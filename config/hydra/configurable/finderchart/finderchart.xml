@@ -333,7 +333,7 @@
                         <Title><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Title>
                         <PreferWidth>350</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
-                        <Default>true</Default>
+                        <Default>false</Default>
                         <NullAllowed/>
                         <ShortDescription>Search Catalog(s)</ShortDescription>
                         <EnumValue id="true">
@@ -343,160 +343,98 @@
                 </FieldGroup>
 
             </Form>
-            <!--<Query id="finderChart" searchProcessorId="QueryFinderChartWeb" ref-xid="finderChart">-->
-                <!--<Param key="SearchType" value="images"/>-->
-                <!--<Param key="maxSearchTargets" value="1000"/>-->
-                <!--<Metadata>-->
-                    <!--<Param key="datasetInfoConverterId" value="FINDER_CHART"/>-->
-                <!--</Metadata>-->
-                <!--<Download id="FinderChartDownload" filePrefix="FinderChartFiles" title="Options" titlePrefix="Download Files" maxRows="5000">-->
-                    <!--<Param key="maxTargetsPerPdf" value="1000"/>-->
-                    <!--<Form>-->
-                        <!--<FormEventWorker id="hide_downloadOptions" type="FieldDefVisibilityControl">-->
-                            <!--<Param key="masters" value="SimpleTargetPanel.field.position=*"></Param>-->
-                            <!--<Param key="hide" value="scope"></Param>-->
-                            <!--<Param key="retainSpace" value="false"></Param>-->
-                        <!--</FormEventWorker>-->
-                        <!--<FormEventWorker id="show_downloadOptions" type="FieldDefVisibilityControl">-->
-                            <!--<Param key="masters" value="filename=*"></Param>-->
-                            <!--<Param key="show" value="scope"></Param>-->
-                            <!--<Param key="retainSpace" value="false"></Param>-->
-                        <!--</FormEventWorker>-->
-                        <!--<FormEventWorker id="show_itemize" type="FieldDefVisibilityControl">-->
-                            <!--<Param key="masters" value="scope=all"></Param>-->
-                            <!--<Param key="show" value="itemize"></Param>-->
-                            <!--<Param key="retainSpace" value="false"></Param>-->
-                        <!--</FormEventWorker>-->
-                        <!--<FormEventWorker id="hide_itemize1" type="FieldDefVisibilityControl">-->
-                            <!--<Param key="masters" value="scope=current"></Param>-->
-                            <!--<Param key="hide" value="itemize"></Param>-->
-                            <!--<Param key="retainSpace" value="false"></Param>-->
-                        <!--</FormEventWorker>-->
-                        <!--<FormEventWorker id="hide_itemize2" type="FieldDefVisibilityControl">-->
-                            <!--<Param key="masters" value="SimpleTargetPanel.field.position=*"></Param>-->
-                            <!--<Param key="hide" value="itemize"></Param>-->
-                            <!--<Param key="retainSpace" value="false"></Param>-->
-                        <!--</FormEventWorker>-->
-                        <!--<FieldGroup labelWidth="120" width="400px">-->
-                            <!--<EnumString orientation="horizontal">-->
-                                <!--<Name>scope</Name>-->
-                                <!--<Title>Download target(s):</Title>-->
-                                <!--<PreferWidth>400</PreferWidth>-->
-                                <!--<Mask>[RADIO]</Mask>-->
-                                <!--<Default>all</Default>-->
-                                <!--<ShortDescription>Download finder chart files of current target or all targets.</ShortDescription>-->
-                                <!--<EnumValue id="current">-->
-                                    <!--<Title>Current target</Title>-->
-                                <!--</EnumValue>-->
-                                <!--<EnumValue id="all">-->
-                                    <!--<Title>All targets</Title>-->
-                                <!--</EnumValue>-->
-                            <!--</EnumString>-->
-                            <!--<EnumString orientation="horizontal">-->
-                                <!--<Name>file_type</Name>-->
-                                <!--<Title>File Type:</Title>-->
-                                <!--<PreferWidth>400</PreferWidth>-->
-                                <!--<Mask>[RADIO]</Mask>-->
-                                <!--<Default>fits</Default>-->
-                                <!--<ShortDescription>Download finder chart files as FITS or PNG.</ShortDescription>-->
-                                <!--<EnumValue id="fits">-->
-                                    <!--<Title>FITS</Title>-->
-                                <!--</EnumValue>-->
-                                <!--<EnumValue id="html">-->
-                                    <!--<Title>HTML</Title>-->
-                                <!--</EnumValue>-->
-                                <!--<EnumValue id="pdf">-->
-                                    <!--<Title>PDF</Title>-->
-                                <!--</EnumValue>-->
-                                <!--<EnumValue id="png">-->
-                                    <!--<Title>PNG</Title>-->
-                                <!--</EnumValue>-->
-                            <!--</EnumString>-->
-                            <!--<EnumString orientation="horizontal">-->
-                                <!--<Name>itemize</Name>-->
-                                <!--<Title>Separate by Object:</Title>-->
-                                <!--<PreferWidth>400</PreferWidth>-->
-                                <!--<Mask>[CHECKBOX]</Mask>-->
-                                <!--<Default>_none_</Default>-->
-                                <!--<NullAllowed/>-->
-                                <!--<ShortDescription>Create separate directory or separate PDF file for each object.</ShortDescription>-->
-                                <!--<EnumValue id="true">-->
-                                    <!--<Title></Title>-->
-                                <!--</EnumValue>-->
-                            <!--</EnumString>-->
-                            <!--<EnumString orientation="horizontal">-->
-                                <!--<Name>reproject</Name>-->
-                                <!--<Title>Re-projected (north up)</Title>-->
-                                <!--<PreferWidth>400</PreferWidth>-->
-                                <!--<Mask>[CHECKBOX]</Mask>-->
-                                <!--<Default></Default>-->
-                                <!--<NullAllowed/>-->
-                                <!--<ShortDescription>Specifies whether to reproject and resample the images.</ShortDescription>-->
-                                <!--<EnumValue id="true">-->
-                                    <!--<Title></Title>-->
-                                <!--</EnumValue>-->
-                            <!--</EnumString>-->
-                        <!--</FieldGroup>-->
-                    <!--</Form>-->
-                <!--</Download>-->
-            <!--</Query>-->
-            <!--&lt;!&ndash; Catalog queries section &ndash;&gt;-->
-            <!--<Query id="sdssCatalog" searchProcessorId="QueryFinderChartWeb">-->
-                <!--<Constraints>-->
-                    <!--<And>-->
-                        <!--<Condition fieldDefId="overlay_catalog" value="true"/>-->
-                        <!--<Condition fieldDefId="sources" value="SDSS"/>-->
-                    <!--</And>-->
-                <!--</Constraints>-->
-                <!--<Param key="SearchType" value="catalog"/>-->
-                <!--<Param key="source" value="SDSS"/>-->
-                <!--<Metadata>-->
-                    <!--<Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>-->
-                <!--</Metadata>-->
-            <!--</Query>-->
-
-            <!--<Query id="irisCatalog" searchProcessorId="QueryFinderChartWeb">-->
-                <!--<Constraints>-->
-                    <!--<And>-->
-                        <!--<Condition fieldDefId="overlay_catalog" value="true"/>-->
-                        <!--<Condition fieldDefId="sources" value="IRIS"/>-->
-                    <!--</And>-->
-                <!--</Constraints>-->
-                <!--<Param key="SearchType" value="catalog"/>-->
-                <!--<Param key="source" value="IRIS"/>-->
-                <!--<Metadata>-->
-                    <!--<Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>-->
-                <!--</Metadata>-->
-            <!--</Query>-->
-
-            <!--<Query id="twomassCatalog" searchProcessorId="QueryFinderChartWeb">-->
-                <!--<Constraints>-->
-                    <!--<And>-->
-                        <!--<Condition fieldDefId="overlay_catalog" value="true"/>-->
-                        <!--<Condition fieldDefId="sources" value="twomass"/>-->
-                    <!--</And>-->
-                <!--</Constraints>-->
-                <!--<Param key="SearchType" value="catalog"/>-->
-                <!--<Param key="source" value="twomass"/>-->
-                <!--<Metadata>-->
-                    <!--<Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>-->
-                <!--</Metadata>-->
-            <!--</Query>-->
-
-            <!--<Query id="wiseCatalog" searchProcessorId="QueryFinderChartWeb">-->
-                <!--<Constraints>-->
-                    <!--<And>-->
-                        <!--<Condition fieldDefId="overlay_catalog" value="true"/>-->
-                        <!--<Condition fieldDefId="sources" value="WISE"/>-->
-                    <!--</And>-->
-                <!--</Constraints>-->
-                <!--<Param key="SearchType" value="catalog"/>-->
-                <!--<Param key="source" value="WISE"/>-->
-                <!--<Metadata>-->
-                    <!--<Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>-->
-                <!--</Metadata>-->
-            <!--</Query>-->
-
+            <Query id="finderChart">
+                <Download id="FinderChartDownload" filePrefix="FinderChartFiles" title="Options" titlePrefix="Download Files" maxRows="5000">
+                    <Param key="maxTargetsPerPdf" value="1000"/>
+                    <Form>
+                        <FormEventWorker id="hide_downloadOptions" type="FieldDefVisibilityControl">
+                            <Param key="masters" value="SimpleTargetPanel.field.position=*"></Param>
+                            <Param key="hide" value="scope"></Param>
+                            <Param key="retainSpace" value="false"></Param>
+                        </FormEventWorker>
+                        <FormEventWorker id="show_downloadOptions" type="FieldDefVisibilityControl">
+                            <Param key="masters" value="filename=*"></Param>
+                            <Param key="show" value="scope"></Param>
+                            <Param key="retainSpace" value="false"></Param>
+                        </FormEventWorker>
+                        <FormEventWorker id="show_itemize" type="FieldDefVisibilityControl">
+                            <Param key="masters" value="scope=all"></Param>
+                            <Param key="show" value="itemize"></Param>
+                            <Param key="retainSpace" value="false"></Param>
+                        </FormEventWorker>
+                        <FormEventWorker id="hide_itemize1" type="FieldDefVisibilityControl">
+                            <Param key="masters" value="scope=current"></Param>
+                            <Param key="hide" value="itemize"></Param>
+                            <Param key="retainSpace" value="false"></Param>
+                        </FormEventWorker>
+                        <FormEventWorker id="hide_itemize2" type="FieldDefVisibilityControl">
+                            <Param key="masters" value="SimpleTargetPanel.field.position=*"></Param>
+                            <Param key="hide" value="itemize"></Param>
+                            <Param key="retainSpace" value="false"></Param>
+                        </FormEventWorker>
+                        <FieldGroup labelWidth="120" width="400px">
+                            <EnumString orientation="horizontal">
+                                <Name>scope</Name>
+                                <Title>Download target(s):</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[RADIO]</Mask>
+                                <Default>all</Default>
+                                <ShortDescription>Download finder chart files of current target or all targets.</ShortDescription>
+                                <EnumValue id="current">
+                                    <Title>Current target</Title>
+                                </EnumValue>
+                                <EnumValue id="all">
+                                    <Title>All targets</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <EnumString orientation="horizontal">
+                                <Name>file_type</Name>
+                                <Title>File Type:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[RADIO]</Mask>
+                                <Default>fits</Default>
+                                <ShortDescription>Download finder chart files as FITS or PNG.</ShortDescription>
+                                <EnumValue id="fits">
+                                    <Title>FITS</Title>
+                                </EnumValue>
+                                <EnumValue id="html">
+                                    <Title>HTML</Title>
+                                </EnumValue>
+                                <EnumValue id="pdf">
+                                    <Title>PDF</Title>
+                                </EnumValue>
+                                <EnumValue id="png">
+                                    <Title>PNG</Title>
+                                </EnumValue>
+                            </EnumString>
+                            <EnumString orientation="horizontal">
+                                <Name>itemize</Name>
+                                <Title>Separate by Object:</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default>_none_</Default>
+                                <NullAllowed/>
+                                <ShortDescription>Create separate directory or separate PDF file for each object.</ShortDescription>
+                                <EnumValue id="true">
+                                    <Title></Title>
+                                </EnumValue>
+                            </EnumString>
+                            <EnumString orientation="horizontal">
+                                <Name>reproject</Name>
+                                <Title>Re-projected (north up)</Title>
+                                <PreferWidth>400</PreferWidth>
+                                <Mask>[CHECKBOX]</Mask>
+                                <Default></Default>
+                                <NullAllowed/>
+                                <ShortDescription>Specifies whether to reproject and resample the images.</ShortDescription>
+                                <EnumValue id="true">
+                                    <Title></Title>
+                                </EnumValue>
+                            </EnumString>
+                        </FieldGroup>
+                    </Form>
+                </Download>
+            </Query>
 
             <!-- Results section -->
             <Result xid="finderChartImageResult">
@@ -506,45 +444,6 @@
                 <EventWorker id="resultsController" type="FinderChartResultsController">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>
-                <!--<Layout>-->
-                    <!--<SplitPanel>-->
-                        <!--<South id="fc_catalog_tab" layout="tab" tagIt="true" initialHeight="250">-->
-                            <!--<Table type="BasicTable">-->
-                                <!--<QueryId>irisCatalog</QueryId>-->
-                                <!--<Title>IRAS</Title>-->
-                                <!--<ShortDescription>IRAS catalog</ShortDescription>-->
-                            <!--</Table>-->
-                            <!--<Table type="BasicTable">-->
-                                <!--<QueryId>sdssCatalog</QueryId>-->
-                                <!--<Title>SDSS</Title>-->
-                                <!--<ShortDescription>SDSS catalog</ShortDescription>-->
-                            <!--</Table>-->
-                            <!--<Table type="BasicTable">-->
-                                <!--<QueryId>twomassCatalog</QueryId>-->
-                                <!--<Title>2MASS</Title>-->
-                                <!--<ShortDescription>2MASS catalog</ShortDescription>-->
-                            <!--</Table>-->
-                            <!--<Table type="BasicTable">-->
-                                <!--<QueryId>wiseCatalog</QueryId>-->
-                                <!--<Title>WISE</Title>-->
-                                <!--<ShortDescription>WISE catalog</ShortDescription>-->
-                            <!--</Table>-->
-                        <!--</South>-->
-                        <!--<West id="fc_source_tab" layout="fixedTab" tagIt="true" initialWidth="250">-->
-                            <!--<Table id="fc_source_table" type="BasicTable">-->
-                                <!--<QueryId>finderChart</QueryId>-->
-                                <!--<Title>Targets</Title>-->
-                                <!--<ShortDescription>List of search targets</ShortDescription>-->
-                            <!--</Table>-->
-                        <!--</West>-->
-                        <!--<Center id="fc_image_grid" layout="fixedTab" tagIt='true' helpId="results">-->
-                            <!--<Preview type="multiDataViewerPreview">-->
-                                <!--<QueryId>finderChart</QueryId>-->
-                                <!--<Title>Finder Chart</Title>-->
-                            <!--</Preview>-->
-                        <!--</Center>-->
-                    <!--</SplitPanel>-->
-                <!--</Layout>-->
             </Result>
         </SearchType>
     </SearchGroup>
