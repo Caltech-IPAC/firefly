@@ -104,7 +104,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                                 content.setHTML(content.getHTML() + "<div style=\"background-color:black; color:blue; margin:20px; padding:20px;\">"
                                  + "<p style=\"color:blue; font-size:120%\"> Your selected data points for Hires generation exceeded the recommended limit of 175000."
                                  + "The Hires generation would take long time to finish. <br>"
-                                + "We suggest you to select fewer data points or use the download option for hires image. <br> </p>"
+                                + "We suggest you select fewer data points or use the download option for hires image. <br> </p>"
                                  + "</div>");
                             }
                             if (totalSel==rowcount) {
