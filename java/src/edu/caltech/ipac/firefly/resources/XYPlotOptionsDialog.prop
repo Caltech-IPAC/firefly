@@ -200,6 +200,20 @@ XYPlotOptionsDialog.y.bins.ShortDescription= Number of bins along Y axis
 XYPlotOptionsDialog.y.bins.PreferWidth= 10
 XYPlotOptionsDialog.y.bins.NullAllowed= true
 
+XYPlotOptionsDialog.shading.Title= Shading:
+XYPlotOptionsDialog.shading.DataType= EnumString
+XYPlotOptionsDialog.shading.Mask= [RADIO]
+XYPlotOptionsDialog.shading.Orient= Horizontal
+XYPlotOptionsDialog.shading.Items= lin log
+XYPlotOptionsDialog.shading.lin.Name= Linear
+XYPlotOptionsDialog.shading.log.Name= Logarithmic
+XYPlotOptionsDialog.shading.ErrorDescription=
+XYPlotOptionsDialog.shading.ShortDescription= When assigning s***REMOVED*** to the number of points \
+                            should we use linear or logarithmic scale?
+XYPlotOptionsDialog.shading.NullAllowed= false
+XYPlotOptionsDialog.shading.Default= lin
+XYPlotOptionsDialog.shading.PreferWidth= 500
+
 
 
 #XYPlotOptionsDialog.maxPoints.DataType= Integer

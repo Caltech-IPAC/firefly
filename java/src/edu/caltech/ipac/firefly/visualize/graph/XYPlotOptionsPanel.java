@@ -69,6 +69,7 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField binning;
     private InputField xBinsFld;
     private InputField yBinsFld;
+    private InputField shading;
     // aspect ratio fileds
     private InputField xyRatioFld;
     private InputField stretchFld;
@@ -385,6 +386,7 @@ public class XYPlotOptionsPanel extends Composite {
                         meta.userMeta.samplingXBins = 0;
                         meta.userMeta.samplingYBins = 0;
                     }
+                    meta.userMeta.logShading = shading.getValue().equals("log");
 
                     //meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
 
@@ -461,12 +463,13 @@ public class XYPlotOptionsPanel extends Composite {
                 yBinsFld.getFocusWidget().setEnabled(enabled);
             }
         });
+        shading = FormBuilder.createField("XYPlotOptionsDialog.shading");
         xBinsFld = FormBuilder.createField("XYPlotOptionsDialog.x.bins");
         yBinsFld = FormBuilder.createField("XYPlotOptionsDialog.y.bins");
         boolean enabled = binning.getValue().equals("user");
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
-        Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld);
+        Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld, shading);
         densityPlotPanel = new CollapsiblePanel("Aggregate Plot", binningParams, false);
         vbox.add(densityPlotPanel);
 
@@ -593,6 +596,7 @@ public class XYPlotOptionsPanel extends Composite {
                 binning.setValue((meta.userMeta != null &&
                         meta.userMeta.samplingXBins > 0 && meta.userMeta.samplingYBins > 0) ?
                         "user" : "auto");
+                shading.setValue((meta.userMeta != null && meta.userMeta.logShading) ? "log" : "lin");
                 int xBins = data.getXSampleBins();
                 if (xBins > 0) {
                     xBinsFld.setValue(Integer.toString(xBins));

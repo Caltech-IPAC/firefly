@@ -1076,8 +1076,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     }
                     if (curve.getLegendLabel().endsWith("pt")) {
                         // single points
-                        s.setWidth(Math.min(xPixelSize,5));
-                        s.setHeight(Math.min(yPixelSize,5));
+                        int size = Math.min(xPixelSize, yPixelSize);
+                        size = Math.min(size, 5);
+                        s.setWidth(size);
+                        s.setHeight(size);
                         continue;
                     }
 
