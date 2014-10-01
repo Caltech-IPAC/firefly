@@ -146,6 +146,8 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     String Freq = sreq.getSafeParam("planckfreq");
                     String detector = sreq.getParam("detector");
                     String radius = sreq.getSafeParam("radius");
+                    String boxsize = sreq.getSafeParam("boxsize");
+                    String type = sreq.getSafeParam("type");
                     String ExpandedDesc, desc;
 
                     WorldPt pt;
@@ -182,7 +184,13 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                         }
                     }
 
-                    String size = Double.toString(2.*StringUtils.getDouble(radius));
+                    String size = null;
+                    if (type.equals("circle")) {
+                        size = Double.toString(2.*StringUtils.getDouble(radius));
+                    } else if (type.equals("box")){
+                        size = Double.toString(StringUtils.getDouble(boxsize));
+                    }
+
 
                     String timeSelt = "";
                     String timeStr = "";

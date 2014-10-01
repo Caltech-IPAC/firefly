@@ -177,28 +177,29 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         // create constraint array
         ArrayList<String> constraints = new ArrayList<String>();
         String constrStr = "+WHERE+CONTAINS(POINT('J2000',ra,dec),";
+        String size =null;
 
         // search type
         String type = req.getParam(PlanckTOITAPRequest.TYPE);
         if (!StringUtils.isEmpty(type)) {
             if (type.equals("circle")) {
-                constraints.add("CIRCLE('J2000',");}
+                size = req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE);}
             else if (type.equals("box")) {
-                constraints.add("BOX('J2000',");}
-            else if (type.equals("polygon")) {
-                constraints.add("POLYGON('J2000',");}
-         }
+                size = req.getParam(PlanckTOITAPRequest.SEARCH_BOX_SIZE);}
+        }
 
         // search size and position
-        String size = req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE);
-
         String userTargetWorldPt = req.getParam("UserTargetWorldPt");
         if (userTargetWorldPt != null) {
             WorldPt pt = WorldPt.parse(userTargetWorldPt);
             if (pt != null) {
                 pt = VisUtil.convertToJ2000(pt);
                 String pos = pt.getLon() + "," + pt.getLat();
-                constraints.add(pos + "," + size + "))=1+and+(");
+                if (type.equals("circle")) {
+                    constraints.add("CIRCLE('J2000'," + pos + "," + size + "))=1+and+(");}
+                else if (type.equals("box")) {
+                    constraints.add("BOX('J2000'," + pos + "," + size+"," + size +"))=1+and+(");}
+                //constraints.add(pos + "," + size + "))=1+and+(");
             }
         }
 

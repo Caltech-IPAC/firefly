@@ -81,6 +81,18 @@
                     <Param key="show" value="detc100"></Param>
                     <Param key="retainSpace" value="false"></Param>
                 </FormEventWorker>
+                <FormEventWorker id="searchtypeController_1" type="FieldDefVisibilityControl" xid="searchtypeController_1">
+                    <Param key="masters" value="type=circle"></Param>
+                    <Param key="hide" value="boxsize"></Param>
+                    <Param key="show" value="radius"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="searchtypeController_2" type="FieldDefVisibilityControl" xid="searchtypeController_2">
+                    <Param key="masters" value="type=box"></Param>
+                    <Param key="hide" value="radius"></Param>
+                    <Param key="show" value="boxsize"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
 
 
                 <!-- Planck Data Release 2: Planck Image TOIs FieldGroup -->
@@ -94,12 +106,22 @@
                 <FieldGroup align="left">
                     <DEGREE units="degree">
                         <Name>radius</Name>
-                        <Title>Search Size</Title>
+                        <Title>Search Radius</Title>
                         <Default>1.0</Default>
                         <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
                         <ErrorDescription>Invalid entry!</ErrorDescription>
                         <Min>0.1666666</Min>
                         <Max>2</Max>
+                        <Cached/>
+                    </DEGREE>
+                    <DEGREE units="degree">
+                        <Name>boxsize</Name>
+                        <Title>Search Box Size</Title>
+                        <Default>2.0</Default>
+                        <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
+                        <ErrorDescription>Invalid entry!</ErrorDescription>
+                        <Min>0.1666666</Min>
+                        <Max>4</Max>
                         <Cached/>
                     </DEGREE>
                     <EnumString orientation="horizontal">
@@ -115,9 +137,9 @@
                         <EnumValue id="box">
                             <Title>Box</Title>
                         </EnumValue>
-                        <EnumValue id="polygon">
+                        <!--EnumValue id="polygon">
                             <Title>Polygon</Title>
-                        </EnumValue>
+                        </EnumValue>-->
                     </EnumString>
                     <EnumString orientation="horizontal">
                         <Name>ssoflag</Name>
@@ -653,6 +675,7 @@
                 <Param key="database" value="%planck.db%"/>
                 <Param key="use" value="catalog_primary"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="releaseVersion" value="release2"/>
                 <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>

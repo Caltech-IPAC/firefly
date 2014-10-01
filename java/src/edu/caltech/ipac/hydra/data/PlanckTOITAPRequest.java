@@ -25,6 +25,7 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String TYPE               = "type";
     public final static String SSOFLAG            = "ssoflag";
     public final static String SEARCH_REGION_SIZE = "radius";
+    public final static String SEARCH_BOX_SIZE    = "boxsize";
     public final static String OBJ_NAME           = "obj_name";
     public final static String OPTBAND            = "planckfreq";
     public final static String RA_DEC_J2000       = "RaDecJ2000";
@@ -95,6 +96,11 @@ public class PlanckTOITAPRequest extends TableServerRequest {
         setParam(SEARCH_REGION_SIZE, value);
     }
     public String getSearchSize() { return getParam(SEARCH_REGION_SIZE); }
+
+    public void setSearchBoxSize(String value) {
+        setParam(SEARCH_BOX_SIZE, value);
+    }
+    public String getSearchBoxSize() { return getParam(SEARCH_BOX_SIZE); }
 
     public void setDetector(String value) {
         setParam(DETECTOR, value);
