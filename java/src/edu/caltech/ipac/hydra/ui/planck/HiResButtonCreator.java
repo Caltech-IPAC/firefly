@@ -102,9 +102,11 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " <br>");
                             if (totaldatapt > totaldatapt_limit) {
                                 content.setHTML(content.getHTML() + "<div style=\"background-color:black; color:blue; margin:20px; padding:20px;\">"
-                                 + "<p style=\"color:blue; font-size:120%\"> Your selected data points for Hires generation exceeded the recommended limit of 175000."
-                                 + "The Hires generation would take long time to finish. <br>"
-                                + "We suggest you select fewer data points or use the download option for hires image. <br> </p>"
+                                 + "<p style=\"color:orange; font-size:120%\"> We estimate that your requested HIRES map will take significantly"
+                                 + " longer than 1-2 minutes to complete."
+                                 + " We recommend that you run"
+                                 +      "  HIRES off-line, or select a smaller amount of data from the TOI search"
+                                 +      "  results. Please hit the \"CANCEL\" button below.<br> </p>"
                                  + "</div>");
                             }
                             if (totalSel==rowcount) {

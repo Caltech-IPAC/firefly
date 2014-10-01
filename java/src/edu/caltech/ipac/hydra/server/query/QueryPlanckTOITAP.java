@@ -204,6 +204,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // get search obj string
         String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
+        targetStr = targetStr.replace(" ", "");
         String source = "OBJECT:'"+targetStr+"'" ;
 
 
