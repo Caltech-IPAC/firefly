@@ -23,11 +23,7 @@ import edu.caltech.ipac.firefly.visualize.ui.color.Color;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 
 import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
@@ -507,7 +503,7 @@ public class Drawer implements WebEventListener {
         int fuzzLevel= 8;
 
 
-
+        Date start = new Date();
 
         int width= dim.getWidth();
         int height= dim.getHeight();
@@ -542,6 +538,11 @@ public class Drawer implements WebEventListener {
                 if (i>=0 && j>=0 && i<width && j<height) {
                     if (decimateObs[i][j]==null) {
                         decimateObs[i][j]= supportCmap && obj.getSupportDuplicate() ? obj.duplicate() : obj;
+                        if (supportCmap) {
+                            decimateObs[i][j].setRepresentCnt(obj.getRepresentCnt());
+                            entryCnt= decimateObs[i][j].getRepresentCnt();
+                            if (entryCnt>maxEntry) maxEntry= entryCnt;
+                        }
                         decimatedAddCnt++;
                     }
                     else {
@@ -576,6 +577,8 @@ public class Drawer implements WebEventListener {
 
         if (supportCmap) setupColorMap(retData,maxEntry);
 
+        GwtUtil.getClientLogger().log(Level.INFO, "Drawer.doDecimation: created "+retData.size()+" objects from "+inData.size()+" in "+
+            ((new Date()).getTime()-start.getTime())+"ms");
 
 
         return retData;
@@ -585,11 +588,21 @@ public class Drawer implements WebEventListener {
     private void setupColorMap(List<DrawObj> data, int maxEntry) {
         String colorMap[]= makeColorMap(maxEntry);
         if (colorMap!=null)  {
-            for(DrawObj obj : data) {
-                setCmapColor(obj,colorMap);
+            if (maxEntry>colorMap.length) {
+                int maxCnt = maxEntry+1; // to include draw obj with cnt==maxEntry into the last color band
+                for(DrawObj obj : data) {
+                    int cnt= obj.getRepresentCnt();
+                    int idx = cnt*colorMap.length/maxCnt;
+                    obj.setColor(colorMap[idx]);
+                }
+            }  else {
+                for(DrawObj obj : data) {
+                    int cnt= obj.getRepresentCnt();
+                    //if (cnt>colorMap.length) cnt=colorMap.length;
+                    obj.setColor(colorMap[cnt-1]);
+                }
             }
         }
-
     }
 
     private static ViewPortPt getViewPortCoords(Pt pt, ViewPortPtMutable mVpPt, WebPlot plot) {
@@ -604,11 +617,19 @@ public class Drawer implements WebEventListener {
         return retval;
     }
 
-    private static void setCmapColor(DrawObj obj, String colorMap[])  {
+    /*
+    private static void setCmapColor(DrawObj obj, String colorMap[], int maxCnt)  {
         int cnt= obj.getRepresentCnt();
-        if (cnt>colorMap.length) cnt=colorMap.length;
-        obj.setColor(colorMap[cnt-1]);
+        if (maxCnt>colorMap.length) {
+            //  linear
+            int idx = cnt*colorMap.length/maxCnt;
+            obj.setColor(colorMap[idx]);
+        } else {
+            if (cnt>colorMap.length) cnt=colorMap.length;
+            obj.setColor(colorMap[cnt-1]);
+        }
     }
+    */
 
 
     private String[] makeColorMap(int mapSize) {

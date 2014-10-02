@@ -517,7 +517,14 @@ public class QueryUtil {
 
                 if (samples.containsKey(key)) {
                     SamplePoint pt = samples.get(key);
-                    pt.addRepresentedRow();
+                    // representative sample point is a random point from the bin
+                    int numRepRows = pt.getRepresentedRows()+1;
+                    if (Math.random() < 1d/(double)numRepRows) {
+                        SamplePoint replacePt = new SamplePoint(xval, yval, row.getRowIdx(), idx, numRepRows);
+                        samples.put(key, replacePt);
+                    } else {
+                        pt.addRepresentedRow();
+                    }
                 } else {
                     SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
                     samples.put(key, pt);
@@ -592,11 +599,16 @@ public class QueryUtil {
         int representedRows;
 
         public SamplePoint(double x, double y, int rowId, int rowIdx) {
+            this(x, y, rowId, rowIdx, 1);
+        }
+
+
+        public SamplePoint(double x, double y, int rowId, int rowIdx, int representedRows) {
             this.x = x;
             this.y = y;
             this.rowId = rowId;
             this.rowIdx = rowIdx;
-            representedRows = 1;
+            this.representedRows = representedRows;
         }
 
         public void addRepresentedRow() { representedRows++; }

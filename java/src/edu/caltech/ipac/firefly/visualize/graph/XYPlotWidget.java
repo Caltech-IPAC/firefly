@@ -351,7 +351,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private String serverRequestToString(TableServerRequest req) {
         // remove page size and start index parameters
-        return req.toString().replaceAll(TableServerRequest.PAGE_SIZE+"=\\d+", "").replaceAll(TableServerRequest.START_IDX+"=\\d+", "");
+        return req.toString().replaceAll('&'+TableServerRequest.PAGE_SIZE+"=\\d+", "").replaceAll('&'+TableServerRequest.START_IDX+"=\\d+", "");
     }
 
     private void onStaleData() {

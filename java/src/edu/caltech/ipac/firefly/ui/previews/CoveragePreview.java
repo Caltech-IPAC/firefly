@@ -16,35 +16,15 @@ import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.CoverageChooser;
-import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
-import edu.caltech.ipac.firefly.visualize.RequestType;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
-import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
-import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
-import edu.caltech.ipac.firefly.visualize.draw.LoadCallback;
-import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
-import edu.caltech.ipac.firefly.visualize.draw.TableDataConnection;
+import edu.caltech.ipac.firefly.visualize.*;
+import edu.caltech.ipac.firefly.visualize.draw.*;
 import edu.caltech.ipac.firefly.visualize.ui.DisableablePlotDeckPanel;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -791,14 +771,15 @@ public class CoveragePreview extends AbstractTablePreview {
 
             if (covType == CoverageData.CoverageType.X) {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
-                int raIdx= model.getColumnIndex(cols.getLonCol());
-                int decIdx= model.getColumnIndex(cols.getLatCol());
+                //int raIdx= model.getColumnIndex(cols.getLonCol());
+                //int decIdx= model.getColumnIndex(cols.getLatCol());
 
                 for(int i= 0; i<tabSize; i++) {
-
-                    _graphObj.add(makePointObj(table, model.getRow(i),
-                                               cols.getLonCol(),cols.getLatCol(),
-                                               cols.getCoordinateSys()));
+                    DrawObj obj= makePointObj(table, model.getRow(i),
+                            cols.getLonCol(),cols.getLatCol(),
+                            cols.getCoordinateSys());
+                    obj.setRepresentCnt(getWeight(i));
+                    _graphObj.add(obj);
                 }
 
             } else if (covType == CoverageData.CoverageType.BOX) {
