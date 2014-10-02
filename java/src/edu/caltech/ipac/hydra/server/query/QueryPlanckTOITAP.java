@@ -20,6 +20,7 @@ import edu.caltech.ipac.hydra.data.PlanckTOITAPRequest;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -193,12 +194,13 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (userTargetWorldPt != null) {
             WorldPt pt = WorldPt.parse(userTargetWorldPt);
             if (pt != null) {
-                pt = VisUtil.convertToJ2000(pt);
+                //pt = VisUtil.convertToJ2000(pt);
+                pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                 String pos = pt.getLon() + "," + pt.getLat();
                 if (type.equals("circle")) {
-                    constraints.add("CIRCLE('J2000'," + pos + "," + size + "))=1+and+(");}
+                    constraints.add("CIRCLE('GALACTIC'," + pos + "," + size + "))=1+and+(");}
                 else if (type.equals("box")) {
-                    constraints.add("BOX('J2000'," + pos + "," + size+"," + size +"))=1+and+(");}
+                    constraints.add("BOX('GALACTIC'," + pos + "," + size+"," + size +"))=1+and+(");}
                 //constraints.add(pos + "," + size + "))=1+and+(");
             }
         }
