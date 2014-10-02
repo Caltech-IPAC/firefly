@@ -80,9 +80,9 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
     private String getTOIDesc(Request req) {
             String bandId = req.getParam("planckfreq");
             String detector = req.getParam("detector");
-            bandId = StringUtils.isEmpty(bandId) ? "" : " Freq=" + bandId + "GHz, ";
+            bandId = StringUtils.isEmpty(bandId) ? "" : "; Freq=" + bandId + "GHz ";
 
-            return getPositionDesc(req) + bandId + getDetector(req)+ getTimeRang(req);
+            return getPositionDesc(req) + getType(req)+  bandId + getDetector(req)+ getTimeRang(req);
     }
 
     private String getBandDesc2(Request req) {
@@ -134,7 +134,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
                 detector = req.getParam("detc857");}
         }
 
-        detector = StringUtils.isEmpty(detector) ? "" : " Detector(s): " + detector;
+        detector = StringUtils.isEmpty(detector) ? "" : "; Detector(s): " + detector;
 
         return detector;
     }
@@ -178,7 +178,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
             }
         }
 
-        return StringUtils.isEmpty(searchSize) ? "" : "; Region=" + toDegString(searchSize)+ ";";
+        return StringUtils.isEmpty(searchSize) ? "" : "; Region=" + toDegString(searchSize);
     }
 
     private String getCutoutSize(Request req) {
@@ -191,6 +191,11 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
     private String getMapscale(Request req) {
         String mapscale = req.getParam("mapscale");
         return StringUtils.isEmpty(mapscale) ? "" : "; Planck Cutout Image Scaled: " + mapscale;
+    }
+
+    private String getType(Request req) {
+            String type = req.getParam("type");
+            return StringUtils.isEmpty(type) ? "" : "; Search: " + type;
     }
 
     private String getScalefactor(Request req) {
