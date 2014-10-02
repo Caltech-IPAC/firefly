@@ -158,8 +158,9 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                         pt = WorldPt.parse(userTargetWorldPt);
                         if (pt != null) {
                             pt = VisUtil.convertToJ2000(pt);
-                            pos = pt.getLon() + "," + pt.getLat();
+//                            pos = pt.getLon() + "," + pt.getLat();
                             pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
+                            pos = pt.getLon() + "," + pt.getLat();
                             if (nf.format(pt.getLat()).startsWith("-")) {
                                 gpos = "G" + nf.format(pt.getLon())  + nf.format(pt.getLat());
                             } else {
@@ -172,6 +173,8 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                         String targetStr = sreq.getSafeParam("UserTargetWorldPt");
                         targetName = targetStr.replace(";", ",");
                     }
+                    targetName = targetName.replace(" ", "");
+
 
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
