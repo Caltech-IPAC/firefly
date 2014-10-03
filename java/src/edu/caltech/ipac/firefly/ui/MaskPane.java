@@ -88,7 +88,7 @@ public class MaskPane {
                     if (waitingToMask) {
                         if (dropdown.isOpen()) hide();
                         else                   show();
-                        if (!isShowing()) schedule(1000);
+                        if (!isShowing()) schedule(500);
                     }
                 }
             };
