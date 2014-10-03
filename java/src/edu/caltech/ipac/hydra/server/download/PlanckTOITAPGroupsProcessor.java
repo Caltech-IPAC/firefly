@@ -157,11 +157,13 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         }
 
         // get objname string
+        String targetStr = null;
         String targetName = request.getSearchRequest().getSafeParam("TargetPanel.field.targetName");
         if (targetName == null) {
-            String targetStr = request.getSearchRequest().getSafeParam("UserTargetWorldPt");
+            targetStr = request.getSearchRequest().getSafeParam("UserTargetWorldPt");
             targetName = targetStr.replace(";", ",");
         }
+        targetStr = targetName.replace(" ", "");
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
                 selectedRows, "rmjd");
@@ -197,7 +199,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         logger.briefInfo("detector constr=" +detc_constr);
         logger.briefInfo("sso constr=" +sso_constr);
-        logger.briefInfo("targetName=" +targetName);
+        logger.briefInfo("targetName=" +targetStr);
         logger.briefInfo("downloadMinmap" +downloadMinimap);
         logger.briefInfo("downloadHires" +downloadHires);
 
@@ -206,14 +208,14 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         if (isSelectAll){
             timeStr="";
             maptimeStr="[]";
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetName, detcStr);
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetStr, detcStr);
             if (downloadMinimap) {
                 iterations ="0";
-                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, gpos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetStr,detcStr);
             }
             if (downloadHires) {
                 iterations ="20";
-                hiresurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+                hiresurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, gpos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetStr,detcStr);
             }
         }
         else{
@@ -241,15 +243,15 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             timeStr += ")";
             maptimeStr += "]";
 
-            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetName, detcStr);
+            toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetStr, detcStr);
             if (downloadMinimap) {
                 iterations ="0";
-                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+                minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, gpos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetStr,detcStr);
             }
 
             if (downloadHires) {
                 iterations ="20";
-                hiresurl =   PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, pos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetName,detcStr);
+                hiresurl =   PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, gpos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetStr,detcStr);
             }
         }
 

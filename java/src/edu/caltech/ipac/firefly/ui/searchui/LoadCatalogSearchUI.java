@@ -77,8 +77,6 @@ public class LoadCatalogSearchUI implements SearchUI {
                     // filepath is returned
                     final TableServerRequest req = new TableServerRequest(CommonParams.USER_CATALOG_FROM_FILE);
                     req.setParam("filePath", filepath);
-                    req.setStartIndex(0);
-                    req.setPageSize(1000);
                     cb.onSuccess(req);
                 }
             });
