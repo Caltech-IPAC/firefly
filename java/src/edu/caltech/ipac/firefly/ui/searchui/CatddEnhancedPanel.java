@@ -286,6 +286,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         Loader<TableDataView> loader = tableConfig.getLoader();
         loader.setPageSize(300);
         final SelectableTableWithConstraintsPanel table = new SelectableTableWithConstraintsPanel(loader);
+        table.setMaskDelayMillSec(1);
 //        table.setSize("100%", "200px");
 
 

@@ -108,13 +108,20 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             builder.setHeaderParams(Arrays.asList("mission", "ds", "subsize"));
             builder.setColorTableID(1);
             builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
-
             bandToID.put("j", ID.TWOMASS_J);
             bandToID.put("h", ID.TWOMASS_H);
             bandToID.put("k", ID.TWOMASS_K);
         }
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+            String inter= selData.getRequest().getParam("intersect");
+            if (inter!=null && inter.equals("OVERLAPS")) {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
+            }
+            else {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
+            }
+
             String b= getBandStr(ID.valueOf(id));
             WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
             r.setTitle("2MASS: "+b);

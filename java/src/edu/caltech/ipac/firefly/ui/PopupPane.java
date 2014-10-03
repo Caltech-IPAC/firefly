@@ -57,7 +57,6 @@ import edu.caltech.ipac.firefly.ui.gwtclone.GwtPopupPanelFirefly;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.CssAnimation;
-import edu.caltech.ipac.firefly.util.Platform;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -231,31 +230,11 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
      * @param styleStr the style to use, must be on of the ones below
      */
     static void addZIndexStyle(PopupPanel popup, String styleStr) {
-        if ((BrowserUtil.isBrowser(Browser.FIREFOX,2) ||
-                BrowserUtil.isBrowser(Browser.SEAMONKEY,1)) &&
-                BrowserUtil.isPlatform(Platform.MAC) ) {
-            int zIndex= 100;
-            if (styleStr.equals("onTopDialog"))            zIndex= 101;
-            else if (styleStr.equals("onTopDialogModal"))  zIndex= 102;
-            DOM.setIntStyleAttribute( popup.getElement(), "zIndex", zIndex);
-        }
-        else {
             popup.addStyleName(styleStr);
-        }
     }
 
     static void addZIndexStyle(GwtPopupPanelFirefly popup, String styleStr) {
-        if ((BrowserUtil.isBrowser(Browser.FIREFOX,2) ||
-                BrowserUtil.isBrowser(Browser.SEAMONKEY,1)) &&
-                BrowserUtil.isPlatform(Platform.MAC) ) {
-            int zIndex= 100;
-            if (styleStr.equals("onTopDialog"))            zIndex= 101;
-            else if (styleStr.equals("onTopDialogModal"))  zIndex= 102;
-            DOM.setIntStyleAttribute( popup.getElement(), "zIndex", zIndex);
-        }
-        else {
-            popup.addStyleName(styleStr);
-        }
+        popup.addStyleName(styleStr);
     }
 
     /**

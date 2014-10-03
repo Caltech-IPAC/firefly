@@ -721,7 +721,7 @@ public class TabPane<T extends Widget> extends Composite
             if (maskPane == null) {
                 maskPane = GwtUtil.mask(msg, this);
             } else {
-                maskPane.show();
+                maskPane.showWhenUncovered();
             }
         }
 

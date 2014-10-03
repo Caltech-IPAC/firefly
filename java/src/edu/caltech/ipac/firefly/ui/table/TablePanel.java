@@ -146,6 +146,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
     private List<View> views = new ArrayList<View>();
     private List<View> activeViews = new ArrayList<View>();
 
+    private int maskDelayMillSec = 200;
+    private boolean onlyMaskWhenUncovered = true;
+
     private String stateId = "TPL";
     private String name;
     private String shortDesc;
@@ -233,6 +236,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             cMouseX = event.getClientX();
             cMouseY = event.getClientY();
         }
+    }
+
+    public void setMaskDelayMillSec(int maskDelayMillSec) {
+        this.maskDelayMillSec = maskDelayMillSec;
     }
 
     public void setHelpId(String id) {
@@ -902,7 +909,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         // listen to table's events
         table.addPageChangeHandler(new PageChangeHandler() {
             public void onPageChange(PageChangeEvent event) {
-                mask("Loading...", 200);
+                mask("Loading...", maskDelayMillSec);
                 if (!expanded) {
                     getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_CHANGE));
                 }
@@ -1029,7 +1036,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         popoutWrapper.add(close, 0, 0);
 
         close.addClickHandler(new ClickHandler() {
-            @Override
             public void onClick(ClickEvent clickEvent) {
                 Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION).hide();
                 if (mainWrapper.getWidget() == null) {

@@ -739,15 +739,27 @@ public class GwtUtil {
 
 
     public static MaskPane mask(String msg, Widget widget) {
-        return mask(msg, widget, MaskPane.MaskHint.OnComponent);
+        return mask(msg, widget, MaskPane.MaskHint.OnComponent,true);
     }
 
+    public static MaskPane mask(String msg, Widget widget, boolean onlyWhenUncovered) {
+        return mask(msg, widget, MaskPane.MaskHint.OnComponent,onlyWhenUncovered);
+    }
 
     public static MaskPane mask(String msg, Widget widget, MaskPane.MaskHint hint) {
+        return mask(msg,widget,hint,false);
+    }
+
+    public static MaskPane mask(String msg, Widget widget, MaskPane.MaskHint hint, boolean onlyWhenUncovered) {
         DefaultWorkingWidget working = new DefaultWorkingWidget();
         working.setText(msg);
         MaskPane maskPane = new MaskPane(widget, working, hint);
-        maskPane.show();
+        if (onlyWhenUncovered) {
+            maskPane.showWhenUncovered();
+        }
+        else {
+            maskPane.show();
+        }
         return maskPane;
     }
 
@@ -1119,6 +1131,22 @@ public class GwtUtil {
         return retval;
     }
 
+    public static boolean isParentOf(Widget w, Widget testParent) {
+        boolean retval= false;
+        if (w != null && testParent!=null) {
+            while (w.getParent() != null) {
+                if (testParent == w.getParent()) {
+                    retval= true;
+                    break;
+                }
+                else  {
+                    w= w.getParent();
+                }
+
+            }
+        }
+        return retval;
+    }
 
     public static boolean isHexColor(String text) {
         if (text.length() != 6) {
