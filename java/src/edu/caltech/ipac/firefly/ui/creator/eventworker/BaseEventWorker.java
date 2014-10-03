@@ -163,13 +163,15 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
         if (!getEvents().contains(ev.getName()) && !ev.getName().equals(Name.BYPASS_EVENT)) {
             return;
         }
-        _lastEvent= ev;
-        if (enabled) {
-            if (getEventHub()!=null) {
-                getEventHub().getEventManager().fireEvent(new WebEvent<ReturnType>(
-                        this, EventHub.ON_EVENT_WORKER_START, null));
+        if (useEvent(ev)) {
+            _lastEvent= ev;
+            if (enabled) {
+                if (getEventHub()!=null) {
+                    getEventHub().getEventManager().fireEvent(new WebEvent<ReturnType>(
+                            this, EventHub.ON_EVENT_WORKER_START, null));
+                }
+                handleEvent(ev);
             }
-            handleEvent(ev);
         }
     }
 
@@ -187,6 +189,10 @@ public abstract class BaseEventWorker<ReturnType> implements EventWorker, WebEve
                     this, EventHub.ON_EVENT_WORKER_COMPLETE, data));
         }
     }
+
+
+
+    protected boolean useEvent(WebEvent ev) { return true; }
 
     abstract protected void handleEvent(WebEvent ev);
 

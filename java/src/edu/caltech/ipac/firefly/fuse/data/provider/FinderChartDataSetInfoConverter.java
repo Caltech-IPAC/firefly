@@ -521,7 +521,8 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
         @Override
         public List<String> get3ColorViewerIDs(SelectedRowData selData) {
-            return getPlotData().getResolver().getIDsForMode(PlotData.GroupMode.TABLE_ROW_ONLY, selData);
+            if (selData==null) return  super.get3ColorViewerIDs(selData);
+            else return getPlotData().getResolver().getIDsForMode(PlotData.GroupMode.TABLE_ROW_ONLY, selData);
         }
     }
 

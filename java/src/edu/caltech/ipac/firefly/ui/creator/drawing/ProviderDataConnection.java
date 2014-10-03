@@ -52,7 +52,7 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
                     em.addListener(EventHub.ON_EVENT_WORKER_COMPLETE,
                                    new WebEventListener<DataSet>() {
                                        public void eventNotify(WebEvent<DataSet> ev) {
-                                           if (ev.getSource().equals(datasetDrawingLayerProvider)) {
+                                           if (ev.getSource().equals(datasetDrawingLayerProvider) && ev.getData()!=null) {
                                                cb.loaded();
                                                em.removeListener(EventHub.ON_EVENT_WORKER_COMPLETE,this);
                                            }

@@ -172,6 +172,10 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
     public void setInputFormat(ActiveTargetCreator.InputFormat f) {_inFormat= f;}
     public ActiveTargetCreator.InputFormat getInputFormat() {return _inFormat;}
 
+    @Override
+    protected boolean useEvent(WebEvent ev) {
+        return (ev.getSource() instanceof TablePanel);
+    }
 
     public void handleEvent(WebEvent ev) {
         if (!(ev.getSource() instanceof TablePanel)) return;
