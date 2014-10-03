@@ -657,7 +657,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
         DatasetDrawingLayerProvider p= new DatasetDrawingLayerProvider();
         p.setQuerySources(Arrays.asList("finderChart"));
-        p.setEnabled(true);   //todo - we want this off by default, make sure that works
+        p.setEnabled(false);   //todo - we want this off by default, make sure that works
         p.setID(id);
         p.setParam(CommonParams.SEARCH_PROCESSOR_ID, "FinderChartQueryArtifact");
 
