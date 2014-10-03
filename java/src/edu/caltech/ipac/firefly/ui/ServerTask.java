@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.Application;
 
 
 /**
@@ -174,11 +173,11 @@ public abstract class ServerTask<R> {
     public void mask() {
         if (widget!=null) {
             if (maskingDelaySec==0) {
-                setMaskWidget();
+                displayMaskWidget();
             }
             else {
                 _timer= new Timer() {
-                    public void run() { setMaskWidget(); }
+                    public void run() { displayMaskWidget(); }
                 };
                 _timer.schedule(maskingDelaySec*1000);
             }
@@ -186,7 +185,7 @@ public abstract class ServerTask<R> {
     }
 
 
-    private void setMaskWidget() {
+    private void displayMaskWidget() {
         if (widget!=null) {
             ClickHandler cancelClick= null;
             if (_cancelable) {
@@ -198,20 +197,21 @@ public abstract class ServerTask<R> {
             working= new DefaultWorkingWidget(cancelClick);
             working.setText(msg);
             maskPane = new MaskPane(widget, working);
-            final Application app= Application.getInstance();
+//            final Application app= Application.getInstance();
             if (_checkForDropdown) {
-                Timer t= new Timer() {
-                    @Override
-                    public void run() {
-                        if (maskPane!=null) {
-                            boolean ddOpen= false;
-                            if (app.getToolBar()!=null)  ddOpen= app.getToolBar().getDropdown().isOpen();
-                            if (!ddOpen)  maskPane.show();
-                            if (!maskPane.isShowing()) schedule(1000);
-                        }
-                    }
-                };
-                t.schedule(100);
+                maskPane.showWhenUncovered();
+//                Timer t= new Timer() {
+//                    @Override
+//                    public void run() {
+//                        if (maskPane!=null) {
+//                            boolean ddOpen= false;
+//                            if (app.getToolBar()!=null)  ddOpen= app.getToolBar().getDropdown().isOpen();
+//                            if (!ddOpen)  maskPane.show();
+//                            if (!maskPane.isShowing()) schedule(1000);
+//                        }
+//                    }
+//                };
+//                t.schedule(100);
             }
             else {
                 maskPane.show();

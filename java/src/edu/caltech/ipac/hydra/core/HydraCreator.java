@@ -4,6 +4,8 @@ import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.DynHomeCmd;
 import edu.caltech.ipac.firefly.commands.FitsInputCmd;
 import edu.caltech.ipac.firefly.commands.HistoryCmd;
+import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
+import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.commands.SearchCmd;
@@ -17,6 +19,8 @@ import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.Vis;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,9 +100,18 @@ public class HydraCreator extends DefaultCreator {
         Application.getInstance().getWidgetFactory().addCreator(
                 FinderChartDescResolver.ID, new FinderChartDescResolver());
 
+        final ImageSelectDropDownCmd isddCmd= new ImageSelectDropDownCmd();
+        commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 
-        return commands;
-    }
+        Vis.init(new Vis.InitComplete() {
+            public void done() {
+                ImageSelectCmd cmd= (ImageSelectCmd) AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+                cmd.setUseDropdownCmd(isddCmd);
+            }
+        });
+
+            return commands;
+        }
 
     private void addCommand(HashMap<String, GeneralCommand> maps, GeneralCommand c) {
         maps.put(c.getName(), c);

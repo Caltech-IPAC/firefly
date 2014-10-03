@@ -122,7 +122,6 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         private WResolver() {
             builder.setColumnsToUse(Arrays.asList("scan_id", "frame_num", "coadd_id", "in_ra", "in_dec", "image_set"));
-            builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
             builder.setColorTableID(1);
             builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
             bandToID.put("1", ID.WISE_1);
@@ -133,6 +132,14 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
             List<Param> ep= Collections.emptyList();
+            String inter= selData.getRequest().getParam("intersect");
+            if (inter!=null && inter.equals("OVERLAPS")) {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
+            }
+            else {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
+            }
+
             ID testID= ID.valueOf(id);
             switch (testID) {
                 case WISE_1:

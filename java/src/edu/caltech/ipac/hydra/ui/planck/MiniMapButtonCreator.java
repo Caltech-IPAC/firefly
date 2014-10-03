@@ -158,8 +158,9 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                         pt = WorldPt.parse(userTargetWorldPt);
                         if (pt != null) {
                             pt = VisUtil.convertToJ2000(pt);
-                            pos = pt.getLon() + "," + pt.getLat();
+//                            pos = pt.getLon() + "," + pt.getLat();
                             pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
+                            pos = pt.getLon() + "," + pt.getLat();
                             if (nf.format(pt.getLat()).startsWith("-")) {
                                 gpos = "G" + nf.format(pt.getLon())  + nf.format(pt.getLat());
                             } else {
@@ -167,11 +168,15 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                             }
                         }
                     }
+
+                    String targetStr = null;
                     String targetName = sreq.getSafeParam("TargetPanel.field.targetName");
                     if (targetName == null) {
-                        String targetStr = sreq.getSafeParam("UserTargetWorldPt");
+                        targetStr = sreq.getSafeParam("UserTargetWorldPt");
                         targetName = targetStr.replace(";", ",");
                     }
+                    targetStr = targetName.replace(" ", "");
+
 
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
@@ -251,7 +256,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("timeStr", timeStr);
                     req.setParam("iterations", interations);
                     req.setParam("size", size);
-                    req.setParam("targetStr", targetName);
+                    req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
                     desc = gpos + "_" + Freq + "GHz-Minimap";
                     ExpandedDesc = "MiniMap with " + desc;

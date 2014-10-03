@@ -194,7 +194,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (userTargetWorldPt != null) {
             WorldPt pt = WorldPt.parse(userTargetWorldPt);
             if (pt != null) {
-                //pt = VisUtil.convertToJ2000(pt);
+                pt = VisUtil.convertToJ2000(pt);
                 pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                 String pos = pt.getLon() + "," + pt.getLat();
                 if (type.equals("circle")) {
@@ -207,6 +207,10 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // get search obj string
         String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
+        if (targetStr == null) {
+            targetStr = req.getSafeParam("UserTargetWorldPt");
+            targetStr = targetStr.replace(";", ",");
+        }
         targetStr = targetStr.replace(" ", "");
         String source = "OBJECT:'"+targetStr+"'" ;
 

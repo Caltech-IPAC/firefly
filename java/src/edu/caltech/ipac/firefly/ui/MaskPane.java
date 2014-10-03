@@ -8,6 +8,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.ui.panels.ToolbarDropdown;
 
 /**
  * @author tatianag
@@ -27,6 +29,7 @@ public class MaskPane {
     private HandlerRegistration _blistRemover= null;
     private final MaskHint _hint;
     private boolean showing= true;
+    private boolean waitingToMask= true;
 
 
     /**
@@ -67,6 +70,34 @@ public class MaskPane {
         show(0);
     }
 
+
+    public void showWhenUncovered() {
+        waitingToMask= true;
+        final Application app= Application.getInstance();
+        final ToolbarDropdown dropdown= (app.getToolBar()!=null) ? app.getToolBar().getDropdown() : null;
+        if (dropdown==null) {
+            show();
+        }
+        else if (GwtUtil.isParentOf(maskWidget, dropdown)) {
+            show();
+        }
+        else {
+            Timer t= new Timer() {
+                @Override
+                public void run() {
+                    if (waitingToMask) {
+                        if (dropdown.isOpen()) hide();
+                        else                   show();
+                        if (!isShowing()) schedule(500);
+                    }
+                }
+            };
+            t.schedule(100);
+        }
+    }
+
+
+
     public void show(int delay) {
 
         if (popup==null) {
@@ -81,16 +112,13 @@ public class MaskPane {
             PopupPane.addZIndexStyle(popup,"onTopDialogModal");
 
             if (_hint==MaskHint.OnComponent) {
-                PopupPane.addZIndexStyle(maskPanel,"onTop");
-//                maskPanel.addStyleName("onTop");
+                maskPanel.addStyleName("onTop");
             }
             else if (_hint==MaskHint.OnDialog) {
-//                maskPanel.addStyleName("onTopDialog");
-                PopupPane.addZIndexStyle(maskPanel,"onTopDialog");
+                maskPanel.addStyleName("onTopDialog");
             }
             else {
-//                maskPanel.addStyleName("onTop");
-                PopupPane.addZIndexStyle(maskPanel,"onTop");
+                maskPanel.addStyleName("onTop");
             }
 
             _blistRemover= Window.addResizeHandler(new BrowserHandler());
@@ -102,6 +130,11 @@ public class MaskPane {
     public boolean isShowing() { return showing;  }
 
     public void hide() {
+        doHide();
+        waitingToMask= false;
+    }
+
+    private void doHide() {
         if (popup!=null) {
             _maskTimer.cancel();
             popup.hide();
