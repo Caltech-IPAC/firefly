@@ -587,7 +587,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         add2massLayerAllBands(hub,"pers_arti", desc, color, symbol, enablePref, type);
 
 
-        desc= "2MASS Glints Artifacts (circle)";
+        desc= "2MASS Glints Artifacts (diamonds)";
         color= "purple";
         symbol= DrawSymbol.DIAMOND;
         enablePref= "2Mass.Artifact.Glints.Selected";
