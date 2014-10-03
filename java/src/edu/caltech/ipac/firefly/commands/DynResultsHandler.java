@@ -4,6 +4,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public interface DynResultsHandler {
 
-    Widget processRequest(final Request inputReq, AsyncCallback<String> callback, EventHub hub, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag);
+    Widget processRequest(final Request inputReq, AsyncCallback<String> callback, EventHub hub, Form form, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag);
 }
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
@@ -47,6 +47,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+// convenience sharing of constants
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -332,7 +335,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             for (String serviceStr: sources.split(",")) {
                 serviceStr = serviceStr.trim().equalsIgnoreCase("2mass") ? WebPlotRequest.ServiceType.TWOMASS.name() : serviceStr.toUpperCase();
                 WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr);
-                String bandKey = FinderChartRequestUtil.getBandKey(service);
+                String bandKey = FinderChartRequestUtil.ImageSet.lookup(service).band;
                 if (bandKey!=null) {
                     bandStr = request.getParam(bandKey);
                     if (bandStr !=null) {
@@ -341,7 +344,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                             bands[i]=getComboPair(service, bands[i]);
                         }
                     } else {
-                        bands = FinderChartRequestUtil.getServiceComboArray(service);
+                        bands = FinderChartRequestUtil.ImageSet.lookup(service).comboAry;
                     }
                 }
 
@@ -392,7 +395,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             DataObject row = new DataObject(dg);
             row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
-            row.setDataElement(dg.getDataDefintion("externalname"), FinderChartRequestUtil.getServiceTitle(service));
+            row.setDataElement(dg.getDataDefintion("externalname"), FinderChartRequestUtil.ImageSet.lookup(service).title);
             row.setDataElement(dg.getDataDefintion("wavelength"), FinderChartRequestUtil.getComboTitle(band));
             row.setDataElement(dg.getDataDefintion("service"), service.name());
             for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
@@ -430,7 +433,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 } else {
                     expanded= curTarget.getName();
                 }
-                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
+                expanded += (" "+FinderChartRequestUtil.ImageSet.lookup(service).title+" "+
                         FinderChartRequestUtil.getComboTitle(band));
 
                 wpReq= FinderChartRequestUtil.makeWebPlotRequest(pt, radius, width, band, expanded, service);
@@ -450,7 +453,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 //                wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);
                 allEW = getServiceEventWorkerId(service, band, true);
-                addWebPlotRequest(table, wpReq, name, FinderChartRequestUtil.getServiceTitle(service), ew, allEW);
+                addWebPlotRequest(table, wpReq, name, FinderChartRequestUtil.ImageSet.lookup(service).title, ew, allEW);
             }
         } catch (Exception e) {
             _log.briefInfo(e.getMessage());
@@ -633,7 +636,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     private static String getComboPair(WebPlotRequest.ServiceType service, String key) {
         if (service.equals(WebPlotRequest.ServiceType.WISE) && key!= null) key = "3a."+key;
-        for (String combo: FinderChartRequestUtil.getServiceComboArray(service)) {
+        for (String combo: FinderChartRequestUtil.ImageSet.lookup(service).comboAry) {
             if (key!= null && key.equals(FinderChartRequestUtil.getComboValue(combo))) return combo;
         }
         return "";

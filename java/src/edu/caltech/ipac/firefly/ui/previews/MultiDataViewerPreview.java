@@ -32,6 +32,10 @@ public class MultiDataViewerPreview extends AbstractTablePreview {
     protected void updateDisplay(TablePanel table) {
         viewer.updateGridWithTable(table);
     }
+
+    public MultiDataViewer getViewer() {
+        return viewer;
+    }
 }
 
 /*

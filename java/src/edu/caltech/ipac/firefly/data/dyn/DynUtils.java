@@ -9,11 +9,26 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.xstream.AccessTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.DownloadTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FieldGroupTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.FormTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.SearchFormParamTag;
 import edu.caltech.ipac.firefly.data.userdata.RoleList;
+import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
+import edu.caltech.ipac.firefly.ui.Form;
+import edu.caltech.ipac.firefly.ui.FormUtil;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
+import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
+import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -218,6 +233,94 @@ public class DynUtils {
 
         return "";
     }
+
+
+    public static DynDownloadSelectionDialog makeDownloadDialog(DownloadTag dlTag, Form form) {
+        // check for downloadTag options
+        DynDownloadSelectionDialog ddsd = null;
+        if (dlTag != null) {
+            ddsd = new DynDownloadSelectionDialog(dlTag.getTitle());
+            String maxRows = dlTag.getMaxRows();
+            if (!StringUtils.isEmpty(maxRows)) {
+                DownloadSelectionIF.MinMaxValidator validator = new DownloadSelectionIF.MinMaxValidator(
+                        ddsd, 1, Integer.parseInt(maxRows));
+                ddsd.setValidator(validator);
+            }
+
+            FormTag formTag = dlTag.getFormTag();
+            if (formTag != null) {
+                List<FieldGroupTag> dlFg = formTag.getFieldGroups();
+                if (dlFg != null) {
+                    Form dlform = GwtUtil.createForm(false, formTag, null, form);
+                    ddsd.addFieldDefPanel(dlform);
+                }
+            }
+
+        }
+        return ddsd;
+    }
+
+    public static void evaluateSearchFormParam(Form searchForm, SearchFormParamTag t, List<ParamTag> pList) {
+        String keyName = t.getKeyName();
+        String keyValue = t.getKeyValue();
+        String createParams = t.getCreateParams();
+
+        InputField inF = searchForm.getField(keyName);
+        if (inF == null) {
+            // see if it a fieldgroup
+            // TODO
+
+        } else if (inF.isVisible()) {
+            String fieldDefValue = inF.getValue();
+            if (keyValue.equals(fieldDefValue) || (keyValue.equals("*") && fieldDefValue.length() > 0)) {
+                String[] createParamArr = createParams.split(",");
+                for (String createParam : createParamArr) {
+                    InputField inF2 = searchForm.getField(createParam);
+                    if (inF2 == null) {
+                        // see if it is within a fieldgroup
+                        String val = getGroupValueFromForm(searchForm, createParam);
+                        if (val != null) {
+                            ParamTag pt = new ParamTag(createParam, val);
+                            pList.add(pt);
+                        }
+
+                    } else {
+                        String val = inF2.getValue();
+                        if (val != null) {
+                            ParamTag pt = new ParamTag(createParam, val);
+                            pList.add(pt);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static String getGroupValueFromForm(Form f, String key) {
+        String val = null;
+        List<InputFieldGroup> groups = new ArrayList<InputFieldGroup>();
+
+        FormUtil.getAllChildGroups(f, groups);
+        boolean found = false;
+        for (InputFieldGroup ifG : groups) {
+            List<Param> pL = ifG.getFieldValues();
+            for (Param _p : pL) {
+                if (_p.getName().equals(key)) {
+                    val = _p.getValue();
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                break;
+            }
+        }
+
+        return val;
+    }
+
+
 
 }
 

@@ -606,7 +606,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return downloadRequest;
     }
 
-    private static void updateHighlighted(FocusWidget b, GeneralCommand cmd) {
+    public static void updateHighlighted(FocusWidget b, GeneralCommand cmd) {
         if (cmd.isHighlighted()) {
             b.removeStyleName("button");
             b.removeStyleName("normal-text");

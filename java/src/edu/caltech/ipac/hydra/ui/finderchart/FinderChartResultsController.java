@@ -1,21 +1,35 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SDSSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+import edu.caltech.ipac.firefly.data.dyn.xstream.DownloadTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.SearchFormParamTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
+import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
@@ -29,21 +43,41 @@ import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
+import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.PlotWidgetGroup;
+import edu.caltech.ipac.firefly.visualize.PrintableUtil;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
+import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+// convenience sharing of constants
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
+
 /**
-* Date: 9/12/14
-*
-* @author loi
-* @version $Id: $
-*/
+ * Date: 9/12/14
+ *
+ * @author loi
+ * @version $Id: $
+ */
 public class FinderChartResultsController extends BaseEventWorker implements DynResultsHandler {
+    private static final String FINDERCHART_GROUP_NAME = "FinderChartGroup";
+    private static final String SUBGROUP_KEY = "subgroup";
+
     private TabPane sourceTab;
     private TablePanel sourceTable;
     private TabPane imageTab;
@@ -51,7 +85,6 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     private TabPane catalogTab;
     private SplitLayoutPanelFirefly layoutPanel;
     private TableResultsDisplay catalogsDisplay;
-    private boolean isInit = false;
 
     public FinderChartResultsController() {
 
@@ -84,15 +117,16 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         layoutPanel.setSize("100%", "100%");
     }
 
-    public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, final EventHub hub, PrimaryTableUILoader loader, SearchTypeTag searchTypeTag) {
+    public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, final EventHub hub, final Form form, PrimaryTableUILoader loader, final SearchTypeTag searchTypeTag) {
 
         imageGrid = new MultiDataViewerPreview();
+        imageGrid.getViewer().setPlotGroupNameRoot(FINDERCHART_GROUP_NAME);
         hub.bind(imageGrid);
         imageGrid.bind(hub);
         imageTab.addTab(imageGrid.getDisplay(), "Finder Chart");
 
         // create source table.
-        Map <String, String> tableParams = new HashMap<String, String>();
+        Map<String, String> tableParams = new HashMap<String, String>();
         tableParams.put(TablePanelCreator.TITLE, "Targets");
         tableParams.put(TablePanelCreator.SHORT_DESC, "List of search targets");
         tableParams.put(TablePanelCreator.QUERY_SOURCE, "finderChart");
@@ -118,10 +152,35 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
-                isInit = true;
                 processCatalog(inputReq);
                 // do this after the initial query..
                 // if it's a table upload, we can use the file with resolved targets coordinates.
+                for (QueryTag qry : searchTypeTag.getQueries()) {
+                    if (qry.getId().equals("finderChart")) {
+                        final DownloadTag dlTag = qry.getDownload();
+                        final DynDownloadSelectionDialog dialog = DynUtils.makeDownloadDialog(dlTag, form);
+
+                        final GeneralCommand cmd = new GeneralCommand("FC Download", "Download", "Download", true) {
+                            protected void doExecute() {
+                                DownloadRequest dlreq = makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form);
+                                dialog.setDownloadRequest(dlreq);
+                                dialog.show();
+                            }
+                        };
+                        cmd.setHighlighted(true);
+
+                        FocusWidget dlButton = new Button(cmd.getLabel());
+                        dlButton.addStyleName("button");
+                        TablePanel.updateHighlighted(dlButton, cmd);
+                        dlButton.addClickHandler(new ClickHandler() {
+                            public void onClick(ClickEvent ev) {
+                                cmd.execute();
+                            }
+                        });
+
+                        imageGrid.getViewer().addToolbarWidgetAtBeginning(dlButton);
+                    }
+                }
             }
         });
 
@@ -132,41 +191,42 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     }
 
     private void processCatalog(ServerRequest tsReq) {
-        boolean doOverlay = tsReq.getBooleanParam("overlay_catalog");
+        boolean doOverlay = tsReq.getBooleanParam(FD_OVERLAY_CAT);
         if (doOverlay) {
             GwtUtil.SplitPanel.showWidget(layoutPanel, catalogTab);
-            String sources = tsReq.getParam("sources");
-            if (sources.contains("SDSS")) {
-                addSDSSCatalog("SDSS", tsReq, "sdss_radius");
+            String sources = tsReq.getParam(FD_SOURCES);
+            if (sources.contains(Source.SDSS.name())) {
+                addSDSSCatalog(FinderChartRequestUtil.ImageSet.SDSS, tsReq, Radius.sdss_radius.name());
             }
-            if (sources.contains("twomass")) {
-                addCatalog("2MASS", tsReq, "fp_psc", "2mass_radius");
+            if (sources.contains(Source.twomass.name())) {
+                addCatalog(FinderChartRequestUtil.ImageSet.TWOMASS, tsReq, Radius.twomass_radius.name());
             }
-            if (sources.contains("WISE")) {
-                addCatalog("WISE", tsReq,"wise_allwise_p3as_psd", "wise_radius");
+            if (sources.contains(Source.WISE.name())) {
+                addCatalog(FinderChartRequestUtil.ImageSet.WISE, tsReq, Radius.wise_radius.name());
             }
-            if (sources.contains("IRIS")) {
-                addCatalog("IRIS", tsReq,"iraspsc", "iras_radius");
+            if (sources.contains(Source.IRIS.name())) {
+                addCatalog(FinderChartRequestUtil.ImageSet.IRIS, tsReq, Radius.iras_radius.name());
             }
         }
     }
 
-    private void addSDSSCatalog(String title, ServerRequest tsReq, String radiusFieldStr) {
+    private void addSDSSCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr) {
         double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
         if (radiusArcSec == Double.NaN) {
             radiusArcSec = 50;
         }
-        double radiusArcMin = radiusArcSec/60.0;
+        double radiusArcMin = radiusArcSec / 60.0;
         SDSSRequest req = new SDSSRequest();
         req.setRadiusArcmin(radiusArcMin);
+        req.setMeta(MetaConst.CATALOG_HINTS, SUBGROUP_KEY + "=" + imageSet.subgroup);
         boolean one_to_one = tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE);
         req.setNearestOnly(one_to_one);
 
-        String uploadFname = tsReq.getParam("filename");
+        String uploadFname = tsReq.getParam(FD_FILENAME);
         if (StringUtils.isEmpty(uploadFname)) {
             req.setUserTargetWorldPoint(tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
-            if (tsReq.getBooleanParam("catalog_by_img_boundary")) {
-                radiusArcMin = tsReq.getDoubleParam("subsize") * 60 /2;
+            if (tsReq.getBooleanParam(FD_CAT_BY_BOUNDARY)) {
+                radiusArcMin = tsReq.getDoubleParam(FD_SUBSIZE) * 60 / 2;
                 req.setRadiusArcmin(radiusArcMin);
                 req.setParam(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.BOX.getDesc());
             } else {
@@ -175,12 +235,11 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         } else {
             req.setFilename(uploadFname);
         }
-        req.setMeta("CatalogHints", "subgroup=" + title);
-        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, imageSet.title);
 
     }
 
-    private void addCatalog(String title, ServerRequest tsReq, String catalog, String radiusFieldStr) {
+    private void addCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr) {
 
         double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
         if (radiusArcSec == Double.NaN) {
@@ -191,19 +250,19 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         gatorReq.setRadUnits(CatalogRequest.RadUnits.ARCSEC);
         gatorReq.setGatorHost("irsa");
         gatorReq.setDDOnList(true);
-        gatorReq.setQueryCatName(catalog);
+        gatorReq.setQueryCatName(imageSet.catalog);
         gatorReq.setRadius(radiusArcSec);
-        gatorReq.setMeta("CatalogHints", "subgroup=" + title);
+        gatorReq.setMeta(MetaConst.CATALOG_HINTS, SUBGROUP_KEY + "=" + imageSet.subgroup);
         if (tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE)) {
             gatorReq.setParam(CatalogRequest.ONE_TO_ONE, "1");
         }
 
-        String uploadFname = tsReq.getParam("filename");
+        String uploadFname = tsReq.getParam(FD_FILENAME);
         if (StringUtils.isEmpty(uploadFname)) {
             gatorReq.setParam(ReqConst.USER_TARGET_WORLD_PT, tsReq.getParam(ReqConst.USER_TARGET_WORLD_PT));
-            if (tsReq.getBooleanParam("catalog_by_img_boundary")) {
+            if (tsReq.getBooleanParam(FD_CAT_BY_BOUNDARY)) {
                 gatorReq.setMethod(CatalogRequest.Method.BOX);
-                double size = tsReq.getDoubleParam("subsize") * 60 * 60;
+                double size = tsReq.getDoubleParam(FD_SUBSIZE) * 60 * 60;
                 gatorReq.setSide(size);
             } else {
                 gatorReq.setMethod(CatalogRequest.Method.CONE);
@@ -213,7 +272,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             gatorReq.setFileName(uploadFname);
         }
 
-        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, title);
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, imageSet.title);
     }
 
 
@@ -244,6 +303,125 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         } else {
             GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceTab);
         }
+    }
+
+    private DownloadRequest makeDownlaodRequest(TableServerRequest srcRequest, DownloadTag dlTag, Form form) {
+        TableServerRequest searchReq = new TableServerRequest("FinderChartQuery", srcRequest);
+        DownloadRequest dlreq = new DownloadRequest(searchReq, "Finder Chart Download Options", "FinderChartFiles");
+        dlreq.setRequestId("FinderChartDownload");
+
+        List<ParamTag> dlParams = dlTag.getParams();
+        List<SearchFormParamTag> sfParams = dlTag.getSearchFormParams();
+        for (SearchFormParamTag sfpt : sfParams) {
+            DynUtils.evaluateSearchFormParam(form, sfpt, dlParams);
+        }
+        if (dlParams != null) {
+            for (ParamTag p : dlParams) {
+                dlreq.setParam(p.getKey(), p.getValue());
+            }
+        }
+
+        // -------------------------------
+        // record plot states and layers info
+        List<PlotWidgetGroup> groups = AllPlots.getInstance().searchGroups(new CollectionUtil.SimpleFilter<PlotWidgetGroup>() {
+                        public boolean accept(PlotWidgetGroup obj) {
+                            return obj.getName().startsWith(FINDERCHART_GROUP_NAME);
+                        }
+                    });
+        // there should only be 1.  if there's more than 1, the logic may need to change.
+        if (groups.size() == 1) {
+            PlotWidgetGroup group = groups.get(0);
+            String stateStr = "";
+            String drawInfoListStr = "";
+            ArrayList<String> queryItems = new ArrayList<String>(Arrays.asList("PlotStates,DrawInfoList,LayerInfo".split(",")));
+            WebPlot currentPlot;
+            Map<String, String> layerMap = new LinkedHashMap<String, String>();
+            for (MiniPlotWidget mpw : group.getAllActive()) {
+                if (mpw.getTitle().length() == 0) break;
+                currentPlot = mpw.getCurrentPlot();
+                if (queryItems.contains("PlotStates")) {
+                    stateStr += getPlotStates(currentPlot);
+                    stateStr += "&&";
+                }
+                if (queryItems.contains("DrawInfoList")) {
+                    drawInfoListStr += getDrawInfoListString(currentPlot);
+                    drawInfoListStr += "&&";
+                }
+                collectLayerInfo(layerMap, currentPlot);
+            }
+            if (queryItems.contains("PlotStates")) {
+                dlreq.setParam("PlotStates", stateStr);
+            }
+            if (queryItems.contains("DrawInfoList")) {
+                dlreq.setParam("DrawInfoList", drawInfoListStr);
+            }
+            if (queryItems.contains("LayerInfo") && layerMap.size() > 0) {
+                String layerInfo = serializeLayerInfo(layerMap);
+                dlreq.setParam("LayerInfo", layerInfo);
+            }
+        }
+        // -------------------------------
+
+        return dlreq;
+    }
+
+    private String getPlotStates(WebPlot plot) {
+        String retval = "";
+
+        PlotState state;
+        if (plot != null) {
+            state = plot.getPlotState();
+            if (state != null) {
+                retval = state.serialize();
+            }
+        } else {
+            retval = Constants.SPLIT_TOKEN;
+        }
+        return retval;
+    }
+
+    private String getDrawInfoListString(WebPlot plot) {
+        StringBuilder sb = new StringBuilder(350);
+
+        if (plot != null) {
+            for (StaticDrawInfo info : PrintableUtil.getDrawInfoList(plot)) {
+//                if (info.getDrawType().equals(StaticDrawInfo.DrawType.SYMBOL) && !info.getLabel().contains("CatalogID")) {
+//                    info.setList(new ArrayList<WorldPt>(0));
+//                }
+                sb.append(info.serialize()).append(Constants.SPLIT_TOKEN);
+            }
+        } else {
+            sb.append(Constants.SPLIT_TOKEN);
+        }
+        return sb.toString();
+    }
+
+    private void collectLayerInfo(Map<String, String> layerMap, WebPlot plot) {
+        String title, defaultColor;
+        if (plot != null) {
+            for (WebLayerItem layer : plot.getPlotView().getUserDrawerLayerSet()) {
+                if (layer.getDrawer().isVisible()) {
+                    defaultColor = layer.getColor();
+                    title = layer.getTitle();
+                    if (!layerMap.keySet().contains(title)) {
+                        layerMap.put(title, defaultColor);
+                    }
+                }
+            }
+        }
+    }
+
+    private String serializeLayerInfo(Map<String, String> layerMap) {
+        StringBuilder sb = new StringBuilder(350);
+        if (layerMap != null && layerMap.size() > 0) {
+            for (String key : layerMap.keySet()) {
+                sb.append(key);
+                sb.append("==");
+                sb.append(layerMap.get(key));
+                sb.append(Constants.SPLIT_TOKEN);
+            }
+        }
+        return sb.toString();
     }
 
 }

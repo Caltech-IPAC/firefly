@@ -14,7 +14,7 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
-import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
@@ -40,6 +40,9 @@ import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.ISSA
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.SDSS;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.TWOMASS;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.WISE;
+
+// convenience sharing of constants
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 
 /**
  * @author Trey Roby
@@ -351,19 +354,19 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
     private static String getBandKey(String key, ServerRequest r) {
         String retval= r!=null ? r.getParam(key) : null;
         if (retval==null) {
-            if (key.equals("dss_bands")) {
+            if (key.equals(ImageSet.DSS.band)) {
                 retval= "poss1_blue,poss1_red,poss2ukstu_blue,poss2ukstu_red,poss2ukstu_ir";
             }
-            else if (key.equals("iras_bands")) {
+            else if (key.equals(ImageSet.IRIS.band)) {
                 retval= "12,25,60,100";
             }
-            else if (key.equals("twomass_bands")) {
+            else if (key.equals(ImageSet.TWOMASS.band)) {
                 retval= "j,k,h";
             }
-            else if (key.equals("wise_bands")) {
+            else if (key.equals(ImageSet.WISE.band)) {
                 retval= "1,2,3,4";
             }
-            else if (key.equals("SDSS_bands")) {
+            else if (key.equals(ImageSet.SDSS.band)) {
                 retval= "u,g,r,i,z";
             }
         }
@@ -412,7 +415,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
     private static String getComboPair(WebPlotRequest.ServiceType service, String key) {
         if (service.equals(WebPlotRequest.ServiceType.WISE) && key!= null) key = "3a."+key;
-        for (String combo: FinderChartRequestUtil.getServiceComboArray(service)) {
+        for (String combo: ImageSet.lookup(service).comboAry) {
             if (key!= null && key.equals(FinderChartRequestUtil.getComboValue(combo))) return combo;
         }
         return "";
@@ -710,7 +713,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             for(String idStr : idList) map.put(idStr,null);
 
             for (WebPlotRequest.ServiceType service : services) {
-                String bandKey = FinderChartRequestUtil.getBandKey(service);
+                String bandKey = ImageSet.lookup(service).band;
                 if (bandKey!=null) {
                     bandStr = getBandKey(bandKey,req);
                     if (bandStr !=null) {
@@ -719,7 +722,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                             bands[i]=getComboPair(service, bands[i]);
                         }
                     } else {
-                        bands = FinderChartRequestUtil.getServiceComboArray(service);
+                        bands = ImageSet.lookup(service).comboAry;
                     }
                 }
 

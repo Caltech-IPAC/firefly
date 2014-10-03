@@ -1,4 +1,4 @@
-package edu.caltech.ipac.firefly.fuse.data.config;
+package edu.caltech.ipac.firefly.data;
 /**
  * User: roby
  * Date: 9/2/14
@@ -16,12 +16,48 @@ import java.util.HashMap;
  * @author Trey Roby
  */
 public class FinderChartRequestUtil {
+    private static final String DEF = Character.toString('\0');
 
+    public static enum ImageSet {DSS(DEF, "dss", "dss_bands", dssCombo, null),
+                                 IRIS("IRAS (IRIS)", "iris", "iras_bands", irisCombo, "iraspsc"),
+                                 ISSA(DEF, "issa", null, issaCombo, null),
+                                 MSX(DEF, "msx", null, msxCombo, null),
+                                 TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc"),
+                                 WISE(DEF, "wise", "wise_bands", wiseCombo, "wise_allwise_p3as_psd"),
+                                 SDSS(DEF, "sdss", "sdss_bands",sDssCombo, null);
 
-    private static HashMap<WebPlotRequest.ServiceType, String> serviceTitleMap = null;
-    private static HashMap<WebPlotRequest.ServiceType, String> bandMap = null;
-    private static HashMap<WebPlotRequest.ServiceType, String[]> comboMap = null;
-//    private static HashMap<WebPlotRequest.ServiceType, String[]> comboMap = null;
+        public WebPlotRequest.ServiceType srvType = WebPlotRequest.ServiceType.valueOf(this.name());
+        public String title;
+        public String subgroup;
+        public String band;
+        public String[] comboAry;
+        public String catalog;
+
+        ImageSet(String title, String subgroup, String band, String[] comboAry, String catalog) {
+            this.title = title.equals(DEF) ? srvType.toString() : title;
+            this.subgroup = subgroup;
+            this.band = band;
+            this.comboAry = comboAry;
+            this.catalog = catalog;
+        }
+
+        public static ImageSet lookup(WebPlotRequest.ServiceType srvType) {
+            return valueOf(srvType.name());
+        }
+    }
+    // --------  input field names and possible values
+    public static final String FD_CAT_BY_BOUNDARY = "catalog_by_img_boundary";
+    public static final String FD_CAT_BY_RADIUS = "catalog_by_radius";
+    public static final String FD_ONE_TO_ONE = "one_to_one";
+    public static final String FD_OVERLAY_CAT = "overlay_catalog";
+    public static final String FD_SOURCES = "sources";
+    public static final String FD_FILENAME = "filename";
+    public static final String FD_SUBSIZE = "subsize";
+
+    public static enum Source {DSS, IRIS, twomass, WISE, SDSS}
+    public static enum Band {dss_bands, iras_bands, twomass_bands, wise_bands, SDSS_bands}
+    public static enum Radius {iras_radius, twomass_radius, wise_radius, sdss_radius}
+    // --------
 
     /**
      * Finder Chart services
@@ -111,34 +147,28 @@ public class FinderChartRequestUtil {
         switch (service) {
             case DSS:
                 wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
-                wpReq.setDrawingSubGroupId("dss");
                 break;
             case IRIS:
                 wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band),radius);
-                wpReq.setDrawingSubGroupId("iris");
                 break;
             case ISSA:
                 wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);
-                wpReq.setDrawingSubGroupId("issa");
                 break;
             case MSX:
                 wpReq= WebPlotRequest.makeMSXRequest(pt, getComboValue(band),radius);
-                wpReq.setDrawingSubGroupId("msx");
                 break;
             case SDSS:
                 wpReq= WebPlotRequest.makeSloanDSSRequest(pt, getComboValue(band), radius);
-                wpReq.setDrawingSubGroupId("sdss");
                 break;
             case TWOMASS:
                 wpReq= WebPlotRequest.make2MASSRequest(pt, getComboValue(band),radius);
-                wpReq.setDrawingSubGroupId("2mass");
                 break;
             case WISE:
                 String[] pair= getComboValue(band).split("\\.");
                 wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
-                wpReq.setDrawingSubGroupId("wise");
                 break;
         }
+        wpReq.setDrawingSubGroupId(ImageSet.lookup(service).subgroup);
         return wpReq;
     }
 
@@ -150,52 +180,6 @@ public class FinderChartRequestUtil {
         String sAry[]= combo.split(";");
         return sAry.length>1 ? sAry[1] : combo;
     }
-
-
-
-    public static String[] getServiceComboArray(WebPlotRequest.ServiceType key) {
-        if (comboMap == null) {
-            comboMap= new HashMap<WebPlotRequest.ServiceType, String[]>();
-            comboMap.put(WebPlotRequest.ServiceType.DSS,dssCombo);
-            comboMap.put(WebPlotRequest.ServiceType.IRIS,irisCombo);
-            comboMap.put(WebPlotRequest.ServiceType.ISSA,issaCombo);
-            comboMap.put(WebPlotRequest.ServiceType.MSX,msxCombo);
-            comboMap.put(WebPlotRequest.ServiceType.SDSS,sDssCombo);
-            comboMap.put(WebPlotRequest.ServiceType.TWOMASS,twoMassCombo);
-            comboMap.put(WebPlotRequest.ServiceType.WISE,wiseCombo);
-        }
-        return comboMap.get(key);
-    }
-
-    public static String getServiceTitle(WebPlotRequest.ServiceType key) {
-        if (serviceTitleMap == null) {
-            serviceTitleMap= new HashMap<WebPlotRequest.ServiceType, String>();
-            serviceTitleMap.put(WebPlotRequest.ServiceType.DSS, WebPlotRequest.ServiceType.DSS.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.IRIS, "IRAS (IRIS)");
-            serviceTitleMap.put(WebPlotRequest.ServiceType.ISSA, WebPlotRequest.ServiceType.ISSA.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.MSX, WebPlotRequest.ServiceType.MSX.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.TWOMASS, "2MASS");
-            serviceTitleMap.put(WebPlotRequest.ServiceType.WISE, WebPlotRequest.ServiceType.WISE.toString());
-            serviceTitleMap.put(WebPlotRequest.ServiceType.SDSS, WebPlotRequest.ServiceType.SDSS.toString());
-        }
-
-        return serviceTitleMap.get(key);
-    }
-
-    public static String getBandKey(WebPlotRequest.ServiceType key) {
-        if (bandMap==null) {
-            bandMap = new HashMap<WebPlotRequest.ServiceType, String>();
-            bandMap.put(WebPlotRequest.ServiceType.DSS, "dss_bands");
-            bandMap.put(WebPlotRequest.ServiceType.IRIS, "iras_bands");
-            bandMap.put(WebPlotRequest.ServiceType.TWOMASS, "twomass_bands");
-            bandMap.put(WebPlotRequest.ServiceType.WISE, "wise_bands");
-            bandMap.put(WebPlotRequest.ServiceType.SDSS, "sdss_bands");
-        }
-        return bandMap.get(key);
-    }
-
-
 
     public static int getPlotWidth(String sizeKey) {
         if (sizeKey!=null && thumbnailSizeMap.containsKey(sizeKey))  {

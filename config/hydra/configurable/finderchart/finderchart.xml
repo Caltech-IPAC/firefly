@@ -295,7 +295,7 @@
                             <Cached/>
                         </Integer>
                         <Integer>
-                            <Name>2mass_radius</Name>
+                            <Name>twomass_radius</Name>
                             <Title>2MASS</Title>
                             <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
                             <Default>50</Default>

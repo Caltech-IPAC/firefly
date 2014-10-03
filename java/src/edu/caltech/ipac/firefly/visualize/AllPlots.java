@@ -63,6 +63,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -70,6 +71,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -275,6 +277,12 @@ public class AllPlots implements HasWebEventManager {
             }
         }
         return retval;
+    }
+
+    public List<PlotWidgetGroup> searchGroups(CollectionUtil.Filter<PlotWidgetGroup> filter) {
+        ArrayList<PlotWidgetGroup> results = new ArrayList<PlotWidgetGroup>();
+        CollectionUtil.filter(_groups, results, filter);
+        return results;
     }
 
 

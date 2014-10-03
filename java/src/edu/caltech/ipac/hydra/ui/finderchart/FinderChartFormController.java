@@ -1,23 +1,15 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.ActiveTabPane;
 import edu.caltech.ipac.firefly.ui.FormHub;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseEventWorker;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
-import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import org.apache.xpath.operations.Bool;
 
-import java.util.Arrays;
-import java.util.List;
-
+// convenience sharing of constants
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 /**
 * Date: 9/12/14
 *
@@ -45,64 +37,65 @@ public class FinderChartFormController extends BaseFormEventWorker {
 
         // keep the two radio buttons in sync.
         if (field != null) {
-            if (field.getName().equals("catalog_by_img_boundary")) {
+            if (field.getName().equals(FD_CAT_BY_BOUNDARY)) {
                 if (Boolean.parseBoolean(field.getValue())) {
-                    setValue(new Param("catalog_by_radius", "false"));
+                    setValue(new Param(FD_CAT_BY_RADIUS, "false"));
                     return;
                 }
             }
 
-            if (field.getName().equals("catalog_by_radius")) {
+            if (field.getName().equals(FD_CAT_BY_RADIUS)) {
                 if (Boolean.parseBoolean(field.getValue())) {
-                    setValue(new Param("catalog_by_img_boundary", "false"));
+                    setValue(new Param(FD_CAT_BY_BOUNDARY, "false"));
                     return;
                 }
             }
         }
 
-        boolean doCatSearch = Boolean.parseBoolean(getValue("overlay_catalog"));
+        boolean doCatSearch = Boolean.parseBoolean(getValue(FD_OVERLAY_CAT));
         setCollapsiblePanelVisibility("catalog_options", doCatSearch);
 
-        String sources = getValue("sources");
+        String sources = getValue(FD_SOURCES);
         sources = sources == null ? "" : sources;
 
-        setVisible("dss_bands", sources.contains("DSS"));
-        setVisible("iras_bands", sources.contains("IRIS"));
-        setVisible("twomass_bands", sources.contains("twomass"));
-        setVisible("wise_bands", sources.contains("WISE"));
-        setVisible("SDSS_bands", sources.contains("SDSS"));
+        setVisible(Band.dss_bands.name(), sources.contains(Source.DSS.name()));
+        setVisible(Band.iras_bands.name(), sources.contains(Source.IRIS.name()));
+        setVisible(Band.twomass_bands.name(), sources.contains(Source.twomass.name()));
+        setVisible(Band.wise_bands.name(), sources.contains(Source.WISE.name()));
+        setVisible(Band.SDSS_bands.name(), sources.contains(Source.SDSS.name()));
 
-        if ((sources.equals("") || sources.equals("DSS")) && doCatSearch) {
-            setValue(new Param("overlay_catalog", "false"));
+        if ((sources.equals("") || sources.equals(Source.DSS.name())) && doCatSearch) {
+            setValue(new Param(FD_OVERLAY_CAT, "false"));
             return;  // event will cause redo of doCheck.
         } else {
-            setVisible("iras_radius", sources.contains("IRIS"));
-            setVisible("2mass_radius", sources.contains("twomass"));
-            setVisible("wise_radius", sources.contains("WISE"));
-            setVisible("sdss_radius", sources.contains("SDSS"));
+            setVisible(Radius.iras_radius.name(), sources.contains(Source.IRIS.name()));
+            setVisible(Radius.twomass_radius.name(), sources.contains(Source.twomass.name()));
+            setVisible(Radius.wise_radius.name(), sources.contains(Source.WISE.name()));
+            setVisible(Radius.sdss_radius.name(), sources.contains(Source.SDSS.name()));
         }
 
-        if (Boolean.parseBoolean(getValue("catalog_by_img_boundary"))) {
-            setVisible("iras_radius", false);
-            setVisible("2mass_radius", false);
-            setVisible("wise_radius", false);
-            setVisible("sdss_radius", false);
-            setVisible("one_to_one", false);
+        if (Boolean.parseBoolean(getValue(FD_CAT_BY_BOUNDARY))) {
+            setVisible(Radius.iras_radius.name(), false);
+            setVisible(Radius.twomass_radius.name(), false);
+            setVisible(Radius.wise_radius.name(), false);
+            setVisible(Radius.sdss_radius.name(), false);
+            setVisible(FD_ONE_TO_ONE, false);
         } else {
-            setVisible("one_to_one", true);
+            setVisible(FD_ONE_TO_ONE, true);
         }
 
         ActiveTabPane posUpldTab = getActiveTabPane("POS UPL TabPane");
         int posUpldTabSelIdx = posUpldTab == null ? 0 : posUpldTab.getTabPane().getSelectedIndex();
 
         if (posUpldTabSelIdx == 1) {
-            setVisible("catalog_by_img_boundary", false);
-            if (Boolean.parseBoolean(getValue("catalog_by_img_boundary"))) {
-                setValue(new Param("catalog_by_radius", "true"));
+            setVisible(FD_CAT_BY_BOUNDARY, false);
+            if (Boolean.parseBoolean(getValue(FD_CAT_BY_BOUNDARY))) {
+                setValue(new Param(FD_CAT_BY_RADIUS, "true"));
             }
         } else {
-            setVisible("catalog_by_img_boundary", true);
+            setVisible(FD_CAT_BY_BOUNDARY, true);
         }
+        setVisible(FD_ONE_TO_ONE, posUpldTabSelIdx == 1);
     }
 
     public void bind(EventHub hub) {

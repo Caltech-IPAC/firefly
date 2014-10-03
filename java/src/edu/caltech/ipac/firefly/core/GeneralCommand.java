@@ -198,7 +198,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     }
 
     public void setHighlighted(boolean highlight) {
-        boolean oldVal = this.isEnabled;
+        boolean oldVal = this.isHighlighted;
         isHighlighted = highlight;
         pcs.firePropertyChange(PROP_HIGHLIGHT, oldVal, highlight);
     }
