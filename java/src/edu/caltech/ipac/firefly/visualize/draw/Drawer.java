@@ -577,8 +577,8 @@ public class Drawer implements WebEventListener {
 
         if (supportCmap) setupColorMap(retData,maxEntry);
 
-        GwtUtil.getClientLogger().log(Level.INFO, "Drawer.doDecimation: created "+retData.size()+" objects from "+inData.size()+" in "+
-            ((new Date()).getTime()-start.getTime())+"ms");
+//        GwtUtil.getClientLogger().log(Level.INFO, "Drawer.doDecimation: created "+retData.size()+" objects from "+inData.size()+" in "+
+//            ((new Date()).getTime()-start.getTime())+"ms");
 
 
         return retData;

@@ -550,6 +550,9 @@ public class DrawingManager implements AsyncDataLoader {
             }
 
             subVisControl.setDataConnect(_dataConnect);
+            for(WebPlotView pv : _allPV.keySet()) {
+                if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
+            }
             updateVisibilityBasedOnSubgroupAll();
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
