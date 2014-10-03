@@ -588,8 +588,8 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
 
         desc= "2MASS Glints Artifacts (circle)";
-        color= "orange";
-        symbol= DrawSymbol.CIRCLE;
+        color= "purple";
+        symbol= DrawSymbol.DIAMOND;
         enablePref= "2Mass.Artifact.Glints.Selected";
         type= "glint";
 
