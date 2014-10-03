@@ -59,7 +59,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
 
         protected FocusWidget makeButton(final TablePanel table) {
             tablePanel = table;
-            final int totaldatapt_limit = 175000;
+            final int totaldatapt_limit = 2000000;
 
             final Button button = GwtUtil.makeButton("HiRes Gen", "Generate High Res Image", new ClickHandler() {
                 @Override
