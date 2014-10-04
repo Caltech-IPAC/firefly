@@ -157,7 +157,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         }
 
         // get objname string
-        String targetStr = null;
+        String targetStr;
         String targetName = request.getSearchRequest().getSafeParam("TargetPanel.field.targetName");
         if (targetName == null) {
             targetStr = request.getSearchRequest().getSafeParam("UserTargetWorldPt");
