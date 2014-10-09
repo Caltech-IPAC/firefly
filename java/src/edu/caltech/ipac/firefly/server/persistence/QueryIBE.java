@@ -44,6 +44,11 @@ import java.util.Map;
          @ParamDoc(name="mcenter", desc="Specifies whether to return only the most centered (in pixel space) image-set for the given input position.")
         })
 public class QueryIBE extends IpacTablePartProcessor {
+    public static final String PROC_ID = QueryIBE.class.getAnnotation(SearchProcessorImpl.class).id();
+    public static final String MISSION = "mission";
+    public static final String POS_WORLDPT = "UserTargetWorldPt";
+    public static final String RADIUS = "radius";
+    public static final String MOST_CENTER = "mcenter";
 
     @Override
     protected String getWspaceSaveDirectory() {
@@ -54,7 +59,7 @@ public class QueryIBE extends IpacTablePartProcessor {
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        String mission = request.getParam("mission");
+        String mission = request.getParam(MISSION);
         Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
         IBE ibe = IBEUtils.getIBE(mission, paramMap);
@@ -80,14 +85,14 @@ public class QueryIBE extends IpacTablePartProcessor {
 
     @Override
     protected String getFilePrefix(TableServerRequest request) {
-        return request.getParam("mission");
+        return request.getParam(MISSION);
     }
 
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
         try {
-            String mission = request.getParam("mission");
+            String mission = request.getParam(MISSION);
             Map<String,String> paramMap = IBEUtils.getParamMap(request.getParams());
 
             IBE ibe = IBEUtils.getIBE(mission, paramMap);
@@ -111,7 +116,7 @@ public class QueryIBE extends IpacTablePartProcessor {
             }
 
             meta.setAttribute("host", source.getIbeHost());
-            meta.setAttribute("mission", source.getMission());
+            meta.setAttribute(MISSION, source.getMission());
             meta.setAttribute("dataset", source.getDataset());
             meta.setAttribute("table", source.getTableName());
             meta.setAttribute("subsize", request.getParam("subsize"));

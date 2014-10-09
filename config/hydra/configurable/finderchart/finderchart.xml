@@ -438,9 +438,6 @@
 
             <!-- Results section -->
             <Result xid="finderChartImageResult">
-                <EventWorker id="target" type="ActiveTarget">
-                    <QueryId>finderChart</QueryId>
-                </EventWorker>
                 <EventWorker id="resultsController" type="FinderChartResultsController">
                     <QueryId>finderChart</QueryId>
                 </EventWorker>

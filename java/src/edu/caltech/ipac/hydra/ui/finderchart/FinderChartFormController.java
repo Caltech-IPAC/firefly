@@ -95,7 +95,6 @@ public class FinderChartFormController extends BaseFormEventWorker {
         } else {
             setVisible(FD_CAT_BY_BOUNDARY, true);
         }
-        setVisible(FD_ONE_TO_ONE, posUpldTabSelIdx == 1);
     }
 
     public void bind(EventHub hub) {

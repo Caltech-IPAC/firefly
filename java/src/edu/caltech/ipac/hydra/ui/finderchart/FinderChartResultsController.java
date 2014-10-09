@@ -31,10 +31,12 @@ import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseEventWorker;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.previews.MultiDataViewerPreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
@@ -56,7 +58,6 @@ import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -142,45 +143,9 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         sourceTab.addTab(primary.getDisplay(), "Targets");
         sourceTable = (TablePanel) sourceTab.getTab("Targets").getContent();
 
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
-                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub); //TODO - uncomment to enable artifacts
-            }
-        });
-
-
         sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
-                processCatalog(inputReq);
-                // do this after the initial query..
-                // if it's a table upload, we can use the file with resolved targets coordinates.
-                for (QueryTag qry : searchTypeTag.getQueries()) {
-                    if (qry.getId().equals("finderChart")) {
-                        final DownloadTag dlTag = qry.getDownload();
-                        final DynDownloadSelectionDialog dialog = DynUtils.makeDownloadDialog(dlTag, form);
-
-                        final GeneralCommand cmd = new GeneralCommand("FC Download", "Download", "Download", true) {
-                            protected void doExecute() {
-                                DownloadRequest dlreq = makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form);
-                                dialog.setDownloadRequest(dlreq);
-                                dialog.show();
-                            }
-                        };
-                        cmd.setHighlighted(true);
-
-                        FocusWidget dlButton = new Button(cmd.getLabel());
-                        dlButton.addStyleName("button");
-                        TablePanel.updateHighlighted(dlButton, cmd);
-                        dlButton.addClickHandler(new ClickHandler() {
-                            public void onClick(ClickEvent ev) {
-                                cmd.execute();
-                            }
-                        });
-
-                        imageGrid.getViewer().addToolbarWidgetAtBeginning(dlButton);
-                    }
-                }
+                onResultsLoad(inputReq, searchTypeTag, hub, form);
             }
         });
 
@@ -188,6 +153,60 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
 
         return layoutPanel;
+    }
+
+    private void onResultsLoad(Request inputReq, SearchTypeTag searchTypeTag, final EventHub hub, final Form form) {
+
+        sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
+
+        // -- setup active target overlay
+        Map<String,String> params = new HashMap<String, String>();
+        params.put(EventWorker.ID, "target");
+        params.put(EventWorker.QUERY_SOURCE, "finderChart");
+        params.put(CommonParams.TARGET_COLUMNS, "ra,dec");
+        params.put(CommonParams.TARGET_TYPE, CommonParams.TABLE_ROW);
+        EventWorker w = Application.getInstance().getWidgetFactory().createEventWorker("ActiveTarget", params);
+        w.bind(hub);
+        // -- end active target overlay
+
+        // start artifacts
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub);
+            }
+        });
+
+        // add  catalogs
+        processCatalog(inputReq);
+
+        // do this after the initial query..
+        // if it's a table upload, we can use the file with resolved targets coordinates.
+        for (QueryTag qry : searchTypeTag.getQueries()) {
+            if (qry.getId().equals("finderChart")) {
+                final DownloadTag dlTag = qry.getDownload();
+                final DynDownloadSelectionDialog dialog = DynUtils.makeDownloadDialog(dlTag, form);
+
+                final GeneralCommand cmd = new GeneralCommand("FC Download", "Download", "Download", true) {
+                    protected void doExecute() {
+                        DownloadRequest dlreq = makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form);
+                        dialog.setDownloadRequest(dlreq);
+                        dialog.show();
+                    }
+                };
+                cmd.setHighlighted(true);
+
+                FocusWidget dlButton = new Button(cmd.getLabel());
+                dlButton.addStyleName("button");
+                TablePanel.updateHighlighted(dlButton, cmd);
+                dlButton.addClickHandler(new ClickHandler() {
+                    public void onClick(ClickEvent ev) {
+                        cmd.execute();
+                    }
+                });
+
+                imageGrid.getViewer().addToolbarWidgetAtBeginning(dlButton);
+            }
+        }
     }
 
     private void processCatalog(ServerRequest tsReq) {

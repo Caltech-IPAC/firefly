@@ -484,7 +484,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
                 sdi = StaticDrawInfo.parse(dStr);
                 artifactStr = sdi.getLabel();
                 isArtifact = false;
-                for (String c: new String[]{"glint_arti_", "pers_arti_", "diff_spikes_","halos_","ghosts_","latents_"}){
+                for (String c: new String[]{"glint_arti", "pers_arti", "diff_spikes_","halos_","ghosts_","latents_"}){
                     if (artifactStr.startsWith(c)) {
                         isArtifact = true;
                         break;
@@ -648,6 +648,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
             req.setParam("service", "2mass");
             req.setSafeParam("type", type);
+            band = "j";   // 2mass artifacts are the same for all 3 bands.  use j for all.
         } else {
             req.setParam("service", "wise");
             if (type.equalsIgnoreCase("diff")) req.setSafeParam(WiseRequest.TYPE, "D");

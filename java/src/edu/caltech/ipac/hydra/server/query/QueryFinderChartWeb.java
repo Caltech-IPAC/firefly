@@ -130,7 +130,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
             WorldPt pt = getTargetWorldPt(tgt);
 
             DataObject row = new DataObject(table);
-            row.setDataElement(objId, i);
+            row.setDataElement(objId, i+1);
             row.setDataElement(objName, getTargetName(tgt));
             row.setDataElement(ra, pt.getLon());
             row.setDataElement(dec, pt.getLat());

@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Constants;
@@ -80,6 +81,8 @@ public class PngRetrieve {
                         rg.setOptions(rgtpl.getOptions());
                         sdi.addRegion(rg);
                     }
+                } else if (sdiLbl.contains("CatalogID")) {
+                    sdi.addAllRegions(sdiTemplate.getRegionList());
                 } else if (!sdiLbl.equals(WebGridLayer.DRAWER_ID) && !sdiLbl.contains("CatalogID")) {
                     for (int j=0; j<artifactList.size(); j++) {
                         fi = artifactList.get(j);
@@ -109,23 +112,23 @@ public class PngRetrieve {
         String retval = null;
         if (s!=null) {
             if (s.contains("_art_glint")) {
-                retval="glint_arti_";
-                if (s.contains("_2massj_")) {
-                    retval += "j";
-                } else if (s.contains("_2massh_")) {
-                    retval += "h";
-                } else if (s.contains("_2massk_")) {
-                    retval += "k";
-                }
+                retval="glint_arti";   // glint is same for all
+//                if (s.contains("_2massj_")) {
+//                    retval += "j";
+//                } else if (s.contains("_2massh_")) {
+//                    retval += "h";
+//                } else if (s.contains("_2massk_")) {
+//                    retval += "k";
+//                }
             } else if (s.contains("_art_persistence")) {
-                retval="pers_arti_";
-                if (s.contains("_2massj_")) {
-                    retval += "j";
-                } else if (s.contains("_2massh_")) {
-                    retval += "h";
-                } else if (s.contains("_2massk_")) {
-                    retval += "k";
-                }
+                retval="pers_arti";
+//                if (s.contains("_2massj_")) {
+//                    retval += "j";
+//                } else if (s.contains("_2massh_")) {
+//                    retval += "h";
+//                } else if (s.contains("_2massk_")) {
+//                    retval += "k";
+//                }
             } else if (s.contains("_art_D")) {
                 retval="diff_spikes_3_";
                 if (s.contains("_wise1_")) {

@@ -146,6 +146,18 @@ public class SDSSQuery extends IpacTablePartProcessor {
                     return null;
             }
 
+            if (!StringUtils.isEmpty(uploadFname) && dg.containsKey("up_id")) {
+                // increment up_id(uploaded id) by 1 if it's an multi object search
+                DataType upId = dg.getDataDefintion("up_id");
+                for(DataObject row : dg) {
+                    int id = StringUtils.getInt(String.valueOf(row.getDataElement(upId)), -1);
+                    if (id >= 0) {
+                        row.setDataElement(upId, String.valueOf(id + 1));
+                    }
+                }
+            }
+
+
             outFile = createFile(request, ".tbl");
             IpacTableWriter.save(outFile, dg);
 
