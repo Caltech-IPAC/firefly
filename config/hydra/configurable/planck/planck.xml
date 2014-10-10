@@ -675,12 +675,14 @@
                 <Param key="server" value="PLANCK_SERVER"/>
                 <Param key="database" value="%planck.db%"/>
                 <Param key="use" value="catalog_primary"/>
-                <Param key="cutoutHost" value="%planck.cutout.host%"/>
-                <Param key="releaseVersion" value="release2"/>
+                <Param key="cutoutHost" value="%planck.cutout.host%" serverOnly="false"/>
+                <Param key="releaseVersion" value="release2" serverOnly="false"/>
                 <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                    <Param key="releaseVersion" value="release2"/>
                     <Param key="col.mx1.Visibility" value="hidden"/>
                     <Param key="col.my1.Visibility" value="hidden"/>
                     <Param key="col.mx2.Visibility" value="hidden"/>

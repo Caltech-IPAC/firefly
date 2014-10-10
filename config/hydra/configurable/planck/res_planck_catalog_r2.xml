@@ -8,15 +8,29 @@
         <QueryId>
             planck30r2,planck44r2,planck70r2,planck100r2,planck143r2,planck217r2,planck353r2,planck545r2,planck857r2
         </QueryId>
-        <Param key="searchProcessorId" value="planckImagesQuery2"/>
+        <Param key="searchProcessorId" value="planckImagesCutoutQuery"/>
+        <Param key="ArgHeaders" value="cutoutHost,releaseVersion"/>
         <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow,TabPane.tabSelected"/>
     </EventWorker>
     <EventWorker id="imagesWorkersz" type="DataSetQuery" xid="imagesWorkersz">
         <QueryId>
             planckszunion
         </QueryId>
-        <Param key="searchProcessorId" value="planckImagesQuery3"/>
+        <Param key="searchProcessorId" value="planckImagesCutoutQuery"/>
+        <Param key="ArgHeaders" value="cutoutHost,releaseVersion"/>
         <Param key="Events" value="onRowHighlightChange,TablePreviewEventHub.TableShow,TabPane.tabSelected"/>
+    </EventWorker>
+
+    <EventWorker id="imagesWorker3" type="DataSetQuery" xid="imagesWorker3">
+        <QueryId>
+            planck30r2,planck44r2,planck70r2,planck100r2,planck143r2,planck217r2,planck353r2,planck545r2,planck857r2
+        </QueryId>
+        <Param key="searchProcessorId" value="planckImagesCutoutQuery"/>
+        <Param key="ExtraParams" value="queryId=planckImagesCutoutQuery"/>
+        <Param key="ExtraParams" value="eventWorkerId=imagesWorker3"/>
+        <Param key="ExtraParams" value="FilterColumn=objname"/>
+        <Param key="ExtraParams" value="columns=id;name;ra;dec"/>
+        <Param key="Events" value="SearchResultEnd"/>
     </EventWorker>
     <Layout>
         <SplitPanel>
