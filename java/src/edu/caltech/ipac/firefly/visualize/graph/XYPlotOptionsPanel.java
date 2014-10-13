@@ -70,7 +70,7 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField xBinsFld;
     private InputField yBinsFld;
     private InputField shading;
-    // aspect ratio fileds
+    // aspect ratio fields
     private InputField xyRatioFld;
     private InputField stretchFld;
 
@@ -442,11 +442,11 @@ public class XYPlotOptionsPanel extends Composite {
         });
         VerticalPanel arParams = new VerticalPanel();
         arParams.setSpacing(5);
-        arParams.add(GwtUtil.makeFaddedHelp("Fix aspect ratio by setting the field below.<br>"+
+        arParams.add(GwtUtil.makeFaddedHelp("Fix display aspect ratio by setting the field below.<br>"+
             "Leave it blank to use all available space."));
         arParams.add(FormBuilder.createPanel(configAR, xyRatioFld, stretchFld));
-        Widget aspectRatioPanel = new CollapsiblePanel("Aspect Ratio", arParams, false);
-        vbox.add(aspectRatioPanel);
+        //Widget aspectRatioPanel = new CollapsiblePanel("Aspect Ratio", arParams, false);
+        //vbox.add(aspectRatioPanel);
 
         // density plot parameters
         FormBuilder.Config configDP = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
@@ -470,7 +470,7 @@ public class XYPlotOptionsPanel extends Composite {
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
         Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld, shading);
-        densityPlotPanel = new CollapsiblePanel("Aggregate Plot", binningParams, false);
+        densityPlotPanel = new CollapsiblePanel("Binning Options", binningParams, false);
         vbox.add(densityPlotPanel);
 
         VerticalPanel vbox1 = new VerticalPanel();
@@ -478,6 +478,7 @@ public class XYPlotOptionsPanel extends Composite {
         vbox1.add(xMinMaxPanel);
         vbox1.add(yMinMaxPanelDesc);
         vbox1.add(yMinMaxPanel);
+        vbox1.add(arParams);
         //if (_xyPlotWidget instanceof XYPlotWidget) {
         //    tableInfo = GwtUtil.makeFaddedHelp(((XYPlotWidget)_xyPlotWidget).getTableInfo());
         //    vbox1.add(tableInfo);
