@@ -572,7 +572,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_7</Name>
-            <Title>Browse Single PCCS Catalogs(TBD on the fly cutout for preview)</Title>
+            <Title>Browse Single PCCS Catalogs (With on-the-fly cutout for preview)</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -689,16 +689,13 @@
                     <Param key="col.mxy.Visibility" value="hidden"/>
                     <Param key="col.my2.Visibility" value="hidden"/>
                 </Metadata>
-                <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlancImagesCutoutkDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <Label><![CDATA[<i>
-                                For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
+                                For Planck data, map regions will be downloaded. <br>
+                                </i>]]>
                             </Label>
                         </FieldGroup>
                         <FieldGroup>
@@ -800,16 +797,14 @@
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
                 </Metadata>
-                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlancImagesCutoutkDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <Label><![CDATA[<i>
                                 For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
+                                </i>]]>
                             </Label>
                         </FieldGroup>
                         <FieldGroup>
@@ -964,7 +959,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
             <Name>planck_8</Name>
-            <Title>Multiple Frequency Cutout Visualization(DX11d Map with PCCS1 catalog)</Title>
+            <Title>Multiple Frequency Cutout Visualization (DX11d Map with PCCS1 catalog)</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image Cutouts Form -->
             <Form>
