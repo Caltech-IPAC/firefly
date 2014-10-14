@@ -13,6 +13,9 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.HealpixWrapper;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.visualize.FileData;
+import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
+import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.hydra.data.PlanckCutoutRequest;
 import edu.caltech.ipac.hydra.server.query.QueryPlanckImagesCutout;
@@ -22,6 +25,7 @@ import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.target.TargetFixedSingle;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -76,6 +80,7 @@ public class PlanckImagesCutoutFileGroupsProcessor extends FileGroupsProcessor {
         String subsizeStr = "2.0";
         Float subsize = new Float(subsizeStr);
         WebPlotRequest wpReq;
+        WorldPt pt = null;
 
         ArrayList<FileGroup> fgArr = new ArrayList<FileGroup>();
         long fgSize = 0;
@@ -131,9 +136,7 @@ public class PlanckImagesCutoutFileGroupsProcessor extends FileGroupsProcessor {
                     Dec = Double.toString(dec);
 
                     pos = Ra + "," + Dec;
-                    curTarget = new TargetFixedSingle(sname, new PositionJ2000(new Double(Ra), new Double(Dec)));
-                    WorldPt pt;
-                    pt = getTargetWorldPt(curTarget);
+                    pt = new WorldPt(ra,dec, CoordinateSys.EQ_J2000);
 
                     url = createCutoutURLString(baseUrl, pos, releaseVersion, mType);
 
@@ -183,14 +186,18 @@ public class PlanckImagesCutoutFileGroupsProcessor extends FileGroupsProcessor {
                     if (cutoutType.equals("IRIS")) {
                         try {
                             for (int band: irasBands) {
-                                baseFilename = outDir + "/" + "IRIS_" + band + sname + ".fits";
+                                baseFilename = outDir + "/" + "IRIS_" + band + "_" + outDir + ".fits";
                                 int estSize = 60000;
 
-                                wpReq= WebPlotRequest.makeISSARequest(pt,Integer.toString(band),subsize);
-                                String req= wpReq.toString();
-                                fi = new FileInfo(req,baseFilename, estSize);
-                                fiArr.add(fi);
-                                fgSize += fi.getSizeInBytes();
+                                wpReq = WebPlotRequest.makeISSARequest(pt,Integer.toString(band),subsize);
+                                FileRetriever retriever = FileRetrieverFactory.getRetriever(wpReq);
+                                if (retriever!=null) {
+                                     FileData fileData = retriever.getFile(wpReq);
+                                     f = fileData.getFile();
+                                    fi = new FileInfo(f.getPath(), baseFilename, estSize);
+                                    fiArr.add(fi);
+                                    fgSize += fi.getSizeInBytes();
+                                }
                             }
 
                         } catch (Exception e) {
@@ -204,8 +211,6 @@ public class PlanckImagesCutoutFileGroupsProcessor extends FileGroupsProcessor {
 
             }
         }
-//        FileGroup fg = new FileGroup(fiArr, null, fgSize, "PLANCK Download Files");
-//        fgArr.add(fg);
         return fgArr;
     }
 
