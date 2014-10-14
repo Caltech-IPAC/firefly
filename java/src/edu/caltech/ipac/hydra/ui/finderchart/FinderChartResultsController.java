@@ -143,11 +143,16 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         sourceTab.addTab(primary.getDisplay(), "Targets");
         sourceTable = (TablePanel) sourceTab.getTab("Targets").getContent();
 
-        sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
-            public void eventNotify(WebEvent ev) {
-                onResultsLoad(inputReq, searchTypeTag, hub, form);
-            }
-        });
+        if (sourceTable.isInit()) {
+            onResultsLoad(inputReq, searchTypeTag, hub, form);
+        } else {
+            sourceTable.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
+                public void eventNotify(WebEvent ev) {
+                    sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
+                    onResultsLoad(inputReq, searchTypeTag, hub, form);
+                }
+            });
+        }
 
         new NewTableEventHandler(hub, catalogTab);
 
@@ -156,8 +161,6 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     }
 
     private void onResultsLoad(Request inputReq, SearchTypeTag searchTypeTag, final EventHub hub, final Form form) {
-
-        sourceTable.getEventManager().removeListener(TablePanel.ON_INIT, this);
 
         // -- setup active target overlay
         Map<String,String> params = new HashMap<String, String>();
@@ -170,11 +173,11 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         // -- end active target overlay
 
         // start artifacts
-        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-            public void execute() {
+//        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+//            public void execute() {
                 ConverterStore.get("FINDER_CHART").initArtifactLayers(hub);
-            }
-        });
+//            }
+//        });
 
         // add  catalogs
         processCatalog(inputReq);
