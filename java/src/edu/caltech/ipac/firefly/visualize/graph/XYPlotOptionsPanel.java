@@ -441,6 +441,8 @@ public class XYPlotOptionsPanel extends Composite {
             }
         });
         VerticalPanel arParams = new VerticalPanel();
+        DOM.setStyleAttribute(arParams.getElement(), "paddingLeft", "10px");
+        arParams.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
         arParams.setSpacing(5);
         arParams.add(GwtUtil.makeFaddedHelp("Fix display aspect ratio by setting the field below.<br>"+
             "Leave it blank to use all available space."));
@@ -449,8 +451,6 @@ public class XYPlotOptionsPanel extends Composite {
         //vbox.add(aspectRatioPanel);
 
         // density plot parameters
-        FormBuilder.Config configDP = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
-                50, 0, HorizontalPanel.ALIGN_LEFT);
         binning = FormBuilder.createField("XYPlotOptionsDialog.binning");
         binning.addValueChangeHandler(new ValueChangeHandler<String>() {
             @Override
@@ -469,7 +469,14 @@ public class XYPlotOptionsPanel extends Composite {
         boolean enabled = binning.getValue().equals("user");
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
-        Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld, shading);
+        VerticalPanel binningParams = new VerticalPanel();
+        FormBuilder.Config configDP1 = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                50, 0, HorizontalPanel.ALIGN_LEFT);
+        FormBuilder.Config configDP2 = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                110, 0, HorizontalPanel.ALIGN_LEFT);
+        binningParams.add(FormBuilder.createPanel(configDP1,binning));
+        binningParams.add(FormBuilder.createPanel(configDP2, xBinsFld, yBinsFld));
+        binningParams.add(FormBuilder.createPanel(configDP1,shading));
         densityPlotPanel = new CollapsiblePanel("Binning Options", binningParams, false);
         vbox.add(densityPlotPanel);
 

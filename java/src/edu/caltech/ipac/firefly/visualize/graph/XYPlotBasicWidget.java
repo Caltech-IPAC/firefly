@@ -624,12 +624,10 @@ public class XYPlotBasicWidget extends PopoutWidget {
     }
 
     private void updateLegendVisibility() {
-        if (_legend != null ) {
-            boolean showLegend = _showLegend || _meta.alwaysShowLegend();
-            _legend.setVisible(showLegend);
-            _chart.setLegendVisible(showLegend);
-            _chart.update();
-        }
+        boolean showLegend = _legend != null && (_showLegend || _meta.alwaysShowLegend());
+        if (_legend != null ) { _legend.setVisible(showLegend); }
+        _chart.setLegendVisible(showLegend);
+        _chart.update();
     }
 
     public void setGridlines() {
@@ -1077,6 +1075,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
                     if (curve.getLegendLabel().endsWith("pt")) {
                         // single points
                         int size = Math.min(xPixelSize, yPixelSize);
+                        if (size > 3) size -= 1; // make the size a bit smaller than for aggregated points
                         size = Math.min(size, 5);
                         s.setWidth(size);
                         s.setHeight(size);
