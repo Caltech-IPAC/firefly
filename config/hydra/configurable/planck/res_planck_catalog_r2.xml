@@ -14,7 +14,7 @@
     </EventWorker>
     <EventWorker id="imagesWorkersz" type="DataSetQuery" xid="imagesWorkersz">
         <QueryId>
-            planckszunion
+            planckszunion,,planckszmmf1,planckszmmf3,planckszpws
         </QueryId>
         <Param key="searchProcessorId" value="planckImagesCutoutQuery"/>
         <Param key="ArgHeaders" value="cutoutHost,releaseVersion"/>
@@ -55,7 +55,7 @@
                 </Preview>
                 <Preview type="BasicPreviewImageGrid">
                     <QueryId>
-                        planckszunion
+                        planckszunion,planckszmmf1,planckszmmf3,planckszpws
                     </QueryId>
                     <EventWorkerId>imagesWorkersz</EventWorkerId>
                     <Title>Images Grid</Title>
