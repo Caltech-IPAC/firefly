@@ -281,7 +281,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // ending with format of output:
 
-        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+"}");
+        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+",DETNAM:'" + detcStr +"'}");
 
 
     // compile all constraints

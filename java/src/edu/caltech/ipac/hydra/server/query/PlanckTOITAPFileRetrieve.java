@@ -47,9 +47,9 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
         //url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+ssoflag+"(round(mjd,0)="+rmjd + "))&format=fits";
         if (type.equals("CIRCLE")){
-            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAME:'" + detcStr + "'}";
+            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
         } else if (type.equals("BOX")){
-            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size + ","+ size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAME:'" + detcStr + "'}";
+            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size + ","+ size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
 
         }
 
