@@ -179,11 +179,11 @@ public class TableResultsDisplay extends BaseLayoutElement {
                     tab.unmask();
                     showTable();
                     break;
-                case CANCELED:     stateStr= "Canceled";
-                    tab.unmask();
-                    break;
-            }
-            tab.setLabel(titleStr);
+            case CANCELED:     stateStr= "Canceled";
+            tab.unmask();
+            break;
+        }
+        tab.setLabel(titleStr);
             title.setHTML(titleStr);
             status.setHTML(stateStr);
         }
@@ -213,8 +213,7 @@ public class TableResultsDisplay extends BaseLayoutElement {
                         tableUI.addDownloadButton(tconfig.getDownloadSelectionIF(), dlreq.getRequestId(),
                                 dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
                     }
-                    tab.clear();
-                    tab.add(tableUI.getDisplay());
+                    tab.setContent(tableUI.getDisplay());
                     if (tableUI instanceof TablePrimaryDisplay) {
                         table = ((TablePrimaryDisplay) tableUI).getTable();
                         table.getTable().setShowUnits(true);
