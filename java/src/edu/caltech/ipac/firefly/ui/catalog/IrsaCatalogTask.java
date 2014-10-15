@@ -94,7 +94,7 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
     private void handleBackgrounding(final MonitorItem monItem) {
         DefaultWorkingWidget working= new DefaultWorkingWidget((ClickHandler)null);
         working.setText("Backgrounding...");
-        final MaskPane maskPane = new MaskPane(getWidget(), working);
+        final MaskPane maskPane = new MaskPane(getMaskWidget(), working);
         maskPane.show();
         Timer t= new Timer() {
             @Override

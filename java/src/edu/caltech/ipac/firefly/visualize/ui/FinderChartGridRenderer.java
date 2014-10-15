@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -91,7 +92,7 @@ public class FinderChartGridRenderer implements GridRenderer {
                 mpw.setSize(dimension.getWidth()+"px", dimension.getHeight()+"px");
             }
             else {
-                mpw.setSize("100%","100%");
+                mpw.setSize("192px","192px");
             }
         }
 
@@ -101,6 +102,23 @@ public class FinderChartGridRenderer implements GridRenderer {
 
         AllPlots.getInstance().updateUISelectedLook();
 
+    }
+
+    public Element getMaskingElement(String key) {
+        Element retval= null;
+        int row= -1;
+        if      (key.toUpperCase().startsWith("DSS"))     row= dssRow;
+        else if (key.toUpperCase().startsWith("SDSS"))    row= sdssRow;
+        else if (key.toUpperCase().startsWith("TWOMASS")) row= massRow;
+        else if (key.toUpperCase().startsWith("2MASS"))   row= massRow;
+        else if (key.toUpperCase().startsWith("WISE"))    row= wiseRow;
+        else if (key.toUpperCase().startsWith("IRAS"))    row= irasRow;
+
+        if (row>-1) {
+            retval= grid.getRowFormatter().getElement(row);
+        }
+
+        return retval;
     }
 
     public void postPlotting() {

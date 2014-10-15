@@ -346,6 +346,17 @@ public class GwtUtil {
         return false;
     }
 
+    public static boolean isOnDisplay(com.google.gwt.dom.client.Element elem) {
+        if (elem != null) {
+            boolean val = (elem.getOffsetHeight() * elem.getOffsetWidth() > 0)
+                    && isVisible(elem);
+            return val;
+        }
+        return false;
+    }
+
+
+
     /**
      * return true if the given element is visible.  this is based on style attribtues. it is possible that a widget is
      * visible, but does not have width or height.
@@ -1130,6 +1141,25 @@ public class GwtUtil {
         }
         return retval;
     }
+
+
+    public static boolean isParentOf(com.google.gwt.dom.client.Element e, Element testParent) {
+        boolean retval= false;
+        if (e != null && testParent!=null) {
+            while (e.getParentElement() != null) {
+                if (testParent == e.getParentElement()) {
+                    retval= true;
+                    break;
+                }
+                else  {
+                    e= e.getParentElement();
+                }
+            }
+        }
+        return retval;
+    }
+
+
 
     public static boolean isParentOf(Widget w, Widget testParent) {
         boolean retval= false;

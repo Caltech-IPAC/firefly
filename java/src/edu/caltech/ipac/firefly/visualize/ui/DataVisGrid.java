@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SimpleLayoutPanel;
 import edu.caltech.ipac.firefly.core.Application;
@@ -325,17 +326,28 @@ public class DataVisGrid {
                 rList.add(reqMap.get(key));
             }
 
-            PlotWidgetOps.plotGroup(panel,rList,mpwList,nextPlotIsExpanded, new AsyncCallback<WebPlot>() {
-                public void onFailure(Throwable caught) {
-                    plottingCnt--;
-                    completeGroupPlotting(allDoneCB, mpwList);
+            Map<String,SubGroupContainer> sgcMap= breakUpInSubgroups(mpwList,rList);
+            for(Map.Entry<String,SubGroupContainer> entry : sgcMap.entrySet()) {
+                Element maskElement= panel.getElement();
+                if (gridRenderer.getMaskingElement(entry.getKey())!=null)  {
+                    maskElement= gridRenderer.getMaskingElement(entry.getKey());
                 }
+                SubGroupContainer sgCon= entry.getValue();
 
-                public void onSuccess(WebPlot result) {
-                    plottingCnt--;
-                    completeGroupPlotting(allDoneCB, mpwList);
-                }
-            });
+                PlotWidgetOps.plotGroup(maskElement,sgCon.rList,sgCon.mpwList,nextPlotIsExpanded
+                        , new AsyncCallback<WebPlot>() {
+                    public void onFailure(Throwable caught) {
+                        plottingCnt--;
+                        completeGroupPlotting(allDoneCB, mpwList);
+                    }
+
+                    public void onSuccess(WebPlot result) {
+                        plottingCnt--;
+                        completeGroupPlotting(allDoneCB, mpwList);
+                    }
+                });
+            }
+
             nextPlotIsExpanded= false;
         }
         else {
@@ -497,6 +509,61 @@ public class DataVisGrid {
                     gridRenderer.postPlotting();
                 }
             });
+        }
+    }
+
+
+
+    public Map<String,SubGroupContainer> breakUpInSubgroups(List<MiniPlotWidget> mpwList, List<WebPlotRequest> rList) {
+        boolean hasSubGroup= false;
+        Map<String,SubGroupContainer> retMap= new HashMap<String,SubGroupContainer>(10);
+        for(WebPlotRequest r : rList) {
+            if (r.getDrawingSubGroupId()!=null) {
+                hasSubGroup= true;
+                break;
+            }
+        }
+
+        if (hasSubGroup) {
+            for(int i= 0; (i<mpwList.size()); i++) {
+                WebPlotRequest r= rList.get(i);
+                MiniPlotWidget mpw= mpwList.get(i);
+                String sgID= r.getDrawingSubGroupId();
+                if (sgID==null) sgID= "EVERYTHING";
+                SubGroupContainer sgContainer= null;
+
+                if (retMap.containsKey(sgID)) {
+                    sgContainer= retMap.get(sgID);
+                }
+                else {
+                    sgContainer= new SubGroupContainer();
+                    retMap.put(sgID,sgContainer);
+                }
+
+                sgContainer.mpwList.add(mpw);
+                sgContainer.rList.add(r);
+            }
+
+        }
+        else {
+            retMap.put("EVERYTHING", new SubGroupContainer(mpwList,rList));
+        }
+        return retMap;
+    }
+
+
+    private static class SubGroupContainer {
+        final List<MiniPlotWidget> mpwList;
+        final List<WebPlotRequest> rList;
+
+        private SubGroupContainer(List<MiniPlotWidget> mpwList, List<WebPlotRequest> rList) {
+            this.mpwList = mpwList;
+            this.rList = rList;
+        }
+
+        private SubGroupContainer() {
+            this.mpwList= new ArrayList<MiniPlotWidget>(10);
+            this.rList= new ArrayList<WebPlotRequest>(10);
         }
     }
 

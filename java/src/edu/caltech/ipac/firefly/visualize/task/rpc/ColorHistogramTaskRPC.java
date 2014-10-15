@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.task.rpc;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
@@ -40,7 +41,7 @@ public class ColorHistogramTaskRPC extends ServerTask<WebPlotResult> {
                                   int width,
                                   int height,
                                   AsyncCallback<WebPlotResult> imageUrlCB) {
-        super(null,null, true);
+        super((Widget)null,null, true);
         this.plot= plot;
         this.hOps= hOps;
         this.width= width;

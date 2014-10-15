@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
@@ -26,6 +27,7 @@ public interface GridRenderer {
     public void clear();
     public void onResize();
     public Widget getWidget();
+    public Element getMaskingElement(String key);
     public void postPlotting();
 
 }

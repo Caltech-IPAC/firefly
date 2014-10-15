@@ -81,7 +81,7 @@ public class PackageTask extends ServerTask<BackgroundStatus> {
         if (bgStat.getState()!= BackgroundState.SUCCESS) {
             Application.getInstance().getBackgroundManager().animateToManager(_animationX,_animationY,1000);
             if (bgStat.hasAttribute(JobAttributes.LongQueue)) {
-                PopupUtil.showInfo(getWidget(),
+                PopupUtil.showInfo(getMaskWidget(),
                                    "Warning: Long Queue",
                                    "The server queue is very long, packaging might take an hour or more before it can start.");
 

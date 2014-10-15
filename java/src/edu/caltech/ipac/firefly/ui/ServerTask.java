@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
@@ -19,7 +20,8 @@ public abstract class ServerTask<R> {
 
     protected enum State {START, WORKING, CANCELED, SUCCESS, FAIL, TIMEOUT, BACKGROUNDED}
     private State _state;
-    private final Widget widget;
+    private final Widget maskWidget;
+    private final Element maskElement;
     private String msg;
     private AsyncCallback<R> _activeCallback= null;
     private final boolean _cancelable;
@@ -36,31 +38,44 @@ public abstract class ServerTask<R> {
 //    private long endDelta= 0;
 
     public ServerTask() {
-        this(null, MASK_MSG,false);
+        this(null, null, MASK_MSG,false, true);
     }
 
-    public ServerTask(Widget widget,
+    public ServerTask(Widget maskWidget,
                       String msg,
                       boolean cancelable) {
-        this(widget, msg, cancelable,true);
+        this(maskWidget, maskWidget!=null?maskWidget.getElement():null,
+             msg, cancelable,true);
     }
 
-    public ServerTask(Widget widget,
+    public ServerTask(Element maskElement,
+                      String msg,
+                      boolean cancelable) {
+        this(null, maskElement, msg, cancelable,true);
+    }
+
+    private ServerTask(Widget maskWidget,
+                      Element maskElement,
                       String msg,
                       boolean cancelable,
                       boolean checkForDropdown) {
-        this.widget = widget;
+        this.maskWidget = maskWidget;
+        this.maskElement = maskElement;
         this.msg = msg == null ? "" : msg;
         _state= State.START;
         _cancelable= cancelable;
         _checkForDropdown= checkForDropdown;
     }
 
+
+
+
+
     public void setMaskingDelaySec(int sec) {
         maskingDelaySec= sec;
     }
 
-    public Widget getWidget() { return widget; }
+    public Widget getMaskWidget() { return maskWidget; }
 
 
     public void start() {
@@ -171,7 +186,7 @@ public abstract class ServerTask<R> {
     }
 
     public void mask() {
-        if (widget!=null) {
+        if (maskElement !=null) {
             if (maskingDelaySec==0) {
                 displayMaskWidget();
             }
@@ -186,7 +201,7 @@ public abstract class ServerTask<R> {
 
 
     private void displayMaskWidget() {
-        if (widget!=null) {
+        if (maskElement !=null) {
             ClickHandler cancelClick= null;
             if (_cancelable) {
                 cancelClick= new ClickHandler () {
@@ -196,7 +211,7 @@ public abstract class ServerTask<R> {
             }
             working= new DefaultWorkingWidget(cancelClick);
             working.setText(msg);
-            maskPane = new MaskPane(widget, working);
+            maskPane = new MaskPane(maskElement, working);
 //            final Application app= Application.getInstance();
             if (_checkForDropdown) {
                 maskPane.showWhenUncovered();
@@ -221,7 +236,7 @@ public abstract class ServerTask<R> {
 
 
     public void unMask() {
-        if (widget!=null) {
+        if (maskElement !=null) {
             if (_timer!=null) {
                 _timer.cancel();
                 _timer= null;
@@ -232,7 +247,7 @@ public abstract class ServerTask<R> {
 
 
     private void unMaskWidget() {
-        if (widget != null && maskPane != null) {
+        if (maskElement != null && maskPane != null) {
             maskPane.hide();
             maskPane = null;
         }

@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.ui;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
@@ -22,11 +23,11 @@ public class MaskPane {
 
     private PopupPanel maskPanel;
     private PopupPanel popup;
-    private Widget     maskWidget;
+    private Widget     maskWidget= null;
+    private Element     maskElement;
     private Widget     popupWidget;
-
-    private MaskTimer _maskTimer;
-    private HandlerRegistration _blistRemover= null;
+    private MaskTimer maskTimer;
+    private HandlerRegistration blistRemover = null;
     private final MaskHint _hint;
     private boolean showing= true;
     private boolean waitingToMask= true;
@@ -43,21 +44,39 @@ public class MaskPane {
         this(maskWidget,popupWidget,MaskHint.OnComponent);
     }
 
-
     /**
      *
-     * @param maskWidget  widget to mask
+     * @param maskElement  widget to mask
      * @param popupWidget widget to popup
-     * @param hint type of widget this mask is on
      */
+    public MaskPane(Element maskElement,
+                    Widget popupWidget) {
+
+        this(maskElement,popupWidget,MaskHint.OnComponent);
+    }
+
     public MaskPane(Widget maskWidget,
                     Widget popupWidget,
                     MaskHint hint) {
+        this(maskWidget.getElement(),popupWidget,hint);
+        this.maskWidget= maskWidget;
+    }
 
-        _maskTimer = new MaskTimer();
+
+    /**
+     *
+     * @param maskElement  widget to mask
+     * @param popupWidget widget to popup
+     * @param hint type of widget this mask is on
+     */
+    public MaskPane(Element maskElement,
+                    Widget popupWidget,
+                    MaskHint hint) {
+
+        maskTimer = new MaskTimer();
         _hint= hint;
 
-        this.maskWidget = maskWidget;
+        this.maskElement = maskElement;
         this.popupWidget = popupWidget;
 
 
@@ -78,7 +97,7 @@ public class MaskPane {
         if (dropdown==null) {
             show();
         }
-        else if (GwtUtil.isParentOf(maskWidget, dropdown)) {
+        else if (GwtUtil.isParentOf(maskElement, dropdown.getElement())) {
             show();
         }
         else {
@@ -121,10 +140,10 @@ public class MaskPane {
                 maskPanel.addStyleName("onTop");
             }
 
-            _blistRemover= Window.addResizeHandler(new BrowserHandler());
+            blistRemover = Window.addResizeHandler(new BrowserHandler());
             showing= true;
         }
-        _maskTimer.starts(delay);
+        maskTimer.starts(delay);
     }
 
     public boolean isShowing() { return showing;  }
@@ -136,12 +155,12 @@ public class MaskPane {
 
     private void doHide() {
         if (popup!=null) {
-            _maskTimer.cancel();
+            maskTimer.cancel();
             popup.hide();
             maskPanel.hide();
-            if (_blistRemover!=null) {
-                _blistRemover.removeHandler();
-                _blistRemover= null;
+            if (blistRemover !=null) {
+                blistRemover.removeHandler();
+                blistRemover = null;
             }
             popup=null;
         }
@@ -151,23 +170,23 @@ public class MaskPane {
     private boolean locateMask() {
         if (popup==null) return false;
 
-        if (GwtUtil.isOnDisplay(maskWidget)) {
-            final int w= maskWidget.getOffsetWidth();
-            final int h= maskWidget.getOffsetHeight();
+        if (GwtUtil.isOnDisplay(maskElement)) {
+            final int w= maskElement.getOffsetWidth();
+            final int h= maskElement.getOffsetHeight();
 
             //int pwidth= popup.getOffsetWidth();
             //int pheight= popup.getOffsetHeight();
             popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
                 public void setPosition(int offsetWidth, int offsetHeight) {
-                    int left = maskWidget.getAbsoluteLeft()+w/2 - offsetWidth/2;
-                    int top = maskWidget.getAbsoluteTop() +h/2 - offsetHeight/2;
+                    int left = maskElement.getAbsoluteLeft()+w/2 - offsetWidth/2;
+                    int top = maskElement.getAbsoluteTop() +h/2 - offsetHeight/2;
                     popup.setPopupPosition(left, top);
                 }
             });
             //popup.setPopupPosition(maskWidget.getAbsoluteLeft()+w/2 - pwidth/2,
             //                       maskWidget.getAbsoluteTop() +h/2 - pheight/2);
-            maskPanel.setPopupPosition(maskWidget.getAbsoluteLeft(),
-                                       maskWidget.getAbsoluteTop());
+            maskPanel.setPopupPosition(maskElement.getAbsoluteLeft(),
+                                       maskElement.getAbsoluteTop());
             maskPanel.setWidth(w+"px");
             maskPanel.setHeight(h+"px");
 //            popup.show();
