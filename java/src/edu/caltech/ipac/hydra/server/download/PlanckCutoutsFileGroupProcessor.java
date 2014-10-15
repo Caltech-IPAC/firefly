@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.hydra.data.PlanckCutoutRequest;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -101,6 +102,7 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
         WorldPt wpt = null;
         String userDesc = null;
         File f;
+        String releaseVersion = request.getParam(PlanckCutoutRequest.RELEASE_VERSION);
         for (int i: request.getSelectedRows()) {
             dObj = dataGroup.get(i);
             wpReqStr= (String) dObj.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.toString());
@@ -135,6 +137,10 @@ public class PlanckCutoutsFileGroupProcessor extends FileGroupsProcessor {
                                 userDesc.contains("353") || userDesc.contains("545") || userDesc.contains("857")) {
                             if (downloadHFI==false) downloadHFI = true;
                         }
+                    }
+                    if (releaseVersion.equals("release2")){
+                        downloadHFI = false;
+                        downloadLFI = false;
                     }
                 } catch (Exception e) {
                     logger.warn(e,"Could not retrieve file for WebPlotRequest: " + wpReqStr);
