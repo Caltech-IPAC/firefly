@@ -51,6 +51,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
         private TablePanel tablePanel;
         private BaseDialog dialog;
         boolean isSelectAll;
+        int totalSel;
 
         public MiniMapButtonSetter() {
             super(ID);
@@ -82,7 +83,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     table.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
                         public void doSuccess(TableDataView result) {
                             int rowcount = table.getDataset().getTotalRows();
-                            int totalSel = 0;
+                            totalSel = 0;
                             for (int i : table.getDataset().getSelected()) {
                                 TableData.Row row = result.getModel().getRow(i);
                                 totalSel += 1;
@@ -149,6 +150,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     String boxsize = sreq.getSafeParam("boxsize");
                     String type = sreq.getSafeParam("type");
                     String ExpandedDesc, desc;
+                    String trangeStr = "";
 
                     WorldPt pt;
                     String pos = null;
@@ -199,16 +201,21 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
 
                     String timeSelt = "";
                     String timeStr = "";
+                    int selectedRowCount = totalSel;
+
                     for (int i : tablePanel.getDataset().getSelected()) {
                         TableData.Row row = tableData.getModel().getRow(i);
                         timeSelt += row.getValue("rmjd") + ",";
                     }
+                    String timeStrArr[] = timeSelt.split(",");
+                    String tBegin = timeStrArr[0];
+                    String tEnd = timeStrArr[timeStrArr.length-1];
+                    trangeStr = tBegin +"-" + tEnd;
 
                     if (isSelectAll){
                         timeStr = "[]";
                     }
                     else {
-                        String timeStrArr[] = timeSelt.split(",");
                         timeStr = "[";
                         for (int j = 0; j < timeStrArr.length; j++) {
                             double t1, t2;
@@ -258,7 +265,8 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("size", size);
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
-                    desc = gpos + "_" + Freq + "GHz-Minimap";
+                    desc = gpos + "_" + Freq + "GHz-Minimap "+ "with time range " + trangeStr + ", total "+ selectedRowCount
+                                                          + " date(s) selected, Detector(s): " + detcStr;
                     ExpandedDesc = "MiniMap with " + desc;
 
                     // add all of the params here.. so it can be sent to server.

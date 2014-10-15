@@ -76,7 +76,7 @@ public class PlanckImagesCutoutFileGroupsProcessor extends FileGroupsProcessor {
         String baseUrl = request.getSearchRequest().getParam(PlanckCutoutRequest.CUTOUT_HOST);
         String releaseVersion = request.getSearchRequest().getParam(PlanckCutoutRequest.RELEASE_VERSION);
         String mType = "I";
-        String groupName, url, planckurl, sizeStr, pixsize;
+        String url, planckurl, sizeStr, pixsize;
         String subsizeStr = "2.0";
         Float subsize = new Float(subsizeStr);
         WebPlotRequest wpReq;
