@@ -129,13 +129,13 @@
                         <Title>Select Search Type: </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[RADIO]</Mask>
-                        <Default>circle</Default>
+                        <Default>box</Default>
                         <ShortDescription>Search Type</ShortDescription>
-                        <EnumValue id="circle">
-                            <Title>Circle</Title>
-                        </EnumValue>
                         <EnumValue id="box">
                             <Title>Box</Title>
+                        </EnumValue>
+                        <EnumValue id="circle">
+                            <Title>Circle</Title>
                         </EnumValue>
                         <!--EnumValue id="polygon">
                             <Title>Polygon</Title>
