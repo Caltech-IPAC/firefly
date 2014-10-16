@@ -93,43 +93,43 @@ public class QueryFinderChart extends DynQueryProcessor {
         super.prepareTableMeta(meta, columns, request);
     }
 
-    @Override
-    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
-        super.onComplete(request, results);
-        // now.. we prefetch the images so the page will load faster.
-
-        TableServerRequest treq = (TableServerRequest) request;
-        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
-
-        String spid = request.getParam("searchProcessorId");
-        String mst = request.getParam("maxSearchTargets");
-        String flt = StringUtils.toString(treq.getFilters());
-
-        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
-            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
-            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
-            try {
-                for (int i = results.getData().size() - 1; i >= 0; i--) {
-                    DataObject row = results.getData().get(i);
-                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
-                    Runnable worker = new Runnable() {
-                        public void run() {
-                            try {
-                                StopWatch.getInstance().start(webReq.getUserDesc());
-                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
-                                StopWatch.getInstance().printLog(webReq.getUserDesc());
-                            } catch (Exception e) {}
-                        }
-                    };
-                    executor.execute(worker);
-                }
-                executor.shutdown();
-                executor.awaitTermination(10, TimeUnit.SECONDS);
-                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
-            } catch (Exception e) { e.printStackTrace();}
-        }
-    }
-
+//    @Override
+//    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
+//        super.onComplete(request, results);
+//        // now.. we prefetch the images so the page will load faster.
+//
+//        TableServerRequest treq = (TableServerRequest) request;
+//        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
+//
+//        String spid = request.getParam("searchProcessorId");
+//        String mst = request.getParam("maxSearchTargets");
+//        String flt = StringUtils.toString(treq.getFilters());
+//
+//        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
+//            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
+//            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
+//            try {
+//                for (int i = results.getData().size() - 1; i >= 0; i--) {
+//                    DataObject row = results.getData().get(i);
+//                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
+//                    Runnable worker = new Runnable() {
+//                        public void run() {
+//                            try {
+//                                StopWatch.getInstance().start(webReq.getUserDesc());
+//                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
+//                                StopWatch.getInstance().printLog(webReq.getUserDesc());
+//                            } catch (Exception e) {}
+//                        }
+//                    };
+//                    executor.execute(worker);
+//                }
+//                executor.shutdown();
+//                executor.awaitTermination(10, TimeUnit.SECONDS);
+//                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
+//            } catch (Exception e) { e.printStackTrace();}
+//        }
+//    }
+//
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
 

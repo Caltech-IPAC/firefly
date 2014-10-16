@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tlau
@@ -31,6 +33,8 @@ import java.util.List;
  */
 public class PngRetrieve {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
+    private static final Pattern ARTI_PATTERN = Pattern.compile("^(diff_spikes|halos|ghosts|latents|glint|pers)");
+
 
     public static File getFile(WebPlotRequest request, String plotStateStr, String drawInfoListStr,
                                List<FileInfo> artifactList) throws IOException {
@@ -66,38 +70,44 @@ public class PngRetrieve {
         String fiExt, sdiLbl;
         if (drawInfoList!=null) {
             for (int i=0; i< drawInfoList.size(); i++) {
-                StaticDrawInfo sdiTemplate = StaticDrawInfo.parse(drawInfoList.get(i));
-                RegionPoint rgtpl = getTemplate(sdiTemplate);
-                sdiLbl = sdiTemplate.getLabel();
-                StaticDrawInfo sdi = new StaticDrawInfo();
-                sdi.setLabel(sdiTemplate.getLabel());
-                sdi.setDrawType(StaticDrawInfo.DrawType.REGION);
+                StaticDrawInfo sdi = StaticDrawInfo.parse(drawInfoList.get(i));
+                sdiLbl = sdi.getLabel();
 
                 if (sdiLbl==null) continue;
-                if (sdiLbl.equals("target")) {
-                    WorldPt position[] = {request.getRequestArea().getCenter()};
-                    for (WorldPt wp : position) {
-                        RegionPoint rg = new RegionPoint(wp, rgtpl.getPointType(), rgtpl.getPointSize());
-                        rg.setOptions(rgtpl.getOptions());
-                        sdi.addRegion(rg);
-                    }
-                } else if (sdiLbl.contains("CatalogID")) {
-                    sdi.addAllRegions(sdiTemplate.getRegionList());
-                } else if (!sdiLbl.equals(WebGridLayer.DRAWER_ID) && !sdiLbl.contains("CatalogID")) {
-                    for (int j=0; j<artifactList.size(); j++) {
-                        fi = artifactList.get(j);
-                        fiExt = fi.getExternalName();
-                        if (fiExt==null) continue;
-                        try {
-                            if (fiExt.endsWith(".tbl") &&
-                                    convertArtifactValue(fiExt).equals(sdiLbl)) {
-                                readArtifact(fi.getInternalFilename(), sdi, rgtpl);
-                                break;
+
+                if (sdiLbl.equals("target") || ARTI_PATTERN.matcher(sdiLbl).lookingAt()) {
+                    // if the layer is an artifact or an active target, replace it with the real data from this request.
+                    StaticDrawInfo sdiTemplate = sdi;
+                    RegionPoint rgtpl = getTemplate(sdiTemplate);
+                    sdiLbl = sdiTemplate.getLabel();
+                    sdi = new StaticDrawInfo();
+                    sdi.setLabel(sdiTemplate.getLabel());
+                    sdi.setDrawType(StaticDrawInfo.DrawType.REGION);
+
+                    if (sdiLbl.equals("target")) {
+                        WorldPt position[] = {request.getRequestArea().getCenter()};
+                        for (WorldPt wp : position) {
+                            RegionPoint rg = new RegionPoint(wp, rgtpl.getPointType(), rgtpl.getPointSize());
+                            rg.setOptions(rgtpl.getOptions());
+                            sdi.addRegion(rg);
+                        }
+                    } else {
+                        for (int j = 0; j < artifactList.size(); j++) {
+                            fi = artifactList.get(j);
+                            fiExt = fi.getExternalName();
+                            if (fiExt == null) continue;
+                            try {
+                                if (fiExt.endsWith(".tbl") &&
+                                        convertArtifactValue(fiExt).equals(sdiLbl)) {
+                                    readArtifact(fi.getInternalFilename(), sdi, rgtpl);
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
                     }
+
                 }
                 retval.add(sdi);
             }
