@@ -55,7 +55,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     }
 
     public String getSearchTitle() {
-        return StringUtils.isEmpty(currentShortName) ? "Cone Search" : currentShortName; //targetPanel.getTargetName();
+        return StringUtils.isEmpty(currentShortName) ? "VO Catalog" : currentShortName; //targetPanel.getTargetName();
     }
 
     public Widget makeUI() {
@@ -92,7 +92,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     }
 
 
-    private Widget createLoadCatalogsContent() {
+    public Widget createLoadCatalogsContent() {
 
         keywordsFld = SimpleInputField.createByProp(_prop.makeBase("keywords"));
         KeyDownHandler keywordsHandler = new KeyDownHandler() {
@@ -141,12 +141,18 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
         GwtUtil.setStyles(coneSearchPanel,
                 "display", "inline-block",
                 "verticalAlign", "top",
-                "padding", "8px 0 20px 40px");
+                "padding", "5px 0 15px 40px");
         coneOps = new SpatialOps.Cone(cone.getField(), cone);
 
         FlowPanel container= new FlowPanel();
         container.add(targetPanel);
         container.add(coneSearchPanel);
+
+        GwtUtil.setStyles(container,
+                "border", "4px ridge lightgray",
+                "background", "white",
+                "padding", "5px");
+
 
         FlexTable grid = new FlexTable();
         grid.setCellSpacing(5);
