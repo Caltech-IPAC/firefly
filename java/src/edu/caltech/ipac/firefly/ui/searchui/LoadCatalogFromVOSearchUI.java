@@ -75,6 +75,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     public void makeServerRequest(final AsyncCallback<ServerRequest> cb) {
 
         final TableServerRequest req = new TableServerRequest("ConeSearchByURL");
+        req.setParam("title", getSearchTitle());
         req.setParam("accessUrl", accessUrl.getValue());
         req.setParams(targetPanel.getFieldValues());
         req.setParams(coneOps.getParams());
@@ -84,6 +85,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     }
 
     public boolean setServerRequest(ServerRequest request) {
+        currentShortName = request.getParam("title");
         accessUrl.setValue(request.getParam("accessurl"));
         List<Param> params = request.getParams();
         targetPanel.setFieldValues(params);
@@ -133,6 +135,8 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
         keywordQueryResults.add(new HTML(KEYWORDS_HELP));
 
         accessUrl = SimpleInputField.createByProp(_prop.makeBase("accessUrl"));
+        GwtUtil.setStyles(accessUrl,
+                "paddingTop", "10px");
 
         targetPanel = new SimpleTargetPanel();
 

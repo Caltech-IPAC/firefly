@@ -77,10 +77,13 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
         try {
             File votable = getSearchResult(getQueryString(req), getFilePrefix(req));
             DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), false);
+            DataGroup dg;
             if (groups == null || groups.length<1) {
-                throw new EndUserException("cone search query failed", "unable to convert results to data group");
+                dg = new DataGroup("empty",new DataType[]{new DataType("empty", String.class)});
+                //throw new EndUserException("cone search query failed", "no results");
+            } else {
+                dg = groups[0];
             }
-            DataGroup dg = groups[0];
             DataGroup.Attribute raColAttr = dg.getAttribute("POS_EQ_RA_MAIN");
             DataGroup.Attribute decColAttr = dg.getAttribute("POS_EQ_DEC_MAIN");
             if (raColAttr != null && decColAttr != null) {

@@ -197,8 +197,11 @@ public class CatalogSearchDropDown {
 
     private Widget createLoadCatalogFromVOContent() {
         final LoadCatalogFromVOSearchUI uiWidget = new LoadCatalogFromVOSearchUI();
-        ButtonBase ok= GwtUtil.makeFormButton("Load", new ClickHandler() {
+        ButtonBase ok= GwtUtil.makeFormButton("Search", new ClickHandler() {
             public void onClick(ClickEvent ev) {
+                if (!uiWidget.validate()) {
+                    return;
+                }
                 uiWidget.makeServerRequest(new AsyncCallback<ServerRequest>(){
 
                     @Override
