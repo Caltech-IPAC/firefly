@@ -18,13 +18,13 @@ import java.util.HashMap;
 public class FinderChartRequestUtil {
     private static final String DEF = Character.toString('\0');
 
-    public static enum ImageSet {DSS(DEF, "dss", "dss_bands", dssCombo, null),
-                                 IRIS("IRAS (IRIS)", "iris", "iras_bands", irisCombo, "iraspsc"),
-                                 ISSA(DEF, "issa", null, issaCombo, null),
-                                 MSX(DEF, "msx", null, msxCombo, null),
-                                 TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc"),
-                                 WISE(DEF, "wise", "wise_bands", wiseCombo, "wise_allwise_p3as_psd"),
-                                 SDSS(DEF, "sdss", "sdss_bands",sDssCombo, null);
+    public static enum ImageSet {DSS(DEF, "dss", "dss_bands", dssCombo, null, DEF),
+                                 IRIS("IRAS (IRIS)", "iris", "iras_bands", irisCombo, "iraspsc", "IRAS"),
+                                 ISSA(DEF, "issa", null, issaCombo, null, DEF),
+                                 MSX(DEF, "msx", null, msxCombo, null, DEF),
+                                 TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc", DEF),
+                                 WISE(DEF, "wise", "wise_bands", wiseCombo, "wise_allwise_p3as_psd", DEF),
+                                 SDSS(DEF, "sdss", "sdss_bands",sDssCombo, null, DEF);
 
         public WebPlotRequest.ServiceType srvType = WebPlotRequest.ServiceType.valueOf(this.name());
         public String title;
@@ -32,13 +32,15 @@ public class FinderChartRequestUtil {
         public String band;
         public String[] comboAry;
         public String catalog;
+        public String catalogTitle;
 
-        ImageSet(String title, String subgroup, String band, String[] comboAry, String catalog) {
+        ImageSet(String title, String subgroup, String band, String[] comboAry, String catalog, String catalogTitle) {
             this.title = title.equals(DEF) ? srvType.toString() : title;
             this.subgroup = subgroup;
             this.band = band;
             this.comboAry = comboAry;
             this.catalog = catalog;
+            this.catalogTitle = catalogTitle.equals(DEF) ? this.title : catalogTitle;
         }
 
         public static ImageSet lookup(WebPlotRequest.ServiceType srvType) {

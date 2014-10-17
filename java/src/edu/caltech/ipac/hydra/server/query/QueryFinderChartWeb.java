@@ -44,7 +44,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     // keys used by finderchart search
-    private static final String OBJ_ID = "id";
+    private static final String OBJ_ID = "FC_ID";
     private static final String OBJ_NAME = "objname";
     private static final String RA = "ra";
     private static final String DEC = "dec";

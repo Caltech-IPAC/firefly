@@ -22,31 +22,6 @@
             <Title>Finder Chart</Title>
             <Form>
                 <FormEventWorker id="formController" type="FinderChartFormController"/>
-                <!--<FormEventWorker id="dss_bands_visi" type="FieldDefVisibilityControl">-->
-                    <!--<Param key="masters" value="contains(sources=DSS)"></Param>-->
-                    <!--<Param key="show" value="dss_bands"></Param>-->
-                    <!--<Param key="retainSpace" value="false"></Param>-->
-                <!--</FormEventWorker>-->
-                <!--<FormEventWorker id="iras_bands_visi" type="FieldDefVisibilityControl">-->
-                    <!--<Param key="masters" value="contains(sources=IRIS)"></Param>-->
-                    <!--<Param key="show" value="iras_bands"></Param>-->
-                    <!--<Param key="retainSpace" value="false"></Param>-->
-                <!--</FormEventWorker>-->
-                <!--<FormEventWorker id="twomass_bands_visi" type="FieldDefVisibilityControl">-->
-                    <!--<Param key="masters" value="contains(sources=twomass)"></Param>-->
-                    <!--<Param key="show" value="twomass_bands"></Param>-->
-                    <!--<Param key="retainSpace" value="false"></Param>-->
-                <!--</FormEventWorker>-->
-                <!--<FormEventWorker id="wise_bands_visi" type="FieldDefVisibilityControl">-->
-                    <!--<Param key="masters" value="contains(sources=WISE)"></Param>-->
-                    <!--<Param key="show" value="wise_bands"></Param>-->
-                    <!--<Param key="retainSpace" value="false"></Param>-->
-                <!--</FormEventWorker>-->
-                <!--<FormEventWorker id="SDSS_bands_visi" type="FieldDefVisibilityControl">-->
-                    <!--<Param key="masters" value="contains(sources=SDSS)"></Param>-->
-                    <!--<Param key="show" value="SDSS_bands"></Param>-->
-                    <!--<Param key="retainSpace" value="false"></Param>-->
-                <!--</FormEventWorker>-->
 
                 <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
                     <FieldGroup align="left" labelWidth="90">
@@ -124,19 +99,17 @@
                             <Title>IRAS (IRIS)</Title>
                         </EnumValue>
                     </EnumString>
-                </FieldGroup>
 
-                <FieldGroup labelWidth="0">
                     <EnumString orientation="horizontal">
                         <Name>overlay_catalog</Name>
-                        <Title></Title>
+                        <Title>Search Catalog(s)</Title>
                         <PreferWidth>350</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>true</Default>
                         <NullAllowed/>
                         <ShortDescription>Search Catalog(s)</ShortDescription>
                         <EnumValue id="true">
-                            <Title>Search Catalog(s)</Title>
+                            <Title></Title>
                         </EnumValue>
                     </EnumString>
                 </FieldGroup>
@@ -170,7 +143,7 @@
 
                     <EnumString orientation="horizontal">
                         <Name>SDSS_bands</Name>
-                        <Title>SDSS band(s): </Title>
+                        <Title>SDSS: </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>_all_</Default>
@@ -286,44 +259,44 @@
                         <Integer>
                             <Name>sdss_radius</Name>
                             <Title>SDSS</Title>
-                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>50</Default>
-                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
-                            <Min>6</Min>
+                            <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
                         </Integer>
                         <Integer>
                             <Name>twomass_radius</Name>
                             <Title>2MASS</Title>
-                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>50</Default>
-                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
-                            <Min>6</Min>
+                            <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
                         </Integer>
                         <Integer>
                             <Name>wise_radius</Name>
                             <Title>WISE</Title>
-                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>50</Default>
-                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
-                            <Min>6</Min>
+                            <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
                         </Integer>
                         <Integer>
                             <Name>iras_radius</Name>
                             <Title>IRAS</Title>
-                            <ShortDescription>Enter the image size between 6 and 3600 arcsec</ShortDescription>
+                            <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>50</Default>
-                            <ErrorDescription>Image size should be between 6 and 3600 arcsec</ErrorDescription>
+                            <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
-                            <Min>6</Min>
+                            <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
                         </Integer>
@@ -335,7 +308,7 @@
                         <Mask>[CHECKBOX]</Mask>
                         <Default>false</Default>
                         <NullAllowed/>
-                        <ShortDescription>Search Catalog(s)</ShortDescription>
+                        <ShortDescription>One to One Match</ShortDescription>
                         <EnumValue id="true">
                             <Title>One to One Match</Title>
                         </EnumValue>

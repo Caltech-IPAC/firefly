@@ -361,7 +361,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                 retval= "12,25,60,100";
             }
             else if (key.equals(ImageSet.TWOMASS.band)) {
-                retval= "j,k,h";
+                retval= "j,h,k";
             }
             else if (key.equals(ImageSet.WISE.band)) {
                 retval= "1,2,3,4";
@@ -435,8 +435,8 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             case SDSS_I: retval= getComboPair(SDSS, "i"); break;
             case SDSS_Z: retval= getComboPair(SDSS, "z"); break;
             case TWOMASS_J: retval= getComboPair(TWOMASS, "j"); break;
-            case TWOMASS_H: retval= getComboPair(TWOMASS, "k"); break;
-            case TWOMASS_K: retval= getComboPair(TWOMASS, "h"); break;
+            case TWOMASS_H: retval= getComboPair(TWOMASS, "h"); break;
+            case TWOMASS_K: retval= getComboPair(TWOMASS, "k"); break;
             case WISE_1:  retval= getComboPair(WISE, "1"); break;
             case WISE_2:  retval= getComboPair(WISE, "2"); break;
             case WISE_3:  retval= getComboPair(WISE, "3"); break;
