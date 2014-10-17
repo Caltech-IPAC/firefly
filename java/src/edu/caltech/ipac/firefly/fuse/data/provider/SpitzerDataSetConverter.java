@@ -35,11 +35,12 @@ public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
 
 
     private static class SResolver implements PlotData.Resolver {
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             String path= selData.getSelectedRow().getValue("fname");
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest("http://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/" + path, "SEIP");
             r.setTitle("Spitzer: SEIP");
             r.setZoomType(ZoomType.TO_WIDTH);
+            if (useWithThreeColor) r.setTitle("3 Color");
             return r;
         }
 

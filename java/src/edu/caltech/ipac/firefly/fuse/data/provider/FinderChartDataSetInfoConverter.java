@@ -561,7 +561,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             case IRAS_25:
             case IRAS_60:
             case IRAS_100:
-                service= WebPlotRequest.ServiceType.ISSA;
+                service= WebPlotRequest.ServiceType.IRIS;
                 break;
         }
         return service;
@@ -684,7 +684,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
 
     private static class FCResolver implements PlotData.Resolver {
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
 
             Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
             ServerRequest req= selData.getRequest();
@@ -697,6 +697,11 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             WebPlotRequest.ServiceType st= getService(ID.valueOf(id));
             String bandComboPair=getComboPair(ID.valueOf(id));
             WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, bandComboPair, "", st);
+
+            if (useWithThreeColor) {
+                wpReq.setTitle("3 Color");
+                wpReq.setTitleOptions(WebPlotRequest.TitleOptions.NONE);
+            }
             return wpReq;
         }
 

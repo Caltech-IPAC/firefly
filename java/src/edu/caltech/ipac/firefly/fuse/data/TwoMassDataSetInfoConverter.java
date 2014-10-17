@@ -113,7 +113,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             bandToID.put("k", ID.TWOMASS_K);
         }
 
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             String inter= selData.getRequest().getParam("intersect");
             if (inter!=null && inter.equals("OVERLAPS")) {
                 builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
@@ -124,7 +124,10 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
             String b= getBandStr(ID.valueOf(id));
             WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
-            r.setTitle("2MASS: "+b);
+
+            if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
+            else r.setTitle("2MASS: "+b);
+
             r.setZoomType(ZoomType.FULL_SCREEN);
             return r;
         }

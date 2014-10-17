@@ -140,12 +140,13 @@ public class TwoMassSIADataSetInfoConverter extends AbstractDataSetInfoConverter
             bandToID.put("k", ID.TWOMASS_K);
         }
 
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             String imageURL= selData.getSelectedRow().getValue("download");
             String b= getBandStr(ID.valueOf(id));
             String workingURL= convertTo(imageURL,b);
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
-            r.setTitle("2MASS: "+b);
+            if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
+            else r.setTitle("2MASS: "+b);
             r.setZoomType(ZoomType.TO_WIDTH);
             return r;
         }

@@ -130,7 +130,7 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
             bandToID.put("4", ID.WISE_4);
         }
 
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             List<Param> ep= Collections.emptyList();
             String inter= selData.getRequest().getParam("intersect");
             if (inter!=null && inter.equals("OVERLAPS")) {
@@ -155,7 +155,9 @@ public class WiseDataSetInfoConverter extends AbstractDataSetInfoConverter {
                     ep= Arrays.asList(new Param("band", "4"));
                     break;
             }
-            return builder.makeServerRequest("ibe_file_retrieve", id, selData, ep);
+            WebPlotRequest wpReq= builder.makeServerRequest("ibe_file_retrieve", id, selData, ep);
+            if (useWithThreeColor) wpReq.setTitle("Wise 3 Color");
+            return wpReq;
         }
 
 

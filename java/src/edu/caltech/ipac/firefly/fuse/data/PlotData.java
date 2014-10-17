@@ -168,7 +168,7 @@ public class PlotData {
         if (resolver!=null)  {
             List<String> idList= resolver.getIDsForMode(mode,selRowData);
             for(String id : idList) {
-                retMap.put(id,resolver.getRequestForID(id,selRowData));
+                retMap.put(id,resolver.getRequestForID(id,selRowData, false));
             }
         }
        return retMap;
@@ -185,7 +185,7 @@ public class PlotData {
                     int len= Math.min(reqList.size(), bandIDList.size());
                     for(int i=0; i<len; i++) {
                         String reqID= bandIDList.get(i);
-                        WebPlotRequest r= reqID!=null ?resolver.getRequestForID(reqID, selRowData) : null;
+                        WebPlotRequest r= reqID!=null ?resolver.getRequestForID(reqID, selRowData, true) : null;
                         reqList.set(i, r);
                         if (r!=null && titleToIDMap.containsKey(id3)) {
                            r.setTitle(titleToIDMap.get(id3));
@@ -232,7 +232,7 @@ public class PlotData {
     }
 
     public static interface Resolver {
-        public abstract WebPlotRequest getRequestForID(String id, SelectedRowData selData);
+        public abstract WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor);
         public abstract List<String> getIDsForMode(GroupMode mode, SelectedRowData selData);
         public abstract List<String> get3ColorIDsForMode(SelectedRowData selData);
     }
