@@ -22,6 +22,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     // keys used by finderchart search
-    private static final String OBJ_ID = "id";
+    private static final String OBJ_ID = "FC_ID";
     private static final String OBJ_NAME = "objname";
     private static final String RA = "ra";
     private static final String DEC = "dec";
@@ -123,7 +124,15 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
         DataType dec = new DataType(DEC, Double.class);
         dec.setFormatInfo(DataType.FormatInfo.createFloatFormat(dec.getFormatInfo().getWidth(), 6));
 
-        DataGroup table = new DataGroup("targets", Arrays.asList(objId, objName, ra, dec));
+        boolean hasObjName = hasObjName(targets);
+        List<DataType> columns;
+        if (hasObjName) {
+            columns = Arrays.asList(objId, objName, ra, dec);
+        } else {
+            columns = Arrays.asList(objId, ra, dec);
+        }
+
+        DataGroup table = new DataGroup("targets", columns);
 
         for (int i = 0; i < targets.size(); i++) {
             Target tgt = targets.get(i);
@@ -131,7 +140,9 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
 
             DataObject row = new DataObject(table);
             row.setDataElement(objId, i+1);
-            row.setDataElement(objName, getTargetName(tgt));
+            if (hasObjName) {
+                row.setDataElement(objName, getTargetName(tgt));
+            }
             row.setDataElement(ra, pt.getLon());
             row.setDataElement(dec, pt.getLat());
             table.add(row);
@@ -149,6 +160,15 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
             FileUtil.copyFile(f, ufile);
         }
         return f;
+    }
+
+    private boolean hasObjName(List<Target> targets) {
+        for (Target t : targets) {
+            if (!StringUtils.isEmpty(t.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String getTargetName(Target t) {

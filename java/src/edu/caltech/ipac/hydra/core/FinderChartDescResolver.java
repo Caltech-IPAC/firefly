@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -54,20 +55,19 @@ public class FinderChartDescResolver extends SearchDescResolver implements Searc
 //====================================================================
 //
 //====================================================================
-
-    private String getPositionDesc(Request req) {
+    public static String getSourceDesc(ServerRequest req) {
         String source;
         if (req.getParam("filename") != null) {
             source = "Multi-Object";
         } else {
             String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
-            if (targetStr==null) {
+            if (targetStr == null) {
                 String userWP = req.getParam(ReqConst.USER_TARGET_WORLD_PT);
                 if (userWP != null) {
                     String wptStr[] = userWP.split(";");
                     if (nf != null) {
-                        targetStr = nf.format(Double.parseDouble(wptStr[0]))+" "+
-                                nf.format(Double.parseDouble(wptStr[1]))+" "+
+                        targetStr = nf.format(Double.parseDouble(wptStr[0])) + " " +
+                                nf.format(Double.parseDouble(wptStr[1])) + " " +
                                 wptStr[2];
                     } else {
                         targetStr = wptStr[0] + " " + wptStr[1] + " " + wptStr[2];
@@ -76,10 +76,13 @@ public class FinderChartDescResolver extends SearchDescResolver implements Searc
                     targetStr = "unknown";
                 }
             }
-            source = "Target= "+targetStr;
+            source = "Target= " + targetStr;
         }
+        return source;
+    }
 
-        return source + getCutoutSize(req) + getDataProduct(req);
+    private String getPositionDesc(Request req) {
+        return getSourceDesc(req) + getCutoutSize(req) + getDataProduct(req);
     }
 
     private String getDataProduct(Request req) {

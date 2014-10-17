@@ -36,6 +36,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.dd.RegionPoint;
@@ -481,6 +482,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         boolean isArtifact = false;
         if (drawInfoList!=null && drawInfoList.size()>0) {
             for (String dStr: drawInfoList) {
+                if (StringUtils.isEmpty(dStr)) continue;
                 sdi = StaticDrawInfo.parse(dStr);
                 artifactStr = sdi.getLabel();
                 isArtifact = false;

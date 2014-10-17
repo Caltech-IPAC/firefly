@@ -36,7 +36,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
 
     public Widget buildActivationUI(MonitorItem monItem, int idx, boolean markAlreadyActivated) {
 
-       String text=  "Show catalog: "+monItem.getTitle();
+       String text=  "Show catalog";
        String tip =  "Show the catalog: " + monItem.getTitle();
        return UIBackgroundUtil.buildActivationUI(text, tip, monItem, idx,
                                                   this,markAlreadyActivated);

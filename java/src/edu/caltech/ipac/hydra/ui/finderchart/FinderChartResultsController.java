@@ -56,6 +56,7 @@ import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
+import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 
@@ -257,7 +258,8 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         } else {
             req.setFilename(uploadFname);
         }
-        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, imageSet.title);
+        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusArcSec + " arcsec";
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
 
     }
 
@@ -294,7 +296,9 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             gatorReq.setFileName(uploadFname);
         }
 
-        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, imageSet.title);
+        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusArcSec + " arcsec";
+
+        MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, title);
     }
 
 
