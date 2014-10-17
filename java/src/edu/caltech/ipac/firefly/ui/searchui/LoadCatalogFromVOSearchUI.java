@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
+import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.VOResourceEndpoint;
 
@@ -112,12 +113,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
                 new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        keywordsFld.getField().reset();
-                        keywordQueryResults.clear();
-                        keywordQueryResults.add(new HTML(KEYWORDS_HELP));
-                        accessUrl.getField().reset();
-                        currentKeywords = "";
-                        currentShortName = "";
+                        clearKeywordSearchResults();
                     }
                 });
         GwtUtil.setStyle(keywordsResetBtn, "fontSize", "9pt");
@@ -167,7 +163,34 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
         grid.setWidget(3, 0, keywordQueryResults);
         grid.setWidget(4, 0, accessUrl);
 
+        updateActiveTarget();
+
         return grid;
+    }
+
+    private void clearKeywordSearchResults() {
+        keywordsFld.getField().reset();
+        keywordQueryResults.clear();
+        keywordQueryResults.add(new HTML(KEYWORDS_HELP));
+        accessUrl.getField().reset();
+        currentKeywords = "";
+        currentShortName = "";
+    }
+
+    public void updateActiveTarget() {
+        ActiveTarget at = ActiveTarget.getInstance();
+        ActiveTarget.PosEntry ctgt = targetPanel.getTarget();
+        ActiveTarget.PosEntry atgt = at.getActive();
+        if (atgt != null && !atgt.equals(ctgt)) {
+            targetPanel.setTarget(atgt);
+            clearKeywordSearchResults();
+            /*
+            float radiusDeg = at.getRadius();
+            if (radiusDeg > 0) {
+                cone.getField().setValue(NumberFormat.getFormat("#.000").format(radiusDeg));
+            }
+            */
+        }
     }
 
     public void queryRegistryAsync() {

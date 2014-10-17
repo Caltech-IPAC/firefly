@@ -42,6 +42,7 @@ public class CatalogSearchDropDown {
     private boolean _showing= false;
     private SimplePanel _mainPanel= new SimplePanel();
     private CatalogPanel _catalogPanel= null;
+    private LoadCatalogFromVOSearchUI voSearchUI = null;
     private TabPane<Widget> _tabs = new TabPane<Widget>();
     private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
 
@@ -196,13 +197,13 @@ public class CatalogSearchDropDown {
     }
 
     private Widget createLoadCatalogFromVOContent() {
-        final LoadCatalogFromVOSearchUI uiWidget = new LoadCatalogFromVOSearchUI();
+        voSearchUI = new LoadCatalogFromVOSearchUI();
         ButtonBase ok= GwtUtil.makeFormButton("Search", new ClickHandler() {
             public void onClick(ClickEvent ev) {
-                if (!uiWidget.validate()) {
+                if (!voSearchUI.validate()) {
                     return;
                 }
-                uiWidget.makeServerRequest(new AsyncCallback<ServerRequest>(){
+                voSearchUI.makeServerRequest(new AsyncCallback<ServerRequest>() {
 
                     @Override
                     public void onFailure(Throwable caught) {
@@ -211,7 +212,7 @@ public class CatalogSearchDropDown {
 
                     @Override
                     public void onSuccess(ServerRequest request) {
-                        final TableServerRequest treq = (TableServerRequest)request;
+                        final TableServerRequest treq = (TableServerRequest) request;
                         SearchServices.App.getInstance().getRawDataSet(treq, new AsyncCallback<RawDataSet>() {
 
                             @Override
@@ -221,7 +222,7 @@ public class CatalogSearchDropDown {
 
                             @Override
                             public void onSuccess(RawDataSet result) {
-                                newRawDataSet(uiWidget.getSearchTitle(), result, treq);
+                                newRawDataSet(voSearchUI.getSearchTitle(), result, treq);
                             }
                         });
                     }
@@ -241,7 +242,7 @@ public class CatalogSearchDropDown {
         buttonBar.getHelpIcon().setHelpId("basics.loadcatalog");
 
         VerticalPanel vp = new VerticalPanel();
-        vp.add(uiWidget.createLoadCatalogsContent());
+        vp.add(voSearchUI.createLoadCatalogsContent());
         vp.add(buttonBar);
         DOM.setStyleAttribute(vp.getElement(), "padding", "5px");
         SimplePanel sp = new SimplePanel();
@@ -279,6 +280,7 @@ public class CatalogSearchDropDown {
     public void show() {
         _showing= true;
         if (_catalogPanel!=null) _catalogPanel.showPanel();
+        if (voSearchUI != null) voSearchUI.updateActiveTarget();
         Application.getInstance().getToolBar().getDropdown().setTitle(_prop.getTitle());
         Application.getInstance().getToolBar().getDropdown().setContent(_mainPanel, true, null,
                                                           IrsaCatalogDropDownCmd.COMMAND_NAME);
