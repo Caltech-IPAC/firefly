@@ -4,18 +4,19 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
+import edu.caltech.ipac.firefly.core.background.*;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.ui.Form;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
+import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
@@ -213,16 +214,50 @@ public class CatalogSearchDropDown {
                     @Override
                     public void onSuccess(ServerRequest request) {
                         final TableServerRequest treq = (TableServerRequest) request;
-                        SearchServices.App.getInstance().getRawDataSet(treq, new AsyncCallback<RawDataSet>() {
 
+                        final DefaultWorkingWidget working= new DefaultWorkingWidget((ClickHandler)null);
+                        working.setText("Retrieving VO Catalog...");
+                        final MaskPane maskPane = new MaskPane(_mainPanel, working);
+                        maskPane.show();
+
+                        SearchServicesAsync serv= SearchServices.App.getInstance();
+                        serv.submitBackgroundSearch(treq, null, 3000, new AsyncCallback<BackgroundStatus>() {
                             @Override
                             public void onFailure(Throwable caught) {
                                 if (caught != null) PopupUtil.showSevereError(caught);
+                                maskPane.hide();
                             }
 
                             @Override
-                            public void onSuccess(RawDataSet result) {
-                                newRawDataSet(voSearchUI.getSearchTitle(), result, treq);
+                            public void onSuccess(BackgroundStatus bgStat) {
+                                WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
+                                MonitorItem monItem= new MonitorItem(treq, voSearchUI.getSearchTitle(), BackgroundUIHint.CATALOG, false);
+                                monItem.setStatus(bgStat);
+                                monItem.setActivateOnCompletion(true);
+                                if (bgStat.isSuccess()) {
+                                    ActivationFactory.getInstance().activate(monItem);
+                                    maskPane.hide();
+                                    hide();
+                                }
+                                else {
+                                    handleBackgrounding(monItem);
+                                }
+                            }
+
+                            private void handleBackgrounding(final MonitorItem monItem) {
+                                working.setText("Backgrounding...");
+                                Timer t= new Timer() {
+                                    @Override
+                                    public void run() {
+                                        BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
+                                        Application.getInstance().getBackgroundManager().animateToManager(0, 0, 1300);
+                                        monItem.setWatchable(true);
+                                        monitor.addItem(monItem);
+                                        maskPane.hide();
+                                        hide();
+                                    }
+                                };
+                                t.schedule(1000);
                             }
                         });
                     }
