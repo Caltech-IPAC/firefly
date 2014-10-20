@@ -58,7 +58,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
     private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
 
-    private static int MIN_ROWS_FOR_DECIMATION = 40000;
+    private static int MIN_ROWS_FOR_DECIMATION = 30000;
 
     private Selection _currentSelection = null;
 
@@ -380,11 +380,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             Date start;
 
             DecimateInfo info = null;
+            boolean logTime = false;
 
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
-                    if (_dataSet != null) {
+                    if (_dataSet != null && logTime) {
                         GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: retrieved "+_dataSet.getSize()+" rows in "+
                             ((new Date()).getTime()-start.getTime())+"ms");
                     }
@@ -491,14 +492,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     String currentServerReqStr = ongoingServerReqStr+info.toString();
                     if (!currentServerReqStr.equals(lastServerReqStr) || _dataSet == null) {
-                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: server req - "+currentServerReqStr);
+                        //GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: server req - "+currentServerReqStr);
+                        logTime = true;
                         _tableModel.getDecimatedAdHocData(passAlong, info);
                     } else {
-                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: using previous server req results");
+                        //GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: using previous server req results");
+                        logTime = false;
                         onSuccess(_dataSet);
                         cancel(); // cancel the task, should do it after onSuccess
                     }
                 } else {
+                    logTime = false;
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
                 }
             }
