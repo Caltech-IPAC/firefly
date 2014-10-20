@@ -94,13 +94,14 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void requestLoad(final LoadCallback cb) {
        if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null) {
+           for(PVData pvData : _allPV.values())  pvData.addTask();
            _dataConnect.getAsyncDataLoader().requestLoad(new LoadCallback() {
                public void loaded() {
                    cb.loaded();
                    for (PVData pvData : _allPV.values()) {
                        Drawer drawer= pvData.getDrawer();
                        drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
-//                       drawer.redraw();
+                       pvData.removeTask();
                    }
                }
            });
@@ -863,6 +864,7 @@ public class DrawingManager implements AsyncDataLoader {
         private final Drawer _drawer;
         private final WebPlotView.MouseInfo _mi;
         private final WebLayerItem _layerItem;
+        private String currDrawTaskID= null;
 
         public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem) {
             _drawer = drawer;
@@ -873,6 +875,22 @@ public class DrawingManager implements AsyncDataLoader {
         public Drawer getDrawer() { return _drawer; }
         public WebLayerItem getWebLayerItem() { return _layerItem; }
         public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
+        public void addTask() {
+            WebPlotView pv= _drawer.getPlotView();
+            if (pv!=null) {
+                if (currDrawTaskID!=null) pv.removeTask(currDrawTaskID);
+                currDrawTaskID= pv.addTask();
+            }
+        }
+        public void removeTask() {
+            WebPlotView pv= _drawer.getPlotView();
+            if (pv!=null && currDrawTaskID!=null) {
+                pv.removeTask(currDrawTaskID);
+                currDrawTaskID= null;
+            }
+
+        }
+
 
     }
 

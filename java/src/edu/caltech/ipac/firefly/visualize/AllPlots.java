@@ -71,7 +71,6 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -824,7 +823,12 @@ public class AllPlots implements HasWebEventManager {
                     mpwItem.setSecondaryTitle(span);
                 }
                 else {
-                    mpwItem.setSecondaryTitle("");
+                    String span = "&nbsp;<span>";
+                    if (mpwItem.getPlotView().isTaskWorking()) {
+                        span += "&nbsp;&nbsp;&nbsp;<img style=\"width:10px;height:10px;\" src=\"" + GwtUtil.LOADING_ICON_URL + "\" >";
+                    }
+                    span += "</span>";
+                    mpwItem.setSecondaryTitle(span);
                 }
             }
         }

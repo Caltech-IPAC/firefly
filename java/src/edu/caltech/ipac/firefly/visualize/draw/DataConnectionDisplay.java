@@ -40,7 +40,10 @@ public class DataConnectionDisplay {
                 DrawingLayerProvider p= (DrawingLayerProvider)source;
                 DataConnection dc= (DataConnection)data;
                 Name evName= ev.getName();
-                if (evName.equals(EventHub.ON_EVENT_WORKER_COMPLETE)) {
+                if (evName.equals(EventHub.DRAWING_LAYER_INIT)) {
+                    updateData(dc, p.getID(), p.getEnablingPreferenceKey());
+                }
+                else if (evName.equals(EventHub.ON_EVENT_WORKER_COMPLETE)) {
                     updateData(dc, p.getID(), p.getEnablingPreferenceKey());
                 }
                 else if (evName.equals(EventHub.DRAWING_LAYER_ADD)) {
