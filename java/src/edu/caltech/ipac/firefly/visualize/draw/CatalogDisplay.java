@@ -36,7 +36,6 @@ public class CatalogDisplay {
     private Map<TablePanel, DrawingManager> _allDrawers= new HashMap<TablePanel, DrawingManager>(5);
     private List<WebPlotView> _allPV= new ArrayList<WebPlotView>(3);
     public static final String HELP_STR= "Click to select an object, Check table to show name";
-    private static final String DEFAULT_COLOR="DEFAULT_COLOR";
     private static int idCnt= 0;
 
 
@@ -118,8 +117,9 @@ public class CatalogDisplay {
     public void addCatalog(TablePanel table) {
 
         TableMeta meta= table.getDataset().getMeta();
-        if (meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) && meta.contains(MetaConst.CATALOG_COORD_COLS)) {
-
+        if (table.getDataset().getTotalRows()>0 &&
+                meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) &&
+                meta.contains(MetaConst.CATALOG_COORD_COLS)) {
 
             Hints hints= new Hints(meta.getAttribute(MetaConst.CATALOG_HINTS));
             idCnt++;
@@ -127,12 +127,31 @@ public class CatalogDisplay {
             //Change default color if defined in table meta
             //user can define a default color value in table's header.
             //e.g. green, lightgreen, red, cyan, yellow, 00ffaa, 103aff
-            if (meta.contains(DEFAULT_COLOR)) {
-                String color = meta.getAttribute(DEFAULT_COLOR);
+            if (meta.contains(MetaConst.DEFAULT_COLOR)) {
+                String color = meta.getAttribute(MetaConst.DEFAULT_COLOR);
                 drawManager.setDefaultColor(color);
             }
             else {
-                drawManager.setDefaultColor( (idCnt%2) == 1 ? AutoColor.PT_1 : AutoColor.PT_3);
+                String defColor;
+                switch (idCnt%5) {
+                    case 0:
+                        defColor= AutoColor.PT_1;
+                        break;
+                    case 1:
+                        defColor= AutoColor.PT_2;
+                        break;
+                    case 2:
+                        defColor= AutoColor.PT_3;
+                        break;
+                    case 3:
+                        defColor= AutoColor.PT_5;
+                        break;
+                    default:
+                    case 4:
+                        defColor= AutoColor.PT_6;
+                        break;
+                }
+                drawManager.setDefaultColor(defColor);
             }
 
             for(WebPlotView pv : _allPV) {
@@ -229,6 +248,7 @@ public class CatalogDisplay {
         public boolean getOnlyVisibleIfActiveTab() {
             return _hintList.contains("OnlyIfVisible".toLowerCase());
         }
+
         public boolean isUsingSubgroup() {
             return findSubgroupHint()!=null;
         }

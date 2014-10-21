@@ -1,6 +1,5 @@
 package edu.caltech.ipac.hydra.ui.finderchart;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -14,6 +13,7 @@ import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.SDSSRequest;
@@ -27,7 +27,6 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.SearchFormParamTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
-import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -67,8 +66,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_CAT_BY_BOUNDARY;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_FILENAME;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_OVERLAY_CAT;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_SOURCES;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_SUBSIZE;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.Radius;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.Source;
+
 // convenience sharing of constants
-import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 
 /**
  * Date: 9/12/14
@@ -219,21 +225,21 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             GwtUtil.SplitPanel.showWidget(layoutPanel, catalogTab);
             String sources = tsReq.getParam(FD_SOURCES);
             if (sources.contains(Source.SDSS.name())) {
-                addSDSSCatalog(FinderChartRequestUtil.ImageSet.SDSS, tsReq, Radius.sdss_radius.name());
+                addSDSSCatalog(FinderChartRequestUtil.ImageSet.SDSS, tsReq, Radius.sdss_radius.name(), "green");
             }
             if (sources.contains(Source.twomass.name())) {
-                addCatalog(FinderChartRequestUtil.ImageSet.TWOMASS, tsReq, Radius.twomass_radius.name());
+                addCatalog(FinderChartRequestUtil.ImageSet.TWOMASS, tsReq, Radius.twomass_radius.name(), "red");
             }
             if (sources.contains(Source.WISE.name())) {
-                addCatalog(FinderChartRequestUtil.ImageSet.WISE, tsReq, Radius.wise_radius.name());
+                addCatalog(FinderChartRequestUtil.ImageSet.WISE, tsReq, Radius.wise_radius.name(), "pink");
             }
             if (sources.contains(Source.IRIS.name())) {
-                addCatalog(FinderChartRequestUtil.ImageSet.IRIS, tsReq, Radius.iras_radius.name());
+                addCatalog(FinderChartRequestUtil.ImageSet.IRIS, tsReq, Radius.iras_radius.name(), "purple");
             }
         }
     }
 
-    private void addSDSSCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr) {
+    private void addSDSSCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr, String color) {
         double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
         if (radiusArcSec == Double.NaN) {
             radiusArcSec = 50;
@@ -242,6 +248,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         SDSSRequest req = new SDSSRequest();
         req.setRadiusArcmin(radiusArcMin);
         req.setMeta(MetaConst.CATALOG_HINTS, SUBGROUP_KEY + "=" + imageSet.subgroup);
+        if (color!=null) req.setMeta(MetaConst.DEFAULT_COLOR,color);
         boolean one_to_one = tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE);
         req.setNearestOnly(one_to_one);
 
@@ -264,7 +271,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
     }
 
-    private void addCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr) {
+    private void addCatalog(FinderChartRequestUtil.ImageSet imageSet, ServerRequest tsReq, String radiusFieldStr, String color) {
 
         double radiusArcSec = tsReq.getDoubleParam(radiusFieldStr);
         if (radiusArcSec == Double.NaN) {
@@ -278,6 +285,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         gatorReq.setQueryCatName(imageSet.catalog);
         gatorReq.setRadius(radiusArcSec);
         gatorReq.setMeta(MetaConst.CATALOG_HINTS, SUBGROUP_KEY + "=" + imageSet.subgroup);
+        if (color!=null) gatorReq.setMeta(MetaConst.DEFAULT_COLOR,color);
         if (tsReq.getBooleanParam(CatalogRequest.ONE_TO_ONE)) {
             gatorReq.setParam(CatalogRequest.ONE_TO_ONE, "1");
         }
