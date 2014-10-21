@@ -25,11 +25,11 @@
 
                 <FieldGroup type="activeTabPane" typeName="POS UPL TabPane" width="640px" height="106px">
                     <FieldGroup align="left" labelWidth="90">
-                        <Title>Single-Object</Title>
+                        <Title>Single Position</Title>
                         <PreDefField id="simpleTargetPanel"/>
                     </FieldGroup>
                     <FieldGroup labelWidth="90">
-                        <Title>Multi-Object</Title>
+                        <Title>Multiple Positions</Title>
                         <File>
                             <Name>filename</Name>
                             <Title>File Name</Title>
@@ -99,23 +99,30 @@
                             <Title>IRAS (IRIS)</Title>
                         </EnumValue>
                     </EnumString>
+                </FieldGroup>
 
+                <FieldGroup align="left" width="640px" labelWidth="170">
                     <EnumString orientation="horizontal">
                         <Name>overlay_catalog</Name>
-                        <Title>Search Catalog(s)</Title>
+                        <Title>Search Corresponding Catalog(s):</Title>
                         <PreferWidth>350</PreferWidth>
-                        <Mask>[CHECKBOX]</Mask>
+                        <Mask>[RADIO]</Mask>
                         <Default>true</Default>
                         <NullAllowed/>
                         <ShortDescription>Search Catalog(s)</ShortDescription>
                         <EnumValue id="true">
-                            <Title></Title>
+                            <Title>Yes</Title>
+                        </EnumValue>
+                        <EnumValue id="false">
+                            <Title>No</Title>
                         </EnumValue>
                     </EnumString>
                 </FieldGroup>
 
+
+
                 <FieldGroup type="activeCollapsiblePanel" labelWidth="90" width="640px">
-                    <Title>Customize wavelength selection:</Title>
+                    <Title>Image Search options:</Title>
                     <EnumString orientation="horizontal">
                         <Name>dss_bands</Name>
                         <Title>DSS: </Title>
@@ -231,7 +238,7 @@
                 </FieldGroup>
 
                 <FieldGroup type="activeCollapsiblePanel"  typeName="catalog_options" labelWidth="0" width="640px">
-                    <Title>Optional constraints for catalog:</Title>
+                    <Title>Catalog search options:</Title>
                     <EnumString>
                         <Name>catalog_by_img_boundary</Name>
                         <Title></Title>
@@ -254,13 +261,13 @@
                             <Title>Search radius (arcsec)</Title>
                         </EnumValue>
                     </EnumString>
-                    <FieldGroup labelWidth="40" width="200px" direction="horizontal">
+                    <FieldGroup labelWidth="85" width="600px" direction="horizontal">
                         <Label><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Label>
                         <Integer>
                             <Name>sdss_radius</Name>
-                            <Title>SDSS</Title>
+                            <Title>SDSS (DR10)</Title>
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
-                            <Default>50</Default>
+                            <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
                             <Min>1</Min>
@@ -269,9 +276,9 @@
                         </Integer>
                         <Integer>
                             <Name>twomass_radius</Name>
-                            <Title>2MASS</Title>
+                            <Title>2MASS (PSC)</Title>
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
-                            <Default>50</Default>
+                            <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
                             <Min>1</Min>
@@ -280,9 +287,9 @@
                         </Integer>
                         <Integer>
                             <Name>wise_radius</Name>
-                            <Title>WISE</Title>
+                            <Title>WISE (AllWISE)</Title>
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
-                            <Default>50</Default>
+                            <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
                             <Min>1</Min>
@@ -291,9 +298,9 @@
                         </Integer>
                         <Integer>
                             <Name>iras_radius</Name>
-                            <Title>IRAS</Title>
+                            <Title>IRAS (PSC)</Title>
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
-                            <Default>50</Default>
+                            <Default>90</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
                             <PreferWidth>5</PreferWidth>
                             <Min>1</Min>
