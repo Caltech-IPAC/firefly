@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class TableResultsDisplay extends BaseLayoutElement {
 
-
+    private static final MonItemCreatedListener newMonItemListener = new MonItemCreatedListener();
     private TabPane tabpane;
     private List<TableHolder> onDisplay = new ArrayList<TableHolder>();
     private EventHub hub;
@@ -49,19 +49,17 @@ public class TableResultsDisplay extends BaseLayoutElement {
         this.hub = hub;
         tabpane = new TabPane();
         tabpane.setSize("100%", "100%");
-        WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_CREATE, new WebEventListener<MonitorItem>() {
-            public void eventNotify(WebEvent<MonitorItem> ev) {
-                MonitorItem item= ev.getData();
-                if (item.getUIHint()== BackgroundUIHint.RAW_DATA_SET) {
-                    addTable(item);
-                }
-            }
-        });
+        newMonItemListener.setTableDisplay(this);
 
         this.hub.bind(tabpane);
 
         tabpane.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener() {
                     public void eventNotify(WebEvent ev) {
+                        TabPane.Tab tab = (TabPane.Tab) ev.getData();
+                        TableHolder th = getTableHolder(tab);
+                        if (th != null) {
+                            onDisplay.remove(th);
+                        }
                         fireEvent(EventType.CONTENT_CHANGED);
                     }
                 });
@@ -221,6 +219,27 @@ public class TableResultsDisplay extends BaseLayoutElement {
                     }
                 }
             });
+        }
+    }
+
+    private static class MonItemCreatedListener implements WebEventListener<MonitorItem> {
+        private TableResultsDisplay tableDisplay;
+
+        private MonItemCreatedListener() {
+            WebEventManager.getAppEvManager().addListener(Name.MONITOR_ITEM_CREATE, this);
+        }
+
+        public void eventNotify(WebEvent<MonitorItem> ev) {
+            MonitorItem item= ev.getData();
+            if (item.getUIHint()== BackgroundUIHint.RAW_DATA_SET) {
+                if (tableDisplay != null) {
+                    tableDisplay.addTable(item);
+                }
+            }
+        }
+
+        public void setTableDisplay(TableResultsDisplay tableDisplay) {
+            this.tableDisplay = tableDisplay;
         }
     }
 }
