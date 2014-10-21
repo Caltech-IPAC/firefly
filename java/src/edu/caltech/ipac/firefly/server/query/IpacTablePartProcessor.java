@@ -137,6 +137,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             TableServerRequest request = (TableServerRequest) sr;
 
             dgFile = getDataFile(request);
+            postProcessData(dgFile, request);
 
             DataGroupPart page = null;
             // get the page requested
@@ -166,6 +167,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
         }
 
+    }
+
+    protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
+        return dgFile;
     }
 
     public boolean doCache() {

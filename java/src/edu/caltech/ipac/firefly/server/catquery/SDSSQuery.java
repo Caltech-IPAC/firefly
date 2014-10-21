@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -34,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -152,7 +154,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
                 for(DataObject row : dg) {
                     int id = StringUtils.getInt(String.valueOf(row.getDataElement(upId)), -1);
                     if (id >= 0) {
-                        row.setDataElement(upId, String.valueOf(id + 1));
+                        row.setDataElement(upId, id + 1);
                     }
                 }
             }
@@ -317,6 +319,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
     }
 
 
+
     @Override
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
 
@@ -340,6 +343,39 @@ public class SDSSQuery extends IpacTablePartProcessor {
             meta.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "SDSS");
             meta.setAttribute(MetaConst.DATA_PRIMARY, "False");
         }
+    }
+
+
+    @Override
+    protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
+
+        String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
+        boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
+        if (nearestOnly && !StringUtils.isEmpty(uploadFname)) {
+            DataGroup upDg = DataGroupReader.read(VisContext.convertToFile(uploadFname));
+            final DataGroup resDg = DataGroupReader.read(dgFile);
+            if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {
+                return dgFile;
+            } else {
+                resDg.addAttributes(new DataGroup.Attribute("joined", "true"));
+            }
+
+            Comparator<DataObject> comparator = new Comparator<DataObject>() {
+                public int compare(DataObject row1, DataObject row2) {
+                    return getVal(row1).compareTo(getVal(row2));
+                }
+            };
+
+            DataGroup results = DataGroupQuery.join(upDg, new DataType[]{upDg.getDataDefintion("fc_id")}, resDg, null, comparator, false, true);
+            DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, "fc_id");
+            IpacTableWriter.save(dgFile, results);
+        }
+        return dgFile;
+    }
+
+    private String getVal(DataObject row) {
+        String cname = row.containsKey("up_id") ? "up_id" : "fc_id";
+        return String.valueOf(row.getDataElement(cname));
     }
 
     public static void main(String [] args) {

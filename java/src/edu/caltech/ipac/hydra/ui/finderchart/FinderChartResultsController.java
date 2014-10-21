@@ -97,7 +97,6 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     @Override
     public void bind(EventHub hub) {
         super.bind(hub);
-        init();
     }
 
     private void init() {
@@ -120,6 +119,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     }
 
     public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, final EventHub hub, final Form form, PrimaryTableUILoader loader, final SearchTypeTag searchTypeTag) {
+        init();
 
         imageGrid = new MultiDataViewerPreview();
         imageGrid.getViewer().setPlotGroupNameRoot(FINDERCHART_GROUP_NAME);
@@ -258,7 +258,8 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         } else {
             req.setFilename(uploadFname);
         }
-        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusArcSec + " arcsec";
+        String radiusDesc = tsReq.getBooleanParam(FD_CAT_BY_BOUNDARY) ? "by image boundary" :  radiusArcSec + " arcsec";
+        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusDesc;
         MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(req, title);
 
     }
@@ -296,7 +297,8 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             gatorReq.setFileName(uploadFname);
         }
 
-        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusArcSec + " arcsec";
+        String radiusDesc = tsReq.getBooleanParam(FD_CAT_BY_BOUNDARY) ? "image boundary" :  radiusArcSec + " arcsec";
+        String title = imageSet.catalogTitle + ": " + FinderChartDescResolver.getSourceDesc(tsReq).replaceAll("Target= ", "") + "; " + radiusDesc;
 
         MonitorItem sourceMonItem = SearchAdmin.getInstance().submitSearch(gatorReq, title);
     }

@@ -70,6 +70,8 @@ public class PngRetrieve {
         String fiExt, sdiLbl;
         if (drawInfoList!=null) {
             for (int i=0; i< drawInfoList.size(); i++) {
+                String str = drawInfoList.get(i);
+                if (StringUtils.isEmpty(str)) continue;
                 StaticDrawInfo sdi = StaticDrawInfo.parse(drawInfoList.get(i));
                 sdiLbl = sdi.getLabel();
 

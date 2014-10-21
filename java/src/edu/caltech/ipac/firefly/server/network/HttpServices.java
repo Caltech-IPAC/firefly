@@ -2,6 +2,8 @@ package edu.caltech.ipac.firefly.server.network;
 
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -93,7 +95,19 @@ public class HttpServices {
             }
 
             int status = httpClient.executeMethod(method);
-            return status >= 200 && status < 300;
+            boolean isSuccess =  status >= 200 && status < 300;
+            String reqDesc = "URL:" + method.getURI();
+            if (isSuccess) {
+                LOG.info(reqDesc);
+            } else {
+                reqDesc = reqDesc +
+                        "REQUEST HEADERS:\n " + CollectionUtil.toString(method.getRequestHeaders()) +
+                        "\nPARAMETERS:\n " + method.getParams() +
+                        "\nRESPONSE HEADERS:\n " + CollectionUtil.toString(method.getResponseHeaders());
+
+                LOG.error("HTTP request failed with status:" + status + "\n" + reqDesc);
+            }
+            return isSuccess;
         } catch (Exception e) {
             LOG.error(e, "Unable to connect to:" + method.toString());
         }
