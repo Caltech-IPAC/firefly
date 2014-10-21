@@ -261,7 +261,7 @@
                             <Title>Search radius (arcsec)</Title>
                         </EnumValue>
                     </EnumString>
-                    <FieldGroup labelWidth="85" width="600px" direction="horizontal">
+                    <FieldGroup labelWidth="85" width="200px" direction="horizontal">
                         <Label><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Label>
                         <Integer>
                             <Name>sdss_radius</Name>
