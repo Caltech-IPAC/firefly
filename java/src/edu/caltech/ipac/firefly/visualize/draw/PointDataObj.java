@@ -4,11 +4,13 @@ import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -83,21 +85,29 @@ public class PointDataObj extends DrawObj {
 
 
     public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,null);
+        drawPt(g,p,ac,useStateColor,null,false);
     }
 
     public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM)
                                                                               throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,vpPtM);
+        drawPt(g,p,ac,useStateColor,vpPtM,false);
     }
+
+
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
+            throws UnsupportedOperationException {
+        drawPt(g,p,ac,useStateColor,vpPtM,onlyAddToPath);
+    }
+
+
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,null,ac,useStateColor,null);
+        drawPt(g,null,ac,useStateColor,null,false);
     }
 
 
 
-    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM)
+    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
                                                        throws UnsupportedOperationException {
         if (plot!=null && _pt!=null) {
             if (plot.pointInPlot(_pt)) {
@@ -125,19 +135,19 @@ public class PointDataObj extends DrawObj {
                     }
                 }
 
-                if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor);
+                if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor, onlyAddToPath);
 
             }
         }
         else {
-            drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(auto,useStateColor), useStateColor);
+            drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(auto,useStateColor), useStateColor,false);
         }
     }
 
-    private void drawXY(Graphics g, int x, int y, String color,boolean useStateColor) {
+    private void drawXY(Graphics g, int x, int y, String color,boolean useStateColor, boolean onlyAddToPath) {
         DrawSymbol s= _symbol;
         if (useStateColor && isHighlighted()) s= _highlightSymbol;
-        drawSymbolOnPlot(g, x,y, s,color);
+        drawSymbolOnPlot(g, x,y, s,color,onlyAddToPath);
         if (_text!=null) {
             g.drawText(color,"9px",x+5,y,_text);
         }
@@ -148,16 +158,17 @@ public class PointDataObj extends DrawObj {
                                     int x,
                                     int y,
                                     DrawSymbol shape,
-                                    String color) {
+                                    String color,
+                                    boolean onlyAddToPath) {
         switch (shape) {
             case X :
-                drawX(jg, x, y, color);
+                drawX(jg, x, y, color, onlyAddToPath);
                 break;
             case EMP_CROSS :
                 drawEmpCross(jg, x, y, color, "white");
                 break;
             case CROSS :
-                drawCross(jg, x, y, color);
+                drawCross(jg, x, y, color, onlyAddToPath);
                 break;
             case SQUARE :
                 drawSquare(jg, x, y, color);
@@ -166,10 +177,10 @@ public class PointDataObj extends DrawObj {
                 drawSquareX(jg, x, y, color);
                 break;
             case DIAMOND :
-                drawDiamond(jg, x, y, color);
+                drawDiamond(jg, x, y, color, onlyAddToPath);
                 break;
             case DOT :
-                drawDot(jg, x, y, color);
+                drawDot(jg, x, y, color, onlyAddToPath);
                 break;
             case CIRCLE :
                 drawCircle(jg, x, y, color);
@@ -183,13 +194,22 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public void drawX(Graphics jg, int x, int y, String color) {
-        jg.drawLine( color,  1,x-size,y-size, x+size, y+size);
-        jg.drawLine( color,  1, x-size,y+size, x+size, y-size);
+    public void drawX(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+
+        if (!onlyAdToPath) jg.beginPath(color,1);
+        jg.pathMoveTo(x - size, y - size);
+        jg.pathLineTo(x + size, y + size);
+        jg.pathMoveTo(x-size,y+size);
+        jg.pathLineTo(x+size,y-size);
+        if (!onlyAdToPath) jg.drawPath();
+
+//
+//        jg.drawLine( color,  1,x-size,y-size, x+size, y+size);
+//        jg.drawLine( color,  1, x-size,y+size, x+size, y-size);
     }
 
     public void drawSquareX(Graphics jg, int x, int y, String color) {
-        drawX(jg,x,y,color);
+        drawX(jg,x,y,color,false);
         drawSquare(jg,x,y,color);
     }
 
@@ -197,13 +217,33 @@ public class PointDataObj extends DrawObj {
         jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size);
     }
 
-    public void drawCross(Graphics jg, int x, int y, String color) {
-        jg.drawLine( color, 1, x-size,y, x+size, y);
-        jg.drawLine( color, 1, x,y-size, x, y+size);
+    public void drawCross(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+
+        if (!onlyAdToPath) jg.beginPath(color,1);
+        jg.pathMoveTo(x-size,y);
+        jg.pathLineTo(x+size,y);
+        jg.pathMoveTo(x,y-size);
+        jg.pathLineTo(x,y+size);
+        if (!onlyAdToPath) jg.drawPath();
+
+
+
+//        jg.drawLine( color, 1, x-size,y, x+size, y);
+//        jg.drawLine( color, 1, x,y-size, x, y+size);
     }
 
 
     public void drawEmpCross(Graphics jg, int x, int y, String color1, String color2) {
+
+        List<Graphics.PathType> ptList= new ArrayList<Graphics.PathType>(4);
+
+
+
+        jg.drawPath(color1,1,ptList);
+
+        ptList.clear();
+
+
         jg.drawLine( color1, 1, x-size,y, x+size, y);
         jg.drawLine( color1, 1, x,y-size, x, y+size);
 
@@ -215,24 +255,108 @@ public class PointDataObj extends DrawObj {
     }
 
 
-    public void drawDiamond(Graphics jg, int x, int y, String color) {
-        jg.drawLine( color, 1, x,y-size, x+size, y);
-        jg.drawLine( color, 1, x+size, y, x, y+size);
-        jg.drawLine( color, 1, x, y+size, x-size,y);
-        jg.drawLine( color, 1, x-size,y, x,y-size);
+    public void drawDiamond(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+
+        if (!onlyAdToPath) jg.beginPath(color,1);
+        jg.pathMoveTo(x,y-size);
+        jg.pathLineTo(x+size, y);
+        jg.pathMoveTo(x+size, y);
+        jg.pathLineTo(x, y+size);
+        jg.pathMoveTo(x, y+size);
+        jg.pathLineTo(x-size,y);
+        jg.pathMoveTo(x-size,y);
+        jg.pathLineTo(x,y-size);
+        if (!onlyAdToPath) jg.drawPath();
+//        jg.drawLine( color, 1, x,y-size, x+size, y);
+//        jg.drawLine( color, 1, x+size, y, x, y+size);
+//
+//        jg.drawLine( color, 1, x, y+size, x-size,y);
+//        jg.drawLine( color, 1, x-size,y, x,y-size);
     }
 
-    public void drawDot(Graphics jg, int x, int y, String color) {
+
+
+    public void drawDot(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
         int begin= size>1 ? y- (size/2) : y;
         int end= size>1 ? y+ (size/2) : y;
+
+        if (!onlyAdToPath) jg.beginPath(color,1);
         for(int i=begin; (i<=end); i++) {
-            jg.drawLine( color, 2, x-size,i, x+size, i);
+            jg.pathMoveTo(x-size,i);
+            jg.pathLineTo(x+size,i);
         }
+
+        if (!onlyAdToPath) jg.drawPath();
+
+
+
+//        for(int i=begin; (i<=end); i++) {
+//            jg.drawLine( color, 2, x-size,i, x+size, i);
+//        }
     }
 
     public void drawCircle(Graphics jg, int x, int y, String color) {
         jg.drawCircle( color, 1, x,y,size+2);
     }
+
+
+    /**
+     * TODO: determine if the this feasible
+     * @param drawList
+     * @param g
+     * @param p
+     * @param ac
+     * @param useStateColor
+     * @param vpPtM
+     */
+    public static void drawAllOptimized(List<PointDataObj> drawList,
+                                        Graphics g,
+                                        WebPlot p,
+                                        AutoColor ac,
+                                        boolean useStateColor,
+                                        ViewPortPtMutable vpPtM) {
+        boolean canOptimize= true;
+        String color= drawList.get(0).getColor();
+        DrawSymbol symbol= drawList.get(0)._symbol;
+        switch (symbol) {
+            case X:
+            case CROSS:
+            case DIAMOND:
+            case DOT:
+                canOptimize= true;
+                break;
+            case SQUARE:
+            case EMP_CROSS:
+            case CIRCLE:
+            case SQUARE_X:
+                canOptimize= false;
+                break;
+        }
+
+
+        if (canOptimize) {
+            for(PointDataObj d : drawList)  {
+                canOptimize= false;
+                if (!ComparisonUtil.equals(color,d.getColor())) {
+                    if (d._symbol==symbol && d._text==null) {
+                        canOptimize= true;
+                    }
+
+                }
+                if (!canOptimize) break;
+            }
+            g.beginPath(color,1);
+            for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,true);
+            g.drawPath();
+        }
+        else {
+            for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,false);
+        }
+
+    }
+
+
+
 
     @Override
     public List<Region> toRegion(WebPlot plot, AutoColor ac) {

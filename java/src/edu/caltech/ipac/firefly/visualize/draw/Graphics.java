@@ -68,11 +68,39 @@ public interface Graphics {
                          List<ScreenPt> pts,
                          boolean close);
 
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<PathType> pts);
+
+
+    public void beginPath(String color, int lineWidth);
+    public void pathMoveTo(int x,int y);
+    public void pathLineTo(int x,int y);
+    public void drawPath();
+
+
 
     public void clear();
     public void paint();
     public void setDrawingAreaSize(int width, int height);
     public Widget getWidget();
 
+    public static class PathType {
+        private final boolean draw;
+        private final int x;
+        private final int y;
+
+        public PathType(boolean draw, int x, int y) {
+            this.draw = draw;
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() { return x; }
+
+        public int getY() { return y; }
+
+        public boolean isDraw() { return draw; }
+    }
 
 }

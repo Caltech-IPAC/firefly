@@ -14,6 +14,7 @@ import java.util.List;
  * @author Trey Roby
  * @version $Id: JSGraphics.java,v 1.15 2012/02/17 23:00:20 roby Exp $
  */
+@Deprecated
 public class JSGraphics implements Graphics {
 
     public static final String DRAWER_NAME = "DrawerLayer-";
@@ -67,6 +68,11 @@ public class JSGraphics implements Graphics {
     }
 
     public void drawPath(String color, int lineWidth, List<ScreenPt> pts, boolean close) {  }
+    public void drawPath(String color, int lineWidth, List<PathType> pts) { }
+    public void beginPath(String color, int lineWidth) { }
+    public void pathMoveTo(int x, int y) { }
+    public void pathLineTo(int x, int y) { }
+    public void drawPath() { }
 
     public void drawCircle(String color, int lineWidth, int x, int y, int radius) {
         if (GwtUtil.isHexColor(color))  color= "#" + color;

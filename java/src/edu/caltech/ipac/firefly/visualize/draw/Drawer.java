@@ -341,7 +341,6 @@ public class Drawer implements WebEventListener {
                     obj= _data.get(idx);
                     draw(g, autoColor, plot, obj,vpPtM, true);
                 }
-                g.paint();
             }
         }
         else {
@@ -370,7 +369,6 @@ public class Drawer implements WebEventListener {
                 draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
             selectedFound= selectedData.size()>0;
-            graphics.paint();
         }
     }
     public void redrawHighlight(Graphics graphics, WebPlotView pv, List<DrawObj> highlightData) {
@@ -385,7 +383,6 @@ public class Drawer implements WebEventListener {
             for(DrawObj pt : highlightData) {
                 if (pt!=null) draw(graphics, autoColor, plot, pt, vpPtM, true);
             }
-            graphics.paint();
         }
     }
 
@@ -682,7 +679,6 @@ public class Drawer implements WebEventListener {
                     lastObj= obj;
                 }
                 if (!params._iterator.hasNext()) { //loop finished
-                    params._graphics.paint();
                     params._done= true;
                     removeTask();
                 }

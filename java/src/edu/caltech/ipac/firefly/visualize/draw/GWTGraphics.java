@@ -89,6 +89,49 @@ public class GWTGraphics implements Graphics {
         surfaceW.stroke();
     }
 
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<PathType> ptList) {
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.beginPath();
+
+        boolean first= true;
+        for(PathType pT : ptList) {
+            if (!pT.isDraw() || first) {
+                surfaceW.moveTo(pT.getX(),pT.getY());
+                first=  false;
+            }
+            else {
+                surfaceW.lineTo(pT.getX(),pT.getY());
+            }
+        }
+        surfaceW.stroke();
+    }
+
+
+
+
+    public void beginPath(String color, int lineWidth) {
+        surfaceW.setLineWidth(lineWidth);
+        surfaceW.setStrokeStyle(makeColor(color));
+        surfaceW.beginPath();
+    }
+
+    public void pathMoveTo(int x,int y) {
+        surfaceW.moveTo(x,y);
+
+    }
+
+    public void pathLineTo(int x,int y) {
+        surfaceW.lineTo(x,y);
+    }
+
+    public void drawPath() {
+        surfaceW.stroke();
+    }
+
+
 
 
     public void drawText(String color, String size, int x, int y, String text) {

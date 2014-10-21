@@ -124,19 +124,29 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                         int y,
                         int width,
                         int height) {
+//        ctx.save();
+//        checkMods();
+//        ctx.setLineWidth(lineWidth);
+//        ctx.setStrokeStyle(makeColor(color));
+//        ctx.beginPath();
+//        ctx.moveTo(x,y);
+//        ctx.lineTo(x+width,y);
+//        ctx.lineTo(x+width,y+height);
+//        ctx.lineTo(x,y+height);
+//        ctx.lineTo(x,y);
+//        ctx.stroke();
+//        ctx.restore();
+
+
         ctx.save();
         checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
-        ctx.beginPath();
-        ctx.moveTo(x,y);
-        ctx.lineTo(x+width,y);
-        ctx.lineTo(x+width,y+height);
-        ctx.lineTo(x,y+height);
-        ctx.lineTo(x,y);
-//        ctx.closePath();
-        ctx.stroke();
+        ctx.strokeRect(x,y,width,height);
+//        ctx.stroke();
         ctx.restore();
+
+
     }
 
     public void drawPath(String color,
@@ -163,6 +173,53 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         ctx.stroke();
         ctx.restore();
     }
+
+    public void beginPath(String color, int lineWidth) {
+        ctx.save();
+        checkMods();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+    }
+
+    public void pathMoveTo(int x,int y) {
+        ctx.moveTo(x,y);
+
+    }
+
+    public void pathLineTo(int x,int y) {
+        ctx.lineTo(x,y);
+    }
+
+    public void drawPath() {
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<PathType> ptList) {
+        ctx.save();
+        checkMods();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+
+        boolean first= true;
+        for(PathType pT : ptList) {
+            if (!pT.isDraw() || first) {
+                ctx.moveTo(pT.getX(),pT.getY());
+                first=  false;
+            }
+            else {
+                ctx.lineTo(pT.getX(),pT.getY());
+            }
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+
 
     public void fillRec(String color,
                         int x,
