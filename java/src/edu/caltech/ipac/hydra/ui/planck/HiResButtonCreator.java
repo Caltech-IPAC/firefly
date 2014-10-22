@@ -101,25 +101,25 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             content.setHTML(content.getHTML() + "..... <br>");
                             content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
                             content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " <br>");
-                            if (totaldatapt > totaldatapt_limit) {
-                                content.setHTML(content.getHTML() + "<div style=\"background-color:black; color:blue; margin:20px; padding:20px;\">"
-                                 + "<p style=\"color:orange; font-size:120%\"> We estimate that your requested HIRES map will take significantly"
-                                 + " longer than 5 minutes to complete."
-                                 + " We recommend that you run"
-                                 +      "  HIRES off-line, or select a smaller amount of data from the TOI search"
-                                 +      "  results. Please hit the \"CANCEL\" button below.<br> </p>"
-                                 + "</div>");
-                            }
+//                            if (totaldatapt > totaldatapt_limit) {
+//                                content.setHTML(content.getHTML() + "<div style=\"background-color:black; color:blue; margin:20px; padding:20px;\">"
+//                                 + "<p style=\"color:orange; font-size:120%\"> We estimate that your requested HIRES map will take significantly"
+//                                 + " longer than 5 minutes to complete."
+//                                 + " We recommend that you run"
+//                                 +      "  HIRES off-line, or select a smaller amount of data from the TOI search"
+//                                 +      "  results. Please hit the \"CANCEL\" button below.<br> </p>"
+//                                 + "</div>");
+//                            }
                             if (totalSel==rowcount) {
                                 isSelectAll = true;
                             } else {
                                 isSelectAll = false;
                             }
-                            if (totaldatapt > totaldatapt_limit) {
-                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(false);
-                            } else {
-                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(true);
-                            }
+//                            if (totaldatapt > totaldatapt_limit) {
+//                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(false);
+//                            } else {
+//                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(true);
+//                            }
                         }
                     }, null);
                     content.setSize("600px", "300px");

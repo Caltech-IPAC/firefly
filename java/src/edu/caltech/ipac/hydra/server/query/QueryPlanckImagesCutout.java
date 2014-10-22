@@ -120,7 +120,7 @@ public class QueryPlanckImagesCutout extends DynQueryProcessor {
 
             planckurl= url+"&pixsize="+pixsize+"&size="+sizeStr+"&mission=planck&planckfreq="+planckBands[j]+"&wmapfreq=&submit=";
 
-            groupName= "PLANCK";
+            groupName= "PLANCK-I";
             desc= planckBands[j] + "GHz";
             ExpandedDesc= groupName+"-"+desc;
             wpReq= WebPlotRequest.makeURLPlotRequest(planckurl,ExpandedDesc);
@@ -148,7 +148,7 @@ public class QueryPlanckImagesCutout extends DynQueryProcessor {
             sizeStr = getSizeStr(pixsize,subsizeStr);
             String wmapurl = url + "&pixsize=" + pixsize + "&size=" + sizeStr + "&mission=wmap" + "&wmapfreq=" +
                             band + "&planckfreq=&submit=";
-            groupName= "WMAP";
+            groupName= "WMAP-I";
             desc= band;
             ExpandedDesc= groupName+"-"+desc;
             wpReq= WebPlotRequest.makeURLPlotRequest(wmapurl, ExpandedDesc);
