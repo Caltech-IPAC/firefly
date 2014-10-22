@@ -76,6 +76,8 @@ public interface Graphics {
     public void beginPath(String color, int lineWidth);
     public void pathMoveTo(int x,int y);
     public void pathLineTo(int x,int y);
+    public void rect(int x,int y, int width, int height);
+    public void arc(int x,int y, double radius, double startAngle, double endAngle);
     public void drawPath();
 
 

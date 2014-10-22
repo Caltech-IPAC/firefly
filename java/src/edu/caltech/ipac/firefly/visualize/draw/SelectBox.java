@@ -41,6 +41,10 @@ public class SelectBox extends DrawObj {
     public void setStyle(Style s) { _style= s; }
     public Style getStyle() { return _style; }
 
+
+    @Override
+    public int getLineWidth() { return 0; }
+
     @Override
     protected boolean getSupportsWebPlot() {
         return (!(_pt1 instanceof ScreenPt));
@@ -75,11 +79,11 @@ public class SelectBox extends DrawObj {
         return WebPlot.makePt(_pt1.getClass(), x,y);
     }
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawImageBox(graphics,p,ac);
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         if (_pt1 instanceof ScreenPt && _pt2 instanceof ScreenPt) {
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
@@ -166,18 +170,20 @@ public class SelectBox extends DrawObj {
 
             ViewPortPt pt1= new ViewPortPt((pt0.getIX()+sWidth),pt0.getIY());
             ViewPortPt pt3= new ViewPortPt((pt0.getIX()),(pt0.getIY()+sHeight));
+            graphics.beginPath(color,3);
             DrawUtil.drawHandledLine(graphics, color,
                                            pt0.getIX(), pt0.getIY(),
-                                           pt1.getIX(), pt1.getIY());
+                                           pt1.getIX(), pt1.getIY(), true);
             DrawUtil.drawHandledLine(graphics, color,
                                            pt1.getIX(), pt1.getIY(),
-                                           pt2.getIX(), pt2.getIY());
+                                           pt2.getIX(), pt2.getIY(), true);
             DrawUtil.drawHandledLine(graphics, color,
                                            pt2.getIX(), pt2.getIY(),
-                                           pt3.getIX(), pt3.getIY());
+                                           pt3.getIX(), pt3.getIY(),true);
             DrawUtil.drawHandledLine(graphics, color,
                                            pt3.getIX(), pt3.getIY(),
-                                           pt0.getIX(), pt0.getIY());
+                                           pt0.getIX(), pt0.getIY(), true);
+            graphics.drawPath();
         }
         if (graphics instanceof AdvancedGraphics && getShadow()!=null) {
             ((AdvancedGraphics)graphics).setShadowPerm(null);

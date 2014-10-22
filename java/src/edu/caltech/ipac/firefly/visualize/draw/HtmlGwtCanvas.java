@@ -25,6 +25,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
     private final List<CanvasLabelShape> _labelList= new ArrayList<CanvasLabelShape>(20);
     private final CanvasPanel panel;
+    private HtmlGwtCanvas labelPanel;
     private final CanvasElement cElement;
     private final Context2d ctx;
     private Shadow nextDrawShadow= null;
@@ -36,6 +37,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
     public HtmlGwtCanvas() {
         panel= new CanvasPanel();
+        labelPanel= this;
         cElement= panel.getCanvas().getCanvasElement();
         ctx= cElement.getContext2d();
     }
@@ -46,6 +48,9 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
+    public void setLabelPanel(HtmlGwtCanvas p) {
+        labelPanel= p;
+    }
 
     public void setTranslationPerm(ScreenPt pt) {
         setTranslation(pt);
@@ -191,6 +196,14 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         ctx.lineTo(x,y);
     }
 
+    public void rect(int x, int y, int width, int height) {
+        ctx.rect(x,y,width,height);
+    }
+
+    public void arc(int x,int y, double radius, double startAngle, double endAngle) {
+        ctx.arc(x,y,radius,startAngle,endAngle);
+    }
+
     public void drawPath() {
         ctx.stroke();
         ctx.restore();
@@ -257,8 +270,8 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                          String text) {
         HTML label= DrawUtil.makeDrawLabel(color, fontFamily, size, fontWeight, fontStyle, text);
         CanvasLabelShape labelShape= new CanvasLabelShape(label);
-        _labelList.add(labelShape);
-        panel.addLabel(label,x,y);
+        labelPanel._labelList.add(labelShape);
+        labelPanel.panel.addLabel(label,x,y);
     }
 
     public void drawText(String color, String size, int x, int y, String text) {
@@ -291,8 +304,18 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     }
 
 
+    public void copyAsImage(AdvancedGraphics g) {
+        Canvas sourceCanvas= g.getCanvasPanel().getCanvas();
+        int w= sourceCanvas.getCoordinateSpaceWidth();
+        int h= sourceCanvas.getCoordinateSpaceHeight();
+        ctx.drawImage(sourceCanvas.getCanvasElement(), 0,0, w,h, 0,0, w,h  );
+    }
 
-//======================================================================
+    public CanvasPanel getCanvasPanel() {
+        return panel;
+    }
+
+    //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 

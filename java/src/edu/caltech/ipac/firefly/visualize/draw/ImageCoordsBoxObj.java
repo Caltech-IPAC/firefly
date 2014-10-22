@@ -43,6 +43,15 @@ public class ImageCoordsBoxObj extends DrawObj {
         this((Pt)pt,width,height);
     }
 
+
+    @Override
+    public int getLineWidth() {
+        switch (_style) {
+            case STANDARD: return 2;
+            default : return 1;
+        }
+    }
+
     public int getWidth() { return _width; }
     public int getHeight() { return _height; }
 
@@ -82,11 +91,11 @@ public class ImageCoordsBoxObj extends DrawObj {
     }
 
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawImageCoordsBox(graphics,p,ac,useStateColor);
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawScreenCoordsBox(graphics,ac,useStateColor);
     }
 
@@ -144,10 +153,7 @@ public class ImageCoordsBoxObj extends DrawObj {
 
         int lineWidth;
 
-        switch (_style) {
-            case STANDARD: lineWidth= 2; break;
-            default : lineWidth= 1; break;
-        }
+        lineWidth= getLineWidth();
 
         String color= calculateColor(ac,useStateColor);
         int sWidth= (pt2.getIX()-pt0.getIX());

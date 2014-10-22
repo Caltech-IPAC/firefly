@@ -29,6 +29,8 @@ import java.util.List;
  */
 public class ShapeDataObj extends DrawObj {
 
+    public static final int DEF_WIDTH= 1;
+
     public enum TextLocation {
         DEFAULT,
         LINE_TOP,
@@ -138,7 +140,10 @@ public class ShapeDataObj extends DrawObj {
         return s;
     }
 
-
+    @Override
+    public int getLineWidth() {
+        return DEF_WIDTH;
+    }
 
     @Override
     public Pt getCenterPt() { return _pts[0]; }
@@ -198,11 +203,11 @@ public class ShapeDataObj extends DrawObj {
     }
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawShape(jg,p,ac,useStateColor);
     }
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
@@ -278,7 +283,7 @@ public class ShapeDataObj extends DrawObj {
         if (pt0==null || pt1==null) return;
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
-            jg.drawLine(color, 1, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
+            jg.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
         }
 
         if (_text!=null && inView) {
@@ -315,7 +320,7 @@ public class ShapeDataObj extends DrawObj {
             }
             centerPt= plot.getViewPortCoords(_pts[0]);
             if (plot.pointInViewPort(centerPt)) {
-                jg.drawCircle(color,1,centerPt.getIX(),centerPt.getIY(), screenRadius);
+                jg.drawCircle(color,DEF_WIDTH,centerPt.getIX(),centerPt.getIY(), screenRadius);
                 inView= true;
             }
         }
@@ -334,7 +339,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
                 centerPt= new ViewPortPt(x,y);
 
-                jg.drawCircle(color,1,x,y,screenRadius );
+                jg.drawCircle(color,DEF_WIDTH,x,y,screenRadius );
             }
         }
 
@@ -368,7 +373,7 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                jg.drawRec(color,1,x,y,w,h);
+                jg.drawRec(color,DEF_WIDTH,x,y,w,h);
             }
 
         }
@@ -384,7 +389,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= pt0.getIY();
                 int width=  pt1.getIX()-pt0.getIX();
                 int height=  pt1.getIY()-pt0.getIY();
-                jg.drawRec(color,1,x,y,width,height);
+                jg.drawRec(color,DEF_WIDTH,x,y,width,height);
             }
         }
 

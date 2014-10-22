@@ -21,10 +21,14 @@ import java.util.List;
  */
 public class FootprintObj extends DrawObj {
 
+    public static final int DEF_WIDTH= 2;
     public enum Style {STANDARD,HANDLED}
 
     private final List<WorldPt[]> _fpList;
     private Style _style= Style.STANDARD;
+
+
+
 
     /**
      * pass a array of WorldPt that represents the corners of a Polygon
@@ -48,6 +52,8 @@ public class FootprintObj extends DrawObj {
         _fpList= ptList;
     }
 
+    @Override
+    public int getLineWidth() { return DEF_WIDTH; }
 
     public List<WorldPt []> getPos() { return _fpList; }
 
@@ -130,11 +136,11 @@ public class FootprintObj extends DrawObj {
 
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawFootprint(jg,p,ac,useStateColor);
     }
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
@@ -171,17 +177,21 @@ public class FootprintObj extends DrawObj {
     }
 
 
-    private void drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
+    private void drawStandardFootprint(Graphics g, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
 
         WorldPt wpt0 = ptAry[ptAry.length-1];
+        String color= calculateColor(ac,useStateColor);
+        g.beginPath(color,DEF_WIDTH);
         for (WorldPt wpt : ptAry) {
             ViewPortPt pt0=plot.getViewPortCoords(wpt0);
             ViewPortPt pt=plot.getViewPortCoords(wpt);
             if (pt0==null || pt==null) return;
             wpt0 = wpt;
-            String color= calculateColor(ac,useStateColor);
-            jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
+//            jg.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
+            g.pathMoveTo(pt0.getIX(), pt0.getIY());
+            g.pathLineTo(pt.getIX(), pt.getIY());
         }
+        g.drawPath();
     }
 
     private void drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {

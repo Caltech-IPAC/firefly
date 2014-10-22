@@ -127,6 +127,14 @@ public class GWTGraphics implements Graphics {
         surfaceW.lineTo(x,y);
     }
 
+    public void rect(int x, int y, int width, int height) {
+        surfaceW.rect(x,y,width,height);
+    }
+
+    public void arc(int x,int y, double radius, double startAngle, double endAngle) {
+        surfaceW.arc(x,y,radius,startAngle,endAngle,false);
+    }
+
     public void drawPath() {
         surfaceW.stroke();
     }

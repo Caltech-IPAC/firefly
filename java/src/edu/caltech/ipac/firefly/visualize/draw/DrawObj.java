@@ -31,7 +31,13 @@ public abstract class DrawObj {
     public boolean hasDetails() { return false; }
     public Widget makeDetailDisplay() { return null;   }
 
+    public boolean isPathOptimized() { return false; }
 
+    /**
+     * method may return a 0 to indicate that with width varies
+     * @return width of line to use to draw this object
+     */
+    public int getLineWidth() { return 1; }
 
     public String getColor() { return color; }
     public void setColor(String c) { color = c; }
@@ -67,28 +73,29 @@ public abstract class DrawObj {
 
     /**
      *
+     *
      * @param g
      * @param p
      * @param ac the AutoColor obj, may be null
      * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
+     * @param onlyAddToPath
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException;
+    public abstract void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
 
     /**
+     *
      *
      * @param g
      * @param ac the AutoColor obj, may be null
      * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
+     * @param onlyAddToPath
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException;
-
-    public void update(Graphics g, boolean front, AutoColor ac) {}
-    public void update(Graphics g, WebPlot p, boolean front, AutoColor ac) {}
+    public abstract void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
 
 
-    protected String calculateColor(AutoColor ac, boolean useStateColor) {
+    public String calculateColor(AutoColor ac, boolean useStateColor) {
         String color= this.color;
         if (useStateColor) {
             if (isSelected()) color= this.selectColor;

@@ -142,6 +142,10 @@ public class WebPlot {
     private final Map<String,Object>  _attributes= new HashMap<String,Object>(3);
     private final TileDrawer    _tileDrawer;
 
+    // Cache is estimated to never exceed 2 MB
+    private HashMap<WorldPt,ImagePt> conversionCache= new HashMap<WorldPt, ImagePt>(3000,.80F);
+    private final int MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 48000 with a 80% load factor
+
 
     private final int       _offsetX= 0;  //if we ever use this we will change the final
     private final int       _offsetY= 0; //if we ever use this we will change the final
@@ -177,7 +181,6 @@ public class WebPlot {
             }
         }
     }
-
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
@@ -684,11 +687,17 @@ public class WebPlot {
 
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
-            if (!_imageCoordSys.equals(wpt.getCoordSys())) {
-                wpt= VisUtil.convert(wpt,_imageCoordSys);
+            WorldPt originalWp= wpt;
+ //
+            retval= conversionCache.get(checkedPt);
+            if (retval==null) {
+                if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+                    wpt= VisUtil.convert(wpt,_imageCoordSys);
+                }
+                ProjectionPt projPt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+                retval= projPt==null ? null : new ImagePt( (projPt.getX())+ 0.5F ,  (projPt.getY())+ 0.5F);
+                putInConversionCache(originalWp,retval);
             }
-            ProjectionPt projPt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
-            retval= projPt==null ? null : new ImagePt( (projPt.getX())+ 0.5F ,  (projPt.getY())+ 0.5F);
         }
         else {
             retval= getImageCoords(checkedPt);
@@ -705,16 +714,33 @@ public class WebPlot {
         boolean success= false;
         float zfact= _plotGroup.getZoomFact();
 
-        if (!_imageCoordSys.equals(wpt.getCoordSys())) {
-            wpt= VisUtil.convert(wpt,_imageCoordSys);
-        }
+        ImagePt imagePt= conversionCache.get(wpt);
 
-        ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
-        if (proj_pt!=null) {
-            double imageX= proj_pt.getX()  + 0.5;
-            double imageY= proj_pt.getY()  + 0.5;
-            double imageWorkspaceX= imageX-_offsetX;
-            double imageWorkspaceY= imageY-_offsetY;
+        if (imagePt==null) {
+            WorldPt originalWp= wpt;
+            if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+                wpt= VisUtil.convert(wpt,_imageCoordSys);
+            }
+
+            ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+            if (proj_pt!=null) {
+                double imageX= proj_pt.getX()  + 0.5;
+                double imageY= proj_pt.getY()  + 0.5;
+                putInConversionCache(originalWp, new ImagePt(imageX,imageY));
+                double imageWorkspaceX= imageX-_offsetX;
+                double imageWorkspaceY= imageY-_offsetY;
+
+                int sx= (int)(imageWorkspaceX*zfact);
+                int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+
+                retPt.setX(sx-_viewPortX);
+                retPt.setY(sy-_viewPortY);
+                success= true;
+            }
+        }
+        else {
+            double imageWorkspaceX= imagePt.getX()-_offsetX;
+            double imageWorkspaceY= imagePt.getY()-_offsetY;
 
             int sx= (int)(imageWorkspaceX*zfact);
             int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
@@ -722,10 +748,17 @@ public class WebPlot {
             retPt.setX(sx-_viewPortX);
             retPt.setY(sy-_viewPortY);
             success= true;
+
         }
+
         return success;
     }
 
+    public void putInConversionCache(WorldPt wp, ImagePt imp) {
+        if (conversionCache.size()<MAX_CACHE_ENTRIES) {
+            conversionCache.put(wp,imp);
+        }
+    }
 
 
     public ViewPortPt getViewPortCoords(ScreenPt spt)  {
@@ -754,7 +787,9 @@ public class WebPlot {
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
-            retval= getViewPortCoords(getScreenCoords(wpt));
+            retval= new ViewPortPtMutable();
+            getViewPortCoordsOptimize(wpt,(ViewPortPtMutable)retval);
+//            retval= getViewPortCoords(getScreenCoords(wpt));
         }
         else {
             retval= getViewPortCoords(getScreenCoords(checkedPt));

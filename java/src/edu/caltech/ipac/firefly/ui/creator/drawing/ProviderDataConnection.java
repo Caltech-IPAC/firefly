@@ -64,7 +64,7 @@ abstract class ProviderDataConnection extends SimpleDataConnection {
 
             public void disableLoad() { datasetDrawingLayerProvider.setEnabled(false); }
 
-            public boolean isDataAvailable() { return datasetDrawingLayerProvider.isEnabled(); }
+            public boolean isDataAvailable() { return datasetDrawingLayerProvider.isEnabled() || getData(false,null)!=null; }
 
             public void markStale() { /* ignore */ }
         };

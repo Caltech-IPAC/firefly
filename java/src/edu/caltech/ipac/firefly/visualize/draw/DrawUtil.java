@@ -15,43 +15,60 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
  */
 public class DrawUtil {
 
-
     public static void drawHandledLine(Graphics g, String color, int sx, int sy, int ex, int ey) {
+        drawHandledLine(g,color,sx,sy,ex,ey,false);
+    }
+
+    public static void drawHandledLine(Graphics g, String color, int sx, int sy, int ex, int ey, boolean onlyAddToPath) {
         float slope= Float.NaN;
 
         if (ex-sx!=0) slope= (ey-sy) / (ex-sx);
         int x, y;
+        if (!onlyAddToPath) g.beginPath(color,3);
 
         if (Float.isNaN(slope)) {// vertical
             y= (sy < ey) ? sy+5 : sy-5;
-            g.drawLine(color, 3, sx, sy, sx, y);
+            g.pathMoveTo(sx,sy);
+            g.pathLineTo(sx,y);
+//            g.drawLine(color, 3, sx, sy, sx, y);
 
             y= (sy < ey) ? ey-5 : ey+5;
-            g.drawLine(color, 3, ex, ey, ex, y);
+            g.pathMoveTo(ex,ey);
+            g.pathLineTo(ex,y);
+//            g.drawLine(color, 3, ex, ey, ex, y);
 
         }
         else if (Math.abs(sx-ex) > Math.abs(sy-ey)) {  // horizontal
             x= (sx < ex) ? sx+5 : sx-5;
             y= (int)(slope * (x - sx) + sy);
 
-            g.drawLine(color, 3, sx, sy, x, y);
+//            g.drawLine(color, 3, sx, sy, x, y);
+            g.pathMoveTo(sx,sy);
+            g.pathLineTo(x,y);
 
             x= (sx < ex) ? ex-5 : ex+5;
             y= (int)(slope * (x - ex) + ey);
-            g.drawLine(color, 3, ex, ey, x, y);
+//            g.drawLine(color, 3, ex, ey, x, y);
+            g.pathMoveTo(ex,ey);
+            g.pathLineTo(x,y);
         }
         else {
 
             y= (sy < ey) ? sy+5 : sy-5;
             x= (int)((y-sy)/slope + sx);
-            g.drawLine(color, 3, sx, sy, x, y);
+//            g.drawLine(color, 3, sx, sy, x, y);
+            g.pathMoveTo(sx,sy);
+            g.pathLineTo(x,y);
 
 
             y= (sy < ey) ? ey-5 : ey+5;
             x= (int)((y-ey)/slope + ex);
-            g.drawLine(color, 3, ex, ey, x, y);
+//            g.drawLine(color, 3, ex, ey, x, y);
+            g.pathMoveTo(ex,ey);
+            g.pathLineTo(x,y);
 
         }
+        if (!onlyAddToPath) g.drawPath();
     }
 
     public static void drawInnerRecWithHandles(Graphics g, String color, int lineWidth, int inX1, int inY1, int inX2, int inY2) {
@@ -70,10 +87,14 @@ public class DrawUtil {
         int x3= x0;
         int y3= y0+height;
 
-        DrawUtil.drawHandledLine(g, color, x0,y0,x1,y1);
-        DrawUtil.drawHandledLine(g, color, x1,y1,x2,y2);
-        DrawUtil.drawHandledLine(g, color, x2,y2,x3,y3);
-        DrawUtil.drawHandledLine(g, color, x3,y3,x0,y0);
+        g.beginPath(color,3);
+
+        DrawUtil.drawHandledLine(g, color, x0,y0,x1,y1,true);
+        DrawUtil.drawHandledLine(g, color, x1,y1,x2,y2, true);
+        DrawUtil.drawHandledLine(g, color, x2,y2,x3,y3,true);
+        DrawUtil.drawHandledLine(g, color, x3,y3,x0,y0,true);
+
+        g.drawPath();
     }
 
     public static HTML makeDrawLabel(String color,

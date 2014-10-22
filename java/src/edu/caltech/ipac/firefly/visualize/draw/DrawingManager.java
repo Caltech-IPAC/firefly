@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -26,7 +27,9 @@ import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 /**
@@ -94,17 +97,26 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void requestLoad(final LoadCallback cb) {
        if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null) {
-           for(PVData pvData : _allPV.values())  pvData.addTask();
-           _dataConnect.getAsyncDataLoader().requestLoad(new LoadCallback() {
-               public void loaded() {
+           if (isDataAvailable()) {
+               for (PVData pvData : _allPV.values()) {
+                   Drawer drawer= pvData.getDrawer();
+                   drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
                    cb.loaded();
-                   for (PVData pvData : _allPV.values()) {
-                       Drawer drawer= pvData.getDrawer();
-                       drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
-                       pvData.removeTask();
-                   }
                }
-           });
+           }
+           else {
+               for(PVData pvData : _allPV.values())  pvData.addTask();
+               _dataConnect.getAsyncDataLoader().requestLoad(new LoadCallback() {
+                   public void loaded() {
+                       cb.loaded();
+                       for (PVData pvData : _allPV.values()) {
+                           Drawer drawer= pvData.getDrawer();
+                           drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
+                           pvData.removeTask();
+                       }
+                   }
+               });
+           }
        }
        else if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()==null){
            cb.loaded();
@@ -790,33 +802,65 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private void highlightNearest(WebPlotView pv, ScreenPt pt) {
-
         if (_dataConnect == null || !_dataConnect.getSupportsMouse()) return;
-
-        WebPlot plot = pv.getPrimaryPlot();
-        double dist;
-        double minDist = Double.MAX_VALUE;
-        List<DrawObj> data = _dataConnect.getData(false, plot);
-        if (data == null) return;
-        DrawObj closestPt = null;
-        int idx= 0;
-        int closestIdx= -1;
-        for (DrawObj obj : data) {
-            if (obj!=null) {
-                dist = obj.getScreenDist(plot, pt);
-                if (dist > -1 && dist < minDist) {
-                    minDist = dist;
-                    closestPt = obj;
-                    closestIdx= idx;
+        HighlightNearestWorker worker= new HighlightNearestWorker(pv,pt);
+        Scheduler.get().scheduleIncremental(worker);
+    }
 
 
-                }
-            }
-            idx++;
+
+    private class HighlightNearestWorker implements Scheduler.RepeatingCommand {
+
+        private double dist;
+        private double minDist = Double.MAX_VALUE;
+        private DrawObj closestPt = null;
+        private int idx= 0;
+        private int closestIdx= -1;
+        private final int _maxChunk= 500;
+        private final ScreenPt pt;
+        private final WebPlot plot;
+        private final Iterator<DrawObj> iterator;
+
+        private HighlightNearestWorker(WebPlotView pv, ScreenPt pt) {
+            this.pt = pt;
+            plot = pv.getPrimaryPlot();
+            iterator= _dataConnect.getData(false, plot).iterator();
         }
 
-        if (closestPt!=null && _dataConnect!=null)  _dataConnect.setHighlightedIdx(closestIdx);
+
+        public boolean execute() {
+            boolean continueProcessing= true;
+            DrawObj obj;
+            try {
+                for(int i= 0; (iterator.hasNext() && i<_maxChunk ); ) {
+                    obj= iterator.next();
+                    if (obj!=null) {
+                        dist = obj.getScreenDist(plot, pt);
+                        if (dist > -1 && dist < minDist) {
+                            minDist = dist;
+                            closestPt = obj;
+                            closestIdx= idx;
+
+
+                        }
+                    }
+                    idx++;
+                }
+                if (!iterator.hasNext()) {
+                    continueProcessing= false;
+                }
+            } catch (ConcurrentModificationException e) {
+                continueProcessing= false;
+            }
+
+            if (!continueProcessing && closestPt!=null) {
+                _dataConnect.setHighlightedIdx(closestIdx);
+            }
+            return continueProcessing;
+        }
     }
+
+
 
 
     private int[] getAndSaveSelectedArea() {
@@ -847,6 +891,10 @@ public class DrawingManager implements AsyncDataLoader {
 
         @Override
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
+        }
+
+        @Override
+        public void onMouseUp(WebPlotView pv, ScreenPt spt) {
             //TODO: Trey, please fix this... this is not a solution.  -loi
             if (!_dataConnect.getClass().getName().contains("ActiveTargetDisplay")) {
                 highlightNearest(_pv, spt);
@@ -1040,9 +1088,8 @@ public class DrawingManager implements AsyncDataLoader {
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
                 pointDataObj.setSize(4);
-                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true);
+                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true, false);
             }
-
         }
     }
 

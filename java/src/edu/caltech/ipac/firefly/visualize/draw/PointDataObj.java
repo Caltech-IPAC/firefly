@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
@@ -13,6 +14,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 
 /**
@@ -39,6 +41,7 @@ public class PointDataObj extends DrawObj {
         size= (_symbol==DrawSymbol.DOT) ? DOT_DEFAULT_SIZE : DEFAULT_SIZE;
     }
 
+    public boolean isPathOptimized() { return _symbol!=DrawSymbol.EMP_CROSS; }
 
 //    public void setSymbol(DrawSymbol s) { _symbol = s; }
     public DrawSymbol getSymbol() { return _symbol; }
@@ -84,14 +87,10 @@ public class PointDataObj extends DrawObj {
     public Pt getCenterPt() { return _pt; }
 
 
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,null,false);
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawPt(g,p,ac,useStateColor,null,onlyAddToPath);
     }
 
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM)
-                                                                              throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,vpPtM,false);
-    }
 
 
     public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
@@ -101,16 +100,15 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawPt(g,null,ac,useStateColor,null,false);
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawPt(g,null,ac,useStateColor,null,onlyAddToPath);
     }
 
 
 
-    private void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
+    public void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
                                                        throws UnsupportedOperationException {
         if (plot!=null && _pt!=null) {
-            if (plot.pointInPlot(_pt)) {
                 int x= 0;
                 int y= 0;
                 boolean draw= false;
@@ -137,7 +135,6 @@ public class PointDataObj extends DrawObj {
 
                 if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor, onlyAddToPath);
 
-            }
         }
         else {
             drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(auto,useStateColor), useStateColor,false);
@@ -171,10 +168,10 @@ public class PointDataObj extends DrawObj {
                 drawCross(jg, x, y, color, onlyAddToPath);
                 break;
             case SQUARE :
-                drawSquare(jg, x, y, color);
+                drawSquare(jg, x, y, color, onlyAddToPath);
                 break;
             case SQUARE_X :
-                drawSquareX(jg, x, y, color);
+                drawSquareX(jg, x, y, color, onlyAddToPath);
                 break;
             case DIAMOND :
                 drawDiamond(jg, x, y, color, onlyAddToPath);
@@ -183,7 +180,7 @@ public class PointDataObj extends DrawObj {
                 drawDot(jg, x, y, color, onlyAddToPath);
                 break;
             case CIRCLE :
-                drawCircle(jg, x, y, color);
+                drawCircle(jg, x, y, color, onlyAddToPath);
                 break;
             default :
                 assert false; // if more shapes are added they must be added here
@@ -194,37 +191,44 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public void drawX(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+    public void drawX(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
 
-        if (!onlyAdToPath) jg.beginPath(color,1);
+        if (!onlyAddToPath) jg.beginPath(color,1);
         jg.pathMoveTo(x - size, y - size);
         jg.pathLineTo(x + size, y + size);
         jg.pathMoveTo(x-size,y+size);
         jg.pathLineTo(x+size,y-size);
-        if (!onlyAdToPath) jg.drawPath();
+        if (!onlyAddToPath) jg.drawPath();
 
 //
 //        jg.drawLine( color,  1,x-size,y-size, x+size, y+size);
 //        jg.drawLine( color,  1, x-size,y+size, x+size, y-size);
     }
 
-    public void drawSquareX(Graphics jg, int x, int y, String color) {
-        drawX(jg,x,y,color,false);
-        drawSquare(jg,x,y,color);
+    public void drawSquareX(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
+        if (!onlyAddToPath) jg.beginPath(color,1);
+        drawX(jg,x,y,color,onlyAddToPath);
+        drawSquare(jg,x,y,color, true);
+        if (!onlyAddToPath) jg.drawPath();
     }
 
-    public void drawSquare(Graphics jg, int x, int y, String color) {
-        jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size);
+    public void drawSquare(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
+        if (onlyAddToPath) {
+            jg.rect(x - size, y - size, 2 * size, 2 * size);
+        }
+        else {
+            jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size);
+        }
     }
 
-    public void drawCross(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+    public void drawCross(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
 
-        if (!onlyAdToPath) jg.beginPath(color,1);
+        if (!onlyAddToPath) jg.beginPath(color,1);
         jg.pathMoveTo(x-size,y);
         jg.pathLineTo(x+size,y);
         jg.pathMoveTo(x,y-size);
         jg.pathLineTo(x,y+size);
-        if (!onlyAdToPath) jg.drawPath();
+        if (!onlyAddToPath) jg.drawPath();
 
 
 
@@ -255,9 +259,9 @@ public class PointDataObj extends DrawObj {
     }
 
 
-    public void drawDiamond(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+    public void drawDiamond(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
 
-        if (!onlyAdToPath) jg.beginPath(color,1);
+        if (!onlyAddToPath) jg.beginPath(color,1);
         jg.pathMoveTo(x,y-size);
         jg.pathLineTo(x+size, y);
         jg.pathMoveTo(x+size, y);
@@ -266,7 +270,7 @@ public class PointDataObj extends DrawObj {
         jg.pathLineTo(x-size,y);
         jg.pathMoveTo(x-size,y);
         jg.pathLineTo(x,y-size);
-        if (!onlyAdToPath) jg.drawPath();
+        if (!onlyAddToPath) jg.drawPath();
 //        jg.drawLine( color, 1, x,y-size, x+size, y);
 //        jg.drawLine( color, 1, x+size, y, x, y+size);
 //
@@ -276,17 +280,17 @@ public class PointDataObj extends DrawObj {
 
 
 
-    public void drawDot(Graphics jg, int x, int y, String color, boolean onlyAdToPath) {
+    public void drawDot(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
         int begin= size>1 ? y- (size/2) : y;
         int end= size>1 ? y+ (size/2) : y;
 
-        if (!onlyAdToPath) jg.beginPath(color,1);
+        if (!onlyAddToPath) jg.beginPath(color,1);
         for(int i=begin; (i<=end); i++) {
             jg.pathMoveTo(x-size,i);
             jg.pathLineTo(x+size,i);
         }
 
-        if (!onlyAdToPath) jg.drawPath();
+        if (!onlyAddToPath) jg.drawPath();
 
 
 
@@ -295,8 +299,11 @@ public class PointDataObj extends DrawObj {
 //        }
     }
 
-    public void drawCircle(Graphics jg, int x, int y, String color) {
-        jg.drawCircle( color, 1, x,y,size+2);
+    public void drawCircle(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
+        if (!onlyAddToPath) jg.beginPath(color,1);
+        jg.arc(x, y, size + 2, 0, 2 * Math.PI);
+        if (!onlyAddToPath) jg.drawPath();
+//        jg.drawCircle( color, 1, x,y,size+2);
     }
 
 
@@ -315,36 +322,22 @@ public class PointDataObj extends DrawObj {
                                         AutoColor ac,
                                         boolean useStateColor,
                                         ViewPortPtMutable vpPtM) {
+        if (drawList==null ||drawList.size()==0) return;
+
         boolean canOptimize= true;
-        String color= drawList.get(0).getColor();
-        DrawSymbol symbol= drawList.get(0)._symbol;
-        switch (symbol) {
-            case X:
-            case CROSS:
-            case DIAMOND:
-            case DOT:
-                canOptimize= true;
-                break;
-            case SQUARE:
-            case EMP_CROSS:
-            case CIRCLE:
-            case SQUARE_X:
+        String color= drawList.get(0).calculateColor(ac,useStateColor);
+
+        long start= System.currentTimeMillis();
+        for(PointDataObj d : drawList)  {
+            canOptimize= ComparisonUtil.equals(color, d.calculateColor(ac, useStateColor));
+            if (d._symbol==DrawSymbol.EMP_CROSS || d._text!=null) {
                 canOptimize= false;
-                break;
+            }
+
+            if (!canOptimize) break;
         }
 
-
         if (canOptimize) {
-            for(PointDataObj d : drawList)  {
-                canOptimize= false;
-                if (!ComparisonUtil.equals(color,d.getColor())) {
-                    if (d._symbol==symbol && d._text==null) {
-                        canOptimize= true;
-                    }
-
-                }
-                if (!canOptimize) break;
-            }
             g.beginPath(color,1);
             for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,true);
             g.drawPath();
@@ -352,6 +345,8 @@ public class PointDataObj extends DrawObj {
         else {
             for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,false);
         }
+        long delta= System.currentTimeMillis()-start;
+        GwtUtil.getClientLogger().log(Level.INFO, "Draw Time for " + drawList.get(0)._symbol + ", " + drawList.size() + ": " + delta + "ms");
 
     }
 
