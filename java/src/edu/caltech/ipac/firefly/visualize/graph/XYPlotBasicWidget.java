@@ -1163,7 +1163,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             return _meta.userMeta.xUnit;
         }
         String xUnits = _data.getXUnits();
-        if (xUnits == null || xUnits.trim().length()<1) {
+        if (xUnits == null || xUnits.trim().length()<1 || xUnits.equals("null")) {
             xUnits = _meta.getDefaultXUnits(_data);
         }
         return xUnits;
@@ -1176,7 +1176,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
             return _meta.userMeta.yUnit;
         }
         String yUnits = _data.getYUnits();
-        if (yUnits == null || yUnits.trim().length()<1) {
+        if (yUnits == null || yUnits.trim().length()<1 || yUnits.equals("null")) {
             yUnits = _meta.getDefaultYUnits(_data);
         }
         return yUnits;
