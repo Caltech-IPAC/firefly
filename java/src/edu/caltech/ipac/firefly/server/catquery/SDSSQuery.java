@@ -18,11 +18,9 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
-import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.target.PositionUtil;
 import edu.caltech.ipac.util.*;
@@ -69,11 +67,11 @@ public class SDSSQuery extends IpacTablePartProcessor {
          Note that these fits are performed for each of the five bands.
      */
     private static String SELECT_COLUMNS=
-            "p.objId,p.run,p.rerun,p.camcol,p.field,"+
-            "dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,flags,"+
+            "ra,dec,raErr,decErr,p.objId,p.run,p.rerun,p.camcol,p.field,"+
+            "dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,dbo.fPhotoFlagsN(flags) as flags,"+
             "psfMag_u,psfMag_g,psfMag_r,psfMag_i,psfMag_z,psfMagErr_u,psfMagErr_g,psfMagErr_r,psfMagErr_i,psfMagErr_z,"+
             "modelMag_u,modelMag_g,modelMag_r,modelMag_i,modelMag_z,modelMagErr_u,modelMagErr_g,modelMagErr_r,modelMagErr_i,modelMagErr_z,"+
-            "ra,dec,raErr,decErr,extinction_u,extinction_g,extinction_r,extinction_i,extinction_z,mjd";
+            "extinction_u,extinction_g,extinction_r,extinction_i,extinction_z,mjd";
 
 
     /*
