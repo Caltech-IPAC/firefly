@@ -33,10 +33,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+
+import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
+import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
 /**
  * @author tatianag
@@ -68,7 +68,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
      */
     private static String SELECT_COLUMNS=
             "ra,dec,raErr,decErr,p.objId,p.run,p.rerun,p.camcol,p.field,"+
-            "dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,dbo.fPhotoFlagsN(flags) as flags,"+
+            "dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,flags,"+
             "psfMag_u,psfMag_g,psfMag_r,psfMag_i,psfMag_z,psfMagErr_u,psfMagErr_g,psfMagErr_r,psfMagErr_i,psfMagErr_z,"+
             "modelMag_u,modelMag_g,modelMag_r,modelMag_i,modelMag_z,modelMagErr_u,modelMagErr_g,modelMagErr_r,modelMagErr_i,modelMagErr_z,"+
             "extinction_u,extinction_g,extinction_r,extinction_i,extinction_z,mjd";
@@ -89,7 +89,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
     private static String NEARBY = "dbo.fGetNearbyObjEq";
     private static String NEAREST = "dbo.fGetNearestObjEq";
 
-    public static String UPLOAD_SQL = "SELECT u.*,"+SELECT_COLUMNS+
+    public static String UPLOAD_SQL = "SELECT u.up_id,"+SELECT_COLUMNS+
             " FROM #upload u"+
             " JOIN #x x ON x.up_id = u.up_id"+
             " JOIN PhotoObj p ON p.objID = x.objID"+
@@ -348,9 +348,9 @@ public class SDSSQuery extends IpacTablePartProcessor {
     protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
 
         String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
-        boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
-        if (nearestOnly && !StringUtils.isEmpty(uploadFname)) {
+        if (!StringUtils.isEmpty(uploadFname)) {
             DataGroup upDg = DataGroupReader.read(VisContext.convertToFile(uploadFname));
+
             final DataGroup resDg = DataGroupReader.read(dgFile);
             if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {
                 return dgFile;
@@ -364,7 +364,19 @@ public class SDSSQuery extends IpacTablePartProcessor {
                 }
             };
 
-            DataGroup results = DataGroupQuery.join(upDg, new DataType[]{upDg.getDataDefintion("fc_id")}, resDg, null, comparator, false, true);
+            ArrayList<DataType> upDefsToSave = new ArrayList();
+            for (DataType dt : upDg.getDataDefinitions()) {
+                String key = dt.getKeyName();
+                if (!key.equals("fc_id")) dt.setKeyName("up_" + dt.getKeyName());
+                if (!resDg.containsKey(dt.getKeyName())) {
+                    upDefsToSave.add((DataType)dt.clone());
+                }
+            }
+
+            boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
+
+            DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
+            results.addAttributes(new DataGroup.Attribute(makeAttribKey(VISI_TAG, "up_id"), "hide"));
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, "fc_id");
             IpacTableWriter.save(dgFile, results);
         }
