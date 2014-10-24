@@ -184,13 +184,13 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         // initiate artifacts
         ConverterStore.get("FINDER_CHART").initArtifactLayers(hub);
 
-
-        sourceTable.clearToolButtons(true, false, false);
-        sourceTable.getTable().showFilters(false);
+        if (sourceTable.getTable() != null) {
+            sourceTable.clearToolButtons(true, false, false);
+            sourceTable.getTable().showFilters(false);
+        }
         if (!isMultiPosition) {
             sourceTable.onShow();
         }
-
 
         // add  catalogs
         processCatalog(inputReq);

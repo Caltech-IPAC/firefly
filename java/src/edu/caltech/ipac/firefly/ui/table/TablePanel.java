@@ -80,6 +80,7 @@ import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -390,10 +391,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 // but, has no way of passing the error.
                 try {
                     handleEvent = false;
-                    mainPanel.add(new HTML(getServerError(caught)));
                     if (callback != null) {
                         callback.onSuccess(0);
                     }
+                    PopupUtil.showError("Request Fail", getServerError(caught));
                 } finally {
                     TablePanel.this.setInit(true);
                 }
