@@ -83,6 +83,7 @@ public class MultiDataViewer {
         mainPanel.add(plotDeck);
         buildToolbar();
         reinitConverterListeners();
+        toolbar.addStyleName("toolbar");
     }
 
     public void setRefreshListener(RefreshListener l) { this.refreshListener= l; }

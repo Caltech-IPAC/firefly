@@ -30,6 +30,7 @@ import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.ShadowedPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
@@ -86,13 +87,14 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     private static final String FINDERCHART_GROUP_NAME = "FinderChartGroup";
     private static final String SUBGROUP_KEY = "subgroup";
 
-    private TabPane sourceTab;
+    private ShadowedPanel sourceContainer;
     private TablePanel sourceTable;
-    private TabPane imageTab;
+    private ShadowedPanel gridContainer;
     private MultiDataViewerPreview imageGrid;
     private TabPane catalogTab;
     private SplitLayoutPanelFirefly layoutPanel;
     private TableResultsDisplay catalogsDisplay;
+    private boolean isMultiPosition;
 
     public FinderChartResultsController() {
 
@@ -100,38 +102,38 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         setEventsByName(Arrays.asList(EventHub.ON_TABLE_ADDED, EventHub.ON_ROWHIGHLIGHT_CHANGE, EventHub.ON_TABLE_REMOVED));
     }
 
-    @Override
-    public void bind(EventHub hub) {
-        super.bind(hub);
-    }
-
     private void init() {
         layoutPanel = new SplitLayoutPanelFirefly();
-        sourceTab = new TabPane();
-        sourceTab.setSize("100%", "100%");
-        sourceTab.setTabPaneName("Targets");
+        sourceContainer = new ShadowedPanel(null);
+//        sourceContainer.setSize("100%", "100%");
 
         catalogsDisplay = new TableResultsDisplay(getEventHub());
         catalogTab = catalogsDisplay.getTabPane();
         catalogTab.setSize("100%", "100%");
 
-        imageTab = new TabPane();
-        imageTab.setSize("100%", "100%");
+        gridContainer = new ShadowedPanel(null);
+//        gridContainer.setSize("100%", "100%");
 
         layoutPanel.addSouth(catalogTab, 350);
-        layoutPanel.addWest(sourceTab, 350);
-        layoutPanel.add(imageTab);
+        layoutPanel.addWest(sourceContainer, 350);
+        layoutPanel.add(gridContainer);
         layoutPanel.setSize("100%", "100%");
     }
 
     public Widget processRequest(final Request inputReq, AsyncCallback<String> callback, final EventHub hub, final Form form, PrimaryTableUILoader loader, final SearchTypeTag searchTypeTag) {
+
+        isMultiPosition = !StringUtils.isEmpty(inputReq.getParam(FD_FILENAME));
+
+
         init();
 
         imageGrid = new MultiDataViewerPreview();
         imageGrid.getViewer().setPlotGroupNameRoot(FINDERCHART_GROUP_NAME);
         hub.bind(imageGrid);
         imageGrid.bind(hub);
-        imageTab.addTab(imageGrid.getDisplay(), "Finder Chart");
+        Widget grid = imageGrid.getDisplay();
+        grid.setSize("100%", "100%");
+        gridContainer.setContent(grid);
 
         // create source table.
         Map<String, String> tableParams = new HashMap<String, String>();
@@ -147,8 +149,8 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         primary.bind(hub);
         loader.addTable(primary);
         loader.loadAll();
-        sourceTab.addTab(primary.getDisplay(), "Targets");
-        sourceTable = (TablePanel) sourceTab.getTab("Targets").getContent();
+        sourceTable = (TablePanel) primary.getDisplay();
+        sourceContainer.setContent(sourceTable);
 
         if (sourceTable.isInit()) {
             onResultsLoad(inputReq, searchTypeTag, hub, form);
@@ -179,12 +181,16 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         w.bind(hub);
         // -- end active target overlay
 
-        // start artifacts
-//        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-//            public void execute() {
-                ConverterStore.get("FINDER_CHART").initArtifactLayers(hub);
-//            }
-//        });
+        // initiate artifacts
+        ConverterStore.get("FINDER_CHART").initArtifactLayers(hub);
+
+
+        sourceTable.clearToolButtons(true, false, false);
+        sourceTable.getTable().showFilters(false);
+        if (!isMultiPosition) {
+            sourceTable.onShow();
+        }
+
 
         // add  catalogs
         processCatalog(inputReq);
@@ -206,7 +212,6 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
                 cmd.setHighlighted(true);
 
                 FocusWidget dlButton = new Button(cmd.getLabel());
-                dlButton.addStyleName("button");
                 TablePanel.updateHighlighted(dlButton, cmd);
                 dlButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
@@ -332,12 +337,10 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     }
 
     private void handleSourceTable() {
-        sourceTable.clearToolButtons(true, false, false);
-        sourceTable.getTable().showFilters(false);
-        if (sourceTable != null && sourceTable.getDataModel().getTotalRows() > 1) {
-            GwtUtil.SplitPanel.showWidget(layoutPanel, sourceTab);
+        if (sourceTable != null && isMultiPosition) {
+            GwtUtil.SplitPanel.showWidget(layoutPanel, sourceContainer);
         } else {
-            GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceTab);
+            GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceContainer);
         }
     }
 
