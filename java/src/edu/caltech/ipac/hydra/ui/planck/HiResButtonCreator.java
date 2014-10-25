@@ -62,11 +62,11 @@ public class HiResButtonCreator implements EventWorkerCreator {
             tablePanel = table;
             final int totaldatapt_limit = 2000000;
 
-            final Button button = GwtUtil.makeButton("HiRes Gen", "Generate High Res Image", new ClickHandler() {
+            final Button button = GwtUtil.makeButton("HIRES Gen", "Generate HIRES Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
-                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "Hires-Map generation", true, null) {
+                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "HIRES generation", true, null) {
                             protected void inputComplete() {
                                 dialog.setVisible(false);
                                 generateHiRes();
@@ -77,7 +77,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             }
                         };
                     }
-                    final HTML content = new HTML("You are sending a request for Hires image generation<br><br>");
+                    final HTML content = new HTML("You are sending a request for HIRES image generation<br><br>");
                     //final HTML content = FormBuilder.createPanel();
                     content.setHTML(content.getHTML() + "<br>" + "Selected time : <br>");
 
@@ -144,7 +144,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
             //set condition if minimap or hires
              tablePanel.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
                  public void doSuccess(TableDataView result) {
-                     NewTabInfo newTabInfo = new NewTabInfo("HiRes");
+                     NewTabInfo newTabInfo = new NewTabInfo("HIRES");
                      MiniPlotWidget mpw = makeImagePlot(result, newTabInfo);
                      newTabInfo.setDisplay(mpw);
                      WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
@@ -288,9 +288,9 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     req.setParam("size", size);
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
-                    desc = gpos+"_" + Freq + "GHz-Hires " + "with time range " + trangeStr + ", total "+ selectedRowCount
+                    desc = gpos+"_" + Freq + "GHz-HIRES " + "with time range " + trangeStr + ", total "+ selectedRowCount
                                       + " date(s) selected, Detector(s): " + detcStr;
-                    ExpandedDesc = "HiRes with " + desc;
+                    ExpandedDesc = "HIRES with " + desc;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);

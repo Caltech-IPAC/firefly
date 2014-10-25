@@ -52,16 +52,23 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
     private final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
     private final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
     private final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
+    private final static int secondInMillis = 1000;
+    private final static int minuteInMillis = secondInMillis * 60;
+    private final static int runlimit = 3 * minuteInMillis;
+    private boolean overlimit = false;
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         File retFile = null;
+        long start = System.currentTimeMillis();
+
         try {
             setXmlParams(request);
             PlanckTOITAPRequest req = QueryUtil.assureType(PlanckTOITAPRequest.class, request);
             retFile = searchPlanck(req);
 
         } catch (Exception e) {
+
             throw makeException(e, "Planck TOI Query Failed.");
         }
 
@@ -72,6 +79,9 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
     private File searchPlanck(PlanckTOITAPRequest req) throws IOException, DataAccessException, EndUserException {
         File outFile = null;
         URLConnection conn = null;
+        long start = System.currentTimeMillis();
+        long elapseTime = 0;
+        String overLimit = "no";
 
         try {
             outFile = makeFileName(req);
@@ -79,9 +89,17 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             URL url = createURL(req);
             conn = URLDownload.makeConnection(url);
             conn.setRequestProperty("Accept", "*/*");
+            conn.setReadTimeout(runlimit);
+            long time = conn.getReadTimeout();
+            _log.info("runtime limit:" + time);
 
             URLDownload.getDataToFile(conn, outFile);
 
+        } catch (SocketTimeoutException e) {
+            _log.error(e, e.toString() + ", Search is too big");
+            String umsg ="Your search is too big, we recommend you reduce the search area size and/or select fewer detectors";
+
+            throw new EndUserException("Planck TOI Search Failed: " + umsg, umsg);
         } catch (MalformedURLException e) {
             _log.error(e, "Bad URL");
             throw makeException(e, "Planck TOI Query Failed - bad url.");
@@ -106,11 +124,9 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             } else {
                 throw makeException(e, "Planck TOI Query Failed - network error.");
             }
-
         } catch (EndUserException e) {
             _log.error(e, e.toString());
             throw new EndUserException(e.getEndUserMsg(), e.getMoreDetailMsg());
-
         } catch (Exception e) {
             throw makeException(e, "Planck TOI Query Failed.");
         }

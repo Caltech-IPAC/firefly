@@ -60,11 +60,11 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
         protected FocusWidget makeButton(final TablePanel table) {
             tablePanel = table;
 
-            final Button button = GwtUtil.makeButton("MiniMap Gen", "Generate Minimap Image", new ClickHandler() {
+            final Button button = GwtUtil.makeButton("Minimap Gen", "Generate Minimap Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
-                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "Mini-Map generation", true, null) {
+                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "Minimap generation", true, null) {
                             protected void inputComplete() {
                                 dialog.setVisible(false);
                                 generateMiniMap();
@@ -121,7 +121,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
             //set condition if minimap or hires
             tablePanel.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
                  public void doSuccess(TableDataView result) {
-                     NewTabInfo newTabInfo = new NewTabInfo("MiniMap");
+                     NewTabInfo newTabInfo = new NewTabInfo("Minimap");
                      MiniPlotWidget mpw = makeImagePlot(result, newTabInfo);
                      newTabInfo.setDisplay(mpw);
                      WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
@@ -267,7 +267,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("detcStr", detcStr);
                     desc = gpos + "_" + Freq + "GHz-Minimap "+ "with time range " + trangeStr + ", total "+ selectedRowCount
                                                           + " date(s) selected, Detector(s): " + detcStr;
-                    ExpandedDesc = "MiniMap with " + desc;
+                    ExpandedDesc = "Minimap with " + desc;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);

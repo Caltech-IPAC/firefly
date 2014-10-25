@@ -485,17 +485,17 @@
                             </EnumString>
                             <EnumString orientation="horizontal">
                                 <Name>dlTOImaps</Name>
-                                <Title>Download TOI Mini-Hires-Map:</Title>
+                                <Title>Download TOI Mini-HIRES-Map:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
                                 <Default>_none_</Default>
                                 <NullAllowed/>
-                                <ShortDescription>Download MiniMap</ShortDescription>
+                                <ShortDescription>Download Minimap</ShortDescription>
                                 <EnumValue id="M">
-                                    <Title>Mini Map</Title>
+                                    <Title>Minimap</Title>
                                 </EnumValue>
                                 <EnumValue id="H">
-                                    <Title>Hires Map</Title>
+                                    <Title>HIRES</Title>
                                 </EnumValue>
                             </EnumString>
                             <EnumString orientation="vertical">
@@ -1038,6 +1038,7 @@
                     <Param key="col.mx2.Visibility" value="hidden"/>
                     <Param key="col.mxy.Visibility" value="hidden"/>
                     <Param key="col.my2.Visibility" value="hidden"/>
+                    <Param key="DEFAULT_COLOR" value="yellow"/>
                 </Metadata>
             </Query>
             <!-- Planck Data Release 2: Planck Image Cutouts Query -->
