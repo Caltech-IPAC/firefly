@@ -104,7 +104,6 @@
                 </FieldGroup>
                 <!-- Planck TOI search parameters-->
                 <FieldGroup align="left">
-<!-- cone search disabled
                    <DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Search Radius</Title>
@@ -114,7 +113,7 @@
                         <Min>0.1666666</Min>
                         <Max>2</Max>
                         <Cached/>
-                    </DEGREE>-->
+                    </DEGREE>
                     <DEGREE units="degree">
                         <Name>boxsize</Name>
                         <Title>Search Box Size</Title>
@@ -135,9 +134,9 @@
                         <EnumValue id="box">
                             <Title>Box</Title>
                         </EnumValue>
-                        <EnumValue id="circle">
+ <!--                       <EnumValue id="circle">
                             <Title>Circle</Title>
-                        </EnumValue>
+                        </EnumValue>-->
                         <!--EnumValue id="polygon">
                             <Title>Polygon</Title>
                         </EnumValue>-->
