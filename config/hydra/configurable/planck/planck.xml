@@ -136,8 +136,8 @@
                         </EnumValue>
  <!--                       <EnumValue id="circle">
                             <Title>Circle</Title>
-                        </EnumValue>-->
-                        <!--EnumValue id="polygon">
+                        </EnumValue>
+                        EnumValue id="polygon">
                             <Title>Polygon</Title>
                         </EnumValue>-->
                     </EnumString>

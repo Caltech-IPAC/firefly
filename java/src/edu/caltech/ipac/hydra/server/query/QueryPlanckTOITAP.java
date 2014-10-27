@@ -97,9 +97,9 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         } catch (SocketTimeoutException e) {
             _log.error(e, e.toString() + ", Search is too big");
-            String umsg ="Your search is too big, we recommend you reduce the search area size and/or select fewer detectors";
+            String umsg ="we recommend you reduce the search area size and/or select fewer detectors";
 
-            throw new EndUserException("Planck TOI Search Failed: " + umsg, umsg);
+            throw new EndUserException("Your Planck TOI Search is too big, " + umsg, umsg);
         } catch (MalformedURLException e) {
             _log.error(e, "Bad URL");
             throw makeException(e, "Planck TOI Query Failed - bad url.");
