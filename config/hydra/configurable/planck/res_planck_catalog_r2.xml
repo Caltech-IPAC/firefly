@@ -46,9 +46,9 @@
                            value="0=TITLE,2=IMAGE_PIXEL,1=GALACTIC,3=Pixel Size"/>
                     <Param key="LockRelated" value="true"/>
                     <Param key="UseScrollBars" value="false"/>
-                    <Param key="TitleDesc.PLANCK"
+                    <Param key="TitleDesc.PLANCK-I"
                            value="( 2.0 degree on a side with Galactic north up, east left. 30/44/70 are 60x60 2-arcmin pixels, 100-857 are 120x120 1-arcmin pixels )"/>
-                    <Param key="TitleDesc.WMAP"
+                    <Param key="TitleDesc.WMAP-I"
                            value="(2.0 degree on a side with Galactic north up, east left. 60x60 2-arcmin pixels)"/>
                     <Param key="TitleDesc.IRAS"
                            value="(2.0 degree on a side with Galactic north up, east left. 120x120 1-arcmin pixels)"/>
@@ -63,9 +63,9 @@
                            value="0=TITLE,2=IMAGE_PIXEL,1=GALACTIC,3=Pixel Size"/>
                     <Param key="LockRelated" value="true"/>
                     <Param key="UseScrollBars" value="false"/>
-                    <Param key="TitleDesc.PLANCK"
+                    <Param key="TitleDesc.PLANCK-I"
                            value="( 2.0 degree on a side with Galactic north up, east left. 30/44/70 are 60x60 2-arcmin pixels, 100-857 are 120x120 1-arcmin pixels )"/>
-                    <Param key="TitleDesc.WMAP"
+                    <Param key="TitleDesc.WMAP-I"
                            value="(2.0 degree on a side with Galactic north up, east left. 60x60 2-arcmin pixels)"/>
                     <Param key="TitleDesc.IRAS"
                            value="(2.0 degree on a side with Galactic north up, east left. 120x120 1-arcmin pixels)"/>

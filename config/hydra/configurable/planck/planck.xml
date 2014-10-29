@@ -1038,7 +1038,7 @@
                     <Param key="col.mx2.Visibility" value="hidden"/>
                     <Param key="col.mxy.Visibility" value="hidden"/>
                     <Param key="col.my2.Visibility" value="hidden"/>
-                    <Param key="DEFAULT_COLOR" value="yellow"/>
+                    <!--<Param key="DEFAULT_COLOR" value="yellow"/>-->
                 </Metadata>
             </Query>
             <!-- Planck Data Release 2: Planck Image Cutouts Query -->
