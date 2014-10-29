@@ -100,7 +100,10 @@ public class RequestConverter {
                                   WebPlotRequest.HEADER_KEY_FOR_TITLE,
                                   WebPlotRequest.PLOT_TO_DIV,
                                   WebPlotRequest.PLOT_DESC_APPEND,
-                                  WebPlotRequest.OBJECT_NAME
+                                  WebPlotRequest.OBJECT_NAME,
+                                  WebPlotRequest.DOWNLOAD_FILENAME_ROOT,
+                                  WebPlotRequest.DRAWING_SUB_GROUP_ID,
+                                  WebPlotRequest.GRID_ID
         );
 
         setIntValues(jspr, wpr, WebPlotRequest.INIT_COLOR_TABLE,

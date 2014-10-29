@@ -182,6 +182,7 @@ public class WebPlot {
         }
     }
 
+
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
     public void refreshWidget() {

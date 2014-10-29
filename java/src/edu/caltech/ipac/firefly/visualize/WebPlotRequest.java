@@ -110,6 +110,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String MINIMAL_READOUT= "MinimalReadout";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
     public static final String GRID_ID = "GRID_ID";
+    public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -130,7 +131,9 @@ public class WebPlotRequest extends ServerRequest {
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                               GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID
+                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
+                                              DOWNLOAD_FILENAME_ROOT
+
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -141,7 +144,7 @@ public class WebPlotRequest extends ServerRequest {
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
-                                                     DRAWING_SUB_GROUP_ID, GRID_ID
+                                                     DRAWING_SUB_GROUP_ID, GRID_ID, DOWNLOAD_FILENAME_ROOT
     };
 
 
@@ -1116,6 +1119,14 @@ public class WebPlotRequest extends ServerRequest {
     public void setGridId(String id) { setParam(GRID_ID,id); }
 
     public String getGridId() { return getParam(GRID_ID); }
+
+    public void setDownloadFileNameRoot(String nameRoot) {
+        setParam(DOWNLOAD_FILENAME_ROOT, nameRoot);
+    }
+
+    public String getDownloadFileNameRoot() {
+        return getParam(DOWNLOAD_FILENAME_ROOT);
+    }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.
