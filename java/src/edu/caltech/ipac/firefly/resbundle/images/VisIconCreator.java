@@ -198,7 +198,7 @@ public interface VisIconCreator extends ClientBundle {
     @Source("icons-2014/28x28_FITS_Modify3Image.png")
     public ImageResource getFITSModify3Image();
 
-    @Source("icons-2014/28x28_FITS_Insert3Image_plain.png")
+    @Source("icons-2014/24x24_FITS_Insert3Image_plain.png")
     public ImageResource getFITSInsert3Image();
 
 //    @Source("statistics_20x20.png")

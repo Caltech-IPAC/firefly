@@ -64,17 +64,11 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
     public boolean isSupport(DataVisualizeMode mode) { return modeList.contains(mode); }
 
 
-    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) { return null; }
 
-    public CoverageInfo getCoverageInfo(TableMeta tableMeta) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public CoverageInfo getCoverageInfo(TableMeta tableMeta) { return null; }
 
-    public ImagePlotDefinition getImagePlotDefinition() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public ImagePlotDefinition getImagePlotDefinition() { return null; }
 
     public ActiveTargetLayer initActiveTargetLayer() {
         if (targetLayer==null) {

@@ -221,6 +221,8 @@ public class ImageSelectPanel2 implements ImageSelectAccess {
         panelComplete.setHideAlgorythm(ptype.handlesSubmit() ? BaseDialog.HideType.DONT_HIDE :
                                                                BaseDialog.HideType.AFTER_COMPLETE);
 
+        GwtUtil.setHidden(_tcPanel,ptype.isThreeColor());
+
     }
 
     private void updateToActive() {

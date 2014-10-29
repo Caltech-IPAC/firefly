@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
@@ -53,6 +54,7 @@ public class MultiDataViewer {
 
 
     private static final IconCreator _ic= IconCreator.Creator.getInstance();
+    private static final VisIconCreator _icVis= VisIconCreator.Creator.getInstance();
 
     private static String groupNameRoot = "MultiViewGroup-";
     private GridCard activeGridCard= null;
@@ -63,7 +65,8 @@ public class MultiDataViewer {
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private FlowPanel toolbar= new FlowPanel();
     private FlowPanel toolbarInner= new FlowPanel();
-    private Widget threeColor;
+    private FlowPanel toolbarRightInner= new FlowPanel();
+    private BadgeButton threeColor;
     private CheckBox relatedView= GwtUtil.makeCheckBox("Show Related", "Show all related images", true);
     private HTML noDataAvailableLabel= new HTML("No Image Data Requested");
     private Widget noDataAvailable= makeNoDataAvailable();
@@ -294,10 +297,10 @@ public class MultiDataViewer {
 
         final PlotData plotData= info.getPlotData();
         if (info.isSupport(DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR ) && plotData.is3ColorOptional()) {
-            GwtUtil.setHidden(threeColor, false);
+            GwtUtil.setHidden(threeColor.getWidget(), false);
         }
         else {
-            GwtUtil.setHidden(threeColor, true);
+            GwtUtil.setHidden(threeColor.getWidget(), true);
         }
 
         GwtUtil.setHidden(relatedView, def.getImageCount()<2 || !plotData.getCanDoGroupingChanges());
@@ -477,11 +480,11 @@ public class MultiDataViewer {
 
 
     private void buildToolbar() {
-        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                add3Color();
-            }
-        });
+//        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
+//            public void onClick(ClickEvent event) {
+//                add3Color();
+//            }
+//        });
 
         popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
@@ -495,6 +498,18 @@ public class MultiDataViewer {
             }
         });
 
+
+        threeColor= GwtUtil.makeBadgeButton(new Image(_icVis.getFITSInsert3Image()),
+                                              "Insert 3 Color images",
+                                              true, new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                add3Color();
+            }
+        });
+
+
+
+
         relatedView.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (currDataContainer != null) {
@@ -507,16 +522,25 @@ public class MultiDataViewer {
 
 
 
-        addToolbarWidget(threeColor);
+//        addToolbarWidget(threeColor);
         addToolbarWidget(relatedView);
+        addToolbarWidgetRight(threeColor.getWidget());
+        addToolbarWidgetRight(popoutButton.getWidget());
 
         toolbar.add(toolbarInner);
-        toolbar.add(popoutButton.getWidget());
+        toolbar.add(toolbarRightInner);
+//        toolbar.add(popoutButton.getWidget());
         GwtUtil.setStyle(toolbarInner, "display", "inline-block");
-        GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
-                          "cssFloat", "right",
-                          "padding", "0 5px 0 0 ");
-        GwtUtil.setHidden(threeColor, true);
+//        GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
+//                          "right", "5px",
+//                          "position", "absolute");
+////                          "padding", "0 5px 0 0 ");
+        GwtUtil.setStyles(toolbarRightInner,
+                          "right", "5px",
+                          "top", "0px",
+                          "position", "absolute");
+//                          "padding", "0 5px 0 0 ");
+        GwtUtil.setHidden(threeColor.getWidget(), true);
         GwtUtil.setHidden(relatedView, true);
         GwtUtil.setHidden(toolbar, true);
     }
@@ -530,6 +554,12 @@ public class MultiDataViewer {
     public void addToolbarWidgetAtBeginning(Widget w) {
         toolbarInner.insert(w,0);
         GwtUtil.setStyle(w, "display", "inline-block");
+    }
+
+    public void addToolbarWidgetRight(Widget w) {
+        toolbarRightInner.add(w);
+        GwtUtil.setStyles(w, "display", "inline-block",
+                          "padding", "0px 2px 0 7px");
     }
 
     private void reinitConverterListeners() {
