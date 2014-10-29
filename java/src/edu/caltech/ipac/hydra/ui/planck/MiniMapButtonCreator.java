@@ -265,9 +265,9 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("size", size);
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
-                    desc = gpos + "_" + Freq + "GHz-Minimap "+ "with time range " + trangeStr + ", total "+ selectedRowCount
-                                                          + " date(s) selected, Detector(s): " + detcStr;
-                    ExpandedDesc = "Minimap with " + desc;
+                    desc = gpos + "_" + Freq + "GHz-Minimap";
+                    ExpandedDesc = "Minimap with " + desc + ", time range " + trangeStr + ", total "+ selectedRowCount
+                                                                              + " date(s) selected, Detector(s): " + detcStr;;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);
@@ -275,7 +275,9 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     wpr.setInitialColorTable(4);
                     wpr.setExpandedTitle(ExpandedDesc);
                     wpr.setHideTitleDetail(false);
-                    wpr.setTitle(desc);
+                    wpr.setShowTitleArea(true);
+                    wpr.setDownloadFileNameRoot(desc);
+                    wpr.setTitle(ExpandedDesc);
 
                     //wpr.setWorldPt(pt);
                     //wpr.setSizeInDeg(size);

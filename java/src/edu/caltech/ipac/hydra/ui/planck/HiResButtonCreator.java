@@ -288,9 +288,9 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     req.setParam("size", size);
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
-                    desc = gpos+"_" + Freq + "GHz-HIRES " + "with time range " + trangeStr + ", total "+ selectedRowCount
-                                      + " date(s) selected, Detector(s): " + detcStr;
-                    ExpandedDesc = "HIRES with " + desc;
+                    desc = gpos+"_" + Freq + "GHz-HIRES";
+                    ExpandedDesc = "HIRES with " + desc +  ", time range " + trangeStr + ", total "+ selectedRowCount
+                                                          + " date(s) selected, Detector(s): " + detcStr;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);
@@ -298,7 +298,9 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     wpr.setInitialColorTable(4);
                     wpr.setExpandedTitle(ExpandedDesc);
                     wpr.setHideTitleDetail(false);
-                    wpr.setTitle(desc);
+                    wpr.setTitle(ExpandedDesc);
+                    wpr.setShowTitleArea(true);
+                    wpr.setDownloadFileNameRoot(desc);
 
                     //wpr.setWorldPt(pt);
                     //wpr.setSizeInDeg(size);
