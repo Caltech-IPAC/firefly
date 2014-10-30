@@ -27,8 +27,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     private static final WebClassProperties _prop= new WebClassProperties(LoadCatalogFromVOSearchUI.class);
 
     private static String KEYWORDS_HELP =
-            "<br>Identify VO Resource.<br>&nbsp;&nbsp;Enter the keywords to search VO resources OR "+
-            "if you know your Cone Search service URL, enter it below.&nbsp;&nbsp;<br><br>";
+            "Search VO registry by keyword OR enter cone search URL directly.<br>";
 
     private SpacialBehaviorPanel.Cone cone;
     private SimpleTargetPanel targetPanel;
@@ -97,6 +96,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     public Widget createLoadCatalogsContent() {
 
         keywordsFld = SimpleInputField.createByProp(_prop.makeBase("keywords"));
+        /*
         KeyDownHandler keywordsHandler = new KeyDownHandler() {
             public void onKeyDown(KeyDownEvent ev) {
                 int c = ev.getNativeKeyCode();
@@ -106,10 +106,19 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
                 }
             }
         };
-
         keywordsFld.getField().getFocusWidget().addKeyDownHandler(keywordsHandler);
+        */
 
-        final Widget keywordsResetBtn = GwtUtil.makeFormButton("Reset",
+        final Widget registrySearchBtn = GwtUtil.makeFormButton("Search Registry",
+                new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent event) {
+                        queryRegistryAsync();
+                    }
+                });
+        GwtUtil.setStyle(registrySearchBtn, "fontSize", "9pt");
+
+        final Widget keywordsResetBtn = GwtUtil.makeFormButton("Clear",
                 new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
@@ -121,9 +130,10 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
 
         //Widget keywordsFldContainer = GwtUtil.leftRightAlign(new Widget[]{keywordsFld}, new Widget[]{keywordsResetBtn});
         HorizontalPanel keywordsFldContainer = new HorizontalPanel();
-        keywordsFldContainer.setSpacing(1);
+        keywordsFldContainer.setSpacing(3);
         keywordsFldContainer.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
         keywordsFldContainer.add(keywordsFld);
+        keywordsFldContainer.add(registrySearchBtn);
         keywordsFldContainer.add(keywordsResetBtn);
 
         keywordQueryResults = new FlowPanel();
@@ -134,7 +144,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
                 "maxHeight", "120px",
                 "overflow", "auto",
                 "verticalAlign", "top");
-        keywordQueryResults.add(new HTML(KEYWORDS_HELP));
+        //keywordQueryResults.add(new HTML(KEYWORDS_HELP));
         GwtUtil.setStyles(keywordQueryResults,
                         "border", "1px solid lightgray",
                         "background", "#F9F9F9",
@@ -144,8 +154,8 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
 
 
         accessUrl = SimpleInputField.createByProp(_prop.makeBase("accessUrl"));
-        GwtUtil.setStyles(accessUrl,
-                "paddingTop", "5px");
+        //GwtUtil.setStyles(accessUrl,
+        //        "paddingTop", "3px");
 
         targetPanel = new SimpleTargetPanel();
 
@@ -162,28 +172,29 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
         container.add(coneSearchPanel);
 
         GwtUtil.setStyles(container,
-                "border", "4px ridge lightgray",
+                "border", "4px solid lightgray",
                 "background", "white",
                 "padding", "5px");
 
         VerticalPanel resourceIdContainer = new VerticalPanel();
         resourceIdContainer.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
-        //HTML titlehelp = new HTML(KEYWORDS_HELP);
-        //resourceIdContainer.add(titlehelp);
+        HTML titlehelp = new HTML(KEYWORDS_HELP);
+        titlehelp.setHeight("15px");
+        resourceIdContainer.add(titlehelp);
         resourceIdContainer.add(keywordsFldContainer);
         resourceIdContainer.add(keywordQueryResults);
         resourceIdContainer.add(accessUrl);
 
         GwtUtil.setStyles(resourceIdContainer,
-                "border", "4px ridge lightgray",
+                "border", "4px solid lightgray",
                 "background", "white",
                 "padding", "5px");
 
         FlexTable grid = new FlexTable();
         grid.setCellSpacing(5);
         grid.setWidget(0, 0, container);
-        grid.setWidget(1, 0, new HTML("&nbsp;"));
-        grid.setWidget(2, 0, resourceIdContainer);
+        //grid.setWidget(1, 0, new HTML("&nbsp;"));
+        grid.setWidget(1, 0, resourceIdContainer);
 
         GwtUtil.setStyles(grid,
                 "padding", "5px");
@@ -197,7 +208,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
     private void clearKeywordSearchResults() {
         keywordsFld.getField().reset();
         keywordQueryResults.clear();
-        keywordQueryResults.add(new HTML(KEYWORDS_HELP));
+        //keywordQueryResults.add(new HTML(KEYWORDS_HELP));
         accessUrl.getField().reset();
         currentKeywords = "";
         currentShortName = "";

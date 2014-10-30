@@ -59,7 +59,7 @@ public class CatalogSearchDropDown {
         _tabs.addTab(createLoadCatalogFromVOContent(), "VO Catalog");
         _mainPanel.setWidget(_tabs);
         _mainPanel.addStyleName("content-panel");
-        _mainPanel.setSize("95%", "500px");
+        _mainPanel.setSize("95%", "550px");
         _tabs.setSize("99%", "99%");
         _tabs.selectTab(0);
 
