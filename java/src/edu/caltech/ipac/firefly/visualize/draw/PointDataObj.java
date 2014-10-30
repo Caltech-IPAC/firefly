@@ -41,7 +41,7 @@ public class PointDataObj extends DrawObj {
         size= (_symbol==DrawSymbol.DOT) ? DOT_DEFAULT_SIZE : DEFAULT_SIZE;
     }
 
-    public boolean isPathOptimized() { return _symbol!=DrawSymbol.EMP_CROSS; }
+    public boolean getCanUsePathEnabledOptimization() { return _symbol!=DrawSymbol.EMP_CROSS; }
 
 //    public void setSymbol(DrawSymbol s) { _symbol = s; }
     public DrawSymbol getSymbol() { return _symbol; }

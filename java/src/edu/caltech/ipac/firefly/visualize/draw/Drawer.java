@@ -417,32 +417,22 @@ public class Drawer implements WebEventListener {
         if (primaryGraphics==null || !alive) return;
         clearDrawingAreas();
         if (canDraw(primaryGraphics)) {
-//            GwtUtil.getClientLogger().log(Level.INFO,System.currentTimeMillis()+"start drawing: "+_data.toString());
-
             _cleared= false;
             AutoColor autoColor= makeAutoColor(_pv);
             WebPlot plot= _pv.getPrimaryPlot();
-
             Dimension dim= plot.getViewPortDimension();
             primaryGraphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
-//            long preDecimate= System.currentTimeMillis(); //todo remove
             List<DrawObj> drawData= decimateData(_data, true);
-//            long delta= System.currentTimeMillis()-preDecimate;// todo remove
-//            if (_data.size()>100) {
-//                GwtUtil.getClientLogger().log(Level.INFO,"Decimate, in:"+_data.size() + ", out: "+drawData.size()+ ", Time: "+delta+ "ms"); //TODO remove
-//            }
             if (_dataTypeHint ==DataType.VERY_LARGE) {
-                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 2000 : 1000;
-                DrawingParams params= new DrawingParams(primaryGraphics, autoColor,plot,drawData, maxChunk, false);
+                DrawingParams params= new DrawingParams(primaryGraphics,autoColor,plot,drawData, getMaxChunk(drawData));
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
                 _drawingCmd.activate();
                 removeTask();
                 if (drawData.size()>15000) _plotTaskID= _pv.addTask();
-
             }
             else {
-                DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE, false);
+                DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
                 doDrawing(params, false);
             }
         }
@@ -452,6 +442,19 @@ public class Drawer implements WebEventListener {
     }
 
 
+
+    private int getMaxChunk(List<DrawObj> drawData) {
+        int maxChunk= 1;
+        if (drawData.size()==0) return maxChunk;
+        DrawObj d= drawData.get(0);
+        if (d instanceof PointDataObj) {
+            maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 2000 : 500;
+        }
+        else {
+            maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 1000 : 200;
+        }
+        return maxChunk;
+    }
 
     private List<DrawObj> decimateData(List<DrawObj> inData, boolean useColormap) {
         WebPlot plot= _pv.getPrimaryPlot();
@@ -674,14 +677,10 @@ public class Drawer implements WebEventListener {
 
 
     private void doDrawing(DrawingParams params, boolean deferred) {
-//        boolean useBuffer= params.drawBuffer!=null;
-//        long startTime= System.currentTimeMillis(); //todo remove
         if (params._begin) {
             params._begin= false;
             GwtUtil.setHidden(params._graphics.getWidget(), true);
         }
-        boolean didOp= true; // todo remove
-//        params._graphics.getWidget().setVisible(false);
         if (deferred && params._deferCnt<MAX_DEFER) {
             params._deferCnt++;
             params._done= false;
@@ -694,14 +693,11 @@ public class Drawer implements WebEventListener {
             try {
                 DrawChunkData nextChunk= getNextChuck(params);
                 if (nextChunk.optimize) {
-//                    PointDataObj.drawAllOptimized(nextChunk.drawList,params._graphics, params._plot,params._ac, false, params.vpPtM);
-//                    drawChunkOptimized(nextChunk.drawList, params, useBuffer?params.drawBuffer:params._graphics);
                     drawChunkOptimized(nextChunk.drawList, params, params._graphics);
+                    params.opCnt++;
                 }
                 else {
-//                    drawChunkNormal(nextChunk.drawList, params, useBuffer?params.drawBuffer:params._graphics);
                     drawChunkNormal(nextChunk.drawList, params, params._graphics);
-                    didOp= false; //todo remove
                 }
             } catch (ConcurrentModificationException e) {
                 GwtUtil.getClientLogger().log(Level.SEVERE,"size= "+ _data.size(),e);
@@ -712,11 +708,6 @@ public class Drawer implements WebEventListener {
                 removeTask();
             }
         }
-        if (didOp) params.opCnt++;
-//        long delta1= System.currentTimeMillis()-startTime;//TODO remove
-//        if (_data.size()>100) { //todo remove
-//            GwtUtil.getClientLogger().log(Level.INFO,"doDrawing:"+ delta1+ "ms, from start:"+(System.currentTimeMillis()-params.startTime)+"ms"); //TODO remove
-//        }
         if (params._done ) {
             GwtUtil.setHidden(primaryGraphics.getWidget(),false);
             if (_drawConnect!=null) {
@@ -755,10 +746,10 @@ public class Drawer implements WebEventListener {
                         lineWidth= obj.getLineWidth();
                     }
                     if (canOptimize) {
-                        canOptimize= lineWidth>0 &&  lineWidth==obj.getLineWidth();
-                        if (canOptimize) {
-                            canOptimize= ComparisonUtil.equals(color,obj.calculateColor(params._ac,false));
-                        }
+                        canOptimize= obj.getCanUsePathEnabledOptimization() &&
+                                     lineWidth>0 &&
+                                     lineWidth==obj.getLineWidth() &&
+                                     ComparisonUtil.equals(color,obj.calculateColor(params._ac,false));
                     }
                     i++;
                 }
@@ -783,7 +774,7 @@ public class Drawer implements WebEventListener {
         }
         graphics.drawPath();
 //        long delta= System.currentTimeMillis()-startTime;//TODO remove
-//        if (drawList.size()>10) GwtUtil.getClientLogger().log(Level.INFO,"Chunk Optimize:"+ delta+ "ms, from start:"+(System.currentTimeMillis()-params.startTime)+"ms"); //TODO remove
+//        if (drawList.size()>10) GwtUtil.getClientLogger().log(Level.INFO,"draw Chunk Optimize:"+ delta+ "ms, from start:"+(System.currentTimeMillis()-params.startTime)+"ms"); //TODO remove
     }
 
     private void drawChunkNormal(List<DrawObj> drawList, DrawingParams params, Graphics graphics) {
@@ -793,7 +784,7 @@ public class Drawer implements WebEventListener {
                 draw(graphics, params._ac, params._plot, obj,params.vpPtM, false,false);
             }
             else  {
-                if (doDraw(params._plot,obj)) { // doDraw must be call when there is a connectory
+                if (doDraw(params._plot,obj)) { // doDraw must be call when there is a connector
                     draw(graphics, params._ac, params._plot, obj,params.vpPtM, false, false);
                     if (_drawConnect!=null) {
                         drawConnector(graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
@@ -907,8 +898,8 @@ public class Drawer implements WebEventListener {
 
 
     private static class DrawingParams {
-        private long startTime= System.currentTimeMillis(); //todo remove
-        private int opCnt= 0;
+        private long startTime= System.currentTimeMillis(); //todo only for debug
+        private int opCnt= 0; //only for debug
         final WebPlot _plot;
         private final List<DrawObj> _data;
 //        final List<DrawObj> _onTop;
@@ -921,28 +912,14 @@ public class Drawer implements WebEventListener {
         int _deferCnt= 0;
         final ViewPortPtMutable vpPtM= new ViewPortPtMutable();
 
-        DrawingParams(Graphics graphics, AutoColor ac, WebPlot plot, List<DrawObj> data, int maxChunk, boolean useBufferIfPossible) {
+        DrawingParams(Graphics graphics, AutoColor ac, WebPlot plot, List<DrawObj> data, int maxChunk) {
             _graphics= graphics;
             _ac= ac;
             _plot= plot;
             _data= data;
-//            _onTop= new ArrayList<DrawObj>((int)(_data.size()*.2F));
             _iterator= _data.iterator();
             _maxChunk= maxChunk;
         }
-    }
-
-    public static class DrawCandidate {
-        private final ViewPortPt vp;
-        private final DrawObj obj;
-
-        public DrawCandidate(ViewPortPt vp, DrawObj obj) {
-            this.vp = vp;
-            this.obj = obj;
-        }
-
-        public DrawObj getObj() { return obj; }
-        public ViewPortPt getPoint() { return vp; }
     }
 
 
@@ -950,25 +927,42 @@ public class Drawer implements WebEventListener {
         public void done();
     }
 
-    public static class MyLoaded implements JSLoad.Loaded {
-        CompleteNotifier _ic;
-        public MyLoaded(CompleteNotifier ic)  { _ic= ic; }
-        public void allLoaded() { _ic.done(); }
-    }
-
-    private class DrawChunkData {
-        public List<DrawObj> drawList;
-        public boolean optimize;
-
-        private DrawChunkData(List<DrawObj> drawList, boolean optimize) {
-            this.drawList = drawList;
-            this.optimize= optimize;
-        }
-    }
-
     public interface DataUpdater {
         List<DrawObj> getData();
     }
+
+
+//    public static class DrawCandidate {
+//        private final ViewPortPt vp;
+//        private final DrawObj obj;
+//
+//        public DrawCandidate(ViewPortPt vp, DrawObj obj) {
+//            this.vp = vp;
+//            this.obj = obj;
+//        }
+//
+//        public DrawObj getObj() { return obj; }
+//        public ViewPortPt getPoint() { return vp; }
+//    }
+
+
+
+//    public static class MyLoaded implements JSLoad.Loaded {
+//        CompleteNotifier _ic;
+//        public MyLoaded(CompleteNotifier ic)  { _ic= ic; }
+//        public void allLoaded() { _ic.done(); }
+//    }
+//
+//    private class DrawChunkData {
+//        public List<DrawObj> drawList;
+//        public boolean optimize;
+//
+//        private DrawChunkData(List<DrawObj> drawList, boolean optimize) {
+//            this.drawList = drawList;
+//            this.optimize= optimize;
+//        }
+//    }
+
 
 
 

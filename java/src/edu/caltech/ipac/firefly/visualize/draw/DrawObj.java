@@ -31,7 +31,7 @@ public abstract class DrawObj {
     public boolean hasDetails() { return false; }
     public Widget makeDetailDisplay() { return null;   }
 
-    public boolean isPathOptimized() { return false; }
+    public boolean getCanUsePathEnabledOptimization() { return false; }
 
     /**
      * method may return a 0 to indicate that with width varies

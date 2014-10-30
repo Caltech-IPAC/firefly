@@ -59,7 +59,7 @@
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED"/>
 
     <!--Uncomment for development - faster compile only for firefox,chrome,safari -->
-    <!--<set-property name="user.agent" value="gecko1_8,safari"/>-->
+    <set-property name="user.agent" value="gecko1_8,safari"/>
 
 
 </module>
