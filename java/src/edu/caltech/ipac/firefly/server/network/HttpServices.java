@@ -14,6 +14,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -101,9 +102,9 @@ public class HttpServices {
                 LOG.info(reqDesc);
             } else {
                 reqDesc = reqDesc +
-                        "REQUEST HEADERS:\n " + CollectionUtil.toString(method.getRequestHeaders()) +
-                        "\nPARAMETERS:\n " + method.getParams() +
-                        "\nRESPONSE HEADERS:\n " + CollectionUtil.toString(method.getResponseHeaders());
+                        "\nREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
+                        "\nPARAMETERS:\n " + getDesc(method.getParams()) +
+                        "\nRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
 
                 LOG.error("HTTP request failed with status:" + status + "\n" + reqDesc);
             }
@@ -113,6 +114,11 @@ public class HttpServices {
         }
         return false;
     }
+
+    private static String getDesc(HttpMethodParams params) {
+        return null;
+    }
+
 
 }
 /*

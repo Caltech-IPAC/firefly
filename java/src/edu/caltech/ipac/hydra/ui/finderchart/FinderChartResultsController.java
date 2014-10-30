@@ -114,7 +114,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         gridContainer = new ShadowedPanel(null);
 //        gridContainer.setSize("100%", "100%");
 
-        layoutPanel.addSouth(catalogTab, 350);
+        layoutPanel.addSouth(catalogTab, 200);
         layoutPanel.addWest(sourceContainer, 350);
         layoutPanel.add(gridContainer);
         layoutPanel.setSize("100%", "100%");

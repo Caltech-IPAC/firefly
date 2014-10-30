@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -16,8 +17,14 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 
 import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
+import edu.caltech.ipac.target.NedAttribute;
+import edu.caltech.ipac.target.PositionJ2000;
+import edu.caltech.ipac.target.SimbadAttribute;
 import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.targetgui.TargetList;
+import edu.caltech.ipac.targetgui.net.NedParams;
+import edu.caltech.ipac.targetgui.net.SimbadParams;
+import edu.caltech.ipac.targetgui.net.TargetNetwork;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
@@ -398,6 +405,96 @@ public class QueryUtil {
         return targets;
     }
 
+    /**
+     * Get target list from uploaded file.  It supports tbl, csv, tsv, Spot target list.
+     * File must contains ra and dec columns.  If not, it must contains either objname, object, or target column
+     * for ra/dec target name resolution.
+     * @param ufile File to parse for targets
+     * @return DataGroup containing original uploaded columns, plus ra and dec if not given.
+     * @throws DataAccessException
+     * @throws IOException
+     */
+    public static DataGroup getUploadedTargets(File ufile) throws DataAccessException, IOException {
+        final String RA = "ra";
+        final String DEC= "dec";
+        try {
+            List<DataType> newCols = new ArrayList<DataType>();
+            newCols.add(new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class));
+            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            if (dg == null) {
+                throw createEndUserException("Unable to read file:" + ufile.getName());
+            }
+            String sourceCName = null;
+
+            // standardize the required columns.
+            for (DataType dt: dg.getDataDefinitions()) {
+                if (dt.getKeyName().toLowerCase().matches("object|target|objname")) {
+                    sourceCName = dt.getKeyName();
+                } else if (dt.getKeyName().toLowerCase().equals(RA)) {
+                    dt.setKeyName(RA);
+                } else if (dt.getKeyName().toLowerCase().equals(DEC)) {
+                    dt.setKeyName(DEC);
+                } else if (dt.getKeyName().startsWith(CatalogRequest.UPDLOAD_ROW_ID)) {
+                    dt.setKeyName(getUploadedCName(dt.getKeyName()));
+                }
+                DataType ndt = (DataType) dt.clone();
+                newCols.add(ndt);
+            }
+            boolean doNameResolve = false;
+            if (!dg.containsKey(RA) || !dg.containsKey(DEC)) {
+                if (sourceCName != null) {
+                    doNameResolve = true;
+                    newCols.add(1, new DataType(DEC, Double.class));
+                    newCols.add(1, new DataType(RA, Double.class));
+                } else {
+                    throw createEndUserException("IPAC Table file must contain RA and Dec columns.");
+                }
+            }
+
+            DataGroup newdg = new DataGroup("sources", newCols);
+            for (DataObject row : dg) {
+                DataObject nrow = new DataObject(newdg);
+                for (DataType dt : newCols) {
+                    if (dt.getKeyName().equals(RA) || dt.getKeyName().equals(DEC)) {
+                        if (doNameResolve && nrow.getDataElement(dt) == null) {
+                            PositionJ2000 pos = null;
+                            Object objname = row.getDataElement(sourceCName);
+                            NedAttribute na = TargetNetwork.getNedPosition(new NedParams(String.valueOf(objname)), null);
+                            pos = na.getPosition();
+                            if (pos == null) {
+                                SimbadAttribute sa = TargetNetwork.getSimbadPosition(new SimbadParams(String.valueOf(objname)), null);
+                                pos = sa.getPosition();
+                            }
+                            if (pos != null) {
+                                nrow.setDataElement(newdg.getDataDefintion(RA), pos.getLon());
+                                nrow.setDataElement(newdg.getDataDefintion(DEC), pos.getLat());
+                            }
+                        } else {
+                            if (row.containsKey(dt.getKeyName())) {
+                                nrow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                            }
+                        }
+                    } else if (dt.getKeyName().equals(CatalogRequest.UPDLOAD_ROW_ID)) {
+                        nrow.setDataElement(dt, newdg.size() + 1);
+                    } else {
+                        nrow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                    }
+                    dt = dt;// workaround
+                }
+                newdg.add(nrow);
+            }
+            newdg.shrinkToFitData(true);
+            return newdg;
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (msg==null) msg=e.getCause().getMessage();
+            if (msg==null) msg="";
+            throw new DataAccessException(
+                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
+                            e.getMessage(), e) );
+        }
+    }
+
     public static DataAccessException createEndUserException(String msg) {
         return new DataAccessException(new EndUserException(msg, msg) );
     }
@@ -619,6 +716,54 @@ public class QueryUtil {
         public double getX() { return x; }
         public double getY() { return y; }
 
+    }
+
+    /**
+     * given a column name, it will return a new column name based on IRSA's uploaded column naming convention.
+     * @param cname
+     * @return
+     */
+    public static String getUploadedCName(String cname) {
+        String s = cname.replaceFirst("_\\d\\d$", "");
+        String seqStr = s.equals(cname) ? "" : cname.replaceFirst(s+"_", "");
+        int seq = 1;
+        if (seqStr.length() > 0) {
+            seq = Integer.parseInt(seqStr) + 1;
+        }
+        return s + String.format("_%02d", seq);
+    }
+
+    private static class UploadedDataType {
+        DataType origDt;
+        DataType newDt;
+
+        private UploadedDataType(DataType origDt, String newCName) {
+            this.origDt = origDt;
+            try {
+                newDt = (DataType) origDt.clone();
+                if (newCName != null) {
+                    newDt.setKeyName(newCName);
+                }
+            } catch (CloneNotSupportedException e) {
+                // should not happen.
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            UploadedDataType obj = (UploadedDataType)o;
+            return origDt.equals(obj.origDt);
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            getUploadedTargets(new File("/Users/loi/fc.tbl"));
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 /*

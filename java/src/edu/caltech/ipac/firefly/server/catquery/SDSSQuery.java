@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -367,24 +368,26 @@ public class SDSSQuery extends IpacTablePartProcessor {
             ArrayList<DataType> upDefsToSave = new ArrayList();
             for (DataType dt : upDg.getDataDefinitions()) {
                 String key = dt.getKeyName();
-                if (!key.equals("fc_id")) dt.setKeyName("up_" + dt.getKeyName());
+                if (!key.equals(CatalogRequest.UPDLOAD_ROW_ID)) dt.setKeyName(QueryUtil.getUploadedCName(dt.getKeyName()));
                 if (!resDg.containsKey(dt.getKeyName())) {
                     upDefsToSave.add((DataType)dt.clone());
                 }
             }
+//            upDg.shrinkToFitData(true);
 
             boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
             results.addAttributes(new DataGroup.Attribute(makeAttribKey(VISI_TAG, "up_id"), "hide"));
-            DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, "fc_id");
+            DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
+            results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);
         }
         return dgFile;
     }
 
     private String getVal(DataObject row) {
-        String cname = row.containsKey("up_id") ? "up_id" : "fc_id";
+        String cname = row.containsKey("up_id") ? "up_id" : CatalogRequest.UPDLOAD_ROW_ID;
         return String.valueOf(row.getDataElement(cname));
     }
 
