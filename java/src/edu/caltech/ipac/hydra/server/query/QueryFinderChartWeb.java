@@ -148,7 +148,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
 
     private DataGroup createDataGroup(Target target, TableServerRequest request) {
 
-        boolean isMultiPosition = StringUtils.isEmpty(request.getParam("filename"));
+        boolean isMultiPosition = !StringUtils.isEmpty(request.getParam("filename"));
 
             //create an IPAC table with default attributes.
         DataType objId = new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class);
@@ -184,7 +184,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
                 } else if (dtype.getKeyName().equals(RA)) {
                     row.setDataElement(ra, pt.getLon());
                 } else if (dtype.getKeyName().equals(DEC)) {
-                    row.setDataElement(ra, pt.getLat());
+                    row.setDataElement(dec, pt.getLat());
                 }
             }
             table.add(row);
