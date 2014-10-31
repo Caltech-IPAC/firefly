@@ -1016,7 +1016,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         GChart.Axis xAxis= _chart.getXAxis();
         GChart.Axis yAxis= _chart.getYAxis();
         String xUnits = getXColUnits();
-        xAxis.setAxisLabel(_meta.getXName(_data) + (StringUtils.isEmpty(xUnits) ? "" : ", " + xUnits));
+        xAxis.setAxisLabel(_meta.getXName(_data) + (StringUtils.isEmpty(xUnits) ? "" : " (" + xUnits + ")"));
         if (_xScale instanceof LogScale) {
             setLogScaleAxis(xAxis, xMinMax, TICKS * _xResizeFactor);
         } else {
@@ -1028,7 +1028,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         int yLabelLines = 1;
         if (getYColUnits().length() > 0) {
             if  (yName.length()+getYColUnits().length() > 20)  yLabelLines++;
-            yLabel =  new HTML(yName + (yLabelLines>1 ? "<br>" : ", ") + getYColUnits());
+            yLabel =  new HTML(yName + (yLabelLines>1 ? "<br>" : " ") + "(" + getYColUnits() +")");
         } else {
             yLabel =  new HTML(yName);
         }
