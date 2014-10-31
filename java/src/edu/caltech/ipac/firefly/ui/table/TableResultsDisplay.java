@@ -214,8 +214,10 @@ public class TableResultsDisplay extends BaseLayoutElement {
                     tab.setContent(tableUI.getDisplay());
                     if (tableUI instanceof TablePrimaryDisplay) {
                         table = ((TablePrimaryDisplay) tableUI).getTable();
-                        table.getTable().setShowUnits(true);
-                        table.getTable().showFilters(true);
+                        if (table != null && table.getTable() != null) {
+                            table.getTable().setShowUnits(true);
+                            table.getTable().showFilters(true);
+                        }
                     }
                 }
             });

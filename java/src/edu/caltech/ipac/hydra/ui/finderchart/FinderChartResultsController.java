@@ -213,6 +213,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
                 FocusWidget dlButton = new Button(cmd.getLabel());
                 TablePanel.updateHighlighted(dlButton, cmd);
+                GwtUtil.setStyle(dlButton, "margin", "4px");
                 dlButton.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
                         cmd.execute();

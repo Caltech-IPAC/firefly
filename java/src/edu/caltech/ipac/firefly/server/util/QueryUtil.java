@@ -427,6 +427,7 @@ public class QueryUtil {
             String sourceCName = null;
 
             // standardize the required columns.
+            boolean doRowIdIncrement = (dg.containsKey(CatalogRequest.UPDLOAD_ROW_ID));
             for (DataType dt: dg.getDataDefinitions()) {
                 if (dt.getKeyName().toLowerCase().matches("object|target|objname")) {
                     sourceCName = dt.getKeyName();
@@ -434,7 +435,7 @@ public class QueryUtil {
                     dt.setKeyName(RA);
                 } else if (dt.getKeyName().toLowerCase().equals(DEC)) {
                     dt.setKeyName(DEC);
-                } else if (dt.getKeyName().startsWith(CatalogRequest.UPDLOAD_ROW_ID)) {
+                } else if (doRowIdIncrement && dt.getKeyName().startsWith(CatalogRequest.UPDLOAD_ROW_ID)) {
                     dt.setKeyName(getUploadedCName(dt.getKeyName()));
                 }
                 DataType ndt = (DataType) dt.clone();
@@ -479,7 +480,6 @@ public class QueryUtil {
                     } else {
                         nrow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
                     }
-                    dt = dt;// workaround
                 }
                 newdg.add(nrow);
             }
@@ -725,35 +725,18 @@ public class QueryUtil {
      */
     public static String getUploadedCName(String cname) {
         String s = cname.replaceFirst("_\\d\\d$", "");
-        String seqStr = s.equals(cname) ? "" : cname.replaceFirst(s+"_", "");
-        int seq = 1;
-        if (seqStr.length() > 0) {
-            seq = Integer.parseInt(seqStr) + 1;
-        }
-        return s + String.format("_%02d", seq);
+        int seq = getSeqNumber(cname);
+        return s + String.format("_%02d", seq+1);
     }
 
-    private static class UploadedDataType {
-        DataType origDt;
-        DataType newDt;
-
-        private UploadedDataType(DataType origDt, String newCName) {
-            this.origDt = origDt;
-            try {
-                newDt = (DataType) origDt.clone();
-                if (newCName != null) {
-                    newDt.setKeyName(newCName);
-                }
-            } catch (CloneNotSupportedException e) {
-                // should not happen.
-            }
+    public static int getSeqNumber(String cname) {
+        String s = cname.replaceFirst("_\\d\\d$", "");
+        String seqStr = s.equals(cname) ? "" : cname.replaceFirst(s+"_", "");
+        int seq = 0;
+        if (seqStr.length() > 0) {
+            seq = Integer.parseInt(seqStr);
         }
-
-        @Override
-        public boolean equals(Object o) {
-            UploadedDataType obj = (UploadedDataType)o;
-            return origDt.equals(obj.origDt);
-        }
+        return seq;
     }
 
     public static void main(String[] args) {

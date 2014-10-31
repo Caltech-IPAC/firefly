@@ -87,13 +87,13 @@
                             <Title>DSS</Title>
                         </EnumValue>
                         <EnumValue id="SDSS">
-                            <Title>SDSS</Title>
+                            <Title>SDSS(DR7)</Title>
                         </EnumValue>
                         <EnumValue id="twomass">
-                            <Title>2MASS</Title>
+                            <Title>2MASS(allsky)</Title>
                         </EnumValue>
                         <EnumValue id="WISE">
-                            <Title>WISE</Title>
+                            <Title>WISE(AllWISE)</Title>
                         </EnumValue>
                         <EnumValue id="IRIS">
                             <Title>IRAS (IRIS)</Title>
@@ -122,7 +122,7 @@
 
 
                 <FieldGroup type="activeCollapsiblePanel" labelWidth="90" width="640px">
-                    <Title>Image Search options:</Title>
+                    <Title>Image Search Options:</Title>
                     <EnumString orientation="horizontal">
                         <Name>dss_bands</Name>
                         <Title>DSS: </Title>
@@ -150,7 +150,7 @@
 
                     <EnumString orientation="horizontal">
                         <Name>SDSS_bands</Name>
-                        <Title>SDSS: </Title>
+                        <Title>SDSS(DR7): </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>_all_</Default>
@@ -174,7 +174,7 @@
                     </EnumString>
                     <EnumString orientation="horizontal">
                         <Name>twomass_bands</Name>
-                        <Title>2MASS </Title>
+                        <Title>2MASS(allsky): </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>_all_</Default>
@@ -194,7 +194,7 @@
 
                     <EnumString orientation="horizontal">
                         <Name>wise_bands</Name>
-                        <Title>WISE: </Title>
+                        <Title>WISE(AllWISE): </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[CHECKBOX]</Mask>
                         <Default>_all_</Default>
@@ -238,7 +238,7 @@
                 </FieldGroup>
 
                 <FieldGroup type="activeCollapsiblePanel"  typeName="catalog_options" labelWidth="0" width="640px">
-                    <Title>Catalog search options:</Title>
+                    <Title>Catalog Search Options:</Title>
                     <EnumString>
                         <Name>catalog_by_img_boundary</Name>
                         <Title></Title>
@@ -261,7 +261,7 @@
                             <Title>Search radius (arcsec)</Title>
                         </EnumValue>
                     </EnumString>
-                    <FieldGroup labelWidth="85" width="200px" direction="horizontal">
+                    <FieldGroup labelWidth="150" width="200px" direction="horizontal">
                         <Label><![CDATA[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]></Label>
                         <Integer>
                             <Name>sdss_radius</Name>
@@ -269,7 +269,7 @@
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
-                            <PreferWidth>5</PreferWidth>
+                            <PreferWidth>3</PreferWidth>
                             <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
@@ -280,7 +280,7 @@
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
-                            <PreferWidth>5</PreferWidth>
+                            <PreferWidth>3</PreferWidth>
                             <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
@@ -291,7 +291,7 @@
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>5</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
-                            <PreferWidth>5</PreferWidth>
+                            <PreferWidth>3</PreferWidth>
                             <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>
@@ -302,7 +302,7 @@
                             <ShortDescription>Enter the radius between 1 and 3600 arcsec</ShortDescription>
                             <Default>90</Default>
                             <ErrorDescription>Radius should be between 1 and 3600 arcsec</ErrorDescription>
-                            <PreferWidth>5</PreferWidth>
+                            <PreferWidth>3</PreferWidth>
                             <Min>1</Min>
                             <Max>3600</Max>
                             <Cached/>

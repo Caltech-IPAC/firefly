@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 
+import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
@@ -11,6 +12,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.spring.mapper.IpacTableExtractor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -20,11 +22,13 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.ui.catalog.Catalog;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtil;
@@ -346,7 +350,7 @@ public class GatorQuery extends BaseGator {
         CatalogRequest req = (CatalogRequest) request;
         if ("1".equals(req.getParam(CatalogRequest.ONE_TO_ONE)) &&
                 req.getMethod() != CatalogRequest.Method.TABLE) {
-            // single 1-to-1 search..  need to remove empty row results
+            // for single target, 1-to-1 search..  remove empty row from results
             DataGroup dg = DataGroupReader.read(f);
             if (dg.size() == 1) {
                 DataObject row = dg.get(0);
@@ -360,6 +364,30 @@ public class GatorQuery extends BaseGator {
             } else {
                 // this should not happen. there should only be 1 row of results from a single target 1-to-1 search
                 LOG.error("Gator returning more than one lines from a 1-to-1 single target search");
+            }
+        } else if (req.getMethod() == CatalogRequest.Method.TABLE) {
+            DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(f);
+            if (meta == null || meta.getCols().size() ==0) return f;
+
+            DataType gatorCntCol = meta.getCols().get(0);
+            int seqNum = QueryUtil.getSeqNumber(gatorCntCol.getKeyName());
+            String uploadedRowId = CatalogRequest.UPDLOAD_ROW_ID + (seqNum == 0 ? "" : String.format("_%02d", seqNum));
+            String cols = uploadedRowId;
+
+            boolean hasUploadId = false;
+            for(DataType dt : meta.getCols()) {
+                if (dt.getKeyName().equals(uploadedRowId)) {
+                    hasUploadId = true;
+                } else {
+                    cols +=  "," + dt.getKeyName();
+                }
+            }
+            if (hasUploadId) {
+                String queryStmt = "select col " + cols + " from " + f.getPath();
+                DataGroup dg = DataGroupQueryStatement.parseStatement(queryStmt).execute();
+                dg.getDataDefintion(uploadedRowId).setKeyName(CatalogRequest.UPDLOAD_ROW_ID);
+                dg.shrinkToFitData(true);
+                IpacTableWriter.save(f, dg);
             }
         }
         return f;
