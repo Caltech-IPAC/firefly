@@ -53,7 +53,7 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private static final DrawSymbol DEF_SYMBOL = DrawSymbol.X;
-    private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.SQUARE_X;
+    private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.EMP_SQUARE_X;
 
 
     private String _highlightedColor = AutoColor.HIGHLIGHTED_PT;

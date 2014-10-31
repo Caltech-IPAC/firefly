@@ -103,6 +103,7 @@ public class CatalogDataConnection extends TableDataConnection {
         if (r!=null) {
             WorldPt graphPt = getWorldPt(r);
             PointDataObj obj= new PointDataObj(graphPt, symbol);
+//            obj.setSize(obj.getSize()+1);
             obj.setHighlighted(true);
             retval= Arrays.asList((DrawObj)obj);
         }

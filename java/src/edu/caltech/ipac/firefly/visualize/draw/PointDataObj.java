@@ -41,7 +41,7 @@ public class PointDataObj extends DrawObj {
         size= (_symbol==DrawSymbol.DOT) ? DOT_DEFAULT_SIZE : DEFAULT_SIZE;
     }
 
-    public boolean getCanUsePathEnabledOptimization() { return _symbol!=DrawSymbol.EMP_CROSS; }
+    public boolean getCanUsePathEnabledOptimization() { return _symbol!=DrawSymbol.EMP_CROSS && _symbol!=DrawSymbol.EMP_SQUARE_X; }
 
 //    public void setSymbol(DrawSymbol s) { _symbol = s; }
     public DrawSymbol getSymbol() { return _symbol; }
@@ -53,6 +53,7 @@ public class PointDataObj extends DrawObj {
     public String getText() { return _text; }
 
     public void setSize(int size) { this.size = size; }
+    public int getSize() { return this.size; }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
@@ -164,6 +165,9 @@ public class PointDataObj extends DrawObj {
             case EMP_CROSS :
                 drawEmpCross(jg, x, y, color, "white");
                 break;
+            case EMP_SQUARE_X:
+                drawEmpSquareX(jg, x, y, color, "black", "white");
+                break;
             case CROSS :
                 drawCross(jg, x, y, color, onlyAddToPath);
                 break;
@@ -220,6 +224,16 @@ public class PointDataObj extends DrawObj {
             jg.drawRec(color, 1, x-size,y-size, 2*size, 2*size);
         }
     }
+
+    public void drawEmpSquareX(Graphics jg, int x, int y, String color, String c1, String c2) {
+        drawX(jg,x,y,color,false);
+        drawSquare(jg,x,y,c1, false);
+        size+=2;
+        drawSquare(jg,x,y,c2, false);
+        size-=2;
+    }
+
+
 
     public void drawCross(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
 

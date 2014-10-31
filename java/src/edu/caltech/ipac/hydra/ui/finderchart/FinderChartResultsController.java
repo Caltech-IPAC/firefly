@@ -237,7 +237,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
                 addCatalog(FinderChartRequestUtil.ImageSet.TWOMASS, tsReq, Radius.twomass_radius.name(), "red");
             }
             if (sources.contains(Source.WISE.name())) {
-                addCatalog(FinderChartRequestUtil.ImageSet.WISE, tsReq, Radius.wise_radius.name(), "pink");
+                addCatalog(FinderChartRequestUtil.ImageSet.WISE, tsReq, Radius.wise_radius.name(), "orange");
             }
             if (sources.contains(Source.IRIS.name())) {
                 addCatalog(FinderChartRequestUtil.ImageSet.IRIS, tsReq, Radius.iras_radius.name(), "purple");
