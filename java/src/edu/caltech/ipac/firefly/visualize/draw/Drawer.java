@@ -5,7 +5,6 @@ import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -931,6 +930,16 @@ public class Drawer implements WebEventListener {
         List<DrawObj> getData();
     }
 
+    private class DrawChunkData {
+        public List<DrawObj> drawList;
+        public boolean optimize;
+
+        private DrawChunkData(List<DrawObj> drawList, boolean optimize) {
+            this.drawList = drawList;
+            this.optimize= optimize;
+        }
+    }
+
 
 //    public static class DrawCandidate {
 //        private final ViewPortPt vp;
@@ -952,16 +961,7 @@ public class Drawer implements WebEventListener {
 //        public MyLoaded(CompleteNotifier ic)  { _ic= ic; }
 //        public void allLoaded() { _ic.done(); }
 //    }
-//
-//    private class DrawChunkData {
-//        public List<DrawObj> drawList;
-//        public boolean optimize;
-//
-//        private DrawChunkData(List<DrawObj> drawList, boolean optimize) {
-//            this.drawList = drawList;
-//            this.optimize= optimize;
-//        }
-//    }
+
 
 
 
