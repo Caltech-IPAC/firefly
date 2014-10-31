@@ -300,7 +300,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     wpr.setHideTitleDetail(false);
                     wpr.setTitle(ExpandedDesc);
                     wpr.setShowTitleArea(true);
-                    wpr.setDownloadFileNameRoot(desc);
+                    wpr.setDownloadFileNameRoot("planck_toi_search_" + desc);
 
                     //wpr.setWorldPt(pt);
                     //wpr.setSizeInDeg(size);

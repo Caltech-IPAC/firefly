@@ -298,14 +298,14 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         }
 
         if (downloadMinimap) {
-            String MiniMap = baseFilename + "_minimap.fits";
+            String MiniMap = baseFilename + "_Minimap.fits";
             fi = new FileInfo(minimapurl, MiniMap, estSize);
             fiArr.add(fi);
             fgSize += fi.getSizeInBytes();
         }
 
         if (downloadHires) {
-            String HiresMap = baseFilename + "_hires.fits";
+            String HiresMap = baseFilename + "_HIRES.fits";
             fi = new FileInfo(hiresurl, HiresMap, estSize);
             fiArr.add(fi);
             fgSize += fi.getSizeInBytes();

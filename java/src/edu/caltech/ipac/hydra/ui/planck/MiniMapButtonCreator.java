@@ -267,7 +267,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("detcStr", detcStr);
                     desc = gpos + "_" + Freq + "GHz-Minimap";
                     ExpandedDesc = "Minimap with " + desc + ", time range " + trangeStr + ", total "+ selectedRowCount
-                                                                              + " date(s) selected, Detector(s): " + detcStr;;
+                                                                            + " date(s) selected, Detector(s): " + detcStr;;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);
@@ -276,7 +276,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     wpr.setExpandedTitle(ExpandedDesc);
                     wpr.setHideTitleDetail(false);
                     wpr.setShowTitleArea(true);
-                    wpr.setDownloadFileNameRoot(desc);
+                    wpr.setDownloadFileNameRoot("planck_toi_search_" + desc);
                     wpr.setTitle(ExpandedDesc);
 
                     //wpr.setWorldPt(pt);
