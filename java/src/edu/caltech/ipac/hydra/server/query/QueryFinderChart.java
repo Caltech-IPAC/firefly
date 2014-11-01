@@ -144,19 +144,19 @@ public class QueryFinderChart extends DynQueryProcessor {
         File retFile = getFinderChart(mode, request);
 
         if (mode.equals(WEB_MODE)) {
-            if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
-                retFile = getFilterPanelTable(request, retFile);
-            } else {
-                // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
-                // Thus set page size to 0 at initial stage.
-                if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
-                    request.setPageSize(0);
-                }
-            }
-
-            if (!request.containsParam("FilterColumn")) {
-                request.setFilters(getFilterList(request, retFile));
-            }
+//            if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
+//                retFile = getFilterPanelTable(request, retFile);
+//            } else {
+//                // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
+//                // Thus set page size to 0 at initial stage.
+////                if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
+////                    request.setPageSize(0);
+////                }
+//            }
+//
+////            if (!request.containsParam("FilterColumn")) {
+////                request.setFilters(getFilterList(request, retFile));
+////            }
         }
 
         return retFile;

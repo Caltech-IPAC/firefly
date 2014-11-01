@@ -5,12 +5,14 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
+import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
@@ -26,10 +28,13 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchFormParamTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.PackageTask;
 import edu.caltech.ipac.firefly.ui.ShadowedPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
@@ -66,6 +71,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_CAT_BY_BOUNDARY;
 import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.FD_FILENAME;
@@ -221,6 +227,24 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
                 });
 
                 imageGrid.getViewer().addToolbarWidgetAtBeginning(dlButton);
+
+
+//                Widget pdfButton = GwtUtil.makeImageButton(
+//                        new Image(IconCreator.Creator.getInstance().getPdf()),
+//                        "Download PDF", new ClickHandler() {
+//                            @Override
+//                            public void onClick(ClickEvent event) {
+//                                Widget maskW=  gridContainer;
+//                                Widget w= gridContainer;
+//                                int cX= w.getAbsoluteLeft()+ w.getOffsetWidth()/2;
+//                                int cY= w.getAbsoluteTop()+ w.getOffsetHeight()/2;
+//                                PackageTask.preparePackage(maskW, cX, cY, makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form));
+//
+//                            }
+//                        });
+//
+//                imageGrid.getViewer().addToolbarWidgetRight(pdfButton);
+
             }
         }
     }
@@ -370,6 +394,15 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
                     });
         // there should only be 1.  if there's more than 1, the logic may need to change.
         if (groups.size() == 1) {
+            Set<TableData.Row> srows = sourceTable.getTable().getSelectedRowValues();
+            if (srows.size() > 0) {
+                TableData.Row selRow = srows.iterator().next();
+                List<String> cfilters = new ArrayList<String>();
+                cfilters.add("ra = " + selRow.getValue("ra"));
+                cfilters.add("dec = " + selRow.getValue("dec"));
+                searchReq.setFilters(cfilters);
+            }
+
             PlotWidgetGroup group = groups.get(0);
             String stateStr = "";
             String drawInfoListStr = "";
