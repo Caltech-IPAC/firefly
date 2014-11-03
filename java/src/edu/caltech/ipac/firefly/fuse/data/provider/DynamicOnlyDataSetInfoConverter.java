@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
@@ -60,7 +59,6 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) { return null; }
 
-    public CoverageInfo getCoverageInfo(TableMeta tableMeta) { return null; }
 
     public ImagePlotDefinition getImagePlotDefinition() { return imagePlotDefinition; }
 

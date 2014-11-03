@@ -409,6 +409,14 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         map.get(ID.TWOMASS_J.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
         map.get(ID.TWOMASS_H.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
         map.get(ID.TWOMASS_K.toString()).addAll(Arrays.asList("pers_arti", "glint_arti" ));
+
+
+         map.put(ID3.DSS_3.toString(),Arrays.asList("target"));
+         map.put(ID3.SDSS_3.toString(),Arrays.asList("target"));
+         map.put(ID3.TWOMASS_3.toString(),Arrays.asList("target"));
+         map.put(ID3.WISE_3C.toString(),Arrays.asList("target"));
+         map.put(ID3.IRAS_3.toString(),Arrays.asList("target"));
+
         return map;
     }
 

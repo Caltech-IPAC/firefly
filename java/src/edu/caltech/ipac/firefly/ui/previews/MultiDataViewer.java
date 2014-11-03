@@ -256,7 +256,6 @@ public class MultiDataViewer {
 
 
     //TODO: how do we deal with the no data message
-    //TODO: how do we deal with the plot fail message
     //TODO: how do we deal with the  no access message
     private void updateGrid(final Object dataContainer) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
@@ -388,9 +387,13 @@ public class MultiDataViewer {
     public void addNewToGrid(GridCard gridCard, Set<String> keys, boolean addToGroup) {
         DataVisGrid grid= gridCard.getVisGrid();
         boolean addedKey= false;
+        ImagePlotDefinition def= gridCard.getInfo().getImagePlotDefinition();
+        Map<String,List<String>> viewToLayerMap= def.getViewerToDrawingLayerMap();
+        List<String> plotViewerIDList;
         for(String key : keys) {
             if (!grid.containsKey(key) && !gridCard.containsDeletedID(key)) {
-                grid.addWebPlotImage(key,null,addToGroup,true,false);
+                plotViewerIDList= viewToLayerMap.get(key);
+                grid.addWebPlotImage(key,plotViewerIDList,addToGroup,true,false);
                 addedKey= true;
             }
         }
@@ -402,15 +405,9 @@ public class MultiDataViewer {
     private void add3Color() {
         if (currDataContainer !=null) {
             GridCard gridCard= viewDataMap.get(currDataContainer);
-            DatasetInfoConverter info= getInfo(currDataContainer);
-            if (gridCard!=null && info!=null) {
-                ImagePlotDefinition def= info.getImagePlotDefinition();
+            if (gridCard!=null && getInfo(currDataContainer)!=null) {
                 gridCard.setThreeColorShowing(true);
                 gridCard.clearDeletedIDs();
-                SelectedRowData rowData= makeRowData(currDataContainer);
-                for(String id : def.get3ColorViewerIDs(rowData)) {{
-                    gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
-                }}
                 updateGrid(currDataContainer);
             }
         }
@@ -480,11 +477,6 @@ public class MultiDataViewer {
 
 
     private void buildToolbar() {
-//        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
-//            public void onClick(ClickEvent event) {
-//                add3Color();
-//            }
-//        });
 
         popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
@@ -561,6 +553,13 @@ public class MultiDataViewer {
         GwtUtil.setStyles(w, "display", "inline-block",
                           "padding", "0px 2px 0 7px");
     }
+
+    public void addToolbarWidgetRightAtBeginning(Widget w) {
+        toolbarRightInner.insert(w,0);
+        GwtUtil.setStyles(w, "display", "inline-block",
+                          "padding", "0px 2px 0 7px");
+    }
+
 
     private void reinitConverterListeners() {
         for(DatasetInfoConverter c : ConverterStore.getConverters()) {

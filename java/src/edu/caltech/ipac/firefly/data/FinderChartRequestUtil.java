@@ -170,7 +170,7 @@ public class FinderChartRequestUtil {
                 wpReq= WebPlotRequest.makeWiseRequest(pt, pair[0], pair[1], radius);
                 break;
         }
-        wpReq.setDrawingSubGroupId(ImageSet.lookup(service).subgroup);
+        if (wpReq!=null) wpReq.setDrawingSubGroupId(ImageSet.lookup(service).subgroup);
         return wpReq;
     }
 
