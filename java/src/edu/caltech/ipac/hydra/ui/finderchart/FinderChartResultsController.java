@@ -9,6 +9,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.DynRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
@@ -31,6 +32,7 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.DynDownloadSelectionDialog;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -51,6 +53,7 @@ import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
 import edu.caltech.ipac.firefly.ui.table.builder.PrimaryTableUILoader;
 import edu.caltech.ipac.firefly.util.Constants;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
@@ -228,23 +231,28 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
 
                 imageGrid.getViewer().addToolbarWidgetAtBeginning(dlButton);
 
+                final Ref<Integer> dlCounter = new Ref<Integer>(0);
+                BadgeButton pdfButton = GwtUtil.makeBadgeButton(
+                        new Image(IconCreator.Creator.getInstance().getPdf()),
+                        "Download PDF", true, new ClickHandler() {
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                int counter = dlCounter.getSource();
+                                Widget maskW = gridContainer;
+                                Widget w = gridContainer;
+                                int cX = w.getAbsoluteLeft() + w.getOffsetWidth() / 2;
+                                int cY = w.getAbsoluteTop() + w.getOffsetHeight() / 2;
+                                DownloadRequest dlreq = makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form);
+                                dlreq.setParam("scope", "current"); // "current target" parameter for finder chart download.
+                                dlreq.setBaseFileName(dlreq.getFilePrefix());
+                                dlreq.setTitle(dlreq.getTitlePrefix() + "-pdf-" + counter++);
+                                dlCounter.setSource(counter);
+                                dlreq.setParam("file_type", "pdf");
+                                PackageTask.preparePackage(maskW, cX, cY, dlreq);
+                            }
+                        });
 
-//                Widget pdfButton = GwtUtil.makeImageButton(
-//                        new Image(IconCreator.Creator.getInstance().getPdf()),
-//                        "Download PDF", new ClickHandler() {
-//                            @Override
-//                            public void onClick(ClickEvent event) {
-//                                Widget maskW=  gridContainer;
-//                                Widget w= gridContainer;
-//                                int cX= w.getAbsoluteLeft()+ w.getOffsetWidth()/2;
-//                                int cY= w.getAbsoluteTop()+ w.getOffsetHeight()/2;
-//                                PackageTask.preparePackage(maskW, cX, cY, makeDownlaodRequest(sourceTable.getDataModel().getRequest(), dlTag, form));
-//
-//                            }
-//                        });
-//
-//                imageGrid.getViewer().addToolbarWidgetRight(pdfButton);
-
+                imageGrid.getViewer().addToolbarWidgetRightAtBeginning(pdfButton.getWidget());
             }
         }
     }
