@@ -209,13 +209,13 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 map_detc_constr += ",'" + detectors[j] + "'";
                 detcStr += ","+detectors[j];
             }
-            detc_constr += ")+and+";
+            detc_constr += ")";
             map_detc_constr += "]";
         }
 
         String sso_constr = "";
         if (ssoflag.equals("false")){
-            sso_constr = "(sso='0')";
+            sso_constr = "+and+(sso='0')";
         }
 
         logger.briefInfo("detector constr=" +detc_constr);
