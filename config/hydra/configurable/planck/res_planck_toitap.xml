@@ -9,11 +9,11 @@
         </QueryId>
     </EventWorker>
 
-    <EventWorker id="PlanckHiRes" type="PlanckHiRes">
+<!--    <EventWorker id="PlanckHiRes" type="PlanckHiRes">
         <QueryId>
             planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
         </QueryId>
-    </EventWorker>
+    </EventWorker>-->
 
     <Layout>
         <SplitPanel>
