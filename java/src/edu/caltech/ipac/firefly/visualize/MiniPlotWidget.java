@@ -118,6 +118,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _useToolsButton  = FFToolEnv.isAPIMode(); // show tools button on the plot toolbar
     private boolean      _useLayerOnPlotToolbar; // show the Layer button on the plot toolbar
     private WebPlotRequest.GridOnStatus _turnOnGridAfterPlot= WebPlotRequest.GridOnStatus.FALSE; // turn on the grid after plot
+    private WebPlotRequest.ExpandedTitleOptions expandedTitleOptions= WebPlotRequest.ExpandedTitleOptions.REPLACE;
 
 
     //preference controls
@@ -497,10 +498,28 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
     public String getNonHTMLExpandedTitle() {
-        String retval = _expandedTitle;
-        if (StringUtils.isEmpty(retval)) {
-            retval = getTitle();
+        String retval = null;
+        String t= getTitle();
+        if (AllPlots.getInstance().isExpanded() && !StringUtils.isEmpty(_expandedTitle)) {
+            switch (expandedTitleOptions) {
+                case REPLACE:
+                    retval= _expandedTitle;
+                    break;
+                case PREFIX:
+                    retval= _expandedTitle + " " + t;
+                    break;
+                case SUFFIX:
+                    retval= t+ " " + _expandedTitle ;
+                    break;
+            }
         }
+        else {
+            retval = t;
+        }
+
+
+
+
         return retval!=null ? retval : "";
     }
 
@@ -512,7 +531,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
     public String computeTitleLabelHTML(int maxChar) {
-        //todo: what happen if called in non-expanded view mode?
         String p= "";
         String s= "";
         if (getExpandedTitle(false)!=null) {
@@ -660,6 +678,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 if (r.containsParam(WebPlotRequest.GRID_ID)) {
                     _plotView.setAttribute(WebPlotView.GRID_ID, r.getGridId());
                 }
+                if (r.containsParam(WebPlotRequest.EXPANDED_TITLE_OPTIONS)) {
+                    expandedTitleOptions= r.getExpandedTitleOptions();
+                }
+
                 if (r.containsParam(WebPlotRequest.ADVERTISE) && r.isAdvertise()) {
                     _showAd= true;
                     if (_plotPanel!=null) {
@@ -1150,7 +1172,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     public void processError(WebPlot wp, String briefDesc, String desc, Exception e) {
-        processError(wp,briefDesc,desc,null,e);
+        processError(wp, briefDesc, desc, null, e);
     }
 
     public void processError(WebPlot wp, String briefDesc, String desc, String details, Exception e) {

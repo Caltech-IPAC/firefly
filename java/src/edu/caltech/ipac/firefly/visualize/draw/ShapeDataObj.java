@@ -71,6 +71,11 @@ public class ShapeDataObj extends DrawObj {
          _sType= sType;
     }
 
+    @Override
+    public boolean getCanUsePathEnabledOptimization() {
+        return _style==Style.STANDARD && (_sType==ShapeType.Line || _sType==ShapeType.Rectangle);
+    }
+
     public static ShapeDataObj makeLine(WorldPt pt1, WorldPt pt2) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Line);
         s._pts= new Pt[] {pt1, pt2};
@@ -204,7 +209,7 @@ public class ShapeDataObj extends DrawObj {
 
 
     public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawShape(jg,p,ac,useStateColor);
+        drawShape(jg,p,ac,useStateColor,onlyAddToPath);
     }
 
     public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
@@ -216,7 +221,8 @@ public class ShapeDataObj extends DrawObj {
     private void drawShape(Graphics jg,
                              WebPlot plot,
                              AutoColor ac,
-                             boolean useStateColor) {
+                             boolean useStateColor,
+                             boolean onlyAddToPath) {
 
         String color= calculateColor(ac,useStateColor);
         switch (_sType) {
@@ -225,13 +231,13 @@ public class ShapeDataObj extends DrawObj {
                 drawText(jg,plot,color,_pts[0], _text);
                 break;
             case Line:
-                drawLine(jg,plot,color);
+                drawLine(jg,plot,color,onlyAddToPath);
                 break;
             case Circle:
                 drawCircle(jg,plot,color);
                 break;
             case Rectangle:
-                drawRectangle(jg,plot,color);
+                drawRectangle(jg,plot,color,onlyAddToPath);
                 break;
         }
     }
@@ -276,24 +282,28 @@ public class ShapeDataObj extends DrawObj {
         }
     }
 
-    private void drawLine(Graphics jg, WebPlot plot, String  color ) {
+    private void drawLine(Graphics g, WebPlot plot, String  color, boolean onlyAddToPath ) {
         boolean inView= false;
         ViewPortPt pt0= plot.getViewPortCoords(_pts[0]);
         ViewPortPt pt1= plot.getViewPortCoords(_pts[1]);
         if (pt0==null || pt1==null) return;
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
-            jg.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
+            if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
+//            g.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
+            g.pathMoveTo(pt0.getIX(), pt0.getIY());
+            g.pathLineTo(pt1.getIX(), pt1.getIY());
+            if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
         }
 
         if (_text!=null && inView) {
             ScreenPt textLocPt= makeTextLocationLine(plot, _pts[0], _pts[1]);
-            drawText(jg, plot, color, plot.getViewPortCoords(textLocPt), _text);
+            drawText(g, plot, color, plot.getViewPortCoords(textLocPt), _text);
         }
 
         if (_style==Style.HANDLED && inView) {
-            jg.fillRec(color,pt0.getIX()-2, pt0.getIY()-2, 5,5);
-            jg.fillRec(color,pt1.getIX()-2, pt1.getIY()-2, 5,5);
+            g.fillRec(color,pt0.getIX()-2, pt0.getIY()-2, 5,5);
+            g.fillRec(color,pt1.getIX()-2, pt1.getIY()-2, 5,5);
         }
     }
 
@@ -308,7 +318,7 @@ public class ShapeDataObj extends DrawObj {
         return retval<2 ? 2 : (int)Math.rint(retval);
     }
 
-    private void drawCircle(Graphics jg, WebPlot plot, String  color ) {
+    private void drawCircle(Graphics g, WebPlot plot, String  color) {
         boolean inView= false;
         int screenRadius= 1;
         ViewPortPt centerPt=null;
@@ -320,7 +330,7 @@ public class ShapeDataObj extends DrawObj {
             }
             centerPt= plot.getViewPortCoords(_pts[0]);
             if (plot.pointInViewPort(centerPt)) {
-                jg.drawCircle(color,DEF_WIDTH,centerPt.getIX(),centerPt.getIY(), screenRadius);
+                g.drawCircle(color,DEF_WIDTH,centerPt.getIX(),centerPt.getIY(), screenRadius);
                 inView= true;
             }
         }
@@ -339,20 +349,20 @@ public class ShapeDataObj extends DrawObj {
                 int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
                 centerPt= new ViewPortPt(x,y);
 
-                jg.drawCircle(color,DEF_WIDTH,x,y,screenRadius );
+                g.drawCircle(color,DEF_WIDTH,x,y,screenRadius );
             }
         }
 
         if (_text!=null && inView && centerPt!=null) {
             ScreenPt textPt= makeTextLocationCircle(plot,centerPt,screenRadius);
-            drawText(jg,plot,color,textPt, _text);
+            drawText(g,plot,color,textPt, _text);
         }
         if (_style==Style.HANDLED && inView) {
             // todo
         }
     }
 
-    private void drawRectangle(Graphics jg, WebPlot plot, String  color ) {
+    private void drawRectangle(Graphics g, WebPlot plot, String  color, boolean onlyAddToPath ) {
 
         boolean inView= false;
         ViewPortPt textPt;
@@ -373,7 +383,9 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                jg.drawRec(color,DEF_WIDTH,x,y,w,h);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
+                g.rect(x,y,w,h);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
             }
 
         }
@@ -389,12 +401,14 @@ public class ShapeDataObj extends DrawObj {
                 int y= pt0.getIY();
                 int width=  pt1.getIX()-pt0.getIX();
                 int height=  pt1.getIY()-pt0.getIY();
-                jg.drawRec(color,DEF_WIDTH,x,y,width,height);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
+                g.rect(x,y,width,height);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
             }
         }
 
         if (_text!=null && inView) {
-            drawText(jg,plot,color,textPt, _text);
+            drawText(g,plot,color,textPt, _text);
         }
         if (_style==Style.HANDLED && inView) {
             // todo

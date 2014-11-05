@@ -35,6 +35,11 @@ public class WebPlotRequest extends ServerRequest {
                               PLOT_DESC_PLUS, // ??
                               SERVICE_OBS_DATE,
                              }
+    public enum ExpandedTitleOptions {
+        REPLACE,// use expanded title when expanded
+        PREFIX,// use expanded title as prefix to title
+        SUFFIX,// use expanded title as sufix to title
+    }
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 70;
 
@@ -103,6 +108,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
+    public static final String EXPANDED_TITLE_OPTIONS = "ExpandedTitleOptions";
     public static final String POST_TITLE= "PostTitle";
     public static final String PRE_TITLE= "PreTitle";
     public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
@@ -130,7 +136,8 @@ public class WebPlotRequest extends ServerRequest {
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
-                                              GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                              GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+                                              POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                               TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
                                               DOWNLOAD_FILENAME_ROOT
 
@@ -142,7 +149,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE,
                                                      ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                                     TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+                                                     POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
                                                      DRAWING_SUB_GROUP_ID, GRID_ID, DOWNLOAD_FILENAME_ROOT
     };
@@ -458,9 +466,21 @@ public class WebPlotRequest extends ServerRequest {
             retval = Enum.valueOf(TitleOptions.class, getParam(TITLE_OPTIONS));
         }
         return retval;
-
-
     }
+
+    public void setExpandedTitleOptions(ExpandedTitleOptions option) {
+        setParam(EXPANDED_TITLE_OPTIONS,option.toString());
+    }
+
+    public ExpandedTitleOptions getExpandedTitleOptions() {
+        ExpandedTitleOptions retval = ExpandedTitleOptions.REPLACE;
+        if (this.containsParam(EXPANDED_TITLE_OPTIONS)) {
+            retval = Enum.valueOf(ExpandedTitleOptions.class, getParam(EXPANDED_TITLE_OPTIONS));
+        }
+        return retval;
+    }
+
+
 
 
     public void setPreTitle(String preTitle) {

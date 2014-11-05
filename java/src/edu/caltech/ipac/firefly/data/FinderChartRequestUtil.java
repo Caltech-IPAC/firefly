@@ -8,6 +8,7 @@ package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.HashMap;
@@ -128,7 +129,8 @@ public class FinderChartRequestUtil {
                                                     WebPlotRequest.ServiceType service ) {
 
         WebPlotRequest wpReq= getWebPlotRequest(service, band, pt, radius);
-//        wpReq.setExpandedTitle(expandedTitle);
+        if (!StringUtils.isEmpty(expandedTitle)) wpReq.setExpandedTitle(expandedTitle);
+        wpReq.setExpandedTitleOptions(WebPlotRequest.ExpandedTitleOptions.PREFIX);
         wpReq.setZoomType(ZoomType.TO_WIDTH);
         wpReq.setZoomToWidth(width);
         wpReq.setZoomToHeight(width); // set width and height the same

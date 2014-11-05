@@ -8,13 +8,13 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.fuse.data.BaseImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
-import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet;
 import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisualizeMode.FITS;
 import static edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.DSS;
@@ -42,7 +43,6 @@ import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.TWOM
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.WISE;
 
 // convenience sharing of constants
-import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 
 /**
  * @author Trey Roby
@@ -700,11 +700,28 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
             Float subSize= req.getFloatParam("subsize");
             if (subSize.isNaN()) subSize= DEFAULT_SUBSIZE;
             int width= FinderChartRequestUtil.getPlotWidth(req.getParam("thumbnail_size"));
-            List<WebPlotRequest.ServiceType> services= getServices(req);
+//            List<WebPlotRequest.ServiceType> services= getServices(req);
             WorldPt wp= getWorldPt(selData.getSelectedRow());
             WebPlotRequest.ServiceType st= getService(ID.valueOf(id));
             String bandComboPair=getComboPair(ID.valueOf(id));
-            WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, bandComboPair, "", st);
+            String expPrefix;
+            switch (st) {
+                case IRIS:
+                case ISSA:
+                case DSS:
+                case SDSS:
+                case MSX:
+                case WISE:
+                    expPrefix= st.name()+":";
+                    break;
+                case TWOMASS:
+                    expPrefix= "2MASS:";
+                    break;
+                default:
+                    expPrefix= null;
+                    break;
+            }
+            WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, bandComboPair, expPrefix, st);
 
             if (useWithThreeColor) {
                 wpReq.setTitle("3 Color");
