@@ -133,7 +133,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         if (_prefMap.containsKey(_enablePrefKey))  v= Boolean.parseBoolean(_prefMap.get(_enablePrefKey));
         v= sgControl.isVisibleAtAnyLevel(_pv,v) || v;
         setOneVisible(v);
+    }
 
+    public void initDefaultVisibilityTo(boolean v) {
+        setOneVisible(v);
     }
 
     public DrawingManager getDrawingManager() { return drawingManager; }

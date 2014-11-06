@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.IncrementalCommand;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Browser;
@@ -46,7 +45,6 @@ public class Drawer implements WebEventListener {
     private static int drawerCnt=0;
     private final int drawerID;
     public static final String DEFAULT_DEFAULT_COLOR= "red";
-    public final static int MAX_DEFER= 1;
     private String _defColor= DEFAULT_DEFAULT_COLOR;
     private List<DrawObj> _data;
     private List<DrawObj> _highlightData;
@@ -422,7 +420,7 @@ public class Drawer implements WebEventListener {
             Dimension dim= plot.getViewPortDimension();
             primaryGraphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
             List<DrawObj> drawData= decimateData(_data, true);
-            if (_dataTypeHint ==DataType.VERY_LARGE) {
+            if (_dataTypeHint ==DataType.VERY_LARGE && _data.size()>500) {
                 DrawingParams params= new DrawingParams(primaryGraphics,autoColor,plot,drawData, getMaxChunk(drawData));
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
@@ -432,7 +430,7 @@ public class Drawer implements WebEventListener {
             }
             else {
                 DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
-                doDrawing(params, false);
+                doDrawing(params);
             }
         }
         else {
@@ -547,7 +545,13 @@ public class Drawer implements WebEventListener {
         for(DrawObj obj : inData) {
             if (obj!=null) {
                 pt= obj.getCenterPt();
-                vpPt= getViewPortCoords(pt,seedPt,plot);
+                if (pt instanceof WorldPt) {
+                    vpPt= plot.pointInPlotRoughGuess((WorldPt)pt) ? getViewPortCoords(pt,seedPt,plot) : null;
+                }
+                else {
+                    vpPt= getViewPortCoords(pt,seedPt,plot);
+                }
+
             }
             else {
                 vpPt= null;
@@ -675,18 +679,17 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private void doDrawing(DrawingParams params, boolean deferred) {
+    private void doDrawing(DrawingParams params) {
         if (params._begin) {
             params._begin= false;
             GwtUtil.setHidden(params._graphics.getWidget(), true);
-        }
-        if (deferred && params._deferCnt<MAX_DEFER) {
-            params._deferCnt++;
             params._done= false;
         }
         else {
-            params._deferCnt= 0;
+            params._deferCnt++;
         }
+
+
         if (!params._done) {
             if (_drawConnect!=null) _drawConnect.beginDrawing();
             try {
@@ -716,8 +719,8 @@ public class Drawer implements WebEventListener {
 //                ((AdvancedGraphics)params._graphics).copyAsImage((AdvancedGraphics)params.drawBuffer);
 //            }
             if (_data.size()>100) { //todo remove
-                long delta= System.currentTimeMillis()-params.startTime;//TODO remove
-                GwtUtil.getClientLogger().log(Level.INFO,"Redraw, Op Cnt:"+params.opCnt+", "+ _data.size() + " rows: "+ delta+ "ms"); //TODO remove
+//                long delta= System.currentTimeMillis()-params.startTime;//TODO remove
+//                GwtUtil.getClientLogger().log(Level.INFO,"Redraw, Op Cnt:"+params.opCnt+", "+ _data.size() + " rows: "+ delta+ "ms"); //TODO remove
             } // todo remove
         }
 
@@ -861,37 +864,24 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private class DrawingDeferred extends Timer implements IncrementalCommand {
+    private class DrawingDeferred implements IncrementalCommand {
 
         DrawingParams _params;
-        boolean       _deferred;
 
         public DrawingDeferred(DrawingParams params) {
             _params= params;
-            _deferred= true;
         }
 
         public boolean execute() {
-            draw();
-            return !_params._done;
-        }
-
-        @Override
-        public void run() {
-            draw();
-            if (!_params._done)  this.schedule(30);
-        }
-
-        private void draw() {
             if (!_params._plot.isAlive()) _params._done= true;
-            if (!_params._done ) doDrawing(_params, _deferred);
+            if (!_params._done) doDrawing(_params);
+            return !_params._done;
         }
 
         public void cancelDraw() { _params._done= true; }
 
         public void activate() {
-            if (_deferred)  DeferredCommand.addCommand(this);
-            else schedule(10);
+            DeferredCommand.addCommand(this);
         }
     }
 

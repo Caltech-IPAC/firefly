@@ -161,6 +161,8 @@ public class WebPlot {
     private int _viewPortY= 0;
     private Dimension _viewPortDim= new Dimension(42,42); // small dummy initialization
 
+    private final WpCorners wpCorners;
+
     public WebPlot(WebPlotInitializer wpInit) {
         _plotGroup= new WebPlotGroup(this,wpInit.getPlotState().getZoomLevel());
         _plotState       = wpInit.getPlotState();
@@ -179,6 +181,20 @@ public class WebPlot {
             if (webFitsData.length>=i+1) {
                 _webFitsData[i]= webFitsData[i];
             }
+        }
+
+        if (!_projection.isWrappingProjection()) {
+            wpCorners= new WpCorners(
+                    this,
+                    getWorldCoords(new ImagePt(0,0)),
+                    getWorldCoords(new ImagePt(0,_dataWidth)),
+                    getWorldCoords(new ImagePt(_dataHeight,0)),
+                    getWorldCoords(new ImagePt(_dataHeight,_dataWidth))
+            );
+
+        }
+        else {
+           wpCorners= null;
         }
     }
 
@@ -416,6 +432,32 @@ public class WebPlot {
     }
 
 
+    /**
+     * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
+     * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+     * @return
+     */
+    public boolean pointInPlotRoughGuess(WorldPt wp) {
+        if (wpCorners==null) return true;
+
+        if (!CoordinateSys.EQ_J2000.equals(wp.getCoordSys())) {
+            wp= VisUtil.convert(wp,CoordinateSys.EQ_J2000);
+        }
+        double x= wp.getLon();
+        double y= wp.getLat();
+
+        boolean retval;
+        if (wpCorners.wrapsRa) {
+            retval= y>wpCorners.minDec && y<wpCorners.maxDec;
+            if (retval) {
+                retval= x>wpCorners.maxRa || x<wpCorners.minRa;
+            }
+        }
+        else {
+            retval= x>wpCorners.minRa && y>wpCorners.minDec && x<wpCorners.maxRa && y<wpCorners.maxDec;
+        }
+        return retval;
+    }
 
 
     /**
@@ -439,8 +481,11 @@ public class WebPlot {
             return false;
         }
         else if (pt instanceof WorldPt) {
+            retval= pointInPlotRoughGuess((WorldPt) pt);
+            if (retval) {
                 ImageWorkSpacePt ipt= getImageWorkSpaceCoords((WorldPt)pt);
                 retval= pointInPlot(ipt);
+            }
         }
         else if (pt instanceof ImageWorkSpacePt) {
             retval= pointInPlot((ImageWorkSpacePt)pt);
@@ -1367,6 +1412,56 @@ public class WebPlot {
    int  getOffsetX() {return _offsetX;}
    int  getOffsetY() {return _offsetY;}
 
+
+    private static class WpCorners {
+//        WorldPt topLeft;
+//        WorldPt topRight;
+//        WorldPt bottomLeft;
+//        WorldPt bottomRight;
+        boolean wrapsRa= false;
+        double minRa;
+        double maxRa;
+        double minDec;
+        double maxDec;
+
+
+        private WpCorners(WebPlot plot, WorldPt topLeft, WorldPt topRight, WorldPt bottomLeft, WorldPt bottomRight) {
+//            this.topLeft = topLeft;
+//            this.topRight = topRight;
+//            this.bottomLeft = bottomLeft;
+//            this.bottomRight = bottomRight;
+
+            minRa= 5000;
+            maxRa= -5000;
+            minDec=5000;
+            maxDec= -5000;
+
+            for(WorldPt wp : new WorldPt[] {topLeft, topRight, bottomLeft, bottomRight}) {
+                if (wp.getLon() < minRa) minRa= wp.getLon();
+                if (wp.getLon() > maxRa) maxRa= wp.getLon();
+                if (wp.getLat() < minDec) minDec= wp.getLat();
+                if (wp.getLat() > maxDec) maxDec= wp.getLat();
+            }
+
+            double scale= plot.getImagePixelScaleInDeg();
+            Dimension dim= plot._viewPortDim;
+            int wPad= dim.getWidth()/2;
+            int hPad= dim.getHeight()/2;
+
+
+            wrapsRa= (maxRa-minRa) > 90;
+
+            minRa-= (wPad *scale);
+            minDec-= (hPad*scale);
+            maxDec+= (hPad*scale);
+            maxRa+= (wPad*scale);
+
+
+        }
+
+
+
+    }
 
 }
 /*

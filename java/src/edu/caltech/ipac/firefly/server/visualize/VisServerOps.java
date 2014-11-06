@@ -1460,8 +1460,9 @@ public class VisServerOps {
     private static WebPlotResult createError(String logMsg, PlotState state, WebPlotRequest reqAry[], Exception e) {
         WebPlotResult retval;
         boolean userAbort= false;
-        String progressKey= reqAry[0].getProgressKey();
+        String progressKey= (reqAry!=null && reqAry.length>0) ? reqAry[0].getProgressKey() : "";
         if (progressKey==null) progressKey= "";
+
         if (e instanceof FailedRequestException ) {
             FailedRequestException fe= (FailedRequestException)e;
             retval= WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(),fe.getDetailMessage(),progressKey);

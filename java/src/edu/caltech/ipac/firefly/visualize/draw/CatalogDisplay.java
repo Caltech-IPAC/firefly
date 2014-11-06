@@ -197,16 +197,33 @@ public class CatalogDisplay {
             for(WebPlotView pv : pvList) {
                 if (!_allPV.contains(pv) && pv.isAlive()) addList.add(pv);
             }
+
             for(WebPlotView pv : addList) {
                 if (pv.isAlive()) {
                     _allPV.add(pv);
                     for(DrawingManager drawManager : _allDrawers.values()) {
                         if (!drawManager.containsPlotView(pv)) {
-                            drawManager.addPlotViewList(pvList);
+                            drawManager.addPlotView(pv);
                         }
                     }
                 }
             }
+
+
+
+//
+//            for(WebPlotView pv : addList) {
+//                if (pv.isAlive()) {
+//                    _allPV.add(pv);
+//                    for(DrawingManager drawManager : _allDrawers.values()) {
+//                        if (!drawManager.containsPlotView(pv)) {
+//                            drawManager.addPlotViewList(pvList);
+//                        }
+//                    }
+//                }
+//            }
+
+
         }
     }
 

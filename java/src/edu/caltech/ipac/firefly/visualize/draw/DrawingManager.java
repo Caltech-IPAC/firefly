@@ -101,8 +101,8 @@ public class DrawingManager implements AsyncDataLoader {
                for (PVData pvData : _allPV.values()) {
                    Drawer drawer= pvData.getDrawer();
                    drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
-                   cb.loaded();
                }
+               cb.loaded();
            }
            else {
                for(PVData pvData : _allPV.values())  pvData.addTask();
@@ -343,7 +343,13 @@ public class DrawingManager implements AsyncDataLoader {
         if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
         pv.addPersistentMouseInfo(mi);
         pv.addWebLayerItem(item);
-        item.initDefaultVisibility();
+
+
+        if (_dataConnect.getOnlyShowIfDataIsVisible())  item.initDefaultVisibilityTo(_dataConnect!=null && _dataConnect.isDataVisible());
+        else                                            item.initDefaultVisibility();
+
+
+//       item.initDefaultVisibility();
         _allPV.put(pv, new PVData(drawer, mi, item));
 
         checkAndSetupPerPlotData(pv,drawer);
@@ -368,7 +374,7 @@ public class DrawingManager implements AsyncDataLoader {
             } else {
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
-                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+//                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
 //                if (subVisControl.isUsingSubgroupVisibility()) updateVisibilityBasedOnSubgroup(pv);
                 item.setDrawingManager(this);
             }
@@ -711,14 +717,15 @@ public class DrawingManager implements AsyncDataLoader {
 
     private void updateVisibilityBasedOnTableVisibility() {
         boolean visible= _dataConnect.isDataVisible();
-        if (_init) {
+        if (_init && _allPV.size()>0) {
             PVData data;
-            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
-                data = entry.getValue();
-                if (data.getWebLayerItem().isVisible() != visible) {
-                    data.getWebLayerItem().setVisible(visible);
-                }
-            }
+            _allPV.values().iterator().next().getWebLayerItem().setVisible(visible);
+//            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
+//                data = entry.getValue();
+//                if (data.getWebLayerItem().isVisible() != visible) {
+//                    data.getWebLayerItem().setVisible(visible);
+//                }
+//            }
         }
     }
 
@@ -913,6 +920,7 @@ public class DrawingManager implements AsyncDataLoader {
         private final WebPlotView.MouseInfo _mi;
         private final WebLayerItem _layerItem;
         private String currDrawTaskID= null;
+        private int taskCnt= 0;
 
         public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem) {
             _drawer = drawer;
@@ -924,18 +932,24 @@ public class DrawingManager implements AsyncDataLoader {
         public WebLayerItem getWebLayerItem() { return _layerItem; }
         public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
         public void addTask() {
-            WebPlotView pv= _drawer.getPlotView();
-            if (pv!=null) {
-                if (currDrawTaskID!=null) pv.removeTask(currDrawTaskID);
-                currDrawTaskID= pv.addTask();
+            if (taskCnt==0) {
+                WebPlotView pv= _drawer.getPlotView();
+                if (pv!=null) {
+                    if (currDrawTaskID!=null) pv.removeTask(currDrawTaskID);
+                    currDrawTaskID= pv.addTask();
+                }
             }
+            taskCnt++;
         }
         public void removeTask() {
-            WebPlotView pv= _drawer.getPlotView();
-            if (pv!=null && currDrawTaskID!=null) {
-                pv.removeTask(currDrawTaskID);
-                currDrawTaskID= null;
+            if (taskCnt==1) {
+                WebPlotView pv= _drawer.getPlotView();
+                if (pv!=null && currDrawTaskID!=null) {
+                    pv.removeTask(currDrawTaskID);
+                    currDrawTaskID= null;
+                }
             }
+            taskCnt--;
 
         }
 
@@ -960,9 +974,21 @@ public class DrawingManager implements AsyncDataLoader {
                     } else if (n.equals(TablePanel.ON_ROWSELECT_CHANGE)) {
                         handleAreaSelectChange();
                     } else if (n.equals(TablePanel.ON_SHOW)) {
-                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                public void execute() {
+                                    updateVisibilityBasedOnTableVisibility();
+                                }
+                            });
+                        }
                     } else if (n.equals(TablePanel.ON_HIDE)) {
-                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                public void execute() {
+                                    updateVisibilityBasedOnTableVisibility();
+                                }
+                            });
+                        }
                     }
                 }
             });
