@@ -82,7 +82,7 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
             String detector = req.getParam("detector");
             bandId = StringUtils.isEmpty(bandId) ? "" : "; Freq=" + bandId + "GHz ";
 
-            return getPositionDesc(req) + getType(req)+  bandId + getDetector(req)+ getTimeRang(req);
+            return getPositionDesc(req) + getType(req)+  bandId + getDetector(req)+ getTimeRang(req) + getSSOflag(req);
     }
 
     private String getBandDesc2(Request req) {
@@ -203,11 +203,23 @@ public class PlanckSearchDescResolver extends SearchDescResolver implements Sear
         return StringUtils.isEmpty(fscale) ? "" : "; Planck Cutout Image Scale factor: " + fscale;
     }
 
+    private String getSSOflag(Request req) {
+        String ssoflag = req.getParam("ssoflag");
+        String SSOflag = " ";
+        if (ssoflag.equalsIgnoreCase("false")) {
+            SSOflag = "; SSO flag: False";
+        } else if  (ssoflag.equalsIgnoreCase("true")) {
+            SSOflag = "; SSO flag: All";
+        }
+
+        return StringUtils.isEmpty(ssoflag) ? "" : SSOflag;
+    }
+
     private String getTimeRang(Request req) {
             String timestart = req.getParam("timeStart");
             String timeend = req.getParam("timeEnd");
             return StringUtils.isEmpty(timestart) ? "" : "; Time Range : " + (timestart)+" -- " + (timeend);
-        }
+    }
 }
 
 /*
