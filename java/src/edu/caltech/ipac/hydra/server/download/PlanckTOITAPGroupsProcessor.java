@@ -201,7 +201,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                     detcStr = PlanckTOITAPRequest.detc100_all;}
             }
         } else {
-            detc_constr = "(detector='"+detectors[0]+"'";
+            detc_constr = "+and+((detector='"+detectors[0]+"'";
             map_detc_constr = "['" + detectors[0] + "'";
             detcStr = detectors[0];
             for(int j = 1; j < detectors.length; j++){
@@ -215,7 +215,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
 
         String sso_constr = "";
         if (ssoflag.equals("false")){
-            sso_constr = "+and+(sso='0')";
+            if (detc_constr.equals("")){
+                sso_constr = "+and+((sso='0')";
+            } else {
+                sso_constr = "+and+(sso='0')";
+            }
         }
 
         logger.briefInfo("detector constr=" +detc_constr);
@@ -227,7 +231,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         String baseFilename = "planck_toi_search_"+ gposStr + "_" + optBand+"GHz";
 
         if (isSelectAll){
-            timeStr="";
+            if (detc_constr.equals("") && sso_constr.equals("")){
+                timeStr="";
+            } else {
+                timeStr=")";
+            }
             maptimeStr="[]";
             toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr,targetStr, detcStr);
             if (downloadMinimap) {
@@ -246,7 +254,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             }
 
             String rmjdStrArr[] = rmjdSelt.split(",");
-            timeStr = "+and+(";
+            if (detc_constr.equals("") && sso_constr.equals("")){
+                timeStr="+and+(";
+            } else {
+                timeStr = "+and+";
+            }
             maptimeStr = "[";
             for (int j = 0; j < rmjdStrArr.length; j++) {
                 double t1, t2;
@@ -265,6 +277,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             maptimeStr += "]";
 
             toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetStr, detcStr);
+
             if (downloadMinimap) {
                 iterations ="0";
                 minimapurl = PlanckTOIMinimapRetrieve.createTOIMinimapURLString(mapbaseUrl, gpos, iterations, mapSize, Freq, map_detc_constr,maptimeStr,targetStr);

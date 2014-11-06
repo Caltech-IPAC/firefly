@@ -49,7 +49,7 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         if (type.equals("CIRCLE")){
             url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
         } else if (type.equals("BOX")){
-            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size + ","+ size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
+            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size + ","+ size +"))=1" + detc_constr + ssoflag + timeStr + "&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
 
         }
 

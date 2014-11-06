@@ -485,7 +485,7 @@
                             </EnumString>
                             <EnumString orientation="horizontal">
                                 <Name>dlTOImaps</Name>
-                                <Title>Download TOI Mini-HIRES-Map:</Title>
+                                <Title>Download TOI Minimap:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
                                 <Default>_none_</Default>
@@ -494,9 +494,9 @@
                                 <EnumValue id="M">
                                     <Title>Minimap</Title>
                                 </EnumValue>
-                                <EnumValue id="H">
+                                <!--<EnumValue id="H">
                                     <Title>HIRES</Title>
-                                </EnumValue>
+                                </EnumValue>-->
                             </EnumString>
                             <EnumString orientation="vertical">
                                 <Name>zipType</Name>
