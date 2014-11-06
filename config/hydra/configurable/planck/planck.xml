@@ -170,7 +170,7 @@
                         <EnumValue id="070">
                             <Title>70 GHz</Title>
                         </EnumValue>
-                        <EnumValue id="100">
+                        <!--<EnumValue id="100">
                             <Title>100 GHz</Title>
                         </EnumValue>
                         <EnumValue id="143">
@@ -187,7 +187,7 @@
                          </EnumValue>
                         <EnumValue id="857">
                             <Title>857 GHz</Title>
-                        </EnumValue>
+                        </EnumValue>-->
                     </EnumString>
 
                     <EnumString orientation="horizontal">

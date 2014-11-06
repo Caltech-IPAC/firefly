@@ -5,7 +5,7 @@
 
     <EventWorker id="PlanckMiniMap" type="PlanckMiniMap">
         <QueryId>
-            planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
+            planckTOITAP030,planckTOITAP044,planckTOITAP070
         </QueryId>
     </EventWorker>
 
@@ -30,11 +30,11 @@
                 </Table>
 
                 <!--100GHz -->
-                <Table type="Table">
+                <!--<Table type="Table">
                     <QueryId>planckTOITAP100</QueryId>
                     <Title>100GHz</Title>
                     <ShortDescription>100GHz TOI Search</ShortDescription>
-                </Table>
+                </Table>-->
                 <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP100_1a</QueryId>
