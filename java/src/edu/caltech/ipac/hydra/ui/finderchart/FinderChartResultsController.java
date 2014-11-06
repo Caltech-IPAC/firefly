@@ -56,6 +56,7 @@ import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -67,6 +68,7 @@ import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -370,10 +372,24 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
     }
 
     private void handleSourceTable() {
-        if (sourceTable != null && isMultiPosition) {
-            GwtUtil.SplitPanel.showWidget(layoutPanel, sourceContainer);
-        } else {
-            GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceContainer);
+        try {
+            Set<TableData.Row> sels = sourceTable.getTable().getSelectedRowValues();
+            if (sels != null && sels.size() > 0) {
+                TableData.Row srow = sels.iterator().next();
+                String ra = (String) srow.getValue("ra");
+                String dec = (String) srow.getValue("dec");
+                if (ra != null && dec != null) {
+                    ActiveTarget.getInstance().setActive(new WorldPt(Double.parseDouble(ra), Double.parseDouble(dec)));
+                }
+            }
+
+            if (sourceTable != null && isMultiPosition) {
+                GwtUtil.SplitPanel.showWidget(layoutPanel, sourceContainer);
+            } else {
+                GwtUtil.SplitPanel.hideWidget(layoutPanel, sourceContainer);
+            }
+        } catch (Exception ex) {
+            // not crucial.. ignore.
         }
     }
 
