@@ -201,7 +201,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
      * @param pageNo   page number.  number starts from 0;
      */
     public void getData(final AsyncCallback<TableDataView> callback, int pageNo) {
-        TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize());
+        TableModelHelper.Request req = new TableModelHelper.Request(pageNo * getPageSize(), getPageSize(), new TableModelHelper.ColumnSortList());
         requestRows(req, new Callback<TableData.Row>() {
             public void onFailure(Throwable caught) {
                 callback.onFailure(caught);
