@@ -21,7 +21,7 @@
 
             <!--</East>-->
 
-            <Center layout="tab" tagIt='false' helpId="results">
+            <Center layout="tab" tagIt='false' helpId="toiResults">
                 <!--030GHz -->
                 <Table type="Table">
                     <QueryId>planckTOITAP030</QueryId>
