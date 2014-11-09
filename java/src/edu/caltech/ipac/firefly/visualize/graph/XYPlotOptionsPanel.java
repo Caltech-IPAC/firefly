@@ -791,8 +791,15 @@ public class XYPlotOptionsPanel extends Composite {
         if (binning.getValue().equals("auto")) return true;
         String xBinsStr = xBinsFld.getValue();
         String yBinsStr = yBinsFld.getValue();
-        if (StringUtils.isEmpty(xBinsStr) || StringUtils.isEmpty(yBinsStr) ||
-                !xBinsFld.validate() || !yBinsFld.validate()) {
+        if (StringUtils.isEmpty(xBinsStr)) {
+            xBinsFld.forceInvalid("Empty value is not allowed for user defined binning");
+            return false;
+        }
+        if (StringUtils.isEmpty(yBinsStr)) {
+            yBinsFld.forceInvalid("Empty value is not allowed for user defined binning");
+            return false;
+        }
+        if (!xBinsFld.validate() || !yBinsFld.validate()) {
             return false;
         }
         int xBins = Integer.parseInt(xBinsStr);

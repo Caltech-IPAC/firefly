@@ -547,13 +547,23 @@ public class QueryUtil {
 
 
         // determine min/max values of x and y
+        boolean checkDeciLimits = false;
+        double xDeciMax = Double.POSITIVE_INFINITY, xDeciMin = Double.NEGATIVE_INFINITY, yDeciMax = Double.POSITIVE_INFINITY, yDeciMin = Double.NEGATIVE_INFINITY;
+        if (!Double.isNaN(decimateInfo.getXMin())) { xDeciMin = decimateInfo.getXMin(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getXMax())) { xDeciMax = decimateInfo.getXMax(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getYMin())) { yDeciMin = decimateInfo.getYMin(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getYMax())) { yDeciMax = decimateInfo.getYMax(); checkDeciLimits = true; }
+        int outRows = dg.size();
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
             DataObject row = dg.get(rIdx);
 
             double xval = xValGetter.getValue(row);
             double yval = yValGetter.getValue(row);
 
-            if (xval==Double.NaN || yval==Double.NaN) { continue; }
+            if (xval==Double.NaN || yval==Double.NaN) {
+                outRows--;
+                continue;
+            }
 
             if (xval > xMax) { xMax = xval; }
             if (xval < xMin) { xMin = xval; }
@@ -566,6 +576,10 @@ public class QueryUtil {
                 retrow.setDataElement(columns[1], yval);
                 retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
                 retval.add(retrow);
+            } else if (checkDeciLimits) {
+                if (xval>xDeciMax || xval<xDeciMin || yval>yDeciMax || yval<yDeciMin) {
+                    outRows--;
+                }
             }
         }
 
@@ -576,80 +590,110 @@ public class QueryUtil {
 
         if (doDecimation) {
 
-            java.util.Date startTime = new java.util.Date();
-
             boolean checkLimits = false;
-            if (!Double.isNaN(decimateInfo.getXMin()) && decimateInfo.getXMin() > xMin) { xMin = decimateInfo.getXMin(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getXMax()) && decimateInfo.getXMax() < xMax) { xMax = decimateInfo.getXMax(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getYMin()) && decimateInfo.getYMin() > yMin) { yMin = decimateInfo.getYMin(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getYMax()) && decimateInfo.getYMax() < yMax) { yMax = decimateInfo.getYMax(); checkLimits = true; }
+            if (checkDeciLimits) {
+                if (xDeciMin > xMin) { xMin = xDeciMin; checkLimits = true; }
+                if (xDeciMax < xMax) { xMax = xDeciMax; checkLimits = true; }
+                if (yDeciMin > yMin) { yMin = yDeciMin; checkLimits = true; }
+                if (yDeciMax < yMax) { yMax = yDeciMax; checkLimits = true; }
+            }
 
+            if (outRows < DECI_ENABLE_SIZE) {
+                // no decimation needed
+                // because the number of rows in the output
+                // is less than decimation limit
 
-            // determine the number of cells on each axis
-            int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
-            int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
+                retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
 
-            double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
-            double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
-            // increase cell size a bit to include max values into grid
-            xUnit += xUnit/1000.0/nXs;
-            yUnit += yUnit/1000.0/nYs;
+                for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
+                    DataObject row = dg.get(rIdx);
 
-            DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+                    double xval = xValGetter.getValue(row);
+                    double yval = yValGetter.getValue(row);
 
-            HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
-            // decimating the data now....
-            for (int idx = 0; idx < dg.size(); idx++) {
-
-                DataObject row = dg.get(idx);
-
-                double xval = xValGetter.getValue(row);
-                double yval = yValGetter.getValue(row);
-
-                if (Double.isNaN(xval) || Double.isNaN(yval)) { continue; }
-
-                if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
-
-                String key = decimateKey.getKey(xval, yval);
-
-                if (samples.containsKey(key)) {
-                    SamplePoint pt = samples.get(key);
-                    // representative sample point is a random point from the bin
-                    int numRepRows = pt.getRepresentedRows()+1;
-                    if (Math.random() < 1d/(double)numRepRows) {
-                        SamplePoint replacePt = new SamplePoint(xval, yval, row.getRowIdx(), idx, numRepRows);
-                        samples.put(key, replacePt);
-                    } else {
-                        pt.addRepresentedRow();
+                    if (xval==Double.NaN || yval==Double.NaN) {
+                        outRows--;
+                        continue;
                     }
-                } else {
-                    SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
-                    samples.put(key, pt);
+
+                    if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
+                    DataObject retrow = new DataObject(retval);
+                    retrow.setDataElement(columns[0], xval);
+                    retrow.setDataElement(columns[1], yval);
+                    retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                    retval.add(retrow);
                 }
-            }
 
-            for(String key : samples.keySet()) {
-                SamplePoint pt = samples.get(key);
-                DataObject row = new DataObject(retval);
-                row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
-                row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
-                row.setDataElement(columns[2], pt.getRowId());
-                row.setDataElement(columns[3], pt.getRowIdx());
-                row.setDataElement(columns[4], pt.getRepresentedRows());
-                row.setDataElement(columns[5], key);
-                retval.add(row);
-            }
-            String decimateInfoStr = decimateInfo.toString();
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
-                    decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
-            decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
-            retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
-                    decimateKey.toString()));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+            } else {
 
-            java.util.Date endTime = new java.util.Date();
-            Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
+                java.util.Date startTime = new java.util.Date();
+
+                // determine the number of cells on each axis
+                int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
+                int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
+
+                double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
+                double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+                // increase cell size a bit to include max values into grid
+                xUnit += xUnit/1000.0/nXs;
+                yUnit += yUnit/1000.0/nYs;
+
+                DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+
+                HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
+                // decimating the data now....
+                for (int idx = 0; idx < dg.size(); idx++) {
+
+                    DataObject row = dg.get(idx);
+
+                    double xval = xValGetter.getValue(row);
+                    double yval = yValGetter.getValue(row);
+
+                    if (Double.isNaN(xval) || Double.isNaN(yval)) { continue; }
+
+                    if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
+
+                    String key = decimateKey.getKey(xval, yval);
+
+                    if (samples.containsKey(key)) {
+                        SamplePoint pt = samples.get(key);
+                        // representative sample point is a random point from the bin
+                        int numRepRows = pt.getRepresentedRows()+1;
+                        if (Math.random() < 1d/(double)numRepRows) {
+                            SamplePoint replacePt = new SamplePoint(xval, yval, row.getRowIdx(), idx, numRepRows);
+                            samples.put(key, replacePt);
+                        } else {
+                            pt.addRepresentedRow();
+                        }
+                    } else {
+                        SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
+                        samples.put(key, pt);
+                    }
+                }
+
+                for(String key : samples.keySet()) {
+                    SamplePoint pt = samples.get(key);
+                    DataObject row = new DataObject(retval);
+                    row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
+                    row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
+                    row.setDataElement(columns[2], pt.getRowId());
+                    row.setDataElement(columns[3], pt.getRowIdx());
+                    row.setDataElement(columns[4], pt.getRepresentedRows());
+                    row.setDataElement(columns[5], key);
+                    retval.add(row);
+                }
+                String decimateInfoStr = decimateInfo.toString();
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
+                        decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+                decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+                retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
+                        decimateKey.toString()));
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+
+                java.util.Date endTime = new java.util.Date();
+                Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
+            }
         }
 
 

@@ -805,37 +805,38 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     _meta = meta;
                     if (_chart != null) {
                         _chart.clearCurves();
-                    }
-                    // force to reevaluate chart size
-                    reevaluateChartSize(true);
 
-                    if (_dataSet != null) {
-                        List<String> requiredCols;
-                        //do we need server call to get a new dataset? always evaluates to true for decimated table
-                        boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
-                        if (!serverCallNeeded) {
-                            requiredCols = getRequiredCols();
-                            for (String c : requiredCols) {
-                                if (_dataSet.findColumn(c) == null) {
-                                    serverCallNeeded = true;
-                                    break;
+                        // force to reevaluate chart size
+                        reevaluateChartSize(true);
+
+                        if (_dataSet != null) {
+                            List<String> requiredCols;
+                            //do we need server call to get a new dataset? always evaluates to true for decimated table
+                            boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
+                            if (!serverCallNeeded) {
+                                requiredCols = getRequiredCols();
+                                for (String c : requiredCols) {
+                                    if (_dataSet.findColumn(c) == null) {
+                                        serverCallNeeded = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        if (serverCallNeeded) {
-                            doServerCall(_meta.getMaxPoints());
-                        } else {
-                            addData(_dataSet);
-                            _selectionCurve = getSelectionCurve();
-                            if (_savedZoomSelection != null && preserveZoomSelection) {
-                                setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+                            if (serverCallNeeded) {
+                                doServerCall(_meta.getMaxPoints());
                             } else {
-                                _savedZoomSelection = null;
+                                addData(_dataSet);
+                                _selectionCurve = getSelectionCurve();
+                                if (_savedZoomSelection != null && preserveZoomSelection) {
+                                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+                                } else {
+                                    _savedZoomSelection = null;
+                                }
+                                if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
+                                _loading.setVisible(false);
+                                _chart.update();
                             }
-                            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
-                            _loading.setVisible(false);
-                            _chart.update();
                         }
                     }
                     //_meta.addUserColumnsToDefault();

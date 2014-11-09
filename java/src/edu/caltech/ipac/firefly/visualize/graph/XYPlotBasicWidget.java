@@ -535,19 +535,19 @@ public class XYPlotBasicWidget extends PopoutWidget {
             _meta = meta;
             if (_chart != null) {
                 _chart.clearCurves();
-            }
-            // force to reevaluate chart size
-            reevaluateChartSize(true);
-            //update chart
-            addData(new XYPlotData(_dataSet, _meta));
 
-            _selectionCurve = getSelectionCurve();
-            if (_savedZoomSelection != null && preserveZoomSelection) {
-                setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
-            } else {
-                _savedZoomSelection = null;
-            }
-            if (_chart != null) {
+                // force to reevaluate chart size
+                reevaluateChartSize(true);
+                //update chart
+                addData(new XYPlotData(_dataSet, _meta));
+
+                _selectionCurve = getSelectionCurve();
+                if (_savedZoomSelection != null && preserveZoomSelection) {
+                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+                } else {
+                    _savedZoomSelection = null;
+                }
+
                 _chart.update();
             }
         } catch (Throwable e) {
@@ -1266,7 +1266,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
         }
 
         _meta.setChartSize(w, h);
-        _chart.setChartSize(w, h);
+        if (_chart != null) _chart.setChartSize(w, h);
 
         _xResizeFactor = (int)Math.ceil(w/330.0);
         _yResizeFactor = (int)Math.ceil(h/300.0);
