@@ -4,11 +4,7 @@ import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.ReqConst;
-import edu.caltech.ipac.firefly.data.SDSSRequest;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -36,6 +32,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
 
+import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
 import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
 import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 
@@ -67,8 +64,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
          There are lot of columns dealing with the deVaucoulers and exponential fits..
          Note that these fits are performed for each of the five bands.
      */
-    private static String SELECT_COLUMNS=
-            "ra,dec,raErr,decErr,p.objId,p.run,p.rerun,p.camcol,p.field,"+
+    static String SELECT_COLUMNS=
+            "p.ra,p.dec,p.raErr,p.decErr,p.objId,p.run,p.rerun,p.camcol,p.field,"+
             "dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,flags,"+
             "psfMag_u,psfMag_g,psfMag_r,psfMag_i,psfMag_z,psfMagErr_u,psfMagErr_g,psfMagErr_r,psfMagErr_i,psfMagErr_z,"+
             "modelMag_u,modelMag_g,modelMag_r,modelMag_i,modelMag_z,modelMagErr_u,modelMagErr_g,modelMagErr_r,modelMagErr_i,modelMagErr_z,"+
@@ -87,21 +84,20 @@ public class SDSSQuery extends IpacTablePartProcessor {
     private static String SINGLE_TGT_SQL = "SELECT "+SELECT_COLUMNS+",distance"+
             " FROM PhotoObj as p JOIN %FUNCTION%(%RA%,%DEC%,%RAD_ARCMIN%) AS R ON P.objID=R.objID"+
             " ORDER BY distance";
-    private static String NEARBY = "dbo.fGetNearbyObjEq";
-    private static String NEAREST = "dbo.fGetNearestObjEq";
+    static String NEARBY = "dbo.fGetNearbyObjEq";
+    static String NEAREST = "dbo.fGetNearestObjEq";
 
-    public static String UPLOAD_SQL = "SELECT u.up_id,"+SELECT_COLUMNS+
+    public static String UPLOAD_SQL = "SELECT dbo.fDistanceEq(u.up_ra,u.up_dec,p.ra,p.dec) as distance,"+SELECT_COLUMNS+
             " FROM #upload u"+
             " JOIN #x x ON x.up_id = u.up_id"+
             " JOIN PhotoObj p ON p.objID = x.objID"+
-            " ORDER BY x.up_id";
+            " ORDER BY u.up_id,distance";
 
     private static String BOX_TGT_SQL = "SELECT "+SELECT_COLUMNS+
             " from PhotoObj as p JOIN dbo.fGetObjFromRectEq(%RA_MIN%,%DEC_MIN%,%RA_MAX%,%DEC_MAX%) AS R ON P.objID=R.objID";
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
 
         File outFile;
         try {
@@ -118,6 +114,15 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
                 URLDownload.getDataToFile(conn, csv);
             } else {
+                File uploadFile = VisContext.convertToFile(uploadFname);
+                File sdssUFile;
+                if (uploadFile.canRead()) {
+                    sdssUFile = getSDSSUploadFile(uploadFile);
+                } else {
+                    throw new EndUserException("SDSS catalog search failed",
+                            "Can not read uploaded file: "+ uploadFname);
+                }
+
                 URL url = new URL(SERVICE_URL_UPLOAD);
                 // use uploadFname
                 //POST http://skyserver.sdss3.org/public/en/tools/crossid/x_crossid.aspx
@@ -128,14 +133,24 @@ public class SDSSQuery extends IpacTablePartProcessor {
                             "URL "+SERVICE_URL_UPLOAD);
                 }
 
-                insertPostParams(request, uploadFname);
+                insertPostParams(request, sdssUFile);
                 BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(csv), 10240);
+                MultiPartPostBuilder.MultiPartRespnse resp = null;
                 try {
-                    _postBuilder.post(writer);
+                    resp = _postBuilder.post(writer);
                 } finally {
                     writer.close();
                 }
 
+                if (resp == null) {
+                    throw new IOException("Exception during post");
+                } else if (resp.getStatusCode()<200 || resp.getStatusCode()>300) {
+                    // throw new IOException(resp.getStatusMsg());
+                    // try repeating the request through CasJobs
+                    boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
+                    String radiusArcMin = request.getParam(SDSSRequest.RADIUS_ARCMIN);
+                    SDSSCasJobs.getCrossMatchResults(sdssUFile, nearestOnly, radiusArcMin, csv);
+                }
             }
 
             // check for errors in returned file
@@ -147,6 +162,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
                     return null;
             }
 
+            /*
+            //TG No need to decrement up_id, since we are using the original upload id
             if (!StringUtils.isEmpty(uploadFname) && dg.containsKey("up_id")) {
                 // increment up_id(uploaded id) by 1 if it's an multi object search
                 DataType upId = dg.getDataDefintion("up_id");
@@ -157,7 +174,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
                     }
                 }
             }
-
+            */
 
             outFile = createFile(request, ".tbl");
             IpacTableWriter.save(outFile, dg);
@@ -182,7 +199,9 @@ public class SDSSQuery extends IpacTablePartProcessor {
         BufferedReader reader = new BufferedReader(new FileReader(csv), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         try {
             String line = reader.readLine();
-            if (line.startsWith("<html>")) {
+            if (line == null) {
+                // no data
+            } else if (line.startsWith("<html>")) {
                 throw new IOException("Error obtaining SDSS catalog data");
             }
         } finally {
@@ -209,14 +228,12 @@ public class SDSSQuery extends IpacTablePartProcessor {
                JOIN PhotoObj p ON p.objID = x.objID
            ORDER BY x.up_id
      */
-    private  void insertPostParams(TableServerRequest request, String uploadFname) throws EndUserException, IOException {
-        File uploadFile = VisContext.convertToFile(uploadFname);
-        if (uploadFile.canRead()) {
-            File sdssUFile = getSDSSUploadFile(uploadFile);
+    private  void insertPostParams(TableServerRequest request, File sdssUFile) throws EndUserException, IOException {
+        if (sdssUFile.canRead()) {
             _postBuilder.addFile("targets",sdssUFile);
         } else {
             throw new EndUserException("SDSS catalog search failed",
-                    "Can not read uploaded file: "+ uploadFname);
+                    "Can not read uploaded file in SDSS format: "+ sdssUFile);
         }
 
         String radiusArcMin = request.getParam(SDSSRequest.RADIUS_ARCMIN);
@@ -231,26 +248,29 @@ public class SDSSQuery extends IpacTablePartProcessor {
         _postBuilder.addParam("photoScope", nearestOnly ? "nearPrim":"allPrim");
         _postBuilder.addParam("radius",radiusArcMin);
         _postBuilder.addParam("photoUpType", "ra-dec");
+        _log.briefInfo(UPLOAD_SQL);
         _postBuilder.addParam("uquery",UPLOAD_SQL);
-        _postBuilder.addParam("firstcol", "0");
+        _postBuilder.addParam("firstcol", "1"); // first column is in_row_id
 
     }
 
     private File getSDSSUploadFile(File uploadFile) throws IOException {
         DataGroup uDg = DataGroupReader.readAnyFormat(uploadFile);
+        DataType inRowIdType = uDg.getDataDefintion(CatalogRequest.UPDLOAD_ROW_ID);
         DataType raType = uDg.getDataDefintion("ra");
         DataType decType = uDg.getDataDefintion("dec");
         DataType.FormatInfo raFmt = raType.getFormatInfo();
         DataType.FormatInfo decFmt = decType.getFormatInfo();
+        DataType.FormatInfo inRowIdFmt = inRowIdType.getFormatInfo();
         File sdssUFile = File.createTempFile("sdss_upload", ".csv", ServerContext.getTempWorkDir());
         BufferedWriter writer = new BufferedWriter(new FileWriter(sdssUFile));
         try {
-            writer.write("ra,dec\n");
+            writer.write("up_id,ra,dec\n");
             Iterator i= uDg.iterator();
             DataObject dob;
             while(i.hasNext()) {
                 dob = (DataObject)i.next();
-                String line = raFmt.formatDataOnly(dob.getDataElement(raType))+","+decFmt.formatDataOnly(dob.getDataElement(decType))+"\n";
+                String line = inRowIdFmt.formatDataOnly(dob.getDataElement(inRowIdType))+","+raFmt.formatDataOnly(dob.getDataElement(raType))+","+decFmt.formatDataOnly(dob.getDataElement(decType))+"\n";
                 writer.write(line);
             }
         } catch (Exception e) {
@@ -365,7 +385,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
                 }
             };
 
-            ArrayList<DataType> upDefsToSave = new ArrayList();
+            ArrayList<DataType> upDefsToSave = new ArrayList<DataType>();
             for (DataType dt : upDg.getDataDefinitions()) {
                 String key = dt.getKeyName();
                 if (!key.equals(CatalogRequest.UPDLOAD_ROW_ID)) dt.setKeyName(QueryUtil.getUploadedCName(dt.getKeyName()));
@@ -379,6 +399,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
             results.addAttributes(new DataGroup.Attribute(makeAttribKey(VISI_TAG, "up_id"), "hide"));
+            results.addAttributes(new DataGroup.Attribute(makeAttribKey(DESC_TAG, "distance"), "distance in arcmin"));
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
             results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);

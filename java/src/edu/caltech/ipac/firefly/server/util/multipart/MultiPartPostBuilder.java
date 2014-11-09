@@ -102,10 +102,10 @@ public class MultiPartPostBuilder {
 
         } catch (Exception ex) {
             LOG.error(ex, "Error while posting multipart request to" + targetURL);
+            return null;
         } finally {
             filePost.releaseConnection();
         }
-        return null;
     }
 
     static void readBody(OutputStream os, InputStream body) {
