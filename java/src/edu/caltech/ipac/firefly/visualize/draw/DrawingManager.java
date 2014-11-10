@@ -345,8 +345,13 @@ public class DrawingManager implements AsyncDataLoader {
         pv.addWebLayerItem(item);
 
 
-        if (_dataConnect.getOnlyShowIfDataIsVisible())  item.initDefaultVisibilityTo(_dataConnect!=null && _dataConnect.isDataVisible());
-        else                                            item.initDefaultVisibility();
+        if (_dataConnect != null) {
+            if (_dataConnect.getOnlyShowIfDataIsVisible())  item.initDefaultVisibilityTo(_dataConnect.isDataVisible());
+            else                                            item.initDefaultVisibility();
+        }
+        else {
+            item.initDefaultVisibility();
+        }
 
 
 //       item.initDefaultVisibility();

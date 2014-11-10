@@ -295,8 +295,8 @@ public class WebPlot {
     public int getColorTableID() { return _plotState.getColorTableId(); }
 
     private void threeColorOK(Band band) {
-        WebAssert.argTst(_plotState.getColorTableId(),
-                   "Must be in three color mode to use this routine");
+//        WebAssert.argTst(_plotState.getColorTableId(),
+//                   "Must be in three color mode to use this routine");
         WebAssert.argTst( (band== Band.RED || band== Band.GREEN || band== Band.BLUE),
                        "band must be RED, GREEN, or BLUE");
     }
