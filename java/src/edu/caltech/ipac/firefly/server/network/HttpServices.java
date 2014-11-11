@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
@@ -38,9 +39,17 @@ public class HttpServices {
         try {
             hostConfig.setHost(InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {e.printStackTrace();}
-        HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
+        HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager(){
+            public void releaseConnection(HttpConnection conn) {
+                try {
+                    if (conn != null) conn.close();
+                } catch (Exception ex) {/* do nothing */}
+                super.releaseConnection(conn);
+            }
+        };
         HttpConnectionManagerParams params = new HttpConnectionManagerParams();
-        params.setMaxConnectionsPerHost(hostConfig, 50);
+        params.setMaxConnectionsPerHost(hostConfig, 5);
+        params.setStaleCheckingEnabled(true);
         params.setConnectionTimeout(5000);
         params.setSoTimeout(0);   // this is the default.. but, setting it explicitly to be sure
         connectionManager.setParams(params);
