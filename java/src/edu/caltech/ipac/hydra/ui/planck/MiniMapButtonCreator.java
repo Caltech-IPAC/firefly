@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class MiniMapButtonCreator implements EventWorkerCreator {
     public static final String ID = "PlanckMiniMap";
-    private final static NumberFormat nf= NumberFormat.getFormat("#.###");
+    private final static NumberFormat nf= NumberFormat.getFormat("#.00");
 
     public EventWorker create(Map<String, String> params) {
         MiniMapButtonSetter worker = new MiniMapButtonSetter();
@@ -149,8 +149,10 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     String radius = sreq.getSafeParam("radius");
                     String boxsize = sreq.getSafeParam("boxsize");
                     String type = sreq.getSafeParam("type");
+                    String ssoflag = sreq.getSafeParam("ssoflag");
                     String ExpandedDesc, desc;
                     String trangeStr = "";
+                    String ssoStr = "";
 
                     WorldPt pt;
                     String pos = null;
@@ -160,7 +162,6 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                         pt = WorldPt.parse(userTargetWorldPt);
                         if (pt != null) {
                             pt = VisUtil.convertToJ2000(pt);
-//                            pos = pt.getLon() + "," + pt.getLat();
                             pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                             pos = pt.getLon() + "," + pt.getLat();
                             if (nf.format(pt.getLat()).startsWith("-")) {
@@ -251,6 +252,12 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
 
                     String interations = "0";
 
+                    if (ssoflag.equals("false")){
+                        ssoStr = "0";
+                    } else if (ssoflag.equals("true")){
+                        ssoStr = "2";
+                    }
+
 
                     ServerRequest req = new ServerRequest("planckTOIMinimapRetrieve", sreq);
 
@@ -265,6 +272,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("size", size);
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
+                    req.setParam("ssoStr", ssoStr);
                     desc = gpos + "_" + Freq + "GHz-Minimap";
                     ExpandedDesc = "Minimap with " + desc + ", time range " + trangeStr + ", total "+ selectedRowCount
                                                                             + " date(s) selected, Detector(s): " + detcStr;;
