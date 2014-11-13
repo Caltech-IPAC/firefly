@@ -273,7 +273,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
                     req.setParam("ssoStr", ssoStr);
-                    desc = gpos + "_" + Freq + "GHz-Minimap";
+                    desc = gpos + "_" + Freq + "GHz_Minimap";
                     ExpandedDesc = "Minimap with " + desc + ", time range " + trangeStr + ", total "+ selectedRowCount
                                                                             + " date(s) selected, Detector(s): " + detcStr;;
 
