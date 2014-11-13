@@ -161,7 +161,7 @@ public class WebPlot {
     private int _viewPortY= 0;
     private Dimension _viewPortDim= new Dimension(42,42); // small dummy initialization
 
-    private final WpCorners wpCorners;
+    private final ImageBoundsData imageBoundsData;
 
     public WebPlot(WebPlotInitializer wpInit) {
         _plotGroup= new WebPlotGroup(this,wpInit.getPlotState().getZoomLevel());
@@ -184,7 +184,7 @@ public class WebPlot {
         }
 
         if (!_projection.isWrappingProjection()) {
-            wpCorners= new WpCorners(
+            imageBoundsData = new ImageBoundsData(
                     this,
                     getWorldCoords(new ImagePt(0,0)),
                     getWorldCoords(new ImagePt(0,_dataWidth)),
@@ -194,7 +194,7 @@ public class WebPlot {
 
         }
         else {
-           wpCorners= null;
+           imageBoundsData = null;
         }
     }
 
@@ -435,28 +435,10 @@ public class WebPlot {
     /**
      * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
      * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
-     * @return
+     * @return true in we guess it might be in the bounds, false if we know that it is not in the bounds
      */
     public boolean pointInPlotRoughGuess(WorldPt wp) {
-        if (wpCorners==null) return true;
-
-        if (!CoordinateSys.EQ_J2000.equals(wp.getCoordSys())) {
-            wp= VisUtil.convert(wp,CoordinateSys.EQ_J2000);
-        }
-        double x= wp.getLon();
-        double y= wp.getLat();
-
-        boolean retval;
-        if (wpCorners.wrapsRa) {
-            retval= y>wpCorners.minDec && y<wpCorners.maxDec;
-            if (retval) {
-                retval= x>wpCorners.maxRa || x<wpCorners.minRa;
-            }
-        }
-        else {
-            retval= x>wpCorners.minRa && y>wpCorners.minDec && x<wpCorners.maxRa && y<wpCorners.maxDec;
-        }
-        return retval;
+        return imageBoundsData==null || imageBoundsData.pointInPlotRoughGuess(wp);
     }
 
 
@@ -941,7 +923,7 @@ public class WebPlot {
      */
     public ScreenPt getScreenCoords(ImagePt ipt, float altZLevel) {
         if (ipt==null) return null;
-        return getScreenCoords(getImageWorkSpaceCoords(ipt),altZLevel);
+        return getScreenCoords(getImageWorkSpaceCoords(ipt), altZLevel);
     }
 
 
@@ -1413,28 +1395,30 @@ public class WebPlot {
    int  getOffsetY() {return _offsetY;}
 
 
-    private static class WpCorners {
+    private static class ImageBoundsData {
 //        WorldPt topLeft;
 //        WorldPt topRight;
 //        WorldPt bottomLeft;
 //        WorldPt bottomRight;
-        boolean wrapsRa= false;
-        double minRa;
-        double maxRa;
-        double minDec;
-        double maxDec;
+        private final boolean wrapsRa;
+        private final boolean northPole;
+        private final boolean southPole;
+        private final double minRa;
+        private final double maxRa;
+        private final double minDec;
+        private final double maxDec;
 
 
-        private WpCorners(WebPlot plot, WorldPt topLeft, WorldPt topRight, WorldPt bottomLeft, WorldPt bottomRight) {
+        private ImageBoundsData(WebPlot plot, WorldPt topLeft, WorldPt topRight, WorldPt bottomLeft, WorldPt bottomRight) {
 //            this.topLeft = topLeft;
 //            this.topRight = topRight;
 //            this.bottomLeft = bottomLeft;
 //            this.bottomRight = bottomRight;
 
-            minRa= 5000;
-            maxRa= -5000;
-            minDec=5000;
-            maxDec= -5000;
+            double minRa= 5000;
+            double maxRa= -5000;
+            double minDec=5000;
+            double maxDec= -5000;
 
             for(WorldPt wp : new WorldPt[] {topLeft, topRight, bottomLeft, bottomRight}) {
                 if (wp.getLon() < minRa) minRa= wp.getLon();
@@ -1449,7 +1433,6 @@ public class WebPlot {
             int hPad= dim.getHeight()/2;
 
 
-            wrapsRa= (maxRa-minRa) > 90;
 
             minRa-= (wPad *scale);
             minDec-= (hPad*scale);
@@ -1457,9 +1440,52 @@ public class WebPlot {
             maxRa+= (wPad*scale);
 
 
+            double imageSize= plot.getImagePixelScaleInDeg() * Math.max(plot.getImageDataHeight(),plot.getImageDataWidth());
+            double checkDeltaTop=    90-(2*imageSize);
+            double checkDeltaBottom= -90 + (2*imageSize);
+
+            this.wrapsRa= (maxRa-minRa) > 90;
+            this.northPole= minDec>checkDeltaTop;
+            this.southPole= maxDec<checkDeltaBottom;
+            this.minRa= minRa;
+            this.maxRa= maxRa;
+            this.minDec= minDec;
+            this.maxDec= maxDec;
         }
 
 
+        /**
+         * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
+         * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+         * @return true in we guess it might be in the bounds, false if we know that it is not in the bounds
+         */
+        public boolean pointInPlotRoughGuess(WorldPt wp) {
+
+            if (!CoordinateSys.EQ_J2000.equals(wp.getCoordSys())) {
+                wp= VisUtil.convert(wp,CoordinateSys.EQ_J2000);
+            }
+            double x= wp.getLon();
+            double y= wp.getLat();
+
+
+            boolean retval;
+            if (northPole) { //if near the j2000 "north pole" then ignore ra check
+                retval= y> minDec;
+            }
+            else if (southPole) { //if near the j2000 "south pole" then ignore ra check
+                retval= y< maxDec;
+            }
+            else if (wrapsRa) { // if image wraps around 0 ra
+                retval= y> minDec && y< maxDec;
+                if (retval) {
+                    retval= x> maxRa || x< minRa;
+                }
+            }
+            else { // normal case
+                retval= x> minRa && y> minDec && x< maxRa && y< maxDec;
+            }
+            return retval;
+        }
 
     }
 
