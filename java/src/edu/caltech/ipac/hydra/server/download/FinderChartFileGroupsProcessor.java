@@ -436,7 +436,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         List<StaticDrawInfo> list = makeDrawList(sreq);
         String sdiStr = "";
         for (StaticDrawInfo sdi : list) {
-            sdiStr = (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
+            sdiStr = sdiStr + (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
         }
         String[] retval = new String[size];
         Arrays.fill(retval, sdiStr);
