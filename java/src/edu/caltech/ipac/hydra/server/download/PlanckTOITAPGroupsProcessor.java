@@ -261,7 +261,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
             if (detc_constr.equals("") && sso_constr.equals("")){
                 timeStr="+and+(";
             } else {
-                timeStr = "+and+";
+                timeStr = "+and+(";
             }
             maptimeStr = "[";
             for (int j = 0; j < rmjdStrArr.length; j++) {
@@ -277,7 +277,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                     maptimeStr += "[" + Double.toString(t1) + "," + Double.toString(t2) + "]";
                 }
             }
-            timeStr += ")";
+            timeStr += "))";
             maptimeStr += "]";
 
             toiurl = PlanckTOITAPFileRetrieve.createTOITAPURLString(toibaseUrl, gpos, Type, Size, optBand, detc_constr, sso_constr, timeStr, targetStr, detcStr);
