@@ -195,21 +195,21 @@
                          <Title>Select 30GHz Detector(s)</Title>
                          <PreferWidth>225</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>27m</Default>
+                         <Default>27M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
                          </EnumValue>
-                         <EnumValue id="27m">
+                         <EnumValue id="27M">
                              <Title>27M</Title>
                          </EnumValue>
-                         <EnumValue id="27s">
+                         <EnumValue id="27S">
                              <Title>27S</Title>
                          </EnumValue>
-                         <EnumValue id="28m">
+                         <EnumValue id="28M">
                              <Title>28M</Title>
                          </EnumValue>
-                         <EnumValue id="28s">
+                         <EnumValue id="28S">
                              <Title>28S</Title>
                          </EnumValue>
                     </EnumString>
@@ -219,27 +219,27 @@
                          <Title>Select 44GHz Detector(s)</Title>
                          <PreferWidth>225</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>24m</Default>
+                         <Default>24M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
                          </EnumValue>
-                         <EnumValue id="24m">
+                         <EnumValue id="24M">
                              <Title>24M</Title>
                          </EnumValue>
-                         <EnumValue id="24s">
+                         <EnumValue id="24S">
                              <Title>24S</Title>
                          </EnumValue>
-                         <EnumValue id="25m">
+                         <EnumValue id="25M">
                              <Title>25M</Title>
                          </EnumValue>
-                         <EnumValue id="25s">
+                         <EnumValue id="25S">
                              <Title>25S</Title>
                          </EnumValue>
-                         <EnumValue id="26m">
+                         <EnumValue id="26M">
                              <Title>26M</Title>
                          </EnumValue>
-                         <EnumValue id="26s">
+                         <EnumValue id="26S">
                              <Title>26S</Title>
                          </EnumValue>
                     </EnumString>
@@ -248,7 +248,7 @@
                          <Title>Select 70GHz Detector(s)</Title>
                          <PreferWidth>185</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>24m</Default>
+                         <Default>18M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
@@ -256,37 +256,37 @@
                         <EnumValue id="18m">
                              <Title>18M</Title>
                          </EnumValue>
-                         <EnumValue id="18s">
+                         <EnumValue id="18S">
                              <Title>18S</Title>
                          </EnumValue>
-                         <EnumValue id="19m">
+                         <EnumValue id="19M">
                              <Title>19M</Title>
                          </EnumValue>
-                         <EnumValue id="19s">
+                         <EnumValue id="19S">
                              <Title>19S</Title>
                          </EnumValue>
-                         <EnumValue id="20m">
+                         <EnumValue id="20M">
                              <Title>20M</Title>
                          </EnumValue>
-                         <EnumValue id="20s">
+                         <EnumValue id="20S">
                              <Title>20S</Title>
                          </EnumValue>
-                         <EnumValue id="21m">
+                         <EnumValue id="21M">
                              <Title>21M</Title>
                          </EnumValue>
-                         <EnumValue id="21s">
+                         <EnumValue id="21S">
                              <Title>21S</Title>
                          </EnumValue>
-                         <EnumValue id="22m">
+                         <EnumValue id="22M">
                              <Title>22M</Title>
                          </EnumValue>
-                         <EnumValue id="22s">
+                         <EnumValue id="22S">
                              <Title>22S</Title>
                          </EnumValue>
-                         <EnumValue id="23m">
+                         <EnumValue id="23M">
                              <Title>23M</Title>
                          </EnumValue>
-                         <EnumValue id="23s">
+                         <EnumValue id="23S">
                              <Title>23S</Title>
                          </EnumValue>
                     </EnumString>
