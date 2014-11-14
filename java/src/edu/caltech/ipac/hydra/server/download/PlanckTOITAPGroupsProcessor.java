@@ -194,11 +194,11 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
                 else if (detcStr.equals("detc070")) {
                     detcStr = PlanckTOITAPRequest.detc070_all;}
                 else if (detcStr.equals("detc353")) {
-                    detcStr = PlanckTOITAPRequest.detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc353_all;}
                 else if (detcStr.equals("detc545")) {
-                    detcStr = PlanckTOITAPRequest.detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc545_all;}
                 else if (detcStr.equals("detc857")) {
-                    detcStr = PlanckTOITAPRequest.detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc857_all;}
             }
         } else {
             detc_constr = "+and+((detector='"+detectors[0]+"'";
