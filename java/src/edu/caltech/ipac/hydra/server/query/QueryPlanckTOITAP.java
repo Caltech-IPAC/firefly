@@ -45,13 +45,6 @@ import java.util.List;
 public class QueryPlanckTOITAP extends DynQueryProcessor {
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-
-    private final static String detc030_all = "27M,27S,28M,28S";
-    private final static String detc044_all = "24M,24S,25M,25S,26M,26S";
-    private final static String detc070_all = "18M,18S,19M,19S,20M,20S,21M,21S,22M,22S,23M,23S";
-    private final static String detc100_all = "1A,1B,2A,2B,3A,3B,4A,4B";
-    private final static String detc143_all = "1A,1B,2A,2B,3A,3B,4A,4B,5,6,7";
-    private final static String detc217_all = "1,2,3,4,,5A,5B,6A,6B,7A,7B,8A,8B";
     private final static int secondInMillis = 1000;
     private final static int minuteInMillis = secondInMillis * 60;
     private final static int runlimit = 3 * minuteInMillis;
@@ -242,23 +235,17 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (detcStr.equals("_all_")){
             if (!StringUtils.isEmpty(Freq)) {
                 if (Freq.equals("100")) {
-                    detcStr = detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc100_all;}
                 else if (Freq.equals("143")) {
-                    detcStr = detc143_all;}
+                    detcStr = PlanckTOITAPRequest.detc143_all;}
                 else if (Freq.equals("217")) {
-                    detcStr = detc217_all;}
+                    detcStr = PlanckTOITAPRequest.detc217_all;}
                 else if (Freq.equals("030")) {
-                    detcStr = detc030_all;}
+                    detcStr = PlanckTOITAPRequest.detc030_all;}
                 else if (Freq.equals("044")) {
-                    detcStr = detc044_all;}
+                    detcStr = PlanckTOITAPRequest.detc044_all;}
                 else if (Freq.equals("070")) {
-                    detcStr = detc070_all;}
-                else if (Freq.equals("353")) {
-                    detcStr = detc100_all;}
-                else if (Freq.equals("545")) {
-                    detcStr = detc100_all;}
-                else if (Freq.equals("857")) {
-                    detcStr = detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc070_all;}
             }
 
         }

@@ -50,9 +50,12 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String detc030_all = "27M,27S,28M,28S";
     public final static String detc044_all = "24M,24S,25M,25S,26M,26S";
     public final static String detc070_all = "18M,18S,19M,19S,20M,20S, 21M,21S,22M,22S,23M,23S";
-    public final static String detc100_all = "1A,1B,2A,2B,3A,3B,4A,4B";
-    public final static String detc143_all = "1A,1B,2A,2B,3A,3B,4A,4B,5,6,7";
-    public final static String detc217_all = "1,2,3,4,,5A,5B,6A,6B,7A,7B,8A,8B";
+    public final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
+    public final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
+    public final static String detc217_all = "1,2,3,4,5a,5b,6a,6b,7a,7b,8a,8b";
+    public final static String detc353_all = "1,2,3a,3b,4a,4b,5a,5b,6a,6b,7,8";
+    public final static String detc545_all = "1,2,3,4";
+    public final static String detc857_all = "1,2,3,4";
 
 
     public PlanckTOITAPRequest() {
