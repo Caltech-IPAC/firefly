@@ -4,6 +4,7 @@ import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
@@ -148,6 +149,8 @@ public class Packager {
             bundle.addProcessedBytes(1, fSize, fSize, fSize);
             bundle.finish(url);
             retval= new BackgroundStatus(_packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.SUCCESS);
+            _estimateStat.addAttribute(JobAttributes.Zipped);
+            _estimateStat.addAttribute(JobAttributes.CanSendEmail);
             retval.setParam(BackgroundStatus.TOTAL_BYTES, fileInfo.getSizeInBytes()+"");
             retval.addPackageProgress(bundle.makePackageProgress());
         } catch (FailedRequestException e) {
@@ -255,8 +258,11 @@ public class Packager {
         PackagedBundle bundle= new PackagedBundle(0, 0, totalFiles, totalSize);
         bundleList.add(bundle);
         _estimateStat = new BackgroundStatus( _packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.WAITING);
+        _estimateStat.addAttribute(JobAttributes.Zipped);
+        _estimateStat.addAttribute(JobAttributes.CanSendEmail);
+        _estimateStat.addAttribute(JobAttributes.DownloadScript);
         _estimateStat.addPackageProgress(bundle.makePackageProgress());
-        _estimateStat.setParam(BackgroundStatus.TOTAL_BYTES, totalSize+"");
+        _estimateStat.setParam(BackgroundStatus.TOTAL_BYTES, totalSize + "");
         _estimateStat.setDataSource(_dataSource);
         backgroundInfoCacher.setStatus(_estimateStat);
     }
