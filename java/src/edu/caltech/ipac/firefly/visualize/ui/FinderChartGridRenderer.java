@@ -11,10 +11,12 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet;
 
 import java.util.List;
 import java.util.Map;
@@ -64,11 +66,11 @@ public class FinderChartGridRenderer implements GridRenderer {
             else if (key.startsWith("IRAS")) irasCnt++;
         }
 
-        dssRow=  (dssCnt>0) ? addMissionRow("DSS") : -1;
-        sdssRow= (sdssCnt>0) ? addMissionRow("SDSS") : -1;
-        massRow= (massCnt>0) ? addMissionRow("2MASS") : -1;
-        wiseRow= (wiseCnt>0) ? addMissionRow("WISE") : -1;
-        irasRow= (irasCnt>0) ? addMissionRow("IRAS") : -1;
+        dssRow=  (dssCnt>0) ? addMissionRow(ImageSet.DSS.title) : -1;
+        sdssRow= (sdssCnt>0) ? addMissionRow(ImageSet.SDSS.title) : -1;
+        massRow= (massCnt>0) ? addMissionRow(ImageSet.TWOMASS.title) : -1;
+        wiseRow= (wiseCnt>0) ? addMissionRow(ImageSet.WISE.title) : -1;
+        irasRow= (irasCnt>0) ? addMissionRow(ImageSet.IRIS.title) : -1;
 
 
         int dssCol= 0;

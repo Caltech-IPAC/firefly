@@ -87,13 +87,13 @@
                             <Title>DSS</Title>
                         </EnumValue>
                         <EnumValue id="SDSS">
-                            <Title>SDSS(DR7)</Title>
+                            <Title>SDSS (DR7)</Title>
                         </EnumValue>
                         <EnumValue id="twomass">
-                            <Title>2MASS(allsky)</Title>
+                            <Title>2MASS (allsky)</Title>
                         </EnumValue>
                         <EnumValue id="WISE">
-                            <Title>WISE(AllWISE)</Title>
+                            <Title>WISE (AllWISE)</Title>
                         </EnumValue>
                         <EnumValue id="IRIS">
                             <Title>IRAS (IRIS)</Title>

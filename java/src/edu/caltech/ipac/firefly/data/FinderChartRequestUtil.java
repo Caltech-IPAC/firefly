@@ -25,7 +25,7 @@ public class FinderChartRequestUtil {
                                  MSX(DEF, "msx", null, msxCombo, null, DEF),
                                  TWOMASS("2MASS", "2mass","twomass_bands", twoMassCombo, "fp_psc", DEF),
                                  WISE(DEF, "wise", "wise_bands", wiseCombo, "wise_allwise_p3as_psd", DEF),
-                                 SDSS(DEF, "sdss", "sdss_bands",sDssCombo, null, DEF);
+                                 SDSS("SDSS (DR7)", "sdss", "sdss_bands",sDssCombo, null, "SDSS (DR10)");
 
         public WebPlotRequest.ServiceType srvType = WebPlotRequest.ServiceType.valueOf(this.name());
         public String title;
