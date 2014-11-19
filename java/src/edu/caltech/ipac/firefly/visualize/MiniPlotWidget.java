@@ -1127,7 +1127,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
         AllPlots.getInstance().getMouseReadout().setEnabled(true);
-        _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpandedAsOne());
+        _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpandedSingleView());
         _rotateNorth= (plot.getRotationType()== PlotState.RotateType.NORTH);
         if (_turnOnGridAfterPlot!= WebPlotRequest.GridOnStatus.FALSE) {
             GridCmd cmd= (GridCmd)AllPlots.getInstance().getCommand(GridCmd.CommandName);

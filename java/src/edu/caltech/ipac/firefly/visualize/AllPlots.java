@@ -223,7 +223,7 @@ public class AllPlots implements HasWebEventManager {
 
         if (expControl.getPopoutControlsUI()!=null) {
             Dimension dim;
-            boolean isGrid= expControl.isExpandedAsGrid();
+            boolean isGrid= expControl.isExpandedGridView();
             if (isGrid) {
                 dim= expControl.getPopoutControlsUI().getGridDimension();
             }
@@ -437,6 +437,23 @@ public class AllPlots implements HasWebEventManager {
                 retval= true;
                 break;
             }
+        }
+        return retval;
+    }
+
+    public boolean isExpandSingleView() {
+        boolean retval= false;
+        if (isExpanded()) {
+            PopoutWidget pw= getExpandedController();
+            if (pw!=null) retval= pw.isExpandedSingleView();
+        }
+        return retval;
+    }
+
+    public PopoutWidget getExpandedSingleWidget() {
+        PopoutWidget retval= null;
+        if (isExpandSingleView()) {
+            retval= getExpandedController().getExpandedSingleViewWidget();
         }
         return retval;
     }

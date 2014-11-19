@@ -312,7 +312,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             this.oneFillType = oneFillType;
             if (isExpanded()) {
                 _behavior.setOnePlotFillStyle(oneFillType);
-                if (isExpandedAsOne()) {
+                if (isExpandedSingleView()) {
                     if (GwtUtil.isOnDisplay(_expandRoot)) {
                         int w = _expandRoot.getOffsetWidth();
                         int h = _expandRoot.getOffsetHeight();
@@ -333,7 +333,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             this.gridFillType = gridFillType;
             if (isExpanded()) {
                 _behavior.setGridPlotFillStyle(gridFillType);
-                if (isExpandedAsGrid()) {
+                if (isExpandedGridView()) {
                     if (GwtUtil.isOnDisplay(_expandRoot)) {
                         Dimension dim= _popoutUI.getGridDimension();
                         if (dim!=null)  _behavior.onGridResize(_expandedList, dim, true);
@@ -507,13 +507,25 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         return _expanded;
     }
 
-    public boolean isExpandedAsOne() {
+    public boolean isExpandedSingleView() {
         PopoutWidget w= AllPlots.getInstance().getExpandedController();
         if (w!=null) return w._expanded && (getViewType() == ViewType.ONE || w._expandedList.size() == 1);
         else return false;
     }
 
-    public boolean isExpandedAsGrid() {
+
+    public PopoutWidget getExpandedSingleViewWidget() {
+        PopoutWidget retval= null;
+        if (isExpandedSingleView()) {
+            int curr = _popoutUI.getVisibleIdxInOneMode();
+            if (curr>-1 && curr<_expandedList.size()) {
+                retval= _expandedList.get(curr);
+            }
+        }
+        return retval;
+    }
+
+    public boolean isExpandedGridView() {
         PopoutWidget w= AllPlots.getInstance().getExpandedController();
         if (w!=null) return w._expanded && getViewType()==ViewType.GRID && w._expandedList.size()>1;
         else return false;
@@ -936,7 +948,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
         if (popoutWidget == null) return;
 
-        if (isExpandedAsGrid()) {
+        if (isExpandedGridView()) {
             if (selected) {
                 GwtUtil.setStyles(popoutWidget, "borderStyle", "ridge",
                                   "borderWidth", "3px 2px 2px 2px",

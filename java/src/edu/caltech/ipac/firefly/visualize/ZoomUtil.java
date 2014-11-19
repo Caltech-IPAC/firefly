@@ -39,7 +39,7 @@ public class ZoomUtil {
         AllPlots ap= AllPlots.getInstance();
         MiniPlotWidget mpw= ap.getMiniPlotWidget();
         final WebPlot plot= mpw.getCurrentPlot();
-        if (mpw.isExpandedAsOne()) {
+        if (mpw.isExpandedSingleView()) {
             final float targetZLevel= getNextZoomLevel(plot.getZoomFact(), dir);
             plot.getPlotView().setZoomTo(targetZLevel, false,true);
         }
@@ -55,7 +55,7 @@ public class ZoomUtil {
     public static void zoomGroup(final float level) {
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
-        if (mpw.isExpandedAsOne()) {
+        if (mpw.isExpandedSingleView()) {
             plot.getPlotView().setZoomTo(level, false, true);
         }
         else {
@@ -80,7 +80,7 @@ public class ZoomUtil {
         }
         if (ap.isExpanded()) {
             PopoutWidget w= ap.getExpandedController();
-            if (w.isExpandedAsOne())  w.setOneFillType(fillType);
+            if (w.isExpandedSingleView())  w.setOneFillType(fillType);
             else w.setGridFillType(fillType);
 
         }

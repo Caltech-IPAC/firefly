@@ -474,7 +474,7 @@ public class PopoutControlsUI {
 
     public void updateExpandedTitle(PopoutWidget popout) {
         if (popout==null) return;
-        if (popout.isExpandedAsGrid()) {
+        if (popout.isExpandedGridView()) {
             _expandedTitle= _tiledTitle;
             _expandTitleLbl.setHTML(_expandedTitle);
             _popoutWidget.getPopoutContainer().setTitle(_expandTitleLbl);
