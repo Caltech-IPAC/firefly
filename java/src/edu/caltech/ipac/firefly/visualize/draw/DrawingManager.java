@@ -261,7 +261,7 @@ public class DrawingManager implements AsyncDataLoader {
 
                 for (WebPlotView pv : pvList) {
                     if (pv.isAlive()) {
-                        redrawAll(pv, _allPV.get(pv)._drawer, false);
+                        redrawAll(pv, _allPV.get(pv).drawer, false);
                     }
                 }
             }
@@ -355,7 +355,9 @@ public class DrawingManager implements AsyncDataLoader {
 
 
 //       item.initDefaultVisibility();
-        _allPV.put(pv, new PVData(drawer, mi, item));
+        PlotAddedListener l= new PlotAddedListener(pv);
+        pv.addListener(Name.PLOT_ADDED,l);
+        _allPV.put(pv, new PVData(drawer, mi, item, l));
 
         checkAndSetupPerPlotData(pv,drawer);
 
@@ -446,6 +448,8 @@ public class DrawingManager implements AsyncDataLoader {
                     }
                 }
                 pvData.getDrawer().dispose();
+                pv.removeListener(Name.PLOT_ADDED, pvData.listener);
+
             }
             _allPV.remove(pv);
         }
@@ -921,24 +925,26 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private static class PVData {
-        private final Drawer _drawer;
-        private final WebPlotView.MouseInfo _mi;
-        private final WebLayerItem _layerItem;
+        private final Drawer drawer;
+        private final WebPlotView.MouseInfo mi;
+        private final WebLayerItem layerItem;
         private String currDrawTaskID= null;
         private int taskCnt= 0;
+        private final PlotAddedListener listener;
 
-        public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem) {
-            _drawer = drawer;
-            _mi = mi;
-            _layerItem = layerItem;
+        public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem, PlotAddedListener listener) {
+            this.drawer = drawer;
+            this.mi = mi;
+            this.layerItem = layerItem;
+            this.listener= listener;
         }
 
-        public Drawer getDrawer() { return _drawer; }
-        public WebLayerItem getWebLayerItem() { return _layerItem; }
-        public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
+        public Drawer getDrawer() { return drawer; }
+        public WebLayerItem getWebLayerItem() { return layerItem; }
+        public WebPlotView.MouseInfo getMouseInfo() { return mi; }
         public void addTask() {
             if (taskCnt==0) {
-                WebPlotView pv= _drawer.getPlotView();
+                WebPlotView pv= drawer.getPlotView();
                 if (pv!=null) {
                     if (currDrawTaskID!=null) pv.removeTask(currDrawTaskID);
                     currDrawTaskID= pv.addTask();
@@ -948,19 +954,35 @@ public class DrawingManager implements AsyncDataLoader {
         }
         public void removeTask() {
             if (taskCnt==1) {
-                WebPlotView pv= _drawer.getPlotView();
+                WebPlotView pv= drawer.getPlotView();
                 if (pv!=null && currDrawTaskID!=null) {
                     pv.removeTask(currDrawTaskID);
                     currDrawTaskID= null;
                 }
             }
             taskCnt--;
-
         }
 
 
     }
 
+    private class PlotAddedListener implements WebEventListener {
+        private final WebPlotView pv;
+
+        public PlotAddedListener(WebPlotView pv) {
+            this.pv = pv;
+        }
+
+        public void eventNotify(WebEvent ev) {
+            String sg= pv.getDrawingSubGroup();
+            if (sg!=null && _dataConnect!=null && _dataConnect.getOKForSubgroups()) {
+                subVisControl.enableSubgroupingIfSupported();
+                if (!subVisControl.containPlotView(pv)) { // updating subgroup here is necessary only if it first time this plot view has been added
+                    updateVisibilityBasedOnSubgroup(pv);
+                }
+            }
+        }
+    }
 
     private class TableViewListener implements WebEventListener {
 

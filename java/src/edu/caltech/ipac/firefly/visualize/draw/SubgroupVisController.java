@@ -136,6 +136,8 @@ public class SubgroupVisController {
         pvVisibility.remove(pv);
     }
 
+    public boolean containPlotView(WebPlotView pv) { return pvVisibility.containsKey(pv); }
+
 //    public boolean isVisibilityAffected(WebPlotView pv, String subgroup, Level level) {
 //        boolean retval= false;
 //        if (isUsingSubgroupVisibility()) {
