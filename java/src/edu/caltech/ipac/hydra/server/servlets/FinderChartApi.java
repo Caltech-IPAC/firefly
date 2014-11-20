@@ -30,6 +30,7 @@ import edu.caltech.ipac.hydra.server.xml.finderchart.ImageTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.InputTag;
 import edu.caltech.ipac.hydra.server.xml.finderchart.ResultTag;
 import edu.caltech.ipac.targetgui.net.TargetNetwork;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
@@ -83,6 +84,9 @@ public class FinderChartApi extends BaseHttpServlet {
     private static final String API_ONLY_PARAMS = "id|" + StringUtils.toString(Param.values(), "|");
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
+    private static final Logger.LoggerImpl SEARCH_STATS = Logger.getLogger(Logger.SEARCH_LOGGER);
+    private static final Logger.LoggerImpl DOWNLOAD_STATS = Logger.getLogger(Logger.DOWNLOAD_LOGGER);
+
 
     PositionParser parser = new PositionParser(new PositionParser.Helper(){
                 public double convertStringToLon(String s, CoordinateSys coordsys) {
@@ -135,6 +139,7 @@ public class FinderChartApi extends BaseHttpServlet {
                     String fname = makeFilename("FC_Images_", params);
                     sendZip(fname, files, res);
                 }
+                DOWNLOAD_STATS.stats("FC API Image", params.entrySet().toArray());
             } else if (mode.equals(GET_ART)) {
                 String fname = makeFilename("FC_Artifacts_", params);
                 String searchName = makeFilename("", params);
@@ -142,7 +147,9 @@ public class FinderChartApi extends BaseHttpServlet {
                 searchReq.setParam("type", GET_ART);
                 List<FileInfo> artifacts = getDataFiles(searchReq);
                 sendZip(fname, artifacts, res);
+                DOWNLOAD_STATS.stats("FC API Artifacts", params.entrySet().toArray());
             } else {
+                SEARCH_STATS.stats("FC API", params.entrySet().toArray());
                 DataGroupPart dgpart = new SearchManager().getDataGroup(searchReq);
                 if (mode.equals(PROG)) {
                     sendFcXml(res, searchReq, params, wp, dgpart);
