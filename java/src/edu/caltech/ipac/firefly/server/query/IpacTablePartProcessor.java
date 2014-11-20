@@ -157,7 +157,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             return page;
         } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request: " + sr.toString());
+            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
             throw new DataAccessException("Unexpected error", e);
         } finally {
             if (!doCache()) {

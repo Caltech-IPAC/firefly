@@ -7,6 +7,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.requestfactory.shared.impl.FindRequest;
 import edu.caltech.ipac.firefly.commands.DynResultsHandler;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.DynRequestHandler;
@@ -422,8 +423,9 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
             if (srows.size() > 0) {
                 TableData.Row selRow = srows.iterator().next();
                 List<String> cfilters = new ArrayList<String>();
-                cfilters.add("ra = " + selRow.getValue("ra"));
-                cfilters.add("dec = " + selRow.getValue("dec"));
+                Object id = selRow.getValue(CatalogRequest.UPDLOAD_ROW_ID);
+                id = id == null ? "1" : id;
+                cfilters.add(CatalogRequest.UPDLOAD_ROW_ID + " = " + String.valueOf(id));
                 searchReq.setFilters(cfilters);
             }
 

@@ -5,6 +5,7 @@ import com.google.gwt.gen2.table.event.client.RowSelectionHandler;
 import com.google.gwt.gen2.table.event.client.TableEvent;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.AbstractDatasetQueryWorker;
@@ -77,7 +78,7 @@ public class TableFilteringPreview extends AbstractTablePreview {
 
         raIdx=data.getModel().getColumnNames().indexOf("ra");
         decIdx=data.getModel().getColumnNames().indexOf("dec");
-        idIdx=data.getModel().getColumnNames().indexOf("id");
+        idIdx=data.getModel().getColumnNames().indexOf(CatalogRequest.UPDLOAD_ROW_ID);
         objNameIdx=data.getModel().getColumnNames().indexOf("objname");
         data.getColumn(idIdx).setHidden(true);
         //data.getColumn(idIdx).setVisible(false);

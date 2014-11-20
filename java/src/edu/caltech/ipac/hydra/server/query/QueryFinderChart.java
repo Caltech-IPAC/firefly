@@ -4,6 +4,7 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -68,7 +69,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String EVENTWORKER = "ew";
     private static final String ALL_EVENTWORKER = "all_ew";
-    public static final String OBJ_ID = "id";
+    public static final String OBJ_ID = CatalogRequest.UPDLOAD_ROW_ID;
     public static final String OBJ_NAME = "objname";
     public static final String RA = "ra";
     public static final String DEC = "dec";
@@ -88,48 +89,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     private List<Target> targets = null;
     private Target curTarget = null;
-    @Override
-    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
-        super.prepareTableMeta(meta, columns, request);
-    }
 
-//    @Override
-//    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
-//        super.onComplete(request, results);
-//        // now.. we prefetch the images so the page will load faster.
-//
-//        TableServerRequest treq = (TableServerRequest) request;
-//        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
-//
-//        String spid = request.getParam("searchProcessorId");
-//        String mst = request.getParam("maxSearchTargets");
-//        String flt = StringUtils.toString(treq.getFilters());
-//
-//        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
-//            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
-//            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
-//            try {
-//                for (int i = results.getData().size() - 1; i >= 0; i--) {
-//                    DataObject row = results.getData().get(i);
-//                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
-//                    Runnable worker = new Runnable() {
-//                        public void run() {
-//                            try {
-//                                StopWatch.getInstance().start(webReq.getUserDesc());
-//                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
-//                                StopWatch.getInstance().printLog(webReq.getUserDesc());
-//                            } catch (Exception e) {}
-//                        }
-//                    };
-//                    executor.execute(worker);
-//                }
-//                executor.shutdown();
-//                executor.awaitTermination(10, TimeUnit.SECONDS);
-//                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
-//            } catch (Exception e) { e.printStackTrace();}
-//        }
-//    }
-//
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
 

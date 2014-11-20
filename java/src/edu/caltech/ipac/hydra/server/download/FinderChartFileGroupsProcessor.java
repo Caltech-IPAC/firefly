@@ -227,7 +227,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
         if (retList.size()==0) {
             throw new IOException(FinderChartFileGroupsProcessor.class.getName()+".retrieveHtmlFiles(): Unable to "+
-                        "process request:\n"+request);
+                        "process request:\n"+StringUtils.truncate(request, 256));
         }
         return retList;
     }
