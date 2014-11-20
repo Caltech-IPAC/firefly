@@ -4,6 +4,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
@@ -77,6 +78,7 @@ public class MultiDataViewer {
     private DataVisGrid.MpwFactory mpwFactory= null;
     private EventHub hub= null;
     private static int groupNum=0;
+    private PreviewTimer _pvTimer= new PreviewTimer();
 
 
     public MultiDataViewer() {
@@ -118,6 +120,15 @@ public class MultiDataViewer {
             }
         };
 
+        WebEventListener rcWel =  new WebEventListener(){
+            public void eventNotify(final WebEvent ev) {
+                if (ev.getSource() instanceof TablePanel)  {
+                    _pvTimer.cancel();
+                    _pvTimer.setupCall((TablePanel) ev.getSource());
+                    _pvTimer.schedule(300);
+                }
+            }
+        };
 
         WebEventListener removeList=  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -130,7 +141,7 @@ public class MultiDataViewer {
             }
         };
 
-        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, rcWel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, removeList);
         this.hub= hub;
@@ -696,6 +707,19 @@ public class MultiDataViewer {
         public void viewerRefreshed();
         public void imageDeleted();
     }
+
+
+    private class PreviewTimer extends Timer {
+        TablePanel table;
+
+        public void run() {
+            updateGridWithTable(table);
+        }
+
+        public void setupCall(TablePanel table) { this.table= table; }
+    }
+
+
 
 
     private class UpdateListener implements PlotData.DynUpdateListener {
