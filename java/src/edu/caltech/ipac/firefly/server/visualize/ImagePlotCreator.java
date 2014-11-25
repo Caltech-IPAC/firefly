@@ -98,6 +98,9 @@ public class ImagePlotCreator {
                      plot.setThreeColorBand(readInfo.getFitsRead(),bIdx);
                      plot.setThreeColorBandVisible(bIdx, state.isBandVisible(readInfo.getBand()));
                  }
+                 if (readInfo.getModFileWriter()!=null) {
+                     fileWriterMap.put(band,readInfo.getModFileWriter());
+                 }
                  first= false;
              }
              else {
@@ -106,7 +109,7 @@ public class ImagePlotCreator {
                      fileWriterMap.put(band,mfw);
                  }
                  else if (readInfo.getModFileWriter()!=null) {
-                     fileWriterMap.put(band,mfw);
+                     fileWriterMap.put(band,readInfo.getModFileWriter());
                  }
              }
              WebFitsData wfData= makeWebFitsData(plot, readInfo.getBand(), readInfo.getOriginalFile());
