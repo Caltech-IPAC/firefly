@@ -48,6 +48,33 @@ public class FinderChartRequestUtil {
             return valueOf(srvType.name());
         }
     }
+
+    public static enum Artifact {
+        diff_spikes_3("WISE Diffraction Spikes (dots)", "Wise.Artifact.Spikes.level3.Selected"),
+        halos("WISE Halos (squares)", "Wise.Artifact.halos.Selected"),
+        ghost("WISE Optical Ghosts (diamonds)", "Wise.Artifact.ghost.Selected"),
+        latents("WISE Latents (x's)", "Wise.Artifact.latents.Selected"),
+        pers_arti("2MASS Persistence Artifacts (crosses)", "2Mass.Artifact.Pers.Selected"),
+        glint_arti("2MASS Glints Artifacts (diamonds)", "2Mass.Artifact.Glints.Selected");
+
+        public String desc;
+        public String enablePref;
+
+        Artifact(String desc, String enablePref) {
+            this.desc = desc;
+            this.enablePref = enablePref;
+        }
+
+        public static boolean isArtifacts(String desc) {
+            for (Artifact art : Artifact.values()) {
+                if (art.desc.equals(desc)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     // --------  input field names and possible values
     public static final String FD_CAT_BY_BOUNDARY = "catalog_by_img_boundary";
     public static final String FD_CAT_BY_RADIUS = "catalog_by_radius";
