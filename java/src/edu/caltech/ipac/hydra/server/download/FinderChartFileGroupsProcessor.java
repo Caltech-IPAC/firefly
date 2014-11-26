@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -61,6 +62,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.Artifact;
 
 /**
  * Created by IntelliJ IDEA.
@@ -782,7 +785,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             String layerInfoPair[];
             for (String layer: layerInfoAry) {
                 layerInfoPair = layer.split("==");
-                if (layerInfoPair[0].toLowerCase().contains(survey)) {
+                if (layerInfoPair[0].toLowerCase().startsWith(survey) && Artifact.isArtifacts(layerInfoPair[0])) {
                     line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
                             .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
                     sb.append(line);
@@ -824,11 +827,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private static String findLabel(String fname) {
         String retval="";
         if (fname!=null) {
-                 if (fname.contains("sdssu")) retval="u";
-            else if (fname.contains("sdssg")) retval="g";
-            else if (fname.contains("sdssr")) retval="r";
-            else if (fname.contains("sdssi")) retval="i";
-            else if (fname.contains("sdssz")) retval="z";
+                 if (fname.contains("sdss (dr7)u")) retval="u";
+            else if (fname.contains("sdss (dr7)g")) retval="g";
+            else if (fname.contains("sdss (dr7)r")) retval="r";
+            else if (fname.contains("sdss (dr7)i")) retval="i";
+            else if (fname.contains("sdss (dr7)z")) retval="z";
             else if (fname.contains("dssdss2red")) retval="DSS2 Red";
             else if (fname.contains("dssdss2blue")) retval="DSS2 Blue";
             else if (fname.contains("dssdss2ir")) retval="DSS2 IR";

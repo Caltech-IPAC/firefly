@@ -41,6 +41,7 @@ import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.ISSA
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.SDSS;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.TWOMASS;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.ServiceType.WISE;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.Artifact;
 
 // convenience sharing of constants
 
@@ -164,172 +165,6 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
     }
 
 
-
-//    public void getThreeColorPlotRequest(SelectedRowData selRowData,
-//                                         Map<Band, String> bandOptions,
-//                                         AsyncCallback<Map<String, List<WebPlotRequest>>> cb) {
-//
-//        Map<String, List<WebPlotRequest>> retMap= new HashMap<String, List<WebPlotRequest>>(7);
-//        Map<String,WebPlotRequest>        reqMap= makeAllRequest(selRowData);
-//        List<WebPlotRequest.ServiceType>  services= getServices(selRowData.getRequest());
-//
-//        for(WebPlotRequest.ServiceType service : services) {
-//            List<ID> possibleIDList= getPossibleIDList(service,reqMap);
-//            if (possibleIDList!=null && possibleIDList.size()>0) {
-//
-//                ID3 id3= get3ID(service);
-//                List<WebPlotRequest> wpReqList= new ArrayList<WebPlotRequest>(Arrays.asList((WebPlotRequest)null,null,null)) ;
-//                Map<Band,String> bandMap= imDef.getBandOptions(id3.name());
-//                setIntoList(wpReqList,bandMap,Band.RED,reqMap);;
-//                setIntoList(wpReqList,bandMap,Band.GREEN,reqMap);;
-//                setIntoList(wpReqList,bandMap,Band.BLUE,reqMap);;
-//                retMap.put(id3.toString(),wpReqList);
-//                String title= title3Map.get(id3);
-//                for(WebPlotRequest r :wpReqList) {
-//                    r.setAllowImageSelection(true);
-//                    r.setTitle(title);
-//                    r.setTitleOptions(WebPlotRequest.TitleOptions.NONE);
-//                }
-//            }
-//        }
-//        cb.onSuccess(retMap);
-//    }
-
-//    private void setIntoList(List<WebPlotRequest> wpReqList, Map<Band,String> bandMap, Band band, Map<String,WebPlotRequest> reqMap) {
-//        String id= bandMap.get(band);
-//        wpReqList.set(band.getIdx(),null);
-//        if (id!=null) {
-//            WebPlotRequest r= reqMap.get(id);
-//            wpReqList.set(band.getIdx(),r);
-//        }
-//    }
-
-//    private List<ID> getPossibleIDList(WebPlotRequest.ServiceType service, Map<String,WebPlotRequest> reqMap) {
-//        List<ID> retList;
-//        switch (service) {
-//            case IRIS:
-//            case ISSA:
-//                 retList= pref3Map.get(ID3.IRAS_3);
-//                break;
-//            case DSS:
-//                retList= pref3Map.get(ID3.DSS_3);
-//                break;
-//            case SDSS:
-//                retList= pref3Map.get(ID3.SDSS_3);
-//                break;
-//            case TWOMASS:
-//                retList= pref3Map.get(ID3.TWOMASS_3);
-//                break;
-//            case WISE:
-//                retList= pref3Map.get(ID3.WISE_3C);
-//                break;
-//            case MSX:
-//            case NONE:
-//            case DSS_OR_IRIS:
-//                default:
-//                return null;
-//        }
-//        if (retList!=null && retList.size()>0) {
-//            int len= retList.size();
-//            for(int i=len-1; (i>=0); i--) {
-//                if (!reqMap.containsKey(retList.get(i).name())) {
-//                    retList.remove(i);
-//                }
-//            }
-//        }
-//        return retList;
-//    }
-
-//    private ID3 get3ID(WebPlotRequest.ServiceType service) {
-//        switch (service) {
-//            case IRIS:
-//            case ISSA:
-//                return ID3.IRAS_3;
-//            case DSS:
-//                return ID3.DSS_3;
-//            case SDSS:
-//                return ID3.SDSS_3;
-//            case TWOMASS:
-//                return ID3.TWOMASS_3;
-//            case WISE:
-//                return ID3.WISE_3C;
-//            case MSX:
-//            case NONE:
-//            case DSS_OR_IRIS:
-//            default:
-//                return null;
-//        }
-//
-//    }
-
-
-
-//    private Map<String, WebPlotRequest> makeAllRequest(SelectedRowData selRowData) {
-//        Map<String,WebPlotRequest> map= new LinkedHashMap<String, WebPlotRequest>();
-//        ServerRequest req= selRowData.getRequest();
-//        // use default if not given
-//        Float subSize= req.getFloatParam("subsize");
-//        if (subSize.isNaN()) subSize= DEFAULT_SUBSIZE;
-//        int width= FinderChartRequestUtil.getPlotWidth(req.getParam("thumbnail_size"));
-//        List<WebPlotRequest.ServiceType> services= getServices(req);
-//        WorldPt wp= getWorldPt(selRowData.getSelectedRow());
-//
-//
-//        String bandStr;
-//        String bands[]=null;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//        for(String idStr : idList) map.put(idStr,null);
-//
-//        for (WebPlotRequest.ServiceType service : services) {
-//            String bandKey = FinderChartRequestUtil.getBandKey(service);
-//            if (bandKey!=null) {
-//                bandStr = getBandKey(bandKey,req);
-//                if (bandStr !=null) {
-//                    bands = bandStr.split(",");
-//                    for (int i=0;i<bands.length;i++) {
-//                        bands[i]=getComboPair(service, bands[i]);
-//                    }
-//                } else {
-//                    bands = FinderChartRequestUtil.getServiceComboArray(service);
-//                }
-//            }
-//
-//
-//            for (String band: bands) {
-//                if (service.equals(WebPlotRequest.ServiceType.WISE)) {
-//                    if (!band.startsWith("3a.")) band = "3a."+band;
-//                }
-////                if (curTarget.getName()==null || curTarget.getName().length()==0) {
-////                        TargetFixedSingle fixedSingle = (TargetFixedSingle)curTarget;
-////
-////
-////                        expanded = String.format("%.6f",fixedSingle.getPosition().getRa())
-////                                +"+"+String.format("%.6f",fixedSingle.getPosition().getDec());
-////                        expanded = expanded.replaceAll("\\+\\-","\\-");
-////                } else {
-////                    expanded= curTarget.getName();
-////                }
-////                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
-////                        FinderChartRequestUtil.getComboTitle(band));
-//
-//                String idStr= getID(service,FinderChartRequestUtil.getComboValue(band));
-//                WebPlotRequest wpReq= FinderChartRequestUtil.makeWebPlotRequest(wp, subSize, width, band, "", service);
-//                dimension= new Dimension(width,width); // make width & height the same
-//                map.put(idStr,wpReq);
-//            }
-//
-//        }
-//        return map;
-//
-//    }
 
 
     private static List<WebPlotRequest.ServiceType> getServices(ServerRequest req) {
@@ -586,22 +421,22 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
     }
 
     private void add2Mass(EventHub hub) {
-        String desc= "2MASS Persistence Artifacts (crosses)";
+        String desc= FinderChartRequestUtil.Artifact.pers_arti.desc;
         String color= "orange";
         DrawSymbol symbol= DrawSymbol.CROSS;
-        String enablePref= "2Mass.Artifact.Pers.Selected";
-        String type= "pers";
+        String enablePref= Artifact.pers_arti.enablePref;
+        String type= FinderChartRequestUtil.Artifact.pers_arti.name();
 
-        add2massLayerAllBands(hub,"pers_arti", desc, color, symbol, enablePref, type);
+        add2massLayerAllBands(hub, FinderChartRequestUtil.Artifact.pers_arti.name(), desc, color, symbol, enablePref, type);
 
 
-        desc= "2MASS Glints Artifacts (diamonds)";
+        desc= FinderChartRequestUtil.Artifact.glint_arti.desc;
         color= "purple";
         symbol= DrawSymbol.DIAMOND;
-        enablePref= "2Mass.Artifact.Glints.Selected";
-        type= "glint";
+        enablePref= FinderChartRequestUtil.Artifact.glint_arti.enablePref;
+        type= FinderChartRequestUtil.Artifact.glint_arti.name();
 
-        add2massLayerAllBands(hub,"glint_arti", desc, color, symbol, enablePref, type);
+        add2massLayerAllBands(hub, Artifact.glint_arti.name(), desc, color, symbol, enablePref, type);
 
     }
 
@@ -616,35 +451,35 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
     }
 
     private void addWise(EventHub hub) {
-        String desc= "WISE Diffraction Spikes (dots)";
+        String desc= Artifact.diff_spikes_3.desc;
         String color= "orange";
         DrawSymbol symbol= DrawSymbol.DOT;
-        String enablePref= "Wise.Artifact.Spikes.level3.Selected";
+        String enablePref= Artifact.diff_spikes_3.enablePref;
         String type= "D";
-        addWiseLayerAllBands(hub, "diff_spikes_3_", desc, color, symbol, enablePref, type);
+        addWiseLayerAllBands(hub, Artifact.diff_spikes_3 + "_", desc, color, symbol, enablePref, type);
 
-        desc= "WISE Halos (squares)";
+        desc= Artifact.halos.desc;
         color= "yellow";
         symbol= DrawSymbol.SQUARE;
-        enablePref= "Wise.Artifact.halos.Selected";
+        enablePref= Artifact.halos.enablePref;
         type= "H";
-        addWiseLayerAllBands(hub, "halos_", desc, color, symbol, enablePref, type);
+        addWiseLayerAllBands(hub, Artifact.halos + "_", desc, color, symbol, enablePref, type);
 
 
-        desc= "WISE Optical Ghosts (diamonds)";
+        desc= Artifact.ghost.desc;
         color= "pink";
         symbol= DrawSymbol.DIAMOND;
-        enablePref= "Wise.Artifact.ghost.Selected";
+        enablePref= Artifact.ghost.enablePref;
         type= "O";
-        addWiseLayerAllBands(hub, "ghost_", desc, color, symbol, enablePref, type);
+        addWiseLayerAllBands(hub, Artifact.ghost + "_", desc, color, symbol, enablePref, type);
 
 
-        desc= "WISE Latents (x's)";
+        desc= Artifact.latents.desc;
         color= "green";
         symbol= DrawSymbol.X;
-        enablePref= "Wise.Artifact.latents.Selected";
+        enablePref= Artifact.latents.enablePref;
         type= "P";
-        addWiseLayerAllBands(hub, "latents_", desc, color, symbol, enablePref, type);
+        addWiseLayerAllBands(hub, Artifact.latents + "_", desc, color, symbol, enablePref, type);
     }
 
 
