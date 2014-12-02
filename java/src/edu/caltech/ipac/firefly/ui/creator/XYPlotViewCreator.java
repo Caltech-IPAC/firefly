@@ -135,7 +135,8 @@ public class XYPlotViewCreator implements TableViewCreator {
             if (tablePanel != null && !isPlotUpdated) {
                 DataSetTableModel tableModel = tablePanel.getDataModel();
                 if (tableModel != null) {
-                    xyPlotWidget.makeNewChart(tableModel, "X,Y view of the selected table columns");
+                    String title = tablePanel.getShortDesc();
+                    xyPlotWidget.makeNewChart(tableModel, StringUtils.isEmpty(title) ? "X,Y view of the selected table columns":title);
                     isPlotUpdated = true;
                 }
             }
