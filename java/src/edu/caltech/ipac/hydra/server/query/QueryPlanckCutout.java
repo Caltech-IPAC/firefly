@@ -240,6 +240,18 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                         continue;
                     } else if (mType.equals("U") && planckBands[j]==857){
                         continue;
+                    } else if (mType.equals("Q") && planckBands[j]==100){
+                        continue;
+                    } else if (mType.equals("U") && planckBands[j]==100) {
+                        continue;
+                    } else if (mType.equals("Q") && planckBands[j]==143) {
+                        continue;
+                    } else if (mType.equals("U") && planckBands[j]==143) {
+                        continue;
+                    } else if (mType.equals("Q") && planckBands[j]==217) {
+                        continue;
+                    } else if (mType.equals("U") && planckBands[j]==217) {
+                        continue;
                     }
 
                     if (planckBands[j]==30 || planckBands[j]==44 || planckBands[j]==70){
