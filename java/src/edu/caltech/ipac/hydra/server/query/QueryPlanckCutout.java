@@ -231,7 +231,7 @@ public class QueryPlanckCutout extends DynQueryProcessor {
                 for(int j = 0; j < planckBands.length; j++){
                     row = new DataObject(table);
 
-                    //skip Q and U for 545 and 857
+                    //skip Q and U for 545 and 857, 100,143,217
                     if (mType.equals("Q") && planckBands[j]==545){
                         continue;
                     } else if (mType.equals("U") && planckBands[j]==545){
