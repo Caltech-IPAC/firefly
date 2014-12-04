@@ -78,11 +78,11 @@ public class DirectionArrowDataObj extends DrawObj {
 
     protected boolean getSupportsWebPlot() { return false; }
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         drawDirectionArrow(graphics,ac,useStateColor);
     }
 

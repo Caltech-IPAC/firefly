@@ -20,6 +20,7 @@ import edu.caltech.ipac.hydra.data.PlanckTOITAPRequest;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -44,23 +45,23 @@ import java.util.List;
 public class QueryPlanckTOITAP extends DynQueryProcessor {
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-
-    private final static String detc030_all = "27m,27s,28m,28s";
-    private final static String detc044_all = "24m,24s,25m,25s,26m,26s";
-    private final static String detc070_all = "18m,18s,19m,19s,20m,20s,21m,21s,22m,22s,23m,23s";
-    private final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
-    private final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
-    private final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
+    private final static int secondInMillis = 1000;
+    private final static int minuteInMillis = secondInMillis * 60;
+    private final static int runlimit = 3 * minuteInMillis;
+    private boolean overlimit = false;
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
         File retFile = null;
+        long start = System.currentTimeMillis();
+
         try {
             setXmlParams(request);
             PlanckTOITAPRequest req = QueryUtil.assureType(PlanckTOITAPRequest.class, request);
             retFile = searchPlanck(req);
 
         } catch (Exception e) {
+
             throw makeException(e, "Planck TOI Query Failed.");
         }
 
@@ -71,6 +72,9 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
     private File searchPlanck(PlanckTOITAPRequest req) throws IOException, DataAccessException, EndUserException {
         File outFile = null;
         URLConnection conn = null;
+        long start = System.currentTimeMillis();
+        long elapseTime = 0;
+        String overLimit = "no";
 
         try {
             outFile = makeFileName(req);
@@ -78,9 +82,17 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             URL url = createURL(req);
             conn = URLDownload.makeConnection(url);
             conn.setRequestProperty("Accept", "*/*");
+            conn.setReadTimeout(runlimit);
+            long time = conn.getReadTimeout();
+            _log.info("runtime limit:" + time);
 
             URLDownload.getDataToFile(conn, outFile);
 
+        } catch (SocketTimeoutException e) {
+            _log.error(e, e.toString() + ", Search is too big");
+            String umsg ="We recommend you reduce the search area size and/or select fewer detectors";
+
+            throw new EndUserException("Your Planck TOI Search is extremely large. " + umsg, umsg);
         } catch (MalformedURLException e) {
             _log.error(e, "Bad URL");
             throw makeException(e, "Planck TOI Query Failed - bad url.");
@@ -105,11 +117,9 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
             } else {
                 throw makeException(e, "Planck TOI Query Failed - network error.");
             }
-
         } catch (EndUserException e) {
             _log.error(e, e.toString());
             throw new EndUserException(e.getEndUserMsg(), e.getMoreDetailMsg());
-
         } catch (Exception e) {
             throw makeException(e, "Planck TOI Query Failed.");
         }
@@ -177,33 +187,40 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         // create constraint array
         ArrayList<String> constraints = new ArrayList<String>();
         String constrStr = "+WHERE+CONTAINS(POINT('J2000',ra,dec),";
+        String size =null;
 
         // search type
         String type = req.getParam(PlanckTOITAPRequest.TYPE);
         if (!StringUtils.isEmpty(type)) {
             if (type.equals("circle")) {
-                constraints.add("CIRCLE('J2000',");}
+                size = req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE);}
             else if (type.equals("box")) {
-                constraints.add("BOX('J2000',");}
-            else if (type.equals("polygon")) {
-                constraints.add("POLYGON('J2000',");}
-         }
+                size = req.getParam(PlanckTOITAPRequest.SEARCH_BOX_SIZE);}
+        }
 
         // search size and position
-        String size = req.getParam(PlanckTOITAPRequest.SEARCH_REGION_SIZE);
-
         String userTargetWorldPt = req.getParam("UserTargetWorldPt");
         if (userTargetWorldPt != null) {
             WorldPt pt = WorldPt.parse(userTargetWorldPt);
             if (pt != null) {
                 pt = VisUtil.convertToJ2000(pt);
+                pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
                 String pos = pt.getLon() + "," + pt.getLat();
-                constraints.add(pos + "," + size + "))=1+and+(");
+                if (type.equals("circle")) {
+                    constraints.add("CIRCLE('GALACTIC'," + pos + "," + size + "))=1+and+(");}
+                else if (type.equals("box")) {
+                    constraints.add("BOX('GALACTIC'," + pos + "," + size+"," + size +"))=1+and+(");}
+                //constraints.add(pos + "," + size + "))=1+and+(");
             }
         }
 
         // get search obj string
         String targetStr = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
+        if (targetStr == null) {
+            targetStr = req.getSafeParam("UserTargetWorldPt");
+            targetStr = targetStr.replace(";", ",");
+        }
+        targetStr = targetStr.replace(" ", "");
         String source = "OBJECT:'"+targetStr+"'" ;
 
 
@@ -218,23 +235,17 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (detcStr.equals("_all_")){
             if (!StringUtils.isEmpty(Freq)) {
                 if (Freq.equals("100")) {
-                    detcStr = detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc100_all;}
                 else if (Freq.equals("143")) {
-                    detcStr = detc143_all;}
+                    detcStr = PlanckTOITAPRequest.detc143_all;}
                 else if (Freq.equals("217")) {
-                    detcStr = detc217_all;}
+                    detcStr = PlanckTOITAPRequest.detc217_all;}
                 else if (Freq.equals("030")) {
-                    detcStr = detc030_all;}
+                    detcStr = PlanckTOITAPRequest.detc030_all;}
                 else if (Freq.equals("044")) {
-                    detcStr = detc044_all;}
+                    detcStr = PlanckTOITAPRequest.detc044_all;}
                 else if (Freq.equals("070")) {
-                    detcStr = detc070_all;}
-                else if (Freq.equals("353")) {
-                    detcStr = detc100_all;}
-                else if (Freq.equals("545")) {
-                    detcStr = detc100_all;}
-                else if (Freq.equals("857")) {
-                    detcStr = detc100_all;}
+                    detcStr = PlanckTOITAPRequest.detc070_all;}
             }
 
         }
@@ -273,7 +284,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // ending with format of output:
 
-        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+"}");
+        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+",DETNAM:'" + detcStr +"'}");
 
 
     // compile all constraints

@@ -407,7 +407,7 @@ public class PlotState implements DataEntry, HandSerialize {
             if (request.containsParam(WebPlotRequest.INIT_RANGE_VALUES)) {
                 String rvStr= request.getParam(WebPlotRequest.INIT_RANGE_VALUES);
                 RangeValues rv= RangeValues.parse(rvStr);
-                get(band).setRangeValues(rv);
+                if (rv!=null) get(band).setRangeValues(rv);
             }
         }
 

@@ -6,14 +6,17 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet;
 
 import java.util.List;
 import java.util.Map;
@@ -63,11 +66,11 @@ public class FinderChartGridRenderer implements GridRenderer {
             else if (key.startsWith("IRAS")) irasCnt++;
         }
 
-        dssRow=  (dssCnt>0) ? addMissionRow("DSS") : -1;
-        sdssRow= (sdssCnt>0) ? addMissionRow("SDSS") : -1;
-        massRow= (massCnt>0) ? addMissionRow("2MASS") : -1;
-        wiseRow= (wiseCnt>0) ? addMissionRow("WISE") : -1;
-        irasRow= (irasCnt>0) ? addMissionRow("IRAS") : -1;
+        dssRow=  (dssCnt>0) ? addMissionRow(ImageSet.DSS.title) : -1;
+        sdssRow= (sdssCnt>0) ? addMissionRow(ImageSet.SDSS.title) : -1;
+        massRow= (massCnt>0) ? addMissionRow(ImageSet.TWOMASS.title) : -1;
+        wiseRow= (wiseCnt>0) ? addMissionRow(ImageSet.WISE.title) : -1;
+        irasRow= (irasCnt>0) ? addMissionRow(ImageSet.IRIS.title) : -1;
 
 
         int dssCol= 0;
@@ -91,7 +94,7 @@ public class FinderChartGridRenderer implements GridRenderer {
                 mpw.setSize(dimension.getWidth()+"px", dimension.getHeight()+"px");
             }
             else {
-                mpw.setSize("100%","100%");
+                mpw.setSize("192px","192px");
             }
         }
 
@@ -101,6 +104,23 @@ public class FinderChartGridRenderer implements GridRenderer {
 
         AllPlots.getInstance().updateUISelectedLook();
 
+    }
+
+    public Element getMaskingElement(String key) {
+        Element retval= null;
+        int row= -1;
+        if      (key.toUpperCase().startsWith("DSS"))     row= dssRow;
+        else if (key.toUpperCase().startsWith("SDSS"))    row= sdssRow;
+        else if (key.toUpperCase().startsWith("TWOMASS")) row= massRow;
+        else if (key.toUpperCase().startsWith("2MASS"))   row= massRow;
+        else if (key.toUpperCase().startsWith("WISE"))    row= wiseRow;
+        else if (key.toUpperCase().startsWith("IRAS"))    row= irasRow;
+
+        if (row>-1) {
+            retval= grid.getRowFormatter().getElement(row);
+        }
+
+        return retval;
     }
 
     public void postPlotting() {
@@ -122,22 +142,24 @@ public class FinderChartGridRenderer implements GridRenderer {
             }
         }
 
-        if (!hasDss) clearRow(dssRow, "DSS");
-        if (!hasSdss) clearRow(sdssRow, "SDSS");
-        if (!has2mass) clearRow(massRow, "2MASS");
-        if (!hasWise) clearRow(wiseRow, "WISE");
-        if (!hasIras) clearRow(irasRow, "IRAS");
+        if (!hasDss) clearRow(dssRow, "DSS", true);
+        if (!hasSdss) clearRow(sdssRow, "SDSS", true);
+        if (!has2mass) clearRow(massRow, "2MASS", true);
+        if (!hasWise) clearRow(wiseRow, "WISE", true);
+        if (!hasIras) clearRow(irasRow, "IRAS", true);
     }
 
-    public void clearRow(int row, String rowDesc) {
+    public void clearRow(int row, String rowDesc, boolean wasQueried) {
         if (row==-1) return;
         int colCnt= grid.getCellCount(row);
         for(int i=0; (i<colCnt); i++) {
             grid.clearCell(row,i);
         }
-        grid.getFlexCellFormatter().setColSpan(row,0,5);
-        HTML html= new HTML("No data available for "+ rowDesc);
-        grid.setWidget(row,0,html);
+        if (wasQueried) {
+            grid.getFlexCellFormatter().setColSpan(row,0,5);
+            HTML html= new HTML("No data available for "+ rowDesc);
+            grid.setWidget(row,0,html);
+        }
     }
 
     public void setDimension(Dimension dim) {

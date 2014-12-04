@@ -49,6 +49,15 @@ public class RowTargetCreator implements EventWorkerCreator {
             super(ROW_TARGET);
         }
 
+        @Override
+        protected boolean useEvent(WebEvent ev) {
+            boolean retval= false;
+            if (ev.getSource() instanceof TablePanel) {
+                TablePanel t= (TablePanel) ev.getSource();
+                retval= getQuerySources().contains(t.getName());
+            }
+            return retval;
+        }
 
         public void handleEvent(WebEvent ev) {
             if (!(ev.getSource() instanceof TablePanel)) return;

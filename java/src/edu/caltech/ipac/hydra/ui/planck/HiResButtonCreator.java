@@ -52,6 +52,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
         private TablePanel tablePanel;
         private BaseDialog dialog;
         boolean isSelectAll;
+        int totalSel;
 
         public HiResButtonSetter() {
             super(ID);
@@ -59,12 +60,13 @@ public class HiResButtonCreator implements EventWorkerCreator {
 
         protected FocusWidget makeButton(final TablePanel table) {
             tablePanel = table;
+            final int totaldatapt_limit = 2000000;
 
-            final Button button = GwtUtil.makeButton("HiRes Gen", "Generate High Res Image", new ClickHandler() {
+            final Button button = GwtUtil.makeButton("HIRES Gen", "Generate HIRES Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
-                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "Hires-Map generation", true, null) {
+                        dialog = new BaseDialog(table, ButtonType.OK_CANCEL, "HIRES generation", true, null) {
                             protected void inputComplete() {
                                 dialog.setVisible(false);
                                 generateHiRes();
@@ -75,7 +77,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             }
                         };
                     }
-                    final HTML content = new HTML("You are sending a request for Hires image generation<br><br>");
+                    final HTML content = new HTML("You are sending a request for HIRES image generation<br><br>");
                     //final HTML content = FormBuilder.createPanel();
                     content.setHTML(content.getHTML() + "<br>" + "Selected time : <br>");
 
@@ -84,7 +86,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         public void doSuccess(TableDataView result) {
 
                             int rowcount = table.getDataset().getTotalRows();
-                            int totalSel = 0;
+                            totalSel = 0;
                             int totaldatapt = 0;
                             for (int i : table.getDataset().getSelected()) {
                                 TableData.Row row = result.getModel().getRow(i);
@@ -99,11 +101,25 @@ public class HiResButtonCreator implements EventWorkerCreator {
                             content.setHTML(content.getHTML() + "..... <br>");
                             content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
                             content.setHTML(content.getHTML() + "Total data points:" + totaldatapt + " <br>");
+//                            if (totaldatapt > totaldatapt_limit) {
+//                                content.setHTML(content.getHTML() + "<div style=\"background-color:black; color:blue; margin:20px; padding:20px;\">"
+//                                 + "<p style=\"color:orange; font-size:120%\"> We estimate that your requested HIRES map will take significantly"
+//                                 + " longer than 5 minutes to complete."
+//                                 + " We recommend that you run"
+//                                 +      "  HIRES off-line, or select a smaller amount of data from the TOI search"
+//                                 +      "  results. Please hit the \"CANCEL\" button below.<br> </p>"
+//                                 + "</div>");
+//                            }
                             if (totalSel==rowcount) {
                                 isSelectAll = true;
                             } else {
                                 isSelectAll = false;
                             }
+//                            if (totaldatapt > totaldatapt_limit) {
+//                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(false);
+//                            } else {
+//                                dialog.getButton(BaseDialog.ButtonID.OK).setEnabled(true);
+//                            }
                         }
                     }, null);
                     content.setSize("600px", "300px");
@@ -128,7 +144,7 @@ public class HiResButtonCreator implements EventWorkerCreator {
             //set condition if minimap or hires
              tablePanel.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
                  public void doSuccess(TableDataView result) {
-                     NewTabInfo newTabInfo = new NewTabInfo("HiRes");
+                     NewTabInfo newTabInfo = new NewTabInfo("HIRES");
                      MiniPlotWidget mpw = makeImagePlot(result, newTabInfo);
                      newTabInfo.setDisplay(mpw);
                      WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.NEW_TABLE_RETRIEVED, newTabInfo));
@@ -153,7 +169,10 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     String Freq = sreq.getSafeParam("planckfreq");
                     String detector = sreq.getParam("detector");
                     String radius = sreq.getSafeParam("radius");
+                    String boxsize = sreq.getSafeParam("boxsize");
+                    String type = sreq.getSafeParam("type");
                     String ExpandedDesc, desc;
+                    String trangeStr = "";
 
                     WorldPt pt;
                     String pos = null;
@@ -163,17 +182,25 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         pt = WorldPt.parse(userTargetWorldPt);
                         if (pt != null) {
                             pt = VisUtil.convertToJ2000(pt);
-                            pos = pt.getLon() + "," + pt.getLat();
+//                            pos = pt.getLon() + "," + pt.getLat();
                             pt = VisUtil.convert(pt, CoordinateSys.GALACTIC);
-                            gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
+                            pos = pt.getLon() + "," + pt.getLat();
+                            if (nf.format(pt.getLat()).startsWith("-")) {
+                                gpos = "G" + nf.format(pt.getLon()) + nf.format(pt.getLat());
+                            } else {
+                                gpos = "G" + nf.format(pt.getLon()) + "+" + nf.format(pt.getLat());
+                            }
                         }
                     }
 
+                    String targetStr = null;
                     String targetName = sreq.getSafeParam("TargetPanel.field.targetName");
                     if (targetName == null) {
-                        String targetStr = sreq.getSafeParam("UserTargetWorldPt");
+                        targetStr = sreq.getSafeParam("UserTargetWorldPt");
                         targetName = targetStr.replace(";", ",");
                     }
+                    targetStr = targetName.replace(" ", "");
+
 
                     String optBand = Freq;
                     if (!StringUtils.isEmpty(Freq)) {
@@ -186,21 +213,34 @@ public class HiResButtonCreator implements EventWorkerCreator {
                         }
                     }
 
-                    String size = Double.toString(2.*StringUtils.getDouble(radius));
+                    String size = null;
+                    if (type.equals("circle")) {
+                        size = Double.toString(2.*StringUtils.getDouble(radius));
+                    } else if (type.equals("box")){
+                        size = Double.toString(StringUtils.getDouble(boxsize));
+                    }
 
                     String timeSelt = "";
-                    String timeStr ="";
+                    String timeStr = "";
+                    int selectedRowCount = totalSel;
 
                     for (int i : tablePanel.getDataset().getSelected()) {
                         TableData.Row row = tableData.getModel().getRow(i);
                         timeSelt += row.getValue("rmjd") + ",";
                     }
 
+                    String timeStrArr[] = timeSelt.split(",");
+                    String tBegin = timeStrArr[0];
+                    String tEnd = timeStrArr[timeStrArr.length-1];
+                    trangeStr = tBegin +"-" + tEnd;
+
                     if (isSelectAll){
                         timeStr = "[]";
                     }
                     else {
-                        String timeStrArr[] = timeSelt.split(",");
+//                        String timeStrArr[] = timeSelt.split(",");
+//                        String tBegin = timeStrArr[0];
+//                        String tEnd = timeStrArr[timeStrArr.length];
                         timeStr = "[";
                         for (int j = 0; j < timeStrArr.length; j++) {
                             double t1, t2;
@@ -236,7 +276,6 @@ public class HiResButtonCreator implements EventWorkerCreator {
 
                     String interations = "20";
 
-
                     ServerRequest req = new ServerRequest("planckTOIMinimapRetrieve", sreq);
 
                     // add all of the params here.. so it can be sent to server.
@@ -247,10 +286,11 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     req.setParam("timeStr", timeStr);
                     req.setParam("iterations", interations);
                     req.setParam("size", size);
-                    req.setParam("targetStr", targetName);
+                    req.setParam("targetStr", targetStr);
                     req.setParam("detcStr", detcStr);
-                    desc = gpos+"_" + Freq + "GHz-Hires";
-                    ExpandedDesc = "HiRes with " + desc;
+                    desc = gpos+"_" + Freq + "GHz-HIRES";
+                    ExpandedDesc = "HIRES with " + desc +  ", time range " + trangeStr + ", total "+ selectedRowCount
+                                                          + " date(s) selected, Detector(s): " + detcStr;
 
                     // add all of the params here.. so it can be sent to server.
                     WebPlotRequest wpr = WebPlotRequest.makeProcessorRequest(req, ExpandedDesc);
@@ -258,7 +298,9 @@ public class HiResButtonCreator implements EventWorkerCreator {
                     wpr.setInitialColorTable(4);
                     wpr.setExpandedTitle(ExpandedDesc);
                     wpr.setHideTitleDetail(false);
-                    wpr.setTitle(desc);
+                    wpr.setTitle(ExpandedDesc);
+                    wpr.setShowTitleArea(true);
+                    wpr.setDownloadFileNameRoot("planck_toi_search_" + desc);
 
                     //wpr.setWorldPt(pt);
                     //wpr.setSizeInDeg(size);

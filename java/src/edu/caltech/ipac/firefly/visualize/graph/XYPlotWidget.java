@@ -58,7 +58,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
     private static final String RUBBERBAND_HELP = "&nbsp;Rubber band zoom/select/filter &mdash; click and drag to select an area.&nbsp;";
     private static final String SELECTION_BTNS_HELP = "&nbsp;Please see buttons at the top right for available actions.&nbsp;";
 
-    private static int MIN_ROWS_FOR_DECIMATION = 40000;
+    private static int MIN_ROWS_FOR_DECIMATION = 30000;
 
     private Selection _currentSelection = null;
 
@@ -351,7 +351,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
 
     private String serverRequestToString(TableServerRequest req) {
         // remove page size and start index parameters
-        return req.toString().replaceAll(TableServerRequest.PAGE_SIZE+"=\\d+", "").replaceAll(TableServerRequest.START_IDX+"=\\d+", "");
+        return req.toString().replaceAll('&'+TableServerRequest.PAGE_SIZE+"=\\d+", "").replaceAll('&'+TableServerRequest.START_IDX+"=\\d+", "");
     }
 
     private void onStaleData() {
@@ -380,11 +380,12 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
             Date start;
 
             DecimateInfo info = null;
+            boolean logTime = false;
 
             public void onSuccess(TableDataView result) {
                 try {
                     _dataSet = (DataSet)result;
-                    if (_dataSet != null) {
+                    if (_dataSet != null && logTime) {
                         GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: retrieved "+_dataSet.getSize()+" rows in "+
                             ((new Date()).getTime()-start.getTime())+"ms");
                     }
@@ -491,14 +492,17 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     }
                     String currentServerReqStr = ongoingServerReqStr+info.toString();
                     if (!currentServerReqStr.equals(lastServerReqStr) || _dataSet == null) {
-                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: server req - "+currentServerReqStr);
+                        //GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: server req - "+currentServerReqStr);
+                        logTime = true;
                         _tableModel.getDecimatedAdHocData(passAlong, info);
                     } else {
-                        GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: using previous server req results");
+                        //GwtUtil.getClientLogger().log(Level.INFO, "XY Plot: using previous server req results");
+                        logTime = false;
                         onSuccess(_dataSet);
                         cancel(); // cancel the task, should do it after onSuccess
                     }
                 } else {
+                    logTime = false;
                     _tableModel.getAdHocData(passAlong, requiredCols, 0, maxPoints);
                 }
             }
@@ -801,37 +805,38 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                     _meta = meta;
                     if (_chart != null) {
                         _chart.clearCurves();
-                    }
-                    // force to reevaluate chart size
-                    reevaluateChartSize(true);
 
-                    if (_dataSet != null) {
-                        List<String> requiredCols;
-                        //do we need server call to get a new dataset? always evaluates to true for decimated table
-                        boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
-                        if (!serverCallNeeded) {
-                            requiredCols = getRequiredCols();
-                            for (String c : requiredCols) {
-                                if (_dataSet.findColumn(c) == null) {
-                                    serverCallNeeded = true;
-                                    break;
+                        // force to reevaluate chart size
+                        reevaluateChartSize(true);
+
+                        if (_dataSet != null) {
+                            List<String> requiredCols;
+                            //do we need server call to get a new dataset? always evaluates to true for decimated table
+                            boolean serverCallNeeded = _dataSet.getSize() < _tableModel.getTotalRows() && _meta.getMaxPoints() > _dataSet.getSize();
+                            if (!serverCallNeeded) {
+                                requiredCols = getRequiredCols();
+                                for (String c : requiredCols) {
+                                    if (_dataSet.findColumn(c) == null) {
+                                        serverCallNeeded = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        if (serverCallNeeded) {
-                            doServerCall(_meta.getMaxPoints());
-                        } else {
-                            addData(_dataSet);
-                            _selectionCurve = getSelectionCurve();
-                            if (_savedZoomSelection != null && preserveZoomSelection) {
-                                setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+                            if (serverCallNeeded) {
+                                doServerCall(_meta.getMaxPoints());
                             } else {
-                                _savedZoomSelection = null;
+                                addData(_dataSet);
+                                _selectionCurve = getSelectionCurve();
+                                if (_savedZoomSelection != null && preserveZoomSelection) {
+                                    setChartAxesForSelection(_savedZoomSelection.xMinMax, _savedZoomSelection.yMinMax);
+                                } else {
+                                    _savedZoomSelection = null;
+                                }
+                                if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
+                                _loading.setVisible(false);
+                                _chart.update();
                             }
-                            if (plotMode.equals(PlotMode.TABLE_VIEW)) { updateOnSelectionBtns(); }
-                            _loading.setVisible(false);
-                            _chart.update();
                         }
                     }
                     //_meta.addUserColumnsToDefault();

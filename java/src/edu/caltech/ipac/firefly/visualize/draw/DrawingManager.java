@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -26,7 +27,9 @@ import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 /**
@@ -50,7 +53,7 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private static final DrawSymbol DEF_SYMBOL = DrawSymbol.X;
-    private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.SQUARE_X;
+    private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.EMP_SQUARE_X;
 
 
     private String _highlightedColor = AutoColor.HIGHLIGHTED_PT;
@@ -94,16 +97,26 @@ public class DrawingManager implements AsyncDataLoader {
 
     public void requestLoad(final LoadCallback cb) {
        if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()!=null) {
-           _dataConnect.getAsyncDataLoader().requestLoad(new LoadCallback() {
-               public void loaded() {
-                   cb.loaded();
-                   for (PVData pvData : _allPV.values()) {
-                       Drawer drawer= pvData.getDrawer();
-                       drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
-//                       drawer.redraw();
-                   }
+           if (isDataAvailable()) {
+               for (PVData pvData : _allPV.values()) {
+                   Drawer drawer= pvData.getDrawer();
+                   drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
                }
-           });
+               cb.loaded();
+           }
+           else {
+               for(PVData pvData : _allPV.values())  pvData.addTask();
+               _dataConnect.getAsyncDataLoader().requestLoad(new LoadCallback() {
+                   public void loaded() {
+                       cb.loaded();
+                       for (PVData pvData : _allPV.values()) {
+                           Drawer drawer= pvData.getDrawer();
+                           drawer.setData(_dataConnect.getData(false,drawer.getPlotView().getPrimaryPlot()));
+                           pvData.removeTask();
+                       }
+                   }
+               });
+           }
        }
        else if (_dataConnect!=null && _dataConnect.getAsyncDataLoader()==null){
            cb.loaded();
@@ -248,7 +261,7 @@ public class DrawingManager implements AsyncDataLoader {
 
                 for (WebPlotView pv : pvList) {
                     if (pv.isAlive()) {
-                        redrawAll(pv, _allPV.get(pv)._drawer, false);
+                        redrawAll(pv, _allPV.get(pv).drawer, false);
                     }
                 }
             }
@@ -330,8 +343,21 @@ public class DrawingManager implements AsyncDataLoader {
         if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
         pv.addPersistentMouseInfo(mi);
         pv.addWebLayerItem(item);
-        item.initDefaultVisibility();
-        _allPV.put(pv, new PVData(drawer, mi, item));
+
+
+        if (_dataConnect != null) {
+            if (_dataConnect.getOnlyShowIfDataIsVisible())  item.initDefaultVisibilityTo(_dataConnect.isDataVisible());
+            else                                            item.initDefaultVisibility();
+        }
+        else {
+            item.initDefaultVisibility();
+        }
+
+
+//       item.initDefaultVisibility();
+        PlotAddedListener l= new PlotAddedListener(pv);
+        pv.addListener(Name.PLOT_ADDED,l);
+        _allPV.put(pv, new PVData(drawer, mi, item, l));
 
         checkAndSetupPerPlotData(pv,drawer);
 
@@ -355,7 +381,7 @@ public class DrawingManager implements AsyncDataLoader {
             } else {
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
-                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+//                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
 //                if (subVisControl.isUsingSubgroupVisibility()) updateVisibilityBasedOnSubgroup(pv);
                 item.setDrawingManager(this);
             }
@@ -422,6 +448,8 @@ public class DrawingManager implements AsyncDataLoader {
                     }
                 }
                 pvData.getDrawer().dispose();
+                pv.removeListener(Name.PLOT_ADDED, pvData.listener);
+
             }
             _allPV.remove(pv);
         }
@@ -550,6 +578,9 @@ public class DrawingManager implements AsyncDataLoader {
             }
 
             subVisControl.setDataConnect(_dataConnect);
+            for(WebPlotView pv : _allPV.keySet()) {
+                if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
+            }
             updateVisibilityBasedOnSubgroupAll();
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
         }
@@ -695,14 +726,15 @@ public class DrawingManager implements AsyncDataLoader {
 
     private void updateVisibilityBasedOnTableVisibility() {
         boolean visible= _dataConnect.isDataVisible();
-        if (_init) {
+        if (_init && _allPV.size()>0) {
             PVData data;
-            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
-                data = entry.getValue();
-                if (data.getWebLayerItem().isVisible() != visible) {
-                    data.getWebLayerItem().setVisible(visible);
-                }
-            }
+            _allPV.values().iterator().next().getWebLayerItem().setVisible(visible);
+//            for (Map.Entry<WebPlotView, PVData> entry : _allPV.entrySet()) {
+//                data = entry.getValue();
+//                if (data.getWebLayerItem().isVisible() != visible) {
+//                    data.getWebLayerItem().setVisible(visible);
+//                }
+//            }
         }
     }
 
@@ -786,33 +818,65 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private void highlightNearest(WebPlotView pv, ScreenPt pt) {
-
         if (_dataConnect == null || !_dataConnect.getSupportsMouse()) return;
-
-        WebPlot plot = pv.getPrimaryPlot();
-        double dist;
-        double minDist = Double.MAX_VALUE;
-        List<DrawObj> data = _dataConnect.getData(false, plot);
-        if (data == null) return;
-        DrawObj closestPt = null;
-        int idx= 0;
-        int closestIdx= -1;
-        for (DrawObj obj : data) {
-            if (obj!=null) {
-                dist = obj.getScreenDist(plot, pt);
-                if (dist > -1 && dist < minDist) {
-                    minDist = dist;
-                    closestPt = obj;
-                    closestIdx= idx;
+        HighlightNearestWorker worker= new HighlightNearestWorker(pv,pt);
+        Scheduler.get().scheduleIncremental(worker);
+    }
 
 
-                }
-            }
-            idx++;
+
+    private class HighlightNearestWorker implements Scheduler.RepeatingCommand {
+
+        private double dist;
+        private double minDist = Double.MAX_VALUE;
+        private DrawObj closestPt = null;
+        private int idx= 0;
+        private int closestIdx= -1;
+        private final int _maxChunk= 500;
+        private final ScreenPt pt;
+        private final WebPlot plot;
+        private final Iterator<DrawObj> iterator;
+
+        private HighlightNearestWorker(WebPlotView pv, ScreenPt pt) {
+            this.pt = pt;
+            plot = pv.getPrimaryPlot();
+            iterator= _dataConnect.getData(false, plot).iterator();
         }
 
-        if (closestPt!=null && _dataConnect!=null)  _dataConnect.setHighlightedIdx(closestIdx);
+
+        public boolean execute() {
+            boolean continueProcessing= true;
+            DrawObj obj;
+            try {
+                for(int i= 0; (iterator.hasNext() && i<_maxChunk ); ) {
+                    obj= iterator.next();
+                    if (obj!=null) {
+                        dist = obj.getScreenDist(plot, pt);
+                        if (dist > -1 && dist < minDist) {
+                            minDist = dist;
+                            closestPt = obj;
+                            closestIdx= idx;
+
+
+                        }
+                    }
+                    idx++;
+                }
+                if (!iterator.hasNext()) {
+                    continueProcessing= false;
+                }
+            } catch (ConcurrentModificationException e) {
+                continueProcessing= false;
+            }
+
+            if (!continueProcessing && closestPt!=null) {
+                _dataConnect.setHighlightedIdx(closestIdx);
+            }
+            return continueProcessing;
+        }
     }
+
+
 
 
     private int[] getAndSaveSelectedArea() {
@@ -843,6 +907,10 @@ public class DrawingManager implements AsyncDataLoader {
 
         @Override
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
+        }
+
+        @Override
+        public void onMouseUp(WebPlotView pv, ScreenPt spt) {
             //TODO: Trey, please fix this... this is not a solution.  -loi
             if (!_dataConnect.getClass().getName().contains("ActiveTargetDisplay")) {
                 highlightNearest(_pv, spt);
@@ -857,22 +925,64 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private static class PVData {
-        private final Drawer _drawer;
-        private final WebPlotView.MouseInfo _mi;
-        private final WebLayerItem _layerItem;
+        private final Drawer drawer;
+        private final WebPlotView.MouseInfo mi;
+        private final WebLayerItem layerItem;
+        private String currDrawTaskID= null;
+        private int taskCnt= 0;
+        private final PlotAddedListener listener;
 
-        public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem) {
-            _drawer = drawer;
-            _mi = mi;
-            _layerItem = layerItem;
+        public PVData(Drawer drawer, WebPlotView.MouseInfo mi, WebLayerItem layerItem, PlotAddedListener listener) {
+            this.drawer = drawer;
+            this.mi = mi;
+            this.layerItem = layerItem;
+            this.listener= listener;
         }
 
-        public Drawer getDrawer() { return _drawer; }
-        public WebLayerItem getWebLayerItem() { return _layerItem; }
-        public WebPlotView.MouseInfo getMouseInfo() { return _mi; }
+        public Drawer getDrawer() { return drawer; }
+        public WebLayerItem getWebLayerItem() { return layerItem; }
+        public WebPlotView.MouseInfo getMouseInfo() { return mi; }
+        public void addTask() {
+            if (taskCnt==0) {
+                WebPlotView pv= drawer.getPlotView();
+                if (pv!=null) {
+                    if (currDrawTaskID!=null) pv.removeTask(currDrawTaskID);
+                    currDrawTaskID= pv.addTask();
+                }
+            }
+            taskCnt++;
+        }
+        public void removeTask() {
+            if (taskCnt==1) {
+                WebPlotView pv= drawer.getPlotView();
+                if (pv!=null && currDrawTaskID!=null) {
+                    pv.removeTask(currDrawTaskID);
+                    currDrawTaskID= null;
+                }
+            }
+            taskCnt--;
+        }
+
 
     }
 
+    private class PlotAddedListener implements WebEventListener {
+        private final WebPlotView pv;
+
+        public PlotAddedListener(WebPlotView pv) {
+            this.pv = pv;
+        }
+
+        public void eventNotify(WebEvent ev) {
+            String sg= pv.getDrawingSubGroup();
+            if (sg!=null && _dataConnect!=null && _dataConnect.getOKForSubgroups()) {
+                subVisControl.enableSubgroupingIfSupported();
+                if (!subVisControl.containPlotView(pv)) { // updating subgroup here is necessary only if it first time this plot view has been added
+                    updateVisibilityBasedOnSubgroup(pv);
+                }
+            }
+        }
+    }
 
     private class TableViewListener implements WebEventListener {
 
@@ -891,9 +1001,21 @@ public class DrawingManager implements AsyncDataLoader {
                     } else if (n.equals(TablePanel.ON_ROWSELECT_CHANGE)) {
                         handleAreaSelectChange();
                     } else if (n.equals(TablePanel.ON_SHOW)) {
-                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                public void execute() {
+                                    updateVisibilityBasedOnTableVisibility();
+                                }
+                            });
+                        }
                     } else if (n.equals(TablePanel.ON_HIDE)) {
-                        if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();
+                        if (_dataConnect.getOnlyShowIfDataIsVisible()) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                public void execute() {
+                                    updateVisibilityBasedOnTableVisibility();
+                                }
+                            });
+                        }
                     }
                 }
             });
@@ -1019,9 +1141,8 @@ public class DrawingManager implements AsyncDataLoader {
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
                 pointDataObj.setSize(4);
-                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true);
+                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true, false);
             }
-
         }
     }
 

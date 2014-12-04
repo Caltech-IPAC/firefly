@@ -5,15 +5,15 @@
 
     <EventWorker id="PlanckMiniMap" type="PlanckMiniMap">
         <QueryId>
-            planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
+            planckTOITAP030,planckTOITAP044,planckTOITAP070
         </QueryId>
     </EventWorker>
 
-    <EventWorker id="PlanckHiRes" type="PlanckHiRes">
+<!--    <EventWorker id="PlanckHiRes" type="PlanckHiRes">
         <QueryId>
             planckTOITAP030,planckTOITAP100,planckTOITAP044,planckTOITAP070
         </QueryId>
-    </EventWorker>
+    </EventWorker>-->
 
     <Layout>
         <SplitPanel>
@@ -21,7 +21,7 @@
 
             <!--</East>-->
 
-            <Center layout="tab" tagIt='false' helpId="results">
+            <Center layout="tab" tagIt='false' helpId="toiResults">
                 <!--030GHz -->
                 <Table type="Table">
                     <QueryId>planckTOITAP030</QueryId>
@@ -30,11 +30,11 @@
                 </Table>
 
                 <!--100GHz -->
-                <Table type="Table">
+                <!--<Table type="Table">
                     <QueryId>planckTOITAP100</QueryId>
                     <Title>100GHz</Title>
                     <ShortDescription>100GHz TOI Search</ShortDescription>
-                </Table>
+                </Table>-->
                 <!--
                 <Table type="Table">
                     <QueryId>planckTOITAP100_1a</QueryId>

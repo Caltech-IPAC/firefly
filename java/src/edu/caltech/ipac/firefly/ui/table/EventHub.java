@@ -42,6 +42,7 @@ public class EventHub implements StatefulWidget {
 
     public static final Name ON_TAB_SELECTED        = TabPane.TAB_SELECTED;
     public static final Name ON_TAB_ADDED           = TabPane.TAB_ADDED;
+    public static final Name ON_TAB_REMOVED         = TabPane.TAB_REMOVED;
 
     public static final Name ON_TABLE_SHOW     = new Name("EventHub.TableShow",
                                                     "When a table becomes visible.");
@@ -161,8 +162,9 @@ public class EventHub implements StatefulWidget {
         if (!tabs.contains(tPane)) {
             tabs.add(tPane);
 
-            tPane.getEventManager().addListener(ON_TAB_SELECTED, eventBridge);
-            tPane.getEventManager().addListener(ON_TAB_ADDED, eventBridge);
+            tPane.getEventManager().addListener(TabPane.TAB_SELECTED, eventBridge);
+            tPane.getEventManager().addListener(TabPane.TAB_ADDED, eventBridge);
+            tPane.getEventManager().addListener(TabPane.TAB_REMOVED, eventBridge);
         }
     }
 
@@ -313,6 +315,8 @@ public class EventHub implements StatefulWidget {
                 getEventManager().fireEvent(new WebEvent(ev.getSource(), ON_TAB_SELECTED, ev.getData()));
             } else if (ev.getName().equals(TabPane.TAB_ADDED)) {
                 getEventManager().fireEvent(new WebEvent(ev.getSource(), ON_TAB_ADDED, ev.getData()));
+            } else if (ev.getName().equals(TabPane.TAB_REMOVED)) {
+                getEventManager().fireEvent(new WebEvent(ev.getSource(), ON_TAB_REMOVED, ev.getData()));
             } else {
                 getEventManager().fireEvent(ev);
             }

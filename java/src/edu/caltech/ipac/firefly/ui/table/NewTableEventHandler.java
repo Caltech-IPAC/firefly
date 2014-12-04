@@ -49,7 +49,9 @@ public class NewTableEventHandler implements WebEventListener {
                 public void eventNotify(WebEvent ev) {
                     TabPane.Tab<TablePanel> tab = (TabPane.Tab<TablePanel>) ev.getData();
                     if (tab.isRemovable()) {
-                        NewTableEventHandler.this.hub.unbind(tab.getContent());
+                        if (tab.getContent() instanceof TablePanel) {
+                            NewTableEventHandler.this.hub.unbind(tab.getContent());
+                        }
                     }
                 }
             });

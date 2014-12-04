@@ -79,12 +79,14 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
         boolean allFalse= true;
         boolean allTrue= true;
         for (MiniPlotWidget mpw : getGroupActiveList()) {
-            WebGridLayer gridLayer= getLayer(mpw);
-            if (gridLayer.isShowing()) {
-                allFalse= false;
-            }
-            else {
-                allTrue= false;
+            if (mpw.getCurrentPlot()!=null) {
+                WebGridLayer gridLayer= getLayer(mpw);
+                if (gridLayer.isShowing()) {
+                    allFalse= false;
+                }
+                else {
+                    allTrue= false;
+                }
             }
         }
         return (!(allFalse || allTrue));

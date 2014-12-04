@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -16,8 +17,14 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 
 import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
+import edu.caltech.ipac.target.NedAttribute;
+import edu.caltech.ipac.target.PositionJ2000;
+import edu.caltech.ipac.target.SimbadAttribute;
 import edu.caltech.ipac.target.Target;
 import edu.caltech.ipac.targetgui.TargetList;
+import edu.caltech.ipac.targetgui.net.NedParams;
+import edu.caltech.ipac.targetgui.net.SimbadParams;
+import edu.caltech.ipac.targetgui.net.TargetNetwork;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
@@ -398,6 +405,96 @@ public class QueryUtil {
         return targets;
     }
 
+    /**
+     * Get target list from uploaded file.  It supports tbl, csv, tsv, Spot target list.
+     * File must contains ra and dec columns.  If not, it must contains either objname, object, or target column
+     * for ra/dec target name resolution.
+     * @param ufile File to parse for targets
+     * @return DataGroup containing original uploaded columns, plus ra and dec if not given.
+     * @throws DataAccessException
+     * @throws IOException
+     */
+    public static DataGroup getUploadedTargets(File ufile) throws DataAccessException, IOException {
+        final String RA = "ra";
+        final String DEC= "dec";
+        try {
+            List<DataType> newCols = new ArrayList<DataType>();
+            newCols.add(new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class));
+            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            if (dg == null) {
+                throw createEndUserException("Unable to read file:" + ufile.getName());
+            }
+            String sourceCName = null;
+
+            // standardize the required columns.
+            boolean doRowIdIncrement = (dg.containsKey(CatalogRequest.UPDLOAD_ROW_ID));
+            for (DataType dt: dg.getDataDefinitions()) {
+                if (dt.getKeyName().toLowerCase().matches("object|target|objname")) {
+                    sourceCName = dt.getKeyName();
+                } else if (dt.getKeyName().toLowerCase().equals(RA)) {
+                    dt.setKeyName(RA);
+                } else if (dt.getKeyName().toLowerCase().equals(DEC)) {
+                    dt.setKeyName(DEC);
+                } else if (doRowIdIncrement && dt.getKeyName().startsWith(CatalogRequest.UPDLOAD_ROW_ID)) {
+                    dt.setKeyName(getUploadedCName(dt.getKeyName()));
+                }
+                DataType ndt = (DataType) dt.clone();
+                newCols.add(ndt);
+            }
+            boolean doNameResolve = false;
+            if (!dg.containsKey(RA) || !dg.containsKey(DEC)) {
+                if (sourceCName != null) {
+                    doNameResolve = true;
+                    newCols.add(1, new DataType(DEC, Double.class));
+                    newCols.add(1, new DataType(RA, Double.class));
+                } else {
+                    throw createEndUserException("IPAC Table file must contain RA and Dec columns.");
+                }
+            }
+
+            DataGroup newdg = new DataGroup("sources", newCols);
+            for (DataObject row : dg) {
+                DataObject nrow = new DataObject(newdg);
+                for (DataType dt : newCols) {
+                    if (dt.getKeyName().equals(RA) || dt.getKeyName().equals(DEC)) {
+                        if (doNameResolve && nrow.getDataElement(dt) == null) {
+                            PositionJ2000 pos = null;
+                            Object objname = row.getDataElement(sourceCName);
+                            NedAttribute na = TargetNetwork.getNedPosition(new NedParams(String.valueOf(objname)), null);
+                            pos = na.getPosition();
+                            if (pos == null) {
+                                SimbadAttribute sa = TargetNetwork.getSimbadPosition(new SimbadParams(String.valueOf(objname)), null);
+                                pos = sa.getPosition();
+                            }
+                            if (pos != null) {
+                                nrow.setDataElement(newdg.getDataDefintion(RA), pos.getLon());
+                                nrow.setDataElement(newdg.getDataDefintion(DEC), pos.getLat());
+                            }
+                        } else {
+                            if (row.containsKey(dt.getKeyName())) {
+                                nrow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                            }
+                        }
+                    } else if (dt.getKeyName().equals(CatalogRequest.UPDLOAD_ROW_ID)) {
+                        nrow.setDataElement(dt, newdg.size() + 1);
+                    } else {
+                        nrow.setDataElement(dt, row.getDataElement(dt.getKeyName()));
+                    }
+                }
+                newdg.add(nrow);
+            }
+            newdg.shrinkToFitData(true);
+            return newdg;
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (msg==null) msg=e.getCause().getMessage();
+            if (msg==null) msg="";
+            throw new DataAccessException(
+                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
+                            e.getMessage(), e) );
+        }
+    }
+
     public static DataAccessException createEndUserException(String msg) {
         return new DataAccessException(new EndUserException(msg, msg) );
     }
@@ -450,13 +547,23 @@ public class QueryUtil {
 
 
         // determine min/max values of x and y
+        boolean checkDeciLimits = false;
+        double xDeciMax = Double.POSITIVE_INFINITY, xDeciMin = Double.NEGATIVE_INFINITY, yDeciMax = Double.POSITIVE_INFINITY, yDeciMin = Double.NEGATIVE_INFINITY;
+        if (!Double.isNaN(decimateInfo.getXMin())) { xDeciMin = decimateInfo.getXMin(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getXMax())) { xDeciMax = decimateInfo.getXMax(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getYMin())) { yDeciMin = decimateInfo.getYMin(); checkDeciLimits = true; }
+        if (!Double.isNaN(decimateInfo.getYMax())) { yDeciMax = decimateInfo.getYMax(); checkDeciLimits = true; }
+        int outRows = dg.size();
         for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
             DataObject row = dg.get(rIdx);
 
             double xval = xValGetter.getValue(row);
             double yval = yValGetter.getValue(row);
 
-            if (xval==Double.NaN || yval==Double.NaN) { continue; }
+            if (xval==Double.NaN || yval==Double.NaN) {
+                outRows--;
+                continue;
+            }
 
             if (xval > xMax) { xMax = xval; }
             if (xval < xMin) { xMin = xval; }
@@ -469,6 +576,10 @@ public class QueryUtil {
                 retrow.setDataElement(columns[1], yval);
                 retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
                 retval.add(retrow);
+            } else if (checkDeciLimits) {
+                if (xval>xDeciMax || xval<xDeciMin || yval>yDeciMax || yval<yDeciMin) {
+                    outRows--;
+                }
             }
         }
 
@@ -479,73 +590,110 @@ public class QueryUtil {
 
         if (doDecimation) {
 
-            java.util.Date startTime = new java.util.Date();
-
             boolean checkLimits = false;
-            if (!Double.isNaN(decimateInfo.getXMin()) && decimateInfo.getXMin() > xMin) { xMin = decimateInfo.getXMin(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getXMax()) && decimateInfo.getXMax() < xMax) { xMax = decimateInfo.getXMax(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getYMin()) && decimateInfo.getYMin() > yMin) { yMin = decimateInfo.getYMin(); checkLimits = true; }
-            if (!Double.isNaN(decimateInfo.getYMax()) && decimateInfo.getYMax() < yMax) { yMax = decimateInfo.getYMax(); checkLimits = true; }
+            if (checkDeciLimits) {
+                if (xDeciMin > xMin) { xMin = xDeciMin; checkLimits = true; }
+                if (xDeciMax < xMax) { xMax = xDeciMax; checkLimits = true; }
+                if (yDeciMin > yMin) { yMin = yDeciMin; checkLimits = true; }
+                if (yDeciMax < yMax) { yMax = yDeciMax; checkLimits = true; }
+            }
 
+            if (outRows < DECI_ENABLE_SIZE) {
+                // no decimation needed
+                // because the number of rows in the output
+                // is less than decimation limit
 
-            // determine the number of cells on each axis
-            int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
-            int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
+                retval = new DataGroup("decimated results", new DataType[]{columns[0],columns[1],columns[2]});
 
-            double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
-            double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
-            // increase cell size a bit to include max values into grid
-            xUnit += xUnit/1000.0/nXs;
-            yUnit += yUnit/1000.0/nYs;
+                for (int rIdx = 0; rIdx < dg.size(); rIdx++) {
+                    DataObject row = dg.get(rIdx);
 
-            DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+                    double xval = xValGetter.getValue(row);
+                    double yval = yValGetter.getValue(row);
 
-            HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
-            // decimating the data now....
-            for (int idx = 0; idx < dg.size(); idx++) {
+                    if (xval==Double.NaN || yval==Double.NaN) {
+                        outRows--;
+                        continue;
+                    }
 
-                DataObject row = dg.get(idx);
-
-                double xval = xValGetter.getValue(row);
-                double yval = yValGetter.getValue(row);
-
-                if (Double.isNaN(xval) || Double.isNaN(yval)) { continue; }
-
-                if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
-
-                String key = decimateKey.getKey(xval, yval);
-
-                if (samples.containsKey(key)) {
-                    SamplePoint pt = samples.get(key);
-                    pt.addRepresentedRow();
-                } else {
-                    SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
-                    samples.put(key, pt);
+                    if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
+                    DataObject retrow = new DataObject(retval);
+                    retrow.setDataElement(columns[0], xval);
+                    retrow.setDataElement(columns[1], yval);
+                    retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                    retval.add(retrow);
                 }
-            }
 
-            for(String key : samples.keySet()) {
-                SamplePoint pt = samples.get(key);
-                DataObject row = new DataObject(retval);
-                row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
-                row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
-                row.setDataElement(columns[2], pt.getRowId());
-                row.setDataElement(columns[3], pt.getRowIdx());
-                row.setDataElement(columns[4], pt.getRepresentedRows());
-                row.setDataElement(columns[5], key);
-                retval.add(row);
-            }
-            String decimateInfoStr = decimateInfo.toString();
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
-                    decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
-            decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
-            retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
-                    decimateKey.toString()));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+            } else {
 
-            java.util.Date endTime = new java.util.Date();
-            Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
+                java.util.Date startTime = new java.util.Date();
+
+                // determine the number of cells on each axis
+                int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
+                int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
+
+                double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
+                double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+                // increase cell size a bit to include max values into grid
+                xUnit += xUnit/1000.0/nXs;
+                yUnit += yUnit/1000.0/nYs;
+
+                DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+
+                HashMap<String, SamplePoint> samples = new HashMap<String, SamplePoint>();
+                // decimating the data now....
+                for (int idx = 0; idx < dg.size(); idx++) {
+
+                    DataObject row = dg.get(idx);
+
+                    double xval = xValGetter.getValue(row);
+                    double yval = yValGetter.getValue(row);
+
+                    if (Double.isNaN(xval) || Double.isNaN(yval)) { continue; }
+
+                    if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
+
+                    String key = decimateKey.getKey(xval, yval);
+
+                    if (samples.containsKey(key)) {
+                        SamplePoint pt = samples.get(key);
+                        // representative sample point is a random point from the bin
+                        int numRepRows = pt.getRepresentedRows()+1;
+                        if (Math.random() < 1d/(double)numRepRows) {
+                            SamplePoint replacePt = new SamplePoint(xval, yval, row.getRowIdx(), idx, numRepRows);
+                            samples.put(key, replacePt);
+                        } else {
+                            pt.addRepresentedRow();
+                        }
+                    } else {
+                        SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
+                        samples.put(key, pt);
+                    }
+                }
+
+                for(String key : samples.keySet()) {
+                    SamplePoint pt = samples.get(key);
+                    DataObject row = new DataObject(retval);
+                    row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
+                    row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
+                    row.setDataElement(columns[2], pt.getRowId());
+                    row.setDataElement(columns[3], pt.getRowIdx());
+                    row.setDataElement(columns[4], pt.getRepresentedRows());
+                    row.setDataElement(columns[5], key);
+                    retval.add(row);
+                }
+                String decimateInfoStr = decimateInfo.toString();
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
+                        decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+                decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+                retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
+                        decimateKey.toString()));
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
+                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+
+                java.util.Date endTime = new java.util.Date();
+                Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
+            }
         }
 
 
@@ -592,11 +740,16 @@ public class QueryUtil {
         int representedRows;
 
         public SamplePoint(double x, double y, int rowId, int rowIdx) {
+            this(x, y, rowId, rowIdx, 1);
+        }
+
+
+        public SamplePoint(double x, double y, int rowId, int rowIdx, int representedRows) {
             this.x = x;
             this.y = y;
             this.rowId = rowId;
             this.rowIdx = rowIdx;
-            representedRows = 1;
+            this.representedRows = representedRows;
         }
 
         public void addRepresentedRow() { representedRows++; }
@@ -607,6 +760,37 @@ public class QueryUtil {
         public double getX() { return x; }
         public double getY() { return y; }
 
+    }
+
+    /**
+     * given a column name, it will return a new column name based on IRSA's uploaded column naming convention.
+     * @param cname
+     * @return
+     */
+    public static String getUploadedCName(String cname) {
+        String s = cname.replaceFirst("_\\d\\d$", "");
+        int seq = getSeqNumber(cname);
+        return s + String.format("_%02d", seq+1);
+    }
+
+    public static int getSeqNumber(String cname) {
+        String s = cname.replaceFirst("_\\d\\d$", "");
+        String seqStr = s.equals(cname) ? "" : cname.replaceFirst(s+"_", "");
+        int seq = 0;
+        if (seqStr.length() > 0) {
+            seq = Integer.parseInt(seqStr);
+        }
+        return seq;
+    }
+
+    public static void main(String[] args) {
+        try {
+            getUploadedTargets(new File("/Users/loi/fc.tbl"));
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 /*

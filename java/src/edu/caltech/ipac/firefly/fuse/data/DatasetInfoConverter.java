@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.fuse.data;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
@@ -27,7 +26,6 @@ public interface DatasetInfoConverter {
      * with the proper overlay for its elements in the group. e.g. 2mass j will have 2 mass J artifacts
      */
     public enum DataVisualizeMode { NONE, SPECTRUM, FITS, FITS_3_COLOR}
-    public enum GroupMode {TABLE_ROW_ONLY, WHOLE_GROUP}
 
     public Set<DataVisualizeMode> getDataVisualizeModes();
     public boolean isSupport(DataVisualizeMode mode);
@@ -39,13 +37,9 @@ public interface DatasetInfoConverter {
     public PlotData getPlotData();
 
     public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData);
-    public CoverageInfo getCoverageInfo(TableMeta tableMeta);
 
     public ActiveTargetLayer initActiveTargetLayer();
     public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub);
-
-    public static class CoverageInfo {}
-
 
 }
 

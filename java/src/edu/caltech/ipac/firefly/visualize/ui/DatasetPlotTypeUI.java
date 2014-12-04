@@ -83,7 +83,7 @@ public class DatasetPlotTypeUI extends DataConvPlotTypeUI implements ThreeColorP
         PlotData pd= info.getPlotData();
         List<String> allOpList;
 
-        List<String> threeCIDList= imd.get3ColorViewerIDs();
+        List<String> threeCIDList= imd.get3ColorViewerIDs(null);
         if (id!=null && threeCIDList.contains(id)) {
             allOpList= imd.getAllBandOptions(id);
         }

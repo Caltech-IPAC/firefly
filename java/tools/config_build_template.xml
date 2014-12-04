@@ -26,6 +26,7 @@
     <property name="global-config-files" value="project.dtd projectList.dtd"/>
     <property name="config-files" value="app.prop
                                         db.prop
+                                        CasJobs.config
                                         context.xml
                                         ehcache.xml
                                         log4j.properties

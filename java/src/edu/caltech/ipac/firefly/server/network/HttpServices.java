@@ -2,9 +2,12 @@ package edu.caltech.ipac.firefly.server.network;
 
 import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
@@ -12,6 +15,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -35,9 +39,17 @@ public class HttpServices {
         try {
             hostConfig.setHost(InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {e.printStackTrace();}
-        HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
+        HttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager(){
+            public void releaseConnection(HttpConnection conn) {
+                try {
+                    if (conn != null) conn.close();
+                } catch (Exception ex) {/* do nothing */}
+                super.releaseConnection(conn);
+            }
+        };
         HttpConnectionManagerParams params = new HttpConnectionManagerParams();
-        params.setMaxConnectionsPerHost(hostConfig, 50);
+        params.setMaxConnectionsPerHost(hostConfig, 5);
+        params.setStaleCheckingEnabled(true);
         params.setConnectionTimeout(5000);
         params.setSoTimeout(0);   // this is the default.. but, setting it explicitly to be sure
         connectionManager.setParams(params);
@@ -93,12 +105,29 @@ public class HttpServices {
             }
 
             int status = httpClient.executeMethod(method);
-            return status >= 200 && status < 300;
+            boolean isSuccess =  status >= 200 && status < 300;
+            String reqDesc = "URL:" + method.getURI();
+            if (isSuccess) {
+                LOG.info(reqDesc);
+            } else {
+                reqDesc = reqDesc +
+                        "\nREQUEST HEADERS: " + CollectionUtil.toString(method.getRequestHeaders()).replaceAll("\\r|\\n", "") +
+                        "\nPARAMETERS:\n " + getDesc(method.getParams()) +
+                        "\nRESPONSE HEADERS: " + CollectionUtil.toString(method.getResponseHeaders()).replaceAll("\\r|\\n", "");
+
+                LOG.error("HTTP request failed with status:" + status + "\n" + reqDesc);
+            }
+            return isSuccess;
         } catch (Exception e) {
             LOG.error(e, "Unable to connect to:" + method.toString());
         }
         return false;
     }
+
+    private static String getDesc(HttpMethodParams params) {
+        return null;
+    }
+
 
 }
 /*

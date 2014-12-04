@@ -69,7 +69,8 @@ public class XYPlotOptionsPanel extends Composite {
     private InputField binning;
     private InputField xBinsFld;
     private InputField yBinsFld;
-    // aspect ratio fileds
+    private InputField shading;
+    // aspect ratio fields
     private InputField xyRatioFld;
     private InputField stretchFld;
 
@@ -385,6 +386,7 @@ public class XYPlotOptionsPanel extends Composite {
                         meta.userMeta.samplingXBins = 0;
                         meta.userMeta.samplingYBins = 0;
                     }
+                    meta.userMeta.logShading = shading.getValue().equals("log");
 
                     //meta.setMaxPoints(Integer.parseInt(maxPoints.getValue()));
 
@@ -439,16 +441,16 @@ public class XYPlotOptionsPanel extends Composite {
             }
         });
         VerticalPanel arParams = new VerticalPanel();
+        DOM.setStyleAttribute(arParams.getElement(), "paddingLeft", "10px");
+        arParams.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
         arParams.setSpacing(5);
-        arParams.add(GwtUtil.makeFaddedHelp("Fix aspect ratio by setting the field below.<br>"+
+        arParams.add(GwtUtil.makeFaddedHelp("Fix display aspect ratio by setting the field below.<br>"+
             "Leave it blank to use all available space."));
         arParams.add(FormBuilder.createPanel(configAR, xyRatioFld, stretchFld));
-        Widget aspectRatioPanel = new CollapsiblePanel("Aspect Ratio", arParams, false);
-        vbox.add(aspectRatioPanel);
+        //Widget aspectRatioPanel = new CollapsiblePanel("Aspect Ratio", arParams, false);
+        //vbox.add(aspectRatioPanel);
 
         // density plot parameters
-        FormBuilder.Config configDP = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
-                50, 0, HorizontalPanel.ALIGN_LEFT);
         binning = FormBuilder.createField("XYPlotOptionsDialog.binning");
         binning.addValueChangeHandler(new ValueChangeHandler<String>() {
             @Override
@@ -461,13 +463,21 @@ public class XYPlotOptionsPanel extends Composite {
                 yBinsFld.getFocusWidget().setEnabled(enabled);
             }
         });
+        shading = FormBuilder.createField("XYPlotOptionsDialog.shading");
         xBinsFld = FormBuilder.createField("XYPlotOptionsDialog.x.bins");
         yBinsFld = FormBuilder.createField("XYPlotOptionsDialog.y.bins");
         boolean enabled = binning.getValue().equals("user");
         xBinsFld.getFocusWidget().setEnabled(enabled);
         yBinsFld.getFocusWidget().setEnabled(enabled);
-        Widget binningParams = FormBuilder.createPanel(configDP, binning, xBinsFld, yBinsFld);
-        densityPlotPanel = new CollapsiblePanel("Aggregate Plot", binningParams, false);
+        VerticalPanel binningParams = new VerticalPanel();
+        FormBuilder.Config configDP1 = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                50, 0, HorizontalPanel.ALIGN_LEFT);
+        FormBuilder.Config configDP2 = new FormBuilder.Config(FormBuilder.Config.Direction.VERTICAL,
+                110, 0, HorizontalPanel.ALIGN_LEFT);
+        binningParams.add(FormBuilder.createPanel(configDP1,binning));
+        binningParams.add(FormBuilder.createPanel(configDP2, xBinsFld, yBinsFld));
+        binningParams.add(FormBuilder.createPanel(configDP1,shading));
+        densityPlotPanel = new CollapsiblePanel("Binning Options", binningParams, false);
         vbox.add(densityPlotPanel);
 
         VerticalPanel vbox1 = new VerticalPanel();
@@ -475,6 +485,7 @@ public class XYPlotOptionsPanel extends Composite {
         vbox1.add(xMinMaxPanel);
         vbox1.add(yMinMaxPanelDesc);
         vbox1.add(yMinMaxPanel);
+        vbox1.add(arParams);
         //if (_xyPlotWidget instanceof XYPlotWidget) {
         //    tableInfo = GwtUtil.makeFaddedHelp(((XYPlotWidget)_xyPlotWidget).getTableInfo());
         //    vbox1.add(tableInfo);
@@ -593,6 +604,7 @@ public class XYPlotOptionsPanel extends Composite {
                 binning.setValue((meta.userMeta != null &&
                         meta.userMeta.samplingXBins > 0 && meta.userMeta.samplingYBins > 0) ?
                         "user" : "auto");
+                shading.setValue((meta.userMeta != null && meta.userMeta.logShading) ? "log" : "lin");
                 int xBins = data.getXSampleBins();
                 if (xBins > 0) {
                     xBinsFld.setValue(Integer.toString(xBins));
@@ -779,8 +791,15 @@ public class XYPlotOptionsPanel extends Composite {
         if (binning.getValue().equals("auto")) return true;
         String xBinsStr = xBinsFld.getValue();
         String yBinsStr = yBinsFld.getValue();
-        if (StringUtils.isEmpty(xBinsStr) || StringUtils.isEmpty(yBinsStr) ||
-                !xBinsFld.validate() || !yBinsFld.validate()) {
+        if (StringUtils.isEmpty(xBinsStr)) {
+            xBinsFld.forceInvalid("Empty value is not allowed for user defined binning");
+            return false;
+        }
+        if (StringUtils.isEmpty(yBinsStr)) {
+            yBinsFld.forceInvalid("Empty value is not allowed for user defined binning");
+            return false;
+        }
+        if (!xBinsFld.validate() || !yBinsFld.validate()) {
             return false;
         }
         int xBins = Integer.parseInt(xBinsStr);

@@ -8,7 +8,6 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
@@ -38,7 +37,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     private ActiveTargetLayer targetLayer= null;
     private final String activeTargetLayerName= "target";
-    private final PlotData dynPlotData= new PlotData(null,false,true);
+    private final PlotData dynPlotData= new PlotData(null,false,true,false);
     private final DynImagePlotDefinition imagePlotDefinition= new DynImagePlotDefinition();
 
 
@@ -60,7 +59,6 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) { return null; }
 
-    public CoverageInfo getCoverageInfo(TableMeta tableMeta) { return null; }
 
     public ImagePlotDefinition getImagePlotDefinition() { return imagePlotDefinition; }
 
@@ -89,7 +87,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
             return Collections.emptyList();
         }
 
-        public List<String> get3ColorViewerIDs() {
+        public List<String> get3ColorViewerIDs(SelectedRowData selData) {
             return Collections.emptyList();
         }
 

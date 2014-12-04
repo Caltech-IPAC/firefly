@@ -211,6 +211,12 @@ public class FitsDownloadOpsDialog extends BaseDialog {
 
 
         WebPlotRequest req= state.getWebPlotRequest(band);
+
+        if (req.getDownloadFileNameRoot()!=null) {
+            return req.getDownloadFileNameRoot()+".fits";
+        }
+
+
         RequestType rType= req.getRequestType();
 
         String retval;

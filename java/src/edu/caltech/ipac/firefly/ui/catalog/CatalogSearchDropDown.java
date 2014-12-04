@@ -1,40 +1,27 @@
 package edu.caltech.ipac.firefly.ui.catalog;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ButtonBase;
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.NewTableResults;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.core.background.*;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.ui.Form;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.PopupUtil;
+import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
+import edu.caltech.ipac.firefly.ui.*;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.searchui.LoadCatalogFromVOSearchUI;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
@@ -56,6 +43,7 @@ public class CatalogSearchDropDown {
     private boolean _showing= false;
     private SimplePanel _mainPanel= new SimplePanel();
     private CatalogPanel _catalogPanel= null;
+    private LoadCatalogFromVOSearchUI voSearchUI = null;
     private TabPane<Widget> _tabs = new TabPane<Widget>();
     private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
 
@@ -68,9 +56,10 @@ public class CatalogSearchDropDown {
 
         _tabs.addTab(createSearchCatalogsContent(projectId),"Search Catalogs");
         _tabs.addTab(createLoadCatalogsContent(),"Load Catalog");
+        _tabs.addTab(createLoadCatalogFromVOContent(), "VO Catalog");
         _mainPanel.setWidget(_tabs);
         _mainPanel.addStyleName("content-panel");
-        _mainPanel.setSize("95%", "500px");
+        _mainPanel.setSize("95%", "550px");
         _tabs.setSize("99%", "99%");
         _tabs.selectTab(0);
 
@@ -153,7 +142,7 @@ public class CatalogSearchDropDown {
                             final TableServerRequest req = new TableServerRequest(CommonParams.USER_CATALOG_FROM_FILE);
                             req.setParam("filePath", filepath);
                             req.setStartIndex(0);
-                            req.setPageSize(1000);
+                            req.setPageSize(50);
                             SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>() {
 
                                 public void onFailure(Throwable caught) {
@@ -208,6 +197,95 @@ public class CatalogSearchDropDown {
         return grid;
     }
 
+    private Widget createLoadCatalogFromVOContent() {
+        voSearchUI = new LoadCatalogFromVOSearchUI();
+        ButtonBase ok= GwtUtil.makeFormButton("Search", new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                if (!voSearchUI.validate()) {
+                    return;
+                }
+                voSearchUI.makeServerRequest(new AsyncCallback<ServerRequest>() {
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        if (caught != null) PopupUtil.showSevereError(caught);
+                    }
+
+                    @Override
+                    public void onSuccess(ServerRequest request) {
+                        final TableServerRequest treq = (TableServerRequest) request;
+
+                        final DefaultWorkingWidget working= new DefaultWorkingWidget((ClickHandler)null);
+                        working.setText("Retrieving VO Catalog...");
+                        final MaskPane maskPane = new MaskPane(_mainPanel, working);
+                        maskPane.show();
+
+                        SearchServicesAsync serv= SearchServices.App.getInstance();
+                        serv.submitBackgroundSearch(treq, null, 3000, new AsyncCallback<BackgroundStatus>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                if (caught != null) PopupUtil.showSevereError(caught);
+                                maskPane.hide();
+                            }
+
+                            @Override
+                            public void onSuccess(BackgroundStatus bgStat) {
+                                WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
+                                MonitorItem monItem= new MonitorItem(treq, voSearchUI.getSearchTitle(), BackgroundUIHint.CATALOG, false);
+                                monItem.setStatus(bgStat);
+                                monItem.setActivateOnCompletion(true);
+                                if (bgStat.isSuccess()) {
+                                    ActivationFactory.getInstance().activate(monItem);
+                                    maskPane.hide();
+                                    hide();
+                                }
+                                else {
+                                    handleBackgrounding(monItem);
+                                }
+                            }
+
+                            private void handleBackgrounding(final MonitorItem monItem) {
+                                working.setText("Backgrounding...");
+                                Timer t= new Timer() {
+                                    @Override
+                                    public void run() {
+                                        BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
+                                        Application.getInstance().getBackgroundManager().animateToManager(0, 0, 1300);
+                                        monItem.setWatchable(true);
+                                        monitor.addItem(monItem);
+                                        maskPane.hide();
+                                        hide();
+                                    }
+                                };
+                                t.schedule(1000);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        ButtonBase cancel = GwtUtil.makeFormButton("Cancel", new ClickHandler() {
+            public void onClick(ClickEvent ev) {
+                _tabs.selectTab(0);
+            }
+        });
+        Form.ButtonBar buttonBar = new Form.ButtonBar();
+        buttonBar.setVisible(false);
+        buttonBar.addStyleName("button-bar");
+        buttonBar.addRight(ok);
+        buttonBar.addRight(cancel);
+        buttonBar.getHelpIcon().setHelpId("basics.loadcatalog");
+
+        VerticalPanel vp = new VerticalPanel();
+        vp.add(voSearchUI.createLoadCatalogsContent());
+        vp.add(buttonBar);
+        DOM.setStyleAttribute(vp.getElement(), "padding", "5px");
+        SimplePanel sp = new SimplePanel();
+        sp.add(vp);
+
+        return sp;
+    }
+
     private void newRawDataSet(String title, RawDataSet rawDataSet, TableServerRequest req) {
         DataSet ds= DataSetParser.parse(rawDataSet);
         if (ds.getTotalRows()>0) {
@@ -237,6 +315,7 @@ public class CatalogSearchDropDown {
     public void show() {
         _showing= true;
         if (_catalogPanel!=null) _catalogPanel.showPanel();
+        if (voSearchUI != null) voSearchUI.updateActiveTarget();
         Application.getInstance().getToolBar().getDropdown().setTitle(_prop.getTitle());
         Application.getInstance().getToolBar().getDropdown().setContent(_mainPanel, true, null,
                                                           IrsaCatalogDropDownCmd.COMMAND_NAME);

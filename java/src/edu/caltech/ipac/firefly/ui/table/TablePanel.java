@@ -80,6 +80,7 @@ import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopoutToolbar;
 import edu.caltech.ipac.firefly.ui.PopupPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
 import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.creator.XYPlotViewCreator;
@@ -145,6 +146,9 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     private List<View> views = new ArrayList<View>();
     private List<View> activeViews = new ArrayList<View>();
+
+    private int maskDelayMillSec = 200;
+    private boolean onlyMaskWhenUncovered = true;
 
     private String stateId = "TPL";
     private String name;
@@ -233,6 +237,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
             cMouseX = event.getClientX();
             cMouseY = event.getClientY();
         }
+    }
+
+    public void setMaskDelayMillSec(int maskDelayMillSec) {
+        this.maskDelayMillSec = maskDelayMillSec;
     }
 
     public void setHelpId(String id) {
@@ -383,10 +391,10 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
                 // but, has no way of passing the error.
                 try {
                     handleEvent = false;
-                    mainPanel.add(new HTML(getServerError(caught)));
                     if (callback != null) {
                         callback.onSuccess(0);
                     }
+                    PopupUtil.showError("Request Fail", getServerError(caught));
                 } finally {
                     TablePanel.this.setInit(true);
                 }
@@ -606,7 +614,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         return downloadRequest;
     }
 
-    private static void updateHighlighted(FocusWidget b, GeneralCommand cmd) {
+    public static void updateHighlighted(FocusWidget b, GeneralCommand cmd) {
         if (cmd.isHighlighted()) {
             b.removeStyleName("button");
             b.removeStyleName("normal-text");
@@ -902,7 +910,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         // listen to table's events
         table.addPageChangeHandler(new PageChangeHandler() {
             public void onPageChange(PageChangeEvent event) {
-                mask("Loading...", 200);
+                mask("Loading...", maskDelayMillSec);
                 if (!expanded) {
                     getEventManager().fireEvent(new WebEvent(TablePanel.this, ON_PAGE_CHANGE));
                 }
@@ -1029,7 +1037,6 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         popoutWrapper.add(close, 0, 0);
 
         close.addClickHandler(new ClickHandler() {
-            @Override
             public void onClick(ClickEvent clickEvent) {
                 Application.getInstance().getLayoutManager().getRegion(LayoutManager.POPOUT_REGION).hide();
                 if (mainWrapper.getWidget() == null) {

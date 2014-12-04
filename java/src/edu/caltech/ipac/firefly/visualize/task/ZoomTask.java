@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.visualize.task;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
@@ -32,7 +33,7 @@ public class ZoomTask extends ServerTask<WebPlotResult> {
     }
 
     private ZoomTask(WebPlotGroup group, float zLevel, boolean isFullScreen) {
-        super(null, "zooming...", false);
+        super((Widget)null, "zooming...", false);
         this.group= group;
         this.zLevel = zLevel;
         this.isFullScreen= isFullScreen;

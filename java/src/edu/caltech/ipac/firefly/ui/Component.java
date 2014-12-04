@@ -69,8 +69,12 @@ public class Component extends Composite implements VisibleListener {
     }
 
     public void mask(String msg, int delay) {
+        mask(msg, delay, true);
+    }
+
+    public void mask(String msg, int delay, boolean onlyMaskWhenUncovered) {
         if (maskPane == null) {
-            maskPane = GwtUtil.mask(msg, this);
+            maskPane = GwtUtil.mask(msg, this, onlyMaskWhenUncovered);
         } else {
             maskPane.show(delay);
         }

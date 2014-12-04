@@ -21,10 +21,15 @@ import java.util.List;
  */
 public class FootprintObj extends DrawObj {
 
+    public static final int DEF_WIDTH= 1;
     public enum Style {STANDARD,HANDLED}
 
     private final List<WorldPt[]> _fpList;
     private Style _style= Style.STANDARD;
+    private int lineWidth= DEF_WIDTH;
+
+
+
 
     /**
      * pass a array of WorldPt that represents the corners of a Polygon
@@ -48,6 +53,15 @@ public class FootprintObj extends DrawObj {
         _fpList= ptList;
     }
 
+    @Override
+    public boolean getCanUsePathEnabledOptimization() {
+        return _style==Style.STANDARD && lineWidth==1;
+    }
+
+    @Override
+    public int getLineWidth() { return DEF_WIDTH; }
+
+    private void setLineWidth(int w) { lineWidth= w; }
 
     public List<WorldPt []> getPos() { return _fpList; }
 
@@ -130,18 +144,19 @@ public class FootprintObj extends DrawObj {
 
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
-        drawFootprint(jg,p,ac,useStateColor);
+    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawFootprint(jg,p,ac,useStateColor,onlyAddToPath);
     }
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
     private void drawFootprint(Graphics jg,
                                WebPlot plot,
                                AutoColor ac,
-                               boolean useStateColor) {
+                               boolean useStateColor,
+                               boolean onlyAddToPath) {
 
         boolean inView= false;
         for(WorldPt ptAry[] :_fpList ) {
@@ -158,7 +173,7 @@ public class FootprintObj extends DrawObj {
             for(WorldPt ptAry[] :_fpList ) {
                 switch (_style) {
                     case STANDARD:
-                        drawStandardFootprint(jg, ptAry, plot, ac,useStateColor);
+                        drawStandardFootprint(jg, ptAry, plot, ac,useStateColor,onlyAddToPath);
                         break;
                     case HANDLED:
                         drawHandledFootprint(jg, ptAry, plot, ac, useStateColor);
@@ -171,17 +186,26 @@ public class FootprintObj extends DrawObj {
     }
 
 
-    private void drawStandardFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {
+    private void drawStandardFootprint(Graphics g,
+                                       WorldPt[] ptAry,
+                                       WebPlot plot,
+                                       AutoColor ac,
+                                       boolean useStateColor,
+                                       boolean onlyAddToPath) {
 
         WorldPt wpt0 = ptAry[ptAry.length-1];
+        String color= calculateColor(ac,useStateColor);
+        if (!onlyAddToPath) g.beginPath(color,lineWidth);
         for (WorldPt wpt : ptAry) {
             ViewPortPt pt0=plot.getViewPortCoords(wpt0);
             ViewPortPt pt=plot.getViewPortCoords(wpt);
             if (pt0==null || pt==null) return;
             wpt0 = wpt;
-            String color= calculateColor(ac,useStateColor);
-            jg.drawLine(color, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
+//            g.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
+            g.pathMoveTo(pt0.getIX(), pt0.getIY());
+            g.pathLineTo(pt.getIX(), pt.getIY());
         }
+        if (!onlyAddToPath) g.drawPath();
     }
 
     private void drawHandledFootprint(Graphics jg, WorldPt[] ptAry, WebPlot plot, AutoColor ac, boolean useStateColor) {

@@ -24,7 +24,7 @@ public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
     public final static String SEIP= "seip";
 
     public SpitzerDataSetConverter() {
-        super(Arrays.asList(DataVisualizeMode.FITS), new PlotData(new SResolver(),false,false), "target");
+        super(Arrays.asList(DataVisualizeMode.FITS), new PlotData(new SResolver(),false,false,false), "target");
     }
 
     @Override
@@ -35,15 +35,16 @@ public class SpitzerDataSetConverter extends AbstractDataSetInfoConverter {
 
 
     private static class SResolver implements PlotData.Resolver {
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             String path= selData.getSelectedRow().getValue("fname");
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest("http://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/" + path, "SEIP");
             r.setTitle("Spitzer: SEIP");
             r.setZoomType(ZoomType.TO_WIDTH);
+            if (useWithThreeColor) r.setTitle("3 Color");
             return r;
         }
 
-        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+        public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
             return Arrays.asList(SEIP);
         }
 

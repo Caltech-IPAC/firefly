@@ -1,6 +1,8 @@
 package edu.caltech.ipac.hydra.server.query;
 
+import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -11,6 +13,8 @@ import edu.caltech.ipac.firefly.server.query.QueryDescResolver;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.hydra.core.FinderChartDescResolver;
@@ -22,6 +26,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -43,7 +48,6 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
     // keys used by finderchart search
-    private static final String OBJ_ID = "id";
     private static final String OBJ_NAME = "objname";
     private static final String RA = "ra";
     private static final String DEC = "dec";
@@ -73,27 +77,30 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
             maxSearchTargets = Integer.parseInt(request.getParam(MAX_SEARCH_TARGETS));
         }
 
-        List<Target> targets = getTargetsFromRequest(request);
+//        List<Target> targets = getTargetsFromRequest(request);
 
+        DataGroup targets = getSourcesFromRequest(request);
         if (targets.size() > maxSearchTargets) {
             throw QueryUtil.createEndUserException(
                 "There are "+targets.size()+" targets. "+
                         "Finder Chart only supports "+ maxSearchTargets +" targets or less.");
         }
-        File f = createTargetFile(targets, request);
-
+        File f = createFile(request);
+        targets.shrinkToFitData(true);
+        IpacTableWriter.save(f, targets);
         return f;
     }
 
-    private List<Target> getTargetsFromRequest(TableServerRequest request) throws IOException, DataAccessException {
-        List<Target> list;
-
+    private DataGroup getSourcesFromRequest(TableServerRequest request) throws IOException, DataAccessException {
+        DataGroup table;
         if (request.containsParam("filename")) {
             String uploadedFile = request.getParam("filename");
-            list = getTargetList(uploadedFile);
+            File ufile = VisContext.convertToFile(uploadedFile);
+            table = QueryUtil.getUploadedTargets(ufile);
+            IpacTableWriter.save(ufile, table);
         } else {
             String userTargetWorldPt = request.getParam(ReqConst.USER_TARGET_WORLD_PT);
-            list= new ArrayList<Target>();
+            Target t = null;
             //parse position
             if (userTargetWorldPt != null) {
                 WorldPt pt = WorldPt.parse(userTargetWorldPt);
@@ -101,20 +108,50 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
                     pt = VisUtil.convertToJ2000(pt);
                     String name = request.containsParam("TargetPanel.field.targetName")?
                             request.getParam("TargetPanel.field.targetName"):"";
-                    Target t= new TargetFixedSingle(name, new PositionJ2000(pt.getLon(), pt.getLat()));
-                    list.add(t);
+                    t= new TargetFixedSingle(name, new PositionJ2000(pt.getLon(), pt.getLat()));
                 }
             }
+            table = createDataGroup(t, request);
         }
-        return list;
+        return table;
     }
 
 
-    private File createTargetFile(List<Target> targets, TableServerRequest request)
-            throws IOException, DataAccessException {
 
-        //create an IPAC table with default attributes.
-        DataType objId = new DataType(OBJ_ID, Integer.class);
+//    private List<Target> getTargetsFromRequest(TableServerRequest request) throws IOException, DataAccessException {
+//        List<Target> list;
+//
+//        if (request.containsParam("filename")) {
+//            String uploadedFile = request.getParam("filename");
+//            File ufile = VisContext.convertToFile(uploadedFile);
+//            list = QueryUtil.getUploadedTargets(uploadedFile);
+//        } else {
+//            String userTargetWorldPt = request.getParam(ReqConst.USER_TARGET_WORLD_PT);
+//            list= new ArrayList<Target>();
+//            //parse position
+//            if (userTargetWorldPt != null) {
+//                WorldPt pt = WorldPt.parse(userTargetWorldPt);
+//                if (pt!=null) {
+//                    pt = VisUtil.convertToJ2000(pt);
+//                    String name = request.containsParam("TargetPanel.field.targetName")?
+//                            request.getParam("TargetPanel.field.targetName"):"";
+//                    Target t= new TargetFixedSingle(name, new PositionJ2000(pt.getLon(), pt.getLat()));
+//                    list.add(t);
+//                }
+//            }
+//        }
+//        return list;
+//    }
+//
+//
+
+
+    private DataGroup createDataGroup(Target target, TableServerRequest request) {
+
+        boolean isMultiPosition = !StringUtils.isEmpty(request.getParam("filename"));
+
+            //create an IPAC table with default attributes.
+        DataType objId = new DataType(CatalogRequest.UPDLOAD_ROW_ID, Integer.class);
         DataType objName = new DataType(OBJ_NAME, String.class);
 
         DataType ra = new DataType(RA, Double.class);
@@ -123,32 +160,49 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
         DataType dec = new DataType(DEC, Double.class);
         dec.setFormatInfo(DataType.FormatInfo.createFloatFormat(dec.getFormatInfo().getWidth(), 6));
 
-        DataGroup table = new DataGroup("targets", Arrays.asList(objId, objName, ra, dec));
+        boolean hasObjName = StringUtils.isEmpty(target.getName());
+        List<DataType> columns = new ArrayList<DataType>();
+        if (hasObjName) {
+            columns.addAll(Arrays.asList(objName, ra, dec));
+        } else {
+            columns.addAll(Arrays.asList(ra, dec));
+        }
+        if (isMultiPosition) {
+            columns.add(0, objId);
+        }
 
-        for (int i = 0; i < targets.size(); i++) {
-            Target tgt = targets.get(i);
-            WorldPt pt = getTargetWorldPt(tgt);
-
-            DataObject row = new DataObject(table);
-            row.setDataElement(objId, i);
-            row.setDataElement(objName, getTargetName(tgt));
-            row.setDataElement(ra, pt.getLon());
-            row.setDataElement(dec, pt.getLat());
+        DataGroup table = new DataGroup("targets", columns);
+        DataObject row = new DataObject(table);
+        WorldPt pt = null;
+        try {
+            pt = getTargetWorldPt(target);
+            for (DataType dtype : columns) {
+                if (dtype.getKeyName().equals(CatalogRequest.UPDLOAD_ROW_ID)) {
+                    row.setDataElement(objId, 1);
+                } else if (dtype.getKeyName().equals(OBJ_NAME)) {
+                    row.setDataElement(objName, getTargetName(target));
+                } else if (dtype.getKeyName().equals(RA)) {
+                    row.setDataElement(ra, pt.getLon());
+                } else if (dtype.getKeyName().equals(DEC)) {
+                    row.setDataElement(dec, pt.getLat());
+                }
+            }
             table.add(row);
+        } catch (IOException e) {
+            // should not happen
+            Logger.error(e);
         }
 
-        //create and write IPAC table into a file
-        table.shrinkToFitData();
-        File f = createFile(request);
-        IpacTableWriter.save(f, table);
+        return table;
+    }
 
-        if (request.containsParam("filename")) {
-            // update the uploaded file with resolved coordinates so gator can use it.
-            String uploadedFile = request.getParam("filename");
-            File ufile = VisContext.convertToFile(uploadedFile);
-            FileUtil.copyFile(f, ufile);
+    private boolean hasObjName(List<Target> targets) {
+        for (Target t : targets) {
+            if (!StringUtils.isEmpty(t.getName())) {
+                return true;
+            }
         }
-        return f;
+        return false;
     }
 
     private static String getTargetName(Target t) {
@@ -169,7 +223,7 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
         return pt ;
     }
 
-    public static List<Target> getTargetList(String uploadedFile) throws DataAccessException, IOException {
+    public static DataGroup readUploadedFile(String uploadedFile) throws DataAccessException, IOException {
 
         File ufile = VisContext.convertToFile(uploadedFile);
         if (ufile == null || !ufile.canRead()) {
@@ -178,11 +232,9 @@ public class QueryFinderChartWeb extends DynQueryProcessor {
                     "Unable to read uploaded file.");
         }
 
-        if (FileUtil.isBinary(ufile)) {
-            throw QueryUtil.createEndUserException("Unable to parse binary file.");
-        }
+        DataGroup dg = DataGroupReader.readAnyFormat(ufile);
 
-        return QueryUtil.getTargetList(ufile);
+        return dg;
 
     }
 

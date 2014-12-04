@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize.task.rpc;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
@@ -28,7 +29,7 @@ public class LoadDS9RegionTask extends ServerTask<WebPlotResult> {
 
     private LoadDS9RegionTask(String fileKey,
                               AsyncCallback<RegionData> resultCB) {
-        super(null,null, true);
+        super((Widget)null,null, true);
         super.setMaskingDelaySec(1);
         this.resultCB= resultCB;
         this.fileKey= fileKey;

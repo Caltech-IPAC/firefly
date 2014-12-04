@@ -182,7 +182,7 @@ XYPlotOptionsDialog.x.bins.Min=2
 XYPlotOptionsDialog.x.bins.Max=500
 XYPlotOptionsDialog.x.bins.MinBoundType= inclusive
 XYPlotOptionsDialog.x.bins.MaxBoundType= inclusive
-XYPlotOptionsDialog.x.bins.Title= X-Bins
+XYPlotOptionsDialog.x.bins.Title= Number of X-Bins
 XYPlotOptionsDialog.x.bins.ErrorDescription = Must be an integer from 2 to 500
 XYPlotOptionsDialog.x.bins.ShortDescription= Number of bins along X axis
 XYPlotOptionsDialog.x.bins.PreferWidth= 10
@@ -194,11 +194,25 @@ XYPlotOptionsDialog.y.bins.Min=2
 XYPlotOptionsDialog.y.bins.Max=500
 XYPlotOptionsDialog.y.bins.MinBoundType= inclusive
 XYPlotOptionsDialog.y.bins.MaxBoundType= inclusive
-XYPlotOptionsDialog.y.bins.Title= Y-Bins
+XYPlotOptionsDialog.y.bins.Title= Number of Y-Bins
 XYPlotOptionsDialog.y.bins.ErrorDescription = Must be an integer from 2 to 500
 XYPlotOptionsDialog.y.bins.ShortDescription= Number of bins along Y axis
 XYPlotOptionsDialog.y.bins.PreferWidth= 10
 XYPlotOptionsDialog.y.bins.NullAllowed= true
+
+XYPlotOptionsDialog.shading.Title= Shading:
+XYPlotOptionsDialog.shading.DataType= EnumString
+XYPlotOptionsDialog.shading.Mask= [RADIO]
+XYPlotOptionsDialog.shading.Orient= Horizontal
+XYPlotOptionsDialog.shading.Items= lin log
+XYPlotOptionsDialog.shading.lin.Name= Linear
+XYPlotOptionsDialog.shading.log.Name= Logarithmic
+XYPlotOptionsDialog.shading.ErrorDescription=
+XYPlotOptionsDialog.shading.ShortDescription= When assigning s***REMOVED*** to the number of points \
+                            should we use linear or logarithmic scale?
+XYPlotOptionsDialog.shading.NullAllowed= false
+XYPlotOptionsDialog.shading.Default= lin
+XYPlotOptionsDialog.shading.PreferWidth= 500
 
 
 

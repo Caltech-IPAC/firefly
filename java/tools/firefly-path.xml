@@ -95,6 +95,10 @@
        <include name="josso/josso-ws-1.8.5.jar"/>
     </fileset>
 
+    <fileset id="sdss_casjobs.lib.fs" dir="${firefly.jars.dir}">
+       <include name="sdss/casjobs.jar"/>
+    </fileset>
+
     <fileset id="votable.lib.fs" dir="${firefly.jars.dir}">
        <include name="votable/voi.vowrite.jar"/>
     </fileset>
@@ -145,6 +149,7 @@
         <fileset refid="log4j.jars.fs"/>
         <fileset refid="josso.lib.fs"/>
         <fileset refid="healpix.lib.fs"/>
+        <fileset refid="sdss_casjobs.lib.fs"/>
         <fileset refid="xstream.lib.fs"/>
         <fileset refid="xbeanfinder.lib.fs"/>
     </path>

@@ -137,6 +137,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             TableServerRequest request = (TableServerRequest) sr;
 
             dgFile = getDataFile(request);
+            postProcessData(dgFile, request);
 
             DataGroupPart page = null;
             // get the page requested
@@ -156,7 +157,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             return page;
         } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request: " + sr.toString());
+            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
             throw new DataAccessException("Unexpected error", e);
         } finally {
             if (!doCache()) {
@@ -166,6 +167,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             }
         }
 
+    }
+
+    protected File postProcessData(File dgFile, TableServerRequest request) throws Exception {
+        return dgFile;
     }
 
     public boolean doCache() {

@@ -74,7 +74,7 @@ public abstract class BackgroundingServerTask<R> extends ServerTask<R> {
                 _monItem.setCanceller(canceler);
                 _monItem.setStatus(new BackgroundStatus(_taskID,BackgroundState.WAITING));
                 setState(State.BACKGROUNDED);
-                PopupUtil.showMinimalMsg(getWidget(),"Backgrounding...", 2, PopupPane.Align.CENTER, 150);
+                PopupUtil.showMinimalMsg(getMaskWidget(),"Backgrounding...", 2, PopupPane.Align.CENTER, 150);
             }
         };
         _timer.schedule(_delaySeconds*1000);

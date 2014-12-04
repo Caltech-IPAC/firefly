@@ -1,10 +1,10 @@
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.visualize.task.PlotGroupTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
@@ -113,7 +113,7 @@ public class PlotWidgetOps {
 
 
 
-    public static void plotGroup(final Widget maskWidget,
+    public static void plotGroup(final Element maskElement,
                                  final List<WebPlotRequest> requestList,
                                  final List<MiniPlotWidget> mpwList,
                                  final boolean plotExpanded,
@@ -142,7 +142,7 @@ public class PlotWidgetOps {
                         requestList.set(i,rl.get(0));
                     }
                 }
-                PlotGroupTask.plot(maskWidget,requestList,mpwList,notify);
+                PlotGroupTask.plot(maskElement,requestList,mpwList,notify);
             }
         });
     }

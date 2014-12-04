@@ -4,11 +4,12 @@ import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.fuse.data.config.FinderChartRequestUtil;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
@@ -48,6 +49,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+// convenience sharing of constants
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
+
 /**
  * Created by IntelliJ IDEA.
  * User: tlau
@@ -65,7 +69,7 @@ public class QueryFinderChart extends DynQueryProcessor {
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String EVENTWORKER = "ew";
     private static final String ALL_EVENTWORKER = "all_ew";
-    public static final String OBJ_ID = "id";
+    public static final String OBJ_ID = CatalogRequest.UPDLOAD_ROW_ID;
     public static final String OBJ_NAME = "objname";
     public static final String RA = "ra";
     public static final String DEC = "dec";
@@ -85,47 +89,6 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     private List<Target> targets = null;
     private Target curTarget = null;
-    @Override
-    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
-        super.prepareTableMeta(meta, columns, request);
-    }
-
-    @Override
-    public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {
-        super.onComplete(request, results);
-        // now.. we prefetch the images so the page will load faster.
-
-        TableServerRequest treq = (TableServerRequest) request;
-        if (results.getData().size() == 0 || treq.getFilters() == null || treq.getFilters().size() == 0) return;
-
-        String spid = request.getParam("searchProcessorId");
-        String mst = request.getParam("maxSearchTargets");
-        String flt = StringUtils.toString(treq.getFilters());
-
-        if ( StringUtils.isEmpty(spid) && (!StringUtils.isEmpty(mst) || flt.startsWith("id =")) ) {
-            ExecutorService executor = Executors.newFixedThreadPool(results.getData().size());
-            StopWatch.getInstance().start("QueryFinderChart: prefetch images");
-            try {
-                for (int i = results.getData().size() - 1; i >= 0; i--) {
-                    DataObject row = results.getData().get(i);
-                    final WebPlotRequest webReq = WebPlotRequest.parse(String.valueOf(row.getDataElement(ImageGridSupport.COLUMN.THUMBNAIL.name())));
-                    Runnable worker = new Runnable() {
-                        public void run() {
-                            try {
-                                StopWatch.getInstance().start(webReq.getUserDesc());
-                                FileRetrieverFactory.getRetriever(webReq).getFile(webReq);
-                                StopWatch.getInstance().printLog(webReq.getUserDesc());
-                            } catch (Exception e) {}
-                        }
-                    };
-                    executor.execute(worker);
-                }
-                executor.shutdown();
-                executor.awaitTermination(10, TimeUnit.SECONDS);
-                StopWatch.getInstance().printLog("QueryFinderChart: prefetch images");
-            } catch (Exception e) { e.printStackTrace();}
-        }
-    }
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -141,19 +104,19 @@ public class QueryFinderChart extends DynQueryProcessor {
         File retFile = getFinderChart(mode, request);
 
         if (mode.equals(WEB_MODE)) {
-            if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
-                retFile = getFilterPanelTable(request, retFile);
-            } else {
-                // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
-                // Thus set page size to 0 at initial stage.
-                if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
-                    request.setPageSize(0);
-                }
-            }
-
-            if (!request.containsParam("FilterColumn")) {
-                request.setFilters(getFilterList(request, retFile));
-            }
+//            if (request.containsParam("FilterColumn") && request.containsParam("columns")) {
+//                retFile = getFilterPanelTable(request, retFile);
+//            } else {
+//                // QueryFinderChart returns a complete table, but finder chart only shows filtered results.
+//                // Thus set page size to 0 at initial stage.
+////                if (request.containsParam("filename") && (request.getFilters()==null || request.getFilters().size()==0)) {
+////                    request.setPageSize(0);
+////                }
+//            }
+//
+////            if (!request.containsParam("FilterColumn")) {
+////                request.setFilters(getFilterList(request, retFile));
+////            }
         }
 
         return retFile;
@@ -332,7 +295,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             for (String serviceStr: sources.split(",")) {
                 serviceStr = serviceStr.trim().equalsIgnoreCase("2mass") ? WebPlotRequest.ServiceType.TWOMASS.name() : serviceStr.toUpperCase();
                 WebPlotRequest.ServiceType service = WebPlotRequest.ServiceType.valueOf(serviceStr);
-                String bandKey = FinderChartRequestUtil.getBandKey(service);
+                String bandKey = FinderChartRequestUtil.ImageSet.lookup(service).band;
                 if (bandKey!=null) {
                     bandStr = request.getParam(bandKey);
                     if (bandStr !=null) {
@@ -341,7 +304,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                             bands[i]=getComboPair(service, bands[i]);
                         }
                     } else {
-                        bands = FinderChartRequestUtil.getServiceComboArray(service);
+                        bands = FinderChartRequestUtil.ImageSet.lookup(service).comboAry;
                     }
                 }
 
@@ -392,7 +355,7 @@ public class QueryFinderChart extends DynQueryProcessor {
             DataObject row = new DataObject(dg);
             row.setDataElement(dg.getDataDefintion(RA), pt.getLon());
             row.setDataElement(dg.getDataDefintion(DEC),pt.getLat());
-            row.setDataElement(dg.getDataDefintion("externalname"), FinderChartRequestUtil.getServiceTitle(service));
+            row.setDataElement(dg.getDataDefintion("externalname"), FinderChartRequestUtil.ImageSet.lookup(service).title);
             row.setDataElement(dg.getDataDefintion("wavelength"), FinderChartRequestUtil.getComboTitle(band));
             row.setDataElement(dg.getDataDefintion("service"), service.name());
             for (String type: new String[] {"accessUrl", "accessWithAnc1Url", "fitsurl", "jpgurl", "shrunkjpgurl"}) {
@@ -430,7 +393,7 @@ public class QueryFinderChart extends DynQueryProcessor {
                 } else {
                     expanded= curTarget.getName();
                 }
-                expanded += (" "+FinderChartRequestUtil.getServiceTitle(service)+" "+
+                expanded += (" "+FinderChartRequestUtil.ImageSet.lookup(service).title+" "+
                         FinderChartRequestUtil.getComboTitle(band));
 
                 wpReq= FinderChartRequestUtil.makeWebPlotRequest(pt, radius, width, band, expanded, service);
@@ -450,7 +413,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 //                wpReq.setTitle(getComboTitle(band)/*+" "+dateStr*/);
                 ew = getServiceEventWorkerId(service, band, false);
                 allEW = getServiceEventWorkerId(service, band, true);
-                addWebPlotRequest(table, wpReq, name, FinderChartRequestUtil.getServiceTitle(service), ew, allEW);
+                addWebPlotRequest(table, wpReq, name, FinderChartRequestUtil.ImageSet.lookup(service).title, ew, allEW);
             }
         } catch (Exception e) {
             _log.briefInfo(e.getMessage());
@@ -633,7 +596,7 @@ public class QueryFinderChart extends DynQueryProcessor {
 
     private static String getComboPair(WebPlotRequest.ServiceType service, String key) {
         if (service.equals(WebPlotRequest.ServiceType.WISE) && key!= null) key = "3a."+key;
-        for (String combo: FinderChartRequestUtil.getServiceComboArray(service)) {
+        for (String combo: FinderChartRequestUtil.ImageSet.lookup(service).comboAry) {
             if (key!= null && key.equals(FinderChartRequestUtil.getComboValue(combo))) return combo;
         }
         return "";

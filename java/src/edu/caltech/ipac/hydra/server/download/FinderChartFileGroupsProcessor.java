@@ -2,6 +2,7 @@ package edu.caltech.ipac.hydra.server.download;
 
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -36,6 +37,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.dd.RegionPoint;
@@ -60,6 +62,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.Artifact;
 
 /**
  * Created by IntelliJ IDEA.
@@ -226,7 +230,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
 
         if (retList.size()==0) {
             throw new IOException(FinderChartFileGroupsProcessor.class.getName()+".retrieveHtmlFiles(): Unable to "+
-                        "process request:\n"+request);
+                        "process request:\n"+StringUtils.truncate(request, 256));
         }
         return retList;
     }
@@ -435,7 +439,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         List<StaticDrawInfo> list = makeDrawList(sreq);
         String sdiStr = "";
         for (StaticDrawInfo sdi : list) {
-            sdiStr = (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
+            sdiStr = sdiStr + (sdiStr.length() > 0 ? Constants.SPLIT_TOKEN : "") + sdi.serialize();
         }
         String[] retval = new String[size];
         Arrays.fill(retval, sdiStr);
@@ -481,10 +485,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         boolean isArtifact = false;
         if (drawInfoList!=null && drawInfoList.size()>0) {
             for (String dStr: drawInfoList) {
+                if (StringUtils.isEmpty(dStr)) continue;
                 sdi = StaticDrawInfo.parse(dStr);
                 artifactStr = sdi.getLabel();
                 isArtifact = false;
-                for (String c: new String[]{"glint_arti_", "pers_arti_", "diff_spikes_","halos_","ghosts_","latents_"}){
+                for (String c: new String[]{"glint_arti", "pers_arti", "diff_spikes_","halos_","ghosts_","latents_"}){
                     if (artifactStr.startsWith(c)) {
                         isArtifact = true;
                         break;
@@ -648,6 +653,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
         if (type.equalsIgnoreCase("glint") || type.equalsIgnoreCase("pers")) {
             req.setParam("service", "2mass");
             req.setSafeParam("type", type);
+            band = "j";   // 2mass artifacts are the same for all 3 bands.  use j for all.
         } else {
             req.setParam("service", "wise");
             if (type.equalsIgnoreCase("diff")) req.setSafeParam(WiseRequest.TYPE, "D");
@@ -779,7 +785,7 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
             String layerInfoPair[];
             for (String layer: layerInfoAry) {
                 layerInfoPair = layer.split("==");
-                if (layerInfoPair[0].toLowerCase().contains(survey)) {
+                if (layerInfoPair[0].toLowerCase().startsWith(survey) && Artifact.isArtifacts(layerInfoPair[0])) {
                     line = FINDERCHART_HTML_LAYER.replaceAll("#TITLE#",layerInfoPair[0])
                             .replaceAll("#COLOR#",layerInfoPair[1]).replaceAll("&amp;","&");
                     sb.append(line);
@@ -821,11 +827,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private static String findLabel(String fname) {
         String retval="";
         if (fname!=null) {
-                 if (fname.contains("sdssu")) retval="u";
-            else if (fname.contains("sdssg")) retval="g";
-            else if (fname.contains("sdssr")) retval="r";
-            else if (fname.contains("sdssi")) retval="i";
-            else if (fname.contains("sdssz")) retval="z";
+                 if (fname.contains("sdss (dr7)u")) retval="u";
+            else if (fname.contains("sdss (dr7)g")) retval="g";
+            else if (fname.contains("sdss (dr7)r")) retval="r";
+            else if (fname.contains("sdss (dr7)i")) retval="i";
+            else if (fname.contains("sdss (dr7)z")) retval="z";
             else if (fname.contains("dssdss2red")) retval="DSS2 Red";
             else if (fname.contains("dssdss2blue")) retval="DSS2 Blue";
             else if (fname.contains("dssdss2ir")) retval="DSS2 IR";

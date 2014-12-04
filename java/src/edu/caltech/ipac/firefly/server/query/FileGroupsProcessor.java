@@ -50,7 +50,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
             onComplete(request, fileGroups);
             return fileGroups;
         } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request:" + sr);
+            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
             throw new DataAccessException("Request failed due to unexpected exception: ", e);
         }
 

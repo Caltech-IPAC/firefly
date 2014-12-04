@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -281,6 +282,8 @@ public class PackagingController {
 
     private static BackgroundStatus makeFailStatus(String id) {
         BackgroundStatus retval= new BackgroundStatus(id, BackgroundStatus.BgType.PACKAGE, BackgroundState.FAIL);
+        retval.addAttribute(JobAttributes.Zipped);
+        retval.addAttribute(JobAttributes.CanSendEmail);
         retval.addMessage("report is canceled or failed");
         return retval;
     }

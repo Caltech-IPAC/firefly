@@ -4,6 +4,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
@@ -22,6 +23,7 @@ import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
@@ -53,6 +55,7 @@ public class MultiDataViewer {
 
 
     private static final IconCreator _ic= IconCreator.Creator.getInstance();
+    private static final VisIconCreator _icVis= VisIconCreator.Creator.getInstance();
 
     private static String groupNameRoot = "MultiViewGroup-";
     private GridCard activeGridCard= null;
@@ -63,7 +66,8 @@ public class MultiDataViewer {
     private DockLayoutPanel mainPanel= new DockLayoutPanel(Style.Unit.PX);
     private FlowPanel toolbar= new FlowPanel();
     private FlowPanel toolbarInner= new FlowPanel();
-    private Widget threeColor;
+    private FlowPanel toolbarRightInner= new FlowPanel();
+    private BadgeButton threeColor;
     private CheckBox relatedView= GwtUtil.makeCheckBox("Show Related", "Show all related images", true);
     private HTML noDataAvailableLabel= new HTML("No Image Data Requested");
     private Widget noDataAvailable= makeNoDataAvailable();
@@ -74,6 +78,7 @@ public class MultiDataViewer {
     private DataVisGrid.MpwFactory mpwFactory= null;
     private EventHub hub= null;
     private static int groupNum=0;
+    private PreviewTimer _pvTimer= new PreviewTimer();
 
 
     public MultiDataViewer() {
@@ -83,6 +88,7 @@ public class MultiDataViewer {
         mainPanel.add(plotDeck);
         buildToolbar();
         reinitConverterListeners();
+        toolbar.addStyleName("toolbar");
     }
 
     public void setRefreshListener(RefreshListener l) { this.refreshListener= l; }
@@ -114,6 +120,15 @@ public class MultiDataViewer {
             }
         };
 
+        WebEventListener rcWel =  new WebEventListener(){
+            public void eventNotify(final WebEvent ev) {
+                if (ev.getSource() instanceof TablePanel)  {
+                    _pvTimer.cancel();
+                    _pvTimer.setupCall((TablePanel) ev.getSource());
+                    _pvTimer.schedule(300);
+                }
+            }
+        };
 
         WebEventListener removeList=  new WebEventListener(){
             public void eventNotify(WebEvent ev) {
@@ -126,7 +141,7 @@ public class MultiDataViewer {
             }
         };
 
-        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, wel);
+        hub.getEventManager().addListener(EventHub.ON_ROWHIGHLIGHT_CHANGE, rcWel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_SHOW, wel);
         hub.getEventManager().addListener(EventHub.ON_TABLE_REMOVED, removeList);
         this.hub= hub;
@@ -252,7 +267,6 @@ public class MultiDataViewer {
 
 
     //TODO: how do we deal with the no data message
-    //TODO: how do we deal with the plot fail message
     //TODO: how do we deal with the  no access message
     private void updateGrid(final Object dataContainer) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
@@ -293,20 +307,20 @@ public class MultiDataViewer {
 
         final PlotData plotData= info.getPlotData();
         if (info.isSupport(DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR ) && plotData.is3ColorOptional()) {
-            GwtUtil.setHidden(threeColor, false);
+            GwtUtil.setHidden(threeColor.getWidget(), false);
         }
         else {
-            GwtUtil.setHidden(threeColor, true);
+            GwtUtil.setHidden(threeColor.getWidget(), true);
         }
 
-        GwtUtil.setHidden(relatedView, def.getImageCount()<2);
-        final DatasetInfoConverter.GroupMode mode;
+        GwtUtil.setHidden(relatedView, def.getImageCount()<2 || !plotData.getCanDoGroupingChanges());
+        final PlotData.GroupMode mode;
         if (relatedView.getValue()) {
             gridCard.getVisGrid().clearShowMask();
-            mode= DatasetInfoConverter.GroupMode.WHOLE_GROUP;
+            mode= PlotData.GroupMode.WHOLE_GROUP;
         }
         else {
-            mode= DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY;
+            mode= PlotData.GroupMode.TABLE_ROW_ONLY;
         }
 
 
@@ -384,9 +398,13 @@ public class MultiDataViewer {
     public void addNewToGrid(GridCard gridCard, Set<String> keys, boolean addToGroup) {
         DataVisGrid grid= gridCard.getVisGrid();
         boolean addedKey= false;
+        ImagePlotDefinition def= gridCard.getInfo().getImagePlotDefinition();
+        Map<String,List<String>> viewToLayerMap= def.getViewerToDrawingLayerMap();
+        List<String> plotViewerIDList;
         for(String key : keys) {
             if (!grid.containsKey(key) && !gridCard.containsDeletedID(key)) {
-                grid.addWebPlotImage(key,null,addToGroup,true,false);
+                plotViewerIDList= viewToLayerMap.get(key);
+                grid.addWebPlotImage(key,plotViewerIDList,addToGroup,true,false);
                 addedKey= true;
             }
         }
@@ -398,14 +416,9 @@ public class MultiDataViewer {
     private void add3Color() {
         if (currDataContainer !=null) {
             GridCard gridCard= viewDataMap.get(currDataContainer);
-            DatasetInfoConverter info= getInfo(currDataContainer);
-            if (gridCard!=null && info!=null) {
-                ImagePlotDefinition def= info.getImagePlotDefinition();
+            if (gridCard!=null && getInfo(currDataContainer)!=null) {
                 gridCard.setThreeColorShowing(true);
                 gridCard.clearDeletedIDs();
-                for(String id : def.get3ColorViewerIDs()) {{
-                    gridCard.getVisGrid().addWebPlotImage(id,null,true,true,true);
-                }}
                 updateGrid(currDataContainer);
             }
         }
@@ -475,11 +488,6 @@ public class MultiDataViewer {
 
 
     private void buildToolbar() {
-        threeColor= GwtUtil.makeLinkButton("Add 3 Color", "Add 3 Color view", new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                add3Color();
-            }
-        });
 
         popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
@@ -493,6 +501,18 @@ public class MultiDataViewer {
             }
         });
 
+
+        threeColor= GwtUtil.makeBadgeButton(new Image(_icVis.getFITSInsert3Image()),
+                                              "Insert 3 Color images",
+                                              true, new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                add3Color();
+            }
+        });
+
+
+
+
         relatedView.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (currDataContainer != null) {
@@ -505,16 +525,25 @@ public class MultiDataViewer {
 
 
 
-        addToolbarWidget(threeColor);
+//        addToolbarWidget(threeColor);
         addToolbarWidget(relatedView);
+        addToolbarWidgetRight(threeColor.getWidget());
+        addToolbarWidgetRight(popoutButton.getWidget());
 
         toolbar.add(toolbarInner);
-        toolbar.add(popoutButton.getWidget());
+        toolbar.add(toolbarRightInner);
+//        toolbar.add(popoutButton.getWidget());
         GwtUtil.setStyle(toolbarInner, "display", "inline-block");
-        GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
-                          "cssFloat", "right",
-                          "padding", "0 5px 0 0 ");
-        GwtUtil.setHidden(threeColor, true);
+//        GwtUtil.setStyles(popoutButton.getWidget(), "display", "inline-block",
+//                          "right", "5px",
+//                          "position", "absolute");
+////                          "padding", "0 5px 0 0 ");
+        GwtUtil.setStyles(toolbarRightInner,
+                          "right", "5px",
+                          "top", "0px",
+                          "position", "absolute");
+//                          "padding", "0 5px 0 0 ");
+        GwtUtil.setHidden(threeColor.getWidget(), true);
         GwtUtil.setHidden(relatedView, true);
         GwtUtil.setHidden(toolbar, true);
     }
@@ -529,6 +558,19 @@ public class MultiDataViewer {
         toolbarInner.insert(w,0);
         GwtUtil.setStyle(w, "display", "inline-block");
     }
+
+    public void addToolbarWidgetRight(Widget w) {
+        toolbarRightInner.add(w);
+        GwtUtil.setStyles(w, "display", "inline-block",
+                          "padding", "0px 2px 0 7px");
+    }
+
+    public void addToolbarWidgetRightAtBeginning(Widget w) {
+        toolbarRightInner.insert(w,0);
+        GwtUtil.setStyles(w, "display", "inline-block",
+                          "padding", "0px 2px 0 7px");
+    }
+
 
     private void reinitConverterListeners() {
         for(DatasetInfoConverter c : ConverterStore.getConverters()) {
@@ -665,6 +707,19 @@ public class MultiDataViewer {
         public void viewerRefreshed();
         public void imageDeleted();
     }
+
+
+    private class PreviewTimer extends Timer {
+        TablePanel table;
+
+        public void run() {
+            updateGridWithTable(table);
+        }
+
+        public void setupCall(TablePanel table) { this.table= table; }
+    }
+
+
 
 
     private class UpdateListener implements PlotData.DynUpdateListener {

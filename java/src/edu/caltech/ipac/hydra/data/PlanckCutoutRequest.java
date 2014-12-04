@@ -41,7 +41,6 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 public class PlanckCutoutRequest extends TableServerRequest {
 
     public final static String PLANCK_CUTOUT_PROCESSOR = "PlanckCutoutQuery";
-
     public final static String CUTOUT_HOST         = "cutoutHost";
     public final static String RELEASE_VERSION     = "releaseVersion";
 
@@ -72,7 +71,7 @@ public class PlanckCutoutRequest extends TableServerRequest {
     public void setReleaseVersion(String value) {
         setParam(RELEASE_VERSION, value);
     }
-    public String getReleaseVersiont() { return getParam(RELEASE_VERSION); }
+    public String getReleaseVersion() { return getParam(RELEASE_VERSION); }
 
     public void setObjName(String value) {
         setParam(OBJ_NAME, value);

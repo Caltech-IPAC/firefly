@@ -48,7 +48,7 @@ public class DsvToDataGroup {
             for(Iterator<String> itr = cols.iterator(); itr.hasNext(); ) {
                 String s = itr.next();
                 if (!StringUtils.isEmpty(s)) {
-                    columns.add(new DataType(s, String.class));
+                    columns.add(new DataType(s, null)); // unknown type
                 }
             }
 
@@ -114,6 +114,10 @@ public class DsvToDataGroup {
                 for (int i = 0; i < headers.length; i++) {
                     DataType type = headers[i];
                     val = StringUtils.isEmpty(line.get(i)) ? null : line.get(i).trim();
+                    if (!type.isKnownType()) {
+                        IpacTableUtil.guessDataType(type,val);
+                    }
+                    row.setFormattedData(type,val);
                     row.setDataElement(type, type.convertStringToData(val));
 
                     if (val != null && val.length() > type.getMaxDataWidth()) {

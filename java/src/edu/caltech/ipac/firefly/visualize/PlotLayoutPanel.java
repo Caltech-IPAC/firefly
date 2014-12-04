@@ -146,6 +146,7 @@ public class PlotLayoutPanel extends LayoutPanel {
             if (_inlineTitle==null) createInlineTitle();
             setInlineTitleVisible(true);
             if (_hideTitleTimer !=null) _hideTitleTimer.cancel();
+            if (_titleLabelHtml==null) _titleLabelHtml= "";
             String s= "<span class=\"inline-plot-title\">" + _titleLabelHtml+ "</span>";
             _inlineTitle.setHTML(s);
         }

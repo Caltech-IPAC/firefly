@@ -1,27 +1,37 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 
+import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.spring.mapper.IpacTableExtractor;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.ui.catalog.Catalog;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -73,6 +83,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 public class GatorQuery extends BaseGator {
 
     public static final String PROC_ID = GatorQuery.class.getAnnotation(SearchProcessorImpl.class).id();
+    private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private final static double ARCMIN_TO_DEG = .01666666667;
     private final static double ARCSEC_TO_DEG = .00027777778;
     private final static double DEG_TO_ARCMIN = 60.0;
@@ -330,6 +341,56 @@ public class GatorQuery extends BaseGator {
                 meta.setAttribute(makeAttribKey(DESC_TAG, nameStr.toLowerCase()), tipStr);
             }
         }
+    }
+
+    @Override
+    protected File postProcessData(File f, TableServerRequest request) throws Exception {
+        if (!(request instanceof CatalogRequest) ) return f;
+
+        CatalogRequest req = (CatalogRequest) request;
+        if ("1".equals(req.getParam(CatalogRequest.ONE_TO_ONE)) &&
+                req.getMethod() != CatalogRequest.Method.TABLE) {
+            // for single target, 1-to-1 search..  remove empty row from results
+            DataGroup dg = DataGroupReader.read(f);
+            if (dg.size() == 1) {
+                DataObject row = dg.get(0);
+                if (dg.containsKey(RA)) {
+                    Object val = row.getDataElement(RA);
+                    if (StringUtils.isEmpty(val)) {
+                        dg.remove(row);
+                        IpacTableWriter.save(f, dg);
+                    }
+                }
+            } else {
+                // this should not happen. there should only be 1 row of results from a single target 1-to-1 search
+                LOG.error("Gator returning more than one lines from a 1-to-1 single target search");
+            }
+        } else if (req.getMethod() == CatalogRequest.Method.TABLE) {
+            DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(f);
+            if (meta == null || meta.getCols().size() ==0) return f;
+
+            DataType gatorCntCol = meta.getCols().get(0);
+            int seqNum = QueryUtil.getSeqNumber(gatorCntCol.getKeyName());
+            String uploadedRowId = CatalogRequest.UPDLOAD_ROW_ID + (seqNum == 0 ? "" : String.format("_%02d", seqNum));
+            String cols = uploadedRowId;
+
+            boolean hasUploadId = false;
+            for(DataType dt : meta.getCols()) {
+                if (dt.getKeyName().equals(uploadedRowId)) {
+                    hasUploadId = true;
+                } else {
+                    cols +=  "," + dt.getKeyName();
+                }
+            }
+            if (hasUploadId) {
+                String queryStmt = "select col " + cols + " from " + f.getPath();
+                DataGroup dg = DataGroupQueryStatement.parseStatement(queryStmt).execute();
+                dg.getDataDefintion(uploadedRowId).setKeyName(CatalogRequest.UPDLOAD_ROW_ID);
+                dg.shrinkToFitData(true);
+                IpacTableWriter.save(f, dg);
+            }
+        }
+        return f;
     }
 
     private String encodeParams(String params) {

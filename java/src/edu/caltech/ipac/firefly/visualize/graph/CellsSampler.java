@@ -2,6 +2,7 @@ package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.user.client.Window;
 import edu.caltech.ipac.firefly.util.MinMax;
+import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,8 @@ public class CellsSampler {
         xCellSize += xCellSize/1000.0/nX;
         yCellSize = Math.abs((yMax - yMin) / nY);
         yCellSize += yCellSize/1000.0/nY;
-        computeSample(points);
+        DecimateKey decimateKey = new DecimateKey(xMin, yMin, nX, nY, xCellSize, yCellSize);
+        computeSample(points, decimateKey);
     }
 
     public int getNumXCells() { return nX; }
@@ -51,30 +53,23 @@ public class CellsSampler {
     public double getXCellSize() { return xCellSize; }
     public double getYCellSize() { return yCellSize; }
 
-
-
-    CellParams getCellParams(Sampler.SamplePoint p) {
-        int xIdx = (int)(Math.abs(p.getX() - xMin) / xCellSize);
-        int yIdx = (int)(Math.abs(p.getY() - yMin) / yCellSize);
-        double centerX = xMin+(xIdx+0.5)*xCellSize;
-        double centerY = yMin+(yIdx+0.5)*yCellSize;
-        return new CellParams(yIdx*nX+xIdx, centerX, centerY);
-    }
-
     // for now – one point per cell
-    void computeSample (List<Sampler.SamplePoint> points) {
-        cells = new Cell[(nX)*(nY)];
-        CellParams cellParams;
+    void computeSample (List<Sampler.SamplePoint> points, DecimateKey decimateKey) {
         int cellIdx;
+        cells = new Cell[(nX)*(nY)];
         for (Sampler.SamplePoint p : points) {
-            cellParams = getCellParams(p);
-            cellIdx = cellParams.cellIdx;
+            double xval = p.getX();
+            double yval = p.getY();
+            cellIdx = decimateKey.getXIdx(xval)+nX*decimateKey.getYIdx(yval);
+            // TODO remove this check
             if (cellIdx >= (nX)*(nY)) {
                 Window.alert("Error During Sampling: cellIdx is " + cellIdx);
                 samplePoints = points;
                 return;
             }
-            if (cells[cellIdx] == null) { cells[cellIdx] = new Cell(cellParams.centerX, cellParams.centerY); }
+            if (cells[cellIdx] == null) {
+                cells[cellIdx] = new Cell(decimateKey.getCenterX(xval), decimateKey.getCenterY(yval));
+            }
             cells[cellIdx].addPoint(p);
         }
         samplePoints = new ArrayList<Sampler.SamplePoint>();
@@ -105,20 +100,10 @@ public class CellsSampler {
         return samplePoints;
     }
 
-    private static class CellParams {
-        int cellIdx;
-        double centerX, centerY;
-        CellParams(int cellIdx, double cellCenterX, double cellCenterY) {
-            this.cellIdx = cellIdx;
-            this.centerX = cellCenterX;
-            this.centerY = cellCenterY;
-        }
-    }
-
     private static class Cell {
         //ArrayList<Sampler.SamplePoint> cellPoints;
         ArrayList<Integer> cellPointsRowsIdx;
-        Sampler.SamplePoint firstPoint = null;
+        Sampler.SamplePoint randomPoint = null;
         Sampler.SamplePoint samplePoint = null;
         int weight = 0; // for decimated tables only (tells how many rows in full table point represents)
         double centerX, centerY;
@@ -132,15 +117,21 @@ public class CellsSampler {
 
         public void addPoint(Sampler.SamplePoint point) {
             //cellPoints.add(point);
-            if (firstPoint == null) { firstPoint = point; }
             cellPointsRowsIdx.add(point.getRowIdx());
+            if (randomPoint == null) {
+                randomPoint = point;
+            } else {
+                if (Math.random() < 1d/(double)cellPointsRowsIdx.size()) {
+                    randomPoint = point;
+                }
+            }
             weight += point.getWeight();
         }
 
         public Sampler.SamplePoint getSamplePoint() {
             if (samplePoint == null) {
                 //samplePoint = cellPoints.get((int)(cellPoints.size()*Math.random()));
-                samplePoint = firstPoint;
+                samplePoint = randomPoint;
                 if (cellPointsRowsIdx.size() > 1) {
                     // sample point now will have coordinates of the center
                     samplePoint.adjustXY(centerX, centerY);

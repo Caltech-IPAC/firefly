@@ -297,6 +297,7 @@ public class XYPlotData {
         minWeight = sampler.getMinWeight();
         maxWeight = sampler.getMaxWeight();
         hasWeightBasedOrder = minWeight!=maxWeight;
+        boolean logShading = meta.userMeta.logShading;
 
         TableData.Row row;
         int weight;
@@ -323,7 +324,7 @@ public class XYPlotData {
                     order = row.getValue(orderColIdx).toString();
                 } else {
                     weight = sp.getWeight();
-                    order = getWeightBasedOrder(weight, minWeight, maxWeight);
+                    order = getWeightBasedOrder(weight, minWeight, maxWeight, logShading);
                 }
                 if (!curveIdByOrder.containsKey(order)) {
                     curveId++;
@@ -507,20 +508,36 @@ public class XYPlotData {
         }
     }
 
-    private static String getWeightBasedOrder(int weight, int minWeight, int maxWeight) {
+    private static String getWeightBasedOrder(int weight, int minWeight, int maxWeight, boolean logShading) {
         if (weight == 1) return getCharForNumber(1)+". 1pt";
         else {
-            int range =  maxWeight-minWeight-1;
-            int n=2;
-            int min=2, max;
-            // 10 orders incr=0.10, 5 orders incr=0.20
-            for (double incr = 0.20; incr <=1; incr += 0.20) {
-                max = (int)Math.round(minWeight+1+incr*range);
-                if (weight <= max) {
-                    return getCharForNumber(n)+". "+(min==max ? min : (min+"-"+max))+"pts";
+            if (logShading) {
+                //use log scale for shade assignment
+                int min=2, max;
+                //int base = (int)Math.ceil(Math.pow(maxWeight, 0.2));
+                double base = Math.pow(maxWeight+0.5, 0.2);
+                for (int e = 1; e <=5; e++) {
+                    max = (int)Math.round(Math.pow(base, e));
+                    if (weight <= max) {
+                        if (max > maxWeight) { max = maxWeight; }
+                        return getCharForNumber(e+1)+". "+(min==max ? min : (min+"-"+max))+"pts";
+                    }
+                    min = max+1;
                 }
-                min = max+1;
-                n++;
+            } else {
+                // use linear scale for order assignment
+                int range =  maxWeight-minWeight-1;
+                int n=2;
+                int min=2, max;
+                // 10 orders incr=0.10, 5 orders incr=0.20
+                for (double incr = 0.20; incr <=1; incr += 0.20) {
+                    max = (int)Math.round(minWeight+1+incr*range);
+                    if (weight <= max) {
+                        return getCharForNumber(n)+". "+(min==max ? min : (min+"-"+max))+"pts";
+                    }
+                    min = max+1;
+                    n++;
+                }
             }
         }
         return "Z."; // should not happen

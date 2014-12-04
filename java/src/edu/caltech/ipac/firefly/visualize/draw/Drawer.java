@@ -2,10 +2,8 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.IncrementalCommand;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
@@ -20,12 +18,14 @@ import edu.caltech.ipac.firefly.visualize.ViewPortPtMutable;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ui.color.Color;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,13 +39,12 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
  */
 public class Drawer implements WebEventListener {
 
-    public static boolean ENABLE_COLORMAP= true;
+    public static boolean ENABLE_COLORMAP= false;
     public static enum DataType {VERY_LARGE, NORMAL}
 
     private static int drawerCnt=0;
     private final int drawerID;
     public static final String DEFAULT_DEFAULT_COLOR= "red";
-    public final static int MAX_DEFER= 1;
     private String _defColor= DEFAULT_DEFAULT_COLOR;
     private List<DrawObj> _data;
     private List<DrawObj> _highlightData;
@@ -55,6 +54,7 @@ public class Drawer implements WebEventListener {
     private Graphics primaryGraphics;
     private Graphics selectLayerGraphics;
     private Graphics highlightLayerGraphics;
+//    private HtmlGwtCanvas drawBuffer= null;
     private boolean alive= true;
     private boolean _handleImagesChanges = true;
     private boolean _drawingEnabled= true;
@@ -102,7 +102,7 @@ public class Drawer implements WebEventListener {
     }
 
     public void setHighPriorityLayer(boolean highPriorityLayer) {
-        this.highPriorityLayer = highPriorityLayer; //todo
+        this.highPriorityLayer = highPriorityLayer;
     }
 
     private void initGraphics() {
@@ -112,7 +112,7 @@ public class Drawer implements WebEventListener {
             _pv.addListener(Name.VIEW_PORT_CHANGE, this);
         }
 
-        primaryGraphics = makeGraphics(_drawable, "mainDrawingLayer");
+        initPrimaryGraphics();
         _drawable.addDrawingArea(primaryGraphics.getWidget(), highPriorityLayer);
     }
 
@@ -132,6 +132,16 @@ public class Drawer implements WebEventListener {
         }
     }
 
+    public void initPrimaryGraphics() {
+        primaryGraphics = makeGraphics(_drawable, "mainDrawingLayer");
+//        if (HtmlGwtCanvas.isSupported()) {
+//            drawBuffer=  new HtmlGwtCanvas();
+//            drawBuffer.setLabelPanel((HtmlGwtCanvas)primaryGraphics);
+//            drawBuffer.getWidget().setPixelSize(primaryGraphics.getWidget().getOffsetWidth(), primaryGraphics.getWidget().getOffsetHeight());
+//        }
+
+    }
+
 
     public static Graphics makeGraphics(Drawable drawable, String layerName) {
         Graphics graphics;
@@ -139,7 +149,12 @@ public class Drawer implements WebEventListener {
             graphics= new GWTGraphics();
         }
         else {
-            graphics= HtmlGwtCanvas.isSupported() ? new HtmlGwtCanvas() : new GWTGraphics();
+            if (HtmlGwtCanvas.isSupported()) {
+                graphics= new HtmlGwtCanvas();
+            }
+            else {
+                graphics= new GWTGraphics();
+            }
         }
         if (drawable.getDrawingWidth()>0 && drawable.getDrawingHeight()>0) {
             graphics.getWidget().setPixelSize(drawable.getDrawingWidth(), drawable.getDrawingHeight());
@@ -208,13 +223,15 @@ public class Drawer implements WebEventListener {
                               WebPlot plot,
                               DrawObj obj,
                               ViewPortPtMutable vpPtM,
-                              boolean useStateColor) {
+                              boolean useStateColor,
+                              boolean onlyAddToPath) {
+        if (obj==null) return;
         if (obj.getSupportsWebPlot()) {
-            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, ac, useStateColor,vpPtM);
-            else                               obj.draw(g, plot, ac, useStateColor);
+            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, ac, useStateColor,vpPtM,onlyAddToPath);
+            else                               obj.draw(g, plot, ac, useStateColor, onlyAddToPath);
         }
         else {
-            obj.draw(g, ac, useStateColor);
+            obj.draw(g, ac, useStateColor, onlyAddToPath);
         }
     }
 
@@ -315,7 +332,6 @@ public class Drawer implements WebEventListener {
     public void clearHighlightLayer() { if (highlightLayerGraphics!=null) highlightLayerGraphics.clear(); }
 
     public void clear() {
-//        init();
         _data = null;
         cancelRedraw();
         if (primaryGraphics !=null) primaryGraphics.clear();
@@ -335,26 +351,16 @@ public class Drawer implements WebEventListener {
     public void redrawDelta(Graphics g, List<Integer>changeIdx) {
         if (g==null) return;
         AutoColor autoColor= makeAutoColor(_pv);
-        if (getSupportsPartialDraws(g)) {
-            if (canDraw(g)) {
-                _cleared= false;
-                WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
-                DrawObj obj;
-                ViewPortPtMutable vpPtM= new ViewPortPtMutable();
-                for(int idx : changeIdx) {
-                    obj= _data.get(idx);
-                    draw(g, autoColor, plot, obj,vpPtM, true);
-                }
-                g.paint();
+        if (canDraw(g)) {
+            _cleared= false;
+            WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
+            DrawObj obj;
+            ViewPortPtMutable vpPtM= new ViewPortPtMutable();
+            for(int idx : changeIdx) {
+                obj= _data.get(idx);
+                draw(g, autoColor, plot, obj,vpPtM, true, false);
             }
         }
-        else {
-            redrawPrimary();
-        }
-    }
-
-    public boolean getSupportsPartialDraws(Graphics g) {
-        return !(g instanceof JSGraphics);
     }
 
     public void redrawSelected(Graphics graphics, WebPlotView pv, List<DrawObj> data, boolean force) {
@@ -371,10 +377,9 @@ public class Drawer implements WebEventListener {
             selectedData= decimateData(selectedData,null,false);
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : selectedData) {
-                draw(graphics, autoColor, plot, pt, vpPtM, true);
+                draw(graphics, autoColor, plot, pt, vpPtM, true, false);
             }
             selectedFound= selectedData.size()>0;
-            graphics.paint();
         }
     }
     public void redrawHighlight(Graphics graphics, WebPlotView pv, List<DrawObj> highlightData) {
@@ -387,9 +392,8 @@ public class Drawer implements WebEventListener {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : highlightData) {
-                if (pt!=null) draw(graphics, autoColor, plot, pt, vpPtM, true);
+                if (pt!=null) draw(graphics, autoColor, plot, pt, vpPtM, true, false);
             }
-            graphics.paint();
         }
     }
 
@@ -412,24 +416,21 @@ public class Drawer implements WebEventListener {
         if (canDraw(primaryGraphics)) {
             _cleared= false;
             AutoColor autoColor= makeAutoColor(_pv);
-            WebPlot plot= _pv.getPrimaryPlot();  //TODO - how can i support null WebPlotView here?
-
+            WebPlot plot= _pv.getPrimaryPlot();
             Dimension dim= plot.getViewPortDimension();
             primaryGraphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
             List<DrawObj> drawData= decimateData(_data, true);
-            if (_dataTypeHint ==DataType.VERY_LARGE) {
-                int maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 800 : 500;
-                DrawingParams params= new DrawingParams(primaryGraphics, autoColor,plot,drawData, maxChunk);
+            if (_dataTypeHint ==DataType.VERY_LARGE && _data.size()>500) {
+                DrawingParams params= new DrawingParams(primaryGraphics,autoColor,plot,drawData, getMaxChunk(drawData));
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
                 _drawingCmd.activate();
                 removeTask();
-                _plotTaskID= _pv.addTask();
-
+                if (drawData.size()>15000) _plotTaskID= _pv.addTask();
             }
             else {
                 DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
-                doDrawing(params, false);
+                doDrawing(params);
             }
         }
         else {
@@ -438,6 +439,19 @@ public class Drawer implements WebEventListener {
     }
 
 
+
+    private int getMaxChunk(List<DrawObj> drawData) {
+        int maxChunk= 1;
+        if (drawData.size()==0) return maxChunk;
+        DrawObj d= drawData.get(0);
+        if (d instanceof PointDataObj) {
+            maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 2000 : 500;
+        }
+        else {
+            maxChunk= BrowserUtil.isBrowser(Browser.SAFARI) || BrowserUtil.isBrowser(Browser.CHROME) ? 1000 : 200;
+        }
+        return maxChunk;
+    }
 
     private List<DrawObj> decimateData(List<DrawObj> inData, boolean useColormap) {
         WebPlot plot= _pv.getPrimaryPlot();
@@ -504,10 +518,10 @@ public class Drawer implements WebEventListener {
 ////        int fuzzLevel= (int)(inData.size() / (drawArea / arcsecPerPix));
 //        int fuzzLevel= (int )(arcsecPerPix / 2);
 //        if (fuzzLevel<2) fuzzLevel= 2;
-        int fuzzLevel= 8;
+        int fuzzLevel= 5;
 
 
-
+        Date start = new Date();
 
         int width= dim.getWidth();
         int height= dim.getHeight();
@@ -531,7 +545,13 @@ public class Drawer implements WebEventListener {
         for(DrawObj obj : inData) {
             if (obj!=null) {
                 pt= obj.getCenterPt();
-                vpPt= getViewPortCoords(pt,seedPt,plot);
+                if (pt instanceof WorldPt) {
+                    vpPt= plot.pointInPlotRoughGuess((WorldPt)pt) ? getViewPortCoords(pt,seedPt,plot) : null;
+                }
+                else {
+                    vpPt= getViewPortCoords(pt,seedPt,plot);
+                }
+
             }
             else {
                 vpPt= null;
@@ -542,6 +562,11 @@ public class Drawer implements WebEventListener {
                 if (i>=0 && j>=0 && i<width && j<height) {
                     if (decimateObs[i][j]==null) {
                         decimateObs[i][j]= supportCmap && obj.getSupportDuplicate() ? obj.duplicate() : obj;
+                        if (supportCmap) {
+                            decimateObs[i][j].setRepresentCnt(obj.getRepresentCnt());
+                            entryCnt= decimateObs[i][j].getRepresentCnt();
+                            if (entryCnt>maxEntry) maxEntry= entryCnt;
+                        }
                         decimatedAddCnt++;
                     }
                     else {
@@ -576,6 +601,8 @@ public class Drawer implements WebEventListener {
 
         if (supportCmap) setupColorMap(retData,maxEntry);
 
+//        GwtUtil.getClientLogger().log(Level.INFO, "Drawer.doDecimation: created "+retData.size()+" objects from "+inData.size()+" in "+
+//            ((new Date()).getTime()-start.getTime())+"ms");
 
 
         return retData;
@@ -585,11 +612,21 @@ public class Drawer implements WebEventListener {
     private void setupColorMap(List<DrawObj> data, int maxEntry) {
         String colorMap[]= makeColorMap(maxEntry);
         if (colorMap!=null)  {
-            for(DrawObj obj : data) {
-                setCmapColor(obj,colorMap);
+            if (maxEntry>colorMap.length) {
+                int maxCnt = maxEntry+1; // to include draw obj with cnt==maxEntry into the last color band
+                for(DrawObj obj : data) {
+                    int cnt= obj.getRepresentCnt();
+                    int idx = cnt*colorMap.length/maxCnt;
+                    obj.setColor(colorMap[idx]);
+                }
+            }  else {
+                for(DrawObj obj : data) {
+                    int cnt= obj.getRepresentCnt();
+                    //if (cnt>colorMap.length) cnt=colorMap.length;
+                    obj.setColor(colorMap[cnt-1]);
+                }
             }
         }
-
     }
 
     private static ViewPortPt getViewPortCoords(Pt pt, ViewPortPtMutable mVpPt, WebPlot plot) {
@@ -604,11 +641,19 @@ public class Drawer implements WebEventListener {
         return retval;
     }
 
-    private static void setCmapColor(DrawObj obj, String colorMap[])  {
+    /*
+    private static void setCmapColor(DrawObj obj, String colorMap[], int maxCnt)  {
         int cnt= obj.getRepresentCnt();
-        if (cnt>colorMap.length) cnt=colorMap.length;
-        obj.setColor(colorMap[cnt-1]);
+        if (maxCnt>colorMap.length) {
+            //  linear
+            int idx = cnt*colorMap.length/maxCnt;
+            obj.setColor(colorMap[idx]);
+        } else {
+            if (cnt>colorMap.length) cnt=colorMap.length;
+            obj.setColor(colorMap[cnt-1]);
+        }
     }
+    */
 
 
     private String[] makeColorMap(int mapSize) {
@@ -634,40 +679,35 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private void doDrawing(DrawingParams params, boolean deferred) {
-        GwtUtil.setHidden(params._graphics.getWidget(), true);
-//        params._graphics.getWidget().setVisible(false);
-        DrawObj obj;
-        if (deferred && params._deferCnt<MAX_DEFER) {
-            params._deferCnt++;
+    private void doDrawing(DrawingParams params) {
+        if (params._begin) {
+            params._begin= false;
+            GwtUtil.setHidden(params._graphics.getWidget(), true);
             params._done= false;
         }
         else {
-            params._deferCnt= 0;
+            params._deferCnt++;
         }
+
+
         if (!params._done) {
+            if (_drawConnect!=null) _drawConnect.beginDrawing();
             try {
-                if (_drawConnect!=null) _drawConnect.beginDrawing();
-                DrawObj lastObj= null;
-                for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
-                    obj= params._iterator.next();
-                    if (obj!=null && doDraw(params._plot,obj)|| (_drawConnect!=null && doDraw(params._plot,lastObj)) ) {
-                        draw(params._graphics, params._ac, params._plot, obj,params.vpPtM, false);
-                        if (_drawConnect!=null) {
-                            drawConnector(params._graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
-                        }
-                        i++;
-                    }
-                    lastObj= obj;
+                DrawChunkData nextChunk= getNextChuck(params);
+                if (nextChunk.optimize) {
+                    drawChunkOptimized(nextChunk.drawList, params, params._graphics);
+                    params.opCnt++;
                 }
-                if (!params._iterator.hasNext()) { //loop finished
-                    params._graphics.paint();
-                    params._done= true;
-                    removeTask();
+                else {
+                    drawChunkNormal(nextChunk.drawList, params, params._graphics);
                 }
             } catch (ConcurrentModificationException e) {
                 GwtUtil.getClientLogger().log(Level.SEVERE,"size= "+ _data.size(),e);
                 params._done= true;
+            }
+            if (!params._iterator.hasNext()) { //loop finished
+                params._done= true;
+                removeTask();
             }
         }
         if (params._done ) {
@@ -675,9 +715,91 @@ public class Drawer implements WebEventListener {
             if (_drawConnect!=null) {
                 _drawConnect.endDrawing();
             }
+//            if (useBuffer) {
+//                ((AdvancedGraphics)params._graphics).copyAsImage((AdvancedGraphics)params.drawBuffer);
+//            }
+            if (_data.size()>100) { //todo remove
+//                long delta= System.currentTimeMillis()-params.startTime;//TODO remove
+//                GwtUtil.getClientLogger().log(Level.INFO,"Redraw, Op Cnt:"+params.opCnt+", "+ _data.size() + " rows: "+ delta+ "ms"); //TODO remove
+            } // todo remove
         }
 
     }
+
+
+
+    private DrawChunkData getNextChuck(DrawingParams params) {
+//        long startTime= System.currentTimeMillis(); //todo remove
+        List<DrawObj> retList= new ArrayList<DrawObj>(Math.min(params._maxChunk,params._data.size()));
+        DrawObj obj;
+
+        boolean canOptimize= _drawConnect==null;
+        String color= null;
+        int lineWidth= 0;
+
+
+        for(int i= 0; (params._iterator.hasNext() && i<params._maxChunk ); ) {
+            obj= params._iterator.next();
+            if (_drawConnect==null) {
+                if (doDraw(params._plot, obj)) {
+                    retList.add(obj);
+                    if (i==0) {
+                        color= obj.calculateColor(params._ac,false);
+                        lineWidth= obj.getLineWidth();
+                    }
+                    if (canOptimize) {
+                        canOptimize= obj.getCanUsePathEnabledOptimization() &&
+                                     lineWidth>0 &&
+                                     lineWidth==obj.getLineWidth() &&
+                                     ComparisonUtil.equals(color,obj.calculateColor(params._ac,false));
+                    }
+                    i++;
+                }
+            }
+            else {
+                retList.add(obj);
+                i++;
+            }
+        }
+//        long delta= System.currentTimeMillis()-startTime;//TODO remove
+//        if (retList.size()>2)GwtUtil.getClientLogger().log(Level.INFO,"Next Chunk:"+ delta+ "ms, from start:"+(System.currentTimeMillis()-params.startTime)+"ms"); //TODO remove
+        return new DrawChunkData(retList,canOptimize);
+    }
+
+    private void drawChunkOptimized(List<DrawObj> drawList, DrawingParams params, Graphics graphics) {
+//        long startTime= System.currentTimeMillis(); //todo remove
+        if (drawList.size()==0) return;
+        DrawObj d= drawList.get(0);
+        graphics.beginPath(d.calculateColor(params._ac, false), d.getLineWidth());
+        for(DrawObj obj : drawList) {
+            draw(graphics, params._ac, params._plot, obj,params.vpPtM, false,true);
+        }
+        graphics.drawPath();
+//        long delta= System.currentTimeMillis()-startTime;//TODO remove
+//        if (drawList.size()>10) GwtUtil.getClientLogger().log(Level.INFO,"draw Chunk Optimize:"+ delta+ "ms, from start:"+(System.currentTimeMillis()-params.startTime)+"ms"); //TODO remove
+    }
+
+    private void drawChunkNormal(List<DrawObj> drawList, DrawingParams params, Graphics graphics) {
+        DrawObj lastObj= null;
+        for(DrawObj obj : drawList) {
+            if (_drawConnect!=null) { // in this case doDraw was already called
+                draw(graphics, params._ac, params._plot, obj,params.vpPtM, false,false);
+            }
+            else  {
+                if (doDraw(params._plot,obj)) { // doDraw must be call when there is a connector
+                    draw(graphics, params._ac, params._plot, obj,params.vpPtM, false, false);
+                    if (_drawConnect!=null) {
+                        drawConnector(graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
+                    }
+                }
+                lastObj= obj;
+            }
+        }
+    }
+
+
+
+
 
     private void removeTask() {
         if (_pv!=null && _plotTaskID!=null) _pv.removeTask(_plotTaskID);
@@ -701,7 +823,7 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private boolean canDraw(Graphics graphics) {//TODO - how can i support null WebPlotView here?
+    private boolean canDraw(Graphics graphics) {
         return (graphics!=null &&
                 _visible &&
                 _drawingEnabled &&
@@ -742,48 +864,38 @@ public class Drawer implements WebEventListener {
     }
 
 
-    private class DrawingDeferred extends Timer implements IncrementalCommand {
+    private class DrawingDeferred implements IncrementalCommand {
 
         DrawingParams _params;
-        boolean       _deferred;
 
         public DrawingDeferred(DrawingParams params) {
             _params= params;
-            _deferred= true;
         }
 
         public boolean execute() {
-            draw();
-            return !_params._done;
-        }
-
-        @Override
-        public void run() {
-            draw();
-            if (!_params._done)  this.schedule(100);
-        }
-
-        private void draw() {
             if (!_params._plot.isAlive()) _params._done= true;
-            if (!_params._done ) doDrawing(_params, _deferred);
+            if (!_params._done) doDrawing(_params);
+            return !_params._done;
         }
 
         public void cancelDraw() { _params._done= true; }
 
         public void activate() {
-            if (_deferred)  DeferredCommand.addCommand(this);
-            else schedule(100);
+            DeferredCommand.addCommand(this);
         }
     }
 
 
     private static class DrawingParams {
+        private long startTime= System.currentTimeMillis(); //todo only for debug
+        private int opCnt= 0; //only for debug
         final WebPlot _plot;
         private final List<DrawObj> _data;
 //        final List<DrawObj> _onTop;
         final Iterator<DrawObj> _iterator;
         final int _maxChunk;
         boolean _done= false;
+        boolean _begin= true;
         final AutoColor _ac;
         final Graphics _graphics;
         int _deferCnt= 0;
@@ -794,23 +906,9 @@ public class Drawer implements WebEventListener {
             _ac= ac;
             _plot= plot;
             _data= data;
-//            _onTop= new ArrayList<DrawObj>((int)(_data.size()*.2F));
             _iterator= _data.iterator();
             _maxChunk= maxChunk;
         }
-    }
-
-    public static class DrawCandidate {
-        private final ViewPortPt vp;
-        private final DrawObj obj;
-
-        public DrawCandidate(ViewPortPt vp, DrawObj obj) {
-            this.vp = vp;
-            this.obj = obj;
-        }
-
-        public DrawObj getObj() { return obj; }
-        public ViewPortPt getPoint() { return vp; }
     }
 
 
@@ -818,15 +916,43 @@ public class Drawer implements WebEventListener {
         public void done();
     }
 
-    public static class MyLoaded implements JSLoad.Loaded {
-        CompleteNotifier _ic;
-        public MyLoaded(CompleteNotifier ic)  { _ic= ic; }
-        public void allLoaded() { _ic.done(); }
-    }
-
     public interface DataUpdater {
         List<DrawObj> getData();
     }
+
+    private class DrawChunkData {
+        public List<DrawObj> drawList;
+        public boolean optimize;
+
+        private DrawChunkData(List<DrawObj> drawList, boolean optimize) {
+            this.drawList = drawList;
+            this.optimize= optimize;
+        }
+    }
+
+
+//    public static class DrawCandidate {
+//        private final ViewPortPt vp;
+//        private final DrawObj obj;
+//
+//        public DrawCandidate(ViewPortPt vp, DrawObj obj) {
+//            this.vp = vp;
+//            this.obj = obj;
+//        }
+//
+//        public DrawObj getObj() { return obj; }
+//        public ViewPortPt getPoint() { return vp; }
+//    }
+
+
+
+//    public static class MyLoaded implements JSLoad.Loaded {
+//        CompleteNotifier _ic;
+//        public MyLoaded(CompleteNotifier ic)  { _ic= ic; }
+//        public void allLoaded() { _ic.done(); }
+//    }
+
+
 
 
 

@@ -8,10 +8,9 @@ package edu.caltech.ipac.firefly.fuse.data.provider;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.ImagePlotDefinition;
+import edu.caltech.ipac.firefly.fuse.data.PlotData;
 import edu.caltech.ipac.firefly.fuse.data.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
@@ -64,17 +63,9 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
     public boolean isSupport(DataVisualizeMode mode) { return modeList.contains(mode); }
 
 
-    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData) { return null; }
 
-    public CoverageInfo getCoverageInfo(TableMeta tableMeta) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public ImagePlotDefinition getImagePlotDefinition() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+    public ImagePlotDefinition getImagePlotDefinition() { return null; }
 
     public ActiveTargetLayer initActiveTargetLayer() {
         if (targetLayer==null) {

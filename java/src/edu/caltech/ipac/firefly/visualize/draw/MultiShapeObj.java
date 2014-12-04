@@ -38,7 +38,10 @@ public class MultiShapeObj extends DrawObj {
     public boolean contains(DrawObj d) { return drawObjList.contains(d); }
     public int indexOf(DrawObj d) { return drawObjList.indexOf(d); }
 
-//=======================================================================
+    @Override
+    public int getLineWidth() { return 0; }
+
+    //=======================================================================
 //-------------- Override Abstract Methods  -----------------------------
 //=======================================================================
 
@@ -67,16 +70,16 @@ public class MultiShapeObj extends DrawObj {
     }
 
     @Override
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,p,ac,useStateColor);
+            d.draw(g,p,ac,useStateColor, false);
         }
     }
 
     @Override
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor) throws UnsupportedOperationException {
+    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,ac,useStateColor);
+            d.draw(g,ac,useStateColor, false);
         }
     }
 

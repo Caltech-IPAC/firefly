@@ -6,9 +6,9 @@ package edu.caltech.ipac.firefly.visualize.task;
  */
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -43,22 +43,22 @@ public class PlotGroupTask extends ServerTask<WebPlotResult[]> {
     private Map<String,TaskInfo> taskMap= new HashMap<String, TaskInfo>(29);
     private final String _groupProgressKey= GROUP_KEY_ROOT+_keyCnt;
 
-    public static PlotGroupTask plot(Widget maskWidget,
+    public static PlotGroupTask plot(Element maskElement,
                                      List<WebPlotRequest> requestList,
                                      List<MiniPlotWidget> mpwList,
                                      AsyncCallback<WebPlot> notify) {
 
-        PlotGroupTask task= new PlotGroupTask(maskWidget, requestList,mpwList, notify);
+        PlotGroupTask task= new PlotGroupTask(maskElement, requestList,mpwList, notify);
         task.start();
         return task;
     }
 
-    PlotGroupTask(Widget maskWidget,
+    PlotGroupTask(Element maskElement,
                   List<WebPlotRequest> requestList,
                   List<MiniPlotWidget> mpwList,
                   AsyncCallback<WebPlot> notify) {
-        super(maskWidget, "working", true);
-        super.setMaskingDelaySec(1);
+        super(maskElement, "working", true);
+        super.setMaskingDelaySec(0);
         _messageRoot= "working";
         _keyCnt++;
         this.requestList= requestList;

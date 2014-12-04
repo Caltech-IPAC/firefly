@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 
 import javax.servlet.Filter;
@@ -57,6 +58,13 @@ public class CommonFilter implements Filter {
     }
 
     private void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
+
+        String sessId = request.getRequestedSessionId();
+        if (StringUtils.isEmpty(sessId)) {
+            // create a session if one if not in the request.
+            // this is needed for session stickiness.
+            sessId = request.getSession().getId();
+        }
 
         RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
         owner.setHttpRequest(request);

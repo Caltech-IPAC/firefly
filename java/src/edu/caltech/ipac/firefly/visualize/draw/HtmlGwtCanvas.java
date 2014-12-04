@@ -25,6 +25,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
     private final List<CanvasLabelShape> _labelList= new ArrayList<CanvasLabelShape>(20);
     private final CanvasPanel panel;
+    private HtmlGwtCanvas labelPanel;
     private final CanvasElement cElement;
     private final Context2d ctx;
     private Shadow nextDrawShadow= null;
@@ -36,6 +37,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 
     public HtmlGwtCanvas() {
         panel= new CanvasPanel();
+        labelPanel= this;
         cElement= panel.getCanvas().getCanvasElement();
         ctx= cElement.getContext2d();
     }
@@ -46,6 +48,9 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
+    public void setLabelPanel(HtmlGwtCanvas p) {
+        labelPanel= p;
+    }
 
     public void setTranslationPerm(ScreenPt pt) {
         setTranslation(pt);
@@ -124,19 +129,29 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                         int y,
                         int width,
                         int height) {
+//        ctx.save();
+//        checkMods();
+//        ctx.setLineWidth(lineWidth);
+//        ctx.setStrokeStyle(makeColor(color));
+//        ctx.beginPath();
+//        ctx.moveTo(x,y);
+//        ctx.lineTo(x+width,y);
+//        ctx.lineTo(x+width,y+height);
+//        ctx.lineTo(x,y+height);
+//        ctx.lineTo(x,y);
+//        ctx.stroke();
+//        ctx.restore();
+
+
         ctx.save();
         checkMods();
         ctx.setLineWidth(lineWidth);
         ctx.setStrokeStyle(makeColor(color));
-        ctx.beginPath();
-        ctx.moveTo(x,y);
-        ctx.lineTo(x+width,y);
-        ctx.lineTo(x+width,y+height);
-        ctx.lineTo(x,y+height);
-        ctx.lineTo(x,y);
-//        ctx.closePath();
-        ctx.stroke();
+        ctx.strokeRect(x,y,width,height);
+//        ctx.stroke();
         ctx.restore();
+
+
     }
 
     public void drawPath(String color,
@@ -163,6 +178,61 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         ctx.stroke();
         ctx.restore();
     }
+
+    public void beginPath(String color, int lineWidth) {
+        ctx.save();
+        checkMods();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+    }
+
+    public void pathMoveTo(int x,int y) {
+        ctx.moveTo(x,y);
+
+    }
+
+    public void pathLineTo(int x,int y) {
+        ctx.lineTo(x,y);
+    }
+
+    public void rect(int x, int y, int width, int height) {
+        ctx.rect(x,y,width,height);
+    }
+
+    public void arc(int x,int y, double radius, double startAngle, double endAngle) {
+        ctx.arc(x,y,radius,startAngle,endAngle);
+    }
+
+    public void drawPath() {
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    public void drawPath(String color,
+                         int lineWidth,
+                         List<PathType> ptList) {
+        ctx.save();
+        checkMods();
+        ctx.setLineWidth(lineWidth);
+        ctx.setStrokeStyle(makeColor(color));
+        ctx.beginPath();
+
+        boolean first= true;
+        for(PathType pT : ptList) {
+            if (!pT.isDraw() || first) {
+                ctx.moveTo(pT.getX(),pT.getY());
+                first=  false;
+            }
+            else {
+                ctx.lineTo(pT.getX(),pT.getY());
+            }
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+
 
     public void fillRec(String color,
                         int x,
@@ -200,8 +270,8 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
                          String text) {
         HTML label= DrawUtil.makeDrawLabel(color, fontFamily, size, fontWeight, fontStyle, text);
         CanvasLabelShape labelShape= new CanvasLabelShape(label);
-        _labelList.add(labelShape);
-        panel.addLabel(label,x,y);
+        labelPanel._labelList.add(labelShape);
+        labelPanel.panel.addLabel(label,x,y);
     }
 
     public void drawText(String color, String size, int x, int y, String text) {
@@ -234,8 +304,18 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     }
 
 
+    public void copyAsImage(AdvancedGraphics g) {
+        Canvas sourceCanvas= g.getCanvasPanel().getCanvas();
+        int w= sourceCanvas.getCoordinateSpaceWidth();
+        int h= sourceCanvas.getCoordinateSpaceHeight();
+        ctx.drawImage(sourceCanvas.getCanvasElement(), 0,0, w,h, 0,0, w,h  );
+    }
 
-//======================================================================
+    public CanvasPanel getCanvasPanel() {
+        return panel;
+    }
+
+    //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 

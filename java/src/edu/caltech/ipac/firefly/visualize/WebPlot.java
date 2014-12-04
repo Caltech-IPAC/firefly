@@ -142,6 +142,10 @@ public class WebPlot {
     private final Map<String,Object>  _attributes= new HashMap<String,Object>(3);
     private final TileDrawer    _tileDrawer;
 
+    // Cache is estimated to never exceed 2 MB
+    private HashMap<WorldPt,ImagePt> conversionCache= new HashMap<WorldPt, ImagePt>(3000,.80F);
+    private final int MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 48000 with a 80% load factor
+
 
     private final int       _offsetX= 0;  //if we ever use this we will change the final
     private final int       _offsetY= 0; //if we ever use this we will change the final
@@ -156,6 +160,8 @@ public class WebPlot {
     private int _viewPortX= 0;
     private int _viewPortY= 0;
     private Dimension _viewPortDim= new Dimension(42,42); // small dummy initialization
+
+    private final ImageBoundsData imageBoundsData;
 
     public WebPlot(WebPlotInitializer wpInit) {
         _plotGroup= new WebPlotGroup(this,wpInit.getPlotState().getZoomLevel());
@@ -175,6 +181,20 @@ public class WebPlot {
             if (webFitsData.length>=i+1) {
                 _webFitsData[i]= webFitsData[i];
             }
+        }
+
+        if (!_projection.isWrappingProjection()) {
+            imageBoundsData = new ImageBoundsData(
+                    this,
+                    getWorldCoords(new ImagePt(0,0)),
+                    getWorldCoords(new ImagePt(0,_dataWidth)),
+                    getWorldCoords(new ImagePt(_dataHeight,0)),
+                    getWorldCoords(new ImagePt(_dataHeight,_dataWidth))
+            );
+
+        }
+        else {
+           imageBoundsData = null;
         }
     }
 
@@ -275,8 +295,8 @@ public class WebPlot {
     public int getColorTableID() { return _plotState.getColorTableId(); }
 
     private void threeColorOK(Band band) {
-        WebAssert.argTst(_plotState.getColorTableId(),
-                   "Must be in three color mode to use this routine");
+//        WebAssert.argTst(_plotState.getColorTableId(),
+//                   "Must be in three color mode to use this routine");
         WebAssert.argTst( (band== Band.RED || band== Band.GREEN || band== Band.BLUE),
                        "band must be RED, GREEN, or BLUE");
     }
@@ -412,6 +432,14 @@ public class WebPlot {
     }
 
 
+    /**
+     * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
+     * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+     * @return true in we guess it might be in the bounds, false if we know that it is not in the bounds
+     */
+    public boolean pointInPlotRoughGuess(WorldPt wp) {
+        return imageBoundsData==null || imageBoundsData.pointInPlotRoughGuess(wp);
+    }
 
 
     /**
@@ -435,8 +463,11 @@ public class WebPlot {
             return false;
         }
         else if (pt instanceof WorldPt) {
+            retval= pointInPlotRoughGuess((WorldPt) pt);
+            if (retval) {
                 ImageWorkSpacePt ipt= getImageWorkSpaceCoords((WorldPt)pt);
                 retval= pointInPlot(ipt);
+            }
         }
         else if (pt instanceof ImageWorkSpacePt) {
             retval= pointInPlot((ImageWorkSpacePt)pt);
@@ -684,11 +715,17 @@ public class WebPlot {
 
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
-            if (!_imageCoordSys.equals(wpt.getCoordSys())) {
-                wpt= VisUtil.convert(wpt,_imageCoordSys);
+            WorldPt originalWp= wpt;
+ //
+            retval= conversionCache.get(checkedPt);
+            if (retval==null) {
+                if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+                    wpt= VisUtil.convert(wpt,_imageCoordSys);
+                }
+                ProjectionPt projPt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+                retval= projPt==null ? null : new ImagePt( (projPt.getX())+ 0.5F ,  (projPt.getY())+ 0.5F);
+                putInConversionCache(originalWp,retval);
             }
-            ProjectionPt projPt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
-            retval= projPt==null ? null : new ImagePt( (projPt.getX())+ 0.5F ,  (projPt.getY())+ 0.5F);
         }
         else {
             retval= getImageCoords(checkedPt);
@@ -705,16 +742,33 @@ public class WebPlot {
         boolean success= false;
         float zfact= _plotGroup.getZoomFact();
 
-        if (!_imageCoordSys.equals(wpt.getCoordSys())) {
-            wpt= VisUtil.convert(wpt,_imageCoordSys);
-        }
+        ImagePt imagePt= conversionCache.get(wpt);
 
-        ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
-        if (proj_pt!=null) {
-            double imageX= proj_pt.getX()  + 0.5;
-            double imageY= proj_pt.getY()  + 0.5;
-            double imageWorkspaceX= imageX-_offsetX;
-            double imageWorkspaceY= imageY-_offsetY;
+        if (imagePt==null) {
+            WorldPt originalWp= wpt;
+            if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+                wpt= VisUtil.convert(wpt,_imageCoordSys);
+            }
+
+            ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+            if (proj_pt!=null) {
+                double imageX= proj_pt.getX()  + 0.5;
+                double imageY= proj_pt.getY()  + 0.5;
+                putInConversionCache(originalWp, new ImagePt(imageX,imageY));
+                double imageWorkspaceX= imageX-_offsetX;
+                double imageWorkspaceY= imageY-_offsetY;
+
+                int sx= (int)(imageWorkspaceX*zfact);
+                int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+
+                retPt.setX(sx-_viewPortX);
+                retPt.setY(sy-_viewPortY);
+                success= true;
+            }
+        }
+        else {
+            double imageWorkspaceX= imagePt.getX()-_offsetX;
+            double imageWorkspaceY= imagePt.getY()-_offsetY;
 
             int sx= (int)(imageWorkspaceX*zfact);
             int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
@@ -722,10 +776,17 @@ public class WebPlot {
             retPt.setX(sx-_viewPortX);
             retPt.setY(sy-_viewPortY);
             success= true;
+
         }
+
         return success;
     }
 
+    public void putInConversionCache(WorldPt wp, ImagePt imp) {
+        if (conversionCache.size()<MAX_CACHE_ENTRIES) {
+            conversionCache.put(wp,imp);
+        }
+    }
 
 
     public ViewPortPt getViewPortCoords(ScreenPt spt)  {
@@ -754,7 +815,9 @@ public class WebPlot {
         ViewPortPt retval;
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
-            retval= getViewPortCoords(getScreenCoords(wpt));
+            retval= new ViewPortPtMutable();
+            getViewPortCoordsOptimize(wpt,(ViewPortPtMutable)retval);
+//            retval= getViewPortCoords(getScreenCoords(wpt));
         }
         else {
             retval= getViewPortCoords(getScreenCoords(checkedPt));
@@ -860,7 +923,7 @@ public class WebPlot {
      */
     public ScreenPt getScreenCoords(ImagePt ipt, float altZLevel) {
         if (ipt==null) return null;
-        return getScreenCoords(getImageWorkSpaceCoords(ipt),altZLevel);
+        return getScreenCoords(getImageWorkSpaceCoords(ipt), altZLevel);
     }
 
 
@@ -1331,6 +1394,100 @@ public class WebPlot {
    int  getOffsetX() {return _offsetX;}
    int  getOffsetY() {return _offsetY;}
 
+
+    private static class ImageBoundsData {
+//        WorldPt topLeft;
+//        WorldPt topRight;
+//        WorldPt bottomLeft;
+//        WorldPt bottomRight;
+        private final boolean wrapsRa;
+        private final boolean northPole;
+        private final boolean southPole;
+        private final double minRa;
+        private final double maxRa;
+        private final double minDec;
+        private final double maxDec;
+
+
+        private ImageBoundsData(WebPlot plot, WorldPt topLeft, WorldPt topRight, WorldPt bottomLeft, WorldPt bottomRight) {
+//            this.topLeft = topLeft;
+//            this.topRight = topRight;
+//            this.bottomLeft = bottomLeft;
+//            this.bottomRight = bottomRight;
+
+            double minRa= 5000;
+            double maxRa= -5000;
+            double minDec=5000;
+            double maxDec= -5000;
+
+            for(WorldPt wp : new WorldPt[] {topLeft, topRight, bottomLeft, bottomRight}) {
+                if (wp.getLon() < minRa) minRa= wp.getLon();
+                if (wp.getLon() > maxRa) maxRa= wp.getLon();
+                if (wp.getLat() < minDec) minDec= wp.getLat();
+                if (wp.getLat() > maxDec) maxDec= wp.getLat();
+            }
+
+            double scale= plot.getImagePixelScaleInDeg();
+            Dimension dim= plot._viewPortDim;
+            int wPad= dim.getWidth()/2;
+            int hPad= dim.getHeight()/2;
+
+
+
+            minRa-= (wPad *scale);
+            minDec-= (hPad*scale);
+            maxDec+= (hPad*scale);
+            maxRa+= (wPad*scale);
+
+
+            double imageSize= plot.getImagePixelScaleInDeg() * Math.max(plot.getImageDataHeight(),plot.getImageDataWidth());
+            double checkDeltaTop=    90-(2*imageSize);
+            double checkDeltaBottom= -90 + (2*imageSize);
+
+            this.wrapsRa= (maxRa-minRa) > 90;
+            this.northPole= minDec>checkDeltaTop;
+            this.southPole= maxDec<checkDeltaBottom;
+            this.minRa= minRa;
+            this.maxRa= maxRa;
+            this.minDec= minDec;
+            this.maxDec= maxDec;
+        }
+
+
+        /**
+         * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
+         * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+         * @return true in we guess it might be in the bounds, false if we know that it is not in the bounds
+         */
+        public boolean pointInPlotRoughGuess(WorldPt wp) {
+
+            if (!CoordinateSys.EQ_J2000.equals(wp.getCoordSys())) {
+                wp= VisUtil.convert(wp,CoordinateSys.EQ_J2000);
+            }
+            double x= wp.getLon();
+            double y= wp.getLat();
+
+
+            boolean retval;
+            if (northPole) { //if near the j2000 "north pole" then ignore ra check
+                retval= y> minDec;
+            }
+            else if (southPole) { //if near the j2000 "south pole" then ignore ra check
+                retval= y< maxDec;
+            }
+            else if (wrapsRa) { // if image wraps around 0 ra
+                retval= y> minDec && y< maxDec;
+                if (retval) {
+                    retval= x> maxRa || x< minRa;
+                }
+            }
+            else { // normal case
+                retval= x> minRa && y> minDec && x< maxRa && y< maxDec;
+            }
+            return retval;
+        }
+
+    }
 
 }
 /*

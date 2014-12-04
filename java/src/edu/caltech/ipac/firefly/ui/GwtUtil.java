@@ -346,6 +346,17 @@ public class GwtUtil {
         return false;
     }
 
+    public static boolean isOnDisplay(com.google.gwt.dom.client.Element elem) {
+        if (elem != null) {
+            boolean val = (elem.getOffsetHeight() * elem.getOffsetWidth() > 0)
+                    && isVisible(elem);
+            return val;
+        }
+        return false;
+    }
+
+
+
     /**
      * return true if the given element is visible.  this is based on style attribtues. it is possible that a widget is
      * visible, but does not have width or height.
@@ -739,15 +750,27 @@ public class GwtUtil {
 
 
     public static MaskPane mask(String msg, Widget widget) {
-        return mask(msg, widget, MaskPane.MaskHint.OnComponent);
+        return mask(msg, widget, MaskPane.MaskHint.OnComponent,true);
     }
 
+    public static MaskPane mask(String msg, Widget widget, boolean onlyWhenUncovered) {
+        return mask(msg, widget, MaskPane.MaskHint.OnComponent,onlyWhenUncovered);
+    }
 
     public static MaskPane mask(String msg, Widget widget, MaskPane.MaskHint hint) {
+        return mask(msg,widget,hint,false);
+    }
+
+    public static MaskPane mask(String msg, Widget widget, MaskPane.MaskHint hint, boolean onlyWhenUncovered) {
         DefaultWorkingWidget working = new DefaultWorkingWidget();
         working.setText(msg);
         MaskPane maskPane = new MaskPane(widget, working, hint);
-        maskPane.show();
+        if (onlyWhenUncovered) {
+            maskPane.showWhenUncovered();
+        }
+        else {
+            maskPane.show();
+        }
         return maskPane;
     }
 
@@ -1119,6 +1142,41 @@ public class GwtUtil {
         return retval;
     }
 
+
+    public static boolean isParentOf(com.google.gwt.dom.client.Element e, Element testParent) {
+        boolean retval= false;
+        if (e != null && testParent!=null) {
+            while (e.getParentElement() != null) {
+                if (testParent == e.getParentElement()) {
+                    retval= true;
+                    break;
+                }
+                else  {
+                    e= e.getParentElement();
+                }
+            }
+        }
+        return retval;
+    }
+
+
+
+    public static boolean isParentOf(Widget w, Widget testParent) {
+        boolean retval= false;
+        if (w != null && testParent!=null) {
+            while (w.getParent() != null) {
+                if (testParent == w.getParent()) {
+                    retval= true;
+                    break;
+                }
+                else  {
+                    w= w.getParent();
+                }
+
+            }
+        }
+        return retval;
+    }
 
     public static boolean isHexColor(String text) {
         if (text.length() != 6) {

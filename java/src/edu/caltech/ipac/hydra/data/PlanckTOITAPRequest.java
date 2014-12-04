@@ -25,6 +25,7 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String TYPE               = "type";
     public final static String SSOFLAG            = "ssoflag";
     public final static String SEARCH_REGION_SIZE = "radius";
+    public final static String SEARCH_BOX_SIZE    = "boxsize";
     public final static String OBJ_NAME           = "obj_name";
     public final static String OPTBAND            = "planckfreq";
     public final static String RA_DEC_J2000       = "RaDecJ2000";
@@ -46,12 +47,15 @@ public class PlanckTOITAPRequest extends TableServerRequest {
     public final static String TIMESTART          = "timeStart";
     public final static String TIMEEND            = "timeEnd";
 
-    public final static String detc030_all = "27m,27s,28m,28s";
-    public final static String detc044_all = "24m,24s,25m,25s,26m,26s";
-    public final static String detc070_all = "18m,18s,19m,19s,20m,20s, 21m,21s,22m,22s,23m,23s";
+    public final static String detc030_all = "27M,27S,28M,28S";
+    public final static String detc044_all = "24M,24S,25M,25S,26M,26S";
+    public final static String detc070_all = "18M,18S,19M,19S,20M,20S,21M,21S,22M,22S,23M,23S";
     public final static String detc100_all = "1a,1b,2a,2b,3a,3b,4a,4b";
     public final static String detc143_all = "1a,1b,2a,2b,3a,3b,4a,4b,5,6,7";
-    public final static String detc217_all = "1,2,3,4,,5a,5b,6a,6b,7a,7b,8a,8b";
+    public final static String detc217_all = "1,2,3,4,5a,5b,6a,6b,7a,7b,8a,8b";
+    public final static String detc353_all = "1,2,3a,3b,4a,4b,5a,5b,6a,6b,7,8";
+    public final static String detc545_all = "1,2,3,4";
+    public final static String detc857_all = "1,2,3,4";
 
 
     public PlanckTOITAPRequest() {
@@ -95,6 +99,11 @@ public class PlanckTOITAPRequest extends TableServerRequest {
         setParam(SEARCH_REGION_SIZE, value);
     }
     public String getSearchSize() { return getParam(SEARCH_REGION_SIZE); }
+
+    public void setSearchBoxSize(String value) {
+        setParam(SEARCH_BOX_SIZE, value);
+    }
+    public String getSearchBoxSize() { return getParam(SEARCH_BOX_SIZE); }
 
     public void setDetector(String value) {
         setParam(DETECTOR, value);

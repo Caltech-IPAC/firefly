@@ -58,7 +58,7 @@ public class BaseImagePlotDefinition implements ImagePlotDefinition {
      */
     public List<String> getViewerIDs(SelectedRowData selData) { return viewerIDList;  }
 
-    public List<String> get3ColorViewerIDs() {
+    public List<String> get3ColorViewerIDs(SelectedRowData selData) {
         return threeColorViewerIDList;
     }
 

@@ -79,6 +79,16 @@ public abstract class AbstractDatasetQueryWorker<T> extends BaseEventWorker<T> {
         super.setEnabled(enabled);
     }
 
+    @Override
+    protected boolean useEvent(WebEvent ev) {
+        boolean retval= false;
+        if ((ev.getSource() instanceof TablePanel)) {
+            TablePanel t= (TablePanel) ev.getSource();
+            retval= getQuerySources().contains(t.getName());
+        }
+        return retval;
+    }
+
     public void handleEvent(WebEvent ev) {
         if ((ev.getSource() instanceof TablePanel)) {
             TablePanel table = (TablePanel) ev.getSource();

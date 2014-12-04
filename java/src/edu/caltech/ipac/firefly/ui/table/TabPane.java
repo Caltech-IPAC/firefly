@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
+import edu.caltech.ipac.firefly.ui.Component;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MaskPane;
 import edu.caltech.ipac.firefly.ui.StatefulWidget;
@@ -383,6 +384,9 @@ public class TabPane<T extends Widget> extends Composite
             tabs.remove(tab);
             hideTab(tab);
             eventManager.fireEvent(new WebEvent<Tab>(this, TAB_REMOVED, tab));
+            if (tab.getContent() instanceof Component) {
+                ((Component)tab.getContent()).onHide();
+            }
         }
     }
 
@@ -620,15 +624,20 @@ public class TabPane<T extends Widget> extends Composite
 
         public Tab(TabPane tabPane, T content, boolean removable, String name, String tooltips) {
             this.tabPane = tabPane;
-            this.content = content;
             this.tooltips = StringUtils.isEmpty(tooltips) ? name : tooltips;
             isRemovable = removable;
             setName(name);
-            add(content);
+            setContent(content);
 //            setSize("100%", "100%");
             setStyleName("TabItem");
 //            w = DOM.getStyleAttribute(content.getElement(), "width");
 //            h = DOM.getStyleAttribute(content.getElement(), "height");
+        }
+
+        public void setContent(T content) {
+            clear();
+            this.content = content;
+            add(content);
         }
 
         public void setSize(String w, String h) {
@@ -721,7 +730,7 @@ public class TabPane<T extends Widget> extends Composite
             if (maskPane == null) {
                 maskPane = GwtUtil.mask(msg, this);
             } else {
-                maskPane.show();
+                maskPane.showWhenUncovered();
             }
         }
 

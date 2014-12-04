@@ -46,7 +46,13 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String url = baseUrl;
         url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+*+FROM+planck_toi_"+ optBand;
         //url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+detector+ssoflag+"(round(mjd,0)="+rmjd + "))&format=fits";
-        url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('J2000',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAME:'" + detcStr + "'}";
+        if (type.equals("CIRCLE")){
+            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size +"))=1+and+("+ detc_constr + ssoflag + timeStr + ")&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
+        } else if (type.equals("BOX")){
+            url += "+WHERE+CONTAINS(POINT('J2000',ra,dec),"+ type+"('GALACTIC',"+ pos+"," + size + ","+ size +"))=1" + detc_constr + ssoflag + timeStr + "&format=fits&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAM:'" + detcStr + "'}";
+
+        }
+
         return url;
     }
 
@@ -59,7 +65,8 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
     public static URL getTOITAPURL(ServerRequest sr) throws MalformedURLException {
         // build service
         String baseUrl = getBaseURL(sr);
-        String Size = sr.getSafeParam("radius");
+        String radius = sr.getSafeParam("radius");
+        String boxsize = sr.getSafeParam("boxsize");
         String pos = sr.getParam("pos");
         String type = sr.getParam("type");
         String ssoflag = sr.getParam("ssoflag");
@@ -68,6 +75,7 @@ public class PlanckTOITAPFileRetrieve extends URLFileInfoProcessor {
         String detcStr= "";
         String timeStr = "";
         String detc_constr = "";
+        String Size = null;
 
 
         return new URL(createTOITAPURLString(baseUrl, pos, type, Size, optBand,detc_constr,ssoflag,timeStr,targetStr,detcStr));

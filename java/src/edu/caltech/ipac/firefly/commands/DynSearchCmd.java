@@ -60,10 +60,8 @@ import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
-import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.ui.table.DownloadSelectionIF;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
@@ -204,7 +202,7 @@ public class DynSearchCmd extends CommonRequestCmd {
             if (l == null) {
                 for (EventWorker worker : hub.getEventWorkers()) {
                     if (worker instanceof DynResultsHandler) {
-                        Widget results = ((DynResultsHandler)worker).processRequest(inputReq, callback, hub, loader, searchTypeTag);
+                        Widget results = ((DynResultsHandler)worker).processRequest(inputReq, callback, hub, getForm(), loader, searchTypeTag);
                         setResults(results);
                     }
                 }
@@ -226,65 +224,65 @@ public class DynSearchCmd extends CommonRequestCmd {
         }
     }
 
-    private String getGroupValueFromForm(Form f, String key) {
-        String val = null;
-        List<InputFieldGroup> groups = new ArrayList<InputFieldGroup>();
-
-        FormUtil.getAllChildGroups(f, groups);
-        boolean found = false;
-        for (InputFieldGroup ifG : groups) {
-            List<Param> pL = ifG.getFieldValues();
-            for (Param _p : pL) {
-                if (_p.getName().equals(key)) {
-                    val = _p.getValue();
-                    found = true;
-                    break;
-                }
-            }
-
-            if (found) {
-                break;
-            }
-        }
-
-        return val;
-    }
-
-    private void evaluateSearchFormParam(SearchFormParamTag t, List<ParamTag> pList) {
-        String keyName = t.getKeyName();
-        String keyValue = t.getKeyValue();
-        String createParams = t.getCreateParams();
-
-        InputField inF = searchForm.getField(keyName);
-        if (inF == null) {
-            // see if it a fieldgroup
-            // TODO
-
-        } else if (inF.isVisible()) {
-            String fieldDefValue = inF.getValue();
-            if (keyValue.equals(fieldDefValue) || (keyValue.equals("*") && fieldDefValue.length() > 0)) {
-                String[] createParamArr = createParams.split(",");
-                for (String createParam : createParamArr) {
-                    InputField inF2 = searchForm.getField(createParam);
-                    if (inF2 == null) {
-                        // see if it is within a fieldgroup
-                        String val = getGroupValueFromForm(searchForm, createParam);
-                        if (val != null) {
-                            ParamTag pt = new ParamTag(createParam, val);
-                            pList.add(pt);
-                        }
-
-                    } else {
-                        String val = inF2.getValue();
-                        if (val != null) {
-                            ParamTag pt = new ParamTag(createParam, val);
-                            pList.add(pt);
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    private String getGroupValueFromForm(Form f, String key) {
+//        String val = null;
+//        List<InputFieldGroup> groups = new ArrayList<InputFieldGroup>();
+//
+//        FormUtil.getAllChildGroups(f, groups);
+//        boolean found = false;
+//        for (InputFieldGroup ifG : groups) {
+//            List<Param> pL = ifG.getFieldValues();
+//            for (Param _p : pL) {
+//                if (_p.getName().equals(key)) {
+//                    val = _p.getValue();
+//                    found = true;
+//                    break;
+//                }
+//            }
+//
+//            if (found) {
+//                break;
+//            }
+//        }
+//
+//        return val;
+//    }
+//
+//    private void evaluateSearchFormParam(SearchFormParamTag t, List<ParamTag> pList) {
+//        String keyName = t.getKeyName();
+//        String keyValue = t.getKeyValue();
+//        String createParams = t.getCreateParams();
+//
+//        InputField inF = searchForm.getField(keyName);
+//        if (inF == null) {
+//            // see if it a fieldgroup
+//            // TODO
+//
+//        } else if (inF.isVisible()) {
+//            String fieldDefValue = inF.getValue();
+//            if (keyValue.equals(fieldDefValue) || (keyValue.equals("*") && fieldDefValue.length() > 0)) {
+//                String[] createParamArr = createParams.split(",");
+//                for (String createParam : createParamArr) {
+//                    InputField inF2 = searchForm.getField(createParam);
+//                    if (inF2 == null) {
+//                        // see if it is within a fieldgroup
+//                        String val = getGroupValueFromForm(searchForm, createParam);
+//                        if (val != null) {
+//                            ParamTag pt = new ParamTag(createParam, val);
+//                            pList.add(pt);
+//                        }
+//
+//                    } else {
+//                        String val = inF2.getValue();
+//                        if (val != null) {
+//                            ParamTag pt = new ParamTag(createParam, val);
+//                            pList.add(pt);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     protected DockLayoutPanel processSplitPanel(SplitPanelTag sp, Request inputReq, WidgetFactory factory, EventHub hub,
                                                 PrimaryTableUILoader loader) {
@@ -446,40 +444,23 @@ public class DynSearchCmd extends CommonRequestCmd {
                             String tableType = t.getType();
                             final PrimaryTableUI primary = factory.createPrimaryUI(tableType, tsReq, tableParams);
 
-                            // check for downloadTag options
-                            DownloadTag dl = queryTag.getDownload();
-                            if (dl != null) {
-                                DynDownloadSelectionDialog ddsd = new DynDownloadSelectionDialog(dl.getTitle());
-                                String maxRows = dl.getMaxRows();
-                                if (!StringUtils.isEmpty(maxRows)) {
-                                    DownloadSelectionIF.MinMaxValidator validator = new DownloadSelectionIF.MinMaxValidator(
-                                            ddsd, 1, Integer.parseInt(maxRows));
-                                    ddsd.setValidator(validator);
-                                }
+                            DownloadTag dlTag = queryTag.getDownload();
+                            DynDownloadSelectionDialog ddsd = DynUtils.makeDownloadDialog(dlTag, getForm());
+                            if (ddsd != null) {
+                                String dlId = dlTag.getId();
 
-                                FormTag formTag = dl.getFormTag();
-                                if (formTag != null) {
-                                    List<FieldGroupTag> dlFg = formTag.getFieldGroups();
-                                    if (dlFg != null) {
-                                        Form dlform = GwtUtil.createForm(false, formTag, null, getForm());
-                                        ddsd.addFieldDefPanel(dlform);
-                                    }
-                                }
-
-                                String dlId = dl.getId();
-
-                                List<ParamTag> dlParams = dl.getParams();
-                                List<SearchFormParamTag> sfParams = dl.getSearchFormParams();
+                                List<ParamTag> dlParams = dlTag.getParams();
+                                List<SearchFormParamTag> sfParams = dlTag.getSearchFormParams();
                                 for (SearchFormParamTag sfpt : sfParams) {
-                                    evaluateSearchFormParam(sfpt, dlParams);
+                                    DynUtils.evaluateSearchFormParam(getForm(), sfpt, dlParams);
                                 }
 
-                                String downloadTitle = dl.getTitlePrefix();
+                                String downloadTitle = dlTag.getTitlePrefix();
                                 if (!StringUtils.isEmpty(inputReq.getShortDesc())) {
                                     downloadTitle += " " + inputReq.getShortDesc();
                                 }
                                 downloadTitle += " Search";
-                                primary.addDownloadButton(ddsd, dlId, dl.getFilePrefix(), downloadTitle,
+                                primary.addDownloadButton(ddsd, dlId, dlTag.getFilePrefix(), downloadTitle,
                                         DynUtils.convertToParamList(dlParams));
                             }
 

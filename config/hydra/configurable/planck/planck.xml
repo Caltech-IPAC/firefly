@@ -81,6 +81,18 @@
                     <Param key="show" value="detc100"></Param>
                     <Param key="retainSpace" value="false"></Param>
                 </FormEventWorker>
+                <FormEventWorker id="searchtypeController_1" type="FieldDefVisibilityControl" xid="searchtypeController_1">
+                    <Param key="masters" value="type=circle"></Param>
+                    <Param key="hide" value="boxsize"></Param>
+                    <Param key="show" value="radius"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
+                <FormEventWorker id="searchtypeController_2" type="FieldDefVisibilityControl" xid="searchtypeController_2">
+                    <Param key="masters" value="type=box"></Param>
+                    <Param key="hide" value="radius"></Param>
+                    <Param key="show" value="boxsize"></Param>
+                    <Param key="retainSpace" value="false"></Param>
+                </FormEventWorker>
 
 
                 <!-- Planck Data Release 2: Planck Image TOIs FieldGroup -->
@@ -92,9 +104,9 @@
                 </FieldGroup>
                 <!-- Planck TOI search parameters-->
                 <FieldGroup align="left">
-                    <DEGREE units="degree">
+                   <DEGREE units="degree">
                         <Name>radius</Name>
-                        <Title>Search Size</Title>
+                        <Title>Search Radius</Title>
                         <Default>1.0</Default>
                         <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
                         <ErrorDescription>Invalid entry!</ErrorDescription>
@@ -102,22 +114,32 @@
                         <Max>2</Max>
                         <Cached/>
                     </DEGREE>
+                    <DEGREE units="degree">
+                        <Name>boxsize</Name>
+                        <Title>Search Box Size</Title>
+                        <Default>2.0</Default>
+                        <ShortDescription>Specifies the size of the desired search size.</ShortDescription>
+                        <ErrorDescription>Invalid entry!</ErrorDescription>
+                        <Min>0.1666666</Min>
+                        <Max>4</Max>
+                        <Cached/>
+                    </DEGREE>
                     <EnumString orientation="horizontal">
                         <Name>type</Name>
                         <Title>Select Search Type: </Title>
                         <PreferWidth>150</PreferWidth>
                         <Mask>[RADIO]</Mask>
-                        <Default>circle</Default>
+                        <Default>box</Default>
                         <ShortDescription>Search Type</ShortDescription>
-                        <EnumValue id="circle">
-                            <Title>Circle</Title>
-                        </EnumValue>
                         <EnumValue id="box">
                             <Title>Box</Title>
                         </EnumValue>
-                        <EnumValue id="polygon">
-                            <Title>Polygon</Title>
+ <!--                       <EnumValue id="circle">
+                            <Title>Circle</Title>
                         </EnumValue>
+                        EnumValue id="polygon">
+                            <Title>Polygon</Title>
+                        </EnumValue>-->
                     </EnumString>
                     <EnumString orientation="horizontal">
                         <Name>ssoflag</Name>
@@ -148,7 +170,7 @@
                         <EnumValue id="070">
                             <Title>70 GHz</Title>
                         </EnumValue>
-                        <EnumValue id="100">
+                        <!--<EnumValue id="100">
                             <Title>100 GHz</Title>
                         </EnumValue>
                         <EnumValue id="143">
@@ -165,7 +187,7 @@
                          </EnumValue>
                         <EnumValue id="857">
                             <Title>857 GHz</Title>
-                        </EnumValue>
+                        </EnumValue>-->
                     </EnumString>
 
                     <EnumString orientation="horizontal">
@@ -173,21 +195,21 @@
                          <Title>Select 30GHz Detector(s)</Title>
                          <PreferWidth>225</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>27m</Default>
+                         <Default>27M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
                          </EnumValue>
-                         <EnumValue id="27m">
+                         <EnumValue id="27M">
                              <Title>27M</Title>
                          </EnumValue>
-                         <EnumValue id="27s">
+                         <EnumValue id="27S">
                              <Title>27S</Title>
                          </EnumValue>
-                         <EnumValue id="28m">
+                         <EnumValue id="28M">
                              <Title>28M</Title>
                          </EnumValue>
-                         <EnumValue id="28s">
+                         <EnumValue id="28S">
                              <Title>28S</Title>
                          </EnumValue>
                     </EnumString>
@@ -197,27 +219,27 @@
                          <Title>Select 44GHz Detector(s)</Title>
                          <PreferWidth>225</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>24m</Default>
+                         <Default>24M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
                          </EnumValue>
-                         <EnumValue id="24m">
+                         <EnumValue id="24M">
                              <Title>24M</Title>
                          </EnumValue>
-                         <EnumValue id="24s">
+                         <EnumValue id="24S">
                              <Title>24S</Title>
                          </EnumValue>
-                         <EnumValue id="25m">
+                         <EnumValue id="25M">
                              <Title>25M</Title>
                          </EnumValue>
-                         <EnumValue id="25s">
+                         <EnumValue id="25S">
                              <Title>25S</Title>
                          </EnumValue>
-                         <EnumValue id="26m">
+                         <EnumValue id="26M">
                              <Title>26M</Title>
                          </EnumValue>
-                         <EnumValue id="26s">
+                         <EnumValue id="26S">
                              <Title>26S</Title>
                          </EnumValue>
                     </EnumString>
@@ -226,45 +248,45 @@
                          <Title>Select 70GHz Detector(s)</Title>
                          <PreferWidth>185</PreferWidth>
                          <Mask>[CHECKBOX]</Mask>
-                         <Default>24m</Default>
+                         <Default>18M</Default>
                          <ErrorDescription>Please select at least one detector</ErrorDescription>
                          <EnumValue id="_all_">
                              <Title>All</Title>
                          </EnumValue>
-                        <EnumValue id="18m">
+                        <EnumValue id="18M">
                              <Title>18M</Title>
                          </EnumValue>
-                         <EnumValue id="18s">
+                         <EnumValue id="18S">
                              <Title>18S</Title>
                          </EnumValue>
-                         <EnumValue id="19m">
+                         <EnumValue id="19M">
                              <Title>19M</Title>
                          </EnumValue>
-                         <EnumValue id="19s">
+                         <EnumValue id="19S">
                              <Title>19S</Title>
                          </EnumValue>
-                         <EnumValue id="20m">
+                         <EnumValue id="20M">
                              <Title>20M</Title>
                          </EnumValue>
-                         <EnumValue id="20s">
+                         <EnumValue id="20S">
                              <Title>20S</Title>
                          </EnumValue>
-                         <EnumValue id="21m">
+                         <EnumValue id="21M">
                              <Title>21M</Title>
                          </EnumValue>
-                         <EnumValue id="21s">
+                         <EnumValue id="21S">
                              <Title>21S</Title>
                          </EnumValue>
-                         <EnumValue id="22m">
+                         <EnumValue id="22M">
                              <Title>22M</Title>
                          </EnumValue>
-                         <EnumValue id="22s">
+                         <EnumValue id="22S">
                              <Title>22S</Title>
                          </EnumValue>
-                         <EnumValue id="23m">
+                         <EnumValue id="23M">
                              <Title>23M</Title>
                          </EnumValue>
-                         <EnumValue id="23s">
+                         <EnumValue id="23S">
                              <Title>23S</Title>
                          </EnumValue>
                     </EnumString>
@@ -441,6 +463,7 @@
                     <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
                     <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
                     <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
+                    <SearchFormParam keyName="boxsize" keyValue="*" createParams="boxsize,UserTargetWorldPt"/>
                     <SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>
                     <Param key="BaseFileName" value="PlanckTOIFiles"/>
                     <Param key="TOI_INFO" value="toitapsearch"></Param>
@@ -462,18 +485,18 @@
                             </EnumString>
                             <EnumString orientation="horizontal">
                                 <Name>dlTOImaps</Name>
-                                <Title>Download TOI Mini-Hires-Map:</Title>
+                                <Title>Download TOI Minimap:</Title>
                                 <PreferWidth>400</PreferWidth>
                                 <Mask>[CHECKBOX]</Mask>
                                 <Default>_none_</Default>
                                 <NullAllowed/>
-                                <ShortDescription>Download MiniMap</ShortDescription>
+                                <ShortDescription>Download Minimap</ShortDescription>
                                 <EnumValue id="M">
-                                    <Title>Mini Map</Title>
+                                    <Title>Minimap</Title>
                                 </EnumValue>
-                                <EnumValue id="H">
-                                    <Title>Hires Map</Title>
-                                </EnumValue>
+                                <!--<EnumValue id="H">
+                                    <Title>HIRES</Title>
+                                </EnumValue>-->
                             </EnumString>
                             <EnumString orientation="vertical">
                                 <Name>zipType</Name>
@@ -549,7 +572,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_7</Name>
-            <Title>Browse Single PCCS Catalogs(TBD on the fly cutout for preview)</Title>
+            <Title>Browse Single PCCS Catalogs (With on-the-fly cutout for preview)</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -652,27 +675,27 @@
                 <Param key="server" value="PLANCK_SERVER"/>
                 <Param key="database" value="%planck.db%"/>
                 <Param key="use" value="catalog_primary"/>
-                <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                <Param key="cutoutHost" value="%planck.cutout.host%" serverOnly="false"/>
+                <Param key="releaseVersion" value="release2" serverOnly="false"/>
                 <Param key="SortInfo" value="SortInfo=ASC,glon,name"/>
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                    <Param key="releaseVersion" value="release2"/>
                     <Param key="col.mx1.Visibility" value="hidden"/>
                     <Param key="col.my1.Visibility" value="hidden"/>
                     <Param key="col.mx2.Visibility" value="hidden"/>
                     <Param key="col.mxy.Visibility" value="hidden"/>
                     <Param key="col.my2.Visibility" value="hidden"/>
                 </Metadata>
-                <Download id="PlanckDownload2" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
+                <Download id="PlancImagesCutoutkDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <Label><![CDATA[<i>
-                                For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
+                                For Planck data, cutouts of selected sources will be downloaded. <br>
+                                </i>]]>
                             </Label>
                         </FieldGroup>
                         <FieldGroup>
@@ -770,44 +793,6 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_sz_union"/>
                 <Param key="ddfile" value="com_pccs1_sz_union_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
-                    <Form>
-                        <FieldGroup>
-                            <Label><![CDATA[<i>
-                                For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
-                            </Label>
-                        </FieldGroup>
-                        <FieldGroup>
-                            <EnumString orientation="horizontal">
-                                <Name>cutoutTypes</Name>
-                                <Title>Download Cutout Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
-                                <NullAllowed/>
-                                <EnumValue id="PE">
-                                    <Title>PLANCK</Title>
-                                </EnumValue>
-                                <EnumValue id="WMAP">
-                                    <Title>WMAP</Title>
-                                </EnumValue>
-                                <EnumValue id="IRIS">
-                                    <Title>IRAS</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
-                        </FieldGroup>
-                    </Form>
-                </Download>
             </Query>
 
             <Query id="planckszmmf1" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
@@ -816,39 +801,6 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_sz_mmf1"/>
                 <Param key="ddfile" value="com_pccs1_sz_mmf1_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
-                    <Form>
-                        <FieldGroup>
-                            <Label><![CDATA[<i>
-                                For Planck data, the beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
-                            </Label>
-                        </FieldGroup>
-                        <FieldGroup>
-                            <EnumString orientation="horizontal">
-                                <Name>cutoutTypes</Name>
-                                <Title>Download PSF Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
-                                <NullAllowed/>
-                                <EnumValue id="PE">
-                                    <Title>PLANCK</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
-                        </FieldGroup>
-                    </Form>
-                </Download>
-
             </Query>
 
             <Query id="planckszmmf3" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
@@ -857,38 +809,6 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_sz_mmf3"/>
                 <Param key="ddfile" value="com_pccs1_sz_mmf3_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
-                    <Form>
-                        <FieldGroup>
-                            <Label><![CDATA[<i>
-                                For Planck data, the beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
-                            </Label>
-                        </FieldGroup>
-                        <FieldGroup>
-                            <EnumString orientation="horizontal">
-                                <Name>cutoutTypes</Name>
-                                <Title>Download PSF Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
-                                <NullAllowed/>
-                                <EnumValue id="PE">
-                                    <Title>PLANCK</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
-                        </FieldGroup>
-                    </Form>
-                </Download>
             </Query>
 
             <Query id="planckszpws" searchProcessorId="GatorQuery" ref-xid="planck30sf2">
@@ -897,38 +817,6 @@
                 </Constraints>
                 <Param key="catalog" value="com_pccs1_sz_pws"/>
                 <Param key="ddfile" value="com_pccs1_sz_pws_dd"/>
-                <Metadata>
-                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
-                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
-                </Metadata>
-                <Download id="PlanckDownload3" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
-                    <Param key="BaseFileName" value="PlanckFiles"/>
-                    <Param key="PSF_subPath" value="/release"/>
-                    <Form>
-                        <FieldGroup>
-                            <Label><![CDATA[<i>
-                                For Planck data, the beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
-                            </Label>
-                        </FieldGroup>
-                        <FieldGroup>
-                            <EnumString orientation="horizontal">
-                                <Name>cutoutTypes</Name>
-                                <Title>Download PSF Files:</Title>
-                                <PreferWidth>400</PreferWidth>
-                                <Mask>[CHECKBOX]</Mask>
-                                <Default>_all_</Default>
-                                <NullAllowed/>
-                                <EnumValue id="PE">
-                                    <Title>PLANCK</Title>
-                                </EnumValue>
-                            </EnumString>
-                            <Label><![CDATA[&nbsp;]]></Label>
-                        </FieldGroup>
-                    </Form>
-                </Download>
             </Query>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Result -->
             <!-- linked to "res_planck_catalog.xml". -->
@@ -938,7 +826,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
             <Name>planck_8</Name>
-            <Title>Multiple Frequency Cutout Visualization(DX11d Map with PCCS1 catalog)</Title>
+            <Title>Multiple Frequency Cutout Visualization (DX11d Map with PCCS1 catalog)</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image Cutouts Form -->
             <Form>
@@ -1100,16 +988,21 @@
                 <Param key="ImageWidth" value="96"/>
                 <Param key="cutoutHost" value="%planck.cutout.host%"/>
                 <Param key="releaseVersion" value="release2"/>
+                <Metadata>
+                    <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
+                    <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                    <Param key="releaseVersion" value="release2"/>
+                </Metadata>
                 <Download id="PlanckCutoutsDownload" title="Download Options" filePrefix="PlanckFiles" titlePrefix="Planck">
                     <Param key="BaseFileName" value="PlanckFiles"/>
+                    <Param key="releaseVersion" value="release2"/>
                     <Param key="PSF_subPath" value="/release"/>
                     <Form>
                         <FieldGroup>
                             <Label><![CDATA[<i>
-                                For Planck data, map regions and beams will be downloaded. <br>
-                                LFI and HFI PSF files are multi-extension FITS files containing <br>
-                                the derived PSFs at the individual frequencies at the HEALPix pixel <br>
-                                closest to the input coordinates.</i>]]>
+                                For Planck data, cotout map regions will be downloaded. <br>
+                                </i>]]>
                             </Label>
                         </FieldGroup>
                     </Form>
@@ -1138,11 +1031,14 @@
                 <Metadata>
                     <Param key="CENTER_COLUMN" value="ra;dec;EQ_J2000"/>
                     <Param key="CatalogHints" value="DisableMouse,OnlyIfVisible"/>
+                    <Param key="cutoutHost" value="%planck.cutout.host%"/>
+                    <Param key="releaseVersion" value="release2"/>
                     <Param key="col.mx1.Visibility" value="hidden"/>
                     <Param key="col.my1.Visibility" value="hidden"/>
                     <Param key="col.mx2.Visibility" value="hidden"/>
                     <Param key="col.mxy.Visibility" value="hidden"/>
                     <Param key="col.my2.Visibility" value="hidden"/>
+                    <!--<Param key="DEFAULT_COLOR" value="yellow"/>-->
                 </Metadata>
             </Query>
             <!-- Planck Data Release 2: Planck Image Cutouts Query -->

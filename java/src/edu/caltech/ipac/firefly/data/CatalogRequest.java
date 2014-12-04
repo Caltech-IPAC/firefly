@@ -43,6 +43,7 @@ public class CatalogRequest extends TableServerRequest {
     public final static String USE = "use";
     public final static String GATOR_MISSION = "mission";
     public final static String CATALOG_PROJECT = "catalogProject";
+    public static final String UPDLOAD_ROW_ID = "in_row_id";
 
 
     public enum RequestType {

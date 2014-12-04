@@ -21,6 +21,7 @@ import java.util.Map;
  * @author Trey Roby
  */
 public class PlotData {
+    public static enum GroupMode {TABLE_ROW_ONLY, WHOLE_GROUP}
 
     private Map<String, WebPlotRequest> dynReqMap= new HashMap<String, WebPlotRequest>(37);
     private Map<String, List<WebPlotRequest>> dynReq3ColorMap= new HashMap<String, List<WebPlotRequest>>(13);
@@ -32,16 +33,17 @@ public class PlotData {
     private SelectedRowData selRowData = null;
     private final boolean threeColorDataOP;
     private final boolean canCreateAnyNewPlot;
+    private final boolean canDoGroupingChanges;
 
-    public PlotData(Resolver resolver, boolean threeColorDataOP, boolean canCreateAnyNewPlot) {
+    public PlotData(Resolver resolver, boolean threeColorDataOP, boolean canCreateAnyNewPlot, boolean canDoGroupingChanges) {
         this.resolver= resolver;
         this.threeColorDataOP = threeColorDataOP;
         this.canCreateAnyNewPlot = canCreateAnyNewPlot;
+        this.canDoGroupingChanges= canDoGroupingChanges;
     }
 
-    public boolean is3ColorOptional() {
-        return threeColorDataOP;
-    }
+    public boolean is3ColorOptional() { return threeColorDataOP; }
+    public boolean getCanDoGroupingChanges() { return canDoGroupingChanges; }
 
     public void setSelectedRowData(SelectedRowData currentData) {
         this.selRowData = currentData;
@@ -58,6 +60,10 @@ public class PlotData {
     public void deleteID(String id) {
         if (dynReqMap.containsKey(id)) dynReqMap.remove(id);
         if (dynReq3ColorMap.containsKey(id)) dynReq3ColorMap.remove(id);
+    }
+
+    public Resolver getResolver() {
+       return resolver;
     }
 
     public void setCanDelete(String id, boolean canDelete) {
@@ -80,7 +86,7 @@ public class PlotData {
     }
 
     public boolean hasPlotsDefined() {
-       return getImageRequest(DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY).size()>0 ||
+       return getImageRequest(GroupMode.TABLE_ROW_ONLY).size()>0 ||
               get3ColorImageRequest().size()>0;
     }
 
@@ -157,12 +163,12 @@ public class PlotData {
     }
 
 
-    public Map<String,WebPlotRequest> getImageRequest(DatasetInfoConverter.GroupMode mode) {
+    public Map<String,WebPlotRequest> getImageRequest(GroupMode mode) {
         HashMap<String,WebPlotRequest> retMap= new LinkedHashMap<String, WebPlotRequest>(dynReqMap);
         if (resolver!=null)  {
             List<String> idList= resolver.getIDsForMode(mode,selRowData);
             for(String id : idList) {
-                retMap.put(id,resolver.getRequestForID(id,selRowData));
+                retMap.put(id,resolver.getRequestForID(id,selRowData, false));
             }
         }
        return retMap;
@@ -179,7 +185,7 @@ public class PlotData {
                     int len= Math.min(reqList.size(), bandIDList.size());
                     for(int i=0; i<len; i++) {
                         String reqID= bandIDList.get(i);
-                        WebPlotRequest r= reqID!=null ?resolver.getRequestForID(reqID, selRowData) : null;
+                        WebPlotRequest r= reqID!=null ?resolver.getRequestForID(reqID, selRowData, true) : null;
                         reqList.set(i, r);
                         if (r!=null && titleToIDMap.containsKey(id3)) {
                            r.setTitle(titleToIDMap.get(id3));
@@ -217,6 +223,7 @@ public class PlotData {
     }
 
 
+
     public static interface DynUpdateListener {
         public void bandAdded(PlotData dpd, String id);
         public void bandRemoved(PlotData dpd, String id);
@@ -225,8 +232,8 @@ public class PlotData {
     }
 
     public static interface Resolver {
-        public abstract WebPlotRequest getRequestForID(String id, SelectedRowData selData);
-        public abstract List<String> getIDsForMode(DatasetInfoConverter.GroupMode mode, SelectedRowData selData);
+        public abstract WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor);
+        public abstract List<String> getIDsForMode(GroupMode mode, SelectedRowData selData);
         public abstract List<String> get3ColorIDsForMode(SelectedRowData selData);
     }
 }

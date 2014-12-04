@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -99,6 +100,10 @@ public class AutoGridRenderer implements GridRenderer {
 
     public Widget getWidget() {
         return grid;
+    }
+
+    public Element getMaskingElement(String key) {
+        return getWidget().getElement();
     }
 
     public void setShowMask(List<String> showMask) {

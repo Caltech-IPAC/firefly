@@ -26,7 +26,8 @@ import java.util.List;
  */
 public class WebPlotRequest extends ServerRequest {
 
-    public enum ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
+    public enum
+            ServiceType {IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE, NONE}
     public enum TitleOptions {NONE,  // use what it in the title
                               PLOT_DESC, // use the plot description key
                               FILE_NAME, // use the file name or analyze the URL and make a title from that
@@ -34,6 +35,11 @@ public class WebPlotRequest extends ServerRequest {
                               PLOT_DESC_PLUS, // ??
                               SERVICE_OBS_DATE,
                              }
+    public enum ExpandedTitleOptions {
+        REPLACE,// use expanded title when expanded
+        PREFIX,// use expanded title as prefix to title
+        SUFFIX,// use expanded title as sufix to title
+    }
     public enum GridOnStatus {FALSE,TRUE,TRUE_LABELS_FALSE}
     public static final int DEFAULT_THUMBNAIL_SIZE= 70;
 
@@ -102,6 +108,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
+    public static final String EXPANDED_TITLE_OPTIONS = "ExpandedTitleOptions";
     public static final String POST_TITLE= "PostTitle";
     public static final String PRE_TITLE= "PreTitle";
     public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
@@ -109,6 +116,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String MINIMAL_READOUT= "MinimalReadout";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
     public static final String GRID_ID = "GRID_ID";
+    public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -128,8 +136,11 @@ public class WebPlotRequest extends ServerRequest {
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
                                               SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
-                                              GRID_ON, TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
-                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID
+                                              GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+                                              POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                              TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
+                                              DOWNLOAD_FILENAME_ROOT
+
     };
 
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
@@ -138,9 +149,10 @@ public class WebPlotRequest extends ServerRequest {
                                                      SHOW_SCROLL_BARS, EXPANDED_TITLE,
                                                      ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
-                                                     TITLE_OPTIONS, POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
+                                                     TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
+                                                     POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
-                                                     DRAWING_SUB_GROUP_ID, GRID_ID
+                                                     DRAWING_SUB_GROUP_ID, GRID_ID, DOWNLOAD_FILENAME_ROOT
     };
 
 
@@ -454,9 +466,21 @@ public class WebPlotRequest extends ServerRequest {
             retval = Enum.valueOf(TitleOptions.class, getParam(TITLE_OPTIONS));
         }
         return retval;
-
-
     }
+
+    public void setExpandedTitleOptions(ExpandedTitleOptions option) {
+        setParam(EXPANDED_TITLE_OPTIONS,option.toString());
+    }
+
+    public ExpandedTitleOptions getExpandedTitleOptions() {
+        ExpandedTitleOptions retval = ExpandedTitleOptions.REPLACE;
+        if (this.containsParam(EXPANDED_TITLE_OPTIONS)) {
+            retval = Enum.valueOf(ExpandedTitleOptions.class, getParam(EXPANDED_TITLE_OPTIONS));
+        }
+        return retval;
+    }
+
+
 
 
     public void setPreTitle(String preTitle) {
@@ -1115,6 +1139,14 @@ public class WebPlotRequest extends ServerRequest {
     public void setGridId(String id) { setParam(GRID_ID,id); }
 
     public String getGridId() { return getParam(GRID_ID); }
+
+    public void setDownloadFileNameRoot(String nameRoot) {
+        setParam(DOWNLOAD_FILENAME_ROOT, nameRoot);
+    }
+
+    public String getDownloadFileNameRoot() {
+        return getParam(DOWNLOAD_FILENAME_ROOT);
+    }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

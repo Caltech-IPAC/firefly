@@ -46,7 +46,7 @@ abstract public class FileInfoProcessor implements SearchProcessor<FileInfo>, Qu
             onComplete(request, fi);
             return fi;
         } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request:" + sr);
+            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
             throw new DataAccessException("Request failed due to unexpected exception: ", e);
         }
     }

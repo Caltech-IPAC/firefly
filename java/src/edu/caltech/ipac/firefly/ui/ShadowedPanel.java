@@ -25,7 +25,7 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class ShadowedPanel extends Composite implements RequiresResize {
 
-    private final SimplePanel _panel= new SimplePanel();
+    private final AbsolutePanel _panel= new AbsolutePanel();
     private Widget helpIcon;
     private AbsolutePanel p;
 
@@ -38,8 +38,8 @@ public class ShadowedPanel extends Composite implements RequiresResize {
         initWidget(p);
         p.add(_panel);
         _panel.setStyleName("shadow");
-        _panel.setSize("100%", "100%");
         setSize("100%", "100%");
+        GwtUtil.setStyles(_panel, "position", "absolute", "top", "0px", "bottom", "0px", "left", "0px", "right", "0px");
         if (w!=null) setContent(w);
         WebEventManager.getAppEvManager().addListener(Name.WINDOW_RESIZE,
                 new WebEventListener(){
@@ -68,12 +68,13 @@ public class ShadowedPanel extends Composite implements RequiresResize {
     }
 
 
-    private void setContent(Widget w) {
-        _panel.setWidget(w);
-        w.setWidth("100%");
+    public void setContent(Widget w) {
+        _panel.clear();
+        _panel.add(w);
+        w.setSize("100%","100%");
     }
 
-    public Widget getWidget() { return _panel.getWidget(); }
+    public Widget getWidget() { return _panel.getWidgetCount() > 0 ? _panel.getWidget(0) : null; }
 
 //=======================================================================
 //-------------- Method from HasWidgets Interface ----------------------
@@ -89,7 +90,7 @@ public class ShadowedPanel extends Composite implements RequiresResize {
 // =====================================================================
 
     public void onResize() {
-        Widget w= _panel.getWidget();
+        Widget w= getWidget();
         if (w!=null && w instanceof RequiresResize) {
             ((RequiresResize)w).onResize();
         }

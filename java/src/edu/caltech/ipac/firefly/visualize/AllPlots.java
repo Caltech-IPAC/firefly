@@ -63,6 +63,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -222,7 +223,7 @@ public class AllPlots implements HasWebEventManager {
 
         if (expControl.getPopoutControlsUI()!=null) {
             Dimension dim;
-            boolean isGrid= expControl.isExpandedAsGrid();
+            boolean isGrid= expControl.isExpandedGridView();
             if (isGrid) {
                 dim= expControl.getPopoutControlsUI().getGridDimension();
             }
@@ -275,6 +276,12 @@ public class AllPlots implements HasWebEventManager {
             }
         }
         return retval;
+    }
+
+    public List<PlotWidgetGroup> searchGroups(CollectionUtil.Filter<PlotWidgetGroup> filter) {
+        ArrayList<PlotWidgetGroup> results = new ArrayList<PlotWidgetGroup>();
+        CollectionUtil.filter(_groups, results, filter);
+        return results;
     }
 
 
@@ -430,6 +437,23 @@ public class AllPlots implements HasWebEventManager {
                 retval= true;
                 break;
             }
+        }
+        return retval;
+    }
+
+    public boolean isExpandSingleView() {
+        boolean retval= false;
+        if (isExpanded()) {
+            PopoutWidget pw= getExpandedController();
+            if (pw!=null) retval= pw.isExpandedSingleView();
+        }
+        return retval;
+    }
+
+    public PopoutWidget getExpandedSingleWidget() {
+        PopoutWidget retval= null;
+        if (isExpandSingleView()) {
+            retval= getExpandedController().getExpandedSingleViewWidget();
         }
         return retval;
     }
@@ -816,7 +840,12 @@ public class AllPlots implements HasWebEventManager {
                     mpwItem.setSecondaryTitle(span);
                 }
                 else {
-                    mpwItem.setSecondaryTitle("");
+                    String span = "&nbsp;<span>";
+                    if (mpwItem.getPlotView().isTaskWorking()) {
+                        span += "&nbsp;&nbsp;&nbsp;<img style=\"width:10px;height:10px;\" src=\"" + GwtUtil.LOADING_ICON_URL + "\" >";
+                    }
+                    span += "</span>";
+                    mpwItem.setSecondaryTitle(span);
                 }
             }
         }

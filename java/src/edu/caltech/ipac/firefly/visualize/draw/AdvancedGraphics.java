@@ -22,6 +22,11 @@ public interface AdvancedGraphics extends Graphics {
     public void setTranslationForNextDraw(ScreenPt pt);
     public void clearTranslation();
 
+
+    public void copyAsImage(AdvancedGraphics g);
+    public CanvasPanel getCanvasPanel();
+
+
     public static class Shadow {
         private final double blur;
         private final double offX;

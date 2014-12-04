@@ -100,6 +100,7 @@ public class XYPlotMeta {
         copyMeta.userMeta.yColExpr = userMeta.yColExpr;
         copyMeta.userMeta.samplingXBins = userMeta.samplingXBins;
         copyMeta.userMeta.samplingYBins = userMeta.samplingYBins;
+        copyMeta.userMeta.logShading = userMeta.logShading;
         copyMeta.userMeta.aspectRatio = userMeta.aspectRatio;
         copyMeta.userMeta.stretchToFill = userMeta.stretchToFill;
         return copyMeta;
@@ -346,6 +347,7 @@ public class XYPlotMeta {
         boolean addToDefault = false;
         int samplingXBins;
         int samplingYBins;
+        boolean logShading;
         double aspectRatio;
         boolean stretchToFill;
 
@@ -366,6 +368,7 @@ public class XYPlotMeta {
             this.yColExpr = null;
             this.samplingXBins = 0;
             this.samplingYBins = 0;
+            this.logShading = false;
             this.aspectRatio = -1;
             this.stretchToFill = false;
         }
@@ -374,7 +377,7 @@ public class XYPlotMeta {
             return xLimits != null || yLimits != null || xCol != null || yCol != null ||
                     errorCol != null || orderCol != null || xColExpr != null || yColExpr != null ||
                     xName != null || xUnit != null || yName != null || yUnit != null ||
-                    samplingXBins != 0 || samplingYBins != 0 ||
+                    samplingXBins != 0 || samplingYBins != 0 || logShading==true ||
                     aspectRatio > 0 || stretchToFill==true;
         }
 

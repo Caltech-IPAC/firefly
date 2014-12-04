@@ -34,7 +34,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
 
     public TwoMassDataSetInfoConverter() {
-        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false), "2mass_target");
+        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false,true), "2mass_target");
 
         PlotData pd= getPlotData();
 
@@ -108,25 +108,35 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             builder.setHeaderParams(Arrays.asList("mission", "ds", "subsize"));
             builder.setColorTableID(1);
             builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
-
             bandToID.put("j", ID.TWOMASS_J);
             bandToID.put("h", ID.TWOMASS_H);
             bandToID.put("k", ID.TWOMASS_K);
         }
 
-        public WebPlotRequest getRequestForID(String id, SelectedRowData selData) {
+        public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
+            String inter= selData.getRequest().getParam("intersect");
+            if (inter!=null && inter.equals("OVERLAPS")) {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
+            }
+            else {
+                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
+            }
+
             String b= getBandStr(ID.valueOf(id));
             WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
-            r.setTitle("2MASS: "+b);
+
+            if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
+            else r.setTitle("2MASS: "+b);
+
             r.setZoomType(ZoomType.FULL_SCREEN);
             return r;
         }
 
 
-        public List<String> getIDsForMode(GroupMode mode, SelectedRowData selData) {
+        public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
             String b= selData.getSelectedRow().getValue("filter");
             if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
-                if (mode== DatasetInfoConverter.GroupMode.TABLE_ROW_ONLY) {
+                if (mode== PlotData.GroupMode.TABLE_ROW_ONLY) {
                     return Arrays.asList(bandToID.get(b).name());
                 }
                 else {

@@ -26,6 +26,7 @@ public class MetaConst {
     public final static String DATASET_CONVERTER = "datasetInfoConverterId";
 
 
+    public static final String DEFAULT_COLOR="DEFAULT_COLOR";
 }
 
 /*
