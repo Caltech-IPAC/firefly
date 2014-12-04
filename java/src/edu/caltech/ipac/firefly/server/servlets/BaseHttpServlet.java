@@ -107,10 +107,12 @@ public abstract class BaseHttpServlet extends HttpServlet {
     }
 
     public static void enableCors(HttpServletRequest req, HttpServletResponse resp) {
-        resp.setHeader("Access-Control-Allow-Credentials", "true");
-        resp.setHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
-        resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-        resp.setHeader("Access-Control-Max-Age", "86400");      // cache for 1 day
+        if (req.getHeader("Origin") != null) {
+            resp.setHeader("Access-Control-Allow-Credentials", "true");
+            resp.setHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
+            resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
+            resp.setHeader("Access-Control-Max-Age", "86400");      // cache for 1 day
+        }
     }
 
     abstract protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception;
