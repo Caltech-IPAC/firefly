@@ -45,7 +45,6 @@ import com.google.gwt.i18n.client.NumberFormat;
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.PropertyChangeSupport;
-import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
@@ -53,9 +52,10 @@ import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 
 /**
@@ -68,6 +68,14 @@ import java.util.List;
  *
  * @version		02/01/99,  8/22/2000
  * @author		J. Jones / 588,  Xiuqin Wu, Trey Roby, Booth Hartely
+ * @versjon   11/21/14 by Lijun Zhang
+ *            Rewrite the drawLines to plot smooth grid lines and add all the labels
+ *            The labels are added in the left and the bottom for EQxxxx images
+ *            12/04/14  by Lijun Zhang
+ *            Add labels to the middle of the vertical and horizontal lines for none EQXXXX images
+ *
+ *
+ *
 **/
 public class WebGrid
 {
@@ -75,10 +83,6 @@ public class WebGrid
      * Threshold for convergence of values of coordinate ranges.
      */
     private static final double RANGE_THRESHOLD = 1.02;
-    /**
-     * Color used to draw the grid
-    **/
-     public static final String	DEF_GRID_COLOR = "green";
 
      /**
       * Font used to draw the grid coordinates.
@@ -104,7 +108,11 @@ public class WebGrid
      private int _screenWidth;
      private int _screenHeight;
      private double                _factor = 1.0;
-	
+
+    /**
+     * Color used to draw the grid
+     **/
+    public static final String DEF_GRID_COLOR = "green";
     /**
      * The precomputed label strings to be drawn
     **/
@@ -135,6 +143,11 @@ public class WebGrid
      private final  Drawer _drawer;
      private boolean useLabels= true;
 
+    //location of the labels
+    ImageWorkSpacePt[] _points;
+    int _vLines;  //line count in levels[0] direction
+    int _hLines; //line count in levels[1] direction
+
 
     /**
       * Creates a new Grid.
@@ -148,6 +161,9 @@ public class WebGrid
        _drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
        _drawer.setHandleImageChanges(false);
        _drawer.setDefaultColor(_gridColor);
+
+       //_drawerTxt=_drawer;
+       //_drawerTxt.setDefaultColor(V_LABEL_COLOR);
    }
 
     public Drawer getDrawer() {
@@ -187,8 +203,10 @@ public class WebGrid
 
 
             List<DrawObj> drawData= new ArrayList<DrawObj>(300);
-            drawLines(drawData);
-            _drawer.setData(drawData);
+
+             drawLines(drawData);
+             _drawer.setData(drawData);
+            //_drawerTxt.setData(drawDataVLabel);
         }
         return true;
     }
@@ -291,6 +309,7 @@ public class WebGrid
 
 
    protected void drawLines(List<DrawObj>  drawData) {
+   //    protected void drawLines(List<DrawObj>  drawData) {
 	  /* Draw the lines previously computed. */
 
 
@@ -304,200 +323,122 @@ public class WebGrid
        //-----
        //System.out.println("bounds (X, Y) =  ("+bounds.x+", "+bounds.y +")");
        //System.out.println("width, height =  ("+bounds.width+", "+bounds.height +")");
-       int height = useLabels ? 10 : 0;
-	  
-       int width;
-       boolean strokeLabel= useLabels;
-       for (int i=0; i<_xLines.length; i += 1)
-       {
-	    width = useLabels ? (_labels[i].length()*8) + 4 : 0;
-	    drawLabeledPolyLine( drawData, bounds, height, width, _labels[i],
-			        _xLines[i], _yLines[i], strokeLabel);
-        strokeLabel= !strokeLabel;
+
+
+       //get the locations where to put the labels
+         _points =getLabelPoints(bounds);
+
+
+       int lineCount = _xLines.length;
+
+        for (int i=0; i<lineCount; i += 1) {
+            drawLabeledPolyLine(drawData, bounds, _labels[i],
+               _xLines[i], _yLines[i], i);
+
        }
+
+
    }
 
-   protected void drawLabeledPolyLine(List<DrawObj>  drawData, Rectangle bounds,
-                                      int height, int width, String label,
-				      double[] x, double[] y, boolean strokeLabel) {
-   /*
-   Note that bounds checking is done with handcoded conditions rather than
-   using Rectangle.contains() for performance reasons, since contains() 
-   is called thousands of times which adds up.
-   */
-
-       int drawIt= 0;
-       //System.out.println("in drawLabeledPolyLine ");
-       ImageWorkSpacePt ipt0, ipt1;
+    ImageWorkSpacePt[] getLabelPoints(Rectangle bounds) {
 
 
-       int lstrt;
-       int max0, min1=0;
+        int lineCount = _xLines.length;
+        ImageWorkSpacePt[] points = new ImageWorkSpacePt[lineCount];
+        if (_csys.toString().startsWith("EQ")) {
 
 
-       if (x.length < 5) {
-	    lstrt = 1;
-	  }
-       else {
-	    lstrt = x.length/4;
-	  }
-       max0 = lstrt;
-       if (max0 >= x.length) {
-	    max0 = x.length-1;
-	  }
+            for (int i = 0; i < lineCount; i++) {
 
-       //boolean first = true;
-       //System.out.println("before the label max0 ="+ max0);
-       for (int i=0; i<max0; i += 1) {
-           if (x[i] > -1000 && x[i+1] > -1000 && // bounds check on x[i], y[i]
+                if (i<_vLines){
+                    points[i] = new ImageWorkSpacePt(_xLines[i][0], bounds.y);
+
+                }
+                else {
+                    points[i] = new ImageWorkSpacePt(bounds.x, _yLines[i][0]);
+                }
+
+            }
+
+        } else {
+
+            //Horizontal middle position
+            int hM= _hLines%2==0? _hLines/2: _hLines/2+1;
+
+            for (int i=0; i<_vLines; i++){
+              points[i] = new ImageWorkSpacePt(_xLines[i][hM],_yLines[i][hM]);
+            }
+
+            //vertical middle position
+            int vM =_vLines%2==0? _vLines/2+1: _vLines/2+2;
+            for (int i=0; i<_hLines; i++){
+                points[i+_vLines] = new ImageWorkSpacePt(_xLines[_vLines+i][vM], _yLines[_vLines+i][vM]);
+
+
+            }
+
+        }
+
+        return  points;
+    }
+
+
+    protected void drawLabeledPolyLine(List<DrawObj>  drawData, Rectangle bounds,
+                                                String label,
+                                                double[] x, double[] y, int count){
+
+
+        //TODO
+        //1. check the x and y array to see if there are gaps between adjacent points, if so, add point
+        //2. draw the lines
+
+
+        //add the  draw line data to the drawData
+        ImageWorkSpacePt ipt0, ipt1;
+       for (int i=0; i<x.length-1; i++) {
+
+           //check the x[i] and y[i] are inside the image screen
+            if (x[i] > -1000 && x[i+1] > -1000 &&
                    ((x[i] >= bounds.x) &&
-                           ((x[i] - bounds.x) < bounds.width) &&
-                           (y[i] >= bounds.y) &&
-                           ((y[i]-bounds.y) < bounds.height) ||
-                           // bounds check on x[i+1], y[i+1]
-                           (x[i+1] >= bounds.x) &&
-                                   ((x[i+1] - bounds.x) < bounds.width) &&
-                                   (y[i+1] >= bounds.y) &&
-                                   ((y[i+1]-bounds.y) < bounds.height))) {
+                   ((x[i] - bounds.x) < bounds.width) &&
+                   (y[i] >= bounds.y) &&
+                    ((y[i]-bounds.y) < bounds.height) ||
+                            // bounds check on x[i+1], y[i+1]
+                     (x[i+1] >= bounds.x) &&
+                     ((x[i+1] - bounds.x) < bounds.width) &&
+                      (y[i+1] >= bounds.y) &&
+                       ((y[i+1]-bounds.y) < bounds.height))) {
 
-               ipt0= new ImageWorkSpacePt(x[i],y[i]);
-               ipt1= new ImageWorkSpacePt(x[i+1],y[i+1]);
-               if (!_aitoff || 
-		   ((Math.abs(ipt1.getX()-ipt0.getX()) < _screenWidth /8) &&
-		   (_aitoff ))) {
-                   //if (drawIt % 3 == 0) drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
-                   drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
-                   drawIt++;
-               }
+                ipt0= new ImageWorkSpacePt(x[i],y[i]);
+                ipt1= new ImageWorkSpacePt(x[i+1], y[i+1]);
 
-           }
-       } // for
-
-       // Now find how many points we need to skip to get to
-       // draw the label.
-       boolean drewLabel = false;
-
-       // Skip points that are off the window.
-       for (; max0<x.length && x[max0] < -1000; max0 += 1)
-       {
-       }
-
-       for (int i=max0+1; i<x.length; i += 1) {
-
-	    /* The little for loop preceding this should have
-	     * ensured that we were at a valid point when
-	     * we got in here.  If we've gotten to an invalid
-	     * point, then just give up on printing the label.
-	     */
-	    if (x[i] < -1000)
-	    {
-		    break;
-	    }
-
-	    ScreenPt spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[i],y[i]));
-	    ScreenPt spt0= _plot.getScreenCoords(new ImageWorkSpacePt( x[max0], y[max0]));
-	    int dx = spt0.getIX() - spt1.getIX();
-	    int dy = spt0.getIY() - spt1.getIY();
-
-	    int avgx, avgy;
-
-	    if (Math.abs(dx) > width  || Math.abs(dy) > height)
-	    {
-		 // If it takes only a single step to jump far enough
-		 // then we may want to fill in some of this gap.
-
-		 if (i == max0 + 1)
-		 {
-		      double frac = ((double) Math.abs(dy))/height;
-		      if ( ((double) Math.abs(dx))/width > frac)
-		      {
-			      frac = ((double) Math.abs(dx))/width;
-		      }
-		      frac = (frac-1)/frac;
-
-		      //int tmpx = (int) (x[max0] + frac*dx);
-		      //int tmpy = (int) (y[max0] + frac*dy);
-		      int tmpx = (int) (spt0.getIX() + frac*dx);
-		      int tmpy = (int) (spt0.getIY() + frac*dy);
-
-		      if (// bounds check on x[max0], y[max0]
-			  ((x[max0] >= bounds.x) && 
-			  ((x[max0] - bounds.x) < bounds.width) && 
-			  (y[max0] >= bounds.y) && 
-			  ((y[max0]-bounds.y) < bounds.height) || 
-				      // bounds check on x[i+1], y[i+1]
-			  (tmpx >= bounds.x) && 
-			  ((tmpx - bounds.x) < bounds.width) && 
-			  (tmpy >= bounds.y) && 
-			  ((tmpy-bounds.y) < bounds.height))) {
-
-				    //Point2D.Double(x[max0],y[max0]), null);
-                  if (Math.abs(tmpx-spt0.getIX()) < _screenWidth /8) {
-
-                      ImageWorkSpacePt tmpP1= _plot.getImageWorkSpaceCoords(new ScreenPt(tmpx,tmpy));
-                      ImageWorkSpacePt tmpP0= _plot.getImageWorkSpaceCoords(spt0);
-
-                      //if (drawIt % 3 == 0) drawData.add(ShapeDataObj.makeLine(tmpP1,tmpP0));
-                      drawData.add(ShapeDataObj.makeLine(tmpP1,tmpP0));
-                      drawIt++;
+                if (!_aitoff ||  ((Math.abs(ipt1.getX()-ipt0.getX()) < _screenWidth /8) &&   (_aitoff))) {
+                     drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
                   }
-              }
-		      spt1 =_plot.getScreenCoords(new ImageWorkSpacePt( x[max0+1], y[max0+1]));
-		      //pt2= savTran.transform(new 
-			      //Point2D.Double(tmpx, tmpy), null);
-		      avgx = (tmpx + spt1.getIX())/2;
-		      avgy = (tmpy + spt1.getIY())/2;
+            }  // if
+        } // for
 
-		      min1 = max0+1;
-		 }
-		 else
-		 {
-		      min1 = i;
-		      spt1= _plot.getScreenCoords(new ImageWorkSpacePt( x[min1], y[min1]));
-		      avgx = (spt0.getIX() + spt1.getIX())/2;
-		      avgy = (spt0.getIY() + spt1.getIY())/2;
-		 }
+        // draw the label.
 
-         int labelX= avgx - width/2;
-         int labelY= avgy+height/2-12;
-//            label+= "---" + labelX +"," + labelY;
-            ImageWorkSpacePt labelPt= _plot.getImageWorkSpaceCoords(new ScreenPt(labelX,labelY));
-         if (strokeLabel && useLabels) drawData.add(ShapeDataObj.makeText(labelPt,label));
-         drewLabel = strokeLabel;
+       if (useLabels){
+          if (count<_vLines) { //vertical line labels
 
-		 break;
-	    }
+               drawData.add(ShapeDataObj.makeText(_points[count], label));
+           }
+           else { //Horizontal line labels
+               drawData.add(ShapeDataObj.makeText(_points[count], label));
+           }
        }
-       if (!drewLabel) {
-	    min1 = max0;
-	  }
 
 
-    //System.out.println("after the label x.length ="+ x.length);
-    for (int i=min1; i<x.length-1; i += 1) {
-       if (x[i] > -1000 && x[i+1] > -1000 &&
-			 // bounds check on x[i], y[i]
-	  ((x[i] >= bounds.x) && 
-	  ((x[i] - bounds.x) < bounds.width) && 
-	  (y[i] >= bounds.y) && 
-	  ((y[i]-bounds.y) < bounds.height) || 
-			 // bounds check on x[i+1], y[i+1]
-	  (x[i+1] >= bounds.x) && 
-	  ((x[i+1] - bounds.x) < bounds.width) && 
-	  (y[i+1] >= bounds.y) && 
-	  ((y[i+1]-bounds.y) < bounds.height))) {
-	  ipt0= new ImageWorkSpacePt(x[i],y[i]);
-	  ipt1= new ImageWorkSpacePt(x[i+1], y[i+1]);
-	  if (!_aitoff ||
-	      ((Math.abs(ipt1.getX()-ipt0.getX()) < _screenWidth /8) &&
-	      (_aitoff)))
-          //if (drawIt % 3 == 0) drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
-          drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
-          drawIt++;
-       }  // if
-    } // for
 
-  }
+
+    }
+
+
+
+
+
 
      protected void computeLines() {
 	     /* This is where we do all the work. */
@@ -509,18 +450,10 @@ public class WebGrid
 	 double[][] range = getRange();
 	 double[][] levels = getLevels(range);
 	     
-	 //System.out.println("Getrange: " + range[0][0]+ " -> " + range[0][1]);
-	 //System.out.println("          "+range[1][0]+" -> "+range[1][1]);
 
-	     
-/*
-	 for (int i=0; i<2; i += 1) {
-	      for (int j=0; j<levels[i].length; j += 1) {
-		   System.out.println("Levels[ "+i+","+j+"]  = "+levels[i][j]);
-	      }
-	 }
- */
-	     
+
+        _vLines=levels[0].length;
+        _hLines = levels[1].length;
 	  _labels = getLabels(levels);
 	     
 
@@ -632,6 +565,7 @@ public class WebGrid
        
        return labels;
        }
+
 
 
      protected double[][] getLevels(double[][] range) 

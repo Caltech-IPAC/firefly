@@ -40,9 +40,7 @@ public class PlanckTOIMinimapRetrieve extends URLFileInfoProcessor {
         return getTOIMapData(sr);
 
     }
-    //http://irsa.ipac.caltech.edu/cgi-bin/Planck_TOI/nph-planck_toi_sia?POS=[0.053,-0.062]&CFRAME=’GAL’&
-    // ROTANG=90&SIZE=1&CDELT=0.05&FREQ=44000&ITERATIONS=20&DETECTORS=[’24m’,’24s’]&TIME=[[0,55300],[55500,Infinity]]
-    public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detc_constr,String timeStr,String targetStr,String detcStr) {
+      public static String createTOIMinimapURLString(String baseUrl, String pos, String iterations, String size, String optBand, String detc_constr,String timeStr,String targetStr,String detcStr) {
         String url = baseUrl;
         url += "?POS=["+pos+"]"+"&CFRAME='GAL'"+"&SIZE="+size+"&FREQ="+optBand+"&ITERATIONS="+iterations+"&DETECTORS="+detc_constr+"&TIME="+timeStr+"&user_metadata={OBJECT:'" + targetStr + "'"+",DETNAME:'" + detcStr + "'}";
 
