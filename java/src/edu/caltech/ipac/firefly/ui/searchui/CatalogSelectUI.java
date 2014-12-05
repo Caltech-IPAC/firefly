@@ -94,7 +94,7 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         if (proj.getCatagoryCount() > 1) {
             catList= new ArrayList<String>(proj.getCatagoryCount());
             for (Catagory category : proj) catList.add(category.getCatagoryName());
-            catSelectField = GwtUtil.createListBoxField("Catagory", "Choose Catatory",
+            catSelectField = GwtUtil.createListBoxField("Category", "Choose Category",
                                                                          catList,catList.get(0));
             catSelectField.getField().getFocusWidget().setWidth("300px");
             left.addNorth(catSelectField, 25);
