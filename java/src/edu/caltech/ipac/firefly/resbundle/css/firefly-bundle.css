@@ -1292,7 +1292,8 @@ a.linkTypeButton, .linkTypeButton {
 
 
 
-.firefly-popup-pointer .main-panel {
+.firefly-popup-pointer-main-panel {
+    background-color: white;
 }
 
 
