@@ -22,7 +22,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.toiByPosition">
             <Name>planck_6</Name>
-            <Title>TOI Search</Title>
+            <Title>TOI</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image TOIs Form -->
             <Form>
@@ -457,7 +457,7 @@
                     <Param key="RESOURCE_TYPE" value="URL"/>
                 </Metadata>
 
-                <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="PlanckTOI">
+                <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="Planck">
                     <Param key="toitapHost" value="%planck.toitap.host%"/>
                     <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
                     <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
