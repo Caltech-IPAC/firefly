@@ -157,7 +157,7 @@ public class FinderChartResultsController extends BaseEventWorker implements Dyn
         TableServerRequest tsReq = new TableServerRequest("QueryFinderChartWeb", inputReq);
         tsReq.setParam("maxSearchTargets", "1000");
         tsReq.setParam(DynUtils.QUERY_ID, "finderChart");
-        final PrimaryTableUI primary = Application.getInstance().getWidgetFactory().createPrimaryUI(WidgetFactory.TABLE, tsReq, tableParams);
+        final PrimaryTableUI primary = Application.getInstance().getWidgetFactory().createPrimaryUI(WidgetFactory.BASIC_TABLE, tsReq, tableParams);
         primary.bind(hub);
         loader.addTable(primary);
         loader.loadAll();
