@@ -1,7 +1,9 @@
 package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.FormHub;
 import edu.caltech.ipac.firefly.ui.ActiveTabPane;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.data.Param;
 
@@ -60,11 +62,24 @@ public abstract class BaseFormEventWorker implements FormEventWorker {
         }
     }
 
+    /**
+     * this convenience method search for the name field and set visibility on it.
+     * if there is not a field with the given name, it will try to find it by ID.
+     * @param name
+     * @param isVisible
+     */
     protected void setVisible(String name, boolean isVisible) {
         for(FormHub h : hubs) {
             if (h.containsField(name)) {
                 h.setVisible(name, isVisible);
                 break;
+            } else {
+                // try searching name by ID
+                Widget c = GwtUtil.findById(h.getForm(), name);
+                if (c != null) {
+                    c.setVisible(isVisible);
+                    break;
+                }
             }
         }
     }

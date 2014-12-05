@@ -546,8 +546,10 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
                 case DSS:
                 case SDSS:
                 case MSX:
-                case WISE:
                     expPrefix= st.name()+":";
+                    break;
+                case WISE:
+                    expPrefix= "AllWISE:";
                     break;
                 case TWOMASS:
                     expPrefix= "2MASS:";

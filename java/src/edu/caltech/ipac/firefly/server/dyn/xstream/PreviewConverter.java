@@ -32,6 +32,7 @@ public class PreviewConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            previewTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

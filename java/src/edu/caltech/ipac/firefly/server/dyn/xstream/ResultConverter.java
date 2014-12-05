@@ -32,6 +32,7 @@ public class ResultConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            resultTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

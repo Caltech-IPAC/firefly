@@ -32,6 +32,7 @@ public class TableConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            tableTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

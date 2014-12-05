@@ -1090,6 +1090,7 @@ public class GwtUtil {
         if (wHeight != null && wHeight.length() > 0)
             w.setHeight(wHeight);
 
+        Widget rval = w;
 
         if (fgType.equalsIgnoreCase("CollapsiblePanel")) {
             String fgTitle = fg.getTitle();
@@ -1099,8 +1100,7 @@ public class GwtUtil {
                 cp.setPanelName(cpName);
                 formHub.bind(cp, cpName);
             }
-
-            return cp;
+            rval = cp;
 
         } else if (fgType.equalsIgnoreCase("ActiveCollapsiblePanel")) {
             String fgTitle = fg.getTitle();
@@ -1111,15 +1111,17 @@ public class GwtUtil {
                 acp.setPanelName(cpName);
                 formHub.bind(acp, cpName);
             }
-
-            return acp;
+            rval = acp;
 
         } else if (fgType.equalsIgnoreCase("Frame")) {
-            return createShadowTitlePanel(w, "");
+            rval = createShadowTitlePanel(w, "");
 
-        } else {
-            return w;
         }
+
+        if (fg.getXid() != null) {
+            rval.getElement().setId(fg.getXid());
+        }
+        return rval;
     }
 
 
