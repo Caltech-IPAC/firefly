@@ -950,7 +950,6 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             _mainPanel =  new VerticalPanel();
         }
         _mainPanel.add(content);
-        _mainPanel.addStyleName("main-panel");
         _mainPanel.addStyleName(_ffCss.standardBorder());
 
         popup = createPopup(modal,autoHide);
@@ -1005,6 +1004,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             if (_pointerPopup) {
                 definePointerDirection(PointerDir.NORTH);
                 _decoratorPanel.setStyleName("popup-pane-pointer-shadow");
+                _mainPanel.addStyleName("firefly-popup-pointer-main-panel");
                 GwtUtil.setStyle(popup, "background", "transparent");
             }
             else {
