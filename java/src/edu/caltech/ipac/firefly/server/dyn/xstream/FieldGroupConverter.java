@@ -37,6 +37,7 @@ public class FieldGroupConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            fieldGroupTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

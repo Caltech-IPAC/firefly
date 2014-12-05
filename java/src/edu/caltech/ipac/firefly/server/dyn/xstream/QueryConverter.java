@@ -34,6 +34,7 @@ public class QueryConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            queryTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

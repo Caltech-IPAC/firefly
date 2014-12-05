@@ -817,7 +817,11 @@ public class FinderChartFileGroupsProcessor extends FileGroupsProcessor {
     private static String getSurveyTitle(String survey) {
         String retval = null;
         if (survey.equals("iras")) {
-            retval = "IRAS (IRIS)";
+            retval = FinderChartRequestUtil.ImageSet.IRIS.title;
+        } else if (survey.equalsIgnoreCase("wise")) {
+            retval = FinderChartRequestUtil.ImageSet.WISE.title;
+        } else if (survey.equalsIgnoreCase("sdss")) {
+            retval = FinderChartRequestUtil.ImageSet.SDSS.title;
         } else {
             retval = survey.toUpperCase();
         }

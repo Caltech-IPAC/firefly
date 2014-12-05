@@ -31,6 +31,7 @@ public class EventWorkerConverter implements Converter {
         String attrVal = reader.getAttribute("xid");
         if (attrVal != null) {
             xidFlag = attrVal;
+            eventWorkerTag.setXid(attrVal);
         }
 
         attrVal = reader.getAttribute("ref-xid");

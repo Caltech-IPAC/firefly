@@ -2,7 +2,9 @@ package edu.caltech.ipac.hydra.ui.finderchart;
 
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.ActiveTabPane;
+import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormHub;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.BaseFormEventWorker;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -17,9 +19,11 @@ import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.*;
 * @version $Id: $
 */
 public class FinderChartFormController extends BaseFormEventWorker {
+    private FormHub formHub;
 
     public void bind(FormHub hub) {
         if (hub != null) {
+            formHub = hub;
             addHub(hub);
 
             WebEventListener wel = new WebEventListener() {
@@ -53,7 +57,7 @@ public class FinderChartFormController extends BaseFormEventWorker {
         }
 
         boolean doCatSearch = Boolean.parseBoolean(getValue(FD_OVERLAY_CAT));
-        setCollapsiblePanelVisibility("catalog_options", doCatSearch);
+        setVisible("catalog_options", doCatSearch);
 
         String sources = getValue(FD_SOURCES);
         sources = sources == null ? "" : sources;

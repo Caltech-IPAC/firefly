@@ -70,6 +70,10 @@ public class FormHub {
         this.form = form;
     }
 
+    public Form getForm() {
+        return form;
+    }
+
     private final WebEventManager _eventManager = new WebEventManager();
 
     public WebEventManager getEventManager() {
