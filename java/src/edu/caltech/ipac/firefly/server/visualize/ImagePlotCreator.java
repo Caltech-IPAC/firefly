@@ -225,9 +225,9 @@ public class ImagePlotCreator {
                 break;
             case SERVICE_OBS_DATE:
                 if (req.getRequestType()== RequestType.SERVICE) {
-                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
+//                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
                     String title= req.getTitle() + ": " +
-                                  desc + ": " +
+//                                  desc + ": " +
                                   PlotServUtils.getDateValueFromServiceFits(req.getServiceType(), header);
                     plot.setPlotDesc(title);
                 }

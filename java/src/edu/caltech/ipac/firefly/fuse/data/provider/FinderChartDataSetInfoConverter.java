@@ -82,11 +82,11 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
 
         PlotData pd= getPlotData();
 
-        pd.set3ColorIDOfIDs(ID3.DSS_3.name(), makeIDList(ID.DSS1_BLUE, ID.DSS1_RED, ID.DSS2_BLUE, ID.DSS2_RED, ID.DSS2_IR));
-        pd.set3ColorIDOfIDs(ID3.SDSS_3.name(), makeIDList(ID.SDSS_U, ID.SDSS_G, ID.SDSS_R, ID.SDSS_I, ID.SDSS_Z));
-        pd.set3ColorIDOfIDs(ID3.TWOMASS_3.name(), makeIDList(ID.TWOMASS_J, ID.TWOMASS_H, ID.TWOMASS_K));
-        pd.set3ColorIDOfIDs(ID3.WISE_3C.name(), makeIDList(ID.WISE_1, ID.WISE_2, ID.WISE_4, ID.WISE_3));
-        pd.set3ColorIDOfIDs(ID3.IRAS_3.name(), makeIDList(ID.IRAS_100, ID.IRAS_25, ID.IRAS_60, ID.IRAS_12));
+        pd.set3ColorIDOfIDs(ID3.DSS_3.name(), makeIDList(ID.DSS2_IR, ID.DSS2_RED, ID.DSS2_BLUE , ID.DSS1_BLUE, ID.DSS1_RED));
+        pd.set3ColorIDOfIDs(ID3.SDSS_3.name(), makeIDList(ID.SDSS_Z, ID.SDSS_R, ID.SDSS_U, ID.SDSS_G,  ID.SDSS_I));
+        pd.set3ColorIDOfIDs(ID3.TWOMASS_3.name(), makeIDList(ID.TWOMASS_K, ID.TWOMASS_H, ID.TWOMASS_J));
+        pd.set3ColorIDOfIDs(ID3.WISE_3C.name(), makeIDList(ID.WISE_3, ID.WISE_2, ID.WISE_1, ID.WISE_4));
+        pd.set3ColorIDOfIDs(ID3.IRAS_3.name(), makeIDList(ID.IRAS_60, ID.IRAS_25, ID.IRAS_12, ID.IRAS_100));
 
         pd.setTitle(ID3.DSS_3.name(), "DSS 3 Color");
         pd.setTitle(ID3.SDSS_3.name(), "SDSS 3 Color");
@@ -126,7 +126,7 @@ public class FinderChartDataSetInfoConverter extends AbstractDataSetInfoConverte
         imDef= new FCImagePlotDefinition(idList,
                                          as3ColorIDList(),
                                          makeViewerToLayerMap());
-        imDef.setBandOptions(ID3.DSS_3.toString(), make3CMap(Arrays.asList(ID.DSS1_BLUE, ID.DSS1_RED, ID.DSS2_BLUE)));
+        imDef.setBandOptions(ID3.DSS_3.toString(), make3CMap(Arrays.asList(ID.DSS2_IR, ID.DSS2_RED, ID.DSS2_BLUE)));
         imDef.setBandOptions(ID3.SDSS_3.toString(), make3CMap(Arrays.asList(ID.SDSS_U, ID.SDSS_G, ID.SDSS_R)));
         imDef.setBandOptions(ID3.TWOMASS_3.toString(), make3CMap(Arrays.asList(ID.TWOMASS_J, ID.TWOMASS_H, ID.TWOMASS_K)));
         imDef.setBandOptions(ID3.WISE_3C.toString(), make3CMap(Arrays.asList(ID.WISE_1, ID.WISE_2, ID.WISE_4)));

@@ -212,7 +212,7 @@ public class PlotLayoutPanel extends LayoutPanel {
     }
 
     private void hideInlineTitleTemporarily(Delay delay) {
-        if (_showInlineTitle) {
+        if (false && _showInlineTitle) {
             if (_reshowTitleTimer ==null) _reshowTitleTimer = new ReshowInLineTitleTimer();
             if (_hideTitleTimer==null)   _hideTitleTimer = new HideInLineTitleTimer();
 
