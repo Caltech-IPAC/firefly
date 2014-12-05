@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.client.net.FileRetrieveException;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -192,8 +193,10 @@ public class WebPlotFactory {
             logSuccess(pInfo[0].getState(), elapse,
                        allPlots.getFindElapse(), allPlots.getReadElapse(),
                        false, null, true);
+        } catch (FileRetrieveException e) {
+            throw e;
         } catch (FailedRequestException e) {
-            throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
+            throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage()   );
         } catch (FitsException e) {
             throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
         } catch (Exception e) {

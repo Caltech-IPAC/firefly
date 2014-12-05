@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.client.net.FileRetrieveException;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
@@ -1463,7 +1464,12 @@ public class VisServerOps {
         String progressKey= (reqAry!=null && reqAry.length>0) ? reqAry[0].getProgressKey() : "";
         if (progressKey==null) progressKey= "";
 
-        if (e instanceof FailedRequestException ) {
+        if (e instanceof FileRetrieveException) {
+            FileRetrieveException fe= (FileRetrieveException)e;
+            retval= WebPlotResult.makeFail("Retrieve failed", "Could not retrieve fits file",fe.getDetailMessage(),progressKey);
+            fe.setSimpleToString(true);
+        }
+        else if (e instanceof FailedRequestException ) {
             FailedRequestException fe= (FailedRequestException)e;
             retval= WebPlotResult.makeFail(fe.getUserMessage(), fe.getUserMessage(),fe.getDetailMessage(),progressKey);
             fe.setSimpleToString(true);
@@ -1504,6 +1510,9 @@ public class VisServerOps {
 //        messages.add(e.toString());
         if (userAbort) {
             _log.info(logMsg+": "+ VisContext.PLOT_ABORTED);
+        }
+        else if (e instanceof FileRetrieveException) {
+            _log.info(logMsg+": "+ ((FileRetrieveException)e).getRetrieveServiceID()+": File retrieve failed");
         }
         else {
             _log.warn(e, messages.toArray(new String[messages.size()]));
