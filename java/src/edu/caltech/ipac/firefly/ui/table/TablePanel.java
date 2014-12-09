@@ -114,9 +114,9 @@ import java.util.Set;
 public class TablePanel extends Component implements StatefulWidget, FilterToggle.FilterToggleSupport, RequiresResize, ProvidesResize {
 
     private static final String HIGHLIGHTED_ROW_IDX = "TP_HLIdx";
-    //    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
-//                                     "SelectableTablePanel.max.row.Limit", 100000);
-    private static int maxRowLimit = Constants.MAX_ROWS_SUPPORTED;
+    private static int maxRowLimit = Application.getInstance().getProperties().getIntProperty(
+                                     "SelectableTablePanel.max.row.Limit", 100000);
+//    private static int maxRowLimit = Constants.MAX_ROWS_SUPPORTED;
     private static final String TOO_LARGE_MSG = "Sorting is disabled on table with more than " +
             NumberFormat.getFormat("#,##0").format(maxRowLimit) + " rows.";
     private static final HTML FEATURE_ONLY_TABLE = new HTML("<i><font color='red'>This feature is only available in Table View</font></i>");

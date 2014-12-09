@@ -79,6 +79,10 @@ public class DataGroupReader {
     }
 
     public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, String... onlyColumns) throws IOException {
+        return read(inf, isFixedLength, readAsString, false, onlyColumns);
+    }
+
+    public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         List<DataGroup.Attribute> attributes = IpacTableUtil.readAttributes(reader);
@@ -121,7 +125,7 @@ public class DataGroupReader {
             line = reader.readLine();
             lineNum++;
             while (line != null) {
-                DataObject row = IpacTableUtil.parseRow(headers, line, isFixedLength);
+                DataObject row = IpacTableUtil.parseRow(headers, line, isFixedLength, saveFormattedData);
                 if (row != null) {
                     if (isSelectedColumns) {
                         DataObject arow = new DataObject(data);
@@ -146,7 +150,9 @@ public class DataGroupReader {
         }
 
         data.endBulkUpdate();
-        data.shrinkToFitData();
+        if (!saveFormattedData) {
+            data.shrinkToFitData();
+        }
         return data;
     }
 

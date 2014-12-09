@@ -358,7 +358,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         // do sorting...
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
-        DataGroup dg = DataGroupReader.read(inFile);
+        DataGroup dg = DataGroupReader.read(inFile, true, false, true);
         // if this file does not contain ROWID, add it.
         if (!dg.containsKey(DataGroup.ROWID_NAME)) {
             dg.addDataDefinition(DataGroup.ROWID);
