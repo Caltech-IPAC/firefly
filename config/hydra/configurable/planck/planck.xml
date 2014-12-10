@@ -22,7 +22,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.toiByPosition">
             <Name>planck_6</Name>
-            <Title>TOI Data</Title>
+            <Title>Time Ordered Information</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image TOIs Form -->
             <Form>
@@ -84,12 +84,14 @@
                 <FormEventWorker id="searchtypeController_1" type="FieldDefVisibilityControl" xid="searchtypeController_1">
                     <Param key="masters" value="type=circle"></Param>
                     <Param key="hide" value="boxsize"></Param>
+                    <Param key="hide" value="type"></Param>
                     <Param key="show" value="radius"></Param>
                     <Param key="retainSpace" value="false"></Param>
                 </FormEventWorker>
                 <FormEventWorker id="searchtypeController_2" type="FieldDefVisibilityControl" xid="searchtypeController_2">
                     <Param key="masters" value="type=box"></Param>
                     <Param key="hide" value="radius"></Param>
+                    <Param key="hide" value="type"></Param>
                     <Param key="show" value="boxsize"></Param>
                     <Param key="retainSpace" value="false"></Param>
                 </FormEventWorker>
@@ -104,7 +106,7 @@
                 </FieldGroup>
                 <!-- Planck TOI search parameters-->
                 <FieldGroup align="left">
-                   <DEGREE units="degree">
+                   <!--<DEGREE units="degree">
                         <Name>radius</Name>
                         <Title>Search Radius</Title>
                         <Default>1.0</Default>
@@ -113,7 +115,7 @@
                         <Min>0.1666666</Min>
                         <Max>2</Max>
                         <Cached/>
-                    </DEGREE>
+                    </DEGREE>-->
                     <DEGREE units="degree">
                         <Name>boxsize</Name>
                         <Title>Search Box Size</Title>
@@ -134,10 +136,10 @@
                         <EnumValue id="box">
                             <Title>Box</Title>
                         </EnumValue>
- <!--                       <EnumValue id="circle">
+                        <!--<EnumValue id="circle">
                             <Title>Circle</Title>
                         </EnumValue>
-                        EnumValue id="polygon">
+                        <EnumValue id="polygon">
                             <Title>Polygon</Title>
                         </EnumValue>-->
                     </EnumString>
@@ -424,17 +426,17 @@
                         <Date>
                             <Name>timeStart</Name>
                             <Title>Start Date (UT)</Title>
-                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                            <Format>YYYY-MM-DD;YYYY-MM-DD hh:mm:ss</Format>
                             <NullAllowed/>
-                            <ShortDescription>Period start (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ShortDescription>Period start (YYYY-MM-DD [hh:mm:ss])</ShortDescription>
                             <ErrorDescription>Format error!</ErrorDescription>
                         </Date>
                         <Date>
                             <Name>timeEnd</Name>
                             <Title>End Date (UT)</Title>
-                            <Format>yyyy-MM-dd;yyyy-MM-dd HH:mm:ss</Format>
+                            <Format>YYYY-MM-DD;YYYY-MM-DD hh:mm:ss</Format>
                             <NullAllowed/>
-                            <ShortDescription>Period end (yyyy-MM-dd [HH:mm:ss])</ShortDescription>
+                            <ShortDescription>Period end (YYYY-MM-DD [hh:mm:ss])</ShortDescription>
                             <ErrorDescription>Format error!</ErrorDescription>
                         </Date>
                     </FieldGroup>
@@ -449,6 +451,7 @@
                 <Param key="toitapHost" value="%planck.toitap.host%" serverOnly="false"/>
                 <Param key="toiminimapHost" value="%planck.toiminimap.host%" serverOnly="false"/>
                 <Param key="detector" value="detc100" serverOnly="false"/>
+                <Param key="type" value="box" serverOnly="false"/>
                 <Metadata>
                     <Param key="toitapHost" value="%planck.toitap.host%"/>
                     <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
@@ -460,9 +463,10 @@
                 <Download id="planckTOITAPDownload" title="Download Options" filePrefix="PlanckTOIFiles" titlePrefix="Planck">
                     <Param key="toitapHost" value="%planck.toitap.host%"/>
                     <Param key="toiminimapHost" value="%planck.toiminimap.host%"/>
+                    <Param key="type" value="box"/>
                     <SearchFormParam keyName="radius" keyValue="*" createParams="radius,UserTargetWorldPt"/>
                     <SearchFormParam keyName="planckfreq" keyValue="*" createParams="planckfreq"/>
-                    <SearchFormParam keyName="type" keyValue="*" createParams="type"/>
+                    <!--<SearchFormParam keyName="type" keyValue="*" createParams="type"/>-->
                     <SearchFormParam keyName="boxsize" keyValue="*" createParams="boxsize,UserTargetWorldPt"/>
                     <SearchFormParam keyName="ssoflag" keyValue="*" createParams="ssoflag"/>
                     <Param key="BaseFileName" value="PlanckTOIFiles"/>
@@ -572,7 +576,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_7</Name>
-            <Title>Browse Single DR1 PCCS Catalogs</Title>
+            <Title>Browse Single PCCS1 Catalogs (DR2 Full Mission Map Preview)</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -1160,7 +1164,7 @@
         <Title>Planck Data Release 1</Title>
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_4</Name>
-            <Title>Browse Single PCCS Catalogs</Title>
+            <Title>Browse Single PCCS1 Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release 1: Single Frequency Catalog(All-Sky) Form -->
             <Form>

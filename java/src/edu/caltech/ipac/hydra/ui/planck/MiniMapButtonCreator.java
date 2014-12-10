@@ -60,7 +60,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
         protected FocusWidget makeButton(final TablePanel table) {
             tablePanel = table;
 
-            final Button button = GwtUtil.makeButton("Minimap Gen", "Generate Minimap Image", new ClickHandler() {
+            final Button button = GwtUtil.makeButton("Make Minimap", "Generate Minimap Image", new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     if (dialog == null) {
@@ -77,7 +77,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     }
                     final HTML content = new HTML("You are sending a request for Minimap generation<br><br>");
                     //final HTML content = FormBuilder.createPanel();
-                    content.setHTML(content.getHTML() + "<br>" + "Selected rows : <br");
+                    content.setHTML(content.getHTML() + "<br>" + "<b>Selected rows: </b> <br>");
 
                     //get all the rows.. then find the selected.
                     table.getDataModel().getAdHocData(new BaseCallback<TableDataView>() {
@@ -90,7 +90,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                                 content.setHTML(content.getHTML() + " " + i + ";");
 //                                    content.setHTML(content.getHTML() + " " + i + " - " + StringUtils.toString(row.getValues().values()) + ";");
                             }
-                            content.setHTML(content.getHTML() + "<br>" + "total row selected:  " + totalSel + " out of " + rowcount + "<br>");
+                            content.setHTML(content.getHTML() + "<br><br>" + "<b>Total rows selected: </b> " + totalSel + " out of " + rowcount + "<br>");
                             if (totalSel==rowcount) {
                                 isSelectAll = true;
                             }
@@ -206,7 +206,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
 
                     for (int i : tablePanel.getDataset().getSelected()) {
                         TableData.Row row = tableData.getModel().getRow(i);
-                        timeSelt += row.getValue("rmjd") + ",";
+                        timeSelt += row.getValue("mjd") + ",";
                     }
                     String timeStrArr[] = timeSelt.split(",");
                     String tBegin = timeStrArr[0];
@@ -274,7 +274,7 @@ public class MiniMapButtonCreator implements EventWorkerCreator {
                     req.setParam("detcStr", detcStr);
                     req.setParam("ssoStr", ssoStr);
                     desc = gpos + "_" + Freq + "GHz_Minimap";
-                    ExpandedDesc = "Minimap with " + desc + ", time range " + trangeStr + ", total "+ selectedRowCount
+                    ExpandedDesc = "Minimap with " + desc + ", date range " + trangeStr + ", total "+ selectedRowCount
                                                                             + " date(s) selected, Detector(s): " + detcStr;;
 
                     // add all of the params here.. so it can be sent to server.
