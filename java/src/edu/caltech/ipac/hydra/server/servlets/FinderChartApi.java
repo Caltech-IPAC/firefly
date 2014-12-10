@@ -33,6 +33,7 @@ import edu.caltech.ipac.targetgui.net.TargetNetwork;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -654,6 +655,8 @@ public class FinderChartApi extends BaseHttpServlet {
                 log("ERROR: "+ee.getMessage()+" while trying to flush remaining data from FTZ");
             }
             throw e;
+        } finally {
+            FileUtil.silentClose(is);
         }
     }
 
