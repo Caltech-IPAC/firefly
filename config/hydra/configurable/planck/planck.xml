@@ -22,7 +22,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.toiByPosition">
             <Name>planck_6</Name>
-            <Title>TOI</Title>
+            <Title>TOI Data</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image TOIs Form -->
             <Form>
@@ -572,7 +572,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.byWavelength">
             <Name>planck_7</Name>
-            <Title>Browse Single PCCS Catalogs (With on-the-fly cutout for preview)</Title>
+            <Title>Browse Single DR1 PCCS Catalogs</Title>
             <Tooltip>All-Sky Search</Tooltip>
             <!-- Planck Data Release 2: Single Frequency Catalog(All-Sky) Form -->
             <Form>
@@ -826,7 +826,7 @@
 
         <SearchType layoutSelector="true" helpId="searching.cutoutByPosition">
             <Name>planck_8</Name>
-            <Title>Multiple Frequency Cutout Visualization (DX11d Map with PCCS1 catalog)</Title>
+            <Title>Multiple Frequency Cutout Visualization (DR2 Full Mission Map with PCCS1 Catalog)</Title>
             <Tooltip>Name/Position Search</Tooltip>
             <!-- Planck Data Release 2: Planck Image Cutouts Form -->
             <Form>
