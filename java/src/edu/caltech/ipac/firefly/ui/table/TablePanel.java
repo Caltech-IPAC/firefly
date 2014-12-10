@@ -717,7 +717,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
 
     private void setAppStatus(boolean onshow) {
         if (onshow && getDataModel().isMaxRowsExceeded()) {
-            Application.getInstance().setStatus("Dataset too large: some functions are disabled. Filter the data down to " + maxRowLimit + " rows.");
+            Application.getInstance().setStatus("Dataset too large: some functions are disabled. Filter the data down to " + Constants.MAX_ROWS_SUPPORTED + " rows.");
             if (xyPlotView != null && activeViews.contains(xyPlotView)) {
                 activeViews.remove(xyPlotView);
                 if (isActiveView(xyPlotView.getName())) {
