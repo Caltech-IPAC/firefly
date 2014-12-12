@@ -4,11 +4,10 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.decimate.DecimateKey;
-import nom.tam.util.BufferedDataOutputStream;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -109,7 +108,7 @@ public class DataGroupQueryStatement {
 
         if (outStream == null) {
             if (getIntoFile() != null && getIntoFile().canWrite()) {
-                outStream = new BufferedDataOutputStream(new FileOutputStream(getIntoFile()), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+                outStream = new BufferedOutputStream(new FileOutputStream(getIntoFile()), IpacTableUtil.FILE_IO_BUFFER_SIZE);
             } else {
                 throw new IOException("Unable to write into output file:" + getIntoFile());
             }

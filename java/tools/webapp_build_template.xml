@@ -69,11 +69,11 @@
     <target name="webapp-clean" depends="Common Build Rules.clean, clean.gwt.compile, config-clean"/>
 
     <target name="run" depends="firefly, compile, gwt.run"
-            description="launch Heritage using the GWT shell">
+            description="launch app using the GWT shell">
     </target>
 
     <target name="sdrun" depends="firefly, compile, gwt.sdrun"
-            description="launch Heritage using the GWT shell">
+            description="launch app using the GWT shell">
     </target>
 
     <!--common build targets-->

@@ -1,30 +1,18 @@
-<project name="Heritage Project Build init file" basedir=".">
+<project name="Firefly Project Build init file" basedir=".">
     <!-- project specific's property -->
     <property name="jars.dir" location="${build.root}/../jars"/>
 
     <!-- imports the common.xml build file -->
-    <import file="${build.root}/../../common/java/tools/common.xml"/>
+    <import file="${build.root}/tools/common.xml"/>
 
     <!-- imports the firefly-path.xml file -->
     <import file="firefly-path.xml"/>
-
-    <path id="heritage.specify.jars.path">
-        <fileset refid="mysql.lib.fs"/>
-        <fileset refid="informix.lib.fs"/>
-    </path>
-
-    <path id="heritage.webapp.lib">
-        <fileset refid="solrj.lib.fs"/>
-        <file file="${firefly.jars.dir}/solrclient.jar"/>
-    	<fileset refid="votable.lib.fs"/>
-    </path>
 
 <!-- ******************************************************************
         common declared path ...  common.xml uses these
      ****************************************************************** -->
     <path id="host.mode.path">
         <path refid="firefly.host.mode.path"/>
-        <path refid="heritage.specify.jars.path"/>
     </path>
 
     <path id="gwt.compile.path">
@@ -33,12 +21,10 @@
 
     <path id="webapp.lib">
         <path refid="firefly.webapp.lib"/>
-        <path refid="heritage.webapp.lib"/>
     </path>
     
     <path id="javac.classpath">
         <path refid="firefly.javac.classpath"/>
-        <path refid="heritage.webapp.lib"/>
     </path>
 
 </project>

@@ -1,0 +1,754 @@
+<project name="Common Build Rules" basedir=".">
+
+    <fail unless="build.root" message="build.root not defined"/>
+
+
+    <!-- loading override properties-->
+    <property file="${build.root}/tools/build_override.properties"/>
+
+    <!-- loading environment-specific properties-->
+    <property name="env-file" value="env.properties"/>
+    <property name="env-basedir" value="${basedir}"/>
+    <property file="${env-basedir}/${env-file}"/>
+
+    <!-- loading environment-->
+    <property environment="env"/>
+
+    <!-- loading default build properties. -->
+    <condition property="build-env-file" value="build_dev.properties">
+        <equals arg1="${env-file}" arg2="env_dev.properties"/>
+    </condition>
+    <condition property="build-env-file" value="build_test.properties">
+        <equals arg1="${env-file}" arg2="env_test.properties"/>
+    </condition>
+    <condition property="build-env-file" value="build_ops.properties">
+        <equals arg1="${env-file}" arg2="env_ops.properties"/>
+    </condition>
+    <!-- default to build.properties if env-file is not given-->
+    <property name="build-env-file" value="build.properties"/>
+
+    <property file="${build.root}/tools/${build-env-file}"/>
+    <property file="${build.root}/tools/build.properties"/>
+
+
+    <!-- common declarations -->
+    <!-- default directory structure based on build.root at <project_name>/java/ -->
+    <property name="dev.root.dir" location="${build.root}/../.."/>
+    <property name="alljars.dir" location="${dev.root.dir}/alljars"/>
+    <!--<property name="common.jars.dir" location="${dev.root.dir}/common/jars"/>-->
+    <property name="src.dir" location="${build.root}/src"/>
+    <property name="dest.dir" location="${build.root}/classes"/>
+    <property name="dist.dir" location="${build.root}/dist"/>
+    <property name="jars.dir" location="${dist.dir}/jars"/>
+    <property name="ejbs.dir" location="${dist.dir}/ejbs"/>
+    <property name="wars.dir" location="${dist.dir}/wars"/>
+    <property name="ears.dir" location="${dist.dir}/ears"/>
+    <property name="javadocs.dir" location="${dist.dir}/javadocs"/>
+
+<!-- end of common declarations -->
+
+
+    <condition property="build.hostname" value="localhost">
+        <os family="mac" />
+    </condition>
+
+    <condition property="build.hostname" value="${env.COMPUTERNAME}">
+        <os family="windows" />
+    </condition>
+
+    <condition property="build.hostname" value="${env.HOST}">
+        <os family="unix" />
+    </condition>
+
+
+    <!-- common targets -->
+
+<!-- initialize the build environment -->
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp>
+            <format property="build.time" pattern="MMM dd yyyy hh:mm a z"/>
+            <format property="build.date" pattern="MMM dd, yyyy"/>
+            <format property="build.sdate" pattern="yyyyMMdd"/>
+        </tstamp>
+
+        <echo message="init: ${ant.project.name}  ==> started ${build.time}"/>
+
+        <!-- Initize the build settings -->
+        <buildnumber file="${build.root}/tools/build.number"/>
+
+        <available file="${build.root}/tools/base-version.properties" type="file" property="base.version.present"/>
+        <available file="jar-version.properties" type="file" property="jar-version.present"/>
+        <available file="manifest.include" type="file" property="manifest.include.present"/>
+
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${alljars.dir}"/>
+        <mkdir dir="${dest.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${jars.dir}"/>
+        <mkdir dir="${ejbs.dir}"/>
+        <mkdir dir="${wars.dir}"/>
+        <mkdir dir="${javadocs.dir}"/>
+
+        <property name="working.war.dir" value="${dest.dir}/war"/>
+        <property name="war.doc.root" value="${working.war.dir}/${jar.base}"/>
+
+    </target>
+
+    <!-- Load base version info from file -->
+    <target name="base.version" if="base.version.present">
+        <!-- Load base-version.properties first -->
+        <loadproperties srcfile="${build.root}/tools/base-version.properties"/>
+    </target>
+
+    <target name="override.version" if="jar-version.present">
+        <!-- Load version.properties, will override base-version.properties -->
+        <loadproperties srcfile="jar-version.properties"/>
+    </target>
+
+    <target name="version.info" depends="override.version, base.version"/>
+
+    <target name="compile.prepare" if="package.dir">
+        <mkdir dir="${dest.dir}/${package.dir}"/>
+        <property name="compile.includes" value="${package.dir}/**"/>
+        <property name="resources.includes" value="${package.dir}/**/resources/*"/>
+
+    </target>
+
+<!-- copy the resources of the source code without its structure(flatten)
+    ${flatten.resources.includes}   required.  list of file to copy.
+    ${flatten.dest.dir}  optional.  destination directory.  defaults to ${dest.dir}
+    ${flatten.src.dir}   optional.  source directory.  defaults to ${src.dir}
+-->
+    <target name="copy.flatten.resources" depends="init" if="flatten.resources.includes">
+
+        <property name="flatten.dest.dir" value="${dest.dir}"/>
+        <property name="flatten.src.dir" value="${src.dir}"/>
+        <property name="flatten.resources.excludes" value=""/>
+
+        <copy flatten="true" todir="${flatten.dest.dir}">
+            <fileset dir="${flatten.src.dir}" includes="${flatten.resources.includes}" excludes="${flatten.resources.excludes}"/>
+        </copy>
+    </target>
+
+<!-- copy the resources of the source code -->
+    <target name="copy.resources" depends="init, copy.flatten.resources" if="resources.includes">
+
+        <property name="compile.src.dir" value="${src.dir}"/>
+
+        <copy todir="${dest.dir}">
+            <fileset dir="${compile.src.dir}" includes="${resources.includes}" excludes="${resources.excludes}"/>
+        </copy>
+    </target>
+
+
+
+
+    <target name="immediate-start-mod" if="enable-immediate-start">
+        <exec dir="${war.doc.root}" executable="${build.root}/../../common/java/tools/immediate-start-mod.sh" >
+            <arg value="${app-name}.nocache"/>
+        </exec>
+    </target>
+
+
+<!--  compile all of the source code in this project and copy their resource files.
+    ${compile.includes}   required unless ${package.dir} is given.  list of source file to compile.
+    ${resources.includes} required unless ${package.dir} is given.  list of resources to copy.
+    ${package.dir}        optional.  the package to compile
+    ${compile.excludes}   optional.  list of exclude files
+    ${compile.src.dir}    optional.  define the source directory.  default to ${src.dir}.
+    ${resources.excludes} optional.  list of resources to exclude from copy.
+    ${flatten.resources.includes} optional. copy these resources file without its structure(flatten).
+    ${flatten.resources.excludes} optional. excludes these from the flatten.resourses..
+    ${flatten.dest.dir}           optional. the destination of the flatten files.  defaults to ${dest.dir}
+-->
+    <target name="compile" depends="do.compile, copy.resources" if="compile.includes"
+            description="compile all of the source code in this project"/>
+        
+
+    <target name="do.compile" depends="init, compile.prepare" if="compile.includes">
+
+        <property name="compile.src.dir" value="${src.dir}"/>
+        <property name="compile.excludes" value=""/>
+        <property name="resources.excludes" value=""/>
+
+        <!-- Compile the java code from ${src} into ${build} -->
+        <javac srcdir="${compile.src.dir}" destdir="${dest.dir}" classpathref="javac.classpath"
+               includeantruntime="false"
+               includes="${compile.includes}"
+               excludes="${compile.excludes}"
+               deprecation="${javac.deprecation}"
+               listfiles="${javac.listfiles}"
+               debug="${javac.debug}"/>
+    </target>
+
+<!-- prepare for jar target based on package.dir -->
+    <target name="jar.prepare" if="package.dir">
+        <property name="jar.includes" value="${package.dir}/**"/>
+    </target>
+
+<!--  create project jar file.  will compile if necessary.
+    ${jar.base}      required.  base name; identifier.
+    ${jar.includes}  required.  unless ${package.dir} is given.  list of files to jar.
+    ${jar.file}      optional.  name of the jar file. Defaults to ${jar.base}.jar
+    ${package.dir}   optional.  the package to jar
+    ${jar.src.dir}   optional.  define the root directory of the files to jar.  default to ${dest.dir}.
+    ${jar.excludes}  optional.  list of file to exclude from the jar.
+    ${manifest.file} optional.  manifest file for the jar.  default to ${dest.dir}/${jar.base}.manifest
+-->
+    <target name="jar" depends="compile, jar.prepare, version.info, create.manifest, application.setup"
+            description="create project jar file.  will compile if necessary.">
+
+        <fail unless="jar.includes" message="jar.includes not defined"/>
+        <fail unless="jar.base" message="jar.base not defined"/>
+        <fail unless="manifest.file" message="manifest file not defined"/>
+
+        <property name="jar.file" value="${jar.base}.jar"/>
+        <property name="jar.src.dir" value="${dest.dir}"/>
+        <property name="jar.excludes" value=""/>
+
+        <jar destfile="${jars.dir}/${jar.file}" index="${jar.index}" update="false" manifest="${manifest.file}">
+            <fileset dir="${jar.src.dir}" includes="${jar.includes}" excludes="${jar.excludes}"/>
+        </jar>
+        <loadfile property="mf.file.content" srcfile="${manifest.file}"/>
+        <echo level="${jar.manifest.echo.level}" message="${mf.file.content}"/>
+
+        <!-- copy built jar file to alljars  directory -->
+        <copy file="${jars.dir}/${jar.file}" todir="${alljars.dir}"/>
+
+    </target>
+
+
+    <target name="jar.update" depends="compile, jar, jar.prepare, version.info, create.manifest, application.setup"
+            if="jar.update.includes"
+            description="update a project jar file.  will compile if necessary.">
+
+        <fail unless="jar.update.includes" message="jar.includes not defined"/>
+        <fail unless="jar.file" message="jarfile not defined"/>
+        <fail unless="jar.base" message="jarbase not defined"/>
+        <fail unless="manifest.file" message="manifest file not defined"/>
+
+        <property name="jar.update.src.dir" value="${dest.dir}"/>
+        <property name="jar.update.excludes" value=""/>
+
+        <jar destfile="${jars.dir}/${jar.file}" index="${jar.index}" update="true" >
+            <fileset dir="${jar.update.src.dir}"
+                     includes="${jar.update.includes}"
+                     excludes="${jar.update.excludes}"/>
+        </jar>
+        <loadfile property="mf.file.content" srcfile="${manifest.file}"/>
+        <echo level="${jar.manifest.echo.level}" message="${mf.file.content}"/>
+
+        <!-- copy built jar file to alljars  directory -->
+        <copy file="${jars.dir}/${jar.file}" todir="${alljars.dir}"
+                                      overwrite="true"/>
+
+    </target>
+
+
+
+
+
+    <!--this is to maintain backward compatibility..  old spot-common build relies on this.-->
+    <target name="webapp.prepare" depends="init" if="package.dir">
+
+        <fail unless="jar.base" message="jarbase not defined"/>
+
+        <property name="jar.file" value="${jar.base}.jar"/>
+        <property name="jar.includes" value="${package.dir}/**/*.class ${package.dir}/**/resources/*"/>
+        <property name="webapp.dir" value="${src.dir}/${package.dir}/${jar.base}"/>
+        <property name="web.xml.file" value="${src.dir}/${package.dir}/web.xml"/>
+        <property name="webapp.name" value="${jar.base}"/>
+    </target>
+
+    <target name="war.defaults" depends="make-war-filename">
+        <property name="jar.file" value="${jar.base}.jar"/>
+        <property name="webapp.lib.dir" value="${jars.dir}"/>
+        <property name="webapp.lib.excludes" value=""/>
+        <property name="webapp.metainf.dir" value="${dest.dir}"/>
+        <property name="webapp.metainf.excludes" value=""/>
+        <property name="webapp.classes.excludes" value=""/>
+        <property name="jar.exlcudes" value=""/>
+
+    </target>
+
+    <target name="war.prepare" depends="init, webapp.prepare, war.defaults">
+
+        <fail unless="jar.base" message="jar.base not defined"/>
+
+
+        <mkdir dir="${war.doc.root}/WEB-INF/deploy"/>
+        <mkdir dir="${war.doc.root}/WEB-INF/lib"/>
+        <mkdir dir="${war.doc.root}/META-INF"/>
+
+        <copy todir="${war.doc.root}">
+            <fileset dir="${webapp.dir}"/>
+        </copy>
+        <copy failonerror='false' file="${web.xml.file}" todir="${war.doc.root}/WEB-INF" flatten="true"/>
+        <copy todir="${war.doc.root}/WEB-INF/lib" flatten="true">
+            <fileset dir="${webapp.lib.dir}" includes="${webapp.lib.includes}" excludes="${webapp.lib.excludes}"/>
+        </copy>
+        <copy todir="${war.doc.root}/META-INF" flatten="true">
+            <fileset dir="${webapp.metainf.dir}" includes="${webapp.metainf.includes}" excludes="${webapp.metainf.excludes}"/>
+        </copy>
+
+    </target>
+
+<!--  create a WAR file for this project.  will compile if necessary.
+    ${jar.base}      required.  base name; identifier.
+    ${war.file}      required.  name of the war file.
+    ${jar.includes}  required.  unless ${package.dir} is given.  list of files to war.
+    ${webapp.dir}    required.  unless ${package.dir} is given.  define the webapp directory.
+    ${web.xml.file}  required.  unless ${package.dir} is given.  define the web.xml file
+    ${package.dir}   optional.  the package to create the war from
+    ${manifest.file} optional.  manifest file for the jar.  default to ${dest.dir}/${jar.base}.manifest
+    ${webapp.lib.dir} optional. directory to include into the webapp lib. defaults to ${jars.dir}
+    ${webapp.lib.includes} optional.  files to be added to lib dir.
+    ${webapp.lib.excludes} optional.  files to be excluded from lib dir.
+    ${webapp.metainf.dir} optional. directory to include into the webapp META-INF. defaults to ${build.root}/../
+    ${webapp.metainf.includes} optional.  files to be added to META-INF dir.
+    ${webapp.metainf.excludes} optional.  files to be excluded from META-INF dir.
+    ${webapp.classes.includes} optional.  files to be added to classes dir.
+    ${webapp.classes.exlcudes} optional.  files to be excluded from classes dir.
+    ${webapp.classes.dir} optional.  webapp classes dir.
+-->
+    <target name="webapp.war" depends="compile, jar , war.prepare, version.info, create.manifest"
+            description="create a WAR file for this project.  will compile if necessary">
+
+        <fail unless="jar.includes" message="jar.includes not defined"/>
+        <fail unless="jar.base" message="jarbase not defined"/>
+        <fail unless="war.file" message="war.file not defined"/>
+        <fail unless="webapp.dir" message="webapp.dir not defined"/>
+        <fail unless="web.xml.file" message="web.xml.file not defined"/>
+        <fail unless="manifest.file" message="manifest file not defined"/>
+
+        <property name="webapp.classes.dir" value="${dest.dir}"/>
+
+        <copy todir="${war.doc.root}/WEB-INF/lib" flatten="true">
+            <fileset dir="${jars.dir}" includes="${jar.file}"/>
+        </copy>
+
+        <war destfile="${wars.dir}/${war.file}" webxml="${war.doc.root}/WEB-INF/web.xml" manifest="${manifest.file}" update="false" index="true">
+            <fileset dir="${war.doc.root}"/>
+            <classes dir="${webapp.classes.dir}" includes="${webapp.classes.includes}" excludes="${webapp.classes.excludes}"/>
+        </war>
+    </target>
+<!--
+    ${app.name}            required.  the property name used to identify this application.
+    ${app.displayed.name}  optional.  the name of the application.  defaults to ${app.name}
+    ${app.prop.name}       optional.  the property file containing this application information.                
+                                            defaults to ${app.name}-app-version.prop
+-->
+    <target name="application.setup" depends="init, version.info" if="app.name"
+                description="performs necessary steps to setup this build as an application">
+        <taskdef name="PropertyFile" classname="org.apache.tools.ant.taskdefs.optional.PropertyFile"/>
+
+        <property name="app.display.name" value="${app.name}"/>
+        <property name="app.prop.name" value="${app.name}-app-version.prop"/>
+        <property name="app.resources.excludes" value=""/>
+
+        <PropertyFile file="${dest.dir}/${app.prop.name}">
+            <entry key="${app.name}.application.JarVersion.BuildDate" value="${build.time}"/>
+            <entry key="${app.name}.application.JarVersion.Major" default="${build.major.version}"/>
+            <entry key="${app.name}.application.JarVersion.Minor" default="${build.minor.version}"/>
+            <entry key="${app.name}.application.JarVersion.Revision" default="${build.revision}"/>
+            <entry key="${app.name}.application.JarVersion.Type" default="${build.type}"/>
+            <entry key="${app.name}.application.displayed.Name" default="${app.displayed.name}"/>
+        </PropertyFile>
+    </target>
+
+    <target name="javadocs" depends="init" description="generate javadocs for the whole source tree">
+
+        <javadoc packagenames="*" sourcepath="${src.dir}"
+                 destdir="${javadocs.dir}"
+                 classpathref="javac.classpath"
+                 author="${javadoc.author}"
+                 version="${javadoc.version}"
+                 use="${javadoc.use}"
+                 verbose="${javadoc.verbose}"
+                 link="${javadoc.link}"
+                 windowtitle="${javadoc.windowtitle}"
+                 doctitle="${javadoc.doctitle}">
+            <arg value="-quiet"/>
+            <bottom><![CDATA[<i>Copyright &#169; 2005 California Institute of Technology. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+    </target>
+
+    <target name="clean.prepare.package" if="package.dir">
+        <property name="clean.includes" value="${package.dir}/**"/>
+    </target>
+
+    <target name="clean.prepare.jarincl" if="jar.includes">
+        <property name="clean.includes" value="${jar.includes}"/>
+    </target>
+
+    <target name="clean.prepare" depends="clean.prepare.package, clean.prepare.jarincl">
+        <property name="jar.file" value="${jar.base}.jar"/>
+        <available property="jarfile.exists" file="${jars.dir}/${jar.file}"/>
+    </target>
+
+<!--  remove resources and class files generated by build.
+    ${clean.includes}  required.  unless ${package.dir} is given.  list of files to delete.
+    ${clean.excludes}  optional.  unless ${package.dir} is given.  list of files NOT to delete.
+-->
+    <target name="clean" depends="clean.build.files, clean.jar, clean.webapp" if="clean.includes"
+            description="remove resources and class files generated by build">
+    </target>
+
+    <target name="clean.build.files" depends="init, clean.prepare" if="clean.includes">
+
+        <property name="clean.excludes" value=""/>
+
+        <delete verbose="${delete.verbose}" failonerror="true">
+            <fileset dir="${dest.dir}" includes="${clean.includes}" excludes="${clean.excludes}"/>
+        </delete>
+    </target>
+
+    <target name="clean.jar" depends="init, clean.prepare" if="jarfile.exists">
+        <delete verbose="${delete.verbose}" failonerror="true" file="${jars.dir}/${jar.file}"/>
+        <delete verbose="${delete.verbose}" failonerror="true" dir="${dest.dir}/${jar.base}"/>
+    </target>
+    
+    <target name="clean.webapp" depends="init, clean.prepare, war.defaults" if="war.file">
+        <delete verbose="${delete.verbose}" failonerror="true" file="${wars.dir}/${war.file}"/>
+        <delete verbose="${delete.verbose}" failonerror="true" dir="${war.doc.root}"/>
+        <delete verbose="${delete.verbose}" failonerror="true" dir="${working.war.dir}/gwt-tmp/${jar.base}"/>
+    </target>
+
+<!-- creating manifest file
+    ${jar.display.name}     required.  DisplayedName, jar description.
+    ${build.time}           required.  BuildDate
+    ${build.major.version   required.  MajorVersion
+    ${build.minor.version   required.  MinorVersion
+    ${build.revision}       required.  Revision
+    ${build.type}           required.  Type, version type.
+    ${user.name}            required.  Username
+    ${build.hostname}       required.  Hostname
+    ${auto.update.attr}     required.  AutoUpdateAttributes
+    ${auto.update.expand.flag}  required. AutoUpdateExpandFlag
+
+    ${jar.mf.mainclass}     optional.  Main-Class
+    ${jar.mf.classpath}     optional.  Class-Path
+    ${jar.mf.splash.screen.image}   optional.  SplashScreen-Image
+    ${auto.update.extra.jars}       optional.  AutoUpdateExtraJars
+    ${base.dir}/manifest.include    optional.  Append the content of this file to the manifest.
+-->
+    <target name="create.manifest" depends="mf.common, mf.main.class, mf.splash.screen, mf.classpath, mf.extra.jars, mf.include"/>
+
+    <target name="mf.common">
+        <fail unless="jar.base" message="jarbase not defined"/>
+
+        <property name="manifest.file" value="${dest.dir}/${jar.base}/${jar.base}.manifest"/>
+        <property name="jar.display.name" value="${jar.file}"/>
+        <property name="auto.update.attr" value="NONE"/>
+        <property name="auto.update.expand.flag" value="false"/>
+        
+        <mkdir dir="${dest.dir}/${jar.base}"/>
+
+        <manifest file="${manifest.file}">
+            <section name="${jar.base}">
+                <attribute name="DisplayedName" value="${jar.display.name}"/>
+                <attribute name="BuildDate" value="${build.time}"/>
+                <attribute name="MajorVersion" value="${build.major.version}"/>
+                <attribute name="MinorVersion" value="${build.minor.version}"/>
+                <attribute name="Revision" value="${build.revision}"/>
+                <attribute name="Type" value="${build.type}"/>
+                <attribute name="Username" value="${user.name}"/>
+                <attribute name="Hostname" value="${build.hostname}"/>
+                <attribute name="AutoUpdateAttributes" value="${auto.update.attr}"/>
+                <attribute name="AutoUpdateExpandFlag" value="${auto.update.expand.flag}"/>
+            </section>
+        </manifest>
+    </target>
+
+    <target name="mf.main.class" if="jar.mf.mainclass">
+        <manifest mode="update" file="${manifest.file}">
+            <attribute name="Main-Class" value="${jar.mf.mainclass}"/>
+        </manifest>
+    </target>
+
+    <target name="mf.classpath" if="jar.mf.classpath">
+        <manifest mode="update" file="${manifest.file}">
+            <attribute name="Class-Path" value="${jar.mf.classpath}"/>
+        </manifest>
+    </target>
+
+    <target name="mf.splash.screen" if="jar.mf.splash.screen.image">
+        <manifest mode="update" file="${manifest.file}">
+            <attribute name="SplashScreen-Image" value="${jar.mf.splash.screen.image}"/>
+        </manifest>
+    </target>
+
+    <target name="mf.extra.jars" if="auto.update.extra.jars">
+        <manifest mode="update" file="${manifest.file}">
+            <section name="${jar.base}">
+                <attribute name="AutoUpdateExtraJars" value="${auto.update.extra.jars}"/>
+            </section>
+        </manifest>
+    </target>
+
+    <target name="mf.include" if="manifest.include.present">
+        <loadfile srcfile="manifest.include" property="manifest.include.text"/>
+        <echo append="true" file="${manifest.file}" message="${manifest.include.text}"/>
+    </target>
+
+<!-- GWT build targets -->
+    <!--  Starts the GWT development shell
+        ${gwt.module}  required.  the gwt module
+    -->
+    <target name="gwt.compile" depends="init, war.prepare" description="Compile GWT project">
+
+        <fail unless="gwt.module" message="gwt.module not defined"/>
+        <property name="gwt.maxHeapSize" value="512"/>
+        <property name="gwt.module.toCompile" value="${gwt.module}"/>
+
+        <property name="gwt.work.dir" value="${working.war.dir}/gwt-tmp"/>
+
+        <delete dir="${working.war.dir}/gwt-tmp"/>
+        <delete dir="${working.war.dir}/gwt-unitCache"/>
+        <mkdir dir="${gwt.work.dir}"/>
+
+        <java classname="com.google.gwt.dev.Compiler" fork="true" failonerror="true">
+            <classpath>
+                <pathelement path="${src.dir}"/>
+                <path refid="gwt.compile.path"/>
+            </classpath>
+            <jvmarg value="-Xmx${gwt.maxHeapSize}m"/>
+            <arg line="-war ${gwt.work.dir}"/>
+            <arg line="-workDir ${gwt.work.dir}"/>
+            <arg line="${gwt.compiler.addtl.opts}"/>
+            <arg value="${gwt.module.toCompile}"/>
+        </java>
+
+        <copy todir="${war.doc.root}">
+            <fileset dir="${gwt.work.dir}/${jar.base}"/>
+        </copy>
+        <copy todir="${war.doc.root}/WEB-INF/deploy">
+            <fileset dir="${gwt.work.dir}/WEB-INF/deploy/${jar.base}"/>
+        </copy>
+        <!--<delete dir="${gwt.work.dir}" verbose="false"/>-->
+
+    </target>
+
+    <target name="clean.gwt.compile" depends="init, war.defaults" if="gwt.module"
+                    description="clean up the artifacts generated by Compile GWT project">
+        <delete dir="${war.doc.root}"/>
+        <delete dir="${working.war.dir}/gwt-tmp"/>
+        <delete dir="${working.war.dir}/gwt-unitCache"/>
+    </target>
+
+
+    <!--  Starts the GWT development shell
+        ${gwt.module.launch.url}  required.  the url of the gwt application to launch
+        ${gwt.run.debug.addr}  optional.  the debug port of this shell.  Use "no_debug" to disable debugging.
+                                          defaults to 1234
+        ${gwt.run.newprocess}    optional.  run application on a new process.  defaults to true
+        ${gwt.run.fork}    optional.  run application on a new VM.  defaults to true
+        ${gwt.maxHeapSize}    optional.  default to -Xmx256m
+        ${gwt.run.AddtlJvmArgs}  optional.  additional JVM arguments
+        ${gwt.run.AddtlOptions}  see GWTShell refences for details
+    -->
+    <target name="gwt.run" depends="init, war.prepare" description="Run GWT Shell">
+
+        <fail unless="gwt.module.launch.url" message="gwt.module.launch.url not defined"/>
+
+        <property name="gwt.run.debug.addr" value="1234"/>
+        <property name="gwt.run.fork" value="true"/>
+        <property name="gwt.run.newprocess" value="true"/>
+        <property name="gwt.run.AddtlOptions" value=""/>
+        <property name="gwt.run.AddtlJvmArgs" value=""/>
+        <property name="gwt.maxHeapSize" value="256"/>
+        <property name="gwt.work.dir" value="${working.war.dir}/gwt-tmp"/>
+
+        <condition property="gwt.run.debug.stmt" value=""
+                   else="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${gwt.run.debug.addr}">
+            <equals arg1="${gwt.run.debug.addr}" arg2="no_debug" casesensitive="false" trim="true"/>
+        </condition>
+
+        <condition property="gwt.run.onFirstThread" value="" else="">
+            <os family="mac"/>
+        </condition>
+
+        <java classname="com.google.gwt.dev.DevMode" fork="${gwt.run.fork}" spawn="${gwt.run.newprocess}" dir="${working.war.dir}">
+            <classpath>
+                <path refid="host.mode.path"/>
+            </classpath>
+            <jvmarg value="-Xmx${gwt.maxHeapSize}m"/>
+            <jvmarg line="${gwt.run.onFirstThread}"/>
+            <jvmarg line="${gwt.run.debug.stmt}"/>
+            <jvmarg line="${gwt.run.AddtlJvmArgs}"/>
+            <jvmarg line="-XX:MaxPermSize=1024m"/>
+            <arg line="${gwt.run.AddtlOptions}"/>
+            <arg line="-gen ${gwt.work.dir}/gen"/>
+            <arg line="-extra ${gwt.work.dir}/extra"/>
+            <arg line="-workDir ${gwt.work.dir}/workDir"/>
+            <arg line="-war ${war.doc.root}"/>
+            <arg line="-startupUrl ${gwt.module.launch.url}"/>
+            <arg line="${gwt.module}"/>
+        </java>
+    </target>
+
+
+    <target name="gwt.sdrun" depends="init, war.prepare" description="Run GWT Shell">
+
+        <fail unless="gwt.module.launch.url" message="gwt.module.launch.url not defined"/>
+
+        <property name="gwt.work.super-dev" value="${working.war.dir}/gwt-super-dev-work"/>
+        <property name="gwt.run.sd.debug.addr" value="2234"/>
+        <property name="gwt.run.fork" value="true"/>
+        <property name="gwt.run.newprocess" value="true"/>
+        <property name="gwt.run.AddtlOptions" value=""/>
+        <property name="gwt.run.AddtlJvmArgs" value=""/>
+        <property name="gwt.maxHeapSize" value="256"/>
+        <property name="gwt.work.dir" value="${working.war.dir}/gwt-tmp"/>
+
+        <condition property="gwt.run.debug.stmt" value=""
+                   else="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=${gwt.run.debug.addr}">
+            <equals arg1="${gwt.run.sd.debug.addr}" arg2="no_debug" casesensitive="false" trim="true"/>
+        </condition>
+
+        <condition property="gwt.run.onFirstThread" value="" else="">
+            <os family="mac"/>
+        </condition>
+
+        <mkdir dir="${gwt.work.super-dev}"/>
+        <java classname="com.google.gwt.dev.codeserver.CodeServer" fork="${gwt.run.fork}" spawn="${gwt.run.newprocess}" dir="${working.war.dir}">
+            <classpath>
+                <path refid="host.mode.path"/>
+            </classpath>
+            <jvmarg value="-Xmx${gwt.maxHeapSize}m"/>
+            <jvmarg line="${gwt.run.onFirstThread}"/>
+            <jvmarg line="${gwt.run.debug.stmt}"/>
+            <jvmarg line="${gwt.run.AddtlJvmArgs}"/>
+            <jvmarg line="-XX:MaxPermSize=1024m"/>
+            <!--<arg line="-workDir ${gwt.work.dir}/workDir"/>-->
+            <arg line="-workDir ${gwt.work.super-dev}"/>
+            <arg line="${gwt.module}"/>
+        </java>
+    </target>
+
+    <!-- deploy the webapp(war file) onto a running tomcat instance
+        ${tomcat.home}   required.  tomcat home installation dir.
+        ${jar.base}      required if ${webapp.name} is not given.  name of the webapp.
+        ${tomcat.base}   optional.  default to ${tomcat.home}
+        ${webapp.name}   optional.  default to ${jar.base}
+        ${war.file}      optional.  default to ${jar.base}.war
+        ${server.name}   optional.  default to localhost
+    -->
+    <target name="webapp.deploy.prepare" depends="init, make-war-filename">
+
+        <fail unless="tomcat.home" message="tomcat.home not defined"/>
+
+        <property name="tomcat.base" value="${tomcat.home}"/>
+        <property name="webapp.name" value="${jar.base}"/>
+        <property name="war.file" value="${jar.base}.war"/>
+
+        <property name="tomcat.manager.url" value="http://localhost:8080/manager/text"/>
+        <property name="tomcat.manager.username" value="admin"/>
+        <property name="tomcat.manager.password" value="luigi"/>
+    </target>
+
+    <target name="undeploy" depends="webapp.deploy.prepare">
+
+        <taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask">
+            <classpath>
+                <fileset dir="${tomcat.home}/lib" includes="*.jar"/>
+            </classpath>
+        </taskdef>
+
+        <undeploy url="${tomcat.manager.url}"
+                username="${tomcat.manager.username}"
+                password="${tomcat.manager.password}"
+                path="/${webapp.name}" failOnError='false'/>
+    </target>
+
+    <target name="deploy" depends="webapp.deploy.prepare">
+
+        <tempfile destdir="${wars.dir}" deleteonexit="true" property="temp.file"/>
+        <echo message="${war.file}" file="${temp.file}"/>
+        <replace file="${temp.file}" token="#" value="%23"/>
+        <loadfile srcfile="${temp.file}" property="encodedWarFile"/>
+
+        <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask">
+            <classpath>
+                <fileset dir="${tomcat.home}/lib" includes="*.jar"/>
+            </classpath>
+        </taskdef>
+
+        <echo message="deploying file: ${wars.dir}/${encodedWarFile}  path=/${webapp.name}"/>
+        <deploy url="${tomcat.manager.url}"
+                username="${tomcat.manager.username}"
+                password="${tomcat.manager.password}"
+                path="/${webapp.name}"
+                war="file:${wars.dir}/${encodedWarFile}"/>
+    </target>
+
+    <target name="redeploy" depends="webapp.deploy.prepare, undeploy, deploy"/>
+
+    <!-- evaluate and replace tokenized variables from configuration files
+         with values from properties.  Token are values delimited by '%' ie. %buildDate%.
+         eval-props-inf         required.  refid to a fileset containing a list of files to eval.
+         ${eval-props-outdir}   required.  output directory.
+    -->
+    <target name="eval-props">
+        <fail unless="eval-props-outdir" message="eval-props-outdir not defined"/>
+
+        <echoproperties destfile="config.properties"/>
+        <replace file="config.properties" token="\" value=""/>
+
+        <translate todir="${eval-props-outdir}"
+                   starttoken="%" endtoken="%"
+                   bundle="config"
+                   srcencoding="UTF-8"
+                   destencoding="UTF-8"
+                   forceoverwrite="true">
+            <fileset refid="eval-props-inf"/>
+        </translate>
+        <!--<replace dir="${eval-props-outdir}" token="&amp;" value="&amp;amp;" includes="*"/>-->
+
+        <delete file="config.properties" failonerror="false" verbose="false"/>
+
+    </target>
+
+    <target name="make-war-filename" depends="init" if="webapp.name">
+        <tempfile deleteonexit="true" property="temp.file"/>
+        <echo message="${webapp.name}" file="${temp.file}"/>
+        <loadfile srcfile="${temp.file}" property="base-war-fname">
+            <filterchain>
+                <replacestring from="/" to="#"/>
+            </filterchain>
+        </loadfile>
+        <property name="war.file" value="${base-war-fname}.war"/>
+    </target>
+
+
+    <target name="check-htmldoc">
+        <property name="htmldoc-path" value="/hydra/tps/htmldoc/bin/htmldoc"/>
+        <available property="htmldoc-exists" file="${htmldoc-path}"/>
+    </target>
+
+    <!--
+        ${pdf-out-file}  required.  name of the generated pdf file
+        ${pdf-in-file}  optional.  input file.. list of html files to generate.  default to ${basedir}/.pdf-input
+        ${htmldoc-path}  optional.  default to /hydra/tps/htmldoc/bin/htmldoc
+    -->
+    <target name="generate-pdf" if="htmldoc-exists" depends="check-htmldoc"
+            description="generate a pdf file base on the given parameters">
+
+        <fail unless="pdf-out-file" message="pdf-out-file not defined"/>
+
+        <property name="pdf-src-dir" value="${basedir}/"/>
+        <property name="pdf-in-file" value="${basedir}/.pdf-input"/>
+        <loadfile property="input-file" srcfile="${pdf-in-file}">
+            <filterchain>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <exec executable="${htmldoc-path}" dir="${pdf-src-dir}">
+            <arg line="--left .7in --right .7in --linkcolor blue --webpage -f ${pdf-out-file} --titleimage ${input-file}"/>
+        </exec>
+
+    </target>
+
+
+</project>

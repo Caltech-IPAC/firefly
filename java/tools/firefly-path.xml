@@ -2,39 +2,43 @@
     <!-- project specific's property -->
     <property name="firefly.jars.dir" location="${build.root}/../jars"/>
 
-    <fileset id="spotCommon.lib.fs" dir="${common.jars.dir}">
-        <include name="axis.jar"/>
-        <!--<include name="commons-logging-1.0.4.jar"/>-->
-        <include name="commons-discovery-0.2.jar"/>
-        <include name="saaj.jar"/>
-        <include name="wsdl4j-1.5.1.jar"/>
-        <include name="stil.jar"/>
-        <include name="regclient.jar"/>
-        <include name="rayreg.jar"/>
-        <include name="archive_dto_votable.jar"/>
-        <include name="uplink_util.jar"/>
-        <include name="astro.jar"/>
-        <include name="client.jar"/>
-        <include name="data.jar"/>
-        <include name="fits.jar"/>
-        <include name="fits_io.jar"/>        
-        <include name="meta.jar"/>
-        <include name="planner.jar"/>
-        <include name="simbad_ws.jar"/>
-        <include name="uplink_util.jar"/>
-        <include name="xbean.jar"/>
-        <include name="jsr173_1.0_api.jar"/>
-        <!--<include name="ifxjdbc.jar"/>-->
-        <include name="jaxrpc.jar"/>
-        <!--<include name="mail.jar"/>-->
-        <!--<include name="activation.jar"/>-->
-        <include name="flyingsaucer/iText-2.0.8.jar"/>
-        <include name="flyingsaucer/core-renderer.jar"/>
-    </fileset>
+    <!--<fileset id="spotCommon.lib.fs" dir="${common.jars.dir}">-->
+        <!--<include name="axis.jar"/>-->
+        <!--&lt;!&ndash;<include name="commons-logging-1.0.4.jar"/>&ndash;&gt;-->
+        <!--<include name="commons-discovery-0.2.jar"/>-->
+        <!--<include name="saaj.jar"/>-->
+        <!--<include name="wsdl4j-1.5.1.jar"/>-->
+        <!--<include name="stil.jar"/>-->
+        <!--<include name="regclient.jar"/>-->
+        <!--<include name="rayreg.jar"/>-->
+        <!--<include name="archive_dto_votable.jar"/>-->
+        <!--<include name="uplink_util.jar"/>-->
+        <!--<include name="astro.jar"/>-->
+        <!--<include name="client.jar"/>-->
+        <!--<include name="data.jar"/>-->
+        <!--<include name="fits.jar"/>-->
+        <!--<include name="fits_io.jar"/>        -->
+        <!--<include name="meta.jar"/>-->
+        <!--<include name="planner.jar"/>-->
+        <!--<include name="simbad_ws.jar"/>-->
+        <!--<include name="uplink_util.jar"/>-->
+        <!--<include name="xbean.jar"/>-->
+        <!--<include name="jsr173_1.0_api.jar"/>-->
+        <!--&lt;!&ndash;<include name="ifxjdbc.jar"/>&ndash;&gt;-->
+        <!--<include name="jaxrpc.jar"/>-->
+        <!--&lt;!&ndash;<include name="mail.jar"/>&ndash;&gt;-->
+        <!--&lt;!&ndash;<include name="activation.jar"/>&ndash;&gt;-->
+        <!--<include name="flyingsaucer/iText-2.0.8.jar"/>-->
+        <!--<include name="flyingsaucer/core-renderer.jar"/>-->
+    <!--</fileset>-->
 
 
-    <fileset id="gwtCommon.lib.fs" dir="${common.jars.dir}">
-        <include name="common-gwt.jar"/>
+    <!--<fileset id="gwtCommon.lib.fs" dir="${common.jars.dir}">-->
+        <!--<include name="common-gwt.jar"/>-->
+    <!--</fileset>-->
+
+    <fileset id="fits-io.jars.fs" dir="${firefly.jars.dir}/fits-io">
+        <include name="*.jar"/>
     </fileset>
 
     <fileset id="gwt.lib.fs" dir="${firefly.jars.dir}">
@@ -122,7 +126,7 @@
      ****************************************************************** -->
     <path id="firefly.gwt.compile.path">
         <pathelement path="${src.dir}"/>
-        <fileset refid="gwtCommon.lib.fs"/>
+        <!--<fileset refid="gwtCommon.lib.fs"/>-->
         <fileset refid="gwt.lib.fs"/>
         <file file="${firefly.jars.dir}/firefly.jar"/>
         <file file="${firefly.jars.dir}/gwt-comet.jar"/>
@@ -142,10 +146,11 @@
         <pathelement path="${firefly.jars.dir}/gwt/gwt-servlet-deps.jar"/>
         <pathelement path="${firefly.jars.dir}/firefly.jar"/>
         <pathelement path="${firefly.jars.dir}/gwt-comet.jar"/>
-        <fileset refid="spotCommon.lib.fs"/>
+        <!--<fileset refid="spotCommon.lib.fs"/>-->
         <fileset refid="apache.jars"/>
         <fileset refid="spring.jars.fs"/>
-        <fileset refid="gwtCommon.lib.fs"/>
+        <!--<fileset refid="gwtCommon.lib.fs"/>-->
+        <fileset refid="fits-io.jars.fs"/>
         <fileset refid="log4j.jars.fs"/>
         <fileset refid="josso.lib.fs"/>
         <fileset refid="healpix.lib.fs"/>

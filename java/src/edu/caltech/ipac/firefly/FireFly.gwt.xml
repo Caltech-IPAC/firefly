@@ -42,6 +42,69 @@
     <source path="commands"/>
     <source path="resbundle"/>
 
+    <!--common GWT classes-->
+    <source path="../astro/conv"/>
+    <source path="../visualize/plot/projection"/>
+    <source path="../astro/">
+        <include name="CoordException.java"/>
+    </source>
+    <source path="../visualize/plot/" >
+        <include name="ProjectionPt.java"/>
+        <include name="*Pt.java"/>
+        <include name="CoordinateSys.java"/>
+        <include name="ProjectionException.java"/>
+        <include name="PixelValueException.java"/>
+        <include name="RangeValues.java"/>
+        <include name="CoveragePolygons.java"/>
+        <include name="Circle.java"/>
+        <include name="ImageCorners.java"/>
+        <include name="MiniFitsHeader.java"/>
+    </source>
+    <source path="../visualize/draw/">
+        <include name="Metrics.java"/>
+        <include name="Metric.java"/>
+    </source>
+    <source path="../data/">
+        <include name="DataConst.java"/>
+    </source>
+    <source path="../util/">
+        <include name="ComparisonUtil.java"/>
+        <include name="CollectionUtil.java"/>
+        <include name="StringTokenizer.java"/>
+        <include name="StringUtils.java"/>
+        <include name="MapPropertyLoader.java"/>
+        <include name="Cache.java"/>
+        <include name="Base64.java"/>
+        <include name="HandSerialize.java"/>
+        <include name="RegionFactory.java"/>
+    </source>
+    <source path="../util/dd">
+        <include name="*FieldDef.java"/>
+        <include name="FieldDef.java"/>
+        <include name="Region.java"/>
+        <include name="Region*.java"/>
+        <include name="FieldDefSource.java"/>
+        <include name="MappedFieldDefSource.java"/>"
+        <include name="UIAttrib.java"/>
+        <include name="UIAttributes.java"/>
+        <include name="UIComponent.java"/>
+        <include name="ValidationException.java"/>
+        <include name="ParseResult.java"/>
+        <include name="RegParseException.java"/>
+        <include name="Global.java"/>
+        <include name="ContainsOptions.java"/>
+        <include name="VOResourceEndpoint.java"/>
+    </source>
+    <source path="../util/decimate"/>
+    <source path="../util/expr"/>
+    <source path="../util/action">
+        <include name="ActionConst.java"/>
+    </source>
+    <source path="../targetgui/net/">
+        <include name="Resolver.java"/>
+    </source>
+    <!--End of common GWT classes-->
+
     <define-linker name="nowaitlinker" class="edu.caltech.ipac.firefly.linker.NoWaitingLinker" />
 
     <!--<stylesheet src="css/gwt-standard.css"/>-->

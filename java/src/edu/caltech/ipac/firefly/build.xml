@@ -1,6 +1,6 @@
 <project name="Spitzer firefly.jar Build File" default="all" basedir=".">
     <description>
-        The build file for building gwtapp.jar
+        The build file for building firefly.jar
     </description>
 <!-- Project level init file -->
     <property name="build.root" value="${basedir}/../../../../../"/>
@@ -11,7 +11,15 @@
     <property name="gwt.module" value="edu.caltech.ipac.firefly.firefly"/>
 
 <!-- files to include in build -->
-    <property name="compile.includes" value="edu/caltech/ipac/firefly/**"/>
+    <property name="compile.includes" value="edu/caltech/ipac/firefly/**
+                                             edu/caltech/ipac/astro/**
+                                             edu/caltech/ipac/client/**
+                                             edu/caltech/ipac/planner/**
+                                             edu/caltech/ipac/target/**
+                                             edu/caltech/ipac/targetgui/**
+                                             edu/caltech/ipac/util/**
+                                             edu/caltech/ipac/visualize/**
+                                             "/>
     <property name="resources.includes" value="edu/caltech/ipac/firefly/**/*.java
                                                edu/caltech/ipac/firefly/**/resources/*
                                                edu/caltech/ipac/firefly/FireFly.gwt.xml
@@ -19,7 +27,7 @@
                                                edu/caltech/ipac/firefly/public/**
                                                edu/caltech/ipac/firefly/ui/image/**"/>
 
-    <property name="jar.includes" value="edu/caltech/ipac/firefly/**"/>
+    <property name="jar.includes" value="${compile.includes}"/>
 
 <!-- files to exclude from build -->
     <property name="compile.excludes" value="edu/caltech/ipac/firefly/visualize/ui/ColorStretchDialog.java"/>
