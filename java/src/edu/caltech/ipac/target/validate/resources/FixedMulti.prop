@@ -1,4 +1,0 @@
-FixedMulti.maxDistance.Value= 2.0
-FixedMulti.maxDistance.Error= The maximum distance between positions in \
-                              this cluster is larger than 2.0 degrees.
-FixedMulti.maxDistance.ErrorDescription= Fixed Cluster-Position:

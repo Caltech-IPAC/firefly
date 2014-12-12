@@ -56,7 +56,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      * STANDARD or BACKGROUND
      */
     private final int                     _type;
-    private final Requester               _requester;
+ //   private final Requester               _requester;
     /**
      * the Window is use for creating the GUI for a foreground service.  If
      * it is null it indicates that the user wants to do the service silently,
@@ -153,7 +153,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
         _type     = type;
         _component= c;
         _listener = listener;
-        _requester= new Requester(this,c);
+        //_requester= new Requester(this,c);
     }
 
   //========================================================================
@@ -184,23 +184,24 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
                                        throws FailedRequestException { 
         if (_type == STANDARD && !_callerThreaded) {
             if (_component!=null) {
-                _requester.startStandardRequest(showProgressBar);
+                //_requester.startStandardRequest(showProgressBar);
             }
             else {
-                _requester.doStandardSilentRequest();  // this is here for historical reasons, i don't think it is used
+                //_requester.doStandardSilentRequest();  // this is here for historical reasons, i don't think it is used
                                                        // i think this now would be a caller threaded service
             }
         }
         else if (_type == STANDARD && _callerThreaded) {
             if (_component!=null) {
-               _requester.doCallerThreadedRequest();
+               //_requester.doCallerThreadedRequest();
             }
             else {
-               _requester.doCallerThreadedSlientRequest(); }
+               //_requester.doCallerThreadedSlientRequest(); 
+            }
         }
         else if (_type == BACKGROUND) {
             if (_component!=null) {
-                _requester.startBackgroundRequest();
+                //_requester.startBackgroundRequest();
             }
             else {
                 Assert.tst(false, "We should never be here");
@@ -215,7 +216,9 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
    //=======================================================================
    //----- Public Methods to control behavior ------------------------------
    //=======================================================================
-    public final void setErrorTitle(String s) { _requester.setErrorTitle(s); }
+    public final void setErrorTitle(String s) { 
+            //_requester.setErrorTitle(s); 
+    }
     
 
     /**
@@ -230,7 +233,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
     public final void setShowUserErrors(boolean show) {_showUserErrors= show; }
 
     public final void setMoreRequestComming(boolean moreComming) {
-        _requester.setMoreRequestComming(moreComming);
+        //_requester.setMoreRequestComming(moreComming);
     }
 
 
@@ -301,7 +304,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      */
     public final void setProcessingDesc(String desc) {
         _processingDesc= desc;
-        if (working() && _requester!=null) _requester.updateFeedback();
+        //if (working() && _requester!=null) _requester.updateFeedback();
     }
 
     public final void setProgressFeedback(long    min,
@@ -312,7 +315,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
         _pBarMax    =max;
         _pBarCurrent=current;
         _pBarDesc   =desc;
-        if (working() && _requester!=null) _requester.updateFeedback();
+        //if (working() && _requester!=null) _requester.updateFeedback();
     }
 
     public final void setProgressMin(long min){
@@ -594,10 +597,11 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
         } // end switch
     }
 
-    private void wrapUpStandard() { _requester.endStandardRequest(); }
+    //private void wrapUpStandard() { _requester.endStandardRequest(); }
+    private void wrapUpStandard() { }
 
     private void wrapUpBackground() {
-         if (_component!=null) _requester.endBackgroundRequest();
+         //if (_component!=null) _requester.endBackgroundRequest();
     }
 
     private void fireUpdateNow(ThreadedServiceEvent ev) {

@@ -20,7 +20,6 @@ import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.visualize.controls.BlankFITS;
 import edu.caltech.ipac.visualize.draw.DistanceVectorGroup;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.GridLayer;

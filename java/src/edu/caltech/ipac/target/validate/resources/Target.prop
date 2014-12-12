@@ -1,3 +1,0 @@
-Target.name.Error="Empty target name."
-FixedCluster.noJ2000.Error=Fixed cluster target has to be in \
-                           Equatorial J2000 coordinate system

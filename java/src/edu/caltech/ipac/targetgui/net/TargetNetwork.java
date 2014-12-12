@@ -3,7 +3,6 @@ package edu.caltech.ipac.targetgui.net;
 import edu.caltech.ipac.client.net.CacheHelper;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.gui.OptionPaneWrap;
 import edu.caltech.ipac.target.NedAttribute;
 import edu.caltech.ipac.target.PTFAttribute;
 import edu.caltech.ipac.target.PositionJ2000;
@@ -14,7 +13,6 @@ import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -227,9 +225,9 @@ public class TargetNetwork {
 
         while (selectedIdx<0) {
             tab.getSelectionModel().setLeadSelectionIndex(0);
-            OptionPaneWrap.showMess(c, panel,
-                                    _prop.getTitle("ChooseOne"),
-                                    JOptionPane.QUESTION_MESSAGE);
+           // OptionPaneWrap.showMess(c, panel,
+           //                         _prop.getTitle("ChooseOne"),
+           //                         JOptionPane.QUESTION_MESSAGE);
             selectedIdx= tab.getSelectedRow();
         }
         return items[selectedIdx];

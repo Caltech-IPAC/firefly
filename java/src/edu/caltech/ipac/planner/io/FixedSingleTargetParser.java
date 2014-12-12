@@ -39,13 +39,13 @@ public class FixedSingleTargetParser {
     public static String FORMAT_ERROR = "Format error in the following line:" +
             LINE_FEED;
 
-    private static final String COORD_SYSTEM = ExportFixedSingleTarget.COORD_SYSTEM;
-    private static final String EQUINOX = ExportFixedSingleTarget.EQUINOX;
-    private static final String RESOLVER = ExportFixedSingleTarget.RESOLVER;
+    public static final String COORD_SYSTEM = "COORD_SYSTEM";
+    public static final String EQUINOX = "EQUINOX";
+    public static final String RESOLVER = "NAME-RESOLVER";
 
-    private static final String NED_RESOLVER = ExportFixedSingleTarget.NED_RESOLVER;
-    private static final String SIMBAD_RESOLVER = ExportFixedSingleTarget.SIMBAD_RESOLVER;
-    private static final String ATTRIB_SEP = ExportFixedSingleTarget.ATTRIB_SEP;
+    public static final String NED_RESOLVER = "NED";
+    public static final String SIMBAD_RESOLVER = "Simbad";
+    public static final String ATTRIB_SEP = "=";
 
     private String _coord_system;
     private String _equinox;

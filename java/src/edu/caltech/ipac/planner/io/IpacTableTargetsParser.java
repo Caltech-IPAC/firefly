@@ -25,7 +25,7 @@ public class IpacTableTargetsParser {
     private static String RA = "RA";
     private static String DEC = "DEC";
     private static String OBJ_NAME = "OBJNAME";
-    private static final String ATTRIB_SEP = ExportFixedSingleTarget.ATTRIB_SEP;
+    private static final String ATTRIB_SEP = "=";
     private static String FLOAT_MASK = "[+-]?[0-9]*[.]?[0-9]+";
 
     /**

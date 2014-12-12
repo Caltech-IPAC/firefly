@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.visualize.controls.PlottingUtil;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
@@ -20,8 +19,23 @@ import java.net.URL;
  */
 public class AllSkyRetriever implements FileRetriever {
 
+     private static final ReservedImage RESERVED_IMAGES[] = {
+                  new ReservedImage("e90gal07.fits",
+                                    "All Sky Image -- DIRBE 60 micron", "sky"),
+                  new ReservedImage("e90gal09.fits",
+                                    "All Sky Image -- DIRBE 140 micron", "sky"),
+                  new ReservedImage("e90gal04.fits",
+                                    "All Sky Image -- DIRBE 4.9 micron", "sky"),
+                  new ReservedImage("allsky.fits",
+                                    "ISSA All Sky Image", "sky")
+            };
+
+     public static final int DEFAULT_ALLSKY        = 0;
+
+
+
     public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
-        String urlStr= PlottingUtil.getReservedImageAry()[PlottingUtil.DEFAULT_ALLSKY].getURLString();
+        String urlStr= RESERVED_IMAGES[DEFAULT_ALLSKY].getURLString();
 
         File fitsFile;
         try {
@@ -33,8 +47,28 @@ public class AllSkyRetriever implements FileRetriever {
             throw new FailedRequestException("No data",null,e);
         }
         return new FileData(fitsFile,
-                           PlottingUtil.getReservedImageAry()[PlottingUtil.DEFAULT_ALLSKY].getDescription());
+                           RESERVED_IMAGES[DEFAULT_ALLSKY].getDescription());
     }
+
+//===================================================================
+//------------------------- Public Inner classes --------------------
+//===================================================================
+   public static class ReservedImage {
+      private String _urlName;
+      private String _desc;
+      private String _shortDesc;
+
+      ReservedImage( String urlName, String desc, String shortDesc) {
+          _urlName  = urlName;
+          _desc     = desc;
+          _shortDesc= shortDesc;
+      }
+      public String getURLString()        { return _urlName; }
+      public String getDescription()      { return _desc; }
+      public String getShortDescription() { return _shortDesc; }
+   }
+
+
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA

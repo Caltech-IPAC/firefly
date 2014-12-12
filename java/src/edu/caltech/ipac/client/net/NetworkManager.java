@@ -1,7 +1,6 @@
 package edu.caltech.ipac.client.net;
 
 import edu.caltech.ipac.client.ClientLog;
-import edu.caltech.ipac.client.Platform;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
@@ -86,7 +85,7 @@ public class NetworkManager implements PropertyChangeListener {
        addServerWithProp(SPIZTER_POPULAR,      "data.spitzer.caltech.edu",80);
        addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"          ,80);
        addServerWithProp(SDSS_SERVER,          "cas.sdss.org"             ,80);
-       ProxySetupDialog.setupProxyFromSavedProperties();
+       //ProxySetupDialog.setupProxyFromSavedProperties();
        AppProperties.addPropertyChangeListener(this);
      }
 
@@ -195,7 +194,7 @@ public class NetworkManager implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent ev) {
        String prop= ev.getPropertyName();
        if (prop.indexOf("roxy") > -1) {  // search for any instance of proxy
-                ProxySetupDialog.setupProxyFromSavedProperties();
+                //ProxySetupDialog.setupProxyFromSavedProperties();
                 evaluateNetwork();
        }
     }
@@ -264,15 +263,10 @@ public class NetworkManager implements PropertyChangeListener {
           _thread.start();
        }
        public void run() { 
-         if (Platform.getInstance().isThreadedSleepProblem()) {
-             doNetEval();
-         }
-         else {
-             while( doNetEval() != NET_UP) {
-                try {  Thread.sleep(SLEEP_TIME); }
-                catch (InterruptedException e) { }
-             }
-         }
+          while( doNetEval() != NET_UP) {
+             try {  Thread.sleep(SLEEP_TIME); }
+             catch (InterruptedException e) { }
+          }
        }
        Thread getEvalThread() { return _thread; }
     }

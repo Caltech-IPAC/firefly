@@ -2,7 +2,6 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.controls.PlottingUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Data;
 import nom.tam.fits.Fits;
@@ -858,34 +857,6 @@ public class ImagePlot extends Plot implements Serializable {
            getPlotGroup().removeFromPlotted();
            super.freeResources();
        }
-   }
-
-   public ImageIcon makeIconFromImage() {
-       ImageIcon icon;
-       GraphicsEnvironment ge=GraphicsEnvironment.getLocalGraphicsEnvironment();
-       GraphicsDevice gd= ge.getDefaultScreenDevice();
-       GraphicsConfiguration config= gd.getDefaultConfiguration();
-       try {
-           ImagePlot pCopy= (ImagePlot)makeSharedDataPlot();
-           int  pWidth  = pCopy.getScreenWidth();
-           pCopy.getPlotGroup().setZoomTo( 20/(float)pWidth);
-           BufferedImage image= config.createCompatibleImage(20,20);
-           Graphics2D g2= image.createGraphics();
-           g2.setTransform(new AffineTransform());
-           g2.clearRect(0,0,image.getWidth(),image.getHeight());
-           g2.setClip(0,0, 20, 20 );
-
-           pCopy.getPlotGroup().beginPainting(g2);
-           //pCopy.getPlotView().firePlotPaint(g2);
-           PlotPaintEvent ev= new PlotPaintEvent(PlottingUtil.class, this, g2, 0, 1);
-           pCopy.paint(ev);
-           pCopy.freeResources();
-           icon= new ImageIcon(image);
-       } catch (IllegalArgumentException e) {
-           icon= null;
-           // if this fails then we just return null
-       }
-       return icon;
    }
 
     /**

@@ -2,7 +2,6 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.CoordUtil;
-import edu.caltech.ipac.gui.table.MultiLineValue;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.action.ClassProperties;

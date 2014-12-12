@@ -1,7 +1,5 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.gui.DialogSupport;
-import edu.caltech.ipac.gui.MouseCentral;
 import edu.caltech.ipac.util.Assert;
 
 import javax.swing.JComponent;
@@ -36,7 +34,6 @@ import java.util.List;
  * This is one of the most key classes in the all vis packages.
  *
  * @see Plot
- * @see edu.caltech.ipac.gui.MouseCentral
  *
  * @author Trey Roby
  * @version $Id: PlotView.java,v 1.25 2011/01/24 03:56:22 roby Exp $
@@ -56,7 +53,7 @@ public class PlotView extends JComponent implements PlotContainer,
 
   private int                   _primaryIndex= 0;
   private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
-  private MouseCentral          _mouse     = new MouseCentral(this);
+ // private MouseCentral          _mouse     = new MouseCentral(this);
   private boolean               _mayChangeSize;
   private Color                 _fillColor= new JLabel().getBackground();
 
@@ -99,7 +96,7 @@ public class PlotView extends JComponent implements PlotContainer,
     public void freeResources() {
         _plotContainer.freeResources();
         _propChange= null;
-        _mouse= null;
+        //_mouse= null;
         _fillColor= null;
         _cacheImage= null;
     }
@@ -281,11 +278,7 @@ public class PlotView extends JComponent implements PlotContainer,
   }
 
 
-  /**
-   * Return the <code>edu.caltech.ipac.gui.MouseCentral</code> class
-   * @return MouseCentral the MouseCentral class
-   */
-  public MouseCentral getMouseCentral() { return _mouse; }
+  //public MouseCentral getMouseCentral() { return _mouse; }
 
   /**
    * Return the plot that is primary.  This is the one that the user sees.
@@ -373,7 +366,7 @@ public class PlotView extends JComponent implements PlotContainer,
    * <code>Plot.UP</code> or <code>Plot.DOWN</code>.
    */
   public void zoom(int dir) {
-      DialogSupport.setWaitCursor(true);
+      //DialogSupport.setWaitCursor(true);
       Assert.tst( dir==Plot.UP || dir==Plot.DOWN);
       Plot      p= getPrimaryPlot();
       Component c= getParent();
@@ -393,10 +386,10 @@ public class PlotView extends JComponent implements PlotContainer,
       if (c instanceof JViewport && ipt != null) {
           setScrollToPoint(ipt, (JViewport)c);
       }
-      SwingUtilities.invokeLater( new Runnable() {
-                                   public void run() {
-                                     DialogSupport.setWaitCursor(false);
-                                   } } );
+      //SwingUtilities.invokeLater( new Runnable() {
+      //                             public void run() {
+      //                               DialogSupport.setWaitCursor(false);
+      //                             } } );
   }
 
   /**
@@ -406,7 +399,7 @@ public class PlotView extends JComponent implements PlotContainer,
    * <code>Plot.UP</code> or <code>Plot.DOWN</code>.
    */
   public void zoomAll(int dir) {
-      DialogSupport.setWaitCursor(true);
+      //DialogSupport.setWaitCursor(true);
       Assert.tst( dir==Plot.UP || dir==Plot.DOWN);
       Plot p;
       Plot primary= getPrimaryPlot();
@@ -416,7 +409,7 @@ public class PlotView extends JComponent implements PlotContainer,
          if (p!=primary) p.zoom(dir);
       }
       configureForPlot(getPrimaryPlot());
-      DialogSupport.setWaitCursor(false);
+      //DialogSupport.setWaitCursor(false);
   }
 
    public void firePlotPaint(Graphics2D g2) { _plotContainer.firePlotPaint(getPrimaryPlot(), g2); }
