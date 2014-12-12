@@ -1,0 +1,22 @@
+!
+CachePrefsDialog.Title= Cache Preferences
+CachePrefsDialog.dir.Name= Directories
+!
+CachePrefsDialog.cache.size.Name= Disk Cache Size (Kbytes):
+CachePrefsDialog.cache.size.ShortDescription= This is how much data can be \
+                          stored in the cache before older data is purged away
+CachePrefsDialog.cache.size.min= 1000
+CachePrefsDialog.cache.size.max= 100000
+CachePrefsDialog.cache.size.Default= 600000
+CachePrefsDialog.cache.size.Validate= 5000
+
+CachePrefsDialog.options.cacheEnabled.Selected= true
+CachePrefsDialog.options.cacheEnabled.Name= Enable Cache
+CachePrefsDialog.options.cacheEnabled.ShortDescription= This option will turn \
+               the use of caching on or off.  \
+               Turning this option off may affect performance.
+!
+CachePrefsDialog.CacheDirAction.Name= Change Cache Dir...
+CachePrefsDialog.CacheDirAction.ShortDescription= Set a directory where would \
+                              you would like to store your cache.  
+

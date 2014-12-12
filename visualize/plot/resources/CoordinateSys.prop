@@ -1,0 +1,35 @@
+CoordinateSys.Equatorial.J2000.RA.Name= Eq-J2000 RA: 
+CoordinateSys.Equatorial.J2000.Dec.Name=Eq-J2000 Dec: 
+CoordinateSys.Equatorial.J.Name=Equatorial J
+!
+CoordinateSys.Equatorial.B1950.RA.Name= Eq-B1950 RA: 
+CoordinateSys.Equatorial.B1950.Dec.Name=Eq-B1950 Dec: 
+CoordinateSys.Equatorial.B.Name=Equatorial B
+!
+CoordinateSys.Ecliptic.J2000.RA.Name= Ecl-J2000 RA: 
+CoordinateSys.Ecliptic.J2000.Dec.Name=Ecl-J2000 Dec: 
+CoordinateSys.Ecliptic.J.Name=Ecliptic J
+!
+CoordinateSys.Ecliptic.B1950.RA.Name= Ecl-B1950 RA: 
+CoordinateSys.Ecliptic.B1950.Dec.Name=Ecl-B1950 Dec: 
+CoordinateSys.Ecliptic.B.Name=Ecliptic B
+!
+CoordinateSys.Galactic.lon.Name= Gal. Lon: 
+CoordinateSys.Galactic.lat.Name= Gal. Lat: 
+CoordinateSys.Galactic.Name= Galactic
+!
+CoordinateSys.SuperGalactic.lon.Name= Gal. Lon: 
+CoordinateSys.SuperGalactic.lat.Name= Gal. Lat: 
+CoordinateSys.SuperGalactic.Name= SuperGalactic
+!
+CoordinateSys.Pixel.x.Name= X: 
+CoordinateSys.Pixel.y.Name= Y: 
+CoordinateSys.Pixel.Name= Image Pixel 
+!
+CoordinateSys.ScreenPixel.x.Name= screen pixel X: 
+CoordinateSys.ScreenPixel.y.Name= screen pixel Y: 
+CoordinateSys.ScreenPixel.Name= Screen Pixel 
+!
+CoordinateSys.Undefined.x.Name= X: 
+CoordinateSys.Undefined.y.Name= Y: 
+CoordinateSys.Undefined.Name= Undefined 

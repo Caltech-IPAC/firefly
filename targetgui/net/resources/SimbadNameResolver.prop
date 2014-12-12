@@ -1,0 +1,6 @@
+SimbadNameResolver.server.Name=simbad.harvard.edu
+SimbadNameResolver.script.Name=/sim-id.pl
+SimbadNameResolver.desc.Name=Simbad Name Resolver
+SimbadNameResolver.searching.Name=Searching for name: 
+
+SimbadNameResolver.use.simbad4.Selected=true

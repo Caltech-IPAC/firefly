@@ -1,0 +1,24 @@
+<project name="IPAC Common Client Project Build File" default="all" basedir=".">
+    <description>
+        The Common build file for the client.jar file
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- local properties -->
+
+<!-- files to include in build -->
+    <property name="jar.includes" value="edu/caltech/ipac/client/InterfaceToMac*.class"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="compile.includes" value="**/InterfaceToMac.java"/>
+
+    <property name="jar.base" value="InterfaceToMac"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="with Mac Specific functions"/>
+
+    <target name="all" depends="jar" description="build the whole project"/>
+</project>

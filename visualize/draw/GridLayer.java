@@ -1,0 +1,207 @@
+package edu.caltech.ipac.visualize.draw;
+
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
+import edu.caltech.ipac.visualize.plot.PlotPaintListener;
+import edu.caltech.ipac.visualize.plot.PlotView;
+import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
+import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
+
+import java.awt.Graphics2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * using the Grid class to draw grid on the Plot
+ *
+ * @version $Id: GridLayer.java,v 1.5 2009/03/03 21:45:39 roby Exp $
+ * @author		Xiuqin Wu
+**/
+public class GridLayer implements PlotViewStatusListener,
+                                  PlotPaintListener
+{
+   public static final String COORD_SYSTEM         = "CoordSystem";
+
+     /*  the coordinate system that user wants the Grid to be drawn 
+	 It has to be set to the constants defined in Plot
+      */
+   private CoordinateSys         _csys;
+   private Grid                  _grid;
+   private Map<Plot,PlotInfo>    _plotMap   = new HashMap<Plot,PlotInfo>(20);
+   private boolean               _showing   = true;
+   private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
+
+	/**
+	 * Creates a new GridLayer.
+	**/
+   public GridLayer(CoordinateSys csys) {
+       super();
+       _grid = new Grid(csys);
+       _csys = csys;
+       _grid.setSexigesimalLabel(
+                (_csys.equals(CoordinateSys.EQ_J2000) || _csys.equals(CoordinateSys.EQ_B1950)));
+   }
+
+   public GridLayer() { this(CoordinateSys.EQ_J2000); }
+
+
+   public void setCoordSystem(String coordSys) {
+      boolean sexigesimalLabel = false;
+
+      if (coordSys.equals("equJ2000")) {
+         _csys = CoordinateSys.EQ_J2000;
+         sexigesimalLabel = true;
+         }
+      else if (coordSys.equals("equJ2000D"))
+         _csys = CoordinateSys.EQ_J2000;
+      else if (coordSys.equals("equB1950")) {
+         _csys = CoordinateSys.EQ_B1950;
+         sexigesimalLabel = true;
+         }
+      else if (coordSys.equals("equB1950D"))
+         _csys = CoordinateSys.EQ_B1950;
+      else if (coordSys.equals("eclJ2000"))
+         _csys = CoordinateSys.ECL_J2000;
+      else if (coordSys.equals("eclB1950"))
+         _csys = CoordinateSys.ECL_B1950;
+      else if (coordSys.equals("gal"))
+         _csys = CoordinateSys.GALACTIC;
+      else if (coordSys.equals("superG"))
+         _csys = CoordinateSys.SUPERGALACTIC;
+      else
+         Assert.tst(false, coordSys);
+
+      _grid.setCoordSystem(_csys);
+      _grid.setSexigesimalLabel(sexigesimalLabel);
+      _propChange.firePropertyChange ( COORD_SYSTEM, null, coordSys);
+   }
+
+   public Grid getGrid() {
+      return _grid;
+   }
+
+   public void setShowGrid(boolean show) {
+      _showing = show;
+   }
+
+    public void drawOnPlot(Plot p, Graphics2D g2){
+       if (_showing) _grid.paint(g2, p);
+    }
+
+
+    public void addPlotView(PlotView pv) {
+        for(Plot p : pv)  addPlot(p);
+        pv.addPlotViewStatusListener( this);
+        pv.addPlotPaintListener(this);
+    }
+
+    public void removePlotView(PlotView pv) {
+        for(Plot p : pv)  removePlot(p);
+        pv.removePlotViewStatusListener( this);
+        pv.removePlotPaintListener(this);
+    }
+
+    public boolean isOnAnyPlot() {
+        return (_plotMap.size()>0);
+    }
+    //=====================================================================
+    //----------- add / remove property Change listener methods -----------
+    //=====================================================================
+
+    /**
+     * Add a property changed listener.
+     * @param p  the listener
+     */
+    public void addPropertyChangeListener (PropertyChangeListener p) {
+       _propChange.addPropertyChangeListener (p);
+    }
+
+    /**
+     * Remove a property changed listener.
+     * @param p  the listener
+     */
+    public void removePropertyChangeListener (PropertyChangeListener p) {
+       _propChange.removePropertyChangeListener (p);
+    }
+
+   // ===================================================================
+   // --------  Methods from PlotViewStatusListener Interface-----------
+   // ===================================================================
+    public void plotAdded(PlotViewStatusEvent ev) {
+         addPlot(ev.getPlot());
+    }
+    public void plotRemoved(PlotViewStatusEvent ev) {
+         removePlot(ev.getPlot());
+    }
+
+   // ===================================================================
+   // ---------  Methods from PlotPaintListener Interface---------------
+   // ===================================================================
+
+    public void paint(PlotPaintEvent ev) {
+         drawOnPlot( ev.getPlot(), ev.getGraphics() );
+    }
+
+
+
+    //=====================================================================
+    //----------- Private / Protected Methods -----------------------------
+    //=====================================================================
+
+    /**
+     remeber the relationship of plot and ppl so th eppl can be
+     removed when the control panel for Grid is removed.
+    */
+    private void addPlot(Plot p) {
+        _plotMap.put(p, new PlotInfo());
+    }
+
+    private void removePlot(Plot p) {
+        PlotInfo pInfo= _plotMap.get(p);
+        if (pInfo != null) {
+	   _plotMap.remove(p);
+        }
+    }
+
+
+//===================================================================
+//------------------------- Private Inner classes -------------------
+//===================================================================
+ 
+    private static class PlotInfo {
+       public int  _csys_int;
+       PlotInfo( ) {
+        }
+
+    }
+}
+
+
+
+/*
+ * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
+ * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 
+ * THE NATIONAL AERONAUTICS AND SPACE ADMINISTRATION (NASA). THE SOFTWARE 
+ * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS 
+ * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND, 
+ * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR 
+ * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312-2313) 
+ * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS, 
+ * HOWEVER USED.
+ * 
+ * IN NO EVENT SHALL CALTECH, ITS JET PROPULSION LABORATORY, OR NASA BE LIABLE 
+ * FOR ANY DAMAGES AND/OR COSTS, INCLUDING, BUT NOT LIMITED TO, INCIDENTAL 
+ * OR CONSEQUENTIAL DAMAGES OF ANY KIND, INCLUDING ECONOMIC DAMAGE OR INJURY TO 
+ * PROPERTY AND LOST PROFITS, REGARDLESS OF WHETHER CALTECH, JPL, OR NASA BE 
+ * ADVISED, HAVE REASON TO KNOW, OR, IN FACT, SHALL KNOW OF THE POSSIBILITY.
+ * 
+ * RECIPIENT BEARS ALL RISK RELATING TO QUALITY AND PERFORMANCE OF THE SOFTWARE 
+ * AND ANY RELATED MATERIALS, AND AGREES TO INDEMNIFY CALTECH AND NASA FOR 
+ * ALL THIRD-PARTY CLAIMS RESULTING FROM THE ACTIONS OF RECIPIENT IN THE USE 
+ * OF THE SOFTWARE. 
+ */

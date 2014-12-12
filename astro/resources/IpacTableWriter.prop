@@ -1,0 +1,4 @@
+IpacTableWriter.column.length.Value=30
+IpacTableWriter.precision.max.Value=7
+IpacTableWriter.precision.min.Value=3
+

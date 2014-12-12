@@ -1,0 +1,29 @@
+ProxySetupDialog.Title= Proxy Setup Dialog
+
+ProxySetupDialog.proxy.Name= Proxy Configuartion
+ProxySetupDialog.proxy.host.Name= HTTP Proxy Host:
+
+ProxySetupDialog.proxy.port.Name= HTTP Proxy Port:
+ProxySetupDialog.proxy.port.Validate= min
+ProxySetupDialog.proxy.port.Min= 10
+ProxySetupDialog.proxy.port.Default= 80
+ProxySetupDialog.proxy.port.NullAllowed= true
+
+ProxySetupDialog.proxy.secureHost.Name= HTTPS Proxy Host:
+
+ProxySetupDialog.proxy.securePort.Name= HTTPS Proxy Port:
+ProxySetupDialog.proxy.securePort.Validate= min
+ProxySetupDialog.proxy.securePort.Min= 10
+ProxySetupDialog.proxy.securePort.Default= 80
+ProxySetupDialog.proxy.securePort.NullAllowed= true
+
+
+ProxySetupDialog.useProxy.Items=direct proxy
+ProxySetupDialog.useProxy.RadioValue=direct
+
+ProxySetupDialog.useProxy.direct.Name=Direct Connect to Internet
+ProxySetupDialog.useProxy.proxy.Name=Manual Proxy Connection
+
+
+ProxySetupDialog.proxy.proxyUserName.Name= Proxy Server User Name: 
+ProxySetupDialog.proxy.proxyUserPwd.Name= Proxy Server User Password: 

@@ -1,0 +1,18 @@
+!
+VisPrefsDialog.Title= General Preferences
+VisPrefsDialog.cSysType.Name= Coordinate System Default 
+VisPrefsDialog.cSysType.Validation=list
+VisPrefsDialog.cSysType.Items= eqJ-hms eqJ-deg eqB-hms eqB-deg galactic     \
+                               supergalactic eclipticJ eclipticB
+VisPrefsDialog.cSysType.RadioValue= eqJ-hms
+VisPrefsDialog.cSysType.eqJ-hms.Name=        Equatorial J2000
+VisPrefsDialog.cSysType.eqJ-deg.Name=        Equatorial J2000 (Degree)
+VisPrefsDialog.cSysType.eqB-hms.Name=        Equatorial B1950
+VisPrefsDialog.cSysType.eqB-deg.Name=        Equatorial B1950 (Degree)
+VisPrefsDialog.cSysType.galactic.Name=       Galactic   
+VisPrefsDialog.cSysType.supergalactic.Name=  Super Galactic
+VisPrefsDialog.cSysType.eclipticJ.Name=      Ecliptic J2000
+VisPrefsDialog.cSysType.eclipticB.Name=      Ecliptic B1950
+Coordinate.doDecimal.Default=false
+Coordinate.Sys.Default=EQ_J2000
+!

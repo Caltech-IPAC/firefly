@@ -1,0 +1,51 @@
+NonStandardEphemeris.epoch.Name=Epoch:
+NonStandardEphemeris.t.Name=T:
+NonStandardEphemeris.e.Name=Eccentricity:
+NonStandardEphemeris.q.Name=Perihelion distance (AU):
+NonStandardEphemeris.littleOmega.ErrorDescription=Little Omega (deg):
+NonStandardEphemeris.bigOmega.ErrorDescription=Big Omega (deg):
+NonStandardEphemeris.i.Name=Inclination of orbit (deg):
+
+NonStandardEphemeris.epoch.ShortDescription=Julian ephemeris date (TDB) \
+of osculating elements
+NonStandardEphemeris.t.ShortDescription=perihelion Julian date
+NonStandardEphemeris.e.ShortDescription=Eccentricity (0.0-1.0)
+NonStandardEphemeris.q.ShortDescription=perihelion distance, range (AU: 0-100)
+NonStandardEphemeris.littleOmega.ShortDescription=argument of perihelion w.r.t. \
+ecliptic (degrees: 0-360)
+
+NonStandardEphemeris.bigOmega.ShortDescription=longitude of ascending node w.r.t. \
+ecliptic (degrees: 0-360) 
+NonStandardEphemeris.i.ShortDescription=inclination of orbit w.r.t. ecliptic \
+(degrees: 0-180)
+
+NonStandardEphemeris.e.Min=0.0
+NonStandardEphemeris.e.Max=1.0
+NonStandardEphemeris.e.Default=0.0
+NonStandardEphemeris.e.Precision=12
+NonStandardEphemeris.e.Validation=range
+
+NonStandardEphemeris.q.Min=0.0
+NonStandardEphemeris.q.Max=100.0
+NonStandardEphemeris.q.Default=0.0
+NonStandardEphemeris.q.Precision=12
+NonStandardEphemeris.q.Validation=range
+
+NonStandardEphemeris.littleOmega.Min=0.0
+NonStandardEphemeris.littleOmega.Max=360.0
+NonStandardEphemeris.littleOmega.Default=0.0
+NonStandardEphemeris.littleOmega.Precision=12
+NonStandardEphemeris.littleOmega.Validation=range
+
+NonStandardEphemeris.bigOmega.Min=0.0
+NonStandardEphemeris.bigOmega.Max=360.0
+NonStandardEphemeris.bigOmega.Default=0.0
+NonStandardEphemeris.bigOmega.Precision=12
+NonStandardEphemeris.bigOmega.Validation=range
+
+NonStandardEphemeris.i.Min=0.0
+NonStandardEphemeris.i.Max=180.0
+NonStandardEphemeris.i.Default=0.0
+NonStandardEphemeris.i.Precision=12
+NonStandardEphemeris.i.Validation=range
+

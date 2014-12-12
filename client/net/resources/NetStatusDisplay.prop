@@ -1,0 +1,6 @@
+NetStatusDisplay.netUp.Name= Net Up
+NetStatusDisplay.netUp.ShortDescription= The Network Server is available
+NetStatusDisplay.netDown.Name= Net Down
+NetStatusDisplay.netDown.ShortDescription= \
+                  The Network Server is not available - either \
+                  the network is down or the remote server is down.

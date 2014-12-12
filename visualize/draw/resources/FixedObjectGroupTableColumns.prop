@@ -1,0 +1,28 @@
+FixedObjectGroupTableColumns.on.ColumnName=  On
+FixedObjectGroupTableColumns.hilight.ColumnName=  Hi.
+FixedObjectGroupTableColumns.shape.ColumnName=  Shape
+FixedObjectGroupTableColumns.targetName.ColumnName= Tgt. Name
+FixedObjectGroupTableColumns.userRa.ColumnName= RA
+FixedObjectGroupTableColumns.userDec.ColumnName= Dec
+FixedObjectGroupTableColumns.userLon.ColumnName= Lon
+FixedObjectGroupTableColumns.userLat.ColumnName= Lat
+FixedObjectGroupTableColumns.cat.ColumnName= Catalog
+FixedObjectGroupTableColumns.observer.ColumnName= Observer
+FixedObjectGroupTableColumns.showName.ColumnName= N
+
+
+
+FixedObjectGroupTableColumns.on.ShortDescription= Show this point on the Image
+FixedObjectGroupTableColumns.hilighted.ShortDescription= Highlight \
+                                          (show in different color) \
+                                           this point on the image
+FixedObjectGroupTableColumns.shape.ShortDescription= Change the shape of \
+                                          this point on the image
+FixedObjectGroupTableColumns.showName.ShortDescription= Show the target name of \
+                                    this point on the image
+
+FixedObjectGroupTableColumns.userRa.ShortDescription= The Longitude of this \
+                                                    position
+FixedObjectGroupTableColumns.userDec.ShortDescription= The Latitude of this \
+                                                    position
+FixedObjectGroupTableColumns.targetName.ShortDescription= The Name of this position

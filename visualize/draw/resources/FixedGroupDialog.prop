@@ -1,0 +1,23 @@
+FixedGroupDialog.Title= Data
+
+FixedGroupDialog.controls.Title= Controls
+
+FixedGroupDialog.enable.Name=  Show All
+FixedGroupDialog.disable.Name= Hide All
+FixedGroupDialog.color.Name=   Color...
+FixedGroupDialog.save.Name=  Save Table...
+FixedGroupDialog.delete.Name=  Delete Selected
+
+FixedGroupDialog.name.enable.Name=  Show All Names
+FixedGroupDialog.name.disable.Name= Hide All Names
+!
+FixedGroupDialog.on.ShortDescription= Show this point on the Image
+FixedGroupDialog.hilighted.ShortDescription= Highlight \
+                                          (show in different color) \
+                                           this point on the image
+FixedGroupDialog.shape.ShortDescription= Change the shape of this point on \
+                                         the image
+FixedGroupDialog.showName.ShortDescription= Show the name of this point on \
+                                         the image
+FixedGroupDialog.MakeTargetAction.Name= Make Target...
+FixedGroupDialog.MakeTargetAction.ShortDescription= Make A Target from first selected object

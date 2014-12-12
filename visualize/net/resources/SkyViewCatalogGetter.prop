@@ -1,0 +1,6 @@
+
+SkyViewCatalogGetter.heasarc.desc.Name= Catalog from HEASARC
+SkyViewCatalogGetter.vizier.desc.Name= Catalog from VizieR
+
+SkyViewCatalogGetter.vizier.targetName.Error= VizieR access is in beta.<br>\
+                                              It currenctly only works with target name resolable by Simbad

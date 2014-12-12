@@ -1,0 +1,6 @@
+DoubleAction.minValue.Name=Min Value:
+DoubleAction.maxValue.Name=Max Value:
+DoubleAction.defaultValue.Name=Default Value:
+DoubleAction.validValues.Name=Valid Values:
+DoubleAction.Precision.Name=Precision:
+DoubleAction.increment.Error= Must increment with by: 

@@ -1,0 +1,11 @@
+
+IpacTableReader.fnu_12.ColumnName= fnu 12
+IpacTableReader.fnu_25.ColumnName= fnu 25
+IpacTableReader.fnu_60.ColumnName= fnu 60
+IpacTableReader.fnu_100.ColumnName= fnu 100
+IpacTableReader.j_m.ColumnName= J Magnitude
+IpacTableReader.h_m.ColumnName= H Magnitude
+IpacTableReader.k_m.ColumnName= K Magnitude
+
+IpacTableReader.wrongFormat.Error= File not in the right IPAC table format
+IpacTableReader.noData.Error= No data found

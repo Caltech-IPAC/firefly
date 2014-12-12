@@ -1,0 +1,10 @@
+
+
+TargetNetwork.name.Title= Object Name
+TargetNetwork.id.Title= NAIF ID
+TargetNetwork.des.Title= Primary Designation
+TargetNetwork.ChooseOne.Title= Choose One 
+TargetNetwork.ChooseOne.Name= <html><i>Please choose one object:</i> 
+
+TargetNetwork.cacheFileLoad.Error= Could not load cache File
+TargetNetwork.ephRetrieve.Error= Could not Retrieve Ephemeris Information
