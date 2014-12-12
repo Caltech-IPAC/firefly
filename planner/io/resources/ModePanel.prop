@@ -1,0 +1,15 @@
+ModePanel.saveType.Name=Save All or Checked AORs
+ModePanel.saveType.RadioValue=saveAll
+ModePanel.saveType.saveSelected.Name=Save checked AORs              
+ModePanel.saveType.saveAll.Name=Save all AORs
+
+ModePanel.saveWhat.Name=Save AOR or Target List
+ModePanel.saveWhat.RadioValue=saveAor
+ModePanel.saveWhat.saveAor.Name=Save AORs
+ModePanel.saveWhat.saveTarget.Name=Save Target list              
+
+ModePanel.saveOrder.Name=What Order?
+ModePanel.saveOrder.RadioValue=original
+ModePanel.saveOrder.Items=original sorted
+ModePanel.saveOrder.original.Name=Original Order
+ModePanel.saveOrder.sorted.Name=Sorted Order

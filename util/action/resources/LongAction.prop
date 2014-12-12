@@ -1,0 +1,4 @@
+LongAction.minValue.Name=Min Value:
+LongAction.maxValue.Name=Max Value:
+LongAction.defaultValue.Name=Default Value:
+LongAction.validValues.Name=Valid Values:

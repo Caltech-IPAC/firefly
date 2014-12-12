@@ -1,0 +1,6 @@
+FloatAction.minValue.Name=Min Value:
+FloatAction.maxValue.Name=Max Value:
+FloatAction.defaultValue.Name=Default Value:
+FloatAction.validValues.Name=Valid Values:
+FloatAction.Precision.Name=Precision:
+FloatAction.increment.Error= Must increment with by: 

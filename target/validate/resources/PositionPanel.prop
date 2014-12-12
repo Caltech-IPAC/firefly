@@ -1,0 +1,59 @@
+PositionPanel.label.Min= 1
+PositionPanel.label.Max= 100.0
+PositionPanel.label.Default= 1
+PositionPanel.label.NullAllowed= false
+PositionPanel.label.Validation= range
+PositionPanel.pmRa.Min= -100.0
+PositionPanel.pmRa.Max= 100.0
+PositionPanel.pmRa.Default= 0.0
+PositionPanel.pmRa.Precision= 3
+PositionPanel.pmRa.NullAllowed= true
+PositionPanel.pmRa.Validation= range
+PositionPanel.pmDec.Min= -100.0
+PositionPanel.pmDec.Max= 100.0
+PositionPanel.pmDec.Default= 0.0
+PositionPanel.pmDec.Precision= 3
+PositionPanel.pmDec.NullAllowed= true
+PositionPanel.pmDec.Validation= range
+PositionPanel.epoch.Min= 1900.0
+PositionPanel.epoch.Max= 2100.0
+PositionPanel.epoch.Default= 1950.0
+!PositionPanel.epoch.Precision= 3
+PositionPanel.epoch.Pattern= 0000.00
+PositionPanel.epoch.NullAllowed= false
+PositionPanel.epoch.Validation= range
+PositionPanel.pmRa.ShortDescription= Proper Motion for RA, \
+				     arcsec per year
+PositionPanel.pmDec.ShortDescription= Proper Motion for Dec, \
+				     arcsec per year
+
+PositionPanel.ra.ShortDescription= <html> \
+     <u>Equatorial Coordinates</u>             \
+     <ul> \
+     <li>RA in degrees -- 23.45d \
+     <li>RA in hours, min, secs -- hh mm ss.ss or hh:mm:ss.ss \
+     </ul> \
+     <u>Galactic/Ecliptic Coordinates</u>             \
+     <ul> \
+     <li>Longitude in degrees -- 23.45 or 23.45d \
+     </ul>
+
+PositionPanel.dec.ShortDescription= <html> \
+     <u>Equatorial Coordinates </u>             \
+     <ul> \
+     <li>DEC in degrees -- 23.45 or 23.45d \
+     <li>DEC in deg, arcmin, arcsecs -- dd mm ss.ss or dd:mm:ss.ss \
+     </ul> \
+     <u>Galactic/Ecliptic Coordinates</u>             \
+     <ul> \
+     <li>Latitude in degrees -- 23.45 or 23.45d \
+     </ul>
+
+PositionPanel.coord.ShortDescription= Select one coordinate system
+PositionPanel.epoch.ShortDescription= Epoch of observation 
+PositionPanel.pmRa.ErrorDescription= PM RA:
+PositionPanel.pmDec.ErrorDescription= PM Dec:
+PositionPanel.ra.ErrorDescription= RA/Lon:
+PositionPanel.dec.ErrorDescription= Dec/Lat:
+PositionPanel.coord.ErrorDescription= Coordinate System:
+PositionPanel.epoch.ErrorDescription= Epoch:

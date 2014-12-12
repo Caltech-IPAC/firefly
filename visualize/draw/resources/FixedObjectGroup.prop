@@ -1,0 +1,12 @@
+FixedObjectGroup.on.ColumnName=  On
+FixedObjectGroup.hilight.ColumnName=  Hi.
+FixedObjectGroup.shape.ColumnName=  Shape
+FixedObjectGroup.targetName.ColumnName= Tgt. Name
+FixedObjectGroup.userRa.ColumnName= RA
+FixedObjectGroup.userDec.ColumnName= Dec
+FixedObjectGroup.userLon.ColumnName= Lon
+FixedObjectGroup.userLat.ColumnName= Lat
+FixedObjectGroup.cat.ColumnName= Catalog
+FixedObjectGroup.observer.ColumnName= Observer
+FixedObjectGroup.showName.ColumnName= Show Name
+!

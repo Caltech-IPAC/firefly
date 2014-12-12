@@ -1,0 +1,7 @@
+VisConstants.fitsFilter.Name= FITS Files (*.fits)
+VisConstants.jpegFilter.Name= JPEG Files (*.jpg)
+VisConstants.gifFilter.Name= GIF Files (*.gif)
+VisConstants.pngFilter.Name= PNG Files (*.png)
+VisConstants.bmpFilter.Name= BMP Files (*.bmp)
+VisConstants.gzFitsFilter.Name= Gzipped FITS Files (*.fits.gz)
+VisConstants.tableFilter.Name= Catalog Table Files (*.tbl)

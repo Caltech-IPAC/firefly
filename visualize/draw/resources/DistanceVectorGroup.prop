@@ -1,0 +1,11 @@
+DistanceVectorGroup.on.ColumnName=  On
+DistanceVectorGroup.ra1.ColumnName=  RA 1
+DistanceVectorGroup.dec1.ColumnName=  Dec 1
+DistanceVectorGroup.ra2.ColumnName=  RA 2
+DistanceVectorGroup.dec2.ColumnName=  Dec 2
+DistanceVectorGroup.distance.ColumnName=  Distance
+DistanceVectorGroup.angle.ColumnName=  Rot. Angle
+DistanceVectorGroup.pos.ra.Name=  Lon:
+DistanceVectorGroup.pos.dec.Name= Lat:
+DistanceVectorGroup.pos1.ColumnName=  Position 1
+DistanceVectorGroup.pos2.ColumnName=  Position 2

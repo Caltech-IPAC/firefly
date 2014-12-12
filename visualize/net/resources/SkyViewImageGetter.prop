@@ -1,0 +1,7 @@
+
+SkyViewImageGetter.desc.Name= SkyView Image
+SkyViewImageGetter.noData.Error= Could not find any data for this query.
+SkyViewImageGetter.searching.Name= Searching database for %s
+SkyViewImageGetter.loading.Name= Retrieving %s Image
+SkyViewImageGetter.notFound.Error= <html>There is no image that meets you request.<br>\
+                                   Possibly the survey does not cover your target.

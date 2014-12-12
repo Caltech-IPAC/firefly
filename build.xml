@@ -1,0 +1,130 @@
+<project name="IPAC Common Project Build File" default="common" basedir=".">
+    <description>
+        The main build file for the common project
+    </description>
+    <!-- Define build.root -->
+    <property name="build.root" value="${basedir}/../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+    <target name="simbad" description="build simbad_ws.jar">
+        <ant antfile="${build.root}/wsdl/simbad/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="simbad.clean" description="clean up build simbad_ws.jar">
+        <ant antfile="${build.root}/wsdl/simbad/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="meta" description="build meta.jar">
+        <ant antfile="${build.root}/../data/meta/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="meta.clean" description="clean up build meta.jar">
+        <ant antfile="${build.root}/../data/meta/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="fits" description="build fits.jar">
+        <ant antfile="${build.root}/../data/fits/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="fits.clean" description="clean up build fits.jar">
+        <ant antfile="${build.root}/../data/fits/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="fitsio" description="build external fits_io.jar">
+        <ant antfile="${build.root}/external/fits_io/build.xml" inheritall="false"/>
+    </target>
+    <target name="fitsio.clean" description="clean up build fits_io.jar">
+        <ant antfile="${build.root}/external/fits_io/build.xml" inheritall="false"/>
+    </target>
+
+    <target name="loader" description="build loader.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/planner/build_loader.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="loader.clean" description="clean up build loader.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/planner/build_loader.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="planner" description="build loader.jar and planner.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/planner/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="planner.clean" description="clean up build loader.jar and planner.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/planner/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="client" description="build client.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/client/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="client.clean" description="clean up build client.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/client/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="util" description="build util.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/util/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="util.clean" description="clean up build util.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/util/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="data" description="build data.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/data/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="data.clean" description="clean up build data.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/data/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="astro" description="build astro.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/astro/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="astro.clean" description="clean up build astro.jar">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/astro/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="SoftwareUpdate" description="build SoftwareUpdate.war">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/server/update/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="SoftwareUpdate.clean" description="clean up build SoftwareUpdate.war">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/server/update/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="jniBinaries" description="build jniBinaries.jar">
+        <ant antfile="${build.root}/../data/jniBinaries/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="jniBinaries.clean" description="clean up build jniBinaries.jar">
+        <ant antfile="${build.root}/../data/jniBinaries/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="devext" description="build devext.war">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/extensions/developer/build.xml" inheritall="false" target="all"/>
+    </target>
+    <target name="devext.clean" description="clean up build devext.war">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/extensions/developer/build.xml" inheritall="false" target="clean"/>
+    </target>
+
+    <target name="common-gwt" description="build the common gwt Module" >
+        <ant antfile="${build.root}/src/edu/caltech/ipac/build_gwt.xml" target="all"/>
+    </target>
+
+
+             <!--this target used only internally, only jars called when you know the common jar are made -->
+    <target name="common-gwt-jaronly">  
+        <ant antfile="${build.root}/src/edu/caltech/ipac/build_gwt.xml" target="jar-only"/>
+    </target>
+
+
+    <target name="common" depends="setup.alljars, simbad, meta, fits, planner, client, util, data, astro, SoftwareUpdate, jniBinaries, devext"
+            description="build the whole common project">
+    </target>
+
+
+    <target name="all" depends="common, SoftwareUpdate, common-gwt-jaronly"
+            description="build the whole common project">
+    </target>
+
+
+    <target name="javadocs" description="generate javadocs for the whole source tree">
+        <ant antfile="${build.root}/src/edu/caltech/ipac/util/build.xml" inheritall="false" target="javadocs"/>
+    </target>
+
+    <target name="clean" depends="simbad.clean, meta.clean, fits.clean, planner.clean, loader.clean, client.clean, util.clean,
+                                data.clean, astro.clean, SoftwareUpdate.clean, jniBinaries.clean, devext.clean"
+            description="remove resources, class files, and jar file generated by build">
+    </target>
+
+</project>

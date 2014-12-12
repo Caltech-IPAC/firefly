@@ -1,0 +1,82 @@
+
+AutoUpdateUI.yesNow.Name= Quit NOW and Install!
+AutoUpdateUI.yesLater.Name= Install when I start next time.
+AutoUpdateUI.noNever.Name= I do not want the new version.
+AutoUpdateUI.details.Name= Show The Details...
+
+AutoUpdateUI.minorUpdate.Title= Updating minor files
+AutoUpdateUI.minorUpdate.Name= <html><b>%s needs to perform some \
+                                minor updates.</b>
+
+AutoUpdateUI.newVersion.Title= New version - What shall I do?
+AutoUpdateUI.newVersion.Name= <b>A new version of %s is available.  \
+                      It has already been downloaded and is ready to go.<br>\
+                      Would you like to install this new version?</b>
+
+AutoUpdateUI.criticalUpdate.Title= Critical Update - What shall I do?
+AutoUpdateUI.criticalUpdate.Name= <b>A critical update of %s is available.  \
+                      It has already been downloaded and is ready to go.<br>\
+                      Would you like to install this new version?</b>
+
+AutoUpdateUI.retry.Title= Retry version update
+AutoUpdateUI.retry.Name= <b>An attempt to update %s failed. \
+                      Would you like to try the update again?</b><br>
+
+AutoUpdateUI.quitInstruction.Title= Information
+AutoUpdateUI.quitInstruction.Name= %s will automatically restart 
+                                    with the new version in about 30 seconds.
+
+AutoUpdateUI.other.Name= <br><br>Other Updates include:
+
+AutoUpdateUI.progRunning.Title= Quit other programs
+AutoUpdateUI.progRunning.Name= <html>There are other Spitzer programs \
+                                currently running.<br> Please quit those \
+                                programs and press <i>OK</i> or press \
+                                <i>Cancel</i> to abort the update
+
+AutoUpdateUI.progRunning2.Name= <html>You still have are other Spitzer \
+                           programs currently running.<br>  \
+                           %s cannot update until these programs exit.<br> \
+                           Please quit those \
+                           programs and press <i>OK</i> or press \
+                           <i>Cancel</i> to abort the update
+
+AutoUpdateUI.jreWarn.Name= <br><br>Note the JRE will also be \
+                            updated.<br>The restart will take about \
+                            a minute longer than normal.
+
+AutoUpdateUI.noAccess.Title= No Privilege for Auto-Update
+AutoUpdateUI.noAccess.Name= <html>The Auto-Update for %1$s is being \
+                                disabled.<br>\
+                                You do not have write access to the \
+                                installation directory.<br><br>Perhaps %1$s \
+                                was installed by another user or your \
+                                system administrator.<br><br>\
+                                %1$s is still fully functional, it just will not \
+                                be able to do version update checking.
+
+
+AutoUpdateUI.noAccess.vista.Name= <html>There are updates available for %1$s. However, \
+                                you need to run as administrator for %1$s to update.<br><br>\
+                                <i>Do the following:</i><br>                                \
+                                Restart %1$s by right-clicking on the %1$s icon and choosing<br>\
+                                "Run as administrator", then %1$s will be able to update.
+
+
+
+
+
+AutoUpdateUI.detailsDesc.Title= Updating Details
+AutoUpdateUI.detailsDesc.Name= <html><b>The following packages will be \
+                              updated:</b>
+
+AutoUpdateUI.disableUpdate.Title= Disable AutoUpdate?
+AutoUpdateUI.disableUpdate.Name= Do you want to disable Auto update?
+
+
+AutoUpdateUI.expanding.Name= <html>Completing Installation / Expanding \
+                                  Compressed Files...<br><br>\
+                                 Expanding File #%d, %s<br><br> \
+                               (This could take awhile)
+
+AutoUpdateUI.jreDesc.Name= Java Runtime: old Version: 

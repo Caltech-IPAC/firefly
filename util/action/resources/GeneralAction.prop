@@ -1,0 +1,5 @@
+GeneralAction.minValue.Name=Min Value:
+GeneralAction.maxValue.Name=Max Value:
+GeneralAction.defaultValue.Name=Selected Value:
+GeneralAction.validValues.Name=Valid Values:
+GeneralAction.validValue.Name=Valid Value:

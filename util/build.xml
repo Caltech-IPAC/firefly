@@ -1,0 +1,25 @@
+<project name="IPAC Common uplink_util.jar Build File" default="all" basedir=".">
+    <description>
+        The build file for building uplink_util.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- local properties -->
+
+    <!-- files to include in build -->
+    <property name="package.dir" value="edu/caltech/ipac/util"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="jar.base" value="uplink_util"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="general reusable utilities"/>
+    <property name="auto.update.attr" value="CRITICAL"/>
+
+    <target name="all" depends="jar"
+            description="build the uplink_util.jar">
+    </target>
+</project>

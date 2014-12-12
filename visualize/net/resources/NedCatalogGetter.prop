@@ -1,0 +1,4 @@
+NedCatalogGetter.desc.Name= NED Catalog
+NedCatalogGetter.column.length=30
+NedCatalogGetter.precision.max=7
+NedCatalogGetter.precision.min=3
