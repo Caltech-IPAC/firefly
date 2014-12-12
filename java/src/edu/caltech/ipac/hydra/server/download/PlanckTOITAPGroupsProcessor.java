@@ -166,7 +166,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         targetStr = targetName.replace(" ", "");
 
         IpacTableParser.MappedData dgData = IpacTableParser.getData(new File(dgp.getTableDef().getSource()),
-                selectedRows, "rmjd");
+                selectedRows, "mjd");
 
         String toibaseUrl = PlanckTOITAPFileRetrieve.getBaseURL(request);
         String mapbaseUrl = PlanckTOIMinimapRetrieve.getBaseURL(request);
@@ -254,7 +254,7 @@ public class PlanckTOITAPGroupsProcessor extends FileGroupsProcessor {
         else{
             String rmjdSelt ="";
             for (int rowIdx : selectedRows) {
-                rmjdSelt += String.format("%.0f",(Double)dgData.get(rowIdx, "rmjd")) +",";
+                rmjdSelt += String.format("%.0f",(Double)dgData.get(rowIdx, "mjd")) +",";
             }
 
             String rmjdStrArr[] = rmjdSelt.split(",");

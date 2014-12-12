@@ -141,7 +141,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
         if (paramStr.startsWith("&")) {
             paramStr = paramStr.substring(1);
         }
-        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+round(mjd,0)+as+rmjd,count(mjd)+as+counter+FROM+" + paramStr;
+        url += "/TAP/sync?LANG=ADQL&REQUEST=doQuery&QUERY=SELECT+round(mjd,0)+as+mjd,count(mjd)+as+counts+FROM+" + paramStr;
 
         _log.info("querying URL:" + url);
 
@@ -284,7 +284,7 @@ public class QueryPlanckTOITAP extends DynQueryProcessor {
 
         // ending with format of output:
 
-        constraints.add(")+group+by+rmjd&format=ipac_table"+"&user_metadata={"+source+",DETNAM:'" + detcStr +"'}");
+        constraints.add(")+group+by+mjd&format=ipac_table"+"&user_metadata={"+source+",DETNAM:'" + detcStr +"'}");
 
 
     // compile all constraints
