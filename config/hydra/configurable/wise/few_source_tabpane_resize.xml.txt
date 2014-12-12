@@ -1,5 +1,0 @@
-<FormEventWorker id="tpsController_1" type="TabPaneSizeControl">
-    <Param key="tabPaneName" value="SOURCE TabPane"/>
-    <Param key="Images Covering a Source" value="width=600px,height=250px"/>
-    <Param key="Image a Source was Extracted From" value="width=600px,height=80px"/>
-</FormEventWorker>

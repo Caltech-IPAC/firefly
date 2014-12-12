@@ -1,3 +1,0 @@
-# the value needs to be overwritten for projects, plotting spectra
-#PrefGroup.Items = Generic Spectrum
-PrefGroup.Items = Generic

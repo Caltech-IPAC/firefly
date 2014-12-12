@@ -1,6 +1,0 @@
-setup.py
-IngestXMP.egg-info/PKG-INFO
-IngestXMP.egg-info/SOURCES.txt
-IngestXMP.egg-info/dependency_links.txt
-IngestXMP.egg-info/requires.txt
-IngestXMP.egg-info/top_level.txt

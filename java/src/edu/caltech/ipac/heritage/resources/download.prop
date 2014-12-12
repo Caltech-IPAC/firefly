@@ -1,5 +1,0 @@
-download.Title= Prepare Download
-download.ShortDescription= Prepare download of data product for the selected row(s)
-
-download.nonSelected.Title= No data selected
-download.nonSelected.Error= Please select the data you want to download.

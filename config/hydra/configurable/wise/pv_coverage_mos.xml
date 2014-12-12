@@ -1,9 +1,0 @@
-<!DOCTYPE Preview SYSTEM "../../project.dtd">
-
-<Preview type="COVERAGE_VIEW">
-    <QueryId>wiseMOSQuery_1b</QueryId>
-    <EventWorkerId>targetMOS</EventWorkerId>
-    <Title>Coverage</Title>
-    <Param key="ZoomType" value="SMART_SMALL"/>
-    <Param key="ColorPreferenceKey" value="Wise-Coverage"/>
-</Preview>

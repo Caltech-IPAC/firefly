@@ -1,3 +1,0 @@
-HelpMenu.Title = LSST Archive Help
-HelpMenu.Items = lsst.overview lsst.basics lsst.searching lsst.results visualization user lsst.privacy
-HelpMenu.URL = help/doc/lsst/overview.html
