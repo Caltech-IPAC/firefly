@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
@@ -30,7 +31,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.visualize.controls.PlottingUtil;
+import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsDialog;
 import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
@@ -53,6 +54,8 @@ import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.util.Cursor;
 
 import java.awt.Color;
 import java.awt.Shape;
@@ -854,7 +857,7 @@ public class VisServerOps {
             ImagePlot plot= ctx.getPlot();
             for(Band band : state.getBands()) {
                 FitsRead fr= plot.getHistogramOps(PlotServUtils.cnvtBand(band)).getFitsRead();
-                DataGroup dg = PlottingUtil.showFitsHeaders(fr.getHeader(), plot.getPlotDesc());
+                DataGroup dg = getFitsHeaders(fr.getHeader(), plot.getPlotDesc());
                 RawDataSet rds = QueryUtil.getRawDataSet(dg);
 
                 String string = String.valueOf(plot.getPixelScale());
@@ -879,6 +882,35 @@ public class VisServerOps {
         return retValue;
     }
 
+    public static DataGroup getFitsHeaders(Header headers, String name) {
+        //if ( headers.getNumberOfCards() > 0) {
+            DataType comment = new DataType("Comments", String.class);
+            DataType keyword = new DataType("Keyword", String.class);
+            DataType value = new DataType("Value", String.class);
+            comment.getFormatInfo().setWidth(80);
+            value.getFormatInfo().setWidth(80);
+            keyword.getFormatInfo().setWidth(68);
+            DataType[] types = new DataType[]{
+                               new DataType("#", Integer.class),
+                               keyword, value, comment };
+            DataGroup dg = new DataGroup("Headers - " + name, types);
+
+             int i=0;
+            for (Cursor itr = headers.iterator(); itr.hasNext();) {
+                HeaderCard hc = (HeaderCard) itr.next();
+                if (hc.isKeyValuePair()) {
+                    DataObject row = new DataObject(dg);
+                    row.setDataElement(types[0], i++);
+                    row.setDataElement(types[1], hc.getKey());
+                    row.setDataElement(types[2], hc.getValue());
+                    row.setDataElement(types[3], hc.getComment());
+                    dg.add(row);
+                }
+            }
+      return dg;
+    //}
+    }
+
 
 
     private static class UseFullException extends Exception {}
@@ -900,7 +932,7 @@ public class VisServerOps {
                     throw new UseFullException();
                 }
                 else {
-                    DataGroup dg = PlottingUtil.showFitsHeaders(header, "fits data");
+                    DataGroup dg = getFitsHeaders(header, "fits data");
                     RawDataSet rds = QueryUtil.getRawDataSet(dg);
                     rawDataMap.put(band, rds);
                 }
