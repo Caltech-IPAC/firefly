@@ -9,6 +9,8 @@
         <include name="webservices/jaxrpc.jar"/>
         <include name="webservices/xbean.jar"/>
         <include name="webservices/archive_dto_votable.jar"/>
+        <include name="webservices/archive_dto_irsa.jar"/>
+        <include name="webservices/regclient.jar"/>
         <include name="simbad_ws.jar"/>
     </fileset>
 
