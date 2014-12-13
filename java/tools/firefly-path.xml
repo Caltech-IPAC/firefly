@@ -2,35 +2,16 @@
     <!-- project specific's property -->
     <property name="firefly.jars.dir" location="${build.root}/../jars"/>
 
-    <!--<fileset id="spotCommon.lib.fs" dir="${common.jars.dir}">-->
-        <!--<include name="axis.jar"/>-->
-        <!--&lt;!&ndash;<include name="commons-logging-1.0.4.jar"/>&ndash;&gt;-->
-        <!--<include name="commons-discovery-0.2.jar"/>-->
-        <!--<include name="saaj.jar"/>-->
-        <!--<include name="wsdl4j-1.5.1.jar"/>-->
-        <!--<include name="stil.jar"/>-->
-        <!--<include name="regclient.jar"/>-->
-        <!--<include name="rayreg.jar"/>-->
-        <!--<include name="archive_dto_votable.jar"/>-->
-        <!--<include name="uplink_util.jar"/>-->
-        <!--<include name="astro.jar"/>-->
-        <!--<include name="client.jar"/>-->
-        <!--<include name="data.jar"/>-->
-        <!--<include name="fits.jar"/>-->
-        <!--<include name="fits_io.jar"/>        -->
-        <!--<include name="meta.jar"/>-->
-        <!--<include name="planner.jar"/>-->
-        <!--<include name="simbad_ws.jar"/>-->
-        <!--<include name="uplink_util.jar"/>-->
-        <!--<include name="xbean.jar"/>-->
-        <!--<include name="jsr173_1.0_api.jar"/>-->
-        <!--&lt;!&ndash;<include name="ifxjdbc.jar"/>&ndash;&gt;-->
-        <!--<include name="jaxrpc.jar"/>-->
-        <!--&lt;!&ndash;<include name="mail.jar"/>&ndash;&gt;-->
-        <!--&lt;!&ndash;<include name="activation.jar"/>&ndash;&gt;-->
-        <!--<include name="flyingsaucer/iText-2.0.8.jar"/>-->
-        <!--<include name="flyingsaucer/core-renderer.jar"/>-->
-    <!--</fileset>-->
+    <fileset id="simbad.lib.fs" dir="${firefly.jars.dir}">
+        <include name="j2ee/axis.jar"/>
+        <include name="jakarta-commons/commons-logging.jar"/>
+        <include name="jakarta-commons/commons-discovery-0.2.jar"/>
+        <include name="webservices/saaj.jar"/>
+        <include name="webservices/wsdl4j-1.5.1.jar"/>
+        <include name="simbad_ws.jar"/>
+        <include name="webservices/jaxrpc.jar"/>
+        <include name="webservices/xbean.jar"/>
+    </fileset>
 
 
     <!--<fileset id="gwtCommon.lib.fs" dir="${common.jars.dir}">-->
@@ -151,6 +132,7 @@
         <fileset refid="spring.jars.fs"/>
         <!--<fileset refid="gwtCommon.lib.fs"/>-->
         <fileset refid="fits-io.jars.fs"/>
+        <fileset refid="simbad.lib.fs"/>
         <fileset refid="log4j.jars.fs"/>
         <fileset refid="josso.lib.fs"/>
         <fileset refid="healpix.lib.fs"/>
