@@ -2,7 +2,7 @@
     <!-- project specific's property -->
     <property name="firefly.jars.dir" location="${build.root}/../jars"/>
 
-    <fileset id="simbad.lib.fs" dir="${firefly.jars.dir}">
+    <fileset id="webservices.lib.fs" dir="${firefly.jars.dir}">
         <include name="j2ee/axis.jar"/>
         <include name="jakarta-commons/commons-logging.jar"/>
         <include name="jakarta-commons/commons-discovery-0.2.jar"/>
@@ -11,6 +11,7 @@
         <include name="simbad_ws.jar"/>
         <include name="webservices/jaxrpc.jar"/>
         <include name="webservices/xbean.jar"/>
+        <include name="webservices/archive_dto_votable.jar.jar"/>
     </fileset>
 
 
