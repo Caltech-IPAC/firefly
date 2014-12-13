@@ -133,7 +133,7 @@
         <fileset refid="spring.jars.fs"/>
         <!--<fileset refid="gwtCommon.lib.fs"/>-->
         <fileset refid="fits-io.jars.fs"/>
-        <fileset refid="webservices.lib.fs.lib.fs"/>
+        <fileset refid="webservices.lib.fs"/>
         <fileset refid="log4j.jars.fs"/>
         <fileset refid="josso.lib.fs"/>
         <fileset refid="healpix.lib.fs"/>
