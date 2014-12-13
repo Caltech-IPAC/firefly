@@ -3,16 +3,13 @@
     <property name="firefly.jars.dir" location="${build.root}/../jars"/>
 
     <fileset id="webservices.lib.fs" dir="${firefly.jars.dir}">
-        <include name="j2ee/axis.jar"/>
-        <include name="jakarta-commons/commons-logging.jar"/>
         <include name="jakarta-commons/commons-discovery-0.2.jar"/>
-        <include name="webservices/saaj.jar"/>
+        <include name="webservices/axis.jar"/>
         <include name="webservices/wsdl4j-1.5.1.jar"/>
-        <include name="simbad_ws.jar"/>
-        <include name="webservices/rayreg.jar"/>
         <include name="webservices/jaxrpc.jar"/>
         <include name="webservices/xbean.jar"/>
         <include name="webservices/archive_dto_votable.jar.jar"/>
+        <include name="simbad_ws.jar"/>
     </fileset>
 
 
@@ -133,6 +130,7 @@
         <fileset refid="apache.jars"/>
         <fileset refid="spring.jars.fs"/>
         <!--<fileset refid="gwtCommon.lib.fs"/>-->
+        <fileset refid="votable.lib.fs"/>
         <fileset refid="fits-io.jars.fs"/>
         <fileset refid="webservices.lib.fs"/>
         <fileset refid="log4j.jars.fs"/>
@@ -144,10 +142,13 @@
     </path>
 
     <path id="firefly.javac.classpath">
-        <file file="${firefly.jars.dir}/j2ee/servlet-api.jar"/>
         <pathelement path="${dest.dir}"/>
+        <file file="${firefly.jars.dir}/j2ee/servlet-api.jar"/>
+        <file file="${firefly.jars.dir}/j2ee/activation.jar"/>
+        <file file="${firefly.jars.dir}/j2ee/mail.jar"/>
         <path refid="firefly.webapp.lib"/>
         <fileset refid="gwt.lib.fs"/>
+        <fileset refid="ehcache.jars.fs"/>
         <fileset refid="ehcache.jars.fs"/>
     </path>
 
