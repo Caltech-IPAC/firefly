@@ -51,7 +51,7 @@
         <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false" target="javadocs"/>
     </target>
 
-    <target name="all" depends="fftools"/>
+    <target name="all" depends="simbad, fftools"/>
     <target name="all.redeploy"
             depends="fftools.redeploy"/>
 

@@ -8,7 +8,7 @@
         <include name="webservices/wsdl4j-1.5.1.jar"/>
         <include name="webservices/jaxrpc.jar"/>
         <include name="webservices/xbean.jar"/>
-        <include name="webservices/archive_dto_votable.jar.jar"/>
+        <include name="webservices/archive_dto_votable.jar"/>
         <include name="simbad_ws.jar"/>
     </fileset>
 
