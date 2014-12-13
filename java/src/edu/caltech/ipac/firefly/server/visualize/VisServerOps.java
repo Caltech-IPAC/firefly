@@ -72,8 +72,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
-import static edu.caltech.ipac.visualize.DefaultMouseReadoutHandler.WhichReadout.LEFT;
-import static edu.caltech.ipac.visualize.DefaultMouseReadoutHandler.WhichReadout.RIGHT;
+import static edu.caltech.ipac.visualize.draw.AreaStatisticsDialog.WhichReadout.LEFT;
+import static edu.caltech.ipac.visualize.draw.AreaStatisticsDialog.WhichReadout.RIGHT;
 /**
  * User: roby
  * Date: Aug 7, 2008
