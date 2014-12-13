@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="urn:VizieRBeta" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="urn:VizieRBeta" xmlns:intf="urn:VizieRBeta" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.3
+Built on Oct 05, 2005 (05:23:37 EDT)-->
+ <wsdl:types>
+  <schema targetNamespace="urn:VizieRBeta" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="VizieRCriteria">
+    <sequence>
+     <element name="astronomy" nillable="true" type="xsd:string"/>
+     <element name="author" nillable="true" type="xsd:string"/>
+     <element name="catalog" nillable="true" type="xsd:string"/>
+     <element name="mission" nillable="true" type="xsd:string"/>
+     <element name="ucd" nillable="true" type="xsd:string"/>
+     <element name="wavelength" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="VizieRTarget">
+    <sequence>
+     <element name="name" nillable="true" type="xsd:string"/>
+     <element name="position" nillable="true" type="xsd:string"/>
+     <element name="reference" nillable="true" type="xsd:string"/>
+     <element name="sexaordec" type="xsd:boolean"/>
+    </sequence>
+   </complexType>
+   <complexType name="VizieRFilter">
+    <sequence/>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="ADQLrequestRequest">
+
+      <wsdl:part name="adql" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ConeResultsRequest">
+
+      <wsdl:part name="in0" type="impl:VizieRCriteria"/>
+
+      <wsdl:part name="in1" type="impl:VizieRTarget"/>
+
+      <wsdl:part name="in2" type="xsd:string"/>
+
+      <wsdl:part name="in3" type="impl:VizieRFilter"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesMetaDataResponse">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesDataRequest1">
+
+      <wsdl:part name="target" type="xsd:string"/>
+
+      <wsdl:part name="radius" type="xsd:double"/>
+
+      <wsdl:part name="unit" type="xsd:string"/>
+
+      <wsdl:part name="text" type="xsd:string"/>
+
+      <wsdl:part name="wavelength" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ConeResultsResponse">
+
+      <wsdl:part name="ConeResultsReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesMetaDataRequest1">
+
+      <wsdl:part name="target" type="xsd:string"/>
+
+      <wsdl:part name="radius" type="xsd:double"/>
+
+      <wsdl:part name="unit" type="xsd:string"/>
+
+      <wsdl:part name="text" type="xsd:string"/>
+
+      <wsdl:part name="wavelength" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesDataRequest">
+
+      <wsdl:part name="target" type="xsd:string"/>
+
+      <wsdl:part name="radius" type="xsd:double"/>
+
+      <wsdl:part name="unit" type="xsd:string"/>
+
+      <wsdl:part name="text" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesDataResponse1">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ADQLrequestResponse">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesDataResponse">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="metaAllRequest">
+
+   </wsdl:message>
+
+   <wsdl:message name="metaAllResponse">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="getAvailabilityRequest">
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesMetaDataRequest">
+
+      <wsdl:part name="target" type="xsd:string"/>
+
+      <wsdl:part name="radius" type="xsd:double"/>
+
+      <wsdl:part name="unit" type="xsd:string"/>
+
+      <wsdl:part name="text" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="cataloguesMetaDataResponse1">
+
+      <wsdl:part name="return" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="getAvailabilityResponse">
+
+      <wsdl:part name="getAvailabilityReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ConeCatalogsRequest">
+
+      <wsdl:part name="in0" type="impl:VizieRCriteria"/>
+
+      <wsdl:part name="in1" type="impl:VizieRTarget"/>
+
+      <wsdl:part name="in2" type="xsd:string"/>
+
+      <wsdl:part name="in3" type="impl:VizieRFilter"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ConeCatalogsResponse">
+
+      <wsdl:part name="ConeCatalogsReturn" type="xsd:string"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="VizieRBeta">
+
+      <wsdl:operation name="ADQLrequest" parameterOrder="adql">
+
+         <wsdl:input message="impl:ADQLrequestRequest" name="ADQLrequestRequest"/>
+
+         <wsdl:output message="impl:ADQLrequestResponse" name="ADQLrequestResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesMetaData" parameterOrder="target radius unit text">
+
+         <wsdl:input message="impl:cataloguesMetaDataRequest" name="cataloguesMetaDataRequest"/>
+
+         <wsdl:output message="impl:cataloguesMetaDataResponse" name="cataloguesMetaDataResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesMetaData" parameterOrder="target radius unit text wavelength">
+
+         <wsdl:input message="impl:cataloguesMetaDataRequest1" name="cataloguesMetaDataRequest1"/>
+
+         <wsdl:output message="impl:cataloguesMetaDataResponse1" name="cataloguesMetaDataResponse1"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesData" parameterOrder="target radius unit text">
+
+         <wsdl:input message="impl:cataloguesDataRequest" name="cataloguesDataRequest"/>
+
+         <wsdl:output message="impl:cataloguesDataResponse" name="cataloguesDataResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesData" parameterOrder="target radius unit text wavelength">
+
+         <wsdl:input message="impl:cataloguesDataRequest1" name="cataloguesDataRequest1"/>
+
+         <wsdl:output message="impl:cataloguesDataResponse1" name="cataloguesDataResponse1"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="metaAll">
+
+         <wsdl:input message="impl:metaAllRequest" name="metaAllRequest"/>
+
+         <wsdl:output message="impl:metaAllResponse" name="metaAllResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getAvailability">
+
+         <wsdl:input message="impl:getAvailabilityRequest" name="getAvailabilityRequest"/>
+
+         <wsdl:output message="impl:getAvailabilityResponse" name="getAvailabilityResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ConeCatalogs" parameterOrder="in0 in1 in2 in3">
+
+         <wsdl:input message="impl:ConeCatalogsRequest" name="ConeCatalogsRequest"/>
+
+         <wsdl:output message="impl:ConeCatalogsResponse" name="ConeCatalogsResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ConeResults" parameterOrder="in0 in1 in2 in3">
+
+         <wsdl:input message="impl:ConeResultsRequest" name="ConeResultsRequest"/>
+
+         <wsdl:output message="impl:ConeResultsResponse" name="ConeResultsResponse"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="VizieRBetaSoapBinding" type="impl:VizieRBeta">
+
+      <wsdlsoap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="ADQLrequest">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ADQLrequestRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ADQLrequestResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesMetaData">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="cataloguesMetaDataRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="cataloguesMetaDataResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesMetaData">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="cataloguesMetaDataRequest1">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="cataloguesMetaDataResponse1">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesData">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="cataloguesDataRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="cataloguesDataResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cataloguesData">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="cataloguesDataRequest1">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="cataloguesDataResponse1">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="metaAll">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="metaAllRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="metaAllResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="getAvailability">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="getAvailabilityRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://VizieRWS" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="getAvailabilityResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ConeCatalogs">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ConeCatalogsRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://VizieRWS" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ConeCatalogsResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ConeResults">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ConeResultsRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://VizieRWS" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ConeResultsResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="urn:VizieRBeta" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="VizieRBetaService">
+
+      <wsdl:port binding="impl:VizieRBetaSoapBinding" name="VizieRBeta">
+
+         <wsdlsoap:address location="http://cdsws.u-strasbg.fr/axis/services/VizieRBeta"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  downloaded from http://simweb.u-strasbg.fr/axis/services/WSQuery?wsdl
+      change wsdlsoap:address from port 8080 to 80.
+-->
+
+<wsdl:definitions targetNamespace="http://uif.simbad.cds" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://uif.simbad.cds" xmlns:intf="http://uif.simbad.cds" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.3
+Built on Oct 05, 2005 (05:23:37 EDT)-->
+
+   <wsdl:message name="queryObjectByIdRequest">
+
+      <wsdl:part name="in0" type="soapenc:string"/>
+
+      <wsdl:part name="in1" type="soapenc:string"/>
+
+      <wsdl:part name="in2" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="queryObjectByCoordResponse">
+
+      <wsdl:part name="queryObjectByCoordReturn" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="queryObjectByIdResponse">
+
+      <wsdl:part name="queryObjectByIdReturn" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="queryObjectByBibResponse">
+
+      <wsdl:part name="queryObjectByBibReturn" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="queryObjectByBibRequest">
+
+      <wsdl:part name="in0" type="soapenc:string"/>
+
+      <wsdl:part name="in1" type="soapenc:string"/>
+
+      <wsdl:part name="in2" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="queryObjectByCoordRequest">
+
+      <wsdl:part name="in0" type="soapenc:string"/>
+
+      <wsdl:part name="in1" type="soapenc:string"/>
+
+      <wsdl:part name="in2" type="soapenc:string"/>
+
+      <wsdl:part name="in3" type="soapenc:string"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="WSQueryInterface">
+
+      <wsdl:operation name="queryObjectByBib" parameterOrder="in0 in1 in2">
+
+         <wsdl:input message="impl:queryObjectByBibRequest" name="queryObjectByBibRequest"/>
+
+         <wsdl:output message="impl:queryObjectByBibResponse" name="queryObjectByBibResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="queryObjectByCoord" parameterOrder="in0 in1 in2 in3">
+
+         <wsdl:input message="impl:queryObjectByCoordRequest" name="queryObjectByCoordRequest"/>
+
+         <wsdl:output message="impl:queryObjectByCoordResponse" name="queryObjectByCoordResponse"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="queryObjectById" parameterOrder="in0 in1 in2">
+
+         <wsdl:input message="impl:queryObjectByIdRequest" name="queryObjectByIdRequest"/>
+
+         <wsdl:output message="impl:queryObjectByIdResponse" name="queryObjectByIdResponse"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="WSQuerySoapBinding" type="impl:WSQueryInterface">
+
+      <wsdlsoap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="queryObjectByBib">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="queryObjectByBibRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="queryObjectByBibResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="queryObjectByCoord">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="queryObjectByCoordRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="queryObjectByCoordResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="queryObjectById">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="queryObjectByIdRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="queryObjectByIdResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://uif.simbad.cds" use="encoded"/>
+
+         </wsdl:output>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="WSQueryInterfaceService">
+
+      <wsdl:port binding="impl:WSQuerySoapBinding" name="WSQuery">
+
+<!--         <wsdlsoap:address location="http://simweb.u-strasbg.fr:8080/axis/services/WSQuery"/>
+         changes to use port 80 instead.  -->
+         <wsdlsoap:address location="http://simbad.u-strasbg.fr/axis/services/WSQuery"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>
