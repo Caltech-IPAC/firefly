@@ -1,6 +1,6 @@
 package edu.caltech.ipac.client.net;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtil;

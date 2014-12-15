@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.packagedata.Packager;

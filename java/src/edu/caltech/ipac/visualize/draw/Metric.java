@@ -1,7 +1,6 @@
 package edu.caltech.ipac.visualize.draw;
 
     
-import edu.caltech.ipac.data.DataConst;
 import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -11,6 +10,7 @@ import java.io.Serializable;
 public class Metric implements Serializable, HandSerialize {
 
     private final static String SPLIT_TOKEN= "--Metric--";
+    public static final double NULL_DOUBLE = Double.NaN;
 
     String desc;
     ImageWorkSpacePt ip;
@@ -31,7 +31,7 @@ public class Metric implements Serializable, HandSerialize {
     }
 
     boolean hasValue() {
-        return value != DataConst.NULL_DOUBLE;
+        return value != NULL_DOUBLE;
     }
 
     public String getDesc() { return desc;}

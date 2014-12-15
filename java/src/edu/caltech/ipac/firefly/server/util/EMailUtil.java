@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ThrowableUtil;
 

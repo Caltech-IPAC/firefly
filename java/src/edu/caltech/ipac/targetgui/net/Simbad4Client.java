@@ -7,7 +7,7 @@ import edu.caltech.ipac.astro.simbad.SimbadException;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.NetworkManager;
 import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 
 import javax.xml.rpc.ServiceException;
 import java.util.HashMap;

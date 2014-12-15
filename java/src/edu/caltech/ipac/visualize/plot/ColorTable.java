@@ -1,6 +1,6 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.SUTDebug;
 
 import java.awt.image.IndexColorModel;

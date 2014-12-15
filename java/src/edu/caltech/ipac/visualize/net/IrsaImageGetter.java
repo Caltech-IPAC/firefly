@@ -5,7 +5,7 @@ import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.ISSA;
 import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.MSX;
 import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.TWOMASS;
 import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.IRIS;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.ThreadedService;
 import edu.caltech.ipac.client.net.NetworkManager;

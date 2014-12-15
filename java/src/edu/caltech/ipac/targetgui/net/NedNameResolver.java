@@ -4,7 +4,7 @@ import edu.caltech.ipac.astro.ned.NedException;
 import edu.caltech.ipac.astro.ned.NedObject;
 import edu.caltech.ipac.astro.ned.NedReader;
 import edu.caltech.ipac.astro.ned.NedResultSet;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.HostPort;
 import edu.caltech.ipac.client.net.NetworkManager;

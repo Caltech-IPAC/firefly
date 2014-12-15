@@ -7,7 +7,7 @@ import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.CacheHelper;
 import edu.caltech.ipac.client.net.DownloadListener;
 import edu.caltech.ipac.client.net.FailedRequestException;

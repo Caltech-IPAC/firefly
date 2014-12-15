@@ -1,6 +1,6 @@
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;

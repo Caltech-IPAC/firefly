@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.util;
 
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.AppProperties;
@@ -333,7 +333,7 @@ public class Logger {
 
 
     @IgnoreStackEntry
-    public static class ClientLogImpl implements edu.caltech.ipac.client.ClientLog.Logger {
+    public static class ClientLogImpl implements ClientLog.Logger {
 
         public void log(boolean showMethodName, ClientLog.MessageType level, String... messages) {
 

@@ -6,7 +6,7 @@ import VizieRBeta_pkg.VizieRBetaServiceLocator;
 import VizieRBeta_pkg.VizieRCriteria;
 import VizieRBeta_pkg.VizieRFilter;
 import VizieRBeta_pkg.VizieRTarget;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.FailedRequestException;
 import edu.caltech.ipac.client.net.HostPort;
 import edu.caltech.ipac.client.net.NetworkManager;

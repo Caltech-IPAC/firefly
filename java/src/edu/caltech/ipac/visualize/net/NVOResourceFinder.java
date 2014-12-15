@@ -2,7 +2,7 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.client.ClientLog;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.client.net.*;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;

@@ -1,7 +1,6 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.data.DataConst;
 import edu.caltech.ipac.target.TargetUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
@@ -448,9 +447,9 @@ public class AreaStatisticsUtil {
         ImageWorkSpacePt minIp = new ImageWorkSpacePt(minimumX, minimumY);
         metrics.put(Metrics.MIN, new Metric("Minimum Flux", minIp, minimumFlux, fluxUnits));
         ImageWorkSpacePt centroidIp = new ImageWorkSpacePt(xCentroid, yCentroid);
-        metrics.put(Metrics.CENTROID, new Metric("Aperture Centroid", centroidIp, DataConst.NULL_DOUBLE, null));
+        metrics.put(Metrics.CENTROID, new Metric("Aperture Centroid", centroidIp, Metric.NULL_DOUBLE, null));
         ImageWorkSpacePt fwCentroidIp = new ImageWorkSpacePt(xfCentroid, yfCentroid);
-        metrics.put(Metrics.FW_CENTROID, new Metric("Flux Weighted Centroid", fwCentroidIp, DataConst.NULL_DOUBLE, null));
+        metrics.put(Metrics.FW_CENTROID, new Metric("Flux Weighted Centroid", fwCentroidIp, Metric.NULL_DOUBLE, null));
 
         metrics.put(Metrics.MEAN, new Metric("Mean Flux", null, averageFlux, fluxUnits));
         metrics.put(Metrics.STDEV, new Metric("Standard Deviation", null, stdev, fluxUnits));
