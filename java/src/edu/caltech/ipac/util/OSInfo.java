@@ -177,9 +177,9 @@ public class OSInfo {
        System.out.println("platform:     " + getRecognizedPlatform() );
        System.out.println("OS name:      " + getOSName() );
        System.out.println("Base OS type: " + getBaseOStype() );
-       System.out.println("jar dir:      " + Installer.findDirWithJars() );
-       System.out.println("install root: "  + 
-                               Installer.deriveInstallationRoot());
+//       System.out.println("jar dir:      " + Installer.findDirWithJars() );
+//       System.out.println("install root: "  +
+//                               Installer.deriveInstallationRoot());
    }
 }
 /*

@@ -191,7 +191,7 @@ public class IpacTableUtil {
     }
 
     public static void guessDataType(DataType type, String rval) {
-        if (StringUtil.isEmpty(rval)) return;
+        if (StringUtils.isEmpty(rval)) return;
 
         try {
             Integer.parseInt(rval);

@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -14,7 +12,6 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -94,7 +91,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
 
     protected void requiredPostFileCacheParam(MultiPartPostBuilder builder, String name, String cacheID) throws EndUserException {
         boolean badParam = true;
-        if (!StringUtil.isEmpty(cacheID)) {
+        if (!StringUtils.isEmpty(cacheID)) {
             File uploadFile = VisContext.convertToFile(cacheID);
             if (uploadFile.canRead()) {
                 requiredPostParam(builder, name, uploadFile);
@@ -119,7 +116,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     }
 
     protected void requiredPostParam(MultiPartPostBuilder builder, String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             builder.addParam(name, value);
 
         } else {
@@ -133,7 +130,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     }
 
     protected void optionalPostParam(MultiPartPostBuilder builder, String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             builder.addParam(name, value);
         }
     }
@@ -149,7 +146,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     }
 
     protected static void requiredParam(StringBuffer sb, String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
 
         } else {
@@ -163,7 +160,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     }
 
     protected static void optionalParam(StringBuffer sb, String name, String value) {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
         }
     }

@@ -296,9 +296,15 @@ public class StringUtils {
         return false;
     }
 
+
+
     public static boolean hasContent(String s) {
         return !isEmpty(s);
     }
+
+
+
+
 
     /**
      * Returns true is the given string is either null, or an empty string.

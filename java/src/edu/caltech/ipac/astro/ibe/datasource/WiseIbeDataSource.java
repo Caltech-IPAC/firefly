@@ -5,7 +5,6 @@ import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -239,7 +238,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
 
                 } else {
                     // workaround:
-                    if ( StringUtil.isEmpty(queryInfo.get("radius"))) {
+                    if ( StringUtils.isEmpty(queryInfo.get("radius"))) {
                         queryParam.setSize(queryInfo.get("size"));
                     } else {
                         queryParam.setSize(queryInfo.get("radius"));

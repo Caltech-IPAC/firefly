@@ -15,7 +15,7 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -69,7 +69,7 @@ public class Query2MassSIA extends QueryVOTABLE  {
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 
         String ds = req.getParam(DS_KEY);
-        if (StringUtil.isEmpty(ds)) { ds = "asky"; }
+        if (StringUtils.isEmpty(ds)) { ds = "asky"; }
 
         String type = req.getParam(TYPE_KEY);
         String hem = req.getParam(HEM_KEY);
@@ -82,10 +82,10 @@ public class Query2MassSIA extends QueryVOTABLE  {
         double radDeg = MathUtil.convert(MathUtil.Units.parse(req.getParam(CatalogRequest.RAD_UNITS), MathUtil.Units.DEGREE), MathUtil.Units.DEGREE, radVal);
 
         return TM_URL + "&ds=" + ds
-                + ((StringUtil.isEmpty(type) || type.equals("at")) ? "" : "&type=" + type)
+                + ((StringUtils.isEmpty(type) || type.equals("at")) ? "" : "&type=" + type)
                 + "&SIZE=" + radDeg + "&POS=" + wpt.getLon() + "," + wpt.getLat()
-                + ((StringUtil.isEmpty(hem) || hem.equals("a")) ? "" : "&hem=" + hem)
-                + ((StringUtil.isEmpty(band) || band.equals("A")) ? "" : "&band=" + band)
+                + ((StringUtils.isEmpty(hem) || hem.equals("a")) ? "" : "&hem=" + hem)
+                + ((StringUtils.isEmpty(band) || band.equals("A")) ? "" : "&band=" + band)
                 + (xdate == null ? "" : "&xdate="+(new SimpleDateFormat("yyMMdd")).format(xdate))
                 + (scan == -1 ? "" : "&scan="+scan)
                 ;

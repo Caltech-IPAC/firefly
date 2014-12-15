@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -103,13 +102,13 @@ public class BackgroundEnv {
             BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
             BackgroundStatus bgStat= pi.getStatus();
             if (bgStat!=null && bgStat.hasAttribute(JobAttributes.CanSendEmail)) {
-                if (StringUtil.isEmpty(email)) {
+                if (StringUtils.isEmpty(email)) {
                     email= pi.getEmailAddress();
                 }
                 else {
                     pi.setEmailAddress(email);
                 }
-                if (!StringUtil.isEmpty(email)) {
+                if (!StringUtils.isEmpty(email)) {
                     if (bgStat.getBackgroundType()== BackgroundStatus.BgType.PACKAGE) { // TODO: remove this if when we can support email in a more general way
                         PackagedEmail.send(email, pi);
                     }

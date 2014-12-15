@@ -23,7 +23,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataGroupQuery;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedOutputStream;
@@ -292,7 +291,7 @@ public abstract class BaseGator extends DynQueryProcessor {
     }
 
     protected static void requiredParam(StringBuffer sb, String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
         } else {
             throw new EndUserException("IRSA search failed, Catalog is unavailable",
@@ -312,7 +311,7 @@ public abstract class BaseGator extends DynQueryProcessor {
 
 
     protected void requiredPostParam(String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             postParam(name, value);
         } else {
             throw new EndUserException("IRSA search failed, Catalog is unavailable",
@@ -332,7 +331,7 @@ public abstract class BaseGator extends DynQueryProcessor {
     protected void requiredPostFileCacheParam(String name, String cacheID) throws EndUserException {
         boolean badParam = true;
 
-        if (!StringUtil.isEmpty(cacheID)) {
+        if (!StringUtils.isEmpty(cacheID)) {
             File uploadFile = VisContext.convertToFile(cacheID);
             if (uploadFile.canRead()) {
                 requiredPostParam(name, uploadFile);
@@ -347,7 +346,7 @@ public abstract class BaseGator extends DynQueryProcessor {
 
 
     protected static void optionalParam(StringBuffer sb, String name, String value) {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
         }
     }
@@ -359,7 +358,7 @@ public abstract class BaseGator extends DynQueryProcessor {
 
 
     protected void optionalPostParam(String name, String value) {
-        if (!StringUtil.isEmpty(value)) postParam(name, value);
+        if (!StringUtils.isEmpty(value)) postParam(name, value);
     }
 
     protected void optionalPostParam(String name, boolean value) {

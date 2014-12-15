@@ -19,7 +19,7 @@ import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -61,9 +61,9 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
     protected String getFilePrefix(TableServerRequest request) {
         String ds;
         String dataset = request.getParam("dataset");
-        if (!StringUtil.isEmpty(dataset)) {
+        if (!StringUtils.isEmpty(dataset)) {
             ds = dataset.replace("ivo://irsa.ipac/","");
-            if (!StringUtil.isEmpty(ds)) { ds += "-"; }
+            if (!StringUtils.isEmpty(ds)) { ds += "-"; }
         }
         return "rtree-"+"ds";
     }
@@ -71,7 +71,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
 
     protected String getQueryString(TableServerRequest req) throws DataAccessException {
         String serviceurl = req.getParam(SERVICE_URL_KEY);
-        if (StringUtil.isEmpty(serviceurl)) {
+        if (StringUtils.isEmpty(serviceurl)) {
             throw new DataAccessException("could not find the parameter: " +SERVICE_URL_KEY);
         }
 
@@ -82,7 +82,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 
         String dataset = req.getParam(DATASET_KEY);
-        if (StringUtil.isEmpty(dataset)) {
+        if (StringUtils.isEmpty(dataset)) {
             throw new DataAccessException("could not find the parameter: " + DATASET_KEY);
         }
 

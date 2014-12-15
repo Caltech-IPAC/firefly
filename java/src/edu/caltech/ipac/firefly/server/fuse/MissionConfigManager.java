@@ -22,7 +22,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynTagMapper;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Ref;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -71,7 +71,7 @@ public class MissionConfigManager {
             SpacialTypeTag spacialTypes = dstag.getSpacialTypes();
             if (spacialTypes != null) {
                 // catalogs
-                if (!StringUtil.isEmpty(spacialTypes.getCatalog())) {
+                if (!StringUtils.isEmpty(spacialTypes.getCatalog())) {
                     String[] vals = spacialTypes.getCatalog().split(",");
                     types = new HashSet<SpacialType>(vals.length);
                     for (String s : vals) {
@@ -80,7 +80,7 @@ public class MissionConfigManager {
                     dsi.setCatSpatial(types);
                 }
                 // images
-                if (!StringUtil.isEmpty(spacialTypes.getImageSet())) {
+                if (!StringUtils.isEmpty(spacialTypes.getImageSet())) {
                     String[] vals = spacialTypes.getImageSet().split(",");
                     types = new HashSet<SpacialType>(vals.length);
                     for (String s : vals) {
@@ -89,7 +89,7 @@ public class MissionConfigManager {
                     dsi.setImageSpatial(types);
                 }
                 // spectrum
-                if (!StringUtil.isEmpty(spacialTypes.getSpectrum())) {
+                if (!StringUtils.isEmpty(spacialTypes.getSpectrum())) {
                     String[] vals = spacialTypes.getSpectrum().split(",");
                     types = new HashSet<SpacialType>(vals.length);
                     for (String s : vals) {

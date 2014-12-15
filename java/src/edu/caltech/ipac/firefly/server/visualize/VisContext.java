@@ -551,7 +551,7 @@ public class VisContext {
 
     static private void initVisSearchPath() {
         String path= AppProperties.getProperty(VIS_SEARCH_PATH, null);
-        if (StringUtil.isEmpty(path)) {
+        if (StringUtils.isEmpty(path)) {
             _visSearchPath= new File[0];
             _log.warn("There is no property " + VIS_SEARCH_PATH+ " defined.",
                       "This property is for security and is required to access fits files off the local server disk.",

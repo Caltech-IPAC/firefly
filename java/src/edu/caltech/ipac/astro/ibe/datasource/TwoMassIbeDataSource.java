@@ -5,7 +5,6 @@ import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -168,7 +167,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
 
                 } else {
                     // workaround:
-                    if ( StringUtil.isEmpty(queryInfo.get("radius"))) {
+                    if ( StringUtils.isEmpty(queryInfo.get("radius"))) {
                         queryParam.setSize(queryInfo.get("size"));
                     } else {
                         queryParam.setSize(queryInfo.get("radius"));
@@ -192,12 +191,12 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         String constrStr = "";
 
         String band = queryInfo.get(BAND_KEY);
-        if (!StringUtil.isEmpty(band)&&!band.startsWith("A"))  {
+        if (!StringUtils.isEmpty(band)&&!band.startsWith("A"))  {
             constraints.add("filter=\'"+band.toLowerCase()+"\'");
         }
 
         String hem = queryInfo.get(HEM_KEY);
-        if (!StringUtil.isEmpty(hem)&&!hem.startsWith("a"))  {
+        if (!StringUtils.isEmpty(hem)&&!hem.startsWith("a"))  {
             constraints.add("hemisphere=\'"+hem+"\'");
         }
 

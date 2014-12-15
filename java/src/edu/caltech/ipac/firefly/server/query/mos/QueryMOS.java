@@ -270,7 +270,7 @@ public class QueryMOS extends DynQueryProcessor {
     }
 
     protected static void requiredParam(StringBuffer sb, String name, String value) throws EndUserException {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
 
         } else {
@@ -284,7 +284,7 @@ public class QueryMOS extends DynQueryProcessor {
     }
 
     protected static void optionalParam(StringBuffer sb, String name, String value) {
-        if (!StringUtil.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
         }
     }

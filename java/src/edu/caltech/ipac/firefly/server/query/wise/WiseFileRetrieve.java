@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -327,7 +326,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
         if (!sr.containsParam(WiseRequest.SCHEMA)) sr.setSafeParam(WiseRequest.SCHEMA, DEFAULT_SCHEMA);
-        if (sr.containsParam("subsize") && !StringUtil.isEmpty(sr.getParam("subsize"))) {
+        if (sr.containsParam("subsize") && !StringUtils.isEmpty(sr.getParam("subsize"))) {
             return getCutoutData(sr);
         } else {
             return getNonCutoutData(sr);

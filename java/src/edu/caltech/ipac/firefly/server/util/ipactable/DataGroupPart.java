@@ -4,7 +4,6 @@ import edu.caltech.ipac.firefly.data.HasAccessInfos;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
@@ -155,7 +154,7 @@ public class DataGroupPart implements HasAccessInfos {
 
         public State getStatus() {
             DataGroup.Attribute a = attributes.get(LOADING_STATUS);
-            if (a != null && !StringUtil.isEmpty(a.getValue())) {
+            if (a != null && !StringUtils.isEmpty(a.getValue())) {
                 return State.valueOf(String.valueOf(a.getValue()));
             } else {
                 return State.COMPLETED;
