@@ -22,6 +22,6 @@
     </condition>
 
     <import file="${build.root}/../config/fftools/build.xml"/>
-    <import file="${build.root}/tools/webapp_build_template.xml"/>
+    <import file="${firefly.build.root}/tools/webapp_build_template.xml"/>
 
 </project>

@@ -2,6 +2,7 @@
     <!-- project specific's property -->
     <property name="jars.dir" location="${build.root}/../jars"/>
     <property name="dev.root.dir" location="${build.root}/../.."/>
+    <property name="firefly.build.root" location="${dev.root.dir}/firefly/java"/>
 
     <!-- imports the common.xml build file -->
     <import file="${build.root}/tools/common.xml"/>

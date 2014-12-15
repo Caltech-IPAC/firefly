@@ -76,6 +76,7 @@
             description="launch app using the GWT shell">
     </target>
 
+
     <!--common build targets-->
     <target name="all" depends="webapp-build"/>
     <target name="deploy" depends="webapp-deploy"/>
@@ -85,7 +86,7 @@
     <!-- ================== -->
 
     <target name="firefly">
-        <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false"/>
+        <ant antfile="${firefly.build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false"/>
     </target>
 
     <target name="webapp-setup" depends="init, war.defaults">
