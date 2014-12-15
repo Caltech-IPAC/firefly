@@ -4,12 +4,9 @@ import edu.caltech.ipac.astro.ned.NedException;
 import edu.caltech.ipac.astro.ned.NedObject;
 import edu.caltech.ipac.astro.ned.NedReader;
 import edu.caltech.ipac.astro.ned.NedResultSet;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,19 +15,17 @@ import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
 import java.util.Enumeration;
 
 /**
  * This class handles to get catalogs for NED.
  * @author Michael Nguyen
- * @see edu.caltech.ipac.client.net.ThreadedService
  * @see edu.caltech.ipac.astro.ned.NedReader
  * @see edu.caltech.ipac.astro.ned.NedResultSet
  * @see edu.caltech.ipac.astro.ned.NedObject
  */
 
-public class NedCatalogGetter extends ThreadedService
+public class NedCatalogGetter
 {
   private final static String BACKSLASH = "\\";
   private final static String FIXLEN = BACKSLASH + "fixlen = ";
@@ -74,65 +69,14 @@ public class NedCatalogGetter extends ThreadedService
 
   private final static int NED_OBJECT_TOTAL = _names.length;
 
-  private final static ClassProperties _prop = 
-               new ClassProperties(NedCatalogGetter.class);
 
   // constants
-  private final static int DECIMAL_MAX = 
-     AppProperties.getIntProperty("NedCatalogGetter.precision.max",0);
-  private final static int DECIMAL_MIN = 
-     AppProperties.getIntProperty("NedCatalogGetter.precision.min",0);
   private final static int COL_LENGTH =
      AppProperties.getIntProperty("NedCatalogGetter.column.length",0);
 
-  private final static String   OP_DESC = _prop.getName("desc");
   private static String _maxColumn;
   private static NumberFormat _decimal = new DecimalFormat();
-  private NedCatalogParams _params;
-  private File _outFile;
 
-  /**
-   * constructor
-   * @param params the Ned Catalog Parameters
-   * @param outFile the File
-   */
-  private NedCatalogGetter(NedCatalogParams params, File outFile, Window w)
-  {
-    super(w);
-    char[] maxColumn = new char[COL_LENGTH];
-
-    _params = params;
-    _outFile = outFile;
-    _decimal.setMaximumFractionDigits(DECIMAL_MAX); 
-    _decimal.setMinimumFractionDigits(DECIMAL_MIN); 
-    Arrays.fill(maxColumn, ' ');
-    _maxColumn = new String(maxColumn);
-     setOperationDesc(OP_DESC);
-  }
-
-  /**
-   * get the catalog
-   * @exception Exception
-   */
-  protected void doService() throws Exception
-  {
-    lowlevelGetCatalog(_params, _outFile);
-  }
-
-  /**
-   * get the catalog
-   * @param params the Ned Catalog Parameters
-   * @param outFile the File
-   * @param w the Window
-   * @exception FailedRequestException
-   */
-  public static void getCatalog(NedCatalogParams params,
-                                File outFile, Window w)
-              throws FailedRequestException
-  {
-    NedCatalogGetter action = new NedCatalogGetter(params, outFile,w);
-    action.execute();
-  }
 
   /**
    * get the catalog
@@ -175,7 +119,7 @@ public class NedCatalogGetter extends ThreadedService
    * @param params the Ned Catalog Parameters
    * @param outFile the File
    */  
-  private static void lowlevelGetCatalog(NedResultSet nedObjects, 
+  public static void lowlevelGetCatalog(NedResultSet nedObjects,
 					 NedCatalogParams params, File outFile)
   {
     PrintWriter out = null;

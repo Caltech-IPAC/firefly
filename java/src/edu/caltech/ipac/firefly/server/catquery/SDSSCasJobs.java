@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;

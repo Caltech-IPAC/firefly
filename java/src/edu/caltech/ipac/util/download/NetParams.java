@@ -1,31 +1,11 @@
-package edu.caltech.ipac.client.net;
-/**
- * User: roby
- * Date: 12/4/14
- * Time: 3:55 PM
- */
+package edu.caltech.ipac.util.download;
+
+import edu.caltech.ipac.util.cache.CacheKey;
 
 
-/**
- * @author Trey Roby
- */
-public class FileRetrieveException extends FailedRequestException {
+public interface NetParams extends CacheKey { }
 
-    private final String retrieveServiceID;
-    public FileRetrieveException(String err, String detailErr, String retrieveServiceID) {
-        super(err, detailErr, true, null);
-        this.retrieveServiceID= retrieveServiceID;
-    }
 
-    public FileRetrieveException(String err, String detailErr, Exception e, String retrieveServiceID) {
-        super(err, detailErr, true, e);
-        this.retrieveServiceID= retrieveServiceID;
-    }
-
-    public String getRetrieveServiceID() {
-        return retrieveServiceID;
-    }
-}
 
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
@@ -34,7 +14,7 @@ public class FileRetrieveException extends FailedRequestException {
  * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS 
  * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND, 
  * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR 
- * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312- 2313) 
+ * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312-2313) 
  * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS, 
  * HOWEVER USED.
  * 

@@ -3,7 +3,7 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataParam;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;

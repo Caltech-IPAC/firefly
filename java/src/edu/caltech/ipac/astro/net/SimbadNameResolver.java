@@ -3,16 +3,14 @@ package edu.caltech.ipac.astro.net;
 import edu.caltech.ipac.astro.simbad.SimbadClient;
 import edu.caltech.ipac.astro.simbad.SimbadException;
 import edu.caltech.ipac.astro.simbad.SimbadObject;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.astro.target.ProperMotion;
 import edu.caltech.ipac.astro.target.SimbadAttribute;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
@@ -21,11 +19,9 @@ import java.net.UnknownHostException;
 /**
  * @author Xiuqin Wu, based on Trey Roby's CoordConvert
  */
-public class SimbadNameResolver extends ThreadedService {
+public class SimbadNameResolver {
 
 
-    private String          _in = null;
-    private SimbadAttribute _out= null;
     private final static ClassProperties _prop= new ClassProperties(
                                            SimbadNameResolver.class);
     private static final String SERVER_SCRIPT= _prop.getName("script");
@@ -34,31 +30,6 @@ public class SimbadNameResolver extends ThreadedService {
 
 
 
-
-    private SimbadNameResolver (String objname, Window w) {
-        super(w);
-        setOperationDesc(_prop.getName("desc"));
-        setProcessingDesc(_prop.getName("searching") + objname);
-        _in = objname;
-//        if (USE_SIMBAD4_CLIENT) {
-//            _simbad4Client = new Simbad4Client();
-//        } else {
-////            System.out.println("server: " + _server.getHost()
-////                             + "  script: " + SERVER_SCRIPT);
-//        }
-    }
-
-    protected void doService() throws Exception {
-        _out= lowlevelNameResolver(_in);
-    }
-
-    public static SimbadAttribute getPosition(String objname, Window w)
-                                         throws FailedRequestException {
-        SimbadNameResolver action= new SimbadNameResolver(objname,w);
-        action.execute();
-        System.out.println("SimbadNameResolver: got results");
-        return action._out;
-    }
 
     public static SimbadAttribute lowlevelNameResolver(String objname)
                                          throws  FailedRequestException {

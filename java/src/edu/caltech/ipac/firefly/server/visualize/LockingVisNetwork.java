@@ -1,10 +1,10 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.client.net.BaseNetParams;
-import edu.caltech.ipac.client.net.DownloadEvent;
-import edu.caltech.ipac.client.net.DownloadListener;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.VetoDownloadException;
+import edu.caltech.ipac.util.download.BaseNetParams;
+import edu.caltech.ipac.util.download.DownloadEvent;
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.VetoDownloadException;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
@@ -67,7 +67,7 @@ public class LockingVisNetwork {
             synchronized (lockKey) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
-                edu.caltech.ipac.client.net.FileData fd[] = VisNetwork.getImageSrv(params, dl);
+                edu.caltech.ipac.util.download.FileData fd[] = VisNetwork.getImage(params, dl);
                 File fitsFile = fd[0].getFile();
                 if (unzip) fitsFile = unzip(fitsFile);
                 retval = new FileInfo(fitsFile.getPath(), fd[0].getSugestedExternalName(), fitsFile.length());

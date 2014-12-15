@@ -1,26 +1,24 @@
 package edu.caltech.ipac.visualize.net;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.astro.target.CoordinateSys;
 import edu.caltech.ipac.astro.target.Position;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.astro.target.UserPosition;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.ParseException;
 import edu.caltech.ipac.util.StringUtil;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.draw.FixedObject;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -40,13 +38,10 @@ import java.util.Map;
 
 /**
  */
-public class IspyGetter extends ThreadedService {
+public class IspyGetter {
 
     private static final ClassProperties _prop=new ClassProperties(
                                                    IspyGetter.class);
-    private static final String OP_DESC   =_prop.getName("desc");
-    //private static final String BUILD_DESC=_prop.getName("build");
-    //private static final String LOAD_DESC =_prop.getName("loading");
 
     private static final String CGI_CMD="/x/ispy.cgi";
 
@@ -107,31 +102,9 @@ public class IspyGetter extends ThreadedService {
 
 
 
-    private byte   _out[] = null;
-    private HorizonsIspyParams _params;
-
-    private IspyGetter(HorizonsIspyParams params, Component  c) {
-        super(c);
-	_params = params;
-        setOperationDesc(OP_DESC);
-    }
-
-    protected void doService() throws Exception { 
-        _out = lowlevelGetIspy(_params,this);
-    }
 
 
-
-    public static byte[] getIspy(HorizonsIspyParams params, Component c)
-                                          throws FailedRequestException {
-        IspyGetter action= new IspyGetter(params,  c);
-        action.execute();
-	return action._out;
-    }
-
-
-    public static byte[] lowlevelGetIspy(HorizonsIspyParams params,
-                                         ThreadedService    ts)
+    public static byte[] lowlevelGetIspy(HorizonsIspyParams params)
                                          throws IOException,
                                                 FailedRequestException {
 
@@ -151,7 +124,7 @@ public class IspyGetter extends ThreadedService {
         wr.flush();
         wr.close();
 
-        byte data[]= URLDownload.getDataFromOpenURL(conn, true, ts);
+        byte data[]= URLDownload.getDataFromOpenURL(conn, true, null);
 
         ClientLog.message("Done");
         return data;
@@ -351,7 +324,7 @@ public class IspyGetter extends ThreadedService {
             HorizonsIspyParams params= new HorizonsIspyParams(epoch,
                                           180.717D, -0.875D,600,
                                           HorizonsIspyParams.SIRTF);
-            byte data[]= lowlevelGetIspy(params,null);
+            byte data[]= lowlevelGetIspy(params);
             FixedObjectGroup fixedGroup= parseIspyData(data);
             FileOutputStream out= new FileOutputStream(
                                new File("IspyGetter-data.dat"));

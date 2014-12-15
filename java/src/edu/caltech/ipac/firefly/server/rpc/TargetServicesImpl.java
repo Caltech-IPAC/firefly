@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.astro.simbad.SimbadObject;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.EphPair;
 import edu.caltech.ipac.firefly.rpc.TargetServices;
@@ -31,7 +31,7 @@ public class TargetServicesImpl extends BaseRemoteService implements TargetServi
             retval = (WorldPt) getServletContext().getAttribute(key);
             if (retval == null) {
                 if (resolver.equalsIgnoreCase("NED")) {
-                    PositionJ2000 pos = NedNameResolver.getPositionVOTable(objName, null);
+                    PositionJ2000 pos = NedNameResolver.getPositionVOTable(objName);
                     if (pos != null) {
                         retval = new WorldPt(pos.getLon(), pos.getLat(), CoordinateSys.EQ_J2000);
                         throw new FailedRequestException("NED returns no matches");

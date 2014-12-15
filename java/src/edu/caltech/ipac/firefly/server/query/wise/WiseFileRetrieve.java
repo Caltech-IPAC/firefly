@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.query.wise;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;

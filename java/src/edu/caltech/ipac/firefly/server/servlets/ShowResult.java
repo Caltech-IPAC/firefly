@@ -6,8 +6,8 @@ package edu.caltech.ipac.firefly.server.servlets;
  */
 
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;

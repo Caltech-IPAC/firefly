@@ -1,15 +1,12 @@
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -26,98 +23,17 @@ import java.util.Vector;
  * This class gets Ned fits fi
  * es or list of available images.
 **/
-public class NedImageGetter extends ThreadedService {
+public class NedImageGetter {
 
    protected static final String NED_IMAGES_ARG = "objname";
-   protected static final int    IMAGE_QUERY = 456;
-   protected static final int    IMAGE       = 457;
-   private HostPort           _nedServer=
-             NetworkManager.getInstance().getServer(NetworkManager.NED_SERVER);
-   private NedImageParams   _imageParams;
-   private NedImQueryParams _queryParams;
-   private File             _outFile;
    private final static ClassProperties _prop=  new ClassProperties(
                                                           NedImageGetter.class);
-   private final static String   OP_DESC         = _prop.getName("desc");
    private final static String   HTML_PARSE_ERROR= _prop.getError("noImages");
    private final static String   NO_OBJECT_ERR   = _prop.getError("noObject");
-   private static final String   QUERY_DESC = _prop.getName("query");
-   private static final String   SEARCH_DESC= _prop.getName("searching");
-   private static final String   LOAD_DESC= _prop.getName("loading");
    private final static String   NED_NO_OBJECT_ERR=
        "does not seem to match any catalogue in the EXTRAGALACTIC database";
-   private int _typeOfService;
-   private AstroImageInformation _imageInfo[];
-
-   private NedImageGetter(NedImageParams params, 
-                          File           outFile, 
-                          Window         w) {
-       super(w);
-       _imageParams = params;
-       _outFile= outFile;
-       _typeOfService= IMAGE;
-       setOperationDesc(OP_DESC);
-       setProcessingDesc(SEARCH_DESC);
-   }
-
-   private NedImageGetter(NedImQueryParams params, Window w) {
-       super(w);
-       _queryParams = params;
-       _typeOfService= IMAGE_QUERY;
-       setOperationDesc(OP_DESC);
-       setProcessingDesc(QUERY_DESC);
-   }
-
-   protected void doService() throws Exception { 
-        Assert.tst( _typeOfService==IMAGE || _typeOfService==IMAGE_QUERY);
-        if (_typeOfService==IMAGE) {
-           Assert.tst(_imageParams);
-           lowlevelGetNedImage(_nedServer.getHost(), _imageParams, 
-                               _outFile,this); 
-        }
-        else if (_typeOfService==IMAGE_QUERY) {
-           Assert.tst(_queryParams);
-           _imageInfo= lowlevelQueryNedImages(_nedServer.getHost(),
-                                              _queryParams); 
-        }
-   }
-
-   public static void getNedImage(NedImageParams params, 
-                                  File           outFile,
-                                  Window         w)
-                                         throws FailedRequestException {
-       NedImageGetter action= new NedImageGetter(params, outFile,w);
-       action.execute(true);
-   }
-
-  /*
-   * Get a list of images that NED has for this target.
-   * It is worth noting here that NED does the look up on the name and not the
-   * RA/DEC of the target.  If the RA/DEC is corrent but the user names his
-   * target a different name than NED, then NED  will not find any images.
-   * 
-   * @return AstroImageInformation[] an array of objects that contain NED
-   * data.
-   */
-   public static AstroImageInformation [] queryNedImages(
-                                                 NedImQueryParams params, 
-                                                 Window           w) 
-                                             throws FailedRequestException {
-       NedImageGetter action= new NedImageGetter(params,w);
-       action.execute(true);
-       return action._imageInfo;
-   }
 
 
-
-
-//   public static AstroImageInformation [] lowlevelQueryNedImages(
-//                                                String           nedHost,
-//                                                NedImQueryParams params)
-//                                           throws FailedRequestException,
-//                                                  IOException {
-//       return lowlevelQueryNedImages(nedHost, params,null);
-//    }
     public static AstroImageInformation [] lowlevelQueryNedImages(
                                                 String           nedHost,
                                                 NedImQueryParams params)
@@ -136,14 +52,6 @@ public class NedImageGetter extends ThreadedService {
                                            File           outFile) 
                                            throws FailedRequestException,
                                                   IOException {
-       lowlevelGetNedImage(nedHost, params,outFile, null);
-    }
-    public static void lowlevelGetNedImage(String           nedHost, 
-                                           NedImageParams   params, 
-                                           File             outFile,
-                                           ThreadedService  ts )
-                                           throws FailedRequestException,
-                                                  IOException {
       ClientLog.message("Retrieving Ned image");
       try  {
          URL url  = new URL( "http://" + nedHost + params.getURL());
@@ -155,8 +63,7 @@ public class NedImageGetter extends ThreadedService {
                throw new FailedRequestException( "Ned request Failed");
          }
 
-         if (ts!=null) ts.setProcessingDesc(LOAD_DESC);
-         URLDownload.getDataToFile(conn, outFile, ts);
+         URLDownload.getDataToFile(conn, outFile, null);
       } catch (MalformedURLException me){
           ClientLog.message(me.toString());
           throw new FailedRequestException("Service failed", 

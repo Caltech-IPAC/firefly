@@ -1,4 +1,4 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.cache.Cache;

@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.PlotState;

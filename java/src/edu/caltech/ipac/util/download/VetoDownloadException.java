@@ -1,10 +1,19 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
 
-import edu.caltech.ipac.util.cache.CacheKey;
+/**
+ * This exception is thrown when a download is stop.
+ * @author Trey Roby
+ */
+public class VetoDownloadException extends Exception {
 
-
-public interface NetParams extends CacheKey { }
-
+    /**
+     * Create a new VetoDownload Exception.
+     * @param mess the error message.
+     */
+    public VetoDownloadException(String mess) {
+        super(mess); 
+    }
+}
 
 
 /*

@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;

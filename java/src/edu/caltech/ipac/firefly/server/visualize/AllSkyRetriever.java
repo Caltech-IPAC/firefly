@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
 import edu.caltech.ipac.visualize.plot.GeomException;

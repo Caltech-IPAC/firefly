@@ -1,20 +1,17 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.CacheHelper;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.FileRetrieveException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileRetrieveException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.VoTableUtil;
-import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,52 +23,10 @@ import java.net.URLConnection;
  * @author Trey Roby
  * @version $Id: SloanDssImageGetter.java,v 1.4 2012/08/21 21:30:41 roby Exp $
  */
-public class SloanDssImageGetter extends ThreadedService {
-
-    private SloanDssImageParams _params;
-    private File _outFile;
-    private static final ClassProperties _prop = new ClassProperties(
-            SloanDssImageGetter.class);
-    private static final String OP_DESC = _prop.getName("desc");
-    private static final String SEARCH_DESC = _prop.getName("searching");
-    private static final String LOAD_DESC = _prop.getName("loading");
-
-
-    /**
-     * @param params  the parameter for the query
-     * @param outFile file to write to
-     * @param w       a Window
-     */
-    private SloanDssImageGetter(SloanDssImageParams params, File outFile, Window w) {
-        super(w);
-        _params = params;
-        _outFile = outFile;
-        setOperationDesc(OP_DESC);
-        setProcessingDesc(SEARCH_DESC);
-    }
-
-    protected void doService() throws Exception {
-        lowlevelGetSloanDssImage(_params, _outFile, this);
-    }
-
-    public static void getSloanDssImage(SloanDssImageParams params,
-                                        File outFile,
-                                        Window w) throws FailedRequestException {
-
-        SloanDssImageGetter action = new SloanDssImageGetter(params, outFile, w);
-        action.execute(true);
-    }
-
+public class SloanDssImageGetter {
 
     public static void lowlevelGetSloanDssImage(SloanDssImageParams params,
                                                 File outFile) throws FailedRequestException,
-                                                                     IOException {
-        lowlevelGetSloanDssImage(params, outFile, null);
-    }
-
-    public static void lowlevelGetSloanDssImage(SloanDssImageParams params,
-                                                File outFile,
-                                                ThreadedService ts) throws FailedRequestException,
                                                                            IOException {
         ClientLog.message("Retrieving Sloan Dss image");
 
@@ -93,26 +48,25 @@ public class SloanDssImageGetter extends ThreadedService {
                 URLDownload.logHeader(conn);
 
                 if (statusCode!=200) {
-                    String htmlErr = URLDownload.getStringFromOpenURL(conn, ts);
+                    String htmlErr = URLDownload.getStringFromOpenURL(conn, null);
                     throw new FailedRequestException(
                             htmlErr,
                             "The SDss server is reporting an error", null);
                 }
 
-                if (ts != null) ts.setProcessingDesc(LOAD_DESC);
                 //todo
 
                 //----------------
 
                 String newfile= qParam.getUniqueString() + ".xml";
                 f= CacheHelper.makeFile(newfile);
-                URLDownload.getDataToFile(conn, f, ts);
+                URLDownload.getDataToFile(conn, f, null);
             }
             DataGroup dgAry[]= VoTableUtil.voToDataGroups(f.getAbsolutePath());
             DataGroup dataGroup= dgAry[0];
             if (dataGroup.size() >0) {
                 String urlString= (String)dataGroup.get(0).getDataElement("url");
-                URLDownload.getDataToFile(new URL(urlString), outFile, ts, false, true);
+                URLDownload.getDataToFile(new URL(urlString), outFile, null, false, true);
             }
             else {
                 throw new FileRetrieveException("Area not covered",

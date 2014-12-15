@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;

@@ -1,13 +1,11 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.astro.target.PTFAttribute;
 import edu.caltech.ipac.astro.target.PositionJ2000;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Base64;
 
-import java.awt.Window;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -16,42 +14,17 @@ import java.net.URL;
 /**
  * @author Xiuqin Wu, based on Trey Roby's CoordConvert
  */
-public class PTFNameResolver extends ThreadedService {
+public class PTFNameResolver {
 
     private static final String CGI_CMD="http://ptf.caltech.edu/cgi-bin/ptf/transient/name_radec.cgi?name=";
 
-    private final static String OP_DESC = "Ned Name Resolver";
-    private final static String PROC_DESC = "Searching for Name: ";
 
     private final static String UNAME= "irsaquery";
     private final static String PWD= "iptf333";
 
-   private String _in = null;
-   private PTFAttribute _out = null;
 
-   private PTFNameResolver(String objname, Window w) {
-      super(w);
-      setOperationDesc(OP_DESC);
-      setProcessingDesc(PROC_DESC + objname);
-      _in = objname;
-   }
 
-   protected void doService() throws Exception {
-      _out = lowlevelNameResolver(_in, this);
-   }
-
-   public static PTFAttribute getPosition(String objname, Window w)
-           throws FailedRequestException {
-       PTFNameResolver action = new PTFNameResolver(objname, w);
-       action.execute();
-       return action._out;
-   }
-
-   public static PTFAttribute lowlevelNameResolver(String objname)  throws FailedRequestException {
-       return lowlevelNameResolver(objname,null);
-   }
-
-   public static PTFAttribute lowlevelNameResolver(String objname, ThreadedService ts) throws  FailedRequestException {
+   public static PTFAttribute lowlevelNameResolver(String objname) throws  FailedRequestException {
       PositionJ2000 positionOut = null;
 
        PTFAttribute pa;
@@ -62,7 +35,7 @@ public class PTFNameResolver extends ThreadedService {
 
            String authStringEnc = Base64.encode(UNAME + ":" + PWD);
            conn.setRequestProperty("Authorization", "Basic " + authStringEnc);
-           String obj= URLDownload.getStringFromOpenURL(conn,ts);
+           String obj= URLDownload.getStringFromOpenURL(conn,null);
            if (obj.endsWith("\n")) {
                obj= obj.substring(0,obj.indexOf("\n"));
            }

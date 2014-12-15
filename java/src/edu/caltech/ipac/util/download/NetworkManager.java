@@ -1,11 +1,8 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ClientLog;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +11,7 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: NetworkManager.java,v 1.9 2012/07/30 23:34:39 roby Exp $
  */
-public class NetworkManager implements PropertyChangeListener {
+public class NetworkManager {
 
    public static final String MISSION_SERVER        = "MissionServer";
    public static final String MISSION_SECURE_SERVER = "MissionSecureServer";
@@ -38,7 +35,6 @@ public class NetworkManager implements PropertyChangeListener {
 
      private static NetworkManager _theInstance= null;
      private Map<String,HostPort> _servers   = new HashMap<String,HostPort>(11);
-     private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
      private boolean  _logAdds = false;
 
      protected NetworkManager() {
@@ -66,8 +62,6 @@ public class NetworkManager implements PropertyChangeListener {
        addServerWithProp(SPIZTER_POPULAR,      "data.spitzer.caltech.edu",80);
        addServerWithProp(HORIZONS_NAIF,        "ssd.jpl.nasa.gov"          ,80);
        addServerWithProp(SDSS_SERVER,          "cas.sdss.org"             ,80);
-       //ProxySetupDialog.setupProxyFromSavedProperties();
-       AppProperties.addPropertyChangeListener(this);
      }
 
      public static NetworkManager getInstance() {
@@ -95,35 +89,6 @@ public class NetworkManager implements PropertyChangeListener {
      public HostPort getServer(String serverName) {
          return _servers.get(serverName);
      }
-
-
-
-
-//===================================================================
-//-------------------------- PropertyChangeListener Interface -------
-//===================================================================
-    public void propertyChange(PropertyChangeEvent ev) {
-    }
-
-//===================================================================
-//--------------- Public Add / Remove Property Change Methods -------
-//===================================================================
-
-    /**
-     * Add a property changed listener.
-     * @param p PropertyChangeListener the listener
-     */
-    public void addPropertyChangeListener (PropertyChangeListener p) {
-       _propChange.addPropertyChangeListener (p);
-    }
-
-    /**
-     * Remove a property changed listener.
-     * @param p PropertyChangeListener  the listener
-     */
-    public void removePropertyChangeListener (PropertyChangeListener p) {
-       _propChange.removePropertyChangeListener (p);
-    }
 
 
 //===================================================================

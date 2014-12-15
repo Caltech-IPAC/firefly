@@ -1,21 +1,24 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
 
-import java.util.EventListener;
 
 /**
- * A listener that is called durring a download with status
  * @author Trey Roby
+ * @version $Id: HostPort.java,v 1.2 2005/12/08 22:30:43 tatianag Exp $
  */
-public interface DownloadListener extends EventListener {
-    public abstract void dataDownloading(DownloadEvent ev);
-    public abstract void beginDownload(DownloadEvent ev);
-    public abstract void downloadCompleted(DownloadEvent ev);
-    public abstract void downloadAborted(DownloadEvent ev);
-    public abstract void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException;
+public class HostPort {
+    private String   _host;
+    private int      _port;
+
+    public HostPort(String host, int port) {
+         _host= host;
+         _port= port;
+    }
+    public int    getPort() { return _port; }
+    public String getHost() { return _host; }
+    public String toString(){
+       return      "Server Host: " + _host + ":" + _port;
+    }
 }
-
-
-
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 

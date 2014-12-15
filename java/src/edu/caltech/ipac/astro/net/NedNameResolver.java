@@ -1,16 +1,10 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.astro.ned.NedException;
-import edu.caltech.ipac.astro.ned.NedObject;
-import edu.caltech.ipac.astro.ned.NedReader;
-import edu.caltech.ipac.astro.ned.NedResultSet;
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.astro.target.NedAttribute;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.visualize.draw.FixedObject;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
@@ -21,109 +15,20 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.xmlbeans.XmlOptions;
 import org.usVo.xml.voTable.VOTABLEDocument;
 
-import java.awt.Window;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.util.Enumeration;
 import java.util.HashMap;
 
 
 /**
  * @author Xiuqin Wu, based on Trey Roby's CoordConvert
  */
-public class NedNameResolver extends ThreadedService {
+public class NedNameResolver {
 
    private static final String CGI_CMD="/cgi-bin/nph-objsearch?extend=no&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=xml_main&zv_breaker=30000.0&list_limit=1&img_stamp=NO&objname=";
 
-   private final static String OP_DESC = "Ned Name Resolver";
-   private final static String PROC_DESC = "Searching for Name: ";
 
-   private String _in = null;
-   private boolean _useVOTable;
-   private NedAttribute _out = null;
-   private NedReader _nedReader = null;
-
-   private NedNameResolver(String objname, Window w, boolean useVOTable) {
-      super(w);
-      setOperationDesc(OP_DESC);
-      setProcessingDesc(PROC_DESC + objname);
-      _in = objname;
-      _useVOTable = useVOTable;
-      if (!_useVOTable) _nedReader = new NedReader();
-   }
-
-   private NedNameResolver(String objname, Window w) {
-      this(objname, w, false);
-   }
-
-   protected void doService() throws Exception {
-      _out = lowlevelNameResolver(_in);
-
-   }
-
-   public static NedAttribute getPosition(String objname, Window w, boolean useVOTable)
-           throws FailedRequestException {
-      NedNameResolver action = new NedNameResolver(objname, w,useVOTable);
-      action.execute();
-      return action._out;
-   }
-
-   public static NedAttribute getPosition(String objname, Window w)
-           throws FailedRequestException {
-      return getPosition(objname, w, false);
-   }
-
-   public NedAttribute lowlevelNameResolver(String objname)
-           throws ClassNotFoundException,
-           FailedRequestException {
-      NedResultSet nedResult;
-      PositionJ2000 positionOut = null;
-
-      if (_useVOTable)
-         positionOut = getPositionVOTable(objname, this);
-      else {
-         nedResult = getNedResult(objname);
-
-         if (nedResult.size() > 0) {
-            Enumeration elements = nedResult.elements();
-            NedObject nObject = (NedObject) elements.nextElement();
-            positionOut = new PositionJ2000(nObject.getRA(), nObject.getDec());
-         } else {
-         throw new FailedRequestException("No NED object returned");
-         }
-      }
-
-      NedAttribute na = new NedAttribute(positionOut);
-      return na;
-   }
-
-   public NedResultSet getNedResult(String objname) throws FailedRequestException {
-
-      NedResultSet nedResult;
-      try {
-         _nedReader.connect();
-         nedResult = _nedReader.searchByName(objname);
-         _nedReader.disconnect();
-      }
-      catch (NedException ne) {
-         throw new FailedRequestException(
-                 "NED did not find the object: " + objname,
-                 ne.getMessage(), ne);
-      }
-      catch (UnknownHostException uhe) {
-         throw new FailedRequestException(
-                 " NED Service Unavailable", null, uhe);
-      }
-      catch (IOException ioe) {
-         throw new FailedRequestException(
-                 "NED Service Unavailable", null, ioe);
-      }
-      return nedResult;
-   }
-
-   public static PositionJ2000 getPositionVOTable(String objname, ThreadedService ts ) throws FailedRequestException {
+   public static PositionJ2000 getPositionVOTable(String objname) throws FailedRequestException {
       PositionJ2000 pos = null;
       ClientLog.message("Requesting name resolution for \"" +
             objname + "\"...");
@@ -139,7 +44,7 @@ public class NedNameResolver extends ThreadedService {
 
            URL url = new URL(urlStr);
 
-           String data = URLDownload.getStringFromURL(url, ts);
+           String data = URLDownload.getStringFromURL(url, null);
            // System.out.println(data);
 
            XmlOptions xmlOptions = new XmlOptions();

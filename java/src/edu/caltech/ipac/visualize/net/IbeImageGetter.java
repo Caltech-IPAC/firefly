@@ -9,18 +9,15 @@ import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.CacheHelper;
-import edu.caltech.ipac.client.net.DownloadListener;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,59 +27,7 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: DssImageGetter.java,v 1.9 2012/08/21 21:30:41 roby Exp $
  */
-public class IbeImageGetter extends  ThreadedService {
-
-    private BaseIrsaParams _params;
-    private File           _outFile;
-    private static final ClassProperties _prop= new ClassProperties(
-                                                  IbeImageGetter.class);
-    private static final String   OP_DESC_WISE= _prop.getName("desc.wise");
-    private static final String   OP_DESC_2MASS= _prop.getName("desc.2mass");
-    private static final String   SEARCH_DESC= _prop.getName("searching");
-    private static final String   LOAD_DESC= _prop.getName("loading");
-
-
-    /**
-     * @param params the parameter for the query
-     * @param outFile file to write to
-     * @param w a Window
-     */
-    private IbeImageGetter(BaseIrsaParams params, File outFile, Window w) {
-        super(w);
-       _params = params;
-       _outFile= outFile;
-       if (params instanceof WiseImageParams) {
-           setOperationDesc(OP_DESC_WISE);
-       }
-       else if (params instanceof IrsaImageParams) {
-           IrsaImageParams p= (IrsaImageParams)params;
-           switch (p.getType()) {
-               case TWOMASS:
-                   setOperationDesc(OP_DESC_2MASS);
-                   break;
-               case ISSA:
-               case IRIS:
-               case MSX:
-                    setOperationDesc("IRSA Image");
-                   break;
-           }
-       }
-       setProcessingDesc(SEARCH_DESC);
-    }
-
-    protected void doService() throws Exception { 
-        lowlevelGetIbeImage(_params, _outFile, this);
-    }
-
-    public static void getIbeImage(BaseIrsaParams params,
-                                   File           outFile,
-                                   Window         w,
-                                   boolean        moreCallsComming)
-                                         throws FailedRequestException {
-       IbeImageGetter action= new IbeImageGetter(params, outFile,w);
-        action.setMoreRequestComming(moreCallsComming);
-       action.execute(true);
-    }
+public class IbeImageGetter {
 
     public static void lowlevelGetIbeImage(BaseIrsaParams params,
                                            File           outFile) 

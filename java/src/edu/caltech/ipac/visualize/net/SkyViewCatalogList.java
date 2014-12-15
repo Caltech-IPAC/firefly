@@ -1,17 +1,15 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,14 +17,14 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Trey Roby
  * @version $Id: SkyViewCatalogList.java,v 1.4 2007/10/22 20:01:01 roby Exp $
  */
-public class SkyViewCatalogList extends  ThreadedService {
+public class SkyViewCatalogList {
 
     private static final ClassProperties _prop= new ClassProperties(
                                                   SkyViewCatalogList.class);
@@ -45,72 +43,31 @@ public class SkyViewCatalogList extends  ThreadedService {
     private SurveyEntry  _skyviewSurvey[]  = null;
     private SearchType   _searchType;
 
-    private SkyViewCatalogList(Window w, SearchType searchType) {
-       super(STANDARD,  w);
-       setOperationDesc(OP_DESC);
-       _searchType= searchType;
-    }
-
-    protected void doService() throws Exception { 
-        if (_searchType==SearchType.HEASARC_CATALOGS) {
-            _skyviewCatalog= lowlevelGetCatalogList(this, _searchType);
-        }
-        else if (_searchType==SearchType.VIZIER_CATALOGS) {
-            _skyviewCatalog= lowlevelGetCatalogList(this, _searchType);
-        }
-        else if (_searchType==SearchType.SKYVIEW_SURVEYS) {
-            _skyviewSurvey= lowlevelGetSurveyList(this); 
-        }
-        else {
-            Assert.tst(false);
-        }
-    }
 
 
-    public static CatalogEntry[] getCatalogList(Window w, SearchType searchType)
-                                           throws FailedRequestException {
-        Assert.argTst(searchType==SearchType.HEASARC_CATALOGS ||
-                      searchType==SearchType.VIZIER_CATALOGS,
-                      "search type must be either HEASARC_CATALOGS or VIZIER_CATALOGS");
-       SkyViewCatalogList action= new SkyViewCatalogList(w,searchType);
-       action.execute(true);
-       return action._skyviewCatalog;
-    }
-
-    public static SurveyEntry[] getSurveyList(Window w) 
-                                           throws FailedRequestException {
-       SkyViewCatalogList action= new SkyViewCatalogList(w,SearchType.SKYVIEW_SURVEYS);
-       action.execute(true);
-       return action._skyviewSurvey;
-    }
-
-
-
-    public static CatalogEntry[] lowlevelGetCatalogList(ThreadedService ts,
-                                                        SearchType searchType)
+    public static CatalogEntry[] lowlevelGetCatalogList(SearchType searchType)
                                            throws FailedRequestException,
                                                   IOException {
         Assert.argTst(searchType==SearchType.HEASARC_CATALOGS ||
                       searchType==SearchType.VIZIER_CATALOGS,
                       "search type must be either HEASARC_CATALOGS or VIZIER_CATALOGS");
       ClientLog.message("Retrieving SkyView Catalog List");
-      String results[]= lowlevelGetList(ts, searchType);
+      String results[]= lowlevelGetList(searchType);
       return packageCatalogResults(results);
     }
 
-    public static SurveyEntry[] lowlevelGetSurveyList(ThreadedService ts) 
+    public static SurveyEntry[] lowlevelGetSurveyList()
                                            throws FailedRequestException,
                                                   IOException {
       ClientLog.message("Retrieving SkyView Survey List");
-      String results[]= lowlevelGetList(ts, SearchType.SKYVIEW_SURVEYS);
+      String results[]= lowlevelGetList(SearchType.SKYVIEW_SURVEYS);
       return packageSurveyResults(results);
     }
 
 
 
 
-    public static String[] lowlevelGetList(ThreadedService ts,
-                                           SearchType      searchType)
+    public static String[] lowlevelGetList(SearchType      searchType)
                                            throws FailedRequestException,
                                                   IOException {
 
@@ -141,7 +98,7 @@ public class SkyViewCatalogList extends  ThreadedService {
 //              String req= "http://" + server.getHost() + CAT_STR;
 //              data= URLDownload.getDataFromURL(new URL(req), ts);
               URL url= ClassLoader.getSystemResource(resource);
-              data= URLDownload.getDataFromURL(url, ts);
+              data= URLDownload.getDataFromURL(url, null);
 
 
 
@@ -158,7 +115,7 @@ public class SkyViewCatalogList extends  ThreadedService {
           }
           else if (searchType==SearchType.SKYVIEW_SURVEYS) {
               URL url= ClassLoader.getSystemResource(SUR_REASOURCE);
-              data= URLDownload.getDataFromURL(url, ts);
+              data= URLDownload.getDataFromURL(url, null);
               results= readInfo( new ByteArrayInputStream(data));
           }
           else {
@@ -299,12 +256,12 @@ public class SkyViewCatalogList extends  ThreadedService {
 
    public static void main(String args[]) {
        try {
-          CatalogEntry[] catAry= lowlevelGetCatalogList(null, SearchType.HEASARC_CATALOGS);
+          CatalogEntry[] catAry= lowlevelGetCatalogList(SearchType.HEASARC_CATALOGS);
           for(CatalogEntry entry : catAry) {
                System.out.println(entry.getDescription() + "\t" +
                                   entry.getTable() );
           }
-          SurveyEntry[] surAry= lowlevelGetSurveyList(null);
+          SurveyEntry[] surAry= lowlevelGetSurveyList();
           for(SurveyEntry entry : surAry) {
                System.out.println(entry.getSurveyType() + "\t" +
                                   entry.getSurvey() );

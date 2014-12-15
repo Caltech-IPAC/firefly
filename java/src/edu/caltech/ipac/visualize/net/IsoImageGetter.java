@@ -1,18 +1,16 @@
 package edu.caltech.ipac.visualize.net;
 
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.util.action.ClassProperties;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroupUtils;
 import org.apache.xmlbeans.XmlOptions;
 import org.usVo.xml.voTable.VOTABLEDocument;
 
-import java.awt.Window;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -21,41 +19,10 @@ import java.util.HashMap;
 /**
  * This class gets Ned fits files or list of available images.
  */
-public class IsoImageGetter extends ThreadedService {
+public class IsoImageGetter {
 
 
 	private static final String CGI_CMD = "/aio/jsp/siap.jsp?POS=";
-	private IsoImageListParams _queryParams;
-	private final static ClassProperties _prop = new ClassProperties(
-			IsoImageGetter.class);
-	private final static String OP_DESC = _prop.getName("desc");
-	private static final String QUERY_DESC = _prop.getName("query");
-	private FixedObjectGroup _fixedGroup;
-
-
-	private IsoImageGetter(IsoImageListParams params, Window w) {
-		super(w);
-		_queryParams = params;
-		setOperationDesc(OP_DESC);
-		setProcessingDesc(QUERY_DESC);
-	}
-
-	protected void doService() throws Exception {
-		_fixedGroup = lowlevelSearchForImages(_queryParams, this);
-	}
-
-	/*
-	   * Get a list of images that Iso has for this target.
-	   * @return a FixedObjectGroup with the images
-	   */
-	public static FixedObjectGroup queryIsoImages(IsoImageListParams params,
-	                                              Window w)
-			throws FailedRequestException {
-		IsoImageGetter action = new IsoImageGetter(params, w);
-		action.execute(true);
-		return action._fixedGroup;
-	}
-
 
 	/**
 	 * Searches for all available images for a particular object.
@@ -67,8 +34,7 @@ public class IsoImageGetter extends ThreadedService {
 	 * @param	params the params with the location to search
 	 */
 	public static FixedObjectGroup lowlevelSearchForImages(
-			IsoImageListParams params,
-			ThreadedService ts)
+			IsoImageListParams params)
 			throws FailedRequestException,
 			IOException {
 
@@ -89,7 +55,7 @@ public class IsoImageGetter extends ThreadedService {
 
 			URL url = new URL(urlStr);
 
-			String data = URLDownload.getStringFromURL(url, ts);
+			String data = URLDownload.getStringFromURL(url, null);
 			// System.out.println(data);
 
 			XmlOptions xmlOptions = new XmlOptions();
@@ -136,7 +102,7 @@ public class IsoImageGetter extends ThreadedService {
 
 	public static void main(String args[]) {
 		try {
-			lowlevelSearchForImages(new IsoImageListParams(10, 41), null);
+			lowlevelSearchForImages(new IsoImageListParams(10, 41));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

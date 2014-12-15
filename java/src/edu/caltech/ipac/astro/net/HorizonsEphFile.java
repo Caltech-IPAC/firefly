@@ -1,18 +1,16 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.astro.target.Ephemeris;
 import edu.caltech.ipac.astro.target.NonStandardEphemeris;
 import edu.caltech.ipac.astro.target.StandardEphemeris;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,12 +27,10 @@ import java.util.Date;
  * @author Booth Hartley
  * @version $Id: HorizonsEphFile.java,v 1.8 2012/01/23 22:09:55 roby Exp $
  */
-public class HorizonsEphFile extends ThreadedService {
+public class HorizonsEphFile {
 
     private static final ClassProperties _prop= new ClassProperties(
                                                   HorizonsEphFile.class);
-    private static final String  OP_DESC   = _prop.getName("desc");
-    private static final String  BUILD_DESC= _prop.getName("build");
     private static final String  LOAD_DESC = _prop.getName("loading");
 
     private static final String CGI_CMD= "/x/smb_spk.cgi";
@@ -42,33 +38,9 @@ public class HorizonsEphFile extends ThreadedService {
     private static String suggested_filename;
 
 
-    private byte               _out[] = null;
-    private HorizonsFileParams _params;
-
-    private HorizonsEphFile(HorizonsFileParams params, Window  w) {
-        super(w);
-	_params = params;
-        setOperationDesc(OP_DESC);
-        setProcessingDesc(BUILD_DESC);
-    }
-
-    protected void doService() throws Exception { 
-        _out = lowlevelGetEphFile(_params,this);
-    }
 
 
-
-    public static byte[] getEphFile(HorizonsFileParams params,
-                                    Window             w)
-                                          throws FailedRequestException {
-        HorizonsEphFile action= new HorizonsEphFile(params,  w);
-        action.execute();
-	return action._out;
-    }
-
-
-    public static byte[] lowlevelGetEphFile(HorizonsFileParams params,
-                                            ThreadedService    ts)
+    public static byte[] lowlevelGetEphFile(HorizonsFileParams params)
                                          throws IOException,
                                                 FailedRequestException {
 
@@ -93,7 +65,7 @@ public class HorizonsEphFile extends ThreadedService {
         URLDownload.logHeader(conn);
 
         if (contentType != null && contentType.startsWith("text/")) {
-            String htmlErr= URLDownload.getStringFromOpenURL(conn,ts);
+            String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
             throw new FailedRequestException(
                     htmlErr,
                     "The Horizons server is reporting an error- " +
@@ -104,8 +76,7 @@ public class HorizonsEphFile extends ThreadedService {
         if (SUTDebug.isDebug())
             System.out.println("RBH suggested_filename = " + suggested_filename);
 
-        if (ts!=null) ts.setProcessingDesc(LOAD_DESC);
-        byte retval[]= URLDownload.getDataFromOpenURL(conn, ts);
+        byte retval[]= URLDownload.getDataFromOpenURL(conn, null);
 
 
         ClientLog.message("Done");
@@ -252,7 +223,7 @@ public class HorizonsEphFile extends ThreadedService {
                                                 eph, begin, end,
                                                 HorizonsFileParams.BSP_EXT);
 
-            byte results[]= lowlevelGetEphFile(params,null);
+            byte results[]= lowlevelGetEphFile(params);
             FileOutputStream out= new FileOutputStream(
                                          new File(params.toString()));
             out.write(results);

@@ -6,7 +6,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -71,7 +71,7 @@ public class WebPlotReader {
      * @return the ReadInfo[] object
      * @throws java.io.IOException        any io problem
      * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.client.net.FailedRequestException
+     * @throws edu.caltech.ipac.util.download.FailedRequestException
      *                                    any other problem
      * @throws edu.caltech.ipac.visualize.plot.GeomException
      *                                    problem reprojecting

@@ -10,10 +10,13 @@
     <inherits name="com.google.gwt.xml.XML"/>
 
     <source path="astro/conv"/>
-    <source path="visualize/plot/projection"/>
+    <source path="astro/net/">
+        <include name="Resolver.java"/>
+    </source>
     <source path="astro/">
         <include name="CoordException.java"/>
     </source>
+    <source path="visualize/plot/projection"/>
     <source path="visualize/plot/" >
         <include name="ProjectionPt.java"/>
         <include name="*Pt.java"/>
@@ -29,9 +32,6 @@
     <source path="visualize/draw/">
         <include name="Metrics.java"/>
         <include name="Metric.java"/>
-    </source>
-    <source path="data/">
-        <include name="DataConst.java"/>
     </source>
     <source path="util/">
         <include name="ComparisonUtil.java"/>
@@ -65,9 +65,6 @@
     <source path="util/expr"/>
     <source path="util/action">
         <include name="ActionConst.java"/>
-    </source>
-    <source path="targetgui/net/">
-        <include name="Resolver.java"/>
     </source>
 
 

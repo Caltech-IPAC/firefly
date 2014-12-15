@@ -1,12 +1,12 @@
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.client.net.NetParams;
+import edu.caltech.ipac.util.download.NetParams;
 
 /**
  * This class defines parameters for Ned catalogs. This class is modeled
  * after IrsaCatalogParams class.
  * @author Michael Nguyen
- * @see edu.caltech.ipac.client.net.NetParams
+ * @see edu.caltech.ipac.util.download.NetParams
  */
 
 public class NedCatalogParams extends BaseIrsaParams

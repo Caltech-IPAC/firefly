@@ -4,8 +4,8 @@ import edu.caltech.ipac.astro.target.NedAttribute;
 import edu.caltech.ipac.astro.target.PTFAttribute;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.astro.target.SimbadAttribute;
-import edu.caltech.ipac.client.net.CacheHelper;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
@@ -96,13 +96,8 @@ public class TargetNetwork {
                                                throws FailedRequestException {
       NedAttribute na= (NedAttribute) CacheHelper.getObj(params);
       if (na==null)  {          // if not in cache
-          if (CacheHelper.isServer()) {
-              PositionJ2000 pos= NedNameResolver.getPositionVOTable(params.getName(),null);
-              na= new NedAttribute(pos);
-          }
-          else {
-              na= NedNameResolver.getPosition(params.getName(), w, true); // use NED public VOTable
-          }
+          PositionJ2000 pos= NedNameResolver.getPositionVOTable(params.getName());
+          na= new NedAttribute(pos);
          CacheHelper.putObj(params,na);
       }
       return na;
@@ -113,12 +108,7 @@ public class TargetNetwork {
                                                throws FailedRequestException {
        SimbadAttribute sa= (SimbadAttribute)CacheHelper.getObj(params);
        if (sa == null)  {          // if not in cache
-           if (CacheHelper.isServer()) {
-               sa = SimbadNameResolver.lowlevelNameResolver(params.getName());
-           }
-           else {
-               sa = SimbadNameResolver.getPosition(params.getName(), w);
-           }
+           sa = SimbadNameResolver.lowlevelNameResolver(params.getName());
            CacheHelper.putObj(params,sa);
        }
        return sa;
@@ -128,12 +118,7 @@ public class TargetNetwork {
                                               Window       w) throws FailedRequestException {
         PTFAttribute pa= (PTFAttribute)CacheHelper.getObj(params);
         if (pa == null)  {          // if not in cache
-            if (CacheHelper.isServer()) {
-                pa = PTFNameResolver.lowlevelNameResolver(params.getName());
-            }
-            else {
-                pa = PTFNameResolver.getPosition(params.getName(), w);
-            }
+            pa = PTFNameResolver.lowlevelNameResolver(params.getName());
             CacheHelper.putObj(params,pa);
         }
         return pa;
@@ -158,12 +143,7 @@ public class TargetNetwork {
         HorizonsParams params= new HorizonsParams(nameOrId);
         res= (HorizonsEphPairs.HorizonsResults[])CacheHelper.getObj(params);
         if (res==null) {
-            if (CacheHelper.isServer()) {
-                res= HorizonsEphPairs.lowlevelGetEphInfo(nameOrId,null);
-            }
-            else {
-                res= HorizonsEphPairs.getEphInfo(nameOrId,showError, f);
-            }
+            res= HorizonsEphPairs.lowlevelGetEphInfo(nameOrId);
 
             CacheHelper.putObj(params,res,TWO_MONTHS);
         }

@@ -1,9 +1,8 @@
 package edu.caltech.ipac.firefly.server.network;
 
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;

@@ -1,25 +1,18 @@
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.client.net.CacheHelper;
-import edu.caltech.ipac.client.net.DownloadListener;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.FileData;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetParams;
-import edu.caltech.ipac.client.net.NetworkManager;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileData;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetParams;
+import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.ParseException;
-import edu.caltech.ipac.util.action.ClassProperties;
-import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 
 import java.awt.Component;
-import java.awt.Window;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 
@@ -34,23 +27,19 @@ import java.net.URL;
  */
 public class VisNetwork {
 
-   private final static ClassProperties _prop= new ClassProperties(
-                                                             VisNetwork.class);
     private static final int SEC_IN_DAY= 86400; //60*60*24
 
 
 
 
-    private static File getIrsaImage(IrsaImageParams params,
-                                     Window w,
-                                     boolean moreCallsComming) throws FailedRequestException {
+    private static File getIrsaImage(IrsaImageParams params) throws FailedRequestException {
 
         File f;
         if (params.getType()== IrsaImageParams.IrsaTypes.TWOMASS) {
-            f= getIbeImage(params, w, moreCallsComming);
+            f= getIbeImage(params);
         }
         else {
-            f= getTraditionIrsaImage(params,w,moreCallsComming);
+            f= getTraditionIrsaImage(params);
         }
 
         return f;
@@ -58,26 +47,18 @@ public class VisNetwork {
 
 
 
-    private static File getTraditionIrsaImage(IrsaImageParams params,
-                                              Window w,
-                                              boolean moreCallsComming)
+    private static File getTraditionIrsaImage(IrsaImageParams params)
                                   throws FailedRequestException {
         File f= CacheHelper.getFile(params);
 
         if (f == null)  {          // if not in cache
             f= CacheHelper.makeFitsFile(params);
-            if (CacheHelper.isServer()) {
-                try {
-                    IrsaImageGetter.lowlevelGetIrsaImage(params, f);
-                } catch (IOException e) {
-                    throw new FailedRequestException("IrsaImageGetter Call failed with IOException",
-                                                     "no more detail",e);
-                }
+            try {
+                IrsaImageGetter.lowlevelGetIrsaImage(params, f);
+            } catch (IOException e) {
+                throw new FailedRequestException("IrsaImageGetter Call failed with IOException",
+                                                 "no more detail",e);
             }
-            else {
-                IrsaImageGetter.getIrsaImage(params, f, w, moreCallsComming);
-            }
-
             CacheHelper.getFileCache().put(params,f);
         }
 
@@ -85,9 +66,7 @@ public class VisNetwork {
     }
 
 
-    private static File getIbeImage(BaseIrsaParams params,
-                                    Window w,
-                                    boolean moreCallsComing) throws FailedRequestException {
+    private static File getIbeImage(BaseIrsaParams params) throws FailedRequestException {
         File f= CacheHelper.getFile(params);
 
         if (f == null)  {          // if not in cache
@@ -106,31 +85,7 @@ public class VisNetwork {
 
 
 
-   // added by Xiuqin Wu for Irsa catalog search
-   public static File getIrsaCatalog(IrsaCatalogParams params, Window w)
-                                             throws FailedRequestException {
-
-       File f= CacheHelper.getFile(params);
-       if (f == null)  {          // if not in cache
-           f= CacheHelper.makeTblFile(params);
-           IrsaCatalogGetter.getCatalog(params, f, w );
-           CacheHelper.putFile(params,f);
-       }
-       return f;
-   }
-
-   public static File getSkyViewCatalog(SkyViewCatalogParams params, Window w) 
-                                             throws FailedRequestException {
-       File f= CacheHelper.getFile(params);
-       if (f == null)  {          // if not in cache
-           f= CacheHelper.makeTblFile(params);
-           SkyViewCatalogGetter.getCatalog(params, f, w );
-           CacheHelper.putFile(params,f);
-       }
-       return f;
-   }
-
-    public static File getSloanDssImage(SloanDssImageParams params,  Window w)
+    public static File getSloanDssImage(SloanDssImageParams params)
             throws FailedRequestException {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
@@ -146,7 +101,7 @@ public class VisNetwork {
         return f;
     }
 
-    public static File getDssImage(DssImageParams params,  Window w)
+    public static File getDssImage(DssImageParams params)
                                   throws FailedRequestException {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
@@ -163,8 +118,7 @@ public class VisNetwork {
     }
 
 
-    public static File getSkyViewImage(SkyViewImageParams params,
-                                       Window             w)
+    public static File getSkyViewImage(SkyViewImageParams params)
                                   throws FailedRequestException {
 
         File f= CacheHelper.getFile(params);
@@ -179,7 +133,7 @@ public class VisNetwork {
             }
             f= CacheHelper.makeFile(newfile);
             try {
-                SkyViewImageGetter.lowlevelGetImage(params, f,null);
+                SkyViewImageGetter.lowlevelGetImage(params, f);
             } catch (IOException e) {
                 throw new FailedRequestException("SkyViewImageGetter failed with IOException",
                                                  "no more detail",e);
@@ -189,7 +143,7 @@ public class VisNetwork {
         return f;
     }
 
-    public static FileData getAnyFits(AnyFitsParams params,  Window w, DownloadListener dl)
+    public static FileData getAnyFits(AnyFitsParams params, DownloadListener dl)
                                   throws FailedRequestException {
         File f;
 
@@ -210,32 +164,16 @@ public class VisNetwork {
 
 
 
-//    public static FileData[] getAnyUrl(URL url, boolean useSuggestedFilename, Component c)
-//                   throws FailedRequestException {
-//        Assert.tst(!CacheHelper.isServer());
-//        AnyUrlParams params= new AnyUrlParams(url);
-//        FileData retval[]= CacheHelper.getFileDataAry(params);
-//        if (retval == null)  {          // if not in cache
-//            String newfile= params.getUniqueString();
-//            File templeteFile= CacheHelper.makeFile(newfile);
-//            retval= AnyUrlGetter.getUrl(params, templeteFile,
-//                                          useSuggestedFilename,
-//                                          c);
-//            CacheHelper.putFile(params,retval);
-//        }
-//        return retval;
-//    }
 
 
     /**
      * Retrieve a file from URL and cache it.  If the URL is a gz file then uncompress it and return the uncompress version.
      * @param params the configuration about the retrieve request
-     * @param c any component, only used in client mode
      * @param dl a Download listener, only used in server mode
      * @return a array of FileData of file returned from this URL.  This is usually length of 1.
      * @throws FailedRequestException
      */
-    public static FileData[] getAnyUrlImage(AnyUrlParams params, Component c, DownloadListener dl)
+    public static FileData[] getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
                                                      throws FailedRequestException {
         FileData retval[]=CacheHelper.getFileDataAry(params);
         File fileName= (retval==null) ? CacheHelper.makeFile(params.getUniqueString()) : retval[0].getFile();
@@ -246,8 +184,7 @@ public class VisNetwork {
         }
 
         if (retval == null || params.getCheckForNewer())  {          // if not in cache or is in cache & we want to see if there is a newer version
-            FileData[] results= CacheHelper.isServer() ? AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl) :
-                                                         AnyUrlGetter.getUrl(params, fileName, false, c);
+            FileData[] results= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
 
             CacheKey saveKey= params;
             FileData fd= results[0];
@@ -281,38 +218,26 @@ public class VisNetwork {
 
         if (f == null)  {          // if not in cache
             f= CacheHelper.makeFile(params.getUniqueString());
-
-            if (CacheHelper.isServer()) {
-                AnyUrlGetter.lowlevelGetUrlToFile(params,f,false,null);
-            }
-            else {
-                AnyUrlGetter.getUrl(params, f, c);
-            }
+            AnyUrlGetter.lowlevelGetUrlToFile(params,f,false,null);
             CacheHelper.putFile(params,f);
         }
         return f;
     }
 
 
-   public static File getNedImage(NedImageParams params,
-                                  Window         w)
+   public static File getNedImage(NedImageParams params)
                                  throws FailedRequestException {
        File f= CacheHelper.getFile(params);
        if (f == null)  {          // if not in cache
            String newfile= params.getUniqueString();
            f= CacheHelper.makeFile(newfile);
-           if (CacheHelper.isServer()) {
-               try {
-                   HostPort nedServer=
-                     NetworkManager.getInstance().getServer(NetworkManager.NED_SERVER);
-                   NedImageGetter.lowlevelGetNedImage(nedServer.getHost(), params, f);
-               } catch (IOException e) {
-                   throw new FailedRequestException("NedImageGetter Call failed with IOException",
-                                                    "no more detail",e);
-               }
-           }
-           else {
-               NedImageGetter.getNedImage(params, f, w);
+           try {
+               HostPort nedServer=
+                       NetworkManager.getInstance().getServer(NetworkManager.NED_SERVER);
+               NedImageGetter.lowlevelGetNedImage(nedServer.getHost(), params, f);
+           } catch (IOException e) {
+               throw new FailedRequestException("NedImageGetter Call failed with IOException",
+                                                "no more detail",e);
            }
            CacheHelper.putFile(params,f);
        }
@@ -334,18 +259,6 @@ public class VisNetwork {
        return f;
    }
 
-   public static File getNedCatalog(NedCatalogParams params, Window w) 
-                                             throws FailedRequestException {
-
-       File f= CacheHelper.getFile(params);
-       if (f == null)  {          // if not in cache
-           String newfile= params.getUniqueString() + ".tbl";
-           f= CacheHelper.makeFile(newfile);
-           NedCatalogGetter.getCatalog(params, f, w);
-           CacheHelper.putFile(params, f);
-       }
-       return f;
-   }
 
     /**
      * Retrieve an image, this call should only be used in server mode
@@ -354,59 +267,38 @@ public class VisNetwork {
      * @return one more more files, almost always this will be one file
      * @throws FailedRequestException when anything fails
      */
-    public static FileData[] getImageSrv(NetParams params, DownloadListener dl) throws FailedRequestException {
-        Assert.argTst(CacheHelper.isServer(), "Should only be used in server mode");
-        return getImage(params,null,dl,false);
-    }
-
-    public static FileData[] getImage(NetParams params, Window w)
-                                  throws FailedRequestException {
-        Assert.argTst(!CacheHelper.isServer(), "Should only be used in client mode");
-       return getImage(params,w,false);
-    }
-
-    public static FileData[] getImage(NetParams params, Window w, boolean moreCallsComing)
-            throws FailedRequestException {
-        Assert.argTst(!CacheHelper.isServer(), "Should only be used in client mode");
-        return getImage(params,w,null,moreCallsComing);
-
-    }
-
-    private static FileData[] getImage(NetParams params,
-                                       Window w,
-                                       DownloadListener dl,
-                                       boolean moreCallsComing) throws FailedRequestException {
+    public static FileData[] getImage(NetParams params, DownloadListener dl) throws FailedRequestException {
        FileData retval[]= null;
        File f;
       if (params instanceof IrsaImageParams) {
-          f=  getIrsaImage( (IrsaImageParams)params, w, moreCallsComing);
+          f=  getIrsaImage( (IrsaImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof DssImageParams) {
-          f=  getDssImage( (DssImageParams)params, w);
+          f=  getDssImage( (DssImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof SloanDssImageParams) {
-          f=  getSloanDssImage( (SloanDssImageParams)params, w);
+          f=  getSloanDssImage( (SloanDssImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof NedImageParams) {
-          f=  getNedImage( (NedImageParams)params, w);
+          f=  getNedImage( (NedImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof WiseImageParams) {
-          f=  getIbeImage((BaseIrsaParams) params, w, moreCallsComing);
+          f=  getIbeImage((BaseIrsaParams) params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof SkyViewImageParams) {
-          f=  getSkyViewImage( (SkyViewImageParams)params, w);
+          f=  getSkyViewImage( (SkyViewImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof AnyFitsParams) {
-          retval=  new FileData[] {getAnyFits( (AnyFitsParams)params, w,dl)};
+          retval=  new FileData[] {getAnyFits( (AnyFitsParams)params,dl)};
       }
       else if (params instanceof AnyUrlParams) {
-          retval=  getAnyUrlImage( (AnyUrlParams)params, w,dl);
+          retval=  getAnyUrlImage( (AnyUrlParams)params,dl);
       }
       else {
           Assert.tst(false, "Should never be here");
@@ -420,73 +312,6 @@ public class VisNetwork {
 
 
 
-
-   public static AstroImageInformation [] queryNedImages(
-                                                 NedImQueryParams params,
-                                                 Window           w) 
-                                               throws FailedRequestException {
-      AstroImageInformation  info[];
-      Cache cache= CacheHelper.getObjectCache();
-      info= (AstroImageInformation [])cache.get(params);
-       if (info == null)  {          // if not in cache
-           info = NedImageGetter.queryNedImages(params, w);
-           cache.put(params,info,SEC_IN_DAY);
-       }
-      return info;
-   }
-
-
-    public static FixedObjectGroup  queryIsoImages(IsoImageListParams params,
-                                                   Window             w)
-                                  throws FailedRequestException {
-        FixedObjectGroup info;
-        Cache cache= CacheHelper.getObjectCache();
-        info= (FixedObjectGroup)cache.get(params);
-        if (info == null)  {          // if not in cache
-            info = IsoImageGetter.queryIsoImages(params, w);
-            if (info!=null) {
-                cache.put(params,info,SEC_IN_DAY);
-            }
-        }
-        return info;
-    }
-
-
-    public static FixedObjectGroup getIspyData(HorizonsIspyParams params,
-                                               Component          c)
-                                           throws FailedRequestException,
-                                                  ParseException,
-                                                  IOException {
-        FileOutputStream out   =null;
-        FileInputStream  in    =null;
-        FixedObjectGroup retval=null;
-        byte data[];
-        try {
-            File dataFile= CacheHelper.getFile(params);
-            if(dataFile==null) {        // if not in cache, then goto network
-                data=IspyGetter.getIspy(params, c);
-                String fileName=params.getUniqueString()+".txt";
-                dataFile= CacheHelper.makeFile(fileName);
-                out=new FileOutputStream(dataFile);
-                out.write(data);
-                CacheHelper.putFile(params, dataFile);
-            }
-            else {
-                in= new FileInputStream(dataFile);
-                int size= in.available();
-                data= new byte[size];
-                int readSize= in.read(data);
-                if (readSize==-1 || readSize!=size) {
-                    throw new IOException(_prop.getError("ispyRead"));
-                }
-            }
-            retval= IspyGetter.parseIspyData(data);
-        } finally {
-            FileUtil.silentClose(out);
-            FileUtil.silentClose(in);
-        }
-        return retval;
-    }
 
 }
 /*

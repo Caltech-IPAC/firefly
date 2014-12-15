@@ -1,4 +1,4 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
 /**
  * User: roby
  * Date: 2/10/11

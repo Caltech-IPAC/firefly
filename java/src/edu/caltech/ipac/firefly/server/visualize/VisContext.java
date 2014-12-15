@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.client.net.CacheHelper;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;

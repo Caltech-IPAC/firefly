@@ -1,6 +1,6 @@
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.client.net.BaseNetParams;
+import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.Assert;
 
 public class NedImageParams extends BaseNetParams {

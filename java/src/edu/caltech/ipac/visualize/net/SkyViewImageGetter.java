@@ -1,19 +1,17 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
-import nom.tam.fits.FitsException;
 import edu.caltech.ipac.visualize.plot.FitsValidator;
+import nom.tam.fits.FitsException;
 
-import java.awt.Window;
 import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -27,10 +25,9 @@ import java.net.URLEncoder;
 /**
  * This class handles getting images for SkyView.
  * @author Trey Roby
- * @see edu.caltech.ipac.client.net.ThreadedService
  */
 
-public class SkyViewImageGetter extends ThreadedService {
+public class SkyViewImageGetter {
 
 
 
@@ -40,51 +37,12 @@ public class SkyViewImageGetter extends ThreadedService {
   private final static ClassProperties _prop = 
                           new ClassProperties(SkyViewImageGetter.class);
 
-  private static final String   SEARCH_DESC= _prop.getName("searching");
   private static final String   LOAD_DESC  = _prop.getName("loading");
   // constants
 
-  private final static String   OP_DESC = _prop.getName("desc");
-  private SkyViewImageParams   _params;
-  private File                 _outfile;
 
-  /**
-   * constructor
-   * @param params the SkyView Image Parameters
-   * @param outfile the File
-   */
-  private SkyViewImageGetter(SkyViewImageParams params, 
-                             Window             w,
-                             File               outfile) {
-    super(w);
-    _params  = params;
-    _outfile = outfile;
-    setOperationDesc(OP_DESC);
-    setProcessingDesc(String.format(SEARCH_DESC, params.getSurvey()));
-  }
 
-  /**
-   * get the catalog
-   * @exception Exception
-   */
-  protected void doService() throws Exception {
-     lowlevelGetImage(_params, _outfile, this);
-  }
 
-  /**
-   * get the catalog
-   * @param params the SkyView Image Parameters
-   * @param outfile the File
-   * @param w the Window
-   * @exception FailedRequestException
-   */
-  public static void getImage(SkyViewImageParams params,
-                              File               outfile,
-                              Window             w)
-                                             throws FailedRequestException {
-    SkyViewImageGetter action = new SkyViewImageGetter(params, w, outfile);
-    action.execute(true);
-  }
 
   /**
    * get the catalog
@@ -93,8 +51,7 @@ public class SkyViewImageGetter extends ThreadedService {
    * @exception FailedRequestException
    */  
   public static void lowlevelGetImage(SkyViewImageParams params,
-                                      File               outfile,
-                                      ThreadedService    ts)
+                                      File               outfile)
                                              throws FailedRequestException,
                                                     IOException {
 
@@ -144,7 +101,7 @@ public class SkyViewImageGetter extends ThreadedService {
          URLDownload.logHeader(conn);
 
          if (contentType != null && contentType.startsWith("text/")) {
-               String htmlErr= URLDownload.getStringFromOpenURL(conn,ts);
+               String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
                throw new FailedRequestException(
                          htmlErr,
                          "The Dss server is reporting an error- " +
@@ -152,8 +109,7 @@ public class SkyViewImageGetter extends ThreadedService {
                          true, null );
          }
 
-         if (ts!=null) ts.setProcessingDesc(String.format(LOAD_DESC, params.getSurvey()));
-         URLDownload.getDataToFile(conn, outfile, ts);
+         URLDownload.getDataToFile(conn, outfile, null);
 
           try {
               FitsValidator.validateNaxis(outfile);
@@ -210,7 +166,7 @@ public class SkyViewImageGetter extends ThreadedService {
           p.setPixelHeight(800);
 
           File f= new File("a.fits");
-          lowlevelGetImage(p,f,null);
+          lowlevelGetImage(p,f);
       } catch (Exception e) {
 
            System.out.println("main: failed: " + e);

@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.client.net.BaseNetParams;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.BaseNetParams;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;

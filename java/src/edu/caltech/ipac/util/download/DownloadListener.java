@@ -1,19 +1,19 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
+
+import java.util.EventListener;
 
 /**
- * This exception is thrown when a download is stop.
+ * A listener that is called durring a download with status
  * @author Trey Roby
  */
-public class VetoDownloadException extends Exception {
-
-    /**
-     * Create a new VetoDownload Exception.
-     * @param mess the error message.
-     */
-    public VetoDownloadException(String mess) {
-        super(mess); 
-    }
+public interface DownloadListener extends EventListener {
+    public abstract void dataDownloading(DownloadEvent ev);
+    public abstract void beginDownload(DownloadEvent ev);
+    public abstract void downloadCompleted(DownloadEvent ev);
+    public abstract void downloadAborted(DownloadEvent ev);
+    public abstract void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException;
 }
+
 
 
 /*

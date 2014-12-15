@@ -1,7 +1,7 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -306,7 +306,7 @@ public class FixedObjectGroupUtils {
     /**
      * Check for errors from VOTABLE producer.
      * @param voTable  VOTABLE object - maps to VOTABLE element
-     * @throws edu.caltech.ipac.client.net.FailedRequestException when error is present
+     * @throws edu.caltech.ipac.util.download.FailedRequestException when error is present
      */
     public static void checkStatus(VOTABLEDocument.VOTABLE voTable)
             throws FailedRequestException {

@@ -2,10 +2,9 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.client.net.HostPort;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.util.download.HostPort;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,8 +26,7 @@ public class IrsaUtil {
                                HostPort         hp,
                                String           app,
 		                       URLParms         parms,
-                               String           fileName,
-                               ThreadedService  ts)
+                               String           fileName)
                                    throws IOException,
                                           FailedRequestException
    {
@@ -65,7 +63,7 @@ public class IrsaUtil {
 
          if (isImage) {
 	    if (contentType != null && contentType.startsWith("text/")) {
-               String htmlErr= URLDownload.getStringFromOpenURL(conn,ts);
+               String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
                throw new FailedRequestException(
                          htmlErr,
                          "The IRSA server is reporting an error- " +
@@ -74,7 +72,7 @@ public class IrsaUtil {
 	    }
 	 } //isImage
 
-         URLDownload.getDataToFile(conn, file, ts);
+         URLDownload.getDataToFile(conn, file, null);
 
           if (!isImage) {
               checkCatFileForErrors(file);

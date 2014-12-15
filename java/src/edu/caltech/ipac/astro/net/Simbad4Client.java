@@ -4,9 +4,8 @@ import cds.simbad.uif.WSQueryInterface;
 import cds.simbad.uif.WSQueryInterfaceServiceLocator;
 import edu.caltech.ipac.astro.simbad.SimbadObject;
 import edu.caltech.ipac.astro.simbad.SimbadException;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.ClientLog;
 
 import javax.xml.rpc.ServiceException;
@@ -170,13 +169,6 @@ public class Simbad4Client {
     }
 
 
-    public static void main(String[] args) {
-        try {
-            edu.caltech.ipac.astro.target.SimbadAttribute resolver =  SimbadNameResolver.getPosition(args[0], new javax.swing.JFrame());
-        } catch (FailedRequestException e) {
-            e.printStackTrace();
-        }
-    }
 }
 
 /*

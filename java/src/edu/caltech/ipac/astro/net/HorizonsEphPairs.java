@@ -1,15 +1,13 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
@@ -24,11 +22,10 @@ import java.util.List;
  * @author Booth Hartley
  * @version $Id: HorizonsEphPairs.java,v 1.12 2012/03/13 22:23:02 roby Exp $
  */
-public class HorizonsEphPairs extends ThreadedService {
+public class HorizonsEphPairs {
 
     private static final ClassProperties _prop = new ClassProperties(
             HorizonsEphPairs.class);
-    private static final String OP_DESC = _prop.getName("desc");
 
     private static final String NAME_IDENT = "Object Name";
     private static final String ID_IDENT = "Primary SPKID";
@@ -39,42 +36,8 @@ public class HorizonsEphPairs extends ThreadedService {
     private static final String CGI_CMD = "/x/smb_spk.cgi";
 
 
-    private HorizonsResults _out[] = null;
-    private String _idOrName;
 
-    private HorizonsEphPairs(String idOrName, boolean showError, Window w) {
-        super(w);
-        if (!showError) {
-            setShowUserErrors(false);
-            setShowNetworkDownError(false);
-            setProceedIfNetworkDown(true);
-        }
-        _idOrName = idOrName;
-        setOperationDesc(OP_DESC);
-    }
-
-    protected void doService() throws Exception {
-        _out = lowlevelGetEphInfo(_idOrName, this);
-    }
-
-
-    public static HorizonsResults[] getEphInfo(String idOrName, Window w)
-            throws FailedRequestException {
-        return getEphInfo(idOrName, true, w);
-    }
-
-    public static HorizonsResults[] getEphInfo(String idOrName,
-                                               boolean showError,
-                                               Window w)
-            throws FailedRequestException {
-        HorizonsEphPairs action = new HorizonsEphPairs(idOrName, showError, w);
-        action.execute();
-        return action._out;
-    }
-
-
-    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName,
-                                                       ThreadedService ts)
+    public static HorizonsResults[] lowlevelGetEphInfo(String idOrName)
             throws FailedRequestException {
 
         boolean isName = true;
@@ -128,7 +91,7 @@ public class HorizonsEphPairs extends ThreadedService {
                     server.getHost() + ":" + server.getPort() + CGI_CMD;
             URL url = new URL(urlStr);
             String line;
-            String result = URLDownload.getStringFromURLUsingPost(url, data.toString(), ts);
+            String result = URLDownload.getStringFromURLUsingPost(url, data.toString(), null);
             BufferedReader rd = new BufferedReader(new StringReader(result));
 
 
@@ -297,7 +260,7 @@ public class HorizonsEphPairs extends ThreadedService {
 
         try {
             HorizonsResults[] horizons_results =
-                    lowlevelGetEphInfo(name, null);
+                    lowlevelGetEphInfo(name);
             //printOut(horizons_results);
             for (int i = 0; i < horizons_results.length; i++) {
                 System.out.println("Result # " + i + ":");

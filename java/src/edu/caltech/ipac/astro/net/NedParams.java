@@ -1,6 +1,6 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.client.net.NetParams;
+import edu.caltech.ipac.util.download.NetParams;
 
 public class NedParams implements NetParams {
 

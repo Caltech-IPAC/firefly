@@ -1,6 +1,6 @@
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.client.net.NetParams;
+import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.astro.target.Ephemeris;
 import edu.caltech.ipac.astro.target.StandardEphemeris;

@@ -1,65 +1,29 @@
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileData;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.DownloadListener;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.client.net.FileData;
-import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Window;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.HttpURLConnection;
 
 
 /**
  * This class gets any url object
 **/
-public class AnyFitsGetter extends ThreadedService {
+public class AnyFitsGetter {
 
   private final static ClassProperties _prop = 
                           new ClassProperties(AnyFitsGetter.class);
-
-   private AnyFitsParams _params;
-   private File          _outFile;
-   private FileData      _fileData;
-   private final static String   OP_DESC         = _prop.getName("desc");
-
-   private AnyFitsGetter(AnyFitsParams params,
-                        File         outFile, 
-                        Window       w) {
-       super(w);
-       _params = params;
-       _outFile= outFile;
-       setOperationDesc(OP_DESC);
-   }
-
-   protected void doService() throws Exception { 
-       _fileData= lowlevelGetFits(_params, _outFile, this);
-   }
-
-   public static void getUrl(AnyFitsParams params, 
-                             File          outFile,
-                             Window        w) 
-                                         throws FailedRequestException {
-      getFits(params,outFile,w);
-   }
-
-   public static FileData getFits(AnyFitsParams params,
-                                File          outFile,
-                                Window        w)
-                                         throws FailedRequestException {
-       AnyFitsGetter action= new AnyFitsGetter(params, outFile, w);
-       action.execute(true);
-       return action._fileData;
-   }
 
 
 

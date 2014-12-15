@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;

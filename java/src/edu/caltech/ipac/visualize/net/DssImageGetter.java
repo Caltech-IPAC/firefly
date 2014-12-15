@@ -1,17 +1,14 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.FileRetrieveException;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileRetrieveException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.action.ClassProperties;
+import edu.caltech.ipac.util.ClientLog;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -23,54 +20,11 @@ import java.net.URLConnection;
  * @author Trey Roby
  * @version $Id: DssImageGetter.java,v 1.9 2012/08/21 21:30:41 roby Exp $
  */
-public class DssImageGetter extends  ThreadedService {
-
-    private DssImageParams _params;
-    private File           _outFile;
-    private static final ClassProperties _prop= new ClassProperties(
-                                                  DssImageGetter.class);
-    private static final String   OP_DESC= _prop.getName("desc");
-    private static final String   SEARCH_DESC= _prop.getName("searching");
-    private static final String   LOAD_DESC= _prop.getName("loading");
-
-
-    /**
-     * @param params the parameter for the query
-     * @param outFile file to write to
-     * @param w a Window
-     */
-    private DssImageGetter(DssImageParams params, File outFile, Window w) {
-        super(w);
-       _params = params;
-       _outFile= outFile;
-       setOperationDesc(OP_DESC);
-       setProcessingDesc(SEARCH_DESC);
-    }
-
-    protected void doService() throws Exception { 
-        lowlevelGetDssImage(_params, _outFile,this); 
-    }
-
-    public static void getDssImage(DssImageParams params,
-                                   File           outFile,
-                                   Window         w) 
-                                         throws FailedRequestException {
-       DssImageGetter action= new DssImageGetter(params, outFile,w);
-       action.execute(true);
-    }
-
+public class DssImageGetter {
 
 
     public static void lowlevelGetDssImage(DssImageParams params,
                                            File           outFile) 
-                                           throws FailedRequestException,
-                                                  IOException {
-       lowlevelGetDssImage(params,outFile, null);
-    }
-
-    public static void lowlevelGetDssImage(DssImageParams   params, 
-                                           File             outFile,
-                                           ThreadedService  ts )
                                            throws FailedRequestException,
                                                   IOException {
       ClientLog.message("Retrieving Dss image");
@@ -94,7 +48,7 @@ public class DssImageGetter extends  ThreadedService {
          URLDownload.logHeader(conn);
 
          if (contentType != null && contentType.startsWith("text/")) {
-               String htmlErr= URLDownload.getStringFromOpenURL(conn,ts);
+               String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
                throw new FileRetrieveException(
                          htmlErr,
                          "The Dss server is reporting an error- " +
@@ -102,8 +56,7 @@ public class DssImageGetter extends  ThreadedService {
          }
 
 
-         if (ts!=null) ts.setProcessingDesc(LOAD_DESC);
-         URLDownload.getDataToFile(conn, outFile, ts);
+         URLDownload.getDataToFile(conn, outFile, null);
 
       } catch (SocketTimeoutException timeOutE){
           if (outFile.exists() && outFile.canWrite()) {

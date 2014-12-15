@@ -7,16 +7,14 @@ import VizieRBeta_pkg.VizieRCriteria;
 import VizieRBeta_pkg.VizieRFilter;
 import VizieRBeta_pkg.VizieRTarget;
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.action.ClassProperties;
 
 import javax.xml.rpc.ServiceException;
-import java.awt.Window;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,73 +25,15 @@ import java.rmi.RemoteException;
 /**
  * This class handles getting catalogs for SkyView.
  * @author Trey Roby
- * @see edu.caltech.ipac.client.net.ThreadedService
  */
 
-public class SkyViewCatalogGetter extends ThreadedService {
+public class SkyViewCatalogGetter {
 
-
-
-  private static final String CAT_STR= "/cgi-bin/ncatalog_browse.pl?";
-
-  private final static ClassProperties _prop = 
+  private final static ClassProperties _prop =
                           new ClassProperties(SkyViewCatalogGetter.class);
 
   // constants
 
-    private final static String   HEA_OP_DESC = _prop.getName("heasarc.desc");
-    private final static String   VIZ_OP_DESC = _prop.getName("vizier.desc");
-    private SkyViewCatalogParams _params;
-    private File                 _outfile;
-
-  /**
-   * constructor
-   * @param params the SkyView Catalog Parameters
-   * @param outfile the File
-   */
-  private SkyViewCatalogGetter(SkyViewCatalogParams params, 
-                               Window               w,
-                               File                 outfile) {
-      super(w);
-      String desc;
-      if (params.getSite()== SkyViewCatalogParams.Site.HEASARC) {
-          desc= HEA_OP_DESC;
-      }
-      else if (params.getSite()== SkyViewCatalogParams.Site.VIZIER) {
-          desc= VIZ_OP_DESC;
-      }
-      else {
-          desc= null;
-          Assert.tst(false);
-      }
-
-      setOperationDesc(desc);
-      _params  = params;
-      _outfile = outfile;
-  }
-
-  /**
-   * get the catalog
-   * @exception Exception
-   */
-  protected void doService() throws Exception {
-     lowlevelGetCatalog(_params, _outfile, this);
-  }
-
-  /**
-   * get the catalog
-   * @param params the Skyview Catalog Parameters
-   * @param outfile the File
-   * @param w the Window
-   * @exception FailedRequestException
-   */
-  public static void getCatalog(SkyViewCatalogParams params,
-                                File                 outfile,
-                                Window               w) 
-                                             throws FailedRequestException {
-    SkyViewCatalogGetter action = new SkyViewCatalogGetter(params, w, outfile);
-    action.execute();
-  }
 
   /**
    * get the catalog
@@ -102,8 +42,7 @@ public class SkyViewCatalogGetter extends ThreadedService {
    * @exception FailedRequestException
    */  
   public static void lowlevelGetCatalog(SkyViewCatalogParams params,
-                                        File                 outfile,
-                                        ThreadedService      ts)
+                                        File                 outfile)
                                              throws FailedRequestException,
                                                     IOException {
 
@@ -121,7 +60,7 @@ public class SkyViewCatalogGetter extends ThreadedService {
                           "&RA="+params.getRaJ2000String() +
                           "&DEC="+params.getDecJ2000String()+
                           "&SR="+ params.getSize();
-              URLDownload.getDataToFile(new URL(req), outfile, ts);
+              URLDownload.getDataToFile(new URL(req), outfile,null);
           }
           else if (params.getSite()== SkyViewCatalogParams.Site.VIZIER) {
 

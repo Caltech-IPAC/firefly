@@ -1,7 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
@@ -12,23 +10,15 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.CacheManager;
-import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;

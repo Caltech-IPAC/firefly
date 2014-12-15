@@ -1,15 +1,12 @@
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.download.DownloadListener;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileData;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.DownloadListener;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
-import edu.caltech.ipac.client.net.FileData;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.action.ClassProperties;
 
-import java.awt.Component;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,75 +18,12 @@ import java.net.URL;
 /**
  * This class gets any url object
  **/
-public class AnyUrlGetter extends ThreadedService {
+public class AnyUrlGetter {
 
     private final static ClassProperties _prop=
                                    new ClassProperties(AnyUrlGetter.class);
-    private final static String OP_DESC=_prop.getName("desc");
-
-    private String       _outString=null;
-    private URL          _url=null;
-    private AnyUrlParams _params=null;
-    private File         _outFile=null;
-    private boolean      _useSuggestedFilename;
-    private FileData     _outFiles[]=null;
-
-   private AnyUrlGetter(AnyUrlParams params,
-                        File          outFile, 
-                        boolean      useSuggestedFilename,
-                        Component    component) {
-       super(ThreadedService.STANDARD,component);
-       _params=params;
-       _outFile=outFile;
-       _useSuggestedFilename =useSuggestedFilename;
-       setOperationDesc(OP_DESC);
-   }
-
-    private AnyUrlGetter(URL url, Component c) {
-        super(STANDARD, c);
-        _url=url;
-        setOperationDesc(OP_DESC);
-    }
-
-    protected void doService() throws Exception {
-        if(_outFile==null) {
-            Assert.tst(_url!=null);
-            _outString=lowlevelGetUrlToString(_url, this);
-        }
-        else {
-            _outFiles=lowlevelGetUrlToFile(_params, _outFile,
-                                           _useSuggestedFilename, this);
-        }
-    }
-
-    public static String getUrlToString(URL url, Component c)
-                   throws FailedRequestException {
-        AnyUrlGetter action=new AnyUrlGetter(url, c);
-        action.execute(true);
-        return action._outString;
-    }
-
-
-    public static void getUrl(AnyUrlParams params,
-                              File         outFile,
-                              Component    c) throws FailedRequestException {
-        getUrl(params, outFile, false, c);
-    }
-
-    public static FileData[] getUrl(AnyUrlParams params,
-                                    File         outFile,
-                                    boolean      useSuggestedFilename,
-                                    Component c) throws FailedRequestException {
-        AnyUrlGetter action=new AnyUrlGetter(params, outFile,
-                                             useSuggestedFilename, c);
-        action.execute(true);
-        return action._outFiles;
-    }
-
-
-
   /**
-   */  
+   */
   public static String lowlevelGetUrlToString(URL  url, DownloadListener dl)
                                              throws FailedRequestException,
                                                     IOException {
@@ -173,7 +107,7 @@ public class AnyUrlGetter extends ThreadedService {
 //
            url= new URL(urlStr);
            p= new AnyUrlParams(url);
-           getUrl(p,new File("single.dat"),true, null);
+           lowlevelGetUrlToFile(p,new File("single.dat"),true, null);
        } catch (FailedRequestException e) {
            System.out.print(e.toString());
        } catch (MalformedURLException e) {

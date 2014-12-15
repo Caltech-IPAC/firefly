@@ -2,18 +2,15 @@ package edu.caltech.ipac.visualize.net;
 
 
 import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.HostPort;
-import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedService;
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.irsa.CatalogDocument;
 import edu.caltech.ipac.irsa.HoldingsDocument;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import org.apache.xmlbeans.XmlOptions;
 
-import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -25,28 +22,10 @@ import java.util.HashMap;
  * @author Xiuqin Wu, modeled after Trey Roby's IrsaImageGetter
  * @version $Id: IrsaCatalogGetter.java,v 1.11 2011/06/10 21:04:09 xiuqin Exp $
  */
-public class IrsaCatalogGetter extends ThreadedService {
+public class IrsaCatalogGetter {
 
-	private IrsaCatalogParams _params;
-	private File _outFile;
-	private final static ClassProperties _prop = new ClassProperties(
-			IrsaCatalogGetter.class);
-	private final static String OP_DESC = _prop.getName("desc");
 
 	private static CatalogDocument.Catalog[] _catList = getIrsaCatList();
-
-	private IrsaCatalogGetter(IrsaCatalogParams params,
-	                          File outFile,
-	                          Window w) {
-		super(w);
-		_params = params;
-		_outFile = outFile;
-		setOperationDesc(OP_DESC);
-	}
-
-	protected void doService() throws Exception {
-		lowlevelGetCatalog(_params, _outFile);
-	}
 
 	private static CatalogDocument.Catalog[] getIrsaCatList() {
 
@@ -91,13 +70,6 @@ public class IrsaCatalogGetter extends ThreadedService {
 		return catalog;
 	}
 
-	public static void getCatalog(IrsaCatalogParams params,
-	                              File outFile,
-	                              Window w)
-			throws FailedRequestException {
-		IrsaCatalogGetter action = new IrsaCatalogGetter(params, outFile, w);
-		action.execute();
-	}
 
 	public static void lowlevelGetCatalog(IrsaCatalogParams params,
 	                                      File outFile)
@@ -112,7 +84,7 @@ public class IrsaCatalogGetter extends ThreadedService {
 		String file = outFile.getPath();
 		HostPort hp = NetworkManager.getInstance().getServer(NetworkManager.IRSA);
 
-		IrsaUtil.getURL(false, hp, cgiapp, parms, file, null);  //not image
+		IrsaUtil.getURL(false, hp, cgiapp, parms, file);  //not image
 	}
 
 

@@ -1,24 +1,32 @@
-package edu.caltech.ipac.client.net;
+package edu.caltech.ipac.util.download;
+/**
+ * User: roby
+ * Date: 12/4/14
+ * Time: 3:55 PM
+ */
 
 
 /**
  * @author Trey Roby
- * @version $Id: HostPort.java,v 1.2 2005/12/08 22:30:43 tatianag Exp $
  */
-public class HostPort {
-    private String   _host;
-    private int      _port;
+public class FileRetrieveException extends FailedRequestException {
 
-    public HostPort(String host, int port) {
-         _host= host;
-         _port= port;
+    private final String retrieveServiceID;
+    public FileRetrieveException(String err, String detailErr, String retrieveServiceID) {
+        super(err, detailErr, true, null);
+        this.retrieveServiceID= retrieveServiceID;
     }
-    public int    getPort() { return _port; }
-    public String getHost() { return _host; }
-    public String toString(){
-       return      "Server Host: " + _host + ":" + _port;
+
+    public FileRetrieveException(String err, String detailErr, Exception e, String retrieveServiceID) {
+        super(err, detailErr, true, e);
+        this.retrieveServiceID= retrieveServiceID;
+    }
+
+    public String getRetrieveServiceID() {
+        return retrieveServiceID;
     }
 }
+
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 
@@ -26,7 +34,7 @@ public class HostPort {
  * IS TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE UNDER U.S. EXPORT LAWS 
  * AND IS PROVIDED AS-IS TO THE RECIPIENT WITHOUT WARRANTY OF ANY KIND, 
  * INCLUDING ANY WARRANTIES OF PERFORMANCE OR MERCHANTABILITY OR FITNESS FOR 
- * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312-2313) 
+ * A PARTICULAR USE OR PURPOSE (AS SET FORTH IN UNITED STATES UCC 2312- 2313) 
  * OR FOR ANY PURPOSE WHATSOEVER, FOR THE SOFTWARE AND RELATED MATERIALS, 
  * HOWEVER USED.
  * 

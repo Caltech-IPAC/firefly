@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.client.net.URLDownload;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.WebPropertyLoader;
 import edu.caltech.ipac.firefly.util.BrowserInfo;

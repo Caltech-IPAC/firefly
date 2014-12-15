@@ -1,7 +1,7 @@
 package edu.caltech.ipac.visualize.net;
 
 
-import edu.caltech.ipac.client.net.NetParams;
+import edu.caltech.ipac.util.download.NetParams;
 
 public class IrsaCatalogParams extends BaseIrsaParams
                                implements NetParams {

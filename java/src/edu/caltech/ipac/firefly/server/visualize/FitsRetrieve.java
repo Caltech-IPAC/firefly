@@ -1,7 +1,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.client.net.FailedRequestException;
-import edu.caltech.ipac.client.net.FileData;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
 import edu.caltech.ipac.visualize.net.VisNetwork;
@@ -42,7 +42,7 @@ public class FitsRetrieve {
                 tc= _activeRequest.get(params);
             }
             synchronized (tc._lock) {
-                FileData fd[]= VisNetwork.getImageSrv(params,null);
+                FileData fd[]= VisNetwork.getImage(params,null);
                 retval = new FileInfo(fd[0].getFile().getPath(),
                                       fd[0].getSugestedExternalName(),
                                       fd[0].getFile().length());

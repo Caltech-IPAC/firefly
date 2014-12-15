@@ -1,13 +1,13 @@
 package edu.caltech.ipac.visualize.net;
 
-import edu.caltech.ipac.client.net.NetParams;
+import edu.caltech.ipac.util.download.NetParams;
 import edu.caltech.ipac.util.Assert;
 
 /**
  * This class defines parameters for SkyView catalogs. This class is modeled
  * after IrsaCatalogParams class.
  * @author Trey Roby
- * @see edu.caltech.ipac.client.net.NetParams
+ * @see edu.caltech.ipac.util.download.NetParams
  */
 
 public class SkyViewCatalogParams extends BaseIrsaParams implements NetParams  {
