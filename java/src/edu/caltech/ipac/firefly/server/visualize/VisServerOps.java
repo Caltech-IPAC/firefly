@@ -32,7 +32,7 @@ import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.visualize.draw.AreaStatisticsDialog;
+import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
 import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
@@ -75,8 +75,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
-import static edu.caltech.ipac.visualize.draw.AreaStatisticsDialog.WhichReadout.LEFT;
-import static edu.caltech.ipac.visualize.draw.AreaStatisticsDialog.WhichReadout.RIGHT;
+import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.LEFT;
+import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RIGHT;
 /**
  * User: roby
  * Date: Aug 7, 2008
@@ -966,7 +966,7 @@ public class VisServerOps {
             ImagePlot plot= ctx.getPlot();
 
             for(Band band : state.getBands()){
-                // modeled after AreaStatisticsDialog.java lines:654 - 721
+                // modeled after AreaStatisticsUtil.java lines:654 - 721
                 Shape shape;
                 GeneralPath genPath = new GeneralPath();
                 genPath.moveTo((float)pt1.getX(), (float)pt1.getY());
@@ -1001,31 +1001,31 @@ public class VisServerOps {
 
                 Rectangle2D.Double newBoundingBox = new Rectangle2D.Double(minX, minY, (maxX-minX), (maxY-minY));
                 //what to do about selected band?
-                HashMap<Metrics, Metric> metrics = AreaStatisticsDialog.getStatisticMetrics(plot, PlotServUtils.cnvtBand(band),
-                                                                                            shape, newBoundingBox);
+                HashMap<Metrics, Metric> metrics = AreaStatisticsUtil.getStatisticMetrics(plot, PlotServUtils.cnvtBand(band),
+                                                                                          shape, newBoundingBox);
 
                 String html;
                 WorldPt wp;
 
                 Metric max = metrics.get(Metrics.MAX);
                 ImageWorkSpacePt maxIp = max.getImageWorkSpacePt();
-                html = AreaStatisticsDialog.formatPosHtml(LEFT, plot, maxIp);
-                html = html + ";" +  AreaStatisticsDialog.formatPosHtml(RIGHT, plot, maxIp);
+                html = AreaStatisticsUtil.formatPosHtml(LEFT, plot, maxIp);
+                html = html + ";" +  AreaStatisticsUtil.formatPosHtml(RIGHT, plot, maxIp);
 
                 Metric min = metrics.get(Metrics.MIN);
                 ImageWorkSpacePt minIp = min.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(LEFT, plot, minIp);
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(RIGHT, plot, minIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, minIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, minIp);
 
                 Metric centroid = metrics.get(Metrics.CENTROID);
                 ImageWorkSpacePt centroidIp = centroid.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(LEFT, plot, centroidIp);
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(RIGHT, plot, centroidIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, centroidIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, centroidIp);
 
                 Metric fwCentroid = metrics.get(Metrics.FW_CENTROID);
                 ImageWorkSpacePt fwCentroidIp = fwCentroid.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(LEFT, plot, fwCentroidIp);
-                html = html + ";" + AreaStatisticsDialog.formatPosHtml(RIGHT, plot, fwCentroidIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, fwCentroidIp);
+                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, fwCentroidIp);
 
                 //Add Lon and Lat strings for WorldPt conversion on the client
                 wp = plot.getWorldCoords(maxIp);

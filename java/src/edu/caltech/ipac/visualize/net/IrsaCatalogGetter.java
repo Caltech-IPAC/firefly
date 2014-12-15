@@ -10,7 +10,6 @@ import edu.caltech.ipac.client.net.URLDownload;
 import edu.caltech.ipac.irsa.CatalogDocument;
 import edu.caltech.ipac.irsa.HoldingsDocument;
 import edu.caltech.ipac.util.action.ClassProperties;
-import edu.caltech.ipac.visualize.controls.CatalogConstants;
 
 import org.apache.xmlbeans.XmlOptions;
 

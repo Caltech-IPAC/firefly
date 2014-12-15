@@ -1,38 +1,41 @@
-package edu.caltech.ipac.visualize.plot;
+package edu.caltech.ipac.visualize.net;
 
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.Paper;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
-import java.awt.font.FontRenderContext;
-import java.awt.Graphics2D;
-import java.awt.geom.Rectangle2D;
+/**
+ * This class defines contatnts that are used by catalog getter.
+ * @author Michael Nguyen
+ */
 
-public class PlotPrint implements Printable {
+public interface CatalogConstants
+{
+    /* IRAS Point Source Catalog */
+    public final static String PT_SRC_CAT_IRAS = "iraspsc";
 
-    private Plot _plot;
+    /* IRAS Faint Source Catalog */
+    public final static String FT_SRC_CAT_IRAS = "irasfsc";
 
-    public PlotPrint(Plot plot) {
-        _plot= plot;
-    }
+    /* 2MASS Extended Source Catalog */
+    public final static String EXT_SRC_CAT_2MASS = "ext_src_cat";
+    public final static String EXT_SRC_DB_2MASS = "ntmass";
+    public final static String
+            EXT_SRC_QUERY_2MASS = "select ra,dec,designation,j_m,h_m,k_m";
 
-    public int print(Graphics g, PageFormat pf, int  idx) 
-                                       throws PrinterException {
-        Graphics2D g2= (Graphics2D)g;
-        PlotGroup plotGroup= _plot.getPlotGroup();
-        plotGroup.beginPainting(g2);
-        plotGroup.getPlotView().firePlotPaint(g2);
-        return Printable.PAGE_EXISTS;
-    }
+    /* 2MASS Point Source Catalog */
+    public final static String PT_SRC_CAT_2MASS = "pt_src_cat";
 
+    /* MSX catalog */
+    public final static String MSX = "msx";
+
+    /* NED Catalog */
+    public final static String CAT_NED = "ned_cat";
+
+    /* ALLWISE Source Catalog */
+    public final static String ALLWISE = "wise_allwise_p3as_psd";
+
+    /* SEIP Source Catalog */
+    public final static String SEIP = "slphotdr4";
 
 }
+
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 
  * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH 

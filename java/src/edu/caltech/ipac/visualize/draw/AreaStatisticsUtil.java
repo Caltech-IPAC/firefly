@@ -1,46 +1,48 @@
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.OSInfo;
-import edu.caltech.ipac.util.SUTDebug;
-import edu.caltech.ipac.util.action.ClassProperties;
-import edu.caltech.ipac.visualize.*;
-import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.data.DataConst;
+import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.ImageHeader;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
+import edu.caltech.ipac.visualize.plot.PixelValueException;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.PlotGroup;
+import edu.caltech.ipac.visualize.plot.PlotView;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
+import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
+import java.awt.Shape;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.*;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.Iterator;
-import java.util.Date;
 import java.util.HashMap;
 
 
 /**
  * Dialog for Flux Statistics
  * @author Tatiana Goldina
+ * Moved from spot-common AreaStatisticsDialog
  */
-public class AreaStatisticsDialog {
-     // three-color support
-     public enum WhichReadout {LEFT, RIGHT }
-     public enum WhichDir {LON, LAT }
-     public enum ReadoutMode {HMS, DECIMAL }
+public class AreaStatisticsUtil {
 
-     public enum Band {
+
+
+    public enum WhichReadout {LEFT, RIGHT }
+    public enum WhichDir {LON, LAT }
+    public enum ReadoutMode {HMS, DECIMAL }
+    private static NumberFormat  _nf   = NumberFormat.getInstance();// OK for i18n
+    private static NumberFormat  _nfExp= NumberFormat.getInstance();// OK for i18n
+
+
+    public enum Band {
         RED(ImagePlot.RED, "red"),
         GREEN(ImagePlot.GREEN, "green"),
         BLUE(ImagePlot.BLUE, "blue"),
@@ -57,9 +59,6 @@ public class AreaStatisticsDialog {
         String _label;
     }
 
-    private final static ClassProperties _prop  = new ClassProperties(AreaStatisticsDialog.class);
-    private final static String DIALOG_TITLE  = _prop.getTitle();
-    private final static String COLOR         = _prop.getName("color");
 
     // degrees to readians conversion factor
     private static final double DtoR = Math.PI/180.0;
@@ -104,14 +103,147 @@ public class AreaStatisticsDialog {
 
 
     public static String formatPosHtml(WhichReadout which, Plot plot, ImageWorkSpacePt ip) {
-        return "todo: fixe";
-        //return DefaultMouseReadoutHandler.formatReadoutByImagePt(which, plot, ip, "<br>");
+//        return "todo: fixe";
+        return formatReadoutByImagePt(which, plot, ip, "<br>");
     }
 
     private static String formatPos(WhichReadout which, Plot plot, ImageWorkSpacePt ip) {
-        return "todo: fixe";
-        //return DefaultMouseReadoutHandler.formatReadoutByImagePt(which, plot, ip, ", ");
+//        return "todo: fixe";
+        return formatReadoutByImagePt(which, plot, ip, ", ");
     }
+
+
+    public static String formatReadoutByImagePt(WhichReadout which,
+				 Plot plot, ImageWorkSpacePt ipt, String separator) {
+        String retval;
+        try {
+            Point2D screenPt = null;
+            ReadoutMode readoutMode = ReadoutMode.HMS;
+            CoordinateSys coordSys= CoordinateSys.EQ_J2000;
+            if (coordSys == null)  coordSys= plot.getCoordinatesOfPlot();
+            if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
+                screenPt = plot.getScreenCoords(ipt);
+            }
+	    ImagePt ip = new ImagePt(ipt.getX(), ipt.getY());
+            retval = getReadoutByImagePt(plot, ip, screenPt, WhichDir.LON, readoutMode, coordSys) +
+                     separator +
+                     getReadoutByImagePt(plot, ip, screenPt, WhichDir.LAT, readoutMode, coordSys);
+            return retval;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String getReadoutByImagePt(Plot plot,
+                                       ImagePt ip,
+                                       Point2D screenPt,
+                                       WhichDir dir,
+                                       ReadoutMode mode,
+                                       CoordinateSys coordSys) {
+        String retStr;
+        if (plot == null) {
+            retStr= "";
+        }
+        else if (coordSys.equals(CoordinateSys.PIXEL)) {
+            retStr= getDecimalXY(getValue(ip,dir)-0.5 , dir, coordSys);
+        }
+        else if (coordSys.equals(CoordinateSys.SCREEN_PIXEL)) {
+            retStr= getDecimalXY(getValue(screenPt,dir), dir,
+                                  CoordinateSys.SCREEN_PIXEL);
+        }
+        else {
+            try {
+		ImageWorkSpacePt iwspt = new ImageWorkSpacePt(ip.getX(), ip.getY());
+                WorldPt degPt= plot.getWorldCoords(iwspt, coordSys);
+                if (mode == ReadoutMode.HMS) {
+                    retStr= getHmsXY(getValue(degPt,dir), dir, coordSys);
+                }
+                else if (mode == ReadoutMode.DECIMAL) {
+                    retStr= getDecimalXY(getValue(degPt,dir), dir, coordSys);
+                }
+                else {
+                    Assert.tst(false);
+                    retStr= null;
+                }
+            } catch (ProjectionException pe) {
+                retStr= "";
+            }
+        }
+        return retStr;
+    }
+
+    private static String getDecimalXY(double val,
+                                WhichDir dir,
+                                CoordinateSys coordSys) {
+
+        String desc= null;
+        if (dir==WhichDir.LON) {
+            desc= coordSys.getlonShortDesc();
+        }
+        else if (dir==WhichDir.LAT) {
+            desc= coordSys.getlatShortDesc();
+        }
+        else {
+            Assert.tst(false);
+        }
+        return desc + _nf.format(val);
+    }
+
+    private static String getHmsXY(double val, WhichDir which, CoordinateSys coordSys) {
+        String retStr;
+        try {
+            if (which==WhichDir.LON) {
+                retStr= coordSys.getlonShortDesc() +
+                        TargetUtil.convertLonToString(val, coordSys.isEquatorial());
+            }
+            else if (which==WhichDir.LAT) {
+                retStr= coordSys.getlatShortDesc() +
+                        TargetUtil.convertLatToString(val, coordSys.isEquatorial());
+            }
+            else {
+                Assert.tst(false);
+                retStr= null;
+            }
+        } catch (CoordException ce) {
+            retStr= "";
+        }
+        return retStr;
+    }
+
+
+
+    private static double getValue(Point2D pt, WhichDir dir) {
+        double val;
+        if (dir==WhichDir.LON) {
+            val= pt.getX();
+        }
+        else if (dir==WhichDir.LAT) {
+            val= pt.getY();
+        }
+        else {
+            Assert.tst(false);
+            val= 0;
+        }
+        return val;
+    }
+
+    private static double getValue(Pt pt, WhichDir dir) {
+        double val;
+        if (dir==WhichDir.LON) {
+            val= pt.getX();
+        }
+        else if (dir==WhichDir.LAT) {
+            val= pt.getY();
+        }
+        else {
+            Assert.tst(false);
+            val= 0;
+        }
+        return val;
+    }
+
+
+
 
 
     /**
