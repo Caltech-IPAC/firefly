@@ -1,13 +1,5 @@
-package edu.caltech.ipac.planner.io;
+package edu.caltech.ipac.target;
 
-import edu.caltech.ipac.target.CoordinateSys;
-import edu.caltech.ipac.target.NedAttribute;
-import edu.caltech.ipac.target.PositionJ2000;
-import edu.caltech.ipac.target.ProperMotion;
-import edu.caltech.ipac.target.SimbadAttribute;
-import edu.caltech.ipac.target.TargetFixedSingle;
-import edu.caltech.ipac.target.TargetUtil;
-import edu.caltech.ipac.target.UserPosition;
 import edu.caltech.ipac.targetgui.TargetList;
 import edu.caltech.ipac.targetgui.net.NedParams;
 import edu.caltech.ipac.targetgui.net.SimbadParams;

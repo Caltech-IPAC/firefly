@@ -1,4 +1,0 @@
-PlainTextFilePreview.NumberOfLines.Value  = 100
-PlainTextFilePreview.SelectFileMsg.Name  = \ Select a file.
-PlainTextFilePreview.PreviewHeaderA.Name = \ Up to first 
-PlainTextFilePreview.PreviewHeaderB.Name = \ lines are shown below.

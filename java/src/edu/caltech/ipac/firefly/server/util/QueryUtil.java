@@ -16,7 +16,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 
-import edu.caltech.ipac.planner.io.IpacTableTargetsParser;
+import edu.caltech.ipac.target.IpacTableTargetsParser;
 import edu.caltech.ipac.target.NedAttribute;
 import edu.caltech.ipac.target.PositionJ2000;
 import edu.caltech.ipac.target.SimbadAttribute;
