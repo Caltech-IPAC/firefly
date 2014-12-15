@@ -1,7 +1,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
-import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;

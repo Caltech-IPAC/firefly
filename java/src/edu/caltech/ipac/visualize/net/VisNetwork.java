@@ -7,7 +7,6 @@ import edu.caltech.ipac.client.net.FileData;
 import edu.caltech.ipac.client.net.HostPort;
 import edu.caltech.ipac.client.net.NetParams;
 import edu.caltech.ipac.client.net.NetworkManager;
-import edu.caltech.ipac.client.net.ThreadedServiceListener;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.ParseException;
@@ -16,7 +15,8 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Window;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -92,18 +92,12 @@ public class VisNetwork {
 
         if (f == null)  {          // if not in cache
             f= CacheHelper.makeFitsFile(params);
-            if (CacheHelper.isServer()) {
-                try {
-                    IbeImageGetter.lowlevelGetIbeImage(params, f);
-                } catch (IOException e) {
-                    throw new FailedRequestException("IbeImageGetter Call failed with IOException",
-                                                     "no more detail",e);
-                }
+            try {
+                IbeImageGetter.lowlevelGetIbeImage(params, f);
+            } catch (IOException e) {
+                throw new FailedRequestException("IbeImageGetter Call failed with IOException",
+                                                 "no more detail",e);
             }
-            else {
-                IbeImageGetter.getIbeImage(params, f, w, moreCallsComing);
-            }
-
             CacheHelper.getFileCache().put(params,f);
         }
         return f;
@@ -141,16 +135,11 @@ public class VisNetwork {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
             f= CacheHelper.makeFitsFile(params);
-            if (CacheHelper.isServer()) {
-                try {
-                    SloanDssImageGetter.lowlevelGetSloanDssImage(params, f);
-                } catch (IOException e) {
-                    throw new FailedRequestException("SloanDSSImageGetter Call failed with IOException",
-                                                     "no more detail",e);
-                }
-            }
-            else {
-                SloanDssImageGetter.getSloanDssImage(params, f, w);
+            try {
+                SloanDssImageGetter.lowlevelGetSloanDssImage(params, f);
+            } catch (IOException e) {
+                throw new FailedRequestException("SloanDSSImageGetter Call failed with IOException",
+                                                 "no more detail",e);
             }
             CacheHelper.putFile(params,f);
         }
@@ -162,41 +151,17 @@ public class VisNetwork {
         File f= CacheHelper.getFile(params);
         if (f == null)  {          // if not in cache
             f= CacheHelper.makeFitsFile(params);
-            if (CacheHelper.isServer()) {
-                try {
-                    DssImageGetter.lowlevelGetDssImage(params, f);
-                } catch (IOException e) {
-                    throw new FailedRequestException("DSSImageGetter Call failed with IOException",
-                            "no more detail",e);
-                }
-            }
-            else {
-                DssImageGetter.getDssImage(params, f, w);
+            try {
+                DssImageGetter.lowlevelGetDssImage(params, f);
+            } catch (IOException e) {
+                throw new FailedRequestException("DSSImageGetter Call failed with IOException",
+                                                 "no more detail",e);
             }
             CacheHelper.putFile(params,f);
         }
         return f;
     }
 
-//    public static File getWiseImage(WiseImageParams params,  Window w) throws FailedRequestException {
-//        File f= CacheHelper.getFile(params);
-//        if (f == null)  {          // if not in cache
-//            f= CacheHelper.makeFitsFile(params);
-//            if (CacheHelper.isServer()) {
-//                try {
-//                    WiseImageGetter.lowlevelGetWiseImage(params, f);
-//                } catch (IOException e) {
-//                    throw new FailedRequestException("WiseImageGetter Call failed with IOException",
-//                                                     "no more detail",e);
-//                }
-//            }
-//            else {
-//                WiseImageGetter.getWiseImage(params, f, w);
-//            }
-//            CacheHelper.putFile(params,f);
-//        }
-//        return f;
-//    }
 
     public static File getSkyViewImage(SkyViewImageParams params,
                                        Window             w)
@@ -213,16 +178,11 @@ public class VisNetwork {
                 newfile= newfile + ".fits";
             }
             f= CacheHelper.makeFile(newfile);
-            if (CacheHelper.isServer()) {
-                try {
-                    SkyViewImageGetter.lowlevelGetImage(params, f,null);
-                } catch (IOException e) {
-                    throw new FailedRequestException("SkyViewImageGetter failed with IOException",
-                                                     "no more detail",e);
-                }
-            }
-            else {
-                SkyViewImageGetter.getImage(params, f, w);
+            try {
+                SkyViewImageGetter.lowlevelGetImage(params, f,null);
+            } catch (IOException e) {
+                throw new FailedRequestException("SkyViewImageGetter failed with IOException",
+                                                 "no more detail",e);
             }
             CacheHelper.putFile(params,f);
         }
@@ -237,19 +197,12 @@ public class VisNetwork {
         if (fData == null)  {          // if not in cache
             String newfile= params.getUniqueString();
             f= CacheHelper.makeFile(newfile);
-
-            if (CacheHelper.isServer()) {
-                try {
-                    fData= AnyFitsGetter.lowlevelGetFits(params, f,dl);
-                } catch (IOException e) {
-                    throw new FailedRequestException("AnyFitsGetter failed with IOException",
-                                                     "no more detail",e);
-                }
+            try {
+                fData= AnyFitsGetter.lowlevelGetFits(params, f,dl);
+            } catch (IOException e) {
+                throw new FailedRequestException("AnyFitsGetter failed with IOException",
+                                                 "no more detail",e);
             }
-            else {
-                fData= AnyFitsGetter.getFits(params, f, w);
-            }
-
             CacheHelper.putFile(params,fData);
         }
         return fData;
@@ -533,14 +486,6 @@ public class VisNetwork {
             FileUtil.silentClose(in);
         }
         return retval;
-    }
-
-    public static void queryNVOImages(SIAPImageParams params,
-                                      ThreadedServiceListener listener,
-                                      Window             w)
-            throws FailedRequestException {
-        Assert.tst(!CacheHelper.isServer());
-        NVOResourceFinder.getMatchingResources(params, listener, w);
     }
 
 }

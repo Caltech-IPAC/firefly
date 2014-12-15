@@ -1,20 +1,13 @@
 package edu.caltech.ipac.client.net;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtil;
-import edu.caltech.ipac.util.action.ClassProperties;
+import edu.caltech.ipac.util.ClientLog;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * a singleton
@@ -42,22 +35,10 @@ public class NetworkManager implements PropertyChangeListener {
    public static final String HORIZONS_NAIF         = "HorizonsNaif";
    public static final String SDSS_SERVER           = "SDSSServer";
 
-   public static final ClassProperties _prop= new ClassProperties(
-                                                     NetworkManager.class);
-
-     public static final int NET_UP      = 1;
-     public static final int NET_DOWN    = 2;
-     public static final int NET_UNKNOWN = 3;
-     public static final int SLEEP_TIME = 60 * 1000; // 1 minute
 
      private static NetworkManager _theInstance= null;
-     private HostPort _pingTarget= null;
      private Map<String,HostPort> _servers   = new HashMap<String,HostPort>(11);
-     private int      _netStatus = NET_UNKNOWN;
-     private Ping     _pinger    = null;
      private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
-     private NetEval  _netEval= null;
-     private boolean  _logEvals= false;
      private boolean  _logAdds = false;
 
      protected NetworkManager() {
@@ -109,94 +90,19 @@ public class NetworkManager implements PropertyChangeListener {
          _servers.put(serverName, server);
      }
 
-     public void reportServers() {
-          String report[]= new String[_servers.size()+1]; 
-          Set<String> set= _servers.keySet();
-          List<String> list= new ArrayList<String>(set);
-          Collections.sort(list);
-          HostPort  hp;
-          int       j= 0;
-          Iterator  i;
-          String serverName;
-          String serverDesc;
-          int    maxLen= 0;
-          report[j++]= "Active server list: ";
-          for (i= list.iterator(); i.hasNext();) {
-              serverName= (String)i.next();
-              if (serverName.length() > maxLen) maxLen= serverName.length();
-          }
-          for (i= list.iterator(); i.hasNext();) {
-              serverName= (String)i.next();
-              hp        = _servers.get(serverName);
-              serverDesc= hp.getHost()+ ":" +  hp.getPort();
-              report[j++]= "   " + StringUtil.pad(serverName,maxLen) + 
-                            ": " + serverDesc;
-          }
-          ClientLog.message(report);
-     }
 
-
-     public void setLogNetworkEvaluations(boolean l) { _logEvals= l; }
-
-     public void addServer( String serverName,
-                            String hostProperty, 
-                            String portProperty) {
-        String host= AppProperties.getPreference(hostProperty, null);
-        int    port= AppProperties.getIntPreference( portProperty, 80);
-        if (host != null) {
-           addServer(serverName, new HostPort(host,port));
-        }
-     }
 
      public HostPort getServer(String serverName) {
          return _servers.get(serverName);
      }
 
-     public void setPinger(Ping pinger) {
-         _pinger= pinger;
-     }
-
-     public void setPingTarget(HostPort pingTarget) {
-         _pingTarget= pingTarget;
-         evaluateNetwork();
-     }
 
 
-     public void evaluateNetwork() {
-         if (_netEval == null || !_netEval.getEvalThread().isAlive()) {
-            _netEval= new NetEval();
-         }
-         else {  // the thread is going, just interrupt to wake it up
-            _netEval.getEvalThread().interrupt();
-         }
-     }
-
-     public int getNetworkStatus() {
-          return _netStatus;
-     }
-     public String getNetworkStatusAsString() {
-         String s;
-         if (_netStatus==NetworkManager.NET_UP)  {
-             s= _prop.getName("netUp");
-         }
-         else if (_netStatus==NetworkManager.NET_DOWN) {
-             s= _prop.getName("netDown");
-         }
-         else  {
-             s= _prop.getName("netUnknown");
-         }
-         return s;
-     }
 
 //===================================================================
 //-------------------------- PropertyChangeListener Interface -------
 //===================================================================
     public void propertyChange(PropertyChangeEvent ev) {
-       String prop= ev.getPropertyName();
-       if (prop.indexOf("roxy") > -1) {  // search for any instance of proxy
-                //ProxySetupDialog.setupProxyFromSavedProperties();
-                evaluateNetwork();
-       }
     }
 
 //===================================================================
@@ -224,25 +130,6 @@ public class NetworkManager implements PropertyChangeListener {
 //-------------------------- Private / Protected Methods ------------
 //===================================================================
 
-    protected int doNetEval() {
-       Integer oldStat= new Integer(_netStatus);
-       if (_pingTarget != null && _pinger != null ) {
-          boolean goodNet= _pinger.doPing(_pingTarget.getHost(), 
-                                          _pingTarget.getPort() );
-          _netStatus= goodNet ?  NET_UP : NET_DOWN;
-          if (_logEvals) {
-                ClientLog.message("net status:  " + getNetworkStatusAsString(),
-                                  "ping target: " + _pingTarget  );
-          }
-       }
-       else {
-          _netStatus= NET_DOWN;
-       }
-       //System.out.println("evaluateNetwork: " + _netStatus);
-       _propChange.firePropertyChange ( "networkStatus", 
-                        oldStat, new Integer(_netStatus) );
-       return _netStatus;
-    }
 
     private void addServerWithProp(String serverName, 
                                    String defaultHost,
@@ -256,20 +143,6 @@ public class NetworkManager implements PropertyChangeListener {
     }
 
 
-    private class NetEval implements Runnable {
-       Thread _thread;
-       NetEval() {
-          _thread = new Thread(this, "NetEval");
-          _thread.start();
-       }
-       public void run() { 
-          while( doNetEval() != NET_UP) {
-             try {  Thread.sleep(SLEEP_TIME); }
-             catch (InterruptedException e) { }
-          }
-       }
-       Thread getEvalThread() { return _thread; }
-    }
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

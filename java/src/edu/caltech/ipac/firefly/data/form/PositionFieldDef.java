@@ -5,7 +5,7 @@ import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.StringFieldDef;
 import edu.caltech.ipac.util.dd.ValidationException;

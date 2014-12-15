@@ -2,7 +2,7 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
-import edu.caltech.ipac.target.DatedPosition;
+import edu.caltech.ipac.astro.target.DatedPosition;
 
 import java.awt.Rectangle;
 import java.awt.Point;

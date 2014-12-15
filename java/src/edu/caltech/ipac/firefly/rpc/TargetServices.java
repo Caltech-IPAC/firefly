@@ -6,7 +6,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.EphPair;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.util.ArrayList;

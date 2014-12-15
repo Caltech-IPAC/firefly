@@ -1,6 +1,6 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import nom.tam.fits.BasicHDU;

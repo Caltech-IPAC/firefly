@@ -26,7 +26,7 @@ import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.EnumFieldDef;

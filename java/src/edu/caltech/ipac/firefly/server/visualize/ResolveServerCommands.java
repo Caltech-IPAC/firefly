@@ -9,7 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.rpc.TargetServicesImpl;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.util.Map;

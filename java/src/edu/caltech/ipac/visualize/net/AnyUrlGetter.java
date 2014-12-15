@@ -38,7 +38,7 @@ public class AnyUrlGetter extends ThreadedService {
                         File          outFile, 
                         boolean      useSuggestedFilename,
                         Component    component) {
-       super(component);
+       super(ThreadedService.STANDARD,component);
        _params=params;
        _outFile=outFile;
        _useSuggestedFilename =useSuggestedFilename;
@@ -46,7 +46,7 @@ public class AnyUrlGetter extends ThreadedService {
    }
 
     private AnyUrlGetter(URL url, Component c) {
-        super(STANDARD, null, c);
+        super(STANDARD, c);
         _url=url;
         setOperationDesc(OP_DESC);
     }

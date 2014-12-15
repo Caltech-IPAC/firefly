@@ -1,13 +1,9 @@
 package edu.caltech.ipac.visualize.plot;
 
-import java.lang.reflect.*;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.astro.target.TargetUtil;
 
 
 /** Find central point and radius of the minimum circle  

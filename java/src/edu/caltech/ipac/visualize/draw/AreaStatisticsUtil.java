@@ -1,7 +1,7 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;

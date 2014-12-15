@@ -1,20 +1,14 @@
 package edu.caltech.ipac.util;
 
-import java.beans.PropertyChangeListener;
-
 public interface TableConnectionList {
     static public final String BULK_UPDATE        = "bulkUpdate";
     static public final String ADD                = "add";
     static public final String REMOVE             = "remove";
     static public final String CURRENT            = "current";
-    static public final String SAVED              = "saved";
     static public final String ALL_ENTRIES_UPDATED= "allEntriesUpdated";
     static public final String ENTRY_UPDATED      = "entryUpdated";
-    static public final String VALUE_AT           = "valueAt";
-    static public final String SELECTED_INDEX_ARY = "SelectedIndexAry";
 
 
-    public void addPropertyChangeListener (PropertyChangeListener p);
     public int size();
     public int indexOf(Object o);
 

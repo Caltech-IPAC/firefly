@@ -19,7 +19,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.target.PositionUtil;
+import edu.caltech.ipac.astro.target.PositionUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;

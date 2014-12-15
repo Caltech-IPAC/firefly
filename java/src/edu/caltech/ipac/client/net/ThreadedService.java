@@ -4,7 +4,6 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 
 import javax.swing.Icon;
-import javax.swing.SwingUtilities;
 import java.awt.Component;
 import java.awt.EventQueue;
 /**
@@ -63,7 +62,6 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      * that is no indication to the user that the network request is going on.
      */
     private final Component               _component;
-    private final ThreadedServiceListener _listener; //listener for BACKGROUND
 
 
     private boolean _showUserErrors          = true;
@@ -98,17 +96,8 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      * Construtor for a threaded service that you wish to run silent in
      * without the user knowing. (in other words- run with no feedback).
      */
-    public ThreadedService()         { this(STANDARD, null, null); }
-    /**
-     * Construtor for a threaded service.
-     * @param c if the Component is not null then
-     *               provide feedback and a cancel button to the user.
-     *               If the window is null this threaded service will
-     *               run silent
-     */
-    public ThreadedService(Component c) { this(STANDARD, null, c);    }
-
-
+    public ThreadedService()         { this(STANDARD, null); }
+    public ThreadedService(Component c)         { this(STANDARD, c); }
 
     /**
      * Construtor for a threaded service.
@@ -122,10 +111,6 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      *                           not block the user) and provides the user 
      *                           with feedback and a cancel button.
      *                  </ul>
-     * @param listener  a listener to know the status of the service.
-     *                 This is only used when the mode is BACKGROUND since
-     *                 the use is doing some asyncronous type of request and his
-     *                 only notification is through the listeners.
      * @param c if the Component is not null then
      *          provide feedback and a cancel button to the user.
      *          If the window is null this threaded service will
@@ -133,16 +118,7 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
      *          Background requires a Window.
      */
     public ThreadedService(int                     type, 
-                           ThreadedServiceListener listener,
                            Component               c) {
-        Assert.argTst(type==STANDARD ||
-                     (type==BACKGROUND && c!=null),
-             "Type must be: STANDARD, or BACKGROUND\n"+
-             "if type is BACKGROUND then c must not be null.");
-        Assert.argTst((type==BACKGROUND || listener==null),
-                      "a listener should only be passed if the " +
-                      "type is BACKGROUND, the listener is not used with "+
-                      "STANDARD");
         if (type==STANDARD && !EventQueue.isDispatchThread()) {
             _callerThreaded= true;
             _thread= null;
@@ -152,7 +128,6 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
         }
         _type     = type;
         _component= c;
-        _listener = listener;
         //_requester= new Requester(this,c);
     }
 
@@ -404,76 +379,13 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
    //-------------------- Listener fire methods ---------------------------
    //=======================================================================
 
-    /**
-     * This method is intended to be used from a subclass of Threaded Service.
-     * It would be call during a long network process that might have several
-     * steps.  When the subclass needs to pass partial competed data to the
-     * listener that can be vetoed.
-     * @param ev the ThreadedServiceEvent
-     * @throws FailedRequestException will stop the processing
-     */
-    protected final void fireVetoableUpdate(ThreadedServiceEvent ev)
-                                               throws FailedRequestException {
-        if (_listener != null) _listener.vetoableUpdate(ev);
-    }
-
-    /**
-     * This method is intended to be used from a subclass of Threaded Service.
-     * It would be call during a long network process that might have several
-     * steps.  When the subclass needs to pass partial competed data to the
-     * listener.
-     * @param ev the ThreadedServiceEvent
-     */
-    protected final void fireUpdate(final ThreadedServiceEvent ev) {
-        if (_listener != null) {
-             if (_fireListenersInAWTThread) {
-                 SwingUtilities.invokeLater(new Runnable() {
-                     public void run() { fireUpdateNow(ev); }
-                 });
-             }
-             else {
-                 fireUpdateNow(ev);
-             }
-        }
-    }
-
 
     private void firePreFail() {
-        if (_listener != null) {
-             if (_fireListenersInAWTThread) {
-                 SwingUtilities.invokeLater( new Runnable() {
-                       public void run() { firePreFailNow(); }
-                  } );
-             }
-             else {
-                 firePreFailNow();
-             }
-        }
     }
     private void fireFailed(final FailedRequestException ev) {
-        if (_listener != null) {
-             if (_fireListenersInAWTThread) {
-                 SwingUtilities.invokeLater(new Runnable() {
-                     public void run() { fireFailedNow(ev); }
-                 });
-             }
-             else {
-                 fireFailedNow(ev);
-             }
-        }
     }
 
     private void fireSuccess() {
-        if (_listener != null) {
-             if (_fireListenersInAWTThread) {
-                 SwingUtilities.invokeLater( new Runnable() {
-                       public void run() { fireSuccessNow(); }
-                  } );
-             }
-             else {
-                 fireSuccessNow();
-             }
-        }
     }
 
     // ===================================================================
@@ -604,18 +516,6 @@ public abstract class ThreadedService implements Runnable, DownloadListener {
          //if (_component!=null) _requester.endBackgroundRequest();
     }
 
-    private void fireUpdateNow(ThreadedServiceEvent ev) {
-        if (_listener != null) _listener.update(ev);
-    }
-    private void firePreFailNow() {
-        if (_listener != null) _listener.preFail();
-    }
-    private void fireFailedNow(FailedRequestException e) {
-        if (_listener != null) _listener.failed(e);
-    }
-    private void fireSuccessNow() {
-        if (_listener != null) _listener.success();
-    }
 
 
 }

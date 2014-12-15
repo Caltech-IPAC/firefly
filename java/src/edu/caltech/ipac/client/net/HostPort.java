@@ -8,8 +8,6 @@ package edu.caltech.ipac.client.net;
 public class HostPort {
     private String   _host;
     private int      _port;
-    private boolean  _firstSecureAccessMade= false;
-
 
     public HostPort(String host, int port) {
          _host= host;
@@ -19,14 +17,6 @@ public class HostPort {
     public String getHost() { return _host; }
     public String toString(){
        return      "Server Host: " + _host + ":" + _port;
-    }
-
-    public boolean getFirstSecureAccessMade() { 
-       return _firstSecureAccessMade;
-    }
-
-    public void setFirstSecureAccessMade(boolean firstSecureAccessMade) { 
-       _firstSecureAccessMade= firstSecureAccessMade;
     }
 }
 /*

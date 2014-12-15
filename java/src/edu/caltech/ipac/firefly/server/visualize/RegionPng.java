@@ -7,7 +7,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.target.TargetUtil;
+import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
 import edu.caltech.ipac.util.dd.RegionBox;

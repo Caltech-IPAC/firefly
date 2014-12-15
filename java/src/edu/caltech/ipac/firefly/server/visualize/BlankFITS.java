@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.target.PositionJ2000;
+import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;

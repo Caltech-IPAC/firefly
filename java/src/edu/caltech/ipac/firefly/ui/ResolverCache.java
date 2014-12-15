@@ -8,7 +8,7 @@ package edu.caltech.ipac.firefly.ui;
 
 import edu.caltech.ipac.firefly.data.EphPair;
 import edu.caltech.ipac.firefly.util.BrowserCache;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.util.ArrayList;

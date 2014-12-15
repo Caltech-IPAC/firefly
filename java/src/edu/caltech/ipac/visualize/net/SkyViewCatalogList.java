@@ -46,7 +46,7 @@ public class SkyViewCatalogList extends  ThreadedService {
     private SearchType   _searchType;
 
     private SkyViewCatalogList(Window w, SearchType searchType) {
-       super(STANDARD, null, w);
+       super(STANDARD,  w);
        setOperationDesc(OP_DESC);
        _searchType= searchType;
     }

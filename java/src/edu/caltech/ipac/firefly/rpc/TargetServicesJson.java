@@ -11,7 +11,7 @@ import edu.caltech.ipac.firefly.core.JsonUtils;
 import edu.caltech.ipac.firefly.data.EphPair;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.targetgui.net.Resolver;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import java.util.ArrayList;
