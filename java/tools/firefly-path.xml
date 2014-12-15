@@ -11,6 +11,7 @@
         <include name="webservices/archive_dto_votable.jar"/>
         <include name="webservices/archive_dto_irsa.jar"/>
         <include name="webservices/regclient.jar"/>
+        <include name="data/fits.jar"/>
         <include name="simbad_ws.jar"/>
     </fileset>
 
