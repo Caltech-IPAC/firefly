@@ -1,6 +1,7 @@
 <project name="Firefly Project Build init file" basedir=".">
     <!-- project specific's property -->
     <property name="jars.dir" location="${build.root}/../jars"/>
+    <property name="dev.root.dir" location="${build.root}/../.."/>
 
     <!-- imports the common.xml build file -->
     <import file="${build.root}/tools/common.xml"/>
