@@ -24,7 +24,6 @@ public class TargetUtil {
 
    private static NumberFormat nf = NumberFormat.getInstance();
 
-    public static enum sortFirst { RA, DEC }
 
    static {
       nf.setMaximumFractionDigits(MAX_FRACTION_DIGITS);
@@ -40,7 +39,6 @@ public class TargetUtil {
    public static String convertLonToString(double lon, boolean isEquatorial )
                    throws CoordException {
        int convertionType= isEquatorial ? 2 : 0;
-       //return new Coord(lon, false, isEquatorial).c_ddsex(convertionType);
        return CoordUtil.dd2sex(lon, false, isEquatorial, 5);
     }
 
@@ -52,8 +50,6 @@ public class TargetUtil {
 
     public static String convertLatToString(double lat, boolean isEquatorial)
                                                   throws CoordException {
-        int convertionType= isEquatorial  ? 1 : 0;
-//        return new Coord(lat, true, isEquatorial).c_ddsex(convertionType);
         return CoordUtil.dd2sex(lat, true, isEquatorial, 5);
     }
 
@@ -61,7 +57,6 @@ public class TargetUtil {
                                       CoordinateSys coordSystem )
                                                   throws CoordException {
        boolean eq= coordSystem.isEquatorial();
-       //return new Coord(hms, false, eq).c_coord();
        return CoordUtil.sex2dd(hms,false, eq);
    }
 
@@ -69,7 +64,6 @@ public class TargetUtil {
                                            CoordinateSys coordSystem )
                                                   throws CoordException {
        boolean eq= coordSystem.isEquatorial();
-       //return new Coord(dms, true, eq).c_coord();
        return CoordUtil.sex2dd(dms,true, eq);
    }
 
@@ -267,268 +261,7 @@ public class TargetUtil {
       return computeDistance(t1.getPosition(), t2.getPosition());
    }
 
-   /**
-    *  compute the maximum distance between all
-    *  the positions in a TargetMulti target.
-    *  the unit of the distance is degree
-    */
-   public static double computeMaxDistance(TargetMulti t) {
-      PositionJ2000 [] ps = t.getPositionAry();
-      int number = ps.length;
-      double max = 0.0;
-      double dist;
 
-      for (int i = 0; i< number-1; i++) {
-         for (int j=i+1; j<number; j++) {
-            dist = computeDistance(ps[i], ps[j]);
-            if (dist > max) max = dist;
-            }
-         }
-      return max;
-   }
-
-   /**
-    *  compute the distance between each position in
-    *  a TargetMulti target and the position calculated using given offset,
-    *  return the maximum.
-    *  offsets RA and DEC are in arcsec.
-    *  the unit of the distance is degree
-    *
-    *  assuming that the offset given is in the same coordinate system
-    *  as the positions in target
-    */
-   public static double computeMaxDistance(TargetMulti t, Offset of) {
-      PositionJ2000 [] ps = t.getPositionAry();
-      Position newP = getNewPosition(ps[0], of);
-
-      int         number = ps.length;
-      double      dist = 0.0;
-      double      max = 0.0;
-
-      for (int i=0; i<number; i++) {
-         dist = computeDistance(newP, ps[i]);
-         if (max < dist) max = dist;
-         }
-      return max;
-   }
-
-   /**
-    *  compute the distance between each position in
-    *  a TargetFixedCluster target and the position calculated using
-    *  given offset,
-    *  return the maximum.
-    *  offsets RA and DEC are in arcsec.
-    *  the unit of the distance is degree
-    *
-    *  asuming the offset given is in the same coordinate system
-    *  as the position in target. also the offset in target is in
-    *  the same coordinate system as the position
-    */
-   public static double computeMaxDistance(TargetFixedCluster t, Offset of) {
-      TargetMulti  tgtM = toTargetMulti(t);
-      return computeMaxDistance(tgtM, of);
-   }
-
-   public static double computeMaxDistance(Target t, Offset of) {
-      double dist = 0.0;
-      if (!t.isFixed())
-         throw new IllegalArgumentException(
-                        "only fixed target is supported");
-      if (t instanceof TargetFixedCluster)
-         dist = computeMaxDistance((TargetFixedCluster)t, of);
-      else if (t instanceof TargetMulti)
-         dist = computeMaxDistance((TargetMulti)t, of);
-      else {
-         Position p = ((TargetFixedSingle)t).getPosition();
-         dist = computeDistance(p, getNewPosition(p, of));
-         }
-
-      return dist;
-   }
-
-   public static double computeMaxDistance(TargetFixedCluster t,
-                                           PositionJ2000 p) {
-      TargetMulti tm = toTargetMulti(t);
-      return computeMaxDistance(tm, p);
-
-   }
-   public static double computeMaxDistance(TargetMulti t, PositionJ2000 p) {
-      PositionJ2000 [] ps = t.getPositionAry();
-
-      int         number = ps.length;
-      double      dist = 0.0;
-      double      max = 0.0;
-
-      for (int i=0; i<number; i++) {
-         dist = computeDistance(p.getLon(),p.getLat(),
-                                ps[i].getLon(), ps[i].getLat());
-         if (max < dist) max = dist;
-         }
-      return max;
-   }
-   public static double computeMaxDistance(Target t, PositionJ2000 p) {
-      double dist = 0.0;
-      if (!t.isFixed())
-         throw new IllegalArgumentException(
-                        "only fixed target is supported");
-      if (t instanceof TargetFixedCluster)
-         dist = computeMaxDistance((TargetFixedCluster)t, p);
-      else if (t instanceof TargetMulti)
-         dist = computeMaxDistance((TargetMulti)t, p);
-      else {
-         Position tp = ((TargetFixedSingle)t).getPosition();
-         dist = computeDistance( p.getLon(),  p.getLat(),
-                                 tp.getLon(), tp.getLat());
-         }
-      return dist;
-   }
-
-   /**
-    * compare base position for two targets,
-    * for sorting in target list and aor list  br>
-    * if (t1 < t2)  return -1; <br>
-    * else if (t1 > t2) return 1; <br>
-    * else return 0;  (this does not mean equal, use equals method
-    * if you want to see if two targets are exactly the same)<br>
-    * <br>
-    * <ol>
-    * Definitions as following: <br>
-    *  <li> Fixed target is smaller than non-fixed targets;
-    *  <li> TargetAny is smaller than moving target
-    *  <li> Fixed Single, fixed cluster with offsets and fixed cluster with
-    *       multiple positions, only the position(first position
-    *       for multiple positions) are compared.
-    *  <li> for fixed targets, we take into account the RA/Lon, Dec/Lat
-    *  <li> for RA/Lon,from small to large:    0.00  ===> 360.0
-    *  <li> for Dec/Lat, -rom small to large: 90.00  ===>  90.00
-    *  <li> moving target with standard ephemeris is smaller than
-    *     with non-standard ephemeris
-    *  <li> for moving tragets with standard ephemeris,
-    *       naifID is treated as integer comparison
-    *  <li> for non-standard ephemeris, they are considered the same
-    * </ol>
-    */
-   public static int compareBasePosition(Target t1, Target t2) {
-       return compareBasePosition(t1, t2, sortFirst.RA);
-   }
-
-    public static int compareBasePosition(Target t1, Target t2, sortFirst sort) {
-      int retval = -1;
-      Position p1, p2;
-
-      if (t1.isFixed()) {
-         if (t2.isFixed()) {
-            p1 = ((Fixed)t1).getPosition();
-            p2 = ((Fixed)t2).getPosition();
-             if (sort.equals(sortFirst.DEC)) {
-                retval = compareLatLon(p1,p2);
-             } else if (sort.equals(sortFirst.RA)) {
-                retval = compareLonLat(p1, p2);
-             }
-            }
-         else {
-            retval = -1;
-            }
-         }
-      else {   // t1 is TargetAny or moving target
-         if (t2.isFixed()) {
-            retval = 1;
-            }
-         else {  // both are moving or TargetAny
-            if (t1 instanceof TargetAny && t2 instanceof TargetAny)
-               retval = 0;
-            else if (t1 instanceof TargetAny)
-               retval = -1;
-            else if (t2 instanceof TargetAny)
-               retval = 1;
-            else  if (((Moving)t1).isStandard()) { // both are moving target
-               if (((Moving)t2).isStandard()) {
-                  Ephemeris eph1 = ((Moving)t1).getEphemeris();
-                  Ephemeris eph2 = ((Moving)t2).getEphemeris();
-                  retval = compareEphID((StandardEphemeris)eph1,
-                                        (StandardEphemeris)eph2);
-                  }
-               else {
-                  retval = -1;
-                  }
-               }
-            else { // t1 is non-standard
-               if (((Moving)t2).isStandard())
-                  retval = 1;
-               else
-                  retval = 0;
-               }
-            }
-         }
-      return retval;
-   }
-
-    /**
-     * Compare by Latitute first then by lattitude then by longitude
-     * @param p1
-     * @param p2
-     * @return int
-     */
-    private static int compareLatLon(Position p1, Position p2) {
-        int retval = 0;
-      double latD1 = p1.getLat();
-      double latD2 = p2.getLat();
-      double lonD1 = p1.getLon();
-      double lonD2 = p2.getLon();
-
-     if (latD1 < latD2) {
-         retval = -1;
-      }
-      else if (latD1 > latD2) {
-         retval = 1;
-      }
-      else {
-         if (lonD1 < lonD2)      retval = -1;
-         else if (lonD1 > lonD2) retval = 1;
-         else                    retval = 0;
-      }
-      return retval;
-    }
-
-    /**
-     * Compare Longitude first then Lattitude
-     * @param p1
-     * @param p2
-     * @return int
-     */
-   private static int compareLonLat(Position p1, Position p2) {
-      int retval = 0;
-      double lonD1 = p1.getLon();
-      double lonD2 = p2.getLon();
-      double latD1 = p1.getLat();
-      double latD2 = p2.getLat();
-
-     if (lonD1 < lonD2) {
-         retval = -1;
-      }
-      else if (lonD1 > lonD2) {
-         retval = 1;
-      }
-      else {
-         if (latD1 < latD2)      retval = -1;
-         else if (latD1 > latD2) retval = 1;
-         else                    retval = 0;
-      }
-      return retval;
-   }
-
-   private static int compareEphID(StandardEphemeris eph1,
-                                   StandardEphemeris eph2) {
-      int retval;
-      int id1 = eph1.getNaifID();
-      int id2 = eph2.getNaifID();
-
-      if (id1 < id2)      retval = -1;
-      else if (id1 > id2) retval = 1;
-      else                retval = 0;
-
-      return retval;
-   }
 
 
   /** Compute position angle
@@ -575,50 +308,6 @@ public class TargetUtil {
         return(pa);
     }
 
-   /**
-    * Convert the passed ofset to a PositionJ2000 if posible.  If the
-    * Offset contains a non-null Location that is an instance of
-    * Position then call getNewPosition and return a new position that
-    * combines the Position and the offset.
-    * @param of the offset to try to convert to a PositionJ2000
-    * @return return a PositonJ2000 if the convertion is position or a
-    *         null if the convertion is not posible
-    */
-   public static PositionJ2000 convertToPosition(Offset of) {
-      PositionJ2000 retval= null;
-      Location l= of.getLocation();
-      if (l!=null && l instanceof Position) {
-         Position p= (Position)l;
-         retval= getNewPosition(p,of);
-      }
-      return retval;
-   }
-   /**
-    * @param p the base postion to start from
-    * @param of - the offset in the same coordinate system as the input position
-    * @return a new position with offset respective to input position.
-    * the new position is in the same coordinate system as the input position.
-    * the new psoition has the same proper motion as the input position
-    * the new position has J2000 values populated.
-    */
-   public static PositionJ2000 getNewPosition(Position p, Offset of) {
-      PositionJ2000 pos1 = new PositionJ2000(p);
-      PositionJ2000 pos2 = PositionUtil.calculatePosition(pos1, of);
-      return pos2;
-   }
-
-   private static TargetMulti toTargetMulti(TargetFixedCluster t) {
-      PositionJ2000 p = t.getPosition();
-      Offset []    ofs = t.getOffsets();
-      int          number = ofs.length;
-      PositionJ2000 []  newP = new PositionJ2000[number+1];
-
-      for (int i=0; i<number; i++) {
-         newP[i+1] = getNewPosition(p, ofs[i]);
-         }
-      newP[0] = p;
-      return new TargetMulti(t.getName(), newP);
-      }
 
    private static Position correctJ2000Epoch(Position inP) {
       Position outP;
@@ -653,17 +342,6 @@ public class TargetUtil {
       return outP;
    }
 
-   public static void printPosition(String msg, Position p) {
-
-      System.out.println(msg);
-      System.out.println(p.toString());
-      }
-
-   //private static void printOffset(String msg, Offset of) {
-   //   System.out.println(msg);
-   //  System.out.println("user input: "+ of.getDeltaRaV() + ", " +
-   //                                    of.getDeltaDecW());
-   //}
 
      // coordName will be one of the following : Equaltorial, Ecliptic,
     // Galactic, equinox will be J2000 or B1950

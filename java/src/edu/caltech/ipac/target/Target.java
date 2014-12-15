@@ -43,9 +43,9 @@ public abstract class Target implements Cloneable, Serializable {
      */
     public void setName( String name ) { this.name = name; }
 
-    public boolean isMoving()    { return (this instanceof Moving); }
-    public boolean isFixed()     { return (this instanceof Fixed); }
-    public boolean isTargetAny() { return (this instanceof TargetAny); }
+//    public boolean isMoving()    { return (this instanceof Moving); }
+//    public boolean isFixed()     { return (this instanceof Fixed); }
+//    public boolean isTargetAny() { return (this instanceof TargetAny); }
 
 //======================================================================
 //----------------------- Target Attributes ----------------------------
