@@ -28,7 +28,6 @@ public class StringUtil {
     */
    public static String [] strToStrings(String instr) {
        String astr, delim= " ", tmpstr;
-//       String [] retval;
        ArrayList<String> tokens= new ArrayList<String>(12);
        Assert.tst(instr != null);
        StringTokenizer st = new StringTokenizer(instr, delim);
@@ -51,33 +50,13 @@ public class StringUtil {
                        st.nextToken(delim);
                    }
                    astr= adder.toString();
-               } // end if
+               }
                tokens.add(astr);
-           }  // end while
-       } catch (NoSuchElementException e) { }
-//       retval = new String[tokens.size()];
-//       for(int i= 0; (i<retval.length); i++)
-//                             retval[i]= (String)tokens.get(i);
+           }
+       }  catch (NoSuchElementException e) {
+            // ignore - end of loop
+       }
        return tokens.toArray(new String[tokens.size()]);
-   }
-
-
-
-
-    /**
-    * return true if there are only spaces in the string
-    */
-   public static boolean isSpaces(String s) {
-      int     length = s.length();
-      boolean retval = true;
-
-      for (int i=0; i<length; i++) {
-         if (!Character.isWhitespace(s.charAt(i))) {
-            retval = false;
-            break;
-            }
-         }
-      return retval;
    }
 
    /**
@@ -113,46 +92,6 @@ public class StringUtil {
     }
 
 
-
-    public static String millsecToFormatStr(long milliSec,
-                                            boolean userFriendly) {
-        String retval;
-        if (userFriendly) {
-            long sec= milliSec / 1000;
-
-            if (sec < 3300) {
-                if (sec <=5)                     retval= "Less than 5 sec";
-                else if (sec <=30)               retval= "Less than 30 sec";
-                else if (sec <=45)               retval= "Less than a minute";
-                else if (sec < 75 && sec > 45)   retval= "About a minute";
-                else                     retval= "About " + sec/60 + " minutes";
-            }
-            else {
-                float hour= sec / 3600F;
-                if (hour < 1.2F && hour > .8F) {
-                    retval= "About an hour";
-                }
-                else {
-                    retval= millsecToFormatStr(milliSec);
-                }
-            }
-        }
-        else {
-            retval= millsecToFormatStr(milliSec);
-        }
-        return retval;
-    }
-
-    public static String millsecToFormatStr(long milliSec) {
-        String minStr, secStr;
-        long inSec= milliSec / 1000;
-        long hours= inSec/3600;
-        long mins= (inSec - (hours*3600)) / 60;
-        minStr=  (mins < 10) ? "0" + mins : mins + "";
-        long secs= inSec - ((hours*3600) + (mins*60));
-        secStr=  (secs < 10) ? "0" + secs : secs + "";
-        return hours + ":" + minStr + ":" + secStr;
-    }
 
    public static String getShortClassName(String className) {
       StringTokenizer st= new StringTokenizer(className, "."); 

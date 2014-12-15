@@ -342,6 +342,18 @@ public final class IpacTableReader {
       return columnsDesc;
    }
 
+    public static boolean isSpaces(String s) {
+        int     length = s.length();
+        boolean retval = true;
+
+        for (int i=0; i<length; i++) {
+            if (!Character.isWhitespace(s.charAt(i))) {
+                retval = false;
+                break;
+            }
+        }
+        return retval;
+    }
 
     private void addToGroup(String line, List<IpacTableColumn> columnsDesc,
                             DataGroup dataGroup,
@@ -354,7 +366,7 @@ public final class IpacTableReader {
         IpacTableColumn lastItc;
         int workingEndIdx;
 
-        if (StringUtil.isSpaces(line)) return;
+        if (isSpaces(line)) return;
 
         // -check to see if this line is shorter then expected
         int realIdx = _line.length();

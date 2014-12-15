@@ -8,7 +8,6 @@ package edu.caltech.ipac.client.net;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -211,10 +210,50 @@ public class Downloader {
 
         timeStats.elapseSec = elapseTime / 1000;
         timeStats.remainSec = remainingTime / 1000;
-        timeStats.remainingStr = StringUtil.millsecToFormatStr(remainingTime, true);
-        timeStats.elapseStr = StringUtil.millsecToFormatStr(elapseTime);
+        timeStats.remainingStr = millsecToFormatStr(remainingTime, true);
+        timeStats.elapseStr = millsecToFormatStr(elapseTime);
 
         return timeStats;
+    }
+
+    public static String millsecToFormatStr(long milliSec,
+                                            boolean userFriendly) {
+        String retval;
+        if (userFriendly) {
+            long sec= milliSec / 1000;
+
+            if (sec < 3300) {
+                if (sec <=5)                     retval= "Less than 5 sec";
+                else if (sec <=30)               retval= "Less than 30 sec";
+                else if (sec <=45)               retval= "Less than a minute";
+                else if (sec < 75 && sec > 45)   retval= "About a minute";
+                else                     retval= "About " + sec/60 + " minutes";
+            }
+            else {
+                float hour= sec / 3600F;
+                if (hour < 1.2F && hour > .8F) {
+                    retval= "About an hour";
+                }
+                else {
+                    retval= millsecToFormatStr(milliSec);
+                }
+            }
+        }
+        else {
+            retval= millsecToFormatStr(milliSec);
+        }
+        return retval;
+    }
+
+    public static String millsecToFormatStr(long milliSec) {
+        String minStr, secStr;
+        long inSec= milliSec / 1000;
+        long hours= inSec/3600;
+        long mins= (inSec - (hours*3600)) / 60;
+        minStr=  (mins < 10) ? "0" + mins : mins + "";
+        long secs= inSec - ((hours*3600) + (mins*60));
+        secStr=  (secs < 10) ? "0" + secs : secs + "";
+        return hours + ":" + minStr + ":" + secStr;
     }
 
 
