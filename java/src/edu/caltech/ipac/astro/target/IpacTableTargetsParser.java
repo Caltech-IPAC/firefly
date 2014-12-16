@@ -20,17 +20,6 @@ public class IpacTableTargetsParser {
     private static String FLOAT_MASK = "[+-]?[0-9]*[.]?[0-9]+";
 
     /**
-     * parse DataGroup's RA and DEC columns and produce a TargetList
-     *
-     * @param dg      DataGroup containing RA and Dec columns
-     * @param targets a TargetList product
-     * @throws Exception
-     */
-    public static void parseTargets(DataGroup dg, TargetList targets) throws Exception {
-        parseTargets(dg, targets, false);
-    }
-
-    /**
      * @param dg            DataGroup containing RA and Dec columns
      * @param targets       a TargetList product
      * @param nedThenSimbad true if use NED then SIMBAD

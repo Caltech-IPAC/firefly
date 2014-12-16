@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  */
-public class TargetFixedSingle extends    Fixed
+public class TargetFixedSingle extends    Target
                                implements Cloneable, Serializable {
     // class variable definitions //
 

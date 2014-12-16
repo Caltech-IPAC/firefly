@@ -43,8 +43,6 @@ public abstract class Target implements Cloneable, Serializable {
      */
     public void setName( String name ) { this.name = name; }
 
-    public boolean isFixed()     { return (this instanceof Fixed); }
-
 //======================================================================
 //----------------------- Target Attributes ----------------------------
 //======================================================================

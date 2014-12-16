@@ -10,6 +10,7 @@ import edu.caltech.ipac.astro.target.NedAttribute;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.astro.target.SimbadAttribute;
 import edu.caltech.ipac.astro.target.Target;
+import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.astro.target.TargetList;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
@@ -353,11 +354,11 @@ public class QueryUtil {
 //     * @throws DataAccessException
 //     * @throws IOException
 //     */
-    public static List<Target> getTargetList(File ufile)
+    public static List<TargetFixedSingle> getTargetList(File ufile)
             throws DataAccessException, IOException {
         TargetList targetList = new TargetList();
         String parsingErrors = "";
-        ArrayList<Target> targets = new ArrayList<Target>();
+        ArrayList<TargetFixedSingle> targets = new ArrayList<TargetFixedSingle>();
         final String OBJ_NAME = "objname";
         final String RA = "ra";
         final String DEC= "dec";
@@ -396,7 +397,9 @@ public class QueryUtil {
                 if(t.getCoords() == null || t.getCoords().length() < 1){
                     parsingErrors = parsingErrors + "Invalid Target: " + t.getName() + "<br>";
                 } else {
-                    targets.add(t);
+                    if (t instanceof TargetFixedSingle) {
+                        targets.add((TargetFixedSingle)t);
+                    }
                 }
             }
 
