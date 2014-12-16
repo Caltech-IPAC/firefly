@@ -471,6 +471,134 @@ public class VisUtil {
 
     }
 
+
+    public static WorldPt calculatePosition(WorldPt pos1,
+                                            Offset offset) {
+        double ra = Math.toRadians(pos1.getLon());
+        double dec = Math.toRadians(pos1.getLat());
+        double de = Math.toRadians(offset.getDeltaRaV()/3600.0); // east
+        double dn = Math.toRadians(offset.getDeltaDecW())/3600.0; // north
+
+        double cos_ra,sin_ra,cos_dec,sin_dec;
+        double cos_de,sin_de,cos_dn,sin_dn;
+        double rhat[] = new double[3];
+        double shat[] = new double[3];
+        double uhat[] = new double[3];
+        double uxy;
+        double ra2, dec2;
+
+        cos_ra  = Math.cos(ra);
+        sin_ra  = Math.sin(ra);
+        cos_dec = Math.cos(dec);
+        sin_dec = Math.sin(dec);
+
+        cos_de = Math.cos(de);
+        sin_de = Math.sin(de);
+        cos_dn = Math.cos(dn);
+        sin_dn = Math.sin(dn);
+
+
+        rhat[0] = cos_de * cos_dn;
+        rhat[1] = sin_de * cos_dn;
+        rhat[2] = sin_dn;
+
+        shat[0] = cos_dec * rhat[0] - sin_dec * rhat[2];
+        shat[1] = rhat[1];
+        shat[2] = sin_dec * rhat[0] + cos_dec * rhat[2];
+
+        uhat[0] = cos_ra * shat[0] - sin_ra * shat[1];
+        uhat[1] = sin_ra * shat[0] + cos_ra * shat[1];
+        uhat[2] = shat[2];
+
+        uxy = Math.sqrt(uhat[0] * uhat[0] + uhat[1] * uhat[1]);
+        if (uxy>0.0)
+            ra2 = Math.atan2(uhat[1],uhat[0]);
+        else
+            ra2 = 0.0;
+        dec2 = Math.atan2(uhat[2],uxy);
+
+        ra2  = Math.toDegrees(ra2);
+        dec2 = Math.toDegrees(dec2);
+
+        if (ra2 < 0.0) ra2 +=360.0;
+
+        /*
+        System.out.println("PositionUtil: " );
+        System.out.println("ra: " + ra2);
+        System.out.println("dec: " + dec2);
+        */
+        return new WorldPt((float)ra2, (float)dec2);
+    }
+
+    /**
+     * Find the corners of a bounding box given the center and the radius
+     * of a circle
+     *
+     * @param center the center of the circle
+     * @param radius in arcsec
+     * @return
+     */
+    public static Corners getCorners(WorldPt center, double radius) {
+        Offset left =  new Offset(center, +radius, 0.0);
+        Offset right = new Offset(center, -radius, 0.0);
+        Offset up =    new Offset(center, 0.0, +radius);
+        Offset down =  new Offset(center, 0.0, -radius);
+        WorldPt pos_left = calculatePosition(center, left);
+        WorldPt pos_right = calculatePosition(center, right);
+        WorldPt pos_up = calculatePosition(center, up);
+        WorldPt pos_down = calculatePosition(center, down);
+        WorldPt upperLeft = new WorldPt(pos_left.getLon(), pos_up.getLat());
+        WorldPt upperRight = new WorldPt(pos_right.getLon(), pos_up.getLat());
+        WorldPt lowerLeft = new WorldPt(pos_left.getLon(), pos_down.getLat());
+        WorldPt lowerRight = new WorldPt(pos_right.getLon(), pos_down.getLat());
+
+        return new Corners(upperLeft, upperRight, lowerLeft, lowerRight);
+    }
+
+    public static Corners getCorners(double ra, double dec, double radius) {
+        return getCorners(new WorldPt(ra, dec), radius);
+    }
+
+    public static class Corners {
+        WorldPt upperLeft;
+        WorldPt upperRight;
+        WorldPt lowerLeft;
+        WorldPt lowerRight;
+
+        public Corners(WorldPt upperLeft, WorldPt upperRight,
+                       WorldPt lowerLeft, WorldPt lowerRight) {
+            this.upperLeft = upperLeft;
+            this.upperRight = upperRight;
+            this.lowerLeft = lowerLeft;
+            this.lowerRight = lowerRight;
+        }
+
+        public WorldPt getUpperLeft() { return upperLeft; }
+        public WorldPt getUpperRight() { return upperRight; }
+        public WorldPt getLowerLeft() { return lowerLeft; }
+        public WorldPt getLowerRight() { return lowerRight; }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("upper_left RA = " + upperLeft.getLon() + "  DEC = ").append(upperLeft.getLat());
+            sb.append("upper_right RA = " + upperRight.getLon() + "  DEC = ").append(upperRight.getLat());
+            sb.append("lower_left RA = " + lowerLeft.getLon() + "  DEC = ").append(lowerLeft.getLat());
+            sb.append("lower_right RA = " + lowerRight.getLon() + "  DEC = ").append(lowerRight.getLat());
+            return sb.toString();
+        }
+
+        public static void main(String [] args)
+        {
+            double ra = 10.0;  // degrees
+            double dec = 60.0;  // degrees
+            double radius = 3600.0;  // arcsec
+            System.out.println(getCorners(ra, dec, radius));
+        }
+    }
+
+
+
     public static class NorthEastCoords {
         public final int x1, y1, x2, y2;
         public final int barbX1, barbY1;

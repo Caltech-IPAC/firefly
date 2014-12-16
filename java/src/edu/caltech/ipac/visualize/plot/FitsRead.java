@@ -1,12 +1,13 @@
 package edu.caltech.ipac.visualize.plot;
 
-import edu.caltech.ipac.astro.target.TargetUtil;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
-import nom.tam.fits.FitsFactory;
 import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
@@ -14,7 +15,6 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
 import nom.tam.util.Cursor;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -145,8 +145,8 @@ public class FitsRead implements Serializable
 	}
 	throw new FitsException("Could not rotate image.\n -  got ProjectionException: " + pe.getMessage());
     }
-    double position_angle = - TargetUtil.getPositionAngle(world_pt1.getX(), 
-	world_pt1.getY(), world_pt2.getX(), world_pt2.getY());
+    double position_angle = - VisUtil.getPositionAngle(world_pt1.getX(), world_pt1.getY(),
+                                                       world_pt2.getX(), world_pt2.getY());
 
     position_angle += rotation_angle;
     return(createFitsReadPositionAngle(fr, position_angle, CoordinateSys.EQ_J2000));

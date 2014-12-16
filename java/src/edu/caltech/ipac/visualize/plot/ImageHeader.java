@@ -1,12 +1,12 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
-import edu.caltech.ipac.astro.target.TargetUtil;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
+import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.io.Serializable;
 
@@ -494,10 +494,10 @@ public class ImageHeader implements Serializable
 	WorldPt one_to_right = proj.getWorldCoords(crpix1, crpix2 - 1);
 	WorldPt one_up = proj.getWorldCoords(crpix1 - 1, crpix2);
 
-	cdelt1 = - TargetUtil.computeDistance(
-	    proj_center.getLon(), proj_center.getLat(),
-	    one_to_right.getLon(), one_to_right.getLat());
-	cdelt2 = TargetUtil.computeDistance(
+	cdelt1 = - VisUtil.computeDistance(
+			proj_center.getLon(), proj_center.getLat(),
+			one_to_right.getLon(), one_to_right.getLat());
+	cdelt2 = VisUtil.computeDistance(
 	    proj_center.getLon(), proj_center.getLat(),
 	    one_up.getLon(), one_up.getLat());
 	if (SUTDebug.isDebug())

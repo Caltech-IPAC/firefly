@@ -1,7 +1,7 @@
-package edu.caltech.ipac.astro.target;
+package edu.caltech.ipac.firefly.visualize;
 
 
-import java.io.Serializable;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
  *
@@ -9,9 +9,7 @@ import java.io.Serializable;
  *
  * @author Xiuqin Wu
  */
-public class Offset implements Location,
-                               Cloneable, 
-                               Serializable {
+public class Offset implements Cloneable {
 
 	/**
 	 * offset in Ra(east) in sky coordinate or 
@@ -25,7 +23,7 @@ public class Offset implements Location,
 	 */
 	private final double deltaDecW;
 
-	private final Location location;
+	private final WorldPt location;
 
 
     /**
@@ -34,7 +32,7 @@ public class Offset implements Location,
      * @param deltaRaV the offset in the ra(lon) direction
      * @param deltaDecW the offset in the dec(lat) direction
      */
-	public Offset(Location location, double deltaRaV, double deltaDecW) {
+	public Offset(WorldPt location, double deltaRaV, double deltaDecW) {
         this.location = location;
 		this.deltaRaV = deltaRaV;
 		this.deltaDecW = deltaDecW;
@@ -56,7 +54,7 @@ public class Offset implements Location,
      * Get the location that this offset is for
      * @return a Location associated with this offset
      */
-	public Location getLocation() { return location; }
+	public WorldPt getLocation() { return location; }
 
 	/**
 	 * Implementation of the Cloneable interface

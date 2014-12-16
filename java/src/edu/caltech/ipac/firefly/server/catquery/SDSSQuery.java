@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.astro.target.PositionUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -316,7 +315,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
         String method = request.getParam(CatalogRequest.SEARCH_METHOD);
         if (CatalogRequest.Method.BOX.getDesc().equals(String.valueOf(method))) {
             double radiusArcsec = request.getDoubleParam(SDSSRequest.RADIUS_ARCMIN) * 60;
-            PositionUtil.Corners corners = PositionUtil.getCorners(pt.getLon(), pt.getLat(), radiusArcsec);
+            VisUtil.Corners corners = VisUtil.getCorners(pt, radiusArcsec);
             String upperLeft = String.format(Locale.US, "%8.6f,%8.6f", corners.getUpperLeft().getLon(), corners.getUpperLeft().getLat());
             String lowerRight = String.format(Locale.US, "%8.6f,%8.6f", corners.getLowerRight().getLon(), corners.getLowerRight().getLat());
             sql = BOX_TGT_SQL.replace("%RA_MAX%,%DEC_MAX%", upperLeft).replace("%RA_MIN%,%DEC_MIN%",lowerRight);

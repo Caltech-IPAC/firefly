@@ -1,7 +1,6 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.astro.target.Position;
 import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
@@ -47,7 +46,6 @@ import java.util.Vector;
  * This class is the data class for any set of objects that we show on
  * plots.  <i>This class need more documentation.</i>
  * 
- * @see FixedGroupDialog
  * @see FixedObject
  *
  * @author Trey Roby
@@ -317,7 +315,7 @@ public class FixedObjectGroup implements TableConnectionList,
         DataType decDataType= new DataType("_dec","Dec", Double.class);
         ParseInstruction parseInstruction= ParseInstruction.SEARCH_HMS_J2000;
 
-        edu.caltech.ipac.astro.target.CoordinateSys convertTarget= edu.caltech.ipac.astro.target.CoordinateSys.EQ_J2000;
+        CoordinateSys convertTarget= CoordinateSys.EQ_J2000;
         for(int i=0; i<originalDataDef.length; i++) {
             Class classType= originalDataDef[i].getDataType();
             String key= originalDataDef[i].getKeyName();
@@ -348,12 +346,12 @@ public class FixedObjectGroup implements TableConnectionList,
 
                     try {
                         TargetUtil.convertStringToLat((String)dataGroup.get(0).getDataElement(originalDataDef[i]),
-                                                      edu.caltech.ipac.astro.target.CoordinateSys.EQ_J2000);
+                                                      CoordinateSys.EQ_J2000);
                         dataGroup.addDataDefinition(decDataType);
                         double lat;
                         for(int j= 0; (j<len); j++) {
                             lat= TargetUtil.convertStringToLat((String)dataGroup.get(j).getDataElement(originalDataDef[i]),
-                                                               edu.caltech.ipac.astro.target.CoordinateSys.EQ_J2000);
+                                                               CoordinateSys.EQ_J2000);
                             dataGroup.get(j).setDataElement(decDataType,lat);
                         }
 
@@ -386,11 +384,12 @@ public class FixedObjectGroup implements TableConnectionList,
                 data= dataGroup.get(j);
                 double ra= (Double)data.getDataElement(raDataType);
                 double dec= (Double)data.getDataElement(decDataType);
-                Position p= new Position(ra,dec,
-                                edu.caltech.ipac.astro.target.CoordinateSys.EQ_B1950);
-                p= TargetUtil.convertTo(p,convertTarget);
-                data.setDataElement(raDataType, p.getLon());
-                data.setDataElement(decDataType, p.getLat());
+                WorldPt wp= new WorldPt(ra,dec,CoordinateSys.EQ_B1950);
+//                Position p= new Position(ra,dec,
+//                                edu.caltech.ipac.astro.target.CoordinateSys.EQ_B1950);
+                wp= Plot.convert(wp,convertTarget);
+                data.setDataElement(raDataType, wp.getLon());
+                data.setDataElement(decDataType, wp.getLat());
             }
         }
 

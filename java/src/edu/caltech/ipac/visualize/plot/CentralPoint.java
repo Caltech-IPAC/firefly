@@ -1,9 +1,9 @@
 package edu.caltech.ipac.visualize.plot;
 
+import edu.caltech.ipac.firefly.visualize.VisUtil;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import edu.caltech.ipac.astro.target.TargetUtil;
 
 
 /** Find central point and radius of the minimum circle  
@@ -170,8 +170,8 @@ static void usage()
 	{
 	    double a_distance = central_point.computeDistance(center.getLon(),
 		center.getLat(), point.getLon(), point.getLat());
-	    double exact_distance = TargetUtil.computeDistance(center.getLon(),
-		center.getLat(), point.getLon(), point.getLat());
+	    double exact_distance = VisUtil.computeDistance(center.getLon(), center.getLat(),
+														point.getLon(), point.getLat());
 	    System.out.printf(
 	    "lon = %9.5f lat = %8.4f  crude dist = %9.5f  exact_dist = %9.5f\n",
 	    point.getLon(), point.getLat(), a_distance, exact_distance);
@@ -289,7 +289,7 @@ static void usage()
 
 	    if (false)
 	    {
-		double pa = TargetUtil.getPositionAngle(ra_i, dec_i, ra_j, dec_j);
+		double pa = VisUtil.getPositionAngle(ra_i, dec_i, ra_j, dec_j);
 		center = posdis(ra_i, dec_i, distance/2, pa);
 		center_ra = center.getLon();
 		center_dec = center.getLat();

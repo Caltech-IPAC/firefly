@@ -7,7 +7,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.visualize.VisUtil;
-import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
 import edu.caltech.ipac.util.dd.RegionBox;
@@ -349,7 +348,7 @@ public class RegionPng {
             ImageWorkSpacePt iwpt = plot.getImageCoords(wp);
             ImageWorkSpacePt iwpt2 = new ImageWorkSpacePt(iwpt.getX(), iwpt.getY() + 1);
             WorldPt wpt = plot.getWorldCoords(iwpt2, CoordinateSys.EQ_J2000);
-            posAngle = (float) TargetUtil.getPositionAngle(wp.getLon(), wpt.getLat(),
+            posAngle = (float) VisUtil.getPositionAngle(wp.getLon(), wpt.getLat(),
                                                             wpt.getLon(), wpt.getLat());
             float rotation_angle = posAngle - 270.0F;
             pos.setRotation(plot, new ScalableObject.RotationInfo(rotation_angle, null));

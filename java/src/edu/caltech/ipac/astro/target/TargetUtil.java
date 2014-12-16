@@ -28,11 +28,11 @@ public class TargetUtil {
       nf.setMinimumFractionDigits(MAX_FRACTION_DIGITS);
       }
 
-   public static String convertLonToString(double        lon,
-                                           CoordinateSys coordSystem )
-                                                 throws CoordException {
-       return convertLonToString(lon,coordSystem.isEquatorial());
-   }
+//   public static String convertLonToString(double        lon,
+//                                           CoordinateSys coordSystem )
+//                                                 throws CoordException {
+//       return convertLonToString(lon,coordSystem.isEquatorial());
+//   }
 
    public static String convertLonToString(double lon, boolean isEquatorial )
                    throws CoordException {
@@ -40,11 +40,11 @@ public class TargetUtil {
        return CoordUtil.dd2sex(lon, false, isEquatorial, 5);
     }
 
-   public static String convertLatToString(double        lat,
-                                           CoordinateSys coordSystem )
-                                                  throws CoordException {
-       return convertLatToString(lat,coordSystem.isEquatorial());
-   }
+//   public static String convertLatToString(double        lat,
+//                                           CoordinateSys coordSystem )
+//                                                  throws CoordException {
+//       return convertLatToString(lat,coordSystem.isEquatorial());
+//   }
 
     public static String convertLatToString(double lat, boolean isEquatorial)
                                                   throws CoordException {
@@ -65,7 +65,26 @@ public class TargetUtil {
        return CoordUtil.sex2dd(dms,true, eq);
    }
 
+    public static String convertLonToString(double lon, edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem) throws CoordException {
+        return convertLonToString(lon,coordSystem.isEquatorial());
+    }
+    public static double convertStringToLon(String        hms,
+                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem ) throws CoordException {
+        boolean eq= coordSystem.isEquatorial();
+        return CoordUtil.sex2dd(hms,false, eq);
+    }
 
+    public static String convertLatToString(double        lat,
+                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem )
+            throws CoordException {
+        return convertLatToString(lat,coordSystem.isEquatorial());
+    }
+
+    public static double convertStringToLat(String        dms,
+                                            edu.caltech.ipac.visualize.plot.CoordinateSys coordSystem ) throws CoordException {
+        boolean eq= coordSystem.isEquatorial();
+        return CoordUtil.sex2dd(dms,true, eq);
+    }
 
    /**
     * convert a Position from one coordSystem to another
@@ -175,102 +194,6 @@ public class TargetUtil {
 
 
    }
-
-
-
-   /**
-    *  compute the distance between two positions (lon1, lat1)
-    *  and (lon2, lat2), the lon and lat are in decimal degrees.
-    *  the unit of the distance is degree
-    */
-   public static double computeDistance(double lon1, double lat1,
-                                        double lon2, double lat2) {
-      double cosine;
-      double lon1Radians, lon2Radians;
-      double lat1Radians, lat2Radians;
-      lon1Radians  = lon1 * DtoR;
-      lat1Radians  = lat1 * DtoR;
-      lon2Radians  = lon2 * DtoR;
-      lat2Radians  = lat2 * DtoR;
-      cosine =
-         Math.cos(lat1Radians)*Math.cos(lat2Radians)*
-         Math.cos(lon1Radians-lon2Radians)
-         + Math.sin(lat1Radians)*Math.sin(lat2Radians);
-
-      if (Math.abs(cosine) > 1.0)
-         cosine = cosine/Math.abs(cosine);
-      return RtoD*Math.acos(cosine);
-   }
-
-   /**
-    * Find this distance between two positions.  If the postions do not have
-    * the same coordinate system and epoch then convert then both to J2000
-    * and then compute the distance. The distance is returned in degrees.
-    *
-    * @param p1 the first postion
-    * @param p2 the second position
-    * @return this distance in degrees
-    */
-   public static double computeDistance(Position p1, Position p2) {
-      double retval;
-      if (p1.getCoordSystem().equals(p2.getCoordSystem()) &&
-          p1.getEpoch()==p2.getEpoch()) {
-          retval= computeDistance(p1.getLon(), p1.getLat(),
-                                  p2.getLon(), p2.getLat());
-      }
-      else {
-         PositionJ2000 cp1= new PositionJ2000(p1);
-         PositionJ2000 cp2= new PositionJ2000(p2);
-         retval= computeDistance(cp1.getLon(), cp1.getLat(),
-                                 cp2.getLon(), cp2.getLat());
-      }
-      return retval;
-   }
-
-
-  /** Compute position angle
-    * @param ra0 the equatorial RA in degrees of the first object
-    * @param dec0 the equatorial DEC in degrees of the first object
-    * @param ra the equatorial RA in degrees of the second object
-    * @param dec the equatorial DEC in degrees of the second object
-    * @return position angle in degrees between the two objects
-    */
-    static public double getPositionAngle(double ra0, double dec0,
-        double ra, double dec)
-    {
-        double alf,alf0,del,del0;
-        double sd,sd0,cd,cd0,cosda,cosd,sind,sinpa,cospa;
-        double dist;
-        double pa;
-
-        alf = ra * DtoR;
-        alf0= ra0 * DtoR;
-        del = dec * DtoR;
-        del0= dec0 * DtoR;
-
-        sd0= Math.sin(del0);
-        sd = Math.sin(del);
-        cd0= Math.cos(del0);
-        cd = Math.cos(del);
-        cosda= Math.cos(alf-alf0);
-        cosd=sd0*sd+cd0*cd*cosda;
-        dist= Math.acos(cosd);
-        pa=0.0;
-        if(dist > 0.0000004) {
-            sind= Math.sin(dist);
-            cospa=(sd*cd0 - cd*sd0*cosda)/sind;
-            if(cospa>1.0)cospa=1.0;
-            if (cospa < -1.0) cospa= -1.0;
-            sinpa=cd * Math.sin(alf-alf0)/sind;
-            pa=Math.acos(cospa) * RtoD;
-            if(sinpa < 0.0) pa = 360.0-(pa);
-        }
-        dist *= RtoD;
-        if(dec0 == 90.) pa = 180.0;
-        if(dec0 == -90.) pa = 0.0;
-
-        return(pa);
-    }
 
 
    private static Position correctJ2000Epoch(Position inP) {

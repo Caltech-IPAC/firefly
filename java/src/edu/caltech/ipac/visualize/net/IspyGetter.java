@@ -1,22 +1,20 @@
 package edu.caltech.ipac.visualize.net;
 
 import edu.caltech.ipac.astro.CoordException;
-import edu.caltech.ipac.astro.target.CoordinateSys;
-import edu.caltech.ipac.astro.target.Position;
-import edu.caltech.ipac.astro.target.PositionJ2000;
-import edu.caltech.ipac.astro.target.UserPosition;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.ParseException;
 import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.HostPort;
+import edu.caltech.ipac.util.download.NetworkManager;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.draw.FixedObject;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.BufferedReader;
@@ -277,11 +275,8 @@ public class IspyGetter {
     private static FixedObject makeFixedObject(String values[],
                                                FixedObjectGroup group)
                                                throws CoordException {
-        UserPosition up= new UserPosition(
-                       values[RA_POS], values[DEC_POS],
-                       PositionJ2000.DEFAULT_PM,
-                       CoordinateSys.EQ_J2000, Position.EPOCH2000);
-        WorldPt  wp= new WorldPt(up.getLon(), up.getLat());
+        WorldPt  wp= new WorldPt(TargetUtil.convertStringToLon(values[RA_POS], CoordinateSys.EQ_B2000),
+                                 TargetUtil.convertStringToLat(values[DEC_POS], CoordinateSys.EQ_B2000));
         FixedObject fixO= group.makeFixedObject(wp);
         fixO.setTargetName(StringUtil.crunch(values[NAME_POS]));
 
