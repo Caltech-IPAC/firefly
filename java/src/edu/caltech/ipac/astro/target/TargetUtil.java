@@ -307,6 +307,29 @@ public class TargetUtil {
    }
 
 
+    public static CoordinateSys makeCoordSys(String coordName, String equinox) {
+       CoordinateSys retval;
+       if (coordName.equalsIgnoreCase(CoordinateSys.EQUATORIAL_NAME) ) {
+          if (equinox.equalsIgnoreCase(CoordinateSys.B1950_DESC))
+             retval = CoordinateSys.EQ_B1950;
+          else
+             retval = CoordinateSys.EQ_J2000;
+       }
+       else if (coordName.equalsIgnoreCase(CoordinateSys.ECLIPTIC_NAME)) {
+          if (equinox.equalsIgnoreCase(CoordinateSys.B1950_DESC))
+             retval = CoordinateSys.ECL_B1950;
+          else
+             retval = CoordinateSys.ECL_J2000;
+       }
+       else if (coordName.equalsIgnoreCase(CoordinateSys.GALACTIC_NAME)) {
+          retval= CoordinateSys.GALACTIC ;
+       }
+       else
+          retval= CoordinateSys.EQ_J2000 ;
+
+       return retval;
+    }
+
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA 

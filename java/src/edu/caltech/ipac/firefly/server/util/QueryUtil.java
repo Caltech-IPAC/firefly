@@ -2,6 +2,15 @@ package edu.caltech.ipac.firefly.server.util;
 
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.astro.net.NedParams;
+import edu.caltech.ipac.astro.net.SimbadParams;
+import edu.caltech.ipac.astro.net.TargetNetwork;
+import edu.caltech.ipac.astro.target.IpacTableTargetsParser;
+import edu.caltech.ipac.astro.target.NedAttribute;
+import edu.caltech.ipac.astro.target.PositionJ2000;
+import edu.caltech.ipac.astro.target.SimbadAttribute;
+import edu.caltech.ipac.astro.target.Target;
+import edu.caltech.ipac.astro.target.TargetList;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
@@ -15,12 +24,6 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.astro.target.NedAttribute;
-import edu.caltech.ipac.astro.target.PositionJ2000;
-import edu.caltech.ipac.astro.target.SimbadAttribute;
-import edu.caltech.ipac.astro.net.NedParams;
-import edu.caltech.ipac.astro.net.SimbadParams;
-import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -350,63 +353,63 @@ public class QueryUtil {
 //     * @throws DataAccessException
 //     * @throws IOException
 //     */
-//    public static List<Target> getTargetList(File ufile)
-//            throws DataAccessException, IOException {
-//        TargetList targetList = new TargetList();
-//        String parsingErrors = "";
-//        ArrayList<Target> targets = new ArrayList<Target>();
-//        final String OBJ_NAME = "objname";
-//        final String RA = "ra";
-//        final String DEC= "dec";
-//        String ra = null, dec = null, name = null;
-//        try {
-//            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
-//            if (dg != null) {
-//                for (DataType dt: dg.getDataDefinitions()) {
-//                    if (dt.getKeyName().toLowerCase().equals("object") ||
-//                            dt.getKeyName().toLowerCase().equals("target")) {
-//                        dt.setKeyName(OBJ_NAME);
-//                        break;
-//                    }
-//                }
-//                // Find RA and Dec keys
-//                for (String key: dg.getKeySet()) {
-//                    if (key.trim().toLowerCase().equals(RA)) {
-//                        ra=key;
-//                    } else if (key.trim().toLowerCase().equals(DEC)) {
-//                        dec=key;
-//                    } else if (key.trim().toLowerCase().equals(OBJ_NAME)) {
-//                        name=key;
-//                    }
-//                }
-//
-//                if (name==null) {
-//                    if (ra==null || dec==null)
-//                        throw createEndUserException("IPAC Table file must contain RA and Dec columns.");
-//                }
-//                IpacTableTargetsParser.parseTargets(dg, targetList, true);
-//            }
-//            if (targetList.size()==0) throw createEndUserException("Unable to uploaded file:" + ufile.getName());
-//
-//            for (Target t: targetList) {
-//                //check for invalid targets
-//                if(t.getCoords() == null || t.getCoords().length() < 1){
-//                    parsingErrors = parsingErrors + "Invalid Target: " + t.getName() + "<br>";
-//                } else {
-//                    targets.add(t);
-//                }
-//            }
-//
-//        } catch (Exception e) {
-//            String msg = e.getMessage();
-//            if (msg==null) msg=e.getCause().getMessage();
-//            if (msg==null) msg="";
-//            throw new DataAccessException(
-//                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
-//                               e.getMessage(), e) );
-//        }
-//        return targets;
-//    }
+    public static List<Target> getTargetList(File ufile)
+            throws DataAccessException, IOException {
+        TargetList targetList = new TargetList();
+        String parsingErrors = "";
+        ArrayList<Target> targets = new ArrayList<Target>();
+        final String OBJ_NAME = "objname";
+        final String RA = "ra";
+        final String DEC= "dec";
+        String ra = null, dec = null, name = null;
+        try {
+            DataGroup dg= DataGroupReader.readAnyFormat(ufile);
+            if (dg != null) {
+                for (DataType dt: dg.getDataDefinitions()) {
+                    if (dt.getKeyName().toLowerCase().equals("object") ||
+                            dt.getKeyName().toLowerCase().equals("target")) {
+                        dt.setKeyName(OBJ_NAME);
+                        break;
+                    }
+                }
+                // Find RA and Dec keys
+                for (String key: dg.getKeySet()) {
+                    if (key.trim().toLowerCase().equals(RA)) {
+                        ra=key;
+                    } else if (key.trim().toLowerCase().equals(DEC)) {
+                        dec=key;
+                    } else if (key.trim().toLowerCase().equals(OBJ_NAME)) {
+                        name=key;
+                    }
+                }
+
+                if (name==null) {
+                    if (ra==null || dec==null)
+                        throw createEndUserException("IPAC Table file must contain RA and Dec columns.");
+                }
+                IpacTableTargetsParser.parseTargets(dg, targetList, true);
+            }
+            if (targetList.size()==0) throw createEndUserException("Unable to uploaded file:" + ufile.getName());
+
+            for (Target t: targetList) {
+                //check for invalid targets
+                if(t.getCoords() == null || t.getCoords().length() < 1){
+                    parsingErrors = parsingErrors + "Invalid Target: " + t.getName() + "<br>";
+                } else {
+                    targets.add(t);
+                }
+            }
+
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (msg==null) msg=e.getCause().getMessage();
+            if (msg==null) msg="";
+            throw new DataAccessException(
+                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
+                               e.getMessage(), e) );
+        }
+        return targets;
+    }
 
     /**
      * Get target list from uploaded file.  It supports tbl, csv, tsv, Spot target list.
