@@ -19,13 +19,15 @@
                                              edu/caltech/ipac/targetgui/**
                                              edu/caltech/ipac/util/**
                                              edu/caltech/ipac/visualize/**
+                                             edu/caltech/ipac/*
                                              "/>
-    <property name="resources.includes" value="edu/caltech/ipac/firefly/**/*.java
+    <property name="resources.includes" value="edu/caltech/ipac/**/*.java
                                                edu/caltech/ipac/firefly/**/resources/*
                                                edu/caltech/ipac/firefly/FireFly.gwt.xml
                                                edu/caltech/ipac/firefly/linker/nowaitIsBodyLoaded.js
                                                edu/caltech/ipac/firefly/public/**
-                                               edu/caltech/ipac/firefly/ui/image/**"/>
+                                               edu/caltech/ipac/firefly/ui/image/**
+                                               edu/caltech/ipac/Common.gwt.xml"/>
 
     <property name="jar.includes" value="${compile.includes}"/>
 
