@@ -2,7 +2,7 @@ package edu.caltech.ipac.astro.target;
 
 import edu.caltech.ipac.astro.CoordException;
 
-public final class UserPosition extends Position {
+final class UserPosition extends Position {
 
 
    private final String lonStr;

@@ -6,16 +6,11 @@ import edu.caltech.ipac.astro.conv.CoordConv;
 import java.io.Serializable;
 
 
-public class CoordinateSys implements Serializable, Comparable {
+class CoordinateSys implements Serializable {
 
    // =====================================================================
    // --------------  Public Constans -------------------------------------
    // =====================================================================
-    public static final String EQ_J2000_STR = "EQ_J2000";
-    public static final String EQ_B1950_STR = "EQ_B1950";
-    public static final String EC_J2000_STR = "EC_J2000";
-    public static final String EC_B1950_STR = "EC_B1950";
-    public static final String GALACTIC_STR = "GALACTIC";
 
     public static final String  EQUATORIAL_NAME = "Equatorial";
     public static final String  GALACTIC_NAME   = "Galactic";
@@ -134,33 +129,7 @@ public class CoordinateSys implements Serializable, Comparable {
 
     public boolean isEquatorial() { return equatorial; }
 
-    public boolean isEcliptic() { return ecliptic; }
-
-    public boolean isGalactic() { return galactic; }
-
     public String getEquinox() { return equinoxDesc;}
-
-    public String getCoordSysName() { return coodSysName;}
-
-    public int compareTo(Object obj) {
-       int retval = -1;
-       if(obj == this) {
-          retval = 0;
-       } //end if
-       else if (obj!=null && obj instanceof CoordinateSys) {
-          if(obj.getClass() == getClass()) {
-             CoordinateSys coordinatesys = (CoordinateSys)obj;
-             if (jsys > coordinatesys.jsys)      retval= 1;
-             else if (jsys < coordinatesys.jsys) retval= -1;
-             else if (jsys == coordinatesys.jsys) {
-                if (equinoxYear > coordinatesys.equinoxYear)      retval= 1;
-                else if (equinoxYear < coordinatesys.equinoxYear) retval= -1;
-                else if (equinoxYear == coordinatesys.equinoxYear)retval= 0;
-             }
-          }
-       } // end else
-       return retval;
-    }
 
     public boolean equals(Object obj) {
         boolean retval = false;

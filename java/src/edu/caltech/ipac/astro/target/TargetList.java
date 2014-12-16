@@ -1,13 +1,8 @@
 package edu.caltech.ipac.astro.target;
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.TableConnectionList;
 
-import java.awt.datatransfer.Transferable;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,17 +15,12 @@ import java.util.List;
  * @author Trey Roby, Xiuqin Xu
  * @version $Id: TargetList.java,v 1.7 2006/07/08 00:18:03 tatianag Exp $
  */
-public class TargetList implements Serializable,
-                                   TableConnectionList,
-                                   Iterable<Target> {
+public class TargetList implements Serializable, Iterable<Target> {
 
 
     private List<Target>          _list            = makeList();
     private Target                _current         = null;
-    private Transferable          _transferable    = null;
     private boolean               _doingBulkUpdates= false;
-    private PropertyChangeSupport _propChange=new PropertyChangeSupport(this);
-    private   int                 _selectedIndexes[]= null;
 
 
     public TargetList() { }
@@ -39,9 +29,8 @@ public class TargetList implements Serializable,
 
     public void endBulkUpdate() {
         if(_doingBulkUpdates) {
-            _propChange.firePropertyChange(BULK_UPDATE, null, this);
             int idx=_list.size()-1;
-            setCurrent((idx>-1) ? (Target) _list.get(idx) : null);
+            setCurrent((idx>-1) ?  _list.get(idx) : null);
         }
         _doingBulkUpdates=false;
     }
@@ -50,7 +39,7 @@ public class TargetList implements Serializable,
 
 
     public Target get(int index) {
-        return (Target) _list.get(index);
+        return  _list.get(index);
     }
 
 
@@ -59,18 +48,16 @@ public class TargetList implements Serializable,
 
     public void setCurrent(int idx) {
         if (idx>-1 && idx<_list.size()) {
-            Target t=((Target) _list.get(idx));
+            Target t=( _list.get(idx));
             if(t!=null) setCurrent(t);
         }
     }
 
     public void setCurrent(Target t) {
-        Target oldCurrent=_current;
         _current=t;
         if(t!=null && !_list.contains(t)) {
             _list.add(t);
         }
-        _propChange.firePropertyChange(CURRENT, oldCurrent, _current);
     }
 
     public Target getCurrent() {  return _current; }
@@ -81,40 +68,8 @@ public class TargetList implements Serializable,
 
     public boolean contains(Target t) { return _list.contains(t); }
 
-    public boolean containsName(String targetName) {
-        boolean retval=false;
-        for(Target t: _list) {
-            if(targetName.equals(t.getName())) {
-                retval=true;
-                break;
-            }
-        }
-        return retval;
-
-    }
-
     public Iterator<Target> iterator() { return _list.iterator(); }
 
-    public void deleteCurrent() {
-        if(_current!=null) {
-            int newIdx;
-            int idx=_list.indexOf(_current);
-            newIdx=(idx==0) ? 0 : idx-1;
-            remove(_current);
-            if(_list.size()>0)
-                setCurrent(newIdx);
-            else
-                setCurrent(null);
-        }
-    }
-
-    public void deleteAll() {
-        beginBulkUpdate();
-        _list.clear();
-        _current = null;
-        _selectedIndexes = null;
-        endBulkUpdate();
-    }
 
 
     public void remove(Target t) {
@@ -125,9 +80,6 @@ public class TargetList implements Serializable,
         if((line+1)<_list.size()) newT=(Target) _list.get(line+1);
         if(line>-1) {
             _list.remove(t);
-            if(!_doingBulkUpdates) {
-                _propChange.firePropertyChange(REMOVE, t, newT);
-            }
         }
     }
 
@@ -150,7 +102,6 @@ public class TargetList implements Serializable,
                 _list.add(t);
                 if(!_doingBulkUpdates) {
                     //fireTableDataChanged();
-                    _propChange.firePropertyChange(ADD, null, this);
                     if(makeCurrent) setCurrent(t);
                 }
             }
@@ -160,18 +111,6 @@ public class TargetList implements Serializable,
                 }
             }
         } // end if (target != null)
-    }
-
-    public void entryUpdated(Target t) {
-        Assert.tst(t, "TargetList.entryUpdated: Target must not be null");
-        int line=_list.indexOf(t);
-        if(line>-1) {
-            //fireTableRowsUpdated( line, line);
-        }
-        else {
-            addTarget(t);
-        }
-        _propChange.firePropertyChange(ENTRY_UPDATED, null, _current);
     }
 
     /**
@@ -193,47 +132,13 @@ public class TargetList implements Serializable,
         Assert.tst(index>=0, "the orignal target does not exist!");
         _list.set(index, t);
         if(makeCurrent) setCurrent(t);
-        _propChange.firePropertyChange(ALL_ENTRIES_UPDATED, null, t);
     }
 
-    public List getTargetList() {
-        return Collections.unmodifiableList(_list);
-    }
-
-    /**
-     * Add a property changed listener.
-     *
-     * @param p the listener
-     */
-    public void addPropertyChangeListener(PropertyChangeListener p) {
-        _propChange.addPropertyChangeListener(p);
-    }
-
-    /**
-     * Remove a property changed listener.
-     *
-     * @param p the listener
-     */
-    public void removePropertyChangeListener(PropertyChangeListener p) {
-        _propChange.removePropertyChangeListener(p);
-    }
 
     protected List<Target> makeList() { return new LinkedList<Target>(); }
 
-    public void setTransferable(Transferable t) { _transferable=t; }
-
-    public Transferable getTransferable() { return _transferable; }
 
 
-//   public static void cleanoutFlux(Target target) {
-//       Iterator i= target.locationIterator();
-//       Location l;
-//       while (i.hasNext()) {
-//          l= (Location)i.next();
-//          SpitzerTargetUtil.setFluxEst(target,l,null);
-//          SpitzerTargetUtil.setMaxFluxEst(target,l,null);
-//       }
-//   }
 
 }
 /*

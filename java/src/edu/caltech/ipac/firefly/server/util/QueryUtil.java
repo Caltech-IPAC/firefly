@@ -469,10 +469,10 @@ public class QueryUtil {
                         if (doNameResolve && nrow.getDataElement(dt) == null) {
                             PositionJ2000 pos = null;
                             Object objname = row.getDataElement(sourceCName);
-                            NedAttribute na = TargetNetwork.getNedPosition(new NedParams(String.valueOf(objname)), null);
+                            NedAttribute na = TargetNetwork.getNedPosition(new NedParams(String.valueOf(objname)));
                             pos = na.getPosition();
                             if (pos == null) {
-                                SimbadAttribute sa = TargetNetwork.getSimbadPosition(new SimbadParams(String.valueOf(objname)), null);
+                                SimbadAttribute sa = TargetNetwork.getSimbadPosition(new SimbadParams(String.valueOf(objname)));
                                 pos = sa.getPosition();
                             }
                             if (pos != null) {

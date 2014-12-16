@@ -8,7 +8,7 @@ import edu.caltech.ipac.util.Assert;
 
 import java.io.Serializable;
 
-public class Position implements Location, Serializable, Cloneable {
+class Position implements Location, Serializable, Cloneable {
 
     public static final float EPOCH2000= 2000.0F;
     public static final float EPOCH1950= 1950.0F;

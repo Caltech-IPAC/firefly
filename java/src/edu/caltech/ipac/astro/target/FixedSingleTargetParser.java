@@ -7,11 +7,9 @@ import edu.caltech.ipac.util.FileReadStatusException;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
-import javax.swing.JFrame;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -45,20 +43,9 @@ public class FixedSingleTargetParser {
     private int _errorsFound = 0;
     private StringBuffer _errorBuffer;
     private SimpleParser _parser;
-    private TargetAttributesHandler _attribHandler;
-    private JFrame _frame;
 
-    public FixedSingleTargetParser(JFrame frame) {
-        _frame = frame;
-    }
+    public FixedSingleTargetParser() { }
 
-    public TargetAttributesHandler getAttributesHandler() {
-        return _attribHandler;
-    }
-
-    public void setAttributesHandler(TargetAttributesHandler handler) {
-        _attribHandler = handler;
-    }
 
     public void parseTargets(BufferedReader in, TargetList targets)
             throws TargetParseException {
@@ -135,9 +122,6 @@ public class FixedSingleTargetParser {
                             if (isValidData(elements[1])) resolveType = elements[1];
                             PositionAttributePair pap = resolveName(elements[0], resolveType);
                             tgtPosition = pap.position;
-                            if (getAttributesHandler() != null) {
-                                getAttributesHandler().setResolvedAttributes(target, pap.attribute);
-                            }
 
                         } else {
                             userPosition = new UserPosition(elements[1],
@@ -149,23 +133,6 @@ public class FixedSingleTargetParser {
 
                         target.setPosition(tgtPosition);
 
-                        // parse the attributes from the current line and
-                        // invoke the attributes handler to take care of the data.
-                        // this may override name resolution.
-                        if (getAttributesHandler() != null) {
-                            HashMap<String, String> attribs = new HashMap<String, String>();
-                            for (String s : elements) {
-                                if (s != null && s.indexOf(ATTRIB_SEP) > 0) {
-                                    String[] keyval = s.split(ATTRIB_SEP, 2);
-                                    attribs.put(keyval[0].trim(), keyval[1].trim());
-                                }
-                            }
-                            if (attribs.size() > 0) {
-                                getAttributesHandler().setAttributes(target, attribs);
-                            }
-                            // validate this target with its attributes set.
-                            getAttributesHandler().validate(target);
-                        }
 
                         targets.addTarget(target);
                     } catch (Exception e) {
@@ -253,13 +220,13 @@ public class FixedSingleTargetParser {
         if (resolver.equalsIgnoreCase(NED_RESOLVER)) {
             NedParams params = new NedParams(name);
             NedAttribute na;
-            na = TargetNetwork.getNedPosition(params, getFrame());
+            na = TargetNetwork.getNedPosition(params);
             retval.position = na.getPosition();
             retval.attribute = na;
         } else if (resolver.equalsIgnoreCase(SIMBAD_RESOLVER)) {
             SimbadParams params = new SimbadParams(name);
             SimbadAttribute na;
-            na = TargetNetwork.getSimbadPosition(params, getFrame());
+            na = TargetNetwork.getSimbadPosition(params);
             retval.position = na.getPosition();
             retval.attribute = na;
         } else {
@@ -269,9 +236,6 @@ public class FixedSingleTargetParser {
         return retval;
     }
 
-    private JFrame getFrame() {
-        return _frame;
-    }
 
     private class PositionAttributePair {
         public PositionJ2000 position;

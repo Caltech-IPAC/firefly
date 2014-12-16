@@ -10,7 +10,6 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 
 import javax.swing.JFrame;
-import java.awt.Window;
 
 /*
  * This is the new class that all the Target related network request 
@@ -31,11 +30,11 @@ public class TargetNetwork {
         PositionJ2000 pos;
         switch (resolver) {
             case NED :
-                pos= getNedPosition( new NedParams(objName),null).getPosition();
+                pos= getNedPosition( new NedParams(objName)).getPosition();
                 retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(),objName,Resolver.NED);
                 break;
             case Simbad :
-                pos= getSimbadPosition( new SimbadParams(objName),null).getPosition();
+                pos= getSimbadPosition( new SimbadParams(objName)).getPosition();
                 retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
                 break;
             case SimbadThenNed :
@@ -45,7 +44,7 @@ public class TargetNetwork {
                 retval= getNedThenSimbad(objName);
                 break;
             case PTF :
-                pos= getPtfPosition(new PTFParams(objName), null).getPosition();
+                pos= getPtfPosition(new PTFParams(objName)).getPosition();
                 retval= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.PTF);
                 break;
             case Smart :
@@ -65,13 +64,13 @@ public class TargetNetwork {
     public static ResolvedWorldPt getNedThenSimbad(String objName) throws FailedRequestException {
         ResolvedWorldPt wp= null;
         try {
-            PositionJ2000 pos= getNedPosition( new NedParams(objName),null).getPosition();
+            PositionJ2000 pos= getNedPosition( new NedParams(objName)).getPosition();
             if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.NED);
         } catch (FailedRequestException e) {
             wp= null;
         }
         if (wp==null)  {
-            PositionJ2000 pos= getSimbadPosition( new SimbadParams(objName),null).getPosition();
+            PositionJ2000 pos= getSimbadPosition( new SimbadParams(objName)).getPosition();
             if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
         }
         return wp;
@@ -80,19 +79,19 @@ public class TargetNetwork {
     public static ResolvedWorldPt getSimbadThenNed(String objName) throws FailedRequestException {
         ResolvedWorldPt wp= null;
         try {
-            PositionJ2000 pos= getSimbadPosition(new SimbadParams(objName), null).getPosition();
+            PositionJ2000 pos= getSimbadPosition(new SimbadParams(objName)).getPosition();
             if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.Simbad);
         } catch (FailedRequestException e) {
             wp= null;
         }
         if (wp==null) {
-            PositionJ2000 pos= getNedPosition(new NedParams(objName), null).getPosition();
+            PositionJ2000 pos= getNedPosition(new NedParams(objName)).getPosition();
             if (pos!=null) wp= new ResolvedWorldPt(pos.getLon(), pos.getLat(), objName, Resolver.NED);
         }
         return wp;
     }
 
-   public static NedAttribute getNedPosition(NedParams params, Window w)
+   public static NedAttribute getNedPosition(NedParams params)
                                                throws FailedRequestException {
       NedAttribute na= (NedAttribute) CacheHelper.getObj(params);
       if (na==null)  {          // if not in cache
@@ -103,8 +102,7 @@ public class TargetNetwork {
       return na;
    }
 
-   public static SimbadAttribute getSimbadPosition(SimbadParams params,
-                                                   Window       w)
+   public static SimbadAttribute getSimbadPosition(SimbadParams params)
                                                throws FailedRequestException {
        SimbadAttribute sa= (SimbadAttribute)CacheHelper.getObj(params);
        if (sa == null)  {          // if not in cache
@@ -114,8 +112,7 @@ public class TargetNetwork {
        return sa;
    }
 
-    public static PTFAttribute getPtfPosition(PTFParams params,
-                                              Window       w) throws FailedRequestException {
+    public static PTFAttribute getPtfPosition(PTFParams params) throws FailedRequestException {
         PTFAttribute pa= (PTFAttribute)CacheHelper.getObj(params);
         if (pa == null)  {          // if not in cache
             pa = PTFNameResolver.lowlevelNameResolver(params.getName());

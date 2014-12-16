@@ -70,11 +70,11 @@ public class IpacTableTargetsParser {
             } else if (name != null && nameStr != null) {
                 PositionJ2000 pos = null;
                 if (nedThenSimbad) {
-                    NedAttribute na = TargetNetwork.getNedPosition(new NedParams(nameStr), null);
+                    NedAttribute na = TargetNetwork.getNedPosition(new NedParams(nameStr));
                     pos = na.getPosition();
                 }
                 if (pos == null) {
-                    SimbadAttribute na = TargetNetwork.getSimbadPosition(new SimbadParams(nameStr), null);
+                    SimbadAttribute na = TargetNetwork.getSimbadPosition(new SimbadParams(nameStr));
                     pos = na.getPosition();
                 }
                 targets.addTarget(new TargetFixedSingle(nameStr, pos));
