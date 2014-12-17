@@ -1,12 +1,8 @@
 package edu.caltech.ipac.firefly.server.cache;
 
 import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
-import net.sf.ehcache.event.CacheEventListener;
-import org.apache.commons.logging.impl.Log4JCategoryLog;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
