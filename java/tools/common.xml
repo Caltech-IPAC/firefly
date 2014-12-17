@@ -145,7 +145,7 @@
 
 
     <target name="immediate-start-mod" if="enable-immediate-start">
-        <exec dir="${war.doc.root}" executable="${build.root}/../../common/java/tools/immediate-start-mod.sh" >
+        <exec dir="${war.doc.root}" executable="${firefly.build.root}/tools/immediate-start-mod.sh" >
             <arg value="${app-name}.nocache"/>
         </exec>
     </target>
