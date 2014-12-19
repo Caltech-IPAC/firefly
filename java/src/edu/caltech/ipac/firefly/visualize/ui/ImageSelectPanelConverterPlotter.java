@@ -6,8 +6,8 @@ package edu.caltech.ipac.firefly.visualize.ui;
  */
 
 
-import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
-import edu.caltech.ipac.firefly.fuse.data.PlotData;
+import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;

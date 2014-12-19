@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.data.table;
 
-import edu.caltech.ipac.firefly.fuse.data.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.PropertyChangeSupport;
 import edu.caltech.ipac.util.CollectionUtil;

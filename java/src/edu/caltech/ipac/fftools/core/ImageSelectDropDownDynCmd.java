@@ -1,7 +1,7 @@
 package edu.caltech.ipac.fftools.core;
 
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.fuse.data.ConverterStore;
+import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
 import edu.caltech.ipac.firefly.visualize.ui.ImageSelectDropDown;
 
 

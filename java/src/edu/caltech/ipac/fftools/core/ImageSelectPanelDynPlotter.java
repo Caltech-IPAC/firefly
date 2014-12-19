@@ -7,7 +7,7 @@ package edu.caltech.ipac.fftools.core;
 
 
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.fuse.data.PlotData;
+import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;

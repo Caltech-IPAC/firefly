@@ -9,8 +9,8 @@ import edu.caltech.ipac.firefly.data.Status;
 import edu.caltech.ipac.firefly.data.TagInfo;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.fuse.data.MissionInfo;
-import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
+import edu.caltech.ipac.firefly.data.fuse.MissionInfo;
+import edu.caltech.ipac.firefly.data.fuse.config.MissionTag;
 
 import java.util.List;
 import java.util.Map;

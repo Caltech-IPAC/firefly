@@ -1,6 +1,6 @@
 package edu.caltech.ipac.firefly.server.fuse;
 
-import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
+import edu.caltech.ipac.firefly.data.fuse.config.MissionTag;
 
 import java.io.Serializable;
 import java.util.Collection;

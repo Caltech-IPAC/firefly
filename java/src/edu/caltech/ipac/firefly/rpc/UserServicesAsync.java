@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.rpc;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
-import edu.caltech.ipac.firefly.fuse.data.config.MissionTag;
+import edu.caltech.ipac.firefly.data.fuse.config.MissionTag;
 
 import java.util.Map;
 
