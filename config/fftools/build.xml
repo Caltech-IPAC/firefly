@@ -4,6 +4,8 @@
     </description>
 
     <property name="build.root" value="${basedir}/../../java"/>
+    <import file="${build.root}/tools/init.xml"/>
+
     <property name="FireflyTools.Advertise" value="false"/>
 
     <property name="app-name" value="fftools"/>

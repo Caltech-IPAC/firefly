@@ -4,9 +4,6 @@
     <property name="dev.root.dir" location="${build.root}/../.."/>
     <property name="firefly.build.root" location="${dev.root.dir}/firefly/java"/>
 
-    <!-- imports the common.xml build file -->
-    <import file="${build.root}/tools/common.xml"/>
-
     <!-- imports the firefly-path.xml file -->
     <import file="firefly-path.xml"/>
 

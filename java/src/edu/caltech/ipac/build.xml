@@ -27,7 +27,7 @@
     <!--_____Firefly Tools_-->
     <!--+++++++++++++++++++-->
 
-    <target name="fftools" description="build firefly tools">
+    <target name="fftools" depends="firefly" description="build firefly tools">
         <ant antfile="${build.root}/src/edu/caltech/ipac/fftools/build.xml" inheritall="false"/>
     </target>
     <target name="fftools.clean" description="clean up build firefly tools">

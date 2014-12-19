@@ -5,6 +5,8 @@
 <!-- Project level init file -->
     <property name="build.root" value="${basedir}/../.."/>
     <import file="${build.root}/tools/init.xml"/>
+    <import file="${build.root}/tools/common.xml"/>
+
 
 <!-- local properties -->
 
@@ -31,14 +33,14 @@
 
     <manifestclasspath property="jar.mf.classpath" jarfile="${firefly.jars.dir}/${jar.file}">
       <classpath>
-          <pathelement location="${firefly.jars.dir}/webservices/axis.jar"/>
-          <pathelement location="${firefly.jars.dir}/jakarta-commons/commons-logging.jar"/>
-          <pathelement location="${firefly.jars.dir}/jakarta-commons/commons-discovery.jar"/>
-          <pathelement location="${firefly.jars.dir}/webservices/jaxrpc.jar"/>
-          <pathelement location="${firefly.jars.dir}/webservices/saaj.jar"/>
-          <pathelement location="${firefly.jars.dir}/webservices/webservices/wsdl4j-1.5.1.jar"/>
-          <pathelement location="${firefly.jars.dir}/j2ee/activation.jar"/>
-          <pathelement location="${firefly.jars.dir}/j2ee/mail.jar"/>
+          <pathelement location="${common.jars.dir}/axis.jar"/>
+          <pathelement location="${common.jars.dir}/commons-logging-1.0.4.jar"/>
+          <pathelement location="${common.jars.dir}/commons-discovery-0.2.jar"/>
+          <pathelement location="${common.jars.dir}/jaxrpc.jar"/>
+          <pathelement location="${common.jars.dir}/saaj.jar"/>
+          <pathelement location="${common.jars.dir}/wsdl4j-1.5.1.jar"/>
+          <pathelement location="${common.jars.dir}/activation.jar"/>
+          <pathelement location="${common.jars.dir}/mail.jar"/>
       </classpath>
     </manifestclasspath>
 

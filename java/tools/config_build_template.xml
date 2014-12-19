@@ -33,6 +33,7 @@
                                     "/>
 
     <import file="${build.root}/tools/init.xml"/>
+    <import file="${firefly.build.root}/tools/common.xml"/>
 
     <property name="config.dir" value="/hydra/server/config"/>
     <property name="app.config.dir" value="${config.dir}/${app-name}"/>

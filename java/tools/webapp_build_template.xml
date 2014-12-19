@@ -3,9 +3,9 @@
     <property name="build.root" value="${basedir}/../../../../.."/>
 
     <!-- load init.xml and common.xml -->
-    <import file="${build.root}/tools/init.xml"/>
+    <import file="${firefly.build.root}/tools/common.xml"/>
 
-    <!--
+    <!--``
     required properties:
         launch.page     - default page
         gwt.module

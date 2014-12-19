@@ -5,6 +5,7 @@
 <!-- Project level init file -->
     <property name="build.root" value="${basedir}/../../../../../"/>
     <import file="${build.root}/tools/init.xml"/>
+    <import file="${firefly.build.root}/tools/common.xml"/>
 
 <!-- local properties -->
     <!--<property name="gwt.www.dir" value="${dest.dir}/www"/>-->
