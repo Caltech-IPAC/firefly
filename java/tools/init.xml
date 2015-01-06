@@ -1,5 +1,8 @@
 <project name="Firefly Project Build init file" basedir=".">
     <!-- project specific's property -->
+    <property name="src.dir" location="${build.root}/src"/>
+    <property name="dest.dir" location="${build.root}/classes"/>
+    <property name="dist.dir" location="${build.root}/dist"/>
     <property name="jars.dir" location="${build.root}/../jars"/>
     <property name="dev.root.dir" location="${build.root}/../.."/>
     <property name="firefly.build.root" location="${dev.root.dir}/firefly/java"/>
