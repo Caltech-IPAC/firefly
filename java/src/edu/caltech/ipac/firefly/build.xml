@@ -20,9 +20,12 @@
                                              edu/caltech/ipac/targetgui/**
                                              edu/caltech/ipac/util/**
                                              edu/caltech/ipac/visualize/**
+                                             edu/caltech/ipac/fftools/**
                                              edu/caltech/ipac/*
                                              "/>
     <property name="resources.includes" value="edu/caltech/ipac/**/*.java
+                                               edu/caltech/ipac/fftools/**/resources/*
+                                               edu/caltech/ipac/fftools/*.gwt.xml
                                                edu/caltech/ipac/firefly/**/resources/*
                                                edu/caltech/ipac/firefly/FireFly.gwt.xml
                                                edu/caltech/ipac/firefly/linker/nowaitIsBodyLoaded.js
