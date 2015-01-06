@@ -28,6 +28,8 @@ import edu.caltech.ipac.firefly.data.Version;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.rpc.ResourceServices;
+import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
+import edu.caltech.ipac.firefly.task.IrsaAllDataSetsFactory;
 import edu.caltech.ipac.firefly.ui.BundledServerTask;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
@@ -92,6 +94,7 @@ public class Application {
     private boolean doSaveState = true;
     private ApplicationReady appReady;
     private EventHub eventHub;
+    private static DataSetInfoFactory dataSetInfoFactory= null;
 
     /**
      * singleton; use getInstance().
@@ -138,6 +141,20 @@ public class Application {
         }
         return eventHub;
     }
+
+
+    public static DataSetInfoFactory getDataSetFactory() {
+        if (dataSetInfoFactory == null) {
+            dataSetInfoFactory= IrsaAllDataSetsFactory.getInstance();
+        }
+        return dataSetInfoFactory;
+    }
+
+    public static void setDataSetFactory(DataSetInfoFactory  datasetFactory) {
+        dataSetInfoFactory= datasetFactory;
+    }
+
+
 
     public void setDoSaveState(boolean doSaveState) {
         this.doSaveState = doSaveState;

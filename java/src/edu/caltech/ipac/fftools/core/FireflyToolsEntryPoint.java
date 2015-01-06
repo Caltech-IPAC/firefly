@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
+import edu.caltech.ipac.firefly.task.IrsaAllDataSetsFactory;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 
 /**
@@ -25,9 +27,13 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     private static final boolean USE_CORS_IF_POSSIBLE= true;
 
     public void onModuleLoad() {
+        start(IrsaAllDataSetsFactory.getInstance());
+    }
+
+    public void start(DataSetInfoFactory factory) {
         FFToolEnv.loadJS();
         boolean alone= isStandAloneApp();
-        Application.setCreator(alone ? new FFToolsStandaloneCreator() : new FireflyToolsEmbededCreator());
+        Application.setCreator(alone ? new FFToolsStandaloneCreator(factory) : new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
         boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
         app.setNetworkMode(alone ||  useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);

@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
 import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
+import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.panels.ToolbarDropdown;
@@ -38,7 +39,9 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     private StandaloneUI aloneUI;
     ImageSelectDropDownCmd isddCmd;
 
-    public FFToolsStandaloneCreator() { }
+    public FFToolsStandaloneCreator(DataSetInfoFactory factory) {
+        if (factory!=null) Application.setDataSetFactory(factory);
+    }
 
     public boolean isApplication() { return true; }
 

@@ -17,6 +17,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
@@ -26,7 +27,7 @@ import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
-import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
+import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.catalog.Catagory;
 import edu.caltech.ipac.firefly.ui.catalog.Catalog;
@@ -208,8 +209,9 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
     private DataSet makeCatalogDataset() {
         DataSet dataset = null;
-        if (IrsaAllDataSetsTask.isIrsaAllDataSetsRetrieved()) {
-            dataset = IrsaAllDataSetsTask.getOriginalDataSet();
+        DataSetInfoFactory factory= Application.getDataSetFactory();
+        if (factory.isAllDataSetsRetrieved()) {
+            dataset = factory.getOriginalDataSet();
             if (selectedCategory != null) {
                 dataset = dataset.subset(new CollectionUtil.FilterImpl<BaseTableData.RowData>() {
                     public boolean accept(BaseTableData.RowData testRow) {

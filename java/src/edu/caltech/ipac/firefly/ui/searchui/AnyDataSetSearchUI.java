@@ -17,11 +17,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.task.IrsaAllDataSetsTask;
+import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -348,19 +349,20 @@ public class AnyDataSetSearchUI implements SearchUI {
         dataTypeViews.add(spectrumView);
         dataTypeViews.showWidget(0);
 
+        DataSetInfoFactory factory= Application.getDataSetFactory();
 
-        if (IrsaAllDataSetsTask.isIrsaAllDataSetsRetrieved()) {
-            allDatasetList= IrsaAllDataSetsTask.getIrsaAllDataSetsImmediate();
+        if (factory.isAllDataSetsRetrieved()) {
+            allDatasetList= factory.getAllDataSetsImmediate();
             initMissionSection();
         }
         else {
-            IrsaAllDataSetsTask.getIrsaAllDataSets(mainPanel,new AsyncCallback<List<DataSetInfo>>() {
+            factory.getAllDataSets(mainPanel, new AsyncCallback<List<DataSetInfo>>() {
                 public void onFailure(Throwable caught) {
                     //todo
                 }
 
                 public void onSuccess(List<DataSetInfo> result) {
-                    allDatasetList= result;
+                    allDatasetList = result;
                     initMissionSection();
                 }
             });
