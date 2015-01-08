@@ -74,6 +74,8 @@ import java.util.List;
  *            12/04/14  by Lijun Zhang
  *            Add labels to the middle of the vertical and horizontal lines for none EQXXXX images
  *
+ * 12/16/14  by Lijun Zhang
+ *           Changed the algorithm to calculate  the label location
  *
  *
 **/
@@ -145,8 +147,8 @@ public class WebGrid
 
     //location of the labels
     ImageWorkSpacePt[] _points;
-    int _vLines;  //line count in levels[0] direction
-    int _hLines; //line count in levels[1] direction
+    int _nLivel0;  //line count in levels[0] direction
+    int _nLivel1; //line count in levels[1] direction
 
 
     /**
@@ -350,7 +352,7 @@ public class WebGrid
 
             for (int i = 0; i < lineCount; i++) {
 
-                if (i<_vLines){
+                if (i< _nLivel0){
                     points[i] = new ImageWorkSpacePt(_xLines[i][0], bounds.y);
 
                 }
@@ -362,20 +364,32 @@ public class WebGrid
 
         } else {
 
-            //Horizontal middle position
-            int hM= _hLines%2==0? _hLines/2: _hLines/2+1;
-
-            for (int i=0; i<_vLines; i++){
-              points[i] = new ImageWorkSpacePt(_xLines[i][hM],_yLines[i][hM]);
-            }
-
-            //vertical middle position
-            int vM =_vLines%2==0? _vLines/2+1: _vLines/2+2;
-            for (int i=0; i<_hLines; i++){
-                points[i+_vLines] = new ImageWorkSpacePt(_xLines[_vLines+i][vM], _yLines[_vLines+i][vM]);
-
+            //levels[0] direction labels
+             /*
+              The lines in this direction have the same number of points _xLines, _yLines.
+              Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
+              Put the label in the middle of this direction.
+             */
+            int hM = _xLines[0].length/2; //in the middle of the line
+            for (int i=0; i< _nLivel0; i++){
+             points[i] = new ImageWorkSpacePt(_xLines[i][hM],_yLines[i][hM]);
 
             }
+
+
+            //levels[1] direction labels
+            /*
+              The lines in this direction have the same number of points _xLines, _yLines.
+              Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
+              Put the label in the middle of this direction.
+             */
+            int vM=_xLines[_nLivel0].length/2;
+            for (int i=0; i< _nLivel1; i++){
+                 points[i+ _nLivel0] = new ImageWorkSpacePt(_xLines[_nLivel0 +i][vM], _yLines[_nLivel0 +i][vM]);
+
+            }
+
+
 
         }
 
@@ -421,7 +435,7 @@ public class WebGrid
         // draw the label.
 
        if (useLabels){
-          if (count<_vLines) { //vertical line labels
+          if (count< _nLivel0) { //vertical line labels
 
                drawData.add(ShapeDataObj.makeText(_points[count], label));
            }
@@ -452,8 +466,8 @@ public class WebGrid
 	     
 
 
-        _vLines=levels[0].length;
-        _hLines = levels[1].length;
+        _nLivel0 =levels[0].length;
+        _nLivel1 = levels[1].length;
 	  _labels = getLabels(levels);
 	     
 
@@ -1248,6 +1262,4 @@ public class WebGrid
         }
     }
 }
-
-
 
