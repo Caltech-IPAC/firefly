@@ -6,7 +6,7 @@
     <property name="build.root" value="${basedir}/../../../.."/>
     <import file="${build.root}/tools/init.xml"/>
 
-    <target name="firefly" description="build firefly.jar">
+    <target name="firefly" depends="simbad" description="build firefly.jar">
         <ant antfile="${build.root}/src/edu/caltech/ipac/firefly/build.xml" inheritall="false"/>
     </target>
     <target name="firefly.clean" description="clean up buid firefly.jar">
