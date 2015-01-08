@@ -1,0 +1,8 @@
+<module rename-to="fftools">
+    <inherits name='edu.caltech.ipac.firefly.FireFly'/>
+    <inherits name='edu.caltech.ipac.theme.standard.Standard'/>
+
+    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" />
+    <source path="core"/>
+
+</module>
