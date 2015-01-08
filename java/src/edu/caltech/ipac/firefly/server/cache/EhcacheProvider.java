@@ -8,6 +8,8 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.Cleanupable;
 import edu.caltech.ipac.util.cache.FileHolder;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -15,6 +17,7 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -60,10 +63,30 @@ public class EhcacheProvider implements Cache.Provider {
 
 
         File sharedConfig = ServerContext.getConfigFile("shared_ehcache.xml");
-        if (sharedConfig != null && sharedConfig.exists()) {
-            File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
-            if (ignoreSizeOf != null) {
-                System.setProperty("net.sf.ehcache.sizeof.filter", ServerContext.getConfigFile("ignore_sizeof.txt").getAbsolutePath());
+        if (sharedConfig == null) {
+            sharedConfig = new File(ServerContext.getWebappConfigDir(), "shared_ehcache.xml");
+            try {
+                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/shared_ehcache.xml"), sharedConfig);
+            } catch (Exception e) {
+                _log.error("Unable to extract shared_ehcache.xml from jar file");
+            }
+        }
+
+        File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
+        if (ignoreSizeOf == null) {
+            ignoreSizeOf = new File(ServerContext.getWebappConfigDir(), "ignore_sizeof.txt");
+            try {
+                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/ignore_sizeof.txt"), ignoreSizeOf);
+            } catch (Exception e) {
+                _log.error("Unable to extract ignore_sizeof.txt from jar file");
+            }
+        }
+
+        if (sharedConfig.exists()) {
+            if (ignoreSizeOf.exists()) {
+                System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
+            } else {
+                _log.error("Unable to locate ignore_sizeof.txt file.");
             }
             String sharedMemSize = System.getProperty("vis.shared.mem.size");
 
@@ -73,7 +96,6 @@ public class EhcacheProvider implements Cache.Provider {
             }
             _log.info("shared cache manager config file: " + sharedConfig);
         }
-
 
 
 //        if (cleanupTypes.length>0)  cleanup.start();

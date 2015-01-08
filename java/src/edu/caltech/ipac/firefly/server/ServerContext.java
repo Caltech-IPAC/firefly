@@ -141,6 +141,9 @@ public class ServerContext {
         return Math.max(appTime, webTime);
     }
 
+    public static File getWebappConfigDir() {
+        return webappConfigDir;
+    }
 
     private static boolean loadProperties(String dirName) {
         if (dirName == null) return false;
