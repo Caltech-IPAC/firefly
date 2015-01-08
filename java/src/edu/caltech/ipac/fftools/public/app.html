@@ -40,6 +40,18 @@
             top:-50px; left:-12px;
 
         }
+
+        .ffTitle {
+            position: absolute;
+            top: 16px;
+            left: 85px;
+            color: white;
+            font-size: 25pt;
+            font-family: "Varela", sans-serif;
+            z-index: 1;
+            text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);
+        }
+
     </style>
 
 </head>
@@ -47,11 +59,13 @@
 <body>
 
 <div id="user-info" class="user-info"></div>
-<div id="irsa-banner"   style= "min-width:768px; min-height:40px;"></div>
+<div style= "min-width:768px; min-height:2px;">
+    <div class="ffTitle">Firefly</div>
+</div>
 <div id="application" style= "background-color: #e3e3e3;" class="global-settings"></div>
 <div id="loading">
     <div class="loading-indicator">
-        <img src="images/gxt/large-loading.gif" width="32" height="32"/>IRSA<br />
+        <img src="images/gxt/large-loading.gif" width="32" height="32"/><br />
         <span id="loading-msg">Loading...</span>
     </div>
 </div>
@@ -70,9 +84,6 @@
         "appToolbarOffset" : 70
     };
 </script>
-
-<script type="text/javascript" language='javascript' src='%banner.host%/frontpage/frontpage.nocache.js'> </script>
-
 
 <!-- OPTIONAL: include this if you want history support -->
 <iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>

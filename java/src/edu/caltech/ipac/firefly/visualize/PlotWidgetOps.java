@@ -199,15 +199,13 @@ public class PlotWidgetOps {
         _mpw.setDefaultPlotRequest(new DefaultRequestInfo(red,green,blue));
         _mpw.setCanCollapse(canCollapse);
         if (plotExpanded) {
-            red.setZoomType(ZoomType.FULL_SCREEN);
-            red.setZoomToWidth(Window.getClientWidth());
-            red.setZoomToHeight(Window.getClientHeight()-125);
-            green.setZoomType(ZoomType.FULL_SCREEN);
-            green.setZoomToWidth(Window.getClientWidth());
-            green.setZoomToHeight(Window.getClientHeight()-125);
-            blue.setZoomType(ZoomType.FULL_SCREEN);
-            blue.setZoomToWidth(Window.getClientWidth());
-            blue.setZoomToHeight(Window.getClientHeight()-125);
+            for(WebPlotRequest r : new WebPlotRequest[] {red,green,blue}) {
+                if (r!=null) {
+                    r.setZoomType(ZoomType.FULL_SCREEN);
+                    r.setZoomToWidth(Window.getClientWidth());
+                    r.setZoomToHeight(Window.getClientHeight()-125);
+                }
+            }
         }
 
         if (plotExpanded) {
@@ -257,7 +255,7 @@ public class PlotWidgetOps {
                            boolean addToHistory,
                            AsyncCallback<WebPlot> notify) {
 
-        plot3Internal(red, green, blue, addToHistory, true, false, true, notify);
+        plot3Internal(red, green, blue, addToHistory, true, AllPlots.getInstance().isExpanded(), true, notify);
     }
 
     public void removeCurrentPlot() {

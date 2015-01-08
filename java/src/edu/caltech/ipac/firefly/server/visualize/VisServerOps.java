@@ -1536,7 +1536,9 @@ public class VisServerOps {
             if (ctx!=null) ctx.freeResources(PlotClientCtx.Free.ALWAYS);
         }
         if (reqAry!=null) {
-            for(WebPlotRequest req : reqAry)  messages.add("Request: " + req.prettyString());
+            for(WebPlotRequest req : reqAry)   {
+                if  (req!=null) messages.add("Request: " + req.prettyString());
+            }
         }
 
 //        messages.add(e.toString());

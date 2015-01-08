@@ -27,13 +27,13 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     private static final boolean USE_CORS_IF_POSSIBLE= true;
 
     public void onModuleLoad() {
-        start(IrsaAllDataSetsFactory.getInstance());
+        start(IrsaAllDataSetsFactory.getInstance(),2,"generic_footer_minimal.html");
     }
 
-    public void start(DataSetInfoFactory factory) {
+    public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile) {
         FFToolEnv.loadJS();
         boolean alone= isStandAloneApp();
-        Application.setCreator(alone ? new FFToolsStandaloneCreator(factory) : new FireflyToolsEmbededCreator());
+        Application.setCreator(alone ? new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile) : new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
         boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
         app.setNetworkMode(alone ||  useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);

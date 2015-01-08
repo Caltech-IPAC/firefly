@@ -16,10 +16,12 @@ import edu.caltech.ipac.firefly.fftools.FFToolEnv;
  */
 public class FFToolsStandaloneLayoutManager extends IrsaLayoutManager {
     private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-56x56.png";
+    private final String footerHtmlFile;
 
-    public FFToolsStandaloneLayoutManager() {
-        super();
+    public FFToolsStandaloneLayoutManager(int topOffset,String footerHtmlFile) {
+        super(DEF_MIN_WIDTH,DEF_MIN_HEIGHT, topOffset);
         getLayoutSelector().setHub(FFToolEnv.getHub());
+        this.footerHtmlFile= footerHtmlFile;
     }
 
     public void layout(String rootId) {
@@ -31,7 +33,8 @@ public class FFToolsStandaloneLayoutManager extends IrsaLayoutManager {
 
 
         HtmlRegionLoader footer= new HtmlRegionLoader();
-        footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
+//        footer.load("irsa_footer_minimal.html",LayoutManager.FOOTER_REGION);
+        if (footerHtmlFile!=null) footer.load(footerHtmlFile,LayoutManager.FOOTER_REGION);
     }
 
 }

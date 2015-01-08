@@ -38,9 +38,13 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     private final static String FIREFLY_LOGO= GWT.getModuleBaseURL()+  "images/fftools-logo-offset-small-75x75.png";
     private StandaloneUI aloneUI;
     ImageSelectDropDownCmd isddCmd;
+    private final int bannerOffset;
+    private final String footerHtmlFile;
 
-    public FFToolsStandaloneCreator(DataSetInfoFactory factory) {
+    public FFToolsStandaloneCreator(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile) {
         if (factory!=null) Application.setDataSetFactory(factory);
+        this.bannerOffset= bannerOffset;
+        this.footerHtmlFile= footerHtmlFile;
     }
 
     public boolean isApplication() { return true; }
@@ -125,7 +129,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     }
 
 
-    public LayoutManager makeLayoutManager() { return new FFToolsStandaloneLayoutManager(); }
+    public LayoutManager makeLayoutManager() { return new FFToolsStandaloneLayoutManager(bannerOffset, footerHtmlFile); }
 
     public String getLoadingDiv() { return "application"; }
 

@@ -30,16 +30,19 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
  * @version $Id: ResizableLayoutManager.java,v 1.26 2012/10/03 22:18:11 loi Exp $
  */
 public class IrsaLayoutManager extends AbstractLayoutManager {
-    private static final int DEF_MIN_WIDTH = 768;
-    private static final int DEF_MIN_HEIGHT = 500;
+    public static final int DEF_MIN_WIDTH = 768;
+    public static final int DEF_MIN_HEIGHT = 500;
+    private static final int DEF_TOP_OFFSET = 40;
+    private final int topOffset;
     private DockPanel mainPanel;
 
     public IrsaLayoutManager() {
-        this(DEF_MIN_WIDTH, DEF_MIN_HEIGHT);
+        this(DEF_MIN_WIDTH, DEF_MIN_HEIGHT, DEF_TOP_OFFSET);
     }
 
-    public IrsaLayoutManager(int minWidth, int minHeight) {
+    public IrsaLayoutManager(int minWidth, int minHeight, int topOffset) {
         super(minWidth, minHeight);
+        this.topOffset= topOffset;
         mainPanel = new DockPanel();
         Window.addResizeHandler(new ResizeHandler(){
                 public void onResize(ResizeEvent event) {
@@ -144,8 +147,14 @@ public class IrsaLayoutManager extends AbstractLayoutManager {
                 throw new RuntimeException("Application is not setup correctly; unable to find " + rootId);
             }
             root.add(mainPanel);
-            GwtUtil.setStyles(root, "position", "absolute", "left", "1px", "right", "1px",
-                            "top", "40px", "bottom", "1px", "minWidth", getMinWidth()+"px", "minHeight", getMinHeight() + "px");
+            GwtUtil.setStyles(root,
+                              "position", "absolute",
+                              "top", topOffset+"px",
+                              "left", "1px",
+                              "right", "1px",
+                              "bottom", "1px",
+                              "minWidth", getMinWidth()+"px",
+                              "minHeight", getMinHeight() + "px");
         } else {
             RootPanel.get().add(mainPanel);
         }
