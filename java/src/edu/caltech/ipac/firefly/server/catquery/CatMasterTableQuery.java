@@ -79,7 +79,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
     private static File getMasterCatalogFile(TableServerRequest request) throws IOException, DataAccessException {
         File retval;
         try {
-            String colNames = "projectshort, subtitle, description, server, catname, cols, rows, nrows, coneradius, infourl, ddlink";
+            String colNames = "projectshort, subtitle, description, server, catname, cols, nrows, coneradius, infourl, ddlink";
             File catOutFile = MASTER_CAT_FILE;
 
             // if hydra, check for additional catalogs
@@ -127,8 +127,10 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             DataGroupQueryStatement statement = DataGroupQueryStatement.parseStatement(selectStr);
             DataGroup dg = statement.execute();
 
+            DataGroup outputDG;
             if (dgExtra == null) {
-                DataGroupWriter.write(catOutFile, dg, 0);
+                outputDG= dg;
+//                DataGroupWriter.write(catOutFile, dg, 0);
 
             } else {
                 // concat dg to dgExtra
@@ -137,13 +139,17 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
                     dgExtra.add(iter.next());
                 }
 
-                DataGroupWriter.write(catOutFile, dgExtra, 0);
+                outputDG= dgExtra;
+//                DataGroupWriter.write(catOutFile, dgExtra, 0);
             }
+            DataGroupWriter.write(catOutFile, outputDG, 0);
+
             DataGroup data = DataGroupReader.read(catOutFile);
             // append hostname to relative path urls.
             appendHostToUrls(data, "moreinfo", "description");
             makeIntoUrl(data, "infourl", "info");
             makeIntoUrl(data, "ddlink", "Column Def");
+            addSearchProcessorCols(data);
             data.shrinkToFitData(true);
             IpacTableWriter.save(catOutFile, data);
 
@@ -168,6 +174,24 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
         return null;
     }
 
+
+    private static void addSearchProcessorCols(DataGroup dg) {
+
+        DataType catDt= new DataType("catSearchProcessor", String.class);
+        DataType ddDt= new DataType("ddSearchProcessor", String.class);
+        dg.addDataDefinition(catDt);
+        dg.addDataDefinition(ddDt);
+
+        for (int r = 0; r < dg.size(); r++) {
+            DataObject row = dg.get(r);
+            row.setDataElement(catDt, "GatorQuery");
+            row.setDataElement(ddDt, "GatorDD");
+        }
+    }
+
+
+
+
     private static void makeIntoUrl(DataGroup dg, String colname, String linkDesc) {
         
         DataType col = dg.getDataDefintion(colname);
@@ -189,6 +213,7 @@ public class CatMasterTableQuery extends IpacTablePartProcessor {
             row.setDataElement(col, url);
         }
     }
+
     
     private static void appendHostToUrls(DataGroup dg, String linkDesc, String... cols) {
 

@@ -53,7 +53,8 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
     private String formToSelect = "short";
 
 
-    public CatddEnhancedPanel(String catalogName,
+    public CatddEnhancedPanel(String ddSearchProcessor,
+                              String catalogName,
                               final String cols,
                               final String reqCols,
                               final String cons,
@@ -70,6 +71,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         GwtUtil.setPadding(tableWrapper,0,15,0,20);
 
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
+        req.setRequestId(ddSearchProcessor);
         req.setQueryCatName(catalogName);
 
         reqParams = req.getParams();

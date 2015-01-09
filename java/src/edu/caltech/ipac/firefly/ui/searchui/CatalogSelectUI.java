@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DataSetInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
@@ -165,13 +166,20 @@ public class CatalogSelectUI implements DataTypeSelectUI {
     private void updateDD() {
         catDDContainerRight.clear();
 
-        try {
-            catDD = new CatddEnhancedPanel(currentCatalog.getQueryCatName(), selectedColumns, "", selectedConstraints, selectedDDForm, StringUtils.isEmpty(selectedColumns));
-        } catch (Exception e) {
-            WebAssert.argTst(false, "not sure what to do here");
+        if (!StringUtils.isEmpty(currentCatalog.getDDSearchProcessor())) {
+            try {
+                catDD = new CatddEnhancedPanel(currentCatalog.getDDSearchProcessor(),
+                                               currentCatalog.getQueryCatName(), selectedColumns, "",
+                                               selectedConstraints, selectedDDForm, StringUtils.isEmpty(selectedColumns));
+            } catch (Exception e) {
+                WebAssert.argTst(false, "not sure what to do here");
+            }
+            catDDContainerRight.add(catDD);
+        }
+        else {
+            catDD= null;
         }
 
-        catDDContainerRight.add(catDD);
     }
 
 
@@ -249,13 +257,21 @@ public class CatalogSelectUI implements DataTypeSelectUI {
         return currentCatalog!=null ? currentCatalog.getQueryCatName() : "catalog data";
     }
 
-    public String makeRequestID() { return CatalogRequest.RequestType.GATOR_QUERY.getSearchProcessor(); }
+    public String makeRequestID() {
+        if (selectedCategory!=null) {
+            return currentCatalog.getCatalogSearchProcessor();
+        }
+        else {
+            return CatalogRequest.RequestType.GATOR_QUERY.getSearchProcessor();
+        }
+    }
 
     public List<Param> getFieldValues() {
         List<Param> list= new ArrayList<Param>(10);
         list.add(new Param(CatalogRequest.SEARCH_METHOD, CatalogRequest.Method.CONE.getDesc()));
         list.add(new Param(CatalogRequest.CATALOG, currentCatalog.getQueryCatName()));
-        list.addAll(catDD.getFieldValues());
+        list.add(new Param(ServerParams.REQUESTED_DATA_SET, currentCatalog.getQueryCatName()));
+        if (catDD!=null) list.addAll(catDD.getFieldValues());
 //      list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.DATA_PRIMARY.toString()));
         list.add(new Param(CatalogRequest.USE, CatalogRequest.Use.CATALOG_OVERLAY.toString()));
         if (catList!=null) {

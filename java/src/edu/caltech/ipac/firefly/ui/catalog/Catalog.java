@@ -3,6 +3,9 @@ package edu.caltech.ipac.firefly.ui.catalog;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.util.Arrays;
+import java.util.List;
 /**
  * User: roby
  * Date: Oct 30, 2009
@@ -35,9 +38,15 @@ public class Catalog {
         }
         return nrows;
     }
+
+    public String getCatalogSearchProcessor() { return _row.getValue("catSearchProcessor"); }
+    public String getDDSearchProcessor() { return _row.getValue("ddSearchProcessor"); }
+
     public String getInfoURL() { return _row.getValue("infourl"); }
     public String getDdLink() { return _row.getValue("ddlink"); }
-    public int getMaxArcSec() { return StringUtils.getInt(_row.getValue("coneradius")); }
+    public int getMaxArcSec() {
+        return StringUtils.getInt(_row.getValue("coneradius"));
+    }
     public BaseTableData.RowData  getDataSetRow() { return _row; }
 
 
@@ -62,6 +71,37 @@ public class Catalog {
             }
         }
         return retval;
+    }
+
+
+    public static BaseTableData.RowData makeTableRow( String projectshort,
+                                                      String subtitle,
+                                                      String description,
+                                                      String server,
+                                                      String catname,
+                                                      String cols,
+                                                      String nrows,
+                                                      String coneradius,
+                                                      String infourl,
+                                                      String ddlink,
+                                                      String catSearchProcessor,
+                                                      String ddSearchProcessor
+                                                      ) {
+
+        List<String> cStrList= Arrays.asList(
+                     "projectshort", "subtitle", "description",
+                     "server", "catname", "cols",
+                     "nrows", "coneradius", "infourl", "ddlink",
+                     "catSearchProcessor", "ddSearchProcessor"
+                     );
+
+
+        String r1Data[]= {projectshort,  subtitle,  description,
+                          server,  catname,  cols,
+                          nrows,  coneradius,  infourl,  ddlink,
+                          catSearchProcessor, ddSearchProcessor
+        };
+        return new BaseTableData.RowData(cStrList,r1Data);
     }
 }
 
