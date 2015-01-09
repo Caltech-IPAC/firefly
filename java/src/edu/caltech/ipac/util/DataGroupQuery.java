@@ -769,7 +769,7 @@ public class DataGroupQuery {
             if (_colNameIsExpression) {
                 for (DataType dt : _colDataTypes) {
                     try {
-                        _expression.setVariableValue(dt.getKeyName(), (Double) dataObject.getDataElement(dt));
+                        _expression.setVariableValue(dt.getKeyName(), ((Number)dataObject.getDataElement(dt)).doubleValue());
                     } catch (Exception e) {
                         return false;
                     }
