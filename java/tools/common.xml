@@ -666,7 +666,7 @@
 
         <tempfile destdir="${wars.dir}" deleteonexit="true" property="temp.file"/>
         <echo message="${war.file}" file="${temp.file}"/>
-        <replace file="${temp.file}" token="#" value="%23"/>
+        <replace file="${temp.file}" token="#" value="@23"/>
         <loadfile srcfile="${temp.file}" property="encodedWarFile"/>
 
         <taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask">
@@ -686,7 +686,7 @@
     <target name="redeploy" depends="webapp.deploy.prepare, undeploy, deploy"/>
 
     <!-- evaluate and replace tokenized variables from configuration files
-         with values from properties.  Token are values delimited by '%' ie. %buildDate%.
+         with values from properties.  Token are values delimited by '@' ie. @buildDate@.
          eval-props-inf         required.  refid to a fileset containing a list of files to eval.
          ${eval-props-outdir}   required.  output directory.
     -->
@@ -697,7 +697,7 @@
         <replace file="config.properties" token="\" value=""/>
 
         <translate todir="${eval-props-outdir}"
-                   starttoken="%" endtoken="%"
+                   starttoken="@" endtoken="@"
                    bundle="config"
                    srcencoding="UTF-8"
                    destencoding="UTF-8"

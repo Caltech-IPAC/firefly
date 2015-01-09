@@ -33,14 +33,14 @@
 
     <manifestclasspath property="jar.mf.classpath" jarfile="${firefly.jars.dir}/${jar.file}">
       <classpath>
-          <pathelement location="${common.jars.dir}/axis.jar"/>
-          <pathelement location="${common.jars.dir}/commons-logging-1.0.4.jar"/>
-          <pathelement location="${common.jars.dir}/commons-discovery-0.2.jar"/>
-          <pathelement location="${common.jars.dir}/jaxrpc.jar"/>
-          <pathelement location="${common.jars.dir}/saaj.jar"/>
-          <pathelement location="${common.jars.dir}/wsdl4j-1.5.1.jar"/>
-          <pathelement location="${common.jars.dir}/activation.jar"/>
-          <pathelement location="${common.jars.dir}/mail.jar"/>
+          <pathelement location="${firefly.build.root}/jars/axis.jar"/>
+          <pathelement location="${firefly.build.root}/jars/commons-logging-1.0.4.jar"/>
+          <pathelement location="${firefly.build.root}/jars/commons-discovery-0.2.jar"/>
+          <pathelement location="${firefly.build.root}/jars/jaxrpc.jar"/>
+          <pathelement location="${firefly.build.root}/jars/saaj.jar"/>
+          <pathelement location="${firefly.build.root}/jars/wsdl4j-1.5.1.jar"/>
+          <pathelement location="${firefly.build.root}/jars/activation.jar"/>
+          <pathelement location="${firefly.build.root}/jars/mail.jar"/>
       </classpath>
     </manifestclasspath>
 
