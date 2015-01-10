@@ -154,9 +154,9 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
 
             List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
                     Catalog.makeTableRow("lsst","lsst-all","Deep Source", "SERVER","DeepSource",
-                                         "25","456","3600","","", "LSSTCatalogQuery",""),
+                                         "25","456","7200","","", "LSSTCatalogQuery",""),
                     Catalog.makeTableRow("lsst","lsst-all","second catalog", "SERVER","lsst-cat-2",
-                                         "44","789","3600","","", "LSSTCatalogQuery","")
+                                         "44","789","7200","","", "LSSTCatalogQuery","")
             );
 
             DataSetInfo dsInfo= new DataSetInfo("LSST", "LSST");

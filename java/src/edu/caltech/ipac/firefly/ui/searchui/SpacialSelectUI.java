@@ -89,10 +89,10 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private static final int COORDS_IDX= 2;
 
 
-    private static final Map<SpacialType,SpatialOps> spacialOpsMap= new HashMap<SpacialType, SpatialOps>(15);
+    private final Map<SpacialType,SpatialOps> spacialOpsMap= new HashMap<SpacialType, SpatialOps>(15);
 
     private static final WebClassProperties _prop = new WebClassProperties(SpacialSelectUI.class);
-    private DataSetInfo dsInfo= null;
+//    private DataSetInfo dsInfo= null;
     private DataSetInfo.DataTypes currDataType= DataSetInfo.DataTypes.CATALOGS;
 
     enum TabMode { SINGLE, IBE_SINGLE, MULTI, IBE_MULTI, POLYGON, ALL_SKY}
@@ -110,6 +110,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private Widget multiTarget;
     private Widget multiTargetIbe; //  todo
     private Widget allSky;
+    private Set<SpacialType> stGroup= null;
     private DeckLayoutPanel singleModeOpsPanel= new DeckLayoutPanel();
     private DeckLayoutPanel multiModeOpsPanel= new DeckLayoutPanel();
 
@@ -139,15 +140,11 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     }
 
-    void setDataSetInfo(DataSetInfo dsInfo, DataSetInfo.DataTypes dataType) {
-        if (dsInfo==null) return;
-        if (this.dsInfo==null ||
-                !this.dsInfo.getId().equals(dsInfo.getId()) ||
-                currDataType!=dataType) {
-
-            this.dsInfo= dsInfo;
+    void setSpacialOptions(Set<SpacialType> stGroup, DataSetInfo.DataTypes dataType) {
+        if (stGroup==null) return;
+        if (this.stGroup==null || this.stGroup!=stGroup || currDataType!=dataType) {
             currDataType= dataType;
-            Set<SpacialType> stGroup= dsInfo.getSpatialSearchType(dataType);
+            this.stGroup= stGroup;
             boolean singleOp= stGroup.contains(Cone) || stGroup.contains(Box) || stGroup.contains(Elliptical);
             boolean ibeSingleOp= stGroup.contains(IbeSingleImage);
             boolean multiOp= stGroup.contains(MultiPoints) ||
@@ -478,8 +475,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
 
     private void reinitMultiOp() {
-        if (currDataType!=null && dsInfo!=null) {
-            Set<SpacialType> stGroup= dsInfo.getSpatialSearchType(currDataType);
+        if (currDataType!=null && stGroup!=null) {
             boolean hidden= !stGroup.contains(SpacialType.MultiSupportsOneToOneAttribute);
             GwtUtil.setHidden(oneToOneCB,hidden);
             if (hidden) oneToOneCB.setValue(false);

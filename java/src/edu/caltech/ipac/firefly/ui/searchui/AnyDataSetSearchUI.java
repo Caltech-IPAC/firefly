@@ -145,7 +145,7 @@ public class AnyDataSetSearchUI implements SearchUI {
                 dataTypeViews.showWidget(SPECTRUM_IDX);
                 break;
         }
-        spacialArea.setDataSetInfo(dsInfo, selectedDT);
+        spacialArea.setSpacialOptions(dsInfo.getSpatialSearchType(selectedDT), selectedDT);
     }
 
     private void datasetChange() {

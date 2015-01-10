@@ -6,15 +6,19 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.DataSetInfo;
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.SpacialType;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static edu.caltech.ipac.firefly.data.SpacialType.*;
+import static edu.caltech.ipac.firefly.data.SpacialType.Box;
+import static edu.caltech.ipac.firefly.data.SpacialType.Cone;
 
 /**
  * @author tatianag
@@ -44,12 +48,7 @@ public class LSSTCatalogSearchUI  implements SearchUI {
                         adjustSpacialHeight();
                     }
                 });
-        spacialArea.setDataSetInfo(new DataSetInfo("LSSTCat", "LSSTCat Desc"){
-            @Override
-            public Set<SpacialType> getSpatialSearchType(DataTypes dt) {
-                return new HashSet<SpacialType>(Arrays.asList(Cone, Box));
-            }
-        }, DataSetInfo.DataTypes.CATALOGS);
+        spacialArea.setSpacialOptions(new HashSet<SpacialType>(Arrays.asList(Cone, Box)), DataSetInfo.DataTypes.CATALOGS);
         mainPanel.setSize("100%", "100%");
 
         topArea= new DockLayoutPanel(Style.Unit.PX);
