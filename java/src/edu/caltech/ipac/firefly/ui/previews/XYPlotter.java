@@ -21,11 +21,7 @@ import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.ComparisonUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Trey Roby
@@ -97,7 +93,7 @@ public class XYPlotter {
 
         TableMeta tableMeta= table.getDataset().getMeta();
         if (!tableMeta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) return;
-
+        TableMeta.LonLatColumns llc = tableMeta.getLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS);
 
 
         XYCard card= getCard(table);
@@ -105,7 +101,14 @@ public class XYPlotter {
 
         if (card==null) {
             if (cardList.size()<MAX_CARDS) {
-                XYPlotMeta meta = new XYPlotMeta("none", 800, 200, new CustomMetaSource(new HashMap<String, String>()));
+                HashMap<String, String> params = new HashMap<String, String>();
+                if (llc != null) {
+                    params.put(CustomMetaSource.XCOL_KEY, llc.getLonCol());
+                    params.put(CustomMetaSource.YCOL_KEY, llc.getLatCol());
+                }
+                String plotTitle = tableMeta.getAttribute(MetaConst.CATALOG_OVERLAY_TYPE);
+                if (plotTitle == null) plotTitle = "none";
+                XYPlotMeta meta = new XYPlotMeta(plotTitle, 800, 200, new CustomMetaSource(params));
                 meta.setAspectRatio(panel.getOffsetWidth()/panel.getOffsetHeight());
                 meta.setStretchToFill(true);
                 xyPlotWidget = new XYPlotWidget(meta);
@@ -137,6 +140,7 @@ public class XYPlotter {
             if (card.isDataChange()) {
                 if (table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
                     xyPlotWidget.setVisible(true);
+                    //TODO: plotMeta need to be cached when card data change and restored here
                     xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
                 } else {
                     xyPlotWidget.setVisible(false);
