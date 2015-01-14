@@ -57,6 +57,7 @@ public class WiseRequest extends TableServerRequest {
     // Image sets (internal)
     public final static String PASS1 = "pass1";
     public final static String NEOWISER_PROV = "neowiser_prov";
+    public final static String NEOWISER_YR1 = "neowiser-yr1";
     public final static String NEOWISER = "neowiser";
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
@@ -73,6 +74,7 @@ public class WiseRequest extends TableServerRequest {
             put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
             put(PASS1,"Pass 1");
             put(NEOWISER_PROV,"NEO WISER PROV");
+            put(NEOWISER_YR1,"NEO WISER YR1 (2 Bands)");
             put(NEOWISER,"NEO WISER (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
@@ -101,6 +103,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
+            put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
             put(NEOWISER +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});  // TODO: check
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
@@ -130,7 +133,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_3BAND, new Integer[]{7101, 8744});
             put(PASS2_2BAND, new Integer[]{8745, 12514});
             put(NEOWISER_PROV, new Integer[]{12515, 999999});
-            put(NEOWISER, new Integer[]{12515, 999999});
+            put(NEOWISER_YR1, new Integer[]{12515, 55289}); // TODO: which scan is the last for yr1?
+            put(NEOWISER, new Integer[]{55289, 999999}); // TODO: which scan is the first for yr2?
         }
     };
 
@@ -150,6 +154,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_3BAND,"wise_pass2_3band");
             put(PASS2_2BAND, "wise_pass2_2band");
             put(NEOWISER_PROV,"wise_neowiser_prov");
+            put(NEOWISER_YR1,"wise_neowiser_yr1");
             put(NEOWISER,"wise_neowiser");
 
         }
