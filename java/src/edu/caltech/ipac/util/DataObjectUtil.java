@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.util.expr.Expression;

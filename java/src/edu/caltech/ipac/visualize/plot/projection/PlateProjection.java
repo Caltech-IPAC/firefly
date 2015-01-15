@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 /* This file is a translation of a file from CfA  */
 /* The original comments remain */
 

@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 // A lexical token from an input string.
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered

@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.util.cache.Cache;

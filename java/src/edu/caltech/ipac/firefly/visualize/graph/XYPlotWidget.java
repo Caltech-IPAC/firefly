@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.core.client.GWT;
@@ -627,7 +630,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
                 //info about data - rows retrieved, points plotted, etc
                 _statusMessage.setHTML("&nbsp;&nbsp;" + getDataInfo());
-                        (_data.isSampled() ? " – zoom for better resolution" : ""));
+                        (_data.isSampled() ? " b  zoom for better resolution" : ""));
                         //(_data.isSampled() ? " plotted with "+_data.getNumPointsInSample()+" symbols" : ""));
             }
         });

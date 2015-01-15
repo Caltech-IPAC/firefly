@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

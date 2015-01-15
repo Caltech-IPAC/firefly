@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.server.query.mos;
 
 import edu.caltech.ipac.astro.IpacTableReader;

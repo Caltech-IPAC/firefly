@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 //=== File Prolog =============================================================
 //	This code was developed by NASA, Goddard Space Flight Center, Code 588
 //	for the Scientist's Expert Assistant (SEA) project.

@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.dom.client.Style;
@@ -62,7 +65,7 @@ public class XYPlotBasicWidget extends PopoutWidget {
               "Plum", "LightSalmon", "SandyBrown", "PaleTurquoise", "YellowGreen",
               "LightPink", "CornflowerBlue", "Khaki", "PaleGreen", "LightSteelBlue"};
 
-    private static String [] sedcolors = {"gray", "#00b8e6", "#9900cc", "#336600"}; // [0] – upper limit orange #ff9933
+    private static String [] sedcolors = {"gray", "#00b8e6", "#9900cc", "#336600"}; // [0] b  upper limit orange #ff9933
 
     protected static final String ZOOM_OUT_HELP = "&nbsp;Zoom out with original size button.&nbsp;";
     protected static final String ZOOM_IN_HELP = "&nbsp;Rubber band zoom &mdash; click and drag an area to zoom in.&nbsp;";

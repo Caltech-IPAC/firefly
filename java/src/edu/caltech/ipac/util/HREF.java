@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 /*****************************************************************************
  * Copyright (C) 2008 California Institute of Technology. All rights reserved
  * US Government Sponsorship under NASA contract NAS7-918 is acknowledged

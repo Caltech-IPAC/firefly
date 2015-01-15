@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import com.google.gwt.user.client.Window;
@@ -53,7 +56,7 @@ public class CellsSampler {
     public double getXCellSize() { return xCellSize; }
     public double getYCellSize() { return yCellSize; }
 
-    // for now – one point per cell
+    // for now b  one point per cell
     void computeSample (List<Sampler.SamplePoint> points, DecimateKey decimateKey) {
         int cellIdx;
         cells = new Cell[(nX)*(nY)];
