@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import static edu.caltech.ipac.firefly.data.SpacialType.*;
 
 /**
@@ -156,10 +157,15 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
             // Add test LSST data support
 
             List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
+                    Catalog.makeTableRow("lsst","lsst-all","Science CCD Exposure", "SERVER","Science_Ccd_Exposure",
+                                         "46","26528","7200","","", "LSSTCatalogQuery",""),
+                    Catalog.makeTableRow("lsst","lsst-all","Deep Coadd", "SERVER","DeepCoadd",
+                                         "34","48","7200","","", "LSSTCatalogQuery",""),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Source", "SERVER","DeepSource",
-                                         "25","456","7200","","", "LSSTCatalogQuery",""),
-                    Catalog.makeTableRow("lsst","lsst-all","second catalog", "SERVER","lsst-cat-2",
-                                         "44","789","7200","","", "LSSTCatalogQuery","")
+                                         "55","135978","7200","","", "LSSTCatalogQuery",""),
+                    Catalog.makeTableRow("lsst","lsst-all","Deep Forced Source", "SERVER","DeepForcedSource",
+                                         "59","33349940","3600","","", "LSSTCatalogQuery","")
+
             );
 
             DataSetInfo dsInfo= new DataSetInfo("LSST", "LSST");
