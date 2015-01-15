@@ -135,9 +135,9 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND, new Integer[]{712, 7101});
             put(PASS2_3BAND, new Integer[]{7101, 8744});
             put(PASS2_2BAND, new Integer[]{8745, 12514});
-            put(NEOWISER_PROV, new Integer[]{12515, 999999});
-            put(NEOWISER_YR1, new Integer[]{12515, 55289}); // TODO: which scan is the last for yr1?
-            put(NEOWISER, new Integer[]{55289, 999999}); // TODO: which scan is the first for yr2?
+            put(NEOWISER_PROV, new Integer[]{44212, 55289});
+            put(NEOWISER_YR1, new Integer[]{44212, 55289});
+            put(NEOWISER, new Integer[]{55290, 999999}); // TODO: which scan is the first for yr2?
         }
     };
 
@@ -217,12 +217,8 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static boolean useMergedTable(String imageSet) {
-        if (imageSet.contains(",")) {
-            // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
-            return true;
-        } else {
-            return false;
-        }
+        // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+        return imageSet.contains(",");
     }
 
     public static String getTableSchema(String imageSet) {
