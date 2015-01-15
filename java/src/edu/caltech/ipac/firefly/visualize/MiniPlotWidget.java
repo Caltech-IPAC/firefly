@@ -483,14 +483,16 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public boolean isAutoTearDown() { return _autoTearDown; }
 
     public void freeResources() {
-        if (_plotView.size()>0) {
-            for(int i=0; i<_plotView.size(); i++) {
-                VisTask.getInstance().deletePlot(_plotView.get(i));
+        if (_initialized && _plotView!=null) {
+            if (_plotView.size()>0) {
+                for(int i=0; i<_plotView.size(); i++) {
+                    VisTask.getInstance().deletePlot(_plotView.get(i));
+                }
             }
+            if (_plotView!=null)  _plotView.freeResources();
+            super.freeResources();
+            getPopoutContainer().freeResources();
         }
-        if (_plotView!=null)  _plotView.freeResources();
-        super.freeResources();
-        getPopoutContainer().freeResources();
     }
 
 
