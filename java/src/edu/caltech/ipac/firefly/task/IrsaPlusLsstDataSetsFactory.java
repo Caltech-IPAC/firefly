@@ -173,7 +173,7 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
             }
             Set<SpacialType> set= new HashSet<SpacialType>(Arrays.asList(Cone, Elliptical, Box, AllSky));
             dsInfo.setCatData(proj,set);
-            dsList.add(dsInfo);
+            dsList.add(0,dsInfo);
 
         }
 
