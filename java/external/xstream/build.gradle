@@ -1,0 +1,15 @@
+
+sourceSets {
+  main.java.srcDir '.'
+  main.resources {
+    srcDirs "."
+    exclude "**/*.gradle"
+  }
+}
+
+jar {
+  baseName = 'xstream-gwt'
+  includes = ['com/thoughtworks/**']
+  from sourceSets.main.allJava
+}
+

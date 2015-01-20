@@ -1,0 +1,40 @@
+#version info
+BuildMajor=@BuildMajor@
+BuildMinor=@BuildMinor@
+BuildRev=@BuildRev@
+BuildType=@BuildType@
+BuildNumber=@BuildNumber@
+BuildDate=@build_time@
+
+
+#==========================================================
+# app.prop env sensitive properties
+#==========================================================
+
+
+# a directory for storing intermediate files
+# default to System.getProperty("java.io.tmpdir") + "/workarea"
+work.directory=@work.directory@
+
+# set this to false to disable debug related code, like logging, etc.
+debug.mode=@debug.mode@
+
+# Allow JMX to monitor ehcache's status.
+# Enabling this feature may incur a small performance hit.
+ehcache.jmx.monitor=true
+
+# If set then ehcache will look throught the cache and call cleanup
+# on any element that implements Cleanupable
+# This does not remove an element from cache but just allows the element
+# to remove and large chunks of memory
+ehcache.cleanup.internal.minutes= 5
+ehcache.cleanup.cache.types= VISUALIZE
+
+# setting custom padding to the ArrayRenderer
+# ~33 spaces
+ArrayRenderer.padding=\
+
+# set this property to the search path to look for fits files
+# this path does not need to include the upload or cache directory
+#visualize.fits.search.path=@alerts.dir@:@work.directory@:@visualize.fits.search.path@
+

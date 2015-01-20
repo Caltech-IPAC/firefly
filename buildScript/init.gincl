@@ -1,0 +1,3 @@
+
+project.ext["env"] = project.hasProperty("env") ? project.ext["env"] : 'local'
+println ">> Environment is set to $env"

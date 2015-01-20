@@ -1,0 +1,23 @@
+
+sourceSets {
+  main.java.srcDir  "$rootDir/java/src/"
+  main.resources {
+    srcDirs "$rootDir/java/src/"
+    exclude "**/*.gradle"
+  }
+}
+
+dependencies {
+  compile project(':gwt-comet'), project(':xstream'), project(':raphael'), project(':simbad')
+}
+
+jar {
+  baseName = 'firefly'
+  includes = ['edu/caltech/ipac/**/*']
+  from sourceSets.main.allJava
+
+  manifest {
+    attributes(["properties-dir": "edu/caltech/ipac/firefly/resources"],"webapp-properties")
+    attributes(["hasSearchProcessors": "true"],"hasSearchProcessors")
+  }
+}

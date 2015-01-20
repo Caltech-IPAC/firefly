@@ -1,0 +1,326 @@
+project.ext["app-name"] = project.hasProperty("app-name") ? project.property("app-name") : name
+def app_name = project.ext["app-name"]
+def WEBAPP_GROUP = "Webapp Tasks"
+defaultTasks 'war'
+
+apply plugin: 'war'
+
+jar {
+  baseName = "$app_name"
+  include "edu/caltech/ipac/${project.projectDir.name}/**/*"
+  from sourceSets.main.allJava
+  enabled = true
+
+  manifest {
+    attributes(["properties-dir": "edu/caltech/ipac/${project.projectDir.name}/resources"],"webapp-properties")
+    attributes(["hasSearchProcessors": "true"],"hasSearchProcessors")
+  }
+}
+
+sourceSets {
+  main.java.srcDir  "$rootDir/java/src/"
+  main.resources {
+    srcDir "$rootDir/java/src/"
+    include "edu/caltech/ipac/$jar.baseName/**/*"
+    exclude "**/*.gradle"
+  }
+}
+
+configurations {
+  webappLib {
+    description = 'web app runtime dependencies.'
+  }
+}
+
+dependencies {
+  compile firefly_lib
+  webappLib FIREFLY_RUNTIME + firefly_lib + ":$jar.baseName"
+}
+
+def loadConfig() {
+  project.ext.build_time = new Date().toString()
+  project.ext["app-name"] = project.hasProperty("app-name") ?
+                            property("app-name") : name
+
+  project.ext["launch.page"] = gwt.startupUrl.toString()
+  if (!project.hasProperty("appConfigProps")) {
+
+    project.ext.appConfigProps = new Properties()
+
+    def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
+    appConfigProps.putAll(cs.toProperties())
+
+    if (project.hasProperty("appConfig")) {
+      cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
+      appConfigProps.putAll(cs.toProperties())
+      logger.info(">> script's appConfig added")
+    }
+
+    logger.info ">> loading build.config for env: $project.env"
+    // set all props in bulid.config to be project's properties
+    cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
+    logger.info ">> add properties from $rootDir/buildScript/build.config"
+    cs.toProperties().each{ k, v ->
+      logger.info ">>    $k : $v"
+      project.ext.set(k, v)
+    }
+
+    if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+      cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
+      logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
+      cs.toProperties().each{ k, v ->
+        logger.info ">>      $k : $v"
+        project.ext.set(k, v)
+      }
+    }
+//  project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
+
+    appConfigProps.putAll(project.ext.properties)
+    appConfigProps.putAll(System.properties)
+//    appConfigProps.each{ k, v -> println "${k} => ${v}\n" }
+  }
+}
+
+task gwt {
+
+  ext.buildDir = "${project.buildDir}/gwt"
+  ext.warDir = "$buildDir/$app_name"
+  ext.modules = "<UNDEFINED>"
+  ext.startupUrl = "${app_name}.html"
+  ext.localWorkers = "6"
+  ext.style = "OBFUSCATED"
+  ext.maxHeapSize = "512M"
+  ext.debugAddr = "1234"
+  ext.linkedDirName = project.projectDir.name
+  outputs.dir gwt.buildDir
+}
+
+task gwtCompile (dependsOn: gwt, type: JavaExec) {
+  description= 'GWT Compile'
+  group = WEBAPP_GROUP
+
+  inputs.source sourceSets.main.java.srcDirs
+  inputs.dir sourceSets.main.output.resourcesDir
+  outputs.dir gwt.buildDir
+
+// Workaround for incremental build (GRADLE-1483)
+  outputs.upToDateSpec = new org.gradle.api.specs.AndSpec()
+
+  main = 'com.google.gwt.dev.Compiler'
+
+  classpath {
+    [
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+    ]
+  }
+
+  maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
+
+  doFirst {
+    loadConfig()
+
+    if (gwt.modules == "<UNDEFINED>") {
+      println ">> No GWT module defined.  Skipping gwtCompile."
+      throw new StopExecutionException("No GWT module defined.  Skipping gwtCompile.")
+    }
+
+    file(gwt.buildDir).mkdirs()
+
+    def localWorkers = project.hasProperty("gwtLocalWorkers") ?
+                        project.gwtLocalWorkers : gwt.localWorkers
+    def style = project.hasProperty("gwtStyle") ? project.gwtStyle : gwt.style
+
+    systemProperties.put("gwt.persistentunitcachedir", "$gwt.buildDir")
+    args "-style", "$style"
+    args "-localWorkers", localWorkers
+    args "-war", gwt.warDir
+    args "-extra", "$gwt.buildDir/extra"
+    args "-workDir", "$gwt.buildDir/work"
+    args "-logLevel", "INFO"
+    if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
+      args "-draftCompile"
+    }
+    if (project.hasProperty("gwtCompileReport") && project.gwtCompileReport == 'true') {
+      args "-compileReport"
+    }
+//    args "-gen", "$gwt.buildDir/gen"
+    args gwt.modules
+    logger.info (">> gwtCompile options: $args")
+  }
+
+  doLast {
+    // because we rename it to a shorter name, we need to shuffle these directories around.
+    file(gwt.warDir).renameTo("${gwt.warDir}_tmp")
+    file("${gwt.warDir}_tmp/$gwt.linkedDirName").renameTo(gwt.warDir)
+    file("$gwt.warDir/WEB-INF").mkdirs()
+    file("${gwt.warDir}_tmp/WEB-INF/deploy/$gwt.linkedDirName").renameTo("$gwt.warDir/WEB-INF/deploy")
+    delete {"${gwt.warDir}_tmp"}
+  }
+}
+
+task gwtRun (type: JavaExec) {
+  description= 'GWT DevMode'
+  group = WEBAPP_GROUP
+
+  inputs.source sourceSets.main.java.srcDirs
+  inputs.dir sourceSets.main.output.resourcesDir
+
+  main = 'com.google.gwt.dev.DevMode'
+
+  classpath {
+    [
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+    ]
+  }
+
+  maxHeapSize = gwt.maxHeapSize
+
+  doFirst {
+    loadConfig()
+    def debugAddr = project.hasProperty("gwtDebugAddr") ? project.gwtDebugAddr : gwt.debugAddr
+
+    jvmArgs "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$debugAddr"
+    args "-war", gwt.warDir
+    args "-extra", "$gwt.buildDir/extra"
+    args "-workDir", "$gwt.buildDir/work"
+    args "-gen", "$gwt.buildDir/gen"
+    args "-noserver", "-port", "8080"
+    args "-logLevel", "DEBUG"
+    args "-startupUrl", "$war.archiveName/$gwt.startupUrl"
+    args gwt.modules
+  }
+}
+
+task prepareWebapp (type:Copy) {
+
+  from("$rootDir/config/") {
+    include 'common.prop', '*.xml', 'ignore_sizeof.txt', 'log4j.properties'
+    into 'WEB-INF/config'
+  }
+  from("$rootDir/config/") {
+    include 'logging.properties'
+    into 'WEB-INF/classes'
+  }
+  from("$rootDir/config") {
+    include "context.xml"
+    into 'META-INF'
+  }
+  from("web.xml") {
+    into "WEB-INF"
+  }
+  from("public/") {
+    include "*.html"
+  }
+  into gwt.warDir
+
+  doFirst {
+    loadConfig()
+
+    def hydraProjId = project.hasProperty("proj_id") ? project.property("proj_id") : app_name
+    from("$rootDir/config/$gwt.linkedDirName") {
+      include "configurable/$hydraProjId/*"
+      include "configurable/*.xml"
+      include "*.prop", "*.dtd", "*.config"
+      into 'WEB-INF/config'
+    }
+
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: appConfigProps)
+  }
+}
+
+task immediateStart (type: Exec) {
+  doFirst {
+    logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${app_name}.nocache"
+  }
+  commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${app_name}.nocache"
+}
+
+task webapp {
+  ext.baseWarName = jar.baseName
+}
+
+war {
+  description= 'Build application. Creates a war file.'
+  group = WEBAPP_GROUP
+
+  doFirst {
+    archiveName = "${webapp.baseWarName}.war"
+
+  }
+  outputs.dir gwt.warDir
+  classpath = configurations.webappLib
+  from gwt.warDir
+  dependsOn webapp, jar, gwtCompile, prepareWebapp
+}
+
+task dirty (type: War) {
+  description= 'Create a war without GWT compile.  This is much faster.'
+  group = WEBAPP_GROUP
+
+  doFirst {
+    archiveName = "${webapp.baseWarName}.war"
+  }
+  outputs.dir gwt.warDir
+  classpath = configurations.webappLib
+  from gwt.warDir
+  dependsOn webapp, jar, prepareWebapp
+}
+
+task deploy {
+  description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
+  group = WEBAPP_GROUP
+
+  doLast {
+    loadConfig()
+
+    if (!project.hasProperty("tomcat_home")) {
+      throw ProjectConfigurationException("tomcat_home property is not found.")
+    }
+    exec {
+      ignoreExitValue = 'true'
+      executable "$tomcat_home/bin/shutdown.sh"
+      println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
+      errorOutput = new ByteArrayOutputStream()
+    }
+    sleep(4 * 1000)
+
+    copy {
+      println ">> deploying file:$war.destinationDir/${webapp.baseName}.war"
+      delete("$tomcat_home/webapps/${webapp.baseName}")
+      from("$war.destinationDir/${webapp.baseName}.war")
+      into "$tomcat_home/webapps/"
+    }
+
+    exec {
+      delete("$tomcat_home/temp/ehcache")
+      executable "$tomcat_home/bin/catalina.sh"
+      if (project.hasProperty("tomcatDebugStart")) {
+        args 'jpda'
+      }
+      args 'start'
+      println ">> Starting Tomcat:.."
+    }
+  }
+  dependsOn webapp
+}
+
+
+/**
+ * this is used by loadConfig to extra the information from a script into a properties object.
+ */
+class ClosureScript extends groovy.lang.Script {
+  Closure closure
+  def run() {
+    closure.resolveStrategy = Closure.DELEGATE_FIRST
+    closure.delegate = this
+    closure.call()
+  }
+}
+
+

@@ -36,12 +36,16 @@ public class CommonFilter implements Filter {
 
 
     public void init(FilterConfig filterConfig) throws ServletException {
-        System.setProperty(WEBAPP_CONFIG_DIR, filterConfig.getServletContext().getRealPath("WEB-INF/config"));
-        String appName = filterConfig.getServletContext().getServletContextName();
-        System.setProperty(APP_NAME, appName);
-        if (!isInit) {
-            ServerContext.init(); // just a way to initializes ServerContext
-            isInit = true;
+        try {
+            System.setProperty(WEBAPP_CONFIG_DIR, filterConfig.getServletContext().getRealPath("WEB-INF/config"));
+            String appName = filterConfig.getServletContext().getServletContextName();
+            System.setProperty(APP_NAME, appName);
+            if (!isInit) {
+                ServerContext.init(); // just a way to initializes ServerContext
+                isInit = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

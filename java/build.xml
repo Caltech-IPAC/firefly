@@ -1,9 +1,0 @@
-<project name="IPAC Heritage Project Build File" default="all" basedir=".">
-    <description>
-        The main build file for the heritage project
-    </description>
-    <!-- Define build.root -->
-    <property name="build.root" value="${basedir}"/>
-
-    <import file="src/edu/caltech/ipac/build.xml" />
-</project>

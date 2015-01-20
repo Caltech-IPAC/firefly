@@ -1,0 +1,11 @@
+rootProject.name = 'firefly_root'
+
+include 'gwt-comet', 'raphael', 'simbad', 'xstream', 'firefly', 'fftools'
+
+project(":gwt-comet").projectDir = file('java/external/gwt-comet')
+project(":raphael").projectDir  = file('java/external/raphael')
+project(":simbad").projectDir   = file('java/external/simbad')
+project(":xstream").projectDir  = file('java/external/xstream')
+project(":firefly").projectDir  = file('java/src/edu/caltech/ipac/firefly')
+project(":fftools").projectDir  = file('java/src/edu/caltech/ipac/fftools')
+

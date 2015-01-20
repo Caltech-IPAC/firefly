@@ -1,0 +1,8 @@
+jar {
+  baseName = 'raphael-modified-r24'
+  includes = ['com/hydro4ge/**']
+}
+
+sourceSets {
+  main.java.srcDir '.'
+}

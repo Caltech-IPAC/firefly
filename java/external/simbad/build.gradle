@@ -1,0 +1,28 @@
+task wsdl {
+
+  doFirst {
+    println "compiling wsdl..."
+  }
+  doLast {
+    ['simbad.wsdl', 'VizieRBeta.wsdl', 'VizieR.wsdl', 'VORegistrySTSCI.wsdl'].each() { file ->
+      javaexec {
+        classpath sourceSets.main.compileClasspath
+        main = 'org.apache.axis.wsdl.WSDL2Java'
+        args '-o', "$buildDir/wsdl"
+        args file
+      }
+    }
+  }
+}
+
+compileJava.dependsOn wsdl
+
+jar {
+  baseName = 'simbad_ws'
+  includes = ["cds/**", "VizieRBeta_pkg/**", "VizieR_pkg/**", "org/**", "net/**"]
+}
+
+sourceSets {
+  main.java.srcDir "$buildDir/wsdl"
+}
+

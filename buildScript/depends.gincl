@@ -1,0 +1,105 @@
+
+ext {
+
+  apache_lib = [':commons-fileupload',
+                     ':commons-io',
+                     ':commons-httpclient',
+                     ':commons-codec',
+                     ':commons-lang',
+                     ':jackrabbit-webdav-2.8.0',
+                     ':commons-discovery',
+                     ':commons-csv-1.0-201209']
+
+  webservices_lib = [':archive_dto_irsa',
+                     ':axis',
+                     ':regclient',
+                     ':wsdl4j-1.5.1',
+                     ':archive_dto_votable',
+                     ':jaxrpc',
+                     ':saaj',
+                     ':xbean',
+                     ':fits' ]
+
+  solr_lib = [':apache-solr-common-1.3.0', ':apache-solr-solrj-1.3.0' ]
+  xbeanfinder_lib = [':xbean-finder-3.6',
+                     ':asm-3.2',
+                     ':asm-commons-3.2',
+                     ':asm-tree-3.2']
+
+  ehcache_lib = [':ehcache-2.7.4', ':slf4j-api-1.6.6', ':ehcache-web-2.0.4']
+  j2ee_lib = [':servlet-api', ':activation', ':mail']
+  spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']
+  votable_lib = ':voi.vowrite'
+  fits_io_lib = [':fits_io', ':stil']
+  log4j_lib = ':log4j-1.2.14'
+  josso_lib = ':josso-ws-1.8.5'
+  healpix_lib = ':jhealpix_compat'
+  sdss_casjobs_lib = ':casjobs'
+  xstream_lib = [':xstream-1.3.1', ':xpp3_min-1.1.4c']
+  gwt_lib_rt = [':gwt-servlet', ':gwt-servlet-deps']
+  gwt_lib = [ gwt_lib_rt,
+             ':gwt-user',
+             ':gwt-dev',
+             ':gwt-codeserver',
+             ':validation-api-1.0.0.GA',
+             ':validation-api-1.0.0.GA-sources',
+             ':canvas-2.1-r1766',
+             ':gwt-incubator-2.1-r1766-striped',
+             ':gchart' ]
+
+  firefly_ext_lib = [ ':gwt-comet', ':xstream-gwt', ':raphael-modified-r24', ':simbad_ws' ]
+
+  firefly_lib = [ firefly_ext_lib, ':firefly' ]
+
+
+  FIREFLY_RUNTIME = [apache_lib, spring_lib, votable_lib, fits_io_lib, webservices_lib,
+                     log4j_lib, josso_lib, healpix_lib, sdss_casjobs_lib, xstream_lib, xbeanfinder_lib,
+                     gwt_lib_rt]
+
+  FIREFLY_COMPILE = [FIREFLY_RUNTIME, j2ee_lib, ehcache_lib, gwt_lib]
+}
+
+
+dependencies {
+  compile FIREFLY_COMPILE
+}
+
+def libPath = "$fireflyPath/jars/"
+
+//project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
+
+repositories {
+  flatDir {
+    name 'firefly_repo'
+    dirs  libPath,
+            "$libPath/hEALPix",
+            "$libPath/ant",
+            "$libPath/antlr",
+            "$libPath/asm",
+            "$libPath/data",
+            "$libPath/ehcache",
+            "$libPath/fits-io",
+            "$libPath/j2ee",
+            "$libPath/gwt",
+            "$libPath/gwt-incubator",
+            "$libPath/informix",
+            "$libPath/jakarta-commons",
+            "$libPath/jcs",
+            "$libPath/josso",
+            "$libPath/junit",
+            "$libPath/log4j",
+            "$libPath/mysql",
+            "$libPath/sdss",
+            "$libPath/solr",
+            "$libPath/spring",
+            "$libPath/votable",
+            "$libPath/webservices",
+            "$libPath/xbean",
+            "$libPath/xstream"
+  }
+}
+
+
+jar.destinationDir = file ("$rootDir/jars")
+buildDir = "$rootDir/build"
+

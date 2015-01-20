@@ -1,0 +1,32 @@
+ext["app-name"] = 'fftools'
+
+dependencies {
+  compile project(':firefly')
+}
+
+apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
+
+gwt {
+  modules = 'edu.caltech.ipac.fftools.FFTools'
+  startupUrl = "app.html"
+}
+
+ext.appConfig = {
+  FireflyTools.Advertise = ""
+  ehcache.multicast.port = "4016"
+  environments {
+    dev {
+      ehcache.multicast.port = "5016"
+    }
+
+    test {
+      ehcache.multicast.port = "6016"
+    }
+
+    ops {
+      ehcache.multicast.port = "7016"
+    }
+  }
+}
+
+

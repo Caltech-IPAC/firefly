@@ -33,12 +33,16 @@ public class JossoVerifyFilter implements Filter {
     private static FilterConfig filterConfig;
 
     public void init(FilterConfig filterConfig) throws ServletException {
-        JossoVerifyFilter.filterConfig = filterConfig;
-        JossoUtil.init(
-                AppProperties.getProperty("sso.server.url"),
-                filterConfig.getServletContext().getContextPath(),
-                AppProperties.getProperty("sso.user.profile.url")
-        );
+        try {
+            JossoVerifyFilter.filterConfig = filterConfig;
+            JossoUtil.init(
+                    AppProperties.getProperty("sso.server.url"),
+                    filterConfig.getServletContext().getContextPath(),
+                    AppProperties.getProperty("sso.user.profile.url")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
