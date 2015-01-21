@@ -64,42 +64,42 @@ dependencies {
   compile FIREFLY_COMPILE
 }
 
-def libPath = "$fireflyPath/jars/"
+def libPath = "$fireflyPath/jars"
 
 //project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
 
 repositories {
   flatDir {
     name 'firefly_repo'
-    dirs  libPath,
-            "$libPath/hEALPix",
-            "$libPath/ant",
-            "$libPath/antlr",
-            "$libPath/asm",
-            "$libPath/data",
-            "$libPath/ehcache",
-            "$libPath/fits-io",
-            "$libPath/j2ee",
-            "$libPath/gwt",
-            "$libPath/gwt-incubator",
-            "$libPath/informix",
-            "$libPath/jakarta-commons",
-            "$libPath/jcs",
-            "$libPath/josso",
-            "$libPath/junit",
-            "$libPath/log4j",
-            "$libPath/mysql",
-            "$libPath/sdss",
-            "$libPath/solr",
-            "$libPath/spring",
-            "$libPath/votable",
-            "$libPath/webservices",
-            "$libPath/xbean",
-            "$libPath/xstream"
+    dirs  "$libPath/build",
+          "$libPath/hEALPix",
+          "$libPath/ant",
+          "$libPath/antlr",
+          "$libPath/asm",
+          "$libPath/data",
+          "$libPath/ehcache",
+          "$libPath/fits-io",
+          "$libPath/j2ee",
+          "$libPath/gwt",
+          "$libPath/gwt-incubator",
+          "$libPath/informix",
+          "$libPath/jakarta-commons",
+          "$libPath/jcs",
+          "$libPath/josso",
+          "$libPath/junit",
+          "$libPath/log4j",
+          "$libPath/mysql",
+          "$libPath/sdss",
+          "$libPath/solr",
+          "$libPath/spring",
+          "$libPath/votable",
+          "$libPath/webservices",
+          "$libPath/xbean",
+          "$libPath/xstream"
   }
 }
 
 
-jar.destinationDir = file ("$rootDir/jars")
+jar.destinationDir = file ("$rootDir/jars/build")
 buildDir = "$rootDir/build"
 
