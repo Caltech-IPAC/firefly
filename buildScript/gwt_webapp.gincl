@@ -41,6 +41,8 @@ def loadConfig() {
   project.ext.build_time = new Date().toString()
   project.ext["app-name"] = project.hasProperty("app-name") ?
                             property("app-name") : name
+  project.ext["proj_id"] =  project.hasProperty("proj_id") ?
+                            project.property("proj_id") : project.ext["app-name"]
 
   project.ext["launch.page"] = gwt.startupUrl.toString()
   if (!project.hasProperty("appConfigProps")) {
@@ -230,7 +232,7 @@ task prepareWebapp (type:Copy) {
       into 'WEB-INF/config'
     }
 
-    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: appConfigProps)
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
 }
 
@@ -300,7 +302,7 @@ task deploy {
     exec {
       delete("$tomcat_home/temp/ehcache")
       executable "$tomcat_home/bin/catalina.sh"
-      if (project.hasProperty("tomcatDebugStart")) {
+      if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
         args 'jpda'
       }
       args 'start'
