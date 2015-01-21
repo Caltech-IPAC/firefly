@@ -291,9 +291,9 @@ task deploy {
     sleep(4 * 1000)
 
     copy {
-      println ">> deploying file:$war.destinationDir/${webapp.baseName}.war"
-      delete("$tomcat_home/webapps/${webapp.baseName}")
-      from("$war.destinationDir/${webapp.baseName}.war")
+      println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
+      delete("$tomcat_home/webapps/${webapp.baseWarName}")
+      from("$war.destinationDir/${webapp.baseWarName}.war")
       into "$tomcat_home/webapps/"
     }
 
