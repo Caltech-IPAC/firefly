@@ -34,7 +34,7 @@ ehcache.cleanup.cache.types= VISUALIZE
 # ~33 spaces
 ArrayRenderer.padding=\
 
-# set this property to the search path to look for fits files
-# this path does not need to include the upload or cache directory
-#visualize.fits.search.path=@alerts.dir@:@work.directory@:@visualize.fits.search.path@
+sso.server.url=@sso.server.url@
+sso.user.profile.url=@sso.user.profile.url@
 
+help.base.url=@help.base.url@
