@@ -1,3 +1,69 @@
 
 project.ext["env"] = project.hasProperty("env") ? project.ext["env"] : 'local'
 println ">> Environment is set to $env"
+
+
+def loadConfig() {
+    // set all props in bulid.config to be project's properties
+    def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
+    logger.info ">> add properties from $rootDir/buildScript/build.config"
+    cs.toProperties().each{ k, v ->
+      logger.info ">>    $k : $v"
+      project.ext.set(k, v)
+    }
+
+    if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+      cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
+      logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
+      cs.toProperties().each{ k, v ->
+        logger.info ">>      $k : $v"
+        project.ext.set(k, v)
+      }
+    }
+//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
+}
+
+
+
+task deployAllWars << {
+  description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property'
+
+  loadConfig()
+
+  if (!project.hasProperty("tomcat_home")) {
+    throw ProjectConfigurationException("tomcat_home property is not found.")
+  }
+
+  // stop tomcat
+  exec {
+    ignoreExitValue = 'true'
+    executable "$tomcat_home/bin/shutdown.sh"
+    println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
+    errorOutput = new ByteArrayOutputStream()
+  }
+  sleep(4 * 1000)
+
+  // copy all of the war files
+  def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
+  wars.each {File file ->
+    def baseName = file.name.tokenize('.')[0]
+
+    copy {
+      println ">> copying file: $file"
+      delete("$tomcat_home/webapps/$baseName")
+      from("$file")
+      into "$tomcat_home/webapps/"
+    }
+  }
+
+  // start tomcat
+  exec {
+    executable "$tomcat_home/bin/catalina.sh"
+    if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
+      args 'jpda'
+    }
+    args 'start'
+    println ">> Starting Tomcat:.."
+  }
+
+}

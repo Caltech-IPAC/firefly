@@ -325,6 +325,38 @@ task deploy {
   dependsOn webapp
 }
 
+task buildAndPublish << {
+  description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
+  group = WEBAPP_GROUP
+
+  if (!file(war.archivePath).exists()) {
+    throw StopActionException("$war.archivePath not found.  Skipping sendArtifacts.")
+  }
+  loadConfig()
+  if (!project.hasProperty("publish_host")) {
+    throw StopActionException("publish_host not found.  Skipping sendArtifacts.")
+  }
+
+  def rhost = project.property("publish_host")
+  def reposRoot = "/hydra/repos/$app_name"
+  def major = appConfigProps.get('BuildMajor')
+  def minor = appConfigProps.get('BuildMinor')
+  def rev = appConfigProps.get('BuildRev')
+  def buildNum = appConfigProps.get('BuildNumber')
+  def dirName = "v$major.$minor.$rev.$buildNum"
+
+  exec {
+    commandLine "ssh", "$rhost", "mkdir -p $reposRoot/$dirName/"
+  }
+  exec {
+    commandLine "scp", "$war.archivePath", "$rhost:$reposRoot/$dirName/"
+  }
+  exec {
+    commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
+  }
+}
+buildAndPublish.dependsOn war
+
 /**
  * this is used by loadConfig to extra the information from a script into a properties object.
  */
