@@ -12,6 +12,10 @@ gwt {
 }
 
 ext.appConfig = {
+  BuildMajor  = "2"
+  BuildMinor  = "4"
+  BuildRev    = "0"
+
   FireflyTools.Advertise = ""
   ehcache.multicast.port = "4016"
   environments {
