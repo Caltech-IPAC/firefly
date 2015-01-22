@@ -1,5 +1,6 @@
 project.ext["app-name"] = project.hasProperty("app-name") ? project.property("app-name") : name
 def app_name = project.ext["app-name"]
+project.ext.hydra_proj_name = project.hasProperty("hydra_proj_name") ? project.property("hydra_proj_name") : app_name
 def WEBAPP_GROUP = "Webapp Tasks"
 defaultTasks 'war'
 
@@ -41,6 +42,8 @@ def loadConfig() {
   project.ext.build_time = new Date().toString()
   project.ext["app-name"] = project.hasProperty("app-name") ?
                             property("app-name") : name
+  project.ext["proj_id"] =  project.hasProperty("proj_id") ?
+                            project.property("proj_id") : project.ext["app-name"]
 
   project.ext["launch.page"] = gwt.startupUrl.toString()
   if (!project.hasProperty("appConfigProps")) {
@@ -73,12 +76,11 @@ def loadConfig() {
         project.ext.set(k, v)
       }
     }
-//  project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
+//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
 
     appConfigProps.putAll(project.ext.properties)
     appConfigProps.putAll(System.properties)
-
-//    appConfigProps.each{ k, v -> println "${k} => ${v}\n" }
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
   }
 }
 
@@ -224,7 +226,7 @@ task prepareWebapp (type:Copy) {
     loadConfig()
 
     from("$rootDir/config/$gwt.linkedDirName") {
-      include "configurable/$app_name/*"
+      include "configurable/${project.ext.hydra_proj_name}/*"
       include "configurable/*.xml"
       include "*.prop", "*.dtd", "*.config"
       into 'WEB-INF/config'
