@@ -72,7 +72,7 @@ repositories {
   flatDir {
     name 'firefly_repo'
     dirs  "$libPath/build",
-          "$libPath/hEALPix",
+          "$libPath/HEALPix",
           "$libPath/ant",
           "$libPath/antlr",
           "$libPath/asm",
