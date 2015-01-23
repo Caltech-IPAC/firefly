@@ -25,7 +25,7 @@ def loadConfig() {
 
 
 task deployAllWars << {
-  description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property'
+  description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property.  May include ${remoteHost} as well.'
 
   loadConfig()
 
@@ -48,13 +48,9 @@ task deployAllWars << {
   // copy all of the war files
   def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
   wars.each {File file ->
-    def baseName = file.name.tokenize('.')[0]
-
-    copy {
-      println ">> copying file: $file"
-      delete("$tomcat_home/webapps/$baseName")
-      from("$file")
-      into "$tomcat_home/webapps/"
+    copyWar(file)
+    if (remoteHost != null) {
+      copyWar(file, remoteHost)
     }
   }
 
@@ -64,6 +60,30 @@ task deployAllWars << {
     startTomcat(remoteHost)
   }
 
+}
+
+def copyWar(file, remoteHost) {
+  println ">> copying file: $file"
+
+  def baseName = file.name.tokenize('.')[0]
+  if (remoteHost != null) {
+    exec {
+      executable "ssh"
+      args "$remoteHost"
+      args "rm -r $tomcat_home/webapps/$baseName"
+    }
+    exec {
+      executable "scp"
+      args "$file"
+      args "$remoteHost:/$tomcat_home/webapps/"
+    }
+  } else {
+    delete("$tomcat_home/webapps/$baseName")
+    copy {
+      from("$file")
+      into "$tomcat_home/webapps/"
+    }
+  }
 }
 
 
