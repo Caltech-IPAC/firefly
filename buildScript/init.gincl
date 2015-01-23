@@ -37,7 +37,7 @@ task deployAllWars << {
 
   def wait = 4
           // stop tomcat
-  stopTomcat()
+  stopTomcat(null)
   if (remoteHost != null) {
     stopTomcat(remoteHost)
     wait = 10
@@ -55,7 +55,7 @@ task deployAllWars << {
   }
 
   // start tomcat
-  startTomcat()
+  startTomcat(null)
   if (remoteHost != null) {
     startTomcat(remoteHost)
   }
