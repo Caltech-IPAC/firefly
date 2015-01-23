@@ -24,7 +24,6 @@ def loadConfig() {
 }
 
 
-
 task deployAllWars << {
   description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property'
 
@@ -34,14 +33,17 @@ task deployAllWars << {
     throw ProjectConfigurationException("tomcat_home property is not found.")
   }
 
-  // stop tomcat
-  exec {
-    ignoreExitValue = 'true'
-    executable "$tomcat_home/bin/shutdown.sh"
-    println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
-    errorOutput = new ByteArrayOutputStream()
+  def remoteHost = project.hasProperty("remoteHost") ? remoteHost : null
+
+  def wait = 4
+          // stop tomcat
+  stopTomcat()
+  if (remoteHost != null) {
+    stopTomcat(remoteHost)
+    wait = 10
   }
-  sleep(4 * 1000)
+
+  sleep(wait * 1000)
 
   // copy all of the war files
   def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
@@ -57,13 +59,44 @@ task deployAllWars << {
   }
 
   // start tomcat
+  startTomcat()
+  if (remoteHost != null) {
+    startTomcat(remoteHost)
+  }
+
+}
+
+
+def stopTomcat(remoteHost) {
+  def host = remoteHost != null ? remoteHost : "local"
   exec {
-    executable "$tomcat_home/bin/catalina.sh"
+    if (remoteHost != null) {
+      executable "ssh"
+      args "$remoteHost"
+      args "$tomcat_home/bin/shutdown.sh"
+    } else {
+      executable "$tomcat_home/bin/shutdown.sh"
+    }
+    ignoreExitValue = 'true'
+    println ">> Stopping Tomcat:.. $host: $tomcat_home"
+    errorOutput = new ByteArrayOutputStream()
+  }
+}
+
+def startTomcat(remoteHost) {
+  def host = remoteHost != null ? remoteHost : "local"
+  exec {
+    if (remoteHost != null) {
+      executable "ssh"
+      args "$remoteHost"
+      args "$tomcat_home/bin/catalina.sh"
+    } else {
+      executable "$tomcat_home/bin/catalina.sh"
+    }
     if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
       args 'jpda'
     }
     args 'start'
-    println ">> Starting Tomcat:.."
+    println ">> Starting Tomcat:.. $host: $tomcat_home"
   }
-
 }
