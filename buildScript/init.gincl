@@ -48,7 +48,7 @@ task deployAllWars << {
   // copy all of the war files
   def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
   wars.each {File file ->
-    copyWar(file)
+    copyWar(file, null)
     if (remoteHost != null) {
       copyWar(file, remoteHost)
     }
@@ -68,9 +68,11 @@ def copyWar(file, remoteHost) {
   def baseName = file.name.tokenize('.')[0]
   if (remoteHost != null) {
     exec {
+      def baseNameStr = baseName.replaceAll("#", "\\#")
+      ignoreExitValue = 'true'
       executable "ssh"
       args "$remoteHost"
-      args "rm -r $tomcat_home/webapps/$baseName"
+      args "rm -r $tomcat_home/webapps/$baseNameStr"
     }
     exec {
       executable "scp"
