@@ -158,13 +158,13 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
 
             List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
                     Catalog.makeTableRow("lsst","lsst-all","Science CCD Exposure", "SERVER","Science_Ccd_Exposure",
-                                         "46","26528","7200","","", "LSSTCatalogQuery",""),
+                                         "46","26528","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Coadd", "SERVER","DeepCoadd",
-                                         "34","48","7200","","", "LSSTCatalogQuery",""),
+                                         "34","48","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Source", "SERVER","DeepSource",
-                                         "55","135978","7200","","", "LSSTCatalogQuery",""),
+                                         "55","135978","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Forced Source", "SERVER","DeepForcedSource",
-                                         "59","33349940","3600","","", "LSSTCatalogQuery","")
+                                         "59","33349940","3600","","", "LSSTCatalogQuery","LSSTCatalogDD")
 
             );
 
