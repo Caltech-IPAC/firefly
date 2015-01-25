@@ -90,7 +90,6 @@ def copyWar(file, remoteHost) {
 
 
 def stopTomcat(remoteHost) {
-  def host = remoteHost != null ? remoteHost : "local"
   exec {
     if (remoteHost != null) {
       executable "ssh"
@@ -100,13 +99,12 @@ def stopTomcat(remoteHost) {
       executable "$tomcat_home/bin/shutdown.sh"
     }
     ignoreExitValue = 'true'
-    println ">> Stopping Tomcat:.. $host: $tomcat_home"
     errorOutput = new ByteArrayOutputStream()
+    println ">> Stopping Tomcat:.. $commandLine"
   }
 }
 
 def startTomcat(remoteHost) {
-  def host = remoteHost != null ? remoteHost : "local"
   exec {
     if (remoteHost != null) {
       executable "ssh"
@@ -119,6 +117,6 @@ def startTomcat(remoteHost) {
       args 'jpda'
     }
     args 'start'
-    println ">> Starting Tomcat:.. $host: $tomcat_home"
+    println ">> Starting Tomcat:.. $commandLine"
   }
 }
