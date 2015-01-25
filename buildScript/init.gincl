@@ -72,7 +72,7 @@ def copyWar(file, remoteHost) {
       ignoreExitValue = 'true'
       executable "ssh"
       args "$remoteHost"
-      args "rm -r $tomcat_home/webapps/$baseNameStr"
+      args "rm -r \"$tomcat_home/webapps/$baseNameStr\""
     }
     exec {
       executable "scp"
