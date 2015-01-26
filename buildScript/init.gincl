@@ -43,11 +43,13 @@ def startTomcat(remoteHost) {
 def execCmd(remoteHost, ignoreFailure, cmdLine) {
   if (remoteHost != null) {
     exec {
-      cmdLine = cmdLine.replaceAll("#", "\\#")
+      if (cmdLine.find("#") != null) {
+        cmdLine = '"' + cmdLine.replaceAll("#", "\\#") + '"'
+      }
       setIgnoreExitValue(ignoreFailure)
       executable "ssh"
       args "$remoteHost"
-      args "\"$cmdLine\""
+      args "$cmdLine"
     }
   } else {
     exec {
