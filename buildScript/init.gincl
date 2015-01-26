@@ -51,9 +51,8 @@ def execCmd(remoteHost, ignoreFailure, cmdLine) {
     }
   } else {
     exec {
-      cmdLine = cmdLine.split(" ")
       setIgnoreExitValue(ignoreFailure)
-      commandLine cmdLine
+      commandLine cmdLine.split()
     }
 
   }
