@@ -118,7 +118,15 @@ def execCmd(remoteHost, ignoreFailure, cmdLine) {
     exec {
       setIgnoreExitValue(ignoreFailure)
       commandLine cmdLine
-      logger.info( ">> execCmd: $commandLine" )
+      standardOutput new ByteArrayOutputStream()
+      errorOutput    new ByteArrayOutputStream()
+
+      doLast {
+        logger.info( ">> execCmd: $commandLine" )
+        logger.info(">> ${standardOutput.toString()}")
+        logger.error(">> ERROR: ${errorOutput.toString()}")
+      }
+
     }
 
   }
