@@ -24,40 +24,20 @@ def loadBuildConfig() {
 }
 
 def stopTomcat(remoteHost) {
-  def desc = execCmd (remoteHost, true, "$tomcat_home/bin/shutdown.sh")
+  def desc = execCmd (remoteHost, true, ["$tomcat_home/bin/shutdown.sh"])
   println ">> Stopping Tomcat:.. $desc"
 }
 
 def startTomcat(remoteHost) {
-  def cmd = "$tomcat_home/bin/catalina.sh";
+  def cmd = ["$tomcat_home/bin/catalina.sh"];
   if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
-    cmd = cmd + " jpda start"
+    cmd = cmd + "jpda" +  "start"
   } else {
-    cmd = cmd + " start"
+    cmd = cmd + "start"
   }
 
   def desc = execCmd (remoteHost, false, cmd)
-  println ">> Starting Tomcat:.. $desc"
-}
-
-def execCmd(remoteHost, ignoreFailure, cmdLine) {
-  if (remoteHost != null) {
-    exec {
-      if (cmdLine.find("#") != null) {
-        cmdLine = '"' + cmdLine.replaceAll("#", "\\#") + '"'
-      }
-      setIgnoreExitValue(ignoreFailure)
-      executable "ssh"
-      args "$remoteHost"
-      args "$cmdLine"
-    }
-  } else {
-    exec {
-      setIgnoreExitValue(ignoreFailure)
-      commandLine cmdLine.split()
-    }
-
-  }
+  println ">> Starting Tomcat:.. $cmd ==> $desc"
 }
 
 task deployAllWars << {
@@ -102,8 +82,8 @@ def copyWar(file, remoteHost) {
   println ">> copying file: $file"
 
   def baseName = file.name.tokenize('.')[0]
-  execCmd(remoteHost, true, "rm -r $tomcat_home/webapps/$baseName")
-  execCmd(remoteHost, true, "rm -r $tomcat_home/temp/ehcache")
+  execCmd(remoteHost, true, ["rm", "-r","$tomcat_home/webapps/$baseName"])
+  execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
 
   if (remoteHost != null) {
     exec {
@@ -118,3 +98,29 @@ def copyWar(file, remoteHost) {
     }
   }
 }
+
+def execCmd(remoteHost, ignoreFailure, cmdLine) {
+  if (remoteHost != null) {
+    exec {
+      setIgnoreExitValue(ignoreFailure)
+      executable "ssh"
+      args "$remoteHost"
+      cmdLine.each { arg ->
+        if (arg.contains("#")) {
+          args arg.replaceAll('\\#', '\\\\#')
+        } else {
+          args arg
+        }
+      }
+      logger.info( ">> execCmd: $commandLine" )
+    }
+  } else {
+    exec {
+      setIgnoreExitValue(ignoreFailure)
+      commandLine cmdLine
+      logger.info( ">> execCmd: $commandLine" )
+    }
+
+  }
+}
+
