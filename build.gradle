@@ -1,6 +1,7 @@
 ext.fireflyPath = rootDir.path
 
 apply from: "$fireflyPath/buildScript/init.gincl"
+apply from: "$fireflyPath/buildScript/deployAll.gincl"
 
 allprojects {
   defaultTasks 'build'

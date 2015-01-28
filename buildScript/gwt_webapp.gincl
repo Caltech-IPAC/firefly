@@ -45,7 +45,6 @@ def loadConfig() {
   project.ext["proj_id"] =  project.hasProperty("proj_id") ?
                             project.property("proj_id") : project.ext["app-name"]
 
-  project.ext["launch.page"] = gwt.startupUrl.toString()
   if (!project.hasProperty("appConfigProps")) {
 
     project.ext.appConfigProps = new Properties()
@@ -96,6 +95,7 @@ task gwt {
   ext.debugAddr = "1234"
   ext.linkedDirName = project.projectDir.name
   outputs.dir gwt.buildDir
+  project.ext["launch.page"] = startupUrl.toString()
 }
 
 task gwtCompile (dependsOn: gwt, type: JavaExec) {
@@ -330,11 +330,11 @@ task buildAndPublish << {
   group = WEBAPP_GROUP
 
   if (!file(war.archivePath).exists()) {
-    throw StopActionException("$war.archivePath not found.  Skipping sendArtifacts.")
+    throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
   }
   loadConfig()
   if (!project.hasProperty("publish_host")) {
-    throw StopActionException("publish_host not found.  Skipping sendArtifacts.")
+    throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
   }
 
   def rhost = project.property("publish_host")
