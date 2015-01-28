@@ -95,7 +95,10 @@ task gwt {
   ext.debugAddr = "1234"
   ext.linkedDirName = project.projectDir.name
   outputs.dir gwt.buildDir
-  project.ext["launch.page"] = startupUrl.toString()
+
+  doFirst {
+    project.ext["launch.page"] = startupUrl.toString()
+  }
 }
 
 task gwtCompile (dependsOn: gwt, type: JavaExec) {
