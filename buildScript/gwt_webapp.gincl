@@ -204,6 +204,8 @@ task gwtRun (type: JavaExec) {
 }
 
 task prepareWebapp (type:Copy) {
+  description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
+  group = WEBAPP_GROUP
 
   from("$rootDir/config/") {
     include 'common.prop', '*.xml', 'ignore_sizeof.txt', 'log4j.properties'
