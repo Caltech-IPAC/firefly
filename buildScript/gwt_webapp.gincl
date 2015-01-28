@@ -94,6 +94,7 @@ task gwt {
   ext.maxHeapSize = "512M"
   ext.debugAddr = "1234"
   ext.linkedDirName = project.projectDir.name
+  ext.contextName = linkedDirName
   outputs.dir gwt.buildDir
 
   doFirst {
@@ -178,6 +179,7 @@ task gwtRun (type: JavaExec) {
 
   classpath {
     [
+            "$fireflyPath/java/src",
             sourceSets.main.java.srcDirs,           // Java source
             sourceSets.main.output.resourcesDir,    // Generated resources
             sourceSets.main.output.classesDir,      // Generated classes
@@ -190,6 +192,11 @@ task gwtRun (type: JavaExec) {
   doFirst {
     loadConfig()
     def debugAddr = project.hasProperty("gwtDebugAddr") ? project.gwtDebugAddr : gwt.debugAddr
+    def context = webapp.baseWarName
+    if (context.contains('#')) {
+      context = context.replaceAll("#", "/")
+    }
+    logger.info( ">> context: $context")
 
     jvmArgs "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$debugAddr"
     args "-war", gwt.warDir
@@ -197,8 +204,7 @@ task gwtRun (type: JavaExec) {
     args "-workDir", "$gwt.buildDir/work"
     args "-gen", "$gwt.buildDir/gen"
     args "-noserver", "-port", "8080"
-    args "-logLevel", "DEBUG"
-    args "-startupUrl", "$war.archiveName/$gwt.startupUrl"
+    args "-startupUrl", "$context/$gwt.startupUrl"
     args gwt.modules
   }
 }
