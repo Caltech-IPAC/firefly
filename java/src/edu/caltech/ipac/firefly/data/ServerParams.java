@@ -39,6 +39,7 @@ public class ServerParams {
     public static final String CRO_MULTI_ALL = "cropMultiAll";
     public static final String STRETCH_DATA = "stretchData";
     public static final String BAND = "band";
+    public static final String IDX = "idx";
     public static final String COLOR_IDX = "idx";
     public static final String COL_NAME= "colName";
     public static final String NORTH = "north";
@@ -54,6 +55,7 @@ public class ServerParams {
     public static final String OBJ_NAME = "objName";
     public static final String RESOLVER = "resolver";
     public static final String ID = "id";
+    public static final String BID = "bid";
     public static final String POLLING = "polling";
     public static final String EMAIL = "email";
     public static final String ATTRIBUTE = "attribute";
@@ -104,12 +106,18 @@ public class ServerParams {
     public static final String SET_ATTR= "setAttribute";
     public static final String GET_EMAIL= "getEmail";
     public static final String RESEND_EMAIL= "resendEmail";
+    public static final String CLEAR_PUSH_ENTRY= "clearPushEntry";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
     public static final String DS9_REGION= "ds9Region";
     public static final String SAVE_DS9_REGION= "saveDS9Region";
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";
     public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
+
+    public static final String VIS_PUSH_CREATE_ID= "createID";
+    public static final String VIS_PUSH_FITS= "pushFits";
+    public static final String VIS_PUSH_REG= "pushRegion";
+    public static final String VIS_PUSH_WPR= "pushWPR";
 
 
 

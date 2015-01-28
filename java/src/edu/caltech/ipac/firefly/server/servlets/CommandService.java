@@ -91,11 +91,14 @@ public class CommandService extends BaseHttpServlet {
         }
 
         BrowserInfo b= new BrowserInfo(req.getHeader("user-agent"));
-        if ((b.isIE() && b.getMajorVersion()<=9) || !doJsonp) {
+        if ((b.isIE() && b.getMajorVersion()<=9)) {
             res.setContentType("text/html");
         }
-        else {
+        else if (doJsonp) {
             res.setContentType("application/javascript");
+        }
+        else {
+            res.setContentType("application/json");
         }
         res.setContentLength(retval.length());
         ServletOutputStream out = res.getOutputStream();

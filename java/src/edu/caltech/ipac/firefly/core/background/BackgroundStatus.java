@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.core.background;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -28,7 +29,8 @@ import java.util.List;
  */
 public class BackgroundStatus implements Serializable {
 
-    public enum BgType {SEARCH, PACKAGE, UNKNOWN}
+    public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
+    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME }
 
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";
     public static final String PARAM_SEP = "<<BGSEP>>";
@@ -52,8 +54,13 @@ public class BackgroundStatus implements Serializable {
     public static final String PACKAGE_CNT = "PACKAGE_CNT";
     public static final String CLIENT_REQ = "CLIENT_REQ";
     public static final String SERVER_REQ = "SERVER_REQ";
+    public static final String WEB_PLOT_REQ = "WEB_PLOT_REQ";
     public static final String FILE_PATH = "FILE_PATH";
     public static final String TOTAL_BYTES = "TOTAL_BYTES";
+
+    public static final String PUSH_DATA_BASE = "PUSH_DATA_#";
+    public static final String PUSH_TYPE_BASE = "PUSH_TYPE_#";
+    public static final String PUSH_CNT =       "PUSH_CNT";
     // --------End Keys -------------------
 
 
@@ -128,6 +135,7 @@ public class BackgroundStatus implements Serializable {
             setParam(p);
         }
     }
+
 
     public void setParam(String name, WorldPt wpt) {
         setParam(name,wpt==null ? null : wpt.toString());
@@ -231,6 +239,26 @@ public class BackgroundStatus implements Serializable {
                 state == BackgroundState.STARTING);
     }
 
+    public int getNumPushData() {
+        return getIntParam(PUSH_CNT,0);
+    }
+
+    public void addPushData(String serializeData, PushType pt) {
+        int total= getNumPushData();
+        setParam(PUSH_DATA_BASE +total,serializeData);
+        setParam(PUSH_TYPE_BASE +total,pt.toString());
+        total++;
+        setParam(PUSH_CNT,total+"");
+    }
+
+    public String getPushData(int idx) {
+        return getParam(PUSH_DATA_BASE +idx);
+    }
+
+    public PushType getPushType(int idx) {
+        return StringUtils.getEnum(getParam(PUSH_TYPE_BASE + idx), PushType.WEB_PLOT_REQUEST);
+    }
+
     public void addMessage(String message) {
         int total= getNumMessages();
         setParam(MESSAGE_BASE +total,message);
@@ -312,6 +340,14 @@ public class BackgroundStatus implements Serializable {
 
     public void setServerRequest(TableServerRequest request) {
         if (request!=null) setParam(SERVER_REQ,request.toString());
+    }
+
+    public void setWebPlotRequest(WebPlotRequest wpr) {
+        if (wpr!=null) setParam(WEB_PLOT_REQ,wpr.toString());
+    }
+
+    public WebPlotRequest getWebPlotRequest() {
+        return WebPlotRequest.parse(getParam(WEB_PLOT_REQ));
     }
 
     public static BackgroundStatus createUnknownFailStat() {

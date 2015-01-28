@@ -44,6 +44,7 @@ public interface SearchServicesAsync {
     void setAttribute(List<String> idList, JobAttributes attribute, AsyncCallback<Boolean> async);
 
     public void getEmail(String id, AsyncCallback<String> async);
+    public void clearPushEntry(String id, int idx, AsyncCallback<Boolean> async);
 
     public void resendEmail(List<String> idList, String email, AsyncCallback<Boolean> async);
 

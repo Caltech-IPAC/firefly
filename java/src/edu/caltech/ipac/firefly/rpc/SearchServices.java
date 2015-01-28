@@ -43,6 +43,7 @@ public interface SearchServices extends RemoteService {
     boolean setAttribute(List<String> idList, JobAttributes attribute);
     String getEmail(String id);
     boolean resendEmail(List<String> idList, String email);
+    boolean clearPushEntry(String id, int idx);
     String createDownloadScript(String id,
                                         String fname,
                                         String dataSource,

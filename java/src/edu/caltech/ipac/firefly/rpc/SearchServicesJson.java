@@ -184,6 +184,19 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
+    public void clearPushEntry(String id, int idx , AsyncCallback<Boolean> async) {
+        List<Param> paramList = new ArrayList<Param>(1);
+        paramList.add(new Param(ServerParams.ID, id));
+        paramList.add(new Param(ServerParams.IDX, idx+""));
+        JsonUtils.doService(doJsonP, ServerParams.CLEAR_PUSH_ENTRY, paramList, async, new JsonUtils.Converter<Boolean>() {
+            public Boolean convert(String s) {
+                return Boolean.TRUE;
+            }
+        });
+    }
+
+
+
     public void createDownloadScript(String id,
                                      String fname,
                                      String dataSource,

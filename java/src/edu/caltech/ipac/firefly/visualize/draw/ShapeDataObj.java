@@ -68,6 +68,7 @@ public class ShapeDataObj extends DrawObj {
     private UnitType unitType = UnitType.PIXEL; // only supported by Circle so far
     private TextLocation _textLoc= TextLocation.DEFAULT;
     private OffsetScreenPt _textOffset= null;
+    private int lineWidth= DEF_WIDTH;
 
      private ShapeDataObj(ShapeType sType) {
          super();
@@ -150,7 +151,11 @@ public class ShapeDataObj extends DrawObj {
 
     @Override
     public int getLineWidth() {
-        return DEF_WIDTH;
+        return lineWidth;
+    }
+
+    public void setLineWidth(int w) {
+        lineWidth= w;
     }
 
     @Override
@@ -292,8 +297,8 @@ public class ShapeDataObj extends DrawObj {
         if (pt0==null || pt1==null) return;
         if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
             inView= true;
-            if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
-//            g.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
+            if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,lineWidth);
+//            g.drawLine(color, lineWidth, pt0.getIX(), pt0.getIY(), pt1.getIX(), pt1.getIY());
             g.pathMoveTo(pt0.getIX(), pt0.getIY());
             g.pathLineTo(pt1.getIX(), pt1.getIY());
             if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
@@ -333,7 +338,7 @@ public class ShapeDataObj extends DrawObj {
             }
             centerPt= plot.getViewPortCoords(_pts[0]);
             if (plot.pointInViewPort(centerPt)) {
-                g.drawCircle(color,DEF_WIDTH,centerPt.getIX(),centerPt.getIY(), screenRadius);
+                g.drawCircle(color,lineWidth,centerPt.getIX(),centerPt.getIY(), screenRadius);
                 inView= true;
             }
         }
@@ -352,7 +357,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= Math.min(pt0.getIY(),pt1.getIY()) + Math.abs(pt0.getIY()-pt1.getIY())/2;
                 centerPt= new ViewPortPt(x,y);
 
-                g.drawCircle(color,DEF_WIDTH,x,y,screenRadius );
+                g.drawCircle(color,lineWidth,x,y,screenRadius );
             }
         }
 
@@ -386,7 +391,7 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,lineWidth);
                 g.rect(x,y,w,h);
                 if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
             }
@@ -404,7 +409,7 @@ public class ShapeDataObj extends DrawObj {
                 int y= pt0.getIY();
                 int width=  pt1.getIX()-pt0.getIX();
                 int height=  pt1.getIY()-pt0.getIY();
-                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,DEF_WIDTH);
+                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,lineWidth);
                 g.rect(x,y,width,height);
                 if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
             }

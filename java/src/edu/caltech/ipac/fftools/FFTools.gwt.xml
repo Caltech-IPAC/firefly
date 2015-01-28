@@ -12,6 +12,7 @@
     <set-configuration-property name="devModeRedirectEnabled" value="true"/>
     <set-property name="compiler.useSourceMaps" value="true" />
     <!--<set-property name="gwt.codeserver.port" value="9876" />-->
+    <!--<set-property name="user.agent" value="gecko1_8"/>-->
 
 
 </module>

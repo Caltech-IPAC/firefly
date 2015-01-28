@@ -63,7 +63,7 @@ public class RegionConnection implements DataConnection {
     public void hideDetails() {  }
     public WebEventManager getEventManager() { return _evManager; }
 
-    public boolean getSupportsHighlight() { return false; }
+    public boolean getSupportsHighlight() { return true; }
     public SelectSupport getSupportsAreaSelect() { return SelectSupport.NO; }
     public int getSelectedCount() { return 0; }
 
@@ -72,7 +72,7 @@ public class RegionConnection implements DataConnection {
     public List<String> getDefaultSubgroupList() { return null; }
     public boolean getOKForSubgroups() { return true; }
 
-    public boolean getSupportsMouse() { return false; }
+    public boolean getSupportsMouse() { return true; }
     public boolean getOnlyShowIfDataIsVisible() { return true; }
 
     public boolean getHasPerPlotData() { return true; }
@@ -111,7 +111,7 @@ public class RegionConnection implements DataConnection {
     public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
         drawData= new ArrayList<DrawObj>(regionList.size()*2);
         for(Region r : regionList) {
-            DrawObj drawObj=makeRegionDrawObject(r,plot);
+            DrawObj drawObj=makeRegionDrawObject(r,plot,false);
             if (drawObj!=null) drawData.add(drawObj);
         }
         return drawData;
@@ -122,16 +122,16 @@ public class RegionConnection implements DataConnection {
         int idx= getHighlightedIdx();
         if (idx>-1 && idx<regionList.size()) {
             Region r= regionList.get(idx);
-            if (r!=null) {
-                retval=makeRegionDrawObject(r,p);
-                retval.setHighlighted(true);
+            if (r!=null && r.getOptions().isHighlightable()) {
+                retval=makeRegionDrawObject(r,p,true);
+                if (retval!=null) retval.setHighlighted(true);
             }
         }
         return (retval==null) ? null : Arrays.asList(retval);
     }
 
 
-    public DrawObj makeRegionDrawObject(Region r, WebPlot plot) {
+    public DrawObj makeRegionDrawObject(Region r, WebPlot plot, boolean highlight) {
         DrawObj retval= null;
         if (r.getOptions().isInclude()) {
             if      (r instanceof RegionAnnulus)    retval= makeAnnulus((RegionAnnulus) r, plot);
@@ -141,6 +141,7 @@ public class RegionConnection implements DataConnection {
             else if (r instanceof RegionPoint)      retval= makePoint((RegionPoint) r);
             else if (r instanceof RegionText)       retval= makeText((RegionText) r);
         }
+        if (retval instanceof  ShapeDataObj) ((ShapeDataObj)retval).setLineWidth(retval.getLineWidth()+1);
 
         return retval;
 

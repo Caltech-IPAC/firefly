@@ -102,6 +102,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         addCommand(commands, new AnyDataSetCmd());
 //        addCommand(commands, new ExternalCatalogSearchCmd());
         commands.put(FFToolsImageCmd.COMMAND, new FFToolsImageCmd(aloneUI));
+        commands.put(FFToolsPushReceiveCmd.COMMAND, new FFToolsPushReceiveCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
 //        commands.put(ImageSelectDropDownDynCmd.COMMAND_NAME, new ImageSelectDropDownDynCmd(aloneUI));

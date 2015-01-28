@@ -26,6 +26,10 @@ public enum BackgroundState {
      */
     WORKING,
     /**
+     * server is notifying of more data
+     */
+    NEW_DATA,
+    /**
      * USER_ABORTED - user aborted the package - should only be set on client side
      */
     USER_ABORTED,

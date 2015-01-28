@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.server.visualize.JsonDataCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResolveServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResourceServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.SearchServerCommands;
+import edu.caltech.ipac.firefly.server.visualize.VisPushCommands;
 import edu.caltech.ipac.firefly.server.visualize.VisServerCommands;
 
 import java.util.HashMap;
@@ -119,9 +120,15 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.SET_ATTR,               new SearchServerCommands.SetAttribute());
         _cmdMap.put(ServerParams.GET_EMAIL,              new SearchServerCommands.GetEmail());
         _cmdMap.put(ServerParams.RESEND_EMAIL,           new SearchServerCommands.ResendEmail());
+        _cmdMap.put(ServerParams.CLEAR_PUSH_ENTRY,       new SearchServerCommands.ClearPushEntry());
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
+
+        _cmdMap.put(ServerParams.VIS_PUSH_CREATE_ID,     new VisPushCommands.GetPushID());
+        _cmdMap.put(ServerParams.VIS_PUSH_FITS,          new VisPushCommands.PushFITS());
+        _cmdMap.put(ServerParams.VIS_PUSH_REG,          new VisPushCommands.PushRegion());
+//        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new VisPushCommands.PushFITS());
 
 
         // maybe temporary

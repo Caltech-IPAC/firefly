@@ -578,6 +578,9 @@ public class RegionFactory {
             else if (token.toLowerCase().startsWith("width=")) {
                 retval.ops.setLineWidth(parseInt(token,1));
             }
+            else if (token.toLowerCase().startsWith("select=")) {
+                retval.ops.setHighlightable(parseBoolean(token, true));
+            }
             else if (token.toLowerCase().startsWith("highlite=") ||
                      token.toLowerCase().startsWith("highlight=")) {
                 retval.ops.setHighlightable(parseBoolean(token, true));
@@ -908,7 +911,7 @@ public class RegionFactory {
                 sb.append(makeValue("rotate",op.isRotatable()));
             }
             if (op.isHighlightable()!=globalOps.isHighlightable()) {
-                sb.append(makeValue("highlight",op.isHighlightable()));
+                sb.append(makeValue("select",op.isHighlightable()));
             }
             if (op.isInclude()!=globalOps.isInclude()) {
                 sb.append(makeValue("include",op.isInclude()));

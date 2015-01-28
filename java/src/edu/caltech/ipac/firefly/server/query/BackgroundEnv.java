@@ -124,6 +124,13 @@ public class BackgroundEnv {
         for(String id : idList) resendEmail(id, email);
     }
 
+    public static void clearPushEntry(String id, int idx) {
+        BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
+        BackgroundStatus bgStat= pi.getStatus();
+        bgStat.removeParam(BackgroundStatus.PUSH_DATA_BASE+idx );
+        bgStat.removeParam(BackgroundStatus.PUSH_TYPE_BASE+idx );
+    }
+
     public static ScriptRet createDownloadScript(String id,
                                               String fName,
                                               String dataSource,
@@ -237,7 +244,7 @@ public class BackgroundEnv {
 
 
     public static String makeBackgroundID() {
-        return "bid__"+ (System.currentTimeMillis() % 100000000000L) + "__" + _hostname; // unique for 3 years
+        return "bid"+ (System.currentTimeMillis() % 100000000000L) + "_" + _hostname; // unique for 3 years
     }
 
 
@@ -398,7 +405,25 @@ public class BackgroundEnv {
                                    String email,
                                    String dataSource,
                                    RequestOwner requestOwner) {
-            _bid = makeBackgroundID();
+            this(worker,baseFileName,title,email,dataSource,requestOwner,null);
+        }
+
+        public BackgroundProcessor(Worker worker,
+                                   String title,
+                                   String dataSource,
+                                   RequestOwner requestOwner,
+                                   String bid) {
+            this(worker,null,title,null,dataSource,requestOwner,bid);
+        }
+
+        public BackgroundProcessor(Worker worker,
+                                   String baseFileName,
+                                   String title,
+                                   String email,
+                                   String dataSource,
+                                   RequestOwner requestOwner,
+                                   String bid) {
+            _bid = bid!=null ? bid : makeBackgroundID();
             _worker= worker;
             _baseFileName= baseFileName;
             _title= title;

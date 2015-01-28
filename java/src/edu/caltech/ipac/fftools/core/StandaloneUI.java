@@ -241,6 +241,7 @@ class StandaloneUI {
 
 
     public void relayoutMainArea() {
+        Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION).setDisplay(main);
         main.setSize("100%", "100%");
         main.clear();
 

@@ -32,7 +32,7 @@ public class JsonUtils {
 
 
     public static final int TIMEOUT = 10 * 60 * 1000;  // 10 min
-    public static final String DEF_BASE_URL = GWT.getModuleBaseURL() + "sticky/FireFly_CommandService";
+    public static final String DEF_BASE_URL = GWT.getModuleBaseURL() + "sticky/CmdSrv";
 
     public static String makeURL(String baseUrl, String cmd, List<Param> paramList, boolean isJsonp) {
         if (cmd != null) paramList.add(new Param(ServerParams.COMMAND, cmd));

@@ -198,7 +198,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>FireFly CommandService</servlet-name>
-        <url-pattern>/sticky/FireFly_CommandService</url-pattern>
+        <url-pattern>/sticky/CmdSrv</url-pattern>
     </servlet-mapping>
 
 

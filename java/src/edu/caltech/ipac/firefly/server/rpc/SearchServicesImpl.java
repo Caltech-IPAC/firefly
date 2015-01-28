@@ -131,6 +131,10 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
         return true;
     }
 
+    public boolean clearPushEntry(String id, int idx) {
+        BackgroundEnv.clearPushEntry(id,idx);
+        return true;
+    }
 
     public SearchServices.DownloadProgress getDownloadProgress(String fileKey) {
         return BackgroundEnv.getDownloadProgress(fileKey);

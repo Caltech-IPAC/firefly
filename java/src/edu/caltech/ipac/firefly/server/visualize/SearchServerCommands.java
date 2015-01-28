@@ -175,6 +175,17 @@ public class SearchServerCommands {
         }
     }
 
+    public static class ClearPushEntry extends BaseSearchServerCommand {
+        @Override
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String id= sp.getRequired(ServerParams.ID);
+            int idx=   sp.getRequiredInt(ServerParams.IDX);
+            new SearchServicesImpl().clearPushEntry(id,idx);
+            return "true";
+        }
+    }
+
     public static class CreateDownloadScript extends BaseSearchServerCommand  {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
