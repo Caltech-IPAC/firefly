@@ -1,0 +1,125 @@
+
+project.ext["env"] = project.hasProperty("env") ? project.ext["env"] : 'local'
+
+def loadBuildConfig() {
+  // set all props in bulid.config to be project's properties
+  def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
+  logger.info ">> add properties from $rootDir/buildScript/build.config"
+  cs.toProperties().each{ k, v ->
+    logger.info ">>    $k : $v"
+    project.ext.set(k, v)
+  }
+
+  if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+    cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
+    logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
+    cs.toProperties().each{ k, v ->
+      logger.info ">>      $k : $v"
+      project.ext.set(k, v)
+    }
+  }
+//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
+}
+
+def stopTomcat(remoteHost) {
+  def desc = execCmd (remoteHost, true, ["$tomcat_home/bin/shutdown.sh"])
+  println ">> Stopping Tomcat:.. $desc"
+}
+
+def startTomcat(remoteHost) {
+  def cmd = ["$tomcat_home/bin/catalina.sh"];
+  if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
+    cmd = cmd + "jpda" +  "start"
+  } else {
+    cmd = cmd + "start"
+  }
+
+  def desc = execCmd (remoteHost, false, cmd)
+  println ">> Starting Tomcat:.. $cmd ==> $desc"
+}
+
+task deployAllWars << {
+  description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property.  May include ${remoteHost} as well.'
+
+  loadBuildConfig()
+
+  if (!project.hasProperty("tomcat_home")) {
+    throw ProjectConfigurationException("tomcat_home property is not found.")
+  }
+
+  def remoteHost = project.hasProperty("remoteHost") ? remoteHost : null
+
+  // stop tomcat
+  stopTomcat(null)
+  if (remoteHost != null) {
+    stopTomcat(remoteHost)
+    sleep(16 * 1000)
+  }
+
+  sleep(4 * 1000)
+
+  // copy all of the war files
+  def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
+  wars.each {File file ->
+    copyWar(file, null)
+    if (remoteHost != null) {
+      copyWar(file, remoteHost)
+    }
+  }
+
+  // start tomcat
+  startTomcat(null)
+  if (remoteHost != null) {
+    sleep(4 * 1000)
+    startTomcat(remoteHost)
+  }
+
+}
+
+def copyWar(file, remoteHost) {
+  println ">> copying file: $file"
+
+  def baseName = file.name.tokenize('.')[0]
+  execCmd(remoteHost, true, ["rm", "-r","$tomcat_home/webapps/$baseName"])
+  execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
+
+  if (remoteHost != null) {
+    exec {
+      executable "scp"
+      args "$file"
+      args "$remoteHost:/$tomcat_home/webapps/"
+    }
+  } else {
+    copy {
+      from("$file")
+      into "$tomcat_home/webapps/"
+    }
+  }
+}
+
+def execCmd(remoteHost, ignoreFailure, cmdLine) {
+  if (remoteHost != null) {
+    exec {
+      setIgnoreExitValue(ignoreFailure)
+      executable "ssh"
+      args "$remoteHost"
+      cmdLine.each { arg ->
+        if (arg.contains("#")) {
+          args arg.replaceAll('\\#', '\\\\#')
+        } else {
+          args arg
+        }
+      }
+      logger.info( ">> execCmd: $commandLine" )
+    }
+  } else {
+    exec {
+      setIgnoreExitValue(ignoreFailure)
+      commandLine cmdLine
+      logger.info( ">> execCmd: $commandLine" )
+
+    }
+
+  }
+}
+
