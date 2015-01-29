@@ -51,12 +51,12 @@ task deployAllWars << {
 
   // stop tomcat
   stopTomcat(null)
+  sleep(1 * 1000)
   if (remoteHost != null) {
     stopTomcat(remoteHost)
-    sleep(16 * 1000)
   }
 
-  sleep(4 * 1000)
+  sleep(15 * 1000)
 
   // copy all of the war files
   def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
@@ -68,9 +68,10 @@ task deployAllWars << {
   }
 
   // start tomcat
+  sleep(1 * 1000)
   startTomcat(null)
   if (remoteHost != null) {
-    sleep(4 * 1000)
+    sleep(1 * 1000)
     startTomcat(remoteHost)
   }
 
