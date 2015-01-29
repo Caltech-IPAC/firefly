@@ -19,6 +19,7 @@
 # -- ignore the build directories
 #
 build/
+.gradle/
 java/classes/
 java/dist/
 #
