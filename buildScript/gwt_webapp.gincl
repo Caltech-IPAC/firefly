@@ -22,7 +22,7 @@ sourceSets {
   main.java.srcDir  "$rootDir/java/src/"
   main.resources {
     srcDir "$rootDir/java/src/"
-    include "edu/caltech/ipac/$jar.baseName/**/*"
+    include "edu/caltech/ipac/${project.projectDir.name}/resources/*.*"
     exclude "**/*.gradle"
   }
 }
@@ -84,6 +84,7 @@ def loadConfig() {
 }
 
 task gwt {
+  outputs.upToDateWhen { false }
 
   ext.buildDir = "${project.buildDir}/gwt"
   ext.warDir = "$buildDir/$app_name"
@@ -268,6 +269,7 @@ task immediateStart (type: Exec) {
 }
 
 task webapp {
+  outputs.upToDateWhen { false }
   ext.baseWarName = jar.baseName
 }
 
@@ -284,6 +286,7 @@ war {
   from gwt.warDir
   dependsOn webapp, jar, gwtCompile, prepareWebapp
 }
+prepareWebapp.mustRunAfter gwtCompile
 
 task dirty (type: War) {
   description= 'Create a war without GWT compile.  This is much faster.'
