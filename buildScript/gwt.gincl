@@ -1,0 +1,135 @@
+def GWT_GROUP = "Webapp-GWT"
+
+task gwt {
+  outputs.upToDateWhen { false }
+
+  ext.buildDir = "${project.buildDir}/gwt"
+  ext.warDir = "$buildDir/${project['app-name']}"
+  ext.modules = "<UNDEFINED>"
+  ext.startupUrl = "${project['app-name']}.html"
+  ext.localWorkers = "6"
+  ext.style = "OBFUSCATED"
+  ext.maxHeapSize = "512M"
+  ext.debugAddr = "1234"
+  ext.linkedDirName = project.projectDir.name
+  ext.contextName = linkedDirName
+  outputs.dir gwt.buildDir
+
+  doFirst {
+    project.ext["launch.page"] = startupUrl.toString()
+  }
+}
+
+task gwtCompile (type: JavaExec) {
+  dependsOn gwt, loadConfig
+  description= 'GWT Compile'
+  group = GWT_GROUP
+
+  inputs.source sourceSets.main.java.srcDirs
+  inputs.dir sourceSets.main.output.resourcesDir
+  outputs.dir gwt.buildDir
+
+// Workaround for incremental build (GRADLE-1483)
+  outputs.upToDateSpec = new org.gradle.api.specs.AndSpec()
+
+  main = 'com.google.gwt.dev.Compiler'
+
+  classpath {
+    [
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+    ]
+  }
+
+  doFirst {
+    maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
+
+    if (gwt.modules == "<UNDEFINED>") {
+      println ">> No GWT module defined.  Skipping gwtCompile."
+      throw new StopExecutionException("No GWT module defined.  Skipping gwtCompile.")
+    }
+
+    file(gwt.buildDir).mkdirs()
+
+    def localWorkers = project.hasProperty("gwtLocalWorkers") ?
+                        project.gwtLocalWorkers : gwt.localWorkers
+    def style = project.hasProperty("gwtStyle") ? project.gwtStyle : gwt.style
+
+    systemProperties.put("gwt.persistentunitcachedir", "$gwt.buildDir")
+    args "-style", "$style"
+    args "-localWorkers", localWorkers
+    args "-war", gwt.warDir
+    args "-extra", "$gwt.buildDir/extra"
+    args "-workDir", "$gwt.buildDir/work"
+    args "-logLevel", "INFO"
+    if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
+      args "-draftCompile"
+    }
+    if (project.hasProperty("gwtCompileReport") && project.gwtCompileReport == 'true') {
+      args "-compileReport"
+    }
+//    args "-gen", "$gwt.buildDir/gen"
+    args gwt.modules
+    logger.info (">> gwtCompile options: $args")
+  }
+
+  doLast {
+    // because we rename it to a shorter name, we need to shuffle these directories around.
+    file(gwt.warDir).renameTo("${gwt.warDir}_tmp")
+    file("${gwt.warDir}_tmp/$gwt.linkedDirName").renameTo(gwt.warDir)
+    file("$gwt.warDir/WEB-INF").mkdirs()
+    file("${gwt.warDir}_tmp/WEB-INF/deploy/$gwt.linkedDirName").renameTo("$gwt.warDir/WEB-INF/deploy")
+    delete {"${gwt.warDir}_tmp"}
+  }
+}
+
+task gwtRun (type: JavaExec) {
+  dependsOn gwt, loadConfig
+  description= 'GWT DevMode'
+  group = GWT_GROUP
+
+  inputs.source sourceSets.main.java.srcDirs
+  inputs.dir sourceSets.main.output.resourcesDir
+
+  main = 'com.google.gwt.dev.DevMode'
+
+  classpath {
+    [
+            "$fireflyPath/java/src",
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+    ]
+  }
+
+  doFirst {
+    maxHeapSize = gwt.maxHeapSize
+
+    def debugAddr = project.hasProperty("gwtDebugAddr") ? project.gwtDebugAddr : gwt.debugAddr
+    def context = webapp.baseWarName
+    if (context.contains('#')) {
+      context = context.replaceAll("#", "/")
+    }
+    logger.info( ">> context: $context")
+
+    jvmArgs "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$debugAddr"
+    args "-war", gwt.warDir
+    args "-extra", "$gwt.buildDir/extra"
+    args "-workDir", "$gwt.buildDir/work"
+    args "-gen", "$gwt.buildDir/gen"
+    args "-noserver", "-port", "8080"
+    args "-startupUrl", "$context/$gwt.startupUrl"
+    args gwt.modules
+  }
+}
+
+task immediateStart (type: Exec) {
+  dependsOn gwt
+  doFirst {
+    logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
+  }
+  commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
+}

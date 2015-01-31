@@ -4,7 +4,7 @@ dependencies {
   compile project(':firefly')
 }
 
-apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
+apply from: "$fireflyPath/buildScript/gwt_webapp2.gincl"
 
 gwt {
   modules = 'edu.caltech.ipac.fftools.FFTools'

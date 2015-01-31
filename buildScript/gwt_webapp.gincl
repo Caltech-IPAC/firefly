@@ -1,13 +1,11 @@
-project.ext["app-name"] = project.hasProperty("app-name") ? project.property("app-name") : name
-def app_name = project.ext["app-name"]
-project.ext.hydra_proj_name = project.hasProperty("hydra_proj_name") ? project.property("hydra_proj_name") : app_name
-def WEBAPP_GROUP = "Webapp Tasks"
-defaultTasks 'war'
-
 apply plugin: 'war'
+apply from: "$fireflyPath/buildScript/gwt.gincl"
+
+def WEBAPP_GROUP = "Webapp"
+
 
 jar {
-  baseName = "$app_name"
+  baseName = "${project['app-name']}"
   include "edu/caltech/ipac/${project.projectDir.name}/**/*"
   from sourceSets.main.allJava
   enabled = true
@@ -38,179 +36,8 @@ dependencies {
   webappLib FIREFLY_RUNTIME + firefly_lib + ":$jar.baseName"
 }
 
-def loadConfig() {
-  project.ext.build_time = new Date().toString()
-  project.ext["app-name"] = project.hasProperty("app-name") ?
-                            property("app-name") : name
-  project.ext["proj_id"] =  project.hasProperty("proj_id") ?
-                            project.property("proj_id") : project.ext["app-name"]
-
-  if (!project.hasProperty("appConfigProps")) {
-
-    project.ext.appConfigProps = new Properties()
-
-    def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
-    appConfigProps.putAll(cs.toProperties())
-
-    if (project.hasProperty("appConfig")) {
-      cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
-      appConfigProps.putAll(cs.toProperties())
-      logger.info(">> script's appConfig added")
-    }
-
-    logger.info ">> loading build.config for env: $project.env"
-    // set all props in bulid.config to be project's properties
-    cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
-    logger.info ">> add properties from $rootDir/buildScript/build.config"
-    cs.toProperties().each{ k, v ->
-      logger.info ">>    $k : $v"
-      project.ext.set(k, v)
-    }
-
-    if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
-      cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
-      logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
-      cs.toProperties().each{ k, v ->
-        logger.info ">>      $k : $v"
-        project.ext.set(k, v)
-      }
-    }
-//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
-
-    appConfigProps.putAll(project.ext.properties)
-    appConfigProps.putAll(System.properties)
-//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
-  }
-}
-
-task gwt {
-  outputs.upToDateWhen { false }
-
-  ext.buildDir = "${project.buildDir}/gwt"
-  ext.warDir = "$buildDir/$app_name"
-  ext.modules = "<UNDEFINED>"
-  ext.startupUrl = "${app_name}.html"
-  ext.localWorkers = "6"
-  ext.style = "OBFUSCATED"
-  ext.maxHeapSize = "512M"
-  ext.debugAddr = "1234"
-  ext.linkedDirName = project.projectDir.name
-  ext.contextName = linkedDirName
-  outputs.dir gwt.buildDir
-
-  doFirst {
-    project.ext["launch.page"] = startupUrl.toString()
-  }
-}
-
-task gwtCompile (dependsOn: gwt, type: JavaExec) {
-  description= 'GWT Compile'
-  group = WEBAPP_GROUP
-
-  inputs.source sourceSets.main.java.srcDirs
-  inputs.dir sourceSets.main.output.resourcesDir
-  outputs.dir gwt.buildDir
-
-// Workaround for incremental build (GRADLE-1483)
-  outputs.upToDateSpec = new org.gradle.api.specs.AndSpec()
-
-  main = 'com.google.gwt.dev.Compiler'
-
-  classpath {
-    [
-            sourceSets.main.java.srcDirs,           // Java source
-            sourceSets.main.output.resourcesDir,    // Generated resources
-            sourceSets.main.output.classesDir,      // Generated classes
-            sourceSets.main.compileClasspath,       // Deps
-    ]
-  }
-
-  maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
-
-  doFirst {
-    loadConfig()
-
-    if (gwt.modules == "<UNDEFINED>") {
-      println ">> No GWT module defined.  Skipping gwtCompile."
-      throw new StopExecutionException("No GWT module defined.  Skipping gwtCompile.")
-    }
-
-    file(gwt.buildDir).mkdirs()
-
-    def localWorkers = project.hasProperty("gwtLocalWorkers") ?
-                        project.gwtLocalWorkers : gwt.localWorkers
-    def style = project.hasProperty("gwtStyle") ? project.gwtStyle : gwt.style
-
-    systemProperties.put("gwt.persistentunitcachedir", "$gwt.buildDir")
-    args "-style", "$style"
-    args "-localWorkers", localWorkers
-    args "-war", gwt.warDir
-    args "-extra", "$gwt.buildDir/extra"
-    args "-workDir", "$gwt.buildDir/work"
-    args "-logLevel", "INFO"
-    if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
-      args "-draftCompile"
-    }
-    if (project.hasProperty("gwtCompileReport") && project.gwtCompileReport == 'true') {
-      args "-compileReport"
-    }
-//    args "-gen", "$gwt.buildDir/gen"
-    args gwt.modules
-    logger.info (">> gwtCompile options: $args")
-  }
-
-  doLast {
-    // because we rename it to a shorter name, we need to shuffle these directories around.
-    file(gwt.warDir).renameTo("${gwt.warDir}_tmp")
-    file("${gwt.warDir}_tmp/$gwt.linkedDirName").renameTo(gwt.warDir)
-    file("$gwt.warDir/WEB-INF").mkdirs()
-    file("${gwt.warDir}_tmp/WEB-INF/deploy/$gwt.linkedDirName").renameTo("$gwt.warDir/WEB-INF/deploy")
-    delete {"${gwt.warDir}_tmp"}
-  }
-}
-
-task gwtRun (type: JavaExec) {
-  description= 'GWT DevMode'
-  group = WEBAPP_GROUP
-
-  inputs.source sourceSets.main.java.srcDirs
-  inputs.dir sourceSets.main.output.resourcesDir
-
-  main = 'com.google.gwt.dev.DevMode'
-
-  classpath {
-    [
-            "$fireflyPath/java/src",
-            sourceSets.main.java.srcDirs,           // Java source
-            sourceSets.main.output.resourcesDir,    // Generated resources
-            sourceSets.main.output.classesDir,      // Generated classes
-            sourceSets.main.compileClasspath,       // Deps
-    ]
-  }
-
-  maxHeapSize = gwt.maxHeapSize
-
-  doFirst {
-    loadConfig()
-    def debugAddr = project.hasProperty("gwtDebugAddr") ? project.gwtDebugAddr : gwt.debugAddr
-    def context = webapp.baseWarName
-    if (context.contains('#')) {
-      context = context.replaceAll("#", "/")
-    }
-    logger.info( ">> context: $context")
-
-    jvmArgs "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=$debugAddr"
-    args "-war", gwt.warDir
-    args "-extra", "$gwt.buildDir/extra"
-    args "-workDir", "$gwt.buildDir/work"
-    args "-gen", "$gwt.buildDir/gen"
-    args "-noserver", "-port", "8080"
-    args "-startupUrl", "$context/$gwt.startupUrl"
-    args gwt.modules
-  }
-}
-
 task prepareWebapp (type:Copy) {
+  dependsOn gwt, loadConfig
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = WEBAPP_GROUP
 
@@ -235,15 +62,11 @@ task prepareWebapp (type:Copy) {
   into gwt.warDir
 
   doFirst {
-    loadConfig()
-
     from("$rootDir/config/$gwt.linkedDirName") {
-      include "configurable/${project.ext.hydra_proj_name}/*"
       include "configurable/*.xml"
       include "*.prop", "*.dtd", "*.config"
       into 'WEB-INF/config'
     }
-
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
   doLast {
@@ -261,19 +84,13 @@ task prepareWebapp (type:Copy) {
   }
 }
 
-task immediateStart (type: Exec) {
-  doFirst {
-    logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${app_name}.nocache"
-  }
-  commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${app_name}.nocache"
-}
-
 task webapp {
   outputs.upToDateWhen { false }
   ext.baseWarName = jar.baseName
 }
 
 war {
+  dependsOn webapp, jar, gwtCompile, prepareWebapp
   description= 'Build application. Creates a war file.'
   group = WEBAPP_GROUP
 
@@ -284,11 +101,11 @@ war {
   outputs.dir gwt.warDir
   classpath = configurations.webappLib
   from gwt.warDir
-  dependsOn webapp, jar, gwtCompile, prepareWebapp
 }
 prepareWebapp.mustRunAfter gwtCompile
 
 task dirty (type: War) {
+  dependsOn webapp, jar, prepareWebapp
   description= 'Create a war without GWT compile.  This is much faster.'
   group = WEBAPP_GROUP
 
@@ -298,15 +115,14 @@ task dirty (type: War) {
   outputs.dir gwt.warDir
   classpath = configurations.webappLib
   from gwt.warDir
-  dependsOn webapp, jar, prepareWebapp
 }
 
 task deploy {
+  dependsOn loadConfig, webapp
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
   group = WEBAPP_GROUP
 
   doLast {
-    loadConfig()
 
     if (!project.hasProperty("tomcat_home")) {
       throw ProjectConfigurationException("tomcat_home property is not found.")
@@ -336,51 +152,4 @@ task deploy {
       println ">> Starting Tomcat:.."
     }
   }
-  dependsOn webapp
 }
-
-task buildAndPublish << {
-  description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
-  group = WEBAPP_GROUP
-
-  if (!file(war.archivePath).exists()) {
-    throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
-  }
-  loadConfig()
-  if (!project.hasProperty("publish_host")) {
-    throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
-  }
-
-  def rhost = project.property("publish_host")
-  def reposRoot = "/hydra/repos/$app_name"
-  def major = appConfigProps.get('BuildMajor')
-  def minor = appConfigProps.get('BuildMinor')
-  def rev = appConfigProps.get('BuildRev')
-  def buildNum = appConfigProps.get('BuildNumber')
-  def dirName = "v$major.$minor.$rev.$buildNum"
-
-  exec {
-    commandLine "ssh", "$rhost", "mkdir -p $reposRoot/$dirName/"
-  }
-  exec {
-    commandLine "scp", "$war.archivePath", "$rhost:$reposRoot/$dirName/"
-  }
-  exec {
-    commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
-  }
-}
-buildAndPublish.dependsOn war
-
-/**
- * this is used by loadConfig to extra the information from a script into a properties object.
- */
-class ClosureScript extends groovy.lang.Script {
-  Closure closure
-  def run() {
-    closure.resolveStrategy = Closure.DELEGATE_FIRST
-    closure.delegate = this
-    closure.call()
-  }
-}
-
-

@@ -1,4 +1,67 @@
+def INIT_GROUP = "Common initial setup for all gradle build."
 
-project.ext["env"] = project.hasProperty("env") ? project.ext["env"] : 'local'
-println ">> Environment is set to $env"
+project.ext["app-name"] = name
+
+task loadConfig {
+  description= 'Load build and app config files.  Also, setup common properties like build_date, build_time, etc.'
+  group = INIT_GROUP
+
+  project.ext.build_time = new Date().toString()
+  project.ext.build_date = new Date().format("yyyy-MM-dd")
+
+  doLast {
+    if (!project.hasProperty("appConfigProps")) {
+
+      project.ext["env"] = project.hasProperty("env") ? project.env : 'local'
+      println ">> Environment is set to $env"
+
+      project.ext.appConfigProps = new Properties()
+
+      def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
+      appConfigProps.putAll(cs.toProperties())
+
+      if (project.hasProperty("appConfig")) {
+        cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
+        appConfigProps.putAll(cs.toProperties())
+        logger.info(">> script's appConfig added")
+      }
+
+      logger.info ">> loading build.config for env: $project.env"
+      // set all props in bulid.config to be project's properties
+      cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
+      logger.info ">> add properties from $rootDir/buildScript/build.config"
+      cs.toProperties().each{ k, v ->
+        logger.info ">>    $k : $v"
+        project.ext.set(k, v)
+      }
+
+      if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+        cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
+        logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
+        cs.toProperties().each{ k, v ->
+          logger.info ">>      $k : $v"
+          project.ext.set(k, v)
+        }
+      }
+//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
+
+      appConfigProps.putAll(project.ext.properties)
+      appConfigProps.putAll(System.properties)
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+    }
+  }
+}
+
+/**
+ * this is used by loadConfig to extra the information from a script into a properties object.
+ */
+class ClosureScript extends groovy.lang.Script {
+  Closure closure
+  def run() {
+    closure.resolveStrategy = Closure.DELEGATE_FIRST
+    closure.delegate = this
+    closure.call()
+  }
+}
+
 
