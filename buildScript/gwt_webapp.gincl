@@ -161,7 +161,6 @@ task buildAndPublish << {
   if (!file(war.archivePath).exists()) {
     throw new StopExecutionException("$war.archivePath not found.  Skipping sendArtifacts.")
   }
-  loadConfig()
   if (!project.hasProperty("publish_host")) {
     throw new StopExecutionException("publish_host not found.  Skipping sendArtifacts.")
   }
