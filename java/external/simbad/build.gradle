@@ -1,5 +1,7 @@
 task wsdl {
 
+  outputs.dir "$buildDir/wsdl"
+
   doFirst {
     println "compiling wsdl..."
   }

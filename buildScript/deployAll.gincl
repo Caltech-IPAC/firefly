@@ -5,7 +5,7 @@ def stopTomcat(remoteHost) {
 }
 
 def startTomcat(remoteHost) {
-  def cmd = ["sh", "$tomcat_home/bin/catalina.sh"];
+  def cmd = ["$tomcat_home/bin/catalina.sh"];
   if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
     cmd = cmd + "jpda" +  "start"
   } else {
@@ -34,6 +34,11 @@ task deployAllWars(dependsOn: loadConfig) << {
 
   sleep(15 * 1000)
 
+  execCmd(null, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
+  if (remoteHost != null) {
+    execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
+  }
+
   // copy all of the war files
   def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
   wars.each {File file ->
@@ -58,7 +63,6 @@ def copyWar(file, remoteHost) {
 
   def baseName = file.name.tokenize('.')[0]
   execCmd(remoteHost, true, ["rm", "-r","$tomcat_home/webapps/$baseName"])
-  execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
 
   if (remoteHost != null) {
     exec {
