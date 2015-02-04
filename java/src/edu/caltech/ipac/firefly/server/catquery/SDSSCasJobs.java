@@ -3,12 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.jhu.Cas.CasJobsCL.CJobsProps;
-import edu.jhu.Cas.CasJobsCL.Util;
+import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.jhu.Cas.Services.CJJob;
 import edu.jhu.Cas.Services.JobsLocator;
 import edu.jhu.Cas.Services.JobsSoap;
@@ -92,7 +90,7 @@ public class SDSSCasJobs {
                     retries--;
                     _log.briefInfo("SDSS CasJobs poll failed (jobid="+jobid+", will retry.");
                     Thread.sleep(w);
-                    continue;
+                    //continue;
                 } else {
                     throw e;
                 }
@@ -114,24 +112,21 @@ public class SDSSCasJobs {
     public static void getCrossMatchResults(File sdssUFile, boolean nearestOnly, String radiusArcMin, File outFile)
         throws EndUserException {
         Date start = new Date();
-        try {
-            File config = ServerContext.getConfigFile("CasJobs.config");
-            CJobsProps.loadProps(config.getAbsolutePath());
-            //CJobsProps.loadProps("/Users/tatianag/dev/casjobs/CasJobs.config");
-        } catch (Exception e) {
-            _log.error(e, "SDSS CasJob query failed. Unable to load CasJobs config.");
-            throw new EndUserException("SDSS CasJob query failed",
-                    "Unable to load CasJobs config: "+e.getMessage());
-        }
-        long WSID = Long.parseLong(CJobsProps.get(CJobsProps.WSID));
-        String PW = CJobsProps.get(CJobsProps.PW);
 
-        String TARGET = CJobsProps.get(CJobsProps.DEFAULT_TARGET);
-        int QUEUE = Integer.parseInt(CJobsProps.get(CJobsProps.DEFAULT_QUEUE));
+
+        String wsidVal = AppProperties.getProperty("sdss.casjobs.wsid", null);
+        if (wsidVal == null) { throw new EndUserException("SDSS CasJob query failed",
+                            "sdss.casjobs.wsid property is not set"); }
+        long WSID = Long.parseLong(wsidVal);
+
+        String PW = AppProperties.getProperty("sdss.casjobs.password", null);
+        if (PW == null) { throw new EndUserException("SDSS CasJob query failed",
+                                "sdss.casjobs.password property is not set"); }
+
+        String TARGET = AppProperties.getProperty("sdss.casjobs.default_target", "DR10");
+        int QUEUE = Integer.parseInt(AppProperties.getProperty("sdss.casjobs.default_queue", "4"));
 
         JobsLocator locator = new JobsLocator();
-        // address set to public access point when generated from wsdl
-        //locator.JobsSoap12_address = CJobsProps.get("jobs_location");
         JobsSoap cJobs;
         try {
             cJobs = locator.getJobsSoap12();
@@ -163,7 +158,7 @@ public class SDSSCasJobs {
                 jobid = cJobs.submitJob(WSID, PW, getQuery(tblname, nearestOnly, radiusArcMin), TARGET, tblname + "-task", QUEUE);
                 if (jobid>0) resultTableCreated = true;
             } catch(Exception e){
-                _log.error("SDSS CasJob query failed. " + Util.OnlyTheError(e));
+                _log.error("SDSS CasJob query failed. " + CasJobsCLOnlyTheError(e));
                 throw new EndUserException("SDSS CasJob query failed",
                         "Unable to submit job.");
             }
@@ -178,7 +173,7 @@ public class SDSSCasJobs {
                 try{
                     jobid = cJobs.submitExtractJob(WSID,PW,tblname+"_out","CSV");
                 } catch(Exception e){
-                    _log.error("SDSS CasJob extract job failed.", Util.OnlyTheError(e));
+                    _log.error("SDSS CasJob extract job failed.", CasJobsCLOnlyTheError(e));
                     throw new EndUserException("SDSS CasJob query failed",
                             "Unable to submit extract job for table "+tblname+"_out");
                 }
@@ -235,5 +230,21 @@ public class SDSSCasJobs {
         }
 
     }
+
+    public static String CasJobsCLOnlyTheError(Exception e){
+        String msg = e.getMessage();
+        if(e instanceof org.apache.axis.AxisFault)
+            msg = msg.replaceFirst("[\\d\\D]*-->[^:]*: ","");
+        msg = CasJobsCLRemoveStackTrace(msg);
+        return msg;
+    }
+
+    public static String CasJobsCLRemoveStackTrace(String s){
+        s = s.replaceAll("at[^\\n]*\\n","");
+        s = s.replaceAll("\\s*---[^-]*---\\s*","");
+        return s;
+    }
+
+
 
 }
