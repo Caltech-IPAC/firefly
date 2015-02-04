@@ -130,7 +130,8 @@ public class SDSSCasJobs {
         int QUEUE = Integer.parseInt(CJobsProps.get(CJobsProps.DEFAULT_QUEUE));
 
         JobsLocator locator = new JobsLocator();
-        locator.JobsSoap12_address = CJobsProps.get("jobs_location");
+        // address set to public access point when generated from wsdl
+        //locator.JobsSoap12_address = CJobsProps.get("jobs_location");
         JobsSoap cJobs;
         try {
             cJobs = locator.getJobsSoap12();
@@ -152,7 +153,7 @@ public class SDSSCasJobs {
         String tblname = uploadfile.substring(uploadfile.lastIndexOf(File.separator)+1,uploadfile.lastIndexOf("."));
         try {
             String uploaddata = readFile(uploadfile);
-            cJobs.uploadData(WSID,PW,tblname,uploaddata,false);
+            cJobs.uploadData(WSID,PW,tblname,uploaddata);
             tableUploaded = true;
 
             long jobid;

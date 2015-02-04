@@ -4,8 +4,6 @@
 package edu.caltech.ipac.firefly.server.catquery;
 
 import edu.caltech.ipac.astro.IpacTableWriter;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
@@ -23,6 +21,8 @@ import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.commons.csv.CSVFormat;
@@ -34,9 +34,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.VISI_TAG;
-import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
+import static edu.caltech.ipac.firefly.util.DataSetParser.*;
 
 /**
  * @author tatianag
@@ -49,8 +47,8 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
         })
 public class SDSSQuery extends IpacTablePartProcessor {
 
-    public final static String SERVICE_URL="http://skyserver.sdss3.org/dr10/en/tools/search/x_sql.aspx?";
-    public final static String SERVICE_URL_UPLOAD="http://skyserver.sdss3.org/public/en/tools/crossid/x_crossid.aspx?";
+    public final static String SERVICE_URL="http://skyserver.sdss.org/dr10/en/tools/search/x_sql.aspx?";
+    public final static String SERVICE_URL_UPLOAD="http://skyserver.sdss.org/dr10/en/tools/crossid/x_crossid.aspx?";
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private MultiPartPostBuilder _postBuilder = null;
@@ -203,7 +201,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             String line = reader.readLine();
             if (line == null) {
                 // no data
-            } else if (line.startsWith("<html>")) {
+            } else if (line.startsWith("<")) {
                 throw new IOException("Error obtaining SDSS catalog data");
             }
         } finally {
@@ -213,7 +211,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
     /*
          For crossid match (upload):
-         Service: http://skyserver.sdss3.org/public/en/tools/crossid/x_crossid.aspx
+         Service: http://skyserver.sdss.org/public/en/tools/crossid/x_crossid.aspx
          parameters:
          format="csv" output format
          searchType="photo"
