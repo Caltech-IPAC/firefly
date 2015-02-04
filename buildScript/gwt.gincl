@@ -106,7 +106,7 @@ task gwtRun (type: JavaExec) {
   }
 
   doFirst {
-    maxHeapSize = gwt.maxHeapSize
+    maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
 
     def debugAddr = project.hasProperty("gwtDebugAddr") ? project.gwtDebugAddr : gwt.debugAddr
     def context = webapp.baseWarName
