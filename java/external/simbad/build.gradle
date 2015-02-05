@@ -6,7 +6,7 @@ task wsdl {
     println "compiling wsdl..."
   }
   doLast {
-    ['simbad.wsdl', 'VizieRBeta.wsdl', 'VizieR.wsdl', 'VORegistrySTSCI.wsdl'].each() { file ->
+    ['simbad.wsdl', 'VizieRBeta.wsdl', 'VizieR.wsdl', 'VORegistrySTSCI.wsdl', 'SDSSCasJobs.wsdl'].each() { file ->
       javaexec {
         classpath sourceSets.main.compileClasspath
         main = 'org.apache.axis.wsdl.WSDL2Java'
@@ -21,7 +21,7 @@ compileJava.dependsOn wsdl
 
 jar {
   baseName = 'simbad_ws'
-  includes = ["cds/**", "VizieRBeta_pkg/**", "VizieR_pkg/**", "org/**", "net/**"]
+  includes = ["cds/**", "VizieRBeta_pkg/**", "VizieR_pkg/**", "org/**", "net/**", "edu/**"]
 }
 
 sourceSets {

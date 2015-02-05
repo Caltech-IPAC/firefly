@@ -1,0 +1,2255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://Services.Cas.jhu.edu" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://Services.Cas.jhu.edu" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Provides basic job management functionality.</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://Services.Cas.jhu.edu">
+      <s:element name="ExecuteQuickJobOID">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="oid" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="md5" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="qry" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="context" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskname" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="isSystem" type="s:boolean"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ExecuteQuickJobOIDResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ExecuteQuickJobOIDResult" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ExecuteQuickJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="qry" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="context" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskname" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="isSystem" type="s:boolean"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ExecuteQuickJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ExecuteQuickJobResult" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ExecuteQuickJobDS">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="qry" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="context" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskname" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="isSystem" type="s:boolean"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ExecuteQuickJobDSResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ExecuteQuickJobDSResult">
+              <s:complexType>
+                <s:sequence>
+                  <s:element ref="s:schema"/>
+                  <s:any/>
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="qry" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="context" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskname" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="estimate" type="s:int"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SubmitJobResult" type="s:long"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitJobInto">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="qry" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="context" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="table" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="taskname" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="estimate" type="s:int"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitJobIntoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SubmitJobIntoResult" type="s:long"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="jobId" type="s:long"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CancelJobResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="GetJobStatus">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsId" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="jobId" type="s:long"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetJobStatusResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetJobStatusResult" type="s:int"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetJobs">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="owner_wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="owner_pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="conditions" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="includeSystem" type="s:boolean"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetJobsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetJobsResult" type="tns:ArrayOfCJJob"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCJJob">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CJJob" nillable="true" type="tns:CJJob"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CJJob">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="JobID" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Rows" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="WebServicesID" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeSubmit" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeStart" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeEnd" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Status" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Queue" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="TaskName" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="OutputLoc" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Error" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Query" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Context" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Type" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetJobsJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="owner_wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="owner_pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="conditions" type="s:string"/>
+            <s:element minOccurs="1" maxOccurs="1" name="includeSystem" type="s:boolean"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetJobsJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetJobsJobResult" type="tns:ArrayOfJob"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfJob">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="Job" nillable="true" type="tns:Job"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="Job">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="JobID" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Rows" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="WebServicesID" type="s:long"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeSubmit" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeStart" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="TimeEnd" type="s:dateTime"/>
+          <s:element minOccurs="1" maxOccurs="1" name="SendEmail" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Status" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="AutoComplete" type="s:int"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Estimate" type="s:int"/>
+          <s:element minOccurs="0" maxOccurs="1" name="TaskName" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="OutputLoc" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="HostIP" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Message" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Query" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="ModifiedQuery" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Target" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="OutputType" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Params" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Created_Table" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetQueues">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetQueuesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetQueuesResult" type="tns:ArrayOfCJQueue"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCJQueue">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CJQueue" nillable="true" type="tns:CJQueue"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CJQueue">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Context" type="s:string"/>
+          <s:element minOccurs="1" maxOccurs="1" name="Timeout" type="s:int"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetJobTypes">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetJobTypesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetJobTypesResult" type="tns:ArrayOfCJType"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfCJType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CJType" nillable="true" type="tns:CJType"/>
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CJType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Type" type="s:string"/>
+          <s:element minOccurs="0" maxOccurs="1" name="Description" type="s:string"/>
+        </s:sequence>
+      </s:complexType>
+      <s:element name="SubmitExtractJob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="tableName" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="type" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SubmitExtractJobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SubmitExtractJobResult" type="s:long"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="UploadData">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="tableName" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="data" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="UploadDataResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="SetServiceState">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="serviceName" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="state" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetServiceStateResponse">
+        <s:complexType/>
+      </s:element>
+      <s:element name="GetServiceState">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="wsid" type="s:long"/>
+            <s:element minOccurs="0" maxOccurs="1" name="pw" type="s:string"/>
+            <s:element minOccurs="0" maxOccurs="1" name="serviceName" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetServiceStateResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetServiceStateResult" type="s:string"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="string" nillable="true" type="s:string"/>
+      <s:element name="DataSet" nillable="true">
+        <s:complexType>
+          <s:sequence>
+            <s:element ref="s:schema"/>
+            <s:any/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="long" type="s:long"/>
+      <s:element name="int" type="s:int"/>
+      <s:element name="ArrayOfCJJob" nillable="true" type="tns:ArrayOfCJJob"/>
+      <s:element name="ArrayOfJob" nillable="true" type="tns:ArrayOfJob"/>
+      <s:element name="ArrayOfCJQueue" nillable="true" type="tns:ArrayOfCJQueue"/>
+      <s:element name="ArrayOfCJType" nillable="true" type="tns:ArrayOfCJType"/>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="ExecuteQuickJobOIDSoapIn">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJobOID"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobOIDSoapOut">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJobOIDResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobSoapIn">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJob"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobSoapOut">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSSoapIn">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJobDS"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSSoapOut">
+    <wsdl:part name="parameters" element="tns:ExecuteQuickJobDSResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobSoapIn">
+    <wsdl:part name="parameters" element="tns:SubmitJob"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobSoapOut">
+    <wsdl:part name="parameters" element="tns:SubmitJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoSoapIn">
+    <wsdl:part name="parameters" element="tns:SubmitJobInto"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoSoapOut">
+    <wsdl:part name="parameters" element="tns:SubmitJobIntoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobSoapIn">
+    <wsdl:part name="parameters" element="tns:CancelJob"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobSoapOut">
+    <wsdl:part name="parameters" element="tns:CancelJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobStatusSoapIn">
+    <wsdl:part name="parameters" element="tns:GetJobStatus"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobStatusSoapOut">
+    <wsdl:part name="parameters" element="tns:GetJobStatusResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetJobs"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetJobsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobSoapIn">
+    <wsdl:part name="parameters" element="tns:GetJobsJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobSoapOut">
+    <wsdl:part name="parameters" element="tns:GetJobsJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetQueues"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetQueuesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesSoapIn">
+    <wsdl:part name="parameters" element="tns:GetJobTypes"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesSoapOut">
+    <wsdl:part name="parameters" element="tns:GetJobTypesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobSoapIn">
+    <wsdl:part name="parameters" element="tns:SubmitExtractJob"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobSoapOut">
+    <wsdl:part name="parameters" element="tns:SubmitExtractJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataSoapIn">
+    <wsdl:part name="parameters" element="tns:UploadData"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataSoapOut">
+    <wsdl:part name="parameters" element="tns:UploadDataResponse"/>
+  </wsdl:message>
+  <wsdl:message name="SetServiceStateSoapIn">
+    <wsdl:part name="parameters" element="tns:SetServiceState"/>
+  </wsdl:message>
+  <wsdl:message name="SetServiceStateSoapOut">
+    <wsdl:part name="parameters" element="tns:SetServiceStateResponse"/>
+  </wsdl:message>
+  <wsdl:message name="GetServiceStateSoapIn">
+    <wsdl:part name="parameters" element="tns:GetServiceState"/>
+  </wsdl:message>
+  <wsdl:message name="GetServiceStateSoapOut">
+    <wsdl:part name="parameters" element="tns:GetServiceStateResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobOIDHttpGetIn">
+    <wsdl:part name="oid" type="s:string"/>
+    <wsdl:part name="md5" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobOIDHttpGetOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobHttpGetOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSHttpGetOut">
+    <wsdl:part name="Body" element="tns:DataSet"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="estimate" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobHttpGetOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="table" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="estimate" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoHttpGetOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobHttpGetIn">
+    <wsdl:part name="wsId" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="jobId" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobHttpGetOut"/>
+  <wsdl:message name="GetJobStatusHttpGetIn">
+    <wsdl:part name="wsId" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="jobId" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobStatusHttpGetOut">
+    <wsdl:part name="Body" element="tns:int"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsHttpGetIn">
+    <wsdl:part name="owner_wsid" type="s:string"/>
+    <wsdl:part name="owner_pw" type="s:string"/>
+    <wsdl:part name="conditions" type="s:string"/>
+    <wsdl:part name="includeSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobHttpGetIn">
+    <wsdl:part name="owner_wsid" type="s:string"/>
+    <wsdl:part name="owner_pw" type="s:string"/>
+    <wsdl:part name="conditions" type="s:string"/>
+    <wsdl:part name="includeSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJQueue"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJType"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="tableName" type="s:string"/>
+    <wsdl:part name="type" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobHttpGetOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="tableName" type="s:string"/>
+    <wsdl:part name="data" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataHttpGetOut"/>
+  <wsdl:message name="SetServiceStateHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="serviceName" type="s:string"/>
+    <wsdl:part name="state" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SetServiceStateHttpGetOut"/>
+  <wsdl:message name="GetServiceStateHttpGetIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="serviceName" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetServiceStateHttpGetOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobOIDHttpPostIn">
+    <wsdl:part name="oid" type="s:string"/>
+    <wsdl:part name="md5" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobOIDHttpPostOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobHttpPostOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="isSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="ExecuteQuickJobDSHttpPostOut">
+    <wsdl:part name="Body" element="tns:DataSet"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="estimate" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobHttpPostOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="qry" type="s:string"/>
+    <wsdl:part name="context" type="s:string"/>
+    <wsdl:part name="table" type="s:string"/>
+    <wsdl:part name="taskname" type="s:string"/>
+    <wsdl:part name="estimate" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitJobIntoHttpPostOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobHttpPostIn">
+    <wsdl:part name="wsId" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="jobId" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="CancelJobHttpPostOut"/>
+  <wsdl:message name="GetJobStatusHttpPostIn">
+    <wsdl:part name="wsId" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="jobId" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobStatusHttpPostOut">
+    <wsdl:part name="Body" element="tns:int"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsHttpPostIn">
+    <wsdl:part name="owner_wsid" type="s:string"/>
+    <wsdl:part name="owner_pw" type="s:string"/>
+    <wsdl:part name="conditions" type="s:string"/>
+    <wsdl:part name="includeSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsHttpPostOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobHttpPostIn">
+    <wsdl:part name="owner_wsid" type="s:string"/>
+    <wsdl:part name="owner_pw" type="s:string"/>
+    <wsdl:part name="conditions" type="s:string"/>
+    <wsdl:part name="includeSystem" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobsJobHttpPostOut">
+    <wsdl:part name="Body" element="tns:ArrayOfJob"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetQueuesHttpPostOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJQueue"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetJobTypesHttpPostOut">
+    <wsdl:part name="Body" element="tns:ArrayOfCJType"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="tableName" type="s:string"/>
+    <wsdl:part name="type" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SubmitExtractJobHttpPostOut">
+    <wsdl:part name="Body" element="tns:long"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="tableName" type="s:string"/>
+    <wsdl:part name="data" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="UploadDataHttpPostOut"/>
+  <wsdl:message name="SetServiceStateHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="serviceName" type="s:string"/>
+    <wsdl:part name="state" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SetServiceStateHttpPostOut"/>
+  <wsdl:message name="GetServiceStateHttpPostIn">
+    <wsdl:part name="wsid" type="s:string"/>
+    <wsdl:part name="pw" type="s:string"/>
+    <wsdl:part name="serviceName" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="GetServiceStateHttpPostOut">
+    <wsdl:part name="Body" element="tns:string"/>
+  </wsdl:message>
+  <wsdl:portType name="JobsSoap">
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Some description goes here...</wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobOIDSoapIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobOIDSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : A typed-csv format string containing the results of the query.&lt;br/&gt;
+Column types are embedded in the column headers.  For example, &lt;br/&gt;
+&lt;p&gt;'[ra]:Float,[dec]:Float'&lt;/p&gt;
+describes two columns, named 'ra' and 'dec', both floating points.
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobSoapIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+DataSet: Standard .Net DataSet.  We recommend clients that are not using .Net use the other function, ExecuteQuickJob.&lt;br/&gt;
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobDSSoapIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobDSSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobSoapIn"/>
+      <wsdl:output message="tns:SubmitJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+Query results are inserted into the given table. If no table is specified then a new table with a unique name is created.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string table : Target table name&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobIntoSoapIn"/>
+      <wsdl:output message="tns:SubmitJobIntoSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Schedules a non-quick job for cancellation.  Has no effect on quick jobs.&lt;br/&gt;
+Users may only cancel jobs they own, otherwise an exception is thrown.&lt;br/&gt;
+This method does nothing and returns nothing if jobid is not an actual job.&lt;br/&gt;
+Otherwise, this method returns once the status of the specified job has changed to 'Canceling' (int = 2).&lt;br/&gt;
+Note that a job is not completely cancelled until the status of that job is 'Cancelled' (or 'Failed'); until then it still consumes a queue slot.&lt;br/&gt;
+Transition from 'Canceling' to 'Cancelled' is an internal operation and is not controlled though web services.&lt;br/&gt;
+This method returns nothing on success.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the cancellation will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job to cancel&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:CancelJobSoapIn"/>
+      <wsdl:output message="tns:CancelJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an int that represents the current status of a job.&lt;br/&gt;
+Possible values and their meanings are shown below.&lt;br/&gt;
+&lt;br/&gt;
+&amp;nbsp;0 = ready&lt;br/&gt;
+&amp;nbsp;1 = started&lt;br/&gt;
+&amp;nbsp;2 = canceling&lt;br/&gt;
+&amp;nbsp;3 = cancelled&lt;br/&gt; 
+&amp;nbsp;4 = failed&lt;br/&gt;
+&amp;nbsp;5 = finished&lt;br/&gt;
+&lt;br/&gt;
+'ready' is an idle state assigned to jobs created, but not yet processed.&lt;br/&gt;
+'started' and 'canceling' are active states, describing jobs that are currently processing&lt;br/&gt;
+'cancelled', 'failed' and 'finished' are final states, indicating a job's execution has terminated.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the status will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job whose status will be retrieved.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+int : A number representing the current status of the requested job.  See above for what those numbers means.
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobStatusSoapIn"/>
+      <wsdl:output message="tns:GetJobStatusSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJJob objects relevant to the conditions parameter.&lt;br/&gt;
+GetJobs() will only return jobs created by the owner_wsid parameter,&lt;br/&gt;
+unless owner_wsid has the 'admin' privilege, in which case all jobs are returnable.&lt;br/&gt;
+The 'conditions' parameter is a specifically formatted string describing which jobs should be retrieved.&lt;br/&gt;
+At the top level, this parameter is a list of keys, separated by ';'.&lt;br/&gt;
+Each key set is described by a string key followed by ':' followed by a '|' separated list of conditions.&lt;br/&gt;
+Each condition may have one of the following possible formats:&lt;br/&gt;
+&lt;br/&gt;
+VALUE  (equality) &lt;br/&gt;
+VALUE, (equal or greater to VALUE)&lt;br/&gt;
+,VALUE (less than or equal to VALUE)&lt;br/&gt;
+V1,V2  (between V1 and V2 (inclusive))&lt;br/&gt;
+&lt;br/&gt;
+String and DateTime values should not be quoted and may not contain any special characters (:;,|).&lt;br/&gt;
+DateTime values can be any format that .net will &lt;a href="http://msdn2.microsoft.com/en-us/library/az4se3k1.aspx"&gt;parse&lt;/a&gt;, so long as they do not contain any of the above special characters.&lt;br/&gt;
+&lt;br/&gt;
+The jobs returned are determined by the intersection of the keys, given the union of their conditions&lt;br/&gt;
+&lt;br/&gt;
+Example 1:&lt;br/&gt;
+jobid : 12345;&lt;br/&gt;
+Jobs with a jobid equal to 12345.&lt;br/&gt;
+&lt;br/&gt;
+Example 2:&lt;br/&gt;
+jobid : 123|321|132;&lt;br/&gt;
+Jobs with a jobid equal to 123 or 321 or 132.&lt;br/&gt;
+&lt;br/&gt;
+Example 3:&lt;br/&gt;
+jobid : 123|321; status : 5&lt;br/&gt;
+Jobs with a status of 5 and a jobid of 123 of 321.&lt;br/&gt;
+&lt;br/&gt;
+Example 4:&lt;br/&gt;
+jobid : 123,|,122&lt;br/&gt;
+Returns jobs with id greater or equal to 123 or less than or equal 122 (all of a users jobs).&lt;br/&gt;
+&lt;br/&gt;
+Example 5:&lt;br/&gt;
+TimeEnd : 2008-04-5,&lt;br/&gt;
+All jobs that ended after April 5, 2008.&lt;br/&gt;
+&lt;br/&gt;
+The following are valid keys:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+long WSID : The WebServicesID of the owner of this job.  If owner_wsid does not have the 'admin' privilege, then this has no effect.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long owner_wsid : ID of owner of jobs&lt;br/&gt;
+string owner_pw : Password of said owner.&lt;br/&gt;
+string conditions : A formatted string describing the conditions for the search.  See above for details on this.&lt;br/&gt;
+bool includeSystem : Determines whether to return system jobs&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJJob[] : An array of all jobs matching the input conditions.&lt;br/&gt;
+&lt;br/&gt;
+A CJJob object contains:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+long Rows : Number of rows this job modified, if applicable&lt;br/&gt;
+WebServicesID : Identifier of user that submitted this job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string OutputLoc : The URL of the output.  This field is only non-null for completed jobs where OutputType != Query&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsSoapIn"/>
+      <wsdl:output message="tns:GetJobsSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Same as GetJobs, but returns an array of Job objects.</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsJobSoapIn"/>
+      <wsdl:output message="tns:GetJobsJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJQueue objects that summarize, for a particular user, their available contexts and the respective timeouts of.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose contexts will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJQueue[] : An array of CJQueue objects representing all available queues for the input user.&lt;br/&gt;
+&lt;br/&gt;
+A CJQueue object contains:&lt;br/&gt;
+string Context : Name of the context&lt;br/&gt;
+int Timeout : The maximum time a job is allowed to run.  The 'estimate' parameter in SubmitJob maps to the closest Timeout of a given context.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetQueuesSoapIn"/>
+      <wsdl:output message="tns:GetQueuesSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJType objects that summarize, for a particular user, all available job types.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose types will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJType[] : An array representing all available job types for a user.&lt;br/&gt;
+&lt;br/&gt;
+A CJType object contains:&lt;br/&gt;
+string Type : Name of the type&lt;br/&gt;
+string Description : Description of this type&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobTypesSoapIn"/>
+      <wsdl:output message="tns:GetJobTypesSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits a table extraction job.&lt;br/&gt;
+On success, returns the jobid of the newly created job.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table to extract.&lt;br/&gt;
+string type : describes type of output to create.  Valid types are all types returned from GetJobTypes(), excluding 'QUERY'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier (jobid) of the newly created job.
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitExtractJobSoapIn"/>
+      <wsdl:output message="tns:SubmitExtractJobSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Loads data into a table in mydb. &lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table into which data will be loaded.&lt;br/&gt;
+string data: ASCII encoded CSV data.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:UploadDataSoapIn"/>
+      <wsdl:output message="tns:UploadDataSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Suspends or wakes a service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+string state: New state of specified service.  Values may be 'SUSPENDING' or 'WAKING'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:SetServiceStateSoapIn"/>
+      <wsdl:output message="tns:SetServiceStateSoapOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Gets the state of the specified service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : The state of the specified service&lt;br/&gt;
+&lt;br/&gt;
+Possible states include:&lt;br/&gt;
+RUNNING = Service is functioning normally.&lt;br/&gt;
+SUSPENDING = Service will be suspended on next cycle.&lt;br/&gt;
+SUSPENDED = Service is suspended.  Continues to cycle, but no longer performs any other actions.&lt;br/&gt;
+WAKING = Service will be RUNNING on next cycle.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetServiceStateSoapIn"/>
+      <wsdl:output message="tns:GetServiceStateSoapOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="JobsHttpGet">
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Some description goes here...</wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobOIDHttpGetIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobOIDHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : A typed-csv format string containing the results of the query.&lt;br/&gt;
+Column types are embedded in the column headers.  For example, &lt;br/&gt;
+&lt;p&gt;'[ra]:Float,[dec]:Float'&lt;/p&gt;
+describes two columns, named 'ra' and 'dec', both floating points.
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobHttpGetIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+DataSet: Standard .Net DataSet.  We recommend clients that are not using .Net use the other function, ExecuteQuickJob.&lt;br/&gt;
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobDSHttpGetIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobDSHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobHttpGetIn"/>
+      <wsdl:output message="tns:SubmitJobHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+Query results are inserted into the given table. If no table is specified then a new table with a unique name is created.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string table : Target table name&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobIntoHttpGetIn"/>
+      <wsdl:output message="tns:SubmitJobIntoHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Schedules a non-quick job for cancellation.  Has no effect on quick jobs.&lt;br/&gt;
+Users may only cancel jobs they own, otherwise an exception is thrown.&lt;br/&gt;
+This method does nothing and returns nothing if jobid is not an actual job.&lt;br/&gt;
+Otherwise, this method returns once the status of the specified job has changed to 'Canceling' (int = 2).&lt;br/&gt;
+Note that a job is not completely cancelled until the status of that job is 'Cancelled' (or 'Failed'); until then it still consumes a queue slot.&lt;br/&gt;
+Transition from 'Canceling' to 'Cancelled' is an internal operation and is not controlled though web services.&lt;br/&gt;
+This method returns nothing on success.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the cancellation will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job to cancel&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:CancelJobHttpGetIn"/>
+      <wsdl:output message="tns:CancelJobHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an int that represents the current status of a job.&lt;br/&gt;
+Possible values and their meanings are shown below.&lt;br/&gt;
+&lt;br/&gt;
+&amp;nbsp;0 = ready&lt;br/&gt;
+&amp;nbsp;1 = started&lt;br/&gt;
+&amp;nbsp;2 = canceling&lt;br/&gt;
+&amp;nbsp;3 = cancelled&lt;br/&gt; 
+&amp;nbsp;4 = failed&lt;br/&gt;
+&amp;nbsp;5 = finished&lt;br/&gt;
+&lt;br/&gt;
+'ready' is an idle state assigned to jobs created, but not yet processed.&lt;br/&gt;
+'started' and 'canceling' are active states, describing jobs that are currently processing&lt;br/&gt;
+'cancelled', 'failed' and 'finished' are final states, indicating a job's execution has terminated.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the status will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job whose status will be retrieved.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+int : A number representing the current status of the requested job.  See above for what those numbers means.
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobStatusHttpGetIn"/>
+      <wsdl:output message="tns:GetJobStatusHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJJob objects relevant to the conditions parameter.&lt;br/&gt;
+GetJobs() will only return jobs created by the owner_wsid parameter,&lt;br/&gt;
+unless owner_wsid has the 'admin' privilege, in which case all jobs are returnable.&lt;br/&gt;
+The 'conditions' parameter is a specifically formatted string describing which jobs should be retrieved.&lt;br/&gt;
+At the top level, this parameter is a list of keys, separated by ';'.&lt;br/&gt;
+Each key set is described by a string key followed by ':' followed by a '|' separated list of conditions.&lt;br/&gt;
+Each condition may have one of the following possible formats:&lt;br/&gt;
+&lt;br/&gt;
+VALUE  (equality) &lt;br/&gt;
+VALUE, (equal or greater to VALUE)&lt;br/&gt;
+,VALUE (less than or equal to VALUE)&lt;br/&gt;
+V1,V2  (between V1 and V2 (inclusive))&lt;br/&gt;
+&lt;br/&gt;
+String and DateTime values should not be quoted and may not contain any special characters (:;,|).&lt;br/&gt;
+DateTime values can be any format that .net will &lt;a href="http://msdn2.microsoft.com/en-us/library/az4se3k1.aspx"&gt;parse&lt;/a&gt;, so long as they do not contain any of the above special characters.&lt;br/&gt;
+&lt;br/&gt;
+The jobs returned are determined by the intersection of the keys, given the union of their conditions&lt;br/&gt;
+&lt;br/&gt;
+Example 1:&lt;br/&gt;
+jobid : 12345;&lt;br/&gt;
+Jobs with a jobid equal to 12345.&lt;br/&gt;
+&lt;br/&gt;
+Example 2:&lt;br/&gt;
+jobid : 123|321|132;&lt;br/&gt;
+Jobs with a jobid equal to 123 or 321 or 132.&lt;br/&gt;
+&lt;br/&gt;
+Example 3:&lt;br/&gt;
+jobid : 123|321; status : 5&lt;br/&gt;
+Jobs with a status of 5 and a jobid of 123 of 321.&lt;br/&gt;
+&lt;br/&gt;
+Example 4:&lt;br/&gt;
+jobid : 123,|,122&lt;br/&gt;
+Returns jobs with id greater or equal to 123 or less than or equal 122 (all of a users jobs).&lt;br/&gt;
+&lt;br/&gt;
+Example 5:&lt;br/&gt;
+TimeEnd : 2008-04-5,&lt;br/&gt;
+All jobs that ended after April 5, 2008.&lt;br/&gt;
+&lt;br/&gt;
+The following are valid keys:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+long WSID : The WebServicesID of the owner of this job.  If owner_wsid does not have the 'admin' privilege, then this has no effect.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long owner_wsid : ID of owner of jobs&lt;br/&gt;
+string owner_pw : Password of said owner.&lt;br/&gt;
+string conditions : A formatted string describing the conditions for the search.  See above for details on this.&lt;br/&gt;
+bool includeSystem : Determines whether to return system jobs&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJJob[] : An array of all jobs matching the input conditions.&lt;br/&gt;
+&lt;br/&gt;
+A CJJob object contains:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+long Rows : Number of rows this job modified, if applicable&lt;br/&gt;
+WebServicesID : Identifier of user that submitted this job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string OutputLoc : The URL of the output.  This field is only non-null for completed jobs where OutputType != Query&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsHttpGetIn"/>
+      <wsdl:output message="tns:GetJobsHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Same as GetJobs, but returns an array of Job objects.</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsJobHttpGetIn"/>
+      <wsdl:output message="tns:GetJobsJobHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJQueue objects that summarize, for a particular user, their available contexts and the respective timeouts of.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose contexts will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJQueue[] : An array of CJQueue objects representing all available queues for the input user.&lt;br/&gt;
+&lt;br/&gt;
+A CJQueue object contains:&lt;br/&gt;
+string Context : Name of the context&lt;br/&gt;
+int Timeout : The maximum time a job is allowed to run.  The 'estimate' parameter in SubmitJob maps to the closest Timeout of a given context.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetQueuesHttpGetIn"/>
+      <wsdl:output message="tns:GetQueuesHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJType objects that summarize, for a particular user, all available job types.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose types will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJType[] : An array representing all available job types for a user.&lt;br/&gt;
+&lt;br/&gt;
+A CJType object contains:&lt;br/&gt;
+string Type : Name of the type&lt;br/&gt;
+string Description : Description of this type&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobTypesHttpGetIn"/>
+      <wsdl:output message="tns:GetJobTypesHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits a table extraction job.&lt;br/&gt;
+On success, returns the jobid of the newly created job.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table to extract.&lt;br/&gt;
+string type : describes type of output to create.  Valid types are all types returned from GetJobTypes(), excluding 'QUERY'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier (jobid) of the newly created job.
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitExtractJobHttpGetIn"/>
+      <wsdl:output message="tns:SubmitExtractJobHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Loads data into a table in mydb. &lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table into which data will be loaded.&lt;br/&gt;
+string data: ASCII encoded CSV data.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:UploadDataHttpGetIn"/>
+      <wsdl:output message="tns:UploadDataHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Suspends or wakes a service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+string state: New state of specified service.  Values may be 'SUSPENDING' or 'WAKING'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:SetServiceStateHttpGetIn"/>
+      <wsdl:output message="tns:SetServiceStateHttpGetOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Gets the state of the specified service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : The state of the specified service&lt;br/&gt;
+&lt;br/&gt;
+Possible states include:&lt;br/&gt;
+RUNNING = Service is functioning normally.&lt;br/&gt;
+SUSPENDING = Service will be suspended on next cycle.&lt;br/&gt;
+SUSPENDED = Service is suspended.  Continues to cycle, but no longer performs any other actions.&lt;br/&gt;
+WAKING = Service will be RUNNING on next cycle.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetServiceStateHttpGetIn"/>
+      <wsdl:output message="tns:GetServiceStateHttpGetOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="JobsHttpPost">
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Some description goes here...</wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobOIDHttpPostIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobOIDHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : A typed-csv format string containing the results of the query.&lt;br/&gt;
+Column types are embedded in the column headers.  For example, &lt;br/&gt;
+&lt;p&gt;'[ra]:Float,[dec]:Float'&lt;/p&gt;
+describes two columns, named 'ra' and 'dec', both floating points.
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobHttpPostIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Executes a synchronous query in the shortest queue of a given context.&lt;br/&gt;
+Returns job results on success, myriad of exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job&lt;br/&gt;
+bool isSystem : System jobs are not visible in the web UI and require a flag with GetJobs().&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+DataSet: Standard .Net DataSet.  We recommend clients that are not using .Net use the other function, ExecuteQuickJob.&lt;br/&gt;
+        </wsdl:documentation>
+      <wsdl:input message="tns:ExecuteQuickJobDSHttpPostIn"/>
+      <wsdl:output message="tns:ExecuteQuickJobDSHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobHttpPostIn"/>
+      <wsdl:output message="tns:SubmitJobHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits an asynchronous query to a queue longer than the shortest queue of a given context.&lt;br/&gt;
+Returns a JobID on successful submission, exceptions otherwise.&lt;br/&gt;
+Query results are inserted into the given table. If no table is specified then a new table with a unique name is created.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the query will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string qry : Query to run&lt;br/&gt;
+string context : Context of job&lt;br/&gt;
+string table : Target table name&lt;br/&gt;
+string taskname : Optional identifier of job.&lt;br/&gt;
+int estimate : Job will be run in the queue with the time limit nearest to 'estimate'.  Values are in minutes.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier for the newly submitted job
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitJobIntoHttpPostIn"/>
+      <wsdl:output message="tns:SubmitJobIntoHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Schedules a non-quick job for cancellation.  Has no effect on quick jobs.&lt;br/&gt;
+Users may only cancel jobs they own, otherwise an exception is thrown.&lt;br/&gt;
+This method does nothing and returns nothing if jobid is not an actual job.&lt;br/&gt;
+Otherwise, this method returns once the status of the specified job has changed to 'Canceling' (int = 2).&lt;br/&gt;
+Note that a job is not completely cancelled until the status of that job is 'Cancelled' (or 'Failed'); until then it still consumes a queue slot.&lt;br/&gt;
+Transition from 'Canceling' to 'Cancelled' is an internal operation and is not controlled though web services.&lt;br/&gt;
+This method returns nothing on success.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the cancellation will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job to cancel&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:CancelJobHttpPostIn"/>
+      <wsdl:output message="tns:CancelJobHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an int that represents the current status of a job.&lt;br/&gt;
+Possible values and their meanings are shown below.&lt;br/&gt;
+&lt;br/&gt;
+&amp;nbsp;0 = ready&lt;br/&gt;
+&amp;nbsp;1 = started&lt;br/&gt;
+&amp;nbsp;2 = canceling&lt;br/&gt;
+&amp;nbsp;3 = cancelled&lt;br/&gt; 
+&amp;nbsp;4 = failed&lt;br/&gt;
+&amp;nbsp;5 = finished&lt;br/&gt;
+&lt;br/&gt;
+'ready' is an idle state assigned to jobs created, but not yet processed.&lt;br/&gt;
+'started' and 'canceling' are active states, describing jobs that are currently processing&lt;br/&gt;
+'cancelled', 'failed' and 'finished' are final states, indicating a job's execution has terminated.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account the status will be run under.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+long jobId : Identifier of the job whose status will be retrieved.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+int : A number representing the current status of the requested job.  See above for what those numbers means.
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobStatusHttpPostIn"/>
+      <wsdl:output message="tns:GetJobStatusHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJJob objects relevant to the conditions parameter.&lt;br/&gt;
+GetJobs() will only return jobs created by the owner_wsid parameter,&lt;br/&gt;
+unless owner_wsid has the 'admin' privilege, in which case all jobs are returnable.&lt;br/&gt;
+The 'conditions' parameter is a specifically formatted string describing which jobs should be retrieved.&lt;br/&gt;
+At the top level, this parameter is a list of keys, separated by ';'.&lt;br/&gt;
+Each key set is described by a string key followed by ':' followed by a '|' separated list of conditions.&lt;br/&gt;
+Each condition may have one of the following possible formats:&lt;br/&gt;
+&lt;br/&gt;
+VALUE  (equality) &lt;br/&gt;
+VALUE, (equal or greater to VALUE)&lt;br/&gt;
+,VALUE (less than or equal to VALUE)&lt;br/&gt;
+V1,V2  (between V1 and V2 (inclusive))&lt;br/&gt;
+&lt;br/&gt;
+String and DateTime values should not be quoted and may not contain any special characters (:;,|).&lt;br/&gt;
+DateTime values can be any format that .net will &lt;a href="http://msdn2.microsoft.com/en-us/library/az4se3k1.aspx"&gt;parse&lt;/a&gt;, so long as they do not contain any of the above special characters.&lt;br/&gt;
+&lt;br/&gt;
+The jobs returned are determined by the intersection of the keys, given the union of their conditions&lt;br/&gt;
+&lt;br/&gt;
+Example 1:&lt;br/&gt;
+jobid : 12345;&lt;br/&gt;
+Jobs with a jobid equal to 12345.&lt;br/&gt;
+&lt;br/&gt;
+Example 2:&lt;br/&gt;
+jobid : 123|321|132;&lt;br/&gt;
+Jobs with a jobid equal to 123 or 321 or 132.&lt;br/&gt;
+&lt;br/&gt;
+Example 3:&lt;br/&gt;
+jobid : 123|321; status : 5&lt;br/&gt;
+Jobs with a status of 5 and a jobid of 123 of 321.&lt;br/&gt;
+&lt;br/&gt;
+Example 4:&lt;br/&gt;
+jobid : 123,|,122&lt;br/&gt;
+Returns jobs with id greater or equal to 123 or less than or equal 122 (all of a users jobs).&lt;br/&gt;
+&lt;br/&gt;
+Example 5:&lt;br/&gt;
+TimeEnd : 2008-04-5,&lt;br/&gt;
+All jobs that ended after April 5, 2008.&lt;br/&gt;
+&lt;br/&gt;
+The following are valid keys:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+long WSID : The WebServicesID of the owner of this job.  If owner_wsid does not have the 'admin' privilege, then this has no effect.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long owner_wsid : ID of owner of jobs&lt;br/&gt;
+string owner_pw : Password of said owner.&lt;br/&gt;
+string conditions : A formatted string describing the conditions for the search.  See above for details on this.&lt;br/&gt;
+bool includeSystem : Determines whether to return system jobs&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJJob[] : An array of all jobs matching the input conditions.&lt;br/&gt;
+&lt;br/&gt;
+A CJJob object contains:&lt;br/&gt;
+long JobID : Unique identifier of job&lt;br/&gt;
+long Rows : Number of rows this job modified, if applicable&lt;br/&gt;
+WebServicesID : Identifier of user that submitted this job&lt;br/&gt;
+DateTime TimeSubmit : When the job was submitted&lt;br/&gt;
+DateTime TimeStart : When the job was started&lt;br/&gt;
+DateTime TimeEnd : When the job completed/cancelled/failed&lt;br/&gt;
+int Status : Current status of the job.  See the GetJobStatus() description for possible Status values.&lt;br/&gt;
+int Queue : The queue the job ran in.&lt;br/&gt;
+string TaskName : The user submitted descriptor for the job.  This can be null.&lt;br/&gt;
+string OutputLoc : The URL of the output.  This field is only non-null for completed jobs where OutputType != Query&lt;br/&gt;
+string Error : Error message for this job, if any&lt;br/&gt;
+string Query : The query submitted for this job&lt;br/&gt;
+string Context : The context of this job&lt;br/&gt;
+string Type : The type of this job.  See GetJobTypes for a listing of possible values.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsHttpPostIn"/>
+      <wsdl:output message="tns:GetJobsHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Same as GetJobs, but returns an array of Job objects.</wsdl:documentation>
+      <wsdl:input message="tns:GetJobsJobHttpPostIn"/>
+      <wsdl:output message="tns:GetJobsJobHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJQueue objects that summarize, for a particular user, their available contexts and the respective timeouts of.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose contexts will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJQueue[] : An array of CJQueue objects representing all available queues for the input user.&lt;br/&gt;
+&lt;br/&gt;
+A CJQueue object contains:&lt;br/&gt;
+string Context : Name of the context&lt;br/&gt;
+int Timeout : The maximum time a job is allowed to run.  The 'estimate' parameter in SubmitJob maps to the closest Timeout of a given context.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetQueuesHttpPostIn"/>
+      <wsdl:output message="tns:GetQueuesHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Returns an array of CJType objects that summarize, for a particular user, all available job types.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of the account of whose types will be retrieved.&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+CJType[] : An array representing all available job types for a user.&lt;br/&gt;
+&lt;br/&gt;
+A CJType object contains:&lt;br/&gt;
+string Type : Name of the type&lt;br/&gt;
+string Description : Description of this type&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetJobTypesHttpPostIn"/>
+      <wsdl:output message="tns:GetJobTypesHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Submits a table extraction job.&lt;br/&gt;
+On success, returns the jobid of the newly created job.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table to extract.&lt;br/&gt;
+string type : describes type of output to create.  Valid types are all types returned from GetJobTypes(), excluding 'QUERY'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+long : A unique identifier (jobid) of the newly created job.
+</wsdl:documentation>
+      <wsdl:input message="tns:SubmitExtractJobHttpPostIn"/>
+      <wsdl:output message="tns:SubmitExtractJobHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Loads data into a table in mydb. &lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string tableName : Name of mydb table into which data will be loaded.&lt;br/&gt;
+string data: ASCII encoded CSV data.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:UploadDataHttpPostIn"/>
+      <wsdl:output message="tns:UploadDataHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Suspends or wakes a service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+string state: New state of specified service.  Values may be 'SUSPENDING' or 'WAKING'&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+Void
+</wsdl:documentation>
+      <wsdl:input message="tns:SetServiceStateHttpPostIn"/>
+      <wsdl:output message="tns:SetServiceStateHttpPostOut"/>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+Gets the state of the specified service component.&lt;br/&gt;
+Account must have the admin priv.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Parameters:&lt;/b&gt;&lt;br/&gt;
+long wsid : WebServicesID of admin account&lt;br/&gt;
+string pw : Password of said account&lt;br/&gt;
+string serviceName : Name of service that will have its state modified.  See /qhealth.aspx for a listing of valid service names.&lt;br/&gt;
+&lt;br/&gt;
+&lt;b&gt;Output:&lt;/b&gt;&lt;br/&gt;
+string : The state of the specified service&lt;br/&gt;
+&lt;br/&gt;
+Possible states include:&lt;br/&gt;
+RUNNING = Service is functioning normally.&lt;br/&gt;
+SUSPENDING = Service will be suspended on next cycle.&lt;br/&gt;
+SUSPENDED = Service is suspended.  Continues to cycle, but no longer performs any other actions.&lt;br/&gt;
+WAKING = Service will be RUNNING on next cycle.&lt;br/&gt;
+</wsdl:documentation>
+      <wsdl:input message="tns:GetServiceStateHttpPostIn"/>
+      <wsdl:output message="tns:GetServiceStateHttpPostOut"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="JobsSoap" type="tns:JobsSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJobOID" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJobDS" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/SubmitJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/SubmitJobInto" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/CancelJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetJobStatus" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetJobs" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetJobsJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetQueues" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetJobTypes" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/SubmitExtractJob" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/UploadData" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/SetServiceState" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <soap:operation soapAction="http://Services.Cas.jhu.edu/GetServiceState" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="JobsSoap12" type="tns:JobsSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJobOID" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/ExecuteQuickJobDS" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/SubmitJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/SubmitJobInto" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/CancelJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetJobStatus" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetJobs" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetJobsJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetQueues" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetJobTypes" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/SubmitExtractJob" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/UploadData" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/SetServiceState" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <soap12:operation soapAction="http://Services.Cas.jhu.edu/GetServiceState" style="document"/>
+      <wsdl:input>
+        <soap12:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="JobsHttpGet" type="tns:JobsHttpGet">
+    <http:binding verb="GET"/>
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <http:operation location="/ExecuteQuickJobOID"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <http:operation location="/ExecuteQuickJob"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <http:operation location="/ExecuteQuickJobDS"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <http:operation location="/SubmitJob"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <http:operation location="/SubmitJobInto"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <http:operation location="/CancelJob"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <http:operation location="/GetJobStatus"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <http:operation location="/GetJobs"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <http:operation location="/GetJobsJob"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <http:operation location="/GetQueues"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <http:operation location="/GetJobTypes"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <http:operation location="/SubmitExtractJob"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <http:operation location="/UploadData"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <http:operation location="/SetServiceState"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <http:operation location="/GetServiceState"/>
+      <wsdl:input>
+        <http:urlEncoded/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="JobsHttpPost" type="tns:JobsHttpPost">
+    <http:binding verb="POST"/>
+    <wsdl:operation name="ExecuteQuickJobOID">
+      <http:operation location="/ExecuteQuickJobOID"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJob">
+      <http:operation location="/ExecuteQuickJob"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExecuteQuickJobDS">
+      <http:operation location="/ExecuteQuickJobDS"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJob">
+      <http:operation location="/SubmitJob"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitJobInto">
+      <http:operation location="/SubmitJobInto"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelJob">
+      <http:operation location="/CancelJob"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobStatus">
+      <http:operation location="/GetJobStatus"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobs">
+      <http:operation location="/GetJobs"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobsJob">
+      <http:operation location="/GetJobsJob"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetQueues">
+      <http:operation location="/GetQueues"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetJobTypes">
+      <http:operation location="/GetJobTypes"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SubmitExtractJob">
+      <http:operation location="/SubmitExtractJob"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UploadData">
+      <http:operation location="/UploadData"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="SetServiceState">
+      <http:operation location="/SetServiceState"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output/>
+    </wsdl:operation>
+    <wsdl:operation name="GetServiceState">
+      <http:operation location="/GetServiceState"/>
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded"/>
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Jobs">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Provides basic job management functionality.</wsdl:documentation>
+    <wsdl:port name="JobsSoap" binding="tns:JobsSoap">
+      <soap:address location="http://skyserver.sdss.org/casjobs/services/jobs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="JobsSoap12" binding="tns:JobsSoap12">
+      <soap12:address location="http://skyserver.sdss.org/casjobs/services/jobs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="JobsHttpGet" binding="tns:JobsHttpGet">
+      <http:address location="http://skyserver.sdss.org/casjobs/services/jobs.asmx"/>
+    </wsdl:port>
+    <wsdl:port name="JobsHttpPost" binding="tns:JobsHttpPost">
+      <http:address location="http://skyserver.sdss.org/casjobs/services/jobs.asmx"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
