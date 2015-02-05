@@ -9,7 +9,7 @@ task gwt {
   ext.startupUrl = "${project['app-name']}.html"
   ext.localWorkers = "6"
   ext.style = "OBFUSCATED"
-  ext.maxHeapSize = "512M"
+  ext.maxHeapSize = "1024M"
   ext.debugAddr = "1234"
   ext.linkedDirName = project.projectDir.name
   ext.contextName = linkedDirName
@@ -125,6 +125,39 @@ task gwtRun (type: JavaExec) {
     args gwt.modules
   }
 }
+
+task gwtSuperDev (type: JavaExec) {
+  dependsOn gwt, loadConfig
+  description= 'GWT SuperDev Mode'
+  group = GWT_GROUP
+
+  inputs.source sourceSets.main.java.srcDirs
+  inputs.dir sourceSets.main.output.resourcesDir
+
+  main = 'com.google.gwt.dev.codeserver.CodeServer'
+
+  classpath {
+    [
+            "$fireflyPath/java/src",
+            sourceSets.main.java.srcDirs,           // Java source
+            sourceSets.main.output.resourcesDir,    // Generated resources
+            sourceSets.main.output.classesDir,      // Generated classes
+            sourceSets.main.compileClasspath,       // Deps
+    ]
+  }
+
+  doFirst {
+
+    file("$gwt.buildDir/superdev").mkdirs()
+    maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
+
+    args "-workDir", "$gwt.buildDir/superdev"
+    args gwt.modules
+
+  }
+}
+
+
 
 task immediateStart (type: Exec) {
   dependsOn gwt
