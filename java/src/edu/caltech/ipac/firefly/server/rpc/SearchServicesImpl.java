@@ -85,6 +85,11 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
 
     public BackgroundStatus getStatus(String id, boolean polling) { return BackgroundEnv.getStatus(id, polling); }
 
+    public boolean addIDToPushCriteria (String id) {
+        BackgroundEnv.addIDToPushCriteria(id);
+        return true;
+    }
+
     public boolean cleanup(String id) { return BackgroundEnv.cleanup(id); }
 
     public boolean cancel(String id) { return BackgroundEnv.cancel(id); }
@@ -133,6 +138,11 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
 
     public boolean clearPushEntry(String id, int idx) {
         BackgroundEnv.clearPushEntry(id,idx);
+        return true;
+    }
+
+    public boolean reportUserAction(String id, String desc, String data) {
+        BackgroundEnv.reportUserAction(id,desc,data);
         return true;
     }
 

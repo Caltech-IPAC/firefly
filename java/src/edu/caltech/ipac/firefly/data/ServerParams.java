@@ -67,6 +67,8 @@ public class ServerParams {
     public static final String STATIC_JSON_DATA = "staticJsonData";
     public static final String REQUESTED_DATA_SET = "RequestedDataSet";
     public static final String DATA_TYPE= "DataType";
+    public static final String DATA= "Data";
+    public static final String DESC= "Desc";
     public static final String SPACIAL_TYPE= "SpacialType";
     public static final String URL= "URL";
 
@@ -99,6 +101,7 @@ public class ServerParams {
     public static final String SUB_BACKGROUND_SEARCH= "subBackgroundSearch";
     public static final String GET_STATUS= "status";
     public static final String CANCEL= "cancel";
+    public static final String ADD_ID_TO_CRITERIA= "addIDToCriteria";
     public static final String CLEAN_UP= "cleanup";
     public static final String DOWNLOAD_PROGRESS= "downloadProgress";
     public static final String GET_DATA_FILE_VALUES= "getDataFileValues";
@@ -107,6 +110,7 @@ public class ServerParams {
     public static final String GET_EMAIL= "getEmail";
     public static final String RESEND_EMAIL= "resendEmail";
     public static final String CLEAR_PUSH_ENTRY= "clearPushEntry";
+    public static final String REPORT_USER_ACTION= "reportUserAction";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
     public static final String DS9_REGION= "ds9Region";
     public static final String SAVE_DS9_REGION= "saveDS9Region";
@@ -117,6 +121,8 @@ public class ServerParams {
     public static final String VIS_PUSH_CREATE_ID= "createID";
     public static final String VIS_PUSH_FITS= "pushFits";
     public static final String VIS_PUSH_REG= "pushRegion";
+    public static final String VIS_PUSH_TABLE= "pushTable";
+    public static final String VIS_QUERY_ACTION= "queryAction";
     public static final String VIS_PUSH_WPR= "pushWPR";
 
 

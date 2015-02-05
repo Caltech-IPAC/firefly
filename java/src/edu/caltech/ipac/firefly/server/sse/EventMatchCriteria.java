@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.sse;
  */
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,14 +18,19 @@ import java.util.List;
  */
 public class EventMatchCriteria {
 
-    private final List<EventTarget> matchList;
+    private volatile List<EventTarget> matchList;
 
     public EventMatchCriteria(EventTarget... targets) {
         this.matchList= Arrays.asList(targets);
     }
 
+    public synchronized void addMatchTarget(EventTarget target) {
+        matchList= new ArrayList<EventTarget>(matchList);
+        matchList.add(target);
+    }
 
-    public boolean matches(EventTarget target) {
+
+    public synchronized boolean matches(EventTarget target) {
         boolean matches=false;
         for(EventTarget  testTgt : matchList) {
             if (testTgt.matches(target)) {
@@ -35,7 +41,7 @@ public class EventMatchCriteria {
         return matches;
     }
 
-    public EventTarget getFirstTarget() { return matchList.get(0); }
+    public synchronized EventTarget getFirstTarget() { return matchList.get(0); }
 
     @Override
     public boolean equals(Object obj) {

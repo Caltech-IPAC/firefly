@@ -85,6 +85,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private PlotLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
     private final FlexTable _flipMbarDisplay= new FlexTable();
+    private HTML _sendToServerNotice= null;
 
     private final Map<String, String> _reqMods= new HashMap<String, String>(5);
     private final PlotWidgetGroup _group;
@@ -447,6 +448,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void setSelectionBarVisible(boolean visible) { _topPanel.setSelMBarVisible(visible); }
     public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
+    public void setSendToNoticeVisible(boolean visible) { _topPanel.setSendToNoticeVisible(visible); }
 
     public void setShowInlineTitle(boolean show) {
        setShowInlineTitle(show,false);
@@ -1038,12 +1040,20 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         GwtUtil.setStyles(flipMbar, "background", "none",
                                     "border", "none");
 
+
+
+        _sendToServerNotice= new HTML("<div class=\"sendToServerNotice\">Response sent to server</div>");
+//        setStyles(holder, "display", "table", "margin", "0 auto");
+
+
         _topPanel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
         _topPanel.addNorth(_flipMbarDisplay, TOOLBAR_SIZE);
+        _topPanel.addNorth(_sendToServerNotice, TOOLBAR_SIZE);
         _topPanel.add(_plotPanel);
 
         setSelectionBarVisible(false);
         setFlipBarVisible(false);
+        setSendToNoticeVisible(false);
 
         HTML oLabel= new HTML("<i>Options: </i>");
         _selectionMbarDisplay.setWidget(0,0,oLabel);
@@ -1304,6 +1314,14 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
 
+        void setSendToNoticeVisible(boolean visible) {
+            LayoutData data = (LayoutData) _sendToServerNotice.getLayoutData();
+            if (data!=null) {
+                if (visible)  data.size= TOOLBAR_SIZE;
+                else          data.size= 0;
+                forceLayout();
+            }
+        }
 
 
     }

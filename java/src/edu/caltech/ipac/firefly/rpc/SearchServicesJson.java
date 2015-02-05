@@ -99,6 +99,16 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
+    public void addIDToPushCriteria(String id, AsyncCallback<Boolean> async) {
+        List<Param> paramList = new ArrayList<Param>(1);
+        paramList.add(new Param(ServerParams.ID, id));
+        JsonUtils.doService(doJsonP, ServerParams.ADD_ID_TO_CRITERIA, paramList, async, new JsonUtils.Converter<Boolean>() {
+            public Boolean convert(String s) {
+                return Boolean.TRUE;
+            }
+        });
+    }
+
     public void cleanup(String id, AsyncCallback<Boolean> async) {
         List<Param> paramList = new ArrayList<Param>(1);
         paramList.add(new Param(ServerParams.ID, id));
@@ -195,6 +205,16 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
+    public void  reportUserAction(String id, String desc, String data, AsyncCallback<Boolean> async) {
+        List<Param> paramList = new ArrayList<Param>(1);
+        paramList.add(new Param(ServerParams.ID, id));
+        paramList.add(new Param(ServerParams.DATA, data));
+        JsonUtils.doService(doJsonP, ServerParams.REPORT_USER_ACTION, paramList, async, new JsonUtils.Converter<Boolean>() {
+            public Boolean convert(String s) {
+                return Boolean.TRUE;
+            }
+        });
+    }
 
 
     public void createDownloadScript(String id,

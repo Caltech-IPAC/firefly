@@ -7,6 +7,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.ui.BaseDialog;
 import edu.caltech.ipac.firefly.ui.ButtonType;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -96,7 +97,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
             public void onFailure(Throwable caught) { }
 
             public void onSuccess(String fileKey) {
-                loadRegFile(fileKey,cb);
+                loadRegFile(fileKey,cb,null);
 //                new VisTask().getDS9Region(fileKey,new AsyncCallback<RegionData>() {
 //                    public void onFailure(Throwable caught) {
 //                        PopupUtil.showInfo("failed");
@@ -113,7 +114,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
         });
     }
 
-    public static void loadRegFile(String fileOnServer, final AsyncCallback<String> cb) {
+    public static void loadRegFile(String fileOnServer, final AsyncCallback<String> cb, final MonitorItem monItem) {
         new VisTask().getDS9Region(fileOnServer,new AsyncCallback<RegionData>() {
             public void onFailure(Throwable caught) {
                 PopupUtil.showInfo("failed");
@@ -122,13 +123,14 @@ public class DS9RegionLoadDialog extends BaseDialog {
             public void onSuccess(RegionData result) {
                 loadRegion(result.getTitle(),
                            result.getRegionTextData(),
-                           result.getRegionParseErrors());
+                           result.getRegionParseErrors(),
+                           monItem);
                 if (cb!=null) cb.onSuccess("ok");
             }
         });
     }
 
-    private static void loadRegion(String title, String regText, String regErr) {
+    private static void loadRegion(String title, String regText, String regErr, MonitorItem monItem) {
         DrawingManager drawMan;
         List<String> retStrList= StringUtils.parseStringList(regText, StringUtils.STRING_SPLIT_TOKEN,0);
         List<String> errStrList= StringUtils.parseStringList(regErr);
@@ -139,6 +141,9 @@ public class DS9RegionLoadDialog extends BaseDialog {
         }
         if (regList.size()>0) {
             RegionConnection rc= new RegionConnection(title, regList);
+            if (monItem!=null && rc.getActionReporter()!=null) {
+                rc.getActionReporter().setMonitorItem(monItem);
+            }
             String id= "RegionOverlay" + (cnt++);
             RegionPrintable printable= new RegionPrintable(regList);
             drawMan= new DrawingManager(id, rc, printable);

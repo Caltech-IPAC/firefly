@@ -33,6 +33,7 @@ public interface SearchServicesAsync {
     void getStatus(String id, boolean polling, AsyncCallback<BackgroundStatus> async);
 
     void cancel(String id, AsyncCallback<Boolean> async);
+    void addIDToPushCriteria(String id, AsyncCallback<Boolean> async);
 
     void cleanup(String id, AsyncCallback<Boolean> async);
 
@@ -45,6 +46,7 @@ public interface SearchServicesAsync {
 
     public void getEmail(String id, AsyncCallback<String> async);
     public void clearPushEntry(String id, int idx, AsyncCallback<Boolean> async);
+    public void  reportUserAction(String id, String desc, String data, AsyncCallback<Boolean> async);
 
     public void resendEmail(List<String> idList, String email, AsyncCallback<Boolean> async);
 

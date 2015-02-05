@@ -113,6 +113,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.SUB_BACKGROUND_SEARCH,  new SearchServerCommands.SubmitBackgroundSearch());
         _cmdMap.put(ServerParams.GET_STATUS,             new SearchServerCommands.GetStatus());
         _cmdMap.put(ServerParams.CANCEL,                 new SearchServerCommands.Cancel());
+        _cmdMap.put(ServerParams.ADD_ID_TO_CRITERIA,     new SearchServerCommands.AddIDToPushCriteria());
         _cmdMap.put(ServerParams.CLEAN_UP,               new SearchServerCommands.CleanUp());
         _cmdMap.put(ServerParams.DOWNLOAD_PROGRESS,      new SearchServerCommands.DownloadProgress());
         _cmdMap.put(ServerParams.GET_DATA_FILE_VALUES,   new SearchServerCommands.GetDataFileValues());
@@ -121,6 +122,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.GET_EMAIL,              new SearchServerCommands.GetEmail());
         _cmdMap.put(ServerParams.RESEND_EMAIL,           new SearchServerCommands.ResendEmail());
         _cmdMap.put(ServerParams.CLEAR_PUSH_ENTRY,       new SearchServerCommands.ClearPushEntry());
+        _cmdMap.put(ServerParams.REPORT_USER_ACTION,     new SearchServerCommands.ReportUserAction());
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
@@ -128,6 +130,8 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_CREATE_ID,     new VisPushCommands.GetPushID());
         _cmdMap.put(ServerParams.VIS_PUSH_FITS,          new VisPushCommands.PushFITS());
         _cmdMap.put(ServerParams.VIS_PUSH_REG,          new VisPushCommands.PushRegion());
+        _cmdMap.put(ServerParams.VIS_PUSH_TABLE,        new VisPushCommands.PushTable());
+        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new VisPushCommands.QueryAction());
 //        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new VisPushCommands.PushFITS());
 
 

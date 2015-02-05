@@ -45,6 +45,7 @@ public abstract class TableDataConnection implements DataConnection {
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
     private List<String> _subGroupList= null;
+    private ActionReporter actionReporter= new ActionReporter();
 
     public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, false, true, false); }
 
@@ -93,6 +94,11 @@ public abstract class TableDataConnection implements DataConnection {
                 idxToSet= -1;
             }
         }
+        ActionReporter reporter= getActionReporter();
+        if (_lastDataReturn!=null && reporter!=null && reporter.isReporting()) {
+            DrawObj drawObj= _lastDataReturn.get(idx);
+            reporter.report(getTitle(null), drawObj.getCenterPt().serialize());
+        }
         if (idxToSet>-1) getTable().highlightRow(true, idxToSet);
     }
 
@@ -128,6 +134,9 @@ public abstract class TableDataConnection implements DataConnection {
     public int getSelectedCount() {
         return tableDataView!=null ? tableDataView.getSelectionInfo().getSelectedCount() : 0;
     }
+
+    @Override
+    public ActionReporter getActionReporter() { return actionReporter; }
 
     public boolean getSupportsFilter() { return _supportsFilter; }
 

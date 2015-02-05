@@ -30,7 +30,7 @@ import java.util.List;
 public class BackgroundStatus implements Serializable {
 
     public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
-    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME }
+    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME }
 
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";
     public static final String PARAM_SEP = "<<BGSEP>>";
@@ -61,6 +61,10 @@ public class BackgroundStatus implements Serializable {
     public static final String PUSH_DATA_BASE = "PUSH_DATA_#";
     public static final String PUSH_TYPE_BASE = "PUSH_TYPE_#";
     public static final String PUSH_CNT =       "PUSH_CNT";
+    public static final String USER_RESPONSE =  "USER_RESPONSE_#";
+    public static final String USER_DESC     =  "USER_DESC_#";
+    public static final String RESPONSE_CNT =   "RESPONSE_CNT";
+    public static final String ACTIVE_REQUEST_CNT ="ACTIVE_REQUEST_CNT";
     // --------End Keys -------------------
 
 
@@ -98,10 +102,7 @@ public class BackgroundStatus implements Serializable {
         }
     }
 //====================================================================
-//
 //====================================================================
-
-
 //====================================================================
 
     public boolean containsParam(String param) {
@@ -239,6 +240,10 @@ public class BackgroundStatus implements Serializable {
                 state == BackgroundState.STARTING);
     }
 
+    //------------------------------------------
+    //---- Request browser load data -----------
+    //------------------------------------------
+
     public int getNumPushData() {
         return getIntParam(PUSH_CNT,0);
     }
@@ -258,6 +263,51 @@ public class BackgroundStatus implements Serializable {
     public PushType getPushType(int idx) {
         return StringUtils.getEnum(getParam(PUSH_TYPE_BASE + idx), PushType.WEB_PLOT_REQUEST);
     }
+
+    //------------------------------------------
+    //---- Contains responses from User --------
+    //------------------------------------------
+
+    public int getNumResponseData() {
+        return getIntParam(RESPONSE_CNT,0);
+    }
+
+    public void addResponseData(String desc, String data) {
+        int total= getNumResponseData();
+        setParam(USER_RESPONSE +total,data);
+        setParam(USER_DESC +total,desc);
+        total++;
+        setParam(RESPONSE_CNT,total+"");
+    }
+
+
+    public String getResponseData(int idx) {
+        return getParam(USER_RESPONSE +idx);
+    }
+    public String getResponseDesc(int idx) {
+        return getParam(USER_DESC +idx);
+    }
+    public int getRequestedCnt() {
+        return getIntParam(ACTIVE_REQUEST_CNT,0);
+    }
+
+    public void incRequestCnt() {
+        int cnt= getRequestedCnt();
+        cnt++;
+        setParam(ACTIVE_REQUEST_CNT,cnt+"");
+    }
+
+    public void decRequestCnt() {
+        int cnt= getRequestedCnt();
+        if (cnt>0) {
+            cnt--;
+            setParam(ACTIVE_REQUEST_CNT,cnt+"");
+        }
+    }
+
+    //------------------------------------------
+    //------------------------------------------
+    //------------------------------------------
 
     public void addMessage(String message) {
         int total= getNumMessages();
@@ -285,6 +335,9 @@ public class BackgroundStatus implements Serializable {
         }
         return list;
     }
+    //------------------------------------------
+    //------------------------------------------
+    //------------------------------------------
 
     public PackageProgress getPartProgress(int i) {
         String s= getParam(PACKAGE_PROGRESS_BASE+i);

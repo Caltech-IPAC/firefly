@@ -25,12 +25,10 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 public class FFToolsExtCatalogCmd extends RequestCmd {
 
     public  static final String COMMAND = "FFToolsExtCatalogCmd";
-    private final StandaloneUI aloneUI;
     public static final String SEARCH_PROC_ID = "IpacTableFromSource";
 
     public FFToolsExtCatalogCmd(StandaloneUI aloneUI) {
         super(COMMAND, "External Catalog load", "External Catalog load", true);
-        this.aloneUI= aloneUI;
     }
 
 

@@ -325,6 +325,7 @@ public class DrawingManager implements AsyncDataLoader {
 
 
     private Drawer connectDrawer(WebPlotView pv) {
+
         WebPlotView.MouseInfo mi = new WebPlotView.MouseInfo(new Mouse(pv),
                                                              "Click to select an Observation");
         boolean highPriority= _dataConnect!=null&&_dataConnect.isPriorityLayer();
@@ -342,6 +343,9 @@ public class DrawingManager implements AsyncDataLoader {
             if (_dataConnect.isVeryLargeData()) drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
 
             if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
+            ActionReporter r= _dataConnect.getActionReporter();
+//            pv.getMiniPlotWidget().setSendToNoticeVisible(r!=null && r.isReporting());
+            item.setSendToServer(r!=null && r.isReporting());
         }
         if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
         pv.addPersistentMouseInfo(mi);
@@ -382,6 +386,8 @@ public class DrawingManager implements AsyncDataLoader {
             if (_dataConnect == null) {
                 pv.setWebLayerItemActive(item, false);
             } else {
+                ActionReporter r= _dataConnect.getActionReporter();
+                item.setSendToServer(r!=null && r.isReporting());
                 item.setTitle(getTitle(pv));
                 pv.setWebLayerItemActive(item, true);
 //                if (_dataConnect.getOnlyShowIfDataIsVisible()) updateVisibilityBasedOnTableVisibility();

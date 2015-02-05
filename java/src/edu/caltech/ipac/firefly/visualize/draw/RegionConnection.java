@@ -42,6 +42,7 @@ public class RegionConnection implements DataConnection {
     private final WebEventManager _evManager = new WebEventManager();
     private static int titleCnt = 1;
     private String title;
+    private ActionReporter actionReporter= new ActionReporter();
 
 
     public RegionConnection(List<Region> regionList) {
@@ -80,6 +81,9 @@ public class RegionConnection implements DataConnection {
 
     public DrawConnector getDrawConnector() { return null; }
 
+    public ActionReporter getActionReporter() { return actionReporter; }
+
+
     public boolean isPriorityLayer() { return false; }
 
     public String getInitDefaultColor() { return "red"; }
@@ -101,7 +105,13 @@ public class RegionConnection implements DataConnection {
 
     public void setHighlightedIdx(int idx) {
         for(Region r : regionList) { r.setHighlighted(false); }
-        if (idx<regionList.size())  regionList.get(idx).setHighlighted(true);
+        if (idx<regionList.size())  {
+            Region highlightR= regionList.get(idx);
+            highlightR.setHighlighted(true);
+            if (actionReporter.isReporting()) {
+                actionReporter.report(getTitle(null),highlightR.serialize());
+            }
+        }
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
 

@@ -50,6 +50,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private String _title;
     private String _help;
     private Drawer _drawer;
+    private boolean sendToServer= false;
     private WebPlotView.MouseInfo _mouseInfo;
     private boolean _active = true;
     private Object _workerObj;
@@ -85,6 +86,13 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     }
 
 
+    public void setSendToServer(boolean sendToServer) {
+        this.sendToServer= sendToServer;
+    }
+
+    public boolean isSendToServer() {
+        return sendToServer;
+    }
 
     public void setWorkerObj(Object obj) { _workerObj= obj; }
     public Object getWorkerObj() { return _workerObj; }
@@ -323,6 +331,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         _drawer.setVisible(v);
         fireVisibleChange(v);
         if (_mouseInfo!=null)  _mouseInfo.setEnabled(v);
+        _pv.updateSendNotice();
     }
 
     private void fireVisibleChange(boolean v) {

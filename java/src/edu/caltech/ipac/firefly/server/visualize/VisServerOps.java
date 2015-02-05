@@ -1293,7 +1293,13 @@ public class VisServerOps {
                              new DataEntry.Str(StringUtils.combineStringList(r.getMsgList())));
 
             UploadFileInfo fi= (UploadFileInfo)sessionCache.get(new StringKey(fileKey));
-            String title= (fi!=null) ? fi.getFileName() : "Region file";
+            String title;
+            if (fi!=null) {
+                title= fi.getFileName();
+            }
+            else {
+                title= fileKey.startsWith("UPLOAD") ? "Region file" : regFile.getName();
+            }
             retval.putResult(WebPlotResult.TITLE, new DataEntry.Str(title));
             PlotServUtils.statsLog("ds9Region", fileKey);
             counters.incrementVis("Region read");

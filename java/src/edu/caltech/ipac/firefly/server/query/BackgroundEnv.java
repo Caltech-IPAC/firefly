@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.sse.EventTarget;
+import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
@@ -127,8 +128,22 @@ public class BackgroundEnv {
     public static void clearPushEntry(String id, int idx) {
         BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
         BackgroundStatus bgStat= pi.getStatus();
-        bgStat.removeParam(BackgroundStatus.PUSH_DATA_BASE+idx );
-        bgStat.removeParam(BackgroundStatus.PUSH_TYPE_BASE+idx );
+        if (bgStat!=null) {
+            bgStat.removeParam(BackgroundStatus.PUSH_DATA_BASE+idx );
+            bgStat.removeParam(BackgroundStatus.PUSH_TYPE_BASE+idx );
+            pi.setStatus(bgStat);
+        }
+    }
+
+    public static void reportUserAction(String id, String desc, String data) {
+        BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
+        BackgroundStatus bgStat= pi.getStatus();
+        if (bgStat!=null) {
+            if (bgStat.getRequestedCnt()>0) {
+                bgStat.addResponseData(desc, data);
+                pi.setStatus(bgStat);
+            }
+        }
     }
 
     public static ScriptRet createDownloadScript(String id,
@@ -146,8 +161,6 @@ public class BackgroundEnv {
             }
         }
         return retval;
-
-
     }
 
 
@@ -334,6 +347,10 @@ public class BackgroundEnv {
         return status;
     }
 
+    public static void addIDToPushCriteria(String id) {
+        ServerEventManager.addSessionExtraEventTarget(new EventTarget.BackgroundID(id));
+    }
+
     private static BackgroundStatus createUncachedStatus(String id, boolean polling) {
         BackgroundStatus status;
         int cnt= 0;
@@ -405,15 +422,16 @@ public class BackgroundEnv {
                                    String email,
                                    String dataSource,
                                    RequestOwner requestOwner) {
-            this(worker,baseFileName,title,email,dataSource,requestOwner,null);
+            this(worker,baseFileName,title,email,dataSource,requestOwner,null,null);
         }
 
         public BackgroundProcessor(Worker worker,
                                    String title,
                                    String dataSource,
                                    RequestOwner requestOwner,
-                                   String bid) {
-            this(worker,null,title,null,dataSource,requestOwner,bid);
+                                   String bid,
+                                   EventTarget target) {
+            this(worker,null,title,null,dataSource,requestOwner,bid,target);
         }
 
         public BackgroundProcessor(Worker worker,
@@ -422,7 +440,8 @@ public class BackgroundEnv {
                                    String email,
                                    String dataSource,
                                    RequestOwner requestOwner,
-                                   String bid) {
+                                   String bid,
+                                   EventTarget evTarget) {
             _bid = bid!=null ? bid : makeBackgroundID();
             _worker= worker;
             _baseFileName= baseFileName;
@@ -430,7 +449,7 @@ public class BackgroundEnv {
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            EventTarget target= new EventTarget.Session(requestOwner.getUserKey());
+            EventTarget target= evTarget==null ? new EventTarget.Session(requestOwner.getUserKey()) : evTarget;
             piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, target); // force a cache entry here
         }
 

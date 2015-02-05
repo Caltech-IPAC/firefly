@@ -22,15 +22,17 @@ public class ServerSentEventQueue {
 
     private final CometServletResponse cometResponse;
     private final EventMatchCriteria criteria;
+    private final String userKey;
     private long lastSentTime= System.currentTimeMillis();
 
 
 
 
-    public ServerSentEventQueue(CometServletResponse cometResponse, EventMatchCriteria criteria) {
+    public ServerSentEventQueue(CometServletResponse cometResponse, String userKey, EventMatchCriteria criteria) {
 
         this.cometResponse = cometResponse;
         this.criteria= criteria;
+        this.userKey= userKey;
     }
 
     long getLastSentTime() { return lastSentTime; }
@@ -40,8 +42,8 @@ public class ServerSentEventQueue {
 
 
 
-    CometServletResponse getCometResponse() { return cometResponse; }
-    EventMatchCriteria getCriteria() { return criteria; }
+//    CometServletResponse getCometResponse() { return cometResponse; }
+    public EventMatchCriteria getCriteria() { return criteria; }
 
     synchronized ServerSentEvent getEvent() {
         ServerSentEvent retval= null;
@@ -50,6 +52,9 @@ public class ServerSentEventQueue {
         return retval;
     }
 
+    public String getUserKey() {
+        return userKey;
+    }
 
     public synchronized void putEvent(ServerSentEvent ev) {
         if (criteria.matches(ev.getEvTarget())) {

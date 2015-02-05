@@ -71,6 +71,11 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
     public void addItem(MonitorItem item) {
         _monitorMap.put(item.getID(), item);
         syncWithCache(null);
+        SearchServicesAsync dserv= SearchServices.App.getInstance();
+        dserv.addIDToPushCriteria(item.getID(), new AsyncCallback<Boolean>() {
+            public void onFailure(Throwable caught) { }
+            public void onSuccess(Boolean success) { }
+        });
     }
 
     public void removeItem(MonitorItem item) {

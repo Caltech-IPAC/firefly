@@ -12,23 +12,23 @@ package edu.caltech.ipac.fftools.core;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.core.SearchAdmin;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
 import edu.caltech.ipac.firefly.data.fuse.PlotData;
+import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.TitleFlasher;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ui.DS9RegionLoadDialog;
-
-import java.util.Arrays;
 
 /**
  * @author Trey Roby
@@ -40,6 +40,7 @@ public class PushReceiver {
     private int consumedCnt= 0;
     private final StandaloneUI aloneUI;
     private static int idCnt= 0;
+    public static final String TABLE_SEARCH_PROC_ID = "IpacTableFromSource";
 
     public PushReceiver(final MonitorItem monItem, StandaloneUI aloneUI) {
         this.aloneUI= aloneUI;
@@ -47,7 +48,7 @@ public class PushReceiver {
         monItem.addUpdateListener(new MonitorItem.UpdateListener() {
             @Override
             public void update(MonitorItem item) {
-                consume(monItem.getStatus());
+                consume(monItem);
             }
         });
 
@@ -57,21 +58,28 @@ public class PushReceiver {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    protected void consume(BackgroundStatus bgStat) {
+    protected void consume(MonitorItem monItem) {
+        BackgroundStatus bgStat= monItem.getStatus();
         for(PushItem item= getNextItem(bgStat); (item!=null); item= getNextItem(bgStat) ) {
             TitleFlasher.flashTitle("!! New Image !!");
             String id=IMAGE_CMD_PLOT_ID+idCnt;
             idCnt++;
             CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
 //            consumedItems.add(wpr.toString());
+            String fileName;
             switch (item.pushType) {
                 case WEB_PLOT_REQUEST:
                     WebPlotRequest wpr= WebPlotRequest.parse(item.data);
                     prepareRequest(id, wpr);
                     break;
                 case REGION_FILE_NAME:
-                    String fileName= item.data;
-                    DS9RegionLoadDialog.loadRegFile(fileName,null);
+                    fileName= item.data;
+                    DS9RegionLoadDialog.loadRegFile(fileName,null,monItem);
+                    break;
+                case TABLE_FILE_NAME:
+                    fileName= item.data;
+                    loadTable(fileName,monItem);
+                    //
                     break;
             }
         }
@@ -79,15 +87,12 @@ public class PushReceiver {
 
 
     private PushItem getNextItem(BackgroundStatus bgStat ) {
-
-
         String inStr= null;
         int statusCnt= bgStat.getNumPushData();
 
         for(;(consumedCnt<statusCnt && inStr==null); consumedCnt++) {
             inStr= bgStat.getPushData(consumedCnt);
         }
-
 
         PushItem retval= null;
         if (inStr!=null) {
@@ -97,14 +102,6 @@ public class PushReceiver {
             consumedCnt++;
         }
         return retval;
-
-//
-//
-//        WebPlotRequest wpr= bgStat.getWebPlotRequest();
-//        if (consumedItems.contains(wpr.toString())) {
-//            wpr= null;
-//        }
-//        return wpr;
     }
 
 
@@ -128,65 +125,6 @@ public class PushReceiver {
     }
 
 
-
-    private void prepare3ColorRequest(final String id,
-                                      final WebPlotRequest red,
-                                      final WebPlotRequest green,
-                                      final WebPlotRequest blue) {
-
-        Timer t = new Timer() { // layout is slow sometime so delay a little (this is a hack)
-            @Override
-            public void run() {
-                deferredPlot3Color(id, red, green, blue);
-            }
-        };
-        t.schedule(100);
-    }
-
-    private void deferredPlot3Color(String id,
-                                    WebPlotRequest red,
-                                    WebPlotRequest green,
-                                    WebPlotRequest blue) {
-
-        aloneUI.getMultiViewer().forceExpand();
-        PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
-        dynData.set3ColorIDRequest(id, Arrays.asList(red, green, blue));
-    }
-
-
-    private static class ThreeRetrieved {
-        boolean redDone= false;
-        boolean greenDone= false;
-        boolean blueDone= false;
-
-        WebPlotRequest red= null;
-        WebPlotRequest green= null;
-        WebPlotRequest blue= null;
-
-        public void markDone(Band band, WebPlotRequest r) {
-            switch (band) {
-                case RED:
-                    redDone= true;
-                    red= r;
-                    break;
-                case GREEN:
-                    greenDone= true;
-                    green= r;
-                    break;
-                case BLUE:
-                    blueDone= true;
-                    blue= r;
-                    break;
-                case NO_BAND:
-                    break;
-            }
-        }
-
-        public boolean isAllDone() {
-            return redDone && blueDone && greenDone;
-        }
-    }
-
     private void clearEntry(final String id, final int idx) {
         Timer t= new Timer() {
             @Override
@@ -202,6 +140,37 @@ public class PushReceiver {
         t.schedule(120000);
     }
 
+
+    protected void loadTable(final String fileName, MonitorItem monItem) {
+
+        final TableServerRequest req = new TableServerRequest(TABLE_SEARCH_PROC_ID);
+        req.setStartIndex(0);
+        req.setPageSize(100);
+        req.setParam("source",fileName);
+        String title= findTitle(req);
+        FFToolEnv.getHub().getCatalogDisplay().addMonitorItemForTable(title,monItem);
+        SearchAdmin.getInstance().submitSearch(req, title);
+    }
+
+    private static String findTitle(TableServerRequest req) {
+        String title= "Loaded Table";
+        if (req.containsParam(ServerParams.TITLE)) {
+            title= req.getParam(ServerParams.TITLE);
+        }
+        else if (req.containsParam(ServerParams.SOURCE)) { // find another way to make a title
+            req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(req.getParam(ServerParams.SOURCE)));
+            String url = req.getParam(ServerParams.SOURCE);
+            int idx = url.lastIndexOf('/');
+            if (idx<0) idx = url.lastIndexOf('\\');
+            if (idx > 1) {
+                title = url.substring(idx+1);
+            } else {
+                title = url;
+            }
+        }
+        return title;
+
+    }
 
     private static final class PushItem {
         String data;

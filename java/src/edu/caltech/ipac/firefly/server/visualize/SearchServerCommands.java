@@ -104,6 +104,15 @@ public class SearchServerCommands {
         }
     }
 
+    public static class AddIDToPushCriteria extends BaseSearchServerCommand {
+        @Override
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            new SearchServicesImpl().addIDToPushCriteria(sp.getID());
+            return "true";
+        }
+    }
+
     public static class Cancel extends BaseSearchServerCommand {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
@@ -117,7 +126,7 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            new SearchServicesImpl().cancel(sp.getID());
+            new SearchServicesImpl().cleanup(sp.getID());
             return "true";
         }
     }
@@ -182,6 +191,18 @@ public class SearchServerCommands {
             String id= sp.getRequired(ServerParams.ID);
             int idx=   sp.getRequiredInt(ServerParams.IDX);
             new SearchServicesImpl().clearPushEntry(id,idx);
+            return "true";
+        }
+    }
+
+    public static class ReportUserAction extends BaseSearchServerCommand {
+        @Override
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String id= sp.getRequired(ServerParams.ID);
+            String desc= sp.getRequired(ServerParams.DESC);
+            String data= sp.getRequired(ServerParams.DATA);
+            new SearchServicesImpl().reportUserAction(id,desc,data);
             return "true";
         }
     }

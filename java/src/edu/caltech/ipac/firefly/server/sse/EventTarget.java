@@ -42,8 +42,8 @@ public abstract class EventTarget implements Serializable {
 
         @Override
         public boolean matches(EventTarget t) {
-            boolean retval= false;
-            if (t instanceof Workspace) {
+            boolean retval= (t instanceof AllClients);
+            if (!retval && t instanceof Workspace) {
                 retval= ComparisonUtil.equals(id,((Workspace)t).id);
             }
             return retval;
@@ -81,8 +81,8 @@ public abstract class EventTarget implements Serializable {
 
         @Override
         public boolean matches(EventTarget t) {
-            boolean retval= false;
-            if (t instanceof Session) {
+            boolean retval= (t instanceof AllClients);
+            if (!retval && t instanceof Session) {
                 retval= ComparisonUtil.equals(id,((Session)t).id);
             }
             return retval;
@@ -93,6 +93,42 @@ public abstract class EventTarget implements Serializable {
             return "EventTarget- sId:"+id+", wId:"+windowID;
         }
     }
+
+
+    public static class BackgroundID extends EventTarget {
+        final String bid;
+
+        public BackgroundID(String bid) {
+            this.bid = bid;
+        }
+
+        public String getBackgroundID() { return bid; }
+
+        public boolean equals(Object o) {
+            boolean retval= false;
+            if (o instanceof BackgroundID) {
+                retval= ComparisonUtil.equals(bid,((BackgroundID)o).bid);
+            }
+            return retval;
+        }
+
+        @Override
+        public boolean matches(EventTarget t) {
+            boolean retval= (t instanceof AllClients);
+            if (!retval && t instanceof BackgroundID) {  // match either bid or session ID
+                retval= ComparisonUtil.equals(bid,((BackgroundID)t).bid);
+            }
+            return retval;
+        }
+
+        @Override
+        public String toString() {
+            return "EventTarget- bId:"+bid;
+        }
+    }
+
+
+
 
     public static class AllClients extends EventTarget {
         private AllClients() {}
