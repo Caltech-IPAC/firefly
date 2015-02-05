@@ -5,7 +5,7 @@ def stopTomcat(remoteHost) {
 }
 
 def startTomcat(remoteHost) {
-  def cmd = ["$tomcat_home/bin/catalina.sh"];
+  def cmd = ["sh", "-l", "$tomcat_home/bin/catalina.sh"];
   if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
     cmd = cmd + "jpda" +  "start"
   } else {
