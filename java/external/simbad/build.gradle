@@ -21,7 +21,7 @@ compileJava.dependsOn wsdl
 
 jar {
   baseName = 'simbad_ws'
-  includes = ["cds/**", "VizieRBeta_pkg/**", "VizieR_pkg/**", "org/**", "net/**", "edu/**"]
+  includes = ["cds/**", "VizieRBeta_pkg/**", "VizieR_pkg/**", "org/**", "net/**", "edu/jhu/Cas/**"]
 }
 
 sourceSets {
