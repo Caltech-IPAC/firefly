@@ -1,11 +1,11 @@
 
 def stopTomcat(remoteHost) {
-  def desc = execCmd (remoteHost, true, "/etc/init.d/tomcat_init stop")
+  def desc = execCmd (remoteHost, true, ["/etc/init.d/tomcat_init", "stop"])
   println ">> Stopping Tomcat:.. $desc"
 }
 
 def startTomcat(remoteHost) {
-  def cmd = "/etc/init.d/tomcat_init start";
+  def cmd = ["/etc/init.d/tomcat_init", "start"];
 //  if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
 //    cmd = cmd + "jpda"
 //  }
@@ -32,9 +32,9 @@ task deployAllWars(dependsOn: loadConfig) << {
 
   sleep(15 * 1000)
 
-  execCmd(null, true, "rm -r $tomcat_home/temp/ehcache")
+  execCmd(null, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
   if (remoteHost != null) {
-    execCmd(remoteHost, true, "rm -r $tomcat_home/temp/ehcache")
+    execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
   }
 
   // copy all of the war files
@@ -60,7 +60,7 @@ def copyWar(file, remoteHost) {
   println ">> copying file: $file"
 
   def baseName = file.name.tokenize('.')[0]
-  execCmd(remoteHost, true, "rm -r $tomcat_home/webapps/$baseName")
+  execCmd(remoteHost, true, ["rm", "-r","$tomcat_home/webapps/$baseName"])
 
   if (remoteHost != null) {
     exec {
@@ -77,15 +77,37 @@ def copyWar(file, remoteHost) {
 }
 
 def execCmd(remoteHost, ignoreFailure, cmdLine) {
-
-  if (remoteHost != null) {
-    if (cmdLine.contains("#")) {
-      cmdLine = cmdLine.replaceAll('\\#', '\\\\#')
+  exec {
+    setIgnoreExitValue(ignoreFailure)
+    executable "ssh"
+    if (remoteHost != null) {
+      args "$remoteHost"
+    } else {
+      args "localhost"
     }
-    cmdLine = "ssh $remoteHost " + cmdLine
+    cmdLine.each { arg ->
+      if (arg.contains("#")) {
+        args arg.replaceAll('\\#', '\\\\#')
+      } else {
+        args arg
+      }
+    }
+
+
+//    if (remoteHost != null) {
+//      executable "ssh"
+//      args "$remoteHost"
+//      cmdLine.each { arg ->
+//        if (arg.contains("#")) {
+//          args arg.replaceAll('\\#', '\\\\#')
+//        } else {
+//          args arg
+//        }
+//      }
+//    } else {
+//      commandLine cmdLine
+//    }
+    logger.info( ">> execCmd: $commandLine" )
   }
-  def proc = cmdLine.execute()
-  logger.info( ">> execCmd: $cmdLine")
-  logger.info( ">> output: ${proc.getText()}")
 }
 
