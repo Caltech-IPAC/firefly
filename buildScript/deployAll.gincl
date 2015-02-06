@@ -79,19 +79,34 @@ def copyWar(file, remoteHost) {
 def execCmd(remoteHost, ignoreFailure, cmdLine) {
   exec {
     setIgnoreExitValue(ignoreFailure)
+    executable "ssh"
     if (remoteHost != null) {
-      executable "ssh"
       args "$remoteHost"
-      cmdLine.each { arg ->
-        if (arg.contains("#")) {
-          args arg.replaceAll('\\#', '\\\\#')
-        } else {
-          args arg
-        }
-      }
     } else {
-      commandLine cmdLine
+      args "localhost"
     }
+    cmdLine.each { arg ->
+      if (arg.contains("#")) {
+        args arg.replaceAll('\\#', '\\\\#')
+      } else {
+        args arg
+      }
+    }
+
+
+//    if (remoteHost != null) {
+//      executable "ssh"
+//      args "$remoteHost"
+//      cmdLine.each { arg ->
+//        if (arg.contains("#")) {
+//          args arg.replaceAll('\\#', '\\\\#')
+//        } else {
+//          args arg
+//        }
+//      }
+//    } else {
+//      commandLine cmdLine
+//    }
     logger.info( ">> execCmd: $commandLine" )
   }
 }
