@@ -429,7 +429,7 @@ public class FlipLR
 
 
        /* Now fix the header */
-       out_fits_header = FitsRead.clone_header(in_fits_header);
+       out_fits_header = FitsRead.cloneHeader(in_fits_header);
        out_fits_header.addValue("CRPIX1", 
 	   in_header.naxis1 - in_header.crpix1 +1 , null);
        if (in_header.using_cd)
