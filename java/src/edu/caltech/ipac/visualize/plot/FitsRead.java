@@ -987,7 +987,18 @@ public class FitsRead implements Serializable {
             deltasav = -64;
 
         float[] onedimdata32 = (float[]) onedimdata;
-        double[] tbl = (double[]) tblArray;
+        //double[] tbl = (double[]) tblArray;
+        int[] tblInt = (int[]) tblArray;
+        double[] tbl = new double[tblInt.length];
+        if (!tblArray.getClass().getSimpleName().equalsIgnoreCase("Double")){
+
+            for (int i=0; i<tblInt.length; i++){
+                tbl[i]= (double) tblInt[i];
+            }
+        }
+        else{
+            tbl = (double[]) tblArray;
+        }
         int i = 0;
         for (int line = start_line; line <= last_line; line++) {
             int start_index = line * naxis1 + start_pixel;
