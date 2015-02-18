@@ -398,6 +398,12 @@ public class QueryWise extends IBESearchProcessor {
                 else imageSetConstraint += "2";
                 n++;
             }
+            if (schema.contains(WiseRequest.NEOWISER_YR1)) {
+                if (n>0) imageSetConstraint += ",6";
+                else imageSetConstraint += "6";
+                n++;
+            }
+
 
             if (imageSets.length > 1) {
                 imageSetConstraint += ")";
