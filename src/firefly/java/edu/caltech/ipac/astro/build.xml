@@ -1,0 +1,25 @@
+<project name="IPAC Common astro.jar Build File" default="all" basedir="">
+    <description>
+        The build file for building astro.jar
+    </description>
+<!-- Project level init file -->
+    <property name="build.root" value="${basedir}/../../../../.."/>
+    <import file="${build.root}/tools/init.xml"/>
+
+<!-- local properties -->
+
+<!-- files to include in build -->
+    <property name="package.dir" value="edu/caltech/ipac/astro"/>
+
+<!-- files to exclude from build -->
+
+<!-- jar properties -->
+    <property name="jar.base" value="astro"/>
+    <property name="jar.file" value="${jar.base}.jar"/>
+    <property name="jar.display.name" value="Utilities for astronomy"/>
+    <property name="auto.update.attr" value="CRITICAL"/>
+
+    <target name="all" depends="jar"
+            description="build astro.jar">
+    </target>
+</project>

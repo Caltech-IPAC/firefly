@@ -97,7 +97,7 @@ task gwtRun (type: JavaExec) {
 
   classpath {
     [
-            "$fireflyPath/java/src",
+            "$fireflyPath/src/java",
             sourceSets.main.java.srcDirs,           // Java source
             sourceSets.main.output.resourcesDir,    // Generated resources
             sourceSets.main.output.classesDir,      // Generated classes
