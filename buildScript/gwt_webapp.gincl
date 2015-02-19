@@ -17,10 +17,11 @@ jar {
 }
 
 sourceSets {
-  main.java.srcDir  "$rootDir/java/src/"
+  main.java.srcDir  "java/"
   main.resources {
-    srcDir "$rootDir/java/src/"
+    srcDir "java/"
     include "edu/caltech/ipac/${project.projectDir.name}/resources/*.*"
+    include "edu/caltech/ipac/${project.projectDir.name}/*.xml"
     exclude "**/*.gradle"
   }
 }
@@ -53,20 +54,32 @@ task prepareWebapp (type:Copy) {
     include "context.xml"
     into 'META-INF'
   }
-  from("web.xml") {
+  // override context.xml if present
+  from("config/") {
+    include "context.xml"
+    into 'META-INF'
+  }
+  from("config/web.xml") {
     into "WEB-INF"
   }
-  from("public/") {
+  from("config/") {
+    exclude "web.xml"
+    into 'WEB-INF/config'
+  }
+
+  // translate the *.html files.
+  from("html/") {
     include "*.html"
   }
   into gwt.warDir
 
   doFirst {
-    from("$rootDir/config/$gwt.linkedDirName") {
-      include "configurable/*.xml"
-      include "*.prop", "*.dtd", "*.config"
-      into 'WEB-INF/config'
+    // copy the content of html to war
+    copy {
+      from ("html/") { include '**/*' }
+      into gwt.warDir
     }
+
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
   doLast {
