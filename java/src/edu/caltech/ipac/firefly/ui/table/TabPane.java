@@ -125,7 +125,7 @@ public class TabPane<T extends Widget> extends Composite
         tabPanel.forceLayout();
     }
 
-    void onTabSelected(Tab tab, Tab prevTab) {
+    void onTabSelected(final Tab tab, Tab prevTab) {
 
         if (tab == null) return;
         if (prevTab != null) {
@@ -139,8 +139,12 @@ public class TabPane<T extends Widget> extends Composite
         }
         if (tab.getContent() instanceof VisibleListener) {
             // workaround for AR8930
-            tab.getContent().setVisible(true);
-            ((VisibleListener)tab.getContent()).onShow();
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                public void execute() {
+                    tab.getContent().setVisible(true);
+                    ((VisibleListener) tab.getContent()).onShow();
+                }
+            });
         }
         curSelectedTab = TabPane.this.getSelectedTab();
 

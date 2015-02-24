@@ -138,7 +138,7 @@ task gwtSuperDev (type: JavaExec) {
 
   classpath {
     [
-            "$fireflyPath/java/src",
+            "$fireflyPath/src/firefly/java",
             sourceSets.main.java.srcDirs,           // Java source
             sourceSets.main.output.resourcesDir,    // Generated resources
             sourceSets.main.output.classesDir,      // Generated classes
