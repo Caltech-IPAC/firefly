@@ -203,10 +203,12 @@ public class FootprintObj extends DrawObj {
             ViewPortPt pt0=plot.getViewPortCoords(wpt0);
             ViewPortPt pt=plot.getViewPortCoords(wpt);
             if (pt0==null || pt==null) return;
-            wpt0 = wpt;
 //            g.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(), pt.getIX(), pt.getIY());
             g.pathMoveTo(pt0.getIX(), pt0.getIY());
-            g.pathLineTo(pt.getIX(), pt.getIY());
+            if (!plot.coordsWrap(wpt0,wpt)) {
+                g.pathLineTo(pt.getIX(), pt.getIY());
+            }
+            wpt0 = wpt;
         }
         if (!onlyAddToPath) g.drawPath();
     }
