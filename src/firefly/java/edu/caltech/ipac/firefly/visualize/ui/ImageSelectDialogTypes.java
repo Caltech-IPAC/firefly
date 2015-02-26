@@ -425,8 +425,8 @@ public class ImageSelectDialogTypes {
                         _file = cacheKey;
                     }
                     _maskPane.hide();
-                    imageSelectAccess.hide();
                     imageSelectAccess.plot(_ops, FileType.this);
+                    imageSelectAccess.hide();
 
                 }
             });

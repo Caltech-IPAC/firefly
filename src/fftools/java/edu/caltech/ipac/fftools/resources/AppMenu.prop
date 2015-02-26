@@ -1,4 +1,7 @@
-AppMenu.Items = AnyDataSetSearch ImageSelectDropDownCmd overviewHelp
+AppMenu.Items = AnyDataSetSearch IrsaCatalogDropDown ImageSelectDropDownCmd overviewHelp
+
+
+
 
 AppMenu.Title = MENU >>
 AppMenu.PreferWidth = 90
@@ -19,7 +22,7 @@ FitsInput.Title = Read FITS File
 FitsInput.ShortDescription= Read a FITS File
 
 
-IrsaCatalogDropDown.Title= Catalogs
+IrsaCatalogDropDown.Title= Catalogs CLASSIC
 IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
 
 about.Title=

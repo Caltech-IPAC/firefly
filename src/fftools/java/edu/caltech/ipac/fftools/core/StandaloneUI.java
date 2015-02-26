@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -18,11 +19,11 @@ import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
+import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
-import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
-import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupContainerForRegion;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -76,6 +77,7 @@ class StandaloneUI {
     private TabPane.Tab<Widget> dynMultiViewerTab = null;
     private TabPane.Tab<Widget> dsMultiViewerTab = null;
     private  TablePanel activeTable= null;
+    private String defaultCmdName= AnyDataSetCmd.COMMAND_NAME;
 
     public StandaloneUI() {
 //        this.factory= factory;
@@ -110,7 +112,9 @@ class StandaloneUI {
             }
 
             public void viewerRefreshed() {
-//                handleViewUpdates();
+                if (AllPlots.getInstance().getAll().size()==1 && hasOnlyPlotResults()) {
+                    handleViewUpdates();
+                }
             }
         });
 
@@ -118,11 +122,20 @@ class StandaloneUI {
     }
 
 
+    public void setDefaultCmdName(String cmdName) {
+        defaultCmdName= cmdName;
+    }
+
     private void handleViewUpdates() {
         AllPlots ap= AllPlots.getInstance();
         if (ap.isExpanded())  ap.updateExpanded(PopoutWidget.getViewType());
         if (hasPlotResults()) {
-            if (AllPlots.getInstance().getMiniPlotWidget()==null || !dynMultiViewer.hasContent()) relayoutMainArea();
+            if (AllPlots.getInstance().getMiniPlotWidget()==null || !dynMultiViewer.hasContent()) {
+                relayoutMainArea();
+            }
+            else if (!AllPlots.getInstance().isExpanded() && hasOnlyPlotResults()) {
+                expandImage();
+            }
         }
         else {
             if (hasTableResults()) {
@@ -175,8 +188,12 @@ class StandaloneUI {
     public void expandImage()  {
         ImageSelectDropDownCmd cmd= (ImageSelectDropDownCmd)Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
         if (cmd!=null && cmd.isInProcessOfPlotting()) dynMultiViewer.forceExpand();
-        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
-        if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+                if (mpw!=null) AllPlots.getInstance().forceExpand(mpw);
+            }
+        });
     }
     public void collapseImage()  {
         if (AllPlots.getInstance().isExpanded()) {
@@ -378,7 +395,7 @@ class StandaloneUI {
             AllPlots.getInstance().forceExpand(AllPlots.getInstance().getMiniPlotWidget());
         }
         else if (!hasResults()) {
-            GeneralCommand cmd= Application.getInstance().getCommand(AnyDataSetCmd.COMMAND_NAME);
+            GeneralCommand cmd= Application.getInstance().getCommand(defaultCmdName);
             cmd.execute();
         }
     }

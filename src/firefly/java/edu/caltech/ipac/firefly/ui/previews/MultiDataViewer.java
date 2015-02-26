@@ -289,9 +289,10 @@ public class MultiDataViewer {
             insureGridCard(def,rowData, dataContainer,info);
         }
 
+        boolean isOnDisplay= GwtUtil.isOnDisplay(mainPanel) || expanded || AllPlots.getInstance().isExpanded();
 
 
-        if (info==null || rowData==null || (!GwtUtil.isOnDisplay(mainPanel) && !expanded) ) return;
+        if (info==null || rowData==null || (!isOnDisplay) ) return;
 
         if (!expanded) expanded= AllPlots.getInstance().isExpanded();
 

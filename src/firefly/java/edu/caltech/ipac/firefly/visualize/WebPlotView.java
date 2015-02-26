@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
@@ -11,6 +12,7 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -134,6 +136,19 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
       _masterPanel.addStyleName("plot-view-master-panel");
 
       _scrollPanel.addScrollHandler(new PVScrollHandler());
+
+      _scrollPanel.addDomHandler(new MouseDownHandler() {
+          public void onMouseDown(MouseDownEvent ev) {
+              if (_mpw!=null) _mpw.selectSelf();
+          }
+      }, MouseDownEvent.getType());
+
+      _scrollPanel.addDomHandler(new TouchStartHandler() {
+          public void onTouchStart(TouchStartEvent event) {
+              if (_mpw!=null) _mpw.selectSelf();
+          }
+      }, TouchStartEvent.getType());
+
   }
 
 
@@ -356,24 +371,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         _scrollPanel.setTouchScrollingDisabled(!enable);
     }
 
-//    public ViewPortPt getScrollViewPortPos() {
-//        Element body = _scrollPanel.getElement();
-//        return new ViewPortPt(body.getScrollLeft(), body.getScrollTop());
-//    }
-
-
-//    public int getScrollWidth() {
-//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth");
-//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
-//
-//        return  (scroll<master || master<1) ? scroll : master;
-//    }
-//    public int getScrollHeight() {
-//        int scroll= DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight");
-//        int master= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
-//
-//        return  (scroll<master || master<1) ? scroll : master;
-//    }
 
     public int getScrollWidth() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth"); }
     public int getScrollHeight() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight"); }

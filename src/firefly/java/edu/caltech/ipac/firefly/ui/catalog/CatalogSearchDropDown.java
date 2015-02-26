@@ -3,23 +3,49 @@
  */
 package edu.caltech.ipac.firefly.ui.catalog;
 
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.ButtonBase;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
-import edu.caltech.ipac.firefly.core.background.*;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.core.SearchAdmin;
+import edu.caltech.ipac.firefly.core.background.ActivationFactory;
+import edu.caltech.ipac.firefly.core.background.BackgroundMonitor;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
+import edu.caltech.ipac.firefly.core.background.MonitorItem;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
+import edu.caltech.ipac.firefly.data.NewTableResults;
+import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
-import edu.caltech.ipac.firefly.ui.*;
+import edu.caltech.ipac.firefly.ui.DefaultWorkingWidget;
+import edu.caltech.ipac.firefly.ui.Form;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.MaskPane;
+import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.input.FileUploadField;
@@ -49,14 +75,16 @@ public class CatalogSearchDropDown {
     private LoadCatalogFromVOSearchUI voSearchUI = null;
     private TabPane<Widget> _tabs = new TabPane<Widget>();
     private SubmitKeyPressHandler keyPressHandler= new SubmitKeyPressHandler();
+    private final boolean useSearchAdmin;
 
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public CatalogSearchDropDown(String projectId) {
+    public CatalogSearchDropDown(String projectId, boolean useSearchAdmin) {
 
+        this.useSearchAdmin= useSearchAdmin;
         _tabs.addTab(createSearchCatalogsContent(projectId),"Search Catalogs");
         _tabs.addTab(createLoadCatalogsContent(),"Load Catalog");
         _tabs.addTab(createLoadCatalogFromVOContent(), "VO Catalog");
@@ -146,25 +174,31 @@ public class CatalogSearchDropDown {
                             req.setParam("filePath", filepath);
                             req.setStartIndex(0);
                             req.setPageSize(50);
-                            SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>() {
+                            if (useSearchAdmin) {
+                                SearchAdmin.getInstance().submitSearch(req, "Table Upload");
+                                hide();
+                            }
+                            else {
+                                SearchServices.App.getInstance().getRawDataSet(req, new AsyncCallback<RawDataSet>() {
 
-                                public void onFailure(Throwable caught) {
-                                    if (caught != null) PopupUtil.showSevereError(caught);
-                                }
-
-                                public void onSuccess(RawDataSet result) {
-                                    String basename;
-                                    String fullPath = _uploadField.getUploadFilename();
-                                    int idx = fullPath.lastIndexOf('/');
-                                    if (idx<0) idx = fullPath.lastIndexOf('\\');
-                                    if (idx > 1) {
-                                        basename = fullPath.substring(idx+1);
-                                    } else {
-                                        basename = fullPath;
+                                    public void onFailure(Throwable caught) {
+                                        if (caught != null) PopupUtil.showSevereError(caught);
                                     }
-                                    newRawDataSet(basename, result, req);
-                                }
-                            });
+
+                                    public void onSuccess(RawDataSet result) {
+                                        String basename;
+                                        String fullPath = _uploadField.getUploadFilename();
+                                        int idx = fullPath.lastIndexOf('/');
+                                        if (idx<0) idx = fullPath.lastIndexOf('\\');
+                                        if (idx > 1) {
+                                            basename = fullPath.substring(idx+1);
+                                        } else {
+                                            basename = fullPath;
+                                        }
+                                        newRawDataSet(basename, result, req);
+                                    }
+                                });
+                            }
                         }
                     });
                 }
@@ -308,9 +342,14 @@ public class CatalogSearchDropDown {
 //======================================================================
 
     public void hide() {
-        _showing= false;
-        hideOnSearch();
-        Application.getInstance().getToolBar().getDropdown().close();
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            @Override
+            public void execute() {
+                _showing= false;
+                hideOnSearch();
+                Application.getInstance().getToolBar().getDropdown().close();
+            }
+        });
     }
 
     protected void hideOnSearch() { }
@@ -346,19 +385,25 @@ public class CatalogSearchDropDown {
         CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_QUERY);
         req.setParams(params);
         req.setUse(CatalogRequest.Use.CATALOG_OVERLAY);
-        Widget w= _mainPanel.getParent();
-        int cX= w.getAbsoluteLeft()+ w.getOffsetWidth()/2;
-        int cY= w.getAbsoluteTop()+ w.getOffsetHeight()/2;
-        IrsaCatalogTask.getCatalog(_mainPanel,req,new CatalogSearchResponse(){
-            public void showNoRowsReturned() {
-                PopupUtil.showError(_prop.getTitle("noRowsReturned"),
-                            _prop.getError("noRowsReturned"));
-            }
+        if (useSearchAdmin) {
+            hide();
+            SearchAdmin.getInstance().submitSearch(req, req.getQueryCatName());
+        }
+        else {
+            Widget w= _mainPanel.getParent();
+            int cX= w.getAbsoluteLeft()+ w.getOffsetWidth()/2;
+            int cY= w.getAbsoluteTop()+ w.getOffsetHeight()/2;
+            IrsaCatalogTask.getCatalog(_mainPanel,req,new CatalogSearchResponse(){
+                public void showNoRowsReturned() {
+                    PopupUtil.showError(_prop.getTitle("noRowsReturned"),
+                                        _prop.getError("noRowsReturned"));
+                }
 
-            public void status(RequestStatus requestStatus) {
-                hide();
-            }
-        },cX,cY, _catalogPanel.getTitle());
+                public void status(RequestStatus requestStatus) {
+                    hide();
+                }
+            },cX,cY, _catalogPanel.getTitle());
+        }
     }
 
 

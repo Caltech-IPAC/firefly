@@ -22,10 +22,15 @@ public class IrsaCatalogDropDownCmd extends GeneralCommand {
     public static final String COMMAND_NAME = "IrsaCatalogDropDown";
     private Map<String, CatalogSearchDropDown> _panelMap = new HashMap<String, CatalogSearchDropDown>();
     private boolean _show = false;
-
+    private final boolean useSearchAdmin;
 
     public IrsaCatalogDropDownCmd() {
+        this(false);
+    }
+
+    public IrsaCatalogDropDownCmd(boolean useSearchAdmin) {
         super(COMMAND_NAME);
+        this.useSearchAdmin= useSearchAdmin;
         WebEventManager evm = WebEventManager.getAppEvManager();
         setupListener();
     }
@@ -37,7 +42,7 @@ public class IrsaCatalogDropDownCmd extends GeneralCommand {
             currentPanel = _panelMap.get(projectId);
 
         } else {
-            currentPanel = new CatalogSearchDropDown(projectId) {
+            currentPanel = new CatalogSearchDropDown(projectId,useSearchAdmin) {
                 @Override
                 protected void hideOnSearch() { catalogDropSearching(); }
             };

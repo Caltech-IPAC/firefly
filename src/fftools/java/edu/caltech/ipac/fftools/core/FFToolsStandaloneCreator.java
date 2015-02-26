@@ -43,11 +43,13 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     ImageSelectDropDownCmd isddCmd;
     private final int bannerOffset;
     private final String footerHtmlFile;
+    private final String defaultCmdName;
 
-    public FFToolsStandaloneCreator(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile) {
+    public FFToolsStandaloneCreator(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defaultCmdName) {
         if (factory!=null) Application.setDataSetFactory(factory);
         this.bannerOffset= bannerOffset;
         this.footerHtmlFile= footerHtmlFile;
+        this.defaultCmdName= defaultCmdName;
     }
 
     public boolean isApplication() { return true; }
@@ -92,6 +94,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
         aloneUI= new StandaloneUI();
+        if (defaultCmdName!=null) aloneUI.setDefaultCmdName(defaultCmdName);
 
 
         isddCmd= new ImageSelectDropDownCmd();
@@ -105,6 +108,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         commands.put(FFToolsPushReceiveCmd.COMMAND, new FFToolsPushReceiveCmd(aloneUI));
         commands.put(FFToolsExtCatalogCmd.COMMAND, new FFToolsExtCatalogCmd(aloneUI));
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
+        commands.put(IrsaCatalogDropDownCmd.COMMAND_NAME , new IrsaCatalogDropDownCmd(true));
 //        commands.put(ImageSelectDropDownDynCmd.COMMAND_NAME, new ImageSelectDropDownDynCmd(aloneUI));
 
         return commands;

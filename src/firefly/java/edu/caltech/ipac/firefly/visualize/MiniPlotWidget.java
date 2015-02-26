@@ -6,8 +6,6 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratorPanel;
@@ -926,6 +924,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
     }
 
+    void selectSelf() {
+        if (AllPlots.getInstance().getSelectPopoutWidget()!=this) {
+            AllPlots.getInstance().setSelectedMPW(this, isExpanded());
+            forceExpandedUIUpdate();
+        }
+    }
 
 
     private void addPlotListeners() {
@@ -957,23 +961,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             @Override
             public void onMouseOut(WebPlotView pv) {
                 showToolbar(false);
-            }
-
-//            @Override
-//            public void onMouseMove(WebPlotView pv, ScreenPt spt) { }
-
-            @Override
-            public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
-                AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, isExpanded());
-                forceExpandedUIUpdate();
-//                updateGridBorderStyle();
-            }
-
-            @Override
-            public void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev) {
-                AllPlots.getInstance().setSelectedMPW(MiniPlotWidget.this, isExpanded());
-                forceExpandedUIUpdate();
-//                updateGridBorderStyle();
             }
 
         };

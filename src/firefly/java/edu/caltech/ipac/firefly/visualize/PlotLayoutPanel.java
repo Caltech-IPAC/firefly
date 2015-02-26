@@ -102,8 +102,12 @@ public class PlotLayoutPanel extends LayoutPanel {
         inlineTitleVisible= v;
         if (v) {
             setWidgetTopHeight(_inlineTitle, 0, Style.Unit.PX,
-                                                         INLINE_TITLE_HEIGHT, Style.Unit.PX);
-            setWidgetLeftRight(_inlineTitle, 0,Style.Unit.PX, 40, Style.Unit.PX );
+                               INLINE_TITLE_HEIGHT, Style.Unit.PX);
+            setWidgetLeftRight(_inlineTitle, 0, Style.Unit.PX, 40, Style.Unit.PX);
+            if (_inlineTitle.getElement().getParentElement()!=null) {
+                _inlineTitle.getElement().getParentElement().getStyle().setProperty("pointerEvents", "none");
+            }
+
         }
         else {
             setWidgetTopHeight(_inlineTitle,0, Style.Unit.PX,0, Style.Unit.PX);

@@ -30,14 +30,18 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     private static final boolean USE_CORS_IF_POSSIBLE= true;
 
     public void onModuleLoad() {
-        start(IrsaPlusLsstDataSetsFactory.getInstance(),2,"generic_footer_minimal.html");
+        start(IrsaPlusLsstDataSetsFactory.getInstance(),
+              2,"generic_footer_minimal.html",
+              ImageSelectDropDownCmd.COMMAND_NAME);
     }
 
-    public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile) {
+    public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defCommandName) {
         FFToolEnv.loadJS();
-//        Application.setEventMode(Application.EventMode.SSE);
+//        Application.setEventMode(Application.EventMode.SSE);  // -- uncomment for testing only, not ready  for production
         boolean alone= isStandAloneApp();
-        Application.setCreator(alone ? new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile) : new FireflyToolsEmbededCreator());
+        Application.setCreator(alone ?
+                               new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile,defCommandName) :
+                               new FireflyToolsEmbededCreator());
         final Application app= Application.getInstance();
         boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
         app.setNetworkMode(alone ||  useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);
