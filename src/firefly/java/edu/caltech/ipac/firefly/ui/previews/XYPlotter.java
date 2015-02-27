@@ -31,10 +31,11 @@ import java.util.*;
  */
 public class XYPlotter {
 
-    private static final int MAX_CARDS= 4;
+    private static final int MAX_CARDS= 2;
 
     private final DeckLayoutPanel panel= new DeckLayoutPanel();
     private final List<XYCard> cardList= new ArrayList<XYCard>(MAX_CARDS);
+    private HashMap<TablePanel, XYPlotMeta> metas = new HashMap<TablePanel, XYPlotMeta>(10);
     private int currentShowingCard= -1;
     private final EventHub hub;
 
@@ -71,6 +72,9 @@ public class XYPlotter {
 
     private void removeActiveTableCard(TablePanel table) {
         if (table!=null) {
+            // remove XYPlotMeta for this table
+            metas.remove(table);
+            // remove card
             XYCard card= getCard(table);
             if (card!=null) {
                 card.getXyPlotWidget().setVisible(false);
@@ -93,27 +97,17 @@ public class XYPlotter {
         panel.setVisible(v);
         if (!v)  return;
 
-
         TableMeta tableMeta= table.getDataset().getMeta();
+        // can handle only the catalogs at the moment
         if (!tableMeta.contains(MetaConst.CATALOG_OVERLAY_TYPE)) return;
-        TableMeta.LonLatColumns llc = tableMeta.getLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS);
-
 
         XYCard card= getCard(table);
         final XYPlotWidget xyPlotWidget;
+        XYPlotMeta restoredMeta = metas.get(table);
 
         if (card==null) {
             if (cardList.size()<MAX_CARDS) {
-                HashMap<String, String> params = new HashMap<String, String>();
-                if (llc != null) {
-                    params.put(CustomMetaSource.XCOL_KEY, llc.getLonCol());
-                    params.put(CustomMetaSource.YCOL_KEY, llc.getLatCol());
-                }
-                String plotTitle = tableMeta.getAttribute(MetaConst.CATALOG_OVERLAY_TYPE);
-                if (plotTitle == null) plotTitle = "none";
-                XYPlotMeta meta = new XYPlotMeta(plotTitle, 800, 200, new CustomMetaSource(params));
-                meta.setAspectRatio(panel.getOffsetWidth()/panel.getOffsetHeight());
-                meta.setStretchToFill(true);
+                XYPlotMeta meta = getXYPlotMeta(table);
                 xyPlotWidget = new XYPlotWidget(meta);
                 xyPlotWidget.setTitleAreaAlwaysHidden(true);
                 panel.add(xyPlotWidget);
@@ -125,6 +119,9 @@ public class XYPlotter {
                 card= getOldestCard();
                 card.setTable(table);
                 xyPlotWidget= card.getXyPlotWidget();
+                if (restoredMeta == null) {
+                    restoredMeta = getXYPlotMeta(table);
+                }
             }
         }
         else {
@@ -137,14 +134,19 @@ public class XYPlotter {
         }
         AllPlots.getInstance().registerPopout(xyPlotWidget);
 
+        // can we assume that oldest card is never current showing?
         if (card.getCardIdx()!=currentShowingCard) {
             panel.showWidget(card.getCardIdx());
             currentShowingCard= card.getCardIdx();
             if (card.isDataChange()) {
                 if (table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
                     xyPlotWidget.setVisible(true);
-                    //TODO: plotMeta need to be cached when card data change and restored here
-                    xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
+                    if (restoredMeta != null) {
+                        //plotMeta need to be restored
+                        xyPlotWidget.makeNewChart(restoredMeta, table.getDataModel(), "XY Plot");
+                    } else {
+                        xyPlotWidget.makeNewChart(table.getDataModel(), "XY Plot");
+                    }
                 } else {
                     xyPlotWidget.setVisible(false);
                     AllPlots.getInstance().deregisterPopout(xyPlotWidget);
@@ -158,10 +160,27 @@ public class XYPlotter {
                 });
             }
             card.updateDataCtx();
+            card.updateAccess();
         }
-
     }
 
+    private XYPlotMeta getXYPlotMeta(TablePanel table) {
+        TableMeta tableMeta= table.getDataset().getMeta();
+        TableMeta.LonLatColumns llc = tableMeta.getLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS);
+
+        HashMap<String, String> params = new HashMap<String, String>();
+        if (llc != null) {
+            params.put(CustomMetaSource.XCOL_KEY, llc.getLonCol());
+            params.put(CustomMetaSource.YCOL_KEY, llc.getLatCol());
+        }
+        String plotTitle = tableMeta.getAttribute(MetaConst.CATALOG_OVERLAY_TYPE);
+        if (plotTitle == null) plotTitle = "none";
+        XYPlotMeta meta = new XYPlotMeta(plotTitle, 800, 200, new CustomMetaSource(params));
+        meta.setAspectRatio(panel.getOffsetWidth()/panel.getOffsetHeight());
+        meta.setStretchToFill(true);
+        metas.put(table, meta);
+        return meta;
+    }
 
     private XYCard getCard(TablePanel table) {
         XYCard retval= null;
@@ -202,27 +221,22 @@ public class XYPlotter {
             this.cardIdx = cardIdx;
             this.xyPlotWidget = xyPlotWidget;
             this.table = table;
-            updateAccess();
         }
 
         private TablePanel getTable() {
-            updateAccess();
             return table;
         }
 
         private void setTable(TablePanel table) {
-            updateAccess();
             this.table = table;
         }
 
 
         public int getCardIdx() {
-            updateAccess();
             return cardIdx;
         }
 
         public XYPlotWidget getXyPlotWidget() {
-            updateAccess();
             return xyPlotWidget;
         }
 

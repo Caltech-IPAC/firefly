@@ -282,6 +282,10 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
         return menuBar;
     }
 
+    public void makeNewChart(XYPlotMeta meta, final DataSetTableModel tableModel, String title) {
+        _meta = meta;
+        makeNewChart(tableModel,title);
+    }
 
     public void makeNewChart(final DataSetTableModel tableModel, String title) {
         if (!tableModel.equals(_tableModel)) {

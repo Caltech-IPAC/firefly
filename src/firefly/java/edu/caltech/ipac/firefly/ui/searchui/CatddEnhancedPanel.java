@@ -170,7 +170,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
                 table.getTable().showFilters(false); //true if you want to see filters
 
                 // TODO: this does not work here
-                table.getDataset().getColumn(5).setVisible(false);
+                if (table.getDataset().getColumns().size()>5) {
+                    table.getDataset().getColumn(5).setVisible(false);
+                }
 
                 for (TableData.Row row : table.getDataset().getModel().getRows()) {
                     _columns.add(new BaseTableColumn((String) row.getValue("name")));
