@@ -390,7 +390,7 @@ public class DynSearchCmd extends CommonRequestCmd {
                         new VerticalPanel();
                 container.setSize("100%", "100%");
                 container.setSpacing(5);
-                GwtUtil.setStyle(container, "borderSpacing", "10px 5px");
+                GwtUtil.setStyles(container, "borderSpacing", "10px 5px", "tableLayout", "fixed");
             }
 
             if (laTag.getId() != null) {
