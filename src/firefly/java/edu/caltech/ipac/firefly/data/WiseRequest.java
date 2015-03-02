@@ -54,6 +54,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
     public final static String POSTCRYO = "postcryo";
+    public final static String NEOWISER_PUB = "neowiser";
     public final static String MERGE = "merge";
 
 
@@ -74,11 +75,11 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"All-Sky Release");
             put(CRYO_3BAND,"3-band Cryo");
             put(POSTCRYO,"2-band Post-Cryo");
-            put(MERGE,"Merged All-Sky, 3-band Cryo, and 2-band Post-Cryo");
+            put(MERGE,"Merged All-Sky, 3-band Cryo, 2-band Post-Cryo and NEOWISE-R");
             put(PASS1,"Pass 1");
-            put(NEOWISER_PROV,"NEO WISER PROV");
-            put(NEOWISER_YR1,"NEO WISER YR1 (2 Bands)");
-            put(NEOWISER,"NEO WISER (2 Bands)");
+            put(NEOWISER_PROV,"NEOWISER PROV");
+            put(NEOWISER_YR1,"NEOWISER YR1 (2 Bands)");
+            put(NEOWISER,"NEOWISER (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -101,6 +102,7 @@ public class WiseRequest extends TableServerRequest {
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
             put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
             put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
+            put(NEOWISER_PUB +"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
 
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
@@ -130,6 +132,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
+            put(NEOWISER_PUB, new Integer[]{44212, 55289});
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
@@ -151,7 +154,8 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
             put(POSTCRYO,"wise_allsky_2band");
-            put(MERGE,"wise_allsky_merge");
+            put(MERGE,"wise_neowiser_merge");
+            put(NEOWISER_PUB,"wise_neowiser_yr1");
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
@@ -217,7 +221,7 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static boolean useMergedTable(String imageSet) {
-        // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO
+        // using merged table same for all ALLSKY_4BAND, CRYO_3BAND, and POSTCRYO and NEOWISER
         return imageSet.contains(",");
     }
 
