@@ -15,18 +15,15 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gwt.user.server.rpc.SerializationPolicy;
 import net.zschech.gwt.comet.client.impl.HTTPRequestCometTransport;
 import net.zschech.gwt.comet.server.CometServlet;
 
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * The CometServletResponse for the {@link HTTPRequestCometTransport}
@@ -46,8 +43,8 @@ public abstract class RawDataCometServletResponse extends ManagedStreamCometServ
 		PADDING_STRING = new String(padding);
 	}
 	
-	public RawDataCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, CometServlet servlet, AsyncServlet async, int heartbeat) {
-		super(request, response, serializationPolicy, clientOracle, servlet, async, heartbeat);
+	public RawDataCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, CometServlet servlet, AsyncServlet async, int heartbeat) {
+		super(request, response, serializationPolicy, servlet, async, heartbeat);
 	}
 	
 	@Override
@@ -95,7 +92,7 @@ public abstract class RawDataCometServletResponse extends ManagedStreamCometServ
 	@Override
 	protected void doWrite(List<? extends Serializable> messages) throws IOException {
 		for (Serializable message : messages) {
-			CharSequence string;
+			CharSequence string= "";
 			appendMessageHeader();
 			if (message instanceof CharSequence) {
 				string = escape((CharSequence) message);
@@ -107,7 +104,7 @@ public abstract class RawDataCometServletResponse extends ManagedStreamCometServ
 				}
 			}
 			else {
-				string = serialize(message);
+//				string = serialize(message);
 			}
 			appendMessage(string);
 			appendMessageTrailer();

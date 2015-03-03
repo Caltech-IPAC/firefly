@@ -15,17 +15,16 @@
  */
 package net.zschech.gwt.comet.client;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gwt.core.client.Duration;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import net.zschech.gwt.comet.client.impl.CometTransport;
 import net.zschech.gwt.comet.client.impl.EventSourceCometTransport;
 import net.zschech.gwt.eventsource.client.EventSource;
 
-import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is the Comet client. It will connect to the given url and notify the given {@link CometListener} of comet
@@ -52,7 +51,6 @@ public class CometClient {
 	}
 	
 	private final String url;
-	private final CometSerializer serializer;
 	private final CometListener listener;
 	private CometClientTransportWrapper primaryTransport;
 	private CometClientTransportWrapper refreshTransport;
@@ -70,12 +68,7 @@ public class CometClient {
 	private int reconnectionTimout = 1000;
 	
 	public CometClient(String url, CometListener listener) {
-		this(url, null, listener);
-	}
-	
-	public CometClient(String url, CometSerializer serializer, CometListener listener) {
 		this.url = url;
-		this.serializer = serializer;
 		this.listener = listener;
 		
 		primaryTransport = new CometClientTransportWrapper();
@@ -85,9 +78,9 @@ public class CometClient {
 		return url;
 	}
 	
-	public CometSerializer getSerializer() {
-		return serializer;
-	}
+//	public CometSerializer getSerializer() {
+//		return serializer;
+//	}
 	
 	public CometListener getListener() {
 		return listener;

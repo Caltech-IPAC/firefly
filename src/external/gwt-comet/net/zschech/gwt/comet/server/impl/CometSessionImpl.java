@@ -15,6 +15,9 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
+import net.zschech.gwt.comet.server.CometSession;
+
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -22,10 +25,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.servlet.http.HttpSession;
-
-import net.zschech.gwt.comet.server.CometSession;
 
 public class CometSessionImpl implements CometSession {
 	
@@ -128,7 +127,7 @@ public class CometSessionImpl implements CometSession {
 				windowSize = Math.max(windowSize / WINDOW_SIZE_MULTIPLIER, MIN_WINDOW_SIZE);
 			}
 			else {
-				windowSize = Math.min(windowSize * WINDOW_SIZE_MULTIPLIER, response instanceof IEHTMLFileCometServletResponse ? IE_MAX_WINDOW_SIZE : MAX_WINDOW_SIZE);
+				windowSize = Math.min(windowSize * WINDOW_SIZE_MULTIPLIER, MAX_WINDOW_SIZE);
 			}
 		}
 		

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Richard Zschech.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,35 +15,26 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import net.zschech.gwt.comet.server.CometServlet;
+import net.zschech.gwt.comet.server.CometServletResponse;
+import net.zschech.gwt.comet.server.CometSession;
+import net.zschech.gwt.comet.server.deflate.DeflaterOutputStream;
 
 import javax.servlet.ServletResponse;
 import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import net.zschech.gwt.comet.server.CometServlet;
-import net.zschech.gwt.comet.server.CometServletResponse;
-import net.zschech.gwt.comet.server.CometSession;
-import net.zschech.gwt.comet.server.deflate.DeflaterOutputStream;
-
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.rpc.server.RPC;
-import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
-import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class CometServletResponseImpl implements CometServletResponse {
 	
@@ -52,7 +43,7 @@ public abstract class CometServletResponseImpl implements CometServletResponse {
 	private CometSessionImpl session;
 	
 	private final SerializationPolicy serializationPolicy;
-	private final ClientOracle clientOracle;
+//	private final ClientOracle clientOracle;
 	private final CometServlet servlet;
 	private final AsyncServlet async;
 	private final int heartbeat;
@@ -69,11 +60,11 @@ public abstract class CometServletResponseImpl implements CometServletResponse {
 	private ScheduledFuture<?> heartbeatFuture;
 	private ScheduledFuture<?> sessionKeepAliveFuture;
 	
-	protected CometServletResponseImpl(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, CometServlet servlet, AsyncServlet async, int heartbeat) {
+	protected CometServletResponseImpl(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, CometServlet servlet, AsyncServlet async, int heartbeat) {
 		this.request = request;
 		this.response = response;
 		this.serializationPolicy = serializationPolicy;
-		this.clientOracle = clientOracle;
+//		this.clientOracle = clientOracle;
 		this.servlet = servlet;
 		this.async = async;
 		this.heartbeat = heartbeat;
@@ -97,9 +88,9 @@ public abstract class CometServletResponseImpl implements CometServletResponse {
 		return asyncOutputStream;
 	}
 	
-	protected boolean isDeRPC() {
-		return clientOracle != null;
-	}
+//	protected boolean isDeRPC() {
+//		return clientOracle != null;
+//	}
 	
 	@Override
 	public HttpServletRequest getRequest() {
@@ -413,25 +404,25 @@ public abstract class CometServletResponseImpl implements CometServletResponse {
 	
 	protected abstract void doTerminate() throws IOException;
 	
-	protected String serialize(Serializable message) throws NotSerializableException, UnsupportedEncodingException {
-		try {
-			if (clientOracle == null) {
-				ServerSerializationStreamWriter streamWriter = new ServerSerializationStreamWriter(serializationPolicy);
-				streamWriter.prepareToWrite();
-				streamWriter.writeObject(message);
-				return streamWriter.toString();
-			}
-			else {
-				ByteArrayOutputStream result = new ByteArrayOutputStream();
-				RPC.streamResponseForSuccess(clientOracle, result, message);
-				return new String(result.toByteArray(), "UTF-8");
-			}
-		}
-		catch (SerializationException e) {
-			throw new NotSerializableException("Unable to serialize object, message: " + e.getMessage());
-		}
-	}
-	
+//	protected String serialize(Serializable message) throws NotSerializableException, UnsupportedEncodingException {
+//		try {
+//			if (clientOracle == null) {
+//				ServerSerializationStreamWriter streamWriter = new ServerSerializationStreamWriter(serializationPolicy);
+//				streamWriter.prepareToWrite();
+//				streamWriter.writeObject(message);
+//				return streamWriter.toString();
+//			}
+//			else {
+//				ByteArrayOutputStream result = new ByteArrayOutputStream();
+//				RPC.streamResponseForSuccess(clientOracle, result, message);
+//				return new String(result.toByteArray(), "UTF-8");
+//			}
+//		}
+//		catch (SerializationException e) {
+//			throw new NotSerializableException("Unable to serialize object, message: " + e.getMessage());
+//		}
+//	}
+
 	boolean setProcessing(boolean processing) {
 		return this.processing.compareAndSet(!processing, processing);
 	}

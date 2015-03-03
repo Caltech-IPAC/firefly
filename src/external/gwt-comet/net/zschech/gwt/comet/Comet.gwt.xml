@@ -33,7 +33,7 @@
 		<when-property-is name="user.agent" value="opera"/>
 	</replace-with>
 	
-	<generate-with class="net.zschech.gwt.comet.rebind.CometSerializerGenerator">
-		<when-type-assignable class="net.zschech.gwt.comet.client.CometSerializer" />
-	</generate-with>	
+	<!--<generate-with class="net.zschech.gwt.comet.rebind.CometSerializerGenerator">-->
+		<!--<when-type-assignable class="net.zschech.gwt.comet.client.CometSerializer" />-->
+	<!--</generate-with>	-->
 </module>

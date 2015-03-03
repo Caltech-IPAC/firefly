@@ -15,25 +15,7 @@
  */
 package net.zschech.gwt.comet.server;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.lang.ref.SoftReference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import net.zschech.gwt.comet.client.impl.CometTransport;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
 import net.zschech.gwt.comet.server.impl.AsyncServlet;
 import net.zschech.gwt.comet.server.impl.CometServletResponseImpl;
 import net.zschech.gwt.comet.server.impl.CometSessionImpl;
@@ -42,10 +24,17 @@ import net.zschech.gwt.comet.server.impl.HTTPRequestCometServletResponse;
 import net.zschech.gwt.comet.server.impl.IEHTMLFileCometServletResponse;
 import net.zschech.gwt.comet.server.impl.OperaEventSourceCometServletResponse;
 
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.rpc.server.HostedModeClientOracle;
-import com.google.gwt.rpc.server.WebModeClientOracle;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This is the base class for application's Comet servlets. To process a Comet request override
@@ -102,35 +91,36 @@ public class CometServlet extends HttpServlet {
 				}
 			}
 			
-			ClientOracle clientOracle = getClientOracle(request);
-			SerializationPolicy serializationPolicy = clientOracle == null ? createSerializationPolicy() : null;
-			CometServletResponseImpl cometServletResponse = createCometServletResponse(request, response, serializationPolicy, clientOracle, requestHeartbeat);
+//			ClientOracle clientOracle = getClientOracle(request);
+//			SerializationPolicy serializationPolicy = clientOracle == null ? createSerializationPolicy() : null;
+            SerializationPolicy serializationPolicy = createSerializationPolicy();
+			CometServletResponseImpl cometServletResponse = createCometServletResponse(request, response, serializationPolicy, requestHeartbeat);
 			doCometImpl(cometServletResponse);
 		}
 		catch (IOException e) {
-			CometServletResponseImpl cometServletResponse = createCometServletResponse(request, response, null, null, 0);
+			CometServletResponseImpl cometServletResponse = createCometServletResponse(request, response, null, 0);
 			cometServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
 		}
 	}
 	
-	private CometServletResponseImpl createCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, int requestHeartbeat) {
-		
+	private CometServletResponseImpl createCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, int requestHeartbeat) {
+
 		String accept = request.getHeader("Accept");
 		String userAgent = request.getHeader("User-Agent");
 		if ("text/event-stream".equals(accept)) {
-			return new EventSourceCometServletResponse(request, response, serializationPolicy, clientOracle, this, async, requestHeartbeat);
+			return new EventSourceCometServletResponse(request, response, serializationPolicy, this, async, requestHeartbeat);
 		}
 		else if ("application/comet".equals(accept)) {
-			return new HTTPRequestCometServletResponse(request, response, serializationPolicy, clientOracle, this, async, requestHeartbeat);
+			return new HTTPRequestCometServletResponse(request, response, serializationPolicy, this, async, requestHeartbeat);
 		}
 		else if (userAgent != null && userAgent.contains("Opera")) {
-			return new OperaEventSourceCometServletResponse(request, response, serializationPolicy, clientOracle, this, async, requestHeartbeat);
+			return new OperaEventSourceCometServletResponse(request, response, serializationPolicy, this, async, requestHeartbeat);
 		}
 		else {
-			return new IEHTMLFileCometServletResponse(request, response, serializationPolicy, clientOracle, this, async, requestHeartbeat);
+			return new IEHTMLFileCometServletResponse(request, response, serializationPolicy, this, async, requestHeartbeat);
 		}
 	}
-	
+
 	private void doCometImpl(CometServletResponseImpl response) throws IOException {
 		try {
 			// setup the request
@@ -214,58 +204,58 @@ public class CometServlet extends HttpServlet {
 		};
 	}
 	
-	private final Map<String, SoftReference<ClientOracle>> clientOracleCache = new HashMap<String, SoftReference<ClientOracle>>();
+//	private final Map<String, SoftReference<ClientOracle>> clientOracleCache = new HashMap<String, SoftReference<ClientOracle>>();
 	
-	protected ClientOracle getClientOracle(HttpServletRequest request) throws IOException {
-		String permutationStrongName = request.getParameter(CometTransport.STRONG_NAME_PARAMETER);
-		if (permutationStrongName == null) {
-			return null;
-		}
-		
-		ClientOracle toReturn;
-		synchronized (clientOracleCache) {
-			if (clientOracleCache.containsKey(permutationStrongName)) {
-				toReturn = clientOracleCache.get(permutationStrongName).get();
-				if (toReturn != null) {
-					return toReturn;
-				}
-			}
-			
-			if ("HostedMode".equals(permutationStrongName)) {
-				// if (!allowHostedModeConnections()) {
-				// throw new SecurityException("Blocked hosted mode request");
-				// }
-				toReturn = new HostedModeClientOracle();
-			}
-			else {
-				String moduleBase = request.getParameter(CometTransport.MODULE_BASE_PARAMETER);
-				if (moduleBase == null) {
-					return null;
-				}
-				
-				String basePath = new URL(moduleBase).getPath();
-				if (basePath == null) {
-					throw new MalformedURLException("Blocked request without GWT base path parameter (XSRF attack?)");
-				}
-				
-				String contextPath = getServletContext().getContextPath();
-				if (!basePath.startsWith(contextPath)) {
-					throw new MalformedURLException("Blocked request with invalid GWT base path parameter (XSRF attack?)");
-				}
-				basePath = basePath.substring(contextPath.length());
-				
-				InputStream in = findClientOracleData(basePath, permutationStrongName);
-				
-				toReturn = WebModeClientOracle.load(in);
-			}
-			clientOracleCache.put(permutationStrongName, new SoftReference<ClientOracle>(toReturn));
-		}
-		
-		return toReturn;
-	}
-	
+//	protected ClientOracle getClientOracle(HttpServletRequest request) throws IOException {
+//		String permutationStrongName = request.getParameter(CometTransport.STRONG_NAME_PARAMETER);
+//		if (permutationStrongName == null) {
+//			return null;
+//		}
+//
+//		ClientOracle toReturn;
+//		synchronized (clientOracleCache) {
+//			if (clientOracleCache.containsKey(permutationStrongName)) {
+//				toReturn = clientOracleCache.get(permutationStrongName).get();
+//				if (toReturn != null) {
+//					return toReturn;
+//				}
+//			}
+//
+//			if ("HostedMode".equals(permutationStrongName)) {
+//				// if (!allowHostedModeConnections()) {
+//				// throw new SecurityException("Blocked hosted mode request");
+//				// }
+//				toReturn = new HostedModeClientOracle();
+//			}
+//			else {
+//				String moduleBase = request.getParameter(CometTransport.MODULE_BASE_PARAMETER);
+//				if (moduleBase == null) {
+//					return null;
+//				}
+//
+//				String basePath = new URL(moduleBase).getPath();
+//				if (basePath == null) {
+//					throw new MalformedURLException("Blocked request without GWT base path parameter (XSRF attack?)");
+//				}
+//
+//				String contextPath = getServletContext().getContextPath();
+//				if (!basePath.startsWith(contextPath)) {
+//					throw new MalformedURLException("Blocked request with invalid GWT base path parameter (XSRF attack?)");
+//				}
+//				basePath = basePath.substring(contextPath.length());
+//
+//				InputStream in = findClientOracleData(basePath, permutationStrongName);
+//
+//				toReturn = WebModeClientOracle.load(in);
+//			}
+//			clientOracleCache.put(permutationStrongName, new SoftReference<ClientOracle>(toReturn));
+//		}
+//
+//		return toReturn;
+//	}
+
 	protected static final String CLIENT_ORACLE_EXTENSION = ".gwt.rpc";
-	
+
 	protected InputStream findClientOracleData(String requestModuleBasePath, String permutationStrongName) throws IOException {
 		String resourcePath = requestModuleBasePath + permutationStrongName + CLIENT_ORACLE_EXTENSION;
 		InputStream in = getServletContext().getResourceAsStream(resourcePath);

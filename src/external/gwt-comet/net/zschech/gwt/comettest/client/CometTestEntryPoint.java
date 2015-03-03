@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Richard Zschech.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,15 +15,6 @@
  */
 package net.zschech.gwt.comettest.client;
 
-import java.io.Serializable;
-import java.util.List;
-
-import net.zschech.gwt.comet.client.CometClient;
-import net.zschech.gwt.comet.client.CometListener;
-import net.zschech.gwt.comet.client.CometSerializer;
-import net.zschech.gwt.comet.client.SerialMode;
-import net.zschech.gwt.comet.client.SerialTypes;
-
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -31,13 +22,19 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.StatusCodeException;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import net.zschech.gwt.comet.client.CometClient;
+import net.zschech.gwt.comet.client.CometListener;
+import net.zschech.gwt.comet.client.SerialMode;
+
+import java.io.Serializable;
+import java.util.List;
+
 
 public class CometTestEntryPoint implements EntryPoint {
 	
@@ -205,13 +202,13 @@ public class CometTestEntryPoint implements EntryPoint {
 		ESCAPE = result.toString();
 	}
 	
-	@SerialTypes(mode = SerialMode.RPC, value = { TestData.class })
-	public static abstract class RPCTestCometSerializer extends CometSerializer {
-	}
-	
-	@SerialTypes(mode = SerialMode.DE_RPC, value = { TestData.class })
-	public static abstract class DeRPCTestCometSerializer extends CometSerializer {
-	}
+//	@SerialTypes(mode = SerialMode.RPC, value = { TestData.class })
+//	public static abstract class RPCTestCometSerializer extends CometSerializer {
+//	}
+//
+//	@SerialTypes(mode = SerialMode.DE_RPC, value = { TestData.class })
+//	public static abstract class DeRPCTestCometSerializer extends CometSerializer {
+//	}
 	
 	public static class TestData implements Serializable {
 		private static final long serialVersionUID = 2554091659231006755L;
@@ -257,56 +254,21 @@ public class CometTestEntryPoint implements EntryPoint {
 		abstract void start();
 		
 		void start(String url) {
-			start(url, (CometSerializer) null);
+			start(url);
 		}
 		
 		void start(String url, SerialMode mode) {
-			final CometSerializer serializer;
+//			final CometSerializer serializer;
 			if (mode == null) {
 				url = url + (url.contains("?") ? "&" : "?") + "mode=string";
-				serializer = null;
 			}
-			else if (mode == SerialMode.RPC) {
-				serializer = GWT.create(RPCTestCometSerializer.class);
-			}
-			else {
-				serializer = GWT.create(DeRPCTestCometSerializer.class);
-			}
-			start(url + (url.contains("?") ? "&" : "?") + "session=" + session, serializer);
-		}
-		
-		private void start(final String url, final CometSerializer serializer) {
-			reset();
-			cometTestService.invalidateSession(new AsyncCallback<Boolean>() {
-				@Override
-				public void onSuccess(Boolean result) {
-					if (session) {
-						cometTestService.createSession(new AsyncCallback<Boolean>() {
-							@Override
-							public void onSuccess(Boolean result) {
-								startTime = Duration.currentTimeMillis();
-								output("start " + name, "black");
-								doStart(url, serializer);
-							}
-							
-							@Override
-							public void onFailure(Throwable error) {
-								output("create session failure " + string(error), "red");
-							}
-						});
-					}
-					else {
-						startTime = Duration.currentTimeMillis();
-						output("start " + name, "black");
-						doStart(url, serializer);
-					}
-				}
-				
-				@Override
-				public void onFailure(Throwable error) {
-					output("invalidate session failure " + string(error), "red");
-				}
-			});
+//			else if (mode == SerialMode.RPC) {
+//				serializer = GWT.create(RPCTestCometSerializer.class);
+//			}
+//			else {
+//				serializer = GWT.create(DeRPCTestCometSerializer.class);
+//			}
+			start(url + (url.contains("?") ? "&" : "?") + "session=" + session);
 		}
 		
 		void reset() {
@@ -326,8 +288,8 @@ public class CometTestEntryPoint implements EntryPoint {
 			failure = null;
 		}
 		
-		void doStart(String url, CometSerializer serializer) {
-			cometClient = new CometClient(url, serializer, this);
+		void doStart(String url) {
+			cometClient = new CometClient(url, this);
 			cometClient.start();
 		}
 		
@@ -738,7 +700,7 @@ public class CometTestEntryPoint implements EntryPoint {
 				output("padding test: " + min + " " + max + " " + padding, "silver");
 				String url = GWT.getModuleBaseURL() + "connection?delay=60000&padding=" + padding;
 				
-				doStart(url, null);
+				doStart(url);
 			}
 		}
 		

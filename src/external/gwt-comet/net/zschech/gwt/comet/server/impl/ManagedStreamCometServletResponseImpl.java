@@ -15,18 +15,15 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import net.zschech.gwt.comet.server.CometServlet;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import net.zschech.gwt.comet.server.CometServlet;
-
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
 
 public abstract class ManagedStreamCometServletResponseImpl extends CometServletResponseImpl {
 	
@@ -35,8 +32,8 @@ public abstract class ManagedStreamCometServletResponseImpl extends CometServlet
 	
 	private CountOutputStream countOutputStream;
 	
-	public ManagedStreamCometServletResponseImpl(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, CometServlet servlet, AsyncServlet async, int heartbeat) {
-		super(request, response, serializationPolicy, clientOracle, servlet, async, heartbeat);
+	public ManagedStreamCometServletResponseImpl(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, CometServlet servlet, AsyncServlet async, int heartbeat) {
+		super(request, response, serializationPolicy, servlet, async, heartbeat);
 		
 		String paddingParameter = getRequest().getParameter("padding");
 		if (paddingParameter != null) {

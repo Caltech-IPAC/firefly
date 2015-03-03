@@ -15,15 +15,12 @@
  */
 package net.zschech.gwt.comet.client.impl;
 
+import com.google.gwt.user.client.rpc.StatusCodeException;
+import net.zschech.gwt.comet.client.CometException;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import net.zschech.gwt.comet.client.CometException;
-import net.zschech.gwt.comet.client.CometSerializer;
-
-import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.StatusCodeException;
 
 public abstract class RawDataCometTransport extends CometTransport {
 	
@@ -101,18 +98,18 @@ public abstract class RawDataCometTransport extends CometTransport {
 			case 'R':
 			case 'r':
 			case 'f':
-				CometSerializer serializer = client.getSerializer();
-				if (serializer == null) {
-					listener.onError(new SerializationException("Can not deserialize message with no serializer: " + message), true);
-				}
-				else {
-					try {
-						messages.add(serializer.parse(message));
-					}
-					catch (SerializationException e) {
-						listener.onError(e, true);
-					}
-				}
+//				CometSerializer serializer = client.getSerializer();
+//				if (serializer == null) {
+//					listener.onError(new SerializationException("Can not deserialize message with no serializer: " + message), true);
+//				}
+//				else {
+//					try {
+//						messages.add(serializer.parse(message));
+//					}
+//					catch (SerializationException e) {
+//						listener.onError(e, true);
+//					}
+//				}
 				break;
 			default:
 				if (c >= '0' && c <= '9') {

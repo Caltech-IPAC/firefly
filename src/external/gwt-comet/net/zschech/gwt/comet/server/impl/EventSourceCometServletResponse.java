@@ -15,16 +15,13 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gwt.user.server.rpc.SerializationPolicy;
 import net.zschech.gwt.comet.client.impl.OperaEventSourceCometTransport;
 import net.zschech.gwt.comet.server.CometServlet;
 
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * The CometServletResponse for the {@link OperaEventSourceCometTransport}
@@ -33,8 +30,8 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
  */
 public class EventSourceCometServletResponse extends RawDataCometServletResponse {
 	
-	public EventSourceCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, CometServlet servlet, AsyncServlet async, int heartbeat) {
-		super(request, response, serializationPolicy, clientOracle, servlet, async, heartbeat);
+	public EventSourceCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, CometServlet servlet, AsyncServlet async, int heartbeat) {
+		super(request, response, serializationPolicy, servlet, async, heartbeat);
 	}
 	
 	@Override

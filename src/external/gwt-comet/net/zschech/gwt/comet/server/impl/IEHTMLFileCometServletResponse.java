@@ -15,22 +15,18 @@
  */
 package net.zschech.gwt.comet.server.impl;
 
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import net.zschech.gwt.comet.server.CometServlet;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import net.zschech.gwt.comet.server.CometServlet;
-
-import com.google.gwt.rpc.server.ClientOracle;
-import com.google.gwt.user.server.rpc.SerializationPolicy;
-
 /**
- * The CometServletResponse for the {@link IEHTMLFileCometTransport}
- * 
+ *
  * @author Richard Zschech
  */
 public class IEHTMLFileCometServletResponse extends ManagedStreamCometServletResponseImpl {
@@ -55,8 +51,8 @@ public class IEHTMLFileCometServletResponse extends ManagedStreamCometServletRes
 	
 	private int clientMemory;
 	
-	public IEHTMLFileCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, ClientOracle clientOracle, CometServlet servlet, AsyncServlet async, int heartbeat) {
-		super(request, response, serializationPolicy, clientOracle, servlet, async, heartbeat);
+	public IEHTMLFileCometServletResponse(HttpServletRequest request, HttpServletResponse response, SerializationPolicy serializationPolicy, CometServlet servlet, AsyncServlet async, int heartbeat) {
+		super(request, response, serializationPolicy, servlet, async, heartbeat);
 	}
 	
 	@Override
@@ -120,12 +116,7 @@ public class IEHTMLFileCometServletResponse extends ManagedStreamCometServletRes
 		boolean first = true;
 		for (Serializable message : messages) {
 			CharSequence string;
-			if (message instanceof CharSequence) {
-				string = "]" + escapeString((CharSequence) message);
-			}
-			else {
-				string = escapeObject(serialize(message));
-			}
+            string = "]" + escapeString((CharSequence) message);
 			if (first) {
 				first = false;
 			}
