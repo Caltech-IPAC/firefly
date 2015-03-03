@@ -114,9 +114,9 @@
     <set-property name="gwt.logging.enabled" value="TRUE"/>
     <set-property name="gwt.logging.developmentModeHandler" value="ENABLED"/>
     <set-property name="gwt.logging.systemHandler" value="DISABLED"/>
-    <set-property name="gwt.logging.popupHandler" value="DISABLED"/>
+    <!--<set-property name="gwt.logging.popupHandler" value="DISABLED"/>-->
     <set-property name="gwt.logging.consoleHandler" value="ENABLED"/>
-    <set-property name="gwt.logging.firebugHandler" value="ENABLED"/>
+    <!--<set-property name="gwt.logging.firebugHandler" value="ENABLED"/>-->
 
     <!--The remote logger is enable in the code when server logging is specifically requested-->
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED"/>

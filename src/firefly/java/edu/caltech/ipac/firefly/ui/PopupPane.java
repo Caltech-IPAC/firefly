@@ -56,7 +56,6 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
-import edu.caltech.ipac.firefly.ui.gwtclone.GwtPopupPanelFirefly;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.CssAnimation;
@@ -97,7 +96,8 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
     private boolean visible;
     private boolean _hiding= false;
-    private GwtPopupPanelFirefly popup;
+//    private GwtPopupPanelFirefly popup;
+    private PopupPanel popup;
     private String header;
     private SimplePanel content;
     private Widget headerWidget;
@@ -106,6 +106,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
 
     // align info
+    private boolean animateDown= false;
     private HandlerManager hMan= new HandlerManager(this);
     private Widget alignWidget;
     private Align alignAt= Align.CENTER;
@@ -219,8 +220,8 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             _maskPanel = null;
         }
 
-        popup.addCloseHandler(new CloseHandler<GwtPopupPanelFirefly>() {
-            public void onClose(CloseEvent<GwtPopupPanelFirefly> ev) {
+        popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+            public void onClose(CloseEvent<PopupPanel> ev) {
                 CloseEvent.fire(PopupPane.this, PopupPane.this, ev.isAutoClosed());
             }
         });
@@ -236,9 +237,9 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             popup.addStyleName(styleStr);
     }
 
-    static void addZIndexStyle(GwtPopupPanelFirefly popup, String styleStr) {
-        popup.addStyleName(styleStr);
-    }
+//    static void addZIndexStyle(PopupPanel popup, String styleStr) {
+//        popup.addStyleName(styleStr);
+//    }
 
     /**
      * Set the content widget.  This is the widget that the popup will wrap around.
@@ -313,7 +314,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
 
     private void hideInternalPopup() {
-        if (animationEnabled &&_rolldownCSSAnimation && visible && popup.getAnimateDown() && popup.isVisible()) {
+        if (animationEnabled &&_rolldownCSSAnimation && visible && animateDown && popup.isVisible()) {
             animationDropdownCSS(false);
         }
         else {
@@ -326,7 +327,10 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
         popup.setAnimationEnabled(!_rolldownCSSAnimation  && animation);
     }
 
-    public void setAnimateDown(boolean animateDown) { popup.setAnimateDown(animateDown); }
+    public void setAnimateDown(boolean animateDown) {
+        this.animateDown= animateDown;
+//        popup.setAnimateDown(animateDown);
+    }
     public boolean isAnimationEnabled() { return animationEnabled; }
 
     public void setRolldownAnimation(boolean rolldown) {
@@ -338,7 +342,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
         }
         else {
-            popup.setAnimationType(rolldown ? GwtPopupPanelFirefly.AnimationType.ROLL_DOWN : GwtPopupPanelFirefly.AnimationType.CENTER);
+//            popup.setAnimationType(rolldown ? GwtPopupPanelFirefly.AnimationType.ROLL_DOWN : GwtPopupPanelFirefly.AnimationType.CENTER);
             _rolldownCSSAnimation= false;
         }
 
@@ -431,7 +435,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
     public void setAnimationDurration(int durration) {
         _animationDuration = durration;
-        popup.setAnimationDuration(durration);
+//        popup.setAnimationDuration(durration);
     }
 
     public boolean isPopupShowing() {
@@ -1267,10 +1271,10 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     }
 
 
-    private GwtPopupPanelFirefly createPopup(boolean modal, boolean autoHide) {
+    private PopupPanel createPopup(boolean modal, boolean autoHide) {
 
 
-        GwtPopupPanelFirefly pp =  new GwtPopupPanelFirefly(autoHide, modal);
+        PopupPanel pp =  new PopupPanel(autoHide, modal);
 
 
         pp.addDomHandler(new MouseMoveHandler() {
