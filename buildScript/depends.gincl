@@ -20,10 +20,9 @@ ext {
                      ':fits' ]
 
   solr_lib = [':apache-solr-common-1.3.0', ':apache-solr-solrj-1.3.0' ]
-  xbeanfinder_lib = [':xbean-finder-3.6',
-                     ':asm-3.2',
-                     ':asm-commons-3.2',
-                     ':asm-tree-3.2']
+  xbeanfinder_lib = [':xbean-finder-4.1',
+                     ':asm-5.0.3'
+                    ]
 
   ehcache_lib = [':ehcache-2.7.4', ':slf4j-api-1.6.6', ':ehcache-web-2.0.4']
   j2ee_lib = [':servlet-api', ':activation', ':mail']
@@ -54,7 +53,7 @@ ext {
                      log4j_lib, josso_lib, healpix_lib, xstream_lib, xbeanfinder_lib,
                      gwt_lib_rt, ehcache_lib]
 
-  FIREFLY_COMPILE = [FIREFLY_RUNTIME, j2ee_lib, gwt_lib]
+  FIREFLY_COMPILE = [j2ee_lib, ehcache_lib, gwt_lib, FIREFLY_RUNTIME]
 }
 
 

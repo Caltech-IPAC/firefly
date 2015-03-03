@@ -3,18 +3,17 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.firefly.server.util.Logger;
+import org.apache.xbean.finder.ClassFinder;
 
-import java.util.Map;
-import java.util.List;
-import java.util.LinkedHashMap;
 import java.lang.annotation.Annotation;
 import java.net.URL;
-
-import org.apache.xbean.finder.ClassFinder;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author tatianag
@@ -41,7 +40,7 @@ public class SearchProcessorFactory {
                 } else {
                     classFinder = new ClassFinder(classLoader, jarsWithSearchProcessors);
                 }
-                List<Class> annotatedClasses = classFinder.findAnnotatedClasses(SearchProcessorImpl.class);
+                List<Class<?>> annotatedClasses = classFinder.findAnnotatedClasses(SearchProcessorImpl.class);
                 if (annotatedClasses.size() == 0) {
                     Logger.error("Fail to find any SearchProcessor.  This is not normal.");
                 }
