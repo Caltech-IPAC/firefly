@@ -644,9 +644,16 @@ public class URLDownload {
     public static void logHeader(String postData, URLConnection conn) {
         StringBuffer workBuff;
         try {
-            Set hSet = conn.getHeaderFields().entrySet();
+            Set hSet= null;
+            String outStr[];
             int extra = postData == null ? 3 : 4;
-            String outStr[] = new String[hSet.size() + extra];
+            if (conn instanceof HttpURLConnection && ((HttpURLConnection)conn).getResponseCode()==-1) {
+                outStr = new String[extra+1];
+            }
+            else {
+                hSet = conn.getHeaderFields().entrySet();
+                outStr = new String[hSet.size() + extra];
+            }
             Map.Entry entry;
             List values;
             int i = 0;
@@ -661,23 +668,28 @@ public class URLDownload {
                 outStr[i++] = StringUtil.pad("Post Data ", 20) + ": " + postData;
             }
             outStr[i++] = "----------Received Headers";
-            for (Iterator j = hSet.iterator(); (j.hasNext()); ) {
-                workBuff = new StringBuffer(100);
-                entry = (Map.Entry) j.next();
-                key = (String) entry.getKey();
-                if (key == null) key = "<none>";
-                workBuff.append(StringUtil.pad(key, 20));
-                workBuff.append(": ");
-                values = (List) entry.getValue();
-                for (m = 0, k = values.iterator(); (k.hasNext()); m++) {
-                    if (m > 0) workBuff.append("; ");
-                    workBuff.append(k.next().toString());
+            if (hSet!=null) {
+                for (Iterator j = hSet.iterator(); (j.hasNext()); ) {
+                    workBuff = new StringBuffer(100);
+                    entry = (Map.Entry) j.next();
+                    key = (String) entry.getKey();
+                    if (key == null) key = "<none>";
+                    workBuff.append(StringUtil.pad(key, 20));
+                    workBuff.append(": ");
+                    values = (List) entry.getValue();
+                    for (m = 0, k = values.iterator(); (k.hasNext()); m++) {
+                        if (m > 0) workBuff.append("; ");
+                        workBuff.append(k.next().toString());
+                    }
+                    outStr[i++] = workBuff.toString();
                 }
-                outStr[i++] = workBuff.toString();
+            }
+            else {
+                outStr[i++] = "No headers or status received, invalid http response, using work around";
             }
             ClientLog.message(outStr);
         } catch (Exception e) {
-            ClientLog.message(e.getMessage() + ":" + " url=" + conn.getURL().toString());
+            ClientLog.message(e.getMessage() + ":" + " url=" + (conn.getURL()!=null ? conn.getURL().toString() : "none"));
         }
     }
 
@@ -745,13 +757,22 @@ public class URLDownload {
     }
 
     private static DataInputStream makeDataInStream(URLConnection conn) throws IOException {
-        return new DataInputStream(makeInStream(conn));
+        if (conn instanceof HttpURLConnection && ((HttpURLConnection)conn).getResponseCode()==-1) {
+            throw new IOException("Http Response Code is -1, invalid http protocol, " +
+                                          "probably no status line in response headers");
+        }
+        else {
+            return new DataInputStream(makeInStream(conn));
+        }
     }
 
     private static InputStream makeInStream(URLConnection conn) throws IOException {
         return new BufferedInputStream(conn.getInputStream(), BUFFER_SIZE);
     }
 
+    private static InputStream makeErrStream(HttpURLConnection conn) throws IOException {
+        return new BufferedInputStream(conn.getErrorStream(), BUFFER_SIZE);
+    }
 
     private static File makeFile(URLConnection conn, File outfile) {
         if (outfile == null) outfile = new File(".", "out.dat");

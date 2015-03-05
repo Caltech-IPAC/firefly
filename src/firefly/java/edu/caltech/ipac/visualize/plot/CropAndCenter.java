@@ -698,7 +698,6 @@ public class CropAndCenter
             e.printStackTrace();
             System.exit(1);
         }
-
     }
 }
 
