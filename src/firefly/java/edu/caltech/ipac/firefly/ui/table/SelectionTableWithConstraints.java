@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CellRenderer;
+import com.google.gwt.http.client.URL;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -14,7 +15,10 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.StringFieldDef;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author tatianag
@@ -111,9 +115,9 @@ public class SelectionTableWithConstraints extends SelectionTable {
                     for (String p : parts) {
                         p = p.trim();
                         if (p.startsWith(">")||p.startsWith("<")||p.startsWith("=")||p.startsWith("LIKE")) {
-                            constraints.add(key+" "+p);
+                            constraints.add(URL.encode(key+" "+p));
                         } else {
-                            constraints.add(key+" LIKE \'"+p+"\'");
+                            constraints.add(URL.encode(key+" LIKE \'"+p+"\'"));
                         }
                     }
                 }
