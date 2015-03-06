@@ -54,7 +54,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
     public final static String POSTCRYO = "postcryo";
-    public final static String NEOWISER_PUB = "neowiser";
+    public final static String NEOWISER_PUB = "neowiser-pub";
     public final static String MERGE = "merge";
 
 
@@ -62,7 +62,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String PASS1 = "pass1";
     public final static String NEOWISER_PROV = "neowiser_prov";
     public final static String NEOWISER_YR1 = "neowiser-yr1";
-    public final static String NEOWISER = "neowiser";
+    public final static String NEOWISER = "neowiser";       //this is the on-going yr2 internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -79,6 +79,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1,"Pass 1");
             put(NEOWISER_PROV,"NEOWISER PROV");
             put(NEOWISER_YR1,"NEOWISER YR1 (2 Bands)");
+            put(NEOWISER_PUB,"NEOWISER PUBLIC (2 Bands)");
             put(NEOWISER,"NEOWISER (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
@@ -464,7 +465,7 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
                 return new String[]{PASS1,PASS2_2BAND};
             } else {
-                return new String[]{NEOWISER_PROV,NEOWISER};
+                return new String[]{NEOWISER_PROV,NEOWISER,NEOWISER_PUB,NEOWISER_YR1};
             }
         }
     }

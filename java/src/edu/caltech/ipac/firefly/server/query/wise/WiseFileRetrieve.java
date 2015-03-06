@@ -65,6 +65,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.PASS2_4BAND+"|3a", "links-pass2/l3a-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_PROV +"|1b", "links-nprov/l1b/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_YR1 +"|1b", "links-neowiser/l1b-yr1/");
+        PROD_LEVEL_MAP.put(WiseRequest.NEOWISER_PUB +"|1b", "links-neowiser/l1b-yr1/");
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER +"|1b", "links-neowiser/l1b/");
     }
 
