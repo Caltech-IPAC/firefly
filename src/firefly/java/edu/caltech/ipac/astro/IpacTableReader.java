@@ -92,10 +92,8 @@ public final class IpacTableReader {
               }
 
               while (_line != null) {
-                  if (_line != null) {
-                      addToGroup(_line, columnsDesc, _dataGroup, extraData);
-                      rowsRead++;
-                  }
+                  addToGroup(_line, columnsDesc, _dataGroup, extraData);
+                  rowsRead++;
                   _line= reader.readLine();
               }
               guessTypesIfNecessary(_dataGroup, columnsDesc);
@@ -206,9 +204,6 @@ public final class IpacTableReader {
       } catch (FileNotFoundException fnfe) {
          System.out.println("File not found Exception");
          throw new IpacTableException("File or object not found");
-      }
-      catch (IOException e) {
-         System.out.println("IO Exception");
       } finally {
           FileUtil.silentClose(br);
       }
@@ -715,17 +710,17 @@ public final class IpacTableReader {
     }
 //===================================================================
 
-  private static class IpacTableColumn {
-     public int     _startIndex;   // inclusive
-     public int     _endIndex;     // exclusive
-     public String  _name;
-     public String  _type;  // can be: char, double, int
-     public Class   _foundType= null;  // can be: String, Double, Float, Int
-     public String  _unit;
-     public boolean _useColumn= false;  // true: use this column, false: ignore
-     public boolean _mayBeNull;
-     public String  _badValueString = null;
-     }
+    private static class IpacTableColumn {
+        public int     _startIndex;   // inclusive
+        public int     _endIndex;     // exclusive
+        public String  _name;
+        public String  _type;  // can be: char, double, int
+        public Class   _foundType= null;  // can be: String, Double, Float, Int
+        public String  _unit;
+        public boolean _useColumn= false;  // true: use this column, false: ignore
+        public boolean _mayBeNull;
+        public String  _badValueString = null;
+    }
 
 
     public static void main(String args[]) {
