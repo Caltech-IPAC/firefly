@@ -21,39 +21,28 @@ task deployAllWars(dependsOn: loadConfig) << {
     throw ProjectConfigurationException("tomcat_home property is not found.")
   }
 
-  def remoteHost = project.hasProperty("remoteHost") ? remoteHost : null
+  def remoteHosts = project.hasProperty("remoteHost") ? remoteHost.split(",") : [null]
 
-  // stop tomcat
-  stopTomcat(null)
-  sleep(1 * 1000)
-  if (remoteHost != null) {
-    stopTomcat(remoteHost)
-  }
+  for ( rhost in remoteHosts ) {
 
-  sleep(15 * 1000)
+    println ">> deploying to host: $rhost"
 
-  execCmd(null, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
-  if (remoteHost != null) {
-    execCmd(remoteHost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
-  }
+    // stop tomcat
+    stopTomcat(rhost)
+    sleep(15 * 1000)
 
-  // copy all of the war files
-  def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
-  wars.each {File file ->
-    copyWar(file, null)
-    if (remoteHost != null) {
-      copyWar(file, remoteHost)
+    execCmd(rhost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
+
+    // copy all of the war files
+    def wars = fileTree(dir:"${project.buildDir}/libs", include: '*.war')
+    wars.each {File file ->
+      copyWar(file, rhost)
     }
-  }
 
-  // start tomcat
-  sleep(1 * 1000)
-  startTomcat(null)
-  if (remoteHost != null) {
+    // start tomcat
     sleep(1 * 1000)
-    startTomcat(remoteHost)
+    startTomcat(rhost)
   }
-
 }
 
 def copyWar(file, remoteHost) {
