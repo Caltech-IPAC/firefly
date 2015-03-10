@@ -452,7 +452,12 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{ALLSKY_4BAND};
             } else if (scanNum <= SCANID_MAP.get(CRYO_3BAND)[1]) {
                 return new String[]{CRYO_3BAND};
+            } else if (scanNum >= SCANID_MAP.get(NEOWISER_PUB)[0] &&
+                    scanNum <= SCANID_MAP.get(NEOWISER_PUB)[1]) {
+                return new String[]{NEOWISER_PUB};
             } else {
+                // these 2 have the same range..
+                // getImageSetFromSourceId() will determine which one to select
                 return new String[]{PRELIM_POSTCRYO, POSTCRYO};
             }
 
@@ -464,8 +469,13 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{PASS1,PASS2_3BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
                 return new String[]{PASS1,PASS2_2BAND};
+            } else if (scanNum >= SCANID_MAP.get(NEOWISER)[0] &&
+                    scanNum <= SCANID_MAP.get(NEOWISER)[1]) {
+                return new String[]{NEOWISER};
             } else {
-                return new String[]{NEOWISER_PROV,NEOWISER,NEOWISER_PUB,NEOWISER_YR1};
+                // these 2 have the same range..
+                // getImageSetFromSourceId() will determine which one to select
+                return new String[]{NEOWISER_PROV,NEOWISER_YR1};
             }
         }
     }
