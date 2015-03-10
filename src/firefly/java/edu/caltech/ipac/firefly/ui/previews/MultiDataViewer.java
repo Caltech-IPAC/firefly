@@ -91,7 +91,7 @@ public class MultiDataViewer {
         mainPanel.add(plotDeck);
         buildToolbar();
         reinitConverterListeners();
-        toolbar.addStyleName("toolbar");
+        toolbar.addStyleName("firefly-toolbar");
     }
 
     public void setRefreshListener(RefreshListener l) { this.refreshListener= l; }

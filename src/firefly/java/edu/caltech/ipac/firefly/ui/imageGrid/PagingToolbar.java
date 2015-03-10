@@ -38,7 +38,7 @@ import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
  * To change this template use File | Settings | File Templates.
  */
 public class PagingToolbar extends Composite {
-    public static final String DEFAULT_STYLENAME = "toolbar";
+    public static final String DEFAULT_STYLENAME = "firefly-toolbar";
 
     private ImageGridPanel imageGridPanel;
     private FlexTable mainPanel;

@@ -1602,7 +1602,7 @@ a.linkTypeButton, .linkTypeButton {
 /**
  * Applied to the options at the bottom of the page.
  */
-.toolbar {
+.firefly-toolbar {
   background: #c8c8c8;
   width: 100%;
   height: 100%;
@@ -1610,15 +1610,15 @@ a.linkTypeButton, .linkTypeButton {
   white-space: nowrap;
 }
 
-.toolbar .gwt-TextBox {
+.firefly-toolbar .gwt-TextBox {
     padding: 0px;
 }
 
-.toolbar .status {
+.firefly-toolbar .status {
   /*font-size: smaller;*/
 }
 
-.toolbar .button {
+.firefly-toolbar .button {
   /*font:normal 11px tahoma,arial,helvetica,sans-serif;*/
   font-weight : bold;
   font-size : 11px;
@@ -1631,7 +1631,7 @@ a.linkTypeButton, .linkTypeButton {
   white-space: nowrap;
 }
 
-.toolbar .button-highlight {
+.firefly-toolbar .button-highlight {
 	/*color : blue;*/
     /*font:bold 11px tahoma,arial,helvetica,sans-serif;*/
     font-weight : bold;
@@ -2302,4 +2302,88 @@ a.linkTypeButton, .linkTypeButton {
 .fuse-push-font-size div {
     font-size: 10pt;
 }
+
+/*=========================================== */
+/* Experimental
+/*=========================================== */
+.modal-dialog {
+    width: 50%;
+    height: 400px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -200px;
+    margin-left: -25%;
+    background-color: #fff;
+    border-radius: 2px;
+    z-index: 100;
+    padding: 10px;
+    box-shadow: 0 0 4px rgba(0,0,0,.14),0 4px 8px rgba(0,0,0,.28);
+}
+
+.modal-dialog--close {
+    cursor: pointer;
+    float: right;
+    font-size: 1.6em;
+}
+
+.modal-dialog__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99;
+    background-color: rgba(0,0,0,0.3);
+}
+
+    /*background-color: rgba(255, 255, 255, 0.75);',*/
+    /*'}',*/
+.ReactModal__Overlay {
+  background-color: rgba(0,0,0, 0.2);
+}
+.ReactModal__Content {
+    /*position: absolute;*/
+    /*top: 40px;*/
+    /*left: 40px;*/
+    /*right: 40px;*/
+    /*bottom: 40px;*/
+    /*border: 1px solid #ccc;*/
+    /*background: #fff;*/
+    /*overflow: auto;*/
+    /*\-webkit-overflow-scrolling: touch;*/
+    /*border-radius: 4px;*/
+    /*outline: none;*/
+    /*padding: 20px;*/
+    /*box-shadow: 0px 0px 3px;*/
+
+      position: relative;
+      top: 100px;
+      border: 1px solid #ccc;
+      background: #fff;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 4px;
+      outline: none;
+      padding: 20px;
+      box-shadow: 0px 0px 3px;
+      margin: 0 auto 0 auto;
+      width: 300px;
+      height: 100px;
+
+
+
+  }
+/*}*/
+/*@media (max-width: 768px) {*/
+    /*.ReactModal__Content {*/
+        /*top: 10px;*/
+        /*left: 10px;*/
+        /*right: 10px;*/
+        /*bottom: 10px;*/
+        /*padding: 10px;*/
+    /*}*/
+/*}*/
+
+
 

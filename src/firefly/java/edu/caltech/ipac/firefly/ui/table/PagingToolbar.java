@@ -13,22 +13,12 @@ import com.google.gwt.gen2.table.event.client.PageLoadHandler;
 import com.google.gwt.gen2.table.event.client.PagingFailureEvent;
 import com.google.gwt.gen2.table.event.client.PagingFailureHandler;
 import com.google.gwt.gen2.table.override.client.FlexTable;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import edu.caltech.ipac.firefly.core.RPCException;
-import edu.caltech.ipac.firefly.data.FileStatus;
-import edu.caltech.ipac.firefly.data.table.DataSet;
-import edu.caltech.ipac.firefly.data.table.RawDataSet;
-import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.resbundle.images.TableImages;
-import edu.caltech.ipac.firefly.rpc.SearchServices;
-import edu.caltech.ipac.firefly.util.DataSetParser;
-import edu.caltech.ipac.util.StringUtils;
 
 /**
  * A paging toobar built on top of gwt-incubator's PagingOptions
@@ -50,7 +40,7 @@ import edu.caltech.ipac.util.StringUtils;
  * @version $Id: PagingToolbar.java,v 1.21 2012/06/16 00:21:53 loi Exp $
  */
 public class PagingToolbar extends Composite {
-    public static final String DEFAULT_STYLENAME = "toolbar";
+    public static final String DEFAULT_STYLENAME = "firefly-toolbar";
 
     private PagingPanel pagingBar;
     private TablePanel table;

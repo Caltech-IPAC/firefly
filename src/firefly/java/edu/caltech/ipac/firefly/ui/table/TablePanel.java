@@ -211,7 +211,7 @@ public class TablePanel extends Component implements StatefulWidget, FilterToggl
         mainPanel.addStyleName("mainPanel");
         DOM.setStyleAttribute(mainPanel.getElement(), "borderSpacing", "0px");
         toolbarWrapper = new HorizontalPanel();
-        toolbarWrapper.setStyleName("toolbar");
+        toolbarWrapper.setStyleName("firefly-toolbar");
         stateId = name;
         mainWrapper.add(mainPanel);
         initWidget(mainWrapper);
