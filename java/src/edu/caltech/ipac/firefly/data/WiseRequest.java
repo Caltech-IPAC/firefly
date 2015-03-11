@@ -54,7 +54,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String ALLSKY_4BAND = "allsky-4band";
     public final static String CRYO_3BAND = "cryo_3band";
     public final static String POSTCRYO = "postcryo";
-    public final static String NEOWISER_PUB = "neowiser-pub";
+    public final static String NEOWISER_PUB = "neowiser";
     public final static String MERGE = "merge";
 
 
@@ -62,7 +62,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String PASS1 = "pass1";
     public final static String NEOWISER_PROV = "neowiser_prov";
     public final static String NEOWISER_YR1 = "neowiser-yr1";
-    public final static String NEOWISER = "neowiser";       //this is the on-going yr2 internal neowiser
+    public final static String NEOWISER_YR2 = "neowiser-yr2";       //this is the on-going yr2 internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -80,7 +80,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_PROV,"NEOWISER PROV");
             put(NEOWISER_YR1,"NEOWISER YR1 (2 Bands)");
             put(NEOWISER_PUB,"NEOWISER PUBLIC (2 Bands)");
-            put(NEOWISER,"NEOWISER (2 Bands)");
+            put(NEOWISER_YR2,"NEOWISER (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -110,7 +110,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR2 +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});  // TODO: check
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
             put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
@@ -141,7 +141,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, new Integer[]{8745, 12514});
             put(NEOWISER_PROV, new Integer[]{44212, 55289});
             put(NEOWISER_YR1, new Integer[]{44212, 55289});
-            put(NEOWISER, new Integer[]{55290, 999999}); // TODO: which scan is the first for yr2?
+            put(NEOWISER_YR2, new Integer[]{55290, 999999}); // TODO: which scan is the first for yr2?
         }
     };
 
@@ -163,7 +163,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, "wise_pass2_2band");
             put(NEOWISER_PROV,"wise_neowiser_prov");
             put(NEOWISER_YR1,"wise_neowiser_yr1");
-            put(NEOWISER,"wise_neowiser");
+            put(NEOWISER_YR2,"wise_neowiser");
 
         }
     };
@@ -469,9 +469,9 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{PASS1,PASS2_3BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
                 return new String[]{PASS1,PASS2_2BAND};
-            } else if (scanNum >= SCANID_MAP.get(NEOWISER)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER)[1]) {
-                return new String[]{NEOWISER};
+            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR2)[0] &&
+                    scanNum <= SCANID_MAP.get(NEOWISER_YR2)[1]) {
+                return new String[]{NEOWISER_YR2};
             } else {
                 // these 2 have the same range..
                 // getImageSetFromSourceId() will determine which one to select
