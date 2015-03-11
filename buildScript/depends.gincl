@@ -52,9 +52,9 @@ ext {
 
   FIREFLY_RUNTIME = [apache_lib, spring_lib, votable_lib, fits_io_lib, webservices_lib,
                      log4j_lib, josso_lib, healpix_lib, xstream_lib, xbeanfinder_lib,
-                     gwt_lib_rt]
+                     gwt_lib_rt, ehcache_lib]
 
-  FIREFLY_COMPILE = [FIREFLY_RUNTIME, j2ee_lib, ehcache_lib, gwt_lib]
+  FIREFLY_COMPILE = [FIREFLY_RUNTIME, j2ee_lib, gwt_lib]
 }
 
 
