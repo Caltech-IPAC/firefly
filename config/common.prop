@@ -30,6 +30,10 @@ ehcache.jmx.monitor=true
 ehcache.cleanup.internal.minutes= 5
 ehcache.cleanup.cache.types= VISUALIZE
 
+# a number between 0-1.  percentage of the heap used for visualization cache.
+# if 0, it will not automatically calculate the size.  instead, it will use vis.shared.mem.size.
+pct.vis.shared.mem.size=@pct.vis.shared.mem.size@
+
 # setting custom padding to the ArrayRenderer
 # ~33 spaces
 ArrayRenderer.padding=\

@@ -41,7 +41,8 @@ public class EhcacheProvider implements Cache.Provider {
     private static final boolean enableJMX = AppProperties.getBooleanProperty("ehcache.jmx.monitor", true);
     private static final int cleanupIntervalMin = AppProperties.getIntProperty("ehcache.cleanup.internal.minutes", 5);
     private static final String cleanupTypes[] = findCleanupCacheTypes();
-//    private static final MemCleanup cleanup= new MemCleanup();
+    private static float pctVisSharedMemSize = AppProperties.getFloatProperty("pct.vis.shared.mem.size", 0F);
+    //    private static final MemCleanup cleanup= new MemCleanup();
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
 
@@ -91,10 +92,14 @@ public class EhcacheProvider implements Cache.Provider {
             } else {
                 _log.error("Unable to locate ignore_sizeof.txt file.");
             }
-            String sharedMemSize = System.getProperty("vis.shared.mem.size");
-
             sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
-            if (!StringUtils.isEmpty(sharedMemSize)) {
+
+            // check to see if vis.shared.mem.size is setup in the environment or setup for auto-config.
+            String sharedMemSize = System.getProperty("vis.shared.mem.size");
+            if (!StringUtils.isEmpty(sharedMemSize) || pctVisSharedMemSize > 0) {
+                if (StringUtils.isEmpty(sharedMemSize)) {
+                    sharedMemSize =  String.format("%dM", (int)(Runtime.getRuntime().maxMemory() * pctVisSharedMemSize/1024/1024));
+                }
                 sharedManager.getCache(Cache.TYPE_VIS_SHARED_MEM).getCacheConfiguration().setMaxBytesLocalHeap(sharedMemSize);
             }
             _log.info("shared cache manager config file: " + sharedConfig);
