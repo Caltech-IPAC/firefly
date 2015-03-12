@@ -7,7 +7,7 @@ var React= require('react/addons');
 var EXCLAMATION= 'tmp-stuff/exclamation16x16.gif'
 
 var InputFieldView = module.exports= React.createClass(
-   {
+{
 
        mixins : [React.addons.PureRenderMixin],
 
@@ -48,7 +48,7 @@ var InputFieldView = module.exports= React.createClass(
            this.setState({infoPopup:true});
        },
        alertLeave: function(ev) {
-           this.setState({infoPopup:false});
+          this.setState({infoPopup:false});
        },
 
        onFocus: function(ev) {
@@ -68,17 +68,22 @@ var InputFieldView = module.exports= React.createClass(
            if (warn) {
                warnIcon= (
                        <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
-                           <img ref="warnIcon" src={EXCLAMATION}/>
+                           <img ref={function(c){
+                               this.computeWarningXY(c);}.bind(this)
+                                   } src={EXCLAMATION}/>
                        </div>
                );
            }
 
+           //<img ref={(c)=>this.computeWarningXY(c);} src={EXCLAMATION}/>
            var retval= (
-                   <div style={{
+                   <div style={
+                      {
                        paddingLeft: "3px",
                        width: "16px",
                        height: "16px",
-                       display:'inline-block'}}>
+                       display:'inline-block'}
+                       }>
                         {warnIcon}
                    </div>
                );
@@ -106,66 +111,80 @@ var InputFieldView = module.exports= React.createClass(
            );
        },
 
-       makeInfoPopup : function() {
+    warningOffsetX : 0,
+    warningOffsetY : 0,
 
-           var retval= "";
-           if (this.refs.warnIcon && this.refs.warnIcon.getDOMNode()) {
-               var e= this.refs.warnIcon.getDOMNode();
-               var bodyRect = document.body.getBoundingClientRect();
-               var elemRect = e.getBoundingClientRect();
-               var offsetX   = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
-               var offsetY   = elemRect.top - bodyRect.top;
-               retval= <PointerPopup x={offsetX} y={offsetY}
-                       message={this.makeMessage()}/>
-           }
-           return retval;
-       },
+    componentDidMount : function() {
+        //if (!this.props.valid) {
+        //    this.computeWarningXY();
+        //}
 
-       createLabel : function() {
-           var retval= null;
-           var labelStyle= {
-               display:'inline-block',
-               paddingRight:'4px',
-           };
-           if (this.props.labelWidth) {
-               labelStyle.width= this.props.labelWidth;
-           }
-           /*jshint ignore:start */
-           if (this.props.label) {
-               retval= (
-                       <div style={labelStyle} title={this.props.tooltip}>
+    },
+
+    computeWarningXY : function(warnIcon) {
+        var retval= "";
+        if (warnIcon) {
+            var e= React.findDOMNode(warnIcon);
+            var bodyRect = document.body.getBoundingClientRect();
+            var elemRect = e.getBoundingClientRect();
+            this.warningOffsetX   = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
+            this.warningOffsetY   = elemRect.top - bodyRect.top;
+        }
+    },
+
+    makeInfoPopup : function() {
+
+        var retval= <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
+                message={this.makeMessage()}/>
+        return retval;
+    },
+
+
+    createLabel : function() {
+        var retval= null;
+        var labelStyle= {
+            display:'inline-block',
+            paddingRight:'4px',
+        };
+        if (this.props.labelWidth) {
+            labelStyle.width= this.props.labelWidth;
+        }
+        /*jshint ignore:start */
+        if (this.props.label) {
+            retval= (
+                    <div style={labelStyle} title={this.props.tooltip}>
                        {this.props.label}
-                       </div>
-               );
-           }
-           /*jshint ignore:end */
-           return retval;
-       },
+                    </div>
+            );
+        }
+        /*jshint ignore:end */
+        return retval;
+    },
 
-       render: function() {
-           var retval= null;
-           if (this.props.visible) {
-               retval= (
-                       <div style={{whiteSpace:"nowrap"}}>
+    render: function() {
+        var retval= null;
+        if (this.props.visible) {
+            retval= (
+                    <div style={{whiteSpace:"nowrap"}}>
                        {this.createLabel()}
-                           <input style={{display:'inline-block'}}
-                                   className={this.computeStyle()}
-                                   onChange={this.onChange}
-                                   onFocus={this.onFocus}
-                                   onBlur={this.onBlur}
-                                   value={this.props.value}
-                                   title={this.props.tooltip}
-                           />
+                        <input style={{display:'inline-block'}}
+                                className={this.computeStyle()}
+                                onChange={this.onChange}
+                                onFocus={this.onFocus}
+                                onBlur={this.onBlur}
+                                value={this.props.value}
+                                title={this.props.tooltip}
+                        />
                        {this.makeWarningArea(!this.props.valid)}
                        {this.state.infoPopup?this.makeInfoPopup() : ""}
-                       </div>
-               );
-           }
+                    </div>
+            );
+        }
 
-           return retval;
-       }
+        return retval;
+    }
 
 
-   });
+});
 
 

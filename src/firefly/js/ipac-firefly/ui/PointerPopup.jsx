@@ -14,7 +14,7 @@ var SOUTH_WEST = "sWest";
 
 var PointerPopup = React.createClass(
    {
-       mixins : [React.addons.PureRenderMixin],
+       //mixins : [React.addons.PureRenderMixin],
 
        statics : {
            NONE : NONE,
@@ -40,7 +40,7 @@ var PointerPopup = React.createClass(
            var retval= {};
            if (dir===NORTH) {
                retval.x= this.props.x;
-               retval.y= this.props.y+30;
+               retval.y= this.props.y+18;
            }
            else {
                retval.x= this.props.x+10;
@@ -75,16 +75,16 @@ var PointerPopup = React.createClass(
                }
                e.style.left= left +"px";
                e.style.top= pos.y+"px";
-               var upPointer= this.refs.upPointer.getDOMNode();
-               upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -10)+"px";
+               var upPointer= React.findDOMNode(this.refs.upPointer);
+               upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+"px";
                e.style.visibility="visible";
            }
            else if (this.state.dir===SOUTH_WEST) {
-               e.style.left= (pos.x+23) +"px";
-               var top= pos.y - (e.offsetHeight/2+3);
+               e.style.left= (pos.x+20) +"px";
+               var top= pos.y - (e.offsetHeight/2+15);
                top= top<5 ? 5 : top;
                e.style.top= top+"px";
-               var leftDownPointer= this.refs.leftDownPointer.getDOMNode();
+               var leftDownPointer= React.findDOMNode(this.refs.leftDownPointer);
                leftDownPointer.style.left= -20+"px";
                leftDownPointer.style.top= 8+"px";
                leftDownPointer.style.paddingLeft= 0;
@@ -105,7 +105,7 @@ var PointerPopup = React.createClass(
        //},
 
        componentDidMount: function () {
-           var e= this.getDOMNode();
+           var e= React.findDOMNode(this);
            this.updateOffsets(e)
            _.defer(function() {
                this.computeDir(e);
@@ -115,7 +115,7 @@ var PointerPopup = React.createClass(
 
 
        componentDidUpdate: function () {
-           var e= this.getDOMNode();
+           var e= React.findDOMNode(this);
            this.updateOffsets(e)
        },
 
@@ -126,7 +126,7 @@ var PointerPopup = React.createClass(
                return (
                        <div style={{position:"absolute",left:0,top:0, visibility:"hidden" }}>
                            <img src={UP_POPUP_POINTER} ref="upPointer"/>
-                           <div className="standard-border" style= {{marginTop:"-5px"}}>
+                           <div className="standard-border" style= {{marginTop:"-3px"}}>
                                <div style={{padding : "5px"}}
                                        className="popup-pane-pointer-shadow firefly-popup-pointer-main-panel">
                               {this.props.message}

@@ -1,6 +1,8 @@
 /*jshint node:true*/
 //var webpack = require('webpack');
+"use strict";
 var path = require('path');
+//var strUtil = require('underscore.string');
 
 
 
@@ -40,7 +42,7 @@ module.exports = {
 
   resolve: {
       root: [path.resolve(ffRoot+'src/firefly/js'),
-             path.resolve(ffRoot+ '/node_modules')],
+             path.resolve(ffRoot+ 'node_modules')],
       extensions: ['', '.js', '.jsx']
   },
 
@@ -53,6 +55,16 @@ module.exports = {
   }
 };
 
+//console.log("arg 1"+process.argv[1]);
+//var myRoot= process.argv.reduce(function(last,param) {
+//    var retval= last;
+//    if (strUtil.startsWith(param,"myRoot")) {
+//        return param;
+//    }
+//    return retval;
+//},null);
+//console.log("myRoot="+myRoot);
+//console.log("ffRoot="+ffRoot);
 //console.log("ffRoot="+ffRoot);
 //console.log("0="+module.exports.resolve.root[0]);
 //console.log("output.path="+module.exports.output.path);

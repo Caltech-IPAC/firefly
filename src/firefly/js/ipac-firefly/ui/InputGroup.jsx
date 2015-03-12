@@ -24,7 +24,8 @@ var InputGroup = module.exports= React.createClass(
            return (
                    <div>
                      {React.Children.map(this.props.children,function(inChild,idx) {
-                         return React.addons.cloneWithProps(inChild, {labelWidth: lWidth});
+                         return React.cloneElement(inChild, {labelWidth: lWidth})
+                         //return React.addons.cloneWithProps(inChild, );
                      })}
                    </div>
 

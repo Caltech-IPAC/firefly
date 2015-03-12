@@ -3,6 +3,7 @@
  */
 
 /*jshint browserify:true*/
+/*globals console*/
 
 "use strict";
 var React= require('react/addons');
@@ -55,7 +56,8 @@ var FormButton = module.exports= React.createClass(
        onClick: function(ev) {
            this.props.formModel.validateForm().then(
                    function(state) {
-                       console.log("validate state: "+ state);
+                       var statStr= "validate state: "+ state;
+                       console.log(statStr);
                        var request= {};
                        _.keys(this.props.formModel.attributes).forEach(function(fieldKey) {
                            request[fieldKey] = this.props.formModel[fieldKey].value;
@@ -71,7 +73,7 @@ var FormButton = module.exports= React.createClass(
                        //this.showSimpleDialog();
                        //PopupUtil.showModal("here", "try this");
                        this.setState({modalOpen:true,
-                                      request:s});
+                                      request:statStr+"::::: "+s});
 
 
                    }.bind(this)
@@ -107,7 +109,13 @@ var FormButton = module.exports= React.createClass(
            return (
                    <div>
                        <button type="button" onClick={this.onClick}>submit</button>
-                       {PopupUtil.getModal("results",this.state.request,this.state.modalOpen,this.closeModal)}
+                       <PopupUtil.ModalDialog
+                               message={this.state.request ? this.state.request : ""}
+                               modalOpen={this.state.modalOpen}
+                               title={"results"}
+                               closeRequest={this.closeModal}
+                       />
+
                    </div>
            );
            /*jshint ignore:end */
@@ -117,7 +125,7 @@ var FormButton = module.exports= React.createClass(
    });
 
 
-
+//{PopupUtil.getModal("results",this.state.request,this.state.modalOpen,this.closeModal)}
 //<Modal
 //        isOpen={this.state.modalOpen}
 //        onRequestClose={this.closeModal} >

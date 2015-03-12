@@ -18,6 +18,14 @@ var modalDiv= null;
 
 
 
+var init= function() {
+    if (!modalDiv) {
+        modalDiv = document.createElement('div');
+        document.body.appendChild(modalDiv);
+        Modal.setAppElement(modalDiv);
+    }
+};
+
 var ModalInternal = React.createClass(
         {
 
@@ -33,17 +41,20 @@ var ModalInternal = React.createClass(
 
             render: function() {
                 /*jshint ignore:start */
-                var retval= (
-                        <Modal isOpen={this.state.modalOpen}
-                                onRequestClose={this.okClick} >
-                            <h2>{this.props.title}</h2>
+                var retval= null;
+                if (this.state.modalOpen) {
+                    retval= (
+                            <Modal isOpen={this.state.modalOpen}
+                                    onRequestClose={this.okClick} >
+                                <h2>{this.props.title}</h2>
                             {this.props.message}
-                            <div>
-                                <button onClick={this.onClick}>close</button>
-                            </div>
-                        </Modal>
+                                <div>
+                                    <button onClick={this.onClick}>close</button>
+                                </div>
+                            </Modal>
+                    );
 
-                );
+                }
                 return retval;
                 /*jshint ignore:end */
             }
@@ -77,4 +88,45 @@ var getModal = function(title,message,show,closing) {
 };
 
 
+var ModalDialog = React.createClass(
+{
+
+    propTypes: {
+        modalOpen   : React.PropTypes.bool.isRequired,
+        title   : React.PropTypes.string.isRequired,
+        message : React.PropTypes.any.isRequired,
+        closeRequest : React.PropTypes.func.isRequired
+    },
+
+    onClick: function(ev) {
+        this.setState({modalOpen : false});
+        this.props.closeRequest();
+    },
+
+    render: function() {
+        /*jshint ignore:start */
+        var retval= null;
+        if (this.props.modalOpen) {
+            retval= (
+                    <Modal isOpen={true}
+                            onRequestClose={this.okClick}>
+                        <h2>{this.props.title}</h2>
+                            {this.props.message}
+                        <div>
+                            <button onClick={this.onClick}>close</button>
+                        </div>
+                    </Modal>
+            );
+
+        }
+        return retval;
+        /*jshint ignore:end */
+    }
+
+});
+
+
+
+
 exports.getModal= getModal;
+exports.ModalDialog= ModalDialog;
