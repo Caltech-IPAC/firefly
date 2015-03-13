@@ -1,24 +1,25 @@
-Firefly
--------
+# Firefly
 
 Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-based Front end to access science archives. It provides sophisticated data visualization capabilities not available in many web-based archives. Our efforts to create a tightly integrated and user-friendly interface has generated numerous positive feedback from scientists. Users can browse and understand large volumes of archive data in a fraction of the time it took in the past.
 
 
-### Firefly Framework
+#### Firefly Framework
 Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive.
 
 
-### Firefly Viewer
+#### Firefly Viewer
 
 By default, this repository builds a default example webapp. This tool can be used for viewing fits data, catalogs, and xyplots. It is a general viewer tool for retrieving and viewing astronomy related data.
 
-### Firefly Tools
+#### Firefly Tools
 
 Firefly Tools exposes the most powerful components of Firefly in a way that can be used by any web page with no prerequisites. It allows any web developer access to Firefly's FITS visualizers or Table Tool with just a very few lines of JavaScript. The goal is to make these tools very easy to use with only a 10 minute learning curve.
 
 An important feature is that the Firefly Tools server can be installed cross-site. In other words, it is not required to be on the same server as the web page. Firefly Tools can do this because it uses JSONP or CORS for the server communication. This allows Firefly Tools not to be limited by the server's Same Origin Policy and to give the developer a lot of flexibility. The web developer does not have to do any installation, but can simply just start using Firefly Tools.
 
 ### Visualizers
+The firefly components contain 3 main visualizers for astronomy data.
+
 
 #### Tabular Display
 Firefly has implemented “Excel-like” tables on the webpage. In an easy, interactive way, a user can sort the results, filter the data on multiple constraints, hide or show columns or select data for download or visualization. The Firefly Tools server is optimized to show very large tables without significant performance degradation. We have tested it with over 10 million rows, 50 column tables.
@@ -31,8 +32,7 @@ Firefly shows 2D line graphs interactively so that a user can read the data poin
 
 
 
-Setup
------
+## Setup
 
 #### Prerequisites
  -  [Java 1.6.+] (http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase6-419409.html)
@@ -81,8 +81,7 @@ Goto http://localhost:8080/fftools/ to launch Firefly Viewer.
 
 
 
-Code Examples Using Firefly Tools
----------------------------------
+## Code Examples Using Firefly Tools
 
 #### Example 1
 To load firefly Tools, you should include the above declaration in your HTML file. When Firefly Tools completes its loading, it calls a JavaScript function `onFireflyLoaded()`
