@@ -102,8 +102,28 @@ task webapp {
   ext.baseWarName = jar.baseName
 }
 
+task buildClient {
+  dependsOn loadConfig
+
+  doLast {
+    if (!file("webpack.config.js").exists()) {
+      println ">> webpack.config.js not found.  Skipping buildClient."
+      throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
+    }
+
+    exec {
+      executable "webpack"
+      args "-d"
+    }
+    copy {
+      from("html/tmp-stuff/")
+      into gwt.warDir
+    }
+  }
+}
+
 war {
-  dependsOn webapp, jar, gwtCompile, prepareWebapp
+  dependsOn webapp, jar, gwtCompile, buildClient, prepareWebapp
   description= 'Build application. Creates a war file.'
   group = WEBAPP_GROUP
 
@@ -130,6 +150,23 @@ task dirty (type: War) {
   from gwt.warDir
 }
 
+task deployClient  {
+  dependsOn loadConfig, buildClient, webapp
+  description= 'Build and deploy the JavaScript client only.  Require ${tomcat_home} property'
+  group = WEBAPP_GROUP
+
+  doLast {
+    copy {
+      from(gwt.warDir) {
+        include "**/*"
+        exclude "WEB-INF"
+        exclude "META-INF"
+      }
+      into "${tomcat_home}/webapps/${webapp.baseWarName}"
+    }
+  }
+}
+
 task deploy {
   dependsOn loadConfig, webapp
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
@@ -140,13 +177,13 @@ task deploy {
     if (!project.hasProperty("tomcat_home")) {
       throw ProjectConfigurationException("tomcat_home property is not found.")
     }
-    exec {
-      ignoreExitValue = 'true'
-      executable "$tomcat_home/bin/shutdown.sh"
-      println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
-      errorOutput = new ByteArrayOutputStream()
-    }
-    sleep(4 * 1000)
+//    exec {
+//      ignoreExitValue = 'true'
+//      executable "$tomcat_home/bin/shutdown.sh"
+//      println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
+//      errorOutput = new ByteArrayOutputStream()
+//    }
+//    sleep(4 * 1000)
 
     copy {
       println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
@@ -155,15 +192,15 @@ task deploy {
       into "$tomcat_home/webapps/"
     }
 
-    exec {
-      delete("$tomcat_home/temp/ehcache")
-      executable "$tomcat_home/bin/catalina.sh"
-      if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
-        args 'jpda'
-      }
-      args 'start'
-      println ">> Starting Tomcat:.."
-    }
+//    exec {
+//      delete("$tomcat_home/temp/ehcache")
+//      executable "$tomcat_home/bin/catalina.sh"
+//      if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
+//        args 'jpda'
+//      }
+//      args 'start'
+//      println ">> Starting Tomcat:.."
+//    }
   }
 }
 
