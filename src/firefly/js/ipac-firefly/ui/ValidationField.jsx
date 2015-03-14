@@ -2,9 +2,9 @@
 /*jshint esnext:true*/
 
 "use strict";
-var React= require('react/addons');
+import React from 'react/addons';
 import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
-var FormStoreLinkMixin= require ("ipac-firefly/ui/model/FormStoreLinkMixin.js");
+import FormStoreLinkMixin from "ipac-firefly/ui/model/FormStoreLinkMixin.js";
 
 
 

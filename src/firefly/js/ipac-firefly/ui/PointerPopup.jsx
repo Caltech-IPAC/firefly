@@ -1,25 +1,26 @@
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 "use strict";
-var React= require('react/addons');
-var _= require("underscore");
+import React from 'react/addons';
+import _ from 'underscore';
 
 
-var UP_POPUP_POINTER = "images/up-pointer.gif";
-var LEFT_DOWN_POPUP_POINTER = "images/left-down-pointer.gif";
-var HOR_PTR_IMAGE_OFFSET= -6;
+const UP_POPUP_POINTER = "images/up-pointer.gif";
+const LEFT_DOWN_POPUP_POINTER = "images/left-down-pointer.gif";
+const HOR_PTR_IMAGE_OFFSET= -6;
 
-var NONE = "none";
-var NORTH = "north";
-var SOUTH_WEST = "sWest";
+const NONE = "none";
+const NORTH = "north";
+const SOUTH_WEST = "sWest";
 
 var PointerPopup = React.createClass(
    {
        //mixins : [React.addons.PureRenderMixin],
 
        statics : {
-           NONE : NONE,
-           NORTH : NORTH,
-           SOUTH_WEST : SOUTH_WEST
+           NONE,
+           NORTH,
+           SOUTH_WEST,
        },
 
 
@@ -30,13 +31,13 @@ var PointerPopup = React.createClass(
        },
 
 
-       getInitialState : function() {
+       getInitialState() {
            return {
                dir : NONE
            };
        },
 
-       computePosition : function(dir) {
+       computePosition(dir) {
            var retval= {};
            if (dir===NORTH) {
                retval.x= this.props.x;
@@ -50,7 +51,7 @@ var PointerPopup = React.createClass(
 
        },
 
-       computeDir : function(e) {
+       computeDir(e) {
 
            var elemRect = e.getBoundingClientRect();
 
@@ -63,7 +64,7 @@ var PointerPopup = React.createClass(
 
        },
 
-       updateOffsets : function(e) {
+       updateOffsets(e) {
            var pos= this.computePosition(this.state.dir);
            if (this.state.dir===NORTH) {
                var left= pos.x - e.offsetWidth/2;
@@ -104,7 +105,7 @@ var PointerPopup = React.createClass(
        //
        //},
 
-       componentDidMount: function () {
+       componentDidMount() {
            var e= React.findDOMNode(this);
            this.updateOffsets(e)
            _.defer(function() {
@@ -114,13 +115,13 @@ var PointerPopup = React.createClass(
        },
 
 
-       componentDidUpdate: function () {
+       componentDidUpdate() {
            var e= React.findDOMNode(this);
            this.updateOffsets(e)
        },
 
 
-       render: function() {
+       render() {
            var retval;
            if (this.state.dir===NORTH || this.state.dir===NONE) {
                return (
@@ -154,4 +155,4 @@ var PointerPopup = React.createClass(
        }
    });
 
-module.exports= PointerPopup;
+export default PointerPopup;

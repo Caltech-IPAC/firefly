@@ -1,5 +1,6 @@
 /*jshint browserify:true*/
 /*globals firefly, onFireflyLoaded*/
+/*jshint esnext:true*/
 "use strict";
 
 
@@ -10,7 +11,6 @@ var InputFormModel= require ("ipac-firefly/ui/model/InputFormModel.js");
 var TargetPanel= require ("ipac-firefly/ui/TargetPanel.jsx");
 var InputGroup= require ("ipac-firefly/ui/InputGroup.jsx");
 var Validate= require("ipac-firefly/util/Validate.js");
-//var ValidationField= require ("ipac-firefly/ui/ValidationField.jsx");
 import ValidationField from "ipac-firefly/ui/ValidationField.jsx";
 
 var myDispatcher= require("./Dispatcher.js");

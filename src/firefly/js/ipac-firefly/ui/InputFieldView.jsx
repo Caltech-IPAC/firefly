@@ -1,10 +1,11 @@
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 
 "use strict";
 import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
 import React from 'react/addons';
 
-var EXCLAMATION= 'tmp-stuff/exclamation16x16.gif'
+const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif'
 
 var InputFieldView = React.createClass(
 {
@@ -21,7 +22,7 @@ var InputFieldView = React.createClass(
            onChange : React.PropTypes.func.isRequired,
        },
 
-       getDefaultProps : function() {
+       getDefaultProps() {
            return {
                valid : true,
                visible : true,
@@ -30,7 +31,7 @@ var InputFieldView = React.createClass(
            };
        },
 
-       getInitialState : function() {
+       getInitialState() {
            return {
                hasFocus : false,
                infoPopup : false,
@@ -38,39 +39,38 @@ var InputFieldView = React.createClass(
            };
        },
 
-       onChange: function(ev) {
+       onChange(ev) {
            if (this.props.onChange) {
                this.props.onChange(ev);
            }
        },
 
-       alertEntry: function(ev) {
+       alertEntry(ev) {
            this.setState({infoPopup:true});
        },
-       alertLeave: function(ev) {
+       alertLeave(ev) {
           this.setState({infoPopup:false});
        },
 
-       onFocus: function(ev) {
+       onFocus(ev) {
            if (!this.state.hasFocus) {
                this.setState({hasFocus:true});
            }
        },
 
 
-       onBlur: function(ev) {
+       onBlur(ev) {
            this.setState({hasFocus:false});
        },
 
-       makeWarningArea : function(warn) {
+       makeWarningArea(warn) {
            /*jshint ignore:start */
            var warnIcon= "";
            if (warn) {
                warnIcon= (
                        <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
-                           <img ref={function(c){
-                               this.computeWarningXY(c);}.bind(this)
-                                   } src={EXCLAMATION}/>
+                           <img ref={(c) => this.computeWarningXY(c)}
+                                src={EXCLAMATION}/>
                        </div>
                );
            }
@@ -114,14 +114,14 @@ var InputFieldView = React.createClass(
     warningOffsetX : 0,
     warningOffsetY : 0,
 
-    componentDidMount : function() {
+    componentDidMount() {
         //if (!this.props.valid) {
         //    this.computeWarningXY();
         //}
 
     },
 
-    computeWarningXY : function(warnIcon) {
+    computeWarningXY(warnIcon) {
         var retval= "";
         if (warnIcon) {
             var e= React.findDOMNode(warnIcon);
@@ -132,7 +132,7 @@ var InputFieldView = React.createClass(
         }
     },
 
-    makeInfoPopup : function() {
+    makeInfoPopup() {
 
         var retval= <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
                 message={this.makeMessage()}/>
@@ -140,7 +140,7 @@ var InputFieldView = React.createClass(
     },
 
 
-    createLabel : function() {
+    createLabel() {
         var retval= null;
         var labelStyle= {
             display:'inline-block',
@@ -161,7 +161,7 @@ var InputFieldView = React.createClass(
         return retval;
     },
 
-    render: function() {
+    render() {
         var retval= null;
         if (this.props.visible) {
             retval= (

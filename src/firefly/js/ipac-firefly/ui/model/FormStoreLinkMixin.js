@@ -6,11 +6,13 @@
  * Created by roby on 3/5/15.
  */
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 "use strict";
-var React= require('react/addons');
+
+import React from 'react/addons';
 
 
-var FormStoreLinkMixin= module.exports=  {
+var FormStoreLinkMixin=  {
         propTypes: {
             dispatcher : React.PropTypes.object.isRequired,
             fieldKey : React.PropTypes.string.isRequired,
@@ -19,7 +21,7 @@ var FormStoreLinkMixin= module.exports=  {
             labelWidth : React.PropTypes.any
         },
 
-        getInitialState : function() {
+        getInitialState() {
             var fieldState = this.props.initialState || this.props.formModel[this.props.fieldKey];
             return {
                 fieldState : fieldState
@@ -27,7 +29,7 @@ var FormStoreLinkMixin= module.exports=  {
         },
 
 
-        componentWillMount : function() {
+        componentWillMount() {
             this.getMessage= this.getFromStore.bind(this,"message","");
             this.isValid= this.getFromStore.bind(this,"valid",true);
             this.isVisible= this.getFromStore.bind(this,"visible",true);
@@ -41,7 +43,7 @@ var FormStoreLinkMixin= module.exports=  {
         },
 
 
-        getFromStore : function(key,defValue) {
+        getFromStore(key,defValue) {
             if (!this.state.fieldState) {
                 return defValue;
             }
@@ -49,7 +51,7 @@ var FormStoreLinkMixin= module.exports=  {
             return fieldState[key] !== undefined ? fieldState[key] : defValue;
         },
 
-        componentDidMount : function() {
+        componentDidMount() {
             this.props.formModel.on('change:'+this.props.fieldKey,this.updateFieldState);
             var payload= {
                 evType : 'mountComponent',
@@ -63,7 +65,7 @@ var FormStoreLinkMixin= module.exports=  {
             this.props.dispatcher.dispatch(payload);
         },
 
-        componentWillUnmount : function () {
+        componentWillUnmount() {
             this.props.formModel.off('change:'+this.props.fieldKey,this.updateFieldState);
             this.props.dispatcher.dispatch({
                                                evType : 'mountComponent',
@@ -73,9 +75,10 @@ var FormStoreLinkMixin= module.exports=  {
                                            });
         },
 
-        updateFieldState : function() {
+        updateFieldState() {
             var key= this.props.fieldKey;
             this.setState( {fieldState : this.props.formModel[key]});
         }
 };
 
+export default FormStoreLinkMixin;

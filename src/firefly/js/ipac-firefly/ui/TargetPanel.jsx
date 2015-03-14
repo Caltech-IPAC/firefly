@@ -3,13 +3,14 @@
  */
 
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 
 "use strict";
-var React= require('react/addons');
-var TargetPanelModel= require ("ipac-firefly/ui/model/TargetPanelModel.js");
-var TargetFeedback= require ("ipac-firefly/ui/TargetFeedback.jsx");
-var InputFieldView= require ("ipac-firefly/ui/InputFieldView.jsx");
-var FormStoreLinkMixin= require ("ipac-firefly/ui/model/FormStoreLinkMixin.js");
+import React from 'react/addons';
+import TargetPanelModel from "ipac-firefly/ui/model/TargetPanelModel.js";
+import TargetFeedback from "ipac-firefly/ui/TargetFeedback.jsx";
+import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
+import FormStoreLinkMixin from "ipac-firefly/ui/model/FormStoreLinkMixin.js";
 
 
 
@@ -17,7 +18,7 @@ var TargetPanel= module.exports= React.createClass(
    {
        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
-       getDefaultProps : function() {
+       getDefaultProps() {
            return {
                fieldKey : "UserTargetWorldPt",
                initialState  : {
@@ -27,7 +28,7 @@ var TargetPanel= module.exports= React.createClass(
            };
        },
 
-       getInitialState : function() {
+       getInitialState() {
            return {
                targetModel: new TargetPanelModel(),
                outputValue : "",
@@ -39,15 +40,15 @@ var TargetPanel= module.exports= React.createClass(
        },
 
 
-       componentDidMount: function () {
+       componentDidMount() {
            this.state.targetModel.on('change',this.updateTargetFeedback);
        },
 
-       componentWillUnmount : function () {
+       componentWillUnmount() {
            this.state.targetModel.off('change',this.updateTargetFeedback);
        },
 
-       updateTargetFeedback : function() {
+       updateTargetFeedback() {
            var tm= this.state.targetModel;
            this.setState(tm.changedAttributes());
            this.props.dispatcher.dispatch({
@@ -61,14 +62,14 @@ var TargetPanel= module.exports= React.createClass(
                                });
        },
 
-       onChange: function(ev) {
+       onChange(ev) {
            this.state.targetModel.targetInput= ev.target.value;
            this.state.targetModel.doParse();
 
            this.setState({outputValue : ev.target.value});
        },
 
-       render: function() {
+       render() {
            /* jshint ignore:start */
            return (
                    <div>
