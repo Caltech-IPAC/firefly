@@ -1,12 +1,12 @@
 /*jshint browserify:true*/
 
 "use strict";
-var PointerPopup= require('ipac-firefly/ui/PointerPopup.jsx');
-var React= require('react/addons');
+import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
+import React from 'react/addons';
 
 var EXCLAMATION= 'tmp-stuff/exclamation16x16.gif'
 
-var InputFieldView = module.exports= React.createClass(
+var InputFieldView = React.createClass(
 {
 
        mixins : [React.addons.PureRenderMixin],
@@ -187,4 +187,5 @@ var InputFieldView = module.exports= React.createClass(
 
 });
 
+export default InputFieldView;
 

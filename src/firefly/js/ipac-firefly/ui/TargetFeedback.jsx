@@ -1,4 +1,5 @@
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 "use strict";
 
 var React= require('react/addons');
@@ -22,19 +23,27 @@ var TargetFeedback = module.exports= React.createClass(
           display : 'inline-block',
           verticalAlign: 'top'
       };
+      var spanPad= {
+          paddingLeft : '15px',
+      };
 
       var retval;
       if (this.props.showHelp) {
+          //var makeSpan= function(w) {
+          //    return  <span style={{paddingLeft: w+"px"}}/>
+          //}
+          var makeSpan= w => {return  <span style={{paddingLeft: w+"px"}}/>}
+          var spanObj= <span style={spanPad}/>
           retval= (
              <div  style={topDivStyle}>
                  <div >
                      <div style={titleStyle}>
-                         <i>Examples:</i>
+                         <i>Examples: </i>
                      </div>
                      <div style={exDivStyle}>
-                         'm81'{"\u00a0"} {"\u00a0"} {"\u00a0"}  'ngc 13'{"\u00a0"} {"\u00a0"} {"\u00a0"} '12.34 34.89 {"\u00a0"} {"\u00a0"} {"\u00a0"} '46.53, -0.251 gal'
+                         {makeSpan(5)} 'm81' {makeSpan(15)} 'ngc 13' {makeSpan(15)}  '12.34 34.89'  {makeSpan(15)} '46.53, -0.251 gal'
                          <br />
-                         '19h17m32s 11d58m02s equ j2000'{"\u00a0"} {"\u00a0"} {"\u00a0"} '12.3, 8.5 b1950'
+                         {makeSpan(5)}'19h17m32s 11d58m02s equ j2000' {makeSpan(5)}  '12.3, 8.5 b1950'
                      </div>
                  </div>
              </div>

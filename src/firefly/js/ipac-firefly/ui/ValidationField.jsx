@@ -1,18 +1,19 @@
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 
 "use strict";
 var React= require('react/addons');
-var InputFieldView= require ("ipac-firefly/ui/InputFieldView.jsx");
+import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
 var FormStoreLinkMixin= require ("ipac-firefly/ui/model/FormStoreLinkMixin.js");
 
 
 
-var ValidationField= module.exports= React.createClass(
+var ValidationField= React.createClass(
    {
 
        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
-       onChange: function(ev) {
+       onChange(ev) {
 
            var validateState= this.getValidator()(ev.target.value);
 
@@ -27,7 +28,7 @@ var ValidationField= module.exports= React.createClass(
        },
 
 
-       render: function() {
+       render() {
            /*jshint ignore:start */
            return (
                        <InputFieldView
@@ -47,4 +48,5 @@ var ValidationField= module.exports= React.createClass(
 
    });
 
+export default ValidationField;
 

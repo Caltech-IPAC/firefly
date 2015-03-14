@@ -3,13 +3,16 @@
 var Resolver=  {
     NED           : {key : "ned", desc : "NED"},
     Simbad        : {key : "simbad", desc : "simbad"},
-    NedThenSimbad : {key : "nedthensimbad", desc : "try ned then simbad", combination : [this.ned, this.simbad]},
-    SimbadThenNed : {key : "simbadthenned", value : "try simbad then ned", combination : [this.simbad, this.ned]},
+    NedThenSimbad : {key : "nedthensimbad", desc : "try ned then simbad" },
+    SimbadThenNed : {key : "simbadthenned", value : "try simbad then ned"},
     PTF           : {key : "ptf", desc : "ptf"},
     smart         : {key : "smart", desc  : "try ned and simbad, then decide"},
     UNKNOWN       : {key : "unknown", desc : "resolved with unknown resolver"},
     NONE          : {key : "none", desc : "none"}
 };
+
+Resolver.NedThenSimbad.combination=  [Resolver.NED, Resolver.Simbad];
+Resolver.SimbadThenNed.combination=  [Resolver.Simbad, Resolver.NED];
 
 var parse= function(resolveStr) {
     "use strict";

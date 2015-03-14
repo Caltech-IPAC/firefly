@@ -2,9 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 /*jshint browserify:true*/
+/*jshint esnext:true*/
 "use strict";
-var validator= require("validator");
-var sprintf= require("underscore.string/sprintf");
+//var validator= require("validator");
+//var sprintf= require("underscore.string/sprintf");
+import validator from "validator";
+import sprintf from "underscore.string/sprintf";
 
 var isInRange= function(val,min,max) {
     var retval= !(min !== undefined && min!==null && val<min);
