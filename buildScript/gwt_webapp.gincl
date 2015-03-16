@@ -106,6 +106,14 @@ task buildClient {
   dependsOn loadConfig
 
   doLast {
+
+    try {
+      def process = "node -v".execute()
+    } catch (Exception e) {
+        println ">> node.js not found.  Skipping buildClient."
+        throw new StopExecutionException("node.js not found.  Skipping buildClient.")
+    }
+
     if (!file("webpack.config.js").exists()) {
       println ">> webpack.config.js not found.  Skipping buildClient."
       throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
@@ -234,3 +242,6 @@ task buildAndPublish << {
   }
 }
 buildAndPublish.dependsOn war
+
+
+
