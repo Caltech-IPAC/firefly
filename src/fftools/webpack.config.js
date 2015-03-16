@@ -22,17 +22,17 @@ var release = (process.env.NODE_ENV === 'production');
 //  jsxLoader = ['react-hot', 'jsx?harmony'];
 //}
 
-
-var ffRoot= __dirname+ '/../../';
+var entryPoint= "demoform.jsx";
+var ffRoot= path.resolve(__dirname+ '/../../') + "/";
 var project = {buildDir : ffRoot+"build/"};
 
-module.exports = {
+var retval= module.exports = {
 
 
 
 
 
-  entry: __dirname+'/js/demoform.jsx',
+  entry: __dirname+'/js/'+entryPoint,
   output: {
     path: project.buildDir+'gwt/fftools',
     filename: 'out.js'
@@ -57,6 +57,13 @@ module.exports = {
   }
 };
 
+//if (process.env.AA) {
+//    console.log("found AA: " + process.env.AA);
+//}
+//else {
+//    console.log("no AA:");
+//}
+
 //console.log("arg 1"+process.argv[1]);
 //var myRoot= process.argv.reduce(function(last,param) {
 //    var retval= last;
@@ -66,7 +73,9 @@ module.exports = {
 //    return retval;
 //},null);
 //console.log("myRoot="+myRoot);
-//console.log("ffRoot="+ffRoot);
+//console.log("ffRoot: "+ffRoot);
+//console.log("entry Point: "+retval.entry);
+//console.log("output file: "+retval.output.path + "/"+ retval.output.filename);
 //console.log("ffRoot="+ffRoot);
 //console.log("0="+module.exports.resolve.root[0]);
 //console.log("output.path="+module.exports.output.path);
