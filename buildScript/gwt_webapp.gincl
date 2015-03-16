@@ -112,7 +112,7 @@ task buildClient {
     }
 
     exec {
-      executable "webpack"
+      executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
       args "-d"
     }
     copy {
