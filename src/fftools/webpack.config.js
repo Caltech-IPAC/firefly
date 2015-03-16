@@ -73,9 +73,9 @@ var retval= module.exports = {
 //    return retval;
 //},null);
 //console.log("myRoot="+myRoot);
-//console.log("ffRoot: "+ffRoot);
-//console.log("entry Point: "+retval.entry);
-//console.log("output file: "+retval.output.path + "/"+ retval.output.filename);
+console.log("ffRoot: "+ffRoot);
+console.log("entry Point: "+retval.entry);
+console.log("output file: "+retval.output.path + "/"+ retval.output.filename);
 //console.log("ffRoot="+ffRoot);
 //console.log("0="+module.exports.resolve.root[0]);
 //console.log("output.path="+module.exports.output.path);
