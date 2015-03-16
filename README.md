@@ -46,6 +46,8 @@ Firefly shows 2D line graphs interactively so that a user can read the data poin
  -  [Tomcat 7.0.+] (http://tomcat.apache.org/download-70.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
+ -  [Node 0.12.0.+] (https://nodejs.org/download/)
+    Javascript interpreter for command line environment, used for development tools
 
 #### How to get Firefly source:
 

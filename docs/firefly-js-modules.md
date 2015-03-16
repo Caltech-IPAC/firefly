@@ -1,6 +1,6 @@
 
 
-#### Modules in use in the firefly js environment
+#### Modules in use for the firefly js environment
 
 React.js, see:  http://facebook.github.io/react/docs/getting-started.html
 
