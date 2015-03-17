@@ -96,6 +96,8 @@ task prepareWebapp (type:Copy) {
     props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
   }
 }
+loadConfig.mustRunAfter gwt
+
 
 task webapp {
   outputs.upToDateWhen { false }
@@ -104,6 +106,8 @@ task webapp {
 
 task buildClient {
   dependsOn loadConfig
+
+  outputs.upToDateWhen { false }
 
   doLast {
 
@@ -143,7 +147,7 @@ war {
   classpath = configurations.webappLib
   from gwt.warDir
 }
-prepareWebapp.mustRunAfter gwtCompile
+prepareWebapp.mustRunAfter buildClient
 
 task dirty (type: War) {
   dependsOn webapp, jar, prepareWebapp
