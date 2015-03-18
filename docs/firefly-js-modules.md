@@ -46,6 +46,12 @@ uniq, see: https://www.npmjs.com/package/uniq
 
 * Removes duplicates from a sorted array in place
 
+
+enum, see: https://www.npmjs.com/package/enum
+
+* Enum is a javascript module that introduces the Enum Type
+
+
 #### Modules in use in the firefly js environment
 
 ampersand-state, http://ampersandjs.com/docs#ampersand-state
