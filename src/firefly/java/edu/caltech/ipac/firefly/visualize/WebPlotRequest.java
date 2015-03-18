@@ -3,11 +3,10 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -186,7 +185,11 @@ public class WebPlotRequest extends ServerRequest {
         setRequestClass(WEB_PLOT_REQUEST_CLASS);
     }
 
-    private WebPlotRequest(RequestType type, ServiceType service, String userDesc) {
+    private WebPlotRequest(RequestType type, String userDesc) {
+        this(type, userDesc, ServiceType.NONE);
+    }
+
+    private WebPlotRequest(RequestType type, String userDesc, ServiceType service) {
         super(type.toString());
         setRequestClass(WEB_PLOT_REQUEST_CLASS);
         setRequestType(type);
@@ -194,10 +197,6 @@ public class WebPlotRequest extends ServerRequest {
         setParam(USER_DESC, userDesc);
     }
 
-    private WebPlotRequest(RequestType type,
-                           String userDesc) {
-        this(type, ServiceType.NONE, userDesc);
-    }
 
 
 //======================================================================
@@ -298,10 +297,6 @@ public class WebPlotRequest extends ServerRequest {
 
     //======================== IRIS =====================================
 
-    public static WebPlotRequest makeIRISRequest(WorldPt wp, float sizeInDeg) {
-        return makeIRISRequest(wp, "100", sizeInDeg);
-    }
-
 
     public static WebPlotRequest makeIRISRequest(WorldPt wp,
                                                  String survey,
@@ -314,11 +309,6 @@ public class WebPlotRequest extends ServerRequest {
 
     //======================== 2MASS =====================================
 
-    public static WebPlotRequest make2MASSRequest(WorldPt wp, float sizeInDeg) {
-        return make2MASSRequest(wp, "k", sizeInDeg);
-    }
-
-
     public static WebPlotRequest make2MASSRequest(WorldPt wp,
                                                   String survey,
                                                   float sizeInDeg) {
@@ -328,11 +318,6 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     //======================== MSX =====================================
-
-    public static WebPlotRequest makeMSXRequest(WorldPt wp, float sizeInDeg) {
-        return makeMSXRequest(wp, "3", sizeInDeg);
-    }
-
 
     public static WebPlotRequest makeMSXRequest(WorldPt wp,
                                                 String survey,
@@ -344,10 +329,6 @@ public class WebPlotRequest extends ServerRequest {
 
     //======================== SDSS =====================================
 
-    public static WebPlotRequest makeSloanDSSRequest(WorldPt wp, float sizeInDeg) {
-        return makeSloanDSSRequest(wp, "u", sizeInDeg);
-    }
-
 
     public static WebPlotRequest makeSloanDSSRequest(WorldPt wp,
                                                      String band,
@@ -358,10 +339,6 @@ public class WebPlotRequest extends ServerRequest {
     }
     //======================== DSS =====================================
 
-    public static WebPlotRequest makeDSSRequest(WorldPt wp, float sizeInDeg) {
-        return makeDSSRequest(wp, "poss2ukstu_red", sizeInDeg);
-    }
-
 
     public static WebPlotRequest makeDSSRequest(WorldPt wp,
                                                 String survey,
@@ -370,10 +347,6 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     //======================== Wise =====================================
-
-    public static WebPlotRequest makeWiseRequest(WorldPt wp, float sizeInDeg) {
-        return makeWiseRequest(wp, "3a", "1", sizeInDeg);
-    }
 
 
     public static WebPlotRequest makeWiseRequest(WorldPt wp,
@@ -388,11 +361,6 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     //======================== DSS or IRIS =====================================
-
-    public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp, float sizeInDeg) {
-        return makeDSSOrIRISRequest(wp, "poss2ukstu_red", "100", sizeInDeg);
-    }
-
 
     public static WebPlotRequest makeDSSOrIRISRequest(WorldPt wp,
                                                       String dssSurvey,
@@ -486,9 +454,7 @@ public class WebPlotRequest extends ServerRequest {
 
 
 
-    public void setPreTitle(String preTitle) {
-        setParam(POST_TITLE, preTitle);
-    }
+    public void setPreTitle(String preTitle) { setParam(PRE_TITLE, preTitle); }
 
     public String getPreTitle() { return getParam(PRE_TITLE); }
 
@@ -1165,6 +1131,7 @@ public class WebPlotRequest extends ServerRequest {
             sb.append(";");
         }
         sb.deleteCharAt(sb.length()-1);
+        setParam(PIPELINE_ORDER, sb.toString());
     }
 
     public List<Order> getPipelineOrder() {
@@ -1246,15 +1213,6 @@ public class WebPlotRequest extends ServerRequest {
 
     }
 
-    public String htmlString() {
-        StringBuilder sb = new StringBuilder(300);
-        for (Param p : getParams()) {
-            sb.append(p.toString());
-            sb.append("<br>");
-        }
-        return sb.toString();
-    }
-
     public void setPlotDescAppend(String s) { setParam(PLOT_DESC_APPEND, s); }
 
     public String getPlotDescAppend() { return getParam(PLOT_DESC_APPEND); }
@@ -1280,8 +1238,7 @@ public class WebPlotRequest extends ServerRequest {
                                                      String survey,
                                                      float sizeInDeg) {
         String desc = makeServiceReqDesc(serviceType, survey, sizeInDeg);
-        WebPlotRequest req = new WebPlotRequest(RequestType.SERVICE, serviceType,
-                                                desc);
+        WebPlotRequest req = new WebPlotRequest(RequestType.SERVICE, desc, serviceType );
         req.setSurveyKey(survey);
         req.setWorldPt(wp);
         req.setSizeInDeg(sizeInDeg);

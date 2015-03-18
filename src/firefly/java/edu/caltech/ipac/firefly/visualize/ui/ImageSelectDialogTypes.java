@@ -99,8 +99,7 @@ public class ImageSelectDialogTypes {
                 request = WebPlotRequest.makeISSARequest(pos, band,
                                                          imageSelectAccess.getStandardPanelDegreeValue());
             } else {
-                request = WebPlotRequest.makeIRISRequest(pos, band,
-                                                         imageSelectAccess.getStandardPanelDegreeValue());
+                request = WebPlotRequest.makeIRISRequest(pos, band, imageSelectAccess.getStandardPanelDegreeValue());
             }
             insertZoomType(request);
             //todo remove here down

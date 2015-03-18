@@ -183,7 +183,7 @@ public class FinderChartRequestUtil {
                 wpReq= WebPlotRequest.makeDSSRequest(pt, getComboValue(band),radius);
                 break;
             case IRIS:
-                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band),radius);
+                wpReq= WebPlotRequest.makeIRISRequest(pt, getComboValue(band), radius);
                 break;
             case ISSA:
                 wpReq= WebPlotRequest.makeISSARequest(pt, getComboValue(band),radius);

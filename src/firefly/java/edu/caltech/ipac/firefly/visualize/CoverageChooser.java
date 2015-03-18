@@ -55,16 +55,16 @@ public class CoverageChooser {
             request.setTitle(baseTitle);
         }
         else if (radiusAS < 500) {
-            request = WebPlotRequest.make2MASSRequest(wp, size);
+            request = WebPlotRequest.make2MASSRequest(wp, "k", size);
             title = baseTitle + " 2MASS k";
             request.setTitle(title);
         } else if (radiusAS < 1800) {
-            request = WebPlotRequest.makeDSSOrIRISRequest(wp, size);
+            request = WebPlotRequest.makeDSSOrIRISRequest(wp, "poss2ukstu_red", "100",size);
             title = baseTitle + " DSS";
             request.setTitle(title);
         } else if (size < 12.5) {
             size = (int)Math.ceil(size);
-            request = WebPlotRequest.makeIRISRequest(wp, size);
+            request = WebPlotRequest.makeIRISRequest(wp, "100", size);
             title = baseTitle + " IRAS:IRIS 100";
             request.setTitle(title);
         } else {
