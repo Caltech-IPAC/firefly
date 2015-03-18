@@ -3,8 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.util.download.CacheHelper;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -21,15 +19,17 @@ import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.Cleanupable;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.CacheHelper;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  * User: roby
@@ -81,7 +81,7 @@ public class VisContext {
     private volatile static String _cacheDirStr = getVisCacheDir().getPath();
     private volatile static String _vUploadDirStr = getVisUploadDir().getPath();
 
-    private final static Map<File, Long> _visSessionDirs= new HashMap<File, Long>(617);
+    private final static Map<File, Long> _visSessionDirs= new ConcurrentHashMap<File, Long>(617);
     private final static AtomicLong _lastDirCheck= new AtomicLong(0) ;
     private final static long EXPIRE_DAYS= 3;
     private final static long EXPIRE_DIR_DELTA = 1000 * 60 * 60 * 24 * EXPIRE_DAYS;
@@ -648,7 +648,7 @@ public class VisContext {
 // =====================================================================
 
     public static class UserCtx implements Serializable, Cleanupable {
-        private final Map<String,PlotClientCtx> _map= new HashMap<String,PlotClientCtx>(217);
+        private final Map<String,PlotClientCtx> _map= new ConcurrentHashMap<String,PlotClientCtx>(217);
 
         Map<String,PlotClientCtx> getMap() { return _map; }
 

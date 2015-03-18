@@ -146,6 +146,7 @@ public class VisServerOps {
         PlotServUtils.updateProgress(new ProgressStat(keyList, progressKey));
 
         ExecutorService executor = Executors.newFixedThreadPool(rList.size());
+        boolean allCompleted= false;
         try {
             for (WebPlotRequest r : rList) {
                 final WebPlotRequest finalR= r;
@@ -157,8 +158,15 @@ public class VisServerOps {
                 executor.execute(worker);
             }
             executor.shutdown();
-            executor.awaitTermination(500, TimeUnit.SECONDS);
-        } catch (Exception e) { e.printStackTrace();}
+            allCompleted= executor.awaitTermination(500, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            executor.shutdownNow();
+            if (!allCompleted) {
+                 _log.info("ExecutorService thread pool was shut down before all plots could complete, after 500 seconds");
+            }
+        }
 
         return resultList.toArray(new WebPlotResult[resultList.size()]);
     }
