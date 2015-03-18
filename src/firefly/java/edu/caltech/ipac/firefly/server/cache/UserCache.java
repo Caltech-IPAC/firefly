@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Date: Jul 21, 2008
@@ -87,7 +88,7 @@ public class UserCache implements Cache {
     private Map<CacheKey, Object> getSessionMap() {
         Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(userKey);
         if (map == null) {
-            map = new HashMap<CacheKey, Object>();
+            map = new ConcurrentHashMap<CacheKey, Object>(100);
         }
         return map;
     }
