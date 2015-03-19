@@ -41,6 +41,9 @@ public class UserCache implements Cache {
     }
 
     public void put(CacheKey key, Object value) {
+        if (key == null || value == null) {
+            throw  new NullPointerException("key or value must not be null.");
+        }
         Map<CacheKey, Object> map = getSessionMap();
         map.put(key, value);
         cache.put(userKey, map);
@@ -52,11 +55,11 @@ public class UserCache implements Cache {
     }
 
     public Object get(CacheKey key) {
-        return getSessionMap().get(key);
+        return key == null ? null : getSessionMap().get(key);
     }
 
     public boolean isCached(CacheKey key) {
-        return getSessionMap().containsKey(key);
+        return key != null && getSessionMap().containsKey(key);
     }
 
     public List<String> getKeys() {
