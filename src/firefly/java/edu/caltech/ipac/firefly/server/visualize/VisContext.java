@@ -483,11 +483,11 @@ public class VisContext {
 
 
     public static PlotClientCtx getPlotCtx(String ctxStr) {
-        return getMap().get(ctxStr);
+        return (ctxStr!=null) ? getMap().get(ctxStr) : null;
     }
 
     public static void putPlotCtx(PlotClientCtx ctx) {
-        if (ctx!=null) {
+        if (ctx!=null && ctx.getKey()!=null) {
             synchronized (VisContext.class) {
                 getMap().put(ctx.getKey(),ctx);
             }
