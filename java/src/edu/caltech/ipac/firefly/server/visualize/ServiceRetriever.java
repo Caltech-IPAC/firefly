@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ServiceRetriever implements FileRetriever {
 
-    public static final String WISE_HOST = AppProperties.getProperty("vis.wise.ibe.host", "irsasearchops1.ipac.caltech.edu:8000");
+    public static final String WISE_HOST = AppProperties.getProperty("vis.wise.ibe.host", "irsasearchops.ipac.caltech.edu:8000");
     public static final String WISE_SCHEMA = AppProperties.getProperty("vis.wise.schema", "allwise");
     public static final String WISE_SCHEMA_GROUP = AppProperties.getProperty("vis.wise.schemaGroup", "wise");
 //    public static final String WISE_4BAND_L1_TABLE = AppProperties.getProperty("vis.wise.l1.table", "4band_p1bm_frm");
