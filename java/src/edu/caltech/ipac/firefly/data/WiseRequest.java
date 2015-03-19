@@ -163,7 +163,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, "wise_pass2_2band");
             put(NEOWISER_PROV,"wise_neowiser_prov");
             put(NEOWISER_YR1,"wise_neowiser_yr1");
-            put(NEOWISER_YR2,"wise_neowiser");
+            put(NEOWISER_YR2,"wise_neowiser_yr2");
 
         }
     };
