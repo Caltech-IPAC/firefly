@@ -1,5 +1,7 @@
 /*jshint browserify:true*/
 
+/*jshint curly:false*/
+
 var numeral= require("numeral");
 /**
  * Created by roby on 12/2/14.
@@ -38,6 +40,7 @@ var Vis= (function(retVis) {
 
         var parse= function(desc) {
             var coordSys;
+            if (!desc) return null;
             desc= desc.toUpperCase();
             if        (desc===EQ_J2000.toString() || desc==="EQJ" || desc==="J2000" ) {
                 coordSys = EQ_J2000;

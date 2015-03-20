@@ -4,7 +4,7 @@
 var Promise= require("es6-promise").Promise;
 var PositionParser= require("ipac-firefly/util/PositionParser");
 var PositionFieldDef= require("ipac-firefly/data/form/PositionFieldDef");
-var Pt= require("ipac-firefly/visualize/Pt");
+var Point= require("ipac-firefly/visualize/Point");
 var http= require('http');
 var AmpersandState = require('ampersand-state');
 var _= require("underscore");
@@ -101,7 +101,7 @@ module.exports= AmpersandState.extend(
         this.makeResolverPromise(objName).then(function(results){
             if (results) {
                 if (results[0].success === "true") {
-                    var wpt = Pt.parseWorldPt(results[0].data);
+                    var wpt = Point.parseWorldPt(results[0].data);
                     model.set({feedback: model.posFieldDef.formatTargetForHelp(wpt),
                                showHelp : false,
                                valid : true,

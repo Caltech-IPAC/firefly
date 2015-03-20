@@ -2,30 +2,59 @@
 
 /**
  * Pt module.
- * @module firefly/visualize/Pt.js
+ * @module firefly/visualize/Point.js
  */
 
 /**
  * Created by roby on 12/2/14.
  */
+/*jshint esnext:true*/
+/*jshint curly:false*/
 
-var Vis= (function(retVis) {
-    "use strict";
+"use strict";
 
-    var CoordinateSys= require("./CoordSys.js");
-    var Resolver= require("ipac-firefly/astro/net/Resolver.js");
-    var hasModule = (typeof module !== 'undefined' && module.exports && exports);
+var CoordinateSys= require("./CoordSys.js");
+import Resolver from "ipac-firefly/astro/net/Resolver.js";
+import validator from "validator";
 
-    var makePt = function (x, y) {
-        var retval= {};
-        retval.getX = function () { return x; };
-        retval.getY = function () { return y; };
-        retval.toString= function() {
-            return x+";"+y;
-        };
-        return retval;
-    };
 
+
+//var makePt = function (x, y) {
+//    var retval= {};
+//    retval.getX = function () { return x; };
+//    retval.getY = function () { return y; };
+//    retval.toString= function() {
+//        return x+";"+y;
+//    };
+//    return retval;
+//};
+
+class Pt {
+    constructor(x,y) {
+        this.x= x;
+        this.y= y;
+    }
+    toString() { return this.x+";"+this.y; }
+
+    static parse(inStr) {
+        if (!inStr) return null;
+        var parts= inStr.split(";");
+        if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
+            return new Pt(validator.isFloat(parts[0]), validator.isFloat(parts[1]));
+        }
+        return null;
+    }
+}
+
+class ImagePt extends Pt {
+    constructor(x,y) {
+        super(x,y);
+    }
+    static parse(inStr) {
+        var p= Pt.parse(inStr);
+        return p ? new ImagePt(p.x,p.y) : null;
+    }
+}
 
     //var makeWorldPt = function (params) {
     //    var cSys = params.coordinateSys ? params.coordinateSys : CoordinateSys.EQ_J2000;
@@ -51,9 +80,9 @@ var Vis= (function(retVis) {
     //
     //};
 
-    var makeWorldPt = function (params) {
-        return new WorldPt(params.params.lon,params.lat);
-    };
+var makeWorldPt = function (params) {
+    return new WorldPt(params.params.lon,params.lat);
+};
 
     /**
      * WorldPt constructor
@@ -66,56 +95,44 @@ var Vis= (function(retVis) {
      * @param {string} [objName] - the object name the was used for name resolution
      * @param {Resolver} [resolver] - the resolver use to return this point
      */
-    var WorldPt = exports.WorldPt = function(lon,lat,coordSys,objName,resolver) {
-        if ((!(this instanceof WorldPt))) {
-            return new WorldPt(lon,lat,coordSys,objName,resolver);
-        }
+    class WorldPt extends Pt {
+        constructor(lon,lat,coordSys,objName,resolver) {
+            super(lon,lat);
 
-        this.lon= lon;
-        this.lat= lat;
-        this.cSys= coordSys || CoordinateSys.EQ_J2000;
-        if (objName) {
-            this.objName= objName;
-        }
-        if (resolver) {
-            this.resolver= resolver;
-        }
+            this.cSys = coordSys || CoordinateSys.EQ_J2000;
+            if (objName) {
+                this.objName = objName;
+            }
+            if (resolver) {
+                this.resolver = resolver;
+            }
 
+        }
         /**
          * Return the lon
          * @type {function(this:exports.WorldPt)}
          * @return {Number}
          */
-        this.getLon = function() {
-            return this.lon;
-        }.bind(this);
+        getLon() { return this.x; }
 
         /**
          * Return the lat
          * @type {function(this:exports.WorldPt)}
          * @return {Number}
          */
-        this.getLat = function() {
-            return this.lat;
-        }.bind(this);
+        getLat() { return this.y; }
 
         /**
          * Returns the coordinate system of this point
          * @type {function(this:exports.WorldPt)}
          * @returns {CoordinateSys}
          */
-        this.getCoordSys = function() {
-            return this.cSys;
-        }.bind(this);
+        getCoordSys() { return this.cSys; }
 
 
-        this.getResolver = function() {
-            return this.resolver ? this.resolver : null;
-        }.bind(this);
+        getResolver() { return this.resolver ? this.resolver : null; }
 
-        this.getObjName= function() {
-            return (this.objName) ? this.objName : null;
-        }.bind(this);
+        getObjName() { return (this.objName) ? this.objName : null; }
 
 
         /**
@@ -125,18 +142,18 @@ var Vis= (function(retVis) {
          * @type {function(this:exports.WorldPt)}
          * @return {string}
          */
-        this.toString= function() {
-            var retval= this.lon+";"+this.lat+";"+this.cSys.toString();
+        toString() {
+            var retval = this.x + ";" + this.y + ";" + this.cSys.toString();
             if (this.objName) {
-                retval+= ";"+this.objName;
+                retval += ";" + this.objName;
                 if (this.resolver) {
-                    retval+= ";"+this.resolver.key;
+                    retval += ";" + this.resolver.key;
                 }
             }
             return retval;
-        }.bind(this);
+        }
 
-    };
+    }
 
     var parseWorldPt = function (serializedWP) {
 
@@ -182,17 +199,10 @@ var Vis= (function(retVis) {
     };
 
 
-    retVis.makePt= makePt;
-    //retVis.makeWorldPt= makeWorldPt;
-    retVis.parseWorldPt= parseWorldPt;
-    retVis.WorldPt= WorldPt;
 
+exports.WorldPt= WorldPt;
+exports.ImagePt= ImagePt;
+exports.Pt= Pt;
+exports.parseWorldPt= parseWorldPt;
+    //exports.makePt= makePt;
 
-        exports.makePt= makePt;
-        //exports.makeWorldPt= makeWorldPt;
-
-        exports.parseWorldPt= parseWorldPt;
-
-    return retVis;
-
-}(Vis || {}));

@@ -1,4 +1,6 @@
 /*jshint browserify:true*/
+/*jshint curly:false*/
+"use strict";
 
 var Resolver=  {
     NED           : {key : "ned", desc : "NED"},
@@ -14,9 +16,24 @@ var Resolver=  {
 Resolver.NedThenSimbad.combination=  [Resolver.NED, Resolver.Simbad];
 Resolver.SimbadThenNed.combination=  [Resolver.Simbad, Resolver.NED];
 
-var parse= function(resolveStr) {
-    "use strict";
+function toString() {
+    return this.key;
+}
 
+Resolver.NED.toString= toString;
+Resolver.Simbad.toString= toString;
+Resolver.NedThenSimbad.toString= toString;
+Resolver.SimbadThenNed.toString= toString;
+Resolver.PTF.toString= toString;
+Resolver.smart.toString= toString;
+Resolver.UNKNOWN.toString= toString;
+Resolver.NONE.toString= toString;
+
+
+
+var parse= function(resolveStr) {
+
+    if (!resolveStr) return null;
     var retval= null;
     for( var resolveType in Resolver) {
         if( Resolver.hasOwnProperty( resolveType ) ) {
