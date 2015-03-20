@@ -148,6 +148,7 @@ war {
   from gwt.warDir
 }
 prepareWebapp.mustRunAfter buildClient
+buildClient.mustRunAfter gwtCompile
 
 task dirty (type: War) {
   dependsOn webapp, jar, prepareWebapp
