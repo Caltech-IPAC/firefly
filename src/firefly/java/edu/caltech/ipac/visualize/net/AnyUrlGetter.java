@@ -95,19 +95,6 @@ public class AnyUrlGetter {
            try {System.in.read(); } catch (IOException e) {/*ignore*/}
              urlStr=  "http://localhost:12201/"+
                     "ArchiveDownload/download?EPPreviewH&id=1106";
-//           urlStr=  "http://localhost:12201/"+
-//                    "ArchiveDownload/download?EPAnc&id=1106";
-//           urlStr= "http://***REMOVED***/"+
-//                   "ArchiveDownload/download?EPAnc&id=1106";
-//           url= new URL( "http://***REMOVED***/"+
-//                         "ArchiveDownload/download?EPAnc&id=1105");
-//           p= new AnyUrlParams(url);
-//           getUrl(p,new File("out.dat"),null);
-
-
-//           url= new URL( "http://***REMOVED***/"+
-//                         "ArchiveDownload/download?EPPreviewH&id=1106");
-//
            url= new URL(urlStr);
            p= new AnyUrlParams(url);
            lowlevelGetUrlToFile(p,new File("single.dat"),true, null);

@@ -47,7 +47,7 @@ import java.rmi.RemoteException;
  */
 public class JOSSOAdapter {
     private static final String SSO_SERVICES_URL = AppProperties.getProperty("sso.server.url",
-                                                    "http://***REMOVED***/account/");
+                                                    "http://irsa.ipac.caltech.edu/account/");
     private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private static final String REQUESTER = "JOSSOAdapter";
 

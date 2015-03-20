@@ -78,7 +78,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
     private void setupDS(String ibeHost, String dataset, String table) {
 
         if (StringUtils.isEmpty(ibeHost)) {
-            ibeHost = AppProperties.getProperty("twomass.ibe.host", "http://***REMOVED***:8000");
+            ibeHost = AppProperties.getProperty("twomass.ibe.host", "http://irsa.ipac.caltech.edu/ibe");
         }
         setIbeHost(ibeHost);
         setMission(TWOMASS);

@@ -169,7 +169,7 @@ public class PtfIbeDataSource extends BaseIbeDataSource {
     private void setupDS(String ibeHost, String dataset, String table) {
 
         if (StringUtils.isEmpty(ibeHost)) {
-            ibeHost = AppProperties.getProperty("ptf.ibe.host", "http://irsasearchops1.ipac.caltech.edu/ibe");
+            ibeHost = AppProperties.getProperty("ptf.ibe.host", "http://irsa.ipac.caltech.edu/ibe");
         }
         setIbeHost(ibeHost);
         setMission(PTF);

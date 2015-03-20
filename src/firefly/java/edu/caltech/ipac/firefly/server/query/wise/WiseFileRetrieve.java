@@ -119,7 +119,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
     }
 
 
-    // example: http://***REMOVED***/wise/pass1/i1bm_frm/{last 2 digits of scan_id}/{scan_id}/{frame_num}/{band}/{product}
+    // example: http://<hostname>/wise/pass1/i1bm_frm/{last 2 digits of scan_id}/{scan_id}/{frame_num}/{band}/{product}
     public static String createURLString_1b(String baseUrl, String scanId, String frameNum, String band, IMG_TYPE type) {
 
         String url = baseUrl;
@@ -129,7 +129,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         return url + getFilePath_1b(scanId, frameNum, band, type);
     }
 
-    // example: http://***REMOVED***/wise/pass1/i3om_cdd/{coadd_id}/{band}/{product}
+    // example: http://<hostname>/wise/pass1/i3om_cdd/{coadd_id}/{band}/{product}
     public static String createURLString_3(String baseUrl, String coaddId, String band, IMG_TYPE type) {
 
         String url = baseUrl;
@@ -144,7 +144,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         return "L" + productLevel + "/" + scanId + "/" + StringUtils.pad(3, frameNum, StringUtils.Align.RIGHT, '0') + "/";
     }
 
-    // example: (***REMOVED***irsa-wise-links-ops/links-pass1-new)/l1b/{last 2 digits of scan_id}/{scan_id}/{frame_num}/{product}
+    // example: (/<path>/irsa-wise-links-ops/links-pass1-new)/l1b/{last 2 digits of scan_id}/{scan_id}/{frame_num}/{product}
     public static String createFilepath_1b(String schema, String productLevel, String scanId, String frameNum, String band, IMG_TYPE type) {
 
         String basepath = getBaseFilePath(schema, productLevel);
@@ -156,14 +156,14 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         return "L" + productLevel + "/" + coaddId + "/";
     }
 
-    // example: (***REMOVED***irsa-wise-links-ops/links-pass1-new)/l3o/{1st 2 digits of coadd_id}/{1st 4 digits of coadd_id}/{coadd_id}/{product}
+    // example: (/<path>/irsa-wise-links-ops/links-pass1-new)/l3o/{1st 2 digits of coadd_id}/{1st 4 digits of coadd_id}/{coadd_id}/{product}
     public static String createFilepath_3(String schema, String productLevel, String coaddId, String band, IMG_TYPE type) {
 
         String basepath = getBaseFilePath(schema, productLevel);
         return basepath + getFilePath_3(coaddId, band, type);
     }
 
-    // example: http://***REMOVED***/applications/WISE/IM/pass1/l1b/{scan_id}/{frame_num}/{band}/{product}?lon={center lon}&lat={center lat}&size={subsize}
+    // example: http://<hostname>/applications/WISE/IM/pass1/l1b/{scan_id}/{frame_num}/{band}/{product}?lon={center lon}&lat={center lat}&size={subsize}
     public static String createCutoutURLString_1b(String baseUrl, String scanId, String frameNum, String band, IMG_TYPE type, String lon, String lat, String size) {
         String url = createURLString_1b(baseUrl, scanId, frameNum, band, type);
         String gz = "&gzip=" + url.endsWith("gz");
@@ -172,7 +172,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         return url;
     }
 
-    // example: http://***REMOVED***/applications/WISE/IM/pass1/l3o/{coadd_id}/{band}/{product}?lon={center lon}&lat={center lat}&size={subsize}
+    // example: http://<hostname>/applications/WISE/IM/pass1/l3o/{coadd_id}/{band}/{product}?lon={center lon}&lat={center lat}&size={subsize}
     public static String createCutoutURLString_3(String baseUrl, String coaddId, String band, IMG_TYPE type, String lon, String lat, String size) {
         String url = createURLString_3(baseUrl, coaddId, band, type);
         String gz = "&gzip=" + url.endsWith("gz");
