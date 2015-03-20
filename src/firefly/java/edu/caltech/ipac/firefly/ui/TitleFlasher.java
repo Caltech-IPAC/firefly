@@ -26,7 +26,6 @@ public class TitleFlasher {
 
     private static JavaScriptObject focusFunc= null;
     private static FlashTitleTimer flashTimer= null;
-    private static String favIcon= null;
     private static LinkElement favIconElement= null;
 
 
@@ -67,25 +66,16 @@ public class TitleFlasher {
             Window.setTitle(t.equals(mainTitle) ? altTitle : mainTitle);
             if (t.equals(mainTitle)) {
                 Window.setTitle(altTitle);
-//                if (favIconElement!=null) {
-//                    favIconElement.setHref(GWT.getModuleBaseURL()+"images/stop.gif");
-//                }
 
             }
             else {
                 Window.setTitle(mainTitle);
-//                if (favIconElement!=null) {
-//                    favIconElement.setHref(favIcon);
-//                }
             }
             this.schedule(2000);
         }
 
         public void stop() {
             Window.setTitle(mainTitle);
-//            if (favIconElement!=null) {
-//                favIconElement.setHref(favIcon);
-//            }
             this.cancel();
         }
     }
@@ -100,7 +90,7 @@ public class TitleFlasher {
             if ("image/x-icon".equals(le.getType())) {
                 if (!StringUtils.isEmpty(le.getHref())) {
                     favIconElement= le;
-                    favIcon= le.getHref();
+                    String favIcon= le.getHref();
                     break;
                 }
             }

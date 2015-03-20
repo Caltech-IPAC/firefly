@@ -13,7 +13,7 @@ import java.net.MalformedURLException;
 import java.util.Properties;
 
 /**
- * Property utilties for setting properties that <i>must</i> exist
+ * Property utilities for setting properties that <i>must</i> exist
  * on swing components.
  * You should only use this class when you know that the properties you are
  * looking for must exist.  If any of the String methods do not find a property
