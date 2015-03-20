@@ -5,7 +5,7 @@
 import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
 import React from 'react/addons';
 
-const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif'
+const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif';
 
 var InputFieldView = React.createClass(
 {
@@ -19,7 +19,7 @@ var InputFieldView = React.createClass(
            tooltip : React.PropTypes.string,
            label : React.PropTypes.string,
            value   : React.PropTypes.string.isRequired,
-           onChange : React.PropTypes.func.isRequired,
+           onChange : React.PropTypes.func.isRequired
        },
 
        getDefaultProps() {
@@ -122,7 +122,6 @@ var InputFieldView = React.createClass(
     },
 
     computeWarningXY(warnIcon) {
-        var retval= "";
         if (warnIcon) {
             var e= React.findDOMNode(warnIcon);
             var bodyRect = document.body.getBoundingClientRect();
@@ -135,7 +134,7 @@ var InputFieldView = React.createClass(
     makeInfoPopup() {
 
         var retval= <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
-                message={this.makeMessage()}/>
+                message={this.makeMessage()}/>;
         return retval;
     },
 
@@ -144,7 +143,7 @@ var InputFieldView = React.createClass(
         var retval= null;
         var labelStyle= {
             display:'inline-block',
-            paddingRight:'4px',
+            paddingRight:'4px'
         };
         if (this.props.labelWidth) {
             labelStyle.width= this.props.labelWidth;

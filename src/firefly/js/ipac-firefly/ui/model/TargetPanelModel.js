@@ -146,7 +146,7 @@ module.exports= AmpersandState.extend(
         }.bind(this));
 
         return Promise.race([workerPromise,abortPromise]);
-    },
+    }
 
 }
 );

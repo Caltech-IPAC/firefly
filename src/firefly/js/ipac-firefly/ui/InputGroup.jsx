@@ -15,7 +15,7 @@ var InputGroup = module.exports= React.createClass(
        mixins : [React.addons.PureRenderMixin],
 
        propTypes: {
-           labelWidth   : React.PropTypes.string.isRequired
+           labelWidth   : React.PropTypes.number.isRequired
        },
 
        render: function() {

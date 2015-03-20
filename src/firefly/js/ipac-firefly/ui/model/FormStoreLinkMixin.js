@@ -18,7 +18,7 @@ var FormStoreLinkMixin=  {
             fieldKey : React.PropTypes.string.isRequired,
             formModel : React.PropTypes.object.isRequired,
             initialState : React.PropTypes.object,
-            labelWidth : React.PropTypes.any
+            labelWidth : React.PropTypes.number
         },
 
         getInitialState() {

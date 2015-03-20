@@ -76,6 +76,18 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
     return retval;
 };
 
+exports.validateEmail = function(description,valStr) {
+    var retval = {
+        valid: true,
+        message: ""
+    };
+    if (!validator.isEmail(valStr)) {
+        retval.valid = false;
+        retval.message = description + ": must be a valid email address";
+    }
+    return retval;
+}
+
 exports.intRange = function(min,max,description, valStr) {
    return validateRange(min,max,null,description,typeInject.asInt,valStr);
 };
@@ -83,4 +95,6 @@ exports.intRange = function(min,max,description, valStr) {
 exports.floatRange = function(min,max,precision, description, valStr) {
     return validateRange(min,max,precision,description,typeInject.asFloat,valStr);
 };
+
+
 

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/html">
   <head>
+      <!-- woraround for &nbsp; -- React is using UTF-8 -->
+      <meta charset="utf-8">
   </head>
 
   <body>
@@ -20,7 +22,7 @@
           /*background-color: #e3e3e3;*/
           background-color: #e3e3e3;
           padding: 0px 1px 0px 1px;
-          border:0 none;
+          border: 0 none;
           line-height: 1.125em;
       }
       body, table td, select, * {
