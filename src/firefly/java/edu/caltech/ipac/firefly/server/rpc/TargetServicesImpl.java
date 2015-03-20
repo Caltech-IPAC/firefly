@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.rpc;
 
-import edu.caltech.ipac.astro.simbad.SimbadObject;
+import edu.caltech.ipac.astro.net.SimbadObject;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.core.RPCException;
 import edu.caltech.ipac.firefly.data.EphPair;

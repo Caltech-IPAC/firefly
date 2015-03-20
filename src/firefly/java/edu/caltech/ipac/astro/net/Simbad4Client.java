@@ -5,8 +5,6 @@ package edu.caltech.ipac.astro.net;
 
 import cds.simbad.uif.WSQueryInterface;
 import cds.simbad.uif.WSQueryInterfaceServiceLocator;
-import edu.caltech.ipac.astro.simbad.SimbadObject;
-import edu.caltech.ipac.astro.simbad.SimbadException;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.ClientLog;

@@ -3,16 +3,10 @@
  */
 package edu.caltech.ipac.astro.net;
 
-import edu.caltech.ipac.astro.simbad.SimbadClient;
-import edu.caltech.ipac.astro.simbad.SimbadException;
-import edu.caltech.ipac.astro.simbad.SimbadObject;
 import edu.caltech.ipac.astro.target.PositionJ2000;
 import edu.caltech.ipac.astro.target.ProperMotion;
 import edu.caltech.ipac.astro.target.SimbadAttribute;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.HostPort;
-import edu.caltech.ipac.util.download.NetworkManager;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -24,31 +18,14 @@ import java.net.UnknownHostException;
  */
 public class SimbadNameResolver {
 
-
-    private final static ClassProperties _prop= new ClassProperties(
-                                           SimbadNameResolver.class);
-    private static final String SERVER_SCRIPT= _prop.getName("script");
-    private static final boolean USE_SIMBAD4_CLIENT = _prop.getSelected("use.simbad4");
-
-
-
-
-
     public static SimbadAttribute lowlevelNameResolver(String objname)
                                          throws  FailedRequestException {
         SimbadObject simbadObject;
         PositionJ2000 positionOut = null;
 
         try {
-            if (USE_SIMBAD4_CLIENT) {
-                Simbad4Client simbad4Client = new Simbad4Client();
-                simbadObject = simbad4Client.searchByName(objname);
-            } else {
-                HostPort server= NetworkManager.getInstance().getServer(
-                        NetworkManager.SIMBAD_NAME_RESOLVER);
-                SimbadClient simbadClient = new SimbadClient(server.getHost(), SERVER_SCRIPT);
-                simbadObject = simbadClient.searchByName(objname);
-            }
+            Simbad4Client simbad4Client = new Simbad4Client();
+            simbadObject = simbad4Client.searchByName(objname);
         }
         catch (UnknownHostException uhe) {
             throw new FailedRequestException(uhe.getMessage(), null, uhe);

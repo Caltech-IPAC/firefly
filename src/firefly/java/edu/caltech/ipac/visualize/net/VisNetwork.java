@@ -3,16 +3,14 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.download.CacheHelper;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.FileData;
-import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetParams;
-import edu.caltech.ipac.util.download.NetworkManager;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.cache.CacheKey;
 
 import java.awt.Component;
 import java.io.File;
@@ -228,39 +226,6 @@ public class VisNetwork {
     }
 
 
-   public static File getNedImage(NedImageParams params)
-                                 throws FailedRequestException {
-       File f= CacheHelper.getFile(params);
-       if (f == null)  {          // if not in cache
-           String newfile= params.getUniqueString();
-           f= CacheHelper.makeFile(newfile);
-           try {
-               HostPort nedServer=
-                       NetworkManager.getInstance().getServer(NetworkManager.NED_SERVER);
-               NedImageGetter.lowlevelGetNedImage(nedServer.getHost(), params, f);
-           } catch (IOException e) {
-               throw new FailedRequestException("NedImageGetter Call failed with IOException",
-                                                "no more detail",e);
-           }
-           CacheHelper.putFile(params,f);
-       }
-
-       return f;
-   }
-
-   public static File getNedPreviewGif(NedImageParams params) 
-                                            throws IOException {
-
-       File f= CacheHelper.getFile(params);
-       if (f == null)  {          // if not in cache
-           f= CacheHelper.makeFile(params.getUniqueString());
-           NetworkManager manager= NetworkManager.getInstance();
-           HostPort server= manager.getServer(NetworkManager.NED_SERVER);
-           NedImageGetter.lowlevelGetPreviewGif(server.getHost(), params, f);
-           CacheHelper.putFile(params,f);
-       }
-       return f;
-   }
 
 
     /**
@@ -286,8 +251,7 @@ public class VisNetwork {
           retval= new FileData[] {new FileData(f,null)};
       }
       else if (params instanceof NedImageParams) {
-          f=  getNedImage( (NedImageParams)params);
-          retval= new FileData[] {new FileData(f,null)};
+          // no longer supported
       }
       else if (params instanceof WiseImageParams) {
           f=  getIbeImage((BaseIrsaParams) params);

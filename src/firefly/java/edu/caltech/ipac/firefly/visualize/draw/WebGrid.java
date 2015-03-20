@@ -1,47 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-//=== File Prolog =============================================================
-//	This code was developed by NASA, Goddard Space Flight Center, Code 588
-//	for the Scientist's Expert Assistant (SEA) project.
-//
-//--- Contents ----------------------------------------------------------------
-//	class Grid
-//
-//--- Description -------------------------------------------------------------
-//	Draws a coordinate system grid on a TargetTunerCanvas.
-//
-//--- Notes -------------------------------------------------------------------
-//	This class is based on code from SkyView:
-//	http://skyview.gsfc.nasa.gov/
-//	Original file: Gridder.java
-//
-//--- Development History -----------------------------------------------------
-//
-//	02/01/99	J. Jones / 588
-//
-//		Original implementation based on code from Skyview.
-//
-//--- DISCLAIMER---------------------------------------------------------------
-//
-//	This software is provided "as is" without any warranty of any kind, either
-//	express, implied, or statutory, including, but not limited to, any 
-//	warranty that the software will conform to specification, any implied 
-//	warranties of merchantability, fitness for a particular purpose, and 
-//	freedom from infringement, and any warranty that the documentation will 
-//	conform to the program, or any warranty that the software will be error 
-//	free.
-//
-//	In no event shall NASA be liable for any damages, including, but not 
-//	limited to direct, indirect, special or consequential damages, arising out 
-//	of, resulting from, or in any way connected with this software, whether or 
-//	not based upon warranty, contract, tort or otherwise, whether or not 
-//	injury was sustained by persons or property or otherwise, and whether or 
-//	not loss was sustained from or arose out of the results of, or use of, 
-//	their software or services provided hereunder.
-//
-//=== End File Prolog =========================================================
-
 package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.i18n.client.NumberFormat;
@@ -62,23 +21,7 @@ import java.util.List;
 
 
 /**
- * Draws a coordinate system grid on a TargetTunerCanvas.
- *
- * <P>This code was developed by NASA, Goddard Space Flight Center, Code 588
- * for the Scientist's Expert Assistant (SEA) project.
- * Modified by Xiuqin Wu for SIRTF
- * 2/24/09 Modified by Trey Roby for the Web
- *
- * @version		02/01/99,  8/22/2000
- * @author		J. Jones / 588,  Xiuqin Wu, Trey Roby, Booth Hartely
- * @versjon   11/21/14 by Lijun Zhang
- *            Rewrite the drawLines to plot smooth grid lines and add all the labels
- *            The labels are added in the left and the bottom for EQxxxx images
- *            12/04/14  by Lijun Zhang
- *            Add labels to the middle of the vertical and horizontal lines for none EQXXXX images
- *
- * 12/16/14  by Lijun Zhang
- *           Changed the algorithm to calculate  the label location
+ * Draws a coordinate system grid
  *
  *
 **/
