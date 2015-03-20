@@ -30,9 +30,6 @@ public class VisNetwork {
 
     private static final int SEC_IN_DAY= 86400; //60*60*24
 
-
-
-
     private static File getIrsaImage(IrsaImageParams params) throws FailedRequestException {
 
         File f;
@@ -119,30 +116,6 @@ public class VisNetwork {
     }
 
 
-    public static File getSkyViewImage(SkyViewImageParams params)
-                                  throws FailedRequestException {
-
-        File f= CacheHelper.getFile(params);
-        if (f == null)  {          // if not in cache
-
-            String newfile= params.getUniqueString();
-            String ext= FileUtil.getExtension(newfile);
-            if (!ext.equalsIgnoreCase(FileUtil.FIT) &&
-                !ext.equalsIgnoreCase(FileUtil.FITS) &&
-                !ext.equalsIgnoreCase(FileUtil.GZ)) {
-                newfile= newfile + ".fits";
-            }
-            f= CacheHelper.makeFile(newfile);
-            try {
-                SkyViewImageGetter.lowlevelGetImage(params, f);
-            } catch (IOException e) {
-                throw new FailedRequestException("SkyViewImageGetter failed with IOException",
-                                                 "no more detail",e);
-            }
-            CacheHelper.putFile(params,f);
-        }
-        return f;
-    }
 
     public static FileData getAnyFits(AnyFitsParams params, DownloadListener dl)
                                   throws FailedRequestException {
@@ -250,17 +223,16 @@ public class VisNetwork {
           f=  getSloanDssImage( (SloanDssImageParams)params);
           retval= new FileData[] {new FileData(f,null)};
       }
-      else if (params instanceof NedImageParams) {
-          // no longer supported
-      }
+//      else if (params instanceof NedImageParams) {
+//          no longer supported
+//      }
       else if (params instanceof WiseImageParams) {
           f=  getIbeImage((BaseIrsaParams) params);
           retval= new FileData[] {new FileData(f,null)};
       }
-      else if (params instanceof SkyViewImageParams) {
-          f=  getSkyViewImage( (SkyViewImageParams)params);
-          retval= new FileData[] {new FileData(f,null)};
-      }
+//      else if (params instanceof SkyViewImageParams) {
+//          no longer supported
+//      }
       else if (params instanceof AnyFitsParams) {
           retval=  new FileData[] {getAnyFits( (AnyFitsParams)params,dl)};
       }

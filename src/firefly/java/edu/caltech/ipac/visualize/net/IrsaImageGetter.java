@@ -4,14 +4,18 @@
 package edu.caltech.ipac.visualize.net;
 
 
+import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.IRIS;
 import static edu.caltech.ipac.visualize.net.IrsaImageParams.IrsaTypes.ISSA;
@@ -53,11 +57,67 @@ public class IrsaImageGetter {
 
         String file = outFile.getPath();
 
-        String sugestedFileName=
-                       IrsaUtil.getURL(true, hp, cgiapp, parms, file);
+        String sugestedFileName= getURL(hp, cgiapp, parms, file);
 
         ClientLog.message("Done.");
         return sugestedFileName;
+    }
+
+    public static String getURL(HostPort         hp,
+                                String           app,
+                                URLParms         parms,
+                                String           fileName) throws IOException,
+                                                                  FailedRequestException {
+        String                retval= null;
+        URL url;
+        URLConnection conn;
+        File                  file= new File(fileName);
+        String                req;
+
+        req = "http://" + hp.getHost() + ":" + hp.getPort() + app;
+
+        if(parms.getLength() > 0)
+        {
+            req = req + "?";
+
+            for(int i=0; i<parms.getLength(); ++i)
+            {
+                if(i != 0)
+                    req = req + "&";
+
+                req = req + parms.getKeyword(i);
+                req = req + "=";
+                req = req + parms.getValue(i);
+            }
+        }
+
+        try {
+            url  = new URL(req);
+            conn = url.openConnection();
+            retval= URLDownload.getSugestedFileName(conn);
+            String contentType = conn.getContentType();
+            ClientLog.message(true,"fileName: " + fileName);
+
+            if (contentType != null && contentType.startsWith("text/")) {
+                String htmlErr= URLDownload.getStringFromOpenURL(conn,null);
+                throw new FailedRequestException(
+                        htmlErr,
+                        "The IRSA server is reporting an error- " +
+                                "the IRSA error message was displayed to the user.",
+                        true, null );
+            }
+
+            URLDownload.getDataToFile(conn, file, null);
+
+
+        } catch (MalformedURLException me){
+            ClientLog.warning(true,me.toString());
+            throw new FailedRequestException(
+                    FailedRequestException.SERVICE_FAILED,
+                    "detail in exception", me );
+        }
+
+        return retval;
     }
 
 }
