@@ -56,7 +56,6 @@ import edu.caltech.ipac.firefly.ui.FormUtil;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ResizablePanel;
-import edu.caltech.ipac.firefly.ui.TargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
 import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
@@ -77,7 +76,6 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,28 +128,6 @@ public class DynSearchCmd extends CommonRequestCmd {
         List<InputFieldGroup> groups = new ArrayList<InputFieldGroup>();
         FormUtil.getAllChildGroups(searchForm, groups);
         boolean noResolutionNeeded = true;
-
-        for (InputFieldGroup ifG : groups) {
-            // TODO: new TargetPanel resolves as user enters value - this code is no longer needed
-            // resolve any TargetPanels found
-            if (ifG instanceof TargetPanel) {
-                TargetPanel tp = (TargetPanel) ifG;
-                if (tp.isResolveNeeded()) {
-                    tp.resolvePosition(new AsyncCallback<WorldPt>() {
-                        public void onFailure(Throwable caught) {
-                            PopupUtil.showSevereError(caught);
-                        }
-
-                        public void onSuccess(WorldPt result) {
-                            // process again
-                            createAndProcessRequest();
-                        }
-                    });
-
-                    noResolutionNeeded = false;
-                }
-            }
-        }
 
         if (noResolutionNeeded) {
             DynSearchCmd.super.createAndProcessRequest();
@@ -934,23 +910,6 @@ public class DynSearchCmd extends CommonRequestCmd {
 
     }
 
-    public String getDownloadTitlePrefix(Request inputReq) {
-        String tname = inputReq.getParam(TargetPanel.TARGET_NAME_KEY);
-        if (!StringUtils.isEmpty(tname)) {
-            return tname + ": ";
-        } else {
-            return "";
-        }
-    }
-
-    public String getDownloadFilePrefix(Request inputReq) {
-        String tname = inputReq.getParam(TargetPanel.TARGET_NAME_KEY);
-        if (!StringUtils.isEmpty(tname)) {
-            return tname.replaceAll("\\s+", "") + "-";
-        } else {
-            return "tgt-";
-        }
-    }
 
     private static void setFormMinSize(FormTag ftag, Element el) {
         String msize = ftag.getMinSize();

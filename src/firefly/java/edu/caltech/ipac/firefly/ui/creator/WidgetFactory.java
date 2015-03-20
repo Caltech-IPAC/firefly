@@ -37,7 +37,7 @@ public class WidgetFactory {
     public static final String XYPLOT = "XYPlot";
     public static final String MULTI_DATA_VIEWER_PREVIEW = "multiDataViewerPreview";
 
-    public static final String TARGET_PANEL = "targetPanel";
+//    public static final String TARGET_PANEL = "targetPanel";
     public static final String SIMPLE_TARGET_PANEL = "simpleTargetPanel";
     public static final String NAIF_TARGET_PANEL = "naifTargetPanel";
     public static final String CATALOG_POPUP_PANEL = "CatalogPopupPanel";
@@ -62,7 +62,7 @@ public class WidgetFactory {
         addCreator(XYPLOT, new XYPlotCreator());
         addCreator(MULTI_DATA_VIEWER_PREVIEW, new MultiDataViewerPreviewCreator());
 
-        addCreator(TARGET_PANEL, new TargetPanelCreator());
+//        addCreator(TARGET_PANEL, new TargetPanelCreator());
         addCreator(SIMPLE_TARGET_PANEL, new SimpleTargetPanelCreator());
         addCreator(NAIF_TARGET_PANEL, new NaifTargetPanelCreator());
         addCreator(CATALOG_POPUP_PANEL, new CatalogPopupPanelCreator());
