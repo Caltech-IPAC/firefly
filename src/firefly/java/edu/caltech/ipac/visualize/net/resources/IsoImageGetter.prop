@@ -1,8 +1,0 @@
-
-IsoImageGetter.desc.Name= ISO Archive query
-!IsoImageGetter.noImages.Error= NED did not find any Images \
-!                               with this object name.
-!IsoImageGetter.noObject.Error= NED does not have this target in its database.
-IsoImageGetter.searching.Name= Searching database for Image
-IsoImageGetter.loading.Name= Retrieving Image
-IsoImageGetter.query.Name= Querying Images

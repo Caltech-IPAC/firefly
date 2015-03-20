@@ -20,16 +20,16 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * This class is the abstrct base class for all plots.  Almost all classes that 
+ * This class is the abstract base class for all plots.  Almost all classes that
  * operate on plots use this class not the subclasses that implement it.
- * Publicly this class operatoes in three coordinate system.  
+ * Publicly this class operations in three coordinate system.
  * A Image coordinate system, a world coordinate system, and a screen
- * coorinate system.
+ * coordinate system.
  * <ul>
  * <li>The image coordinate system is the coordinate system of the data. 
- * <li>The world coordindate system is the system that the data represents 
+ * <li>The world coordinate system is the system that the data represents
  *        (i.e. the coordinate system of the sky)
- * <li>Screen ccoordinates are the pixel values of the screen.
+ * <li>Screen coordinates are the pixel values of the screen.
  * </ul>
  *  We go from screen to image coordinate using the java transform classes.  
  *  We go from image to world using the abstract methods in this class.
@@ -49,15 +49,15 @@ public abstract class Plot implements PlotPaintListener {
     public static final int DOWN = 2;
 
 
-    public static final String MOVING_TARGET_CTX_ATTR= "MOVING_TARGET_CTX_ATTR";
-    public static final String SUGESTED_NAME_ATTR= "SUGESTED_NAME_ATTR";
-    public static final String PLOTTED_FILE_PATH= "PLOTTED_FILE_PATH";
-    public static final String MOUSE_READOUT_HINTS_ATTR= "MOUSE_READOUT_HINTS_ATTR";
-    public static final String REQ_RADIUS_ARCSEC_ATTR= "REQ_RADIUS_ARCSEC_ATTR";
-    public static final String REQ_WIDTH_ARCSEC_ATTR= "REQ_WIDTH_ARCSEC_ATTR";
-    public static final String REQ_HEIGHT_ARCSEC_ATTR= "REQ_HEIGHT_ARCSEC_ATTR";
-    public static final String READOUT_ATTR= "READOUT_ATTR";
-    public static final String DISABLE_OVERLAYS_ATTR= "DISABLE_OVERLAYS_ATTR";
+//    public static final String MOVING_TARGET_CTX_ATTR= "MOVING_TARGET_CTX_ATTR";
+//    public static final String SUGESTED_NAME_ATTR= "SUGESTED_NAME_ATTR";
+//    public static final String PLOTTED_FILE_PATH= "PLOTTED_FILE_PATH";
+//    public static final String MOUSE_READOUT_HINTS_ATTR= "MOUSE_READOUT_HINTS_ATTR";
+//    public static final String REQ_RADIUS_ARCSEC_ATTR= "REQ_RADIUS_ARCSEC_ATTR";
+//    public static final String REQ_WIDTH_ARCSEC_ATTR= "REQ_WIDTH_ARCSEC_ATTR";
+//    public static final String REQ_HEIGHT_ARCSEC_ATTR= "REQ_HEIGHT_ARCSEC_ATTR";
+//    public static final String READOUT_ATTR= "READOUT_ATTR";
+//    public static final String DISABLE_OVERLAYS_ATTR= "DISABLE_OVERLAYS_ATTR";
 
 
     private   List<NewPlotNotificationListener> _plotStatus      =
@@ -67,13 +67,11 @@ public abstract class Plot implements PlotPaintListener {
     private   String              _shortPlotDesc;
     private   boolean             _show            = true;
     private   float               _initialZoomLevel= 1.0F;
-//    private   MovingTargetContext _movingContext   = null;
     protected boolean             _available       = true;
     protected float               _percentOpaque   = 1.0F;
     public    PlotGroup           _plotGroup       = null;
     protected int                 _offsetX         = 0;
     protected int                 _offsetY         = 0;
-    protected String              _sugestedFileName= null;
     protected Map<String,Object>  _attributes= new HashMap<String,Object>(3);
 
     public Plot() { this(null); }
@@ -152,17 +150,17 @@ public abstract class Plot implements PlotPaintListener {
     public abstract Plot    makeSharedDataPlot(PlotGroup plotGroup);
 
     /**
-     * Determine if a world point is in the plot bounderies.
+     * Determine if a world point is in the plot boundaries.
      * @param wpt the point to test.
-     * @return boolean true if it is in the bounderies, false if not.
+     * @return boolean true if it is in the boundaries, false if not.
      */
     public abstract boolean pointInPlot(WorldPt wpt);
 
 
     /**
-     * Determine if a image point is in the plot bounderies.
+     * Determine if a image point is in the plot boundaries.
      * @param pt the point to test.
-     * @return boolean true if it is in the bounderies, false if not.
+     * @return boolean true if it is in the boundaries, false if not.
      */
     public abstract boolean pointInPlot(ImageWorkSpacePt pt);
 

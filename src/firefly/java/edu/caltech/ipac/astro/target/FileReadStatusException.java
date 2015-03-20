@@ -1,9 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.util;
+package edu.caltech.ipac.astro.target;
 
 
+import edu.caltech.ipac.util.Assert;
 
 /**
  *  This exception will be thrown when a file read has a issue.
@@ -24,9 +25,9 @@ public class FileReadStatusException extends Exception {
 
    public FileReadStatusException(String message, int severity) {
       super(message);
-      Assert.tst(severity == ERROR       ||
-                 severity == WARNING     ||
-                 severity == INFORMATION);
+      Assert.tst(severity == ERROR ||
+                         severity == WARNING ||
+                         severity == INFORMATION);
       _severity= severity;
    }
 

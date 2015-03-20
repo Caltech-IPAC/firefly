@@ -6,7 +6,6 @@ package edu.caltech.ipac.astro.target;
 import edu.caltech.ipac.astro.net.NedParams;
 import edu.caltech.ipac.astro.net.SimbadParams;
 import edu.caltech.ipac.astro.net.TargetNetwork;
-import edu.caltech.ipac.util.FileReadStatusException;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 
@@ -295,7 +294,7 @@ public class FixedSingleTargetParser {
      * will return an array of n elements.
      *
      * @param nextTarget the input line to parse
-     * @throws edu.caltech.ipac.util.FileReadStatusException
+     * @throws FileReadStatusException
      *
      */
     public String[] getElements(String nextTarget)

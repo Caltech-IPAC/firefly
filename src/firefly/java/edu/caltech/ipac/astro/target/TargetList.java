@@ -21,7 +21,7 @@ import java.util.List;
 public class TargetList implements Serializable, Iterable<Target> {
 
 
-    private List<Target>          _list            = makeList();
+    private List<Target>          _list            = new LinkedList<Target>();
     private Target                _current         = null;
     private boolean               _doingBulkUpdates= false;
 
@@ -44,10 +44,6 @@ public class TargetList implements Serializable, Iterable<Target> {
     public Target get(int index) {
         return  _list.get(index);
     }
-
-
-
-
 
     public void setCurrent(int idx) {
         if (idx>-1 && idx<_list.size()) {
@@ -90,9 +86,6 @@ public class TargetList implements Serializable, Iterable<Target> {
 
     public int indexOf(Target t) { return indexOf((Object) t); }
 
-    public int getCurrentIdx() {
-        return ((_current==null) ? -1 : _list.indexOf(_current));
-    }
 
     public void addTarget(Target target) {
         addTarget(target, true);
@@ -100,7 +93,6 @@ public class TargetList implements Serializable, Iterable<Target> {
 
     public void addTarget(Target t, boolean makeCurrent) {
         if(t!=null) {
-            //cleanoutFlux(target);
             if(!contains(t)) {
                 _list.add(t);
                 if(!_doingBulkUpdates) {
@@ -115,32 +107,6 @@ public class TargetList implements Serializable, Iterable<Target> {
             }
         } // end if (target != null)
     }
-
-    /**
-     * replace the orignal target with a new one
-     * set current target to be the new target
-     */
-    public void replaceTarget(Target original, Target target) {
-        replaceTarget(original, target, true);
-    }
-
-    /**
-     * replace the orignal target with a new one
-     * set current target to be the new target if makeCurrent is true
-     */
-    public void replaceTarget(Target original,
-                              Target t,
-                              boolean makeCurrent) {
-        int index=_list.indexOf(original);
-        Assert.tst(index>=0, "the orignal target does not exist!");
-        _list.set(index, t);
-        if(makeCurrent) setCurrent(t);
-    }
-
-
-    protected List<Target> makeList() { return new LinkedList<Target>(); }
-
-
 
 
 }

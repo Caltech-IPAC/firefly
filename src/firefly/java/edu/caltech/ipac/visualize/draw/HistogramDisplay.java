@@ -8,8 +8,8 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ColorTable;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -41,9 +41,9 @@ public class HistogramDisplay extends JComponent implements Icon {
 
     public HistogramDisplay() { }
 
-    public HistogramDisplay(String title) {
-       if (title != null)  setBorder( new TitledBorder(title));
-    }
+//    public HistogramDisplay(String title) {
+//       if (title != null)  setBorder( new TitledBorder(title));
+//    }
 
 
     public void setColorBand(int band) {
@@ -58,19 +58,19 @@ public class HistogramDisplay extends JComponent implements Icon {
         }
     }
 
-    public void setHistogramArray(int histogram[]) {
-        _histogram= histogram;
-        _histColorIdx= null;
-        _model= null;
-        repaint();
-    }
-
-    public void setHistogramArray(int histogram[], IndexColorModel model) {
-        _histogram= histogram;
-        _histColorIdx= null;
-        _model= model;
-        repaint();
-    }
+//    public void setHistogramArray(int histogram[]) {
+//        _histogram= histogram;
+//        _histColorIdx= null;
+//        _model= null;
+//        repaint();
+//    }
+//
+//    public void setHistogramArray(int histogram[], IndexColorModel model) {
+//        _histogram= histogram;
+//        _histColorIdx= null;
+//        _model= model;
+//        repaint();
+//    }
 
 
     public void setHistogramArray(int histogram[], byte histColorIdx[], IndexColorModel model) {
@@ -83,31 +83,31 @@ public class HistogramDisplay extends JComponent implements Icon {
 
 
 
-    public void setEnablebounds(boolean enable) {
-        _boundsEnabled= enable;
-        repaint();
-    }
+//    public void setEnablebounds(boolean enable) {
+//        _boundsEnabled= enable;
+//        repaint();
+//    }
 
     public void setScaleOn2ndValue(boolean do2nd) {
         _do2nd= do2nd; 
     }
 
-    public void setPrimaryUpperBounds(int upper) { 
-        _upperBounds= upper; 
-        repaint();
-    }
-    public void setPrimaryLowerBounds(int lower) { 
-        _lowerBounds= lower; 
-        repaint();
-    }
-    public void setSecondaryUpperBounds(int upper) { 
-        _upperBounds2= upper; 
-        repaint();
-    }
-    public void setSecondaryLowerBounds(int lower) { 
-        _lowerBounds2= lower; 
-        repaint();
-    }
+//    public void setPrimaryUpperBounds(int upper) {
+//        _upperBounds= upper;
+//        repaint();
+//    }
+//    public void setPrimaryLowerBounds(int lower) {
+//        _lowerBounds= lower;
+//        repaint();
+//    }
+//    public void setSecondaryUpperBounds(int upper) {
+//        _upperBounds2= upper;
+//        repaint();
+//    }
+//    public void setSecondaryLowerBounds(int lower) {
+//        _lowerBounds2= lower;
+//        repaint();
+//    }
 
     public void setBottomSize(int size) {
         _bottomColorSize= size;
@@ -255,30 +255,30 @@ public class HistogramDisplay extends JComponent implements Icon {
 
     public int getIconHeight() { return getHeight(); }
 
-    public int getHistogramDataFromScreenIdx(int x) {
-        int retval= -1;
-        if (_lineDataSize!=null) {
-            Insets insets= getInsets();
-            Dimension dim= getSize();
-            if (x >= insets.left && x < dim.width-insets.right) {
-                retval= _lineDataSize[x-insets.left];
-            }
-        }
+//    public int getHistogramDataFromScreenIdx(int x) {
+//        int retval= -1;
+//        if (_lineDataSize!=null) {
+//            Insets insets= getInsets();
+//            Dimension dim= getSize();
+//            if (x >= insets.left && x < dim.width-insets.right) {
+//                retval= _lineDataSize[x-insets.left];
+//            }
+//        }
+//
+//        return retval;
+//    }
 
-        return retval;
-    }
-
-    public int getHistogramIdxFromScreenIdx(int x) { 
-        int retval= -1;
-        if (_orginalHistogramIdx!=null) {
-            Insets insets= getInsets();
-            Dimension dim= getSize();
-            if (x >= insets.left && x < dim.width-insets.right) {
-                retval= _orginalHistogramIdx[x-insets.left];
-            }
-        }
-        return retval;
-    }
+//    public int getHistogramIdxFromScreenIdx(int x) {
+//        int retval= -1;
+//        if (_orginalHistogramIdx!=null) {
+//            Insets insets= getInsets();
+//            Dimension dim= getSize();
+//            if (x >= insets.left && x < dim.width-insets.right) {
+//                retval= _orginalHistogramIdx[x-insets.left];
+//            }
+//        }
+//        return retval;
+//    }
 
     private void drawBounds(Graphics2D g2, 
                             int        x, 

@@ -1,8 +1,0 @@
-
-NedImageGetter.desc.Name= NED Image
-NedImageGetter.noImages.Error= NED did not find any Images \
-                               with this object name.
-NedImageGetter.noObject.Error= NED does not have this target in its database.
-NedImageGetter.searching.Name= Searching database for Image
-NedImageGetter.loading.Name= Retrieving Image
-NedImageGetter.query.Name= Querying Images
