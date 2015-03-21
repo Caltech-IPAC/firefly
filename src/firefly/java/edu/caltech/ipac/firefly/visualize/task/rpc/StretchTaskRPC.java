@@ -42,13 +42,13 @@ public class StretchTaskRPC extends ServerTask<WebPlotResult> {
     @Override
     public void onSuccess(WebPlotResult result) {
         if (result.isSuccess()) {
-            plot.setPlotState((PlotState)result.getResult(WebPlotResult.PLOT_STATE));
-            plot.refreshWidget((PlotImages)result.getResult(WebPlotResult.PLOT_IMAGES));
+            plot.setPlotState((PlotState) result.getResult(WebPlotResult.PLOT_STATE));
+            plot.refreshWidget((PlotImages) result.getResult(WebPlotResult.PLOT_IMAGES));
             plot.getPlotView().getMiniPlotWidget().forcePlotPrefUpdate();
-        }
-        else {
+        } else {
             PopupUtil.showError("Server Error", "Changing Stretch Failed: " + result.getUserFailReason());
         }
+    }
 
 
     @Override
