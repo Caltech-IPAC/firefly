@@ -49,7 +49,7 @@ public class StretchTaskRPC extends ServerTask<WebPlotResult> {
         else {
             PopupUtil.showError("Server Error", "Changing Stretch Failed: " + result.getUserFailReason());
         }
-    }
+
 
     @Override
     public void doTask(AsyncCallback<WebPlotResult> passAlong) {

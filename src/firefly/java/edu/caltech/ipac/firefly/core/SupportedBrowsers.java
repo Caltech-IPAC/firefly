@@ -44,7 +44,7 @@ public class SupportedBrowsers {
         boolean supported= true;
         switch (b) {
             case FIREFOX:
-                supported= (major>2);
+                supported= (major>4);
                 if (!supported) _unsupportedMsg= getFFMessage();
                 break;
             case SEAMONKEY:
@@ -58,7 +58,7 @@ public class SupportedBrowsers {
                 supported= true;
                 break;
             case IE:
-                supported= (major>7);
+                supported= (major>8);
                 if (!supported) _unsupportedMsg= getIEMessage();
                 break;
             case OPERA:
@@ -117,7 +117,7 @@ public class SupportedBrowsers {
                 "<i>Unsupported Browser</i><br><br>" +
                 "Your Firefox browser is version " + BrowserUtil.getVersionString() +
                 ".<br>" +
-                "This is a very old browser and we require at least version 3.<br><br>\n" +
+                "This is a very old browser and we require at least version 4.<br><br>\n" +
                 "You can get the most recent version at <a href=\"http://firefox.com\">Firefox.com </a></p>";
     }
 
@@ -138,7 +138,7 @@ public class SupportedBrowsers {
                 "<i>Unsupported Browser</i><br><br>" +
                 "Your IE browser is version " +BrowserUtil.getMajorVersion() +
                 ".  Microsoft's older browsers do not support web standards very well." +
-                " We require at least version 8.<br><br>\n" +
+                " We require at least version 9.<br><br>\n" +
                 "You can get the most recent version of IE at \n" +
                 "<a href=\"http://windows.microsoft.com/en-US/internet-explorer/downloads/ie/\">Microsoft</a><br>\n" +
                 "<br>You might also consider trying one of the following browsers:<br>\n" +
