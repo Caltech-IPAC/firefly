@@ -38,7 +38,7 @@ public class BrowserUtil {
         return _bi.isVersionAtLeast(browser,version,minor);
     }
 
-    public static boolean isPlatform(Platform platform) { return _bi.isPlatform(platform); }
+    public static boolean isPlatform(BrowserInfo.Platform platform) { return _bi.isPlatform(platform); }
 
     /**
      * check to see fi browser is IE

@@ -187,7 +187,7 @@ public class GatorQuery extends BaseGator {
             File uloadFile = null;
             try {
                 uloadFile = File.createTempFile(getFilePrefix(req), ".tbl", ServerContext.getTempWorkDir());
-                WorldPt pt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+                WorldPt pt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
                 if (pt == null) pt = req.getWorldPtJ2000();
                 pt = VisUtil.convertToJ2000(pt);
                 DataGroup singleTarget = new DataGroup("singletargetupload", new DataType[]{new DataType("ra", Double.class), new DataType("dec", Double.class)});
@@ -427,7 +427,7 @@ public class GatorQuery extends BaseGator {
 
 
     private static String makeObjStr(CatalogRequest req) throws UnsupportedEncodingException, EndUserException {
-        WorldPt pt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt pt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (pt == null) pt = req.getWorldPtJ2000();
         pt = VisUtil.convertToJ2000(pt);
 

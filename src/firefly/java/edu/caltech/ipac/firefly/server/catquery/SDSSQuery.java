@@ -41,7 +41,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.*;
  */
 @SearchProcessorImpl(id = "SDSSQuery", params =
         {@ParamDoc(name = SDSSRequest.RADIUS_ARCMIN, desc = "float, the radius in arcminutes"),
-                @ParamDoc(name = ReqConst.USER_TARGET_WORLD_PT, desc = "WorldPt string: ra;dec;coord_sys"),
+                @ParamDoc(name = ServerParams.USER_TARGET_WORLD_PT, desc = "WorldPt string: ra;dec;coord_sys"),
                 @ParamDoc(name = SDSSRequest.FILE_NAME, desc = "for upload, not yet used"),
                 @ParamDoc(name = SDSSRequest.NEAREST_ONLY, desc = "return only one match per target")
         })
@@ -300,11 +300,11 @@ public class SDSSQuery extends IpacTablePartProcessor {
     */
     private URL createGetURL(TableServerRequest request) throws EndUserException, MalformedURLException {
         // use ReqConst.USER_TARGET_WORLD_PT and radiusArcMin
-        WorldPt pt = request.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt pt = request.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         pt = VisUtil.convertToJ2000(pt);
         if (pt == null) {
             throw new EndUserException("SDSS catalog search failed",
-                    "Missing required parameter "+ ReqConst.USER_TARGET_WORLD_PT);
+                    "Missing required parameter "+ ServerParams.USER_TARGET_WORLD_PT);
         }
         String radiusArcMin = request.getParam(SDSSRequest.RADIUS_ARCMIN);
         if (StringUtils.isEmpty(radiusArcMin)) {

@@ -126,7 +126,6 @@ public class ServerParams {
     public static final String VIS_PUSH_WPR= "pushWPR";
 
 
-
-
+    public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 }
 

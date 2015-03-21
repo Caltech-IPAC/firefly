@@ -58,9 +58,9 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
             else { accessUrl += "?"; }
         }
 
-        WorldPt wpt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt wpt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (wpt == null) {
-            throw new DataAccessException("could not find the paramater: " + ReqConst.USER_TARGET_WORLD_PT);
+            throw new DataAccessException("could not find the paramater: " + ServerParams.USER_TARGET_WORLD_PT);
         }
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 

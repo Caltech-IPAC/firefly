@@ -9,8 +9,8 @@ import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileStatus;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
@@ -161,7 +161,7 @@ public class SearchManager {
     public BackgroundStatus getRawDataSetBackground(TableServerRequest request, Request clientRequest, int waitMillis) throws RPCException {
 
         Logger.briefDebug("Backgrounded search started:" + waitMillis + " wait, req:" + request);
-        String email= request.containsParam(ReqConst.EMAIL)? request.getParam(ReqConst.EMAIL) : "";
+        String email= request.containsParam(ServerParams.EMAIL)? request.getParam(ServerParams.EMAIL) : "";
         SearchWorker worker= new SearchWorker(request, clientRequest);
         BackgroundEnv.BackgroundProcessor processor=
                               new BackgroundEnv.BackgroundProcessor(worker,  null,

@@ -5,8 +5,8 @@ package edu.caltech.ipac.firefly.server.query.wise;
 
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.ui.SimpleTargetPanel;
 import edu.caltech.ipac.firefly.ui.creator.SearchDescResolverCreator;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -60,7 +60,7 @@ public class WiseSearchDescResolver extends SearchDescResolver implements Search
         } else {
             source = req.getParam(SimpleTargetPanel.TARGET_NAME_KEY);
             if (source == null) {
-                source = req.getParam(ReqConst.USER_TARGET_WORLD_PT);
+                source = req.getParam(ServerParams.USER_TARGET_WORLD_PT);
             }
         }
 

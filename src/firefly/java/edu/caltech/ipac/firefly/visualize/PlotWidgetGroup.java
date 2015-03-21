@@ -10,10 +10,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.ui.IconMenuItem;
 import edu.caltech.ipac.firefly.ui.imageGrid.BasicImageGrid;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -340,36 +337,6 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
                                                    "color",      "#49a344",
                                                    "paddingBottom", padBottom);
         return zoomLevel;
-    }
-
-    private MenuItem makeHelp(BarPopup popType) {
-        IconMenuItem help= new IconMenuItem(HelpManager.makeHelpImage(),
-                                            new Command() {
-                                                public void execute() {
-                                                    Application.getInstance().getHelpManager().showHelpAt("visualization");
-                                                }
-                                            }, false);
-//        if (_shared) {
-            if (popType==BarPopup.PopupOut) {
-                GwtUtil.setStyles(help.getElement(), "paddingLeft",   "7px",
-                                  "paddingBottom", "3px",
-                                  "borderColor", "transparent");
-            }
-            else {
-                GwtUtil.setStyles(help.getElement(),
-                                  "padding", "0 0 2px 10px",
-                                  "borderColor",   "transparent");
-
-            }
-//        }
-//        else {
-//            GwtUtil.setStyles(help.getElement(), "paddingLeft",   "10px",
-//                                                 "paddingBottom", "5px",
-//                                                 "paddingTop",    "3px",
-//                                                 "borderColor",   "transparent");
-//
-//        }
-        return help;
     }
 
     void updateScrollPositions(MiniPlotWidget originMpw) {

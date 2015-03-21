@@ -3,9 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -282,7 +282,7 @@ public class ServiceRetriever implements FileRetriever {
         Circle c= PlotServUtils.getRequestArea(request);
         WiseRequest sr = new WiseRequest();
         sr.setPageSize(1000);
-        sr.setParam(ReqConst.USER_TARGET_WORLD_PT, c.getCenter());
+        sr.setParam(ServerParams.USER_TARGET_WORLD_PT, c.getCenter());
         sr.setIntersect("CENTER");
         sr.setParam("mcenter", WiseRequest.MCEN); // get the most centered images
         sr.setParam("optLevel", "1b4,3a4");// todo, what is this?

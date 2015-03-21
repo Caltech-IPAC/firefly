@@ -5,7 +5,7 @@ package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
@@ -79,9 +79,9 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
         }
 
 
-        WorldPt wpt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt wpt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (wpt == null)
-            throw new DataAccessException("could not find the parameter: " + ReqConst.USER_TARGET_WORLD_PT);
+            throw new DataAccessException("could not find the parameter: " + ServerParams.USER_TARGET_WORLD_PT);
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 
         String dataset = req.getParam(DATASET_KEY);

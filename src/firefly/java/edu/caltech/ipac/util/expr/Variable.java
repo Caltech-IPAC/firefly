@@ -1,6 +1,3 @@
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 // Variables associate values with names.
 // Copyright 2002 by Darius Bacon <darius@wry.me>
 // Altered

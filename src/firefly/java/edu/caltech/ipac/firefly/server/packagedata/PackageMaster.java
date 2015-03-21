@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
@@ -91,7 +90,6 @@ public class PackageMaster  {
                                ", sizeInBytes: " + bg.getTotalSizeInBytes() );
             retval.add("PackagedBundle cnt: " + bg.getPackageCount());
             StringBuilder bundleStr;
-            PackagedBundle b;
             int i= 0;
             for (PackageProgress p : bg.getPartProgressList()) {
                 bundleStr = new StringBuilder(100);

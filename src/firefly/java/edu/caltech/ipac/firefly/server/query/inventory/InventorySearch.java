@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.inventory;
 
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -49,7 +49,7 @@ public class InventorySearch extends DynQueryProcessor {
 
         String dataset = req.getParam("identifier");
         float radius = req.getFloatParam("InventorySearch.radius");
-        WorldPt pt= req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt pt= req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         pt= VisUtil.convertToJ2000(pt);
         return queryInventoryService(DEF_HOST, dataset, pt, radius, createFile(req));
     }

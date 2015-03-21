@@ -23,7 +23,7 @@ public class SDSSRequest extends TableServerRequest {
     }
 
     public void setUserTargetWorldPoint(String wpStr) {
-        setParam(ReqConst.USER_TARGET_WORLD_PT, wpStr);
+        setParam(ServerParams.USER_TARGET_WORLD_PT, wpStr);
     }
 
     public void setFilename(String filename) {

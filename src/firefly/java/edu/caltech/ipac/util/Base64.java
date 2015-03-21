@@ -1,8 +1,4 @@
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 package edu.caltech.ipac.util;
-
 /*
 Copyright (c) 2009, Mark Renouf
 All rights reserved.

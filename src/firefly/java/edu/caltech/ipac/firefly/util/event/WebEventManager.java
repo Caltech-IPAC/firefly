@@ -100,27 +100,7 @@ public class WebEventManager {
         }
     }
 
-    /**
-     * Add a WebEventListener.
-     * @param eventName limit the event name to only this event, null means all events name
-     * @param l the listener
-     */
-    public void addVetoListener(Name eventName, VetoableWebEventListener l) {
-        _vetoEvListeners.add(new EvListenerContainer(l,eventName, null));
-    }
 
-
-
-    /**
-     * Add a WebEventListener.
-     * @param eventName limit the event name to only this event, null means all events name
-     * @param fromSource limit the source to only this source, null means all sources. You may spectify
- *         an instance Object for the source or a Class for the source.  If you specify a class then
-     * @param l the listener
-     */
-    public void addVetoListener(Name eventName, Object fromSource, VetoableWebEventListener l) {
-        _vetoEvListeners.add(new EvListenerContainer(l,eventName, fromSource));
-    }
 
 
 
@@ -135,16 +115,6 @@ public class WebEventManager {
     public void removeListener(Name eventName, Object fromSource, WebEventListener l) {
         EvListenerContainer lc= findEvListener(l,eventName,fromSource);
         if (lc!=null) _evListeners.remove(lc);
-    }
-
-    public void removeVetoListener(Name eventName, VetoableWebEventListener l) {
-        EvListenerContainer lc= findVetoEvListener(l,eventName,null);
-        if (lc!=null) _vetoEvListeners.remove(lc);
-    }
-
-    public void removeVetoListener(Name eventName, Object fromSource, VetoableWebEventListener l) {
-        EvListenerContainer lc= findVetoEvListener(l,eventName,fromSource);
-        if (lc!=null) _vetoEvListeners.remove(lc);
     }
 
     public void fireDeferredEvent(final WebEvent ev) {
@@ -191,41 +161,6 @@ public class WebEventManager {
     }
 
 
-    /**
-     * Fire an event
-     * @param ev the event to fire
-     * @throws VetoWebEventException if this event is vetoed by a listener
-     */
-    public void fireVetoableEvent(WebEvent ev) throws VetoWebEventException {
-        List<EvListenerContainer> newlist;
-
-        VetoableWebEventListener listener;
-        synchronized (this) {
-            newlist = new ArrayList<EvListenerContainer>(_vetoEvListeners);
-        }
-
-        List<EvListenerContainer> toDel= new ArrayList<EvListenerContainer>(2);
-        boolean fireBySource;
-        boolean fireByName;
-        for(EvListenerContainer lc : newlist)  {
-            listener = lc.getVetoListener();
-            if (listener!=null) {
-                fireBySource= (lc.getSource()==null ||
-                               ev.getSource()==lc.getSource() ||
-                               ev.getSource().getClass() == lc.getSource());
-                fireByName= (lc.getEventName()==null ||
-                             ComparisonUtil.equals(ev.getName(),lc.getEventName()));
-                if (fireBySource && fireByName) {
-                    listener.vetoableEventNotify(ev);
-                }
-            }
-            else {
-                toDel.add(lc);
-            }
-        }
-        for(EvListenerContainer lc : toDel) _vetoEvListeners.remove(lc);
-    }
-
     public synchronized void purgeSource(Object source) {
         for(Iterator<EvListenerContainer> i= _evListeners.iterator(); i.hasNext();) {
             if (i.next().getSource()==source) i.remove();
@@ -258,24 +193,6 @@ public class WebEventManager {
         return retval;
     }
 
-    private EvListenerContainer findVetoEvListener(VetoableWebEventListener listener,
-                                                          Name eventName,
-                                                          Object fromSource) {
-        EvListenerContainer retval= null;
-
-        if (listener!=null) {
-            for(EvListenerContainer lc : _vetoEvListeners) {
-                if (listener==lc.getVetoListener() &&
-                    ComparisonUtil.equals(eventName,lc.getEventName()) &&
-                    fromSource==lc.getSource() ) {
-                    retval= lc;
-                    break;
-                }
-            }
-        }
-        return retval;
-    }
-
 
 // =====================================================================
 // -------------------- Static Inner Classes ---------------------------
@@ -284,45 +201,24 @@ public class WebEventManager {
     private static class EvListenerContainer {
         private final Object _source;
         private final WebEventListener _listener;
-        private final VetoableWebEventListener _vetoListener;
         private final Name  _eventName;
-//        private final boolean _veto;
 
         public EvListenerContainer(WebEventListener listener,
                                   Name eventName,
                                   Object source) {
             _eventName= eventName;
             _source= source;
-//            _veto= false;
             _listener= listener;
-            _vetoListener= null;
 
-        }
-
-        public EvListenerContainer(VetoableWebEventListener vetoListener,
-                                  Name eventName,
-                                  Object source) {
-            _eventName= eventName;
-            _source= source;
-//            _veto= true;
-            _vetoListener= vetoListener;
-            _listener= null;
         }
 
         public WebEventListener getListener() {
-
-//            WebAssert.argTst(!_veto, "This container is set up with a WebEventListener not a VetoableWebEventListener");
             return _listener;
         }
 
-        public VetoableWebEventListener getVetoListener() {
-//            WebAssert.argTst(_veto, "This container is set up with a VetoableWebEventListener not a WebEventListener");
-            return _vetoListener;
-        }
 
         public Name getEventName() {  return _eventName; }
         public Object getSource() {  return _source; }
-//        public boolean isVeto() { return _veto; }
     }
 
 }

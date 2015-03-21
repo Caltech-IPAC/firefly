@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.util.EMailUtil;
@@ -117,7 +116,6 @@ public class PackagedEmail {
             }
 
 
-            PackagedBundle b;
             for(PackageProgress p : bgStat.getPartProgressList()) {
                 if (p.getURL() != null) {
                     sw.append(p.getURL()).append("\n\n");

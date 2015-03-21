@@ -18,6 +18,27 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class BrowserInfo {
 
+    public static enum Platform {
+        MAC("Mac"),
+        WINDOWS("Windows"),
+        LINUX("Linux"),
+        SOLARIS("Solaris"),
+        SUNOS("SunOS"),
+        HPUX("HP/UX"),
+        AIX("AIX"),
+        IPHONE("Iphone"),
+        IPAD("Ipad"),
+        ANDROID("Android"),
+        FREE_BSD("FreeBSD"),
+        SYMBIAN_OS("SymbianOS"),
+        J2ME("J2ME"),
+        BLACKBERRY("Blackberry"),
+        UNKNOWN("Unknown");
+
+        private String desc;
+        Platform(String desc) { this.desc= desc;}
+        public String getDesc() { return desc;  }
+    }
 
     public static final int UNKNOWN_VERSION= -1;
     private static final String SEAMONKEY_KEY= "seamonkey/";

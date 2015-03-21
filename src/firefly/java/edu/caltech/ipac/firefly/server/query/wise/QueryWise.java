@@ -6,9 +6,9 @@ package edu.caltech.ipac.firefly.server.query.wise;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
@@ -282,7 +282,7 @@ public class QueryWise extends IBESearchProcessor {
         StringBuffer sb = new StringBuffer(100);
 
         // process POS - target search
-        String userTargetWorldPt = req.getParam(ReqConst.USER_TARGET_WORLD_PT);
+        String userTargetWorldPt = req.getParam(ServerParams.USER_TARGET_WORLD_PT);
         if (userTargetWorldPt != null) {
             WorldPt pt = WorldPt.parse(userTargetWorldPt);
             if (pt != null) {

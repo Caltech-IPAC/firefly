@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Preferences;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.rpc.TargetServices;
 import edu.caltech.ipac.firefly.ui.input.AsyncInputFieldGroup;
@@ -156,7 +156,7 @@ public class SimpleTargetPanel extends Composite implements AsyncInputFieldGroup
         List<Param> list = new ArrayList<Param>(3);
         WorldPt wp = getPos();
         if (wp != null) {
-            list.add(new Param(ReqConst.USER_TARGET_WORLD_PT, new WorldPt(wp).toString()));
+            list.add(new Param(ServerParams.USER_TARGET_WORLD_PT, new WorldPt(wp).toString()));
         }
         if (posFd.getInputType() == Name) {
             list.add(new Param(TARGET_NAME_KEY, posFd.getObjectName()));
@@ -172,7 +172,7 @@ public class SimpleTargetPanel extends Composite implements AsyncInputFieldGroup
         Resolver resolver = Resolver.NED;
 
         for (Param p : list) {
-            if (p.getName().equals(ReqConst.USER_TARGET_WORLD_PT)) {
+            if (p.getName().equals(ServerParams.USER_TARGET_WORLD_PT)) {
                 wp = WorldPt.parse(p.getValue());
             } else if (p.getName().equals(TARGET_NAME_KEY)) {
                 posName = p.getValue();

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.firefly.data.packagedata;
+package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.DefaultBackgroundPart;

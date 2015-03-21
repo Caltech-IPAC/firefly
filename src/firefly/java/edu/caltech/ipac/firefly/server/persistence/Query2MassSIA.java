@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.persistence;
 
 import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
@@ -66,9 +66,9 @@ public class Query2MassSIA extends QueryVOTABLE  {
 
 
     protected String getQueryString(TableServerRequest req) throws DataAccessException {
-        WorldPt wpt = req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt wpt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (wpt == null)
-            throw new DataAccessException("could not find the paramater: " + ReqConst.USER_TARGET_WORLD_PT);
+            throw new DataAccessException("could not find the paramater: " + ServerParams.USER_TARGET_WORLD_PT);
         wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
 
         String ds = req.getParam(DS_KEY);

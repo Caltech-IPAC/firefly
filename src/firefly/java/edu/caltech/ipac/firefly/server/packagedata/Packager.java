@@ -8,7 +8,6 @@ import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
-import edu.caltech.ipac.firefly.data.packagedata.PackagedBundle;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;

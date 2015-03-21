@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.query.inventory;
 
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.ReqConst;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -50,7 +50,7 @@ public class InventorySummary extends DynQueryProcessor {
     protected File loadDynDataFile(TableServerRequest req) throws IOException, DataAccessException {
 
         float radius = req.getFloatParam("InventorySearch.radius");
-        WorldPt pt= req.getWorldPtParam(ReqConst.USER_TARGET_WORLD_PT);
+        WorldPt pt= req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         pt= VisUtil.convertToJ2000(pt);
         if (radius == Float.NaN || pt==null) {
             throw new DataAccessException(

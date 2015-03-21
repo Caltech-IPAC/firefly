@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ReqConst;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.form.DegreeFieldDef;
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
@@ -692,7 +692,7 @@ public class CatalogPanel extends Composite implements AsyncInputFieldGroup {
 
                         boolean valid = false;
                         for (Param p : params) {
-                            if (p.getName().equals(ReqConst.USER_TARGET_WORLD_PT) &&
+                            if (p.getName().equals(ServerParams.USER_TARGET_WORLD_PT) &&
                                     p.getValue() != null) {
                                 valid = true;
                             }
