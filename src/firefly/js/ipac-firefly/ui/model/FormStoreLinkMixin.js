@@ -79,6 +79,7 @@ var FormStoreLinkMixin=  {
             var key= this.props.fieldKey;
             this.setState( {fieldState : this.props.formModel[key]});
         }
+
 };
 
 export default FormStoreLinkMixin;

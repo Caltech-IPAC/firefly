@@ -22,37 +22,30 @@ var FormButton= require ("./FormButton.jsx");
 import {WorldPt, ImagePt, Pt} from "ipac-firefly/visualize/Point.js";
 
 var testFormModel= new InputFormModel.FormModel(
- {
-     field1: {
-         fieldKey: 'field1',
-         value: '3',
-         validator: Validate.intRange.bind(null, 1, 10, "my test field"),
-         tooltip: "this is a tip for field 1",
-         label : "Int Value:"
-     },
-     field2: {
-         fieldKey: 'field2',
-         value: '',
-         validator: Validate.floatRange.bind(null, 1.2, 22.4, 2,"a float field"),
-         tooltip: "field 2 tool tip",
-         label : "Float Value:",
-         labelWidth : 100
-     },
-     field4: {
-         fieldKey: 'field4',
-         value: '',
-         validator: Validate.validateEmail.bind(null, "an email field"),
-         tooltip: "Please enter an email",
-         label : "Email:"
-     },
-     checkBoxGrpFld: {
-         fieldKey: 'checkBoxGrpFld',
-         value: ['A','G'],
-         tooltip: "Please select some boxes",
-         label : "Checkbox Group:"
-     }
-
- }
+    {
+        field1: {
+            fieldKey: 'field1',
+            value: '3',
+            validator: Validate.intRange.bind(null, 1, 10, "my test field"),
+            tooltip: "this is a tip for field 1",
+            label : "Int Value:"
+        },
+        field2: {
+            fieldKey: 'field2',
+            value: '',
+            validator: Validate.floatRange.bind(null, 1.2, 22.4, 2,"a float field"),
+            tooltip: "field 2 tool tip",
+            label : "Float Value:",
+            labelWidth : 100
+        },
+        field4: {
+            fieldKey: 'field4',
+            value: '',
+            validator: Validate.validateEmail.bind(null, "an email field"),
+            tooltip: "Please enter an email",
+            label : "Email:"
+        }
+    }
 );
 testFormModel.initDispatcher(myDispatcher);
 
@@ -62,18 +55,6 @@ sr.setParam("BB",3);
 var wpr= new WebPlotRequest();
 console.log(wpr);
 
-var makeField3State= function() {
-    return {
-        fieldKey: 'field3',
-        value: '12',
-        validator: Validate.floatRange.bind(null, 1.23, 1000, 3,"field 3"),
-        tooltip: "more tipping",
-        label : "Another Float:",
-        labelWidth : 100
-    };
-};
-
-
 var All = React.createClass({
 
 
@@ -82,17 +63,10 @@ var All = React.createClass({
     },
 
     render: function() {
-        var options = [
-            {key: "A", label: "Apple", value: "A", checked: true},
-            {key: "B", label: "Banana", value: "B", checked: false},
-            {key: "C", label: "Cranberry", value: "C", checked: false},
-            {key: "G", label: "Grape", value: "G", checked: false}
-        ];
-
         /* jshint ignore:start */
         return (
             <div>
-                <InputGroup labelWidth={150}>
+                <InputGroup labelWidth={130}>
                     <TargetPanel dispatcher={myDispatcher}
                         formModel={testFormModel} />
                     <ValidationField dispatcher={myDispatcher}
@@ -103,21 +77,34 @@ var All = React.createClass({
                         formModel={testFormModel}/>
                     <ValidationField dispatcher={myDispatcher}
                         fieldKey="field3"
-                            initialState= {{
-                                fieldKey: 'field3',
-                                value: '12',
-                                validator: Validate.floatRange.bind(null, 1.23, 1000, 3,"field 3"),
-                                tooltip: "more tipping",
-                                label : "Another",
-                                labelWidth : 100
-                            }}
+                        initialState= {{
+                            fieldKey: 'field3',
+                            value: '12',
+                            validator: Validate.floatRange.bind(null, 1.23, 1000, 3,"field 3"),
+                            tooltip: "more tipping",
+                            label : "Another Float:",
+                            labelWidth : 100
+                        }}
                         formModel={testFormModel}/>
                     <ValidationField dispatcher={myDispatcher}
                         fieldKey={"field4"}
                         formModel={testFormModel}/>
                     <br/><br/>
                     <CheckboxGroupInputField dispatcher = {myDispatcher}
-                        options={options}
+                        initialState= {{
+                            fieldKey: 'checkBoxGrpFld',
+                            value: ['A','G'],
+                            tooltip: "Please select some boxes",
+                            label : "Checkbox Group:"
+                        }}
+                        options={
+                            [
+                                {key: "A", label: "Apple", value: "A"},
+                                {key: "B", label: "Banana", value: "B"},
+                                {key: "C", label: "Cranberry", value: "C"},
+                                {key: "G", label: "Grape", value: "G"}
+                            ]
+                            }
                         fieldKey="checkBoxGrpFld"
                         formModel={testFormModel}/>
                     <br/><br/>

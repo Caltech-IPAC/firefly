@@ -3,6 +3,7 @@
 
 "use strict";
 import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
+import InputFieldLabel from "./InputFieldLabel.jsx";
 import React from 'react/addons';
 
 const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif';
@@ -138,45 +139,26 @@ var InputFieldView = React.createClass(
         return retval;
     },
 
-
-    createLabel() {
-        var retval= null;
-        var labelStyle= {
-            display:'inline-block',
-            paddingRight:'4px'
-        };
-        if (this.props.labelWidth) {
-            labelStyle.width= this.props.labelWidth;
-        }
-        /*jshint ignore:start */
-        if (this.props.label) {
-            retval= (
-                    <div style={labelStyle} title={this.props.tooltip}>
-                       {this.props.label}
-                    </div>
-            );
-        }
-        /*jshint ignore:end */
-        return retval;
-    },
-
     render() {
         var retval= null;
         if (this.props.visible) {
             retval= (
-                    <div style={{whiteSpace:"nowrap"}}>
-                       {this.createLabel()}
-                        <input style={{display:'inline-block'}}
-                                className={this.computeStyle()}
-                                onChange={this.onChange}
-                                onFocus={this.onFocus}
-                                onBlur={this.onBlur}
-                                value={this.props.value}
-                                title={this.props.tooltip}
-                        />
+                <div style={{whiteSpace:"nowrap"}}>
+                    <InputFieldLabel label={this.props.label}
+                        tooltip={this.tooltip}
+                        width={this.props.labelWidth}
+                    />
+                    <input style={{display:'inline-block'}}
+                        className={this.computeStyle()}
+                        onChange={this.onChange}
+                        onFocus={this.onFocus}
+                        onBlur={this.onBlur}
+                        value={this.props.value}
+                        title={this.props.tooltip}
+                    />
                        {this.makeWarningArea(!this.props.valid)}
                        {this.state.infoPopup?this.makeInfoPopup() : ""}
-                    </div>
+                </div>
             );
         }
 

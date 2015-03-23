@@ -1,11 +1,11 @@
-/*jshint browserify:true*/
+/*jshint browserify:true*/"use strict";
 /*jshint esnext:true*/
 
-"use strict";
+
 var React= require('react/addons');
 var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
 
-
+import InputFieldLabel from "./InputFieldLabel.jsx";
 
 var CheckboxGroupInputField= React.createClass(
     {
@@ -53,17 +53,22 @@ var CheckboxGroupInputField= React.createClass(
             });
         },
 
+
         render() {
             return (
-                <div>
-               {this.props.options.map((function(option, i) {
-                   return <input type="checkbox"
-                       name={this.props.fieldKey}
-                       value={option["value"]}
-                       defaultChecked={((this.state.fieldState.value).indexOf(option["value"])>-1)}
-                       onChange={this.onChange}
-                   >&nbsp;{option["label"]}&nbsp;</input>;
-               }).bind(this))}
+                <div style={{whiteSpace:"nowrap"}}>
+                    <InputFieldLabel label={this.getLabel()}
+                        tooltip={this.getTip()}
+                        width={this.props.labelWidth}
+                    />
+                    {this.props.options.map((function(option, i) {
+                        return <input type="checkbox"
+                                name={this.props.fieldKey}
+                                value={option["value"]}
+                                defaultChecked={((this.state.fieldState.value).indexOf(option["value"])>-1)}
+                                onChange={this.onChange}
+                            >&nbsp;{option["label"]}&nbsp;</input>;
+                        }).bind(this))}
                 </div>
             )
         }
