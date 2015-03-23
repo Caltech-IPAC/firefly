@@ -62,3 +62,8 @@ asm
    Copyright (c) 2000-2011 INRIA, France Telecom
    Redistribution allowed with copyright file included
 
+unknown:
+jcs
+mysql
+votable
+informix
