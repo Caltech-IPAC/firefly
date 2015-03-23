@@ -1,8 +1,0 @@
-Homepage: http://healpix.jpl.nasa.gov/healpixSoftwareGetHealpix.shtml
-Download URL: http://sourceforge.net/projects/healpix/
-
-1. After downloading "Healpix_3.00_2012Nov30.tar.gz", extract it.
-2. cd Healpix_3.00/src/java
-3. ant dist
-4. copy dist/jhealpix_compat.jar to ife/firefly/jars/HEALPix
-

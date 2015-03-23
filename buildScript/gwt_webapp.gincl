@@ -20,7 +20,7 @@ sourceSets {
   main.java.srcDir  "java/"
   main.resources {
     srcDir "java/"
-    include "edu/caltech/ipac/${project.projectDir.name}/resources/*.*"
+    include "edu/caltech/ipac/${project.projectDir.name}/**/resources/*"
     include "edu/caltech/ipac/${project.projectDir.name}/*.xml"
     exclude "**/*.gradle"
   }

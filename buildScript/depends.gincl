@@ -11,27 +11,27 @@ ext {
 
   webservices_lib = [':archive_dto_irsa',
                      ':axis',
-                     ':regclient',
-                     ':wsdl4j-1.5.1',
                      ':archive_dto_votable',
-                     ':jaxrpc',
-                     ':saaj',
                      ':xbean',
                      ':fits' ]
 
-  solr_lib = [':apache-solr-common-1.3.0', ':apache-solr-solrj-1.3.0' ]
-  xbeanfinder_lib = [':xbean-finder-4.1',
-                     ':asm-5.0.3'
-                    ]
+  ehcache_lib = [':ehcache-2.7.4',
+                 ':slf4j-api-1.6.6',
+                 ':ehcache-web-2.0.4']
 
-  ehcache_lib = [':ehcache-2.7.4', ':slf4j-api-1.6.6', ':ehcache-web-2.0.4']
-  j2ee_lib = [':servlet-api', ':activation', ':mail']
+  j2ee_lib = [':servlet-api',
+              ':activation',
+              ':wsdl4j-1.5.1',
+              ':jaxrpc',
+              ':saaj',
+              ':mail']
+
+  starlink_lib = [':regclient', ':stil']
+  xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
   spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']
-  votable_lib = ':voi.vowrite'
-  fits_io_lib = [':fits_io', ':stil']
+  fits_io_lib = [':fits_io']
   log4j_lib = ':log4j-1.2.14'
   josso_lib = ':josso-ws-1.8.5'
-  healpix_lib = ':jhealpix_compat'
   xstream_lib = [':xstream-1.3.1', ':xpp3_min-1.1.4c']
   gwt_lib_rt = [':gwt-servlet', ':gwt-servlet-deps']
   gwt_lib = [ gwt_lib_rt,
@@ -44,14 +44,14 @@ ext {
              ':gwt-incubator-2.1-r1766-striped',
              ':gchart' ]
 
-  firefly_ext_lib = [ ':gwt-comet', ':xstream-gwt', ':raphael-modified-r24', ':simbad_ws' ]
+  firefly_ext_lib = [ ':gwt-comet', ':xstream-gwt', ':simbad_ws' ]
 
   firefly_lib = [ firefly_ext_lib, ':firefly' ]
 
 
-  FIREFLY_RUNTIME = [apache_lib, spring_lib, votable_lib, fits_io_lib, webservices_lib,
-                     log4j_lib, josso_lib, healpix_lib, xstream_lib, xbeanfinder_lib,
-                     gwt_lib_rt, ehcache_lib]
+  FIREFLY_RUNTIME = [apache_lib, spring_lib, fits_io_lib, webservices_lib,
+                     log4j_lib, josso_lib, xstream_lib, xbeanfinder_lib,
+                     gwt_lib_rt, ehcache_lib, starlink_lib]
 
   FIREFLY_COMPILE = [j2ee_lib, ehcache_lib, gwt_lib, FIREFLY_RUNTIME]
 }
@@ -69,9 +69,6 @@ repositories {
   flatDir {
     name 'firefly_repo'
     dirs  "$libPath/build",
-          "$libPath/HEALPix",
-          "$libPath/ant",
-          "$libPath/antlr",
           "$libPath/asm",
           "$libPath/data",
           "$libPath/ehcache",
@@ -79,17 +76,13 @@ repositories {
           "$libPath/j2ee",
           "$libPath/gwt",
           "$libPath/gwt-incubator",
-          "$libPath/informix",
           "$libPath/jakarta-commons",
-          "$libPath/jcs",
           "$libPath/josso",
-          "$libPath/junit",
           "$libPath/log4j",
           "$libPath/mysql",
           "$libPath/sdss",
-          "$libPath/solr",
           "$libPath/spring",
-          "$libPath/votable",
+          "$libPath/starlink",
           "$libPath/webservices",
           "$libPath/xbean",
           "$libPath/xstream"
