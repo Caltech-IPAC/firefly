@@ -52,8 +52,17 @@ enum, see: https://www.npmjs.com/package/enum
 * Enum is a javascript module that introduces the Enum Type
 
 
-#### Modules in use in the firefly js environment
+#### Modules being evaluated
 
 ampersand-state, http://ampersandjs.com/docs#ampersand-state
 
 * model object, has change events
+
+
+
+#### Licenses for all JS modules
+
+All license files for JavaScript dependencies are in firefly/node_modules. All licenses allow reuse.
+
+To view:
+`cd firefly/node_modules; find . -name 'LIC*' -exec more {} \;`
