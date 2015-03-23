@@ -46,3 +46,11 @@ EHCache
    Copyright 2003-2010 Terracotta, Inc.
    Apache License 2.0 
    http://ehcache.org/about/license
+
+
+Others:
+fits-io
+apache-commons
+log4j
+spring
+axis
