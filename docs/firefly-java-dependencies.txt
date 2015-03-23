@@ -47,10 +47,10 @@ EHCache
    Apache License 2.0 
    http://ehcache.org/about/license
 
+From Apache: log4j, apache-commons, axis
+   Apache License 2.0 
 
 Others:
 fits-io
-apache-commons
-log4j
 spring
-axis
+
