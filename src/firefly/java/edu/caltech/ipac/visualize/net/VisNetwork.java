@@ -144,26 +144,25 @@ public class VisNetwork {
      * Retrieve a file from URL and cache it.  If the URL is a gz file then uncompress it and return the uncompress version.
      * @param params the configuration about the retrieve request
      * @param dl a Download listener, only used in server mode
-     * @return a array of FileData of file returned from this URL.  This is usually length of 1.
+     * @return a FileData of file returned from this URL.
      * @throws FailedRequestException
      */
-    public static FileData[] getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
+    public static FileData getAnyUrlImage(AnyUrlParams params, DownloadListener dl)
                                                      throws FailedRequestException {
-        FileData retval[]=CacheHelper.getFileDataAry(params);
-        File fileName= (retval==null) ? CacheHelper.makeFile(params.getUniqueString()) : retval[0].getFile();
+        FileData retval=CacheHelper.getFileData(params);
+        File fileName= (retval==null) ? CacheHelper.makeFile(params.getUniqueString()) : retval.getFile();
 
         if (retval==null && params.isCompressedFileName()) {  // if we are requesting a gz file then check to see if we cached the unzipped version
-            retval=CacheHelper.getFileDataAry(params.getUncompressedKey());
+            retval=CacheHelper.getFileData(params.getUncompressedKey());
             if (retval==null && fileName.canWrite()) fileName.delete(); // this file should not be in the cache in the this case
         }
 
         if (retval == null || params.getCheckForNewer())  {          // if not in cache or is in cache & we want to see if there is a newer version
-            FileData[] results= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
+            FileData fd= AnyUrlGetter.lowlevelGetUrlToFile(params,fileName,false,dl);
 
             CacheKey saveKey= params;
-            FileData fd= results[0];
             // if is ends with GZ and it is not compressed then rename the file without the GZ
-            if (results.length==1 && fd.isDownloaded() &&
+            if (fd.isDownloaded() &&
                 FileUtil.isGZExtension(fd.getFile()) &&  !FileUtil.isGZipFile(fd.getFile())) {
 
                 File uncompFileName= CacheHelper.makeFile(params.getUncompressedKey().getUniqueString());
@@ -172,12 +171,12 @@ public class VisNetwork {
                     FileUtil.writeStringToFile(fd.getFile(),"placeholder for uncompress file: " +
                                                             uncompFileName.getPath());
                     saveKey= params.getUncompressedKey();
-                    results[0]= new FileData(uncompFileName,fd.getSugestedExternalName()); // modify the results with the uncompressed file
+                    fd= new FileData(uncompFileName,fd.getSugestedExternalName()); // modify the results with the uncompressed file
                 }
             }
             if (fd.isDownloaded() || retval==null) {
-                retval= results;
-                CacheHelper.putFile(saveKey,results);
+                retval= fd;
+                CacheHelper.putFile(saveKey,fd);
             }
         }
         return retval;
@@ -208,33 +207,33 @@ public class VisNetwork {
      * @return one more more files, almost always this will be one file
      * @throws FailedRequestException when anything fails
      */
-    public static FileData[] getImage(NetParams params, DownloadListener dl) throws FailedRequestException {
-       FileData retval[]= null;
+    public static FileData getImage(NetParams params, DownloadListener dl) throws FailedRequestException {
+       FileData retval= null;
        File f;
       if (params instanceof IrsaImageParams) {
           f=  getIrsaImage( (IrsaImageParams)params);
-          retval= new FileData[] {new FileData(f,null)};
+          retval= new FileData(f,null);
       }
       else if (params instanceof DssImageParams) {
           f=  getDssImage( (DssImageParams)params);
-          retval= new FileData[] {new FileData(f,null)};
+          retval= new FileData(f,null);
       }
       else if (params instanceof SloanDssImageParams) {
           f=  getSloanDssImage( (SloanDssImageParams)params);
-          retval= new FileData[] {new FileData(f,null)};
+          retval= new FileData(f,null);
       }
 //      else if (params instanceof NedImageParams) {
 //          no longer supported
 //      }
       else if (params instanceof WiseImageParams) {
           f=  getIbeImage((BaseIrsaParams) params);
-          retval= new FileData[] {new FileData(f,null)};
+          retval= new FileData(f,null);
       }
 //      else if (params instanceof SkyViewImageParams) {
 //          no longer supported
 //      }
       else if (params instanceof AnyFitsParams) {
-          retval=  new FileData[] {getAnyFits( (AnyFitsParams)params,dl)};
+          retval=  getAnyFits( (AnyFitsParams)params,dl);
       }
       else if (params instanceof AnyUrlParams) {
           retval=  getAnyUrlImage( (AnyUrlParams)params,dl);
@@ -242,7 +241,6 @@ public class VisNetwork {
       else {
           Assert.tst(false, "Should never be here");
       }
-      if (retval!=null && retval.length==0) throw new FailedRequestException("fd.length==0");
 
       return retval;
    }

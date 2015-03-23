@@ -55,12 +55,12 @@ public class AnyUrlGetter {
       return retval;
   }
 
-  public static FileData[] lowlevelGetUrlToFile(AnyUrlParams     params,
-                                                File             outfile,
-                                                boolean          useSuggestedFilename,
-                                                DownloadListener dl) throws FailedRequestException {
+  public static FileData lowlevelGetUrlToFile(AnyUrlParams     params,
+                                              File             outfile,
+                                              boolean          useSuggestedFilename,
+                                              DownloadListener dl) throws FailedRequestException {
 
-      FileData outFiles[];
+      FileData outFiles;
       try {
           outFiles=URLDownload.getDataToFile(params.getURL(), outfile, params.getCookies(), null,
                                              dl, useSuggestedFilename,true,

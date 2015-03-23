@@ -70,10 +70,10 @@ public class LockingVisNetwork {
             synchronized (lockKey) {
                 DownloadListener dl = null;
                 if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
-                edu.caltech.ipac.util.download.FileData fd[] = VisNetwork.getImage(params, dl);
-                File fitsFile = fd[0].getFile();
+                edu.caltech.ipac.util.download.FileData fd = VisNetwork.getImage(params, dl);
+                File fitsFile = fd.getFile();
                 if (unzip) fitsFile = unzip(fitsFile);
-                retval = new FileInfo(fitsFile.getPath(), fd[0].getSugestedExternalName(), fitsFile.length());
+                retval = new FileInfo(fitsFile.getPath(), fd.getSugestedExternalName(), fitsFile.length());
             }
         } finally {
             if (params != null) _activeRequest.remove(params);

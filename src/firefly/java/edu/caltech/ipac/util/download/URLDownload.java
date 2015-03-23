@@ -72,10 +72,10 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFileUsingPost(URL url,
-                                                    String postData,
-                                                    File outfile,
-                                                    DownloadListener dl)
+    public static FileData getDataToFileUsingPost(URL url,
+                                                  String postData,
+                                                  File outfile,
+                                                  DownloadListener dl)
             throws FailedRequestException, IOException {
         try {
             URLConnection c = makeConnection(url);
@@ -198,7 +198,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URL url, File outfile) throws FailedRequestException, IOException {
+    public static FileData getDataToFile(URL url, File outfile) throws FailedRequestException, IOException {
         return getDataToFile(url, outfile, null, false, true);
     }
 
@@ -210,7 +210,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URL url, File outfile, DownloadListener dl) throws FailedRequestException,
+    public static FileData getDataToFile(URL url, File outfile, DownloadListener dl) throws FailedRequestException,
             IOException {
         return getDataToFile(url, outfile, dl, false, true);
     }
@@ -223,7 +223,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URL url, File outfile, boolean uncompress) throws FailedRequestException,
+    public static FileData getDataToFile(URL url, File outfile, boolean uncompress) throws FailedRequestException,
             IOException {
         return getDataToFile(url, outfile, null, null, null, false, uncompress, 0);
     }
@@ -242,7 +242,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URL url,
+    public static FileData getDataToFile(URL url,
                                            File outfile,
                                            DownloadListener dl,
                                            boolean useSuggestedFilename,
@@ -266,7 +266,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URL url,
+    public static FileData getDataToFile(URL url,
                                            File outfile,
                                            Map<String, String> cookies,
                                            Map<String, String> requestProperties,
@@ -293,7 +293,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URLConnection conn, File outfile)
+    public static FileData getDataToFile(URLConnection conn, File outfile)
             throws FailedRequestException, IOException {
         return getDataToFile(conn, outfile, true);
     }
@@ -307,7 +307,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URLConnection conn, File outfile, boolean uncompress)
+    public static FileData getDataToFile(URLConnection conn, File outfile, boolean uncompress)
             throws FailedRequestException, IOException {
         return getDataToFile(conn, outfile, null, false, uncompress, true, 0L);
     }
@@ -320,7 +320,7 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URLConnection conn, File outfile, DownloadListener dl)
+    public static FileData getDataToFile(URLConnection conn, File outfile, DownloadListener dl)
             throws FailedRequestException, IOException {
         return getDataToFile(conn, outfile, dl, false, true, true, 0L);
     }
@@ -338,23 +338,23 @@ public class URLDownload {
      * @throws FailedRequestException Stop externally probably by user
      * @throws IOException            any network or file error
      */
-    public static FileData[] getDataToFile(URLConnection conn,
-                                           File outfile,
-                                           DownloadListener dl,
-                                           boolean useSuggestedFilename,
-                                           boolean uncompress,
-                                           boolean onlyIfModified,
-                                           long maxFileSize) throws FailedRequestException,
+    public static FileData getDataToFile(URLConnection conn,
+                                         File outfile,
+                                         DownloadListener dl,
+                                         boolean useSuggestedFilename,
+                                         boolean uncompress,
+                                         boolean onlyIfModified,
+                                         long maxFileSize) throws FailedRequestException,
             IOException {
         try {
             FileData outFileData;
-            FileData retval[];
+            FileData retval;
             try {
                 if (conn instanceof HttpURLConnection) {
                     if (uncompress) conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
                     if (onlyIfModified) {
                         outFileData = checkAlreadyDownloaded((HttpURLConnection) conn, outfile);
-                        if (outFileData != null) return new FileData[]{outFileData};
+                        if (outFileData != null) return outFileData;
                     }
                 }
             } catch (IllegalStateException e) {
@@ -368,55 +368,43 @@ public class URLDownload {
             DataInputStream in;
             logHeader(conn);
             validFileSize(conn, maxFileSize);
-            if (MultipartMimeParser.isMultipartMime(conn)) {
-                out = new MultipartMimeOutputStream(conn, true, outfile, useSuggestedFilename);
-                in = makeDataInStream(conn);
-                retval = null;
-            } else {
-                File f = useSuggestedFilename ? makeFile(conn, outfile) : outfile;
-                String suggested = getSugestedFileName(conn);
-                String encodeType = conn.getContentEncoding();
-                String contentType = conn.getContentType();
-                if (uncompress) {
-
-                    if (encodeType != null) {
-                        if (encodeType.toLowerCase().endsWith("gzip")) {
-                            in = makeGZipInStream(conn);
-                        } else if (encodeType.toLowerCase().endsWith("deflate")) {
-                            in = new DataInputStream(new InflaterInputStream(makeInStream(conn)));
-                        } else {
-                            in = makeDataInStream(conn);
-                            ClientLog.warning("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
-                        }
-                    } else if (contentType != null && contentType.toLowerCase().endsWith("gzip")) {
+            File f = useSuggestedFilename ? makeFile(conn, outfile) : outfile;
+            String suggested = getSugestedFileName(conn);
+            String encodeType = conn.getContentEncoding();
+            String contentType = conn.getContentType();
+            if (uncompress) {
+                if (encodeType != null) {
+                    if (encodeType.toLowerCase().endsWith("gzip")) {
                         in = makeGZipInStream(conn);
+                    } else if (encodeType.toLowerCase().endsWith("deflate")) {
+                        in = new DataInputStream(new InflaterInputStream(makeInStream(conn)));
                     } else {
                         in = makeDataInStream(conn);
+                        ClientLog.warning("unrecognized Content-encoding: " + encodeType, "cannot uncompress");
                     }
-
-
+                } else if (contentType != null && contentType.toLowerCase().endsWith("gzip")) {
+                    in = makeGZipInStream(conn);
                 } else {
-                    if (encodeType != null && encodeType.endsWith("gzip")) { //can be x-gzip or gzip
-                        if (suggested != null && !suggested.toLowerCase().endsWith(FileUtil.GZ)) {
-                            ClientLog.warning("content encoded without accepting it: " + encodeType,
-                                    "added gz to file name");
-                            suggested = suggested + "." + FileUtil.GZ;
-                            if (useSuggestedFilename) f = new File(f.getParent(), suggested);
-                        }
-                    }
-
                     in = makeDataInStream(conn);
                 }
-                outFileData = new FileData(f, suggested);
-                out = makeOutStream(f);
-                retval = new FileData[]{outFileData};
+            } else {
+                if (encodeType != null && encodeType.endsWith("gzip")) { //can be x-gzip or gzip
+                    if (suggested != null && !suggested.toLowerCase().endsWith(FileUtil.GZ)) {
+                        ClientLog.warning("content encoded without accepting it: " + encodeType,
+                                          "added gz to file name");
+                        suggested = suggested + "." + FileUtil.GZ;
+                        if (useSuggestedFilename) f = new File(f.getParent(), suggested);
+                    }
+                }
+
+                in = makeDataInStream(conn);
             }
+            outFileData = new FileData(f, suggested);
+            out = makeOutStream(f);
+            retval = outFileData;
 
 
             netCopy(in, out, conn, maxFileSize, dl);
-
-
-            if (out instanceof MultipartMimeOutputStream) retval = ((MultipartMimeOutputStream) out).getFileNames();
 
             logDownload(retval, conn.getURL().toString());
 
@@ -602,18 +590,12 @@ public class URLDownload {
     }
 
 
-    private static void logDownload(FileData retFiles[], String urlStr) {
-        if (retFiles != null) {
+    private static void logDownload(FileData retFile, String urlStr) {
+        if (retFile != null) {
             List<String> outList = new ArrayList<String>(2);
             outList.add(urlStr);
-            String fStr = retFiles.length > 1 ? "files" : "file";
-            outList.add(String.format("Download Complete- %d %s",
-                    retFiles.length, fStr));
-            File f;
-            for (FileData fd : retFiles) {
-                f = fd.getFile();
-                outList.add(String.format("%s : %d bytes", f.getName(), f.length()));
-            }
+            outList.add("Download Complete- 1 file");
+            outList.add(String.format("%s : %d bytes", retFile.getFile().getName(), retFile.getFile().length()));
             ClientLog.message(outList);
         }
     }

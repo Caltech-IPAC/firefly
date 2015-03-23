@@ -47,7 +47,7 @@ public class AnyFitsGetter {
       String fileName;
       URL url  = params.getURL();
       FileData.FileType fileType= FileData.FileType.FITS;
-      FileData [] fileData = null;
+      FileData fileData = null;
 
       try  {
 
@@ -108,10 +108,8 @@ public class AnyFitsGetter {
             throw ioe;
          }
       }
-      if (fileData != null && fileData.length > 0)
-        return fileData[0];
-      else
-        return new FileData(outfile, fileName, fileType );
+      if (fileData != null)  return fileData;
+      else                    return new FileData(outfile, fileName, fileType );
     }
 	
    public static void main(String args[]) {
