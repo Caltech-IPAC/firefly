@@ -47,10 +47,26 @@ EHCache
    Apache License 2.0 
    http://ehcache.org/about/license
 
-From Apache: log4j, apache-commons, axis
+From Apache: solr, log4j, apache-commons, axis
    Apache License 2.0 
 
-Others:
-fits-io
-spring
+spring:
+   Apache License 2.0
+   http://www.springframework.net/license.html
+
+fits-io,  nom-tam-fits
+   Copyright (C) 2004 - 2015 
+   Software released into the public domain
+   http://heasarc.gsfc.nasa.gov/docs/heasarc/fits/java/v1.0/ 
+
+antlr
+    fully in the public domain
+
+xbean-finder
+   Apache License 2.0
+   http://tomee.apache.org/dev/xbean-finder.html
+    
+asm
+   Copyright (c) 2000-2011 INRIA, France Telecom
+   Redistribution allowed with copyright file included
 
