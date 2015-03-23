@@ -39,7 +39,8 @@ EHCache
    Apache License 2.0 
    http://ehcache.org/about/license
 
-From Apache: solr, log4j, apache-commons, axis
+From Apache: 
+   solr, log4j, apache-commons, axis, jakarta-commons, jackrabbit-webdav, axis, xbeans, jcs
    Apache License 2.0 
 
 spring:
@@ -50,6 +51,7 @@ fits-io,  nom-tam-fits
    Copyright (C) 2004 - 2015 
    Software released into the public domain
    http://heasarc.gsfc.nasa.gov/docs/heasarc/fits/java/v1.0/ 
+   Used for all fits IO
 
 antlr
     fully in the public domain
@@ -62,8 +64,25 @@ asm
    Copyright (c) 2000-2011 INRIA, France Telecom
    Redistribution allowed with copyright file included
 
-unknown:
-jcs
+junit  (DELETE?)
+   Common Public License Version 1.0
+    
+log4j
+   Apache License 2.0
+   Used for logging
+
+java, j2ee
+   Oracle java license
+   http://www.oracle.com/technetwork/java/javase/terms/license/index.html
+   
+regclient.jar, stil.jar
+    LGPL
+    starlink votable reader/writer
+
 mysql
-votable
-informix
+    GNU General Public License
+
+
+
+unknown:
+jcs (DELETE?)
