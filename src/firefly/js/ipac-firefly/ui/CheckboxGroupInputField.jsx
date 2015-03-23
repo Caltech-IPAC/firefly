@@ -29,7 +29,7 @@ var CheckboxGroupInputField= React.createClass(
             // needs to be updated
             var val = ev.target.value;
             var checked = ev.target.checked;
-            var curValueArr = this.getValue().slice(0);
+            var curValueArr = this.getValue().split(',');
             var idx = curValueArr.indexOf(val);
             if (checked) {
                 if (idx < 0) {
@@ -46,7 +46,7 @@ var CheckboxGroupInputField= React.createClass(
             this.props.dispatcher.dispatch({
                 evType : 'valueChange',
                 fieldKey : this.props.fieldKey,
-                newValue : curValueArr,
+                newValue : curValueArr.toString(),
                 message :validateState.message,
                 valid : validateState.valid,
                 fieldState : this.state.fieldState
