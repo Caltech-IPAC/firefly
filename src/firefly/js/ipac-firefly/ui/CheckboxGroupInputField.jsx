@@ -1,5 +1,4 @@
-/*jshint browserify:true*/"use strict";
-/*jshint esnext:true*/
+"use strict";
 
 
 var React= require('react/addons');
@@ -9,39 +8,32 @@ import InputFieldLabel from "./InputFieldLabel.jsx";
 
 var CheckboxGroupInputField= React.createClass(
     {
-
         mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
         propTypes: {
             options : React.PropTypes.array.isRequired
         },
 
-        getInitialState() {
-            return {
-                currentValue : ""
-            };
-        },
-
 
         onChange(ev) {
-            // a checkbox is checked or unchecked
-            // the array, representing the value of the checkbox group,
+            // when a checkbox is checked or unchecked
+            // the array, representing the value of the group,
             // needs to be updated
             var val = ev.target.value;
             var checked = ev.target.checked;
-            var curValueArr = this.getValue().split(',');
+            var curValueArr = this.getCurrentValueArr();
             var idx = curValueArr.indexOf(val);
             if (checked) {
                 if (idx < 0) {
                     curValueArr.push(val); // add val to the array
                 }
-            } else {  // unchecked
+            } else {
                 if (idx > -1) {
                     curValueArr.splice(idx, 1); // remove val from the array
                 }
             }
 
-            var validateState= this.getValidator()(curValueArr);
+            var validateState= this.getValidator()(curValueArr.toString());
 
             this.props.dispatcher.dispatch({
                 evType : 'valueChange',
@@ -53,17 +45,27 @@ var CheckboxGroupInputField= React.createClass(
             });
         },
 
-        isChecked(val) {
-            // TODO: add support for all and none to onChange
-            const ALL = "_all_";
-            const NONE = "_none_";
-
-            var currentGroupVal = this.state.fieldState.value;
-            if (currentGroupVal===NONE) { return false; }
-            else if (currentGroupVal===ALL) { return true; }
-            else {
-                return (currentGroupVal.split(',').indexOf(val) > -1);
+        componentWillMount() {
+            // resolve _all_ and _none_ values
+            if (this.state.fieldState.value==="_all_") {
+                this.state.fieldState.value = this.props.options.map(function(option) {return option["value"];}).toString();
+            } else if (this.state.fieldState.value==="_none_") {
+                this.state.fieldState.value = "";
             }
+        },
+
+        getCurrentValueArr() {
+            var curValue = this.getValue();
+            if (curValue==="") {
+                return [];
+            } else {
+                return curValue.split(',');
+            }
+        },
+
+        isChecked(val) {
+            var currentGroupVal = this.state.fieldState.value;
+            return (currentGroupVal.split(',').indexOf(val) > -1);
         },
 
         render() {
@@ -71,10 +73,11 @@ var CheckboxGroupInputField= React.createClass(
                 <div style={{whiteSpace:"nowrap"}}>
                     <InputFieldLabel label={this.getLabel()}
                         tooltip={this.getTip()}
-                        width={this.props.labelWidth}
+                        labelWidth={this.props.labelWidth}
                     />
-                    {this.props.options.map((function(option, i) {
+                    {this.props.options.map((function(option) {
                         return <input type="checkbox"
+                                key={option["value"]}
                                 name={this.props.fieldKey}
                                 value={option["value"]}
                                 defaultChecked={this.isChecked(option["value"])}

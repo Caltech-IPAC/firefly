@@ -93,16 +93,16 @@ var All = React.createClass({
                     <CheckboxGroupInputField dispatcher = {myDispatcher}
                         initialState= {{
                             fieldKey: 'checkBoxGrpFld',
-                            value: 'A,G',
+                            value: '_all_',
                             tooltip: "Please select some boxes",
                             label : "Checkbox Group:"
                         }}
                         options={
                             [
-                                {key: "A", label: "Apple", value: "A"},
-                                {key: "B", label: "Banana", value: "B"},
-                                {key: "C", label: "Cranberry", value: "C"},
-                                {key: "G", label: "Grape", value: "G"}
+                                {label: "Apple", value: "A"},
+                                {label: "Banana", value: "B"},
+                                {label: "Cranberry", value: "C"},
+                                {label: "Grape", value: "G"}
                             ]
                             }
                         fieldKey="checkBoxGrpFld"

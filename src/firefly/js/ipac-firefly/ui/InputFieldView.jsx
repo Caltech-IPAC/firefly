@@ -146,7 +146,7 @@ var InputFieldView = React.createClass(
                 <div style={{whiteSpace:"nowrap"}}>
                     <InputFieldLabel label={this.props.label}
                         tooltip={this.props.tooltip}
-                        width={this.props.labelWidth}
+                        labelWidth={this.props.labelWidth}
                     />
                     <input style={{display:'inline-block'}}
                         className={this.computeStyle()}
