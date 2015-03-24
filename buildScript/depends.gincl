@@ -19,11 +19,13 @@ ext {
                  ':slf4j-api-1.6.6',
                  ':ehcache-web-2.0.4']
 
-  j2ee_lib = [':servlet-api',
+  j2ee_rt_lib = [':wsdl4j-1.5.1',
+                 ':jaxrpc',
+                 ':saaj']
+
+  j2ee_lib = [j2ee_rt_lib,
+              ':servlet-api',
               ':activation',
-              ':wsdl4j-1.5.1',
-              ':jaxrpc',
-              ':saaj',
               ':mail']
 
   starlink_lib = [':regclient', ':stil']
@@ -51,7 +53,7 @@ ext {
 
   FIREFLY_RUNTIME = [apache_lib, spring_lib, fits_io_lib, webservices_lib,
                      log4j_lib, josso_lib, xstream_lib, xbeanfinder_lib,
-                     gwt_lib_rt, ehcache_lib, starlink_lib]
+                     gwt_lib_rt, ehcache_lib, starlink_lib, j2ee_rt_lib]
 
   FIREFLY_COMPILE = [j2ee_lib, ehcache_lib, gwt_lib, FIREFLY_RUNTIME]
 }

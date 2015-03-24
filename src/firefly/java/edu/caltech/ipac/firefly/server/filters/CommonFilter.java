@@ -66,16 +66,11 @@ public class CommonFilter implements Filter {
 
     private void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
 
-        String sessId = request.getRequestedSessionId();
-        if (StringUtils.isEmpty(sessId)) {
-            // create a session if one if not in the request.
-            // this is needed for session stickiness.
-            sessId = request.getSession().getId();
-        }
-
+        String sessId = request.getSession().getId();
         RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
         owner.setHttpRequest(request);
         owner.setHttpResponse(response);
+        owner.getUserKey();
 
     }
 
