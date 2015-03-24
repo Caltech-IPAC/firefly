@@ -10,24 +10,24 @@ var InputFieldLabel= React.createClass(
         propTypes: {
             label : React.PropTypes.string.isRequired,
             tooltip : React.PropTypes.string.isRequired,
-            style : React.PropTypes.object.optional,
-            width : React.PropTypes.number.optional
+            labelStyle : React.PropTypes.object,
+            labelWidth : React.PropTypes.number
         },
         getDefaultProps: function () {
             return {
-                style : {
+                labelStyle : {
                     display:'inline-block',
                     paddingRight:'4px'
                 },
-                width : 200
+                labelWidth : 200
             };
         },
 
         render() {
-            var currStyle = this.props.style;
-            currStyle.width = this.props.width;
+            var currStyle = this.props.labelStyle;
+            currStyle.width = this.props.labelWidth;
             return (
-                <div style={this.props.style} title={this.props.tooltip}>
+                <div style={currStyle} title={this.props.tooltip}>
                         {this.props.label}
                 </div>
             );

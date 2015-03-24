@@ -53,6 +53,18 @@ var CheckboxGroupInputField= React.createClass(
             });
         },
 
+        isChecked(val) {
+            // TODO: add support for all and none to onChange
+            const ALL = "_all_";
+            const NONE = "_none_";
+
+            var currentGroupVal = this.state.fieldState.value;
+            if (currentGroupVal===NONE) { return false; }
+            else if (currentGroupVal===ALL) { return true; }
+            else {
+                return (currentGroupVal.split(',').indexOf(val) > -1);
+            }
+        },
 
         render() {
             return (
@@ -65,7 +77,7 @@ var CheckboxGroupInputField= React.createClass(
                         return <input type="checkbox"
                                 name={this.props.fieldKey}
                                 value={option["value"]}
-                                defaultChecked={((this.state.fieldState.value).indexOf(option["value"])>-1)}
+                                defaultChecked={this.isChecked(option["value"])}
                                 onChange={this.onChange}
                             >&nbsp;{option["label"]}&nbsp;</input>;
                         }).bind(this))}
