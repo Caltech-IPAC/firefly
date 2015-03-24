@@ -171,6 +171,28 @@ public class VisServerOps {
         return resultList.toArray(new WebPlotResult[resultList.size()]);
     }
 
+    /**
+     * create a new plot
+     * note - createPlot does a free resources
+     * @return PlotCreationResult the results
+     */
+    public static WebPlotResult[] createOneFileGroup(List<WebPlotRequest> rList, String progressKey) {
+
+        List<WebPlotResult> resultList= new ArrayList<WebPlotResult>(rList.size());
+        try {
+            WebPlotInitializer wpInitAry[]=  WebPlotFactory.createNewGroup(progressKey, rList);
+            for(WebPlotInitializer wpInit : wpInitAry) {
+                resultList.add(makeNewPlotResult(new WebPlotInitializer[]{wpInit}));
+                VisContext.deletePlotCtx(VisContext.getPlotCtx(null));
+                counters.incrementVis("New Plots");
+            }
+        } catch (Exception e) {
+            for(int i= 0; (i<resultList.size());i++) {
+                resultList.add(createError("on createPlot", null, new WebPlotRequest[] {rList.get(i)}, e));
+            }
+        }
+        return resultList.toArray(new WebPlotResult[resultList.size()]);
+    }
 
 
     /**

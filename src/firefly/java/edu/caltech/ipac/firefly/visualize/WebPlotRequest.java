@@ -70,6 +70,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String INIT_RANGE_VALUES = "RangeValues";
     public static final String INIT_COLOR_TABLE = "ColorTable";
     public static final String MULTI_IMAGE_FITS = "MultiImageFits";
+    public static final String MULTI_IMAGE_IDX = "MultiImageIdx";
     public static final String ZOOM_TO_WIDTH = "ZoomToWidth";
     public static final String ZOOM_TO_HEIGHT = "ZoomToHeight";
     public static final String ZOOM_ARCSEC_PER_SCREEN_PIX = "ZoomArcsecPerScreenPix";
@@ -125,7 +126,7 @@ public class WebPlotRequest extends ServerRequest {
                                               SERVICE, USER_DESC, INIT_ZOOM_LEVEL,
                                               TITLE, ROTATE_NORTH, ROTATE_NORTH_TYPE, ROTATE, ROTATION_ANGLE,
                                               HEADER_KEY_FOR_TITLE,
-                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,
+                                              INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,MULTI_IMAGE_IDX,
                                               ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
                                               POST_CROP, POST_CROP_AND_CENTER, FLIP_Y,
                                               HAS_MAX_ZOOM_LEVEL,
@@ -958,6 +959,11 @@ public class WebPlotRequest extends ServerRequest {
     public boolean getMultiImageSupport() {
         return getBooleanParam(MULTI_IMAGE_FITS);
     }
+
+    public void setMultiImageIdx(int idx) { setParam(MULTI_IMAGE_IDX, idx + "");  }
+
+    public int getMultiImageIdx() { return getIntParam(MULTI_IMAGE_IDX,0); }
+
 
 
     public void setPreferenceColorKey(String key) {

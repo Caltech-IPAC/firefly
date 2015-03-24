@@ -1,20 +1,22 @@
-
+/*globals firefly*/
+/*jshint curly:false*/
 
 /**
  * @namespace the firefly object.
  * Access to the Firefly tools utilities.
  */
-firefly= function() {
+window.firefly= function() {
+    "use strict";
 
     var globalPlotParams= null;
     var retFF= null;
     var ffPrivate= {};
 
-    if (!("firefly" in window))  retFF= new Object();
+    if (!("firefly" in window))  retFF= {};
     else  retFF= firefly;
 
     if (!("debug" in retFF)) {
-        if ("fireflyDebug" in window)  retFF.debug= fireflyDebug;
+        if ("fireflyDebug" in window)  retFF.debug= window.fireflyDebug;
         else retFF.debug= false;
     }
 
@@ -62,6 +64,17 @@ firefly= function() {
             }
             return toP;
         };
+
+
+        this.plotOneFileGroup= function(reqAry) {
+            var i;
+            for(i=0; i<reqAry.length; i++) {
+                reqAry[i]= this.combineParams(reqAry[i]);
+            }
+            ffPrivate.plotOneFileGroup(reqAry,plotGroup);
+        };
+
+
 
 
         this.combineParams= function(params) {
@@ -160,6 +173,9 @@ firefly= function() {
             }
             firefly.plotExternalMulti(reqAry,targetWindow);
         };
+
+
+
 
         this.showTable= function(reqAry) {
             firefly.showTableExternal(reqAry,targetWindow);

@@ -9,8 +9,6 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -25,6 +23,9 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileRetrieveException;
+import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -67,6 +68,40 @@ public class WebPlotFactory {
         return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_FIRST, null, true);
     }
 
+    public static WebPlotInitializer[] createNewGroup(String workingCtxStr, List<WebPlotRequest> wprList) throws Exception {
+
+
+        FileRetriever retrieve = FileRetrieverFactory.getRetriever(wprList.get(0));
+        FileData fileData = retrieve.getFile(wprList.get(0));
+
+        FitsRead[] frAry= ImagePlotBuilder.getFitsReadAry(fileData, workingCtxStr);
+        List<ImagePlotBuilder.Results> resultsList= new ArrayList<ImagePlotBuilder.Results>(wprList.size());
+        int length= Math.min(wprList.size(), frAry.length);
+        WebPlotInitializer retval[]= new WebPlotInitializer[length];
+        for(int i= 0; (i<length); i++) {
+            WebPlotRequest request= wprList.get(i);
+            ImagePlotBuilder.Results r= ImagePlotBuilder.buildFromFile(workingCtxStr,request, fileData,frAry[i],
+                                                                       request.getMultiImageIdx(),null);
+            resultsList.add(r);
+        }
+        for(int i= 0; (i<resultsList.size()); i++) {
+            ImagePlotBuilder.Results r= resultsList.get(i);
+            ImagePlotInfo pi = r.getPlotInfoAry()[0];
+            PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(), ProgressStat.PType.CREATING,
+                                         PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+resultsList.size());
+
+            for (Map.Entry<Band, ModFileWriter> entry : pi.getFileWriterMap().entrySet()) {
+                ModFileWriter mfw = entry.getValue();
+                if (mfw != null) {
+                    if (mfw.getCreatesOnlyOneImage()) pi.getState().setImageIdx(0, entry.getKey());
+                    mfw.go(pi.getState());
+                }
+            }
+
+            retval[i] = makePlotResults(pi, true, r.getZoomChoice());
+        }
+        return retval;
+    }
 
 
     public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {

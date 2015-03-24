@@ -215,17 +215,16 @@ class ServerRequest {
 //====================================================================
 //  convenience data converting routines
 //====================================================================
-    getBooleanParam(key, defValue) {
-        var def= defValue||false;
+    getBooleanParam(key, def=false) {
         return this.params[key] ? toBoolean(this.params[key]) : def;
     }
 
-    getIntParam(key, def) {
+    getIntParam(key, def=0) {
         var retval= validator.toInt(this.getParam(key));
         return !isNaN(retval) ? retval : def;
     }
 
-    getFloatParam(key, def) {
+    getFloatParam(key, def=0) {
         var retval= validator.toFloat(this.getParam(key));
         return !isNaN(retval) ? retval : def;
     }
@@ -249,6 +248,7 @@ class ServerRequest {
         if (str && key && value) {
             str+= (PARAM_SEP+key+KW_VAL_SEP+value);
         }
+        return str;
     }
 
 

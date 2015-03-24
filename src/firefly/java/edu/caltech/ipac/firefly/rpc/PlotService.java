@@ -36,6 +36,8 @@ public interface PlotService extends RemoteService {
 
     public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList, String progressKey);
 
+    public WebPlotResult[] getOneFileGroup(List<WebPlotRequest> requestList, String progressKey);
+
     public WebPlotResult getWebPlot(WebPlotRequest redRequest,
                                     WebPlotRequest greenRequest,
                                     WebPlotRequest blueRequest);

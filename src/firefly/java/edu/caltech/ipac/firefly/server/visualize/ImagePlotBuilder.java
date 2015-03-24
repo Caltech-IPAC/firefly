@@ -9,13 +9,14 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -24,6 +25,7 @@ import nom.tam.fits.FitsException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +69,7 @@ public class ImagePlotBuilder {
         if (blueRequest != null) requestMap.put(BLUE, blueRequest);
 
         try {
-            ImagePlotBuilder.Results allPlots= build(null, requestMap, PlotState.MultiImageAction.USE_FIRST,
+            Results allPlots= build(null, requestMap, PlotState.MultiImageAction.USE_FIRST,
                                                      null, true);
 
             ImagePlotInfo piAry[]= allPlots.getPlotInfoAry();
@@ -142,6 +144,49 @@ public class ImagePlotBuilder {
 
         return new Results(pInfo,zoomChoice, findElapse,readElapse);
     }
+
+
+    static FitsRead[] getFitsReadAry(FileData fileData, String workingCtxStr) throws Exception {
+        WebPlotReader wpr= new WebPlotReader(workingCtxStr);
+        return wpr.readFits(fileData);
+    }
+
+    static Results buildFromFile(String workingCtxStr,
+                                 WebPlotRequest request,
+                                 FileData fileData,
+                                 FitsRead fitsRead,
+                                 int imageIdx,
+                                 PlotState state) throws Exception {
+
+
+        ImagePlotInfo pInfo[];
+        // ------------ read the FITS files
+        long readStart = System.currentTimeMillis();
+        PlotServUtils.updateProgress(request.getProgressKey(), ProgressStat.PType.CREATING,
+                                     PlotServUtils.CREATING_MSG);
+        long readElapse = System.currentTimeMillis() - readStart;
+//        VisContext.shouldContinue(workingCtxStr);
+
+
+        WebPlotReader wpr= new WebPlotReader(null);
+        Map<Band, FileReadInfo[]> readInfoMap = wpr.processFitsRead(fileData,request,fitsRead,imageIdx);
+
+        Map<Band,WebPlotRequest> requestMap= new HashMap<Band,WebPlotRequest>(1);
+        requestMap.put(Band.NO_BAND,request);
+
+        // ------------ make the ImagePlot(s)
+        ZoomChoice zoomChoice = makeZoomChoice(requestMap, readInfoMap);
+        if (state == null) {
+            pInfo = makeNewPlots(null, readInfoMap, requestMap, zoomChoice, PlotState.MultiImageAction.USE_FIRST, false);
+//            VisContext.shouldContinue(workingCtxStr);
+        } else {
+            pInfo = new ImagePlotInfo[1];
+            pInfo[0] = recreatePlot(state, readInfoMap, zoomChoice);
+        }
+
+        return new Results(pInfo,zoomChoice, 0,readElapse);
+    }
+
 
 
 

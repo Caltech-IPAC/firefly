@@ -67,6 +67,7 @@ const C= {
     INIT_RANGE_VALUES : "RangeValues",
     INIT_COLOR_TABLE : "ColorTable",
     MULTI_IMAGE_FITS : "MultiImageFits",
+    MULTI_IMAGE_IDX : "MultiImageIdx",
     ZOOM_TO_WIDTH : "ZoomToWidth",
     ZOOM_TO_HEIGHT : "ZoomToHeight",
     ZOOM_ARCSEC_PER_SCREEN_PIX : "ZoomArcsecPerScreenPix",
@@ -89,7 +90,7 @@ const C= {
     FLIP_Y : "FlipY",
     HAS_MAX_ZOOM_LEVEL : "HasMaxZoomLevel",
     THUMBNAIL_SIZE : "thumbnailSize",
-    PIPELINE_ORDER : "pipelineOrder", // todo: convert, doc, add to allKeys
+    PIPELINE_ORDER : "pipelineOrder",
 
     MULTI_PLOT_KEY: "MultiPlotKey",
     THREE_COLOR_PLOT_KEY: "ThreeColorPlotKey",
@@ -132,7 +133,7 @@ const _allKeys =
          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
          C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
          C.HEADER_KEY_FOR_TITLE,
-         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS,
+         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
          C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
          C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_Y,
          C.HAS_MAX_ZOOM_LEVEL,
@@ -937,6 +938,12 @@ class WebPlotRequest extends ServerRequest {
 
     getMultiImageSupport() { return this.getBooleanParam(C.MULTI_IMAGE_FITS); }
 
+    setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ""); }
+
+    /**
+     * @return number index of image
+     */
+    getMultiImageIdx() { return this.getIntParam(C.MULTI_IMAGE_IDX,0); }
 
     /**
      * key to store preferences in local cache

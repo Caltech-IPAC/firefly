@@ -30,6 +30,7 @@ import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -66,6 +67,79 @@ public class WebPlotReader {
         }
         return retMap;
     }
+
+
+
+
+    /**
+     * @param fd file data
+     * @param band which band
+     * @param req WebPlotRequest from the search, usually the first
+     * @return the ReadInfo[] object
+     * @throws java.io.IOException        any io problem
+     * @throws nom.tam.fits.FitsException problem reading the fits file
+     * @throws edu.caltech.ipac.util.download.FailedRequestException
+     *                                    any other problem
+     * @throws edu.caltech.ipac.visualize.plot.GeomException
+     *                                    problem reprojecting
+     */
+    public FitsRead[] readFits(FileData fd)
+            throws IOException,
+                   FitsException,
+                   FailedRequestException,
+                   GeomException {
+
+        return PlotServUtils.readFits(fd.getFile());
+    }
+
+
+
+
+
+    /**
+     * @param fd file data
+     * @param req WebPlotRequest from the search, usually the first
+     * @return the ReadInfo[] object
+     * @throws java.io.IOException        any io problem
+     * @throws nom.tam.fits.FitsException problem reading the fits file
+     * @throws edu.caltech.ipac.util.download.FailedRequestException
+     *                                    any other problem
+     * @throws edu.caltech.ipac.visualize.plot.GeomException
+     *                                    problem reprojecting
+     */
+    public Map<Band, FileReadInfo[]> processFitsRead(FileData fd, WebPlotRequest req, FitsRead fitsRead, int imageIdx)
+            throws IOException,
+                   FitsException,
+                   FailedRequestException,
+                   GeomException {
+
+        FileReadInfo retval;
+
+        File originalFile = fd.getFile();
+        String uploadedName= null;
+        if (VisContext.isInUploadDir(originalFile)) {
+            uploadedName= fd.getDesc();
+        }
+
+        modFileWriter= null;
+        this.imageIdx= imageIdx;
+        if (req!=null) {
+            fitsRead= applyPipeline(req, fitsRead, this.imageIdx, Band.NO_BAND, originalFile);
+        }
+        checkUnzip(this.imageIdx,Band.NO_BAND,originalFile);
+
+        retval= new FileReadInfo(originalFile, fitsRead, Band.NO_BAND, imageIdx,
+                                 fd.getDesc(), uploadedName, modFileWriter);
+        VisContext.shouldContinue(workingCtxStr);
+
+        Map<Band, FileReadInfo[]> retMap= new HashMap<Band, FileReadInfo[]>(1);
+        retMap.put(Band.NO_BAND, new FileReadInfo[] {retval});
+
+        return retMap;
+    }
+
+
+
 
     /**
      * @param fd file data
@@ -104,7 +178,9 @@ public class WebPlotReader {
             for (int i = 0; (i < frAry.length); i++) {
                 imageIdx= i;
                 modFileWriter= null;
-                if (req!=null) applyPipeline(req, frAry, i, band, originalFile);
+                if (req!=null) {
+                    frAry[i]= applyPipeline(req, frAry[i], imageIdx, band, originalFile);
+                }
                 checkUnzip(i,band,originalFile);
 
                 retval[i]= new FileReadInfo(originalFile, frAry[i], band, imageIdx,
@@ -116,29 +192,30 @@ public class WebPlotReader {
         return retval;
     }
 
-    private void applyPipeline(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+    private FitsRead applyPipeline(WebPlotRequest req, FitsRead fr, int imageIdx, Band band, File originalFile)
                                         throws IOException,
                                                FitsException,
                                                FailedRequestException,
                                                GeomException {
         modFileWriter = null;
-        imageIdx = i;
+        this.imageIdx = imageIdx;
         for(WebPlotRequest.Order order : req.getPipelineOrder()) {
             switch (order) {
                 case FLIP_Y:
-                    applyFlip(req,frAry,i,band,originalFile);
+                    fr= applyFlip(req,fr,band,originalFile);
                     break;
                 case ROTATE:
-                    applyRotation(req,frAry,i,band,originalFile);
+                    fr= applyRotation(req,fr,band,originalFile);
                     break;
                 case POST_CROP:
-                    applyCrop(req, frAry, i, band, originalFile);
+                    fr= applyCrop(req, fr, band, originalFile);
                     break;
                 case POST_CROP_AND_CENTER:
-                    applyCropAndCenter(req, frAry, i, band, originalFile);
+                    fr= applyCropAndCenter(req, fr, band, originalFile);
                     break;
             }
         }
+        return fr;
     }
 
     private void checkUnzip(int i, Band band, File originalFile)  {
@@ -150,43 +227,46 @@ public class WebPlotReader {
 
 
 
-    private void applyRotation(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+    private FitsRead applyRotation(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
                                                   throws FailedRequestException,
                                                          GeomException,
                                                          FitsException,
                                                          IOException {
-        if (isRotation(req) && canRotate(frAry[i])) {
+        FitsRead retval= fr;
+        if (isRotation(req) && canRotate(fr)) {
             if (req.getRotateNorth()) {
                 if (req.getRotateNorthType().equals(CoordinateSys.EQ_J2000)) {
-                    frAry[i] = FitsRead.createFitsReadNorthUp(frAry[i]);
+                    retval = FitsRead.createFitsReadNorthUp(fr);
                 } else if (req.getRotateNorthType().equals(CoordinateSys.GALACTIC)) {
-                    frAry[i] = FitsRead.createFitsReadNorthUpGalactic(frAry[i]);
+                    retval = FitsRead.createFitsReadNorthUpGalactic(fr);
                 } else {
                     throw new FailedRequestException("Rotation Failed",
                                                      "Fits read failed, rotation type not supported: " +
                                                              req.getRotateNorthType().toString());
                 }
             } else if (req.getRotate()) {
-                frAry[i] = FitsRead.createFitsReadRotated(frAry[i], req.getRotationAngle());
+                retval = FitsRead.createFitsReadRotated(fr, req.getRotationAngle());
             }
             imageIdx = 0;
             File rotFile= ModFileWriter.makeRotFileName(originalFile,imageIdx,req.getRotationAngle());
-            modFileWriter = new ModFileWriter.GeomFileWriter(rotFile, frAry[i], band);
+            modFileWriter = new ModFileWriter.GeomFileWriter(rotFile, retval, band);
         }
+        return retval;
 
     }
 
-    private void applyCrop(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+    private FitsRead applyCrop(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
                                                   throws FailedRequestException,
                                                          GeomException,
                                                          FitsException,
                                                          IOException {
+        FitsRead retval= fr;
         if (req.getPostCrop()) {
-            Fits inFits = frAry[i].getFits();
+            Fits inFits = fr.getFits();
             Pt pt1;
             Pt pt2;
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {
-                ImagePlot tmpIM = new ImagePlot(null, frAry[i], 1F, false, 0, FitsRead.getDefaultFutureStretch(), false);
+                ImagePlot tmpIM = new ImagePlot(null, fr, 1F, false, 0, FitsRead.getDefaultFutureStretch(), false);
                 try {
                     pt1 = tmpIM.getImageCoords((WorldPt) getCropPt1(req));
                     pt2 = tmpIM.getImageCoords((WorldPt) getCropPt2(req));
@@ -201,41 +281,45 @@ public class WebPlotReader {
             if (pt1 != null && pt2 != null) {
                 Fits cropFits = Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
                                              (int) pt2.getX(), (int) pt2.getY());
-                FitsRead fr[] = FitsRead.createFitsReadArray(cropFits);
-                frAry[i] = fr[0];
+                FitsRead tmpFr[] = FitsRead.createFitsReadArray(cropFits);
+                retval = tmpFr[0];
                 File rotName= ModFileWriter.makeRotFileName(originalFile,imageIdx, req.getRotationAngle());
-                modFileWriter = new ModFileWriter.GeomFileWriter(rotName, frAry[i], band);
+                modFileWriter = new ModFileWriter.GeomFileWriter(rotName, retval, band);
             }
         }
+        return retval;
 
     }
 
 
-    private void applyCropAndCenter(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+    private FitsRead applyCropAndCenter(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
                                                      throws  FailedRequestException,
                                                              GeomException,
                                                              FitsException,
                                                              IOException {
+        FitsRead retval= fr;
         if (req.getPostCropAndCenter()) {
             WorldPt wpt = VisUtil.convert(getCropCenter(req), req.getPostCropAndCenterType());
             double size = getImageSize(req) / 2.;
-            FitsRead fr = CropAndCenter.do_crop(frAry[i], wpt.getLon(), wpt.getLat(), size);
-            frAry[i] = fr;
+            retval= CropAndCenter.do_crop(fr, wpt.getLon(), wpt.getLat(), size);
             File cropName= ModFileWriter.makeCropCenterFileName(originalFile,imageIdx, wpt,size);
-            modFileWriter = new ModFileWriter.GeomFileWriter(cropName,frAry[i],band);
+            modFileWriter = new ModFileWriter.GeomFileWriter(cropName,retval,band);
         }
+        return retval;
     }
 
-    private void applyFlip(WebPlotRequest req, FitsRead[] frAry, int i, Band band, File originalFile)
+    private FitsRead applyFlip(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
                                                         throws  FailedRequestException,
                                                                 GeomException,
                                                                 FitsException,
                                                                 IOException {
+        FitsRead retval= fr;
         if (req.isFlipY()) {
-           frAry[i]= FitsRead.createFitsReadFlipLR(frAry[i]);
+            retval= FitsRead.createFitsReadFlipLR(fr);
             File flipName= ModFileWriter.makeFlipYFileName(originalFile,imageIdx);
-            modFileWriter = new ModFileWriter.GeomFileWriter(flipName,frAry[i],band);
+            modFileWriter = new ModFileWriter.GeomFileWriter(flipName,retval,band);
         }
+        return retval;
     }
 
 

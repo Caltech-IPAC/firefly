@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.fftools;
  */
 
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -35,8 +36,10 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -67,6 +70,19 @@ public class FitsViewerJSInterface {
         if (div!=null)  plotNowToTarget(div, wpr, group);
         else  PopupUtil.showError("Plot Error", "You must specify this \"PlotToDiv\" parameter");
     }
+
+
+    public static void plotOneFileGroup(JsArray<JscriptRequest> jsprAry, String group) {
+        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>(jsprAry.length());
+        for(int i=0; i<jsprAry.length(); i++) {
+            JscriptRequest jspr= jsprAry.get(i);
+            WebPlotRequest wpr= RequestConverter.convertToRequest(jspr, false);
+            reqList.add(wpr);
+        }
+        plotFileGroupToTarget(reqList,group);
+    }
+
+
 
     public static void plotAsExpanded(JscriptRequest jspr,boolean fullControl) {
         WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
@@ -352,25 +368,48 @@ public class FitsViewerJSInterface {
         plotNowToTarget(div, wpr, groupName);
     }
 
+
+    private static void plotFileGroupToTarget(final List<WebPlotRequest> wprList, final String groupName) {
+
+
+        List<MiniPlotWidget> mpwList= new ArrayList<MiniPlotWidget>(wprList.size());
+        for(WebPlotRequest wpr : wprList) {
+            String div= wpr.getPlotToDiv();
+            if (wpr.containsParam(WebPlotRequest.OVERLAY_POSITION)) {
+                enableAutoOverlays();
+            }
+            MiniPlotWidget mpw;
+            if (mpwMap.containsKey(div)) {
+                mpw= mpwMap.get(div);
+            }
+            else {
+                SimplePanel panel= makeCenter();
+                FFToolEnv.addToPanel(div,panel,"FITS Image");
+                mpw= createInDiv(panel, div, groupName, false);
+            }
+            mpwList.add(mpw);
+
+        }
+        PlotWidgetOps.plotOneFileGroup(null, wprList, mpwList, false, new AsyncCallback<WebPlot>() {
+            public void onFailure(Throwable caught) {
+
+            }
+
+            public void onSuccess(WebPlot result) {
+
+            }
+        });
+
+    }
+
+
+
     private static void plotNowToTarget(final String target, final WebPlotRequest wpr, final String groupName) {
 
         if (target!=null) {
             if (wpr.containsParam(WebPlotRequest.OVERLAY_POSITION)) {
                 enableAutoOverlays();
             }
-//            if (tpMap.containsKey(target)) {
-//                TabPane tp = tpMap.get(target);
-//                if (!mpwMap.containsKey(target)) {
-//                    SimplePanel panel= makeCenter();
-//                    tp.addTab(panel, "Plot", "Fits Viewer", false, true);
-//                    createAndPlot(panel, target, groupName, wpr,true);
-//                }
-//                else {
-//                    final MiniPlotWidget mpw= mpwMap.get(target);
-//                    plot(mpw,groupName,wpr);
-//                }
-//
-//            }
             if (mpwMap.containsKey(target)) {
                 final MiniPlotWidget mpw= mpwMap.get(target);
                 plot(mpw, groupName, wpr);
@@ -384,18 +423,27 @@ public class FitsViewerJSInterface {
 
     }
 
-    private static void createAndPlot(SimplePanel panel,
-                                      String target,
-                                      String groupName,
-                                      WebPlotRequest wpr,
-                                      boolean enableCatalogs) {
-//        GwtUtil.getClientOnlyLogger().log(Level.INFO, "Plotting from fftools client to div "+ target, new Exception()); // test code
+
+    private static MiniPlotWidget createInDiv(SimplePanel panel,
+                                              String target,
+                                              String groupName,
+                                              boolean enableCatalogs) {
         MiniPlotWidget mpw= makeMPW(groupName);
         mpw.addStyleName("standard-border");
         mpw.setCatalogButtonEnable(enableCatalogs);
         panel.setWidget(mpw);
         panel.addStyleName("fits-input-cmd-main-widget");
         mpwMap.put(target, mpw);
+        return mpw;
+    }
+
+
+    private static void createAndPlot(SimplePanel panel,
+                                      String target,
+                                      String groupName,
+                                      WebPlotRequest wpr,
+                                      boolean enableCatalogs) {
+        MiniPlotWidget mpw= createInDiv(panel, target, groupName, enableCatalogs);
         plot(mpw, groupName, wpr);
     }
 

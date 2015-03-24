@@ -368,6 +368,8 @@ public class FFToolEnv {
                                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotGroupedImageToDiv(Ljava/lang/String;Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;)));
         $wnd.firefly.addPrivate("plotImageToDiv",
                                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotImageToDiv(Ljava/lang/String;Ledu/caltech/ipac/firefly/data/JscriptRequest;)));
+        $wnd.firefly.addPrivate("plotOneFileGroup",
+                                $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::plotOneFileGroup(Lcom/google/gwt/core/client/JsArray;Ljava/lang/String;)));
         $wnd.firefly.addPrivate("setCloseButtonClosesWindow",
                                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::setCloseButtonClosesWindow(Z)));
         $wnd.firefly.addPrivate("makeTabPanel",

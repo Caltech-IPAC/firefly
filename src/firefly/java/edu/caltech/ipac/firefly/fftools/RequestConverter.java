@@ -113,6 +113,7 @@ public class RequestConverter {
                                 WebPlotRequest.ZOOM_TO_WIDTH,
                                 WebPlotRequest.ZOOM_TO_HEIGHT,
                                 WebPlotRequest.BLANK_PLOT_WIDTH,
+                                WebPlotRequest.MULTI_IMAGE_IDX,
                                 WebPlotRequest.BLANK_PLOT_HEIGHT
                      );
 

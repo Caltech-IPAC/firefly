@@ -60,6 +60,11 @@ public class PlotServiceJson implements PlotServiceAsync {
 //                      new Param(ServerParams.NOBAND_REQUEST, request.toString()));
     }
 
+    public void getOneFileGroup(List<WebPlotRequest> requestList, String progressKey, AsyncCallback<WebPlotResult[]> async) {
+//        doPlotService(ServerParams.CREATE_PLOT_GROUP, async,
+//                      new Param(ServerParams.NOBAND_REQUEST, request.toString()));
+    }
+
     public void getWebPlot(WebPlotRequest redRequest, WebPlotRequest greenRequest, WebPlotRequest blueRequest, AsyncCallback<WebPlotResult> async) {
         List<Param> paramList = new ArrayList<Param>(4);
         if (redRequest != null) paramList.add(new Param(ServerParams.RED_REQUEST, redRequest.toString()));

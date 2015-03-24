@@ -9,6 +9,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.visualize.task.PlotGroupTask;
+import edu.caltech.ipac.firefly.visualize.task.PlotOneFileGroupTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -111,6 +112,43 @@ public class PlotWidgetOps {
                      boolean expanded,
                      AsyncCallback<WebPlot> notify) {
         plotInternal(request,addToHistory,true,expanded, true,notify);
+    }
+
+
+
+
+    public static void plotOneFileGroup(final Element maskElement,
+                                        final List<WebPlotRequest> requestList,
+                                        final List<MiniPlotWidget> mpwList,
+                                        final boolean plotExpanded,
+                                        final AsyncCallback<WebPlot> notify) {
+
+        Vis.init(new Vis.InitComplete() {
+            public void done() {
+                if (plotExpanded) AllPlots.getInstance().forceExpand(mpwList.get(0));
+                for(int i=0; (i<requestList.size()); i++) {
+                    MiniPlotWidget mpw= mpwList.get(i);
+                    WebPlotRequest r= requestList.get(i);
+                    mpw.setDefaultPlotRequest(new DefaultRequestInfo(r));
+                    mpw.setStartingExpanded(plotExpanded);
+                    mpw.setCanCollapse(true);
+                    mpw.initMPW();
+                    if (plotExpanded) {
+                        if (mpw.getPlotView()!=null) mpw.getPlotView().clearAllPlots();
+                        r.setZoomType(ZoomType.FULL_SCREEN);
+                        r.setZoomToWidth(200);
+                        r.setZoomToHeight(200);
+                        mpw.prepare(r, null, null, false, true);
+
+                    }
+                    else {
+                        List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);
+                        requestList.set(i,rl.get(0));
+                    }
+                }
+                PlotOneFileGroupTask.plot(maskElement, requestList, mpwList, notify);
+            }
+        });
     }
 
 

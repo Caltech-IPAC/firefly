@@ -34,6 +34,12 @@ public interface PlotServiceAsync {
                                 String progressKey,
                                AsyncCallback<WebPlotResult[]> async);
 
+    public void getOneFileGroup(List<WebPlotRequest> requestList,
+                                String progressKey,
+                                AsyncCallback<WebPlotResult[]> async);
+
+
+
     public void getWebPlot(WebPlotRequest redRequest,
                            WebPlotRequest greenRequest,
                            WebPlotRequest blueRequest,
