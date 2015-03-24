@@ -394,18 +394,15 @@ public abstract class BaseDialog {
                 break;
             case OK :
                 b.setText(OK_TXT);
-//                b.addStyleName("ok");
                 b.addStyleName("highlight-text");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
-//                        GwtUtil.showDebugMsg("ok button click");
                         doOKClick(ev, _hideAlgorithm);
                     }
                 });
                 break;
             case APPLY :
                 b.setText(APPLY_TXT);
-//                b.addStyleName("cancel");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
                         doOKClick(ev,HideType.DONT_HIDE);
@@ -414,17 +411,14 @@ public abstract class BaseDialog {
                 break;
             case CANCEL :
                 b.setText(CANCEL_TXT);
-//                b.addStyleName("cancel");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
-//                        GwtUtil.showDebugMsg("cancel button click");
                         doCancelClick(ev);
                     }
                 });
                 break;
             case HELP :
                 b.setText(HELP_TXT);
-//                b.addStyleName("help");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
                         doHelpClick(ev);
@@ -433,7 +427,6 @@ public abstract class BaseDialog {
                 break;
             case REMOVE :
                 b.setText(REMOVE_TXT);
-//                b.addStyleName("remove");
                 b.addStyleName("highlight-text");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
@@ -443,7 +436,6 @@ public abstract class BaseDialog {
                 break;
             case YES :
                 b.setText(YES_TXT);
-//                b.addStyleName("ok");
                 b.addStyleName("highlight-text");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
@@ -453,7 +445,6 @@ public abstract class BaseDialog {
                 break;
             case NO :
                 b.setText(NO_TXT);
-//                b.addStyleName("cancel");
                 b.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent ev) {
                         doCancelClick(ev);
@@ -521,9 +512,6 @@ public abstract class BaseDialog {
             super("");
             _id= id;
             addButtonAttributes(this);
-//            if (BrowserUtil.isTouchInput()) {
-//                GwtUtil.setStyle(this, "padding", "4px 7px 4px 7px");
-//            }
         }
 
         public ButtonID getID() { return _id; }

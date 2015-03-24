@@ -635,6 +635,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     private void alignPopup(final int xoffset, final int yoffset) {
         int x, y;
 
+        if (popup!=null) GwtUtil.setStyle(popup, "clip",  "auto" );
         if (firstAlign) {
             optimalWidth= content.getOffsetWidth();
             optimalHeight= content.getOffsetHeight();
@@ -1017,6 +1018,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             else {
                 popup.setWidget(_decoratorPanel);
                 _mainPanel.setStylePrimaryName("firefly-popup");
+                _mainPanel.addStyleName("standard-border");
                 _decoratorPanel.setStyleName("popup-pane-shadow");
             }
         }
@@ -1314,6 +1316,7 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
             }
         }, TouchEndEvent.getType());
 
+        GwtUtil.setStyle(pp, "clip",  "auto" );
         return pp;
     }
 
