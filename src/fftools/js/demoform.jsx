@@ -13,6 +13,8 @@ var InputGroup= require ("ipac-firefly/ui/InputGroup.jsx");
 var Validate= require("ipac-firefly/util/Validate.js");
 import ValidationField from "ipac-firefly/ui/ValidationField.jsx";
 import CheckboxGroupInputField from 'ipac-firefly/ui/CheckboxGroupInputField.jsx';
+import RadioGroupInputField from 'ipac-firefly/ui/RadioGroupInputField.jsx';
+import ListBoxInputField from 'ipac-firefly/ui/ListBoxInputField.jsx';
 import {ServerRequest, ID_NOT_DEFINED} from "ipac-firefly/data/ServerRequest.js";
 import WebPlotRequest from "ipac-firefly/visualize/WebPlotRequest.js";
 
@@ -90,9 +92,9 @@ var All = React.createClass({
                         fieldKey={"field4"}
                         formModel={testFormModel}/>
                     <br/><br/>
+
                     <CheckboxGroupInputField dispatcher = {myDispatcher}
                         initialState= {{
-                            fieldKey: 'checkBoxGrpFld',
                             value: '_all_',
                             tooltip: "Please select some boxes",
                             label : "Checkbox Group:"
@@ -102,12 +104,49 @@ var All = React.createClass({
                                 {label: "Apple", value: "A"},
                                 {label: "Banana", value: "B"},
                                 {label: "Cranberry", value: "C"},
-                                {label: "Grape", value: "G"}
+                                {label: "Dates", value: "D"},
+                                {label: "Grapes", value: "G"},
                             ]
                             }
                         fieldKey="checkBoxGrpFld"
                         formModel={testFormModel}/>
                     <br/><br/>
+
+                    <RadioGroupInputField dispatcher = {myDispatcher}
+                        initialState= {{
+                            tooltip: "Please select an option",
+                            label : "Radio Group:"
+                        }}
+                        options={
+                            [
+                                {label: "Option 1", value: "opt1"},
+                                {label: "Option 2", value: "opt2"},
+                                {label: "Option 3", value: "opt3"},
+                                {label: "Option 4", value: "opt4"}
+                            ]
+                            }
+                        fieldKey="radioGrpFld"
+                        formModel={testFormModel}/>
+                    <br/><br/>
+
+                    <ListBoxInputField dispatcher = {myDispatcher}
+                        initialState= {{
+                            tooltip: "Please select an option",
+                            label : "ListBox Field:"
+                        }}
+                        options={
+                            [
+                                {label: "Item 1", value: "i1"},
+                                {label: "Another Item 2", value: "i2"},
+                                {label: "Yet Another 3", value: "i3"},
+                                {label: "And one more 4", value: "i4"}
+                            ]
+                            }
+                        multiple={false}
+                        fieldKey="listBoxFld"
+                        formModel={testFormModel}/>
+                    <br/><br/>
+
                     <FormButton dispatcher={myDispatcher}
                         formModel={testFormModel}
                         label="Submit"/>

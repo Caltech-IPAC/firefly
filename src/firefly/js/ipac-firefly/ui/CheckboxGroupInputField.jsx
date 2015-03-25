@@ -49,7 +49,8 @@ var CheckboxGroupInputField= React.createClass(
             // resolve _all_ and _none_ values
             if (this.state.fieldState.value==="_all_") {
                 this.state.fieldState.value = this.props.options.map(function(option) {return option["value"];}).toString();
-            } else if (this.state.fieldState.value==="_none_") {
+            } else if (typeof(this.state.fieldState.value) == 'undefined'
+                || this.state.fieldState.value==="_none_") {
                 this.state.fieldState.value = "";
             }
         },
@@ -82,7 +83,7 @@ var CheckboxGroupInputField= React.createClass(
                                 value={option["value"]}
                                 defaultChecked={this.isChecked(option["value"])}
                                 onChange={this.onChange}
-                            >&nbsp;{option["label"]}&nbsp;</input>;
+                            >&nbsp;{option["label"]}&nbsp;&nbsp;</input>;
                         }).bind(this))}
                 </div>
             )
