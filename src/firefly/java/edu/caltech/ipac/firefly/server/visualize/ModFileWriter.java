@@ -241,5 +241,17 @@ abstract class ModFileWriter implements Runnable {
         return f;
     }
 
+    public static File makeFlipXFileName(File templateFile, int idx) {
+        String geomTmp= templateFile.getName();
+
+        File f;
+        try {
+            f= File.createTempFile(geomTmp+ "-"+idx + "-flipedX-", "."+FileUtil.FITS,
+                                   VisContext.getVisSessionDir());
+        } catch (IOException e) {
+            f= new File(VisContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedX."+FileUtil.FITS);
+        }
+        return f;
+    }
 }
 

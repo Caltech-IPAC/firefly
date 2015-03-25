@@ -9,16 +9,17 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Crop;
 import edu.caltech.ipac.visualize.plot.CropAndCenter;
 import edu.caltech.ipac.visualize.plot.FitsRead;
+import edu.caltech.ipac.visualize.plot.FlipXY;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
@@ -73,8 +74,6 @@ public class WebPlotReader {
 
     /**
      * @param fd file data
-     * @param band which band
-     * @param req WebPlotRequest from the search, usually the first
      * @return the ReadInfo[] object
      * @throws java.io.IOException        any io problem
      * @throws nom.tam.fits.FitsException problem reading the fits file
@@ -202,7 +201,10 @@ public class WebPlotReader {
         for(WebPlotRequest.Order order : req.getPipelineOrder()) {
             switch (order) {
                 case FLIP_Y:
-                    fr= applyFlip(req,fr,band,originalFile);
+                    fr= applyFlipYAxis(req, fr, band, originalFile);
+                    break;
+                case FLIP_X:
+                    fr= applyFlipXAxis(req, fr, band, originalFile);
                     break;
                 case ROTATE:
                     fr= applyRotation(req,fr,band,originalFile);
@@ -308,7 +310,7 @@ public class WebPlotReader {
         return retval;
     }
 
-    private FitsRead applyFlip(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
+    private FitsRead applyFlipYAxis(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
                                                         throws  FailedRequestException,
                                                                 GeomException,
                                                                 FitsException,
@@ -322,6 +324,19 @@ public class WebPlotReader {
         return retval;
     }
 
+    private FitsRead applyFlipXAxis(WebPlotRequest req, FitsRead fr, Band band, File originalFile)
+            throws  FailedRequestException,
+                    GeomException,
+                    FitsException,
+                    IOException {
+        FitsRead retval= fr;
+        if (req.isFlipX()) {
+            retval= new FlipXY(fr,"xAxis").doFlip();
+            File flipName= ModFileWriter.makeFlipYFileName(originalFile,imageIdx);
+            modFileWriter = new ModFileWriter.GeomFileWriter(flipName,retval,band);
+        }
+        return retval;
+    }
 
     private static boolean isUnzipNecessary(File f) {
         String ext = FileUtil.getExtension(f);

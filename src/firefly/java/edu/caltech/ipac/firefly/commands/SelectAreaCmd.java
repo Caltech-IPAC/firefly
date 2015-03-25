@@ -29,7 +29,7 @@ import edu.caltech.ipac.firefly.visualize.draw.SelectBox;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.Pt;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +60,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     private final String _onIcon= "SelectArea.on.Icon";
     private final String _offIcon= "SelectArea.off.Icon";
 
-    private final WorldPt[] _ptAry= new WorldPt[2];
+    private final Pt[] _twoPtAry = new Pt[2];
     private PlotWidgetGroup activeGroup= null;
 
 
@@ -244,13 +244,13 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                     WebAssert.tst(false, "no RecSelection found in plot");
                 }
 
-                WorldPt wptAry[]= new WorldPt[] { sel.getPt0(), sel.getPt1()};
+                Pt inPtAr[]= new Pt[] { sel.getPt0(), sel.getPt1()};
 
 
                 ScreenPt ptAry[]= new ScreenPt[4];
 
-                ptAry[0]= plot.getScreenCoords(wptAry[0]);
-                ptAry[2]= plot.getScreenCoords(wptAry[1]);
+                ptAry[0]= plot.getScreenCoords(inPtAr[0]);
+                ptAry[2]= plot.getScreenCoords(inPtAr[1]);
                 if (ptAry[0]==null || ptAry[2]==null) return;
                 ptAry[1]= new ScreenPt(ptAry[2].getIX(), ptAry[0].getIY());
                 ptAry[3]= new ScreenPt(ptAry[0].getIX(), ptAry[2].getIY());
@@ -312,11 +312,18 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private List<DrawObj> makeSelectedObj(WebPlot plot) {
-        _ptAry[0]=  plot.getWorldCoords(_firstPt);
-        _ptAry[1]= plot.getWorldCoords(_currentPt);
-        if (_ptAry[0]==null || _ptAry[1]==null) return null;
+        if (plot.getProjection().isSpecified()) {
+            _twoPtAry[0]=  plot.getWorldCoords(_firstPt);
+            _twoPtAry[1]= plot.getWorldCoords(_currentPt);
+        }
+        else {
+            _twoPtAry[0]=  _firstPt;
+            _twoPtAry[1]= _currentPt;
 
-        SelectBox fo= new SelectBox(_ptAry[0],_ptAry[1]);
+        }
+        if (_twoPtAry[0]==null || _twoPtAry[1]==null) return null;
+
+        SelectBox fo= new SelectBox(_twoPtAry[0], _twoPtAry[1]);
         fo.setColor("black");
         fo.setInnerBoxColor("white");
 
@@ -327,7 +334,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private RecSelection makeSelection() {
-         return new RecSelection(_ptAry[0], _ptAry[1]);
+         return new RecSelection(_twoPtAry[0], _twoPtAry[1]);
     }
 
     private int findClosestPtIdx(ScreenPt ptAry[], ScreenPt pt) {
@@ -445,13 +452,13 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                     WebAssert.tst(false, "no RecSelection found in plot");
                 }
 
-                WorldPt wptAry[] = new WorldPt[]{sel.getPt0(), sel.getPt1()};
+                Pt inPtAry[] = new Pt[]{sel.getPt0(), sel.getPt1()};
 
 
                 ScreenPt ptAry[] = new ScreenPt[4];
 
-                ptAry[0] = plot.getScreenCoords(wptAry[0]);
-                ptAry[2] = plot.getScreenCoords(wptAry[1]);
+                ptAry[0] = plot.getScreenCoords(inPtAry[0]);
+                ptAry[2] = plot.getScreenCoords(inPtAry[1]);
                 if (ptAry[0] == null || ptAry[2] == null) return;
                 ptAry[1] = new ScreenPt(ptAry[2].getIX(), ptAry[0].getIY());
                 ptAry[3] = new ScreenPt(ptAry[0].getIX(), ptAry[2].getIY());

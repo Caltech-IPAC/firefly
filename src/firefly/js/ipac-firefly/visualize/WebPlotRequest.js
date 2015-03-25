@@ -40,7 +40,7 @@ const GridOnStatus= new Enum(["FALSE","TRUE","TRUE_LABELS_FALSE"]);
 
 const DEFAULT_THUMBNAIL_SIZE= 70;
 const WEB_PLOT_REQUEST_CLASS= "WebPlotRequest";
-const Order= new Enum(["FLIP_Y", "ROTATE", "POST_CROP", "POST_CROP_AND_CENTER"]);
+const Order= new Enum(["FLIP_Y", "FLIP_X", "ROTATE", "POST_CROP", "POST_CROP_AND_CENTER"]);
 
 //keys
 // note- if you add a new key make sure you put it in the _allKeys array
@@ -87,6 +87,7 @@ const C= {
     BLANK_PLOT_WIDTH : "BlankPlotWidth",               //todo: doc
     BLANK_PLOT_HEIGHT : "BlankPlotHeight",             //todo: doc
     PROGRESS_KEY : "ProgressKey",
+    FLIP_X : "FlipX",
     FLIP_Y : "FlipY",
     HAS_MAX_ZOOM_LEVEL : "HasMaxZoomLevel",
     THUMBNAIL_SIZE : "thumbnailSize",
@@ -133,9 +134,9 @@ const _allKeys =
          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
          C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
          C.HEADER_KEY_FOR_TITLE,
-         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
+         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_XMAGE_FITS, C.MULTI_IMAGE_IDX,
          C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
-         C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_Y,
+         C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_X, C.FLIP_Y,
          C.HAS_MAX_ZOOM_LEVEL,
          C.POST_CROP_AND_CENTER_TYPE, C.CROP_PT1, C.CROP_PT2, C.CROP_WORLD_PT1, C.CROP_WORLD_PT2,
          C.ZOOM_ARCSEC_PER_SCREEN_PIX, C.CONTINUE_ON_FAIL, C.OBJECT_NAME, C.RESOLVER,
@@ -170,6 +171,7 @@ const _ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
 
 const DEFAULT_PIPELINE_ORDER= Order.ROTATE.value+";"+
                               Order.FLIP_Y.value+";"+
+                              Order.FLIP_X.value+";"+
                               Order.POST_CROP.value+";"+
                               Order.POST_CROP_AND_CENTER.value;
 
@@ -690,6 +692,17 @@ class WebPlotRequest extends ServerRequest {
      */
     isFlipY() { return this.getBooleanParam(C.FLIP_Y); }
 
+    /**
+     * set if this image should be flipped on the X axis
+     * @param flipX boolean, true to flip, false not to flip
+     */
+    setFlipX(flipX) { this.setParam(C.FLIP_X,flipX+""); }
+
+
+    /**
+     * @return boolean, flip true or false
+     */
+    isFlipX() { return this.getBooleanParam(C.FLIP_X); }
 
 //======================================================================
 //----------------------- Crop Settings --------------------------------

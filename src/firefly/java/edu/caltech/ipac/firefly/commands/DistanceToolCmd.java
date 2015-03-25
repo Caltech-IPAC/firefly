@@ -37,7 +37,9 @@ import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
+import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.projection.Projection;
 
 import java.util.Arrays;
 import java.util.List;
@@ -304,52 +306,85 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         _ptAry[0]= _firstPt;
         _ptAry[1]= _currentPt;
 
-        WorldPt wpt1 = plot.getWorldCoords(_ptAry[0]);
-        WorldPt wpt2 = plot.getWorldCoords(_ptAry[1]);
+        Projection proj= plot.getProjection();
+        Pt anyPt1;
+        Pt anyPt2;
+        double dist;
+        boolean world;
+        if (proj.isSpecified()) {
+            anyPt1 = plot.getWorldCoords(_ptAry[0]);
+            anyPt2 = plot.getWorldCoords(_ptAry[1]);
+            dist= VisUtil.computeDistance((WorldPt)anyPt1,(WorldPt)anyPt2);
+            world= true;
+        }
+        else {
+            anyPt1 = _ptAry[0];
+            anyPt2 = _ptAry[1];
+            dist= VisUtil.computeDistance(anyPt1,anyPt2);
+            world= false;
+        }
 
-        if (wpt1==null || wpt2==null) return null;
+        if (anyPt1==null || anyPt2==null) return null;
 
-        ShapeDataObj obj= ShapeDataObj.makeLine(wpt1,wpt2);
+        ShapeDataObj obj= ShapeDataObj.makeLine(anyPt1,anyPt2);
         obj.setStyle(ShapeDataObj.Style.HANDLED);
-        double dist= VisUtil.computeDistance(wpt1,wpt2);
-//        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.BOTTOM);
-        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.LINE_MID_POINT);
+        setDistOnShape(obj,dist, ShapeDataObj.TextLocation.LINE_MID_POINT,world);
         obj.setTextOffset(new OffsetScreenPt(-15, 0));
         OffsetScreenPt angleOffPt;
 
         if (_posAngle) {
-            WorldPt eastPt;
-            WorldPt westPt;
+            Pt eastPt;
+            Pt westPt;
 
-            if (wpt1.getLon()>wpt2.getLon()) {
-                eastPt= wpt1;
-                westPt= wpt2;
+            if (anyPt1.getX()>anyPt2.getX()) {
+                eastPt= anyPt1;
+                westPt= anyPt2;
             }
             else {
-                eastPt= wpt2;
-                westPt= wpt1;
+                eastPt= anyPt2;
+                westPt= anyPt1;
             }
 
-            WorldPt lonDelta1= new WorldPt(eastPt.getLon(), eastPt.getLat());
-            WorldPt lonDelta2= new WorldPt(westPt.getLon(), eastPt.getLat());
-            double adjDist= VisUtil.computeDistance(lonDelta1,lonDelta2);
+            ShapeDataObj adj;
+            ShapeDataObj op;
+            double adjDist;
+            double opDist;
+            Pt lonDelta1TextPt;
+            if (world) {
+                WorldPt lonDelta1= new WorldPt(eastPt.getX(), eastPt.getY());
+                WorldPt lonDelta2= new WorldPt(westPt.getX(), eastPt.getY());
+                adjDist= VisUtil.computeDistance(lonDelta1,lonDelta2);
 
-            WorldPt latDelta1= new WorldPt(westPt.getLon(), eastPt.getLat());
-            WorldPt latDelta2= new WorldPt(westPt.getLon(), westPt.getLat());
-            double opDist= VisUtil.computeDistance(latDelta1,latDelta2);
+                WorldPt latDelta1= new WorldPt(westPt.getX(), eastPt.getY());
+                WorldPt latDelta2= new WorldPt(westPt.getX(), westPt.getY());
+                opDist= VisUtil.computeDistance(latDelta1,latDelta2);
+                adj= ShapeDataObj.makeLine(lonDelta1,lonDelta2);
+                op= ShapeDataObj.makeLine(latDelta1, latDelta2);
+                lonDelta1TextPt= lonDelta1;
+            }
+            else {
+                ImageWorkSpacePt lonDelta1= new ImageWorkSpacePt(eastPt.getX(), eastPt.getY());
+                ImageWorkSpacePt lonDelta2= new ImageWorkSpacePt(westPt.getX(), eastPt.getY());
+                adjDist= VisUtil.computeDistance(lonDelta1,lonDelta2);
+
+                ImageWorkSpacePt latDelta1= new ImageWorkSpacePt(westPt.getX(), eastPt.getY());
+                ImageWorkSpacePt latDelta2= new ImageWorkSpacePt(westPt.getX(), westPt.getY());
+                opDist= VisUtil.computeDistance(latDelta1,latDelta2);
+                adj= ShapeDataObj.makeLine(lonDelta1, lonDelta2);
+                op= ShapeDataObj.makeLine(latDelta1,latDelta2);
+                lonDelta1TextPt= lonDelta1;
+            }
 
 
-            ShapeDataObj adj= ShapeDataObj.makeLine(lonDelta1,lonDelta2);
-            ShapeDataObj op= ShapeDataObj.makeLine(latDelta1,latDelta2);
-            setDistOnShape(adj,adjDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_BOTTOM);
-            setDistOnShape(op,opDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_TOP);
+            setDistOnShape(adj,adjDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_BOTTOM,world);
+            setDistOnShape(op,opDist, ShapeDataObj.TextLocation.LINE_MID_POINT_OR_TOP, world);
             op.setTextOffset(new OffsetScreenPt(0,15));
 
             double sinX= opDist/dist;
             double angle= Math.toDegrees(Math.asin(sinX));
 
             String aStr= _nf.format(angle) +HTML_DEG;
-            ShapeDataObj angleShape= ShapeDataObj.makeText(new OffsetScreenPt(8,-8), lonDelta1, aStr);
+            ShapeDataObj angleShape= ShapeDataObj.makeText(new OffsetScreenPt(8,-8), lonDelta1TextPt, aStr);
 
             retval= Arrays.asList((DrawObj)obj, adj, op,angleShape);
         }
@@ -362,18 +397,26 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         return retval;
     }
 
-    private void setDistOnShape(ShapeDataObj obj, double dist, ShapeDataObj.TextLocation texLoc) {
+    private void setDistOnShape(ShapeDataObj obj,
+                                double dist,
+                                ShapeDataObj.TextLocation texLoc,
+                                boolean isWorld) {
         String pref= Preferences.get(DIST_READOUT);
 
-        if(pref!=null && pref.equals(ARC_MIN)){
-            double arcmin = dist*60.0;
-            obj.setText(" "+_nf.format(arcmin)+"\'");
+        if (isWorld)  {
+            if(pref!=null && pref.equals(ARC_MIN)){
+                double arcmin = dist*60.0;
+                obj.setText(" "+_nf.format(arcmin)+"\'");
+            }
+            else if(pref!=null && pref.equals(ARC_SEC)){
+                double arcsec = dist*3600.0;
+                obj.setText(" "+_nf.format(arcsec)+"\"");
+            } else {
+                obj.setText(" "+_nf.format(dist) +"&deg;");
+            }
         }
-        else if(pref!=null && pref.equals(ARC_SEC)){
-            double arcsec = dist*3600.0;
-            obj.setText(" "+_nf.format(arcsec)+"\"");
-        } else {
-            obj.setText(" "+_nf.format(dist) +"&deg;");
+        else {
+            obj.setText(" "+((int)dist) +" Pixels");
         }
         obj.setTextLocation(texLoc);
     }
@@ -382,13 +425,13 @@ public class DistanceToolCmd extends BaseGroupVisCmd
          return new LineSelection(_ptAry[0], _ptAry[1]);
     }
 
-    private int findClosestPtIdx(WebPlot plot, ImageWorkSpacePt worldPtAry[], ScreenPt spt) {
+    private int findClosestPtIdx(WebPlot plot, Pt inPtAry[], ScreenPt spt) {
 
 
         int idx= -1;
-        ScreenPt ptAry[]= new ScreenPt[worldPtAry.length];
+        ScreenPt ptAry[]= new ScreenPt[inPtAry.length];
         for(int i= 0; (i<ptAry.length); i++) {
-            ptAry[i]= plot.getScreenCoords(worldPtAry[i]);
+            ptAry[i]= plot.getScreenCoords(inPtAry[i]);
         }
 
         double dist= Double.MAX_VALUE;

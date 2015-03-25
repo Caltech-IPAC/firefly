@@ -91,6 +91,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String BLANK_PLOT_HEIGHT = "BlankPlotHeight";             //todo: doc
     public static final String PROGRESS_KEY = "ProgressKey";
     public static final String FLIP_Y = "FlipY";
+    public static final String FLIP_X = "FlipX";
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
@@ -128,7 +129,7 @@ public class WebPlotRequest extends ServerRequest {
                                               HEADER_KEY_FOR_TITLE,
                                               INIT_RANGE_VALUES, INIT_COLOR_TABLE, MULTI_IMAGE_FITS,MULTI_IMAGE_IDX,
                                               ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT,
-                                              POST_CROP, POST_CROP_AND_CENTER, FLIP_Y,
+                                              POST_CROP, POST_CROP_AND_CENTER, FLIP_X, FLIP_Y,
                                               HAS_MAX_ZOOM_LEVEL,
                                               POST_CROP_AND_CENTER_TYPE, CROP_PT1, CROP_PT2, CROP_WORLD_PT1, CROP_WORLD_PT2,
                                               ZOOM_ARCSEC_PER_SCREEN_PIX, CONTINUE_ON_FAIL, OBJECT_NAME, RESOLVER,
@@ -162,10 +163,11 @@ public class WebPlotRequest extends ServerRequest {
     private static final String _ignoreForEquals[] = {PROGRESS_KEY, ZOOM_TO_WIDTH, ZOOM_TO_HEIGHT, ZOOM_TYPE, HAS_NEW_PLOT_CONTAINER};
 
 
-    public enum Order {FLIP_Y, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
+    public enum Order {FLIP_Y, FLIP_X, ROTATE, POST_CROP, POST_CROP_AND_CENTER}
 
     public static final String DEFAULT_PIPELINE_ORDER= Order.ROTATE+";"+
                                                        Order.FLIP_Y+";"+
+                                                       Order.FLIP_X+";"+
                                                        Order.POST_CROP+";"+
                                                        Order.POST_CROP_AND_CENTER;
     private static List<Order> defOrder= makeOrderList(DEFAULT_PIPELINE_ORDER);
@@ -703,6 +705,13 @@ public class WebPlotRequest extends ServerRequest {
 
     public boolean isFlipY() { return getBooleanParam(FLIP_Y); }
 
+    /**
+     * set if this image should be flipped on the Y axis
+     * @param flipX true to flip, false not to flip
+     */
+    public void setFlipX(boolean flipX) { setParam(FLIP_X,flipX+""); }
+
+    public boolean isFlipX() { return getBooleanParam(FLIP_X); }
 
 //======================================================================
 //----------------------- Crop Settings --------------------------------

@@ -276,6 +276,7 @@ public class FitsViewerJSInterface {
 //======================================================================
 
     private static void plotImageNow(final WebPlotRequest request) {
+        setWH(_mpw,request);
         _mpw.getOps(new MiniPlotWidget.OpsAsync() {
             public void ops(PlotWidgetOps widgetOps) {
                 widgetOps.plot(request);
@@ -300,6 +301,7 @@ public class FitsViewerJSInterface {
                     _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.UNDER_TOOLBAR);
                 }
                 mpwMap.put(EXPANDED_KEY, mpw);
+                setWH(mpw,wpr);
                 mpw.getOps(new MiniPlotWidget.OpsAsync() {
                     public void ops(final PlotWidgetOps widgetOps) {
                         widgetOps.plotExpanded(wpr, false, new WebPlotCallback(mpw,false));
@@ -388,7 +390,7 @@ public class FitsViewerJSInterface {
                 mpw= createInDiv(panel, div, groupName, false);
             }
             mpwList.add(mpw);
-
+            setWH(mpw,wpr);
         }
         PlotWidgetOps.plotOneFileGroup(null, wprList, mpwList, false, new AsyncCallback<WebPlot>() {
             public void onFailure(Throwable caught) {
@@ -447,7 +449,19 @@ public class FitsViewerJSInterface {
         plot(mpw, groupName, wpr);
     }
 
+    private static void setWH(MiniPlotWidget mpw, WebPlotRequest wpr) {
+        int w= mpw.getOffsetWidth();
+        int h= mpw.getOffsetHeight();
+        if (w>5 && wpr.getZoomToWidth()==0) {
+            wpr.setZoomToWidth(w-6);
+        }
+        if (h>5 && wpr.getZoomToHeight()==0) {
+            wpr.setZoomToHeight(h);
+        }
+    }
+
     private static void plot(final MiniPlotWidget mpw, final String groupName, final WebPlotRequest wpr) {
+        setWH(mpw,wpr);
         mpw.getOps(new MiniPlotWidget.OpsAsync() {
             public void ops(PlotWidgetOps widgetOps) {
                 if (!StringUtils.isEmpty(groupName)) mpw.getGroup().setLockRelated(true);

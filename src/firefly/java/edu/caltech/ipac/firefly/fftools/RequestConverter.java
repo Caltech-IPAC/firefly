@@ -81,7 +81,10 @@ public class RequestConverter {
         //--------- Use short cut routines for these parameters
 
         setWorldPtValues(jspr, wpr, WebPlotRequest.WORLD_PT,
-                                    WebPlotRequest.OVERLAY_POSITION );
+                                    WebPlotRequest.OVERLAY_POSITION,
+                                    WebPlotRequest.CROP_WORLD_PT1,
+                                    WebPlotRequest.CROP_WORLD_PT2
+        );
 
         setBooleanValues(jspr,wpr, WebPlotRequest.ROTATE_NORTH,
                                    WebPlotRequest.ROTATE,
@@ -91,6 +94,7 @@ public class RequestConverter {
                                    WebPlotRequest.MULTI_IMAGE_FITS,
                                    WebPlotRequest.HIDE_TITLE_DETAIL,
                                    WebPlotRequest.MINIMAL_READOUT,
+                                   WebPlotRequest.FLIP_X,
                                    WebPlotRequest.FLIP_Y
                                    );
 
@@ -106,7 +110,9 @@ public class RequestConverter {
                                   WebPlotRequest.OBJECT_NAME,
                                   WebPlotRequest.DOWNLOAD_FILENAME_ROOT,
                                   WebPlotRequest.DRAWING_SUB_GROUP_ID,
-                                  WebPlotRequest.GRID_ID
+                                  WebPlotRequest.GRID_ID,
+                                  WebPlotRequest.CROP_PT1,
+                                  WebPlotRequest.CROP_PT2
         );
 
         setIntValues(jspr, wpr, WebPlotRequest.INIT_COLOR_TABLE,

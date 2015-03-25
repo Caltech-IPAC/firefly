@@ -3,14 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
@@ -26,6 +23,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.util.RegionParser;
@@ -34,7 +33,8 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.FileRetrieveException;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
 import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
@@ -52,7 +52,8 @@ import edu.caltech.ipac.visualize.plot.MiniFitsHeader;
 import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
-import edu.caltech.ipac.visualize.plot.WorldPt;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
+import edu.caltech.ipac.visualize.plot.Pt;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -1038,41 +1039,59 @@ public class VisServerOps {
                                                                                           shape, newBoundingBox);
 
                 String html;
-                WorldPt wp;
+
+                String token= "--;;--";
 
                 Metric max = metrics.get(Metrics.MAX);
                 ImageWorkSpacePt maxIp = max.getImageWorkSpacePt();
                 html = AreaStatisticsUtil.formatPosHtml(LEFT, plot, maxIp);
-                html = html + ";" +  AreaStatisticsUtil.formatPosHtml(RIGHT, plot, maxIp);
+                html = html + token +  AreaStatisticsUtil.formatPosHtml(RIGHT, plot, maxIp);
 
                 Metric min = metrics.get(Metrics.MIN);
                 ImageWorkSpacePt minIp = min.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, minIp);
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, minIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, minIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, minIp);
 
                 Metric centroid = metrics.get(Metrics.CENTROID);
                 ImageWorkSpacePt centroidIp = centroid.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, centroidIp);
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, centroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, centroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, centroidIp);
 
                 Metric fwCentroid = metrics.get(Metrics.FW_CENTROID);
                 ImageWorkSpacePt fwCentroidIp = fwCentroid.getImageWorkSpacePt();
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(LEFT, plot, fwCentroidIp);
-                html = html + ";" + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, fwCentroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(LEFT, plot, fwCentroidIp);
+                html = html + token + AreaStatisticsUtil.formatPosHtml(RIGHT, plot, fwCentroidIp);
 
                 //Add Lon and Lat strings for WorldPt conversion on the client
-                wp = plot.getWorldCoords(maxIp);
-                html = html + ";" +  String.valueOf(wp.getLon());
-                html = html + ";" +  String.valueOf(wp.getLat());
-                wp = plot.getWorldCoords(minIp);
-                html = html + ";" +  String.valueOf(wp.getLon());
-                html = html + ";" +  String.valueOf(wp.getLat());
-                wp = plot.getWorldCoords(centroidIp);
-                html = html + ";" +  String.valueOf(wp.getLon());
-                html = html + ";" +  String.valueOf(wp.getLat());
-                wp = plot.getWorldCoords(fwCentroidIp);
-                html = html + ";" +  String.valueOf(wp.getLon());
-                html = html + ";" +  String.valueOf(wp.getLat());
+                Pt pt = null;
+                try {
+                    pt = plot.getWorldCoords(maxIp);
+                } catch (ProjectionException e) {
+                    pt= maxIp;
+                }
+                html = html + token +  String.valueOf(pt.serialize());
+//                html = html + ";" +  String.valueOf(pt.getY());
+                try {
+                    pt = plot.getWorldCoords(minIp);
+                } catch (ProjectionException e) {
+                    pt= minIp;
+                }
+                html = html + token +  String.valueOf(pt.serialize());
+//                html = html + ";" +  String.valueOf(pt.getY());
+                try {
+                    pt = plot.getWorldCoords(centroidIp);
+                } catch (ProjectionException e) {
+                    pt= centroidIp;
+                }
+                html = html + token +  String.valueOf(pt.serialize());
+//                html = html + ";" +  String.valueOf(pt.getY());
+                try {
+                    pt = plot.getWorldCoords(fwCentroidIp);
+                } catch (ProjectionException e) {
+                    pt= fwCentroidIp;
+                }
+                html = html + token +  String.valueOf(pt.serialize());
+//                html = html + ";" +  String.valueOf(pt.getY());
 
                 metricsMap.put(band, metrics);
                 stringMap.put(band, html);

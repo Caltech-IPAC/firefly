@@ -7,7 +7,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
-//import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -35,9 +34,13 @@ import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.HashMap;
+
+//import com.google.gwt.i18n.client.NumberFormat;
 
 
 /**
@@ -167,7 +170,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
     private class StatsGrid extends Grid{
 
         private int cRow = -1;
-        private WorldPt[] plots = new WorldPt[4];
+        private Pt[] plots = new Pt[4];
         private Drawer _drawer;
         private WebPlotView _pv;
 
@@ -219,40 +222,45 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
             colF.setWidth(0, "110px");
             colF.setWidth(2,"135px");
 
-            String[] htmlStr = htmlString.split(";");
-            WorldPt wp;
+            String parse= "--;;--";
+            String[] htmlStr = htmlString.split(parse);
+            Pt pt;
             //WebPlot webP = _pv.getPrimaryPlot();
             //Grid2 Row 1  MAX
             Metric max = metric.get(Metrics.MAX);
-            wp = new WorldPt(Double.parseDouble(htmlStr[8]),Double.parseDouble(htmlStr[9]));
-            plots[0] = wp;
+            pt = ImagePt.parse(htmlStr[8]);
+            if (pt==null) pt= WorldPt.parse(htmlStr[8]);
+            plots[0] = pt;
             this.setHTML(0,0,"<b>" + _prop.getName("max-flux") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(max.getValue()) + " " + max.getUnits());
-            this.setHTML(0,1,htmlStr[0]);
-            this.setHTML(0,2,htmlStr[1]);
+            this.setHTML(0,1,pt.getX()+"");
+            this.setHTML(0,2,pt.getY()+"");
 
             //Grid2 Row 2 MIN
             Metric min = metric.get(Metrics.MIN);
-            wp = new WorldPt(Double.parseDouble(htmlStr[10]),Double.parseDouble(htmlStr[11]));
-            plots[1] = wp;
+            pt = ImagePt.parse(htmlStr[9]);
+            if (pt==null) pt= WorldPt.parse(htmlStr[9]);
+            plots[1] = pt;
             this.setHTML(1,0,"<b>" +_prop.getName("min-flux") + "</b><br>" + WebDefaultMouseReadoutHandler.formatFlux(min.getValue()) + " " + min.getUnits());
-            this.setHTML(1,1,htmlStr[2]);
-            this.setHTML(1,2,htmlStr[3]);
+            this.setHTML(1,1,pt.getX()+"");
+            this.setHTML(1,2,pt.getY()+"");
 
             // Grid Row 4 Centroid
             //Metric centroid = metric.get(Metrics.CENTROID);
-            wp = new WorldPt(Double.parseDouble(htmlStr[12]),Double.parseDouble(htmlStr[13]));
-            plots[2] = wp;
+            pt = ImagePt.parse(htmlStr[10]);
+            if (pt==null) pt= WorldPt.parse(htmlStr[10]);
+            plots[2] = pt;
             this.setHTML(2,0,"<b>" + _prop.getName("centroid") + "</b>");
-            this.setHTML(2,1,htmlStr[4]);
-            this.setHTML(2,2,htmlStr[5]);
+            this.setHTML(2,1,pt.getX()+"");
+            this.setHTML(2,2,pt.getY()+"");
 
             // Grid Row 5 Flux weighted centroid
             //Metric fwCentroid = metric.get(Metrics.FW_CENTROID);
-            wp = new WorldPt(Double.parseDouble(htmlStr[14]),Double.parseDouble(htmlStr[15]));
-            plots[3] = wp;
+            pt = ImagePt.parse(htmlStr[11]);
+            if (pt==null) pt= WorldPt.parse(htmlStr[11]);
+            plots[3] = pt;
             this.setHTML(3,0,"<b>" + _prop.getName("fw-centroid") + "</b>");
-            this.setHTML(3,1,htmlStr[6]);
-            this.setHTML(3,2,htmlStr[7]);
+            this.setHTML(3,1,pt.getX()+"");
+            this.setHTML(3,2,pt.getY()+"");
 
             MouseMoveHandler h = new MouseMoveHandler() {
                 public void onMouseMove(MouseMoveEvent event) {
