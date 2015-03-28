@@ -110,7 +110,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         }
 
         // sample path
-        // http://***REMOVED***:8000/ibe/data/twomass/allsky/allsky/980623n/s076/image/hi0760126.fits.gz
+        // http://<hostname>:8000/ibe/data/twomass/allsky/allsky/980623n/s076/image/hi0760126.fits.gz
         dataParam.setFilePath(ordate+hemisphere+"/"+"s"+ne.format(scanno)+"/"+ fname);
 
         // check cutout params
@@ -187,7 +187,7 @@ public class TwoMassIbeDataSource extends BaseIbeDataSource {
         return queryParam;
     }
 
-    //http://***REMOVED***:8000/search/twomass/full/full?POS=302.6,38.7&columns=atlasdir,ordate,hemisphere,scanno,fname,filter&WHERE=filter%20in%20%28%27j%27%29%20and%20scanno=76%20and%20hemisphere=%27n%27
+    //http://<hostname>:8000/search/twomass/full/full?POS=302.6,38.7&columns=atlasdir,ordate,hemisphere,scanno,fname,filter&WHERE=filter%20in%20%28%27j%27%29%20and%20scanno=76%20and%20hemisphere=%27n%27
     private String processConstraints(Map<String, String> queryInfo) {
         // create constraint array
         ArrayList<String> constraints = new ArrayList<String>();

@@ -27,14 +27,14 @@ import java.util.Properties;
 
 
 /**
- * A utility class for working with properties.  Reads in properity files,
+ * A utility class for working with properties.  Reads in property files,
  * and manages four level of properties.
  * <ul>
  * <li>Application Properties- These are the properties that application
  *                             uses but the user cannot set.  Most of
  *                             the properties are application properties.
  * <li>Class Properties- These are also application properties and work just
- *                       like them but when are overridden by any equivilent
+ *                       like them but when are overridden by any equivalent
  *                       application properties.
  * <li>User Properties- These are properties that the user is allows to set
  *                      in a property file.
@@ -59,11 +59,9 @@ import java.util.Properties;
  */
 public class AppProperties {
 
-    public static final String DEVELOPER_MODE_PROP= "ipac.developer";
-    public static final boolean DEVELOPER_MODE;
 
 //=========================================================================
-//-------------- private static Property database varibles ----------------
+//-------------- private static Property database variables ----------------
 //=========================================================================
 
     /**
@@ -84,7 +82,7 @@ public class AppProperties {
     /**
      * preference properties will hold properties that the application
      * sets.  It may be initialized from a preference property file.
-     * It is posible (though not recommended) that the user might
+     * It is possible (though not recommended) that the user might
      * edit this preference property file.
      */
     private final static Properties _preferencesProperties=new Properties();
@@ -112,24 +110,7 @@ public class AppProperties {
     private final static List<URL>      _loadedResources=new LinkedList<URL>();
     private final static WeakPropertyChangeSupport _propChange=new
                                    WeakPropertyChangeSupport();
-    private static Properties  _record= null;
 
-    static {
-        boolean dMode= false;
-        try {
-            String v= System.getProperty(DEVELOPER_MODE_PROP);
-            if (v!=null && v.equalsIgnoreCase("true")) {
-                dMode= true;
-                _record= new Properties();
-            }
-        } catch (AccessControlException ace) {
-            dMode= false;
-        } catch (Exception e) {
-            dMode= false;
-            e.printStackTrace();
-        }
-        DEVELOPER_MODE= dMode;
-    }
 
     /**
      * when running in server mode certain client side features are disabled.
@@ -431,7 +412,6 @@ public class AppProperties {
         }
         if (retval==def) retval= getAppProp(key,def,overridePDB);
 
-        if (_record!=null && retval!=null) _record.put(key,retval);
         return retval;
     }
 
@@ -477,12 +457,12 @@ public class AppProperties {
 
   /**
    * Don't call this method unless you really know why you are doing it!
-   * Set a perference but don't dump all the perference to a file as
+   * Set a preference but don't dump all the preference to a file as
    * we normally do. This method is designed to be called from one place-
    * that is when a preference is set in another process and we have been
    * informed.  In that case, the preference is already persisted.
-   * @param key the name of the prerference
-   * @param value the value of the prerference
+   * @param key the name of the preference
+   * @param value the value of the preference
    */
   public static void setPreferenceWithNoPersistence(String key, String value) {
       setPref(key,value,false);
@@ -499,7 +479,7 @@ public class AppProperties {
   }
 
     /**
-     * rewrite the current perference file
+     * rewrite the current preference file
      */
   public static void dumpPreferences() {
      try {
@@ -665,7 +645,7 @@ public class AppProperties {
 
 
   /**
-   * Load this classes class specific properties.  If this methoed is
+   * Load this classes class specific properties.  If this method is
    * called multiple times it will only load the class properties the first
    * time.  The properties are loaded into the application property database.
    *
@@ -673,7 +653,7 @@ public class AppProperties {
    * throw and exception is simple return a boolean indicating whether the
    * properties where loaded.  That is class properties are sort of optional.
    * When you are developing you might not yet have the property file there
-   * yet but still want to got through the running process.  The clas swill log
+   * yet but still want to got through the running process.  The class swill log
    * when a file is not found but will not create an Exception.
    *
    * @param  objClass the class that is loading the properties
@@ -701,11 +681,11 @@ public class AppProperties {
   }
 
   /**
-   * Load this classes class specific properties.  If this methoed is
+   * Load this classes class specific properties.  If this method is
    * class multiple times it will only load the class properties the first
    * time.  The properties are loaded into the application property database.
    *
-   * The file this method will attempt to load is built on the classname, in
+   * The file this method will attempt to load is built on the class name, in
    * a "resources" subdirectory of the packages directory and will have an
    * an extension of ".prop". If the class name is "Abc" then the file name
    * built is "resources/Abc.prop".
@@ -725,7 +705,7 @@ public class AppProperties {
   public static boolean loadClassPropertiesToPdb(Class      objClass,
                                                  Properties pdb,
                                                  boolean forceLoad) {
-       Assert.argTst(objClass, "objClas must not be null");
+       Assert.argTst(objClass, "obj Class must not be null");
        String shortName= StringUtil.getShortClassName(objClass);
        String fname= "resources/" + shortName + ".prop";
        return loadClassPropertiesToPdb(objClass, fname, pdb, forceLoad);
@@ -734,7 +714,7 @@ public class AppProperties {
 
 
   /**
-   * Load this classes class specific properties.  If this methoed is
+   * Load this classes class specific properties.  If this method is
    * called multiple times it will only load the class properties the first
    * time.  The properties are loaded into the application property database.
    *
@@ -742,7 +722,7 @@ public class AppProperties {
    * throw and exception is simple return a boolean indicating whether the
    * properties where loaded.  That is class properties are sort of optional.
    * When you are developing you might not yet have the property file there
-   * yet but still want to got through the running process.  The clas swill log
+   * yet but still want to got through the running process.  The class swill log
    * when a file is not found but will not create an Exception.
    * @param  objClass the class that is loading the properties
    * @param  resource the name of the file to find in the class path
@@ -832,7 +812,7 @@ public class AppProperties {
                 pdb.load(bis);
             }
             else {
-                AppProperties.loadSubstitionValues(bis, pdb);
+                AppProperties.loadSubstitutionValues(bis, pdb);
                 // TODO: tina changes
             }
         } finally {
@@ -840,7 +820,7 @@ public class AppProperties {
         }
   }
 
-    private static void loadSubstitionValues(BufferedInputStream bis, Properties pdb) throws IOException {
+    private static void loadSubstitutionValues(BufferedInputStream bis, Properties pdb) throws IOException {
         Properties tempPDB = new Properties();
         tempPDB.load(bis);
         String key;
@@ -890,7 +870,7 @@ public class AppProperties {
 
     /**
      * This is only called when you need to do language substitution from
-     * American englist to real english
+     * American english to real english
      * @param newValues value substitution map
      */
   public static void setSubstitutionValues (Map<String,String> newValues) {
@@ -929,38 +909,6 @@ public class AppProperties {
                           _classProperties.size(),
                           _userProperties.size(),
                           _preferencesProperties.size());
-    }
-
-    public static void reportUnsedProperties() {
-        if (_record!=null) {
-            writeUnusedProperties("Main",  _mainProperties);
-            writeUnusedProperties("Class",  _classProperties);
-            writeUnusedProperties("Preferences", _preferencesProperties);
-        }
-        else {
-            System.out.println("To use this method you must first set " +
-                               DEVELOPER_MODE_PROP+"=true on the java command line");
-            System.out.println("This property should not be set "+
-                               "in production use.");
-        }
-    }
-
-    private static void writeUnusedProperties(String prefix, Properties props) {
-        Enumeration keys= props.propertyNames();
-        String name;
-        List<String> outList= new ArrayList<String>(1000);
-        System.out.printf(prefix+ " properties has %d lines%n",
-                          props.size());
-        while(keys.hasMoreElements()) {
-            name= (String)keys.nextElement();
-            if (!_record.containsKey(name)) {
-                outList.add(prefix +" Unused: "+name+"="+
-                            props.getProperty(name));
-            }
-        }
-        Collections.sort(outList);
-        for(String s: outList) System.out.println(s);
-
     }
 
     public static List<String> getAllProperties() {
