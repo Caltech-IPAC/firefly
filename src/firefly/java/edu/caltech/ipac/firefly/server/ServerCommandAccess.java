@@ -131,6 +131,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_FITS,          new VisPushCommands.PushFITS());
         _cmdMap.put(ServerParams.VIS_PUSH_REG,          new VisPushCommands.PushRegion());
         _cmdMap.put(ServerParams.VIS_PUSH_TABLE,        new VisPushCommands.PushTable());
+        _cmdMap.put(ServerParams.VIS_PUSH_EXT,          new VisPushCommands.PushExtension());
         _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new VisPushCommands.QueryAction());
 //        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new VisPushCommands.PushFITS());
 

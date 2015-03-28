@@ -72,6 +72,12 @@ public class ServerParams {
     public static final String SPACIAL_TYPE= "SpacialType";
     public static final String URL= "URL";
 
+    public static final String EXT_TYPE= "extType";
+    public static final String IMAGE= "image";
+    public static final String TOOL_TIP=  "toolTip";
+
+
+
 
     // commands
     public static final String FILE_FLUX = "CmdFileFlux";
@@ -122,6 +128,7 @@ public class ServerParams {
     public static final String VIS_PUSH_FITS= "pushFits";
     public static final String VIS_PUSH_REG= "pushRegion";
     public static final String VIS_PUSH_TABLE= "pushTable";
+    public static final String VIS_PUSH_EXT= "pushExt";
     public static final String VIS_QUERY_ACTION= "queryAction";
     public static final String VIS_PUSH_WPR= "pushWPR";
 

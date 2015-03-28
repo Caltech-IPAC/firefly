@@ -11,6 +11,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Panel;
@@ -41,6 +42,7 @@ import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -83,6 +85,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private PlotLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
     private final FlexTable _flipMbarDisplay= new FlexTable();
+    private final FlowPanel selectionAdditionActionBar= new FlowPanel();
     private HTML _sendToServerNotice= null;
 
     private final Map<String, String> _reqMods= new HashMap<String, String>(5);
@@ -1045,6 +1048,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         HTML oLabel= new HTML("<i>Options: </i>");
         _selectionMbarDisplay.setWidget(0,0,oLabel);
         _selectionMbarDisplay.setWidget(0,1,selectionMbar);
+        _selectionMbarDisplay.setWidget(0,2,selectionAdditionActionBar);
 
 
         HTML iLabel= new HTML("<i>Change Image: </i>");
@@ -1065,6 +1069,23 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
         new PlotMover(_plotView);
+    }
+
+
+    public void recomputeUserOptions(ActionReporter reporter)  {
+        selectionAdditionActionBar.clear();
+        List<PlotCmdExtension> list= (List)getPlotView().getAttribute(WebPlotView.EXTENSION_LIST);
+        if (list!=null) {
+            for(PlotCmdExtension ext : list) {
+                if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
+                    final GeneralCommand cmd= new ExtensionAreaSelectCmd(ext, reporter);
+                    BadgeButton button= new BadgeButton(ext.getTitle());
+                    selectionAdditionActionBar.add(button.getWidget());
+                    button.addClickHandler( new ClickHandler() {
+                        public void onClick(ClickEvent event) { cmd.execute(); } });
+                }
+            }
+        }
     }
 
     @Override
@@ -1309,10 +1330,36 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 forceLayout();
             }
         }
-
-
     }
 
+    private class ExtensionAreaSelectCmd extends GeneralCommand {
+
+        private final ActionReporter actionReporter;
+        private final PlotCmdExtension ext;
+
+        public ExtensionAreaSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
+            super(ext.getTitle());
+            this.ext= ext;
+            this.actionReporter= actionReporter;
+            this.setShortDesc(ext.getTitle());
+            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
+        }
+
+        protected void doExecute() {
+            if (actionReporter.isReporting()) {
+                WebPlot plot= getCurrentPlot();
+                RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
+                if (sel!=null) {
+                    String sendVal= "{" +
+                                     "id :  " + ext.getId()              + "," +
+                                     "type :" + ext.getExtType()         + "," +
+                                     "pt0 : "+  sel.getPt0().serialize() + "," +
+                                     "pt1 : " + sel.getPt0().serialize() +
+                                    "}";
+                    actionReporter.report(ext.getId(),sendVal);
+                }
+            }
+        }
+    }
 
 }
-

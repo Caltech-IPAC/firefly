@@ -30,7 +30,7 @@ import java.util.List;
 public class BackgroundStatus implements Serializable {
 
     public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
-    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME }
+    public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME, FITS_COMMAND_EXT }
 
     public static final String SERVER_REQUEST_CLASS = "ServerRequest";
     public static final String PARAM_SEP = "<<BGSEP>>";

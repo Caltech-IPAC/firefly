@@ -1,6 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 package edu.caltech.ipac.firefly.data.fuse;
 /**
  * User: roby
@@ -9,11 +13,12 @@ package edu.caltech.ipac.firefly.data.fuse;
  */
 
 
-import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.fuse.config.SelectedRowData;
 import edu.caltech.ipac.firefly.data.fuse.provider.AbstractDataSetInfoConverter;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.Arrays;
@@ -22,59 +27,48 @@ import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter.DataVisualizeMode.FITS;
-import static edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter.DataVisualizeMode.FITS_3_COLOR;
 
 /**
  * @author Trey Roby
  */
 public class LsstCCDDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
-    public enum ID {TWOMASS_J, TWOMASS_H, TWOMASS_K, }
-    public static final String TWOMASS_3C= "TWOMASS_3C";
-    private static final String bandStr[]= {"j", "h", "k"};
+    public enum ID {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15 }
+    private static final String ampStr[]= {
+        "A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12", "A13", "A14", "A15"
+    };
+
+
+    private static List<String> idList= Arrays.asList(
+            ID.A0.name(), ID.A1.name(), ID.A2.name(), ID.A3.name(),
+            ID.A4.name(), ID.A5.name(), ID.A6.name(), ID.A7.name(),
+            ID.A8.name(), ID.A9.name(), ID.A10.name(), ID.A11.name(),
+            ID.A12.name(), ID.A13.name(),  ID.A14.name(), ID.A15.name()
+    );
+
 
     private BaseImagePlotDefinition imDef= null;
 
 
     public LsstCCDDataSetInfoConverter() {
-        super(Arrays.asList(FITS, FITS_3_COLOR), new PlotData(new TMResolver(),true,false,true), "2mass_target");
+        super(Arrays.asList(FITS), new PlotData(new CCDResolver(),false,false,false), null);
 
         PlotData pd= getPlotData();
 
-        pd.set3ColorIDOfIDs(TWOMASS_3C, Arrays.asList(ID.TWOMASS_J.name(),
-                                                      ID.TWOMASS_H.name(),
-                                                      ID.TWOMASS_K.name()));
-        pd.setTitle(TWOMASS_3C, "2MASS 3 Color");
-        pd.setTitle(ID.TWOMASS_J.name(), "2MASS J");
-        pd.setTitle(ID.TWOMASS_H.name(), "2MASS H");
-        pd.setTitle(ID.TWOMASS_K.name(), "2MASS K");
     }
 
     public ImagePlotDefinition getImagePlotDefinition() {
         if (imDef==null) {
-            HashMap<String,List<String>> vToDMap= new HashMap<String,List<String>> (7);
-            vToDMap.put(ID.TWOMASS_J.name(), makeOverlayList("J"));
-            vToDMap.put(ID.TWOMASS_H.name(), makeOverlayList("H"));
-            vToDMap.put(ID.TWOMASS_K.name(), makeOverlayList("K"));
 
-            List<String> idList= Arrays.asList(
-                    ID.TWOMASS_J.name(),
-                    ID.TWOMASS_H.name(),
-                    ID.TWOMASS_K.name());
-            imDef= new TwoMassPlotDefinitionBase(3,idList, Arrays.asList(TWOMASS_3C), vToDMap);
+            imDef= new LsstCcdPlotDefinitionBase(16,idList, null, null);
         }
         return imDef;
     }
 
-    private static List<String> makeOverlayList(String b) {
-        return Arrays.asList("target");
-    }
 
+    private static class LsstCcdPlotDefinitionBase extends BaseImagePlotDefinition {
 
-
-    private static class TwoMassPlotDefinitionBase extends BaseImagePlotDefinition {
-
-        public TwoMassPlotDefinitionBase(int imageCount,
+        public LsstCcdPlotDefinitionBase(int imageCount,
                                          List<String> viewerIDList,
                                          List<String> threeColorViewerIDList,
                                          Map<String, List<String>> viewerToDrawingLayerMap) {
@@ -83,75 +77,58 @@ public class LsstCCDDataSetInfoConverter extends AbstractDataSetInfoConverter {
 
         @Override
         public List<String> getAllBandOptions(String viewerID) {
-            return Arrays.asList(
-                    ID.TWOMASS_J.name(),
-                    ID.TWOMASS_H.name(),
-                    ID.TWOMASS_K.name());
+            return idList;
         }
 
     }
 
     private static String getBandStr(ID id) {
-        switch (id) {
-            case TWOMASS_J:
-                return "j";
-            case TWOMASS_K:
-                return "h";
-            case TWOMASS_H:
-                return "k";
-        }
-        return null;
+        return id.name();
     }
 
-    private static class TMResolver implements PlotData.Resolver {
-        private ServerRequestBuilder builder= new ServerRequestBuilder();
+    private static class CCDResolver implements PlotData.Resolver {
         static Map<String,ID> bandToID= new HashMap<String, ID>(5);
-        private TMResolver() {
-            builder.setColumnsToUse(Arrays.asList("filter", "scanno", "fname", "ordate", "hemisphere", "in_ra", "in_dec", "image_set"));
-            builder.setHeaderParams(Arrays.asList("mission", "ds", "subsize"));
-            builder.setColorTableID(1);
-            builder.setRangeValues(new RangeValues(RangeValues.SIGMA, -2, RangeValues.SIGMA, 10, RangeValues.STRETCH_LINEAR));
-            bandToID.put("j", ID.TWOMASS_J);
-            bandToID.put("h", ID.TWOMASS_H);
-            bandToID.put("k", ID.TWOMASS_K);
+        private CCDResolver() {
         }
 
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
-            String inter= selData.getRequest().getParam("intersect");
-            if (inter!=null && inter.equals("OVERLAPS")) {
-                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
-            }
-            else {
-                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
-            }
-
-            String b= getBandStr(ID.valueOf(id));
-            WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
-
-            if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
-            else r.setTitle("2MASS: "+b);
-
-            r.setZoomType(ZoomType.FULL_SCREEN);
+            WebPlotRequest r= new WebPlotRequest();
+            r.setRequestType(RequestType.TRY_FILE_THEN_URL);
+            r.setZoomType(ZoomType.TO_WIDTH);
+            r.setInitialRangeValues(new RangeValues(RangeValues.PERCENTAGE,0,RangeValues.PERCENTAGE,100,RangeValues.STRETCH_LINEAR));
+            r.setMultiImageIdx(convertToIdx(StringUtils.getEnum(id,ID.A0)));
             return r;
         }
 
 
         public List<String> getIDsForMode(PlotData.GroupMode mode, SelectedRowData selData) {
-            String b= selData.getSelectedRow().getValue("filter");
-            if (b!=null && Arrays.asList(bandStr).contains(b.toLowerCase())) {
-                if (mode== PlotData.GroupMode.TABLE_ROW_ONLY) {
-                    return Arrays.asList(bandToID.get(b).name());
-                }
-                else {
-                    return Arrays.asList(ID.TWOMASS_J.name(), ID.TWOMASS_H.name(), ID.TWOMASS_K.name());
-                }
-
-            }
-            return null;
+            return Arrays.asList(ampStr);
         }
 
         public List<String> get3ColorIDsForMode(SelectedRowData selData) {
-            return Arrays.asList(TWOMASS_3C);
+            return null;
+        }
+
+        private static int convertToIdx(ID id) {
+            switch (id) {
+                case A0: return 0;
+                case A1: return 1;
+                case A2: return 2;
+                case A3: return 3;
+                case A4: return 4;
+                case A5: return 5;
+                case A6: return 6;
+                case A7: return 7;
+                case A8: return 8;
+                case A9: return 9;
+                case A10: return 10;
+                case A11: return 11;
+                case A12: return 12;
+                case A13: return 13;
+                case A14: return 14;
+                case A15: return 15;
+                default: return 0;
+            }
         }
     }
 }

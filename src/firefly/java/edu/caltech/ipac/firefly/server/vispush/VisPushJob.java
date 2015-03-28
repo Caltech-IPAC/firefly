@@ -11,6 +11,8 @@ package edu.caltech.ipac.firefly.server.vispush;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
@@ -62,6 +64,31 @@ public class VisPushJob {
         }
         return success;
     }
+
+    public static boolean pushExtension(String bid,
+                                        String id,
+                                        String extType,
+                                        String title,
+                                        String image,
+                                        String toolTip) {
+        BackgroundInfoCacher pi= new BackgroundInfoCacher(bid);
+        BackgroundStatus bgStat= pi.getStatus();
+        boolean success= false;
+        ServerRequest r= new ServerRequest(id);
+        r.setParam(ServerParams.EXT_TYPE, extType);
+        r.setParam(ServerParams.TITLE, title);
+        if (image!= null) r.setParam(ServerParams.IMAGE, image);
+        if (toolTip!= null) r.setParam(ServerParams.IMAGE, toolTip);
+
+        if (bgStat!=null) {
+            bgStat.addPushData(r.toString(), BackgroundStatus.PushType.FITS_COMMAND_EXT);
+            pi.setStatus(bgStat);
+            success= true;
+        }
+        return success;
+    }
+
+
 
     public static boolean pushTable(String id, String fileName) {
         BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
