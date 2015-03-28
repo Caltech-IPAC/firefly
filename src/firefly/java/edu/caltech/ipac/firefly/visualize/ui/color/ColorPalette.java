@@ -1,7 +1,4 @@
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-/*
+*
 	Copyright 2008 Marco Mustapic
 	
     This file is part of Agilar GWT Widgets.
