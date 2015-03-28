@@ -90,7 +90,7 @@ task prepareWebapp (type:Copy) {
     def type = appConfigProps.get('BuildType')
     def buildNum = appConfigProps.get('BuildNumber')
 
-    def tag = "$major.$minor.$rev $type-$buildNum"
+    def tag = "$major.$minor.${rev}_${type}-$buildNum"
     def props = new Properties();
     props.setProperty('tag', tag)
     props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")

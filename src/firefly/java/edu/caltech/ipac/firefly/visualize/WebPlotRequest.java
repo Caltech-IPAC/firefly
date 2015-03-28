@@ -359,7 +359,7 @@ public class WebPlotRequest extends ServerRequest {
         WebPlotRequest req = makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
         req.setParam(SURVEY_KEY_BAND, band + "");
         String sDesc= survey.equalsIgnoreCase("3a")  ? "Atlas" : survey;
-        req.setTitle("Wise: "+sDesc+ ", B"+ band);
+        req.setTitle("WISE: "+sDesc+ ", B"+ band);
         return req;
     }
 
