@@ -12,7 +12,6 @@ import java.nio.channels.FileChannel;
 /**
  * TODO Write Javadocs
  *
- * @author <a href="mailto:jchavez@ipac.caltech.edu?subject=Java Docs">Joe Chavez</a>
  * @version $Id: HComp.java,v 1.2 2005/12/01 00:56:21 roby Exp $
  *          <hr>
  *          Represents the data contained in an Observation Request. <BR>

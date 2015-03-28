@@ -12,7 +12,6 @@ package edu.caltech.ipac.astro.target;
  * US Government Sponsorship under NASA contract NAS7-918 is acknowledged.
  * <BR>
  * @version $Id: Ephemeris.java,v 1.4 2007/02/17 01:10:35 booth Exp $
- * @author <a href="mailto:jchavez@ipac.caltech.edu?subject=Java Docs">Joe Chavez</a>
  */
 public interface Ephemeris extends Location {
     int getNaifID();

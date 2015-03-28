@@ -370,7 +370,7 @@ public class WorkspaceManager {
 //        String session = JOSSOAdapter.createSession("", "");
 //        Map<String, String> cookies = new HashMap<String, String>();
 //        cookies.put(WebAuthModule.AUTH_KEY, session);
-//        WorkspaceManager man = new WorkspaceManager("loi@ipac.caltech.edu", cookies);
+//        WorkspaceManager man = new WorkspaceManager("<someuser>@ipac.caltech.edu", cookies);
 //        simpleTest(man);
     }
      private static void simpleTest(WorkspaceManager man) {
