@@ -29,7 +29,6 @@ task deployAllWars(dependsOn: loadConfig) << {
 
     // stop tomcat
     stopTomcat(rhost)
-    sleep(15 * 1000)
 
     execCmd(rhost, true, ["rm", "-r", "$tomcat_home/temp/ehcache"])
 
@@ -40,7 +39,6 @@ task deployAllWars(dependsOn: loadConfig) << {
     }
 
     // start tomcat
-    sleep(1 * 1000)
     startTomcat(rhost)
   }
 }

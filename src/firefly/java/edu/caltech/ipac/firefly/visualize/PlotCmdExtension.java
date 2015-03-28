@@ -3,13 +3,6 @@
  */
 
 package edu.caltech.ipac.firefly.visualize;
-/**
- * User: roby
- * Date: 3/27/15
- * Time: 3:25 PM
- */
-
-
 
 /**
  * @author Trey Roby

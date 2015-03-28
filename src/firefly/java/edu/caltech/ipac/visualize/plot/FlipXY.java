@@ -222,8 +222,6 @@ public class FlipXY {
         }
         return obj;
     }
-
-
     /**
      * Based on the input fits header to create an output fits header
      * @return
@@ -237,23 +235,7 @@ public class FlipXY {
 
         if (inImageHeader.using_cd) {
 
-            double cd1_1, cd2_1;
-            if (inFitsHeader.containsKey("CD1_1")) {
-                cd1_1 = inFitsHeader.getDoubleValue("CD1_1");
-                cd2_1 = inFitsHeader.getDoubleValue("CD2_1");
-                outFitsHeader.addValue("CD1_1", -cd1_1, null);
-                outFitsHeader.addValue("CD2_1", -cd2_1, null);
-            } else if (inFitsHeader.containsKey("CD001001")) {
-                cd1_1 = inFitsHeader.getDoubleValue("CD001001");
-                cd2_1 = inFitsHeader.getDoubleValue("CD002001");
-                outFitsHeader.addValue("CD001001", -cd1_1, null);
-                outFitsHeader.addValue("CD002001", -cd2_1, null);
-            } else if (inFitsHeader.containsKey("PC1_1")) {
-                cd1_1 = inFitsHeader.getDoubleValue("PC1_1");
-                cd2_1 = inFitsHeader.getDoubleValue("PC2_1");
-                outFitsHeader.addValue("PC1_1", -cd1_1, null);
-                outFitsHeader.addValue("PC2_1", -cd2_1, null);
-            }
+            addCDCards(outFitsHeader);
         } else {
 
             outFitsHeader.addValue("CDELT1", -inImageHeader.cdelt1, null);
@@ -261,63 +243,96 @@ public class FlipXY {
 
         if (inImageHeader.map_distortion) {
 
-
-           // negate all even coefficients
+            // negate all even coefficients
             if (inImageHeader.a_order >= 0) {
-                for (int i = 0; i <= inImageHeader.a_order; i += 2)   { // do only even i values
+                addAXOrderCards(outFitsHeader, "A_", inImageHeader.a_order, inImageHeader.a);
 
-                    for (int j = 0; j <= inImageHeader.a_order; j++) {
-                        if (i + j <= inImageHeader.a_order) {
-                            String keyword = "A_" + i + "_" + j;
-                            outFitsHeader.addValue(keyword, -inImageHeader.a[i][j], null);
-                        }
-                    }
-                }
             }
 
             if (inImageHeader.b_order >= 0) {
 
-                for (int i = 1; i <= inImageHeader.b_order; i += 2) {// do only odd i values
-
-                    for (int j = 0; j <= inImageHeader.b_order; j++) {
-                        if (i + j <= inImageHeader.b_order) {
-                            String  keyword = "B_" + i + "_" + j;
-                            outFitsHeader.addValue(keyword, -inImageHeader.b[i][j], null);
-
-                        }
-                    }
-                }
+                addBXOrderCards(outFitsHeader, "B_", inImageHeader.b_order, inImageHeader.b);
             }
 
             if (inImageHeader.ap_order >= 0) {
 
-                for (int i = 0; i <= inImageHeader.ap_order; i += 2){ // do only even i values
-
-                    for (int j = 0; j <= inImageHeader.ap_order; j++) {
-                        if (i + j <= inImageHeader.ap_order) {
-                            String keyword = "AP_" + i + "_" + j;
-                            outFitsHeader.addValue(keyword, -inImageHeader.ap[i][j], null);
-
-                        }
-                    }
-                }
+                addAXOrderCards(outFitsHeader, "AP_", inImageHeader.ap_order, inImageHeader.ap);
             }
 
             if (inImageHeader.bp_order >= 0) {
-                for (int i = 1; i <= inImageHeader.bp_order; i += 2) { // do only odd i values
+                addBXOrderCards(outFitsHeader, "BP_", inImageHeader.bp_order, inImageHeader.bp);
+            }
+        }
+        return outFitsHeader;
+    }
 
-                    for (int j = 0; j <= inImageHeader.bp_order; j++) {
-                        if (i + j <= inImageHeader.bp_order) {
-                            String keyword = "BP_" + i + "_" + j;
-                            outFitsHeader.addValue(keyword, -inImageHeader.bp[i][j], null);
+    /**
+     * Add a_order and ap_order
+     * @param outFitsHeader
+     * @param xOrder
+     * @param length
+     * @param values
+     * @throws HeaderCardException
+     */
+    private void addAXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
 
-                        }
-                    }
+        for (int i = 0; i <= length; i += 2) {// do only odd i values
+           for (int j = 0; j <= length; j++) {
+                if (i + j <= length) {
+                    String  keyword = xOrder + i + "_" + j;
+                    outFitsHeader.addValue(keyword, - values[i][j], null);
+
                 }
             }
         }
+        return;
+    }
 
-        return outFitsHeader;
+    /**
+     * Add b_order and bp_order
+     * @param outFitsHeader
+     * @param xOrder
+     * @param length
+     * @param values
+     * @throws HeaderCardException
+     */
+    private void addBXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
+
+        for (int i = 1; i <= length; i += 2) {// do only odd i values
+            for (int j = 0; j <= length; j++) {
+                if (i + j <= length) {
+                    String  keyword = xOrder + i + "_" + j;
+                    outFitsHeader.addValue(keyword, - values[i][j], null);
+
+                }
+            }
+        }
+        return;
+    }
+
+    /**
+     * Add the cd1 and cd2 cards if they exist in the inFitsHeader
+     * @param outFitsHeader
+     * @throws HeaderCardException
+     */
+    private void addCDCards( Header outFitsHeader) throws HeaderCardException {
+
+        if (inFitsHeader.containsKey("CD1_1")) {
+            double cd1_1 = inFitsHeader.getDoubleValue("CD1_1");
+            double cd2_1 = inFitsHeader.getDoubleValue("CD2_1");
+            outFitsHeader.addValue("CD1_1", -cd1_1, null);
+            outFitsHeader.addValue("CD2_1", -cd2_1, null);
+        } else if (inFitsHeader.containsKey("CD001001")) {
+            double cd1_1 = inFitsHeader.getDoubleValue("CD001001");
+            double cd2_1 = inFitsHeader.getDoubleValue("CD002001");
+            outFitsHeader.addValue("CD001001", -cd1_1, null);
+            outFitsHeader.addValue("CD002001", -cd2_1, null);
+        } else if (inFitsHeader.containsKey("PC1_1")) {
+            double cd1_1 = inFitsHeader.getDoubleValue("PC1_1");
+            double cd2_1  = inFitsHeader.getDoubleValue("PC2_1");
+            outFitsHeader.addValue("PC1_1", -cd1_1, null);
+            outFitsHeader.addValue("PC2_1", -cd2_1, null);
+        }
     }
 
 }

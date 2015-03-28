@@ -1,4 +1,4 @@
-*
+/*
 	Copyright 2008 Marco Mustapic
 	
     This file is part of Agilar GWT Widgets.
