@@ -17,7 +17,6 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +27,6 @@ import java.util.List;
  * This class is the data class for any set of objects that we show on
  * plots.  <i>This class need more documentation.</i>
  * 
- * @see FixedGroupDialog
  * @see FixedObject
  *
  * @author Trey Roby
@@ -50,7 +48,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
    private static final String POS1_COL   = _prop.getColumnName("pos1");
    private static final String POS2_COL   = _prop.getColumnName("pos2");
    private static final String DIST_COL   = _prop.getColumnName("distance");
-   //private static final String ANGLE_COL  = _prop.getColumnName("angle");
    private static final String RA_LABEL   = _prop.getName("pos.ra");
    private static final String DEC_LABEL  = _prop.getName("pos.dec");
 
@@ -67,7 +64,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
    public static final int POS1_IDX       = 1;
    public static final int POS2_IDX       = 2;
    public static final int DIST_IDX       = 3;
-   //public static final int ANGLE_IDX      = 4;
 
    public static final int NUM_COLUMNS    = 4;
 
@@ -86,9 +82,8 @@ public class DistanceVectorGroup extends   AbstractTableModel
    private List<PlotView>  _plotViews  = new ArrayList<PlotView>(50);
    private List<TableObject> _objects= new ArrayList<TableObject>(10);
    private NumberFormat   _nf= NumberFormat.getInstance();// OK for i18n
-   private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
 
-   private boolean  _showPosInDecimal= AppProperties.getBooleanPreference(
+   private boolean  _showPosInDecimal= AppProperties.getBooleanProperty(
                                      VisConstants.COORD_DEC_PROP, false);
    private String   _csysDesc= AppProperties.getProperty(
                                            VisConstants.COORD_SYS_PROP,
@@ -103,10 +98,8 @@ public class DistanceVectorGroup extends   AbstractTableModel
        _colNames[POS1_IDX]   = POS1_COL;
        _colNames[POS2_IDX]   = POS2_COL;
        _colNames[DIST_IDX]   = DIST_COL;
-       //_colNames[ANGLE_IDX]  = ANGLE_COL;
        _nf.setMaximumFractionDigits(3);
        _nf.setMinimumFractionDigits(3);
-       AppProperties.addPropertyChangeListener(this);
    }
  
     /**
@@ -197,36 +190,11 @@ public class DistanceVectorGroup extends   AbstractTableModel
         }
     }
 
-    public void setAllEnabled(boolean enable) {
-        for(TableObject entry: _objects) {
-            entry._vector.setEnabled(enable);
-        }
-        fireTableDataChanged();
-    }
 
     public VectorObject get(int i) {
-       return ((TableObject)_objects.get(i))._vector;
+       return (_objects.get(i))._vector;
     }
  
-    public void setInfo(VectorObject v, double dist, boolean showOnVect) {
-       int row= findVectorEntry(v);
-       Assert.tst((row>-1), "entry should never be -1");
-       TableObject entry= _objects.get(row);
-       entry._distance= dist;
-       if (showOnVect) {
-          setInfoOnVect(v,dist);
-       }
-    }
-
-
-/*
-    public void setLabels(VectorObject v, String labels[]) {
-       int row= findVectorEntry(v);
-       Assert.tst((row>-1), "entry should never be -1");
-       TableObject entry= (TableObject)_objects.get(row); 
-       entry._vector.setLabelStrings(labels);
-    }
-*/
 
 
     public void setAllLineColor(Color c) {
@@ -236,26 +204,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
             line= entry._vector.getLineShape();
             if (line != null) line.setColor(c);
         }
-    }
-
-    public void setAllTextColor(Color c) {
-        StringShape stringShape;
-        for(TableObject entry: _objects) {
-            stringShape= entry._vector.getStringShape();
-            stringShape.setColor(c);
-            if (stringShape != null) stringShape.setColor(c);
-        }
-    }
-
-    public void setDistanceUnits(int unit) {
-        Assert.tst( unit == UNIT_DEGREE ||
-                    unit == UNIT_ARCSEC ||
-                    unit == UNIT_ARCMIN);
-        _distanceUnitType= unit;
-        for(TableObject entry: _objects) {
-            setInfoOnVect(entry._vector,entry._distance);
-        }
-        fireTableDataChanged();
     }
 
     public String formatDistance(double dist) {
@@ -280,26 +228,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
     }
 
 
-//=====================================================================
-//----------- add / remove property Change listener methods -----------
-//=====================================================================
-
-    /**
-     * Add a property changed listener.
-     * @param p  the listener
-     */
-    public void addPropertyChangeListener (PropertyChangeListener p) {
-       _propChange.addPropertyChangeListener (p);
-    }
-
-    /**
-     * Remove a property changed listener.
-     * @param p  the listener
-     */
-    public void removePropertyChangeListener (PropertyChangeListener p) {
-       _propChange.removePropertyChangeListener (p);
-    }
-
 //======================================================================
 //------------- Methods from PropertyChangeListener Interface ----------
 //======================================================================
@@ -307,12 +235,12 @@ public class DistanceVectorGroup extends   AbstractTableModel
     public void propertyChange(PropertyChangeEvent ev) {
        String propName= ev.getPropertyName();
        if (propName.equals(VisConstants.COORD_DEC_PROP)) {
-            _showPosInDecimal= AppProperties.getBooleanPreference(
+            _showPosInDecimal= AppProperties.getBooleanProperty(
                                VisConstants.COORD_DEC_PROP,false);
             fireTableDataChanged();
        }
        else if (propName.equals(VisConstants.COORD_SYS_PROP)) {
-            _csysDesc = AppProperties.getPreference(
+            _csysDesc = AppProperties.getProperty(
                                   VisConstants.COORD_SYS_PROP,
                                   CoordinateSys.EQ_J2000_STR);
             updateCoordinateSystem();
@@ -363,7 +291,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
          VectorObject   vector= entry._vector;
          MultiLineValue mentry[];
          Assert.tst(vector);
-        //System.out.printf("Updating: row: %d, col: %d%n", row,column);
          switch (column) {
             case  ENABLED_IDX:
                        retval= new Boolean(vector.isEnabled());
@@ -418,14 +345,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    public void setInfoOnVect(VectorObject v, double dist) {
-       String str[]= new String[1];
-       //str[0]= "Dummy: xxx";
-       //str[1]= formatDistance(dist);
-       str[0]= formatDistance(dist);
-       v.setLabelStrings(str);
-    }
-
     public String formatLon(double lon, boolean inDecimal) {
         return formatPos(lon,false,inDecimal);// false: not latitude
     }
@@ -468,13 +387,6 @@ public class DistanceVectorGroup extends   AbstractTableModel
         return retval;
     }
 
-
-//===================================================================
-//------------------------- Factory Methods -------------------------
-//===================================================================
-
-
-
 //===================================================================
 //------------------------- Private Inner classes -------------------
 //===================================================================
@@ -502,4 +414,15 @@ public class DistanceVectorGroup extends   AbstractTableModel
         }
     }
 
+
+    public static class MultiLineValue {
+        private String _label;
+        private String _value;
+        public MultiLineValue( String label, String value) {
+            _label= label;
+            _value= value;
+        }
+        public String getLabel() { return _label; }
+        public String getValue() { return _value; }
+    }
 }

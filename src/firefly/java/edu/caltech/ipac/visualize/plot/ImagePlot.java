@@ -505,16 +505,6 @@ public class ImagePlot extends Plot implements Serializable {
             Point2D input  = new Point2D.Double(pt.getX(), pt.getY());
             Point2D imagePt= inverse.transform(input, null);
 	    retval= new ImageWorkSpacePt(imagePt.getX(), imagePt.getY() );
-	    /*
-		System.out.println(
-		"RBH ZZZ1 ImagePlot.getImageCoords:  image = " +
-		_fitsRead.getSourceDec() +
-		" input = " + input.getX() + " " + input.getY() + 
-		"  imagePt = " + imagePt.getX() + " " + imagePt.getY() +
-		"  retval =  " + retval.getX() + " " + retval.getY());
-	    System.out.println("    getScreenCoords() = " +
-		getScreenCoords(new ImageWorkSpacePt(imagePt.getX(), imagePt.getY())));
-	    */
         }
         else {
             throw new NoninvertibleTransformException("no inverse tranform");
@@ -563,19 +553,6 @@ public class ImagePlot extends Plot implements Serializable {
                                       (AffineTransform)_plotGroup.getTransform().clone();
         int imageScaleFactor= _fitsRead.getImageScaleFactor();
 
-	/*
-	System.out.println(
-	    "RBH ImagePlot.getScreenCoords FIRST  imageScaleFactor = " + 
-	    imageScaleFactor + 
-	    "  getOffsetX() = " + getOffsetX() +
-	    "  getOffsetY() = " + getOffsetY() +
-	    "  ipt.getX() = " + ipt.getX() + 
-	    "  ipt.getY() = " + ipt.getY());
-	*/
-	//Thread.currentThread().dumpStack();
-
-        //trans.scale(imageScaleFactor, imageScaleFactor);
-
 	double x = ipt.getX() * imageScaleFactor + (double)getOffsetX();
 	double y = ipt.getY() * imageScaleFactor + (double)getOffsetY();
 	ipt = new ImagePt(x, y);
@@ -584,12 +561,6 @@ public class ImagePlot extends Plot implements Serializable {
                                  null);
     }
 
-
-//----------------------------
-//----------------------------
-//----------------------------
-//----------------------------
-//----------------------------
 
     /** 
      * Return a point the represents the passed point with a distance in
@@ -897,9 +868,6 @@ public class ImagePlot extends Plot implements Serializable {
             System.arraycopy(_threeColorFitsRead,0,
                              p._threeColorFitsRead,0,
                              _threeColorFitsRead.length);
-//            for(int i=0; i<_threeColorFitsRead.length; i++) {
-//                p._threeColorFitsRead[i]= _threeColorFitsRead[i];
-//            }
         }
         p.setZoomTo(        1.0F );
         if (plotGroup != null) p.computeOffsetXY();
@@ -955,8 +923,6 @@ public class ImagePlot extends Plot implements Serializable {
                 double ydiff= ip1.getY()-ip2.getY();
                 double imageDist= Math.sqrt(xdiff*xdiff + ydiff*ydiff);
 
-                //System.out.println("worldDist / pix="+value1 + 
-                //                   "    imageDist="+ imageDist);
                 retval= ((imageDist / value1) > 3);
              } catch (ProjectionException e) {
                  retval= false;

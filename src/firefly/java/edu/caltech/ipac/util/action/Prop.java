@@ -4,12 +4,11 @@
 package edu.caltech.ipac.util.action;
 
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.OSInfo;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.ServerStringUtil;
 
 import javax.swing.Action;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -242,176 +241,6 @@ public class Prop  {
         return getExtension(propBase,null);
     }
 
-    public static String getPlatformPref( String prop, String def) {
-        String retval= def;
-        int dot= prop.lastIndexOf('.');
-        if (dot>-1) {
-            if (dot<prop.length()-1) {
-                String part1= prop.substring(0,dot);
-                String part2= prop.substring(dot+1);
-                retval= getPlatformProp(part1,part2,def, true, true, null);
-            }
-        }
-        return retval;
-
-    }
-
-
-    public static String getPlatformPref( String base,
-                                          String prop,
-                                          String def) {
-        return getPlatformProp(base,prop,def, true, true, null);
-    }
-
-
-    public static String getPlatformProp( String base,
-                                          String prop,
-                                          String def) {
-        return getPlatformProp(base,prop,def, true, null);
-    }
-
-    public static String getPlatformProp( String base,
-                                          String prop,
-                                          String def,
-                                          Properties pdb) {
-        return getPlatformProp(base,prop,def, true, pdb);
-    }
-
-
-
-    public static String getPlatformProp( String base,
-                                          String prop,
-                                          String def,
-                                          boolean useFallback,
-                                          Properties pdb) {
-        return getPlatformProp(base,prop,def,useFallback,false, pdb);
-    }
-
-    /**
-     *
-     * Look for a property that is platform specific.  The property name is
-     * created by combine base and prop with the platform name between.  Therefore
-     * is base is "xxx" and prop is "Name" on solaris it will look for a property
-     * xxx.solaris.Name.
-     * What it does next is based on the useFallback parameter.
-     * if useFallback is true then the method will first look for a property
-     * base.platform.prop.  If it is not found it wil then
-     * look for base.prop.  If that is not found it will return
-     * def.  if useFallback is false it will only look for base.platform.prop
-     * and then return def.
-     *
-     * The supported platforms are:
-     * <ul>
-     * <li>mac
-     * <li>solaris
-     * <li>windows
-     * <li>linux
-     * <li>unix
-     * </ul>
-     *
-     *
-     * @param base the beginning part of the property
-     * @param prop the final part of the property
-     * @param def the default value
-     * @param useFallback if true do the fallback query
-     * @param pdb a alternate property database
-     * @return results of the lookup or the default value is no results are found
-     */
-    public static String getPlatformProp( String base,
-                                          String prop,
-                                          String def,
-                                          boolean useFallback,
-                                          boolean isPref,
-                                          Properties pdb) {
-        String value= null;
-
-        if (OSInfo.isPlatform(OSInfo.MAC)) {
-            if (OSInfo.isPlatform(OSInfo.MAC_LION_OR_LATER) || OSInfo.isPlatform(OSInfo.MAC64)) {
-                value= AppProperties.getProp( base + ActionConst.MAC64_PROP + prop,
-                                              null, isPref, pdb);
-                if (value==null) {
-                    value= AppProperties.getProp( base + ActionConst.MAC_PROP + prop,
-                                                  null, isPref, pdb);
-                }
-
-            } else {
-                value= AppProperties.getProp( base + ActionConst.MAC_PROP + prop,
-                                          null, isPref, pdb);
-            }
-        }
-        else if (OSInfo.isPlatform(OSInfo.ANY_WINDOWS)) {
-            value= AppProperties.getProp( base + ActionConst.WINDOWS_PROP + prop,
-                                          null, isPref, pdb);
-        }
-        else if (OSInfo.isPlatform(OSInfo.ANY_UNIX)) {
-            if (OSInfo.isPlatform(OSInfo.LINUX64)) {
-                value= AppProperties.getProp( base + ActionConst.LINUX64_PROP + prop,
-                                              null, isPref, pdb);
-                if (value==null) {
-                    value= AppProperties.getProp( base + ActionConst.LINUX_PROP + prop,
-                                                  null, isPref, pdb);
-                }
-            }
-            else if (OSInfo.isPlatform(OSInfo.LINUX)) {
-                value= AppProperties.getProp( base + ActionConst.LINUX_PROP + prop,
-                                              null, isPref, pdb);
-            }
-            else if (OSInfo.isPlatform(OSInfo.SUN)){
-                value= AppProperties.getProp( base + ActionConst.SUN_PROP + prop,
-                                              null, isPref, pdb);
-
-            }
-            if (value==null) {
-                value= AppProperties.getProp(
-                         base + ActionConst.UNIX_PROP + prop, null, isPref, pdb);
-            }
-        }
-
-        if (value==null) {
-            if (useFallback) {
-                value= AppProperties.getProp(base +"."+ prop, def, isPref, pdb);
-            }
-            else {
-                value= def;
-            }
-        }
-
-        return value;
-    }
-
-
-    public static String documentPlatformProp(String base, String prop) {
-        String result= null;
-        if (OSInfo.isPlatform(OSInfo.MAC)) {
-            if (OSInfo.isPlatform(OSInfo.MAC_LION_OR_LATER) || OSInfo.isPlatform(OSInfo.MAC64)) {
-                result=  base + ActionConst.MAC64_PROP + prop;
-            } else {
-                result=  base + ActionConst.MAC_PROP + prop;
-            }
-        }
-        else if (OSInfo.isPlatform(OSInfo.ANY_WINDOWS)) {
-            result=  base + ActionConst.WINDOWS_PROP + prop;
-        }
-        else if (OSInfo.isPlatform(OSInfo.ANY_UNIX)) {
-            if (OSInfo.isPlatform(OSInfo.LINUX64)) {
-                result=  base + ActionConst.LINUX64_PROP + prop;
-            }
-            else if (OSInfo.isPlatform(OSInfo.LINUX)) {
-                result=  base + ActionConst.LINUX_PROP + prop;
-            }
-            else if (OSInfo.isPlatform(OSInfo.SUN)){
-                 result= base + ActionConst.SUN_PROP + prop;
-            }
-            if (result==null) {
-                result=  base + ActionConst.UNIX_PROP + prop;
-            }
-            else {
-                result=  " or "  +base + ActionConst.UNIX_PROP + prop;
-            }
-        }
-        return result;
-    }
-
   public static String getErrorDescription(String propBase) {
       return getErrorDescription(propBase, null);
   }
@@ -425,16 +254,8 @@ public class Prop  {
       String tokens[]= null;
       String prop= propBase + "." + ActionConst.ITEMS;
       String value= AppProperties.getProperty(prop, null, pdb);
-      if (value!=null) tokens= StringUtil.strToStrings(value);
+      if (value!=null) tokens= ServerStringUtil.strToStrings(value);
       return tokens;
-  }
-
-  public static boolean isOptional(String propBase, Properties pdb) {
-      boolean optional = false;
-      if (propBase != null) {
-          optional = AppProperties.getBooleanProperty(propBase, false, pdb);
-      }
-      return optional;
   }
 
 

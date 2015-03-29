@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A class the implements an assert mechanism simular to C.  This class 
+ * A class the implements an assert mechanism similar to C.  This class
  * contains all static methods which implements various forms to do an assert.
  * An assert is a programmer level sanity check for testing code.
  * This class extents the traditional C assert a little because it also 
@@ -43,7 +43,6 @@ public class Assert {
 
     private static boolean _serverMode            = false;
     private static Logger _logger            = new DefLogger();
-//    private static boolean _serverModeEnableAssert= true;
 
     private static final String PAD_STR=
       "                                                                  !!";
@@ -72,14 +71,6 @@ public class Assert {
        boolean exitOnFail= AppProperties.getBooleanProperty(
                                "Assert.exitOnFail", exitOnFailDefault);
 
-//       if (_serverMode) {
-//          //serverFail(msg, exitOnFail);
-////          if(_serverModeEnableAssert) doFail(msg,exitOnFail, ASSERT_TST);
-//           doFail(msg,exitOnFail, ASSERT_TST);
-//       }
-//       else {
-//          doFail(msg, exitOnFail, ASSERT_TST);
-//       ASSERT_TST}
 
         doFail(msg, exitOnFail, ASSERT_TST);
 
@@ -140,7 +131,7 @@ public class Assert {
             _logger.log("Assert.showMessage: this should never happen");
             System.exit(1);
         }
-        String cName= StringUtil.getShortClassName(ste.getClassName());
+        String cName= ServerStringUtil.getShortClassName(ste.getClassName());
         outList.add(START_STR);
         outList.add(pad(mType) );
         outList.add(pad("!! Class:  " + cName)              );

@@ -21,8 +21,8 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectItemTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectListTag;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.SearchPanel;
-import edu.caltech.ipac.firefly.util.PropConst;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.action.ActionConst;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +93,7 @@ public class DynHomeCmd extends RequestCmd {
                     vp.add(GwtUtil.makeLinkButton("  " + display, tooltip, new ClickHandler() {
                         public void onClick(ClickEvent ev) {
                             // set original command title
-                            app.getCommandTable().get(id).setLabel(app.getProperties().getProperty(id + "." + PropConst.TITLE));
+                            app.getCommandTable().get(id).setLabel(app.getProperties().getProperty(id + "." + ActionConst.TITLE));
 
                             List<String> sCmds = new ArrayList<String>();
                             sCmds.add(id);

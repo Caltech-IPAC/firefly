@@ -30,11 +30,11 @@ import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.background.BackgroundManager;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.util.PropConst;
 import edu.caltech.ipac.firefly.util.PropertyChangeEvent;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebProp;
+import edu.caltech.ipac.util.action.ActionConst;
 
 import java.util.Map;
 
@@ -144,9 +144,9 @@ public class MenuGeneratorV2 {
     private void setUIAttributes(MenuItemAttrib uia, String commandName) {
         WebAppProperties prop= Application.getInstance().getProperties();
 
-        uia.setName(WebProp.getName(commandName, commandName, null));
+        uia.setName(WebProp.getName(commandName, commandName));
         uia.setLabel(WebProp.getTitle(commandName));
-        uia.setShortDesc(prop.getProperty(commandName + "." + PropConst.SHORT_DESCRIPTION));
+        uia.setShortDesc(prop.getProperty(commandName + "." + ActionConst.SHORT_DESCRIPTION));
         uia.setIcon(prop.getProperty(commandName + ".Icon"));
 
         String bt= prop.getProperty(commandName + ".ToolbarButtonType","NONE");

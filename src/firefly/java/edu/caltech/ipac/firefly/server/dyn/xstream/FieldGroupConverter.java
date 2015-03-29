@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.server.dyn.DynServerData;
 import edu.caltech.ipac.firefly.server.dyn.DynServerUtils;
 import edu.caltech.ipac.util.dd.MappedFieldDefSource;
 import edu.caltech.ipac.util.action.ActionConst;
-import edu.caltech.ipac.firefly.util.PropConst;
 
 public class FieldGroupConverter implements Converter {
 
@@ -135,14 +134,14 @@ public class FieldGroupConverter implements Converter {
 
                 // hidden field
                 if (childName.equalsIgnoreCase("HIDDEN")) {
-                    fd.set(PropConst.MASK, "[HIDDEN]");
+                    fd.set(ActionConst.MASK, "[HIDDEN]");
                 }
 
                 // orientation attribute
                 if (childName.equalsIgnoreCase("EnumString")) {
                     String orient = reader.getAttribute("orientation");
                     if (orient != null) {
-                        fd.set(PropConst.ORIENTATION, orient);
+                        fd.set(ActionConst.ORIENTATION, orient);
                     }
                 }
 
@@ -150,7 +149,7 @@ public class FieldGroupConverter implements Converter {
                 if (childName.equalsIgnoreCase("Double") || childName.equalsIgnoreCase("Float")) {
                     String sciAllowed = reader.getAttribute("scientificAllowed");
                     if (sciAllowed != null) {
-                        fd.set(PropConst.SCIENTIFIC_ALLOWED, sciAllowed);
+                        fd.set(ActionConst.SCIENTIFIC_ALLOWED, sciAllowed);
                     }
                 }
 
@@ -158,7 +157,7 @@ public class FieldGroupConverter implements Converter {
                 if (childName.equalsIgnoreCase("Double") || childName.equalsIgnoreCase("Float") || childName.equalsIgnoreCase("Date")) {
                     String minBound = reader.getAttribute("minBoundType");
                     if (minBound != null) {
-                        fd.set(PropConst.MIN_BOUND_TYPE, minBound);
+                        fd.set(ActionConst.MIN_BOUND_TYPE, minBound);
                     }
                 }
 
@@ -166,7 +165,7 @@ public class FieldGroupConverter implements Converter {
                 if (childName.equalsIgnoreCase("Double") || childName.equalsIgnoreCase("Float") || childName.equalsIgnoreCase("Date")) {
                     String maxBound = reader.getAttribute("maxBoundType");
                     if (maxBound != null) {
-                        fd.set(PropConst.MAX_BOUND_TYPE, maxBound);
+                        fd.set(ActionConst.MAX_BOUND_TYPE, maxBound);
                     }
                 }
 
@@ -174,7 +173,7 @@ public class FieldGroupConverter implements Converter {
                 if (childName.equalsIgnoreCase("DEGREE")) {
                     String units = reader.getAttribute("units");
                     if (units != null) {
-                        fd.set(PropConst.UNITS, units);
+                        fd.set(ActionConst.UNITS, units);
                     }
                 }
 
@@ -234,22 +233,22 @@ public class FieldGroupConverter implements Converter {
                         }
 
                         // set item title
-                        fd.set(itemId + "." + PropConst.TITLE, itemTitle);
+                        fd.set(itemId + "." + ActionConst.TITLE, itemTitle);
 
                         // set item description (optional)
                         if (itemDesc != null) {
-                            fd.set(itemId + "." + PropConst.SHORT_DESCRIPTION, itemDesc);
+                            fd.set(itemId + "." + ActionConst.SHORT_DESCRIPTION, itemDesc);
                         }
 
                         // set item intValue (optional)
                         if (itemIntVal != null) {
-                            fd.set(itemId + "." + PropConst.INT_VALUE, itemIntVal);
+                            fd.set(itemId + "." + ActionConst.INT_VALUE, itemIntVal);
                         }
 
                     } else if (elemName.equalsIgnoreCase("ValidateMask")) {
                         String validateMask = reader.getValue();
                         if (validateMask.length() > 0) {
-                            fd.set(PropConst.PATTERN, validateMask);
+                            fd.set(ActionConst.PATTERN, validateMask);
                         }
                     } else {
                         // all other cases
@@ -262,13 +261,13 @@ public class FieldGroupConverter implements Converter {
 
                 // set pattern, if available
                 if (formatValue.length() > 0) {
-                    fd.set(PropConst.PATTERN, formatValue);
+                    fd.set(ActionConst.PATTERN, formatValue);
                 }
 
 
                 // set items, if available
                 if (itemList.length() > 0) {
-                    fd.set(PropConst.ITEMS, itemList);
+                    fd.set(ActionConst.ITEMS, itemList);
                 }
 
 

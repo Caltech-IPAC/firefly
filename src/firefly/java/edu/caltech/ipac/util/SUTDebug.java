@@ -8,14 +8,11 @@ package edu.caltech.ipac.util;
  * 
  * @author Booth Hartley
  */
-public final class SUTDebug
-{
-
+public final class SUTDebug {
     /**
      * flag which determines whether debug messages should be emitted
      */
-    private static boolean DEBUG = false;
-    
+    private static final boolean DEBUG = false;
 
     /**
      * check flag which determines whether debug messages should be emitted
@@ -23,15 +20,4 @@ public final class SUTDebug
     public static boolean isDebug() {
 	return DEBUG;
     }
-    
-
-    /**
-     * set flag which determines whether debug messages should be emitted
-     */
-    public static void setDebug(boolean b) {
-	DEBUG = b;
-    }
-    
-
-
 }

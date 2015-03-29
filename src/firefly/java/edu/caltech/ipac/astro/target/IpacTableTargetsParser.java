@@ -93,6 +93,7 @@ public class IpacTableTargetsParser {
             }
         }
 
+
         if (errorsFound > 0) {
             throw new Exception(errorBuffer.toString());
         }
@@ -134,104 +135,4 @@ public class IpacTableTargetsParser {
     private static boolean isAnAttribute(String s) {
         return s.indexOf(ATTRIB_SEP) > 0;
     }
-    /*
-    private static String OBJ_NAME = "OBJ_NAME";
-    private static String RA = "RA";
-    private static String DEC = "DEC";
-    private static String PM_RA = "PM-RA";
-    private static String PM_DEC = "PM-DEC";
-    private static String EPOCH = "EPOCH";
-    private static String RESOLVER_KEY = "RESOLVER";
-
-    public void parseTargets(DataGroup dg, TargetList targets)
-        throws TargetParseException{
-        TargetFixedSingle target;
-        PositionJ2000 tgtPosition;
-        UserPosition userPosition;
-        CoordinateSys coordSys = CoordinateSys.EQ_J2000;
-        boolean correctFloatFormat;
-        Float fl;
-        float lonpm = 0.0F, latpm = 0.0F;
-        float epoch = 2000.0F;
-        ProperMotion pm = null;
-        int line=1;
-
-        _errorsFound = 0;
-        _errorBuffer = new StringBuffer();
-        _coord_system = CoordinateSys.EQUATORIAL_NAME;
-        _equinox = "J2000";
-        _resolver = SIMBAD_RESOLVER;
-
-        for (DataObject o: dg.values()) {
-            try {
-                target = new TargetFixedSingle();
-
-                if (hasVaildData(OBJ_NAME, dg, o))
-                    target.setName(getValidString(o, OBJ_NAME));
-
-                coordSys = TargetUtil.makeCoordSys(_coord_system, _equinox);
-                correctFloatFormat = true;
-                fl = null;
-
-                if (hasVaildData(EPOCH, dg, o)) {
-                    try {
-                        fl = new Float(getValidString(o, PM_RA));
-                    } catch (Exception nfe) {
-                        correctFloatFormat = false;
-                    }
-                }
-
-                if (correctFloatFormat && hasVaildData(EPOCH, dg, o) &&  (fl.floatValue() > 1899)) {
-                    epoch = fl.floatValue();
-                } else {
-                    if ( hasVaildData(PM_RA, dg, o) && hasVaildData(PM_DEC, dg, o) ) {
-                        lonpm = Float.parseFloat(getValidString(o, PM_RA));
-                        latpm = Float.parseFloat(getValidString(o, PM_DEC));
-                        pm = new ProperMotion(lonpm, latpm);
-                    }
-                    if (hasVaildData(EPOCH, dg, o)) {
-                        try {
-                            epoch = new Float(getValidString(o, EPOCH));
-                        } catch (Exception nfe) {
-                            correctFloatFormat = false;
-                            epoch = 2000.0F;
-                        }
-                    }
-                }
-
-                if (hasVaildData(OBJ_NAME, dg, o) && !hasVaildData(DEC, dg, o)) {
-                    String resolveType = _resolver;
-                    if (hasVaildData(RESOLVER_KEY, dg, o)) resolveType = (getValidString(o, RESOLVER_KEY));
-                    PositionAttributePair pap = resolveName(getValidString(o, OBJ_NAME), resolveType);
-                    tgtPosition = pap.position;
-                    if (getAttributesHandler() != null) {
-                        getAttributesHandler().setResolvedAttributes(target, pap.attribute);
-                    }
-                } else {
-                    userPosition = new UserPosition(getValidString(o, RA), getValidString(o, DEC), pm, coordSys, epoch);
-                    tgtPosition = new PositionJ2000(userPosition);
-                }
-                target.setPosition(tgtPosition);
-                targets.addTarget(target);
-            } catch (Exception e) {
-                String stack="";
-                for (StackTraceElement ste: e.getStackTrace()) {
-                    stack += (ste.toString()+LINE_FEED);
-                }
-                _errorBuffer.append("-Line number " + line +
-                LINE_FEED + "- stack: " +
-                stack + LINE_FEED + LINE_FEED);
-                _errorsFound++;
-            }
-            line++;
-        }
-
-        if (_errorsFound > 0) {
-            throw new TargetParseException(_errorBuffer.toString());
-        }
-    }
-
-
-    * */
 }
-

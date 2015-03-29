@@ -50,41 +50,14 @@ public class VectorObject implements ShapeObject {
         }
     }
 
-    public VectorObject(LineShape line, ImagePt pts[]) {
-        _line= line;
-        _pts  = new FixedObjectGroup(false);
-        for(int i= 0; (i < pts.length); i++ ) {
-            _pts.add( _pts.makeFixedObject(pts[i]) );
-        }
-    }
-
-    public VectorObject(LineShape line, FixedObjectGroup foGroup) {
-        _line= line;
-        _pts = foGroup;
-    }
-
     public VectorObject(WorldPt pts[]) {
         this(new LineShape(), pts);
-    }
-
-    public VectorObject(ImagePt pts[]) {
-        this(new LineShape(), pts);
-    }
-
-    public VectorObject(FixedObjectGroup foGroup) {
-        this(new LineShape(), foGroup);
     }
 
     public LineShape   getLineShape()   { return _line; }
     public StringShape getStringShape() { return _stringShape; }
 
 
-    public void setLabelStrings(String strs[]) {
-        _labelStrings= new String[strs.length];
-        for (int i=0; (i<_labelStrings.length); i++)
-            _labelStrings[i]= strs[i];
-        doRepair();
-    }
 
     public void setEnabled(boolean show){
         _show= show;
@@ -92,8 +65,6 @@ public class VectorObject implements ShapeObject {
     }
 
     public boolean  isEnabled()             { return _show;}
-
-    public void setLineType(LineShape line) { _line= line; }
 
     public void drawOnPlot(Plot p, Graphics2D g2) {
         if (_show) {
@@ -152,7 +123,7 @@ public class VectorObject implements ShapeObject {
                     imageOldpts= pInfo.convert(oldpts);
                 }
                 else {
-                    imageOldpts= pInfo.convert((ImagePt[])oldpts);
+                    imageOldpts= pInfo.convert(oldpts);
                 }
                 rTmp= _line.computeRepair(trans, imageOldpts);
                 rNew= SwingUtilities.computeUnion( (int)rTmp.getX(),
@@ -210,11 +181,6 @@ public class VectorObject implements ShapeObject {
         }
     }
 
-    private void doRepair() {
-        for(Plot p: _plotMap.keySet()) {
-            p.repair();
-        }
-    }
 
     public void addPlotView(PlotContainer container) {
         for(Plot p : container) addPlot(p);
@@ -253,15 +219,6 @@ public class VectorObject implements ShapeObject {
         return fo.getPosition();
     }
 
-
-    public ImagePt getImagePt(int i) {
-        Assert.argTst(!_pts.isWorldCoordSys(),"This Vector Object does not " +
-                               "support Image coordinates, " +
-                               "you must constuct the vector with image " +
-                               "coordinates to use this method.");
-        FixedObject fo= _pts.get(i);
-        return fo.getImagePt();
-    }
 
     public void set(int idx, ImagePt pt) {
         setPoint(idx,pt);
@@ -508,7 +465,7 @@ public class VectorObject implements ShapeObject {
                     if (fo.isWorldCoordSys()) {
                         current= fo.getPosition();
                         ImageWorkSpacePt ipt= _plot.getImageCoords((WorldPt)current);
-			pt = new ImagePt(ipt.getX(), ipt.getY());
+                        pt = new ImagePt(ipt.getX(), ipt.getY());
                         coordsWrap=
                            (last!=null && _plot.coordsWrap((WorldPt) last, (WorldPt) current));
                     }

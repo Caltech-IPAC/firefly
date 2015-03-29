@@ -8,7 +8,6 @@ import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 /**
  * User: roby
@@ -158,16 +157,6 @@ public class WebEventManager {
             }
         }
         for(EvListenerContainer lc : toDel) _evListeners.remove(lc);
-    }
-
-
-    public synchronized void purgeSource(Object source) {
-        for(Iterator<EvListenerContainer> i= _evListeners.iterator(); i.hasNext();) {
-            if (i.next().getSource()==source) i.remove();
-        }
-        for(Iterator<EvListenerContainer> i= _vetoEvListeners.iterator(); i.hasNext();) {
-            if (i.next().getSource()==source) i.remove();
-        }
     }
 
 

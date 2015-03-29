@@ -103,11 +103,6 @@ public abstract class ZoomCmd extends BaseGroupVisCmd {
         return retval;
     }
 
-
-
-    @Override
-    public boolean isIE6IconBundleSafe() { return true; }
-
     @Override
     protected abstract Image createCmdImage();
 

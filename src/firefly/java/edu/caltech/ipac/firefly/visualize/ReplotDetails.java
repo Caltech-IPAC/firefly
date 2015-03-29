@@ -10,7 +10,6 @@ package edu.caltech.ipac.firefly.visualize;
  */
 public class ReplotDetails {
 
-
     public enum Reason {ZOOM,ZOOM_COMPLETED, STRETCH, BAND_ADDED, BAND_REMOVED, BAND_SHOWING,
                         BAND_HIDDEN, PLOT_ADDED, PLOT_REMOVED, IMAGE_RELOADED,
                         COLOR_CHANGE, REPARENT, UNKNOWN }
@@ -20,16 +19,6 @@ public class ReplotDetails {
     private final Band _colorBand;
     private final Reason _reason;
 
-
-    /**
-     * Create a new ReplotDetails class
-     * @param plotGroup source of the event.
-     * @param plot the plot added or removed
-     * @param reason the Reason enum
-     */
-    public ReplotDetails(WebPlotGroup plotGroup, WebPlot plot, Reason reason) {
-        this(plotGroup, plot, reason, Band.NO_BAND);
-    }
     /**
      * Create a new ReplotDetails class
      * @param plotGroup source of the event.

@@ -13,7 +13,7 @@ import java.util.StringTokenizer;
  * A class with static methods that do operations on Strings.
  * @author Trey Roby Xiuqin Wu
  */
-public class StringUtil {
+public class ServerStringUtil {
 
    /**
     * Parse a string into an array of strings.  If the string contains quotes
@@ -62,39 +62,6 @@ public class StringUtil {
        return tokens.toArray(new String[tokens.size()]);
    }
 
-   /**
-    * removes extra spaces from a string.
-    * <ul><li><code>" bbb    ccc  ddd"</code></li></ul>
-    * should become:
-    * <ul><li><code>aaa "bbb ccc ddd" eee</code></li></ul>
-    */
-    public static String crunch (String s) {
-        if (s != null)
-        {
-            int counter = 0;
-            StringTokenizer st = new StringTokenizer(s);
-            StringBuffer sb = new StringBuffer();
-            String token = "";
-            while (st.hasMoreTokens()){
-                token = st.nextToken();
-                if (token.trim().length() > 0){//if there is something to write
-                    if (counter > 0)
-                    {
-                        sb.append(" ");
-                        sb.append(token);
-                    }
-                    else if  (counter == 0){
-                        sb.append(token);
-                        counter ++;
-                    }
-                }
-            }
-            s = sb.toString();
-        }
-        return s;
-    }
-
-
 
    public static String getShortClassName(String className) {
       StringTokenizer st= new StringTokenizer(className, "."); 
@@ -107,21 +74,8 @@ public class StringUtil {
       return getShortClassName(c.getName());
    }
 
-   public static String pad(String s, int toSize) {
-      int len= s.length();
-      if (s.length() < toSize) {
-          int diffSize= toSize-len;
-          StringBuffer sb= new StringBuffer(diffSize);
-          for(int i=0; (i<diffSize); i++) sb.append(' ');
-          s= s+sb.toString();
-      }
-      return s;
-   }
-
-
     public static boolean matchesRegExpList(String s, String regExpArray[]) {
         return matchesRegExpList(s,regExpArray, false);
-
     }
 
     public static boolean matchesRegExpList(String s,

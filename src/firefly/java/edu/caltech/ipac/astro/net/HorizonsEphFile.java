@@ -6,13 +6,12 @@ package edu.caltech.ipac.astro.net;
 import edu.caltech.ipac.astro.target.Ephemeris;
 import edu.caltech.ipac.astro.target.NonStandardEphemeris;
 import edu.caltech.ipac.astro.target.StandardEphemeris;
+import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.util.SUTDebug;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,10 +30,6 @@ import java.util.Date;
  * @version $Id: HorizonsEphFile.java,v 1.8 2012/01/23 22:09:55 roby Exp $
  */
 public class HorizonsEphFile {
-
-    private static final ClassProperties _prop= new ClassProperties(
-                                                  HorizonsEphFile.class);
-    private static final String  LOAD_DESC = _prop.getName("loading");
 
     private static final String CGI_CMD= "/x/smb_spk.cgi";
 

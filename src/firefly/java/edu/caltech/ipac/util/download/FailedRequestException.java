@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.util.download;
 
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.ThrowableUtil;
 
 /**
@@ -13,18 +13,11 @@ import edu.caltech.ipac.util.ThrowableUtil;
  */
 public class FailedRequestException extends Exception {
 
-    static public final String USER_CANCELED=   "The User Canceled the Request";
-    static public final String NETWORK_DOWN=    "Network down";
-    static public final String SERVER_DOWN=     "Server Unavailable";
-    static public final String SERVER_TIMEOUT=  "Server Timed out";
     static public final String SERVICE_FAILED=  "Service Failed";
                                                  
 
-    private boolean    _isHtml =false;
     private String     _detailMessage;
     private boolean    _simple= false;
-    private Object     _extraInformation;
-    private boolean    _userShouldSeeHint= true;
     private String     _constructedThread= Thread.currentThread().getName();
 
     private static final String NL= "\n";
@@ -71,50 +64,15 @@ public class FailedRequestException extends Exception {
                                   Throwable  e) {
         super(userMessage,e);
         _detailMessage      = detailMessage;
-        _isHtml           =userMessageHtml;
     }
 
     public String     getUserMessage()       { return getMessage(); }
     public String     getDetailMessage()     { return _detailMessage; }
-    public boolean    isHtmlMessage()        { return _isHtml;            }
-    public Object     getExtraInformation()  { return _extraInformation;  }
-    
-    public boolean    isCauseUserCancel()    {
-        return USER_CANCELED.equals(getMessage());
-    }
-
-    /**
-     * This property is only a hint from the thrower to whoever is 
-     * catching this exception.
-     * It is true if this exception contains a user message that the user
-     * should see.  False is a sugestion not to show the user the 
-     * the messages from this exception.  The default is true.
-     * @return  true if use should see the message otherwise false
-     */
-    public boolean    getUserShouldSeeHint()    { return _userShouldSeeHint;  }
-
-    /**
-     * This property is only a hint from the thrower to whoever is 
-     * catching this exception.
-     * Set to true if this exception contains a user message that the user
-     * should see.  False is a sugestion not to show the user the 
-     * the messages from this exception.  The default is true.
-     * @param userShouldSeeHint true if use should see the message,
-     *                          otherwise false
-     */
-    public void setUserShouldSeeHint(boolean userShouldSeeHint) { 
-        _userShouldSeeHint= userShouldSeeHint;
-    }
-
-    public void setExtraInformation(Object extra) {
-          _extraInformation= extra;
-    }
-
 
     public String toString(){
         StackTraceElement eAry[]= getStackTrace();
         StackTraceElement ste= eAry[0];
-        String cName= StringUtil.getShortClassName(ste.getClassName());
+        String cName= ServerStringUtil.getShortClassName(ste.getClassName());
 
         String detail= "";
         String extra= "";
@@ -127,10 +85,6 @@ public class FailedRequestException extends Exception {
               detail= NL + NL +
                    "========---------- Detailed Message -----------=========" 
                     + NL +_detailMessage;
-        if (_extraInformation != null) 
-              extra= NL + NL +
-                   "========---------- Extra Information ----------========" 
-                   + NL  + _extraInformation;
         return super.toString() + detail + where + (_simple? "" : makeCausedBy()) + extra;
     }
 
@@ -142,7 +96,7 @@ public class FailedRequestException extends Exception {
        String retval= "";
        String shortName;
        for (Throwable t= getCause(); (t!=null); t= t.getCause()) {
-           shortName= StringUtil.getShortClassName(t.getClass().getName());
+           shortName= ServerStringUtil.getShortClassName(t.getClass().getName());
            retval+= NL + NL + 
                 "========---------- Caused By " + shortName + 
                 " ----------========" + NL +
@@ -159,7 +113,7 @@ public class FailedRequestException extends Exception {
 	if ((eAry != null) && (eAry.length > 0))
 	{
 	    StackTraceElement ste= eAry[0];
-	    String cName= StringUtil.getShortClassName(ste.getClassName());
+	    String cName= ServerStringUtil.getShortClassName(ste.getClassName());
 	    where = NL +
                        "Class:  " + cName                              + NL +
                        "Method: " + ste.getMethodName()                + NL +

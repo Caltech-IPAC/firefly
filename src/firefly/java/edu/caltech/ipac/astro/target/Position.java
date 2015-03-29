@@ -64,8 +64,6 @@ class Position implements Location, Serializable, Cloneable {
           coordSystem.equals(CoordinateSys.EQ_B1950) ? EPOCH1950 : EPOCH2000);
     }
 
-
-
     /**
      * a copy constructor.  Make a positon just like the one passed in
      * @param pos the position
@@ -107,10 +105,6 @@ class Position implements Location, Serializable, Cloneable {
         this.coordSystem = coordSystem;
         this.epoch = epoch;
     }
-
-
-
-
 
     /**
      * get the Lon of the Position in degrees
@@ -162,8 +156,6 @@ class Position implements Location, Serializable, Cloneable {
        if (computedLatStr ==null) {
            try {
               computedLatStr = CoordUtil.dd2sex(lat, true, coordSystem.isEquatorial(), 7);
-                      //TargetUtil.convertLatToString(lat,
-                                                            // coordSystem);
            } catch (CoordException e) {
               computedLatStr = "";
            }

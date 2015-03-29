@@ -161,12 +161,6 @@ public abstract class FlipCmd extends BaseVisCmd {
 
         }
     }
-
-
-
-    @Override
-    public boolean isIE6IconBundleSafe() { return true; }
-
     @Override
     protected abstract Image createCmdImage();
 

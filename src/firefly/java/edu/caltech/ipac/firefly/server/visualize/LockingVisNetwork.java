@@ -73,7 +73,7 @@ public class LockingVisNetwork {
                 edu.caltech.ipac.util.download.FileData fd = VisNetwork.getImage(params, dl);
                 File fitsFile = fd.getFile();
                 if (unzip) fitsFile = unzip(fitsFile);
-                retval = new FileInfo(fitsFile.getPath(), fd.getSugestedExternalName(), fitsFile.length());
+                retval = new FileInfo(fitsFile.getPath(), fd.getSuggestedExternalName(), fitsFile.length());
             }
         } finally {
             if (params != null) _activeRequest.remove(params);

@@ -4,11 +4,11 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.ClientLog;
+import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import org.apache.xmlbeans.XmlAnySimpleType;
 import org.apache.xmlbeans.XmlObject;
@@ -237,8 +237,8 @@ public class FixedObjectGroupUtils {
         for (edu.caltech.ipac.util.DataType dType : dataGroup.getDataDefinitions()) {
             Class cType = dType.getDataType();
             if (cType==String.class &&
-                    (StringUtil.matchesRegExpList(dType.getKeyName(),raField,true)  ||
-                            StringUtil.matchesRegExpList(dType.getKeyName(),decField,true)))  {
+                    (ServerStringUtil.matchesRegExpList(dType.getKeyName(), raField, true)  ||
+                            ServerStringUtil.matchesRegExpList(dType.getKeyName(), decField, true)))  {
                 dType.setDataType(null);  // set to guess type later
             }
         }

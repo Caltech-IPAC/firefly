@@ -36,13 +36,6 @@ public class CollectionUtil {
         return toString(Arrays.asList(objs));
     }
 
-//    public static String toString(Collection c, String separatedBy) {
-//        if (c != null) {
-//            return toString(c, separatedBy, null);
-//        } else  {
-//            return "";
-//        }
-//    }
 
     public static String toString(Object[] objs, String separatedBy) {
         if (objs != null) {
@@ -86,10 +79,6 @@ public class CollectionUtil {
         return c == null || c.size() == 0;
     }
 
-
-//    public static String toString(Object[] objs, String separatedBy, String frmtPattern) {
-//        return toString(Arrays.asList(objs), separatedBy, frmtPattern);
-//    }
 
     /**
      * takes an int array and returns a List of Integer backed by the array

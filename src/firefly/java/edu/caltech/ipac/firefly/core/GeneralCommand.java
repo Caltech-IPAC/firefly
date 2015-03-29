@@ -6,18 +6,16 @@ package edu.caltech.ipac.firefly.core;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
-import edu.caltech.ipac.firefly.util.PropConst;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.PropertyChangeSupport;
 import edu.caltech.ipac.firefly.util.WebProp;
+import edu.caltech.ipac.util.action.ActionConst;
 import edu.caltech.ipac.util.dd.UIAttrib;
 import edu.caltech.ipac.util.dd.UIAttributes;
 
 
 public abstract class GeneralCommand implements UIAttributes, com.google.gwt.user.client.Command {
 
-    public static final String STATUS_READY = "ready";
-    public static final String STATUS_LOADING = "loading";
     public static final String PROP_INIT = "init";
     public static final String PROP_ENABLED = "prop.enabled";
     public static final String PROP_ATTENTION = "prop.attention";
@@ -157,8 +155,6 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
         uiAttributes.setIcon(icon);
     }
 
-    public boolean isIE6IconBundleSafe() { return false; }
-
     public boolean isIconOnlyHint() {
         return iconOnlyHint;
     }
@@ -184,14 +180,6 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
     public boolean isImportant() { return important; }
 
     public Image createImage() {
-//        Image retval;
-//        if (!isIE6IconBundleSafe() && BrowserUtil.isIE() && BrowserUtil.getMajorVersion()<=6) {
-//            retval= new Image(getIcon());
-//        }
-//        else {
-//            retval= createCmdImage();
-//        }
-//        return retval;
         return createCmdImage();
     }
 
@@ -286,7 +274,7 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
         boolean important=WebProp.isImportant(command,false);
         setImportant(important);
 
-        if (iconProp==null) iconProp= command + "." + PropConst.ICON;
+        if (iconProp==null) iconProp= command + "." + ActionConst.ICON;
         setIconProperty(iconProp);
 
     }

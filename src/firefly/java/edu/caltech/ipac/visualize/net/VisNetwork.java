@@ -171,7 +171,7 @@ public class VisNetwork {
                     FileUtil.writeStringToFile(fd.getFile(),"placeholder for uncompress file: " +
                                                             uncompFileName.getPath());
                     saveKey= params.getUncompressedKey();
-                    fd= new FileData(uncompFileName,fd.getSugestedExternalName()); // modify the results with the uncompressed file
+                    fd= new FileData(uncompFileName,fd.getSuggestedExternalName()); // modify the results with the uncompressed file
                 }
             }
             if (fd.isDownloaded() || retval==null) {

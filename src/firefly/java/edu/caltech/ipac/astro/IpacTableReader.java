@@ -9,7 +9,7 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.action.ActionConst;
 import edu.caltech.ipac.util.action.ClassProperties;
 
@@ -511,7 +511,7 @@ public final class IpacTableReader {
        for (int i=0; i<cols; i++) {
            itc = columnsDesc.get(i);
            if (_onlyColumns==null ||
-               StringUtil.matchesRegExpList(itc._name,_onlyColumns)) {
+               ServerStringUtil.matchesRegExpList(itc._name, _onlyColumns)) {
                itc._useColumn= true;
                colKey = itc._name;
                String propName= _prop.makeBase(itc._name) + "." +
@@ -519,16 +519,16 @@ public final class IpacTableReader {
                colName= AppProperties.getProperty(propName,itc._name);
 
                if (itc._type!=null &&
-                   StringUtil.matchesRegExpList(itc._type, DOUBLE_TYPE, true)) {
+                   ServerStringUtil.matchesRegExpList(itc._type, DOUBLE_TYPE, true)) {
                    itc._foundType= _useFloatsForDoubles ?
                                           Float.class : Double.class;
                     }
                else  if (itc._type!=null &&
-                     StringUtil.matchesRegExpList(itc._type, INT_TYPE, true)) {
+                     ServerStringUtil.matchesRegExpList(itc._type, INT_TYPE, true)) {
                    itc._foundType= Integer.class;
                }
                else  if (itc._type!=null &&
-                     StringUtil.matchesRegExpList(itc._type, LONG_TYPE, true)) {
+                     ServerStringUtil.matchesRegExpList(itc._type, LONG_TYPE, true)) {
                    itc._foundType= Long.class;
                }
                else {
@@ -628,7 +628,7 @@ public final class IpacTableReader {
 
     public static String guessFormatStr(DataType type, String val) {
         if (type.getTypeDesc() != null &&
-                StringUtil.matchesRegExpList(type.getTypeDesc(), STRING_TYPE, true)) {
+                ServerStringUtil.matchesRegExpList(type.getTypeDesc(), STRING_TYPE, true)) {
             return "%s";
         } else {
             return guessFormatStr(val, type.getDataType());
@@ -680,18 +680,18 @@ public final class IpacTableReader {
         if ( type == null ) {
             return false;
         }
-        return StringUtil.matchesRegExpList(type, DOUBLE_TYPE, true) ||
-                StringUtil.matchesRegExpList(type, INT_TYPE, true) ||
-                StringUtil.matchesRegExpList(type, LONG_TYPE, true) ||
-                StringUtil.matchesRegExpList(type, STRING_TYPE, true);
+        return ServerStringUtil.matchesRegExpList(type, DOUBLE_TYPE, true) ||
+                ServerStringUtil.matchesRegExpList(type, INT_TYPE, true) ||
+                ServerStringUtil.matchesRegExpList(type, LONG_TYPE, true) ||
+                ServerStringUtil.matchesRegExpList(type, STRING_TYPE, true);
     }
 
     public static Class resolveClass(String type) {
-        if ( StringUtil.matchesRegExpList(type, DOUBLE_TYPE, true) ) {
+        if ( ServerStringUtil.matchesRegExpList(type, DOUBLE_TYPE, true) ) {
             return Double.class;
-        } else if ( StringUtil.matchesRegExpList(type, INT_TYPE, true) ) {
+        } else if ( ServerStringUtil.matchesRegExpList(type, INT_TYPE, true) ) {
             return Integer.class;
-        } else if ( StringUtil.matchesRegExpList(type, LONG_TYPE, true) ) {
+        } else if ( ServerStringUtil.matchesRegExpList(type, LONG_TYPE, true) ) {
             return Long.class;
         }
         return String.class;

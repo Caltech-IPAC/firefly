@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -564,7 +563,7 @@ public class VisContext {
                       "    "+VIS_SEARCH_PATH+"=/my/directory:/another/dir:/a/b/c:/local/fits/files");
         }
         else {
-            path= StringUtil.crunch(path);
+            path= StringUtils.crunch(path);
             String sep= System.getProperty("path.separator");
             String pathAry[]= path.split(sep);
             _visSearchPath= new File[pathAry.length];
@@ -591,8 +590,8 @@ public class VisContext {
             Cache objCache= CacheManager.getCache(Cache.TYPE_PERM_LARGE);
             Cache fileCache=  CacheManager.getCache(Cache.TYPE_PERM_FILE);
 
-            AppProperties.setServerMode(true);
-            CacheHelper.setServerMode(true);
+//            AppProperties.setServerMode(true);
+//            CacheHelper.setServerMode(true);
             CacheHelper.setFileCache(fileCache);
             CacheHelper.setObjectCache(objCache);
             CacheHelper.setCacheDir(cacheDir);

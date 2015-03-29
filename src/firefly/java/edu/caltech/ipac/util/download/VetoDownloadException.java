@@ -13,9 +13,7 @@ public class VetoDownloadException extends Exception {
      * Create a new VetoDownload Exception.
      * @param mess the error message.
      */
-    public VetoDownloadException(String mess) {
-        super(mess); 
-    }
+    public VetoDownloadException(String mess) { super(mess);  }
 }
 
 

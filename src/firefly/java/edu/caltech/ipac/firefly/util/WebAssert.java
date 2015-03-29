@@ -42,40 +42,18 @@ public class WebAssert {
     private static final int ASSERT_TST = 406;
     private static final int PARAM_TST  = 407;
 
-    private static boolean _serverMode            = false;
-    private static boolean _serverModeEnableAssert= true;
-
-    private static String PAD_STR= 
+    private static final String PAD_STR=
       "                                                                  !!";
-    private static String START_STR= 
+    private static final String START_STR=
       "!!____________________________________________!!";
-    private static String END_STR= 
+    private static final String END_STR=
       "!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!";
-    private static String ST_STR= 
-      "!!--Stack Trace Follows ----------------------!!";
-    private static String LINE_STR= 
-      "!!--------------------------------------------!!";
-                                     
-    /** 
-     * if SOS_ROOT is defined the go to server mode automaticly
-     */
-    static {
-//       final String SOS_ROOT = System.getProperty("SOS_ROOT", "");
-//       if(!SOS_ROOT.equals("")) {
-//            setServerMode(true);
-//       }
-    }
 
     public static void fail(String msg) {
-
-          doFail(msg, false, ASSERT_TST);
-
-       
+          doFail(msg, ASSERT_TST);
     }
 
-    private static void doFail(String  msg, 
-                               boolean exitOnFail,
-                               int     typeOfTest) {
+    private static void doFail(String  msg,  int typeOfTest) {
        RuntimeException t= null;
 
 
@@ -86,29 +64,12 @@ public class WebAssert {
           t= new IllegalArgumentException(msg);
        }
        else {
-//           System.out.println("Assert.doFail: this should never happen");
-//           System.exit(1);
        }
 
-//       StackTraceElement ste= ThrowableUtil.getWhoCalled(Assert.class);
-//       StackTraceElement sAry[]=
-//                      ThrowableUtil.getStackTraceForWhoCalled(Assert.class);
         StackTraceElement steAry[]= t.getStackTrace();
         StackTraceElement ste= steAry[3];
-//        String thisClassName= StringUtils.getShortClassName(WebAssert.class);
-//
-//        for(int i=0; i<steAry.length; i++) {
-//            if (thisClassName.equals(StringUtils.getShortClassName(steAry[i].getClassName()))) {
-//                break;
-//            }
-//            else {
-//                ste= steAry[i];
-//            }
-//        }
         showMessage(msg,typeOfTest,ste);
         GwtUtil.logToServer(Level.INFO, msg,t);
-
-//       if (sAry!= null) t.setStackTrace(sAry);
 
        if(typeOfTest==ASSERT_TST) {
             t.printStackTrace();
@@ -133,8 +94,6 @@ public class WebAssert {
             mType= "!!                    Parameter mismatch!";
         }
         else {
-//            System.out.println("Assert.showMessage: this should never happen");
-            //System.exit(1);
         }
         String cName= ste.getClassName();
         sb.append(START_STR).append("\n");
@@ -226,7 +185,7 @@ public class WebAssert {
      */
     public static void argTst(boolean b, String msg)
                                   throws IllegalArgumentException {
-        if (!b) doFail(msg, false, PARAM_TST);
+        if (!b) doFail(msg, PARAM_TST);
     }
 
     /**
@@ -265,19 +224,6 @@ public class WebAssert {
     public static void stop() {
         fail(null);
     }
-
-    /**
-     * Call this method if you want to put the Assert class in server mode.
-     * In server mode the behavior is less drastic when an assert fails.
-     * The <code>Assert.exitOnFail</code> property defaults to false.
-     * ... and it does whatever else joe wants...
-     */
-//    public static void setServerMode(boolean serverMode) {
-//        _serverMode= serverMode;
-//        _serverModeEnableAssert= Boolean.getBoolean("ENABLE_ASSERT");
-//    }
-
-
 
    private static String pad(String s) {
       return putInto(PAD_STR, s);

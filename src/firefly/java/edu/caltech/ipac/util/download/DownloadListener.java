@@ -6,7 +6,7 @@ package edu.caltech.ipac.util.download;
 import java.util.EventListener;
 
 /**
- * A listener that is called durring a download with status
+ * A listener that is called during a download with status
  * @author Trey Roby
  */
 public interface DownloadListener extends EventListener {

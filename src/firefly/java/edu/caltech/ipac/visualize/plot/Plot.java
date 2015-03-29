@@ -5,19 +5,17 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
-import edu.caltech.ipac.astro.target.DatedPosition;
 
-import java.awt.Rectangle;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * This class is the abstract base class for all plots.  Almost all classes that
@@ -47,18 +45,6 @@ public abstract class Plot implements PlotPaintListener {
      * used for the zoom call.  the call will zoom down.
      */
     public static final int DOWN = 2;
-
-
-//    public static final String MOVING_TARGET_CTX_ATTR= "MOVING_TARGET_CTX_ATTR";
-//    public static final String SUGESTED_NAME_ATTR= "SUGESTED_NAME_ATTR";
-//    public static final String PLOTTED_FILE_PATH= "PLOTTED_FILE_PATH";
-//    public static final String MOUSE_READOUT_HINTS_ATTR= "MOUSE_READOUT_HINTS_ATTR";
-//    public static final String REQ_RADIUS_ARCSEC_ATTR= "REQ_RADIUS_ARCSEC_ATTR";
-//    public static final String REQ_WIDTH_ARCSEC_ATTR= "REQ_WIDTH_ARCSEC_ATTR";
-//    public static final String REQ_HEIGHT_ARCSEC_ATTR= "REQ_HEIGHT_ARCSEC_ATTR";
-//    public static final String READOUT_ATTR= "READOUT_ATTR";
-//    public static final String DISABLE_OVERLAYS_ATTR= "DISABLE_OVERLAYS_ATTR";
-
 
     private   List<NewPlotNotificationListener> _plotStatus      =
                                       new ArrayList<NewPlotNotificationListener>(4);
@@ -163,8 +149,6 @@ public abstract class Plot implements PlotPaintListener {
      * @return boolean true if it is in the boundaries, false if not.
      */
     public abstract boolean pointInPlot(ImageWorkSpacePt pt);
-
-
 
     /**
      * get the coordinate system of the plot.
@@ -702,53 +686,5 @@ public abstract class Plot implements PlotPaintListener {
             listener.newPlot(e);
         }
    }
-
-
-
-
-   // ===================================================================
-   // ------------------ Public Inner Classes  --------------------------
-   // ===================================================================
-
-    /**
-     * This class contains information about the moving target this plot
-     * was created for.
-     */
-    public static class MovingTargetContext {
-        private Date          _centerDate= null;
-        private List<Integer> _naifIDs   = new ArrayList<Integer>(2);
-        private DatedPosition _datedPos[]= null;
-
-        public MovingTargetContext(Date centerDate, DatedPosition datedPos[]) {
-            _centerDate= centerDate;
-            _datedPos= datedPos;
-        }
-
-        public MovingTargetContext(Date           centerDate,
-                                   DatedPosition  datedPos[],
-                                   int            naifID) {
-            this(centerDate, datedPos);
-            addNaifID(naifID);
-        }
-
-        public DatedPosition [] getDatedPositionArray()  { return _datedPos; }
-
-        public Date getCenterDate()  { return _centerDate; }
-
-        public void  addNaifID(int naifID) {
-            _naifIDs.add( naifID );
-        }
-
-        public void  removeNaifID(int naifID) {
-            int idx= _naifIDs.indexOf(naifID);
-            if (idx>-1)  _naifIDs.remove( idx);
-        }
-
-        public boolean isNaifOnPlot(int naifID)  {
-            return _naifIDs.contains( naifID );
-        }
-
-        public int getNaifCount() { return _naifIDs.size(); }
-    }
 
 }

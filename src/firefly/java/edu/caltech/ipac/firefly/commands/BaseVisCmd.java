@@ -11,21 +11,19 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 
 
 public abstract class BaseVisCmd extends GeneralCommand {
-    private final WebPlotView _plotView;
+    private final WebPlotView plotView;
 
     public BaseVisCmd(String commandName, WebPlotView plotView) {
         super(commandName);
-        _plotView= plotView;
+        this.plotView = plotView;
         plotViewListener();
         setEnabled(computeEnabled());
     }
 
-
-    public WebPlotView getPlotView() { return _plotView; }
+    public WebPlotView getPlotView() { return plotView; }
 
 
     protected boolean computeEnabled() {
-        //return (_plotView.size() > 0);
         WebPlot plot= getPlotView().getPrimaryPlot();
         boolean retval= false;
         if (plot!=null) {
@@ -35,7 +33,7 @@ public abstract class BaseVisCmd extends GeneralCommand {
     }
 
     private void plotViewListener() {
-        _plotView.addListener(new WebEventListener() {
+        plotView.addListener(new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 setEnabled(computeEnabled());
             }
@@ -43,7 +41,5 @@ public abstract class BaseVisCmd extends GeneralCommand {
     }
 
     @Override
-    public boolean hasIcon() {
-        return true;
-    }
+    public boolean hasIcon() { return true; }
 }

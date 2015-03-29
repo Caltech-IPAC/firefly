@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
 import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
 import edu.caltech.ipac.firefly.commands.CropCmd;
 import edu.caltech.ipac.firefly.commands.DataFilterInCmd;
-import edu.caltech.ipac.firefly.commands.DataFilterOutCmd;
 import edu.caltech.ipac.firefly.commands.DataSelectCmd;
 import edu.caltech.ipac.firefly.commands.DataUnSelectCmd;
 import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
@@ -562,8 +561,6 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
-//    boolean isFullControl() { return _allMpwList.size()>0 ? _allMpwList.get(0).isFullControl() : false; }
-
     public void updateUISelectedLook() {
         for (MiniPlotWidget mpw : _allMpwList) {
             mpw.updateUISelectedLook();
@@ -695,7 +692,6 @@ public class AllPlots implements HasWebEventManager {
     public void setMenuBarPopupPersistent(boolean p) { getVisMenuBar().setPersistent(p); }
     public void setMenuBarMouseOverHidesReadout(boolean hides) { getVisMenuBar().setMouseOverHidesReadout(hides); }
     public Widget getMenuBarInline() { return getVisMenuBar().getInlineLayout(); }
-//    public Widget getMenuBarInlineStatusLine() { return getVisMenuBar().getInlineStatusLine(); }
     public boolean isMenuBarPopup() { return getVisMenuBar().isPopup(); }
     public boolean isMenuBarVisible() {return getVisMenuBar().isVisible();}
     public Widget getMenuBarWidget() {return getVisMenuBar().getWidget();}
@@ -949,7 +945,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(DataFilterInCmd.CommandName, new DataFilterInCmd(mpw));
         commandMap.put(DataSelectCmd.CommandName, new DataSelectCmd(mpw));
         commandMap.put(DataUnSelectCmd.CommandName, new DataUnSelectCmd(mpw));
-        commandMap.put(DataFilterOutCmd.CommandName, new DataFilterOutCmd(mpw));
+//        commandMap.put(DataFilterOutCmd.CommandName, new DataFilterOutCmd(mpw));
         commandMap.put(FlipRightCmd.CommandName,new FlipRightCmd(mpw));
         commandMap.put(FlipLeftCmd.CommandName,new FlipLeftCmd(mpw));
     }
@@ -1042,15 +1038,4 @@ public class AllPlots implements HasWebEventManager {
     private class TearDownListen implements WebEventListener {
         public void eventNotify(WebEvent ev) { tearDownPlots(); }
     }
-
-    public static native boolean isNewToolbarRunning() /*-{
-        var retval= false;
-        if ("fireflyToolbar" in $wnd) {
-            if ("running" in $wnd.fireflyToolbar) {
-                retval= true;
-            }
-        }
-        return retval;
-    }-*/;
-
 }

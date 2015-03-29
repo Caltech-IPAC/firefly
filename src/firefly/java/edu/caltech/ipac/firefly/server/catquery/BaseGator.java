@@ -118,7 +118,7 @@ public abstract class BaseGator extends DynQueryProcessor {
                     }
                 }
             }
-//            if (!StringUtil.isEmpty(DEF_GATOR_MISSION) && !request.containsParam(CatalogRequest.GATOR_MISSION))  {
+//            if (!ServerStringUtil.isEmpty(DEF_GATOR_MISSION) && !request.containsParam(CatalogRequest.GATOR_MISSION))  {
 //                req.setGatorMission(DEF_GATOR_MISSION);
 //            }
         } catch (IOException e) {

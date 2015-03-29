@@ -8,7 +8,6 @@ import edu.caltech.ipac.util.Assert;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.border.TitledBorder;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -22,13 +21,8 @@ public class ColorDisplay extends JComponent implements Icon {
 
     private IndexColorModel _model       = null;
     private Color           _colorBand   = null;
-    private boolean         _heightLocked= false;
 
     public ColorDisplay() { };
-
-    public ColorDisplay(String title) {
-       if (title != null)  setBorder( new TitledBorder(title));
-    }
 
     public void setColor(IndexColorModel model) {
        _model= model;
@@ -46,13 +40,6 @@ public class ColorDisplay extends JComponent implements Icon {
         repaint();
     }
 
-    public void clearColor() {
-        _model= null;
-        _colorBand= null;
-        repaint();
-
-    }
-
     public void paintComponent(Graphics g) {
        if (_model != null || _colorBand != null) {
            paintIcon(this,g,0,0);
@@ -63,9 +50,6 @@ public class ColorDisplay extends JComponent implements Icon {
     }
 
 
-    public void setHeightLocked(boolean heightLocked) {
-       _heightLocked= heightLocked;
-    }
 
     public Dimension getMaximumSize() {
          Dimension retval= super.getMaximumSize();
@@ -95,17 +79,8 @@ public class ColorDisplay extends JComponent implements Icon {
           float      div    = (float)width / (float)clength;
 
           g2.setStroke( new BasicStroke(1) );
-          //System.out.println("width=" + width + "    div="+ div
-          //                                        + "    clength="+ clength);
           for (int i=0; (i<width); i++) {
              idx= (int)(i/div);
-             //System.out.println("width=" + width + "    idx="+ idx
-             //                                    + "    i="+ i
-             //                                    + "    div="+ div
-             //                                    + "    clength="+ clength);
-//             g2.setPaint( new Color(_model.getRed(idx),
-//                                    _model.getGreen(idx),
-//                                    _model.getBlue(idx) ) );
              g2.setPaint( determinePaint(idx));
              g2.drawLine(x+i+insets.left, y+insets.top,
                          x+i+insets.left, y+insets.top+height);

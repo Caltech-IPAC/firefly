@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.MaskPane;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
-import edu.caltech.ipac.firefly.util.PropConst;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
@@ -24,6 +23,7 @@ import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.action.ActionConst;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -115,9 +115,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("issa.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
@@ -156,9 +156,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("2mass.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
@@ -194,9 +194,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("msx.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
@@ -232,9 +232,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("dss.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
@@ -272,9 +272,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("sdss.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 
@@ -315,9 +315,9 @@ public class ImageSelectDialogTypes {
 
         public void updateSizeArea() {
             WebAppProperties webProp = Application.getInstance().getProperties();
-            double minDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.MIN), 0);
-            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.MAX), 0);
-            double defDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + PropConst.DEFAULT), 0);
+            double minDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + ActionConst.MIN), 0);
+            double maxDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + ActionConst.MAX), 0);
+            double defDeg = webProp.getDoubleProperty(_prop.makeBase("wise.size." + ActionConst.DEFAULT), 0);
             imageSelectAccess.updateSizeIfChange(minDeg, maxDeg, defDeg);
         }
 

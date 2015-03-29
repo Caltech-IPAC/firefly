@@ -475,12 +475,11 @@ public class VisUtil {
     }
 
 
-    public static WorldPt calculatePosition(WorldPt pos1,
-                                            Offset offset) {
+    public static WorldPt calculatePosition(WorldPt pos1, double offsetRa, double offsetDec ) {
         double ra = Math.toRadians(pos1.getLon());
         double dec = Math.toRadians(pos1.getLat());
-        double de = Math.toRadians(offset.getDeltaRaV()/3600.0); // east
-        double dn = Math.toRadians(offset.getDeltaDecW())/3600.0; // north
+        double de = Math.toRadians(offsetRa/3600.0); // east
+        double dn = Math.toRadians(offsetDec)/3600.0; // north
 
         double cos_ra,sin_ra,cos_dec,sin_dec;
         double cos_de,sin_de,cos_dn,sin_dn;
@@ -542,14 +541,10 @@ public class VisUtil {
      * @return
      */
     public static Corners getCorners(WorldPt center, double radius) {
-        Offset left =  new Offset(center, +radius, 0.0);
-        Offset right = new Offset(center, -radius, 0.0);
-        Offset up =    new Offset(center, 0.0, +radius);
-        Offset down =  new Offset(center, 0.0, -radius);
-        WorldPt pos_left = calculatePosition(center, left);
-        WorldPt pos_right = calculatePosition(center, right);
-        WorldPt pos_up = calculatePosition(center, up);
-        WorldPt pos_down = calculatePosition(center, down);
+        WorldPt pos_left = calculatePosition(center, +radius, 0.0);
+        WorldPt pos_right = calculatePosition(center, -radius, 0.0);
+        WorldPt pos_up = calculatePosition(center, 0.0, +radius);
+        WorldPt pos_down = calculatePosition(center, 0.0, -radius);
         WorldPt upperLeft = new WorldPt(pos_left.getLon(), pos_up.getLat());
         WorldPt upperRight = new WorldPt(pos_right.getLon(), pos_up.getLat());
         WorldPt lowerLeft = new WorldPt(pos_left.getLon(), pos_down.getLat());

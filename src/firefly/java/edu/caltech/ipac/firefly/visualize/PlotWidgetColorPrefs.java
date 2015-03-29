@@ -40,15 +40,6 @@ public class PlotWidgetColorPrefs {
         update();
         return _pref!=null;
     }
-
-
-
-//    public float getZoomLevel() {
-//        update();
-//        checkAvailable();
-//        return _pref._zoomLevel;
-//    _zoomLevel}
-
     public RangeValues getRangeValues(Band band) {
         update();
         checkAvailable();

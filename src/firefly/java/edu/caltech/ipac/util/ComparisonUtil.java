@@ -4,7 +4,7 @@
 package edu.caltech.ipac.util;
 
 /**
- * This class handles the equal comparision of two objects of
+ * This class handles the equal comparison of two objects of
  * Object, String, float, double, etc.
  *
  * @author Michael Nguyen

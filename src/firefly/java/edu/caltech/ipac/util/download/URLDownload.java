@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.util.download;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.Base64;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -471,7 +471,7 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     ClientLog.message("Not downloading, already have current version");
-                    retval = new FileData(outfile, getSugestedFileName(urlConn), null, false);
+                    retval = new FileData(outfile, getSugestedFileName(urlConn), false);
                 }
             }
         } catch (IllegalStateException e) {
@@ -613,10 +613,10 @@ public class URLDownload {
             strList.add(url.toString());
         }
         if (postData != null) {
-            strList.add(StringUtil.pad("Post Data ", 20) + ": " + postData);
+            strList.add(StringUtils.pad(20, "Post Data ") + ": " + postData);
         }
         if (e != null) {
-            strList.add(StringUtil.pad("----------Exception ", 20));
+            strList.add(StringUtils.pad(20,"----------Exception "));
             strList.add(e.toString());
         }
         ClientLog.warning(false, strList);
@@ -647,7 +647,7 @@ public class URLDownload {
                 outStr[i++] = conn.getURL().toString();
             }
             if (postData != null) {
-                outStr[i++] = StringUtil.pad("Post Data ", 20) + ": " + postData;
+                outStr[i++] = StringUtils.pad(20,"Post Data ") + ": " + postData;
             }
             outStr[i++] = "----------Received Headers";
             if (hSet!=null) {
@@ -656,7 +656,7 @@ public class URLDownload {
                     entry = (Map.Entry) j.next();
                     key = (String) entry.getKey();
                     if (key == null) key = "<none>";
-                    workBuff.append(StringUtil.pad(key, 20));
+                    workBuff.append(StringUtils.pad(20,key));
                     workBuff.append(": ");
                     values = (List) entry.getValue();
                     for (m = 0, k = values.iterator(); (k.hasNext()); m++) {
@@ -752,10 +752,6 @@ public class URLDownload {
         return new BufferedInputStream(conn.getInputStream(), BUFFER_SIZE);
     }
 
-    private static InputStream makeErrStream(HttpURLConnection conn) throws IOException {
-        return new BufferedInputStream(conn.getErrorStream(), BUFFER_SIZE);
-    }
-
     private static File makeFile(URLConnection conn, File outfile) {
         if (outfile == null) outfile = new File(".", "out.dat");
         File retval = outfile;
@@ -765,7 +761,6 @@ public class URLDownload {
         }
         return retval;
     }
-
 
     private static File adjustExt(URLConnection conn, File originalFile) {
         File retval = originalFile;

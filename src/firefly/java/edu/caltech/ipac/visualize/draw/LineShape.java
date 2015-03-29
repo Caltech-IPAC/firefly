@@ -3,9 +3,7 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
-
 import edu.caltech.ipac.visualize.plot.ImagePt;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -15,21 +13,13 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 
-
 public class LineShape {
 
     private static Color  DEF_STANDARD_COLOR= Color.red;
     private Color _color=  DEF_STANDARD_COLOR;
     private int _lineWidth= -1;
-    private float _dash[] = null;
     public LineShape() { }
 
-    public LineShape(float dash[]) {
-        _dash = new float[dash.length];       
-        for (int i=0; i< dash.length; i++) {
-            _dash[i]=dash[i];
-        }
-    }
 
     public void setColor(Color c) { _color= c; }
 
@@ -61,14 +51,7 @@ public class LineShape {
         AffineTransform trans  = g2.getTransform();
         GeneralPath gp         = new GeneralPath();
         BasicStroke stroke     = (_lineWidth<1) ? new BasicStroke() : new BasicStroke(_lineWidth);
-        if (_dash != null) {
-            stroke = new BasicStroke(2*stroke.getLineWidth() / (float)trans.getScaleX(),
-                                    BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, _dash, 0.0f);
-
-        } else {
-            stroke = new BasicStroke( 2*stroke.getLineWidth() /
-                                    (float)trans.getScaleX() );
-        }
+        stroke = new BasicStroke( 2*stroke.getLineWidth() / (float)trans.getScaleX() );
         ImagePt pt;
         g2.setPaint(_color);
         g2.setStroke( stroke);
@@ -94,12 +77,6 @@ public class LineShape {
         g2.setTransform(savTran);
         return gp.getBounds();
     }
-
-
-    public Rectangle computeRepair(AffineTransform trans, ImagePt pts[]) {
-        return computeRepair(trans, makeEntryAry(pts));
-    }
-  
     public Rectangle computeRepair(AffineTransform trans, Entry entry[]) {
         GeneralPath gp     = new GeneralPath();
         boolean     penDown= false;

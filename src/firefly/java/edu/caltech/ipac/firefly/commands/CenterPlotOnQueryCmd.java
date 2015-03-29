@@ -11,9 +11,7 @@ import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 public class CenterPlotOnQueryCmd extends BaseGroupVisCmd {
     public static final String CommandName= "centerPlotonQuery";
 
-    public CenterPlotOnQueryCmd() {
-        super(CommandName);
-    }
+    public CenterPlotOnQueryCmd() { super(CommandName); }
 
 
     protected void doExecute() {

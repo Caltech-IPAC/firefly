@@ -12,20 +12,11 @@ package edu.caltech.ipac.util.action;
  */
 public class ActionConst {
 
-
     /**
      * specifies what the data type that is represented
      */
     public static final String DATA_TYPE = "DataType"; // the type of data
-    /**
-     * specifies that this button is the default button
-     */
-    public static final String DEFAULT_BUTTON = "DefaultButton"; // a boolean value
 
-    /**
-     *
-     */
-    public static final String ACTION_COMMAND = "ActionCommand"; // a String value
 
     /**
      * defines an accelerator in a pulldown menu
@@ -53,10 +44,6 @@ public class ActionConst {
     public static final String SELECTED = "Selected";      // a boolean value
 
     /**
-     * defines a class name
-     */
-    public static final String CLASSNAME = "ClassName";    // a class name
-    /**
      * defines a name
      */
     public static final String NAME = "Name";    // a name
@@ -71,10 +58,6 @@ public class ActionConst {
      */
     public static final String ID = "ID";    // a name
 
-    /**
-     * defines a icon - you should use ICON instead, this one will be deprecated in the future
-     */
-    public static final String SMALL_ICON = "SmallIcon";
 
     /**
      * defines a hint to only use the icon
@@ -101,76 +84,16 @@ public class ActionConst {
      */
     public static final String FILENAME = "FileName";      // a file name
     /**
-     * defines a relative path name
-     */
-    public static final String RELATIVE_PATH = "relativePath";  // a relative path
-
-    /*
-    * referres to anothter property that this file is relative to
-    */
-    public static final String RELATIVE_TO = "RelativeTo";  // another property
-
-    /**
      * specifies a list of items.
      */
     public static final String ITEMS = "Items";         // a String[]
 
-    /**
-     * Used with pulldowns to specify if this pulldown is a help pulldown
-     */
-    public static final String ISHELP = "IsHelpMenu";    // a boolean value
 
     /**
      * the integer value associated with a property. Used with radio.  A
      * radio may define a string value and a integer value.
      */
     public static final String INT_VALUE = "IntValue";      // an int value
-
-    /**
-     * Do not do any validation.  This constant disables all validation
-     */
-    public static final int NO_VALIDATION = 0;
-    /**
-     * The value must be greater than a minimum to validate.
-     */
-    public static final int MIN_VALIDATION = 1;
-    /**
-     * The value must be less than a maximum to validate.
-     */
-    public static final int MAX_VALIDATION = 2;
-    /**
-     * The value must be between a minimum and a maximum to validate.
-     */
-    public static final int RANGE_VALIDATION = 3;
-    /**
-     * The value must be between one a list of valid values
-     */
-    public static final int LIST_VALIDATION = 4;
-    /**
-     * Do not do any validation.  This constant disables all validation
-     * This string will be used in property files.
-     */
-    public static final String NO_VALIDATION_STR = "none";
-    /**
-     * The value must be greater than a minimum to validate.
-     * This string will be used in property files.
-     */
-    public static final String MIN_VALIDATION_STR = "min";
-    /**
-     * The value must be less than a maximum to validate.
-     * This string will be used in property files.
-     */
-    public static final String MAX_VALIDATION_STR = "max";
-    /**
-     * The value must be between a minimum and a maximum to validate.
-     * This string will be used in property files.
-     */
-    public static final String RANGE_VALIDATION_STR = "range";
-    /**
-     * The value must be one of a list of valid values
-     * This string will be used in property files.
-     */
-    public static final String LIST_VALIDATION_STR = "list";
 
     /**
      * The minimum value a text field may contain.
@@ -217,11 +140,6 @@ public class ActionConst {
      */
     public static final String PATTERN = "Pattern";   // a String
     /**
-     * How to display a number
-     * value is a CHAR: either I, F, E for integer, float, or exponetail
-     */
-    public static final String DISPLAY_TYPE = "DisplayType"; // a char I, F, E
-    /**
      * How to validate a field.  The value is a string.
      */
     public static final String VALIDATION = "Validation";  // a String
@@ -257,27 +175,9 @@ public class ActionConst {
     public static final String IS_EDITABLE = "IsEditable";  // a boolean
 
     /**
-     * Represent a float field that the use choose not to enter a value
-     * in the GUI.
-     */
-    public static final float FLOAT_NULL = Float.NaN;
-
-    /**
-     * Represent a int field that the use choose not to enter a value
-     * in the GUI.
-     */
-    public static final int INT_NULL = Integer.MIN_VALUE;
-
-    /**
-     * Used when a text field will support nulls.
-     */
-    public static final String NULL_STR = "null";
-
-    /**
      * Vertical or horizontal orientation
      */
     public static final String ORIENTATION = "Orient";
-
 
     /**
      * A title property
@@ -289,12 +189,10 @@ public class ActionConst {
      */
     public final static String CACHED = "Cached";
 
-
     /**
      * Defines element size
      */
     public final static String SIZE = "Size";
-
 
     /**
      * A URL property
@@ -333,40 +231,14 @@ public class ActionConst {
      */
     public final static String ERROR_DESCRIPTION_UNITS = "ErrorDescriptionUnits";
     /**
-     * A String to describe all the characters a text field may not have
-     */
-    public final static String INVALID_CHARACTERS = "InvalidCharacters";
-
-    /**
-     * A field is allowed to have multiple consecative white spaces.
-     * value is a boolean.
-     */
-    public final static String ALLOW_MULTIPLE_BLANKS = "AllowMultipleBlanks";
-
-    /**
      * A int - the number of charaters
      */
     public final static String LENGTH = "Length";
 
     /**
-     * A int - the maximum number of charaters that may be in this string
-     */
-    public final static String MAX_LENGTH = "MaxLength";
-
-    /**
-     * Font name
-     */
-    public final static String FONT = "Font";
-
-    /**
      * Font name
      */
     public final static String COLOR = "Color";
-
-    /**
-     * Enable this property with another boolean property
-     */
-    public final static String ENABLED_BY = "EnabledBy";
 
     public final static String EXTENSION = "Extension";
 
@@ -395,23 +267,8 @@ public class ActionConst {
     public static final String POS_STRING = "PositionString"; // a string that has a lon, lat a coordinate sys
     public static final String HIDDEN = "HIDDEN";
 
-
-
-            // the folowing section is data types
-    public final static String MAC_PROP = ".mac.";
-    public final static String MAC64_PROP = ".mac64.";
-    public final static String WINDOWS_PROP = ".windows.";
-    public final static String UNIX_PROP = ".unix.";
-    public final static String LINUX_PROP = ".linux.";
-    public final static String LINUX64_PROP = ".linux64.";
-    public final static String SUN_PROP = ".sun.";
-
-    public final static String INSTALL_DIR = "<INSTALLDIR>";
-    private final static String USE_OP_SEP = ":";
-    public final static String USE_OP = "USE" + USE_OP_SEP;
-
     /**
-     * This property specify the mininum boundary type.  Used for range validation.
+     * This property specify the minimum boundary type.  Used for range validation.
      * It can be either 'inclusive' or 'exclusive'.
      */
     public static final String MIN_BOUND_TYPE = "MinBoundType";

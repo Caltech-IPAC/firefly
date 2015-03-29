@@ -4,21 +4,15 @@
 package edu.caltech.ipac.util;
 
 
-import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.AccessControlException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,19 +32,13 @@ import java.util.Properties;
  *                       application properties.
  * <li>User Properties- These are properties that the user is allows to set
  *                      in a property file.
- * <li>Preference Properties- These are properties that are set for the
- *                             user from the application and saved to a
- *                             preference property file when they change.
- *                             (backing store concept).
  *
  * </ul>
  * When retrieving a property there is only two levels:
- * properties & preferences.  There are a set of getXXXProperty routines and
- * and set of getXXXPreference routines.  The getXXXProperty routines search
+ * properties & preferences.  There are a set of getXXXProperty routines.
+ * The getXXXProperty routines search
  * only System (jre defined), then Application then Class then properties
- * in that order.  The getXXXPreference routines search Preference Properties
- * and User properties and then if not result if found they continue the search
- * the same as the getXXXProperty routines.
+ * in that order.
  * The class also a many get methods for various types of properties.
  *
  * @author Trey Roby
@@ -73,63 +61,19 @@ public class AppProperties {
      */
     private final static Properties _classProperties=new Properties();
 
-    /**
-     * user properties will hold only properties that the end user sets in
-     * a user property file.  We do not write them back out as they change
-     * as we do preferences.
-     */
-    private final static Properties _userProperties=new Properties();
-    /**
-     * preference properties will hold properties that the application
-     * sets.  It may be initialized from a preference property file.
-     * It is possible (though not recommended) that the user might
-     * edit this preference property file.
-     */
-    private final static Properties _preferencesProperties=new Properties();
-
-    private static Map<String,String> _substitutionValues= null;
-
-
-
-    private static boolean serverMode= false;
-
-    //--------------------- Note --------------------
-    // the getXXXXProperty methods will query the _mainProperties,
-    // _classProperties and System properties only
-    // the getXXXXPreference methods will query the _userProperties,
-    // _preferencesProperties  and if not found query _mainProperties,
-    // _classProperties, and System properties
-
 
 
 //=========================================================================
 //------------------------ other static  variables -------------------------
 //=========================================================================
 
-    private static File                  _preferencesFile=null;
     private final static List<URL>      _loadedResources=new LinkedList<URL>();
-    private final static WeakPropertyChangeSupport _propChange=new
-                                   WeakPropertyChangeSupport();
 
-
-    /**
-     * when running in server mode certain client side features are disabled.
-     * @param mode
-     */
-    public static void setServerMode(boolean mode) { serverMode= mode; }
 
 
 //=========================================================================
 //------------------------- Float properties ------------------------------
 //=========================================================================
-  public static float getFloatPreference(String key, float def) {
-      return getFloatProp(key,def,true,null);
-  }
-  public static float getFloatPreference(String     key,
-                                         float      def,
-                                         Properties overridePDB) {
-      return getFloatProp(key,def,true,overridePDB);
-  }
 
 
   public static float getFloatProperty(String key, float def) {
@@ -169,18 +113,6 @@ public class AppProperties {
 //------------------------- Double properties ------------------------------
 //=========================================================================
 
-  public static double getDoublePreference(String key, double def) {
-      return getDoubleProp(key,def,true,null);
-  }
-  public static double getDoublePreference(String     key,
-                                           double     def,
-                                           Properties overridePDB) {
-      return getDoubleProp(key,def,true,overridePDB);
-  }
-
-  public static double getDoubleProperty(String key, double def) {
-      return getDoubleProp(key,def,false,null);
-  }
 
 
   public static double getDoubleProperty(String     key,
@@ -218,14 +150,6 @@ public class AppProperties {
 //------------------------- Long properties --------------------------------
 //=========================================================================
 
-  public static long getLongPreference(String key, long def) {
-      return getLongProp(key,def,true,null);
-  }
-  public static long getLongPreference(String     key,
-                                       long       def,
-                                       Properties overridePDB) {
-      return getLongProp(key,def,true,overridePDB);
-  }
 
   public static long getLongProperty(String key, long def) {
       return getLongProp(key,def,false,null);
@@ -267,13 +191,6 @@ public class AppProperties {
 //------------------------- Int properties --------------------------------
 //=========================================================================
 
-  public static int getIntPreference(String key, int def) {
-      return getIntProp(key,def,true,null);
-  }
-
-  public static int getIntPreference(String key, int def, Properties overPDB) {
-      return getIntProp(key,def,true,overPDB);
-  }
 
   public static int getIntProperty(String key, int def) {
       return getIntProp(key,def,false,null);
@@ -311,15 +228,6 @@ public class AppProperties {
 //=========================================================================
 //------------------------- Boolean properties -------------------------------
 //=========================================================================
-  public static boolean getBooleanPreference(String key, boolean def) {
-      return getBooleanProp(key,def,true,null);
-  }
-
-  public static boolean getBooleanPreference(String     key,
-                                             boolean    def,
-                                             Properties overridePDB) {
-      return getBooleanProp(key,def,true,overridePDB);
-  }
 
   public static boolean getBooleanProperty(String key) {
       return getBooleanProp(key,false,false,null);
@@ -360,19 +268,6 @@ public class AppProperties {
 //=========================================================================
 //------------------------- String properties -----------------------------
 //=========================================================================
-  public static String getPreference(String key) {
-      return getProp(key,null,true,null);
-  }
-
-  public static String getPreference(String key, String def) {
-      return getProp(key,def,true,null);
-  }
-
-  public static String getPreference(String     key,
-                                     String     def,
-                                     Properties overridePDB) {
-      return getProp(key,def,true,overridePDB);
-  }
 
 
   public static String getProperty(String key) {
@@ -395,7 +290,8 @@ public class AppProperties {
                                  boolean    isPref,
                                  Properties overridePDB) {
 
-        String retval= def;
+        //NOTE preference support has been removed
+//        String retval= def;
         // NOTE use of == on String instead of .equal is intentional
         //
         // if isPref is set then:
@@ -406,13 +302,13 @@ public class AppProperties {
         //        1. perfs
         //        2. user
         //        3. application (system, mainProperties, classProperties)
-        if (isPref) {
-            retval= _preferencesProperties.getProperty(key, def);
-            if (retval==def) retval= _userProperties.getProperty(key, def);
-        }
-        if (retval==def) retval= getAppProp(key,def,overridePDB);
-
-        return retval;
+//        if (isPref) {
+//            retval= _preferencesProperties.getProperty(key, def);
+//            if (retval==def) retval= _userProperties.getProperty(key, def);
+//        }
+        return getAppProp(key,def,overridePDB);
+//
+//        return retval;
     }
 
 
@@ -447,150 +343,6 @@ public class AppProperties {
   }
 
 
-//=========================================================================
-//--------------------- Preference Methods --------------------------------
-//=========================================================================
-
-  public static void setPreference(String key, String value) {
-      setPref(key,value,true);
-  }
-
-  /**
-   * Don't call this method unless you really know why you are doing it!
-   * Set a preference but don't dump all the preference to a file as
-   * we normally do. This method is designed to be called from one place-
-   * that is when a preference is set in another process and we have been
-   * informed.  In that case, the preference is already persisted.
-   * @param key the name of the preference
-   * @param value the value of the preference
-   */
-  public static void setPreferenceWithNoPersistence(String key, String value) {
-      setPref(key,value,false);
-  }
-
-  private static void setPref(String key, String value, boolean dump) {
-      String oldValue= getPreference(key, null);
-      if (oldValue==null || !ComparisonUtil.equals(oldValue,value) ) {
-          _preferencesProperties.setProperty(key, value);
-          _userProperties.setProperty(key, value);
-          if (dump) dumpPreferences();
-          _propChange.firePropertyChange(AppProperties.class, key,oldValue, value);
-      }
-  }
-
-    /**
-     * rewrite the current preference file
-     */
-  public static void dumpPreferences() {
-     try {
-          if (_preferencesFile != null) {
-             FileOutputStream fs= new FileOutputStream( _preferencesFile );
-             _preferencesProperties.store(fs,
-                                          "-------- User Preferences - Automaticly Generated -"+
-                                          " Do not Edit -------- ");
-             fs.close();
-          }
-     }
-     catch (IOException e) {
-          System.out.println("AppProperties.dumpPreference: " + e);
-     }
-  }
-
-    public static void setAndLoadPreferenceFile(File f) throws IOException {
-       _preferencesFile= f;
-       if (f.exists()) addPreferences(f);
-   }
-
-    public static void addPreferences(InputStream fs) throws IOException {
-        if (_preferencesProperties==null) {
-            return;  // if _preferencesProperties is null then most probably we are using a server (tomcat) that has
-            // done some sort of static unload during shutdown, in any normal mode of
-            // operation _preferencesProperties is never null
-        }
-        addPropertiesFromStream(fs, _preferencesProperties);
-        _userProperties.putAll(_preferencesProperties);
-    }
-
-    public static void addPreferences(File f) throws IOException {
-        addPreferences( new FileInputStream( f ));
-    }
-
-//=========================================================================
-//-------------------------------------------------------------------------
-//=========================================================================
-
-  public static void dumpUserProperties(File f) throws IOException {
-      FileOutputStream fs= null;
-      try {
-         fs= new FileOutputStream( f );
-         _userProperties.store(fs, "-------- Current User properties -------- ");
-         System.out.println("User properties written to: " + f);
-      } finally {
-         if (fs!=null) fs.close();
-      }
-  }
-
-  public static void addUserProperties(File f, boolean ignoreFileNotFound)
-                                                         throws IOException {
-      if (_userProperties==null) {
-          return;  // if _userProperties is null then most probably we are using a server (tomcat) that has
-                   // done some sort of static unload during shutdown, in any normal mode of
-                   // operation _userProperties is never null
-      }
-      try {
-         InputStream fs= new FileInputStream( f );
-         addPropertiesFromStream(fs, _userProperties);
-      } catch (FileNotFoundException e) {
-          if (!ignoreFileNotFound) throw e;
-      }
-  }
-
-  public static void addApplicationProperties(Class c, String resource)
-                                                          throws IOException {
-
-      if (_mainProperties==null) {
-          return;  // if _mainProperties is null then most probably we are using a server (tomcat) that has
-                   // done some sort of static unload during shutdown, in any normal mode of
-                   // operation _mainProperties is never null
-      }
-      Assert.argTst(c, "objClass must not be null");
-      Assert.argTst(resource, "resource must not be null");
-      URL url=c.getResource(resource);
-      if(url==null) {
-          throw new FileNotFoundException("resource: "+resource+
-                                          " could not be found");
-      }
-      if(notLoaded(url)) {
-          addPropertiesFromStream(url.openStream(), _mainProperties);
-          synchronized(_loadedResources) {
-              _loadedResources.add(url);
-          }
-      }
-  }
-
-    public static void addApplicationProperties(String resource)
-            throws IOException {
-
-        if (_mainProperties==null) {
-            return;  // if _mainProperties is null then most probably we are using a server (tomcat) that has
-            // done some sort of static unload during shutdown, in any normal mode of
-            // operation _mainProperties is never null
-        }
-        ClassLoader cl= AppProperties.class.getClassLoader();
-        URL url= (cl==null) ? ClassLoader.getSystemResource(resource) :
-                 cl.getResource(resource);
-        if(url==null) {
-            throw new FileNotFoundException("resource: "+resource+
-                                                    " could not be found");
-        }
-        if(notLoaded(url)) {
-            InputStream prop_stream=url.openStream();
-            synchronized(_loadedResources) {
-                _loadedResources.add(url);
-            }
-            addPropertiesFromStream(prop_stream, _mainProperties);
-        }
-    }
 
 
     public static void addApplicationProperties(File    f,
@@ -642,44 +394,6 @@ public class AppProperties {
     }
 
 
-
-
-  /**
-   * Load this classes class specific properties.  If this method is
-   * called multiple times it will only load the class properties the first
-   * time.  The properties are loaded into the application property database.
-   *
-   * Unlike other "loader" methods in AppProperties this class does not
-   * throw and exception is simple return a boolean indicating whether the
-   * properties where loaded.  That is class properties are sort of optional.
-   * When you are developing you might not yet have the property file there
-   * yet but still want to got through the running process.  The class swill log
-   * when a file is not found but will not create an Exception.
-   *
-   * @param  objClass the class that is loading the properties
-   * @param  resource the name of the file to find in the class path
-                              (it is probably in a jar file)
-   * @return boolean is it loaded successfully
-   */
-  public static boolean loadClassProperties(Class objClass, String resource) {
-      if (_classProperties==null) {
-          return false; // if _classProperties is null then most probably we are using a server (tomcat) that has
-                        // done some sort of static unload during shutdown, in any normal mode of
-                        // operation _classProperties is never null
-      }
-      return loadClassPropertiesToPdb(objClass,resource,_classProperties,false);
-  }
-
-
-  public static boolean loadClassProperties(Class objClass) {
-      if (_classProperties==null) {
-          return false; // if _classProperties is null then most probably we are using a server (tomcat) that has
-                        // done some sort of static unload during shutdown, in any normal mode of
-                        // operation _classProperties is never null
-      }
-      return loadClassPropertiesToPdb(objClass,_classProperties, false);
-  }
-
   /**
    * Load this classes class specific properties.  If this method is
    * class multiple times it will only load the class properties the first
@@ -706,7 +420,7 @@ public class AppProperties {
                                                  Properties pdb,
                                                  boolean forceLoad) {
        Assert.argTst(objClass, "obj Class must not be null");
-       String shortName= StringUtil.getShortClassName(objClass);
+       String shortName= ServerStringUtil.getShortClassName(objClass);
        String fname= "resources/" + shortName + ".prop";
        return loadClassPropertiesToPdb(objClass, fname, pdb, forceLoad);
   }
@@ -804,17 +518,10 @@ public class AppProperties {
                                              InputStream propStream,
                                              Properties  pdb)
                                           throws IOException {
-        // todo remove above
         Assert.argTst(pdb, "pdb must not be null");
         BufferedInputStream bis= new BufferedInputStream(propStream, 2048);
         try {
-            if (_substitutionValues==null)  {
-                pdb.load(bis);
-            }
-            else {
-                AppProperties.loadSubstitutionValues(bis, pdb);
-                // TODO: tina changes
-            }
+            AppProperties.loadSubstitutionValues(bis, pdb);
         } finally {
             FileUtil.silentClose(bis);
         }
@@ -831,122 +538,14 @@ public class AppProperties {
             key = (String) entry.getKey();
             value = (String) entry.getValue();
             newValue = value;
-
-            if (key.endsWith(".Name") || key.endsWith(".ShortDescription") || key.endsWith(".Title") ||
-                    key.endsWith(".Error")) {
-                for (Map.Entry<String, String> subEntry : _substitutionValues.entrySet()) {
-                    if (value.contains(subEntry.getKey()) && !(value.startsWith("<"))) {
-                        newValue = value.replace(subEntry.getKey(), subEntry.getValue());
-                    } else if (value.contains(subEntry.getKey()) && (value.startsWith("<"))) {
-                        String [] htmlStartSplit = value.split("<");
-                        if (htmlStartSplit.length > 1) {
-                            StringBuffer newValueBuffer = new StringBuffer();
-                            for (String a : htmlStartSplit) {
-                                if (a.length() > 0) {
-                                    String [] htmlFinalSplit = a.split(">",2);
-                                    assert(htmlFinalSplit.length == 2);
-                                    newValueBuffer.append("<" );
-                                    newValueBuffer.append(htmlFinalSplit[0]);
-                                    newValueBuffer.append(">");
-                                    if (htmlFinalSplit[1].contains(subEntry.getKey())) {
-                                        newValueBuffer.append(htmlFinalSplit[1].replace(
-                                                subEntry.getKey(), subEntry.getValue()));
-                                    }
-                                    else {
-                                        newValueBuffer.append(htmlFinalSplit[1]);
-                                    }
-                                }
-                            }
-                            newValue = newValueBuffer.toString();
-                        }
-                    } else {
-                        //do nothing
-                    }
-                }
-            }
             pdb.setProperty(key, newValue);
         }
     }
 
-    /**
-     * This is only called when you need to do language substitution from
-     * American english to real english
-     * @param newValues value substitution map
-     */
-  public static void setSubstitutionValues (Map<String,String> newValues) {
-      _substitutionValues = newValues;
-  }
 //=====================================================================
 //----------- add / remove property Change listener methods -----------
 //=====================================================================
 
-    /**
-     * Add a property changed listener. Because this is a listener on a
-     * static class it uses week references for is property change listener list.
-     * You must not add a listener if it is an anonymous inner class.
-     * The listener will be garbage collected immediately.  You must add a listener
-     * that is being pointed to by another object.
-     * @param l listener
-     */
-    public static void addPropertyChangeListener (PropertyChangeListener l) {
-        if (!serverMode) { // this listener is used for notifying when a preferences changes, this is only necessary in client mode
-            _propChange.addPropertyChangeListener (l);
-        }
-    }
-
-    /**
-     * Remove a property changed listener.
-     * @param l  the listener
-     */
-    public static void removePropertyChangeListener(PropertyChangeListener l){
-       _propChange.removePropertyChangeListener (l);
-    }
-
-
-    public static void writeSizes() {
-        System.out.printf("main= %d%nclass= %d%nuser= %d%npref= %d%n",
-                          _mainProperties.size(),
-                          _classProperties.size(),
-                          _userProperties.size(),
-                          _preferencesProperties.size());
-    }
-
-    public static List<String> getAllProperties() {
-        List<String> outList= new ArrayList<String>(1000);
-        Enumeration keys= _mainProperties.propertyNames();
-        String name;
-        while(keys.hasMoreElements()) {
-            name= (String)keys.nextElement();
-            outList.add(name+"="+_mainProperties.getProperty(name));
-        }
-        keys= _classProperties.propertyNames();
-        while(keys.hasMoreElements()) {
-            name= (String)keys.nextElement();
-            outList.add(name+"="+_classProperties.getProperty(name));
-        }
-        Collections.sort(outList);
-        return outList;
-    }
-
-    public static HashMap<String,String> convertClassPropertiesToMap() {
-        HashMap<String,String> map= new HashMap<String,String>(_classProperties.size()+45);
-        for(Map.Entry entry : _classProperties.entrySet()) {
-            map.put((String)entry.getKey(),(String)entry.getValue());
-        }
-        return map;
-    }
-
-    public static HashMap<String,String> convertMainPropertiesToMap() {
-        HashMap<String,String> map= new HashMap<String,String>(_mainProperties.size()+45);
-        for(Map.Entry entry : _mainProperties.entrySet()) {
-            map.put((String)entry.getKey(),(String)entry.getValue());
-        }
-        return map;
-    }
-
-    public static String convertMainPropertiesToString() {
-        return convertPropertiesToString(_mainProperties);
-    }
 
     public static String convertPropertiesToString(Properties pdb) {
         ByteArrayOutputStream out= new ByteArrayOutputStream(pdb.size()*80);

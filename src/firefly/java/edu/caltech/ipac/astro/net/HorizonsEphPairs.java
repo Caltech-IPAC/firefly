@@ -3,13 +3,12 @@
  */
 package edu.caltech.ipac.astro.net;
 
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.HostPort;
 import edu.caltech.ipac.util.download.NetworkManager;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.util.StringUtil;
-import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +51,7 @@ public class HorizonsEphPairs {
         }
 
         if (isName) {
-            idOrName = StringUtil.crunch(idOrName);
+            idOrName = StringUtils.crunch(idOrName);
             String s[] = idOrName.split(" ");
             if (s.length >= 2) {
                 try {
@@ -175,20 +174,20 @@ public class HorizonsEphPairs {
                                     appendAll(list));
                 }
 
-                label = StringUtil.crunch(sAry[0]);
+                label = StringUtils.crunch(sAry[0]);
                 if (label.equals(NAME_IDENT)) {
-                    name = StringUtil.crunch(sAry[1]);
+                    name = StringUtils.crunch(sAry[1]);
                     if (StringUtils.isEmpty(name)) {
                         name = "";
                     } else if (inParens(name)) {
                         name = stripFirstLast(name);
                     }
                 } else if (label.equals(ID_IDENT)) {
-                    id = StringUtil.crunch(sAry[1]);
+                    id = StringUtils.crunch(sAry[1]);
                 } else if (label.equals(DES_IDENT)) {
-                    des = StringUtil.crunch(sAry[1]);
+                    des = StringUtils.crunch(sAry[1]);
                 } else if (label.equals(ALIAS_IDENT)) {
-                    alias = StringUtil.crunch(sAry[1]);
+                    alias = StringUtils.crunch(sAry[1]);
                     if (alias.length() == 0) {
                         aliases = new String[0];
                     } else {

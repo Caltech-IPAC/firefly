@@ -3,7 +3,8 @@
  */
 package edu.caltech.ipac.astro;
 
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.ServerStringUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -75,8 +76,8 @@ public class EphemerisPairs extends Properties
 	 String idString = st.nextToken();
 	 String nameString = st.nextToken();
 
-	 ids = StringUtil.strToStrings(idString);
-	 names = StringUtil.strToStrings(nameString);
+	 ids = ServerStringUtil.strToStrings(idString);
+	 names = ServerStringUtil.strToStrings(nameString);
 
 
 	 for (i=0; i<ids.length; i++) {
@@ -145,7 +146,7 @@ public class EphemerisPairs extends Properties
       s = _ephID.getProperty(id);
       //System.out.println("getName: ID= " + id+"nameString="+s);
       if (s != null)
-	 strings = StringUtil.strToStrings(s);
+	 strings = ServerStringUtil.strToStrings(s);
       //System.out.println("strings: "+ strings);
       return strings;
 
@@ -153,11 +154,11 @@ public class EphemerisPairs extends Properties
    public String[] getID(String name) {
       String s;
       String [] strings = null;
-      StringUtil.crunch(name);
+      StringUtils.crunch(name);
       s = _ephName.getProperty(name.toUpperCase());
       //System.out.println("getID: name= " + name+"idString="+s);
       if (s != null)
-	 strings = StringUtil.strToStrings(s);
+	 strings = ServerStringUtil.strToStrings(s);
       //System.out.println("strings: "+ strings);
       return strings;
    }

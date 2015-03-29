@@ -5,9 +5,7 @@ package edu.caltech.ipac.util.action;
 
 import edu.caltech.ipac.util.AppProperties;
 
-import java.util.Properties;
 import java.util.StringTokenizer;
-import java.io.File;
 
 
 /**
@@ -23,76 +21,32 @@ public class ClassProperties  {
 
     protected final String     _root;
     protected final String     _base;
-    protected final Properties _db;
     protected final Class      _loaderClass;
     protected boolean    _loaded= false;
-    protected String     _stringFileName= null;
-    protected final File _loadFile;
 
 //=========================================================================
 //------------------------- Constructors -----------------------------------
 //=========================================================================
-    public ClassProperties(String base,
-                           String fileName,
-                           Class c,
-                           Properties alternalPdb) {
+    public ClassProperties(String base, Class c) {
         if (base==null) base= getShortName(c);
         _root= base;
         _base= base + ".";
-        _stringFileName= fileName;
         _loaderClass= c;
-        _db= alternalPdb;
-        _loadFile= null;
         load(); // TODO: this is all set up to turn into a lazy load-- need to evaluate
     }
 
-  public ClassProperties(String base,
-                         String fileName,
-                         Class c,
-                         boolean privateDB) {
-      this(base,fileName,c,privateDB ? new Properties() : null);
-  }
+    public ClassProperties(Class c) { this(null,c); }
 
-
-
-  public ClassProperties(String base,  Class c,  boolean privateDB) {
-      this(base,null,c,privateDB);
-  }
-
-  public ClassProperties(String base, Class c) { this(base,c,false); }
-
-  public ClassProperties(Class c) { this(c,false); }
-
-  public ClassProperties(Class c, boolean privateDB) {
-      this(null, c, privateDB);
-  }
-
-  public ClassProperties(String base) { this(base,null,false); }
-
-    public ClassProperties(File file,
-                           String base,
-                           boolean privateDB) {
-        _db= privateDB ? new Properties() : null;
-        _root= base;
-        _base= base + ".";
-        _loaderClass= null;
-        _loadFile= file;
-        load(); // TODO: this is all set up to turn into a lazy load-- need to evaluate
-    }
 
 //========================================================================
 //------------------------- Public Methods --------------------------------
 //=========================================================================
-
-    public Class getLoaderClass() { return _loaderClass; }
 
 
     public String getBase() {
         load();
         return _root;
     }
-
-    public Properties getAlternatePdb() { return _db; }
 
     public String makeBase(String s) {
         load();
@@ -101,121 +55,121 @@ public class ClassProperties  {
 
     public String getProperty(String prop) {
         load();
-        return AppProperties.getProperty(_base+prop, _base+prop, _db);
+        return AppProperties.getProperty(_base+prop, _base+prop);
     }
 
     public String getName() {
         load();
-        return Prop.getName(_root, _db);
+        return Prop.getName(_root);
     }
 
     public String getName(String prop) {
         load();
-        return Prop.getName(_base+prop, _db);
+        return Prop.getName(_base+prop);
     }
     public String getName(String prop, String defValue) {
         load();
-        return Prop.getName(_base+prop, defValue, _db);
+        return Prop.getName(_base+prop, defValue, null);
     }
 
     public String[] getNames(String prop[]) {
         load();
-        return Prop.getNames(_root, prop, _db);
+        return Prop.getNames(_root, prop);
     }
 
     public String getTip(String prop) {
         load();
-        return Prop.getTip(_base+prop, _db);
+        return Prop.getTip(_base+prop);
     }
     public String getTip() {
         load();
-        return Prop.getTip(_root, _db);
+        return Prop.getTip(_root);
     }
 
     public String getTitle() {
         load();
-        return Prop.getTitle(_root, _db);
+        return Prop.getTitle(_root);
     }
 
     public String getTitle(String prop) {
         load();
-        return Prop.getTitle(_base+prop, _db);
+        return Prop.getTitle(_base+prop);
     }
 
     public String getColumnName(String prop) {
         load();
-        return Prop.getColumnName(_base+prop, _db);
+        return Prop.getColumnName(_base+prop);
     }
 
     public boolean getSelected(String prop) {
         load();
-        return Prop.getSelected(_base+prop, _db);
+        return Prop.getSelected(_base+prop);
     }
 
     public float getFloatValue(String prop) {
         load();
-        return Prop.getFloatValue(_base+prop, _db);
+        return Prop.getFloatValue(_base+prop);
     }
 
     public int getIntValue(String prop) {
         load();
-        return Prop.getIntValue(_base+prop, _db);
+        return Prop.getIntValue(_base+prop);
     }
 
     public long getLongValue(String prop) {
         load();
-        return Prop.getLongValue(_base+prop, _db);
+        return Prop.getLongValue(_base+prop);
     }
 
     public String getDefault(String prop) {
         load();
-        return Prop.getDefault(_base+prop, _db);
+        return Prop.getDefault(_base+prop);
     }
 
     public float getFloatDefault(String prop) {
         load();
-        return Prop.getFloatDefault(_base+prop, _db);
+        return Prop.getFloatDefault(_base+prop);
     }
 
     public double getDoubleDefault(String prop) {
         load();
-        return Prop.getDoubleDefault(_base+prop, _db);
+        return Prop.getDoubleDefault(_base+prop);
     }
 
     public int getIntDefault(String prop) {
         load();
-        return Prop.getIntDefault(_base+prop, _db);
+        return Prop.getIntDefault(_base+prop);
     }
 
     public long getLongDefault(String prop) {
         load();
-        return Prop.getLongDefault(_base+prop, _db);
+        return Prop.getLongDefault(_base+prop);
     }
 
 
     public String getError(String prop) {
         load();
-        return Prop.getError(_base+prop, _db);
+        return Prop.getError(_base+prop);
     }
 
     public String getErrorDescription(String prop) {
         load();
-        return Prop.getErrorDescription(_base+prop, _db);
+        return Prop.getErrorDescription(_base+prop);
     }
 
     public String getDataType(String prop) {
         load();
-        return Prop.getDataType(_base+prop, _db);
+        return Prop.getDataType(_base+prop);
     }
 
     public String[] getItems() {
         load();
-        return Prop.getItems(_root, _db);
+        return Prop.getItems(_root);
     }
 
     public String[] getItems(String prop) {
         load();
-        return Prop.getItems(_base+prop, _db);
+        return Prop.getItems(_base+prop);
     }
 
 
@@ -228,26 +182,12 @@ public class ClassProperties  {
         return retval;
     }
 
-    String getBaseNoLoad() { return _root; }
-
     public void load() {
         if(!_loaded) {
             _loaded=true;
 
             if(_loaderClass!=null) {
-                //System.out.println("loading: " + _loaderClass.getName());
-                if (_stringFileName==null) {
-                    AppProperties.loadClassPropertiesToPdb(_loaderClass, _db,
-                                                           (_db!=null));
-                }
-                else {
-                    AppProperties.loadClassPropertiesToPdb(_loaderClass,
-                                                           _stringFileName,
-                                                           _db,(_db!=null));
-                }
-            }
-            else if (_loadFile!=null && _loadFile.canRead()) {
-                AppProperties.loadClassPropertiesFromFileToPdb(_loadFile, _db);
+                AppProperties.loadClassPropertiesToPdb(_loaderClass, null, false);
             }
         }
     }

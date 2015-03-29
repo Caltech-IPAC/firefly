@@ -36,8 +36,6 @@ public class IpacTableWriter {
     public final static String BACKSLASH = "\\";
 
     // constants
-    //private final static int DECIMAL_MAX = _prop.getIntValue("precision.max");
-    //private final static int DECIMAL_MIN = _prop.getIntValue("precision.min");
     private final static int COL_LENGTH = _prop.getIntValue("column.length");
     // header names & constants
     private final static String NULL_STRING = "null";

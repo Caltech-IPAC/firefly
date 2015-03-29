@@ -4,7 +4,6 @@
 package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.ClientLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Map;
 /**
  * a singleton
  * @author Trey Roby
- * @version $Id: NetworkManager.java,v 1.9 2012/07/30 23:34:39 roby Exp $
  */
 public class NetworkManager {
 
@@ -37,16 +35,11 @@ public class NetworkManager {
 
 
      private static NetworkManager _theInstance= null;
-     private Map<String,HostPort> _servers   = new HashMap<String,HostPort>(11);
-     private boolean  _logAdds = false;
+     private Map<String,HostPort> _servers   = new HashMap<String,HostPort>(23);
 
      protected NetworkManager() {
 
        
-       _logAdds= AppProperties.getBooleanPreference(
-                                      "NetworkManager.logServerLoads", 
-                                                                false);
- 
        addServerWithProp(MISSION_SERVER,       "soas.ipac.caltech.edu",    80 );
        addServerWithProp(NED_SERVER,           "nedwww.ipac.caltech.edu",  80);
        addServerWithProp(NED_NAME_RESOLVER,    "nedsrv.ipac.caltech.edu",  10011);
@@ -73,42 +66,22 @@ public class NetworkManager {
      }
 
      public void addServer( String serverName, HostPort server) {
-         String action;
-         if (_logAdds) {
-            if (_servers.get(serverName) ==null) {
-                 action= "Adding-   ";
-            }
-            else {
-                 action= "Updating- ";
-            }
-            ClientLog.brief(action + serverName + ": " + 
-                                server.getHost()+ ":" +  server.getPort() );
-         }
          _servers.put(serverName, server);
      }
 
-
-
-     public HostPort getServer(String serverName) {
-         return _servers.get(serverName);
-     }
+     public HostPort getServer(String serverName) { return _servers.get(serverName); }
 
 
 //===================================================================
 //-------------------------- Private / Protected Methods ------------
 //===================================================================
 
-
-    private void addServerWithProp(String serverName, 
-                                   String defaultHost,
-                                   int    defaultPort) {
+    private void addServerWithProp(String serverName,  String defaultHost, int    defaultPort) {
 
         String hostProp= "NetworkManager." + serverName + ".Host";
         String portProp= "NetworkManager." + serverName + ".Port";
-        String host= AppProperties.getPreference(hostProp, defaultHost);
-        int    port= AppProperties.getIntPreference(portProp, defaultPort);
+        String host= AppProperties.getProperty(hostProp, defaultHost);
+        int    port= AppProperties.getIntProperty(portProp, defaultPort);
         addServer(serverName,    new HostPort(host, port) );
     }
-
-
 }

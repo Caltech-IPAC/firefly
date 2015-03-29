@@ -56,7 +56,7 @@ public class ServerContext {
         Assert.setServerMode(true);
         String configDirname = System.getProperty(CONFIG_DIR, System.getenv(CONFIG_DIR));
         String webappConfigDirname = System.getProperty(CommonFilter.WEBAPP_CONFIG_DIR);
-        appName = AppProperties.getPreference(CommonFilter.APP_NAME, System.getProperty(CommonFilter.APP_NAME));
+        appName = AppProperties.getProperty(CommonFilter.APP_NAME, System.getProperty(CommonFilter.APP_NAME));
         configDirname = configDirname + "/" + appName;
 
         if (StringUtils.isEmpty(appName)) {
@@ -97,7 +97,7 @@ public class ServerContext {
         WebPropertyLoader.loadAllProperties(resdir, loadAllClientProperties);
 
         // disable caching is it's a preference
-        CacheManager.setDisabled(AppProperties.getBooleanPreference(CACHEMANAGER_DISABLED_PROP, false));
+        CacheManager.setDisabled(AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false));
 
         // use EhCache for caching.
         CacheManager.setCacheProvider(EhcacheProvider.class.getName());

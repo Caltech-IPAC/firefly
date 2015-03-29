@@ -7,17 +7,14 @@ import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.StringUtil;
+import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.TableConnectionList;
 import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.VisConstants;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationEvent;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationListener;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -28,7 +25,6 @@ import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
 import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import javax.swing.ListSelectionModel;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -39,11 +35,8 @@ import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * This class is the data class for any set of objects that we show on
@@ -82,12 +75,6 @@ public class FixedObjectGroup implements TableConnectionList,
    protected final String USER_DEC_COL    = _prop.getColumnName("userDec");
    private final String USER_LON_COL    = _prop.getColumnName("userLon");
    private final String USER_LAT_COL    = _prop.getColumnName("userLat");
-//   private final String CAT_COL         = _prop.getColumnName("cat");
-//   private final String OBSERVER_COL    = _prop.getColumnName("observer");
-  private static final String CAT_NAME = "CatName";
-  private final static String FIXLEN = "fixlen";
-  private final static String FIXLEN_VALUE = "T";
-  private final static String ROWS_RETRIEVED = "RowsRetreived";
 
 //====================================================================
 //---------- public Constants for the table column index ------------
@@ -154,10 +141,9 @@ public class FixedObjectGroup implements TableConnectionList,
    private transient List<PlotInfo> _plots= null;
    private transient SkyShape _allShape;
    private transient PropertyChangeSupport _propChange;
-   private transient List<FixedObjectGroupDataListener> _dataListeners;
-   private boolean        _showPosInDecimal= AppProperties.getBooleanPreference(
+   private boolean        _showPosInDecimal= AppProperties.getBooleanProperty(
                                      VisConstants.COORD_DEC_PROP, false);
-   private String         _csysDesc= AppProperties.getPreference(
+   private String         _csysDesc= AppProperties.getProperty(
                                            VisConstants.COORD_SYS_PROP,
                                            CoordinateSys.EQ_J2000_STR);
    private Color        _allHighLightColor= Color.blue;
@@ -445,37 +431,9 @@ public class FixedObjectGroup implements TableConnectionList,
         return retval;
     }
 
-    public int getExtraDataLength() {
-        int length= 0;
-        DataType defs[]= _extraData.getDataDefinitions();
-        if (defs!=null) {
-            length= getExtraUsedLength();
-        }
-        return length;
-    }
 
     public String getTitle() { return _title;  }
     public void setTitle(String title) { _title= title;  }
-    public void setColumnName(int columnIdx, String name) {
-       Assert.tst(columnIdx < _numColumns);
-       _colNames[columnIdx]= name;
-    }
-
-    public void setTargetNameEditable(boolean editable) {
-       _targetNameEditable= editable;
-    }
-    public boolean isTargetNameEditable() {return _targetNameEditable; }
-
-    public FixedObject findObjectWithTargetName(String name) {
-         FixedObject retval= null;
-         for(FixedObject  fixedObj: _objects) {
-             if (name.equals(fixedObj.getTargetName())) {
-                  retval= fixedObj;
-                  break;
-             }
-         }
-         return retval;
-    }
 
     /**
      * Return an iterator for all the objects in this group
@@ -511,50 +469,8 @@ public class FixedObjectGroup implements TableConnectionList,
      */
     public FixedObject getCurrent() { return _current; }
 
-    /**
-     * Return the extra data types defined for this group.
-     * @return DataType[]  the extra data types.
-     */
-    public DataType[] getExtraDataDefs() {
-        DataType[] retval= null;
-        if (_extraData!=null) {
-            int usedLength= getExtraUsedLength();
-            if (usedLength>0) {
-                if (_extraDataColumnRemap!=null) {
-                    retval= new DataType[usedLength];
-                    for(int i=0; i<retval.length; i++) {
-                        retval[i]= getExtraDataElement(i);
-                    }
-                }
-                else {
-                    retval= _extraData.getDataDefinitions();
-                }
-            }
-            else {
-               retval= null;
-            }
-
-        }
-        return  retval;
-    }
 
     public DataGroup getExtraData() { return _extraData; }
-
-    public void setAllEnabled(boolean enable) {
-        beginBulkUpdate();
-        for (FixedObject  fixedObj: _objects) {
-             fixedObj.setEnabled(enable);
-        }
-        endBulkUpdate();
-    }
-
-    public void setAllNamesEnabled(boolean enable) {
-         beginBulkUpdate();
-         for (FixedObject  fixedObj: _objects) {
-             fixedObj.setShowName(enable);
-         }
-         endBulkUpdate();
-    }
 
     public void setAllShapes(SkyShape shape) {
          _allShape= shape;
@@ -565,13 +481,6 @@ public class FixedObjectGroup implements TableConnectionList,
             }
             endBulkUpdate();
          }
-    }
-
-    public SkyShape getAllShapes() {
-        if (_allShape==null) {
-            _allShape= SkyShapeFactory.getInstance().getSkyShape("x");
-        }
-         return _allShape;
     }
 
     /**
@@ -614,20 +523,6 @@ public class FixedObjectGroup implements TableConnectionList,
          endBulkUpdate();
     }
 
-    public Color getAllColor(int colorType) {
-       Assert.tst(colorType == COLOR_TYPE_HIGHLIGHT ||
-                  colorType == COLOR_TYPE_STANDARD   ||
-                  colorType == COLOR_TYPE_SELECTED);
-       Color retval= Color.red;
-       switch (colorType) {
-          case COLOR_TYPE_HIGHLIGHT: retval= _allHighLightColor; break;
-          case COLOR_TYPE_STANDARD : retval= _allStandardColor;  break;
-          case COLOR_TYPE_SELECTED : retval= _allSelectedColor;  break;
-          default                  : Assert.tst(false);          break;
-       } // end switch
-       return retval;
-    }
-
     public void add(FixedObject s) {
        _objects.add(s);
        s.addPropertyChangeListener(this);
@@ -664,34 +559,6 @@ public class FixedObjectGroup implements TableConnectionList,
     }
 
 
-
-    public double minRa() {
-        FixedObject fo= Collections.min(_objects, raComparator());
-        return fo.getX();
-    }
-
-    public double minDec() {
-        FixedObject fo= Collections.min(_objects, decComparator());
-        return fo.getY();
-    }
-
-    public double maxRa() {
-        FixedObject fo= Collections.max(_objects, raComparator());
-        return fo.getX();
-    }
-
-    public double maxDec() {
-        FixedObject fo= Collections.max(_objects, decComparator());
-        return fo.getY();
-    }
-
-    public void setShowing( Plot plot, boolean show) {
-       PlotInfo pInfo= findPlotInfo(plot);
-       boolean oldShow= pInfo._show;
-       pInfo._show= show;
-       if (oldShow != show) plot.repair();
-    }
-
     public void doRepair() {
         Plot p;
         for(PlotInfo plotInfo: getPlots()) {
@@ -723,37 +590,6 @@ public class FixedObjectGroup implements TableConnectionList,
        }
     }
 
-
-
-    public ClosestResults findClosestPoint(ImagePt pt, Plot p) {
-          int idx= findPlot(p);
-          double dx, dy;
-          double dist;
-          double minDist= Double.MAX_VALUE;
-          ClosestResults retval= new ClosestResults();
-
-
-          ImagePt testPt= null;
-          FixedObject foundPt= null;
-          for(FixedObject fixedObj: _objects) {
-              testPt= fixedObj.getDrawer().getImagePt(idx);
-              if (testPt != null) {
-                 dx= pt.getX() - testPt.getX();
-                 dy= pt.getY() - testPt.getY();
-                 dist= Math.sqrt(dx*dx + dy*dy);
-                 //System.out.println("comparing: " + dist +" & " + minDist);
-                 if (dist < minDist) {
-                        minDist= dist;
-                        foundPt= fixedObj;
-                 }
-              }
-          }
-          retval._pt= foundPt;
-          retval._dist= minDist;
-          retval._group= this;
-          return retval;
-    }
-
     public void addPlotView(PlotContainer container) {
        for(Plot p: container) addPlot(p);
        container.addPlotViewStatusListener( this);
@@ -772,98 +608,9 @@ public class FixedObjectGroup implements TableConnectionList,
           return _selectedCount;
     }
 
-    public FixedObject get(int i) { return (FixedObject)_objects.get(i); }
-
-    public void copySelectionFromModel(ListSelectionModel model) {
-       int         len= size();
-       FixedObject o;
-       Integer     oldCount= new Integer(_selectedCount);
-       _selectedCount= 0;
-       for(int i=0; (i<len); i++) {
-           o= get(i);
-           o.setSelectedWithNoEvent( model.isSelectedIndex(i) );
-           if (model.isSelectedIndex(i)) _selectedCount++;
-       } // end loop
-       getPropChange().firePropertyChange (SELECTED_COUNT, oldCount,
-                                       new Integer(_selectedCount) );
-       doRepair();
-    }
+    public FixedObject get(int i) { return _objects.get(i); }
 
 
-    public DataGroup convertToDataGroupForSaving() {
-        int length= (_extraData!=null) ? getExtraUsedLength()+3 : 3;
-        DataType newDataDef[]= new DataType[length];
-        newDataDef[0]= new DataType("target",TNAME_COL,String.class,
-                                    DataType.Importance.HIGH,"",true);
-        newDataDef[1]= new DataType("ra",USER_RA_COL,Double.class,
-                                    DataType.Importance.HIGH,"degrees",true);
-        newDataDef[2]= new DataType("dec",USER_DEC_COL,Double.class,
-                                    DataType.Importance.HIGH,"degrees",true);
-
-        for(int i=3; i<newDataDef.length; i++) {
-            newDataDef[i]= getExtraDataElement(i-3).copyWithNoColumnIdx(i);
-        }
-
-        DataGroup   retval= new DataGroup(getTitle(), newDataDef);
-        DataObject  dataObject;
-        for(FixedObject fixedObj: _objects) {
-            WorldPt pt = fixedObj.getEqJ2000Position();
-            dataObject= new DataObject(retval);
-            dataObject.setDataElement(newDataDef[0], fixedObj.getTargetName());
-            dataObject.setDataElement(newDataDef[1], new Double(pt.getLon()));
-            dataObject.setDataElement(newDataDef[2], new Double(pt.getLat()));
-
-            for(int j=3; j<newDataDef.length; j++) {
-                dataObject.setDataElement(newDataDef[j],
-                                          fixedObj.getExtraData(getExtraDataElement(j-3)));
-            }
-            retval.add(dataObject);
-        }
-
-        // adding metadata for this data group
-        retval.addAttributes( new DataGroup.Attribute(CAT_NAME, getTitle()) );
-        retval.addAttributes( new DataGroup.Attribute(FIXLEN, FIXLEN_VALUE) );
-        retval.addAttributes( new DataGroup.Attribute(
-                        ROWS_RETRIEVED, String.valueOf(retval.size())) );
-        return retval;
-    }
-
-
-//=====================================================================
-//----------- Add / Remove Listener Methods ---------------------------
-//=====================================================================
-
-    /**
-     * Add a property changed listener.
-     * @param p  the listener
-     */
-    public void addPropertyChangeListener (PropertyChangeListener p) {
-       getPropChange().addPropertyChangeListener (p);
-    }
-
-    /**
-     * Remove a property changed listener.
-     * @param p  the listener
-     */
-    public void removePropertyChangeListener (PropertyChangeListener p) {
-       getPropChange().removePropertyChangeListener (p);
-    }
-
-  /**
-   * Add a FixedObjectGroupDataListener.
-   * @param l the listener
-   */
-   public void addFixedObjectGroupDataListener(FixedObjectGroupDataListener l) {
-      getDataListeners().add(l);
-   }
-  /**
-   * Remove a FixedObjectGroupDataListener.
-   * @param l the listener
-   */
-   public void removeFixedObjectGroupDataListener(
-                                  FixedObjectGroupDataListener l) {
-      getDataListeners().remove(l);
-   }
 
 //======================================================================
 //------------- Methods from PropertyChangeListener Interface ----------
@@ -883,7 +630,6 @@ public class FixedObjectGroup implements TableConnectionList,
                computeAllTransformsForObject(fixedObj);
                int idx= _objects.indexOf(fixedObj);
                Assert.tst(idx >= 0);
-               fireFixedChange(fixedObj, idx );
                if (!_doingBulkUpdates) doRepair(fixedObj);
            }
            else if (propName.equals(FixedObject.SHOW_NAME)) {
@@ -904,13 +650,13 @@ public class FixedObjectGroup implements TableConnectionList,
                               //=========================
 
        if (propName.equals(VisConstants.COORD_DEC_PROP)) {
-            _showPosInDecimal= AppProperties.getBooleanPreference(
+            _showPosInDecimal= AppProperties.getBooleanProperty(
                                VisConstants.COORD_DEC_PROP,false);
 
            getPropChange().firePropertyChange ( ALL_ENTRIES_UPDATED, null, this);
        }
        else if (propName.equals(VisConstants.COORD_SYS_PROP)) {
-            _csysDesc = AppProperties.getPreference(
+            _csysDesc = AppProperties.getProperty(
                                   VisConstants.COORD_SYS_PROP,
                                   CoordinateSys.EQ_J2000_STR);
             updateCoordinateSystem();
@@ -932,18 +678,6 @@ public class FixedObjectGroup implements TableConnectionList,
     public String getColumnName(int idx) { return _colNames[idx]; } //TODO: remove
 
 
-    public List<FixedObject> createSortedView(final String extraDataKey) {
-        ArrayList<FixedObject> _sortedView= new ArrayList<FixedObject>(
-                                                          _objects);
-        Collections.sort(_sortedView, new Comparator<FixedObject>() {
-            public int compare(FixedObject o1, FixedObject o2) {
-                return ComparisonUtil.doCompare(
-                                 (Number)o1.getExtraData(extraDataKey),
-                                 (Number)o2.getExtraData(extraDataKey));
-            }
-        });
-        return Collections.unmodifiableList(_sortedView);
-    }
    // ===================================================================
    // --------  Methods from PlotViewStatusListener Interface-----------
    // ===================================================================
@@ -1022,43 +756,6 @@ public class FixedObjectGroup implements TableConnectionList,
        }
     }
 
-    String getFormatedLon(WorldPt pt) {
-        return formatPos(pt.getLon(), Direction.LON, pt.getCoordSys().isEquatorial());
-    }
-
-    String getFormatedLat(WorldPt pt) {
-        return formatPos(pt.getLat(), Direction.LAT, pt.getCoordSys().isEquatorial());
-    }
-
-    private String formatPos(double x, Direction dir, boolean isEquatorial) {
-       String retval= null;
-       if (_showPosInDecimal) {
-           retval= _nf.format(x);
-       }
-       else {
-          try {
-               if (dir==Direction.LAT) {
-                   retval= TargetUtil.convertLatToString(x, isEquatorial);
-               }
-               else if (dir==Direction.LON) {
-                   retval= TargetUtil.convertLonToString(x, isEquatorial);
-               }
-              else {
-                   Assert.tst(false);
-               }
-          } catch (CoordException ce) {
-               retval= "";
-          }
-       }
-       return retval;
-    }
-
-    private PlotInfo findPlotInfo(Plot p) {
-       int idx= findPlot(p);
-       return getPlots().get(idx);
-    }
-
-
     private int findPlot(Plot p) {
        int retval= -1;
        Iterator<PlotInfo> i= getPlots().iterator();
@@ -1094,27 +791,11 @@ public class FixedObjectGroup implements TableConnectionList,
           }
     }
 
-    /**
-     * fire the <code>VectorDataListener</code>s.
-     */
-    protected void fireFixedChange(FixedObject fo, int idx) {
-        List<FixedObjectGroupDataListener> newlist;
-        FixedObjectGroupDataEvent ev=
-                       new FixedObjectGroupDataEvent(this, fo, idx);
-        synchronized (this) {
-            newlist =
-               new ArrayList<FixedObjectGroupDataListener>(getDataListeners());
-        }
-
-        for(FixedObjectGroupDataListener listener: newlist) {
-            listener.dataChanged(ev);
-        }
-    }
 
     private static ParseInstruction matchesRAList(String s, List<ParseGroup> pgList) {
         ParseInstruction pi= null;
         for(ParseGroup pg : pgList) {
-            if (StringUtil.matchesRegExpList(s,pg.getRaNameOptions(), true)) {
+            if (ServerStringUtil.matchesRegExpList(s, pg.getRaNameOptions(), true)) {
                 pi= pg.getParseInstruction();
             }
         }
@@ -1124,7 +805,7 @@ public class FixedObjectGroup implements TableConnectionList,
     private static ParseInstruction matchesDecList(String s, List<ParseGroup> pgList) {
         ParseInstruction pi= null;
         for(ParseGroup pg : pgList) {
-            if (StringUtil.matchesRegExpList(s,pg.getDecNameOptions(), true)) {
+            if (ServerStringUtil.matchesRegExpList(s, pg.getDecNameOptions(), true)) {
                 pi= pg.getParseInstruction();
             }
         }
@@ -1132,7 +813,7 @@ public class FixedObjectGroup implements TableConnectionList,
     }
 
     private static boolean matchesList(String s, String regExpArray[]) {
-        return StringUtil.matchesRegExpList(s,regExpArray,true);
+        return ServerStringUtil.matchesRegExpList(s, regExpArray, true);
     }
 
 
@@ -1145,7 +826,7 @@ public class FixedObjectGroup implements TableConnectionList,
         _extraDataColumnRemap= extraDataColumnRemap;
         _extraData= extraData;
         _usesWorldCoordSys= usesWorldCoordSys;
-        AppProperties.addPropertyChangeListener(this);
+//        AppProperties.addPropertyChangeListener(this);
         if (extraData != null) {
             _numColumns= BASE_NUM_COLUMNS + getExtraUsedLength();
         }
@@ -1193,12 +874,6 @@ public class FixedObjectGroup implements TableConnectionList,
         return _propChange;
     }
 
-    protected List<FixedObjectGroupDataListener> getDataListeners() {
-        if (_dataListeners==null)  {
-            _dataListeners= new ArrayList<FixedObjectGroupDataListener>(5);
-        }
-        return _dataListeners;
-    }
 
 
     protected List<PlotInfo> getPlots() {
@@ -1213,9 +888,6 @@ public class FixedObjectGroup implements TableConnectionList,
 //------------------------- Factory Methods -------------------------
 //===================================================================
 
-    //protected List newList() { return new ArrayList(200); }
-    protected List newListenerList()  { return new Vector(2,2); }
-
 
     protected FixedObject makeFixedObject(DataObject da,
                                           int tnameIdx,
@@ -1229,24 +901,10 @@ public class FixedObjectGroup implements TableConnectionList,
         return new FixedObject(pt,_extraData);
     }
 
-    public FixedObject makeFixedObject(ImagePt pt) {
-        return new FixedObject(pt,_extraData);
-    }
-
-    public FixedObject makeFixedObject(ImageWorkSpacePt iwspt) {
-	ImagePt pt = new ImagePt(iwspt.getX(), iwspt.getY());
-        return new FixedObject(pt,_extraData);
-    }
-
 //===================================================================
 //------------------------- Public Inner classes --------------------
 //===================================================================
 
-    public static class ClosestResults {
-        public FixedObject      _pt;
-        public double           _dist;
-        public FixedObjectGroup _group;
-    }
 
     public static class ParseGroup {
         private final String  _raNameOptions[];
@@ -1273,49 +931,6 @@ public class FixedObjectGroup implements TableConnectionList,
             return _parseInstruction;
         }
 
-    }
-
-//===================================================================
-//------------------------- Private Inner classes -------------------
-//===================================================================
-
-    private static DoCompare decComparator() {
-        return new DoCompare(DoCompare.ComparType.DO_DEC);
-    }
-    private static DoCompare raComparator() {
-        return new DoCompare(DoCompare.ComparType.DO_RA);
-    }
-
-
-    /**
-     * For comparing RA or DEC
-     */
-    private static class DoCompare implements Comparator<FixedObject> {
-        enum ComparType {DO_RA,DO_DEC};
-        private ComparType _which;
-
-       public DoCompare(ComparType whichType) { _which= whichType; }
-
-       public int compare(FixedObject o1, FixedObject o2)  {
-          double v1;
-          double v2;
-          int retval=0;
-          if (_which == ComparType.DO_RA) {
-              v1= o1.getX();
-              v2= o2.getX();
-          }
-          else if (_which == ComparType.DO_DEC)  {
-              v1= o1.getY();
-              v2= o2.getY();
-          }
-          else {
-              v1= v2= 0;
-              Assert.tst(false);
-          }
-          if      (v1 < v2) retval= -1;
-          else if (v1 > v2) retval=  1;
-          return retval;
-       }
     }
 
     /**

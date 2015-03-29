@@ -103,7 +103,7 @@ public class ClientLog {
                 if (ste!=null) {
 
                     String tName= Thread.currentThread().getName();
-                    String cName= StringUtil.getShortClassName(ste.getClassName());
+                    String cName= ServerStringUtil.getShortClassName(ste.getClassName());
                     String method=  "";
                     String thread=  "";
                     String dateStr= "";
@@ -127,7 +127,7 @@ public class ClientLog {
                     }
                     else {
                         if (level!=MessageType.BRIEF_INFO) {
-                            header= StringUtil.pad(header, PAD_SIZE);
+                            header= StringUtils.pad(PAD_SIZE,header);
                         }
                         out.print(header+dateStr);
                     }

@@ -3,12 +3,11 @@
  */
 package edu.caltech.ipac.visualize.net;
 
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.FileData;
 import edu.caltech.ipac.util.download.URLDownload;
-import edu.caltech.ipac.util.ClientLog;
-import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.EOFException;
 import java.io.File;
@@ -23,10 +22,6 @@ import java.net.URL;
  **/
 public class AnyUrlGetter {
 
-    private final static ClassProperties _prop=
-                                   new ClassProperties(AnyUrlGetter.class);
-  /**
-   */
   public static String lowlevelGetUrlToString(URL  url, DownloadListener dl)
                                              throws FailedRequestException,
                                                     IOException {
@@ -44,7 +39,7 @@ public class AnyUrlGetter {
                                            "Details in exception", me);
       } catch (IOException ioe) {
           if(ioe.getCause() instanceof EOFException) {
-              throw new FailedRequestException(_prop.getError("noData"),
+              throw new FailedRequestException("Could not find any data for this URL",
                           "No data could be downloaded from this URL\n"+
                           url.toString());
           }
@@ -74,7 +69,7 @@ public class AnyUrlGetter {
                                            "URL not found: " + params.getURL() , fne);
       } catch (IOException ioe) {
           if(ioe.getCause() instanceof EOFException) {
-              throw new FailedRequestException(_prop.getError("noData"),
+              throw new FailedRequestException("Could not find any data for this URL",
                                   "No data could be downloaded from this URL\n"+
                                   params.getURL().toString());
           }

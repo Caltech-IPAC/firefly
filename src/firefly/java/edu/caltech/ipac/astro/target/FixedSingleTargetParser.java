@@ -259,34 +259,6 @@ public class FixedSingleTargetParser {
         return counter;
     }
 
-    protected String cleanUp(String line) {
-        System.out.println("cleanUp.line: " + line);
-        if (line == null)
-            return line;
-
-        int index1 = line.indexOf("#");
-        int index2 = line.indexOf("!");
-        int index;
-        String clean = null;
-
-        if (index1 == -1 && index2 == -1) {
-            clean = line.trim();
-        } else {
-            index = index2;
-            if (index1 != -1 && index2 != -1) {
-                if (index1 < index2) {
-                    index = index1;
-                }
-            } else if (index1 == -1) {
-                index = index2;
-            } else {
-                index = index1;
-            }
-            clean = line.substring(0, index).trim();
-        }
-        return clean;
-    }
-
     /**
      * parse the input line and put all elements in a array of String.
      * <p/>
@@ -391,9 +363,6 @@ System.out.println("stringsCounter: " + stringsCounter);
     }
 
     public static class TargetParseException extends Exception {
-
-        public TargetParseException() {}
-
         public TargetParseException(String s) {
             super(s);
         }

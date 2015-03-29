@@ -31,11 +31,6 @@ public class TargetUtil {
       nf.setMinimumFractionDigits(MAX_FRACTION_DIGITS);
       }
 
-//   public static String convertLonToString(double        lon,
-//                                           CoordinateSys coordSystem )
-//                                                 throws CoordException {
-//       return convertLonToString(lon,coordSystem.isEquatorial());
-//   }
 
    public static String convertLonToString(double lon, boolean isEquatorial )
                    throws CoordException {
@@ -43,11 +38,6 @@ public class TargetUtil {
        return CoordUtil.dd2sex(lon, false, isEquatorial, 5);
     }
 
-//   public static String convertLatToString(double        lat,
-//                                           CoordinateSys coordSystem )
-//                                                  throws CoordException {
-//       return convertLatToString(lat,coordSystem.isEquatorial());
-//   }
 
     public static String convertLatToString(double lat, boolean isEquatorial)
                                                   throws CoordException {
