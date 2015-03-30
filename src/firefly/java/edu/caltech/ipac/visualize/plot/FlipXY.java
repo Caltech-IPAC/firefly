@@ -13,7 +13,7 @@ import nom.tam.util.ArrayFuncs;
 import nom.tam.fits.ImageData;
 
 /**
- * This class flips the FitsRead image to either x (naxis2) or y(naxis1) directiron
+ * This class flips the FitsRead image to either x (naxis2) or y(naxis1) direction
  * Example:
  *  FlipXY flip = FlipXY(fitsRead, "xAxis");
  *  FitsRead newFitsRead = flip.doFlip();
