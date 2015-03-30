@@ -40,7 +40,6 @@ public class VisPushCommands {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
 
-
             SrvParam sp= new SrvParam(paramMap);
             String bid= sp.getOptional(ServerParams.BID);
             String id= VisPushJob.makeNewJob(bid);
@@ -53,7 +52,6 @@ public class VisPushCommands {
 
             return jsonData;
         }
-
     }
 
     public static class PushFITS extends BaseVisPushCommand {
@@ -64,7 +62,11 @@ public class VisPushCommands {
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
             String bid= sp.getRequired(ServerParams.BID);
+            String plotID= sp.getOptional(ServerParams.PLOT_ID);
             WebPlotRequest wpr= WebPlotRequest.makeFilePlotRequest(file);
+            if (plotID!=null) {
+                wpr.setPlotId(plotID);
+            }
             boolean success= VisPushJob.pushFits(bid, wpr);
 
             String jsonData = JSTART +
@@ -81,7 +83,6 @@ public class VisPushCommands {
     public static class PushRegion extends BaseVisPushCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
-
 
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);

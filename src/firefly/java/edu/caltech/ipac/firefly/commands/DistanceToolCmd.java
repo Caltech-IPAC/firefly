@@ -175,7 +175,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
     private void setupSelect() {
         grabMouse();
-        getMiniPlotWidget().setSelectionBarVisible(false);
+        getMiniPlotWidget().hideSelectionBar();
     }
 
     private void setupEdit() {
@@ -492,15 +492,19 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         for(MiniPlotWidget mpw : mpwList)  {
             WebPlotView pv= mpw.getPlotView();
             pv.removeAttribute(WebPlot.ACTIVE_DISTANCE);
-            WebEvent ev= new WebEvent<WebPlotView>(this, Name.AREA_SELECTION, pv);
+            WebEvent ev= new WebEvent<WebPlotView>(this, Name.LINE_SELECTION, pv);
             pv.fireEvent(ev);
         }
     }
 
-    private void setAttribute(Object o) {
+    private void setAttribute(LineSelection o) {
         List<MiniPlotWidget> mpwList= getGroupActiveList();
+        WebPlotView pv;
         for(MiniPlotWidget mpw : mpwList)  {
-            mpw.getPlotView().setAttribute(WebPlot.ACTIVE_DISTANCE,o);
+            pv= mpw.getPlotView();
+            pv.setAttribute(WebPlot.ACTIVE_DISTANCE,o);
+            WebEvent<Boolean> ev= new WebEvent<Boolean>(this, Name.LINE_SELECTION, true);
+            pv.fireEvent(ev);
         }
 
     }

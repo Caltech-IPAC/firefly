@@ -47,7 +47,19 @@ public class Name {
     public static final Name AREA_SELECTION =
                                   new Name("AreaSelected",
                                            "An area on a plot have been selected or cleared, " +
-                                           "data should be boolean true for use initiated, false for programicly");
+                                           "data should be boolean true for use initiated");
+
+    public static final Name LINE_SELECTION =
+            new Name("LineSelected",
+                     "An line on a plot have been selected or cleared, " +
+                             "data should be boolean true for use initiated");
+
+    public static final Name POINT_SELECTION =
+            new Name("PointSelected",
+                     "An point on a plot have been selected or cleared, " +
+                             "data should be boolean true for use initiated");
+
+
 
     public static final Name DATA_SELECTION_CHANGE =
             new Name("DataSelectionChange",

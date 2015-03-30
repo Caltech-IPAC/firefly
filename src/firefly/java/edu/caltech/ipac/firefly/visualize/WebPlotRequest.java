@@ -121,6 +121,7 @@ public class WebPlotRequest extends ServerRequest {
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
     public static final String GRID_ID = "GRID_ID";
     public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
+    public static final String PLOT_ID = "PlotID";
 
     private static final String _allKeys[] = {FILE, WORLD_PT, URL, SIZE_IN_DEG, SURVEY_KEY,
                                               SURVEY_KEY_ALT, SURVEY_KEY_BAND, TYPE, ZOOM_TYPE,
@@ -143,7 +144,7 @@ public class WebPlotRequest extends ServerRequest {
                                               GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                               TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT, DRAWING_SUB_GROUP_ID, GRID_ID,
-                                              DOWNLOAD_FILENAME_ROOT
+                                              DOWNLOAD_FILENAME_ROOT, PLOT_ID
 
     };
 
@@ -156,7 +157,8 @@ public class WebPlotRequest extends ServerRequest {
                                                      TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                                      POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
                                                      TITLE_FILENAME_MODE_PFX, MINIMAL_READOUT,
-                                                     DRAWING_SUB_GROUP_ID, GRID_ID, DOWNLOAD_FILENAME_ROOT
+                                                     DRAWING_SUB_GROUP_ID, GRID_ID,
+                                                     DOWNLOAD_FILENAME_ROOT, PLOT_ID
     };
 
 
@@ -1128,9 +1130,14 @@ public class WebPlotRequest extends ServerRequest {
         setParam(DOWNLOAD_FILENAME_ROOT, nameRoot);
     }
 
-    public String getDownloadFileNameRoot() {
-        return getParam(DOWNLOAD_FILENAME_ROOT);
-    }
+    public String getDownloadFileNameRoot() { return getParam(DOWNLOAD_FILENAME_ROOT); }
+
+
+    public void setPlotId(String id) { setParam(PLOT_ID,id); }
+
+    public String getPlotId() { return getParam(PLOT_ID); }
+
+
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

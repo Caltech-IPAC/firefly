@@ -112,7 +112,8 @@ public class RequestConverter {
                                   WebPlotRequest.DRAWING_SUB_GROUP_ID,
                                   WebPlotRequest.GRID_ID,
                                   WebPlotRequest.CROP_PT1,
-                                  WebPlotRequest.CROP_PT2
+                                  WebPlotRequest.CROP_PT2,
+                                  WebPlotRequest.PLOT_ID
         );
 
         setIntValues(jspr, wpr, WebPlotRequest.INIT_COLOR_TABLE,

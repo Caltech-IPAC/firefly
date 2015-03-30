@@ -14,6 +14,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.commands.ActivePointToolCmd;
 import edu.caltech.ipac.firefly.commands.AreaStatCmd;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
 import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
@@ -736,6 +737,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(RotateCmd.COMMAND_NAME,        new RotateCmd());
         commandMap.put(FlipImageCmd.COMMAND_NAME,     new FlipImageCmd());
         commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
+        commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
         commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());

@@ -71,8 +71,6 @@ public class PushReceiver {
         BackgroundStatus bgStat= monItem.getStatus();
         for(PushItem item= getNextItem(bgStat); (item!=null); item= getNextItem(bgStat) ) {
             TitleFlasher.flashTitle("!! New Image !!");
-            String id=IMAGE_CMD_PLOT_ID+idCnt;
-            idCnt++;
             CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
 //            consumedItems.add(wpr.toString());
             ActionReporter actionReporter= new ActionReporter();
@@ -81,7 +79,16 @@ public class PushReceiver {
             switch (item.pushType) {
                 case WEB_PLOT_REQUEST:
                     WebPlotRequest wpr= WebPlotRequest.parse(item.data);
-                    prepareRequest(id, wpr);
+                    String id;
+                    if (wpr.getPlotId()!=null) {
+                        id= wpr.getPlotId();
+                    }
+                    else {
+                        id=IMAGE_CMD_PLOT_ID+idCnt;
+                        idCnt++;
+                        wpr.setPlotId(id);
+                    }
+                    prepareRequest(wpr);
                     break;
                 case REGION_FILE_NAME:
                     fileName= item.data;
@@ -140,12 +147,12 @@ public class PushReceiver {
     }
 
 
-    private void prepareRequest(String id, final ServerRequest req) {
+    private void prepareRequest(ServerRequest req) {
 
-        deferredPlot(id,req);
+        deferredPlot(req);
     }
 
-    private void deferredPlot(String id, ServerRequest req) {
+    private void deferredPlot(ServerRequest req) {
         WebPlotRequest wpReq= WebPlotRequest.makeRequest(req);
 
         if (req.containsParam(CommonParams.RESOLVE_PROCESSOR) && req.containsParam(CommonParams.CACHE_KEY)) {
@@ -155,7 +162,7 @@ public class PushReceiver {
 
         aloneUI.getMultiViewer().forceExpand();
         PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
-        dynData.setID(id,wpReq);
+        dynData.setID(wpReq.getPlotId(),wpReq);
 
     }
 

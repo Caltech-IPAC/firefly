@@ -89,6 +89,14 @@ public class WebPlot {
      */
     public static final String ACTIVE_DISTANCE=          "ACTIVE_DISTANCE";
 
+
+    /**
+     * This will probably be a PointSelection class
+     * @see edu.caltech.ipac.firefly.visualize.draw.PointSelection
+     */
+    public static final String ACTIVE_POINT=          "ACTIVE_POINT";
+
+
     /**
      * This is a String describing why this plot can't be rotated.  If it is defined then
      * rotating is disabled.

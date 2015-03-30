@@ -118,7 +118,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
     private boolean _enabled = true;
     private DisplayMode _mode = DisplayMode.Quick;
     private final WebPlotView.MouseInfo _mi = new WebPlotView.MouseInfo(new ReadOut(),
-                                                                        "Mouse mouse to see plot information");
+                                                                        "Move mouse to see plot information");
     private boolean _mayLockOnce = false;
     private boolean _pixelClickLock = false;
     private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
@@ -148,7 +148,6 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
 
         _lockIcon = new Image(VisIconCreator.Creator.getInstance().getLocked());
         _unlockIcon = new Image(VisIconCreator.Creator.getInstance().getUnlocked());
-
 
 
 

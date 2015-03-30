@@ -124,7 +124,8 @@ const C= {
     MINIMAL_READOUT: "MinimalReadout",
     DRAWING_SUB_GROUP_ID: "DrawingSubgroupID",
     GRID_ID : "GRID_ID",
-    DOWNLOAD_FILENAME_ROOT : "DownloadFileNameRoot"
+    DOWNLOAD_FILENAME_ROOT : "DownloadFileNameRoot",
+    PLOT_ID : "PlotID"
 
 };
 
@@ -150,7 +151,7 @@ const _allKeys =
          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
          C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
-         C.DOWNLOAD_FILENAME_ROOT
+         C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
 const _clientSideKeys =
@@ -163,7 +164,8 @@ const _clientSideKeys =
          C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
          C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT,
-         C.DRAWING_SUB_GROUP_ID, C.GRID_ID, C.DOWNLOAD_FILENAME_ROOT
+         C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
 const _ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
@@ -1103,6 +1105,12 @@ class WebPlotRequest extends ServerRequest {
     setDownloadFileNameRoot(nameRoot) { this.setParam(C.DOWNLOAD_FILENAME_ROOT, nameRoot); }
 
     getDownloadFileNameRoot() { return this.getParam(C.DOWNLOAD_FILENAME_ROOT); }
+
+    setPlotId(id) { this.setParam(C.PLOT_ID,id); }
+
+    getPlotId() { return this.getParam(C.PLOT_ID); }
+
+
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

@@ -115,6 +115,9 @@ public class WebMouseReadoutPerm implements Readout {
 
 
 
+//        ActivePointToolCmd acPoint= (ActivePointToolCmd)AllPlots.getInstance().getCommand(ActivePointToolCmd.CommandName);
+//        acPoint.changeMode(true);
+
 
         HorizontalPanel hp = new HorizontalPanel();
 

@@ -43,6 +43,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
+import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -69,8 +70,7 @@ import java.util.Map;
  */
 public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
-
-
+    public enum SelType {AREA, LINE, POINT}
     public static final String DISABLED= "DISABLED";
     public static final String DEF_WORKING_MSG= "Plotting ";
     public static final int MIN_WIDTH=   50;
@@ -84,8 +84,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final HiddableLayoutPanel _topPanel = new HiddableLayoutPanel(Style.Unit.PX);
     private PlotLayoutPanel _plotPanel= null;
     private final FlexTable _selectionMbarDisplay= new FlexTable();
+    private Widget selectionMbar;
     private final FlexTable _flipMbarDisplay= new FlexTable();
-    private final FlowPanel selectionAdditionActionBar= new FlowPanel();
+    private final FlowPanel areaSelectAdditionActionBar = new FlowPanel();
+    private final FlowPanel lineSelectAdditionActionBar = new FlowPanel();
     private HTML _sendToServerNotice= null;
 
     private final Map<String, String> _reqMods= new HashMap<String, String>(5);
@@ -447,7 +449,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     private boolean isRotatablePlot() { return getCurrentPlot()!=null && getCurrentPlot().isRotatable(); }
 
-    public void setSelectionBarVisible(boolean visible) { _topPanel.setSelMBarVisible(visible); }
+    public void showSelectionBar(SelType selType) { _topPanel.showSelMBar(selType); }
+    public void hideSelectionBar() { _topPanel.hideSelMBar(); }
     public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
     public void setSendToNoticeVisible(boolean visible) { _topPanel.setSendToNoticeVisible(visible); }
 
@@ -942,11 +945,23 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                       resize();
                                       if (_plotView.getPrimaryPlot() != null) {
                                           RecSelection sel = (RecSelection) _plotView.getAttribute(WebPlot.SELECTION);
-                                          setSelectionBarVisible(sel != null);
+                                          if (sel!=null) showSelectionBar(SelType.AREA);
+                                          else           hideSelectionBar();
                                       }
                                   }
                               });
 
+        _plotView.addListener(Name.LINE_SELECTION,
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      resize();
+                                      if (_plotView.getPrimaryPlot() != null) {
+                                          LineSelection sel = (LineSelection) _plotView.getAttribute(WebPlot.ACTIVE_DISTANCE);
+                                          if (sel!=null) showSelectionBar(SelType.LINE);
+                                          else           hideSelectionBar();
+                                      }
+                                  }
+                              });
 
         _plotView.addListener(Name.PRIMARY_PLOT_CHANGE,
                               new WebEventListener() {
@@ -1008,7 +1023,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         AllPlots.loadPrivateVisCommands(privateCommandMap, MiniPlotWidget.this);
 
         MenuGeneratorV2 privateMenugen= MenuGeneratorV2.create(privateCommandMap,null);
-//        MenuGenerator privateMenugen= MenuGenerator.create(privateCommandMap);
         _flipFrame= new HTML();
 
 
@@ -1017,14 +1031,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                       "padding", "0 0 12px 25px",
                                       "color", "#49a344");
 
-        Widget selectionMbar= privateMenugen.makeMenuToolBarFromProp("VisSelectionMenuBar", false);
+        selectionMbar= privateMenugen.makeMenuToolBarFromProp("VisSelectionMenuBar", false);
         Widget flipMbar= privateMenugen.makeMenuToolBarFromProp("VisFlipMenuBar", false);
 
 
         _plotPanel= new PlotLayoutPanel(this,_plotWidgetFactory);
 
-//        flipMbar.addItem(_flipFrame);
-//        flipMbar.setStyleName("NONE");
         GwtUtil.setStyles(selectionMbar, "background", "none",
                                          "border", "none");
         GwtUtil.setStyles(flipMbar, "background", "none",
@@ -1033,7 +1045,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
         _sendToServerNotice= new HTML("<div class=\"sendToServerNotice\">Response sent to server</div>");
-//        setStyles(holder, "display", "table", "margin", "0 auto");
 
 
         _topPanel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
@@ -1041,31 +1052,30 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _topPanel.addNorth(_sendToServerNotice, TOOLBAR_SIZE);
         _topPanel.add(_plotPanel);
 
-        setSelectionBarVisible(false);
+        hideSelectionBar();
         setFlipBarVisible(false);
         setSendToNoticeVisible(false);
 
-        HTML oLabel= new HTML("<i>Options: </i>");
-        _selectionMbarDisplay.setWidget(0,0,oLabel);
-        _selectionMbarDisplay.setWidget(0,1,selectionMbar);
-        _selectionMbarDisplay.setWidget(0,2,selectionAdditionActionBar);
+//        HTML oLabel= new HTML("<i>Options: </i>");
+//        _selectionMbarDisplay.setWidget(0,0,oLabel);
+//        _selectionMbarDisplay.setWidget(0,1,selectionMbar);
+//        _selectionMbarDisplay.setWidget(0,2, areaSelectAdditionActionBar);
 
 
         HTML iLabel= new HTML("<i>Change Image: </i>");
         _flipMbarDisplay.setWidget(0,0,iLabel);
         GwtUtil.setStyle(iLabel, "padding", "0 0 6px 3px");
-        GwtUtil.setStyle(oLabel, "padding", "0 0 6px 3px");
         _flipMbarDisplay.setWidget(0,1,flipMbar);
         _flipMbarDisplay.setWidget(0,2,_flipFrame);
 
 
-        FlexTable.FlexCellFormatter fm= _selectionMbarDisplay.getFlexCellFormatter();
-        fm.setColSpan(0,1,5);
-        fm.setColSpan(0,0,1);
+//        FlexTable.FlexCellFormatter fm= _selectionMbarDisplay.getFlexCellFormatter();
+//        fm.setColSpan(0,1,5);
+//        fm.setColSpan(0,0,1);
 
-        fm= _flipMbarDisplay.getFlexCellFormatter();
-        fm.setColSpan(0,1,5);
-        fm.setColSpan(0,0,1);
+        FlexTable.FlexCellFormatter fm2= _flipMbarDisplay.getFlexCellFormatter();
+        fm2.setColSpan(0,1,5);
+        fm2.setColSpan(0,0,1);
 
 
         new PlotMover(_plotView);
@@ -1073,16 +1083,27 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     public void recomputeUserOptions(ActionReporter reporter)  {
-        selectionAdditionActionBar.clear();
+        areaSelectAdditionActionBar.clear();
+        lineSelectAdditionActionBar.clear();
         List<PlotCmdExtension> list= (List)getPlotView().getAttribute(WebPlotView.EXTENSION_LIST);
         if (list!=null) {
             for(PlotCmdExtension ext : list) {
+                BadgeButton button= new BadgeButton(ext.getTitle());
+                GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
                 if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
                     final GeneralCommand cmd= new ExtensionAreaSelectCmd(ext, reporter);
-                    BadgeButton button= new BadgeButton(ext.getTitle());
-                    selectionAdditionActionBar.add(button.getWidget());
+                    areaSelectAdditionActionBar.add(button.getWidget());
                     button.addClickHandler( new ClickHandler() {
                         public void onClick(ClickEvent event) { cmd.execute(); } });
+                }
+                else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
+                    final GeneralCommand cmd= new ExtensionLineSelectCmd(ext, reporter);
+                    lineSelectAdditionActionBar.add(button.getWidget());
+                    button.addClickHandler( new ClickHandler() {
+                        public void onClick(ClickEvent event) { cmd.execute(); } });
+                }
+                else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
+
                 }
             }
         }
@@ -1292,9 +1313,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             else {
                 _plotPanel.showError(desc);
             }
-//            //TOdo - format plot error
-//            _plotPanel.showError(desc);
-////            PopupUtil.showError("Plot Error", desc, details);
         }
     }
 
@@ -1304,11 +1322,51 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             super(unit);
         }
 
-        void setSelMBarVisible(boolean visible) {
+        void showSelMBar(SelType selType) {
+            LayoutData data = (LayoutData) _selectionMbarDisplay.getLayoutData();
+
+            if (data!=null) {
+                boolean show= false;
+                if (selType==SelType.AREA) {
+                    _selectionMbarDisplay.clear();
+                    HTML oLabel= new HTML("<i>Options: </i>");
+                    _selectionMbarDisplay.setWidget(0,0,oLabel);
+                    _selectionMbarDisplay.setWidget(0,1,selectionMbar);
+                    _selectionMbarDisplay.setWidget(0,2, areaSelectAdditionActionBar);
+
+                    FlexTable.FlexCellFormatter fm= _selectionMbarDisplay.getFlexCellFormatter();
+                    fm.setColSpan(0,1,5);
+                    fm.setColSpan(0,0,1);
+
+                    GwtUtil.setStyle(oLabel, "padding", "0 0 6px 3px");
+                    show= true;
+                }
+                else if (selType==SelType.LINE) {
+                    if (lineSelectAdditionActionBar.getWidgetCount()>0) {
+                        _selectionMbarDisplay.clear();
+                        HTML oLabel= new HTML("<i>Options: </i>");
+                        _selectionMbarDisplay.setWidget(0,0,oLabel);
+                        _selectionMbarDisplay.setWidget(0,1, lineSelectAdditionActionBar);
+                        FlexTable.FlexCellFormatter fm= _selectionMbarDisplay.getFlexCellFormatter();
+                        fm.setColSpan(0,1,5);
+                        fm.setColSpan(0,0,1);
+                        show= true;
+                    }
+                }
+                else if (selType==SelType.POINT) {
+
+                }
+
+                if (show) {
+                    data.size = TOOLBAR_SIZE;
+                    forceLayout();
+                }
+            }
+        }
+        void hideSelMBar() {
             LayoutData data = (LayoutData) _selectionMbarDisplay.getLayoutData();
             if (data!=null) {
-                if (visible) data.size= TOOLBAR_SIZE;
-                else         data.size= 0;
+                data.size = 0;
                 forceLayout();
             }
         }
@@ -1332,6 +1390,39 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
     }
 
+
+
+    private class ExtensionLineSelectCmd extends GeneralCommand {
+
+        private final ActionReporter actionReporter;
+        private final PlotCmdExtension ext;
+
+        public ExtensionLineSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
+            super(ext.getTitle());
+            this.ext= ext;
+            this.actionReporter= actionReporter;
+            this.setShortDesc(ext.getTitle());
+            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
+        }
+
+        protected void doExecute() {
+            if (actionReporter.isReporting()) {
+                LineSelection sel= (LineSelection)getPlotView().getAttribute(WebPlot.ACTIVE_DISTANCE);
+                if (sel!=null) {
+                    String sendVal= "{" +
+                            "id :  " + ext.getId()              + "," +
+                            "type :" + ext.getExtType()         + "," +
+                            "pt0 : "+  sel.getPt1().serialize() + "," +
+                            "pt1 : " + sel.getPt2().serialize() +
+                            "}";
+                    actionReporter.report(ext.getId(),sendVal);
+                }
+            }
+        }
+    }
+
+
+
     private class ExtensionAreaSelectCmd extends GeneralCommand {
 
         private final ActionReporter actionReporter;
@@ -1347,14 +1438,13 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
         protected void doExecute() {
             if (actionReporter.isReporting()) {
-                WebPlot plot= getCurrentPlot();
                 RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
                 if (sel!=null) {
                     String sendVal= "{" +
                                      "id :  " + ext.getId()              + "," +
                                      "type :" + ext.getExtType()         + "," +
                                      "pt0 : "+  sel.getPt0().serialize() + "," +
-                                     "pt1 : " + sel.getPt0().serialize() +
+                                     "pt1 : " + sel.getPt1().serialize() +
                                     "}";
                     actionReporter.report(ext.getId(),sendVal);
                 }

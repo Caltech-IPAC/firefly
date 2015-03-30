@@ -9,7 +9,7 @@ package edu.caltech.ipac.firefly.visualize;
  */
 public class PlotCmdExtension {
 
-    public enum ExtType { AREA_SELECT, LINE_DRAW, POINT, NONE }
+    public enum ExtType { AREA_SELECT, LINE_SELECT, POINT, NONE }
 
     private final ExtType extType;
     private final String id;

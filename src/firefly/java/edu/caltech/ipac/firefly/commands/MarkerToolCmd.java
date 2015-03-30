@@ -162,7 +162,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     private void setupMouse() {
         grabMouse();
-        getMiniPlotWidget().setSelectionBarVisible(false);
+        getMiniPlotWidget().hideSelectionBar();
     }
 
     private void changeMode(Mode newMode) {

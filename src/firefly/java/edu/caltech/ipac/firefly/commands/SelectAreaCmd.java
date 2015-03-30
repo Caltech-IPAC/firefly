@@ -153,7 +153,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     private void setupSelect() {
         grabMouse();
-        getMiniPlotWidget().setSelectionBarVisible(false);
+        getMiniPlotWidget().hideSelectionBar();
     }
 
     private void setupEdit() {
@@ -188,7 +188,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
                 releaseMouse();
                 if (getMiniPlotWidget()!=null) {
                     for (MiniPlotWidget mpw :AllPlots.getInstance().getAll()) {
-                        mpw.setSelectionBarVisible(false);
+                        mpw.hideSelectionBar();
                     }
                 }
                 if (_drawMan!=null) removeDrawMan();
