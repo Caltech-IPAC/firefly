@@ -36,15 +36,9 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
-import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
-import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
-import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
-import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,7 +94,7 @@ public class WebMouseReadoutPerm implements Readout {
     private final WebPlotView.MouseInfo _mi = new WebPlotView.MouseInfo(new ReadOut(),
                                                                         "Mouse mouse to see plot information");
     private boolean _pixelClickLock = false;
-    private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
+//    private MarkedPointDisplay _dataConnect = new MarkedPointDisplay();
     private DrawingManager _lockPointDrawMan = null;
     private CheckBox _lockMouCheckBox = new CheckBox("Lock By Click");
     private final HTML titleLabel= new HTML();
@@ -113,10 +107,6 @@ public class WebMouseReadoutPerm implements Readout {
         super();
 
 
-
-
-//        ActivePointToolCmd acPoint= (ActivePointToolCmd)AllPlots.getInstance().getCommand(ActivePointToolCmd.CommandName);
-//        acPoint.changeMode(true);
 
 
         HorizontalPanel hp = new HorizontalPanel();
@@ -211,12 +201,12 @@ public class WebMouseReadoutPerm implements Readout {
 
     }
 
-    DrawingManager getLockPointDrawing() {
-        if (_lockPointDrawMan==null) {
-            _lockPointDrawMan = new DrawingManager("Clicked Point", _dataConnect);
-        }
-        return _lockPointDrawMan;
-    }
+//    DrawingManager getLockPointDrawing() {
+//        if (_lockPointDrawMan==null) {
+//            _lockPointDrawMan = new DrawingManager("Clicked Point", _dataConnect);
+//        }
+//        return _lockPointDrawMan;
+//    }
 
     public void setEnabled(boolean enabled) {
         _enabled = enabled;
@@ -619,10 +609,10 @@ public class WebMouseReadoutPerm implements Readout {
         @Override
         public void onClick(WebPlotView pv, ScreenPt spt) {
             move(pv, spt, false, true);
-            if (_pixelClickLock) {
-                _dataConnect.setPoint(pv.getPrimaryPlot().getWorldCoords(spt), pv.getPrimaryPlot());
-                getLockPointDrawing().redraw();
-            }
+//            if (_pixelClickLock) {
+//                _dataConnect.setPoint(pv.getPrimaryPlot().getWorldCoords(spt), pv.getPrimaryPlot());
+//                getLockPointDrawing().redraw();
+//            }
         }
 
         @Override
@@ -637,56 +627,58 @@ public class WebMouseReadoutPerm implements Readout {
             Widget w = _magDeck.getWidget(i);
             ((MagnifiedView) w).setFreezeView(_pixelClickLock);
         }
-        DrawingManager dm= getLockPointDrawing();
+//        DrawingManager dm= getLockPointDrawing();
         if (_pixelClickLock) {
-            _dataConnect.setPoint(null, null);
-            dm.redraw();
-            for (WebPlotView pv : _pvList) {
-                dm.addPlotView(pv);
-            }
+            AllPlots.getInstance().enableActivePointSelection(false);
+//            _dataConnect.setPoint(null, null);
+//            dm.redraw();
+//            for (WebPlotView pv : _pvList) {
+//                dm.addPlotView(pv);
+//            }
         } else {
-            for (WebPlotView pv : _pvList) {
-                dm.removePlotView(pv);
-            }
+            AllPlots.getInstance().disableActivePointSelection(true);
+//            for (WebPlotView pv : _pvList) {
+//                dm.removePlotView(pv);
+//            }
         }
 
     }
 
 
-    private static class MarkedPointDisplay extends SimpleDataConnection {
-
-        private List<DrawObj> list = new ArrayList<DrawObj>(1);
-        private WebPlot markedPlot = null;
-
-        MarkedPointDisplay() {
-            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
-        }
-
-        public void setPoint(WorldPt wp, WebPlot plot) {
-            list= null;
-            if (wp != null && plot != null) {
-                list= Arrays.asList((DrawObj)new PointDataObj(wp, DrawSymbol.CIRCLE));
-                markedPlot = plot;
-            }
-        }
-
-
-        @Override
-        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
-            List<DrawObj> retList = list;
-            if (list!=null && list.size() > 0 && plot==markedPlot) {
-                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
-                retList= Arrays.asList(list.get(0),obj);
-            }
-            return retList;
-        }
-        public boolean getHasPerPlotData() { return true; }
-
-        @Override
-        public boolean getSupportsMouse() {
-            return false;
-        }
-    }
+//    private static class MarkedPointDisplay extends SimpleDataConnection {
+//
+//        private List<DrawObj> list = new ArrayList<DrawObj>(1);
+//        private WebPlot markedPlot = null;
+//
+//        MarkedPointDisplay() {
+//            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
+//        }
+//
+//        public void setPoint(WorldPt wp, WebPlot plot) {
+//            list= null;
+//            if (wp != null && plot != null) {
+//                list= Arrays.asList((DrawObj)new PointDataObj(wp, DrawSymbol.CIRCLE));
+//                markedPlot = plot;
+//            }
+//        }
+//
+//
+//        @Override
+//        public List<DrawObj> getData(boolean rebuild, WebPlot plot) {
+//            List<DrawObj> retList = list;
+//            if (list!=null && list.size() > 0 && plot==markedPlot) {
+//                PointDataObj obj = new PointDataObj(list.get(0).getCenterPt(), DrawSymbol.SQUARE);
+//                retList= Arrays.asList(list.get(0),obj);
+//            }
+//            return retList;
+//        }
+//        public boolean getHasPerPlotData() { return true; }
+//
+//        @Override
+//        public boolean getSupportsMouse() {
+//            return false;
+//        }
+//    }
 
 
 

@@ -18,6 +18,7 @@
 */
 
 package edu.caltech.ipac.firefly.visualize.ui.color;
+//package org.agilar.gwt.colorpicker;
 
 public class Color {
     private static final double FACTOR = 0.7;

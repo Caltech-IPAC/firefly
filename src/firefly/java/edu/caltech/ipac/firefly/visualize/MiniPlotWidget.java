@@ -44,6 +44,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
+import edu.caltech.ipac.firefly.visualize.draw.PointSelection;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -70,7 +71,7 @@ import java.util.Map;
  */
 public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
-    public enum SelType {AREA, LINE, POINT}
+    public enum SelType {AREA, LINE, POINT, NONE}
     public static final String DISABLED= "DISABLED";
     public static final String DEF_WORKING_MSG= "Plotting ";
     public static final int MIN_WIDTH=   50;
@@ -88,6 +89,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final FlexTable _flipMbarDisplay= new FlexTable();
     private final FlowPanel areaSelectAdditionActionBar = new FlowPanel();
     private final FlowPanel lineSelectAdditionActionBar = new FlowPanel();
+    private final FlowPanel pointSelectAdditionActionBar = new FlowPanel();
     private HTML _sendToServerNotice= null;
 
     private final Map<String, String> _reqMods= new HashMap<String, String>(5);
@@ -963,6 +965,21 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                   }
                               });
 
+
+        _plotView.addListener(Name.POINT_SELECTION,
+                              new WebEventListener() {
+                                  public void eventNotify(WebEvent ev) {
+                                      resize();
+                                      if (_plotView.getPrimaryPlot() != null) {
+                                          PointSelection sel = (PointSelection) _plotView.getAttribute(WebPlot.ACTIVE_POINT);
+                                          if (sel!=null) showSelectionBar(SelType.POINT);
+                                          else           hideSelectionBar();
+                                      }
+                                  }
+                              });
+
+
+
         _plotView.addListener(Name.PRIMARY_PLOT_CHANGE,
                               new WebEventListener() {
                                   public void eventNotify(WebEvent ev) {
@@ -1063,7 +1080,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
         HTML iLabel= new HTML("<i>Change Image: </i>");
-        _flipMbarDisplay.setWidget(0,0,iLabel);
+        _flipMbarDisplay.setWidget(0, 0, iLabel);
         GwtUtil.setStyle(iLabel, "padding", "0 0 6px 3px");
         _flipMbarDisplay.setWidget(0,1,flipMbar);
         _flipMbarDisplay.setWidget(0,2,_flipFrame);
@@ -1085,26 +1102,43 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void recomputeUserOptions(ActionReporter reporter)  {
         areaSelectAdditionActionBar.clear();
         lineSelectAdditionActionBar.clear();
+        pointSelectAdditionActionBar.clear();
+        List<PlotCmdExtension> addedList= new ArrayList<PlotCmdExtension>(5);
         List<PlotCmdExtension> list= (List)getPlotView().getAttribute(WebPlotView.EXTENSION_LIST);
         if (list!=null) {
             for(PlotCmdExtension ext : list) {
-                BadgeButton button= new BadgeButton(ext.getTitle());
-                GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
-                if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
-                    final GeneralCommand cmd= new ExtensionAreaSelectCmd(ext, reporter);
-                    areaSelectAdditionActionBar.add(button.getWidget());
-                    button.addClickHandler( new ClickHandler() {
-                        public void onClick(ClickEvent event) { cmd.execute(); } });
+                boolean found= false;
+                for(PlotCmdExtension testE : addedList) {
+                    if (testE.getId().equals(ext.getId())) {
+                        found= true;
+                        break;
+                    }
                 }
-                else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
-                    final GeneralCommand cmd= new ExtensionLineSelectCmd(ext, reporter);
-                    lineSelectAdditionActionBar.add(button.getWidget());
-                    button.addClickHandler( new ClickHandler() {
-                        public void onClick(ClickEvent event) { cmd.execute(); } });
-                }
-                else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
+                if (!found) {
+                    BadgeButton button= new BadgeButton(ext.getTitle());
+                    GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
+                    if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
+                        final GeneralCommand cmd= new ExtensionAreaSelectCmd(ext, reporter);
+                        areaSelectAdditionActionBar.add(button.getWidget());
+                        button.addClickHandler( new ClickHandler() {
+                            public void onClick(ClickEvent event) { cmd.execute(); } });
+                    }
+                    else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
+                        final GeneralCommand cmd= new ExtensionLineSelectCmd(ext, reporter);
+                        lineSelectAdditionActionBar.add(button.getWidget());
+                        button.addClickHandler( new ClickHandler() {
+                            public void onClick(ClickEvent event) { cmd.execute(); } });
+                    }
+                    else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
+                        AllPlots.getInstance().enableActivePointSelection(true);
+                        final GeneralCommand cmd= new ExtensionPointSelectCmd(ext, reporter);
+                        pointSelectAdditionActionBar.add(button.getWidget());
+                        button.addClickHandler( new ClickHandler() {
+                            public void onClick(ClickEvent event) { cmd.execute(); } });
+                    }
 
                 }
+                addedList.add(ext);
             }
         }
     }
@@ -1318,6 +1352,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     public class HiddableLayoutPanel extends DockLayoutPanel {
+
+        private SelType activeSelType= SelType.NONE;
+
         public HiddableLayoutPanel(Style.Unit unit) {
             super(unit);
         }
@@ -1354,16 +1391,27 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                     }
                 }
                 else if (selType==SelType.POINT) {
-
+                    if (pointSelectAdditionActionBar.getWidgetCount()>0 && activeSelType==SelType.NONE) {
+                        _selectionMbarDisplay.clear();
+                        HTML oLabel = new HTML("<i>Options: </i>");
+                        _selectionMbarDisplay.setWidget(0, 0, oLabel);
+                        _selectionMbarDisplay.setWidget(0, 1, pointSelectAdditionActionBar);
+                        FlexTable.FlexCellFormatter fm = _selectionMbarDisplay.getFlexCellFormatter();
+                        fm.setColSpan(0, 1, 5);
+                        fm.setColSpan(0, 0, 1);
+                        show = true;
+                    }
                 }
 
                 if (show) {
+                    activeSelType= selType;
                     data.size = TOOLBAR_SIZE;
                     forceLayout();
                 }
             }
         }
         void hideSelMBar() {
+            activeSelType= SelType.NONE;
             LayoutData data = (LayoutData) _selectionMbarDisplay.getLayoutData();
             if (data!=null) {
                 data.size = 0;
@@ -1389,6 +1437,37 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
     }
+
+
+
+    private class ExtensionPointSelectCmd extends GeneralCommand {
+
+        private final ActionReporter actionReporter;
+        private final PlotCmdExtension ext;
+
+        public ExtensionPointSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
+            super(ext.getTitle());
+            this.ext= ext;
+            this.actionReporter= actionReporter;
+            this.setShortDesc(ext.getTitle());
+            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
+        }
+
+        protected void doExecute() {
+            if (actionReporter.isReporting()) {
+                PointSelection sel= (PointSelection)getPlotView().getAttribute(WebPlot.ACTIVE_POINT);
+                if (sel!=null) {
+                    String sendVal= "{" +
+                            "id :  " + ext.getId()              + "," +
+                            "type :" + ext.getExtType()         + "," +
+                            "pt : "  + sel.getPt().serialize() +
+                            "}";
+                    actionReporter.report(ext.getId(),sendVal);
+                }
+            }
+        }
+    }
+
 
 
 

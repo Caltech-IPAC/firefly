@@ -669,6 +669,19 @@ public class AllPlots implements HasWebEventManager {
         updateUISelectedLook();
     }
 
+    public void enableActivePointSelection(boolean enableCommandControl) {
+        ActivePointToolCmd actPoint= (ActivePointToolCmd)AllPlots.getInstance().getCommand(ActivePointToolCmd.CommandName);
+        actPoint.changeMode(false);
+        actPoint.changeMode(true);
+        if (enableCommandControl) actPoint.setCommandControl(true);
+    }
+
+    public void disableActivePointSelection(boolean onlyDisableWhenUsedExclusively) {
+        ActivePointToolCmd actPoint= (ActivePointToolCmd)AllPlots.getInstance().getCommand(ActivePointToolCmd.CommandName);
+        if (!actPoint.isCommandControl() || !onlyDisableWhenUsedExclusively) {
+            actPoint.changeMode(false);
+        }
+    }
 
 //====================================================================
 //------------------- from HasWebEventManager interface

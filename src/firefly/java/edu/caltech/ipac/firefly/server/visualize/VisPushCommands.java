@@ -106,7 +106,6 @@ public class VisPushCommands {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
 
-
             SrvParam sp= new SrvParam(paramMap);
             String bid= sp.getRequired(ServerParams.BID);
             String id= sp.getRequired(ServerParams.ID);
@@ -127,13 +126,9 @@ public class VisPushCommands {
 
     }
 
-
-
-
     public static class PushTable extends BaseVisPushCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
-
 
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
@@ -154,7 +149,6 @@ public class VisPushCommands {
     public static class QueryAction extends BaseVisPushCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
-
 
             SrvParam sp= new SrvParam(paramMap);
             String id= sp.getRequired(ServerParams.BID);

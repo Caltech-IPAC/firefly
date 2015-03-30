@@ -35,6 +35,7 @@ public class ActivePointToolCmd extends BaseGroupVisCmd implements WebEventListe
 
     public static final String CommandName= "ActivePointTool";
     private DrawingManager drawMan;
+    private boolean commandControl= false;
 
     private final WebPlotView.MouseInfo _mi = new WebPlotView.MouseInfo(new Mouse(),
                                                                         "Click on point");
@@ -93,6 +94,10 @@ public class ActivePointToolCmd extends BaseGroupVisCmd implements WebEventListe
         return null;
     }
 
+    public boolean isCommandControl() { return commandControl; }
+    public void setCommandControl(boolean commandControl) {
+        this.commandControl = commandControl;
+    }
 
     public void changeMode(boolean on) {
 

@@ -18,6 +18,7 @@
 */
 
 package edu.caltech.ipac.firefly.visualize.ui.color;
+//package org.agilar.gwt.colorpicker;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

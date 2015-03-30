@@ -20,13 +20,11 @@ import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
  */
 public class PointSelection {
 
-    private final ImageWorkSpacePt _pt1;
+    private final ImageWorkSpacePt pt;
 
-    public PointSelection(ImageWorkSpacePt pt1) {
-        _pt1= pt1;
-    }
+    public PointSelection(ImageWorkSpacePt pt) { this.pt= pt; }
 
-    public ImageWorkSpacePt getPt1() { return _pt1; }
+    public ImageWorkSpacePt getPt() { return this.pt; }
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
