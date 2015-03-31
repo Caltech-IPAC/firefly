@@ -157,7 +157,7 @@ public class VisPushCommands {
             String jsonData = JSTART +
                     "\"success\" :  \"" + (response.getData()!=null) + JLINE_END +
                     "\"id\" :  \"" + id + JLINE_END +
-                    "\"result\" :  \"" + response.getData() + JLINE_END +
+                    "\"result\" :  " + response.getData() + ",   \n"+
                     "\"desc\" :  \"" + response.getDesc() + JLAST_END +
                     JEND;
 

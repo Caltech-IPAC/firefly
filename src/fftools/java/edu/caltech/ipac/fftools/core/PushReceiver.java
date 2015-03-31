@@ -31,12 +31,9 @@ import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotCmdExtension;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.firefly.visualize.ui.DS9RegionLoadDialog;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,9 +69,7 @@ public class PushReceiver {
         for(PushItem item= getNextItem(bgStat); (item!=null); item= getNextItem(bgStat) ) {
             TitleFlasher.flashTitle("!! New Image !!");
             CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
-//            consumedItems.add(wpr.toString());
-            ActionReporter actionReporter= new ActionReporter();
-            actionReporter.setMonitorItem(monItem);
+            AllPlots.getInstance().getActionReporter().setMonitorItem(monItem);
             String fileName;
             switch (item.pushType) {
                 case WEB_PLOT_REQUEST:
@@ -101,15 +96,11 @@ public class PushReceiver {
                     break;
                 case FITS_COMMAND_EXT:
                     PlotCmdExtension ext= parsePlotCmdExtension(item.data);
+                    List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(null);
+                    list.add(ext);
                     for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
                         if (mpw.getPlotView()!=null) {
-                            List<PlotCmdExtension> list= (List)mpw.getPlotView().getAttribute(WebPlotView.EXTENSION_LIST);
-                            if (list==null) {
-                                list= new ArrayList<PlotCmdExtension>(5);
-                                mpw.getPlotView().setAttribute(WebPlotView.EXTENSION_LIST, list);
-                            }
-                            list.add(ext);
-                            mpw.recomputeUserOptions(actionReporter);
+                            mpw.recomputeUserExtensionOptions();
                         }
                     }
 
@@ -147,10 +138,7 @@ public class PushReceiver {
     }
 
 
-    private void prepareRequest(ServerRequest req) {
-
-        deferredPlot(req);
-    }
+    private void prepareRequest(ServerRequest req) { deferredPlot(req); }
 
     private void deferredPlot(ServerRequest req) {
         WebPlotRequest wpReq= WebPlotRequest.makeRequest(req);

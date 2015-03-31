@@ -66,6 +66,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -92,6 +93,7 @@ public class AllPlots implements HasWebEventManager {
     interface ColorTableFile extends PropFile { @Source("colorTable.prop") TextResource get(); }
     interface VisMenuBarFile extends PropFile { @Source("VisMenuBar.prop") TextResource get(); }
 
+    public static final String ALL_MPW=  "AllMpw";
     public enum PopoutStatus {Enabled, Disabled}
     public enum WcsMatchMode {NorthAndCenter, ByUserPositionAndZoom}
 
@@ -105,11 +107,13 @@ public class AllPlots implements HasWebEventManager {
     private final List<PopoutWidget> _additionalWidgets = new ArrayList<PopoutWidget>(4);
     private final Map<String, GeneralCommand> _commandMap = new HashMap<String, GeneralCommand>(13);
     private final Map<PopoutWidget, PopoutStatus> _statusMap = new HashMap<PopoutWidget, PopoutStatus>(3);
+    private final ActionReporter actionReporter= new ActionReporter();
 
     private Readout _mouseReadout;
     private MenuItem _zoomLevelPopup = null;
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
+    private final Map<String,List<PlotCmdExtension>> extCmdMap= new HashMap<String, List<PlotCmdExtension>>(7);
 
     private PopoutWidget _primaryExternal = null;
     private MiniPlotWidget _primaryMPWSel = null;
@@ -141,7 +145,7 @@ public class AllPlots implements HasWebEventManager {
     private AllPlots() {
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
         MiniPlotWidget.setDefaultThumbnailSize(FFToolEnv.isAPIMode() ? 100 : 70);
-
+        extCmdMap.put(ALL_MPW, new ArrayList<PlotCmdExtension>(5));
     }
 
 
@@ -681,6 +685,27 @@ public class AllPlots implements HasWebEventManager {
         if (!actPoint.isCommandControl() || !onlyDisableWhenUsedExclusively) {
             actPoint.changeMode(false);
         }
+    }
+
+
+    public ActionReporter getActionReporter() {
+        return actionReporter;
+    }
+
+    /**
+     *
+     * @param id, if null the return the ALL list
+     * @return a list of PlotCmdExtension
+     */
+    public List<PlotCmdExtension> getExtensionList(String id) {
+        if (id==null) id= ALL_MPW;
+        if (extCmdMap.containsKey(id)) {
+           return extCmdMap.get(id);
+        }
+        else {
+            return Collections.emptyList();
+        }
+
     }
 
 //====================================================================

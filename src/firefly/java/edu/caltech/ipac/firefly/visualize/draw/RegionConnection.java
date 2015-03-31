@@ -109,7 +109,7 @@ public class RegionConnection implements DataConnection {
             Region highlightR= regionList.get(idx);
             highlightR.setHighlighted(true);
             if (actionReporter.isReporting()) {
-                actionReporter.report(getTitle(null),highlightR.serialize());
+                actionReporter.report(getTitle(null),"\""+highlightR.serialize()+"\"");
             }
         }
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));

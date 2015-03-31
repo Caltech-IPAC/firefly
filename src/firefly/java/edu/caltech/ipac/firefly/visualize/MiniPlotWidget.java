@@ -91,6 +91,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final FlowPanel lineSelectAdditionActionBar = new FlowPanel();
     private final FlowPanel pointSelectAdditionActionBar = new FlowPanel();
     private HTML _sendToServerNotice= null;
+    private String plotId= null;
+
+
 
     private final Map<String, String> _reqMods= new HashMap<String, String>(5);
     private final PlotWidgetGroup _group;
@@ -155,15 +158,15 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         this(groupName, choosePopoutType(false));
     }
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
-            super(popContainer,MIN_WIDTH,MIN_HEIGHT);
-            setPopoutWidget(_topPanel);
-            updateUISelectedLook();
-            _topPanel.addStyleName("mpw-popout-panel");
-            _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
-            _group.addMiniPlotWidget(this);
-            _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
+        super(popContainer,MIN_WIDTH,MIN_HEIGHT);
+        setPopoutWidget(_topPanel);
+        updateUISelectedLook();
+        _topPanel.addStyleName("mpw-popout-panel");
+        _group= (groupName==null) ? PlotWidgetGroup.makeSingleUse() : PlotWidgetGroup.getShared(groupName);
+        _group.addMiniPlotWidget(this);
+        _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
 
-        }
+    }
 
 
 
@@ -694,6 +697,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 if (r.containsParam(WebPlotRequest.EXPANDED_TITLE_OPTIONS)) {
                     expandedTitleOptions= r.getExpandedTitleOptions();
                 }
+                if (r.containsParam(WebPlotRequest.PLOT_ID)) {
+                    plotId= r.getPlotId();
+                }
 
                 if (r.containsParam(WebPlotRequest.ADVERTISE) && r.isAdvertise()) {
                     _showAd= true;
@@ -915,6 +921,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 addToolbarButton(badgeButton.getWidget(),28);
             }
             if (_useInlineToolbar && !_useToolsButton && !_useLayerOnPlotToolbar) _plotPanel.enableControlPopoutToolbar();
+            recomputeUserExtensionOptions();
         }
     }
 
@@ -1099,12 +1106,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
 
-    public void recomputeUserOptions(ActionReporter reporter)  {
+    public void recomputeUserExtensionOptions()  {
         areaSelectAdditionActionBar.clear();
         lineSelectAdditionActionBar.clear();
         pointSelectAdditionActionBar.clear();
         List<PlotCmdExtension> addedList= new ArrayList<PlotCmdExtension>(5);
-        List<PlotCmdExtension> list= (List)getPlotView().getAttribute(WebPlotView.EXTENSION_LIST);
+        List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(plotId);
         if (list!=null) {
             for(PlotCmdExtension ext : list) {
                 boolean found= false;
@@ -1115,23 +1122,24 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                     }
                 }
                 if (!found) {
+                    ActionReporter reporter= AllPlots.getInstance().getActionReporter();
                     BadgeButton button= new BadgeButton(ext.getTitle());
                     GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
                     if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
-                        final GeneralCommand cmd= new ExtensionAreaSelectCmd(ext, reporter);
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionAreaSelectCmd(this,ext, reporter);
                         areaSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
                     }
                     else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
-                        final GeneralCommand cmd= new ExtensionLineSelectCmd(ext, reporter);
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionLineSelectCmd(this, ext, reporter);
                         lineSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
                     }
                     else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
                         AllPlots.getInstance().enableActivePointSelection(true);
-                        final GeneralCommand cmd= new ExtensionPointSelectCmd(ext, reporter);
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionPointSelectCmd(this, ext, reporter);
                         pointSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
@@ -1438,97 +1446,5 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
     }
 
-
-
-    private class ExtensionPointSelectCmd extends GeneralCommand {
-
-        private final ActionReporter actionReporter;
-        private final PlotCmdExtension ext;
-
-        public ExtensionPointSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(ext.getTitle());
-            this.ext= ext;
-            this.actionReporter= actionReporter;
-            this.setShortDesc(ext.getTitle());
-            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
-        }
-
-        protected void doExecute() {
-            if (actionReporter.isReporting()) {
-                PointSelection sel= (PointSelection)getPlotView().getAttribute(WebPlot.ACTIVE_POINT);
-                if (sel!=null) {
-                    String sendVal= "{" +
-                            "id :  " + ext.getId()              + "," +
-                            "type :" + ext.getExtType()         + "," +
-                            "pt : "  + sel.getPt().serialize() +
-                            "}";
-                    actionReporter.report(ext.getId(),sendVal);
-                }
-            }
-        }
-    }
-
-
-
-
-    private class ExtensionLineSelectCmd extends GeneralCommand {
-
-        private final ActionReporter actionReporter;
-        private final PlotCmdExtension ext;
-
-        public ExtensionLineSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(ext.getTitle());
-            this.ext= ext;
-            this.actionReporter= actionReporter;
-            this.setShortDesc(ext.getTitle());
-            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
-        }
-
-        protected void doExecute() {
-            if (actionReporter.isReporting()) {
-                LineSelection sel= (LineSelection)getPlotView().getAttribute(WebPlot.ACTIVE_DISTANCE);
-                if (sel!=null) {
-                    String sendVal= "{" +
-                            "id :  " + ext.getId()              + "," +
-                            "type :" + ext.getExtType()         + "," +
-                            "pt0 : "+  sel.getPt1().serialize() + "," +
-                            "pt1 : " + sel.getPt2().serialize() +
-                            "}";
-                    actionReporter.report(ext.getId(),sendVal);
-                }
-            }
-        }
-    }
-
-
-
-    private class ExtensionAreaSelectCmd extends GeneralCommand {
-
-        private final ActionReporter actionReporter;
-        private final PlotCmdExtension ext;
-
-        public ExtensionAreaSelectCmd(PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(ext.getTitle());
-            this.ext= ext;
-            this.actionReporter= actionReporter;
-            this.setShortDesc(ext.getTitle());
-            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
-        }
-
-        protected void doExecute() {
-            if (actionReporter.isReporting()) {
-                RecSelection sel= (RecSelection)getPlotView().getAttribute(WebPlot.SELECTION);
-                if (sel!=null) {
-                    String sendVal= "{" +
-                                     "id :  " + ext.getId()              + "," +
-                                     "type :" + ext.getExtType()         + "," +
-                                     "pt0 : "+  sel.getPt0().serialize() + "," +
-                                     "pt1 : " + sel.getPt1().serialize() +
-                                    "}";
-                    actionReporter.report(ext.getId(),sendVal);
-                }
-            }
-        }
-    }
 
 }

@@ -19,8 +19,6 @@ import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
 import edu.caltech.ipac.firefly.server.sse.EventTarget;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -28,17 +26,23 @@ import java.util.concurrent.TimeUnit;
  */
 public class VisPushJob {
 
-    private static final Map<String,VisPushJob> jobs= new HashMap<String, VisPushJob>(23);
+//    private static final Map<String,VisPushJob> jobs= new HashMap<String, VisPushJob>(23);
 
-    public static VisPushJob getJob(String id) { return jobs.get(id); }
+//    public static VisPushJob getJob(String id) { return jobs.get(id); }
 
     public static String makeNewJob(String bid) {
-        PushWorker worker= new PushWorker();
-        BackgroundEnv.BackgroundProcessor processor=
-                new BackgroundEnv.BackgroundProcessor(worker, "Push Job", "from push",
-                                                      ServerContext.getRequestOwner(),bid,
-                                                      new EventTarget.BackgroundID(bid));
-        return BackgroundEnv.backgroundProcess(1, processor).getID();
+        BackgroundInfoCacher pi= new BackgroundInfoCacher(bid);
+        BackgroundStatus bgStat= pi.getStatus();
+        String retval= bid;
+        if (bgStat==null) {
+            PushWorker worker= new PushWorker();
+            BackgroundEnv.BackgroundProcessor processor=
+                    new BackgroundEnv.BackgroundProcessor(worker, "Push Job", "from push",
+                                                          ServerContext.getRequestOwner(),bid,
+                                                          new EventTarget.BackgroundID(bid));
+            retval= BackgroundEnv.backgroundProcess(1, processor).getID();
+        }
+        return retval;
     }
 
     public static boolean pushFits(String id, WebPlotRequest wpr) {

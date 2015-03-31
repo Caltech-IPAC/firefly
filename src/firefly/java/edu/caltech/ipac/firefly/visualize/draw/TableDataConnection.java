@@ -97,7 +97,7 @@ public abstract class TableDataConnection implements DataConnection {
         ActionReporter reporter= getActionReporter();
         if (_lastDataReturn!=null && reporter!=null && reporter.isReporting()) {
             DrawObj drawObj= _lastDataReturn.get(idx);
-            reporter.report(getTitle(null), drawObj.getCenterPt().serialize());
+            reporter.report(getTitle(null), "\""+drawObj.getCenterPt().serialize()+"\"");
         }
         if (idxToSet>-1) getTable().highlightRow(true, idxToSet);
     }

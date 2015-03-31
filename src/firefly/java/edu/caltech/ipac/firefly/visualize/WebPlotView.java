@@ -82,6 +82,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public static final String GRID_ID = "GRID_ID";
     public static final String DATASET_INFO_CONVERTER = "DATASET_INFO_CONVERTER";
     public static final String EXTENSION_LIST=   "EXTENSION_LIST";
+    public static final String ACTION_REPORTER=   "ACTION_REPORTER";
 
     enum StatusChangeType {ADDED, REMOVED}
     public  static final String PRIMARY_PLOT= "PrimaryPlot";
