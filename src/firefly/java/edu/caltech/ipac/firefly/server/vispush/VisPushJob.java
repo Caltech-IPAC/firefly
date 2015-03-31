@@ -16,7 +16,10 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
+import edu.caltech.ipac.firefly.server.sse.EventMatchCriteria;
 import edu.caltech.ipac.firefly.server.sse.EventTarget;
+import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
+import edu.caltech.ipac.firefly.server.sse.ServerSentEventQueue;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.concurrent.TimeUnit;
@@ -117,7 +120,8 @@ public class VisPushJob {
             pi.setStatus(bgStat);
 
             String name= "wait-for-input-" + id;
-            WaitForData worker= new WaitForData(id);
+//            WaitForData worker= new WaitForData(id);
+            WaitForDataEXP worker= new WaitForDataEXP(id);
             Thread thread= new Thread(worker, name);
 
             thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -177,6 +181,7 @@ public class VisPushJob {
         }
     }
 
+
     private static class WaitForData implements Runnable {
 
         private volatile boolean check= true;
@@ -199,12 +204,13 @@ public class VisPushJob {
                     int max = bgStat.getNumResponseData();
                     String data = null;
                     String desc = null;
-                    for (i = 0; (i < max); i++) {
-                        desc = bgStat.getResponseDesc(i);
-                        data = bgStat.getResponseData(i);
+                    int j;
+                    for (j = 0; (j < max); j++) {
+                        desc = bgStat.getResponseDesc(j);
+                        data = bgStat.getResponseData(j);
                         if (data != null) break;
                     }
-                    bgStat.removeParam(BackgroundStatus.USER_RESPONSE + i);
+                    bgStat.removeParam(BackgroundStatus.USER_RESPONSE + j);
                     pi.setStatus(bgStat);
 
                     if (data != null) {
@@ -222,6 +228,79 @@ public class VisPushJob {
 
         public void quit() {
             check= false;
+        }
+
+        public String getResult() {
+            return result;
+        }
+        public String getDesc() {
+            return desc;
+        }
+    }
+
+
+
+    private static class WaitForDataEXP implements Runnable {
+
+        private volatile String result= null;
+        private volatile String desc= null;
+        private final String id;
+        private volatile Thread thread;
+        private volatile ServerSentEventQueue queue;
+        private volatile boolean threadIsDone= false;
+
+
+        public WaitForDataEXP(String id) {
+            this.id= id;
+        }
+
+
+        public void run() {
+            thread= Thread.currentThread();
+            EventMatchCriteria criteria= new EventMatchCriteria(new EventTarget.BackgroundID(id));
+            queue= new ServerSentEventQueue("NONE", criteria, new ServerSentEventQueue.Sender() {
+                @Override
+                public void send(String message) {
+                    getResponse(message);
+                }
+            });
+            ServerEventManager.addEventQueueForClient(queue);
+
+            try {
+                TimeUnit.SECONDS.sleep(300);
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+        }
+
+        public void quit() {
+            threadIsDone= true;
+            this.thread.interrupt();
+        }
+
+        private void getResponse(String message) {
+            BackgroundInfoCacher pi = new BackgroundInfoCacher(id);
+            BackgroundStatus bgStat = pi.getStatus();
+            if (threadIsDone) return;
+
+            int max = bgStat.getNumResponseData();
+            String data = null;
+            String desc = null;
+            int j;
+            for (j = 0; (j < max); j++) {
+                desc = bgStat.getResponseDesc(j);
+                data = bgStat.getResponseData(j);
+                if (data != null) break;
+            }
+            bgStat.removeParam(BackgroundStatus.USER_RESPONSE + j);
+            pi.setStatus(bgStat);
+
+            if (data != null) {
+                this.result = data;
+                this.desc= desc;
+            }
+            ServerEventManager.removeEventQueue(queue);
+            this.thread.interrupt();
         }
 
         public String getResult() {

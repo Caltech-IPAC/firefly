@@ -59,6 +59,15 @@ public class ServerEventManager {
     }
 
 
+    public static synchronized ServerSentEventQueue addEventQueueForClient(ServerSentEventQueue queue) {
+        Logger.briefInfo("create new Queue for: "+ queue.getCriteria() );
+        evQueueList.add(queue);
+        return queue;
+    }
+
+
+
+
     public static synchronized List<ServerSentEventQueue> getEvQueueList() {
         return Collections.unmodifiableList(new ArrayList<ServerSentEventQueue>(evQueueList));
     }
@@ -94,7 +103,7 @@ public class ServerEventManager {
         if (found) evSenderThread.wake();
     }
 
-    private static synchronized void removeEventQueue(ServerSentEventQueue queue) {
+    public static synchronized void removeEventQueue(ServerSentEventQueue queue) {
         synchronized (ServerEventManager.class) {
             evQueueList.remove(queue);
         }
@@ -125,12 +134,12 @@ public class ServerEventManager {
 //                                String message= "Event: "+ ev.getName() + "=====BEGIN:"+ ev.getEvData().getData().toString();
                                 String message= ev.getSerializedClientString();
                                 Logger.briefInfo("Sending: " + message);
-                                queue.sendEventToClient(message);
+                                queue.sendEventToDestination(message);
                             }
                             if (queue.getLastSentTime()+ONE_MINUTE < System.currentTimeMillis()) {
                                 String message= Name.HEART_BEAT.getName();
                                 Logger.briefInfo("Sending: heartbeat");
-                                queue.sendEventToClient(message);
+                                queue.sendEventToDestination(message);
                             }
                         } catch (IOException e) {
                             removeEventQueue(queue);

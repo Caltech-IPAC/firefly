@@ -699,6 +699,9 @@ public class AllPlots implements HasWebEventManager {
      */
     public List<PlotCmdExtension> getExtensionList(String id) {
         if (id==null) id= ALL_MPW;
+        //tmp - todo fix this
+        id= ALL_MPW;
+        //tmp
         if (extCmdMap.containsKey(id)) {
            return extCmdMap.get(id);
         }

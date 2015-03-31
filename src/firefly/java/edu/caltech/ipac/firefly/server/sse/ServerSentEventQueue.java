@@ -21,18 +21,27 @@ public class ServerSentEventQueue {
     private final LinkedList<ServerSentEvent> evQueue = new LinkedList<ServerSentEvent>();
 
     private final CometServletResponse cometResponse;
+    private final Sender sender;
     private final EventMatchCriteria criteria;
     private final String userKey;
     private long lastSentTime= System.currentTimeMillis();
 
 
+    public ServerSentEventQueue(String userKey, EventMatchCriteria criteria,Sender sender) {
+        this.cometResponse = null;
+        this.criteria= criteria;
+        this.userKey= userKey;
+        this.sender= sender;
+    }
 
 
-    public ServerSentEventQueue(CometServletResponse cometResponse, String userKey, EventMatchCriteria criteria) {
-
+    public ServerSentEventQueue(CometServletResponse cometResponse,
+                                String userKey,
+                                EventMatchCriteria criteria) {
         this.cometResponse = cometResponse;
         this.criteria= criteria;
         this.userKey= userKey;
+        this.sender= null;
     }
 
     long getLastSentTime() { return lastSentTime; }
@@ -42,7 +51,6 @@ public class ServerSentEventQueue {
 
 
 
-//    CometServletResponse getCometResponse() { return cometResponse; }
     public EventMatchCriteria getCriteria() { return criteria; }
 
     synchronized ServerSentEvent getEvent() {
@@ -62,10 +70,18 @@ public class ServerSentEventQueue {
         }
     }
 
-    void sendEventToClient(String message) throws IOException {
-        cometResponse.write(message);
-        setLastSentTime(System.currentTimeMillis());
+    void sendEventToDestination(String message) throws IOException {
+        if (cometResponse!=null) {
+            cometResponse.write(message);
+            setLastSentTime(System.currentTimeMillis());
+        }
+        else if (sender!=null){
+           sender.send(message);
+        }
     }
 
+    public static interface Sender {
+        public void send(String message);
+    }
 }
 
