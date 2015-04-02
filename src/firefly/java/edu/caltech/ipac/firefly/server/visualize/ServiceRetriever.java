@@ -3,21 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.util.download.BaseNetParams;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.util.MathUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.download.BaseNetParams;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.DssImageParams;
 import edu.caltech.ipac.visualize.net.IrsaImageParams;
 import edu.caltech.ipac.visualize.net.SloanDssImageParams;
@@ -42,14 +33,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ServiceRetriever implements FileRetriever {
 
-    public static final String WISE_HOST = AppProperties.getProperty("vis.wise.ibe.host", "irsasearchops.ipac.caltech.edu:8000");
-    public static final String WISE_SCHEMA = AppProperties.getProperty("vis.wise.schema", "allwise");
-    public static final String WISE_SCHEMA_GROUP = AppProperties.getProperty("vis.wise.schemaGroup", "wise");
-//    public static final String WISE_4BAND_L1_TABLE = AppProperties.getProperty("vis.wise.l1.table", "4band_p1bm_frm");
-//    public static final String WISE_4BAND_L3_TABLE = AppProperties.getProperty("vis.wise.l3.table", "4band_p3am_cdd");
 
 
-    public static final String WISE_1B = "1b";
     public static final String WISE_3A = "3a";
 
 
@@ -272,76 +257,6 @@ public class ServiceRetriever implements FileRetriever {
             throw new FailedRequestException("Could not retrieve dss or iris image");
         }
         return retval;
-    }
-
-
-    private FileData getWisePlot(WebPlotRequest request) throws FailedRequestException, GeomException {
-
-        FileData retval = null;
-        String levelStr = request.getSurveyKey();
-        Circle c= PlotServUtils.getRequestArea(request);
-        WiseRequest sr = new WiseRequest();
-        sr.setPageSize(1000);
-        sr.setParam(ServerParams.USER_TARGET_WORLD_PT, c.getCenter());
-        sr.setIntersect("CENTER");
-        sr.setParam("mcenter", WiseRequest.MCEN); // get the most centered images
-        sr.setParam("optLevel", "1b4,3a4");// todo, what is this?
-//        sr.setSchema(WISE_SCHEMA);
-        sr.setSchemaGroup(WISE_SCHEMA_GROUP);
-        sr.setHost(WISE_HOST);
-        sr.setParam("band", request.getSurveyBand());
-        setWiseParams(sr, levelStr, c);
-
-
-        try {
-            SearchManager sman = new SearchManager();
-            DataGroupPart primaryData = sman.getDataGroup(sr);
-            DataGroup resTable = primaryData.getData();
-            if (resTable.values().size() == 1) {
-                WiseRequest fileRequest = new WiseRequest();
-                fileRequest.setParam(ServerRequest.ID_KEY, "WiseFileRetrieve");
-                DataObject rowData = resTable.get(0);
-                fileRequest.setParam("host", WISE_HOST);
-//                fileRequest.setParam("schema", WISE_SCHEMA);
-                fileRequest.setParam("schemaGroup", WISE_SCHEMA_GROUP);
-                fileRequest.setParam("in_ra", c.getCenter().getLon() + "");
-                fileRequest.setParam("in_dec", c.getCenter().getLat() + "");
-                fileRequest.setParam("band", request.getSurveyBand());
-                setWiseParams(fileRequest, levelStr, c);
-                if (levelStr.equals(WISE_1B)) {
-                    String scanID = (String) rowData.getDataElement("scan_id");
-                    int frameNum = (Integer) rowData.getDataElement("frame_num");
-
-                    if (scanID != null) fileRequest.setParam("scan_id", scanID);
-                    if (frameNum > -1) fileRequest.setParam("frame_num", frameNum + "");
-                } else if (levelStr.equals(WISE_3A)) {
-                    String coaddID = (String) rowData.getDataElement("coadd_id");
-                    fileRequest.setParam("coadd_id", coaddID);
-                }
-                WebPlotRequest tempR = WebPlotRequest.makeProcessorRequest(fileRequest, request.getUserDesc());
-                retval = new ProcessorFileRetriever().getFile(tempR);
-
-            }
-        } catch (DataAccessException e) {
-            throw new FailedRequestException("Could not find wise fits file", "Query for the wise data failed", e);
-        } catch (IllegalArgumentException e) {
-            throw new FailedRequestException("Could not find wise fits file",
-                                             "wise query successful, but it returned unexpected arguments in the table",
-                                             e);
-        }
-
-        return retval;
-    }
-
-    private static void setWiseParams(WiseRequest sr, String levelStr, Circle c) {
-        sr.setParam("subsize", c.getRadius() + "");
-        sr.setParam(WiseRequest.PRODUCT_LEVEL, levelStr);
-        if (levelStr.equals(WISE_1B)) {
-            sr.setSchema(WiseRequest.ALLSKY_4BAND);
-        } else if (levelStr.equals(WISE_3A)) {
-            sr.setSchema(WiseRequest.ALLWISE_MULTIBAND);
-        }
-
     }
 
 
