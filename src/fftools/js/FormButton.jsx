@@ -4,6 +4,7 @@
 
 /*jshint browserify:true*/
 /*globals console*/
+/*jshint esnext:true*/
 
 "use strict";
 var React= require('react/addons');
@@ -11,6 +12,7 @@ var _= require("underscore");
 //var SkyLight = require('react-skylight');
 var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
 var Modal = require('react-modal');
+//import Portal from "react-portal";
 
 
 var appElement = document.getElementById('modal-element');
@@ -75,6 +77,7 @@ var FormButton = module.exports= React.createClass(
                        this.setState({modalOpen:true,
                                       request:statStr+"::::: "+s});
 
+                       PopupUtil.showDialog(this.makeDialogContent());
 
                    }.bind(this)
            );
@@ -83,6 +86,23 @@ var FormButton = module.exports= React.createClass(
        //showSimpleDialog: function(){
        //   this.refs.simpleDialog.show();
        // },
+
+       makeDialogContent() {
+           var s= {position : "absolute",
+               width : "100px",
+               height : "100px",
+               background : "blue",
+               left : "40px",
+               right : "170px"};
+           return (
+               /*jshint ignore:start */
+                   <div style={s}>
+                       {this.state.title}<br/>
+                       {this.state.request ? this.state.request : ""}
+                   </div>
+               /*jshint ignore:end */
+                   );
+       },
 
        makeModel : function() {
            var retval= null;
@@ -106,6 +126,7 @@ var FormButton = module.exports= React.createClass(
 
        render: function() {
            /*jshint ignore:start */
+           var button= <button type="button" onClick={this.onClick}>submit</button>;
            return (
                    <div>
                        <button type="button" onClick={this.onClick}>submit</button>
@@ -125,21 +146,30 @@ var FormButton = module.exports= React.createClass(
    });
 
 
-//{PopupUtil.getModal("results",this.state.request,this.state.modalOpen,this.closeModal)}
-//<Modal
-//        isOpen={this.state.modalOpen}
-//        onRequestClose={this.closeModal} >
-//    <h2>Hello</h2>
-//                             {this.state.request? this.state.request.toString():""}
-//    <div>
-//        <button onClick={this.closeModal}>close</button>
+//<Portal isOpen={this.state.modalOpen}>
+//    <div style={s}>
+//        {this.state.title}<br/>
+//        {this.state.request ? this.state.request : ""}
 //    </div>
-//</Modal>
+//</Portal>
+
+//<Portal openbyClickOn={button2} closeOnEsc={true}>
+//    <div style={s}>
+//        {this.state.title}<br/>
+//        {this.state.request ? this.state.request : ""}
+//    </div>
+//</Portal>
 
 
-//{this.makeModel()}
-//<SkyLight ref="simpleDialog" title="Hi, I'm a simple modal">
-//    Hello, I dont have any callback.
-//</SkyLight>
-//
+//<PopupUtil.Dialog openComponent={button}
+//                  message={this.state.request ? this.state.request : ""}
+//                  title={"results"} />
+
+                       //
+//<PopupUtil.ModalDialog
+//        message={this.state.request ? this.state.request : ""}
+//        modalOpen={this.state.modalOpen}
+//        title={"results"}
+//        closeRequest={this.closeModal}
+//        />
 

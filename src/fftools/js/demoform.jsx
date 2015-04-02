@@ -19,7 +19,8 @@ import {ServerRequest, ID_NOT_DEFINED} from "ipac-firefly/data/ServerRequest.js"
 import WebPlotRequest from "ipac-firefly/visualize/WebPlotRequest.js";
 
 var myDispatcher= require("./Dispatcher.js");
-var FormButton= require ("./FormButton.jsx");
+//var FormButton= require ("./FormButton.jsx");
+import FormButton from "./FormButton.jsx";
 
 import {WorldPt, ImagePt, Pt} from "ipac-firefly/visualize/Point.js";
 

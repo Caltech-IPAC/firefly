@@ -173,8 +173,7 @@ static void usage()
 	{
 	    double a_distance = central_point.computeDistance(center.getLon(),
 		center.getLat(), point.getLon(), point.getLat());
-	    double exact_distance = VisUtil.computeDistance(center.getLon(), center.getLat(),
-														point.getLon(), point.getLat());
+	    double exact_distance = VisUtil.computeDistance(center, point);
 	    System.out.printf(
 	    "lon = %9.5f lat = %8.4f  crude dist = %9.5f  exact_dist = %9.5f\n",
 	    point.getLon(), point.getLat(), a_distance, exact_distance);

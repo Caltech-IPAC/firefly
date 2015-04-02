@@ -56,6 +56,19 @@ class ImagePt extends Pt {
     }
 }
 
+
+class ImageWorkSpacePt extends Pt {
+    constructor(x,y) {
+        super(x,y);
+    }
+    static parse(inStr) {
+        var p= Pt.parse(inStr);
+        return p ? new ImageWorkSpacePt(p.x,p.y) : null;
+    }
+}
+
+
+
     //var makeWorldPt = function (params) {
     //    var cSys = params.coordinateSys ? params.coordinateSys : CoordinateSys.EQ_J2000;
     //    var pt= makePt(params.lon, params.lat);
@@ -202,6 +215,7 @@ var makeWorldPt = function (params) {
 
 exports.WorldPt= WorldPt;
 exports.ImagePt= ImagePt;
+exports.ImageWorkSpacePt= ImageWorkSpacePt;
 exports.Pt= Pt;
 exports.parseWorldPt= parseWorldPt;
     //exports.makePt= makePt;

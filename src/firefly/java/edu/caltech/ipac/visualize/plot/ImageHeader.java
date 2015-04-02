@@ -497,12 +497,8 @@ public class ImageHeader implements Serializable
 	WorldPt one_to_right = proj.getWorldCoords(crpix1, crpix2 - 1);
 	WorldPt one_up = proj.getWorldCoords(crpix1 - 1, crpix2);
 
-	cdelt1 = - VisUtil.computeDistance(
-			proj_center.getLon(), proj_center.getLat(),
-			one_to_right.getLon(), one_to_right.getLat());
-	cdelt2 = VisUtil.computeDistance(
-	    proj_center.getLon(), proj_center.getLat(),
-	    one_up.getLon(), one_up.getLat());
+	cdelt1 = - VisUtil.computeDistance( proj_center, one_to_right);
+	cdelt2 = VisUtil.computeDistance( proj_center, one_up);
 	if (SUTDebug.isDebug())
 	{
 	System.out.println("CENTER lon = " + proj_center.getLon() +

@@ -11,6 +11,7 @@
 var React= require('react/addons');
 //var ModalDialog= require('ipac-firefly/ui/ModalDialog.jsx');
 var Modal = require('react-modal');
+//import Portal from "react-portal";
 
 var modalDiv= null;
 
@@ -127,6 +128,106 @@ var ModalDialog = React.createClass(
 
 
 
+//var Dialog = React.createClass(
+//{
+//
+//    propTypes: {
+//        openComponent: React.PropTypes.element,
+//        title   : React.PropTypes.string.isRequired,
+//        message : React.PropTypes.any.isRequired,
+//    },
+//
+//    onClick: function(ev) {
+//        this.setState({modalOpen : false});
+//        this.props.closeRequest();
+//    },
+//
+//    render: function() {
+//        /*jshint ignore:start */
+//
+//        var s= {position : "absolute",
+//            width : "100px",
+//            height : "100px",
+//            background : "blue",
+//            left : "40px",
+//            right : "170px"};
+//
+//        return (
+//                <Portal openbyClickOn={this.props.openComponent} closeOnEsc={true}>
+//                    <div style={s}>
+//                        {this.props.title}<br/>
+//                        {this.props.message}
+//                    </div>
+//                </Portal>
+//        );
+//        /*jshint ignore:end */
+//    }
+//
+//});
+//
+
+
+var idCnt= 0;
+const DIALOG_DIV= "dialogDiv";
+const freeElementList= [];
+
+
+var DialogWrapper = React.createClass(
+{
+
+    propTypes: {
+        divId   : React.PropTypes.string.isRequired,
+    },
+
+    componentWillUnmount() {
+    },
+
+    onClick: function(ev) {
+        //this.setState({modalOpen : false});
+        //this.props.closeRequest();
+        var e = document.getElementById(this.props.divId);
+        React.unmountComponentAtNode(e);
+        freeElementList.push(e);
+    },
+
+    render: function() {
+        /*jshint ignore:start */
+        return  (
+                <div>
+                {this.props.children}
+                <button type="button" onClick={this.onClick}>close</button>
+                </div>
+        );
+        /*jshint ignore:end */
+    }
+
+});
+
+
+
+var showDialog= function(reactComponent) {
+
+    var divElement;
+    if (!freeElementList.length) {
+        var divId= DIALOG_DIV + (idCnt++);
+        divElement= document.createElement("div");
+        document.body.appendChild(divElement);
+        divElement.id= divId;
+    }
+    else {
+        divElement= freeElementList.shift();
+    }
+    var wrapper= <DialogWrapper>{reactComponent}</DialogWrapper>;
+    var c= React.cloneElement(wrapper, {divId:divElement.id})
+
+    React.render(c, divElement);
+}
+
+
+
+
 
 exports.getModal= getModal;
 exports.ModalDialog= ModalDialog;
+exports.Dialog= Dialog;
+exports.showDialog= showDialog;

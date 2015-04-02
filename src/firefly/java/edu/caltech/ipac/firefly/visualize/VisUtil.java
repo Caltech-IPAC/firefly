@@ -52,11 +52,6 @@ public class VisUtil {
         return Math.sqrt(deltaXSq + deltaYSq);
     }
 
-    public static double computeDistance(double ra0, double dec0, double ra1, double dec1) {
-        return computeDistance(new WorldPt(ra0, dec0),
-                               new WorldPt(ra1, dec1));
-    }
-
     /**
      * compute the distance on the sky between two world points
      * @param p1
@@ -553,10 +548,6 @@ public class VisUtil {
         return new Corners(upperLeft, upperRight, lowerLeft, lowerRight);
     }
 
-    public static Corners getCorners(double ra, double dec, double radius) {
-        return getCorners(new WorldPt(ra, dec), radius);
-    }
-
     public static class Corners {
         WorldPt upperLeft;
         WorldPt upperRight;
@@ -591,7 +582,7 @@ public class VisUtil {
             double ra = 10.0;  // degrees
             double dec = 60.0;  // degrees
             double radius = 3600.0;  // arcsec
-            System.out.println(getCorners(ra, dec, radius));
+            System.out.println(getCorners(new WorldPt(ra, dec), radius));
         }
     }
 
