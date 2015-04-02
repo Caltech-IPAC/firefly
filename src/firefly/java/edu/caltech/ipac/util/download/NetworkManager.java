@@ -41,8 +41,7 @@ public class NetworkManager {
 
        
        addServerWithProp(MISSION_SERVER,       "soas.ipac.caltech.edu",    80 );
-       addServerWithProp(NED_SERVER,           "nedwww.ipac.caltech.edu",  80);
-       addServerWithProp(NED_NAME_RESOLVER,    "nedsrv.ipac.caltech.edu",  10011);
+       addServerWithProp(NED_SERVER,           "ned.ipac.caltech.edu",  80);
        addServerWithProp(SIMBAD_NAME_RESOLVER, "simbad.harvard.edu",       80);
        addServerWithProp(SIMBAD4_NAME_RESOLVER,"simbad.u-strasbg.fr",      80);
        addServerWithProp(DSS_SERVER,           "archive.stsci.edu",        80);
