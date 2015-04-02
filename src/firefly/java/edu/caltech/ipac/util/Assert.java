@@ -56,7 +56,7 @@ public class Assert {
       "!!----------------------------------------------------------------!!";
                                      
     /** 
-     * if SOS_ROOT is defined the go to server mode automaticly
+     * if SOS_ROOT is defined the go to server mode automatically
      */
     static {
        final String SOS_ROOT = System.getProperty("SOS_ROOT", "");
@@ -219,7 +219,7 @@ public class Assert {
 
     /**
      * Test a boolean value. The test fails if the boolean is false.
-     * Throw a IllegalArgumentException with thre source as the caller.
+     * Throw a IllegalArgumentException with the source as the caller.
      * @param b the boolean value
      * @param msg print out the string if the test fails.
      */

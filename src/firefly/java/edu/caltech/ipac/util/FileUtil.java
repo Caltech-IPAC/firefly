@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
- *  A collection of utilities reltaed to File manipulations
+ *  A collection of utilities related to File manipulations
  *  @author G. Turek
  *  @version $Id: FileUtil.java,v 1.61 2012/12/10 19:01:01 roby Exp $
  */
@@ -452,12 +452,9 @@ public class FileUtil
 
 
     /**
-     * TOTALLY untested, only deals with files and directories
-     * TODO: test
-     * TODO: what about links?
      * @param fromDir directory to copy from
      * @param toDir directory to copy to
-     * @throws IOException if the copy of any file failes
+     * @throws IOException if the copy of any file fails
      */
     public static void recusiveCopyDir(File fromDir, File toDir) throws IOException {
         Assert.argTst(fromDir.isDirectory(), "the from file is not a directory");

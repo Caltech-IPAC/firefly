@@ -4,7 +4,7 @@ Tomcat
 
 XStream: 
    Copyright (C) 2008 XStream Committers.  open source software, made available under a BSD license.
-   BUT we did not include the LICENSE.txt file in the disctribution
+   BUT we did not include the LICENSE.txt file in the distribution
 
 GWT: 
    Copyright 2010 Google Inc
@@ -25,6 +25,7 @@ Base64:
 
 Mathematical expression scanner and parser: 
    Copyright 2002 by Darius Bacon <darius@wry.me>. permission granted to use
+   https://github.com/darius/expr/blob/master/COPYING
 
 Agilar GWT Widgets.
    Copyright 2008 Marco Mustapic, 

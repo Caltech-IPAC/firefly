@@ -239,7 +239,7 @@ public class ImagePlot extends Plot implements Serializable {
     * @param stream Output File Stream
     * @param fitsRead of FitsRead objects
     * @throws FitsException if problem is fits related
-    * @throws IOException  if problem is in writting the file
+    * @throws IOException  if problem is in writing the file
     */
 
    static public void writeFile(OutputStream stream, FitsRead[] fitsRead)
@@ -592,9 +592,9 @@ public class ImagePlot extends Plot implements Serializable {
 
 
     /**
-     * Determine if a world point is in the plot bounderies.
+     * Determine if a world point is in the plot boundaries.
      * @param wpt the world point to test
-     * @return boolean true if it is in the bounderies, false if not.
+     * @return boolean true if it is in the boundaries, false if not.
      */
     @Override
     public boolean pointInPlot(WorldPt wpt) {
@@ -609,9 +609,9 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
     /**
-     * Determine if a image point is in the plot bounderies.
+     * Determine if a image point is in the plot boundaries.
      * @param ipt image point to test
-     * @return boolean true if it is in the bounderies, false if not.
+     * @return boolean true if it is in the boundaries, false if not.
      */
     @Override
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
@@ -622,7 +622,7 @@ public class ImagePlot extends Plot implements Serializable {
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImagePt class
      * @param ipt  the image point
-     * @param outputCoordSys The coordiate system to return
+     * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
@@ -758,7 +758,7 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
     /**
-     * get the scale (usaully in arcseconds) that on image pixel of data
+     * get the scale (usually in arcseconds) that on image pixel of data
      * represents.
      * @return double the scale of one pixel.
      */
@@ -800,7 +800,7 @@ public class ImagePlot extends Plot implements Serializable {
    }
 
     /**
-     * specificly release any reasources held by this object
+     * specificly release any resources held by this object
      */
    public void freeResources() {
        if (_isPlotted) {

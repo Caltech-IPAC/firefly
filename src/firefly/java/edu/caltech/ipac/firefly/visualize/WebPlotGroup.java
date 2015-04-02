@@ -86,9 +86,9 @@ public class WebPlotGroup  {
      */
 
     /**
-     * Determine if a image point is in the plot bounderies.
+     * Determine if a image point is in the plot boundaries.
      * @param ipt image point to test
-     * @return boolean true if it is in the bounderies, false if not.
+     * @return boolean true if it is in the boundaries, false if not.
      */
     public boolean pointInPlot( ImageWorkSpacePt ipt) {
         if (ipt==null) return false;

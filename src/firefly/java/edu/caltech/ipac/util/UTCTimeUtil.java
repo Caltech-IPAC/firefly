@@ -27,7 +27,7 @@ public class UTCTimeUtil implements Cloneable
 {
 
   /**
-   *  Checks that a given date falls withing bounds by checking
+   *  Checks that a given date falls within bounds by checking
    *  if year falls between given years
    *  @param actual actual date
    *  @param beg begin date

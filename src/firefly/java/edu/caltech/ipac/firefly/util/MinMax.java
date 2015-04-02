@@ -41,7 +41,7 @@ public class MinMax {
         return getRoundedMinMax(minMax.getMin(), minMax.getMax(), numSigDigits);
     }
 
-    // round to given number of significunt digits
+    // round to given number of significant digits
     public static MinMax getRoundedMinMax(double min, double max, int numSigDigits) {
         double range = max - min;
         double sdScale = Math.pow(10, numSigDigits);

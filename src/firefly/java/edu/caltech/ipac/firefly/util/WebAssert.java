@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import java.util.logging.Level;
 
 /**
- * A class the implements an assert mechanism simular to C.  This class 
+ * A class that implements an assert mechanism similar to C.  This class 
  * contains all static methods which implements various forms to do an assert.
  * An assert is a programmer level sanity check for testing code.
  * This class extents the traditional C assert a little because it also 

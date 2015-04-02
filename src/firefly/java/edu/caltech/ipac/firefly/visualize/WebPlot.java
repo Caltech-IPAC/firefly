@@ -1049,7 +1049,7 @@ public class WebPlot {
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
      * @param ipt  the image point
-     * @param outputCoordSys The coordiate system to return
+     * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      */
     public WorldPt getWorldCoords( ImageWorkSpacePt ipt, CoordinateSys outputCoordSys) {
@@ -1072,7 +1072,7 @@ public class WebPlot {
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
      * @param ipt  the image point
-     * @param outputCoordSys The coordiate system to return
+     * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      */
     public WorldPt getWorldCoords( ImagePt ipt, CoordinateSys outputCoordSys) {
@@ -1097,7 +1097,7 @@ public class WebPlot {
      * <i>Important</i>: This method should not be used to convert between coordinate systems.
      * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
      * @param pt the point to translate
-     * @return WorldPt the World point with the coorindate system set
+     * @return WorldPt the World point with the coordinate system set
      */
     public static WorldPt getWorldPtRepresentation(Pt pt) {
         WorldPt retval= null;

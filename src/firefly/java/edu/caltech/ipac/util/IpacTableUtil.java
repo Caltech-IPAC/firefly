@@ -74,7 +74,7 @@ public class IpacTableUtil {
     public static void writeRow(PrintWriter writer, List<DataType> headers, DataObject row) {
         for (DataType dt : headers) {
             String v = row.getFormatedData(dt);
-            // when writting out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
+            // when writing out the IPAC table.. if ROWID is given, and data is not found. use the getRowId() value instead.
             if (v == null && dt.getKeyName().equals(DataGroup.ROWID_NAME)) {
                 v = dt.getFormatInfo().formatData(row.getRowIdx());
             }

@@ -173,7 +173,7 @@ public abstract class Plot implements PlotPaintListener {
     public abstract String getFluxUnits();
 
     /**
-     * get the scale (usaully in arcseconds) that on image pixel of data
+     * get the scale (usually in arcseconds) that on image pixel of data
      * represents.
      * @return double the scale of one pixel.
      */
@@ -384,7 +384,7 @@ public abstract class Plot implements PlotPaintListener {
      * Return the sky coordinates given a image x (fsamp) and  y (fline)
      * package in a ImageWorkSpacePt class
      * @param pt  the image point
-     * @param outputCoordSys The coordiate system to return
+     * @param outputCoordSys The coordinate system to return
      * @return WorldPt the translated coordinates
      * @throws ProjectionException if the point cannot be projected into an WorldPt
      */
@@ -463,7 +463,7 @@ public abstract class Plot implements PlotPaintListener {
 
 
     /**
-     * specificly release any reasources held by this object
+     * specificly release any resources held by this object
      * any subclasses who override this method should do a 
      * super.freeResoureces()
      */
