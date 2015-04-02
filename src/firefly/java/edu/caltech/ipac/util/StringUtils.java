@@ -606,8 +606,7 @@ public class StringUtils {
      * <ul><li><code>aaa "bbb ccc ddd" eee</code></li></ul>
      */
     public static String crunch (String s) {
-        if (s != null)
-        {
+        if (!isEmpty(s)) {
             s= s.replaceAll("[ \t\n\r\f]", " ");
             s= s.trim();
             int counter = 0;
