@@ -9,11 +9,12 @@
 
 import Enum from "enum";
 import React from 'react/addons';
+import {getPopupPosition} from './PopupPanelHelper.js';
 
 
-const LayoutType= new Enum(["CENTER", "NONE"]);
+export const LayoutType= new Enum(["CENTER", "TOP_CENTER", "NONE"]);
 
-var PopupPanel= React.createClass(
+export var PopupPanel= React.createClass(
 {
     propTypes: {
         layoutPosition : React.PropTypes.object.isRequired,
@@ -25,13 +26,12 @@ var PopupPanel= React.createClass(
 
 
 
-    updateOffsets(e) {
-        var pos= this.computePosition(this.state.dir);
+    updateOffsets() {
+        var e= React.findDOMNode(this);
 
-        var left= window.innerWidth/2 - e.offsetWidth/2;
-        var top= window.innerHeight/2 - e.offsetHeight/2;
-        e.style.left= left +"px";
-        e.style.top= top+"px";
+        var results= getPopupPosition(e,LayoutType.TOP_CENTER);
+        e.style.left= results.left;
+        e.style.top= results.top;
         e.style.visibility="visible";
 
     },
@@ -46,37 +46,37 @@ var PopupPanel= React.createClass(
 
     componentDidMount() {
         this.resizeCallback= () =>  {
-            var e= React.findDOMNode(this);
-            updateOffsets(e);
+            updateOffsets();
         };
         var e= React.findDOMNode(this);
-        this.updateOffsets(e)
-        _.defer(function() {
-            this.computeDir(e);
-        }.bind(this));
+        this.updateOffsets();
+        //_.defer(function() {
+        //    this.computeDir(e);
+        //}.bind(this));
         window.addEventListener("resize", this.resizeCallback);
     },
 
 
 
-            render: function() {
+    render: function() {
 
-                var s= {position : "absolute",
-                    width : "100px",
-                    height : "100px",
-                    background : "white",
-                    //left : "40px",
-                    //right : "170px"
-                };
-                /*jshint ignore:start */
-                return  (
-                        <div style={s}>
-                            {this.props.children}
-                            <button type="button" onClick={this.onClick}>close</button>
-                        </div>
-                );
-                /*jshint ignore:end */
-            }
+        var s= {position : "absolute",
+            width : "100px",
+            height : "100px",
+            background : "white",
+            visibility : "hidden"
+            //left : "40px",
+            //right : "170px"
+        };
+        /*jshint ignore:start */
+        return  (
+                <div style={s}>
+                    {this.props.children}
+                    <button type="button" onClick={this.onClick}>close</button>
+                </div>
+        );
+        /*jshint ignore:end */
+    }
 
 });
 

@@ -88,15 +88,15 @@ var FormButton = module.exports= React.createClass(
        // },
 
        makeDialogContent() {
-           var s= {position : "absolute",
-               width : "100px",
-               height : "100px",
-               background : "blue",
-               left : "40px",
-               right : "170px"};
+           //var s= {position : "absolute",
+           //    width : "100px",
+           //    height : "100px",
+           //    background : "blue",
+           //    left : "40px",
+           //    right : "170px"};
            return (
                /*jshint ignore:start */
-                   <div style={s}>
+                   <div >
                        {this.state.title}<br/>
                        {this.state.request ? this.state.request : ""}
                    </div>
@@ -130,12 +130,6 @@ var FormButton = module.exports= React.createClass(
            return (
                    <div>
                        <button type="button" onClick={this.onClick}>submit</button>
-                       <PopupUtil.ModalDialog
-                               message={this.state.request ? this.state.request : ""}
-                               modalOpen={this.state.modalOpen}
-                               title={"results"}
-                               closeRequest={this.closeModal}
-                       />
 
                    </div>
            );
@@ -145,6 +139,13 @@ var FormButton = module.exports= React.createClass(
 
    });
 
+
+//<PopupUtil.ModalDialog
+//        message={this.state.request ? this.state.request : ""}
+//        modalOpen={this.state.modalOpen}
+//        title={"results"}
+//        closeRequest={this.closeModal}
+///>
 
 //<Portal isOpen={this.state.modalOpen}>
 //    <div style={s}>

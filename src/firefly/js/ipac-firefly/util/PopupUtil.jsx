@@ -11,6 +11,8 @@
 var React= require('react/addons');
 //var ModalDialog= require('ipac-firefly/ui/ModalDialog.jsx');
 var Modal = require('react-modal');
+
+import {PopupPanel, LayoutType} from 'ipac-firefly/ui/PopupPanel.jsx';
 //import Portal from "react-portal";
 
 var modalDiv= null;
@@ -172,19 +174,51 @@ const DIALOG_DIV= "dialogDiv";
 const freeElementList= [];
 
 
-var DialogWrapper = React.createClass(
-{
 
+var Dialog= React.createClass(
+{
     propTypes: {
-        divId   : React.PropTypes.string.isRequired,
+        closeCallback : React.PropTypes.object.isRequired,
+        component: React.PropTypes.element,
     },
 
     componentWillUnmount() {
     },
 
     onClick: function(ev) {
-        //this.setState({modalOpen : false});
-        //this.props.closeRequest();
+        this.props.closeCallback();
+    },
+
+    render: function() {
+
+        var s= {position : "absolute",
+            width : "100px",
+            height : "100px",
+            background : "white",
+            left : "40px",
+            right : "170px"};
+        /*jshint ignore:start */
+        return  (
+                <div style={s}>
+                    {this.props.children}
+                    <button type="button" onClick={this.onClick}>close</button>
+                </div>
+        );
+        /*jshint ignore:end */
+    }
+
+});
+
+
+
+
+var IndependentWrapper = React.createClass(
+{
+    propTypes: {
+        divId   : React.PropTypes.string.isRequired,
+    },
+
+    closeCallback: function(ev) {
         var e = document.getElementById(this.props.divId);
         React.unmountComponentAtNode(e);
         freeElementList.push(e);
@@ -192,10 +226,13 @@ var DialogWrapper = React.createClass(
 
     render: function() {
         /*jshint ignore:start */
+        var newChildren = React.Children.map(this.props.children, child => {
+          return React.cloneElement(child, { closeCallback: this.closeCallback })
+        });
+
         return  (
                 <div>
-                {this.props.children}
-                <button type="button" onClick={this.onClick}>close</button>
+                {newChildren}
                 </div>
         );
         /*jshint ignore:end */
@@ -217,10 +254,15 @@ var showDialog= function(reactComponent) {
     else {
         divElement= freeElementList.shift();
     }
-    var wrapper= <DialogWrapper>{reactComponent}</DialogWrapper>;
-    var c= React.cloneElement(wrapper, {divId:divElement.id})
+    var wrapper= (
+            <IndependentWrapper divId={divElement.id}>
+                <PopupPanel>
+                    {reactComponent}
+                </PopupPanel>
+            </IndependentWrapper>
+    );
 
-    React.render(c, divElement);
+    React.render(wrapper, divElement);
 }
 
 
@@ -229,5 +271,4 @@ var showDialog= function(reactComponent) {
 
 exports.getModal= getModal;
 exports.ModalDialog= ModalDialog;
-exports.Dialog= Dialog;
 exports.showDialog= showDialog;
