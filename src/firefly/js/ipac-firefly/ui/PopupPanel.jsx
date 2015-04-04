@@ -7,21 +7,24 @@
 
 "use strict";
 
-import Enum from "enum";
+import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from 'ipac-firefly/util/BrowserUtil.js';
+import _ from 'underscore';
+import Enum from 'enum';
 import React from 'react/addons';
-import {getPopupPosition} from './PopupPanelHelper.js';
+import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 
 
-export const LayoutType= new Enum(["CENTER", "TOP_CENTER", "NONE"]);
+export const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE']);
 
 export var PopupPanel= React.createClass(
 {
     propTypes: {
         layoutPosition : React.PropTypes.object.isRequired,
+        title : React.PropTypes.string
     },
 
     onClick: function(ev) {
-        this.props.closeCallback();
+        this.doClose();
     },
 
 
@@ -45,9 +48,7 @@ export var PopupPanel= React.createClass(
 
 
     componentDidMount() {
-        this.resizeCallback= () =>  {
-            updateOffsets();
-        };
+        this.resizeCallback= _.debounce(() => { this.updateOffsets(); },150);
         var e= React.findDOMNode(this);
         this.updateOffsets();
         //_.defer(function() {
@@ -56,25 +57,78 @@ export var PopupPanel= React.createClass(
         window.addEventListener("resize", this.resizeCallback);
     },
 
+    doClose() {
+        this.props.closeCallback();
+        console.log("close dialog")
+    },
+
+    mouseCtx: null,
+
+    dialogMoveStart(ev)  {
+        var e= React.findDOMNode(this);
+        //this.mouseCtx= humanStart(ev,e);
+    },
+    dialogMove(ev)  {
+        //humanMove(ev,this.mouseCtx);
+
+    },
+    dialogMoveEnd(ev)  {
+        //this.mouseCtx= humanEnd(ev,this.mouseCtx);
+        this.mouseCtx= null;
+    },
 
 
-    render: function() {
+    renderAsTopHeader() {
 
-        var s= {position : "absolute",
-            width : "100px",
-            height : "100px",
-            background : "white",
-            visibility : "hidden"
+        var s= {position : 'absolute',
+            //width : "100px",
+            //height : "100px",
+            //background : "white",
+            visibility : 'hidden'
             //left : "40px",
             //right : "170px"
         };
-        /*jshint ignore:start */
-        return  (
-                <div style={s}>
-                    {this.props.children}
-                    <button type="button" onClick={this.onClick}>close</button>
+
+
+
+        var title= this.props.title||"";
+        return (
+                <div style={s} className={'popup-pane-shadow'}
+                     onMouseDown={this.dialogMoveStart}
+                     onMouseMove={this.dialogMove}
+                     onMouseUp={this.dialogMoveEnd}
+                     onTouchStart={this.dialogMoveStart}
+                     onTouchMove={this.dialogMove}
+                     onTouchEnd={this.dialogMoveEnd} >
+                    <div className={'standard-border'}>
+                        <div style={{position:'relative', height:'14px', width:'100%'}}
+                             className={'title-bar title-color popup-title-horizontal-background'}>
+                            <div style= {{position:'absolute', left:'10px', top:'3px',}}
+                                 className={'title-label'} >
+                                {title}
+                            </div>
+                            <image className={'popup-header'}
+                                   src= {getRootURL()+'images/blue_delete_10x10.gif'}
+                                   style= {{position:'absolute', right:'0px', top:'0px'}}
+                                   onClick={this.doClose} />
+
+                        </div>
+                        <div style={{display:"table"}}>
+                            {this.props.children}
+                            <button type="button" onClick={this.onClick}>close</button>
+                        </div>
+                    </div>
                 </div>
+
         );
+
+    },
+
+
+    render() {
+
+        /*jshint ignore:start */
+        return  this.renderAsTopHeader();
         /*jshint ignore:end */
     }
 

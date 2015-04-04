@@ -242,7 +242,7 @@ var IndependentWrapper = React.createClass(
 
 
 
-var showDialog= function(reactComponent) {
+var showDialog= function(title,reactComponent) {
 
     var divElement;
     if (!freeElementList.length) {
@@ -256,7 +256,7 @@ var showDialog= function(reactComponent) {
     }
     var wrapper= (
             <IndependentWrapper divId={divElement.id}>
-                <PopupPanel>
+                <PopupPanel title={title}>
                     {reactComponent}
                 </PopupPanel>
             </IndependentWrapper>

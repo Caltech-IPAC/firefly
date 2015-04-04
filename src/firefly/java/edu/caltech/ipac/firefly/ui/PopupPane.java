@@ -112,8 +112,6 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
     private Align alignAt= Align.CENTER;
     private int xOffset;
     private int yOffset;
-    private int _reqPosX;
-    private int _reqPosY;
     private HTML titleLabel = new HTML();
     private boolean _doAlign= true;
     private boolean _autoAlign = true;
@@ -800,8 +798,6 @@ public class PopupPane implements HasCloseHandlers<PopupPane> {
 
 
     public void setPopupPosition(int xPos, int yPos) {
-        _reqPosX= xPos;
-        _reqPosY= yPos;
         popup.setPopupPosition(xPos, yPos);
     }
 

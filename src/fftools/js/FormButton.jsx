@@ -77,7 +77,7 @@ var FormButton = module.exports= React.createClass(
                        this.setState({modalOpen:true,
                                       request:statStr+"::::: "+s});
 
-                       PopupUtil.showDialog(this.makeDialogContent());
+                       PopupUtil.showDialog("Results",this.makeDialogContent());
 
                    }.bind(this)
            );
@@ -96,7 +96,7 @@ var FormButton = module.exports= React.createClass(
            //    right : "170px"};
            return (
                /*jshint ignore:start */
-                   <div >
+                   <div style={{padding:'5px'}}>
                        {this.state.title}<br/>
                        {this.state.request ? this.state.request : ""}
                    </div>

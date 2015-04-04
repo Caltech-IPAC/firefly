@@ -1,14 +1,16 @@
 /*jshint browserify:true*/
-/*globals firefly, onFireflyLoaded*/
+/*globals firefly, onFireflyLoaded, console*/
 /*jshint esnext:true*/
 "use strict";
 
+import {fireflyInit} from "ipac-firefly/util/BrowserUtil.js";
+fireflyInit();
 
 require("babel/polyfill");
 var React= require('react/addons');
 
 var InputFormModel= require ("ipac-firefly/ui/model/InputFormModel.js");
-var TargetPanel= require ("ipac-firefly/ui/TargetPanel.jsx");
+import TargetPanel from "ipac-firefly/ui/TargetPanel.jsx";
 var InputGroup= require ("ipac-firefly/ui/InputGroup.jsx");
 var Validate= require("ipac-firefly/util/Validate.js");
 import ValidationField from "ipac-firefly/ui/ValidationField.jsx";
