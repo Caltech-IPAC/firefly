@@ -84,7 +84,7 @@ public class ImageDownload extends BaseHttpServlet {
             }
             else if (type.equals(TYPE_FULL)) {
                 res.setHeader("Content-Disposition", "attachment; filename=fits-image.png");
-                PlotServUtils.writeFullImageFileToStream(out,state, null);
+                PlotServUtils.writeFullImageFileToStream(out,state);
             }
             else {
                 File f= VisContext.convertToFile(fname);

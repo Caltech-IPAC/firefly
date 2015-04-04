@@ -46,73 +46,75 @@ export const getPopupPosition= function(e,layoutType) {
 
 
 
-var setCursorShape= function(popup,ev) {
+var setCursorShape= function(popup,titleBar,ev) {
     if (!canExpand) return;
     var x= getAbsoluteX(ev);
     var y= getAbsoluteY(ev);
-    r= findRegion(popup,x,y);
-    if (r==PopupRegion.SE_CORNER) {
-        GwtUtil.setStyle(popup, "cursor", "se-resize");
+    r= findRegion(popup,titleBar,x,y);
+    if (r===PopupRegion.SE_CORNER) {
+        popup.style.cursor="se-resize";
     }
-    else if (r==PopupRegion.SW_CORNER) {
-        GwtUtil.setStyle(popup, "cursor", "sw-resize");
+    else if (r===PopupRegion.SW_CORNER) {
+        popup.style.cursor="sw-resize";
     }
     else {
-        GwtUtil.setStyle(popup, "cursor", "auto");
+        popup.style.cursor="auto";
     }
 }
 
-export const humanStart= function(ev,popup) {
+export const humanStart= function(ev,popup,titleBar) {
     ev.preventDefault();
-    var x= getAbsoluteX(ev);
-    var y= getAbsoluteY(ev);
-    var popupRegion= findRegion(popup,x,y);
+    ev.stopPropagation();
+    var x= ev.clientX;
+    var y= ev.clientY;
+    var popupRegion= findRegion(popup,titleBar,x,y);
     var ctx= null;
 
     if (popupRegion===PopupRegion.TITLE_BAR) {
-        if (_hideOnResizeWidget!=null) {
-            GwtUtil.setStyle(_hideOnResizeWidget, "visibility", "hidden");
-        }
+        //ev.target.releaseCapture();
+        //ev.target.setCapture(true);
         ctx= beginMove(popup,x,y);
 
     } else if (canExpand) {
         if (popupRegion===PopupRegion.SE_CORNER || popupRegion===PopupRegion.SW_CORNER) {
+            //ev.target.releaseCapture();
+            //ev.target.setCapture(true);
             ctx= beginResize(popupRegion);
         }
     }
     return ctx;
 }
 
-export const humanMove= function(ev,ctx) {
+export const humanMove= function(ev,ctx,titleBar) {
     if (!ctx) return;
-    setCursorShape(ctx.popup,ev);
-    var x= getAbsoluteX(ev);
-    var y= getAbsoluteY(ev);
+    setCursorShape(ctx.popup,titleBar,ev);
+    var x= ev.clientX;
+    var y= ev.clientY;
     if (ctx.moving) {
         ev.preventDefault();
+        ev.stopPropagation();
         doMove(ctx,x,y);
     }
     else if (ctx.resizing) {
         ev.preventDefault();
+        ev.stopPropagation();
         moveResize(x,y);
     }
 }
 
 export const humanStop= function(ev,ctx) {
     if (!ctx) return;
-    if (_moving) {
-        if (_hideOnResizeWidget!=null) {
-            GwtUtil.setStyle(_hideOnResizeWidget, "visibility", "visible");
-        }
+    if (ctx.moving) {
         ev.preventDefault();
+        ev.stopPropagation();
+        //ev.target.releaseCaptures();
         endMove(ctx);
 
     }
-    else if (_resizing) {
-        if (_hideOnResizeWidget!=null) {
-            GwtUtil.setStyle(_hideOnResizeWidget, "visibility", "visible");
-        }
+    else if (cx.resizing) {
         ev.preventDefault();
+        ev.stopPropagation();
+        //ev.target.releaseCaptures();
         endResize();
     }
 }
@@ -120,10 +122,10 @@ export const humanStop= function(ev,ctx) {
 
 var getAbsoluteX= function(ev) {
     if (ev.type===MOUSE_EV) {
-        return  ev.clientX+window.scrollLeft;
+        return  ev.clientX+document.scrollLeft;
     }
     if (ev.type===TOUCH_EV) {
-        return  targetTouches[0].clientX+window.scrollLeft;
+        return  ev.targetTouches[0].clientX+document.scrollLeft;
     }
     return 0;
 }
@@ -131,10 +133,10 @@ var getAbsoluteX= function(ev) {
 
 var getAbsoluteY= function(ev) {
     if (ev.type===MOUSE_EV) {
-        return  ev.clientY+window.scrollLeft;
+        return  ev.clientY+document.scrollLeft;
     }
     if (ev.type===TOUCH_EV) {
-        return  targetTouches[0].clientY+window.scrollLeft;
+        return  ev.targetTouches[0].clientY+window.scrollLeft;
     }
     return 0;
 }
@@ -181,10 +183,6 @@ var getAbsoluteY= function(ev) {
 
 
 const beginMove= function(popup, x, y) {
-    this.moving= true;
-    this.doAlign= false;
-    popup.releaseCapture();
-    popup.setCapture(true);
     return {
         popup,
         moving: true,
@@ -205,23 +203,32 @@ const doMove= function(ctx, x, y) {
         var yDiff= y-ctx.originalMouseY;
         var newX=ctx.originalX+xDiff;
         var newY=ctx.originalY+yDiff;
-        ctx.popup.style.left= newX;
-        ctx.popup.style.top= newY;
+        if (newX+ctx.popup.offsetWidth>window.innerWidth ) {
+            newX= window.innerWidth-ctx.popup.offsetWidth;
+        }
+        if (newX<2) newX=2;
+        if (newY+ctx.popup.offsetHeight>window.innerHeight ) {
+            newY= window.innerHeight-ctx.popup.offsetHeight;
+        }
+        if (newY<2) newY=2;
+
+        ctx.popup.style.left= newX+"px";
+        ctx.popup.style.top= newY+"px";
     }
 }
 
 const endMove= function(ctx) {
     if (!ctx || !ctx.moving) return;
-    ctx.popup.releaseCapture();
+    //ctx.popup.releaseCapture();
     ctx.moving= false;
 }
 
 
 const beginResize= function(resizeCorner,popup, ctx) {
     var retval= null;
-    if (_expandW!=null) {
-        DOM.releaseCapture(popup.getElement());
-        DOM.setCapture(popup.getElement());
+    if (canExpand) {
+        //popup.releaseCapture();
+        //popup.setCapture(true);
         var e= _expandW.getElement();
 
         retval= {
@@ -229,8 +236,8 @@ const beginResize= function(resizeCorner,popup, ctx) {
             popup,
             resizing: true,
             doAlign: false,
-            xDiff: popup.getOffsetWidth()- e.getOffsetWidth(),
-            yDiff: popup.getOffsetHeight()- e.getOffsetHeight(),
+            xDiff: popup.offsetWidth- e.offsetWidth,
+            yDiff: popup.offsetHeight- e.offsetHeight,
             originalX: getAbsoluteLeft(popup),
             originalY: getAbsoluteTop(popup)
         }
@@ -276,7 +283,7 @@ const performResize= function(w, width, height) {
 
 
 
-var findRegion= function(popup,mx, my) {
+var findRegion= function(popup,titleBar,mx, my) {
 
     var retval= PopupRegion.NONE;
 
@@ -286,10 +293,10 @@ var findRegion= function(popup,mx, my) {
     var h= popup.offsetHeight;
 
 
-    var nwCornerCheck= new inRangeCheck(x,y,true,true);
-    var neCornerCheck= new inRangeCheck(x+w,y, false, true);
-    var swCornerCheck= new inRangeCheck(x,y+h, true, false);
-    var seCornerCheck= new inRangeCheck(x+w,y+h, false, false);
+    var nwCornerCheck= inRangeCheck(x,y,true,true);
+    var neCornerCheck= inRangeCheck(x+w,y, false, true);
+    var swCornerCheck= inRangeCheck(x,y+h, true, false);
+    var seCornerCheck= inRangeCheck(x+w,y+h, false, false);
 
 
     if (neCornerCheck(mx,my))      retval= PopupRegion.NE_CORNER;
@@ -298,10 +305,10 @@ var findRegion= function(popup,mx, my) {
     else if (swCornerCheck(mx,my)) retval= PopupRegion.SW_CORNER;
 
     if (retval===PopupRegion.NONE) { // look for the title bar
-        w= titleLabel.offsetWidth;
-        h= titleLabel.offsetHeight;
-        x= getAbsoluteLeft(titleLabel);
-        y= getAbsoluteTop(titleLabel);
+        w= titleBar.offsetWidth;
+        h= titleBar.offsetHeight;
+        x= getAbsoluteLeft(titleBar);
+        y= getAbsoluteTop(titleBar);
         if (mx>=x && mx<=x+w  && my>=y && my<=y+h) {
             retval= PopupRegion.TITLE_BAR;
         }

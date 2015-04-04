@@ -18,6 +18,14 @@ export const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE']);
 
 export var PopupPanel= React.createClass(
 {
+
+
+    resizeCallback : null,
+    mouseCtx: null,
+    titleBarRef: null,
+    moveCallback : null,
+    buttonUpCallback : null,
+
     propTypes: {
         layoutPosition : React.PropTypes.object.isRequired,
         title : React.PropTypes.string
@@ -39,15 +47,19 @@ export var PopupPanel= React.createClass(
 
     },
 
-    resizeCallback : null,
+
 
 
     componentWillUnmount() {
         window.removeEventListener("resize", this.resizeCallback);
+        document.removeEventListener("mousemove", this.moveCallback);
+        document.removeEventListener("mouseup", this.buttonUpCallback);
     },
 
 
     componentDidMount() {
+        this.moveCallback= (ev)=> this.dialogMove(ev)
+        this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev)
         this.resizeCallback= _.debounce(() => { this.updateOffsets(); },150);
         var e= React.findDOMNode(this);
         this.updateOffsets();
@@ -55,6 +67,8 @@ export var PopupPanel= React.createClass(
         //    this.computeDir(e);
         //}.bind(this));
         window.addEventListener("resize", this.resizeCallback);
+        document.addEventListener("mousemove", this.moveCallback);
+        document.addEventListener("mouseup", this.buttonUpCallback);
     },
 
     doClose() {
@@ -62,18 +76,19 @@ export var PopupPanel= React.createClass(
         console.log("close dialog")
     },
 
-    mouseCtx: null,
-
     dialogMoveStart(ev)  {
         var e= React.findDOMNode(this);
-        //this.mouseCtx= humanStart(ev,e);
+        var titleBar= React.findDOMNode(this.titleBarRef);
+        this.mouseCtx= humanStart(ev,e,titleBar);
     },
-    dialogMove(ev)  {
-        //humanMove(ev,this.mouseCtx);
 
+    dialogMove(ev)  {
+        var titleBar= React.findDOMNode(this.titleBarRef);
+        humanMove(ev,this.mouseCtx,titleBar);
     },
+
     dialogMoveEnd(ev)  {
-        //this.mouseCtx= humanEnd(ev,this.mouseCtx);
+        this.mouseCtx= humanStop(ev,this.mouseCtx);
         this.mouseCtx= null;
     },
 
@@ -94,16 +109,19 @@ export var PopupPanel= React.createClass(
         var title= this.props.title||"";
         return (
                 <div style={s} className={'popup-pane-shadow'}
-                     onMouseDown={this.dialogMoveStart}
-                     onMouseMove={this.dialogMove}
-                     onMouseUp={this.dialogMoveEnd}
+                     onMouseDownCapture={this.dialogMoveStart}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
                      onTouchEnd={this.dialogMoveEnd} >
                     <div className={'standard-border'}>
                         <div style={{position:'relative', height:'14px', width:'100%'}}
                              className={'title-bar title-color popup-title-horizontal-background'}>
-                            <div style= {{position:'absolute', left:'10px', top:'3px',}}
+                            <div ref={(c) => this.titleBarRef=c}
+                                 style= {{position:'absolute', left:'0px', top:'0px',width:'100%', padding: '3px 0 3px 10px'}}
+                                 onMouseDownCapture={this.dialogMoveStart}
+                                 onTouchStart={this.dialogMoveStart}
+                                 onTouchMove={this.dialogMove}
+                                 onTouchEnd={this.dialogMoveEnd}
                                  className={'title-label'} >
                                 {title}
                             </div>

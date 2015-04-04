@@ -64,7 +64,7 @@ public class PlotPngCreator {
             }
         }
 
-        File f= PlotServUtils.getUniquePngfileName("imageDownload", VisContext.getVisSessionDir());
+        File f= PlotServUtils.getUniquePngFileName("imageDownload", VisContext.getVisSessionDir());
         File retFile= PlotServUtils.createFullTile(plot, f, fgList,vectorList, scaleList, gridLayer);
         return VisContext.replaceWithPrefix(retFile);
     }

@@ -413,7 +413,7 @@ public class FileUtil
      * Write a file to an output stream
      * @param f input file
      * @param oStream stream to copy to
-     * @throws IOException if any problem occures
+     * @throws IOException if any problem occurs
      */
     public static void writeFileToStream(File f, OutputStream oStream) throws IOException {
         DataInputStream in= new DataInputStream(new BufferedInputStream(new FileInputStream(f),(int)MEG));
@@ -433,7 +433,7 @@ public class FileUtil
      * Write a file to an output stream
      * @param s String to output
      * @param oStream stream to copy to
-     * @throws IOException if any problem occures
+     * @throws IOException if any problem occurs
      */
     public static void writeStringToStream(String s, OutputStream oStream) throws IOException {
         DataInputStream in= new DataInputStream(new ByteArrayInputStream(s.getBytes()));
