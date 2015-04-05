@@ -77,7 +77,7 @@ var FormButton = module.exports= React.createClass(
                        this.setState({modalOpen:true,
                                       request:statStr+"::::: "+s});
 
-                       PopupUtil.showDialog("Results",this.makeDialogContent());
+                       PopupUtil.showDialog("Results",this.makeDialogContent(statStr,s));
 
                    }.bind(this)
            );
@@ -87,18 +87,11 @@ var FormButton = module.exports= React.createClass(
        //   this.refs.simpleDialog.show();
        // },
 
-       makeDialogContent() {
-           //var s= {position : "absolute",
-           //    width : "100px",
-           //    height : "100px",
-           //    background : "blue",
-           //    left : "40px",
-           //    right : "170px"};
+       makeDialogContent(statStr,s) {
            return (
                /*jshint ignore:start */
                    <div style={{padding:'5px'}}>
-                       {this.state.title}<br/>
-                       {this.state.request ? this.state.request : ""}
+                       <br/>{statStr}<br/><br/>{s}
                    </div>
                /*jshint ignore:end */
                    );
