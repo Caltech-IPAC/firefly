@@ -114,7 +114,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     @Override
     public void initialize(Map<String, String> dsInfo) {
         String host = dsInfo.get("host");
-        String baseFsPath = AppProperties.getProperty("wise.filesystem_basepath", "***REMOVED***irsa-wise-links-public");
+        String baseFsPath = AppProperties.getProperty("wise.filesystem_basepath");
 
         String imageset = dsInfo.get("ImageSet");
         if (StringUtils.isEmpty(imageset)) {

@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+/*globals console*/
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 /*jshint curly:false*/
@@ -45,7 +46,7 @@ export var PopupPanel= React.createClass(
         var r= getPopupPosition(e,activeLayoutType);
         //e.style.left= results.left;
         //e.style.top= results.top;
-        this.setState({activeLayoutType, posX:r.left, posY:r.top })
+        this.setState({activeLayoutType, posX:r.left, posY:r.top });
         //e.style.visibility="visible";
 
     },
@@ -68,8 +69,8 @@ export var PopupPanel= React.createClass(
 
 
     componentDidMount() {
-        this.moveCallback= (ev)=> this.dialogMove(ev)
-        this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev)
+        this.moveCallback= (ev)=> this.dialogMove(ev);
+        this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev);
         this.browserResizeCallback= _.debounce(() => { this.updateLayoutPosition(); },150);
         var e= React.findDOMNode(this);
         this.updateLayoutPosition();
@@ -83,7 +84,7 @@ export var PopupPanel= React.createClass(
 
     doClose() {
         this.props.closeCallback();
-        console.log("close dialog")
+        console.log("close dialog");
     },
 
     dialogMoveStart(ev)  {
@@ -93,7 +94,7 @@ export var PopupPanel= React.createClass(
     },
 
     dialogMove(ev)  {
-        if (this.mouseCtx!=null) {
+        if (this.mouseCtx) {
             var titleBar= React.findDOMNode(this.titleBarRef);
             var r = humanMove(ev,this.mouseCtx,titleBar);
             if (r) {
@@ -125,6 +126,7 @@ export var PopupPanel= React.createClass(
 
         var title= this.props.title||"";
         return (
+            /*jshint ignore:start */
                 <div style={rootStyle} className={'popup-pane-shadow'}
                      onMouseDownCapture={this.dialogMoveStart}
                      onTouchStart={this.dialogMoveStart}
@@ -154,6 +156,7 @@ export var PopupPanel= React.createClass(
                         </div>
                     </div>
                 </div>
+            /*jshint ignore:end */
 
         );
 
