@@ -208,7 +208,7 @@ XYPlotOptionsDialog.shading.Items= lin log
 XYPlotOptionsDialog.shading.lin.Name= Linear
 XYPlotOptionsDialog.shading.log.Name= Logarithmic
 XYPlotOptionsDialog.shading.ErrorDescription=
-XYPlotOptionsDialog.shading.ShortDescription= When assigning s***REMOVED*** to the number of points \
+XYPlotOptionsDialog.shading.ShortDescription= When assigning shades to the number of points \
                             should we use linear or logarithmic scale?
 XYPlotOptionsDialog.shading.NullAllowed= false
 XYPlotOptionsDialog.shading.Default= lin

@@ -64,11 +64,11 @@
         onFireflyLoaded= function() {
             firefly.debug= true;
 
-            var table1Data= { "source" : "http://***REMOVED***/demo/WiseDemoTable.tbl"};
+            var table1Data= { "source" : "http://shadev1.ipac.caltech.edu/demo/WiseDemoTable.tbl"};
             firefly.showTable(table1Data, "tableHere");
             firefly.addCoveragePlot({"QUERY_ID" : "tableHere"  }, "coverageHere" );
 
-            var table2Data= { "source" : "http://***REMOVED***/demo/test-table3.tbl"};
+            var table2Data= { "source" : "http://shadev1.ipac.caltech.edu/demo/test-table3.tbl"};
             firefly.showTable(table2Data, "table2Here");
             firefly.addDataViewer( {"DataSource" : "URL",
                                        "DataColumn" : "FITS",
@@ -83,9 +83,6 @@
 
 
 
-<!--<script type="text/javascript" language='javascript'-->
-        <!--src='http://shadev2.ipac.caltech.edu:8080/fftools/fftools.nocache.js'>-->
-<!--</script>-->
 
 <script type="text/javascript" language='javascript'
         src='http://gabriel.ipac.caltech.edu:8080/fftools/fftools.nocache.js'>
