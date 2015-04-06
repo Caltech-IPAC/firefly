@@ -2,6 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/*jshint browserify:true*/
+/*jshint esnext:true*/
+/*jshint curly:false*/
 
 //import {LayoutType} from 'ipac-firefly/ui/PopupPanel.jsx';
 
@@ -38,7 +41,8 @@ export const getPopupPosition= function(e,layoutType) {
 
     }
 
-    return {left : left +"px", top : top+"px"};
+    return {left, top};
+    //return {left : left +"px", top : top+"px"};
 }
 
 
@@ -93,12 +97,12 @@ export const humanMove= function(ev,ctx,titleBar) {
     if (ctx.moving) {
         ev.preventDefault();
         ev.stopPropagation();
-        doMove(ctx,x,y);
+        return doMove(ctx,x,y);
     }
     else if (ctx.resizing) {
         ev.preventDefault();
         ev.stopPropagation();
-        moveResize(x,y);
+        return moveResize(x,y);
     }
 }
 
@@ -212,9 +216,11 @@ const doMove= function(ctx, x, y) {
         }
         if (newY<2) newY=2;
 
-        ctx.popup.style.left= newX+"px";
-        ctx.popup.style.top= newY+"px";
+        return {newX,newY};
+        //ctx.popup.style.left= newX+"px";
+        //ctx.popup.style.top= newY+"px";
     }
+    return null;
 }
 
 const endMove= function(ctx) {

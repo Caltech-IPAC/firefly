@@ -5,6 +5,7 @@
 /*jshint browserify:true*/
 /*globals console*/
 /*jshint esnext:true*/
+/*jshint curly:false*/
 
 "use strict";
 var React= require('react/addons');
@@ -67,8 +68,9 @@ var FormButton = module.exports= React.createClass(
                        console.log("request:");
                        console.log(request);
 
-                       var s= _.keys(request).reduce(function(buildString,k){
-                           buildString+=k+"=" +request[k]+", ";
+                       var s= _.keys(request).reduce(function(buildString,k,idx,array){
+                           buildString+=k+"=" +request[k];
+                           if (idx<array.length-1) buildString+=', ';
                            return buildString;
                        },"");
                        //this.setState({results:true});

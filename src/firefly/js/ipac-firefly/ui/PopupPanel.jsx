@@ -14,13 +14,13 @@ import React from 'react/addons';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 
 
-export const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE']);
+export const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
 
 export var PopupPanel= React.createClass(
 {
 
 
-    resizeCallback : null,
+    browserResizeCallback : null,
     mouseCtx: null,
     titleBarRef: null,
     moveCallback : null,
@@ -37,21 +37,31 @@ export var PopupPanel= React.createClass(
 
 
 
-    updateOffsets() {
+    updateLayoutPosition() {
         var e= React.findDOMNode(this);
 
-        var results= getPopupPosition(e,LayoutType.TOP_CENTER);
-        e.style.left= results.left;
-        e.style.top= results.top;
-        e.style.visibility="visible";
+        var activeLayoutType = LayoutType.TOP_CENTER;
+        //var {posX,posY}= getPopupPosition(e,lt);
+        var r= getPopupPosition(e,activeLayoutType);
+        //e.style.left= results.left;
+        //e.style.top= results.top;
+        this.setState({activeLayoutType, posX:r.left, posY:r.top })
+        //e.style.visibility="visible";
 
+    },
+
+    getInitialState() {
+        return {
+            activeLayoutType : LayoutType.NONE,
+            posX : 0,
+            posY : 0
+        };
     },
 
 
 
-
     componentWillUnmount() {
-        window.removeEventListener("resize", this.resizeCallback);
+        window.removeEventListener("resize", this.browserResizeCallback);
         document.removeEventListener("mousemove", this.moveCallback);
         document.removeEventListener("mouseup", this.buttonUpCallback);
     },
@@ -60,13 +70,13 @@ export var PopupPanel= React.createClass(
     componentDidMount() {
         this.moveCallback= (ev)=> this.dialogMove(ev)
         this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev)
-        this.resizeCallback= _.debounce(() => { this.updateOffsets(); },150);
+        this.browserResizeCallback= _.debounce(() => { this.updateLayoutPosition(); },150);
         var e= React.findDOMNode(this);
-        this.updateOffsets();
+        this.updateLayoutPosition();
         //_.defer(function() {
         //    this.computeDir(e);
         //}.bind(this));
-        window.addEventListener("resize", this.resizeCallback);
+        window.addEventListener("resize", this.browserResizeCallback);
         document.addEventListener("mousemove", this.moveCallback);
         document.addEventListener("mouseup", this.buttonUpCallback);
     },
@@ -83,8 +93,13 @@ export var PopupPanel= React.createClass(
     },
 
     dialogMove(ev)  {
-        var titleBar= React.findDOMNode(this.titleBarRef);
-        humanMove(ev,this.mouseCtx,titleBar);
+        if (this.mouseCtx!=null) {
+            var titleBar= React.findDOMNode(this.titleBarRef);
+            var r = humanMove(ev,this.mouseCtx,titleBar);
+            if (r) {
+                this.setState({posX:r.newX, posY:r.newY});
+            }
+        }
     },
 
     dialogMoveEnd(ev)  {
@@ -95,20 +110,22 @@ export var PopupPanel= React.createClass(
 
     renderAsTopHeader() {
 
-        var s= {position : 'absolute',
+        var rootStyle= {position : 'absolute',
             //width : "100px",
             //height : "100px",
             //background : "white",
-            visibility : 'hidden'
+            visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
             //left : "40px",
             //right : "170px"
+            left : this.state.posX + "px",
+            top : this.state.posY + "px"
         };
 
 
 
         var title= this.props.title||"";
         return (
-                <div style={s} className={'popup-pane-shadow'}
+                <div style={rootStyle} className={'popup-pane-shadow'}
                      onMouseDownCapture={this.dialogMoveStart}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
