@@ -49,14 +49,7 @@ export var PopupPanel= React.createClass(
         this.setState({activeLayoutType, posX:r.left, posY:r.top });
         //e.style.visibility="visible";
 
-    },
-
-    getInitialState() {
-        return {
-            activeLayoutType : LayoutType.NONE,
-            posX : 0,
-            posY : 0
-        };
+    },  getInitialState() { return { activeLayoutType : LayoutType.NONE, posX : 0, posY : 0 };
     },
 
 
