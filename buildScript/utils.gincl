@@ -23,11 +23,15 @@ task createTag(dependsOn: loadConfig) << {
     project.ext.tag_name = props.getProperty('tag')
   }
 
+  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
+  def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
+  def tag_label = prefix + tag_name + suffix
+
   exec {
     executable 'git'
     args 'tag'
     args '-a'
-    args tag_name
+    args tag_label
     args '-m'
     if (project.hasProperty("tag_message")) {
       args tag_message
@@ -44,7 +48,7 @@ task createTag(dependsOn: loadConfig) << {
     } else {
       args 'origin'
     }
-    args tag_name
+    args tag_label
   }
 }
 
