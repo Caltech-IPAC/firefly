@@ -10,5 +10,5 @@ subprojects {
   apply from: "$fireflyPath/buildScript/depends.gincl"
 }
 
-apply from: "$fireflyPath/buildScript/deployAll.gincl"
+apply from: "$fireflyPath/buildScript/utils.gincl"
 

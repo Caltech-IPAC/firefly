@@ -14,6 +14,38 @@ def startTomcat(remoteHost) {
   println ">> Starting Tomcat:.. $cmd ==> $desc"
 }
 
+task createTag(dependsOn: loadConfig) << {
+  description = 'Create and push a tag to remote repo.  Require ${tag_name} property.  Optional properties: ${tag_remote} defaults to origin, ${tag_message}.'
+
+  if (!project.hasProperty("tag_name")) {
+    throw GradleScriptException("tag_name property is not found.")
+  }
+
+  exec {
+    executable 'git'
+    args 'tag'
+    args '-a'
+    args tag_name
+    args '-m'
+    if (project.hasProperty("tag_message")) {
+      args tag_message
+    } else {
+      args 'not given'
+    }
+  }
+
+  exec {
+    executable 'git'
+    args 'push'
+    if (project.hasProperty("tag_remote")) {
+      args tag_remote
+    } else {
+      args 'origin'
+    }
+    args tag_name
+  }
+}
+
 task deployAllWars(dependsOn: loadConfig) << {
   description= 'Deploy all of the built war files to Tomcat.  Require ${tomcat_home} property.  May include ${remoteHost} as well.'
 
