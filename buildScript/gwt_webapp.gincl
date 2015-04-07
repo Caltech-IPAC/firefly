@@ -82,19 +82,6 @@ task prepareWebapp (type:Copy) {
 
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
-  doLast {
-    // generate version tag
-    def major = appConfigProps.get('BuildMajor')
-    def minor = appConfigProps.get('BuildMinor')
-    def rev = appConfigProps.get('BuildRev')
-    def type = appConfigProps.get('BuildType')
-    def buildNum = appConfigProps.get('BuildNumber')
-
-    def tag = "$major.$minor.${rev}_${type}-$buildNum"
-    def props = new Properties();
-    props.setProperty('tag', tag)
-    props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
-  }
 }
 loadConfig.mustRunAfter gwt
 
