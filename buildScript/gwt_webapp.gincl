@@ -89,11 +89,13 @@ task prepareWebapp (type:Copy) {
     def rev = appConfigProps.get('BuildRev')
     def type = appConfigProps.get('BuildType')
     def buildNum = appConfigProps.get('BuildNumber')
+    def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
+    def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
 
-    def tag = "$major.$minor.${rev}_${type}-$buildNum"
+    def tag = "${prefix}${major}.${minor}.${rev}_${type}-${buildNum}${suffix}"
     def props = new Properties();
-    props.setProperty('tag', tag)
-    props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
+      props.setProperty('tag', tag)
+      props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
   }
 }
 loadConfig.mustRunAfter gwt
