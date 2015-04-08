@@ -2,6 +2,7 @@ def INIT_GROUP = "Common initial setup for all gradle build."
 
 project.ext["app-name"] = name
 
+
 task loadConfig {
   description= 'Load build and app config files.  Also, setup common properties like build_date, build_time, etc.'
   group = INIT_GROUP
@@ -58,6 +59,7 @@ task loadConfig {
 
       def tag = "$major.$minor.${rev}_${type}-$buildNum"
       def props = new Properties();
+      file(project.buildDir).mkdirs()
       props.setProperty('tag', tag)
       props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
     }
