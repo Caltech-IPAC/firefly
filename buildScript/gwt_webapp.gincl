@@ -38,7 +38,7 @@ dependencies {
 }
 
 task prepareWebapp (type:Copy) {
-  dependsOn gwt, loadConfig
+  dependsOn gwt, loadConfig, createVersionTag
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = WEBAPP_GROUP
 

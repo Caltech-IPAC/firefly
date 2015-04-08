@@ -50,19 +50,26 @@ task loadConfig {
       appConfigProps.putAll(System.properties)
 //    appConfigProps.each{ k, v -> println "${k} => ${v}" }
 
-      // generate version tag
-      def major = appConfigProps.get('BuildMajor')
-      def minor = appConfigProps.get('BuildMinor')
-      def rev = appConfigProps.get('BuildRev')
-      def type = appConfigProps.get('BuildType')
-      def buildNum = appConfigProps.get('BuildNumber')
-
-      def tag = "$major.$minor.${rev}_${type}-$buildNum"
-      def props = new Properties();
-      file(project.buildDir).mkdirs()
-      props.setProperty('tag', tag)
-      props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
     }
+  }
+}
+
+task createVersionTag  {
+  dependsOn loadConfig
+
+  doLast {
+    // generate version tag
+    def major = appConfigProps.get('BuildMajor')
+    def minor = appConfigProps.get('BuildMinor')
+    def rev = appConfigProps.get('BuildRev')
+    def type = appConfigProps.get('BuildType')
+    def buildNum = appConfigProps.get('BuildNumber')
+
+    def tag = "$major.$minor.${rev}_${type}-$buildNum"
+    def props = new Properties();
+    file(project.buildDir).mkdirs()
+    props.setProperty('tag', tag)
+    props.store(file("${project.buildDir}/version.tag").newWriter(), "Version Info")
   }
 }
 
