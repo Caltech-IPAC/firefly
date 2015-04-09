@@ -74,7 +74,7 @@ class ClosureScript extends groovy.lang.Script {
 }
 
 def loadConfFile(env, cfile) {
-  if (file("$rootDir/buildScript/build.config").exists()) {
+  if (file(cfile).exists()) {
     def cs = new ConfigSlurper(env).parse(new File(cfile).toURL())
     logger.info ">> add properties from $cfile"
     cs.toProperties().each { k, v ->
