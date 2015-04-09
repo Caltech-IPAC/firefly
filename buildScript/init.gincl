@@ -18,32 +18,20 @@ task loadConfig {
 
       project.ext.appConfigProps = new Properties()
 
-      def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
-      appConfigProps.putAll(cs.toProperties())
+      if (file("$rootDir/config/app.config").exists()) {
+        def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
+        appConfigProps.putAll(cs.toProperties())
+      }
 
       if (project.hasProperty("appConfig")) {
-        cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
+        def cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
         appConfigProps.putAll(cs.toProperties())
         logger.info(">> script's appConfig added")
       }
 
       logger.info ">> loading build.config for env: $project.env"
-      // set all props in bulid.config to be project's properties
-      cs = new ConfigSlurper(project.env).parse(new File("$rootDir/buildScript/build.config").toURL())
-      logger.info ">> add properties from $rootDir/buildScript/build.config"
-      cs.toProperties().each{ k, v ->
-        logger.info ">>    $k : $v"
-        project.ext.set(k, v)
-      }
-
-      if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
-        cs = new ConfigSlurper(project.env).parse(new File("$gradle.gradleUserHomeDir/build.config").toURL())
-        logger.info ">> add properties from $gradle.gradleUserHomeDir/build.config"
-        cs.toProperties().each{ k, v ->
-          logger.info ">>      $k : $v"
-          project.ext.set(k, v)
-        }
-      }
+      loadConfFile(project.env, "$rootDir/buildScript/build.config")
+      loadConfFile(project.env, "$gradle.gradleUserHomeDir/build.config")
 //  project.ext.properties.each{ k, v -> println "${k}:${v}" }
 
       appConfigProps.putAll(project.ext.properties)
@@ -82,6 +70,17 @@ class ClosureScript extends groovy.lang.Script {
     closure.resolveStrategy = Closure.DELEGATE_FIRST
     closure.delegate = this
     closure.call()
+  }
+}
+
+def loadConfFile(env, cfile) {
+  if (file("$rootDir/buildScript/build.config").exists()) {
+    def cs = new ConfigSlurper(env).parse(new File(cfile).toURL())
+    logger.info ">> add properties from $cfile"
+    cs.toProperties().each { k, v ->
+      logger.info ">>    $k : $v"
+      project.ext.set(k, v)
+    }
   }
 }
 
