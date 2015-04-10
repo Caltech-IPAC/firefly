@@ -211,7 +211,7 @@ public class JOSSOAdapter {
         try {
             SSOIdentityProvider idProv = getIdProvLoc().getSSOIdentityProviderSoap();
             AssertIdentityWithSimpleAuthenticationResponseType rval = idProv.assertIdentityWithSimpleAuthentication(
-                    new AssertIdentityWithSimpleAuthenticationRequestType(REQUESTER, "jars/josso", name, passwd));
+                    new AssertIdentityWithSimpleAuthenticationRequestType(REQUESTER, "josso", name, passwd));
             String assertId = rval.getAssertionId();
             String token = resolveAuthToken(assertId);
             return token;

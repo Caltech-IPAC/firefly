@@ -12,7 +12,7 @@ import edu.caltech.ipac.util.AppProperties;
 public class DbInstance {
     public static final DbInstance archive = new DbInstance("archive");
     public static final DbInstance operation = new DbInstance("operation");
-    public static final DbInstance josso = new DbInstance("jars/josso");
+    public static final DbInstance josso = new DbInstance("josso");
 
     private static final String POOL_PATH = "connection.datasource";
     private static final String USE_POOL = "use.connection.pool";
