@@ -70,6 +70,7 @@ public class FileUtil
     public static final long K            = 1024;
 
     private static String[] CHARSETS_TO_BE_TESTED = {"ISO-8859-1","windows-1252", "windows-1253","UTF-8", "UTF-16",};
+    private static final int BUFFER_SIZE = (int) (16 * FileUtil.K);
 
     public enum ConvertTo {MEG,GIG,K}
 
@@ -276,11 +277,14 @@ public class FileUtil
         DataOutputStream out=null;
         try {
             in=new DataInputStream(new BufferedInputStream(
-                                new FileInputStream(fromFile), 4096));
+                                new FileInputStream(fromFile), BUFFER_SIZE));
             out=new DataOutputStream(
-                  new BufferedOutputStream( new FileOutputStream(toFile),4096));
-            while(true) {
-                out.writeByte(in.readByte());
+                  new BufferedOutputStream( new FileOutputStream(toFile),BUFFER_SIZE));
+
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
             }
         } catch (EOFException e) {
             // do nothing we are done
@@ -298,15 +302,15 @@ public class FileUtil
         }
         ByteArrayOutputStream byteAry= new ByteArrayOutputStream( (int)file.length()+200);
 
-        int buffsize = (int)Math.min(file.length() + 400, 20000);
-
         try {
-            in=new DataInputStream(new BufferedInputStream( new FileInputStream(file), buffsize));
+            in=new DataInputStream(new BufferedInputStream( new FileInputStream(file), BUFFER_SIZE));
             out=new DataOutputStream(byteAry);
-            while(true) {
-                out.writeByte(in.readByte());
-            }
 
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
         } catch (EOFException e) {
             // do nothing we are done
         } finally {
@@ -344,7 +348,7 @@ public class FileUtil
 
 
     public static File gUnzipFile(File f) throws IOException {
-        return gUnzipFile(f,10000);
+        return gUnzipFile(f,BUFFER_SIZE);
     }
 
     public static File gUnzipFile(File f, int bufferSize) throws IOException {
@@ -416,11 +420,12 @@ public class FileUtil
      * @throws IOException if any problem occurs
      */
     public static void writeFileToStream(File f, OutputStream oStream) throws IOException {
-        DataInputStream in= new DataInputStream(new BufferedInputStream(new FileInputStream(f),(int)MEG));
+        DataInputStream in= new DataInputStream(new BufferedInputStream(new FileInputStream(f), BUFFER_SIZE));
         try {
-            while(true) {
-                byte ch = in.readByte();
-                oStream.write(ch);
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                oStream.write(buffer, 0, read);
             }
         } catch (EOFException e) {
             // do nothing
@@ -438,9 +443,10 @@ public class FileUtil
     public static void writeStringToStream(String s, OutputStream oStream) throws IOException {
         DataInputStream in= new DataInputStream(new ByteArrayInputStream(s.getBytes()));
         try {
-            while(true) {
-                byte ch = in.readByte();
-                oStream.write(ch);
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                oStream.write(buffer, 0, read);
             }
         } catch (EOFException e) {
             // do nothing
@@ -914,6 +920,17 @@ public class FileUtil
     private static String getThisClassFileName() {
         String cName= FileUtil.class.getName();
         return cName.replace(".", "/") + ".class";
+    }
+
+
+    public static void main(String[] args) {
+        try {
+            long start = System.currentTimeMillis();
+            FileUtil.writeFileToStream(new File(args[0]), new BufferedOutputStream(new FileOutputStream(args[1]), BUFFER_SIZE));
+            System.out.println(String.format ("elapsed time: %d ms", (System.currentTimeMillis() - start)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
