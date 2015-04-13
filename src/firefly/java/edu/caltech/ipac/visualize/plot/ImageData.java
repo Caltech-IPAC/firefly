@@ -199,7 +199,7 @@ public class ImageData implements Serializable {
             _imageOutOfDate= true;
             fr.setRangeValues(rangeValues);
             if (force) {
-                fr.do_stretch(getDataArray(fr),
+                fr.doStretch(getDataArray(fr),
                               (_imageType==ImageType.TYPE_24_BIT),
                               _x,_x+_width-1,
                               _y, _y+_height-1);
@@ -207,7 +207,7 @@ public class ImageData implements Serializable {
         }
         else {
             fr.setRangeValues(rangeValues);
-            fr.do_stretch(getDataArray(fr),
+            fr.doStretch(getDataArray(fr),
                           (_imageType==ImageType.TYPE_24_BIT),
                           _x,_x+_width-1,
                           _y, _y+_height-1);
@@ -237,7 +237,7 @@ public class ImageData implements Serializable {
             _raster= null;
             _bufferedImage= new BufferedImage(_width,_height,
                                               BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            _primaryFitsRead.do_stretch(getDataArray(_primaryFitsRead),false,
+            _primaryFitsRead.doStretch(getDataArray(_primaryFitsRead),false,
                                         _x,_x+_width-1,
                                         _y, _y+_height-1);
 //            start_pixel, last_pixel, start_line, last_line);
@@ -249,7 +249,7 @@ public class ImageData implements Serializable {
 
             for(int i=0; (i<_fitsreadAry.length); i++) {
                 if(_fitsreadAry[i]!=null) {
-                    _fitsreadAry[i].do_stretch(getDataArray(_fitsreadAry[i]),true,
+                    _fitsreadAry[i].doStretch(getDataArray(_fitsreadAry[i]),true,
                                                _x,_x+_width-1,
                                                _y, _y+_height-1);
 //                    start_pixel, last_pixel, start_line, last_line);

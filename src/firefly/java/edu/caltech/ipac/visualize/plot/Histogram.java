@@ -910,6 +910,42 @@ public class Histogram
 	
     }
 
+	public double[]  getTblArray()
+	{
+		double[] tbl = new double[255];
+		int goodpix, accum, tblindex, hist_index;
+		double next_goal, goodpix_255;
+
+		goodpix = 0;
+		for (hist_index = 0; hist_index < HISTSIZ2; hist_index++)
+			goodpix += hist[hist_index];
+		goodpix_255 = goodpix / 255.0;
+
+		tblindex = 0;
+		tbl[tblindex++] = hist_min;
+		next_goal = goodpix_255;
+		hist_index = 0;
+		accum = 0;
+		while ((hist_index < HISTSIZ2) && (tblindex < 255))
+		{
+			if (accum >= next_goal)
+			{
+				//System.out.println("RBH setting tbl[" + tblindex + "] to " +
+				//	(int) (hist_index * hist_binsiz + hist_min));
+				tbl[tblindex++] = (hist_index * hist_binsiz + hist_min);
+				next_goal += goodpix_255;
+			}
+			else
+			{
+				accum += hist[hist_index++];
+			}
+		}
+		while (tblindex < 255)
+			tbl[tblindex++] = (hist_index * hist_binsiz + hist_min);
+		tbl[255] = Double.MAX_VALUE;
+        return tbl;
+	}
+
 }
 
 

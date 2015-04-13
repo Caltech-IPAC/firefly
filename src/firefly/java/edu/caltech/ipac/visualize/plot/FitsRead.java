@@ -10,7 +10,6 @@ import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 import edu.caltech.ipac.util.Assert;
 
-import java.util.Date;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,6 +20,9 @@ import java.util.Arrays;
  * 02/06/15
  * Refactor this class
  * Change all data type to float no matter what the bitpix value is
+ *
+ * 04/08/15
+ * reactor doStretch and related methods
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -40,17 +42,15 @@ public class FitsRead implements Serializable {
     private ImageHeader imageHeader;
     private Header header;
     private BasicHDU hdu;
-    private int bitpix;
     private Histogram hist = null;
     private double blankValue;
     private RangeValues rangeValues = (RangeValues) DEFAULT_RANGE_VALUE.clone();
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-    //TODO remove those two since they don't need to be global
     private double slow = 0.0;
     private double shigh = 0.0;
-    // private ImageHDU imageHdu; //add this for using the old stretch methods //TODO remvoe it later
+
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
     /**
@@ -72,7 +72,7 @@ public class FitsRead implements Serializable {
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
         blankValue = imageHeader.blank_value;
-        bitpix = imageHeader.bitpix;
+        int bitpix = imageHeader.bitpix;
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(bitpix))) {
             System.out.println("Unimplemented bitpix = " + bitpix);
         }
@@ -637,13 +637,9 @@ public class FitsRead implements Serializable {
         return float1d;
     }
 
-    /*========================================
-     Everything related stretch has not touched yet.  I will work it in March
-    */
 
-
-    public synchronized void do_stretch(byte passedPixelData[], boolean mapBlankToZero,
-                                            int start_pixel, int last_pixel, int start_line, int last_line) {
+    public synchronized void doStretch(byte passedPixelData[], boolean mapBlankToZero,
+                                            int startPixel, int lastPixel, int startLine, int lastLine) {
 
 
 
@@ -658,7 +654,7 @@ public class FitsRead implements Serializable {
                     ((rangeValues.getUpperWhich() != RangeValues.ABSOLUTE) &&
                             (rangeValues.getUpperWhich() != RangeValues.ZSCALE))) {
 
-            hist = computeHistogramNew();
+            hist = computeHistogram();
 
             }
         }
@@ -670,8 +666,8 @@ public class FitsRead implements Serializable {
         }
 
 
-        stretch_pixels(start_pixel, last_pixel, start_line, last_line,
-                slow, shigh, blank_pixel_value);
+        stretch_pixels(startPixel, lastPixel,startLine, lastLine,imageHeader.naxis1,
+                blank_pixel_value,float1d, pixeldata, pixelhist);
 
 
     }
@@ -680,160 +676,19 @@ public class FitsRead implements Serializable {
     private Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader) {
 
         double contrast = rangeValues.getZscaleContrast();
-        int opt_size = rangeValues.getZscaleSamples();
+        int optSize = rangeValues.getZscaleSamples();
 
-        int len_stdline = rangeValues.getZscaleSamplesPerLine();
+        int lenStdline = rangeValues.getZscaleSamplesPerLine();
 
-        Zscale.ZscaleRetval zscale_retval = Zscale.cdl_zscale(float1d,
+        Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d,
                 imageHeader.naxis1, imageHeader.naxis2,
-                imageHeader.bitpix, contrast / 100.0, opt_size, len_stdline,
+                imageHeader.bitpix, contrast / 100.0, optSize, lenStdline,
                 imageHeader.blank_value,
                 imageHeader.bscale,
                 imageHeader.bzero);
-        return zscale_retval;
+        return zscaleRetval;
     }
 
-    public synchronized void do_stretch_old(byte passedPixelData[], boolean mapBlankToZero,
-                                        int start_pixel, int last_pixel, int start_line, int last_line) {
-
-        double bscale, bzero;
-        double datamax, datamin;
-        byte blank_pixel_value;
-        Zscale.ZscaleRetval zscale_retval = null;
-
-        if (mapBlankToZero)
-            blank_pixel_value = 0;
-        else
-            blank_pixel_value = (byte) 255;
-
-        //System.out.println("RBH SPOT_EXT = " + extension_number);
-        //System.out.println("RBH SPOT_PL = " + planeNumber);
-        pixeldata = passedPixelData;
-//        rangeValues= newRangeValues;
-
-        datamin = imageHeader.datamin;
-        datamax = imageHeader.datamax;
-        bscale = imageHeader.bscale;
-        bzero = imageHeader.bzero;
-
-        Object onedimdata = null;
-
-        switch (bitpix) {
-            case 32:
-                onedimdata =
-                        (int[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(float1d, Integer.TYPE));
-                break;
-            case 16:
-                onedimdata = (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(float1d, Short.TYPE));
-                break;
-            case 8:
-                onedimdata = (byte[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(float1d, Byte.TYPE));
-                break;
-            case -32:
-                onedimdata = float1d;
-                break;
-            case -64:
-                onedimdata = (double[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(float1d, Double.TYPE));
-                break;
-        }
-
-        if ((rangeValues.getLowerWhich() == RangeValues.ZSCALE) ||
-                (rangeValues.getUpperWhich() == RangeValues.ZSCALE))
-            if ((rangeValues.getLowerWhich() == RangeValues.ZSCALE) ||
-                    (rangeValues.getUpperWhich() == RangeValues.ZSCALE)) {
-                double contrast = rangeValues.getZscaleContrast();
-                int opt_size = rangeValues.getZscaleSamples();
-
-                int len_stdline = rangeValues.getZscaleSamplesPerLine();
-
-                zscale_retval = Zscale.cdl_zscale(onedimdata,
-                        imageHeader.naxis1, imageHeader.naxis2,
-                        bitpix, contrast / 100.0, opt_size, len_stdline,
-                        imageHeader.blank_value,
-                        imageHeader.bscale,
-                        imageHeader.bzero);
-            }
-
-        if (hist == null) {
-            if (((rangeValues.getLowerWhich() != RangeValues.ABSOLUTE) &&
-                    (rangeValues.getLowerWhich() != RangeValues.ZSCALE)) ||
-                    ((rangeValues.getUpperWhich() != RangeValues.ABSOLUTE) &&
-                            (rangeValues.getUpperWhich() != RangeValues.ZSCALE))) {
-
-                computeHistogram();
-            }
-        }
-
-
-        switch (rangeValues.getLowerWhich()) {
-            case RangeValues.ABSOLUTE:
-                slow = (rangeValues.getLowerValue() - bzero) / bscale;
-                break;
-            case RangeValues.PERCENTAGE:
-                slow = hist.get_pct(rangeValues.getLowerValue(), false);
-                break;
-            case RangeValues.SIGMA:
-                slow = hist.get_sigma(rangeValues.getLowerValue(), false);
-                break;
-            case RangeValues.MAXMIN:
-                slow = hist.get_pct(0.0, false);
-                break;
-            case RangeValues.ZSCALE:
-                slow = zscale_retval.getZ1();
-                break;
-            default:
-                Assert.tst(false, "illegal rangeValues.getLowerWhich()");
-        }
-        switch (rangeValues.getUpperWhich()) {
-            case RangeValues.ABSOLUTE:
-                shigh = (rangeValues.getUpperValue() - bzero) / bscale;
-                break;
-            case RangeValues.PERCENTAGE:
-                shigh = hist.get_pct(rangeValues.getUpperValue(), true);
-                break;
-            case RangeValues.SIGMA:
-                shigh = hist.get_sigma(rangeValues.getUpperValue(), true);
-                break;
-            case RangeValues.MAXMIN:
-                shigh = hist.get_pct(100.0, true);
-                break;
-            case RangeValues.ZSCALE:
-                shigh = zscale_retval.getZ2();
-                break;
-            default:
-                Assert.tst(false, "illegal rangeValues.getUpperWhich()");
-        }
-
-        if (SUTDebug.isDebug()) {
-            System.out.println("slow = " + slow + "    shigh = " + shigh +
-                    "   bitpix = " + bitpix);
-            if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_LINEAR)
-                System.out.println("stretching STRETCH_LINEAR");
-            else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_LOG)
-                System.out.println("stretching STRETCH_LOG");
-            else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_LOGLOG)
-                System.out.println("stretching STRETCH_LOGLOG");
-            else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_EQUAL)
-                System.out.println("stretching STRETCH_EQUAL");
-            else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_SQUARED)
-                System.out.println("stretching STRETCH_SQUARED");
-        }
-
-        /*stretch_pixels(start_pixel, last_pixel, start_line, last_line,
-                bitpix, imageHeader.naxis1, blank_pixel_value,
-                onedimdata, pixeldata, pixelhist);*/
-
-        stretch_pixels(start_pixel, last_pixel, start_line, last_line,
-                slow, shigh, blank_pixel_value);
-
-
-        //byte[] glop = getHistColors();  // RBH DEBUG
-    }
 
     private double getSlow(double bzero, double bscale) {
         double slow = 0.0;
@@ -910,7 +765,7 @@ public class FitsRead implements Serializable {
 
     }
 
-    private Histogram computeHistogramNew() {
+    private Histogram computeHistogram() {
         double datamin = imageHeader.datamin;
         double datamax = imageHeader.datamax;
         double bscale = imageHeader.bscale;
@@ -922,293 +777,7 @@ public class FitsRead implements Serializable {
 
     }
 
-    void computeHistogram() {
-        double datamin = imageHeader.datamin;
-        double datamax = imageHeader.datamax;
-        double bscale = imageHeader.bscale;
-        double bzero = imageHeader.bzero;
-        hist = new Histogram(float1d, (datamin - bzero) / bscale,
-                (datamax - bzero) / bscale,
-                blankValue);
 
-    }
-
-    private int[] getNoneLinearTblInt() {
-
-        int[] tbl = new int[256];
-        if
-                ((rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_LOG) ||
-                (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOGLOG)) {
-            double sdiff = shigh - slow;
-            if (sdiff == 0.)
-                sdiff = 1.;
-
-            for (int j = 0; j < 255; ++j) {
-                double atbl = Math.pow(10., j / 254.0);
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOGLOG) {
-                    atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                }
-                double floati = (atbl - 1.) / 9. * sdiff + slow;
-                if (-floati > Integer.MAX_VALUE)
-                    tbl[j] = -Integer.MAX_VALUE;
-                else if (floati > Integer.MAX_VALUE)
-                    tbl[j] = Integer.MAX_VALUE;
-                else
-                    tbl[j] = (int) floati;
-
-                //System.out.println("tbl["+ j + "] = " + tbl[j]);
-            }
-            tbl[255] = Integer.MAX_VALUE;
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_EQUAL) {
-            hist.eq_tbl(tbl);
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_SQUARED) {
-            squared_tbl(tbl, slow, shigh);
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_SQRT) {
-            sqrt_tbl(tbl, slow, shigh);
-        }
-
-
-        return tbl;
-
-    }
-
-
-    //TODO work it later after implementing stretch
-    private int[] getTblByte() {
-
-        int[] tbl1 = new int[256];
-        int[] tbl = new int[256];
-        if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_LINEAR) {
-            double sdiff = shigh - slow;
-            for (int j = 0; j < 255; j++) {
-                tbl1[j] = (int) ((254 / sdiff) * (j - slow));
-                if (tbl1[j] < 0)
-                    tbl1[j] = 0;
-                if (tbl1[j] > 254)
-                    tbl1[j] = 254;
-            }
-            tbl1[255] = Integer.MAX_VALUE;
-        } else if
-                ((rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOG) ||
-                        (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG)) {
-            double sdiff = shigh - slow;
-            if (sdiff == 0.)
-                sdiff = 1.;
-            for (int j = 0; j < 255; ++j) {
-                if (j <= slow)
-                    tbl1[j] = 0;
-                else if (j >= shigh)
-                    tbl1[j] = 254;
-                else {
-                    if (rangeValues.getStretchAlgorithm() ==
-                            RangeValues.STRETCH_LOG) {
-                        tbl1[j] = (int) (254 *
-                                .43429 * Math.log((9 * (j - slow) / sdiff) + 1));
-                            /* .43429 changes from natural log to common log */
-                    } else {
-                            /* LOGLOG */
-                        double atbl = .43429 * Math.log((9 * (j - slow) / sdiff) + 1);
-                        tbl1[j] = (int)
-                                (254 * .43429 * Math.log((9.0 * atbl) + 1));
-                    }
-
-                }
-
-
-                //System.out.println("tbl1["+ j + "] = " + tbl1[j]);
-            }
-            tbl1[255] = 254;
-        } else if (
-                (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) ||
-                        (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED) ||
-                        (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT)) {
-            if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_EQUAL) {
-                hist.eq_tbl(tbl);
-            } else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_SQUARED) {
-                squared_tbl(tbl, slow, shigh);
-            } else if (rangeValues.getStretchAlgorithm() ==
-                    RangeValues.STRETCH_SQRT) {
-                sqrt_tbl(tbl, slow, shigh);
-            }
-
-                /* now interpolate */
-            int last_val = -1;
-            for (int j = 0; j <= 255; j++) {
-                int this_val = tbl[j];
-                if (this_val < 0)
-                    this_val = 0;
-                else if (this_val > 254)
-                    this_val = 254;
-                for (int i = last_val + 1; i <= this_val; i++) {
-                    tbl1[i] = j;
-                }
-                last_val = this_val;
-            }
-            for (int i = last_val + 1; i <= 255; i++)
-                tbl1[i] = 255;
-        }
-        return tbl1;
-    }
-
-    //TODO work it later after implementing stretch
-    private double[] getDbtlDouble(double sdiff) {
-
-        double dtbl[] = new double[256];
-
-        if ((rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_LOG) ||
-                (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOGLOG)) {
-
-            for (int j = 0; j < 255; ++j) {
-                double atbl = Math.pow(10., j / 254.0);
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOGLOG) {
-                    atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                }
-                dtbl[j] = (atbl - 1.) / 9. * sdiff + slow;
-
-                //System.out.println("dtbl["+ j + "] = " + dtbl[j]);
-            }
-            dtbl[255] = Double.MAX_VALUE;
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_EQUAL) {
-            hist.deq_tbl(dtbl);
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_SQUARED) {
-            squared_tbl_dbl(dtbl, slow, shigh);
-        } else if (rangeValues.getStretchAlgorithm() ==
-                RangeValues.STRETCH_SQRT) {
-            sqrt_tbl_dbl(dtbl, slow, shigh);
-        }
-
-        return dtbl;
-    }
-    //TODO work it later after implementing stretch
-
-    /**
-     * @param start_pixel
-     * @param last_pixel
-     * @param start_line
-     * @param last_line
-     * @param naxis1
-     * @param blank_pixel_value
-     * @param onedimdata
-     * @param pixeldata
-     * @param pixelhist
-     * @param tblArray
-     * @param bitpix
-     * @param sdiff
-     */
-    private void calculateDataArrays(int start_pixel, int last_pixel,
-                                     int start_line, int last_line, int naxis1,
-                                     byte blank_pixel_value,
-                                     Object onedimdata,
-                                     byte[] pixeldata, int[] pixelhist, Object tblArray, int bitpix, double sdiff) {
-
-
-        int delta, deltasav;
-
-        if (sdiff >= 0)
-            deltasav = 64;
-        else
-            deltasav = -64;
-
-        float[] onedimdata32 = (float[]) onedimdata;
-        //double[] tbl = (double[]) tblArray;
-        int[] tblInt = (int[]) tblArray;
-        double[] tbl = new double[tblInt.length];
-        if (!tblArray.getClass().getSimpleName().equalsIgnoreCase("Double")) {
-
-            for (int i = 0; i < tblInt.length; i++) {
-                tbl[i] = (double) tblInt[i];
-            }
-        } else {
-            tbl = (double[]) tblArray;
-        }
-        int i = 0;
-        for (int line = start_line; line <= last_line; line++) {
-            int start_index = line * naxis1 + start_pixel;
-            int last_index = line * naxis1 + last_pixel;
-            for (int index = start_index; index <= last_index; index++) {
-
-                // stretch each pixel
-                if (onedimdata32[index] == blankValue || Double.isNaN(float1d[index])) {
-                    pixeldata[i] = blank_pixel_value;
-                } else if ((bitpix == -32 || bitpix == -64) && rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    double runval = ((float1d[index] - slow) * 254 / sdiff);
-                    if (runval < 0)
-                        pixeldata[i] = 0;
-                    else if (runval > 254)
-                        pixeldata[i] = (byte) 254;
-                    else
-                        pixeldata[i] = (byte) runval;
-                } else {
-                    double runval = onedimdata32[index];
-
-                    int pixval = 128;
-                    delta = deltasav;
-
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] < runval)
-                        pixval += delta;
-                    else
-                        pixval -= delta;
-                    delta >>= 1;
-                    if (tbl[pixval] >= runval)
-                        pixval -= 1;
-
-                    pixeldata[i] = (byte) pixval;
-                    pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-                    pixelhist[pixeldata[i] & 0xff]++;
-                }
-                i++;
-            }
-        }
-    }
-
-    //TODO write this one later
 
     /**
      * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
@@ -1221,35 +790,28 @@ public class FitsRead implements Serializable {
      * other values in between change accordingly (using the same formula). As 0 is by default displayed in black, and 255 in white, the
      * contrast will be better when the image is displayed.
      *
-     * @param start_pixel
-     * @param last_pixel
-     * @param start_line
-     * @param last_line
-     * @param slow
-     * @param shigh
-     * @param blank_pixel_value
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+       * @param blank_pixel_value
      */
-    private void stretch_pixels(int start_pixel, int last_pixel,
-                                    int start_line, int last_line, double slow, double shigh,
-                                    byte blank_pixel_value) {
+    private void stretch_pixels(int startPixel, int lastPixel,int startLine, int lastLine,
+                                     int naxis1, byte blank_pixel_value,
+                                     float[] float1dArray, byte[] pixeldata, int[] pixelhist) {
 
 
         double sdiff = slow == shigh ? 1.0 : shigh - slow;
 
-        //initialize pixelhist
-        for (int i = 0; i < 255; i++)
-            pixelhist[i] = 0;
-
         double[] dtbl = new double[255];
         if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
                 || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
-            dtbl = getDtbl(slow, shigh);
+            dtbl = getLogDtbl(sdiff, slow);
         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
-
-            dtbl = hist.getTblArray();
+           dtbl = hist.getTblArray();
         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED
                 || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
-            dtbl = getSquareDbl(slow, shigh);
+            dtbl = getSquareDbl(sdiff, slow);
         }
 
 
@@ -1260,20 +822,22 @@ public class FitsRead implements Serializable {
          * stretch algorithm
          */
         int pixelCount = 0;
-        for (int line = start_line; line <= last_line; line++) {
-            int start_index = line * imageHeader.naxis1 + start_pixel;
-            int last_index = line * imageHeader.naxis1 + last_pixel;
+        for (int line = startLine; line <= lastLine; line++) {
+            int start_index = line * naxis1 + startPixel;
+            int last_index = line * naxis1 + lastPixel;
 
             for (int index = start_index; index <= last_index; index++) {
 
-                if (Double.isNaN(float1d[index])) { //orignal pixel value is NaN, assign it to blank
+                if (Double.isNaN(float1dArray[index])) { //orignal pixel value is NaN, assign it to blank
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {   // stretch each pixel
                     if (rangeValues.getStretchAlgorithm() ==
                             RangeValues.STRETCH_LINEAR) {
-                        pixeldata[pixelCount] = getLinearStrectchPixelValue(index, sdiff);
+                        double dRunval = ((float1dArray[index] - slow ) * 254 / sdiff);
+                        pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval,  sdiff, slow);
                     } else {
-                        pixeldata[pixelCount] = (byte) getStretchedPixelValue(index, dtbl, deltasav);
+                        double dRunval = float1dArray[index];
+                        pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(dRunval,  dtbl, deltasav);
                     }
                     pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
                     pixelhist[pixeldata[pixelCount] & 0xff]++;
@@ -1285,46 +849,46 @@ public class FitsRead implements Serializable {
 
     }
 
-    private int getStretchedPixelValue(int index, double[] dtbl, int delta) {
-        double d_runval = float1d[index];
+    private int getNoneLinerStretchedPixelValue(double dRunVal,  double[] dtbl, int delta) {
+
         int pixval = 128;
 
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] < d_runval)
+        if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
         delta >>= 1;
-        if (dtbl[pixval] >= d_runval)
+        if (dtbl[pixval] >= dRunVal)
             pixval -= 1;
         return pixval;
     }
@@ -1332,24 +896,23 @@ public class FitsRead implements Serializable {
     /**
      * The pixel value is in the range of 0-254
      *
-     * @param index
+     *
      * @param sdiff
      * @return
      */
-    private byte getLinearStrectchPixelValue(int index, double sdiff) {
-        double d_runval = ((float1d[index] - slow) * 254 / sdiff);
-        if (d_runval < 0)
+    private byte getLinearStrectchedPixelValue(double dRenVal,  double sdiff, double slow) {
+       //
+        if (dRenVal < 0)
             return 0;
-        else if (d_runval > 254)
+        else if (dRenVal > 254)
             return (byte) 254;
         else
-            return (byte) d_runval;
+            return (byte) dRenVal;
     }
 
-    private double[] getDtbl(double slow, double shigh) {
+    private double[] getLogDtbl(double sdiff, double slow) {
 
         double[] dtbl = new double[256];
-        double sdiff = shigh - slow;
         for (int j = 0; j < 255; ++j) {
 
             double atbl = Math.pow(10., j / 254.0);
@@ -1365,713 +928,6 @@ public class FitsRead implements Serializable {
         return dtbl;
     }
 
-    /* pixeldata and pixelhist are return values */
-    private void stretch_pixels_old(int start_pixel, int last_pixel,
-                                int start_line, int last_line, int bitpix, int naxis1,
-                                byte blank_pixel_value,
-                                Object onedimdata,
-                                byte[] pixeldata, int[] pixelhist) {
-
-        int tbl[] = new int[256];
-        int pixval;
-        int i;
-        int runval;
-        int delta, deltasav;
-        double floati, d_runval;
-        double atbl;
-
-        int tbl1[] = new int[256];
-        ;
-        int this_val, last_val;
-        double dtbl[] = new double[256];
-
-        double sdiff = shigh - slow;
-
-        for (i = 0; i < 255; i++)
-            pixelhist[i] = 0;
-
-        switch (bitpix) {
-            case 32:
-                long start_time = (new Date()).getTime();
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    linear_tbl(tbl, slow, shigh);
-                } else if
-                        ((rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOG) ||
-                                (rangeValues.getStretchAlgorithm() ==
-                                        RangeValues.STRETCH_LOGLOG)) {
-                    sdiff = shigh - slow;
-                    if (sdiff == 0.)
-                        sdiff = 1.;
-                    for (int j = 0; j < 255; ++j) {
-                        atbl = Math.pow(10., j / 254.0);
-                        if (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG) {
-                            atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                        }
-                        floati = (atbl - 1.) / 9. * sdiff + slow;
-                        if (-floati > Integer.MAX_VALUE)
-                            tbl[j] = -Integer.MAX_VALUE;
-                        else if (floati > Integer.MAX_VALUE)
-                            tbl[j] = Integer.MAX_VALUE;
-                        else
-                            tbl[j] = (int) floati;
-
-                        //System.out.println("tbl["+ j + "] = " + tbl[j]);
-                    }
-                    tbl[255] = Integer.MAX_VALUE;
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_EQUAL) {
-                    hist.eq_tbl(tbl);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQUARED) {
-                    squared_tbl(tbl, slow, shigh);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQRT) {
-                    sqrt_tbl(tbl, slow, shigh);
-                }
-
-
-                if (sdiff >= 0)
-                    deltasav = 64;
-                else
-                    deltasav = -64;
-
-                int[] onedimdata32 = (int[]) onedimdata;
-
-                //pixeldata = new byte[onedimdata32.length];
-                //Assert.tst(pixeldata.length >= onedimdata32.length);
-
-                i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-                    //for (i = 0; i < onedimdata32.length; i++)
-
-                    for (int index = start_index; index <= last_index; index++) {
-
-                        // stretch each pixel
-                        if (onedimdata32[index] == blankValue)
-                            pixeldata[i] = blank_pixel_value;
-                        else {
-                            runval = onedimdata32[index];
-                            pixval = 128;
-                            delta = deltasav; /* 64 if ra normal, -64 if ra reversed */
-
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] >= runval)
-                                pixval -= 1;
-
-                            pixeldata[i] = (byte) pixval;
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-                    }
-                }
-                //System.out.println("RBH ELAPSED TIME = " +
-                //    ((new Date()).getTime() - start_time) + " ms");
-                break;
-            case 16:
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    sdiff = shigh - slow;
-                    for (int j = 0; j < 255; j++) {
-                        floati = (sdiff / 254) * j + slow;
-                        if (-floati > Integer.MAX_VALUE)
-                            tbl[j] = -Integer.MAX_VALUE;
-                        else if (floati > Integer.MAX_VALUE)
-                            tbl[j] = Integer.MAX_VALUE;
-                        else
-                            tbl[j] = (int) floati;
-                    }
-                    tbl[255] = Integer.MAX_VALUE;
-                } else if
-                        ((rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOG) ||
-                                (rangeValues.getStretchAlgorithm() ==
-                                        RangeValues.STRETCH_LOGLOG)) {
-                    sdiff = shigh - slow;
-                    if (sdiff == 0.)
-                        sdiff = 1.;
-                    for (int j = 0; j < 255; ++j) {
-                        atbl = Math.pow(10., j / 254.0);
-                        if (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG) {
-                            atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                        }
-                        floati = (atbl - 1.) / 9. * sdiff + slow;
-                        if (-floati > Integer.MAX_VALUE)
-                            tbl[j] = -Integer.MAX_VALUE;
-                        else if (floati > Integer.MAX_VALUE)
-                            tbl[j] = Integer.MAX_VALUE;
-                        else
-                            tbl[j] = (int) floati;
-
-                        //System.out.println("tbl["+ j + "] = " + tbl[j]);
-                    }
-                    tbl[255] = Integer.MAX_VALUE;
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_EQUAL) {
-                    hist.eq_tbl(tbl);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQUARED) {
-                    squared_tbl(tbl, slow, shigh);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQRT) {
-                    sqrt_tbl(tbl, slow, shigh);
-                }
-
-
-                if (sdiff >= 0)
-                    deltasav = 64;
-                else
-                    deltasav = -64;
-
-                short[] onedimdata16 = (short[]) onedimdata;
-
-
-                //pixeldata = new byte[onedimdata16.length];
-                //Assert.tst(pixeldata.length >= onedimdata16.length);
-
-                i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-                    //for (i = 0; i < onedimdata16.length; i++)
-                    for (int index = start_index; index <= last_index; index++) {
-                        // stretch each pixel
-                        if (onedimdata16[index] == blankValue)
-                            pixeldata[i] = blank_pixel_value;
-                        else {
-                            runval = onedimdata16[index];
-                            pixval = 128;
-                            delta = deltasav; /* 64 if ra normal, -64 if ra reversed */
-
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] < runval)
-                                pixval += delta;
-                            else
-                                pixval -= delta;
-                            delta >>= 1;
-                            if (tbl[pixval] >= runval)
-                                pixval -= 1;
-
-                            pixeldata[i] = (byte) pixval;
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-
-
-                    }
-                }
-                break;
-            case 8:
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    sdiff = shigh - slow;
-                    for (int j = 0; j < 255; j++) {
-                        tbl1[j] = (int) ((254 / sdiff) * (j - slow));
-                        if (tbl1[j] < 0)
-                            tbl1[j] = 0;
-                        if (tbl1[j] > 254)
-                            tbl1[j] = 254;
-                    }
-                    tbl1[255] = Integer.MAX_VALUE;
-                } else if
-                        ((rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOG) ||
-                                (rangeValues.getStretchAlgorithm() ==
-                                        RangeValues.STRETCH_LOGLOG)) {
-                    sdiff = shigh - slow;
-                    if (sdiff == 0.)
-                        sdiff = 1.;
-                    for (int j = 0; j < 255; ++j) {
-                        if (j <= slow)
-                            tbl1[j] = 0;
-                        else if (j >= shigh)
-                            tbl1[j] = 254;
-                        else {
-                            if (rangeValues.getStretchAlgorithm() ==
-                                    RangeValues.STRETCH_LOG) {
-                                tbl1[j] = (int) (254 *
-                                        .43429 * Math.log((9 * (j - slow) / sdiff) + 1));
-                            /* .43429 changes from natural log to common log */
-                            } else {
-                            /* LOGLOG */
-                                atbl = .43429 * Math.log((9 * (j - slow) / sdiff) + 1);
-                                tbl1[j] = (int)
-                                        (254 * .43429 * Math.log((9.0 * atbl) + 1));
-                            }
-
-                        }
-
-
-                        //System.out.println("tbl1["+ j + "] = " + tbl1[j]);
-                    }
-                    tbl1[255] = 254;
-                } else if (
-                        (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) ||
-                                (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED) ||
-                                (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT)) {
-                    if (rangeValues.getStretchAlgorithm() ==
-                            RangeValues.STRETCH_EQUAL) {
-                        hist.eq_tbl(tbl);
-                    } else if (rangeValues.getStretchAlgorithm() ==
-                            RangeValues.STRETCH_SQUARED) {
-                        squared_tbl(tbl, slow, shigh);
-                    } else if (rangeValues.getStretchAlgorithm() ==
-                            RangeValues.STRETCH_SQRT) {
-                        sqrt_tbl(tbl, slow, shigh);
-                    }
-
-                /* now interpolate */
-                    last_val = -1;
-                    for (int j = 0; j <= 255; j++) {
-                        this_val = tbl[j];
-                        if (this_val < 0)
-                            this_val = 0;
-                        else if (this_val > 254)
-                            this_val = 254;
-                        for (i = last_val + 1; i <= this_val; i++) {
-                            tbl1[i] = j;
-                        }
-                        last_val = this_val;
-                    }
-                    for (i = last_val + 1; i <= 255; i++)
-                        tbl1[i] = 255;
-                }
-
-                byte[] onedimdata8 = (byte[]) onedimdata;
-
-                //pixeldata = new byte[onedimdata8.length];
-                //Assert.tst(pixeldata.length >= onedimdata8.length);
-                sdiff = shigh - slow;
-
-                i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-                    //for (i = 0; i < onedimdata8.length; i++)
-                    for (int index = start_index; index <= last_index; index++) {
-                        // stretch each pixel
-                        pixval = onedimdata8[index] & 0xff;
-                        if (pixval == blankValue)
-                            pixeldata[i] = blank_pixel_value;
-                        else {
-                            if (pixval > shigh)
-                                pixeldata[i] = (byte) 254;
-                            else if (pixval < slow)
-                                pixeldata[i] = (byte) 0;
-                            else
-                                pixeldata[i] = (byte) tbl1[pixval];
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-
-                    }
-                }
-                break;
-            case -32:
-                sdiff = shigh - slow;
-                if (sdiff == 0.)
-                    sdiff = 1.;
-                if
-                        ((rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOG) ||
-                        (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG)) {
-                    for (int j = 0; j < 255; ++j) {
-                        atbl = Math.pow(10., j / 254.0);
-                        if (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG) {
-                            atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                        }
-                        dtbl[j] = (atbl - 1.) / 9. * sdiff + slow;
-
-                        //System.out.println("dtbl["+ j + "] = " + dtbl[j]);
-                    }
-                    dtbl[255] = Double.MAX_VALUE;
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_EQUAL) {
-                    hist.deq_tbl(dtbl);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQUARED) {
-                    squared_tbl_dbl(dtbl, slow, shigh);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQRT) {
-                    sqrt_tbl_dbl(dtbl, slow, shigh);
-                }
-
-                if (sdiff > 0)
-                    deltasav = 64;
-                else
-                    deltasav = -64;
-
-
-                float[] onedimdatam32 = (float[]) onedimdata;
-
-                //pixeldata = new byte[onedimdatam32.length];
-                //System.out.println("RBH pixeldata.length = " + pixeldata.length +
-                //    "   onedimdatam32.length = " + onedimdatam32.length);
-                //Assert.tst(pixeldata.length >= onedimdatam32.length);
-                i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-                    //for (i = 0; i < onedimdatam32.length; i++)
-
-                    for (int index = start_index; index <= last_index; index++)
-
-                    {
-                        // stretch each pixel
-                        if (Double.isNaN(onedimdatam32[index])) {
-                            pixeldata[i] = blank_pixel_value;
-                        } else {
-                            if (rangeValues.getStretchAlgorithm() ==
-                                    RangeValues.STRETCH_LINEAR) {
-                                d_runval = ((onedimdatam32[index] - slow) * 254 / sdiff);
-                                if (d_runval < 0)
-                                    pixeldata[i] = 0;
-                                else if (d_runval > 254)
-                                    pixeldata[i] = (byte) 254;
-                                else
-                                    pixeldata[i] = (byte) d_runval;
-                            } else {
-                                d_runval = onedimdatam32[index];
-                                pixval = 128;
-                                delta = deltasav; /* 64 if ra normal, -64 if ra reversed */
-
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] >= d_runval)
-                                    pixval -= 1;
-
-                                pixeldata[i] = (byte) pixval;
-
-                            }
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-
-                    }
-                }
-                break;
-            case -64:
-                sdiff = shigh - slow;
-                if (sdiff == 0.)
-                    sdiff = 1.;
-                if
-                        ((rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LOG) ||
-                        (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG)) {
-                    for (int j = 0; j < 255; ++j) {
-                        atbl = Math.pow(10., j / 254.0);
-                        if (rangeValues.getStretchAlgorithm() ==
-                                RangeValues.STRETCH_LOGLOG) {
-                            atbl = Math.pow(10., (atbl - 1.0) / 9.0);
-                        }
-                        dtbl[j] = (atbl - 1.) / 9. * sdiff + slow;
-
-                        //System.out.println("dtbl["+ j + "] = " + dtbl[j]);
-                    }
-                    dtbl[255] = Double.MAX_VALUE;
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_EQUAL) {
-                    hist.deq_tbl(dtbl);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQUARED) {
-                    squared_tbl_dbl(dtbl, slow, shigh);
-                } else if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_SQRT) {
-                    sqrt_tbl_dbl(dtbl, slow, shigh);
-                }
-
-                if (sdiff > 0)
-                    deltasav = 64;
-                else
-                    deltasav = -64;
-
-
-                double[] onedimdatam64 = (double[]) onedimdata;
-                //pixeldata = new byte[onedimdatam64.length];
-                //Assert.tst(pixeldata.length >= onedimdatam64.length);
-                i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-                    //for (i = 0; i < onedimdatam64.length; i++)
-
-                    for (int index = start_index; index <= last_index; index++) {
-                        // stretch each pixel
-                        if (Double.isNaN(onedimdatam64[index])) {
-                            pixeldata[i] = blank_pixel_value;
-                        } else {
-                            if (rangeValues.getStretchAlgorithm() ==
-                                    RangeValues.STRETCH_LINEAR) {
-                                d_runval = ((onedimdatam64[index] - slow) * 254 / sdiff);
-                                if (d_runval < 0)
-                                    pixeldata[i] = 0;
-                                else if (d_runval > 254)
-                                    pixeldata[i] = (byte) 254;
-                                else
-                                    pixeldata[i] = (byte) d_runval;
-                            } else {
-                                d_runval = onedimdatam64[index];
-                                pixval = 128;
-                                delta = deltasav; /* 64 if ra normal, -64 if ra reversed */
-
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] < d_runval)
-                                    pixval += delta;
-                                else
-                                    pixval -= delta;
-                                delta >>= 1;
-                                if (dtbl[pixval] >= d_runval)
-                                    pixval -= 1;
-
-                                pixeldata[i] = (byte) pixval;
-
-                            }
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-
-                    }
-                }
-                break;
-        }
-
-
-        /////
-       /* switch (bitpix) {
-            case 32:
-                long start_time = (new Date()).getTime();
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    linear_tbl(tbl, slow, shigh);
-                } else {
-                    tbl = getNoneLinearTblInt();
-                }
-
-                calculateDataArrays(start_pixel, last_pixel, start_line, last_line, naxis1, blank_pixel_value, onedimdata,
-                        pixeldata, pixelhist, tbl, 32, sdiff);
-
-
-                break;
-            case 16:
-                if (rangeValues.getStretchAlgorithm() ==
-                        RangeValues.STRETCH_LINEAR) {
-                    sdiff = shigh - slow;
-                    for (int j = 0; j < 255; j++) {
-                        double floati = (sdiff / 254) * j + slow;
-                        if (-floati > Integer.MAX_VALUE)
-                            tbl[j] = -Integer.MAX_VALUE;
-                        else if (floati > Integer.MAX_VALUE)
-                            tbl[j] = Integer.MAX_VALUE;
-                        else
-                            tbl[j] = (int) floati;
-                    }
-                    tbl[255] = Integer.MAX_VALUE;
-                } else {
-                    tbl = getNoneLinearTblInt();
-                }
-
-                calculateDataArrays(start_pixel, last_pixel, start_line, last_line, naxis1, blank_pixel_value, onedimdata,
-                        pixeldata, pixelhist, tbl, 16, sdiff);
-
-                break;
-            case 8:
-
-                int[] tbl1 = getTblByte();
-                byte[] onedimdata8 = (byte[]) onedimdata;
-
-                int i = 0;
-                for (int line = start_line; line <= last_line; line++) {
-                    int start_index = line * naxis1 + start_pixel;
-                    int last_index = line * naxis1 + last_pixel;
-
-
-                    for (int index = start_index; index <= last_index; index++) {
-                        // stretch each pixel
-                        int pixval = onedimdata8[index] & 0xff;
-                        if (pixval == blankValue)
-                            pixeldata[i] = blank_pixel_value;
-                        else {
-                            if (pixval > shigh)
-                                pixeldata[i] = (byte) 254;
-                            else if (pixval < slow)
-                                pixeldata[i] = (byte) 0;
-                            else
-                                pixeldata[i] = (byte) tbl1[pixval];
-                            pixeldata[i] = rangeValues.computeBiasAndContrast(pixeldata[i]);
-
-                            pixelhist[pixeldata[i] & 0xff]++;
-                        }
-                        i++;
-
-                    }
-                }
-                break;
-            case -32:
-                sdiff = shigh - slow;
-                if (sdiff == 0.)
-                    sdiff = 1.;
-
-                double[] dtbl = getDbtlDouble(sdiff);
-
-
-                calculateDataArrays(start_pixel, last_pixel, start_line, last_line, naxis1, blank_pixel_value, onedimdata,
-                        pixeldata, pixelhist, dtbl, -32, sdiff);
-                break;
-            case -64:
-                sdiff = shigh - slow;
-                if (sdiff == 0.)
-                    sdiff = 1.;
-                dtbl = getDbtlDouble(sdiff);
-                calculateDataArrays(start_pixel, last_pixel, start_line, last_line, naxis1, blank_pixel_value, onedimdata,
-                        pixeldata, pixelhist, dtbl, -64, sdiff);
-                break;
-        }*/
-    }
 
 
     /**
@@ -2087,192 +943,44 @@ public class FitsRead implements Serializable {
         int last_pixel = 4095;
         int start_line = 0;
         int last_line = 0;
-        int bitpix = -64;
         int naxis1 = 1;
         byte blank_pixel_value = 0;
+        //calling stretch_pixel to calculate pixeldata, pixelhist
         byte[] pixeldata = new byte[4096];
         int[] pixelhist = new int[256];
 
 
-	/*
-    int[] onedimdata32;
-	Object onedimdata = null;
-	onedimdata = onedimdatam32;
-	*/
-
-        double[] hist_bin_values = new double[4096];
+        float[] hist_bin_values = new float[4096];
         for (int i = 0; i < 4096; i++) {
-            hist_bin_values[i] = hist.getDNfromBin(i);
+            hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
 
-        Object onedimdata = (Object) hist_bin_values;
+        stretch_pixels(start_pixel, last_pixel,  start_line, last_line, naxis1,
+                blank_pixel_value, hist_bin_values, pixeldata, pixelhist);
 
-        stretch_pixels(start_pixel, last_pixel, start_line, last_line,
-                bitpix, naxis1, blank_pixel_value, onedimdata, pixeldata, pixelhist);
 
-	/*
-	for (int i = 0; i < 240; i++)
-	{
-	    int pixelDN = pixeldata[i] & 0xff;
-	    System.out.println("hist_bin_values[" + i + "] = " +
-		hist_bin_values[i]  + "  -> pixval = " + pixelDN);
-	}
-	*/
+
         return pixeldata;
     }
 
-    /**
-     * fill the 256 element table with linear values
-     */
-    private void linear_tbl(int tbl[], double slow, double shigh) {
-        double floati;
-        double sdiff;
-
-        sdiff = shigh - slow;
-        for (int j = 0; j < 255; j++) {
-            floati = (sdiff / 254) * j + slow;
-            if (-floati > Integer.MAX_VALUE)
-                tbl[j] = -Integer.MAX_VALUE;
-            else if (floati > Integer.MAX_VALUE)
-                tbl[j] = Integer.MAX_VALUE;
-            else
-                tbl[j] = (int) floati;
-        }
-        tbl[255] = Integer.MAX_VALUE;
-
-    }
 
 
     /**
      * fill the 256 element table with values for a squared stretch
      */
-    private double[] getSquareDbl(double slow, double shigh) {
+    private double[] getSquareDbl(double sdiff, double slow) {
         double[] dtbl = new double[255];
-
-        double sdiff = slow == shigh ? 1.0 : shigh - slow;
 
         for (int j = 0; j < 255; ++j) {
             double floati = Math.sqrt(sdiff * sdiff / 254 * j) + slow;
             dtbl[j] = floati;
-
-            //System.out.println("tbl["+ j + "] = " + tbl[j]);
         }
         dtbl[255] = Float.MAX_VALUE;
         return dtbl;
     }
 
-    /**
-     * fill the 256 element table with values for a squared stretch
-     */
-    private void squared_tbl(int tbl[], double slow, double shigh) {
-        double floati;
-        double sdiff;
 
-        sdiff = shigh - slow;
-        if (sdiff == 0.)
-            sdiff = 1.;
-        for (int j = 0; j < 255; ++j) {
-            floati = Math.sqrt(sdiff * sdiff / 254 * j) + slow;
-            //System.out.println("RBH j = " + j + "  floati = " + floati);
-            if (-floati > Integer.MAX_VALUE)
-                tbl[j] = -Integer.MAX_VALUE;
-            else if (floati > Integer.MAX_VALUE)
-                tbl[j] = Integer.MAX_VALUE;
-            else
-                tbl[j] = (int) floati;
-
-            //System.out.println("tbl["+ j + "] = " + tbl[j]);
-        }
-        tbl[255] = Integer.MAX_VALUE;
-    }
-
-    /**
-     * fill the 256 element table with values for a squared stretch
-     * for floating point pixels
-     */
-    private void squared_tbl_dbl(double tbl[], double slow, double shigh) {
-        double floati;
-        double sdiff;
-
-        sdiff = shigh - slow;
-        if (sdiff == 0.)
-            sdiff = 1.;
-        for (int j = 0; j < 255; ++j) {
-            floati = Math.sqrt(sdiff * sdiff / 254 * j) + slow;
-            //System.out.println("RBH j = " + j + "  floati = " + floati);
-            tbl[j] = floati;
-
-            //System.out.println("tbl["+ j + "] = " + tbl[j]);
-        }
-        tbl[255] = Double.MAX_VALUE;
-    }
-
-    /**
-     * fill the 256 element table with values for a square root stretch
-     */
-    private void sqrt_tbl(int tbl[], double slow, double shigh) {
-        double floati;
-        double sdiff;
-
-        sdiff = shigh - slow;
-        if (sdiff == 0.)
-            sdiff = 1.;
-        for (int j = 0; j < 255; ++j) {
-            floati = (Math.sqrt(sdiff) / 254 * j);
-            floati = floati * floati + slow;
-            //System.out.println("RBH j = " + j + "  floati = " + floati);
-            if (-floati > Integer.MAX_VALUE)
-                tbl[j] = -Integer.MAX_VALUE;
-            else if (floati > Integer.MAX_VALUE)
-                tbl[j] = Integer.MAX_VALUE;
-            else
-                tbl[j] = (int) floati;
-
-            //System.out.println("tbl["+ j + "] = " + tbl[j]);
-        }
-        tbl[255] = Integer.MAX_VALUE;
-    }
-
-    /**
-     * fill the 256 element table with values for a square root stretch
-     */
-    private double[] getSqrtDbl(double slow, double shigh) {
-
-        double[] dtbl = new double[255];
-
-        double sdiff = shigh == slow ? 1.0 : shigh - slow;
-        if (sdiff == 0.)
-            sdiff = 1.;
-        for (int j = 0; j < 255; ++j) {
-            double floati = (Math.sqrt(sdiff) / 254 * j);
-            floati = floati * floati + slow;
-            dtbl[j] = floati;
-        }
-        dtbl[255] = Double.MAX_VALUE;
-        return dtbl;
-    }
-
-    /**
-     * fill the 256 element table with values for a square root stretch
-     * for floating point pixels
-     */
-    private void sqrt_tbl_dbl(double tbl[], double slow, double shigh) {
-        double floati;
-        double sdiff;
-
-        sdiff = shigh - slow;
-        if (sdiff == 0.)
-            sdiff = 1.;
-        for (int j = 0; j < 255; ++j) {
-            floati = (Math.sqrt(sdiff) / 254 * j);
-            floati = floati * floati + slow;
-            tbl[j] = floati;
-
-            //System.out.println("tbl["+ j + "] = " + tbl[j]);
-        }
-        tbl[255] = Double.MAX_VALUE;
-    }
 
     public byte[] getData8() {
         return (pixeldata);
@@ -2294,40 +1002,34 @@ public class FitsRead implements Serializable {
 
     public double getFlux(ImagePt ipt)
             throws PixelValueException {
-        double x = ipt.getX() - 0.5;
-        double y = ipt.getY() - 0.5;
 
-        int xint = (int) Math.round(x);
-        int yint = (int) Math.round(y);
+
+        int xint = (int) Math.round(ipt.getX() - 0.5);
+        int yint = (int) Math.round(ipt.getY() - 0.5);
+
+        if ((xint < 0) || (xint >= imageHeader.naxis1) ||
+                (yint < 0) || (yint >= imageHeader.naxis2)) {
+            throw new PixelValueException("location not on the image");
+        }
 
         int index = yint * imageHeader.naxis1 + xint;
 
-
-        if ((xint < 0) || (xint >= imageHeader.naxis1) ||
-                (yint < 0) || (yint >= imageHeader.naxis2))
-            throw new PixelValueException("location not on the image");
-        if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
-            System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
-            throw new PixelValueException("illegal bitpix");
-        }
-
         double raw_dn = float1d[index];
 
-
-        if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn)))
+        if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
             throw new PixelValueException("No flux available");
+        }
 
-        double flux;
         if (imageHeader.origin.startsWith("Palomar Transient Factory")) {
-            flux = -2.5 * .43429 * Math.log(raw_dn / imageHeader.exptime) +
+            return  -2.5 * .43429 * Math.log(raw_dn / imageHeader.exptime) +
                     imageHeader.imagezpt +
                     imageHeader.extinct * imageHeader.airmass;
 			/* .43429 changes from natural log to common log */
         } else {
-            flux = raw_dn * imageHeader.bscale + imageHeader.bzero;
+            return raw_dn * imageHeader.bscale + imageHeader.bzero;
         }
 
-        return (flux);
+
     }
 
     public String getFluxUnits() {
@@ -2457,11 +1159,11 @@ public class FitsRead implements Serializable {
         return result;
     }
 
-    public boolean isSameProjection(FitsRead second_fitsread) {
+    public boolean isSameProjection(FitsRead secondFitsread) {
         boolean result = false;
 
         ImageHeader H1 = getImageHeader();
-        ImageHeader H2 = second_fitsread.getImageHeader();
+        ImageHeader H2 = secondFitsread.getImageHeader();
 
         if (H1.maptype == H2.maptype) {
             if (H1.maptype == Projection.PLATE) {
