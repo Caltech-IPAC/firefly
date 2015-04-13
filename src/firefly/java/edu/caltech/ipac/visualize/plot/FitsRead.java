@@ -1159,11 +1159,11 @@ public class FitsRead implements Serializable {
         return result;
     }
 
-    public boolean isSameProjection(FitsRead secondFitsread) {
+    public boolean isSameProjection(FitsRead second_fitsread) {
         boolean result = false;
 
         ImageHeader H1 = getImageHeader();
-        ImageHeader H2 = secondFitsread.getImageHeader();
+        ImageHeader H2 = second_fitsread.getImageHeader();
 
         if (H1.maptype == H2.maptype) {
             if (H1.maptype == Projection.PLATE) {
