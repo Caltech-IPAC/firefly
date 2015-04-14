@@ -72,9 +72,8 @@ public class FitsRead implements Serializable {
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
         blankValue = imageHeader.blank_value;
-        int bitpix = imageHeader.bitpix;
-        if (!SUPPORTED_BIT_PIXS.contains(new Integer(bitpix))) {
-            System.out.println("Unimplemented bitpix = " + bitpix);
+        if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
+            System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
         float1d = getImageHDUDataInFloatArray(this.fits, imageHdu);
@@ -666,8 +665,8 @@ public class FitsRead implements Serializable {
         }
 
 
-        stretch_pixels(startPixel, lastPixel,startLine, lastLine,imageHeader.naxis1,
-                blank_pixel_value,float1d, pixeldata, pixelhist);
+        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
+                blank_pixel_value, float1d, pixeldata, pixelhist);
 
 
     }
@@ -796,9 +795,9 @@ public class FitsRead implements Serializable {
      * @param lastLine
        * @param blank_pixel_value
      */
-    private void stretch_pixels(int startPixel, int lastPixel,int startLine, int lastLine,
-                                     int naxis1, byte blank_pixel_value,
-                                     float[] float1dArray, byte[] pixeldata, int[] pixelhist) {
+    private void stretchPixels(int startPixel, int lastPixel, int startLine, int lastLine,
+                               int naxis1, byte blank_pixel_value,
+                               float[] float1dArray, byte[] pixeldata, int[] pixelhist) {
 
 
         double sdiff = slow == shigh ? 1.0 : shigh - slow;
@@ -834,7 +833,7 @@ public class FitsRead implements Serializable {
                     if (rangeValues.getStretchAlgorithm() ==
                             RangeValues.STRETCH_LINEAR) {
                         double dRunval = ((float1dArray[index] - slow ) * 254 / sdiff);
-                        pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval,  sdiff, slow);
+                        pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
                     } else {
                         double dRunval = float1dArray[index];
                         pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(dRunval,  dtbl, deltasav);
@@ -897,11 +896,11 @@ public class FitsRead implements Serializable {
      * The pixel value is in the range of 0-254
      *
      *
-     * @param sdiff
+     *
      * @return
      */
-    private byte getLinearStrectchedPixelValue(double dRenVal,  double sdiff, double slow) {
-       //
+    private byte getLinearStrectchedPixelValue(double dRenVal) {
+
         if (dRenVal < 0)
             return 0;
         else if (dRenVal > 254)
@@ -956,7 +955,7 @@ public class FitsRead implements Serializable {
         }
 
 
-        stretch_pixels(start_pixel, last_pixel,  start_line, last_line, naxis1,
+        stretchPixels(start_pixel, last_pixel, start_line, last_line, naxis1,
                 blank_pixel_value, hist_bin_values, pixeldata, pixelhist);
 
 
