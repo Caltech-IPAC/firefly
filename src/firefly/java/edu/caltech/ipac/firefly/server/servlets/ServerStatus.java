@@ -66,7 +66,7 @@ public class ServerStatus extends BaseHttpServlet {
         String[] cacheNames = cm.getCacheNames();
         for(String n : cacheNames) {
             Ehcache c = cm.getCache(n);
-            writer.println("\t" + c.getName());
+            writer.println("\t" + c.getName() + " @" + c.hashCode());
             writer.println("\tCache Status    : " + c.getStatus());
             writer.println("\tMax Heap       : " + c.getCacheConfiguration().getMaxBytesLocalHeap()/(1024 * 1024) + "MB");
             writer.println("\tMax Entries    : " + c.getCacheConfiguration().getMaxEntriesLocalHeap());

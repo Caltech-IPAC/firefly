@@ -37,7 +37,7 @@ public class CommonFilter implements Filter {
 
     public void init(FilterConfig filterConfig) throws ServletException {
         try {
-            System.setProperty(WEBAPP_CONFIG_DIR, filterConfig.getServletContext().getRealPath("WEB-INF/config"));
+            System.setProperty(WEBAPP_CONFIG_DIR, filterConfig.getServletContext().getRealPath("/WEB-INF/config"));
             String appName = filterConfig.getServletContext().getServletContextName();
             System.setProperty(APP_NAME, appName);
             if (!isInit) {

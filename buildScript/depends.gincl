@@ -5,6 +5,7 @@ ext {
                      ':commons-httpclient',
                      ':commons-codec',
                      ':commons-lang',
+                     ':commons-logging',
                      ':jackrabbit-webdav-2.8.0',
                      ':commons-discovery',
                      ':commons-csv-1.0-201209']
@@ -21,12 +22,12 @@ ext {
 
   j2ee_rt_lib = [':wsdl4j-1.5.1',
                  ':jaxrpc',
-                 ':saaj']
+                 ':saaj',
+                 ':activation',
+                 ':mail']
 
   j2ee_lib = [j2ee_rt_lib,
-              ':servlet-api',
-              ':activation',
-              ':mail']
+              ':servlet-api']
 
   starlink_lib = [':regclient', ':stil']
   xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
@@ -55,7 +56,7 @@ ext {
                      log4j_lib, josso_lib, xstream_lib, xbeanfinder_lib,
                      gwt_lib_rt, ehcache_lib, starlink_lib, j2ee_rt_lib]
 
-  FIREFLY_COMPILE = [j2ee_lib, ehcache_lib, gwt_lib, FIREFLY_RUNTIME]
+  FIREFLY_COMPILE = [j2ee_lib, gwt_lib, FIREFLY_RUNTIME]
 }
 
 

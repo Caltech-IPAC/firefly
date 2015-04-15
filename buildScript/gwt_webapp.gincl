@@ -42,8 +42,11 @@ task prepareWebapp (type:Copy) {
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = WEBAPP_GROUP
 
+  // should rerun this everytime.  properties could be modified from external files.
+  outputs.upToDateWhen { false }
+
   from("$rootDir/config/") {
-    include 'common.prop', '*.xml', 'ignore_sizeof.txt', 'log4j.properties'
+    include '*.prop', '*.xml', 'ignore_sizeof.txt', '*.properties'
     into 'WEB-INF/config'
   }
   from("$rootDir/config/") {
@@ -177,13 +180,10 @@ task deploy {
     if (!project.hasProperty("tomcat_home")) {
       throw ProjectConfigurationException("tomcat_home property is not found.")
     }
-//    exec {
-//      ignoreExitValue = 'true'
-//      executable "$tomcat_home/bin/shutdown.sh"
-//      println ">> Stopping Tomcat:.. tomcat_home: $tomcat_home"
-//      errorOutput = new ByteArrayOutputStream()
-//    }
-//    sleep(4 * 1000)
+    if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
+      println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
+      throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
+    }
 
     copy {
       println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
@@ -191,16 +191,6 @@ task deploy {
       from("$war.destinationDir/${webapp.baseWarName}.war")
       into "$tomcat_home/webapps/"
     }
-
-//    exec {
-//      delete("$tomcat_home/temp/ehcache")
-//      executable "$tomcat_home/bin/catalina.sh"
-//      if (project.hasProperty("tomcatDebugStart") && project.tomcatDebugStart == 'true') {
-//        args 'jpda'
-//      }
-//      args 'start'
-//      println ">> Starting Tomcat:.."
-//    }
   }
 }
 

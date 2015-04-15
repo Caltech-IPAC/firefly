@@ -328,7 +328,9 @@ public class QueryUtil {
         RawDataSet rds = convertToRawDataset(page.getData(), 0, Integer.MAX_VALUE);
         rds.setTotalRows(page.getRowCount());
         rds.setStartingIndex(page.getStartRow());
-        rds.getMeta().setSource(page.getTableDef().getSource());
+        if (page.getTableDef() != null) {
+            rds.getMeta().setSource(page.getTableDef().getSource());
+        }
         return rds;
     }
 
