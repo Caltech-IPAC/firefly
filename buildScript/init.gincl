@@ -11,34 +11,31 @@ task loadConfig {
   project.ext.build_date = new Date().format("yyyy-MM-dd")
 
   doLast {
-    if (!project.hasProperty("appConfigProps")) {
+    project.ext["env"] = project.hasProperty("env") ? project.env : 'local'
+    println ">> Environment is set to $env"
 
-      project.ext["env"] = project.hasProperty("env") ? project.env : 'local'
-      println ">> Environment is set to $env"
+    project.ext.appConfigProps = new Properties()
 
-      project.ext.appConfigProps = new Properties()
+    if (file("$rootDir/config/app.config").exists()) {
+      def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
+      appConfigProps.putAll(cs.toProperties())
+    }
 
-      if (file("$rootDir/config/app.config").exists()) {
-        def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
-        appConfigProps.putAll(cs.toProperties())
-      }
+    if (project.hasProperty("appConfig")) {
+      def cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
+      appConfigProps.putAll(cs.toProperties())
+      logger.info(">> script's appConfig added")
+    }
 
-      if (project.hasProperty("appConfig")) {
-        def cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
-        appConfigProps.putAll(cs.toProperties())
-        logger.info(">> script's appConfig added")
-      }
-
-      logger.info ">> loading build.config for env: $project.env"
-      loadConfFile(project.env, "$rootDir/buildScript/build.config")
-      loadConfFile(project.env, "$gradle.gradleUserHomeDir/build.config")
+    logger.info ">> loading build.config for env: $project.env"
+    loadConfFile(project.env, "$rootDir/buildScript/build.config")
+    loadConfFile(project.env, "$gradle.gradleUserHomeDir/build.config")
 //  project.ext.properties.each{ k, v -> println "${k}:${v}" }
 
-      appConfigProps.putAll(project.ext.properties)
-      appConfigProps.putAll(System.properties)
-//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+    appConfigProps.putAll(project.ext.properties)
+    appConfigProps.putAll(System.properties)
+//  appConfigProps.each{ k, v -> println "${k} => ${v}" }
 
-    }
   }
 }
 

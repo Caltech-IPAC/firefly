@@ -17,6 +17,7 @@ import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
+import net.sf.ehcache.event.NotificationScope;
 
 /**
  * @author Trey Roby
@@ -43,7 +44,7 @@ public class CacheEventsContainer implements ServerEventManager.EventsContainer 
         if (cache!=null) {
             if (cache instanceof EhcacheImpl) {
                 Ehcache ehC= ((EhcacheImpl)cache).getEHcache();
-                ehC.getCacheEventNotificationService().registerListener(new LoggingEventListener());
+                ehC.getCacheEventNotificationService().registerListener(new LoggingEventListener(), NotificationScope.ALL);
             }
         }
 

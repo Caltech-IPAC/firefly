@@ -468,11 +468,11 @@ public class BackgroundStatus implements Serializable {
      */
     public String serialize() {
 
-        StringBuffer str=  new StringBuffer(params.size()*20 + 30);
+        StringBuffer str=  new StringBuffer();
         str.append(TYPE).append(KW_VAL_SEP).append(getParam(TYPE));
 
         if (params != null && params.size() > 0) {
-            Collection<Param> vals = params.values();
+            Collection<Param> vals = new ArrayList<Param>(params.values()); // fix concurrent access issue.
             for(Param p : vals) {
                 if (!(p.getName().equals(TYPE))) {
                     str.append(PARAM_SEP).append(p.serialize(KW_VAL_SEP));

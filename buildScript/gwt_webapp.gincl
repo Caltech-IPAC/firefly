@@ -1,8 +1,7 @@
-apply plugin: 'war'
-apply from: "$fireflyPath/buildScript/gwt.gincl"
-
 def WEBAPP_GROUP = "Webapp"
 
+apply plugin: 'war'
+apply from: "$fireflyPath/buildScript/gwt.gincl"
 
 jar {
   baseName = "${project['app-name']}"
@@ -86,7 +85,6 @@ task prepareWebapp (type:Copy) {
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
 }
-loadConfig.mustRunAfter gwt
 
 
 task webapp {
@@ -137,8 +135,6 @@ war {
   classpath = configurations.webappLib
   from gwt.warDir
 }
-prepareWebapp.mustRunAfter buildClient
-buildClient.mustRunAfter gwtCompile
 
 task dirty (type: War) {
   dependsOn webapp, jar, prepareWebapp
@@ -194,7 +190,10 @@ task deploy {
   }
 }
 
-task buildAndPublish << {
+task buildAndDeploy( dependsOn:[war, deploy] )
+
+
+task buildAndPublish( dependsOn: war ) << {
   description= 'Build the war file and then publish it to a remote host. Property ${publish_host} is required'
   group = WEBAPP_GROUP
 
@@ -223,7 +222,13 @@ task buildAndPublish << {
     commandLine "ssh", "$rhost", "cd $reposRoot; rm current; ln -s $dirName current"
   }
 }
-buildAndPublish.dependsOn war
 
 
+// ------------------------
+// define task order
+//-------------------------
+loadConfig.mustRunAfter gwt
+prepareWebapp.mustRunAfter buildClient
+buildClient.mustRunAfter gwtCompile
+deploy.mustRunAfter war
 

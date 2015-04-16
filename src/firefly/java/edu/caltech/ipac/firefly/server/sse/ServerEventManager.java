@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class ServerEventManager {
 
-    private static final boolean USE_CACHE_EV_CONTAINER= false;
+    private static final boolean USE_CACHE_EV_CONTAINER= true;
     private static final EventsContainer eventsContainer= USE_CACHE_EV_CONTAINER ? new CacheEventsContainer():
                                                                                    new SimpleEventsContainer();
     private static final StringKey EV_TARGETS_KEY= new StringKey("ADDITIONAL_EVENT_TARGETS");
@@ -90,7 +90,9 @@ public class ServerEventManager {
 
     static void queueEventForFiringToClient(ServerSentEvent ev) {
         List<ServerSentEventQueue> list;
+System.out.print(">>>> incoming event for que: " + evQueueList.hashCode());
         synchronized (evQueueList) {
+System.out.println("  : " + ev.getSerializedClientString());
             list= new ArrayList<ServerSentEventQueue>(evQueueList);
         }
         boolean found= false;

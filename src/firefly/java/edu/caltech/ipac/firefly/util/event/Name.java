@@ -5,6 +5,8 @@ package edu.caltech.ipac.firefly.util.event;
 
 import edu.caltech.ipac.util.ComparisonUtil;
 
+import java.io.Serializable;
+
 /**
  * User: roby
  * Date: Dec 20, 2007
@@ -15,7 +17,7 @@ import edu.caltech.ipac.util.ComparisonUtil;
 /**
  * @author Trey Roby
  */
-public class Name {
+public class Name implements Serializable {
 
     public static final Name WINDOW_RESIZE = new Name("WindowResize", "This event is triggered when the browser resizes.");
     public static final Name APP_ONLOAD = new Name("AppOnLoad", "This event is triggered after the application is loaded.");
@@ -292,6 +294,10 @@ public class Name {
     public Name(String name, String desc) {
         _name= name;
         _desc= desc;
+    }
+
+    public Name() {
+        this("unknown", "bad name.");
     }
 
     public String toString() { return "EventName: "+ _name + " - " + _desc;}
