@@ -7,18 +7,20 @@ import {fireflyInit} from "ipac-firefly/util/BrowserUtil.js";
 fireflyInit();
 
 require("babel/polyfill");
-var React= require('react/addons');
+import React from 'react/addons';
 
-var InputFormModel= require ("ipac-firefly/ui/model/InputFormModel.js");
+import InputFormModel from "ipac-firefly/ui/model/InputFormModel.js";
 import TargetPanel from "ipac-firefly/ui/TargetPanel.jsx";
-var InputGroup= require ("ipac-firefly/ui/InputGroup.jsx");
-var Validate= require("ipac-firefly/util/Validate.js");
+import InputGroup from "ipac-firefly/ui/InputGroup.jsx";
+import Validate from "ipac-firefly/util/Validate.js";
 import ValidationField from "ipac-firefly/ui/ValidationField.jsx";
 import CheckboxGroupInputField from 'ipac-firefly/ui/CheckboxGroupInputField.jsx';
 import RadioGroupInputField from 'ipac-firefly/ui/RadioGroupInputField.jsx';
 import ListBoxInputField from 'ipac-firefly/ui/ListBoxInputField.jsx';
 import {ServerRequest, ID_NOT_DEFINED} from "ipac-firefly/data/ServerRequest.js";
 import WebPlotRequest from "ipac-firefly/visualize/WebPlotRequest.js";
+
+import Histogram from "ipac-firefly/visualize/Histogram.jsx";
 
 var myDispatcher= require("./Dispatcher.js");
 //var FormButton= require ("./FormButton.jsx");
@@ -155,6 +157,32 @@ var All = React.createClass({
                         label="Submit"/>
 
                 </InputGroup>
+                <div>
+                    <Histogram data={[
+                                            [-2.3138013781265, 1],
+                                            [-2.0943590644815, 4],
+                                            [-1.8749167508365, 11],
+                                            [-1.6554744371915, 12],
+                                            [-1.4360321235466, 18],
+                                            [-1.2165898099016, 18],
+                                            [-0.99714749625658, 24],
+                                            [-0.77770518261159, 21],
+                                            [-0.55826286896661, 36],
+                                            [-0.33882055532162, 40],
+                                            [-0.11937824167663, 51],
+                                            [0.10006407196835, 40],
+                                            [0.31950638561334, 42],
+                                            [0.53894869925832, 36],
+                                            [0.75839101290331, 40],
+                                            [0.9778333265483, 36],
+                                            [1.1972756401933, 23],
+                                            [1.4167179538383, 18],
+                                            [1.6361602674833, 9],
+                                            [1.8556025811282, 12],
+                                            [2.0750448947732, 3],
+                                            [2.2944872084182, 4]
+                                        ]}/>
+                </div>
             </div>
 
         );
