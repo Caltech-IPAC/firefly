@@ -6,6 +6,10 @@ dependencies {
 
 apply from: "$fireflyPath/buildScript/gwt_webapp.gincl"
 
+dependencies {
+  webappLib mysql_lib
+}
+
 gwt {
   modules = 'edu.caltech.ipac.fftools.FFTools'
   startupUrl = "app.html"
