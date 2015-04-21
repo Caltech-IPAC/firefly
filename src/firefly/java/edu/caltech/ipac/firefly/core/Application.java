@@ -66,7 +66,7 @@ public class Application {
     public static final String PRIOR_STATE = "app_prior_state";
     private static final int DEF_Z_INDEX= 0;
 
-    public enum EventMode { SSE, POLL}
+    public enum EventMode { SSE, POLL, WebSocket}
 
     private static NetworkMode networkMode= NetworkMode.RPC;
     private static EventMode eventMode= EventMode.POLL;
@@ -112,8 +112,10 @@ public class Application {
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
-
-        if (eventMode==EventMode.SSE && creator.isApplication() && !BrowserUtil.isIE()) {
+        if (eventMode==EventMode.WebSocket && creator.isApplication()) {
+            ClientEventQueue.start();
+            backgroundMonitor = new BackgroundMonitorEvent();
+        } else if (eventMode==EventMode.SSE && creator.isApplication() && !BrowserUtil.isIE()) {
             SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }

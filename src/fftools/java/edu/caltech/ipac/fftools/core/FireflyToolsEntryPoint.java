@@ -37,7 +37,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
     public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defCommandName) {
         FFToolEnv.loadJS();
-        Application.setEventMode(Application.EventMode.SSE);  // -- uncomment for testing only, not ready  for production
+        Application.setEventMode(Application.EventMode.WebSocket);  // -- uncomment for testing only, not ready  for production
         boolean alone= isStandAloneApp();
         Application.setCreator(alone ?
                                new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile,defCommandName) :

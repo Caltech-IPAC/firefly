@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.core.JossoUtil;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import javax.servlet.Filter;
@@ -34,8 +35,8 @@ public class JossoCheckFilter implements Filter {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpServletResponse resp = (HttpServletResponse) response;
 
-            Cookie c = WebAuthModule.getAuthCookie(req);
-            if (c != null) {
+            String authToken = ServerContext.getRequestOwner().getAuthToken();
+            if (authToken != null) {
                 // already authenticated.. allow to pass
                 filterChain.doFilter(req, resp);
             } else {

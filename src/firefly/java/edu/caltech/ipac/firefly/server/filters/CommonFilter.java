@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 
 import javax.servlet.Filter;
@@ -50,13 +49,13 @@ public class CommonFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+        ServerContext.clearRequestOwner();
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpReq = (HttpServletRequest) request;
             setupRequestOwner(httpReq, (HttpServletResponse)response);
         }
         filterChain.doFilter( request, response );
         // clean up ThreadLocal instances.
-        ServerContext.clearRequestOwner();
         StopWatch.clear();
     }
 
@@ -64,12 +63,11 @@ public class CommonFilter implements Filter {
         ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
     }
 
-    private void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
+    public static void setupRequestOwner(HttpServletRequest request, HttpServletResponse response) {
 
         String sessId = request.getSession().getId();
         RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
-        owner.setHttpRequest(request);
-        owner.setHttpResponse(response);
+        owner.setRequestAgent(ServerContext.getHttpRequestAgent(request, response));
         owner.getUserKey();
 
     }
