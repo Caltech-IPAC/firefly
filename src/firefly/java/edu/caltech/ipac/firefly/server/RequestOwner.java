@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
-import edu.caltech.ipac.firefly.server.security.WebAuthModule;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
@@ -14,10 +13,7 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,11 +33,11 @@ import java.util.UUID;
 public class RequestOwner implements Cloneable {
 
     public static String USER_KEY = "usrkey";
-    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
+//    private static final String[] ID_COOKIE_NAMES = new String[]{WebAuthModule.AUTH_KEY, "ISIS"};
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    private HttpServletRequest request;
-    private HttpServletResponse response;
+
+    private RequestAgent requestAgent;
     private Date startTime;
     private File workingDir;
     private String host;
@@ -53,7 +49,6 @@ public class RequestOwner implements Cloneable {
     // ------ these are lazy-load variables.. make sure you access it via getter. --------
     private String userKey;
     private String authKey;
-    private Map<String, Cookie> cookies;
 
     private WorkspaceManager wsManager;
 
@@ -66,21 +61,17 @@ public class RequestOwner implements Cloneable {
         this.startTime = startTime;
     }
 
-    public void setHttpRequest(HttpServletRequest request) {
-        this.request = request;
-
-        host = request.getHeader("host");
-        protocol = request.getProtocol();
-        referrer = request.getHeader("Referer");
-        baseUrl = request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/";
-        remoteIP = request.getHeader("X-Forwarded-For");
-        if (StringUtils.isEmpty(remoteIP)) {
-            remoteIP = request.getRemoteAddr();
-        }
+    public RequestAgent getRequestAgent() {
+        return requestAgent;
     }
 
-    public void setHttpResponse(HttpServletResponse response) {
-        this.response = response;
+    public void setRequestAgent(RequestAgent requestAgent) {
+        this.requestAgent = requestAgent;
+        host = requestAgent.getHeader("host");
+        protocol = requestAgent.getProtocol();
+        referrer = requestAgent.getHeader("Referer");
+        baseUrl = requestAgent.getBaseUrl();
+        remoteIP = requestAgent.getRemoteIP();
     }
 
     public WorkspaceManager getWsManager() {
@@ -95,13 +86,9 @@ public class RequestOwner implements Cloneable {
         return wsManager;
     }
 
-    public HttpServletRequest getRequest() {
-        return request;
-    }
-
     public String getUserKey() {
         if (userKey == null) {
-            String userKeyAndName = WebAuthModule.getValFromCookie(USER_KEY, request);
+            String userKeyAndName = requestAgent.getCookie(USER_KEY);
             userKey = userKeyAndName == null ? null :
                     userKeyAndName.split("/", 2)[0];
 
@@ -114,11 +101,8 @@ public class RequestOwner implements Cloneable {
         return userKey;
     }
 
-    public String getAuthKey() {
-        if (authKey == null) {
-            authKey = WebAuthModule.getToken(request);
-        }
-        return authKey;
+    public String getAuthToken() {
+        return requestAgent.getAuthToken();
     }
 
     public String getRemoteIP() {
@@ -129,22 +113,8 @@ public class RequestOwner implements Cloneable {
         return startTime;
     }
 
-    public Map<String, Cookie> getCookieMap() {
-        if (cookies == null) {
-            if (request != null) {
-                cookies = new HashMap<String, Cookie>();
-                if (request.getCookies() != null) {
-                    for (Cookie c : request.getCookies()) {
-                        cookies.put(c.getName(), c);
-                    }
-                }
-            }
-        }
-        return cookies;
-    }
-
-    public Cookie[] getCookies() {
-        return getCookieMap().values().toArray(new Cookie[0]);
+    public Map<String, String> getCookieMap() {
+        return requestAgent.getCookies();
     }
 
     public File getWorkingDir() {
@@ -164,26 +134,15 @@ public class RequestOwner implements Cloneable {
     }
 
     public void sendRedirect(String url) {
-        try {
-            response.sendRedirect(url);
-        } catch (IOException e) {
-            LOG.error(e, "Unable to redirect to:" + url);
-        }
+        requestAgent.sendRedirect(url);
     }
 
     public Map<String, String> getIdentityCookies() {
-        HashMap<String, String> idCookies = new HashMap<String, String>();
-        for (String s : ID_COOKIE_NAMES) {
-            Cookie c = getCookieMap().get(s);
-            if (c != null && !StringUtils.isEmpty(c.getValue())) {
-                idCookies.put(s, c.getValue());
-            }
-        }
-        return idCookies.size() == 0 ? null : idCookies;
+        return requestAgent.getIdentities();
     }
 
     public boolean isAuthUser() {
-        return !StringUtils.isEmpty(getAuthKey());
+        return !StringUtils.isEmpty(getAuthToken());
     }
 
     // should only use this as a way to bypass the web-based access.
@@ -194,9 +153,9 @@ public class RequestOwner implements Cloneable {
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
-                userInfo = WebAuthModule.getUserInfo(getAuthKey());
+                userInfo = requestAgent.getUserInfo(getAuthToken());
                 if (userInfo == null) {
-                    WebAuthModule.removeAuthKey(request, response);
+                    requestAgent.clearAuthInfo();
                 } else {
                     updateUserKey(userInfo.getLoginName());
                 }
@@ -217,19 +176,17 @@ public class RequestOwner implements Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         RequestOwner ro = new RequestOwner(getUserKey(), startTime);
-        ro.request = request;
-        ro.response = response;
+        ro.requestAgent = requestAgent;
         ro.workingDir = workingDir;
         ro.attributes = (HashMap<String, Object>) attributes.clone();
         ro.remoteIP = getRemoteIP();
-        ro.authKey = getAuthKey();
+        ro.authKey = getAuthToken();
         ro.userInfo = userInfo;
         ro.referrer = referrer;
         ro.host = host;
         ro.baseUrl = baseUrl;
         ro.protocol = protocol;
         ro.wsManager = wsManager;
-        ro.cookies = getCookieMap();
         return ro;
     }
 
@@ -278,15 +235,13 @@ public class RequestOwner implements Cloneable {
     }
 
     private void updateUserKey(String userName) {
-        if (request == null || response == null) return;
-
         String nVal = userKey + "/" + userName;
-        String cVal = WebAuthModule.getValFromCookie(USER_KEY, request);
+        String cVal = requestAgent.getCookie(USER_KEY);
         if (!nVal.equals(String.valueOf(cVal))) {
             Cookie cookie = new Cookie(USER_KEY, userKey + "/" + userName);
             cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
             cookie.setPath("/"); // to make it available to all subpasses within base URL
-            response.addCookie(cookie);
+            requestAgent.sendCookie(cookie);
         }
     }
 }

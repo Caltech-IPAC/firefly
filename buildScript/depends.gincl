@@ -27,7 +27,8 @@ ext {
                  ':mail']
 
   j2ee_lib = [j2ee_rt_lib,
-              ':servlet-api']
+              ':servlet-api',
+              ':websocket-api']
 
   starlink_lib = [':regclient', ':stil']
   xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']

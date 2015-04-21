@@ -90,7 +90,7 @@ public class ServerEventManager {
 
     static void queueEventForFiringToClient(ServerSentEvent ev) {
         List<ServerSentEventQueue> list;
-System.out.print(">>>> incoming event for que: " + evQueueList.hashCode());
+System.out.print(">>>> incoming event for queue: " + evQueueList.hashCode());
         synchronized (evQueueList) {
 System.out.println("  : " + ev.getSerializedClientString());
             list= new ArrayList<ServerSentEventQueue>(evQueueList);
@@ -126,9 +126,11 @@ System.out.println("  : " + ev.getSerializedClientString());
             thread.start();
         }
 
+
         public void run() {
             while (thread!=null) {
                 synchronized (this) {
+System.out.println("$$$$$$  sender thread awakes....");
                     List<ServerSentEventQueue> list= new ArrayList<ServerSentEventQueue>(evQueueList);
                     for(ServerSentEventQueue queue : list) {
                         try {
@@ -138,11 +140,11 @@ System.out.println("  : " + ev.getSerializedClientString());
                                 Logger.briefInfo("Sending: " + message);
                                 queue.sendEventToDestination(message);
                             }
-                            if (queue.getLastSentTime()+ONE_MINUTE < System.currentTimeMillis()) {
-                                String message= Name.HEART_BEAT.getName();
-                                Logger.briefInfo("Sending: heartbeat");
-                                queue.sendEventToDestination(message);
-                            }
+//                            if (queue.getLastSentTime()+ONE_MINUTE < System.currentTimeMillis()) {
+//                                String message= Name.HEART_BEAT.getName();
+//                                Logger.briefInfo("Sending: heartbeat");
+//                                queue.sendEventToDestination(message);
+//                            }
                         } catch (IOException e) {
                             removeEventQueue(queue);
                             Logger.getLogger().error(e,"comet send fail, removing queue: "+e.toString());

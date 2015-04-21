@@ -187,7 +187,7 @@ public class VisContext {
                     retval= new File(ServerContext.getIrsaRoot(), relFile);
                 }
                 else if (prefix.equals(WEBAPP_ROOT)) {
-                    String rp= ServerContext.getRequestOwner().getRequest().getRealPath(relFile);
+                    String rp= ServerContext.getRequestOwner().getRequestAgent().getRealPath(relFile);
                     retval= new File(rp);
                 }
                 else if (prefix.equals(SEARCH_PATH_PREFIX)) {
