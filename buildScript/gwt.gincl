@@ -120,7 +120,9 @@ task gwtRun (type: JavaExec) {
     args "-extra", "$gwt.buildDir/extra"
     args "-workDir", "$gwt.buildDir/work"
     args "-gen", "$gwt.buildDir/gen"
-    args "-noserver", "-port", "8080"
+    args "-noserver"
+    args "-port", "8080"
+    args "-nosuperDevMode"
     args "-startupUrl", "$context/$gwt.startupUrl"
     args gwt.modules
   }
