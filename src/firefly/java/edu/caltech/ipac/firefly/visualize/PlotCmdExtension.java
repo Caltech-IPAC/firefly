@@ -7,6 +7,7 @@ package edu.caltech.ipac.firefly.visualize;
 /**
  * @author Trey Roby
  */
+@Deprecated
 public class PlotCmdExtension {
 
     public enum ExtType { AREA_SELECT, LINE_SELECT, POINT, NONE }

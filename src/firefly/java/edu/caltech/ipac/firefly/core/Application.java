@@ -113,7 +113,7 @@ public class Application {
             throw new ResourceNotFoundException("Provider is not set.");
         }
 
-        if (eventMode==EventMode.SSE && creator.isApplication() && !BrowserUtil.isIE()) {
+        if (eventMode==EventMode.SSE && !BrowserUtil.isIE()) {
             SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }

@@ -113,6 +113,11 @@ task buildClient (dependsOn: loadConfig) {
       executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
       args "-d"
     }
+    exec {
+      executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
+      args "-d"
+      args "--config", "webpack-ffapp.config.js"
+    }
     copy {
       from("html/tmp-stuff/")
       into gwt.warDir

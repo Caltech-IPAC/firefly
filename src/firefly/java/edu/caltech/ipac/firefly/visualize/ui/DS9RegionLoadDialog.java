@@ -141,9 +141,6 @@ public class DS9RegionLoadDialog extends BaseDialog {
         }
         if (regList.size()>0) {
             RegionConnection rc= new RegionConnection(title, regList);
-            if (monItem!=null && rc.getActionReporter()!=null) {
-                rc.getActionReporter().setMonitorItem(monItem);
-            }
             String id= "RegionOverlay" + (cnt++);
             RegionPrintable printable= new RegionPrintable(regList);
             drawMan= new DrawingManager(id, rc, printable);

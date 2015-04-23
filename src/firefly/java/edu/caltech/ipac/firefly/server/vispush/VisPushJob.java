@@ -74,6 +74,7 @@ public class VisPushJob {
 
     public static boolean pushExtension(String bid,
                                         String id,
+                                        String plotId,
                                         String extType,
                                         String title,
                                         String image,
@@ -84,6 +85,7 @@ public class VisPushJob {
         ServerRequest r= new ServerRequest(id);
         r.setParam(ServerParams.EXT_TYPE, extType);
         r.setParam(ServerParams.TITLE, title);
+        r.setParam(ServerParams.PLOT_ID, plotId);
         if (image!= null) r.setParam(ServerParams.IMAGE, image);
         if (toolTip!= null) r.setParam(ServerParams.IMAGE, toolTip);
 

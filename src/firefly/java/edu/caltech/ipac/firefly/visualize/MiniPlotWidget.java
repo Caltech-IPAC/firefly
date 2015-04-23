@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -42,7 +43,6 @@ import edu.caltech.ipac.firefly.util.BrowserUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.PointSelection;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
@@ -90,7 +90,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private final FlowPanel areaSelectAdditionActionBar = new FlowPanel();
     private final FlowPanel lineSelectAdditionActionBar = new FlowPanel();
     private final FlowPanel pointSelectAdditionActionBar = new FlowPanel();
-    private HTML _sendToServerNotice= null;
     private String plotId= null;
 
 
@@ -147,6 +146,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private String _expandedTitle = null;
     private TabPane.Tab _titleTab= null;
     private String _adText =  "<a target=\"_blank\" class=\"link-color\" style=\"font-size:7pt; \" href=\"http://irsa.ipac.caltech.edu\">Powered by IRSA @ IPAC</a>";
+    private Ext.ExtensionInterface extInterface;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -158,7 +158,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         this(groupName, choosePopoutType(false));
     }
     public MiniPlotWidget(String groupName, PopoutContainer popContainer) {
-        super(popContainer,MIN_WIDTH,MIN_HEIGHT);
+        super(popContainer, MIN_WIDTH, MIN_HEIGHT);
         setPopoutWidget(_topPanel);
         updateUISelectedLook();
         _topPanel.addStyleName("mpw-popout-panel");
@@ -166,6 +166,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         _group.addMiniPlotWidget(this);
         _useLayerOnPlotToolbar  = FFToolEnv.isAPIMode(); // show the Layer button on the plot toolbar
 
+//        js("window.firefly.appFlux.getStore('ExternalAccessStore').addListener('change', $0", new CallbackImpl());
+//        listenForFluxChange(new CallbackImpl(), this);
+        extInterface= Ext.makeExtensionInterfaceWithListener(this, getStoreCBForJs());
     }
 
 
@@ -202,9 +205,9 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
     public void notifyWidgetShowing() {
-        Vis.init(this, new Vis.InitComplete()  {
+        Vis.init(this, new Vis.InitComplete() {
             public void done() {
-                if (_plotView!=null) {
+                if (_plotView != null) {
                     _plotView.notifyWidgetShowing();
                     refreshWidget();
                 }
@@ -255,6 +258,8 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
 
     public PlotWidgetGroup getGroup() { return _group;}
+
+    public String getPlotId() { return plotId; }
 
     public void setRemoveOldPlot(boolean remove) { _removeOldPlot= remove; }
 
@@ -333,7 +338,10 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     }
     public boolean isActive() { return _active; }
 
-    public void dispose() { _plotView.clearAllPlots(); }
+    public void dispose() {
+        _plotView.clearAllPlots();
+        if (extInterface!=null) extInterface.clearListener();
+    }
 
     public void setBoxSelection(boolean boxSelection ) {
         _boxSelection= boxSelection;
@@ -457,7 +465,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void showSelectionBar(SelType selType) { _topPanel.showSelMBar(selType); }
     public void hideSelectionBar() { _topPanel.hideSelMBar(); }
     public void setFlipBarVisible(boolean visible) { _topPanel.setFlipMBarVisible(visible); }
-    public void setSendToNoticeVisible(boolean visible) { _topPanel.setSendToNoticeVisible(visible); }
+//    public void setSendToNoticeVisible(boolean visible) { _topPanel.setSendToNoticeVisible(visible); }
 
     public void setShowInlineTitle(boolean show) {
        setShowInlineTitle(show,false);
@@ -1064,21 +1072,18 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         GwtUtil.setStyles(selectionMbar, "background", "none",
                                          "border", "none");
         GwtUtil.setStyles(flipMbar, "background", "none",
-                                    "border", "none");
+                          "border", "none");
 
 
 
-        _sendToServerNotice= new HTML("<div class=\"sendToServerNotice\">Response sent to server</div>");
 
 
         _topPanel.addNorth(_selectionMbarDisplay, TOOLBAR_SIZE);
         _topPanel.addNorth(_flipMbarDisplay, TOOLBAR_SIZE);
-        _topPanel.addNorth(_sendToServerNotice, TOOLBAR_SIZE);
         _topPanel.add(_plotPanel);
 
         hideSelectionBar();
         setFlipBarVisible(false);
-        setSendToNoticeVisible(false);
 
 //        HTML oLabel= new HTML("<i>Options: </i>");
 //        _selectionMbarDisplay.setWidget(0,0,oLabel);
@@ -1105,41 +1110,85 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         new PlotMover(_plotView);
     }
 
+//    public void recomputeUserExtensionOptionsORIGINAL()  {
+//        areaSelectAdditionActionBar.clear();
+//        lineSelectAdditionActionBar.clear();
+//        pointSelectAdditionActionBar.clear();
+//        List<PlotCmdExtension> addedList= new ArrayList<PlotCmdExtension>(5);
+//        List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(plotId);
+//        if (list!=null) {
+//            for(PlotCmdExtension ext : list) {
+//                boolean found= false;
+//                for(PlotCmdExtension testE : addedList) {
+//                    if (testE.getId().equals(ext.getId())) {
+//                        found= true;
+//                        break;
+//                    }
+//                }
+//                if (!found) {
+//                    ActionReporter reporter= AllPlots.getInstance().getActionReporter();
+//                    BadgeButton button= new BadgeButton(ext.getTitle());
+//                    GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
+//                    if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
+//                        final GeneralCommand cmd= new ExtensionCommands.ExtensionAreaSelectCmd(this,ext, reporter);
+//                        areaSelectAdditionActionBar.add(button.getWidget());
+//                        button.addClickHandler( new ClickHandler() {
+//                            public void onClick(ClickEvent event) { cmd.execute(); } });
+//                    }
+//                    else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
+//                        final GeneralCommand cmd= new ExtensionCommands.ExtensionLineSelectCmd(this, ext, reporter);
+//                        lineSelectAdditionActionBar.add(button.getWidget());
+//                        button.addClickHandler( new ClickHandler() {
+//                            public void onClick(ClickEvent event) { cmd.execute(); } });
+//                    }
+//                    else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
+//                        AllPlots.getInstance().enableActivePointSelection(true);
+//                        final GeneralCommand cmd= new ExtensionCommands.ExtensionPointSelectCmd(this, ext, reporter);
+//                        pointSelectAdditionActionBar.add(button.getWidget());
+//                        button.addClickHandler( new ClickHandler() {
+//                            public void onClick(ClickEvent event) { cmd.execute(); } });
+//                    }
+//
+//                }
+//                addedList.add(ext);
+//            }
+//        }
+//    }
 
     public void recomputeUserExtensionOptions()  {
         areaSelectAdditionActionBar.clear();
         lineSelectAdditionActionBar.clear();
         pointSelectAdditionActionBar.clear();
-        List<PlotCmdExtension> addedList= new ArrayList<PlotCmdExtension>(5);
-        List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(plotId);
+        List<Ext.Extension> addedList= new ArrayList<Ext.Extension>(5);
+        List<Ext.Extension> list= AllPlots.getInstance().getExtensionList(plotId);
         if (list!=null) {
-            for(PlotCmdExtension ext : list) {
+            for(Ext.Extension ext : list) {
                 boolean found= false;
-                for(PlotCmdExtension testE : addedList) {
-                    if (testE.getId().equals(ext.getId())) {
+                for(Ext.Extension testE : addedList) {
+                    if (testE.id().equals(ext.id())) {
                         found= true;
                         break;
                     }
                 }
                 if (!found) {
-                    ActionReporter reporter= AllPlots.getInstance().getActionReporter();
-                    BadgeButton button= new BadgeButton(ext.getTitle());
+//                    ActionReporter reporter= AllPlots.getInstance().getActionReporter();
+                    BadgeButton button= new BadgeButton(ext.title());
                     GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
-                    if (ext.getExtType()== PlotCmdExtension.ExtType.AREA_SELECT) {
-                        final GeneralCommand cmd= new ExtensionCommands.ExtensionAreaSelectCmd(this,ext, reporter);
+                    if (ext.extType().equals(Ext.AREA_SELECT)) {
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionAreaSelectCmd(this,ext);
                         areaSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
                     }
-                    else if (ext.getExtType()== PlotCmdExtension.ExtType.LINE_SELECT) {
-                        final GeneralCommand cmd= new ExtensionCommands.ExtensionLineSelectCmd(this, ext, reporter);
+                    else if (ext.extType().equals(Ext.LINE_SELECT)) {
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionLineSelectCmd(this, ext);
                         lineSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
                     }
-                    else if (ext.getExtType()== PlotCmdExtension.ExtType.POINT) {
+                    else if (ext.extType().equals(Ext.POINT)) {
                         AllPlots.getInstance().enableActivePointSelection(true);
-                        final GeneralCommand cmd= new ExtensionCommands.ExtensionPointSelectCmd(this, ext, reporter);
+                        final GeneralCommand cmd= new ExtensionCommands.ExtensionPointSelectCmd(this, ext);
                         pointSelectAdditionActionBar.add(button.getWidget());
                         button.addClickHandler( new ClickHandler() {
                             public void onClick(ClickEvent event) { cmd.execute(); } });
@@ -1436,15 +1485,34 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
 
-        void setSendToNoticeVisible(boolean visible) {
-            LayoutData data = (LayoutData) _sendToServerNotice.getLayoutData();
-            if (data!=null) {
-                if (visible)  data.size= TOOLBAR_SIZE;
-                else          data.size= 0;
-                forceLayout();
-            }
-        }
     }
+
+
+    //
+//    @JsExport
+//    @JsNamespace("$wnd.ffinterface")
+//    public static class CallbackImpl implements Callback {
+//        @Override
+//        public void update() {
+//            GwtUtil.getClientLogger().log(Level.INFO, "I am here");
+//        }
+//    }
+
+
+
+    public static native JavaScriptObject getStoreCBForJs() /*-{
+            return $entry(@edu.caltech.ipac.firefly.visualize.MiniPlotWidget::storeCB(*));
+    }-*/;
+
+
+    public static void storeCB(Object o) {
+        ((MiniPlotWidget)o).recomputeUserExtensionOptions();
+    }
+
+//    private static native Ext.ExtensionInterface initExtensionInterface(Object mpw) /*-{
+//        var cb= $entry(@edu.caltech.ipac.firefly.visualize.MiniPlotWidget::storeCB(*));
+//        return new $wnd.firefly.gwt.ExtensionJavaInterface(mpw,cb);
+//    }-*/;
 
 
 }

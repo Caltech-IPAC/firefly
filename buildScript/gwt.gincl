@@ -63,6 +63,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
     args "-extra", "$gwt.buildDir/extra"
     args "-workDir", "$gwt.buildDir/work"
     args "-logLevel", "INFO"
+    args "-XjsInteropMode", "JS"
     if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
       args "-draftCompile"
     }
@@ -122,6 +123,7 @@ task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
     args "-port", "8080"
     args "-nosuperDevMode"
     args "-startupUrl", "$context/$gwt.startupUrl"
+    args "-XjsInteropMode", "JS"
     args gwt.modules
   }
 }
@@ -151,6 +153,7 @@ task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
     maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
 
     args "-workDir", "$gwt.buildDir/superdev"
+    args "-XjsInteropMode", "JS"
     args gwt.modules
 
   }

@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
 import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
@@ -180,5 +181,9 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         }
     }
 
-    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
+
+    @Override
+    public ServerTask[] getCreatorInitTask() {
+        return new ServerTask[] {new CoreTask.LoadProperties(), new CoreTask.LoadJS()};
+    }
 }

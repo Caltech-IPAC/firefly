@@ -40,7 +40,7 @@ class Pt {
         if (!inStr) return null;
         var parts= inStr.split(";");
         if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
-            return new Pt(validator.isFloat(parts[0]), validator.isFloat(parts[1]));
+            return new Pt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
         }
         return null;
     }
@@ -166,6 +166,9 @@ var makeWorldPt = function (params) {
             return retval;
         }
 
+        static parse(inStr) {
+            return parseWorldPt(inStr);
+        }
     }
 
     var parseWorldPt = function (serializedWP) {

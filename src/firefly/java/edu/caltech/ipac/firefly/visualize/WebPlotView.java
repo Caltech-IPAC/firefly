@@ -256,7 +256,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             item.setPlotView(this);
             _userDrawLayerMap.put(item.getID(),item);
             WebEvent ev= new WebEvent<WebLayerItem>(this, Name.LAYER_ITEM_ADDED, item);
-            updateSendNotice();
             fireEvent(ev);
         }
     }
@@ -266,21 +265,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (_userDrawLayerMap.containsKey(item.getID())) {
             _userDrawLayerMap.remove(item.getID());
             WebEvent ev= new WebEvent<WebLayerItem>(this, Name.LAYER_ITEM_REMOVED, item);
-            updateSendNotice();
             fireEvent(ev);
         }
     }
 
-    public void updateSendNotice() {
-        boolean sendOn= false;
-        for(WebLayerItem item : _userDrawLayerMap.values()) {
-            if (item.isActive() && item.isVisible()) {
-                sendOn= item.isSendToServer();
-                if (sendOn) break;
-            }
-        }
-        _mpw.setSendToNoticeVisible(sendOn);
-    }
 
     public void setWebLayerItemActive(WebLayerItem item, boolean active) {
         if (_userDrawLayerMap.containsKey(item.getID())) {
@@ -289,7 +277,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 WebEvent ev= new WebEvent<WebLayerItem>(this, Name.LAYER_ITEM_ACTIVE, item);
                 fireEvent(ev);
             }
-            updateSendNotice();
         }
     }
 

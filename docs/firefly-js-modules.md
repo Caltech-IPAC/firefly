@@ -1,66 +1,73 @@
 
 
-#### Modules in use for the firefly js environment
+### Modules in use for the firefly js environment
 
-React.js, see:  http://facebook.github.io/react/docs/getting-started.html
+**React.js**, see:  http://facebook.github.io/react/docs/getting-started.html
 
 * the core UI library
 
-react-modal, see: https://github.com/rackt/react-modal
-
-* simple modal dialog
-* still under evaluation
-
-underscore.string, see: http://epeli.github.io/underscore.string/
+**underscore.string**, see: http://epeli.github.io/underscore.string/
 
 * complete string manipulation operations
 
-underscore, see: http://underscorejs.org/
+**underscore**, see: http://underscorejs.org/
 
 * whole mess of useful functional programming helpers
 
-validator, see: https://www.npmjs.com/package/validator
+**validator**, see: https://www.npmjs.com/package/validator
 
 * String validation and sanitization
 
-numeraljs, see: http://numeraljs.com/
+**numeraljs**, see: http://numeraljs.com/
 
 * format and manipulate numbers
 
-es6-promise, see: https://github.com/jakearchibald/es6-promise
+**es6-promise**, see: https://github.com/jakearchibald/es6-promise
 
 * promise library
 * Article about: http://www.html5rocks.com/en/tutorials/es6/promises/
 * might replace this with the built in one from Babel
 
-icepick, see: https://www.npmjs.com/package/icepick
+**icepick**, see: https://www.npmjs.com/package/icepick
 
 * make object immutable
 
 
-react-grid-layout, see: https://github.com/STRML/react-grid-layout
+**react-grid-layout**, see: https://github.com/STRML/react-grid-layout
 
 * grid layout system
 
-uniq, see: https://www.npmjs.com/package/uniq
+**uniq**, see: https://www.npmjs.com/package/uniq
 
 * Removes duplicates from a sorted array in place
 
 
-enum, see: https://www.npmjs.com/package/enum
+**enum**, see: https://www.npmjs.com/package/enum
 
 * Enum is a javascript module that introduces the Enum Type
 
+**jsonp**, see: https://www.npmjs.com/package/jsonp
+
+* handle jsonp request
+
+**debug**, see: https://www.npmjs.com/package/debug
+
+* will provide some functionality similar to java logging 
 
 #### Modules being evaluated
 
-ampersand-state, http://ampersandjs.com/docs#ampersand-state
+**ampersand-state**, http://ampersandjs.com/docs#ampersand-state
 
 * model object, has change events
 
+**react-modal**, see: https://github.com/rackt/react-modal
+
+* simple modal dialog
+* still under evaluation
 
 
-#### Licenses for all JS modules
+
+### Licenses for all JS modules
 
 All license files for JavaScript dependencies are in firefly/node_modules. All licenses allow reuse.
 

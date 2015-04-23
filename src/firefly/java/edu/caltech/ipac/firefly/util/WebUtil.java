@@ -54,7 +54,7 @@ public class WebUtil {
         String paramChar= paramType== ParamType.QUESTION_MARK ? "?": "#";
         String[] parts = url.split("\\"+paramChar, 2);
         String baseUrl = parts[0];
-        String queryStr = URL.encode(parts.length == 2 ? parts[1] : "");
+        String queryStr = URL.encode(parts.length==2 ? parts[1] : "");
 
         if (params != null && params.length > 0) {
             for (int i = 0; i < params.length; i++) {

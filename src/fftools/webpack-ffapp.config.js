@@ -23,14 +23,14 @@ var release = (process.env.NODE_ENV === 'production');
 //  jsxLoader = ['react-hot', 'jsx?harmony'];
 //}
 
-var entryPoint= "demoform.jsx";
+var entryPoint= "fireflyJSLib.js";
 var ffRoot= path.resolve(__dirname+ '/../../') + "/";
 var project = {buildDir : ffRoot+"build/"};
-var outScriptName= 'out.js';
+var outScriptName= 'fflib.js';
 
 var namePlugin= new webpack.DefinePlugin({
     __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
-});
+        });
 
 var retval= module.exports = {
 

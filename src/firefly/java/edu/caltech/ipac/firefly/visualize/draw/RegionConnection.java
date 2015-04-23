@@ -6,6 +6,8 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.Ext;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.Region;
@@ -42,7 +44,6 @@ public class RegionConnection implements DataConnection {
     private final WebEventManager _evManager = new WebEventManager();
     private static int titleCnt = 1;
     private String title;
-    private ActionReporter actionReporter= new ActionReporter();
 
 
     public RegionConnection(List<Region> regionList) {
@@ -81,7 +82,6 @@ public class RegionConnection implements DataConnection {
 
     public DrawConnector getDrawConnector() { return null; }
 
-    public ActionReporter getActionReporter() { return actionReporter; }
 
 
     public boolean isPriorityLayer() { return false; }
@@ -108,9 +108,13 @@ public class RegionConnection implements DataConnection {
         if (idx<regionList.size())  {
             Region highlightR= regionList.get(idx);
             highlightR.setHighlighted(true);
-            if (actionReporter.isReporting()) {
-                actionReporter.report(getTitle(null),"\""+highlightR.serialize()+"\"");
-            }
+
+
+            Ext.ExtensionResult r= Ext.makeExtensionResult();
+            r.setExtValue("plotId", AllPlots.getInstance().getMiniPlotWidget().getPlotId());
+            r.setExtValue("title", getTitle(null));
+            r.setExtValue("region",highlightR.serialize());
+            Ext.fireExtAction(null,r);
         }
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }

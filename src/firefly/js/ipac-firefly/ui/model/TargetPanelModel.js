@@ -135,9 +135,7 @@ module.exports= AmpersandState.extend(
                 });
             }.bind(this));
 
-        }).then(function(buf) {
-                    return JSON.parse(buf);
-                });
+        }).then(function(buf) { return JSON.parse(buf); });
 
         var abortPromise= new Promise(function(resolve,reject) {
             this.abortLastRequest= function() {

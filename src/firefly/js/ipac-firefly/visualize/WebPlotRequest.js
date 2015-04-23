@@ -1071,7 +1071,7 @@ class WebPlotRequest extends ServerRequest {
 
 
     /**
-     * @param showBars boolean
+     * @param {boolean} showBars boolean
      */
     setShowScrollBars(showBars) { this.setParam(C.SHOW_SCROLL_BARS, showBars + ""); }
 
@@ -1205,14 +1205,16 @@ class WebPlotRequest extends ServerRequest {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    /*
+    /**
     * This method can only be used for those services that take the standard
     * ra, dec, radius approach (so far, iras, issa, 2mass, dss)
-    * @param ctxStr the context  string
-    * @param serviceType the network service type
-    * @param wp the center point WorldPt
-    * @param sizeInDeg size in degrees
-    * @return the PlotRequest object that was constructed
+    *
+    * @param {ServiceType} serviceType the network service type
+    * @param {WorldPt} wp the center point WorldPt
+     * @param {string} survey
+    * @param {number} sizeInDeg size in degrees
+    *
+    * @return {WebPlotRequest} the PlotRequest object that was constructed
     */
     makePlotServiceReq(serviceType, wp, survey, sizeInDeg) {
         var desc = this.makeServiceReqDesc(serviceType, survey, sizeInDeg);
@@ -1232,7 +1234,7 @@ class WebPlotRequest extends ServerRequest {
      * Parses the string argument into a ServerRequest object.
      * This method is reciprocal to toString().
      *
-     * @param str the serialized WebPlotRequest
+     * @param {string} str the serialized WebPlotRequest
      * @return the deserialized WebPlotRequest
      */
     static parse(str) {
@@ -1256,7 +1258,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * Perform equals but ignore layout params, such as zoom type, width and height
      * @param obj
-     * @return boolean
+     * @return {boolean}
      */
     equalsPlottingParams(obj) {
         var retval= false;

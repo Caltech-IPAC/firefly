@@ -11,10 +11,11 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import edu.caltech.ipac.firefly.core.GeneralCommand;
-import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.firefly.visualize.draw.LineSelection;
 import edu.caltech.ipac.firefly.visualize.draw.PointSelection;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
  * @author Trey Roby
@@ -24,34 +25,33 @@ public class ExtensionCommands {
 
     public static abstract class ExtensionBaseCmd extends GeneralCommand {
 
-        protected final ActionReporter actionReporter;
-        protected final PlotCmdExtension ext;
+        protected final Ext.Extension ext;
         protected final MiniPlotWidget mpw;
 
 
-        public ExtensionBaseCmd(MiniPlotWidget mpw, PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(ext.getTitle());
+        public ExtensionBaseCmd(MiniPlotWidget mpw, Ext.Extension ext) {
+            super(ext.title());
             this.mpw= mpw;
             this.ext= ext;
-            this.actionReporter= actionReporter;
-            this.setShortDesc(ext.getTitle());
-            if (ext.getImageUrl()!=null) this.setIcon(ext.getImageUrl());
+            this.setShortDesc(ext.title());
+            if (ext.imageUrl()!=null) this.setIcon(ext.imageUrl());
         }
 
         protected void doExecute() {
-            if (actionReporter.isReporting()) {
-                String sendVal= getSendValue();
-                if (sendVal!=null) {
-                    actionReporter.report(ext.getId(),sendVal);
-                }
-            }
+            Ext.ExtensionResult result= Ext.makeExtensionResult();
+            result.setExtValue("id", ext.id());
+            result.setExtValue("PlotId", mpw.getPlotId());
+            result.setExtValue("type", ext.extType());
+            addResultValue(result);
+            Ext.fireExtAction(ext,result);
         }
 
         protected abstract String getSendValue();
+        protected abstract void addResultValue(Ext.ExtensionResult result);
 
         protected String makeIDAndType() {
-            return "id : \"" + ext.getId()        + "\"," +
-                   "type : \"" + ext.getExtType() + "\",";
+            return "id : \"" + ext.id()        + "\"," +
+                   "type : \"" + ext.extType() + "\",";
 
         }
 
@@ -60,8 +60,8 @@ public class ExtensionCommands {
 
     public static class ExtensionPointSelectCmd extends ExtensionBaseCmd {
 
-        public ExtensionPointSelectCmd(MiniPlotWidget mpw, PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(mpw,ext,actionReporter);
+        public ExtensionPointSelectCmd(MiniPlotWidget mpw, Ext.Extension ext) {
+            super(mpw,ext);
         }
 
         protected String getSendValue() {
@@ -75,12 +75,29 @@ public class ExtensionCommands {
             }
             return sendVal;
         }
+
+        @Override
+        protected void addResultValue(Ext.ExtensionResult result) {
+            PointSelection sel= (PointSelection)mpw.getPlotView().getAttribute(WebPlot.ACTIVE_POINT);
+            WebPlot p= mpw.getPlotView().getPrimaryPlot();
+
+            ImagePt ipt= p.getImageCoords(sel.getPt());
+            WorldPt wpt= p.getWorldCoords(sel.getPt());
+
+            if (ipt!=null) {
+                result.setExtValue("ipt", ipt.serialize());
+            }
+            if (wpt!=null) {
+                result.setExtValue("wpt", wpt.serialize());
+            }
+
+        }
     }
 
     public static class ExtensionLineSelectCmd extends ExtensionBaseCmd {
 
-        public ExtensionLineSelectCmd(MiniPlotWidget mpw, PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(mpw,ext,actionReporter);
+        public ExtensionLineSelectCmd(MiniPlotWidget mpw, Ext.Extension  ext) {
+            super(mpw,ext);
         }
 
         protected String getSendValue() {
@@ -95,12 +112,36 @@ public class ExtensionCommands {
             }
             return sendVal;
         }
+
+        @Override
+        protected void addResultValue(Ext.ExtensionResult result) {
+            LineSelection sel= (LineSelection)mpw.getPlotView().getAttribute(WebPlot.ACTIVE_DISTANCE);
+            WebPlot p= mpw.getPlotView().getPrimaryPlot();
+
+            ImagePt ipt0= p.getImageCoords(sel.getPt1());
+            ImagePt ipt1= p.getImageCoords(sel.getPt1());
+
+            WorldPt wpt0= p.getWorldCoords(sel.getPt1());
+            WorldPt wpt1= p.getWorldCoords(sel.getPt2());
+
+
+            if (ipt0!=null && ipt1!=null) {
+                result.setExtValue("ipt0", ipt0.serialize());
+                result.setExtValue("ipt1", ipt1.serialize());
+            }
+            if (wpt0!=null && wpt1!=null) {
+                result.setExtValue("wpt0", wpt0.serialize());
+                result.setExtValue("wpt1", wpt1.serialize());
+
+            }
+
+        }
     }
 
     public static class ExtensionAreaSelectCmd extends ExtensionBaseCmd {
 
-        public ExtensionAreaSelectCmd(MiniPlotWidget mpw, PlotCmdExtension ext, ActionReporter actionReporter) {
-            super(mpw,ext,actionReporter);
+        public ExtensionAreaSelectCmd(MiniPlotWidget mpw, Ext.Extension ext) {
+            super(mpw,ext);
         }
 
         protected String getSendValue() {
@@ -114,6 +155,29 @@ public class ExtensionCommands {
                         "}";
             }
             return sendVal;
+        }
+
+        @Override
+        protected void addResultValue(Ext.ExtensionResult result) {
+            RecSelection sel= (RecSelection)mpw.getPlotView().getAttribute(WebPlot.SELECTION);
+            WebPlot p= mpw.getPlotView().getPrimaryPlot();
+
+            ImagePt ipt0= p.getImageCoords(sel.getPt0());
+            ImagePt ipt1= p.getImageCoords(sel.getPt1());
+
+            WorldPt wpt0= p.getWorldCoords(sel.getPt0());
+            WorldPt wpt1= p.getWorldCoords(sel.getPt1());
+
+
+            if (ipt0!=null && ipt1!=null) {
+                result.setExtValue("ipt0", ipt0.serialize());
+                result.setExtValue("ipt1", ipt1.serialize());
+            }
+            if (wpt0!=null && wpt1!=null) {
+                result.setExtValue("wpt0", wpt0.serialize());
+                result.setExtValue("wpt1", wpt1.serialize());
+
+            }
         }
     }
 }
