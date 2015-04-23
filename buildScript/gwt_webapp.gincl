@@ -191,6 +191,7 @@ task deploy {
 }
 
 task buildAndDeploy( dependsOn:[war, deploy] )
+task dirtyAndDeploy( dependsOn:[dirty, deploy] )
 
 
 task buildAndPublish( dependsOn: war ) << {
@@ -231,4 +232,5 @@ loadConfig.mustRunAfter gwt
 prepareWebapp.mustRunAfter buildClient
 buildClient.mustRunAfter gwtCompile
 deploy.mustRunAfter war
+deploy.mustRunAfter dirty
 
