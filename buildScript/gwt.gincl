@@ -20,8 +20,7 @@ task gwt {
   }
 }
 
-task gwtCompile (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT Compile'
   group = GWT_GROUP
 
@@ -85,8 +84,7 @@ task gwtCompile (type: JavaExec) {
   }
 }
 
-task gwtRun (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT DevMode'
   group = GWT_GROUP
 
@@ -128,8 +126,7 @@ task gwtRun (type: JavaExec) {
   }
 }
 
-task gwtSuperDev (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT SuperDev Mode'
   group = GWT_GROUP
 
@@ -161,10 +158,9 @@ task gwtSuperDev (type: JavaExec) {
 
 
 
-task immediateStart (type: Exec) {
-  dependsOn gwt
-  doFirst {
-    logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
+task immediateStart (dependsOn: gwt) << {
+  logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
+  exec {
+    commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
   }
-  commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
 }

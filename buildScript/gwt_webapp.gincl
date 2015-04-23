@@ -36,8 +36,7 @@ dependencies {
   webappLib FIREFLY_RUNTIME + firefly_lib + ":$jar.baseName"
 }
 
-task prepareWebapp (type:Copy) {
-  dependsOn gwt, loadConfig, createVersionTag
+task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
   description= 'Generates the configuration files needed by the webapp, ie. app.prop, web.xml, etc.'
   group = WEBAPP_GROUP
 
@@ -92,8 +91,7 @@ task webapp {
   ext.baseWarName = jar.baseName
 }
 
-task buildClient {
-  dependsOn loadConfig
+task buildClient (dependsOn: loadConfig) {
 
   outputs.upToDateWhen { false }
 
@@ -123,21 +121,20 @@ task buildClient {
 }
 
 war {
-  dependsOn webapp, jar, gwtCompile, buildClient, prepareWebapp
   description= 'Build application. Creates a war file.'
   group = WEBAPP_GROUP
 
-  doFirst {
-    archiveName = "${webapp.baseWarName}.war"
-
-  }
+  dependsOn webapp, jar, gwtCompile, buildClient, prepareWebapp
   outputs.dir gwt.warDir
   classpath = configurations.webappLib
   from gwt.warDir
+
+  doFirst {
+    archiveName = "${webapp.baseWarName}.war"
+  }
 }
 
-task dirty (type: War) {
-  dependsOn webapp, jar, prepareWebapp
+task dirty (type: War, dependsOn: [webapp, jar, prepareWebapp]) {
   description= 'Create a war without GWT compile.  This is much faster.'
   group = WEBAPP_GROUP
 
@@ -149,44 +146,37 @@ task dirty (type: War) {
   from gwt.warDir
 }
 
-task deployClient  {
-  dependsOn loadConfig, buildClient, webapp
+task deployClient(dependsOn: [loadConfig, buildClient, webapp])  << {
   description= 'Build and deploy the JavaScript client only.  Require ${tomcat_home} property'
   group = WEBAPP_GROUP
 
-  doLast {
-    copy {
-      from(gwt.warDir) {
-        include "**/*"
-        exclude "WEB-INF"
-        exclude "META-INF"
-      }
-      into "${tomcat_home}/webapps/${webapp.baseWarName}"
+  copy {
+    from(gwt.warDir) {
+      include "**/*"
+      exclude "WEB-INF"
+      exclude "META-INF"
     }
+    into "${tomcat_home}/webapps/${webapp.baseWarName}"
   }
 }
 
-task deploy {
-  dependsOn loadConfig, webapp
+task deploy (dependsOn: [loadConfig, webapp]) << {
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
   group = WEBAPP_GROUP
 
-  doLast {
+  if (!project.hasProperty("tomcat_home")) {
+    throw ProjectConfigurationException("tomcat_home property is not found.")
+  }
+  if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
+    println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
+    throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
+  }
 
-    if (!project.hasProperty("tomcat_home")) {
-      throw ProjectConfigurationException("tomcat_home property is not found.")
-    }
-    if (!file("$war.destinationDir/${webapp.baseWarName}.war").exists()) {
-      println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
-      throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
-    }
-
-    copy {
-      println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
-      delete("$tomcat_home/webapps/${webapp.baseWarName}")
-      from("$war.destinationDir/${webapp.baseWarName}.war")
-      into "$tomcat_home/webapps/"
-    }
+  copy {
+    println ">> deploying file:$war.destinationDir/${webapp.baseWarName}.war"
+    delete("$tomcat_home/webapps/${webapp.baseWarName}")
+    from("$war.destinationDir/${webapp.baseWarName}.war")
+    into "$tomcat_home/webapps/"
   }
 }
 
