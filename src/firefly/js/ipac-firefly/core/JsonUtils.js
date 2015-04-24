@@ -59,9 +59,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
 
     var workerPromise= new Promise(function(resolve, reject) {
         var options= {
-            //method : 'GET',
             path : url,
-            //headers : {},
             host : getHost(),
             port : getPort(),
         };
