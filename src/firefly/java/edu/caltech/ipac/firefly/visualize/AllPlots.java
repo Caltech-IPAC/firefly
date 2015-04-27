@@ -725,6 +725,8 @@ public class AllPlots implements HasWebEventManager {
     public List<Ext.Extension> getExtensionList(String id) {
         if (id==null) id= ALL_MPW;
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+        if (exI == null) return null;
+
         int len= exI.getExtLength();
         List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
         for(int i= 0; (i<len); i++) {
