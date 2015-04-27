@@ -31,17 +31,26 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final String SQUARED_STR= "Squared";
     public static final String SQRT_STR= "Sqrt";
 
+    public static final String ASINH_STR= "Asinh";
+    public static final String POWERLAW_GAMMA_STR= "powerlaw_gamma";
+
+
     public static final int STRETCH_LINEAR= 44;
     public static final int STRETCH_LOG   = 45;
     public static final int STRETCH_LOGLOG= 46;
     public static final int STRETCH_EQUAL = 47;
     public static final int STRETCH_SQUARED = 48;
     public static final int STRETCH_SQRT    = 49;
+    public static final int STRETCH_ASINH   = 50;
+    public static final int STRETCH_POWERLAW_GAMMA   = 51;
+
 
     private int    _lowerWhich;
     private double _lowerValue;
     private int    _upperWhich;
     private double _upperValue;
+    private double _drValue;
+    private double _gammaValue;
     private int    _algorithm= STRETCH_LINEAR;
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
@@ -125,6 +134,9 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
             else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
             else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
+            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
+            else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
+
         }
         return new RangeValues(s,lowerValue,s,upperValue,a);
     }

@@ -25,8 +25,9 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
  *         $Id: StretchInputField.java,v 1.11 2011/06/29 17:03:49 roby Exp $
  */
 public class StretchInputField extends InputField {
-
-    public static enum Type {MIN, MAX}
+    //public static enum Type {MIN, MAX}
+    //LZ 4/24/15 modified to add dr and gamma
+    public static enum Type {MIN, MAX, DR, GAMMA}
     public static enum Units {PERCENT, DATA, MINMAX, SIGMA}
     private static WebClassProperties _prop= new WebClassProperties(StretchInputField.class);
 

@@ -58,6 +58,8 @@ public class BandPanel extends Composite {
     private static final String EQUALIZATION_KEY = "equalization";
     private static final String SQUARED_KEY      = "squared";
     private static final String SQRT_KEY         = "sqrt";
+    private static final String ASINH_KEY         = "asinh";
+    private static final String POWERLAW_GAMMA_KEY         = "powerlaw_gamma";
 
     private static final String TEMP_GIF=  GWT.getModuleBaseURL()+"images/transparent-20x20.gif";
 
@@ -70,6 +72,9 @@ public class BandPanel extends Composite {
     private       CheckBox _showBand= null;
     private final StretchInputField _minStretch;
     private final StretchInputField _maxStretch;
+    private final StretchInputField _drStretch;
+    private final StretchInputField _gammaStretch;
+
     private final DeckPanel _stPanel   = new DeckPanel();
     //    private final Image             _colorHist = new Image(TEMP_GIF);
     private final Image _dataHist  = new Image(TEMP_GIF);
@@ -84,7 +89,8 @@ public class BandPanel extends Composite {
     private WebHistogramOps _histOps= null;
     private final Band _band;
     private WebPlot _plot;
-
+    private SimpleInputField ifDR;
+    private  SimpleInputField ifGamma;
 
     public BandPanel(WebPlot plot, Band band) {
         _band= band;
@@ -92,6 +98,9 @@ public class BandPanel extends Composite {
         WebFitsData fData= plot.getFitsData(band);
         _minStretch= new StretchInputField(StretchInputField.Type.MIN,fData);
         _maxStretch= new StretchInputField(StretchInputField.Type.MAX,fData);
+        _drStretch= new StretchInputField(StretchInputField.Type.DR,fData);
+        _gammaStretch= new StretchInputField(StretchInputField.Type.GAMMA,fData);
+
         createContents();
         _dataHist.setPixelSize(340,55);
     }
@@ -105,6 +114,10 @@ public class BandPanel extends Composite {
         SimpleInputField ifMin= new  SimpleInputField(_minStretch,new SimpleInputField.Config("100px"),true);
         SimpleInputField ifMax= new  SimpleInputField(_maxStretch,new SimpleInputField.Config("100px"),true);
 
+        ifDR= new  SimpleInputField(_drStretch,new SimpleInputField.Config("100px"),true);
+        ifGamma= new  SimpleInputField(_gammaStretch,new SimpleInputField.Config("100px"),true);
+
+
         VerticalPanel barPanel= new VerticalPanel();
 
         DOM.setStyleAttribute(barPanel.getElement(), "border", "1px solid black");
@@ -112,7 +125,7 @@ public class BandPanel extends Composite {
         barPanel.add(_dataHist);
 //        barPanel.add(_cbar);
         Widget cbarCenter= GwtUtil.centerAlign(_cbar);
-        DOM.setStyleAttribute(cbarCenter.getElement(), "padding", "5px 1px 5px 1px" );
+        DOM.setStyleAttribute(cbarCenter.getElement(), "padding", "5px 1px 5px 1px");
 
 
         VerticalPanel fp= new VerticalPanel();
@@ -132,11 +145,15 @@ public class BandPanel extends Composite {
         vp.add(cbarCenter);
 
 
-        DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px" );
+        DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
         VerticalPanel minmaxPanel= new VerticalPanel();
         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
+        minmaxPanel.add(ifDR);
+        ifDR.setVisible(false);
+        minmaxPanel.add(ifGamma);
+        ifGamma.setVisible(false);
         _rangeForm.add(minmaxPanel);
 
 
@@ -297,17 +314,29 @@ public class BandPanel extends Composite {
      int getStretch() {
 
         String sTypeStr= _stretchType.getValue();
+         ifDR.setVisible(false);
+         ifGamma.setVisible(false);
         int sType;
         if      (sTypeStr.equals(LINEAR_KEY))       sType= RangeValues.STRETCH_LINEAR;
         else if (sTypeStr.equals(LOG_KEY))          sType= RangeValues.STRETCH_LOG;
         else if (sTypeStr.equals(LOGLOG_KEY))       sType= RangeValues.STRETCH_LOGLOG;
         else if (sTypeStr.equals(EQUALIZATION_KEY)) sType= RangeValues.STRETCH_EQUAL;
         else if (sTypeStr.equals(SQUARED_KEY))      sType= RangeValues.STRETCH_SQUARED;
+
         else if (sTypeStr.equals(SQRT_KEY))         sType= RangeValues.STRETCH_SQRT;
+        else if (sTypeStr.equals(ASINH_KEY))        {
+            sType= RangeValues.STRETCH_ASINH;
+            ifDR.setVisible(true);
+        }
+        else if (sTypeStr.equals(POWERLAW_GAMMA_KEY))   {
+            sType= RangeValues.STRETCH_POWERLAW_GAMMA;
+            ifGamma.setVisible(true);
+        }
         else {
             sType= -1;
             assert false;  // if we end up here then there is a new stretch type that has been added
         }
+
         return sType;
     }
 

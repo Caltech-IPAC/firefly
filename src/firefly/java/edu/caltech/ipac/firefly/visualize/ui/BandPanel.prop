@@ -6,7 +6,7 @@
 BandPanel.stretchType.type.DataType= EnumString
 BandPanel.stretchType.type.Title= Stretch Type
 BandPanel.stretchType.type.ShortDescription= Choose Stretch algorithm
-BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt
+BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt asinh, powerLawGamma
 BandPanel.stretchType.type.Default=linear
 BandPanel.stretchType.type.linear.Name= Linear
 BandPanel.stretchType.type.log.Name=    Log
@@ -14,14 +14,16 @@ BandPanel.stretchType.type.loglog.Name= Log-Log
 BandPanel.stretchType.type.equalization.Name= Histogram Equalization
 BandPanel.stretchType.type.squared.Name= Squared
 BandPanel.stretchType.type.sqrt.Name= Sqrt
+BandPanel.stretchType.type.sqrt.Name= Asinh
+BandPanel.stretchType.type.sqrt.Name= PowerLawGamma
 BandPanel.stretchType.type.linear.IntValue= 44
 BandPanel.stretchType.type.log.IntValue=    45
 BandPanel.stretchType.type.loglog.IntValue= 46
 BandPanel.stretchType.type.equalization.IntValue= 47
 BandPanel.stretchType.type.squared.IntValue= 48
 BandPanel.stretchType.type.sqrt.IntValue= 49
-
-
+BandPanel.stretchType.type.asinh.IntValue= 50
+BandPanel.stretchType.type.powerLayGamma.IntValue= 51
 
 
 
@@ -51,7 +53,6 @@ BandPanel.sampPerLine.Min= 1
 BandPanel.sampPerLine.Max= 500
 BandPanel.sampPerLine.Default= 120
 BandPanel.sampPerLine.Validation= range
-
 
 
 
