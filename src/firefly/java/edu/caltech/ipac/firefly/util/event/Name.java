@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.util.event;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 
 /**
  * User: roby
@@ -285,8 +286,8 @@ public class Name implements Serializable {
     public static final Name CROP=  new Name("Crop",
                                          "Plot was replaced with a cropped version, data will be the WebPlotView");
 
-    public static final Name HEART_BEAT=  new Name("HEARTBEAT",
-                                             "Heartbeat event, not data");
+    public static final Name EVT_CONN_EST =  new Name("EVT_CONN_EST",
+                                             "Event connection established.  Along with this event, you can expect termID and channel in the event's data. ie. {termID: val, channel: val}");
 
     private final String _name;
     private final String _desc;
@@ -323,6 +324,15 @@ public class Name implements Serializable {
             retval= ComparisonUtil.equals(_name, en._name);
         }
         return retval;
+    }
+
+    /**
+     * Should make Name into a string.
+     * @param name
+     * @return
+     */
+    public static Name parse(String name) {
+        return new Name(name, "unknown");
     }
 }
 

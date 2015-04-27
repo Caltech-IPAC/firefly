@@ -11,15 +11,14 @@ package edu.caltech.ipac.firefly.server.vispush;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
-import edu.caltech.ipac.firefly.server.sse.EventMatchCriteria;
-import edu.caltech.ipac.firefly.server.sse.EventTarget;
-import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
-import edu.caltech.ipac.firefly.server.sse.ServerSentEventQueue;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.events.ServerEventQueue;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,7 @@ public class VisPushJob {
             BackgroundEnv.BackgroundProcessor processor=
                     new BackgroundEnv.BackgroundProcessor(worker, "Push Job", "from push",
                                                           ServerContext.getRequestOwner(),bid,
-                                                          new EventTarget.BackgroundID(bid));
+                                                          new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL));
             retval= BackgroundEnv.backgroundProcess(1, processor).getID();
         }
         return retval;
@@ -246,7 +245,7 @@ public class VisPushJob {
         private volatile String desc= null;
         private final String id;
         private volatile Thread thread;
-        private volatile ServerSentEventQueue queue;
+        private volatile ServerEventQueue queue;
         private volatile boolean threadIsDone= false;
 
 
@@ -257,14 +256,16 @@ public class VisPushJob {
 
         public void run() {
             thread= Thread.currentThread();
-            EventMatchCriteria criteria= new EventMatchCriteria(new EventTarget.BackgroundID(id));
-            queue= new ServerSentEventQueue("NONE", criteria, new ServerSentEventQueue.Sender() {
+            queue= new ServerEventQueue(ServerEvent.SERVER_TERM_ID, null, new ServerEventQueue.EventTerminal() {
                 @Override
                 public void send(String message) {
                     getResponse(message);
                 }
+
+                @Override
+                public void close() {}
             });
-            ServerEventManager.addEventQueueForClient(queue);
+            ServerEventManager.addEventQueue(queue);
 
             try {
                 TimeUnit.SECONDS.sleep(300);

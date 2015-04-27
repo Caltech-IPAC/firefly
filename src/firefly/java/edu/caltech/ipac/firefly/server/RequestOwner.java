@@ -49,6 +49,8 @@ public class RequestOwner implements Cloneable {
     // ------ these are lazy-load variables.. make sure you access it via getter. --------
     private String userKey;
     private String authKey;
+    private String eventChannel;
+    private String eventTermID;
 
     private WorkspaceManager wsManager;
 
@@ -72,6 +74,13 @@ public class RequestOwner implements Cloneable {
         referrer = requestAgent.getHeader("Referer");
         baseUrl = requestAgent.getBaseUrl();
         remoteIP = requestAgent.getRemoteIP();
+
+        String sei = requestAgent.getCookie("seinfo");
+        if (!StringUtils.isEmpty(sei)) {
+            String [] parts =  sei.split("_");
+            eventTermID = parts[0];
+            eventChannel = parts[1];
+        }
     }
 
     public WorkspaceManager getWsManager() {
@@ -96,7 +105,6 @@ public class RequestOwner implements Cloneable {
                 userKey = newUserKey();
                 updateUserKey("Guest");
             }
-            Logger.briefInfo("establishing userKey: " + userKey);
         }
         return userKey;
     }
@@ -244,4 +252,10 @@ public class RequestOwner implements Cloneable {
             requestAgent.sendCookie(cookie);
         }
     }
+
+    public String getEventChannel() {
+        return eventChannel;
+    }
+
+    public String getEventTermID() { return eventTermID; }
 }
