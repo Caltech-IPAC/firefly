@@ -1500,6 +1500,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
 
 
+
     public static native JavaScriptObject getStoreCBForJs() /*-{
             return $entry(@edu.caltech.ipac.firefly.visualize.MiniPlotWidget::storeCB(*));
     }-*/;

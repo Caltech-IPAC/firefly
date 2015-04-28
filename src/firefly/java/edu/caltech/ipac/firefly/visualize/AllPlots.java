@@ -690,20 +690,20 @@ public class AllPlots implements HasWebEventManager {
      * @param id, if null the return the ALL list
      * @return a list of PlotCmdExtension
      */
-    public List<Ext.Extension> getExtensionListNEW(String id) {
-        if (id==null) id= ALL_MPW;
-        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
-        int len= exI.getExtLength();
-        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
-        for(int i= 0; (i<len); i++) {
-            Ext.Extension ext= exI.getExtension(i);
-            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
-               retList.add(ext);
-            }
-        }
-        return retList;
-
-    }
+//    public List<Ext.Extension> getExtensionListNEW(String id) {
+//        if (id==null) id= ALL_MPW;
+//        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+//        int len= exI.getExtLength();
+//        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+//        for(int i= 0; (i<len); i++) {
+//            Ext.Extension ext= exI.getExtension(i);
+//            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+//               retList.add(ext);
+//            }
+//        }
+//        return retList;
+//
+//    }
 
 //    public List<Ext.Extension> getExtensionList(String id) {
 //        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
@@ -722,20 +722,44 @@ public class AllPlots implements HasWebEventManager {
 //
 //    }
 
+
+
     public List<Ext.Extension> getExtensionList(String id) {
-        if (id==null) id= ALL_MPW;
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
-        int len= exI.getExtLength();
-        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
-        for(int i= 0; (i<len); i++) {
-            Ext.Extension ext= exI.getExtension(i);
-            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
-                retList.add(ext);
-            }
-        }
-        return retList;
+        Ext.Extension allExtensions[]= exI.getExtensionList(id);
+//        GwtUtil.getClientLogger().log(Level.INFO, allExtensions[0].id() +" "+allExtensions[0].extType());
+        return Arrays.asList(allExtensions);
+//        GwtUtil.getClientLogger().log(Level.INFO, allExtensions[0].id() +" "+allExtensions[0].extType());
+//        int len= exI.getExtLength();
+//        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+//        for(int i= 0; (i<len); i++) {
+//            Ext.Extension ext= exI.getExtension(i);
+//            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+//                retList.add(ext);
+//            }
+//        }
+//        return retList;
 
     }
+
+
+
+//    public List<Ext.Extension> getExtensionList(String id) {
+//        if (id==null) id= ALL_MPW;
+//        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+//        Ext.Extension allExtensions[]= exI.getExtensionListTEST();
+//        GwtUtil.getClientLogger().log(Level.INFO, allExtensions[0].id() +" "+allExtensions[0].extType());
+//        int len= exI.getExtLength();
+//        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+//        for(int i= 0; (i<len); i++) {
+//            Ext.Extension ext= exI.getExtension(i);
+//            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+//                retList.add(ext);
+//            }
+//        }
+//        return retList;
+//
+//    }
 
 
 

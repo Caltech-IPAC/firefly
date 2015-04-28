@@ -83,12 +83,13 @@ export class ExternalAccessStore extends Store {
     }
 
 
-    getExtensionList(testPlotId=ALL_MPW) {
-        return this.state.extensionList.filter(ext => {
-            if (!ext.plotId || testPlotId === ALL_MPW || ext.plotId === testPlotId) {
+    getExtensionList(testPlotId) {
+        var retList= this.state.extensionList.filter(ext => {
+            if (!testPlotId  || !ext.plotId || testPlotId === ALL_MPW || ext.plotId === testPlotId) {
                 return ext;
             }
         });
+        return retList;
     }
 
 

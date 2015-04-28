@@ -11,6 +11,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsProperty;
 import com.google.gwt.core.client.js.JsType;
 
@@ -43,14 +44,27 @@ public class Ext {
 
 
     @JsType public interface ExtensionInterface {
-        int getExtLength();
+//        Extension[] getExtensionListTEST();
+        Extension[] getExtensionList(String id);
+//        int getExtLength();
         String getRemoteChannel();
-        Extension getExtension(int idx);
+//        Extension getExtension(int idx);
         void clearListener();
         void fireExtAdd(Extension ext);
         void fireExtAction(Extension ext, ExtensionResult result);
         void fireChannelActivate(String bgIdChannel);
     }
+
+
+
+    @JsExport
+    @JsType
+    public interface StoreEvent {
+        public void storeChange();
+    }
+
+
+
 
     public static void fireExtAction(Extension ext, ExtensionResult result) {
         Ext.makeExtensionInterface().fireExtAction(ext,result);

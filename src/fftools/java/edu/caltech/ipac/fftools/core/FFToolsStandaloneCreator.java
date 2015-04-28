@@ -71,9 +71,6 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
         map.putAll(AllPlots.getInstance().getCommandMap());
         MenuGeneratorV2.create(map).populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
-//                Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
-//                                                                          "Catalogs", "Search and load IRSA catalog");
-//                toolbar.addButton(catalog, 0);
         ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
         cmd.setUseDropdownCmd(isddCmd);
 
