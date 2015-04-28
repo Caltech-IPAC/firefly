@@ -20,6 +20,7 @@ import Enum from "enum";
 import {ExtensionJavaInterface } from "ipac-firefly/gwtinterface/ExtensionJavaInterface.js";
 import {ExtensionResult } from "ipac-firefly/gwtinterface/ExtensionResult.js";
 import {PlotCmdExtension } from "ipac-firefly/visualize/PlotCmdExtension.js";
+import {ReactJavaInterface } from "ipac-firefly/gwtinterface/ReactJavaInterface.jsx";
 
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
@@ -36,6 +37,7 @@ export const fireflyInit= function() {
         if (!window.firefly.gwt) {
             window.firefly.gwt= {};
         }
+        window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
         window.firefly.appFlux= appFlux;
         window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
         window.firefly.gwt.ExtensionResult= ExtensionResult;

@@ -430,6 +430,8 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::plotTable(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
         $wnd.firefly.addXYPlot=
                 $entry(@edu.caltech.ipac.firefly.fftools.XYPlotJSInterface::addXYPlot(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
+        $wnd.firefly.showHistogram=
+                $entry(@edu.caltech.ipac.firefly.fftools.HistogramJSInterface::plotHistogram(Ledu/caltech/ipac/firefly/data/JscriptRequest;Ljava/lang/String;));
 
     }-*/;
 
