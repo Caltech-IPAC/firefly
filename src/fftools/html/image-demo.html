@@ -109,6 +109,26 @@
                      } );
 
 
+            var extFunc= function(data) {
+                console.log("do something was pushed");
+                console.log("wp1= " + data.wpt1);
+            };
+
+
+
+            var extension= {
+                id : "MySpecialExt",
+                plotId : "serviceHere",
+                imageUrl : null,
+                title : "Do something",
+                toolTip : "tip for do something",
+                extType: "AREA_SELECT",
+                callback: extFunc
+            };
+
+            var actions= firefly.appFlux.getActions('ExternalAccessActions');
+
+
             firefly.makeTabGroup("wiseURLHere", "tabs");
 
             var iv2= firefly.makeImageViewer("tabs");
@@ -122,6 +142,8 @@
                        "ZoomToWidth" : "350"}
             );
 
+            actions.extensionAdd(extension);
+            actions.channelActivate("tt");
 
             var ex= firefly.getExpandViewer();
             ex.setDefaultParams({   "Title"     : "FITS Data",
@@ -135,6 +157,7 @@
                                           "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
                                       }) ;
             external.setTarget("_testWin");
+//            setTimeout(function () {actions.extensionAdd(extension);}, 3000);
         }
    }
    

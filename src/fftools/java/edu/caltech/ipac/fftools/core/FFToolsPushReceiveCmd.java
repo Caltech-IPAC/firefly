@@ -7,6 +7,7 @@
  */
 package edu.caltech.ipac.fftools.core;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import edu.caltech.ipac.firefly.core.Application;
@@ -17,7 +18,12 @@ import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
+import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
+import edu.caltech.ipac.firefly.data.fuse.PlotData;
+import edu.caltech.ipac.firefly.fftools.PushReceiver;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.visualize.Ext;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,8 +32,6 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
 
     public static final String COMMAND = "Loader";
     private final StandaloneUI aloneUI;
-    private static final String IMAGE_CMD_PLOT_ID = "ImagePushPlotID";
-    private static int idCnt = 0;
     private Map<String,PushReceiver> receivers= new HashMap<String, PushReceiver>(5);
 
     public FFToolsPushReceiveCmd(StandaloneUI aloneUI) {
@@ -37,15 +41,8 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
         String bid = req.getParam("BID");
-        if (!receivers.containsKey(bid)) {
-            MonitorItem monItem = new MonitorItem(null, "i don't know", BackgroundUIHint.NONE);
-            monItem.setWatchable(false);
-            monItem.setStatus(new BackgroundStatus(bid, BackgroundState.STARTING));
-            Application.getInstance().getBackgroundMonitor().addItem(monItem);
-            PushReceiver dpR= new PushReceiver(monItem,aloneUI);
-            receivers.put(bid,dpR);
-        }
-
+            Ext.ExtensionInterface exI= Ext.makeExtensionInterfaceWithListener(this, getStoreCBForJs());
+            exI.fireChannelActivate(bid);
         if (!aloneUI.hasResults()) {
             HTML message= new HTML("Waiting for data");
             GwtUtil.setStyles(message,  "width","100%",
@@ -53,7 +50,43 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
                                         "textAlign", "center");
             Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION).setDisplay(message);
         }
-
     }
 
+    public static void storeCB(Object o) {
+        ((FFToolsPushReceiveCmd)o).setupBackgroundChannel();
+    }
+
+    public static native JavaScriptObject getStoreCBForJs() /*-{
+        return $entry(@edu.caltech.ipac.fftools.core.FFToolsPushReceiveCmd::storeCB(*));
+    }-*/;
+
+
+    private void setupBackgroundChannel() {
+        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+        String channel= exI.getRemoteChannel();
+        if (channel!=null && !receivers.containsKey(channel)) {
+            MonitorItem monItem = new MonitorItem(null, "i don't know", BackgroundUIHint.NONE);
+            monItem.setWatchable(false);
+            monItem.setStatus(new BackgroundStatus(channel, BackgroundState.STARTING));
+            Application.getInstance().getBackgroundMonitor().addItem(monItem);
+
+            PushReceiver.ExternalPlotController plotController= new AppPlotController(aloneUI);
+            PushReceiver dpR= new PushReceiver(monItem,plotController);
+            receivers.put(channel,dpR);
+        }
+    }
+
+    public static class AppPlotController implements PushReceiver.ExternalPlotController {
+
+        private StandaloneUI aloneUI;
+        public AppPlotController(StandaloneUI aloneUI) {
+            this.aloneUI= aloneUI;
+        }
+
+        public void update(WebPlotRequest wpr) {
+            aloneUI.getMultiViewer().forceExpand();
+            PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
+            dynData.setID(wpr.getPlotId(),wpr);
+        }
+    }
 }

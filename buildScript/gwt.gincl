@@ -20,8 +20,7 @@ task gwt {
   }
 }
 
-task gwtCompile (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT Compile'
   group = GWT_GROUP
 
@@ -64,6 +63,7 @@ task gwtCompile (type: JavaExec) {
     args "-extra", "$gwt.buildDir/extra"
     args "-workDir", "$gwt.buildDir/work"
     args "-logLevel", "INFO"
+    args "-XjsInteropMode", "JS"
     if (project.hasProperty("gwtDraftCompile") && project.gwtDraftCompile == 'true') {
       args "-draftCompile"
     }
@@ -85,8 +85,7 @@ task gwtCompile (type: JavaExec) {
   }
 }
 
-task gwtRun (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT DevMode'
   group = GWT_GROUP
 
@@ -120,15 +119,17 @@ task gwtRun (type: JavaExec) {
     args "-extra", "$gwt.buildDir/extra"
     args "-workDir", "$gwt.buildDir/work"
     args "-gen", "$gwt.buildDir/gen"
-    args "-noserver", "-port", "8080"
+    args "-noserver"
+    args "-port", "8080"
+    args "-nosuperDevMode"
     args "-startupUrl", "$context/$gwt.startupUrl"
+    args "-XjsInteropMode", "JS"
     args "-nosuperDevMode"
     args gwt.modules
   }
 }
 
-task gwtSuperDev (type: JavaExec) {
-  dependsOn gwt, loadConfig
+task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT SuperDev Mode'
   group = GWT_GROUP
 
@@ -153,6 +154,7 @@ task gwtSuperDev (type: JavaExec) {
     maxHeapSize = project.hasProperty("gwtMaxHeapSize") ? gwtMaxHeapSize : gwt.maxHeapSize
 
     args "-workDir", "$gwt.buildDir/superdev"
+    args "-XjsInteropMode", "JS"
     args gwt.modules
 
   }
@@ -160,10 +162,9 @@ task gwtSuperDev (type: JavaExec) {
 
 
 
-task immediateStart (type: Exec) {
-  dependsOn gwt
-  doFirst {
-    logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
+task immediateStart (dependsOn: gwt) << {
+  logger.info ">> running immediate-start-mod.sh on $gwt.warDir/${project['app-name']}.nocache"
+  exec {
+    commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
   }
-  commandLine "$fireflyPath/buildScript/immediate-start-mod.sh", "$gwt.warDir/${project['app-name']}.nocache"
 }

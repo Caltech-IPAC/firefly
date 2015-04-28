@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-package edu.caltech.ipac.fftools.core;
+package edu.caltech.ipac.firefly.fftools;
 /**
  * User: roby
  * Date: 1/27/15
@@ -19,38 +19,30 @@ import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
-import edu.caltech.ipac.firefly.data.fuse.PlotData;
-import edu.caltech.ipac.firefly.fftools.FFToolEnv;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.ui.TitleFlasher;
 import edu.caltech.ipac.firefly.ui.catalog.CatalogPanel;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotCmdExtension;
+import edu.caltech.ipac.firefly.visualize.Ext;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ui.DS9RegionLoadDialog;
 import edu.caltech.ipac.util.StringUtils;
-
-import java.util.List;
 
 /**
  * @author Trey Roby
  */
 public class PushReceiver {
 
+    public enum ExtType { AREA_SELECT, LINE_SELECT, POINT, NONE }
     private static final String IMAGE_CMD_PLOT_ID= "ImagePushPlotID";
-//    private final List<String> consumedItems= new ArrayList<String>(15);
     private int consumedCnt= 0;
-    private final StandaloneUI aloneUI;
     private static int idCnt= 0;
     public static final String TABLE_SEARCH_PROC_ID = "IpacTableFromSource";
+    public final ExternalPlotController plotController;
 
-    public PushReceiver(final MonitorItem monItem, StandaloneUI aloneUI) {
-        this.aloneUI= aloneUI;
-
+    public PushReceiver(final MonitorItem monItem, ExternalPlotController plotController) {
+        this.plotController= plotController;
         monItem.addUpdateListener(new MonitorItem.UpdateListener() {
             @Override
             public void update(MonitorItem item) {
@@ -69,7 +61,7 @@ public class PushReceiver {
         for(PushItem item= getNextItem(bgStat); (item!=null); item= getNextItem(bgStat) ) {
             TitleFlasher.flashTitle("!! New Image !!");
             CatalogPanel.setDefaultSearchMethod(CatalogRequest.Method.POLYGON);
-            AllPlots.getInstance().getActionReporter().setMonitorItem(monItem);
+//            AllPlots.getInstance().getActionReporter().setMonitorItem(monItem);
             String fileName;
             switch (item.pushType) {
                 case WEB_PLOT_REQUEST:
@@ -95,28 +87,24 @@ public class PushReceiver {
                     //
                     break;
                 case FITS_COMMAND_EXT:
-                    PlotCmdExtension ext= parsePlotCmdExtension(item.data);
-                    List<PlotCmdExtension> list= AllPlots.getInstance().getExtensionList(null);
-                    list.add(ext);
-                    for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
-                        if (mpw.getPlotView()!=null) {
-                            mpw.recomputeUserExtensionOptions();
-                        }
-                    }
-
+                    Ext.Extension ext= parsePlotCmdExtension(item.data);
+                    Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+                    exI.fireExtAdd(ext);
                     break;
             }
         }
     }
 
 
-    private static PlotCmdExtension parsePlotCmdExtension(String in) {
+    private static Ext.Extension parsePlotCmdExtension(String in) {
         ServerRequest req= ServerRequest.parse(in,new ServerRequest());
-        return new PlotCmdExtension(req.getRequestId(),
-                                    StringUtils.getEnum(req.getParam(ServerParams.EXT_TYPE), PlotCmdExtension.ExtType.NONE),
-                                    req.getParam(ServerParams.IMAGE),
-                                    req.getParam(ServerParams.TITLE),
-                                    req.getParam(ServerParams.TOOL_TIP) );
+
+        return Ext.makeExtension(req.getRequestId(),
+                                 req.getParam(ServerParams.PLOT_ID),
+                                 StringUtils.getEnum(req.getParam(ServerParams.EXT_TYPE), ExtType.NONE).toString(),
+                                 req.getParam(ServerParams.IMAGE),
+                                 req.getParam(ServerParams.TITLE),
+                                 req.getParam(ServerParams.TOOL_TIP));
     }
 
     private PushItem getNextItem(BackgroundStatus bgStat ) {
@@ -148,10 +136,7 @@ public class PushReceiver {
             wpReq.setRequestType(RequestType.PROCESSOR);
         }
 
-        aloneUI.getMultiViewer().forceExpand();
-        PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
-        dynData.setID(wpReq.getPlotId(),wpReq);
-
+        plotController.update(wpReq);
     }
 
 
@@ -176,9 +161,8 @@ public class PushReceiver {
         final TableServerRequest req = new TableServerRequest(TABLE_SEARCH_PROC_ID);
         req.setStartIndex(0);
         req.setPageSize(100);
-        req.setParam("source",fileName);
+        req.setParam("source", fileName);
         String title= findTitle(req);
-        FFToolEnv.getHub().getCatalogDisplay().addMonitorItemForTable(title,monItem);
         SearchAdmin.getInstance().submitSearch(req, title);
     }
 
@@ -211,4 +195,12 @@ public class PushReceiver {
             this.pushType = pushType;
         }
     }
+
+    public interface ExternalPlotController {
+        void update(WebPlotRequest wpr);
+    }
+
+
+
+
 }

@@ -47,7 +47,6 @@ public abstract class SimpleDataConnection implements DataConnection {
     public SelectSupport getSupportsAreaSelect() { return SelectSupport.NO; }
     public int getSelectedCount() { return 0; }
 
-    public ActionReporter getActionReporter() { return null; }
 
     public boolean getSupportsFilter() { return false; }
 

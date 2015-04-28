@@ -3,9 +3,7 @@
  */
 package edu.caltech.ipac.firefly.core;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Image;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.PropertyChangeListener;
 import edu.caltech.ipac.firefly.util.PropertyChangeSupport;
 import edu.caltech.ipac.firefly.util.WebProp;
@@ -239,14 +237,10 @@ public abstract class GeneralCommand implements UIAttributes, com.google.gwt.use
 
     public void execute() {
         if (isEnabled) {
-            GWT.runAsync(new GwtUtil.DefAsync() {
-                public void onSuccess() {
-                    if (!isInit()) {
-                        setInit(init());
-                    }
-                    doExecute();
-                }
-            });
+            if (!isInit()) {
+                setInit(init());
+            }
+            doExecute();
         }
     }
 

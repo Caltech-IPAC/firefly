@@ -7,12 +7,12 @@ import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.OverviewHelpCmd;
 import edu.caltech.ipac.firefly.core.AlertManager;
 import edu.caltech.ipac.firefly.core.Creator;
-import edu.caltech.ipac.firefly.core.DefaultCreator;
 import edu.caltech.ipac.firefly.core.DefaultRequestHandler;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.LoginManager;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 
@@ -53,5 +53,7 @@ public class FireflyToolsEmbededCreator implements Creator {
 
     public AlertManager makeAlertManager() { return null; }
 
-    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
+    public ServerTask[] getCreatorInitTask() {
+        return new ServerTask[] {new CoreTask.LoadProperties()};
+    }
 }

@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
-import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
@@ -37,7 +36,6 @@ public class CatalogDisplay {
 
 
     private static final String BASE_ID= "CatalogID-";
-    private Map<String, MonitorItem> monitorTables= new HashMap<String, MonitorItem>(5);
     private Map<TablePanel, DrawingManager> _allDrawers= new HashMap<TablePanel, DrawingManager>(5);
     private List<WebPlotView> _allPV= new ArrayList<WebPlotView>(3);
     public static final String HELP_STR= "Click to select an object, Check table to show name";
@@ -79,9 +77,6 @@ public class CatalogDisplay {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public void addMonitorItemForTable(String title, MonitorItem item) {
-        monitorTables.put(title,item);
-    }
 
     public void beginBulkUpdate() {
         for(DrawingManager drawManager : _allDrawers.values()) {
@@ -169,10 +164,6 @@ public class CatalogDisplay {
             CatalogDataConnection conn= new CatalogDataConnection(table,
                                                          !hints.getDisableMouse(),
                                                          hints.getOnlyVisibleIfActiveTab());
-            MonitorItem item= monitorTables.get(table.getShortDesc());
-            if (item!=null) {
-                conn.getActionReporter().setMonitorItem(item);
-            }
             if (hints.isUsingSubgroup()) {
                 conn.setSubgroupList(hints.getSubGroupList());
             }

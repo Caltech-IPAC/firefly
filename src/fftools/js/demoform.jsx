@@ -3,7 +3,7 @@
 /*jshint esnext:true*/
 "use strict";
 
-import {fireflyInit} from "ipac-firefly/util/BrowserUtil.js";
+import {fireflyInit} from "ipac-firefly/core/Application.js";
 fireflyInit();
 
 require("babel/polyfill");

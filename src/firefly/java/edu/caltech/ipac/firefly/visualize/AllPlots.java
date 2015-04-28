@@ -66,7 +66,6 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.draw.ActionReporter;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -107,13 +106,12 @@ public class AllPlots implements HasWebEventManager {
     private final List<PopoutWidget> _additionalWidgets = new ArrayList<PopoutWidget>(4);
     private final Map<String, GeneralCommand> _commandMap = new HashMap<String, GeneralCommand>(13);
     private final Map<PopoutWidget, PopoutStatus> _statusMap = new HashMap<PopoutWidget, PopoutStatus>(3);
-    private final ActionReporter actionReporter= new ActionReporter();
+//    private final ActionReporter actionReporter= new ActionReporter();
 
     private Readout _mouseReadout;
     private MenuItem _zoomLevelPopup = null;
     private Toolbar.CmdButton _toolbarLayerButton = null;
     private boolean _layerButtonAdded = false;
-    private final Map<String,List<PlotCmdExtension>> extCmdMap= new HashMap<String, List<PlotCmdExtension>>(7);
 
     private PopoutWidget _primaryExternal = null;
     private MiniPlotWidget _primaryMPWSel = null;
@@ -145,7 +143,6 @@ public class AllPlots implements HasWebEventManager {
     private AllPlots() {
         PopoutWidget.setExpandBehavior(new ExpandBehavior());
         MiniPlotWidget.setDefaultThumbnailSize(FFToolEnv.isAPIMode() ? 100 : 70);
-        extCmdMap.put(ALL_MPW, new ArrayList<PlotCmdExtension>(5));
     }
 
 
@@ -688,28 +685,62 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    public ActionReporter getActionReporter() {
-        return actionReporter;
-    }
-
     /**
      *
      * @param id, if null the return the ALL list
      * @return a list of PlotCmdExtension
      */
-    public List<PlotCmdExtension> getExtensionList(String id) {
+    public List<Ext.Extension> getExtensionListNEW(String id) {
         if (id==null) id= ALL_MPW;
-        //tmp - todo fix this
-        id= ALL_MPW;
-        //tmp
-        if (extCmdMap.containsKey(id)) {
-           return extCmdMap.get(id);
+        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+        int len= exI.getExtLength();
+        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+        for(int i= 0; (i<len); i++) {
+            Ext.Extension ext= exI.getExtension(i);
+            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+               retList.add(ext);
+            }
         }
-        else {
-            return Collections.emptyList();
-        }
+        return retList;
 
     }
+
+//    public List<Ext.Extension> getExtensionList(String id) {
+//        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+//        JavaScriptObject o= exI.getExtensionList(id);
+//        return Ext.makeIntoList(o);
+//        if (id==null) id= ALL_MPW;
+//        int len= exI.getExtLength();
+//        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+//        for(int i= 0; (i<len); i++) {
+//            Ext.Extension ext= exI.getExtension(i);
+//            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+//                retList.add(ext);
+//            }
+//        }
+//        return retList;
+//
+//    }
+
+    public List<Ext.Extension> getExtensionList(String id) {
+        if (id==null) id= ALL_MPW;
+        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+        if (exI == null) return null;
+
+        int len= exI.getExtLength();
+        List<Ext.Extension> retList= new ArrayList<Ext.Extension>(10);
+        for(int i= 0; (i<len); i++) {
+            Ext.Extension ext= exI.getExtension(i);
+            if (ext.plotId() == null || id.equals(ALL_MPW)  || ext.plotId().equals(id) ) {
+                retList.add(ext);
+            }
+        }
+        return retList;
+
+    }
+
+
+
 
 //====================================================================
 //------------------- from HasWebEventManager interface

@@ -30,6 +30,7 @@ ext {
               ':servlet-api',
               ':websocket-api']
 
+  mysql_lib = ':mysql-connector-java-5.1.6-bin'
   starlink_lib = [':regclient', ':stil']
   xbeanfinder_lib = [':xbean-finder-4.1', ':asm-5.0.3']
   spring_lib = [':spring-beans', ':spring-core', ':spring-jdbc', ':spring-tx', ':spring-web']

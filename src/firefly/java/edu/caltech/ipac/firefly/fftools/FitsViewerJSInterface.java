@@ -406,9 +406,10 @@ public class FitsViewerJSInterface {
 
 
 
-    private static void plotNowToTarget(final String target, final WebPlotRequest wpr, final String groupName) {
+    public static void plotNowToTarget(final String target, final WebPlotRequest wpr, final String groupName) {
 
         if (target!=null) {
+            wpr.setPlotId(target);
             if (wpr.containsParam(WebPlotRequest.OVERLAY_POSITION)) {
                 enableAutoOverlays();
             }

@@ -10,17 +10,25 @@ package edu.caltech.ipac.firefly.fftools;
 
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
+import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
+import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
+import edu.caltech.ipac.firefly.visualize.Ext;
+import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
@@ -49,15 +57,18 @@ public class FFToolEnv {
 
     public static void loadJS() {
         String js= GWT.getModuleBaseURL() + "js/fftools/fireflyJSTools.js";
+        String fireflyJS= GWT.getModuleBaseURL() + "fflib.js";
+
         new JSLoad(new JSLoad.Loaded(){
             public void allLoaded() {
                 _scriptLoaded = true;
+                monitorForExternalPushChannel();
                 initFitsView();
                 initTable();
                 initPlot();
                 notifyLoaded();
             }
-        },js);
+        },js,fireflyJS);
     }
 
     public static void postInitialization() {
@@ -291,6 +302,44 @@ public class FFToolEnv {
 
 
 
+
+    public static void monitorForExternalPushChannel() {
+        if (!Application.getInstance().getCreator().isApplication()) {
+            Ext.ExtensionInterface exI= Ext.makeExtensionInterfaceWithListener(new Object(), getStoreCBForJs());
+        }
+    }
+
+    private static String pushChannel= null;
+
+    public static void initExternalPush() {
+        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
+        String channel= exI.getRemoteChannel();
+        GwtUtil.getClientLogger().log(Level.INFO, "channel:" + channel);
+        if (channel!=null && !ComparisonUtil.equals(channel,pushChannel)) {
+            pushChannel= channel;
+            GwtUtil.getClientLogger().log(Level.INFO, "here:" + channel);
+            MonitorItem monItem = new MonitorItem(null, "i don't know", BackgroundUIHint.NONE);
+            monItem.setWatchable(false);
+            monItem.setStatus(new BackgroundStatus(channel, BackgroundState.STARTING));
+            Application.getInstance().getBackgroundMonitor().addItem(monItem);
+
+            PushReceiver.ExternalPlotController plotController= new ApiPlotController();
+            new PushReceiver(monItem,plotController);
+        }
+    }
+
+
+    public static void storeCB(Object o) {
+        initExternalPush();
+    }
+
+    public static native JavaScriptObject getStoreCBForJs() /*-{
+        return $entry(@edu.caltech.ipac.firefly.fftools.FFToolEnv::storeCB(*));
+    }-*/;
+
+
+
+
     private static native boolean isInternalAdvertise() /*-{
         if ("advertise" in $wnd.firefly) { return $wnd.firefly.advertise;
         }
@@ -400,5 +449,14 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.ExtTableJSInterface::fireExtTableEvent(Ljava/lang/String;Ljava/lang/String;Ledu/caltech/ipac/firefly/data/JscriptRequest;));
     }-*/;
 
+    public static class ApiPlotController implements PushReceiver.ExternalPlotController {
+
+        public ApiPlotController() {
+        }
+
+        public void update(WebPlotRequest wpr) {
+            FitsViewerJSInterface.plotNowToTarget(wpr.getPlotId(), wpr, null);
+        }
+    }
 }
 

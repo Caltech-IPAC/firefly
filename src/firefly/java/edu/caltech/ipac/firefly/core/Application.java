@@ -112,10 +112,11 @@ public class Application {
         if (creator == null) {
             throw new ResourceNotFoundException("Provider is not set.");
         }
+
         if (eventMode==EventMode.WebSocket && creator.isApplication()) {
             ClientEventQueue.start();
             backgroundMonitor = new BackgroundMonitorEvent();
-        } else if (eventMode==EventMode.SSE && creator.isApplication() && !BrowserUtil.isIE()) {
+        } else if (eventMode==EventMode.SSE && !BrowserUtil.isIE()) {
             SSEClient.start();
             backgroundMonitor = new BackgroundMonitorEvent();
         }

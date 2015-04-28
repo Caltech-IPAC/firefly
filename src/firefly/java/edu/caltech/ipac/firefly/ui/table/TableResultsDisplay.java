@@ -9,9 +9,13 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.BaseCallback;
+import edu.caltech.ipac.firefly.core.background.BackgroundState;
+import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
 import edu.caltech.ipac.firefly.core.background.MonitorItem;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.NewTableResults;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.PrimaryTableUI;
@@ -53,6 +57,28 @@ public class TableResultsDisplay extends BaseLayoutElement {
         tabpane = new TabPane();
         tabpane.setSize("100%", "100%");
         newMonItemListener.setTableDisplay(this);
+
+
+        WebEventManager.getAppEvManager().addListener(Name.NEW_TABLE_RETRIEVED, new WebEventListener() {
+            @Override
+            public void eventNotify(WebEvent ev) {
+                if ( ev.getData() instanceof NewTableResults) {
+                    NewTableResults tableInfo = (NewTableResults) ev.getData();
+                    if (tableInfo != null && tableInfo.getConfig() != null) {
+                        TableConfig tconfig = tableInfo.getConfig();
+                        TableHolder tableHolder = getTableHolder(tconfig.getSearchRequest());
+                        if (tableHolder != null) {
+                            tabpane.selectTab(tableHolder.getTab());
+                        } else {
+                            TableServerRequest req = tconfig.getSearchRequest();
+                            BackgroundUIHint uiHint = req instanceof CatalogRequest ? BackgroundUIHint.CATALOG : BackgroundUIHint.RAW_DATA_SET;
+                            MonitorItem newTable = new MonitorItem(tconfig.getSearchRequest(), tconfig.getTitle(), uiHint, false);
+                            newTable.setStatus(new BackgroundStatus("-1", BackgroundState.SUCCESS));
+                        }
+                    }
+                }
+            }
+        });
 
         this.hub.bind(tabpane);
 
@@ -102,6 +128,15 @@ public class TableResultsDisplay extends BaseLayoutElement {
 //====================================================================
 //
 //====================================================================
+
+    private TableHolder getTableHolder(TableServerRequest item) {
+        for (TableHolder th : onDisplay) {
+            if (th.getItem() != null && th.getItem().getRequest() != null && th.getItem().getRequest().equals(item)) {
+                return th;
+            }
+        }
+        return null;
+    }
 
     private TableHolder getTableHolder(MonitorItem item) {
         for (TableHolder th : onDisplay) {

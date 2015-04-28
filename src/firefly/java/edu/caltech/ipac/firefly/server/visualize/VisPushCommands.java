@@ -109,16 +109,18 @@ public class VisPushCommands {
             SrvParam sp= new SrvParam(paramMap);
             String bid= sp.getRequired(ServerParams.BID);
             String id= sp.getRequired(ServerParams.ID);
+            String plotId= sp.getRequired(ServerParams.PLOT_ID);
             String extType= sp.getRequired(ServerParams.EXT_TYPE);
             String title= sp.getRequired(ServerParams.TITLE);
             String image= sp.getOptional(ServerParams.IMAGE);
             String toolTip= sp.getOptional(ServerParams.TOOL_TIP);
-            boolean success= VisPushJob.pushExtension(bid, id,extType, title, image, toolTip );
+            boolean success= VisPushJob.pushExtension(bid, id,plotId,extType, title, image, toolTip );
 
             String jsonData = JSTART +
                     "\"success\" :  \"" + success + JLINE_END +
                     "\"bid\" :  \"" + bid + JLINE_END +
                     "\"id\" :  \"" + id + JLAST_END +
+                    "\"plotId\" :  \"" + plotId + JLAST_END +
                     JEND;
 
             return jsonData;

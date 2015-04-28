@@ -41,9 +41,9 @@ public class JsonUtils {
     }
 
 
-    public static <T extends JavaScriptObject> void jsonpRequest(String cmd, AsyncCallback<T> cb) {
-        jsonpRequest(cmd, new ArrayList<Param>(2), cb);
-    }
+//    public static <T extends JavaScriptObject> void jsonpRequest(String cmd, AsyncCallback<T> cb) {
+//        jsonpRequest(cmd, new ArrayList<Param>(2), cb);
+//    }
 
     public static <T extends JavaScriptObject> void jsonpRequest(String cmd,
                                                                  List<Param> paramList,
@@ -62,9 +62,9 @@ public class JsonUtils {
     }
 
 
-    public static void jsonRequest(String cmd, RequestCallback cb) throws RequestException {
-        jsonRequest(cmd, new ArrayList<Param>(2), cb);
-    }
+//    public static void jsonRequest(String cmd, RequestCallback cb) throws RequestException {
+//        jsonRequest(cmd, new ArrayList<Param>(2), cb);
+//    }
 
     public static void jsonRequest(String cmd,
                                    List<Param> paramList,

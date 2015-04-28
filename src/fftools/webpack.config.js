@@ -2,6 +2,7 @@
 //var webpack = require('webpack');
 "use strict";
 var path = require('path');
+var webpack = require('webpack');
 //var strUtil = require('underscore.string');
 
 
@@ -25,6 +26,11 @@ var release = (process.env.NODE_ENV === 'production');
 var entryPoint= "demoform.jsx";
 var ffRoot= path.resolve(__dirname+ '/../../') + "/";
 var project = {buildDir : ffRoot+"build/"};
+var outScriptName= 'out.js';
+
+var namePlugin= new webpack.DefinePlugin({
+    __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
+});
 
 var retval= module.exports = {
 
@@ -35,10 +41,10 @@ var retval= module.exports = {
   entry: __dirname+'/js/'+entryPoint,
   output: {
     path: project.buildDir+'gwt/fftools',
-    filename: 'out.js'
+    filename: outScriptName
   },
 
-  plugins : {},
+  plugins : [namePlugin],
 
   resolve: {
       root: [path.resolve(ffRoot+'src/firefly/js'),

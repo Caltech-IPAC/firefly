@@ -4,6 +4,7 @@
 package edu.caltech.ipac.fftools.core;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
@@ -19,6 +20,7 @@ import edu.caltech.ipac.firefly.core.LoginManagerImpl;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
 import edu.caltech.ipac.firefly.core.RequestHandler;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
 import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
@@ -66,25 +68,21 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         final Toolbar toolbar = new StandaloneToolBar();
         toolbar.setVisible(true);
 
-        Vis.init(new Vis.InitComplete() {
-            public void done() {
-                Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
-                map.putAll(AllPlots.getInstance().getCommandMap());
-                MenuGeneratorV2.create(map).populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
+        Map<String, GeneralCommand> map = Application.getInstance().getCommandTable();
+        map.putAll(AllPlots.getInstance().getCommandMap());
+        MenuGeneratorV2.create(map).populateApplicationToolbar(APPLICATION_MENU_PROP, toolbar);
 //                Toolbar.RequestButton catalog = new Toolbar.RequestButton(CATALOG_NAME, IrsaCatalogDropDownCmd.COMMAND_NAME,
 //                                                                          "Catalogs", "Search and load IRSA catalog");
 //                toolbar.addButton(catalog, 0);
-                ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
-                cmd.setUseDropdownCmd(isddCmd);
+        ImageSelectCmd cmd= (ImageSelectCmd)AllPlots.getInstance().getCommand(ImageSelectCmd.CommandName);
+        cmd.setUseDropdownCmd(isddCmd);
 
 
-                DatasetInfoConverter ddConv= ConverterStore.get(ConverterStore.DYNAMIC);
-                ImageSelectPanelDynPlotter plotter= new ImageSelectPanelDynPlotter(ddConv.getPlotData());
-                ImageSelectDropDown dropDown= new ImageSelectDropDown(null,true,plotter);
-                isddCmd.addImageSelectDropDown(ddConv,dropDown);
-                isddCmd.setDatasetInfoConverterForCreation(dropDown);
-            }
-        });
+        DatasetInfoConverter ddConv= ConverterStore.get(ConverterStore.DYNAMIC);
+        ImageSelectPanelDynPlotter plotter= new ImageSelectPanelDynPlotter(ddConv.getPlotData());
+        ImageSelectDropDown dropDown= new ImageSelectDropDown(null,true,plotter);
+        isddCmd.addImageSelectDropDown(ddConv,dropDown);
+        isddCmd.setDatasetInfoConverterForCreation(dropDown);
         return toolbar;
     }
 
@@ -180,5 +178,25 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         }
     }
 
-    public ServerTask[] getCreatorInitTask() { return DefaultCreator.getDefaultCreatorInitTask(); }
+
+    @Override
+    public ServerTask[] getCreatorInitTask() {
+        return new ServerTask[] {new CoreTask.LoadProperties(), new CoreTask.LoadJS(), new LoadVisualization()};
+    }
+
+    public static class LoadVisualization extends ServerTask {
+        @Override
+        public void onSuccess(Object result) { }
+
+        @Override
+        public void doTask(final AsyncCallback passAlong) {
+            Vis.init(new Vis.InitComplete() {
+                public void done() {
+                    passAlong.onSuccess(null);
+
+                }
+            });
+        }
+    }
+
 }

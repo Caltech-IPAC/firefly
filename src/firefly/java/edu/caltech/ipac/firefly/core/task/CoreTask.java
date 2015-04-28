@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.JsonUtils;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.ui.JSLoad;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
@@ -94,4 +95,22 @@ public class CoreTask {
     }
 
 
+    public static class LoadJS extends ServerTask {
+        @Override
+        public void onSuccess(Object result) {
+
+        }
+
+        @Override
+        public void doTask(final AsyncCallback passAlong) {
+            String fireflyJS= GWT.getModuleBaseURL() + "fflib.js";
+            String js= GWT.getModuleBaseURL() + "js/fftools/fireflyJSTools.js";
+            new JSLoad(new JSLoad.Loaded(){
+                public void allLoaded() {
+                    passAlong.onSuccess(null);
+                }
+            },fireflyJS,js);
+
+        }
+    }
 }

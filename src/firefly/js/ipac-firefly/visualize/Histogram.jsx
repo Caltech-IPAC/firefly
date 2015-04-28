@@ -8,14 +8,22 @@
 "use strict";
 import React from 'react/addons';
 import Highcharts from 'react-highcharts';
+import numeral from 'numeral';
+import {getFormatString} from 'ipac-firefly/util/MathUtil.js';
 
-var Histogram = module.exports= React.createClass(
+
+module.exports= React.createClass(
     {
         propTypes: {
             data: React.PropTypes.array.isRequired
         },
 
         render() {
+            var xrange = 0;
+            if (this.props.data.length > 1) {
+                xrange = this.props.data[1][0]-this.props.data[0][0];
+            }
+
             var config =  {
                 chart: {
                     renderTo: 'container',
@@ -34,7 +42,9 @@ var Histogram = module.exports= React.createClass(
                     borderWidth: 1,
                     //pointFormat: "<b>Center:</b> {point.x:.2f}<br><b>Count:</b> {point.y}"
                     formatter: function () {
-                        return '<b>Center:</b><br/> ' + Highcharts.numberFormat(this.x,2) + '<br/>' +
+                        return '<b>Range:</b> (' +
+                                   numeral(this.x-xrange/2.0).format(getFormatString(xrange,2)) + ','+
+                                   numeral(this.x+xrange/2.0).format(getFormatString(xrange,2))+')<br/>' +
                             '<b>Count:</b> ' + this.y;
                     }
                 },
@@ -79,7 +89,7 @@ var Histogram = module.exports= React.createClass(
             config.series[0].data = this.props.data;
             if (this.props.data.length > 1) {
                 // find the x range of the bin - assuming equal size
-                config.series[0].pointRange = this.props.data[1][0]-this.props.data[0][0];
+                config.series[0].pointRange = xrange;
             }
 
             /* jshint ignore:start */

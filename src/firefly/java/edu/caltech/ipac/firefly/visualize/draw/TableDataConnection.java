@@ -12,9 +12,15 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.DataSetTableModel;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.Ext;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +51,6 @@ public abstract class TableDataConnection implements DataConnection {
     private TableDataView tableDataView= null;
     private List<DrawObj> _lastDataReturn= null;
     private List<String> _subGroupList= null;
-    private ActionReporter actionReporter= new ActionReporter();
 
     public TableDataConnection(TablePanel table,String helpLine) {this(table,helpLine, true, false, false, true, false); }
 
@@ -94,11 +99,23 @@ public abstract class TableDataConnection implements DataConnection {
                 idxToSet= -1;
             }
         }
-        ActionReporter reporter= getActionReporter();
-        if (_lastDataReturn!=null && reporter!=null && reporter.isReporting()) {
+        if (_lastDataReturn!=null) {
+            MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+            WebPlot p= mpw.getCurrentPlot();
             DrawObj drawObj= _lastDataReturn.get(idx);
-            reporter.report(getTitle(null), "\""+drawObj.getCenterPt().serialize()+"\"");
+            Pt pt= drawObj.getCenterPt();
+            Ext.ExtensionResult r= Ext.makeExtensionResult();
+            ImagePt ipt= p.getImageCoords(pt);
+            WorldPt wpt= p.getWorldCoords(pt);
+            if (ipt!=null) r.setExtValue("ipt",ipt.serialize());
+            if (wpt!=null) r.setExtValue("wpt",wpt.serialize());
+            r.setExtValue("plotId", mpw.getPlotId());
+            r.setExtValue("title", getTitle(null));
+            Ext.fireExtAction(null,r);
         }
+
+
+
         if (idxToSet>-1) getTable().highlightRow(true, idxToSet);
     }
 
@@ -134,9 +151,6 @@ public abstract class TableDataConnection implements DataConnection {
     public int getSelectedCount() {
         return tableDataView!=null ? tableDataView.getSelectionInfo().getSelectedCount() : 0;
     }
-
-    @Override
-    public ActionReporter getActionReporter() { return actionReporter; }
 
     public boolean getSupportsFilter() { return _supportsFilter; }
 
