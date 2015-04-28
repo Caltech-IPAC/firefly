@@ -84,12 +84,6 @@
     };
 </script>
 
-<div style="z-index:10000; position: absolute; left: 100px; top: 150px; background-color: #ffffff">
-    <textarea id="chatlog" readonly rows="10" cols="80"></textarea><br/>
-    <input id="msg" type="text" size="50" />
-    <button type="submit" onclick="firefly.ClientEventManager.send(document.getElementById('msg').value)">Send Message</button>
-</div>
-
 <!-- OPTIONAL: include this if you want history support -->
 <iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
 
