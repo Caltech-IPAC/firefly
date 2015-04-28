@@ -19,10 +19,10 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -32,12 +32,10 @@ public class BackgroundStatus implements Serializable {
     public enum BgType {SEARCH, PACKAGE, UNKNOWN, PERSISTENT}
     public enum PushType {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME, FITS_COMMAND_EXT }
 
-    public static final String SERVER_REQUEST_CLASS = "ServerRequest";
     public static final String PARAM_SEP = "<<BGSEP>>";
     protected static final String URL_SUB = "URL_PARAM_SEP";
-//    public static final String KW_DESC_SEP = "/";
     public static final String KW_VAL_SEP = "==>>";
-    private LinkedHashMap<String, Param> params = new LinkedHashMap<String, Param>();     // a map of Param keyed by name
+    private LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();     // a map of Param keyed by name
     public final static String NO_ID = "WARNING:_UNKNOWN_PACKAGE_ID";
 
 
@@ -68,19 +66,19 @@ public class BackgroundStatus implements Serializable {
     // --------End Keys -------------------
 
 
-    public BackgroundStatus() { this(NO_ID, BgType.UNKNOWN,BackgroundState.STARTING,null ); }
+    public BackgroundStatus() { this(NO_ID, BackgroundState.STARTING, BgType.UNKNOWN, null ); }
 
-    public BackgroundStatus(String id, BackgroundState state) {  this(id, BgType.UNKNOWN,state,null); }
+    public BackgroundStatus(String id, BackgroundState state) {  this(id, state, BgType.UNKNOWN, null); }
 
-    public BackgroundStatus(String id, BgType type, BackgroundState state) {  this(id, type,state,null); }
+    public BackgroundStatus(String id, BackgroundState state, BgType type) {  this(id, state, type, null); }
 
-    public BackgroundStatus(BackgroundState state, BackgroundStatus copyFromReq) {
-        if (copyFromReq!=null) this.copyFrom(copyFromReq);
-        setState(state);
-    }
+//    public BackgroundStatus(BackgroundState state, BackgroundStatus copyFromReq) {
+//        if (copyFromReq!=null) this.copyFrom(copyFromReq);
+//        setState(state);
+//    }
 
 
-    public BackgroundStatus(String id, BgType type, BackgroundState state, List<Param> paramList) {
+    public BackgroundStatus(String id, BackgroundState state, BgType type, List<Param> paramList) {
         if (paramList!=null) setParams(paramList);
         if (type==null) {
             if (getBackgroundType()==null)  setBackgroundType(BgType.UNKNOWN);
@@ -101,6 +99,13 @@ public class BackgroundStatus implements Serializable {
             setID(id);
         }
     }
+
+    public static BackgroundStatus cloneWithState(BackgroundState state, BackgroundStatus copyFromStatus)  {
+        BackgroundStatus retval= new BackgroundStatus();
+        if (copyFromStatus!=null) retval.copyFrom(copyFromStatus);
+        retval.setState(state);
+        return retval;
+    }
 //====================================================================
 //====================================================================
 //====================================================================
@@ -110,12 +115,7 @@ public class BackgroundStatus implements Serializable {
     }
 
     public String getParam(String param) {
-        Param p = params.get(param);
-        return p == null ? null : p.getValue();
-    }
-
-    public List<Param> getParams() {
-        return new ArrayList<Param>(params.values());
+        return params.get(param);
     }
 
     public void setParam(String name, String val) {
@@ -128,7 +128,7 @@ public class BackgroundStatus implements Serializable {
 
 
     private void setParam(Param param) {
-        if (param!=null) params.put(param.getName(), param);
+        if (param!=null) params.put(param.getName(), param.getValue());
     }
 
     public void setParams(List<Param> params) {
@@ -182,7 +182,7 @@ public class BackgroundStatus implements Serializable {
     public void addAttribute(JobAttributes a) {
         String attributes= getParam(ATTRIBUTE);
         if (attributes==null) {
-            attributes+= a.toString();
+            attributes= a.toString();
         }
         else if (!attributes.contains(a.toString())) {
             attributes+= "|"+a.toString();
@@ -404,7 +404,7 @@ public class BackgroundStatus implements Serializable {
     }
 
     public static BackgroundStatus createUnknownFailStat() {
-        return new BackgroundStatus(NO_ID, BgType.UNKNOWN, BackgroundState.FAIL);
+        return new BackgroundStatus(NO_ID, BackgroundState.FAIL, BgType.UNKNOWN);
     }
 
 
@@ -451,11 +451,12 @@ public class BackgroundStatus implements Serializable {
         if (str==null) return null;
         BackgroundStatus bgStat= new BackgroundStatus();
         String[] params = str.split(PARAM_SEP);
-        if (params != null) {
-            for(int i = 0; i < params.length; i++) {
-                Param p = Param.parse(params[i],KW_VAL_SEP);
-                bgStat.setParam(p);
-
+        if (params.length>0) {
+            for(String param : params) {
+                String[] kv = param.split(KW_VAL_SEP, 2);
+                if (kv.length == 2) {
+                    bgStat.setParam(kv[0], kv[1]);
+                }
             }
             return bgStat;
         }
@@ -464,18 +465,17 @@ public class BackgroundStatus implements Serializable {
 
     /**
      * Serialize this object into its string representation.
-     * @return
+     * @return the serialized string
      */
     public String serialize() {
 
-        StringBuffer str=  new StringBuffer();
+        StringBuilder str=  new StringBuilder();
         str.append(TYPE).append(KW_VAL_SEP).append(getParam(TYPE));
 
         if (params != null && params.size() > 0) {
-            Collection<Param> vals = new ArrayList<Param>(params.values()); // fix concurrent access issue.
-            for(Param p : vals) {
-                if (!(p.getName().equals(TYPE))) {
-                    str.append(PARAM_SEP).append(p.serialize(KW_VAL_SEP));
+            for(Map.Entry<String,String> p :  params.entrySet()) {
+                if (!(p.getKey().equals(TYPE))) {
+                    str.append(PARAM_SEP).append(p.getKey()).append(KW_VAL_SEP).append(p.getValue());
                 }
             }
         }

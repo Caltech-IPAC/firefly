@@ -9,7 +9,6 @@ import toBoolean from "underscore.string/toBoolean";
 import join from "underscore.string/join";
 import replaceAll from "underscore.string/replaceAll";
 import words from "underscore.string/words";
-import _ from "underscore";
 import validator from "validator";
 import Point from "ipac-firefly/visualize/Point.js";
 
@@ -81,6 +80,14 @@ class ServerRequest {
     getParams() { return this.params; }
 
 
+    /**
+     * This method can take multiple types a parameter
+     * If a single object literal is passed then it will look for a name & value field.
+     * If two strings are passed the the first will me the name and the second will be the value.
+     * if more then two string are passed then the first is the name and the others are join tother as the value
+     * {object|string}
+     * {string}
+     */
     setParam() {
         if (arguments.length===1 && typeof arguments[0] === 'object')  {
             var v= arguments[0];
@@ -94,13 +101,10 @@ class ServerRequest {
             for(var i=2; i<arguments.length; i++) {
                values.push(arguments[i]);
             }
-            this.setParamNameMultiValue(arguments[0],values);
+            this.params[arguments[0]]= values.join(',');
         }
     }
 
-    setParamNameMultiValue(key,valAry) {
-        this.params[arguments[0]]= join(valAry);
-    }
 
     setParams(params) {
          Object.assign(this.params, params);
@@ -149,7 +153,7 @@ class ServerRequest {
      * This method is reciprocal to toString().
      * @param str
      * @param req
-     * @return the passed request
+     * @return {ServerRequest} the passed request
      */
     static parse(str,req) {
         if (!str) return null;
@@ -177,8 +181,8 @@ class ServerRequest {
      */
     toString() {
         var idStr= (this.ID_KEY+KW_VAL_SEP+this.params[this.ID_KEY]);
-        var retStr= _.keys(this.params).reduce((str,key) => {
-            if (key!==this.ID_KEY) str+= key+KW_VAL_SEP+this.params[key];
+        var retStr= Object.keys(this.params).reduce((str,key) => {
+            if (key!==this.ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);
         return retStr;

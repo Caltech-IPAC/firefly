@@ -158,8 +158,8 @@ public class VisPushJob {
         }
 
         public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
-            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundStatus.BgType.PERSISTENT,
-                                                          BackgroundState.WAITING);
+            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundState.WAITING, BackgroundStatus.BgType.PERSISTENT
+            );
             return bgStat;
         }
     }

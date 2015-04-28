@@ -195,7 +195,7 @@ public class SearchManager {
 
         public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
             RawDataSet data= getRawDataSet(request);
-            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundStatus.BgType.SEARCH,BackgroundState.SUCCESS);
+            BackgroundStatus bgStat= new BackgroundStatus(p.getBID(), BackgroundState.SUCCESS, BackgroundStatus.BgType.SEARCH);
             bgStat.setServerRequest(request);
             bgStat.setClientRequest(clientRequest);
             if (data.getTotalRows() > 0)  bgStat.setFilePath(data.getMeta().getSource());
