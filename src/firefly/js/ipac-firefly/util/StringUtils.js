@@ -173,7 +173,11 @@ var StringUtils= (function(retUtil) {
         return map;
     };
 
-
+    var checkNull= function(s) {
+        if (!s)              return null;
+        else if (s==='null') return null;
+        else                 return s;
+    };
 
     retUtil.matchesIgCase= matchesIgCase;
     retUtil.matches= matches;
@@ -186,6 +190,7 @@ var StringUtils= (function(retUtil) {
     retUtil.parseHelper= parseHelper;
     retUtil.parseStringList= parseStringList;
     retUtil.parseStringMap= parseStringMap;
+    retUtil.checkNull= checkNull;
 
     if (hasModule) {
         exports.matchesIgCase= matchesIgCase;
@@ -199,6 +204,7 @@ var StringUtils= (function(retUtil) {
         exports.parseHelper= parseHelper;
         exports.parseStringList= parseStringList;
         exports.parseStringMap= parseStringMap;
+        exports.checkNull= checkNull;
     }
 
     return retUtil;
