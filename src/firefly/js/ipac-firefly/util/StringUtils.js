@@ -148,10 +148,10 @@ var StringUtils= (function(retUtil) {
     };
 
     var parseStringList= function(s,token,max=500) {
+        var retval=[];
         if (s.startsWith('[') && s.endsWith(']')) {
             var ss= s.substring(1,s.length-1);
             var sAry= ss.split(token,max);
-            var retval=[];
             sAry.forEach(function(item) {
                 if (item) {retval.push(item);}
             });
@@ -185,7 +185,7 @@ var StringUtils= (function(retUtil) {
     retUtil.endsWith= endsWith;
     retUtil.parseHelper= parseHelper;
     retUtil.parseStringList= parseStringList;
-    retUtil.parseStringList= parseStringMap;
+    retUtil.parseStringMap= parseStringMap;
 
     if (hasModule) {
         exports.matchesIgCase= matchesIgCase;
