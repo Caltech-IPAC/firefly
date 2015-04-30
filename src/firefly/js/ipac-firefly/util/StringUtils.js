@@ -145,7 +145,7 @@ var StringUtils= (function(retUtil) {
         if (!sAry) throw "wrong number of tokens in String";
         return sAry;
 
-    }
+    };
 
     var parseStringList= function(s,token,max=500) {
         if (s.startsWith('[') && s.endsWith(']')) {
