@@ -6,130 +6,125 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-"use strict";
+'use strict';
 
-import {ServerRequest, ID_NOT_DEFINED}  from "ipac-firefly/data/ServerRequest.js";
-//var ServerRequest=  require("ipac-firefly/data/ServerRequest.js");
-import RequestType from "./RequestType.js";
-import ZoomType from "./ZoomType.js";
-import Enum from "enum";
-import CoordinateSys from "./CoordSys.js";
-import {WorldPt, ImagePt, Pt} from "./Point.js";
-import Resolver from "ipac-firefly/astro/net/Resolver.js";
-import RangeValues from "./RangeValues.js";
-import _ from "underscore";
-
-//var WorldPt= PtPackage.WordlPt;
-//var ImagePt= PtPackage.ImagePt;
-//var Pt= PtPackage.Pt;
+import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
+//var ServerRequest=  require('ipac-firefly/data/ServerRequest.js');
+import RequestType from './RequestType.js';
+import ZoomType from './ZoomType.js';
+import Enum from 'enum';
+import CoordinateSys from './CoordSys.js';
+import {WorldPt, ImagePt} from './Point.js';
+import Resolver from '../astro/net/Resolver.js';
+import RangeValues from './RangeValues.js';
 
 
-const ServiceType= new Enum(["IRIS", "ISSA", "DSS", "SDSS", "TWOMASS", "MSX", "DSS_OR_IRIS", "WISE", "NONE"]);
-const TitleOptions= new Enum(["NONE",  // use what it in the title
-                            "PLOT_DESC", // use the plot description key
-                            "FILE_NAME", // use the file name or analyze the URL and make a title from that
-                            "HEADER_KEY", // use the header value
-                            "PLOT_DESC_PLUS", // ??
-                            "SERVICE_OBS_DATE"
+const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);
+const TitleOptions= new Enum(['NONE',  // use what it in the title
+                            'PLOT_DESC', // use the plot description key
+                            'FILE_NAME', // use the file name or analyze the URL and make a title from that
+                            'HEADER_KEY', // use the header value
+                            'PLOT_DESC_PLUS', // ??
+                            'SERVICE_OBS_DATE'
                            ]);
-const ExpandedTitleOptions= new Enum([ "REPLACE",// use expanded title when expanded
-                                     "PREFIX",// use expanded title as prefix to title
-                                     "SUFFIX"// use expanded title as sufix to title
+const ExpandedTitleOptions= new Enum([ 'REPLACE',// use expanded title when expanded
+                                     'PREFIX',// use expanded title as prefix to title
+                                     'SUFFIX'// use expanded title as sufix to title
                                    ]);
-const GridOnStatus= new Enum(["FALSE","TRUE","TRUE_LABELS_FALSE"]);
+const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE']);
 
 const DEFAULT_THUMBNAIL_SIZE= 70;
-const WEB_PLOT_REQUEST_CLASS= "WebPlotRequest";
-const Order= new Enum(["FLIP_Y", "FLIP_X", "ROTATE", "POST_CROP", "POST_CROP_AND_CENTER"]);
+const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
+const Order= new Enum(['FLIP_Y', 'FLIP_X', 'ROTATE', 'POST_CROP', 'POST_CROP_AND_CENTER']);
 
 //keys
 // note- if you add a new key make sure you put it in the _allKeys array
 
 const C= {
-    FILE : "File",
-    WORLD_PT : "WorldPt",
-    URLKEY : "URL",
-    SIZE_IN_DEG : "SizeInDeg",
-    SURVEY_KEY : "SurveyKey",
-    SURVEY_KEY_ALT : "SurveyKeyAlt",
-    SURVEY_KEY_BAND : "SurveyKeyBand",
-    TYPE : "Type",
-    ZOOM_TYPE : "ZoomType",
-    SERVICE : "Service",
-    USER_DESC : "UserDesc",
-    INIT_ZOOM_LEVEL : "InitZoomLevel",
-    TITLE : "Title",
-    ROTATE_NORTH : "RotateNorth",
-    ROTATE_NORTH_TYPE : "RotateNorthType",
-    ROTATE : "Rotate",
-    ROTATION_ANGLE : "RotationAngle",
-    HEADER_KEY_FOR_TITLE : "HeaderKeyForTitle",
-    INIT_RANGE_VALUES : "RangeValues",
-    INIT_COLOR_TABLE : "ColorTable",
-    MULTI_IMAGE_FITS : "MultiImageFits",
-    MULTI_IMAGE_IDX : "MultiImageIdx",
-    ZOOM_TO_WIDTH : "ZoomToWidth",
-    ZOOM_TO_HEIGHT : "ZoomToHeight",
-    ZOOM_ARCSEC_PER_SCREEN_PIX : "ZoomArcsecPerScreenPix",
-    POST_CROP : "PostCrop",
-    POST_CROP_AND_CENTER : "PostCropAndCenter",
-    POST_CROP_AND_CENTER_TYPE : "PostCropAndCenterType",
-    CROP_PT1 : "CropPt1",
-    CROP_PT2 : "CropPt2",
-    CROP_WORLD_PT1 : "CropWorldPt1",
-    CROP_WORLD_PT2 : "CropWorldPt2",
-    UNIQUE_KEY : "UniqueKey",
-    CONTINUE_ON_FAIL : "ContinueOnFail",
-    OBJECT_NAME : "ObjectName",
-    RESOLVER : "Resolver",
-    PLOT_DESC_APPEND : "PlotDescAppend",
-    BLANK_ARCSEC_PER_PIX : "BlankArcsecPerScreenPix",  //todo: doc
-    BLANK_PLOT_WIDTH : "BlankPlotWidth",               //todo: doc
-    BLANK_PLOT_HEIGHT : "BlankPlotHeight",             //todo: doc
-    PROGRESS_KEY : "ProgressKey",
-    FLIP_X : "FlipX",
-    FLIP_Y : "FlipY",
-    HAS_MAX_ZOOM_LEVEL : "HasMaxZoomLevel",
-    THUMBNAIL_SIZE : "thumbnailSize",
-    PIPELINE_ORDER : "pipelineOrder",
+    FILE : 'File',
+    WORLD_PT : 'WorldPt',
+    URLKEY : 'URL',
+    SIZE_IN_DEG : 'SizeInDeg',
+    SURVEY_KEY : 'SurveyKey',
+    SURVEY_KEY_ALT : 'SurveyKeyAlt',
+    SURVEY_KEY_BAND : 'SurveyKeyBand',
+    TYPE : 'Type',
+    ZOOM_TYPE : 'ZoomType',
+    SERVICE : 'Service',
+    USER_DESC : 'UserDesc',
+    INIT_ZOOM_LEVEL : 'InitZoomLevel',
+    TITLE : 'Title',
+    ROTATE_NORTH : 'RotateNorth',
+    ROTATE_NORTH_TYPE : 'RotateNorthType',
+    ROTATE : 'Rotate',
+    ROTATION_ANGLE : 'RotationAngle',
+    HEADER_KEY_FOR_TITLE : 'HeaderKeyForTitle',
+    INIT_RANGE_VALUES : 'RangeValues',
+    INIT_COLOR_TABLE : 'ColorTable',
+    MULTI_IMAGE_FITS : 'MultiImageFits',
+    MULTI_IMAGE_IDX : 'MultiImageIdx',
+    ZOOM_TO_WIDTH : 'ZoomToWidth',
+    ZOOM_TO_HEIGHT : 'ZoomToHeight',
+    ZOOM_ARCSEC_PER_SCREEN_PIX : 'ZoomArcsecPerScreenPix',
+    POST_CROP : 'PostCrop',
+    POST_CROP_AND_CENTER : 'PostCropAndCenter',
+    POST_CROP_AND_CENTER_TYPE : 'PostCropAndCenterType',
+    CROP_PT1 : 'CropPt1',
+    CROP_PT2 : 'CropPt2',
+    CROP_WORLD_PT1 : 'CropWorldPt1',
+    CROP_WORLD_PT2 : 'CropWorldPt2',
+    UNIQUE_KEY : 'UniqueKey',
+    CONTINUE_ON_FAIL : 'ContinueOnFail',
+    OBJECT_NAME : 'ObjectName',
+    RESOLVER : 'Resolver',
+    PLOT_DESC_APPEND : 'PlotDescAppend',
+    BLANK_ARCSEC_PER_PIX : 'BlankArcsecPerScreenPix',  //todo: doc
+    BLANK_PLOT_WIDTH : 'BlankPlotWidth',               //todo: doc
+    BLANK_PLOT_HEIGHT : 'BlankPlotHeight',             //todo: doc
+    PROGRESS_KEY : 'ProgressKey',
+    FLIP_X : 'FlipX',
+    FLIP_Y : 'FlipY',
+    HAS_MAX_ZOOM_LEVEL : 'HasMaxZoomLevel',
+    THUMBNAIL_SIZE : 'thumbnailSize',
+    PIPELINE_ORDER : 'pipelineOrder',
 
-    MULTI_PLOT_KEY: "MultiPlotKey",
-    THREE_COLOR_PLOT_KEY: "ThreeColorPlotKey",
-    THREE_COLOR_HINT: "ThreeColorHint",
-    RED_HINT: "RedHint",
-    GREEN_HINT: "GreenHint",
-    BLUE_HINT: "BlueHint",
+    MULTI_PLOT_KEY: 'MultiPlotKey',
+    THREE_COLOR_PLOT_KEY: 'ThreeColorPlotKey',
+    THREE_COLOR_HINT: 'ThreeColorHint',
+    RED_HINT: 'RedHint',
+    GREEN_HINT: 'GreenHint',
+    BLUE_HINT: 'BlueHint',
 
 // keys - client side operations
 // note- if you add a new key make sure you put it in the _allKeys array
-    PLOT_TO_DIV : "PlotToDiv",
-    PREFERENCE_COLOR_KEY : "PreferenceColorKey",
-    PREFERENCE_ZOOM_KEY : "PreferenceZoomKey",
-    SHOW_TITLE_AREA : "ShowTitleArea",
-    ROTATE_NORTH_SUGGESTION : "RotateNorthSuggestion",
-    SAVE_CORNERS : "SaveCornersAfterPlot",
-    SHOW_SCROLL_BARS : "showScrollBars",
-    EXPANDED_TITLE : "ExpandedTitle",
-    ALLOW_IMAGE_SELECTION : "AllowImageSelection",
-    HAS_NEW_PLOT_CONTAINER : "HasNewPlotContainer",
-    ADVERTISE : "Advertise",
-    HIDE_TITLE_DETAIL : "HideTitleDetail",
-    GRID_ON : "GridOn",
-    TITLE_OPTIONS : "TitleOptions",
-    EXPANDED_TITLE_OPTIONS : "ExpandedTitleOptions",
-    POST_TITLE: "PostTitle",
-    PRE_TITLE: "PreTitle",
-    TITLE_FILENAME_MODE_PFX : "TitleFilenameModePfx",
-    OVERLAY_POSITION : "OverlayPosition",
-    MINIMAL_READOUT: "MinimalReadout",
-    DRAWING_SUB_GROUP_ID: "DrawingSubgroupID",
-    GRID_ID : "GRID_ID",
-    DOWNLOAD_FILENAME_ROOT : "DownloadFileNameRoot",
-    PLOT_ID : "PlotID"
+    PLOT_TO_DIV : 'PlotToDiv',
+    PREFERENCE_COLOR_KEY : 'PreferenceColorKey',
+    PREFERENCE_ZOOM_KEY : 'PreferenceZoomKey',
+    SHOW_TITLE_AREA : 'ShowTitleArea',
+    ROTATE_NORTH_SUGGESTION : 'RotateNorthSuggestion',
+    SAVE_CORNERS : 'SaveCornersAfterPlot',
+    SHOW_SCROLL_BARS : 'showScrollBars',
+    EXPANDED_TITLE : 'ExpandedTitle',
+    ALLOW_IMAGE_SELECTION : 'AllowImageSelection',
+    HAS_NEW_PLOT_CONTAINER : 'HasNewPlotContainer',
+    ADVERTISE : 'Advertise',
+    HIDE_TITLE_DETAIL : 'HideTitleDetail',
+    GRID_ON : 'GridOn',
+    TITLE_OPTIONS : 'TitleOptions',
+    EXPANDED_TITLE_OPTIONS : 'ExpandedTitleOptions',
+    POST_TITLE: 'PostTitle',
+    PRE_TITLE: 'PreTitle',
+    TITLE_FILENAME_MODE_PFX : 'TitleFilenameModePfx',
+    OVERLAY_POSITION : 'OverlayPosition',
+    MINIMAL_READOUT: 'MinimalReadout',
+    DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
+    GRID_ID : 'GRID_ID',
+    DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
+    PLOT_ID : 'PlotID'
 
 };
 
-const _allKeys =
+const allKeys =
         [C.FILE, C.WORLD_PT, C.URLKEY, C.SIZE_IN_DEG, C.SURVEY_KEY,
          C.SURVEY_KEY_ALT, C.SURVEY_KEY_BAND, C.TYPE, C.ZOOM_TYPE,
          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
@@ -154,7 +149,7 @@ const _allKeys =
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
-const _clientSideKeys =
+const clientSideKeys =
         [C.UNIQUE_KEY,
          C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
          C.SHOW_TITLE_AREA, C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
@@ -168,19 +163,19 @@ const _clientSideKeys =
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
-const _ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
+const ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
                           C.ZOOM_TYPE, C.HAS_NEW_PLOT_CONTAINER];
 
-const DEFAULT_PIPELINE_ORDER= Order.ROTATE.value+";"+
-                              Order.FLIP_Y.value+";"+
-                              Order.FLIP_X.value+";"+
-                              Order.POST_CROP.value+";"+
+const DEFAULT_PIPELINE_ORDER= Order.ROTATE.value+';'+
+                              Order.FLIP_Y.value+';'+
+                              Order.FLIP_X.value+';'+
+                              Order.POST_CROP.value+';'+
                               Order.POST_CROP_AND_CENTER.value;
 
 function makeOrderList(orderStr) {
     var retList= [];
     if (!orderStr) return retList;
-    var sAry= orderStr.split(";");
+    var sAry= orderStr.split(';');
     sAry.forEach(v => {
         if (Order.get(v)) retList.push(Order.get(v));
     });
@@ -226,7 +221,7 @@ class WebPlotRequest extends ServerRequest {
      * or if you can create the WebPlotRequest by calling makeProcessorRequest instead
      *
      * @param serverReq the request
-     * @return the new WebPlotRequest
+     * @return {ServerRequest} the new WebPlotRequest
      */
     makeRequest(serverReq) {
         var retval;
@@ -234,7 +229,7 @@ class WebPlotRequest extends ServerRequest {
             retval= serverReq;
         }
         else {
-            retval = new WebPlotRequest(RequestType.FILE, "Fits File");
+            retval = new WebPlotRequest(RequestType.FILE, 'Fits File');
             retval.setParams(serverReq.getParams());
             retval.removeParam(this.ID_KEY);
         }
@@ -244,10 +239,10 @@ class WebPlotRequest extends ServerRequest {
 
 
     static makeFilePlotRequest(fileName, initZoomLevel) {
-        var req = new WebPlotRequest(RequestType.FILE, "Fits file: " + fileName);
+        var req = new WebPlotRequest(RequestType.FILE, 'Fits file: ' + fileName);
         req.setParam(C.FILE, fileName);
         if (initZoomLevel) {
-            req.setParam(C.INIT_ZOOM_LEVEL, initZoomLevel + "");
+            req.setParam(C.INIT_ZOOM_LEVEL, initZoomLevel + '');
         }
         else {
             req.setZoomType(ZoomType.TO_WIDTH);
@@ -263,21 +258,21 @@ class WebPlotRequest extends ServerRequest {
 
 
     static makeURLPlotRequest(url, userDesc) {
-        var req = new WebPlotRequest(RequestType.URL, userDesc||"Fits from URL: " + url);
+        var req = new WebPlotRequest(RequestType.URL, userDesc||'Fits from URL: ' + url);
         req.setURL(url);
         return req;
     }
 
 
     static makeTblFilePlotRequest(fileName) {
-        var req = new WebPlotRequest(RequestType.FILE, "Table: " + fileName);
+        var req = new WebPlotRequest(RequestType.FILE, 'Table: ' + fileName);
         req.setParam(C.FILE, fileName);
         return req;
     }
 
 
     static makeTblURLPlotRequest(url) {
-        var req = new WebPlotRequest(RequestType.URL, "Table from URL: " + url);
+        var req = new WebPlotRequest(RequestType.URL, 'Table from URL: ' + url);
         req.setParam(C.URLKEY, url);
         return req;
     }
@@ -287,7 +282,7 @@ class WebPlotRequest extends ServerRequest {
 
     static makeISSARequest(worldPt, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.ISSA, worldPt, survey, sizeInDeg);
-        req.setTitle("ISSA "+survey);
+        req.setTitle('ISSA '+survey);
         return req;
     }
 
@@ -296,7 +291,7 @@ class WebPlotRequest extends ServerRequest {
 
     static makeIRISRequest(worldPt, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg);
-        req.setTitle("IRIS "+survey);
+        req.setTitle('IRIS '+survey);
         return req;
     }
 
@@ -305,7 +300,7 @@ class WebPlotRequest extends ServerRequest {
 
     static make2MASSRequest(wp, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
-        req.setTitle("2MASS "+survey);
+        req.setTitle('2MASS '+survey);
         return req;
     }
 
@@ -314,7 +309,7 @@ class WebPlotRequest extends ServerRequest {
 
     static makeMSXRequest(wp, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
-        req.setTitle("MSX "+survey);
+        req.setTitle('MSX '+survey);
         return req;
     }
 
@@ -322,7 +317,7 @@ class WebPlotRequest extends ServerRequest {
 
     static makeSloanDSSRequest(wp, band, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
-        req.setTitle("SDSS "+band);
+        req.setTitle('SDSS '+band);
         return req;
     }
     //======================== DSS =====================================
@@ -337,9 +332,9 @@ class WebPlotRequest extends ServerRequest {
 
     static makeWiseRequest(wp, survey, band, sizeInDeg) {
         var req = this.makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
-        req.setParam(C.SURVEY_KEY_BAND, band + "");
-        var sDesc= survey.toLowerCase()==="3a"  ? "Atlas" : survey;
-        req.setTitle("Wise: "+sDesc+ ", B"+ band);
+        req.setParam(C.SURVEY_KEY_BAND, band + '');
+        var sDesc= survey.toLowerCase()==='3a' ? 'Atlas' : survey;
+        req.setTitle('Wise: '+sDesc+ ', B'+ band);
         return req;
     }
 
@@ -355,14 +350,14 @@ class WebPlotRequest extends ServerRequest {
 
 
     static makeAllSkyPlotRequest() {
-        return new WebPlotRequest(RequestType.ALL_SKY, "All Sky Image");
+        return new WebPlotRequest(RequestType.ALL_SKY, 'All Sky Image');
     }
 
 
 
     //======================== Blank =====================================
     static makeBlankPlotRequest(wp, arcsecSize, plotWidth, plotHeight ) {
-        var r= new WebPlotRequest(RequestType.BLANK, "");
+        var r= new WebPlotRequest(RequestType.BLANK, '');
         r.setWorldPt(wp);
         r.setBlankArcsecPerPix(arcsecSize);
         r.setBlankPlotWidth(plotWidth);
@@ -384,7 +379,7 @@ class WebPlotRequest extends ServerRequest {
 
     getExpandedTitle() { return this.getParam(C.EXPANDED_TITLE); }
 
-    setShowTitleArea(show) { this.setParam(C.SHOW_TITLE_AREA, show + ""); }
+    setShowTitleArea(show) { this.setParam(C.SHOW_TITLE_AREA, show + ''); }
 
     getShowTitleArea() { return this.getBooleanParam(C.SHOW_TITLE_AREA); }
 
@@ -458,7 +453,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param id integer, color table id number
      */
-    setInitialColorTable(id) { this.setParam(C.INIT_COLOR_TABLE, id + ""); }
+    setInitialColorTable(id) { this.setParam(C.INIT_COLOR_TABLE, id + ''); }
 
     /**
      *
@@ -500,7 +495,7 @@ class WebPlotRequest extends ServerRequest {
      * @param width the width in pixels
      * @see ZoomType
      */
-    setZoomToWidth(width) { this.setParam(C.ZOOM_TO_WIDTH, width + ""); }
+    setZoomToWidth(width) { this.setParam(C.ZOOM_TO_WIDTH, width + ''); }
 
     getZoomToWidth() {
         return this.containsParam(C.ZOOM_TO_WIDTH) ? this.getIntParam(C.ZOOM_TO_WIDTH) : 0;
@@ -514,7 +509,7 @@ class WebPlotRequest extends ServerRequest {
      * @see ZoomType
      */
     setZoomToHeight(height) {
-        this.setParam(C.ZOOM_TO_HEIGHT, height + "");
+        this.setParam(C.ZOOM_TO_HEIGHT, height + '');
     }
 
     getZoomToHeight() {
@@ -529,7 +524,7 @@ class WebPlotRequest extends ServerRequest {
      * @see ZoomType
      */
     setInitialZoomLevel(zl) {
-        this.setParam(C.INIT_ZOOM_LEVEL, zl + "");
+        this.setParam(C.INIT_ZOOM_LEVEL, zl + '');
     }
 
     /**
@@ -558,7 +553,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param hasMax boolean
      */
-    setHasMaxZoomLevel(hasMax) { this.setParam(C.HAS_MAX_ZOOM_LEVEL, hasMax +""); }
+    setHasMaxZoomLevel(hasMax) { this.setParam(C.HAS_MAX_ZOOM_LEVEL, hasMax +''); }
 
     hasMaxZoomLevel() { return this.getBooleanParam(C.HAS_MAX_ZOOM_LEVEL); }
 
@@ -593,7 +588,7 @@ class WebPlotRequest extends ServerRequest {
      * @see ZoomType
      */
     setZoomArcsecPerScreenPix(arcsecSize) {
-        this.setParam(C.ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + "");
+        this.setParam(C.ZOOM_ARCSEC_PER_SCREEN_PIX, arcsecSize + '');
     }
 
     /**
@@ -613,7 +608,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param rotateNorth, boolean, true to rotate
      */
-    setRotateNorth(rotateNorth) { this.setParam(C.ROTATE_NORTH, rotateNorth + ""); }
+    setRotateNorth(rotateNorth) { this.setParam(C.ROTATE_NORTH, rotateNorth + ''); }
 
     /**
      *
@@ -627,7 +622,7 @@ class WebPlotRequest extends ServerRequest {
      * @param rotateNorth true to rotate
      */
     setRotateNorthSuggestion(rotateNorth) {
-        this.setParam(C.ROTATE_NORTH_SUGGESTION, rotateNorth + "");
+        this.setParam(C.ROTATE_NORTH_SUGGESTION, rotateNorth + '');
     }
 
     /**
@@ -662,7 +657,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param rotate boolean, true to rotate
      */
-    setRotate(rotate) { this.setParam(C.ROTATE, rotate + ""); }
+    setRotate(rotate) { this.setParam(C.ROTATE, rotate + ''); }
 
     /**
      * @return boolean,  true if rotate, false otherwise
@@ -675,7 +670,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param rotationAngle  number, the angle in degrees to rotate to
      */
-    setRotationAngle(rotationAngle) { this.setParam(C.ROTATION_ANGLE, rotationAngle + ""); }
+    setRotationAngle(rotationAngle) { this.setParam(C.ROTATION_ANGLE, rotationAngle + ''); }
 
     /**
      * @return number, the angle
@@ -686,7 +681,7 @@ class WebPlotRequest extends ServerRequest {
      * set if this image should be flipped on the Y axis
      * @param flipY boolean, true to flip, false not to flip
      */
-    setFlipY(flipY) { this.setParam(C.FLIP_Y,flipY+""); }
+    setFlipY(flipY) { this.setParam(C.FLIP_Y,flipY+''); }
 
 
     /**
@@ -698,7 +693,7 @@ class WebPlotRequest extends ServerRequest {
      * set if this image should be flipped on the X axis
      * @param flipX boolean, true to flip, false not to flip
      */
-    setFlipX(flipX) { this.setParam(C.FLIP_X,flipX+""); }
+    setFlipX(flipX) { this.setParam(C.FLIP_X,flipX+''); }
 
 
     /**
@@ -716,7 +711,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param postCrop boolean, do the post crop
      */
-    setPostCrop(postCrop) { this.setParam(C.POST_CROP, postCrop + ""); }
+    setPostCrop(postCrop) { this.setParam(C.POST_CROP, postCrop + ''); }
 
     /**
      * @return boolean, do the post crop
@@ -728,7 +723,7 @@ class WebPlotRequest extends ServerRequest {
      * set the post crop
      * @param postCrop boolean
      */
-    setPostCropAndCenter(postCrop) { this.setParam(C.POST_CROP_AND_CENTER, postCrop + ""); }
+    setPostCropAndCenter(postCrop) { this.setParam(C.POST_CROP_AND_CENTER, postCrop + ''); }
 
     /**
      * @return boolean, do the post crop and center
@@ -747,7 +742,7 @@ class WebPlotRequest extends ServerRequest {
     getPostCropAndCenterType() {
         var cStr= this.getParam(C.POST_CROP_AND_CENTER_TYPE);
         var retval= null;
-        if (cStr!==null)  retval= CoordinateSys.parse(cStr);
+        if (cStr!==null) retval= CoordinateSys.parse(cStr);
         if (retval===null) retval= CoordinateSys.EQ_J2000;
         return retval;
     }
@@ -794,7 +789,7 @@ class WebPlotRequest extends ServerRequest {
      * @param arcsecSize float,  the size of the pixels in arcsec
      * @see RequestType
      */
-    setBlankArcsecPerPix(arcsecSize) { this.setParam(C.BLANK_ARCSEC_PER_PIX, arcsecSize + ""); }
+    setBlankArcsecPerPix(arcsecSize) { this.setParam(C.BLANK_ARCSEC_PER_PIX, arcsecSize + ''); }
 
     /**
      * @return float
@@ -804,7 +799,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param width int
      */
-    setBlankPlotWidth(width) { this.setParam(C.BLANK_PLOT_WIDTH, width + ""); }
+    setBlankPlotWidth(width) { this.setParam(C.BLANK_PLOT_WIDTH, width + ''); }
 
     /**
      * @return width int
@@ -817,7 +812,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param height int
      */
-    setBlankPlotHeight(height) { this.setParam(C.BLANK_PLOT_HEIGHT, height + ""); }
+    setBlankPlotHeight(height) { this.setParam(C.BLANK_PLOT_HEIGHT, height + ''); }
 
     getBlankPlotHeight() { return this.getIntParam(C.BLANK_PLOT_HEIGHT,0); }
 
@@ -939,7 +934,7 @@ class WebPlotRequest extends ServerRequest {
     getWorldPt() { return this.getWorldPtParam(C.WORLD_PT); }
 
 
-    setSizeInDeg(sizeInDeg) { this.setParam(C.SIZE_IN_DEG, sizeInDeg + ""); }
+    setSizeInDeg(sizeInDeg) { this.setParam(C.SIZE_IN_DEG, sizeInDeg + ''); }
     getSizeInDeg() { return this.getFloatParam(C.SIZE_IN_DEG, NaN); }
 
 //======================================================================
@@ -949,11 +944,11 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param multi boolean
      */
-    setMultiImageSupport(multi) { this.setParam(C.MULTI_IMAGE_FITS, multi + ""); }
+    setMultiImageSupport(multi) { this.setParam(C.MULTI_IMAGE_FITS, multi + ''); }
 
     getMultiImageSupport() { return this.getBooleanParam(C.MULTI_IMAGE_FITS); }
 
-    setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ""); }
+    setMultiImageIdx(idx) { this.setParam(C.MULTI_IMAGE_IDX, idx + ''); }
 
     /**
      * @return number index of image
@@ -976,7 +971,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param save boolean
      */
-    setSaveCorners(save) { this.setParam(C.SAVE_CORNERS, save + ""); }
+    setSaveCorners(save) { this.setParam(C.SAVE_CORNERS, save + ''); }
 
     /**
      * @return boolean
@@ -988,7 +983,7 @@ class WebPlotRequest extends ServerRequest {
      * @param allowImageSelection boolean
      */
     setAllowImageSelection(allowImageSelection) {
-        this.setParam(C.ALLOW_IMAGE_SELECTION, allowImageSelection + "");
+        this.setParam(C.ALLOW_IMAGE_SELECTION, allowImageSelection + '');
     }
 
     /**
@@ -1000,14 +995,14 @@ class WebPlotRequest extends ServerRequest {
      * @param allowImageSelectionCreateNew boolean
      */
     setHasNewPlotContainer(allowImageSelectionCreateNew) {
-        this.setParam(C.HAS_NEW_PLOT_CONTAINER, allowImageSelectionCreateNew + "");
+        this.setParam(C.HAS_NEW_PLOT_CONTAINER, allowImageSelectionCreateNew + '');
     }
 
     getHasNewPlotContainer() { this.getBooleanParam(C.HAS_NEW_PLOT_CONTAINER); }
 
 
 
-    setAdvertise(advertise)  { this.setParam(C.ADVERTISE, advertise + ""); }
+    setAdvertise(advertise) { this.setParam(C.ADVERTISE, advertise + ''); }
 
     isAdvertise() { return this.getBooleanParam(C.ADVERTISE); }
 
@@ -1028,7 +1023,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param hideTitleZoomLevel boolean
      */
-    setHideTitleDetail(hideTitleZoomLevel)  { this.setParam(C.HIDE_TITLE_DETAIL, hideTitleZoomLevel + ""); }
+    setHideTitleDetail(hideTitleZoomLevel) { this.setParam(C.HIDE_TITLE_DETAIL, hideTitleZoomLevel + ''); }
 
     /**
      * @return boolean
@@ -1038,7 +1033,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param thumbnailSize int
      */
-    setThumbnailSize(thumbnailSize) { this.setParam(C.THUMBNAIL_SIZE, thumbnailSize+""); }
+    setThumbnailSize(thumbnailSize) { this.setParam(C.THUMBNAIL_SIZE, thumbnailSize+''); }
 
     /**
      * @return int
@@ -1052,7 +1047,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param continueOnFail boolean
      */
-    setContinueOnFail(continueOnFail) { this.setParam(C.CONTINUE_ON_FAIL, continueOnFail + ""); }
+    setContinueOnFail(continueOnFail) { this.setParam(C.CONTINUE_ON_FAIL, continueOnFail + ''); }
 
     isContinueOnFail() { return this.getBooleanParam(C.CONTINUE_ON_FAIL); }
 
@@ -1073,7 +1068,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param {boolean} showBars boolean
      */
-    setShowScrollBars(showBars) { this.setParam(C.SHOW_SCROLL_BARS, showBars + ""); }
+    setShowScrollBars(showBars) { this.setParam(C.SHOW_SCROLL_BARS, showBars + ''); }
 
     /**
      * @return boolean
@@ -1087,7 +1082,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @param minimalReadout boolean
      */
-    setMinimalReadout(minimalReadout) { this.setParam(C.MINIMAL_READOUT,minimalReadout+""); }
+    setMinimalReadout(minimalReadout) { this.setParam(C.MINIMAL_READOUT,minimalReadout+''); }
 
     /**
      * @return boolean
@@ -1121,8 +1116,8 @@ class WebPlotRequest extends ServerRequest {
      */
     setPipelineOrder(orderList) {
         var out= orderList.reduce((str,v,idx,ary)=> {
-            return   str+ v.value + (idx===ary.length-1 ? "": ";");
-        },"");
+            return str+ v.value + (idx===ary.length-1 ? '': ';');
+        },'');
         this.setParam(C.PIPELINE_ORDER, out);
     }
 
@@ -1158,7 +1153,7 @@ class WebPlotRequest extends ServerRequest {
 
 
     prettyString() {
-        var s = "WebPlotRequest: ";
+        var s = 'WebPlotRequest: ';
         switch (this.getRequestType()) {
             case RequestType.SERVICE:
                 switch (this.getServiceType()) {
@@ -1166,26 +1161,26 @@ class WebPlotRequest extends ServerRequest {
                     case ServiceType.DSS:
                     case ServiceType.TWOMASS:
                         if (this.containsParam(C.WORLD_PT)) {
-                            s += this.getServiceType().value + "- " + this.getRequestArea();
+                            s += this.getServiceType().value + '- ' + this.getRequestArea();
                         }
                         else {
-                            s += this.getServiceType().value + "- Obj name: " + this.getObjectName() +
-                            ", radius: " +this.getParam(C.SIZE_IN_DEG);
+                            s += this.getServiceType().value + '- Obj name: ' + this.getObjectName() +
+                            ', radius: ' +this.getParam(C.SIZE_IN_DEG);
                         }
                         break;
                 }
                 break;
             case RequestType.FILE:
-                s += " File: " + this.getFileName();
+                s += ' File: ' + this.getFileName();
                 break;
             case RequestType.URL:
-                s += " URL: " + this.getURL();
+                s += ' URL: ' + this.getURL();
                 break;
             case RequestType.ALL_SKY:
-                s += " AllSky";
+                s += ' AllSky';
                 break;
             case RequestType.PROCESSOR:
-                s += "File Search Processor: "+ this.getRequestId();
+                s += 'File Search Processor: '+ this.getRequestId();
                 break;
         }
         return s;
@@ -1226,7 +1221,7 @@ class WebPlotRequest extends ServerRequest {
     }
 
     static makeServiceReqDesc(serviceType, survey, sizeInDeg) {
-        return serviceType.value + ": " + survey + ", " + sizeInDeg + " Deg";
+        return serviceType.value + ': ' + survey + ', ' + sizeInDeg + ' Deg';
     }
 
 
@@ -1235,7 +1230,7 @@ class WebPlotRequest extends ServerRequest {
      * This method is reciprocal to toString().
      *
      * @param {string} str the serialized WebPlotRequest
-     * @return the deserialized WebPlotRequest
+     * @return (WebPlotRequest) the deserialized WebPlotRequest
      */
     static parse(str) {
         return ServerRequest.parse(str, new WebPlotRequest());
@@ -1251,9 +1246,9 @@ class WebPlotRequest extends ServerRequest {
         return r ? null : r.makeCopy();
     }
 
-    static getAllKeys() { return _allKeys; }
+    static getAllKeys() { return allKeys; }
 
-    static getClientKeys() { return _clientSideKeys; }
+    static getClientKeys() { return clientSideKeys; }
 
     /**
      * Perform equals but ignore layout params, such as zoom type, width and height
@@ -1265,7 +1260,7 @@ class WebPlotRequest extends ServerRequest {
         if (obj instanceof WebPlotRequest) {
             var wpr1= this.makeCopy();
             var wpr2= obj.makeCopy();
-            _ignoreForEquals.forEach(key=> {
+            ignoreForEquals.forEach(key=> {
                 wpr1.removeParam(key);
                 wpr2.removeParam(key);
             });

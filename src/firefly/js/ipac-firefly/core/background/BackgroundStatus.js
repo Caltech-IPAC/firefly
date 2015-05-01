@@ -2,25 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
 /**
  * User: roby
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-"use strict";
+'use strict';
 
-import Enum from "enum";
-import Point from "ipac-firefly/visualize/Point.js";
-import BackgroundState from "./BackgroundState.js";
-import PackageProgress from "./PackageProgress.js";
-import ServerRequest from "ipac-firefly/data/ServerRequest.js";
-import ServerRequest from "ipac-firefly/visualize/WebPlotRequest.js";
-import replaceAll from "underscore.string/replaceAll";
-import words from "underscore.string/words";
-import validator from "validator";
+import Enum from 'enum';
+import Point from 'ipac-firefly/visualize/Point.js';
+import WebPlotRequest from 'ipac-firefly/visualize/WebPlotRequest.js';
+import BackgroundState from './BackgroundState.js';
+import PackageProgress from './PackageProgress.js';
+import ServerRequest from 'ipac-firefly/data/ServerRequest.js';
+import ServerRequest from 'ipac-firefly/visualize/WebPlotRequest.js';
+import replaceAll from 'underscore.string/replaceAll';
+import words from 'underscore.string/words';
+import validator from 'validator';
 
 export const BgType = new Enum(['SEARCH', 'PACKAGE', 'UNKNOWN', 'PERSISTENT']);
 export const PushType = new Enum(['WEB_PLOT_REQUEST', 'REGION_FILE_NAME', 'TABLE_FILE_NAME', 'FITS_COMMAND_EXT']);
@@ -52,7 +50,8 @@ const Keys= {
     USER_DESC     :  'USER_DESC_#',
     RESPONSE_CNT :   'RESPONSE_CNT',
     ACTIVE_REQUEST_CNT :'ACTIVE_REQUEST_CNT'
-}
+};
+
 
 class BackgroundStatus {
 
@@ -60,13 +59,13 @@ class BackgroundStatus {
         this.params= {};
         if (inParams) this.setParams(inParams);
         if (!type) {
-            if (!this.getBackgroundType())  this.setBackgroundType(BgType.UNKNOWN);
+            if (!this.getBackgroundType()) this.setBackgroundType(BgType.UNKNOWN);
         }
         else {
             this.setBackgroundType(type);
         }
         if (!state) {
-            if (!this.getState())  this.setState(BackgroundState.STARTING);
+            if (!this.getState()) this.setState(BackgroundState.STARTING);
         }
         else {
             this.setState(state);
@@ -88,7 +87,7 @@ class BackgroundStatus {
 //====================================================================
 //====================================================================
 
-    static cloneWithState(state, copyFromStatus)  {
+    static cloneWithState(state, copyFromStatus) {
         var retval= new BackgroundStatus();
         if (copyFromStatus) retval.copyFrom(copyFromStatus);
         retval.setState(state);
@@ -106,9 +105,14 @@ class BackgroundStatus {
     }
 
 
-    setParam(name, ...values) {
-        if (values.length) {
-            this.params[name]= values.join(',');
+    setPara(name, values) {
+        if (values) {
+            if (Array.isArray(values) && values.length) {
+                this.params[name]= values.join(',');
+            }
+            else {
+                this.params[name]= values;
+            }
         }
     }
 
@@ -182,7 +186,7 @@ class BackgroundStatus {
             attributes= a.toString();
         }
         else if (!attributes.includes(a.toString())) {
-            attributes+= "|"+a.toString();
+            attributes+= '|'+a.toString();
         }
         this.params[Keys.ATTRIBUTE]= attributes;
     }
@@ -266,7 +270,7 @@ class BackgroundStatus {
         this.setParam(Keys.PUSH_DATA_BASE +total,serializeData);
         this.setParam(Keys.PUSH_TYPE_BASE +total,pushType.toString());
         total++;
-        this.setParam(Keys.PUSH_CNT,total+"");
+        this.setParam(Keys.PUSH_CNT,total+'');
     }
 
     /**
@@ -300,7 +304,7 @@ class BackgroundStatus {
         this.setParam(Keys.USER_RESPONSE +total,data);
         this.setParam(Keys.USER_DESC +total,desc);
         total++;
-        this.setParam(Keys.RESPONSE_CNT,total+"");
+        this.setParam(Keys.RESPONSE_CNT,total+'');
     }
 
 
@@ -319,14 +323,14 @@ class BackgroundStatus {
     incRequestCnt() {
         var cnt= this.getRequestedCnt();
         cnt++;
-        this.setParam(Keys.ACTIVE_REQUEST_CNT,cnt+"");
+        this.setParam(Keys.ACTIVE_REQUEST_CNT,cnt+'');
     }
 
     decRequestCnt() {
         var cnt= this.getRequestedCnt();
         if (cnt>0) {
             cnt--;
-            this.setParam(Keys.ACTIVE_REQUEST_CNT,cnt+"");
+            this.setParam(Keys.ACTIVE_REQUEST_CNT,cnt+'');
         }
     }
 
@@ -338,7 +342,7 @@ class BackgroundStatus {
         var total= this.getNumMessages();
         this.setParam(Keys.MESSAGE_BASE +total,message);
         total++;
-        this.setParam(Keys.MESSAGE_CNT,total+"");
+        this.setParam(Keys.MESSAGE_CNT,total+'');
     }
 
     getNumMessages() {
@@ -354,7 +358,7 @@ class BackgroundStatus {
         var list= [];
         if (cnt) {
             for(var i= 0; (i<cnt); i++) {
-                var m= getMessage(i);
+                var m= this.getMessage(i);
                 if (m) list.push(m);
             }
         }
@@ -403,7 +407,7 @@ class BackgroundStatus {
         return this.getIntParam(Keys.PACKAGE_CNT,0);
     }
 
-    setPackageCount(cnt) { this.setParam(Keys.PACKAGE_CNT,cnt+""); }
+    setPackageCount(cnt) { this.setParam(Keys.PACKAGE_CNT,cnt+''); }
 
     /**
      *
@@ -413,7 +417,7 @@ class BackgroundStatus {
         var total= this.getPackageCount();
         this.setPartProgress(progress,total);
         total++;
-        this.setParam(Keys.PACKAGE_CNT,total+"");
+        this.setParam(Keys.PACKAGE_CNT,total+'');
     }
 
     /**
@@ -483,9 +487,9 @@ class BackgroundStatus {
     }
 
 
-    setFilePath(filePath) { setParam(Keys.FILE_PATH,filePath); }
+    setFilePath(filePath) { this.setParam(Keys.FILE_PATH,filePath); }
 
-    getFilePath() { return getParam(Keys.FILE_PATH); }
+    getFilePath() { return this.getParam(Keys.FILE_PATH); }
 
     /**
      * @return {number} processed bytes if all bundles were processed successfully, otherwise previously estimated size in bytes
@@ -493,9 +497,9 @@ class BackgroundStatus {
     getTotalSizeInBytes() {
         var actualProcessSize = 0;
         if (this.getState()===BackgroundState.SUCCESS && this.getPackageCount()>0) {
-            actualProcessSize= this.getPartProgressList().reduce( (pp,total) =>  total+pp.getProcessedBytes() ,0);
+            actualProcessSize= this.getPartProgressList().reduce( (pp,total) => total+pp.getProcessedBytes() ,0);
         }
-        return actualProcessSize ? actualProcessSize : this.getIntParam(Keys.TOTAL_BYTES,0)
+        return actualProcessSize ? actualProcessSize : this.getIntParam(Keys.TOTAL_BYTES,0);
     }
 
 //====================================================================
@@ -524,7 +528,7 @@ class BackgroundStatus {
         const bgStat= new BackgroundStatus();
         const params = str.split(PARAM_SEP);
         if (params.length>0) {
-            words(str,PARAM_SEP).forEach(p => {
+            words(str, PARAM_SEP).forEach(p => {
                 var outParam= words(p,KW_VAL_SEP);
                 if (outParam.length===2) bgStat.setParam(outParam[0], outParam[1]);
             });
@@ -543,7 +547,7 @@ class BackgroundStatus {
     }
 
     toString() {
-        return "packageID: " + this.getID() + ", state: " + this.getState() + ", type: " + this.getBackgroundType();
+        return 'packageID: ' + this.getID() + ', state: ' + this.getState() + ', type: ' + this.getBackgroundType();
     }
 
     /**
@@ -551,7 +555,7 @@ class BackgroundStatus {
      * @return {BackgroundStatus} a Background status witha new state
      */
     cloneWithState(newState) {
-        s = new BackgroundStatus();
+        var s = new BackgroundStatus();
         s.copyFrom(this);
         s.setState(newState);
         return s;
@@ -580,7 +584,7 @@ class BackgroundStatus {
 //====================================================================
 
     getBooleanParam(key, def=false) {
-        return this.params[key] ? toBoolean(this.params[key]) : def;
+        return this.params[key] ? validator.toBoolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {

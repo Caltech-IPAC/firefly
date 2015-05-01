@@ -1,11 +1,11 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-"use strict";
+'use strict';
 import React from 'react/addons';
 //import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
-import InputFieldView from "./InputFieldView.jsx";
-import FormStoreLinkMixin from "ipac-firefly/ui/model/FormStoreLinkMixin.js";
+import InputFieldView from './InputFieldView.jsx';
+import FormStoreLinkMixin from 'ipac-firefly/ui/model/FormStoreLinkMixin.js';
 
 
 

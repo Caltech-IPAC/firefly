@@ -1,9 +1,9 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-"use strict";
+'use strict';
 import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
-import InputFieldLabel from "./InputFieldLabel.jsx";
+import InputFieldLabel from './InputFieldLabel.jsx';
 import React from 'react/addons';
 
 const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif';
@@ -27,7 +27,7 @@ var InputFieldView = React.createClass(
            return {
                valid : true,
                visible : true,
-               message: ""
+               message: ''
 
            };
        },
@@ -66,7 +66,7 @@ var InputFieldView = React.createClass(
 
        makeWarningArea(warn) {
            /*jshint ignore:start */
-           var warnIcon= "";
+           var warnIcon= '';
            if (warn) {
                warnIcon= (
                        <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
@@ -80,9 +80,9 @@ var InputFieldView = React.createClass(
            var retval= (
                    <div style={
                       {
-                       paddingLeft: "3px",
-                       width: "16px",
-                       height: "16px",
+                       paddingLeft: '3px',
+                       width: '16px',
+                       height: '16px',
                        display:'inline-block'}
                        }>
                         {warnIcon}
@@ -94,10 +94,10 @@ var InputFieldView = React.createClass(
 
        computeStyle : function() {
            if (!this.props.valid) {
-               return "firefly-inputfield-error";
+               return 'firefly-inputfield-error';
            }
            else {
-               return this.state.hasFocus ?  "firefly-inputfield-focus" : "firefly-inputfield-valid";
+               return this.state.hasFocus ? 'firefly-inputfield-focus' : 'firefly-inputfield-valid';
            }
        },
 
@@ -127,8 +127,8 @@ var InputFieldView = React.createClass(
             var e= React.findDOMNode(warnIcon);
             var bodyRect = document.body.getBoundingClientRect();
             var elemRect = e.getBoundingClientRect();
-            this.warningOffsetX   = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
-            this.warningOffsetY   = elemRect.top - bodyRect.top;
+            this.warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
+            this.warningOffsetY = elemRect.top - bodyRect.top;
         }
     },
 
@@ -143,7 +143,7 @@ var InputFieldView = React.createClass(
         var retval= null;
         if (this.props.visible) {
             retval= (
-                <div style={{whiteSpace:"nowrap"}}>
+                <div style={{whiteSpace:'nowrap'}}>
                     <InputFieldLabel label={this.props.label}
                         tooltip={this.props.tooltip}
                         labelWidth={this.props.labelWidth}
@@ -157,7 +157,7 @@ var InputFieldView = React.createClass(
                         title={this.props.tooltip}
                     />
                        {this.makeWarningArea(!this.props.valid)}
-                       {this.state.infoPopup?this.makeInfoPopup() : ""}
+                       {this.state.infoPopup?this.makeInfoPopup() : ''}
                 </div>
             );
         }
