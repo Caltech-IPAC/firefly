@@ -135,6 +135,50 @@ var StringUtils= (function(retUtil) {
         return (s.indexOf(endStr, s.length - endStr.length) !== -1);
     };
 
+    var parseHelper= function(s, max, splitToken) {
+
+        var sAry= null;
+        if (s) {
+            sAry= s.split(splitToken,max+1);
+            if (sAry.length>max)  sAry= null;
+        }
+        if (!sAry) throw "wrong number of tokens in String";
+        return sAry;
+
+    };
+
+    var parseStringList= function(s,token,max=500) {
+        var retval=[];
+        if (s.startsWith('[') && s.endsWith(']')) {
+            var ss= s.substring(1,s.length-1);
+            var sAry= ss.split(token,max);
+            sAry.forEach(function(item) {
+                if (item) {retval.push(item);}
+            });
+        }
+        return retval;
+    };
+
+    var parseStringMap= function(s,token) {
+        var map= new Map();
+        if (s.startsWith('[') && s.endsWith(']')) {
+            s= s.substring(1,s.length-1);
+            var sAry = s.split(token,500);
+            for(var i= 0; (i<sAry.length-1); i+=2) {
+                if (sAry[i]  && sAry[i+1]) {
+                    map.set(sAry[i],sAry[i+1]);
+                }
+            }
+        }
+        return map;
+    };
+
+    var checkNull= function(s) {
+        if (!s)              return null;
+        else if (s==='null') return null;
+        else                 return s;
+    };
+
     retUtil.matchesIgCase= matchesIgCase;
     retUtil.matches= matches;
     retUtil.crunch= crunch;
@@ -142,6 +186,11 @@ var StringUtils= (function(retUtil) {
     retUtil.convertExtendedAscii= convertExtendedAscii;
     retUtil.isEmpty= isEmpty;
     retUtil.startsWith= startsWith;
+    retUtil.endsWith= endsWith;
+    retUtil.parseHelper= parseHelper;
+    retUtil.parseStringList= parseStringList;
+    retUtil.parseStringMap= parseStringMap;
+    retUtil.checkNull= checkNull;
 
     if (hasModule) {
         exports.matchesIgCase= matchesIgCase;
@@ -152,6 +201,10 @@ var StringUtils= (function(retUtil) {
         exports.isEmpty= isEmpty;
         exports.startsWith= startsWith;
         exports.endsWith= endsWith;
+        exports.parseHelper= parseHelper;
+        exports.parseStringList= parseStringList;
+        exports.parseStringMap= parseStringMap;
+        exports.checkNull= checkNull;
     }
 
     return retUtil;
