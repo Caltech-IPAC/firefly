@@ -18,7 +18,7 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public class BrowserInfo {
 
-    public static enum Platform {
+    public enum Platform {
         MAC("Mac"),
         WINDOWS("Windows"),
         LINUX("Linux"),
@@ -45,6 +45,7 @@ public class BrowserInfo {
     private static final String FIREFOX_KEY= "firefox/";
     private static final String SIMPLE_VERSION_KEY = "version/";
     private static final String CHROME_KEY= "chrome/";
+    private static final String IE_11_KEY= "rv:";
 
     private Browser _browser;
     private Platform _platform;
@@ -54,7 +55,7 @@ public class BrowserInfo {
     private boolean _allRecognized;
 
     public BrowserInfo(String userAgent) {
-        _userAgent= userAgent;
+        _userAgent= userAgent.toLowerCase();
         _platform= getPlatform(userAgent);
         _allRecognized = (_platform!=Platform.UNKNOWN);
         evaluateBrowser(_platform);
@@ -239,7 +240,10 @@ public class BrowserInfo {
         _majorVersion= UNKNOWN_VERSION;
         if (_userAgent.contains("msie")) {
             _browser= Browser.IE;
-            if (_userAgent.contains("msie 10")) {
+            if (_userAgent.contains("msie 11")) {
+                _majorVersion= 11;
+            }
+            else if (_userAgent.contains("msie 10")) {
                 _majorVersion= 10;
             }
             else if (_userAgent.contains("msie 9")) {
@@ -254,6 +258,10 @@ public class BrowserInfo {
             else if (_userAgent.contains("msie 6")) {
                 _majorVersion= 6;
             }
+        }
+        else if (_userAgent.contains("windows nt")) {
+            _browser= Browser.IE;
+            _allRecognized= parseVersion(IE_11_KEY);
         }
         else if (_userAgent.contains(FIREFOX_KEY)) {
             _browser= Browser.FIREFOX;
@@ -383,4 +391,8 @@ public class BrowserInfo {
         return platform;
     }
 
+    public static void main(String[] args) {
+        BrowserInfo bi= new BrowserInfo("mozilla/5.0 (windows nt 6.1; wow64; trident/7.0; slcc2; .net clr 2.0.50727; .net clr 3.5.30729; .net clr 3.0.30729; media center pc 6.0; bri/2; .net4.0c; .net4.0e; rv:11.0) like gecko");
+        System.out.println(bi.getBrowserType()+" " + bi.getVersionString());
+    }
 }
