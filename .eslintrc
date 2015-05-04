@@ -1,6 +1,7 @@
 {
    "env": {
-        "browser": true,
+        "es6": true,
+        "browser": true
     },
     "ecmaFeatures": {
         "blockBindings": true,
@@ -29,6 +30,7 @@
         "space-infix-ops" : false,
         "comma-spacing" : false,
         "key-spacing" : false,
-        "global-strict" : false
+        "global-strict" : false,
+        "no-console" : false
     }
 }

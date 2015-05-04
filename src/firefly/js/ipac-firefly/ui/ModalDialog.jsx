@@ -5,7 +5,7 @@
 /*jshint browserify:true*/
 
 "use strict";
-var React= require('react/addons');
+var React= require("react/addons");
 
 
 var ModalDialog = module.exports= React.createClass({

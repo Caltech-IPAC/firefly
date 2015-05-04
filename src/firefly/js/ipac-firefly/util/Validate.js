@@ -3,11 +3,11 @@
  */
 /*jshint browserify:true*/
 /*jshint esnext:true*/
-"use strict";
-//var validator= require("validator");
-//var sprintf= require("underscore.string/sprintf");
-import validator from "validator";
-import sprintf from "underscore.string/sprintf";
+'use strict';
+//var validator= require('validator');
+//var sprintf= require('underscore.string/sprintf');
+import validator from 'validator';
+import sprintf from 'underscore.string/sprintf';
 
 var isInRange= function(val,min,max) {
     var retval= !(min !== undefined && min!==null && val<min);
@@ -16,12 +16,12 @@ var isInRange= function(val,min,max) {
 
 var typeInject= {
     asInt : {
-        dataTypeDesc : "integer",
+        dataTypeDesc : 'integer',
         testFunc : validator.isInt,
         convertFunc : validator.toInt
     },
     asFloat : {
-        dataTypeDesc : "float",
+        dataTypeDesc : 'float',
         testFunc : validator.isFloat,
         convertFunc : validator.toFloat
     }
@@ -31,26 +31,26 @@ var typeInject= {
 
 var makePrecisionStr= function(value,precision) {
     if (value !== undefined && value!==null && precision) {
-        return sprintf("%."+precision+"f",value);
+        return sprintf('%.'+precision+'f',value);
     }
-    return (value || "")+ "";
+    return (value || '')+ '';
 };
 
 var makeErrorMessage= function(description,min,max,precision) {
-    var retval= "";
+    var retval= '';
     var hasMin= (min !== undefined && min!==null);
     var hasMax= (min !== undefined && min!==null);
     var minStr= makePrecisionStr(min,precision);
     var maxStr= makePrecisionStr(max,precision);
-    description= description || "";
+    description= description || '';
     if (hasMin && hasMax) {
-        retval= description + ": must be between " + minStr + " and " + maxStr;
+        retval= description + ': must be between ' + minStr + ' and ' + maxStr;
     }
     else if (hasMin) {
-        retval= description + ": must be greater than " + minStr;
+        retval= description + ': must be greater than ' + minStr;
     }
     else if (hasMax) {
-        retval= description + ": must be less than " + maxStr;
+        retval= description + ': must be less than ' + maxStr;
     }
     return retval;
 };
@@ -58,7 +58,7 @@ var makeErrorMessage= function(description,min,max,precision) {
 var validateRange = function(min,max,precision,description,dType, valStr) {
     var retval= {
         valid : true,
-        message : ""
+        message : ''
     };
     if (valStr) {
         if (valStr && dType.testFunc(valStr)) {
@@ -70,7 +70,7 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
         }
         else {
             retval.valid = false;
-            retval.message = description + ": must be a "+ dType.dataTypeDesc + makeErrorMessage(null, min, max, null);
+            retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, null);
         }
     }
     return retval;
@@ -79,14 +79,14 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
 exports.validateEmail = function(description,valStr) {
     var retval = {
         valid: true,
-        message: ""
+        message: ''
     };
     if (!validator.isEmail(valStr)) {
         retval.valid = false;
-        retval.message = description + ": must be a valid email address";
+        retval.message = description + ': must be a valid email address';
     }
     return retval;
-}
+};
 
 exports.intRange = function(min,max,description, valStr) {
    return validateRange(min,max,null,description,typeInject.asInt,valStr);
