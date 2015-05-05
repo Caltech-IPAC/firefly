@@ -265,6 +265,11 @@ public class VisPushJob {
                 }
 
                 @Override
+                public boolean isOpen() {
+                    return true;
+                }
+
+                @Override
                 public void close() {}
             });
             ServerEventManager.addEventQueue(queue);

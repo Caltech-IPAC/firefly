@@ -26,7 +26,8 @@ public class ServerEventManager {
                                                     new CacheEventWorker() : new SimpleEventWorker();
     private static final List<ServerEventQueue> evQueueList= new CopyOnWriteArrayList<ServerEventQueue>();
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-
+    private static long totalEventCnt;
+    private static long deliveredEventCnt;
 
 
 
@@ -52,16 +53,19 @@ public class ServerEventManager {
     }
 
     static void processEvent(ServerEvent ev) {
+        totalEventCnt++;
+        boolean delivered = false;
         for(ServerEventQueue queue : evQueueList) {
             try {
                 if (queue.matches(ev)) {
                     try {
                         queue.putEvent(ev);
+                        delivered = true;
                     } catch (Exception e) {
                         // queue is bad..  release it.
                         LOG.warn("Event queue is bad.. releasing it:" + queue.getQueueID());
-                        if (queue.getEventTerminal() != null) {
-                            queue.getEventTerminal().close();
+                        if (queue.getEventConnector() != null) {
+                            queue.getEventConnector().close();
                         }
                         evQueueList.remove(queue);
                     }
@@ -70,15 +74,38 @@ public class ServerEventManager {
                 LOG.warn(e, "Unexpected exception while processing event: " + ev + " for queue:" + queue == null ? "null" : queue.getQueueID());
             }
         }
+        if (delivered) deliveredEventCnt++;
     }
 
     public static void removeEventQueue(ServerEventQueue queue) {
         evQueueList.remove(queue);
     }
 
-///==============================================
-///==============================================
-///==============================================
+//====================================================================
+//  For stats
+//====================================================================
+
+    public static int getActiveQueueCnt() {
+        int cnt = 0;
+        for(ServerEventQueue queue : evQueueList) {
+            if (queue.getEventConnector().isOpen()) {
+                cnt++;
+            } else {
+                removeEventQueue(queue);
+            }
+        }
+        return cnt;
+    }
+
+    public static long getTotalEventCnt() {
+        return totalEventCnt;
+    }
+
+    public static long getDeliveredEventCnt() {
+        return deliveredEventCnt;
+    }
+
+
 //====================================================================
 //
 //====================================================================

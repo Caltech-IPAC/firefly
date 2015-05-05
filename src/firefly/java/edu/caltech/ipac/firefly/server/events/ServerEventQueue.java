@@ -45,7 +45,7 @@ public class ServerEventQueue {
         }
     }
 
-    public EventConnector getEventTerminal() {
+    public EventConnector getEventConnector() {
         return eventTerminal;
     }
 
@@ -66,8 +66,6 @@ public class ServerEventQueue {
                 // don't send event back to itself.
                 return false;
             }
-
-            if (true) return true;
 
             if (!StringUtils.isEmpty(evTarget.getConnID()) && !evTarget.getConnID().equals(connID)) {
                 return false;
@@ -135,6 +133,7 @@ public class ServerEventQueue {
 
     public static interface EventConnector {
         public void send(String message) throws Exception;
+        public boolean isOpen();
         public void close();
     }
 }

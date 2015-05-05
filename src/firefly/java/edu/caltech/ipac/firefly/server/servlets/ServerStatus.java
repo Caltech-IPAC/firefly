@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingController;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.util.StringUtils;
@@ -40,6 +41,9 @@ public class ServerStatus extends BaseHttpServlet {
             skip(writer);
 
             showPackagingStatus(writer);
+            skip(writer);
+
+            showEventsStatus(writer);
             skip(writer);
 
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
@@ -101,6 +105,13 @@ public class ServerStatus extends BaseHttpServlet {
 
     private static void showCountStatus(PrintWriter w) {
         w.println(StringUtils.toString(Counters.getInstance().reportStatus(), "\n"));
+    }
+
+    private static void showEventsStatus(PrintWriter w) {
+        w.println("Server Events Information");
+        w.println("  - Total events fired:" + ServerEventManager.getTotalEventCnt());
+        w.println("  - Total events delivered:" + ServerEventManager.getDeliveredEventCnt());
+        w.println("  - Total active queues:" + ServerEventManager.getActiveQueueCnt());
     }
 
     private static void showPackagingStatus(PrintWriter w) {

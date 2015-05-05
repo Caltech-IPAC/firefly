@@ -75,6 +75,10 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         session.getBasicRemote().sendText(message);
     }
 
+    public boolean isOpen() {
+        return session != null && session.isOpen();
+    }
+
     public void close() {
         if (session != null) {
             try {

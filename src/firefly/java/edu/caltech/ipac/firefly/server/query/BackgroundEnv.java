@@ -451,7 +451,7 @@ public class BackgroundEnv {
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, new ServerEvent.EventTarget(ServerEvent.Scope.CHANNEL)); // force a cache entry here
+            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, evTarget); // force a cache entry here
         }
 
 
