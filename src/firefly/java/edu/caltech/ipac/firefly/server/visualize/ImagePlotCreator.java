@@ -64,7 +64,7 @@ public class ImagePlotCreator {
              else  {
                  PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING, PlotServUtils.CREATING_MSG);
              }
-             ImagePlot plot= createImagePlot(stateAry[i],readInfo,zoomChoice, readAry.length>1);
+             ImagePlot plot= createImagePlot(stateAry[i], readInfo.getBand(),readInfo,zoomChoice, readAry.length>1);
              WebFitsData wfData= makeWebFitsData(plot,readInfo.getBand(),readInfo.getOriginalFile());
              wfDataMap.put(Band.NO_BAND,wfData);
              Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(1);
@@ -94,12 +94,11 @@ public class ImagePlotCreator {
              Band band= entry.getKey();
              FileReadInfo readInfoAry[]= entry.getValue();
              FileReadInfo readInfo= readInfoAry[state.getImageIdx(band)];
-             int bIdx= PlotServUtils.cnvtBand(readInfo.getBand());
              if (first) {
-                 plot= createImagePlot(state,readInfo,zoomChoice,false);
+                 plot= createImagePlot(state,readInfo.getBand(), readInfo,zoomChoice,false);
                  if (state.isThreeColor()) {
-                     plot.setThreeColorBand(readInfo.getFitsRead(),bIdx);
-                     plot.setThreeColorBandVisible(bIdx, state.isBandVisible(readInfo.getBand()));
+                     plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
+                                            readInfo.getBand());
                  }
                  if (readInfo.getModFileWriter()!=null) {
                      fileWriterMap.put(band,readInfo.getModFileWriter());
@@ -136,6 +135,7 @@ public class ImagePlotCreator {
      * @throws nom.tam.fits.FitsException if creating plot fails
      */
     static ImagePlot createImagePlot(PlotState state,
+                                     Band band,
                                      FileReadInfo readInfo,
                                      ZoomChoice zoomChoice,
                                      boolean    isMultiImage) throws FitsException {
@@ -146,12 +146,11 @@ public class ImagePlotCreator {
             state.setRangeValues(rv,state.firstBand());
         }
 
-        // todo uncomment
-//        state.setDecimationLevel(pd._band,pd._decimation);
         float zoomLevel= zoomChoice.getZoomLevel();
 
         ImagePlot plot= PlotServUtils.makeImagePlot( readInfo.getFitsRead(), zoomLevel,
                                                      state.isThreeColor(),
+                                                     band,
                                                      state.getColorTableId(), rv);
 
 
@@ -172,14 +171,17 @@ public class ImagePlotCreator {
                                                                        IOException,
                                                                        GeomException {
         ModFileWriter retval= null;
-        int bIdx= PlotServUtils.cnvtBand(readInfo.getBand());
-        plot.addThreeColorBand(readInfo.getFitsRead(),bIdx);
-        plot.setThreeColorBandVisible(bIdx, state.isBandVisible(readInfo.getBand()));
-        HistogramOps histOps= plot.getHistogramOps(bIdx);
+        Band band= readInfo.getBand();
+
+
+        plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
+                               readInfo.getBand());
+        HistogramOps histOps= plot.getHistogramOps(band);
         FitsRead tmpFR= histOps.getFitsRead();
         if (tmpFR!=readInfo.getFitsRead() && readInfo.getWorkingFile()!=null) { // testing to see it the fits read got geomed when the band was added
-            state.setImageIdx(0, readInfo.getBand());
+            state.setImageIdx(0, band);
             retval = new ModFileWriter.GeomFileWriter(readInfo.getWorkingFile(),0,tmpFR,readInfo.getBand(),false);
+            FitsCacher.addFitsReadToCache(retval.getTargetFile(), new FitsRead[]{tmpFR});
         }
 
         RangeValues rv= state.getRangeValues(readInfo.getBand());
@@ -346,10 +348,9 @@ public class ImagePlotCreator {
 
     public static WebFitsData makeWebFitsData(ImagePlot plot, Band band, File f) {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
-        int idx= PlotServUtils.cnvtBand(band);
-        HistogramOps ops= plot.getHistogramOps(idx);
+        HistogramOps ops= plot.getHistogramOps(band);
         return new WebFitsData( ops.getDataMin(), ops.getDataMax(),
-                                fileLength, plot.getFluxUnits(idx));
+                                fileLength, plot.getFluxUnits(band));
     }
 }
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -44,15 +45,14 @@ public class PlotClientCtx implements Serializable {
     private static final long   LONG_HOLD_TIME= 15*1000;
     private static final AtomicLong _cnt= new AtomicLong(0);
 
-    private final String _key;
-    private final CacheKey _cacheKey;
-//    private volatile transient ImagePlot _plot= null;
     private volatile transient long _minimumHoldTime = -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
+    private final transient AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
     private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
 
+    private final String _key;
+    private final CacheKey _imagePlotCacheKey;
     private final List<Integer> _previousZoomList= new ArrayList<Integer>(15);
-//    private final AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
     private final AtomicReference<PlotImages>_images= new AtomicReference<PlotImages>(null);
     private final AtomicReference<PlotState>_state= new AtomicReference<PlotState>(null);
 
@@ -63,7 +63,7 @@ public class PlotClientCtx implements Serializable {
     public PlotClientCtx () {
         long cnt= _cnt.incrementAndGet();
         _key = "WebPlot-"+HOST_NAME+"--"+cnt;
-        _cacheKey= new StringKey(_key);
+        _imagePlotCacheKey = new StringKey(_key);
     }
 
 //======================================================================
@@ -71,16 +71,20 @@ public class PlotClientCtx implements Serializable {
 //======================================================================
 
     public ImagePlot getPlot() {
-        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-        ImagePlot p= (ImagePlot)memCache.get(_cacheKey);
+        ImagePlot p= _plot.get();
+        if (p==null) {
+            Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+            p= (ImagePlot)memCache.get(_imagePlotCacheKey);
+            if (p!=null) _plot.set(p);
+        }
         return p;
     }
 
 
     public void setPlot(ImagePlot p) {
         Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-        memCache.put(_cacheKey,p);
-//        _plot.set(p);
+        memCache.put(_imagePlotCacheKey,p);
+        _plot.set(p);
         updateAccessTime();
         if (p!=null) initHoldTime();
     }
@@ -120,12 +124,12 @@ public class PlotClientCtx implements Serializable {
         try {
             for(PlotImages images : allImages) {
                 for(PlotImages.ImageURL image : images) {
-                    delFile=  VisContext.convertToFile(image.getURL());
+                    delFile=  ServerContext.convertToFile(image.getURL());
                     delFile.delete(); // if the file does not exist, I don't care
                 }
                 String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
                 if (thumbUrl!=null) {
-                    delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
+                    delFile=  ServerContext.convertToFile(images.getThumbnail().getURL());
                     delFile.delete(); // if the file does not exist, I don't care
                 }
             }
@@ -177,7 +181,7 @@ public class PlotClientCtx implements Serializable {
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();
                 Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-                memCache.put(_cacheKey,null);
+                memCache.put(_imagePlotCacheKey,null);
             }
         }
         return doFree;
@@ -189,18 +193,14 @@ public class PlotClientCtx implements Serializable {
         PlotState state= _state.get();
         if (p!=null) {
             if (p.isThreeColor()) {
-                for(int i=0; i<3; i++) {
-                    if (p.isColorBandInUse(i)) {
-                        FitsRead fr= p.getHistogramOps(i).getFitsRead();
-                        rv= fr.getRangeValues();
-                        state.setRangeValues(rv, PlotServUtils.cnvtBand(i));
-
+                for(Band band : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
+                    if (p.isColorBandInUse(band)) {
+                        state.setRangeValues(FitsRead.getDefaultRangeValues(), band);
                     }
                 }
             }
             else {
-                rv= p.getFitsRead().getRangeValues();
-                state.setRangeValues(rv, Band.NO_BAND);
+                state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
                 int id= p.getImageData().getColorTableId();
                 if (id==-1) id= 0;
                 state.setColorTableId(id);
@@ -209,6 +209,14 @@ public class PlotClientCtx implements Serializable {
     }
 
 
+    /**
+     * should be call at the end of a servlet call.  This will clean up the temp copy of the ImagePlot
+     */
+    public void flushToCache() {
+        ImagePlot p= _plot.get();
+        _plot.set(null);
+        if (p!=null) p.clearFitsReadGroup();
+    }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
@@ -237,7 +245,7 @@ public class PlotClientCtx implements Serializable {
         PlotState state= _state.get();
         long length= 0;
         for(Band band : state.getBands()) {
-            File f= VisContext.getWorkingFitsFile(state,band);
+            File f= PlotStateUtil.getWorkingFitsFile(state, band);
             if (f!=null) length+= f.length();
         }
         return Math.round((double)length/(double)FileUtil.K);
@@ -247,5 +255,6 @@ public class PlotClientCtx implements Serializable {
     public long getDataSizeMB() {
         return getDataSizeK()/1024;
     }
+
 }
 

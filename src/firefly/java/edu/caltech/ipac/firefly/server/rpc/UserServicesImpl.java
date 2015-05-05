@@ -21,7 +21,6 @@ import edu.caltech.ipac.firefly.server.persistence.HistoryAndTagsDao;
 import edu.caltech.ipac.firefly.server.persistence.PreferencesDao;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
@@ -368,7 +367,7 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
                     title = FileUtil.readFile(f);
                 } catch (IOException e) {}
 
-                String fStr = VisContext.replaceWithPrefix(f);
+                String fStr = ServerContext.replaceWithPrefix(f);
                 alert = new Alert(String.format(URL_F, fStr), title, true);
                 alert.setLastModDate(f.lastModified());
                 alerts.put(getKey(f), alert);

@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -36,7 +35,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         String dest = req.getParameter(DEST_PARAM);
         File destDir = ServerContext.getTempWorkDir();
         if (!StringUtils.isEmpty(dest)) {
-            destDir = VisContext.convertToFile(dest);
+            destDir = ServerContext.convertToFile(dest);
         }
         String overrideKey= req.getParameter("cacheKey");
 
@@ -65,7 +64,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 try {
                     File uf = File.createTempFile("upload_", ext, destDir);
                     item.write(uf);
-                    String retFName = VisContext.replaceWithPrefix(uf);
+                    String retFName = ServerContext.replaceWithPrefix(uf);
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
                     String fileCacheKey= overrideKey!=null ? overrideKey : retFName;
                     UserCache.getInstance().put(new StringKey(fileCacheKey), fi);

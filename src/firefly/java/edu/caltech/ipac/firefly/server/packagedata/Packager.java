@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
@@ -292,7 +291,7 @@ public class Packager {
     }
 
     private static String getUrl(File f, String suggestedName) {
-        String fileStr = VisContext.replaceWithPrefix(f);
+        String fileStr = ServerContext.replaceWithPrefix(f);
         try {
             fileStr = URLEncoder.encode(fileStr, "UTF-8");
         } catch (UnsupportedEncodingException e) {

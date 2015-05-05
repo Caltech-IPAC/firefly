@@ -24,7 +24,7 @@ public class OptimizeForSpeedByUserPurger implements MemoryPurger {
                                                                                  700);
 
     public void purgeOtherPlots(PlotState excludeState) {
-        PlotClientCtx ctx= VisContext.getPlotCtx(excludeState.getContextString());
+        PlotClientCtx ctx= CtxControl.getPlotCtx(excludeState.getContextString());
         if (ctx!=null) {
             String excludeKey= ctx.getKey();
             synchronized (VisContext.class) {
@@ -32,7 +32,7 @@ public class OptimizeForSpeedByUserPurger implements MemoryPurger {
                     long cnt= 0;
                     PlotClientCtx testCtx;
                     boolean freed;
-                    for(Map.Entry<String,PlotClientCtx> entry : VisContext.getMap().entrySet()) {
+                    for(Map.Entry<String,PlotClientCtx> entry : CtxControl.getMap().entrySet()) {
                         testCtx= entry.getValue();
                         if (!testCtx.getKey().equals(excludeKey)) {
                             if (testCtx.getPlot()!=null) {  // if we are using memory

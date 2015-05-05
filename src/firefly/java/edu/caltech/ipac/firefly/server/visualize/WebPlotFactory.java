@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
@@ -74,13 +75,13 @@ public class WebPlotFactory {
         FileRetriever retrieve = FileRetrieverFactory.getRetriever(wprList.get(0));
         FileData fileData = retrieve.getFile(wprList.get(0));
 
-        FitsRead[] frAry= ImagePlotBuilder.getFitsReadAry(fileData, workingCtxStr);
+        FitsRead[] frAry= FitsCacher.readFits(fileData.getFile());
         List<ImagePlotBuilder.Results> resultsList= new ArrayList<ImagePlotBuilder.Results>(wprList.size());
         int length= Math.min(wprList.size(), frAry.length);
         WebPlotInitializer retval[]= new WebPlotInitializer[length];
         for(int i= 0; (i<length); i++) {
             WebPlotRequest request= wprList.get(i);
-            ImagePlotBuilder.Results r= ImagePlotBuilder.buildFromFile(workingCtxStr,request, fileData,frAry[i],
+            ImagePlotBuilder.Results r= ImagePlotBuilder.buildFromFile(request, fileData,frAry[i],
                                                                        request.getMultiImageIdx(),null);
             resultsList.add(r);
         }
@@ -136,7 +137,7 @@ public class WebPlotFactory {
 
         try {
             VisContext.purgeOtherPlots(state);
-            if (VisContext.getPlotCtx(state.getContextString()) == null) {
+            if (CtxControl.getPlotCtx(state.getContextString()) == null) {
                 throw new FailedRequestException("PlotClientCtx not found, ctxStr=" +
                                                          state.getContextString());
             }
@@ -146,7 +147,7 @@ public class WebPlotFactory {
             ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0]);
 
             WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, band, frInfo[0].getOriginalFile());
-            PlotServUtils.setPixelAccessInfo(plot, state);
+            PlotStateUtil.setPixelAccessInfo(plot, state);
 
             ImagePlotBuilder.initState(state, frInfo[0], band, null);
 
@@ -263,7 +264,7 @@ public class WebPlotFactory {
         long start = System.currentTimeMillis();
         InsertBandInitializer retval = null;
 
-        PlotClientCtx ctx = VisContext.getPlotCtx(state.getContextString());
+        PlotClientCtx ctx = CtxControl.getPlotCtx(state.getContextString());
 
         state.setWebPlotRequest(request, band);
         File file;
@@ -342,15 +343,15 @@ public class WebPlotFactory {
                                     PlotState state,
                                     PlotImages images) throws FitsException,
                                                               IOException {
-        PlotClientCtx ctx = VisContext.getPlotCtx(state.getContextString());
+        PlotClientCtx ctx = CtxControl.getPlotCtx(state.getContextString());
         ctx.setImages(images);
         ctx.setPlotState(state);
         ctx.setPlot(plot);
         ctx.extractColorInfo();
         ctx.addZoomLevel(plot.getPlotGroup().getZoomFact());
-        PlotServUtils.setPixelAccessInfo(plot, state);
-        VisContext.putPlotCtx(ctx);
-        _log.info("creating context for new plot: " + ctx.getKey());
+        PlotStateUtil.setPixelAccessInfo(plot, state);
+        CtxControl.putPlotCtx(ctx);
+//        _log.briefInfo("creating context for new plot: " + ctx.getKey());
         PlotServUtils.createThumbnail(plot, images, true, state.getThumbnailSize());
         state.setNewPlot(false);
     }
@@ -362,7 +363,7 @@ public class WebPlotFactory {
 //        if (plot.getPlotView() == null) new PlotView().addPlot(plot);
         String base = PlotServUtils.makeTileBase(state);
 
-        return PlotServUtils.writeImageTiles(VisContext.getVisSessionDir(),
+        return PlotServUtils.writeImageTiles(ServerContext.getVisSessionDir(),
                                              base, plot, fullScreen,
                                              makeFiles ? 2 : 0);
 
@@ -390,7 +391,7 @@ public class WebPlotFactory {
         out.add("Context String: " + state.getContextString());
         if (bandAdded) {
             String bStr = newBand.toString() + " - ";
-            File f = VisContext.getWorkingFitsFile(state, newBand);
+            File f = PlotStateUtil.getWorkingFitsFile(state, newBand);
             out.add("band: " + newBand + " added");
             if (!PlotServUtils.isBlank(state, newBand)) {
                 out.add(bStr + "filename: " + f.getPath());
@@ -402,7 +403,7 @@ public class WebPlotFactory {
         } else {
             for (Band band : state.getBands()) {
                 String bStr = state.isThreeColor() ? StringUtils.pad(5, band.toString()) + " - " : "";
-                File f = VisContext.getWorkingFitsFile(state, band);
+                File f = PlotStateUtil.getWorkingFitsFile(state, band);
                 if (!PlotServUtils.isBlank(state, band)) {
                     out.add(bStr + "filename: " + f.getPath());
                     out.add(bStr + "size:     " + FileUtil.getSizeAsString(f.length()));

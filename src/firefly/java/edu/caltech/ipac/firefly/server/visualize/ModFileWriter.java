@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -50,9 +51,9 @@ abstract class ModFileWriter implements Runnable {
      * @param state the PlotState to update
      */
     public void go(PlotState state) {
-        VisContext.setWorkingFitsFile(state,_targetFile,_band);
+        PlotStateUtil.setWorkingFitsFile(state, _targetFile, _band);
         if (_markAsOriginal) {
-            VisContext.setOriginalFitsFile(state, _targetFile, _band);
+            PlotStateUtil.setOriginalFitsFile(state, _targetFile, _band);
         }
         if (doThread()) {
             Thread thread= new Thread(this);
@@ -124,72 +125,26 @@ abstract class ModFileWriter implements Runnable {
             try {
                 f=  File.createTempFile(geomTmp + "-"+idx +"-geomed",
                                             "."+FileUtil.FITS,
-                                            VisContext.getVisSessionDir());
+                                            ServerContext.getVisSessionDir());
             } catch (IOException e) {
-                f= new File(VisContext.getVisSessionDir(),
+                f= new File(ServerContext.getVisSessionDir(),
                                   geomTmp + "-"+idx +"-geomed." + FileUtil.FITS);
             }
             return f;
         }
 
         protected void write() {
+            File f= getTargetFile();
             try {
-                OutputStream os= new BufferedOutputStream(new FileOutputStream(getTargetFile()), 1024*16);
+                OutputStream os= new BufferedOutputStream(new FileOutputStream(f), 1024*16);
                 ImagePlot.writeFile(os, new FitsRead[]{_fr});
                 FileUtil.silentClose(os);
             } catch (Exception e) {
-                _log.warn(e,"geom write failed",
-                          "geom file: "+getTargetFile().getPath());
+                _log.warn(e,"geom write failed", "geom file: "+f.getPath());
             }
         }
     }
 
-//    static class RotateFileWriter extends GeomFileWriter {
-//        RotateFileWriter(File templateFile, int idx, FitsRead fr, Band band, double angle, boolean markAsOriginal) {
-//            super(makeFile(templateFile,idx,angle),fr,band,markAsOriginal);
-//        }
-//
-//        static File makeFile(File templateFile, int idx, double angle) {
-//            String geomTmp= templateFile.getName();
-//
-//            File f;
-//            try {
-//                String angleDesc= Double.isNaN(angle) ? "north" : angle+"";
-//                f= File.createTempFile(geomTmp + "-"+idx +"-rot-"+angleDesc,
-//                                            "."+FileUtil.FITS,
-//                                            VisContext.getVisSessionDir());
-//            } catch (IOException e) {
-//                f= new File(VisContext.getVisSessionDir(),
-//                                geomTmp + "-"+idx +"-rot-north." + FileUtil.FITS);
-//            }
-//            return f;
-//        }
-//    }
-//
-//    static class CropAndCenterFileWriter extends GeomFileWriter {
-//        CropAndCenterFileWriter(File templateFile, int idx, FitsRead fr, Band band, WorldPt wpt, double size) {
-//            super(makeFile(templateFile,idx,wpt,size),fr,band,true);
-//        }
-//
-//        static File makeFile(File templateFile, int idx, WorldPt wpt, double size) {
-//            String geomTmp= templateFile.getName();
-//
-//            File f;
-//            try {
-//                DecimalFormat df = new DecimalFormat("##.##");
-//                String cropDesc= (df.format(wpt.getLon())+"+"+df.format(wpt.getLat())+"x"+df.format(size)+"-")
-//                        .replaceAll("\\+\\-","\\-");
-//                f= File.createTempFile(geomTmp + "-"+idx +"-cropCenter-"+cropDesc,
-//                                            "."+FileUtil.FITS,
-//                                            VisContext.getVisSessionDir());
-//            } catch (IOException e) {
-//                f= new File(VisContext.getVisSessionDir(),
-//                                geomTmp + "-"+idx +"-cropAndCenter." + FileUtil.FITS);
-//            }
-//            return f;
-//        }
-//
-//    }
 
 
 
@@ -201,9 +156,9 @@ abstract class ModFileWriter implements Runnable {
             String angleDesc= Double.isNaN(angle) ? "north" : angle+"";
             f= File.createTempFile(geomTmp + "-"+idx +"-rot-"+angleDesc,
                                    "."+FileUtil.FITS,
-                                   VisContext.getVisSessionDir());
+                                   ServerContext.getVisSessionDir());
         } catch (IOException e) {
-            f= new File(VisContext.getVisSessionDir(),
+            f= new File(ServerContext.getVisSessionDir(),
                         geomTmp + "-"+idx +"-rot-north." + FileUtil.FITS);
         }
         return f;
@@ -220,9 +175,9 @@ abstract class ModFileWriter implements Runnable {
                     .replaceAll("\\+\\-","\\-");
             f= File.createTempFile(geomTmp + "-"+idx +"-cropCenter-"+cropDesc,
                                    "."+FileUtil.FITS,
-                                   VisContext.getVisSessionDir());
+                                   ServerContext.getVisSessionDir());
         } catch (IOException e) {
-            f= new File(VisContext.getVisSessionDir(),
+            f= new File(ServerContext.getVisSessionDir(),
                         geomTmp + "-"+idx +"-cropAndCenter." + FileUtil.FITS);
         }
         return f;
@@ -234,9 +189,9 @@ abstract class ModFileWriter implements Runnable {
         File f;
         try {
             f= File.createTempFile(geomTmp+ "-"+idx + "-flipedY-", "."+FileUtil.FITS,
-                                   VisContext.getVisSessionDir());
+                                   ServerContext.getVisSessionDir());
         } catch (IOException e) {
-            f= new File(VisContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedY."+FileUtil.FITS);
+            f= new File(ServerContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedY."+FileUtil.FITS);
         }
         return f;
     }
@@ -247,9 +202,9 @@ abstract class ModFileWriter implements Runnable {
         File f;
         try {
             f= File.createTempFile(geomTmp+ "-"+idx + "-flipedX-", "."+FileUtil.FITS,
-                                   VisContext.getVisSessionDir());
+                                   ServerContext.getVisSessionDir());
         } catch (IOException e) {
-            f= new File(VisContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedX."+FileUtil.FITS);
+            f= new File(ServerContext.getVisSessionDir(), geomTmp +"-"+idx + "-flipedX."+FileUtil.FITS);
         }
         return f;
     }

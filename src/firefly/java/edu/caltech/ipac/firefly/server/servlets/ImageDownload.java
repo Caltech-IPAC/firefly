@@ -3,11 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.visualize.CtxControl;
+import edu.caltech.ipac.firefly.server.visualize.PlotClientCtx;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.download.URLDownload;
+import nom.tam.fits.FitsException;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -48,6 +51,7 @@ public class ImageDownload extends BaseHttpServlet {
         PlotState state= PlotState.parse(stateStr);
 
         if (type==null) type= TYPE_ANY;
+        PlotClientCtx ctx= null;
         try {
 
             String fname= getFileName(req);
@@ -64,7 +68,8 @@ public class ImageDownload extends BaseHttpServlet {
                     int y= Integer.parseInt(yStr);
                     int width= Integer.parseInt(widthStr);
                     int height= Integer.parseInt(heightStr);
-                    File outputFile= PlotServUtils.createImageFile(fname,state,x,y,width,height);
+                    ctx= CtxControl.prepare(state);
+                    File outputFile= PlotServUtils.createImageFile(ctx.getPlot(),fname,x,y,width,height);
                     insertCacheHeaders(res,outputFile.lastModified()+"");
                     FileUtil.writeFileToStream(outputFile,out);
                 }
@@ -74,7 +79,8 @@ public class ImageDownload extends BaseHttpServlet {
             }
             else if (type.equals(TYPE_THUMBNAIL)) {
                 if (isNonMatch(fname,req)) {
-                    File outputFile= PlotServUtils.createImageThumbnail(fname,state, null);
+                    ctx= CtxControl.prepare(state);
+                    File outputFile= PlotServUtils.createImageThumbnail(fname,ctx.getPlot(), state.getThumbnailSize());
                     insertCacheHeaders(res,outputFile.lastModified()+"");
                     FileUtil.writeFileToStream(outputFile,out);
                 }
@@ -84,14 +90,20 @@ public class ImageDownload extends BaseHttpServlet {
             }
             else if (type.equals(TYPE_FULL)) {
                 res.setHeader("Content-Disposition", "attachment; filename=fits-image.png");
-                PlotServUtils.writeFullImageFileToStream(out,state);
+                ctx= CtxControl.prepare(state);
+                PlotServUtils.writeFullImageFileToStream(out,ctx.getPlot());
             }
             else {
-                File f= VisContext.convertToFile(fname);
+                File f= ServerContext.convertToFile(fname);
                 FileUtil.writeFileToStream(f,out);
             }
         } catch (IOException e) {
             throw new ServletException(e.toString(),e);
+        } catch (FitsException e) {
+            throw new ServletException(e.toString(),e);
+        }
+        finally {
+            CtxControl.flush(ctx);
         }
     }
 

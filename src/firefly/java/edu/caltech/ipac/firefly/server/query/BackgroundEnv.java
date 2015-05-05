@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.server.sse.EventTarget;
 import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -184,7 +183,7 @@ public class BackgroundEnv {
                     File outFile = File.createTempFile(fName, ext, ServerContext.getStageWorkDir());
                     String retFile= fName+ext;
                     DownloadScript.composeDownloadScript(outFile, dataSource, urlList, attributes);
-                    String fStr= VisContext.replaceWithPrefix(outFile);
+                    String fStr= ServerContext.replaceWithPrefix(outFile);
                     try {
                         fStr = URLEncoder.encode(fStr, "UTF-8");
                     } catch (UnsupportedEncodingException e) {

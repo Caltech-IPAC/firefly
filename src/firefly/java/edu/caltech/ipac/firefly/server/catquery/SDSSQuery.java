@@ -18,7 +18,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -114,7 +113,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
                 URLDownload.getDataToFile(conn, csv);
             } else {
-                File uploadFile = VisContext.convertToFile(uploadFname);
+                File uploadFile = ServerContext.convertToFile(uploadFname);
                 File sdssUFile;
                 if (uploadFile.canRead()) {
                     sdssUFile = getSDSSUploadFile(uploadFile);
@@ -370,7 +369,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
 
         String uploadFname = request.getParam(SDSSRequest.FILE_NAME);
         if (!StringUtils.isEmpty(uploadFname)) {
-            DataGroup upDg = DataGroupReader.read(VisContext.convertToFile(uploadFname));
+            DataGroup upDg = DataGroupReader.read(ServerContext.convertToFile(uploadFname));
 
             final DataGroup resDg = DataGroupReader.read(dgFile);
             if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {

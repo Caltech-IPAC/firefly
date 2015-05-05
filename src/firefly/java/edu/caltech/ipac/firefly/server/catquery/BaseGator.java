@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
@@ -18,7 +19,6 @@ import edu.caltech.ipac.firefly.server.query.DynQueryProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -335,7 +335,7 @@ public abstract class BaseGator extends DynQueryProcessor {
         boolean badParam = true;
 
         if (!StringUtils.isEmpty(cacheID)) {
-            File uploadFile = VisContext.convertToFile(cacheID);
+            File uploadFile = ServerContext.convertToFile(cacheID);
             if (uploadFile.canRead()) {
                 requiredPostParam(name, uploadFile);
                 badParam = false;

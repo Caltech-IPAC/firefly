@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -145,14 +146,7 @@ public class ImagePlotBuilder {
         return new Results(pInfo,zoomChoice, findElapse,readElapse);
     }
 
-
-    static FitsRead[] getFitsReadAry(FileData fileData, String workingCtxStr) throws Exception {
-        WebPlotReader wpr= new WebPlotReader(workingCtxStr);
-        return wpr.readFits(fileData);
-    }
-
-    static Results buildFromFile(String workingCtxStr,
-                                 WebPlotRequest request,
+    static Results buildFromFile(WebPlotRequest request,
                                  FileData fileData,
                                  FitsRead fitsRead,
                                  int imageIdx,
@@ -327,7 +321,7 @@ public class ImagePlotBuilder {
     private static PlotState makeState(WebPlotRequest request,
                                        FileReadInfo readInfo,
                                        PlotState.MultiImageAction multiAction) {
-        PlotState state = new PlotState(request);
+        PlotState state = PlotStateUtil.create(request);
         state.setMultiImageAction(multiAction);
         initState(state, readInfo, NO_BAND, request);
         return state;
@@ -338,9 +332,8 @@ public class ImagePlotBuilder {
     private static PlotState make3ColorState(Map<Band, WebPlotRequest> requestMap,
                                              Map<Band, FileReadInfo[]> readInfoMap,
                                              PlotState.MultiImageAction multiAction) {
-        PlotState state = new PlotState(requestMap.get(RED),
-                                        requestMap.get(GREEN),
-                                        requestMap.get(BLUE));
+
+        PlotState state = PlotStateUtil.create(requestMap);
         state.setMultiImageAction(multiAction);
         for (Map.Entry<Band, FileReadInfo[]> entry : readInfoMap.entrySet()) {
             Band band = entry.getKey();
@@ -360,7 +353,7 @@ public class ImagePlotBuilder {
                                                              FileReadInfo info[]) {
         PlotState stateAry[] = new PlotState[info.length];
         for (int i = 0; (i < stateAry.length); i++) {
-            stateAry[i] = new PlotState(request);
+            stateAry[i] = PlotStateUtil.create(request);
             stateAry[i].setMultiImageAction(PlotState.MultiImageAction.USE_ALL);
             initState(stateAry[i], info[i], NO_BAND, request);
             stateAry[i].setOriginalImageIdx(i, NO_BAND);
@@ -410,13 +403,13 @@ public class ImagePlotBuilder {
         if (state.isBandUsed(band)) {
             if (state.getContextString() == null) {
                 PlotClientCtx ctx= new PlotClientCtx();
-                VisContext.putPlotCtx(ctx);
+                CtxControl.putPlotCtx(ctx);
                 String ctxStr = ctx.getKey();
                 state.setContextString(ctxStr);
             }
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
-            VisContext.setOriginalFitsFile(state, fi.getOriginalFile(), band);
-            VisContext.setWorkingFitsFile(state, fi.getWorkingFile(), band);
+            PlotStateUtil.setOriginalFitsFile(state, fi.getOriginalFile(), band);
+            PlotStateUtil.setWorkingFitsFile(state, fi.getWorkingFile(), band);
             state.setUploadFileName(fi.getUploadedName(),band);
             checkFileNames(state, fi.getOriginalFile(), band);
             state.setOriginalImageIdx(fi.getOriginalImageIdx(), band);
@@ -437,7 +430,7 @@ public class ImagePlotBuilder {
             if (!VisContext.isFileInPath(original)) {
                 String s = "Cannot read file - Configuration may not be setup correctly, file not in path: " +
                         original.getPath();
-                _log.warn(s, "check property: " + VisContext.VIS_SEARCH_PATH);
+                _log.warn(s, "check property: " + ServerContext.VIS_SEARCH_PATH);
                 throw new IllegalArgumentException(s);
             }
         }

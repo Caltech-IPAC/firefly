@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.core.layout.Region;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Constants;
@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
-import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
@@ -47,7 +46,7 @@ public class PngRetrieve {
             ImagePlot plot= ImagePlotBuilder.create(request);
             List<StaticDrawInfo> drawInfoList = parseDrawInfoListStr(request, drawInfoListStr, artifactList);
             if (request.getPlotDescAppend()!=null) request.setTitle( plot.getPlotDesc());
-            return VisContext.convertToFile(PlotPngCreator.createImagePng(plot, drawInfoList));
+            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plot, drawInfoList));
         } catch (Exception e) {
             _log.error(e,"Could not create png file");
 

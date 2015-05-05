@@ -4,9 +4,9 @@
 package edu.caltech.ipac.visualize.draw;
 
 
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ColorTable;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -37,19 +37,14 @@ public class HistogramDisplay extends JComponent implements Icon {
     private boolean         _boundsEnabled= true;
     private byte            _histColorIdx[];
     private int             _bottomColorSize= 0;
-    private int             _band= ImagePlot.NO_BAND;
+    private Band             _band= Band.NO_BAND;
 
     public HistogramDisplay() { }
 
 
-    public void setColorBand(int band) {
-        Assert.argTst((band== ImagePlot.RED ||
-                band==ImagePlot.GREEN ||
-                band==ImagePlot.BLUE ||
-                band==ImagePlot.NO_BAND ),
-                      "Color must be ImagePlot.RED, ImagePlot.BLUE, ImagePlot.GREEN, or ImagePlot.NO_BAND");
+    public void setColorBand(Band band) {
         _band= band;
-        if (_band!=ImagePlot.NO_BAND) {
+        if (_band!=Band.NO_BAND) {
             _model= ColorTable.getColorModel(0);
         }
     }
@@ -134,20 +129,20 @@ public class HistogramDisplay extends JComponent implements Icon {
 
               if (_model!=null && _histColorIdx!=null) {
                   int cidx= _histColorIdx[idx] & 0xFF;
-                  if (_band==ImagePlot.NO_BAND) {
+                  if (_band==Band.NO_BAND) {
                       color=  new Color(_model.getRed(cidx), _model.getGreen(cidx),
                                         _model.getBlue(cidx));
                   }
                   else {
                       int colorIdx= _model.getRed(cidx);
                       switch (_band) {
-                          case ImagePlot.RED:
+                          case RED:
                               color=  new Color(colorIdx,0,0);
                               break;
-                          case ImagePlot.GREEN:
+                          case GREEN:
                               color=  new Color(0,colorIdx,0);
                               break;
-                          case ImagePlot.BLUE:
+                          case BLUE:
                               color=  new Color(0,0,colorIdx);
                               break;
                           default : color= null;

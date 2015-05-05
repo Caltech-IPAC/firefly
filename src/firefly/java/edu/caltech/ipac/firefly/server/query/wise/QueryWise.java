@@ -24,7 +24,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -196,7 +195,7 @@ public class QueryWise extends IBESearchProcessor {
             return null;
         }
 
-        DataGroup dg = IpacTableReader.readIpacTable(VisContext.convertToFile(req.getParam(filenameParam)), "Uploaded Table");
+        DataGroup dg = IpacTableReader.readIpacTable(ServerContext.convertToFile(req.getParam(filenameParam)), "Uploaded Table");
         for (DataType dt : dg.getDataDefinitions()) {
             if (dt.getKeyName().equals(colName)) {
                 Set<String> vals = new LinkedHashSet<String>();

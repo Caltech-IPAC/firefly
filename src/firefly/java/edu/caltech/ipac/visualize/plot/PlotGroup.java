@@ -25,10 +25,7 @@ import java.util.Collections;
  */
 public class PlotGroup implements Iterable<Plot> {
 
-    enum ChangeType { ADDED, REMOVED, BAND_ADDED,
-                      BAND_REMOVED, BAND_SHOWING, BAND_HIDDEN, PLOT_SHOWING, PLOT_HIDDEN }
-
-    private int _imageWidth;     // image width of the mosaic of images 
+    private int _imageWidth;     // image width of the mosaic of images
     private int _imageHeight;    // image height of the mosaic of images 
     private int _screenWidth;    // screen width of the mosic of imagges
     private int _screenHeight;   // screen height of the mosic of imagges
@@ -46,8 +43,6 @@ public class PlotGroup implements Iterable<Plot> {
 
     private Plot            _basePlot;
     private List<Plot>      _plotList  = new ArrayList<Plot>(3);
-    private List<PlotGroupStatusListener> _plotStatus=
-                   new ArrayList<PlotGroupStatusListener>(2);
     private PlotView        _plotView;
     private AffineTransform _trans;
     private AffineTransform _inverseTrans;
@@ -272,24 +267,6 @@ public class PlotGroup implements Iterable<Plot> {
     }
 
 
-  // ====================================================================
-  // ----------------- Add / remove other listener methods ---------------
-  // ====================================================================
-  /**
-   * Add a PlotViewStatusListener.
-   * @param l the listener
-   */
-   public void addPlotGroupStatusListener(PlotGroupStatusListener l) {
-      _plotStatus.add(l); 
-   }
-  /**
-   * Remove a PlotGroupStatusListener.
-   * @param l the listener
-   */
-   public void removePlotGroupStatusListener(PlotGroupStatusListener l) {
-      _plotStatus.remove(l); 
-   }
-
   // ------------------------------------------------------------
   // ================= Package methods ==========================
   // ------------------------------------------------------------
@@ -305,7 +282,6 @@ public class PlotGroup implements Iterable<Plot> {
        if (_plotView!=null && !isBasePlot(p)) {
            _plotView.addPlotPaintListener(p);
        }
-       fireStatusChanged(ChangeType.ADDED,p);
     }
 
     void removePlot(Plot p) {
@@ -376,7 +352,6 @@ public class PlotGroup implements Iterable<Plot> {
     private void removePlotCleanup(Plot p) {
        if (_plotView!=null && !isBasePlot(p)) 
                             _plotView.removePlotPaintListener(p);
-       fireStatusChanged(ChangeType.REMOVED,p);
     }
 
     /**
@@ -410,62 +385,6 @@ public class PlotGroup implements Iterable<Plot> {
 
 
 
-  /**
-   * fire the <code>PlotGroupStatusListener</code>s. 
-   * @param stat which listener to fire must be the constants
-   *            <code>ADDED</code> or <code>REMOVED</code>.
-   * @param plot the plot that the event is about.
-   */
-  private void fireStatusChanged(ChangeType stat, Plot plot) {
-      fireStatusChanged(stat, plot, -1);
-  }
-
-
-
-  void fireStatusChanged(ChangeType stat, Plot plot, int band) {
-      List<PlotGroupStatusListener> newlist;
-      PlotGroupStatusEvent ev;
-
-      if (band==-1) {
-          ev= new PlotGroupStatusEvent(this, plot);
-      }
-      else {
-          ev= new PlotGroupStatusEvent(this, plot, band);
-      }
-      synchronized (this) {
-          newlist = new ArrayList<PlotGroupStatusListener>(_plotStatus);
-      }
-
-      switch (stat) {
-          case ADDED:
-              for(PlotGroupStatusListener l : newlist) l.plotAdded(ev);
-              break;
-          case REMOVED:
-              for(PlotGroupStatusListener l : newlist)  l.plotRemoved(ev);
-              break;
-          case BAND_ADDED:
-              for(PlotGroupStatusListener l : newlist)  l.colorBandAdded(ev);
-              break;
-          case BAND_REMOVED:
-              for(PlotGroupStatusListener l : newlist)  l.colorBandRemoved(ev);
-              break;
-          case BAND_SHOWING:
-              for(PlotGroupStatusListener l : newlist)  l.colorBandShowing(ev);
-              break;
-          case BAND_HIDDEN:
-              for(PlotGroupStatusListener l : newlist)  l.colorBandHidden(ev);
-              break;
-          case PLOT_SHOWING:
-              for(PlotGroupStatusListener l : newlist)  l.plotShowing(ev);
-              break;
-          case PLOT_HIDDEN:
-              for(PlotGroupStatusListener l : newlist)  l.plotHidden(ev);
-              break;
-          default:
-              Assert.tst(false);
-              break;
-      }
-  }
 
 
 //    static boolean _alternate= true;

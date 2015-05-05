@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.util.dd.Region;
@@ -64,9 +65,9 @@ public class PlotPngCreator {
             }
         }
 
-        File f= PlotServUtils.getUniquePngFileName("imageDownload", VisContext.getVisSessionDir());
+        File f= PlotServUtils.getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
         File retFile= PlotServUtils.createFullTile(plot, f, fgList,vectorList, scaleList, gridLayer);
-        return VisContext.replaceWithPrefix(retFile);
+        return ServerContext.replaceWithPrefix(retFile);
     }
 
 

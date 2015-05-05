@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.BrowserInfo;
 import edu.caltech.ipac.util.VoRegistryUtil;
 import edu.caltech.ipac.util.dd.VOResourceEndpoint;
@@ -59,7 +58,7 @@ public class ResourceServicesImpl extends BaseRemoteService implements ResourceS
     // TODO: convert calls to this methods to getIpacTable(ResourcePath path, Req params)
     public RawDataSet getIpacTable(String filePath, Request params) throws RPCException {
         try {
-            RawDataSet dataset =  new ResourceManager().getIpacTableView(VisContext.convertToFile(filePath), params.getStartIndex(), params.getPageSize(),
+            RawDataSet dataset =  new ResourceManager().getIpacTableView(ServerContext.convertToFile(filePath), params.getStartIndex(), params.getPageSize(),
                     params.getSortInfo(), QueryUtil.convertToDataFilter(params.getFilters()));
             return dataset;
 

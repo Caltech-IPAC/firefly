@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartPostBuilder;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
@@ -95,7 +94,7 @@ public abstract class IBESearchProcessor extends DynQueryProcessor {
     protected void requiredPostFileCacheParam(MultiPartPostBuilder builder, String name, String cacheID) throws EndUserException {
         boolean badParam = true;
         if (!StringUtils.isEmpty(cacheID)) {
-            File uploadFile = VisContext.convertToFile(cacheID);
+            File uploadFile = ServerContext.convertToFile(cacheID);
             if (uploadFile.canRead()) {
                 requiredPostParam(builder, name, uploadFile);
                 badParam = false;

@@ -568,11 +568,6 @@ public abstract class Plot implements PlotPaintListener {
     public void setShowing(boolean show) {
         if (show != _show) {
             _show = show;
-            if (_show) {
-                getPlotGroup().fireStatusChanged(PlotGroup.ChangeType.PLOT_SHOWING, this, -1);
-            } else {
-                getPlotGroup().fireStatusChanged(PlotGroup.ChangeType.PLOT_HIDDEN, this, -1);
-            }
         }
     }
 

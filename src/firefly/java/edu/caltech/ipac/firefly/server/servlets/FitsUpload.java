@@ -3,10 +3,10 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
@@ -37,7 +37,7 @@ public class FitsUpload extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        File dir= VisContext.getVisUploadDir();
+        File dir= ServerContext.getVisUploadDir();
         File uploadedFile= getUniqueName(dir);
 
         String overrideKey= req.getParameter("cacheKey");
@@ -80,7 +80,7 @@ public class FitsUpload extends BaseHttpServlet {
         }
 
         PrintWriter resultOut = res.getWriter();
-        String retFile= VisContext.replaceWithPrefix(uploadedFile);
+        String retFile= ServerContext.replaceWithPrefix(uploadedFile);
         UploadFileInfo fi= new UploadFileInfo(retFile,uploadedFile,item.getName(),item.getContentType());
         String fileCacheKey= overrideKey!=null ? overrideKey : retFile;
         UserCache.getInstance().put(new StringKey(fileCacheKey), fi);

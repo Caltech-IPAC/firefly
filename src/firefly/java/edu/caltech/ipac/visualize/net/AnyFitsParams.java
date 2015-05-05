@@ -85,11 +85,21 @@ public class AnyFitsParams extends BaseNetParams {
         if (fileStr.length()>150) {
             fileStr= fileStr.substring(0, 130)+urlHashCode + "."+ext;
         }
-        String retval=  "AF-" + _url.getHost() +"-"+fileStr;
+        String retval=  "AF-" + getShortName(_url.getHost()) +"-"+fileStr;
 
 //       String retval=  "AF-" + _url.getHost() +"-"+
 //               (fileStr.length()>150?fileStr.substring(0, 150)+fileStr.hashCode():fileStr);
        return retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>]", "");
+    }
+
+    private static String getShortName(String hostName) {
+        if (hostName==null) return "";
+        String parts[]= hostName.split("\\.");
+        String retval= "";
+        if (parts.length>0) {
+            retval= (parts.length==1) ? parts[0]  : parts[0]+"."+parts[1];
+        }
+        return retval;
     }
 
 }

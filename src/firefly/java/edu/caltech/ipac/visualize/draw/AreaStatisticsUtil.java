@@ -5,6 +5,7 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.target.TargetUtil;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -44,20 +45,20 @@ public class AreaStatisticsUtil {
     private static NumberFormat  _nfExp= NumberFormat.getInstance();// OK for i18n
 
 
-    public enum Band {
-        RED(ImagePlot.RED, "red"),
-        GREEN(ImagePlot.GREEN, "green"),
-        BLUE(ImagePlot.BLUE, "blue"),
-        NO_BAND(ImagePlot.NO_BAND, "") ;
+    public enum AreaBand {
+        RED(Band.RED, "red"),
+        GREEN(Band.GREEN, "green"),
+        BLUE(Band.BLUE, "blue"),
+        NO_BAND(Band.NO_BAND, "") ;
 
-        int getBand() { return _band;}
+        Band getBand() { return _band;}
         String getLabel() {return _label;}
 
-        Band(int band, String label) {
+        AreaBand(Band band, String label) {
             _band = band;
             _label = label;
         }
-        int _band;
+        Band _band;
         String _label;
     }
 
@@ -281,15 +282,15 @@ public class AreaStatisticsUtil {
 
     class PlotListItem {
         ImagePlot _plot;
-        Band _band;
+        AreaBand _band;
 
-        public PlotListItem(ImagePlot plot, Band band) {
+        public PlotListItem(ImagePlot plot, AreaBand band) {
             this._plot = plot;
             this._band = band;
         }
 
         ImagePlot getPlot() {return this._plot;}
-        Band getBand() {return this._band; }
+        AreaBand getBand() {return this._band; }
 
         boolean equals(PlotListItem pli) {
             return pli != null && pli.getPlot() == this._plot &&
@@ -306,7 +307,7 @@ public class AreaStatisticsUtil {
      * @param boundingBox if not null, region of calculation will be intersection of shape and boundingBox
      * @return map of calculated metrics by metric id
      */
-    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, int selectedBand, Shape shape, Rectangle2D boundingBox) {
+    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, Band selectedBand, Shape shape, Rectangle2D boundingBox) {
 
         //comment    
         if (boundingBox == null) boundingBox = shape.getBounds2D();
@@ -329,7 +330,7 @@ public class AreaStatisticsUtil {
         double yfSum = 0d;
         double xSum = 0d;
         double ySum = 0d;
-        FitsRead fitsRead = (selectedBand == ImagePlot.NO_BAND) ? plot.getFitsRead() : plot.getImageData().getFitsRead(selectedBand);
+        FitsRead fitsRead = plot.getFitsRead(selectedBand);
         int imageScaleFactor = fitsRead.getImageScaleFactor();
         if (imageScaleFactor < 1) imageScaleFactor = 1;
         // to calculate the number of pixels (and integratedFlux) correctly in overlay plots,
@@ -361,7 +362,7 @@ public class AreaStatisticsUtil {
             for (double x=minX; x<=maxX; x+=imageScaleFactor) {
                 try {
                     if (!shape.contains(x, y)) continue;
-                    if (selectedBand == ImagePlot.NO_BAND) {
+                    if (selectedBand == Band.NO_BAND) {
                         flux = plot.getFlux(new ImageWorkSpacePt(x, y));
                     } else {
                         flux = plot.getFlux(selectedBand, new ImageWorkSpacePt(x, y));
@@ -401,7 +402,7 @@ public class AreaStatisticsUtil {
             return metrics;
         }
 
-        String fluxUnits = ((selectedBand == ImagePlot.NO_BAND) ? plot.getFluxUnits() : plot.getFluxUnits(selectedBand));
+        String fluxUnits = ((selectedBand == Band.NO_BAND) ? plot.getFluxUnits() : plot.getFluxUnits(selectedBand));
 
 
         // calculate the centroid position

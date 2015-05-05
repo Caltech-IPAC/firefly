@@ -79,33 +79,19 @@ public class PlotState implements DataEntry, HandSerialize {
     }
 
 
-//    public PlotState(WebPlotRequest request, MultiImageAction action) {
-//        this();
-//        _threeColor= (_multiImage==MultiImageAction.MAKE_THREE_COLOR);
-//        setWebPlotRequest(request, Band.NO_BAND);
-//        _multiImage= action;
-//    }
-
-
-
     public PlotState(boolean threeColor) {
         this();
         _threeColor= threeColor;
         _multiImage= threeColor ? MultiImageAction.USE_FIRST : MultiImageAction.USE_ALL;
     }
 
-
-
-
-    public PlotState(WebPlotRequest redRequest,
-                     WebPlotRequest greenRequest, 
-                     WebPlotRequest blueRequest) {
+    public PlotState(WebPlotRequest redReq, WebPlotRequest greenReq,  WebPlotRequest blueReq) {
         this();
         _threeColor= true;
         _multiImage= MultiImageAction.USE_FIRST;
-        setWebPlotRequest(redRequest, Band.RED);
-        setWebPlotRequest(greenRequest, Band.GREEN);
-        setWebPlotRequest(blueRequest, Band.BLUE);
+        setWebPlotRequest(redReq, Band.RED);
+        setWebPlotRequest(greenReq, Band.GREEN);
+        setWebPlotRequest(blueReq, Band.BLUE);
     }
 
 
