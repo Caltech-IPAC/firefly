@@ -17,8 +17,8 @@
  // private SelectionInfo selectInfo = new SelectionInfo();
  */
 
-import {TableMeta, HAS_ACCESS_CNAME} from "./TableMeta.js";
-import {BaseTableColumn} from "./BaseTableColumn.js";
+import {HAS_ACCESS_CNAME} from './TableMeta.js';
+import {BaseTableColumn} from './BaseTableColumn.js';
 
 export class DataSet {
 
@@ -49,7 +49,7 @@ export class DataSet {
     }
 
     setModel(model) {
-        let old = this.model;
+        //let old = this.model;
         this.model = model;
         this.model.setHasAccessCName(this.getMeta().getAttribute(HAS_ACCESS_CNAME));
         //TODO: pcs.firePropertyChange(MODEL_LOADED, old, model);

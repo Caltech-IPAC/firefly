@@ -110,7 +110,7 @@ export class BaseTableData {
     getColumnIndex(colName) {
         var idx = this.columns.indexOf(colName);
         if (idx < 0) {
-            throw "This column does not exists: " + colName;
+            throw 'This column does not exists: ' + colName;
         }
         return idx;
     }

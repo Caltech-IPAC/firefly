@@ -5,53 +5,53 @@
 
 'use strict';
 
-var StringUtils= require('ipac-firefly/util/StringUtils.js');
+import {parseStringList, parseStringMap} from '../../util/StringUtils.js';
 
-const HAS_ACCESS_CNAME='hasAccessCName';
+export const HAS_ACCESS_CNAME='hasAccessCName';
 
 export class TableMeta {
 
-    constructor() { this._attributes = new Map(); }
+    constructor() { this.attributesP = new Map(); }
 
-    get source() { return this._source; }
-    set source(value) { this._source = value; }
+    get source() { return this.sourceP; }
+    set source(value) { this.sourceP = value; }
 
-    get fileSize() { return this._fileSize; }
-	set fileSize(value) { this._fileSize = value; }
+    get fileSize() { return this.fileSizeP; }
+	set fileSize(value) { this.fileSizeP = value; }
 
-    get isFullyLoaded() { return this._isFullyLoaded; }
-  	set isFullyLoaded(value) { this._isFullyLoaded = value; }
+    get isFullyLoaded() { return this.isFullyLoadedP; }
+    set isFullyLoaded(value) { this.isFullyLoadedP = value; }
 
-    get relatedCols() { return this._relatedCols; }
-  	set relatedCols(value) { this._relatedCols = value; }
+    get relatedCols() { return this.relatedColsP; }
+    set relatedCols(value) { this.relatedColsP = value; }
 
-    get groupByCols() { return this._groupByCols; }
-  	set groupByCols(value) { this._groupByCols = value; }
+    get groupByCols() { return this.groupByColsP; }
+    set groupByCols(value) { this.groupByColsP = value; }
 
-    get attributes() { return this._attributes; }
-  	set attributes(value) { this._attributes = value; }
+    get attributes() { return this.attributesP; }
+    set attributes(value) { this.attributesP = value; }
 
     getAttribute(key) {
-        return this._attributes.get(key);
+        return this.attributesP.get(key);
     }
 
     setAttributes(attributes) {
-        if (this._attributes) {
+        if (this.attributesP) {
             attributes.forEach(function (value, key) {
-                this._attributes.set(key,value);
-            });
+                this.attributesP.set(key,value);
+            }.bind(this));
         }
     }
 
     clone() {
         let ret = new TableMeta();
-        ret.attributes(this._attributes);
+        ret.attributes(this.attributesP);
     }
 
     // takes a string returns TableMeta object
     static parse(s) {
-        const SPLIT_TOKEN = "--TableMeta--";
-        const ELEMENT_TOKEN = "--TMElement--";
+        const SPLIT_TOKEN = '--TableMeta--';
+        const ELEMENT_TOKEN = '--TMElement--';
 
         if (!s) {
             return null;
@@ -65,9 +65,9 @@ export class TableMeta {
                 idx++;
                 retval.fileSize = sAry[idx++];
                 retval.isFullyLoaded = sAry[idx++];
-                retval.relatedCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
-              	retval.groupByCols = StringUtils.parseStringList(sAry[idx++], ELEMENT_TOKEN);
-              	retval.attributes = StringUtils.parseStringMap(sAry[idx++], ELEMENT_TOKEN);
+                retval.relatedCols = parseStringList(sAry[idx++], ELEMENT_TOKEN);
+                retval.groupByCols = parseStringList(sAry[idx++], ELEMENT_TOKEN);
+                retval.attributes = parseStringMap(sAry[idx++], ELEMENT_TOKEN);
             } catch (e) {
                 retval = null;
             }

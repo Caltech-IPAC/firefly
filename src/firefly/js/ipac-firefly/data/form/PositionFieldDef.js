@@ -1,5 +1,7 @@
 /*jshint browserify:true*/
 
+import * as StringUtils from '../../util/StringUtils.js';
+
 var uniq= require('uniq');
 var numeral= require('numeral');
 
@@ -7,13 +9,13 @@ var numeral= require('numeral');
  * Created by roby on 12/2/14.
  */
 var Vis= (function(retVis) {
-    "use strict";
+    'use strict';
 
+    //    var StringUtils= require("ipac-firefly/util/StringUtils.js");
     var hasModule = (typeof module !== 'undefined' && module.exports && exports);
-    var PositionParser= require("ipac-firefly/util/PositionParser.js");
-    var CoordinateSys= require("ipac-firefly/visualize/CoordSys.js");
-    var StringUtils= require("ipac-firefly/util/StringUtils.js");
-    var CoordUtil=  require("ipac-firefly/visualize/CoordUtil.js");
+    var PositionParser= require('ipac-firefly/util/PositionParser.js');
+    var CoordinateSys= require('ipac-firefly/visualize/CoordSys.js');
+    var CoordUtil=  require('ipac-firefly/visualize/CoordUtil.js');
 
     var makePositionFieldDef= function(properties) {
         var _parser = PositionParser.makePositionParser(new ClientPositionResolverHelper());
@@ -42,7 +44,7 @@ var Vis= (function(retVis) {
                 if (isNullAllow()) {
                     return true;
                 } else {
-                    throw "You must enter a valid position or name";
+                    throw 'You must enter a valid position or name';
                 }
             }
             var isValid = _parser.parse(s);
@@ -52,13 +54,13 @@ var Vis= (function(retVis) {
                 // validate ObjName
                 if (_parser.getInputType()===PositionParser.PositionParsedInput.Name) {
                     if (hard) {
-                        throw "Object names must be more than one character";
+                        throw 'Object names must be more than one character';
                     }
                 } else {
 
                     // check coordinate system
                     if (_parser.getCoordSys() ===null) {
-                        throw getErrMsg() + "- invalid coordinate system.";
+                        throw getErrMsg() + '- invalid coordinate system.';
                     }
 
                     // validate RA
@@ -66,7 +68,7 @@ var Vis= (function(retVis) {
                     if (isNaN(ra)) {
                         var raStr = _parser.getRaString();
                         if (hard || (raStr !==null && !(raStr.length === 1 && raStr.charAt(0) === '.'))) {
-                            throw getErrMsg() + "- unable to parse RA.";
+                            throw getErrMsg() + '- unable to parse RA.';
                         }
                     }
                     // validate DEC
@@ -74,7 +76,7 @@ var Vis= (function(retVis) {
                     if (isNaN(dec)) {
                         var decStr = _parser.getDecString();
                         if (hard || (decStr !== null && !(decStr.length === 1 && (decStr.charAt(0) === '+' || decStr.charAt(0) === '-' || decStr.charAt(0) === '.')))) {
-                            throw getErrMsg() + "- unable to parse DEC.";
+                            throw getErrMsg() + '- unable to parse DEC.';
                         }
                     }
                 }
@@ -89,7 +91,7 @@ var Vis= (function(retVis) {
         }
 
         function getErrMsg() {
-            return "error: ";
+            return 'error: ';
         }
 
         // -------------------- public methods --------------------
@@ -129,22 +131,22 @@ var Vis= (function(retVis) {
          * @returns String
          */
         var coordToString= function(csys) {
-            var retval= "";
+            var retval= '';
 
             if (csys === CoordinateSys.EQ_J2000)      {
-                retval = "Equ J2000";
+                retval = 'Equ J2000';
             }
             else if (csys === CoordinateSys.EQ_B1950) {
-                retval = "Equ B1950";
+                retval = 'Equ B1950';
             }
             else if (csys === CoordinateSys.GALACTIC) {
-                retval = "Gal";
+                retval = 'Gal';
             }
             else if (csys === CoordinateSys.ECL_J2000) {
-                retval = "Ecl J2000";
+                retval = 'Ecl J2000';
             }
             else if (csys === CoordinateSys.ECL_B1950) {
-                retval = "Ecl B1950";
+                retval = 'Ecl B1950';
             }
 
             return retval;
@@ -164,13 +166,13 @@ var Vis= (function(retVis) {
                     lat = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
                 }
                 else {
-                    lon = numeral(wp.getLon()).format("#.xxxxxx");
-                    lat = numeral(wp.getLat()).format("#.xxxxxx");
+                    lon = numeral(wp.getLon()).format('#.xxxxxx');
+                    lat = numeral(wp.getLat()).format('#.xxxxxx');
                 }
-                retval = lon + " " + lat + " " + coordToString(wp.getCoordSys());
+                retval = lon + ' ' + lat + ' ' + coordToString(wp.getCoordSys());
 
             } catch (e) {
-                retval = "";
+                retval = '';
             }
             return retval;
 
@@ -186,7 +188,7 @@ var Vis= (function(retVis) {
         var formatTargetForHelp= function(wp, name, resolver) {
             var retval = null;
             if (!wp) {
-                retval = "";
+                retval = '';
             }
 
             if (name && resolver) {
@@ -206,11 +208,11 @@ var Vis= (function(retVis) {
                 var s;
 
                 if (name !==null && resolver !==null) {
-                    s = "<b>" + name + "</b>" +
-                    " <i>resolved by</i> " + resolver.desc +
-                    "<div  style=\"padding-top:6px;\">" +
+                    s = ' <b>' + name + '</b>' +
+                    ' <i>resolved by</i> ' + resolver.desc +
+                    '<div  style=\"padding-top:6px;\">' +
                             formatPosForHelp(wp) +
-                    "</div>";
+                    '</div>';
                 }
                 else {
                     s = formatPosForHelp(wp);
@@ -228,7 +230,7 @@ var Vis= (function(retVis) {
          */
         var formatPosForHelp= function(wp) {
             if (wp ===null) {
-                return "";
+                return '';
             }
             var s;
 
@@ -242,15 +244,15 @@ var Vis= (function(retVis) {
                 var hmsRa = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
                 var hmsDec = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
 
-                s = "<div class=\"on-dialog-help faded-text\" style=\"font-size:10px;\">" +
-                lonStr + ",&nbsp;" + latStr + "&nbsp;&nbsp;" + csys +
-                " &nbsp;&nbsp;&nbsp;<i>or</i> &nbsp;&nbsp;&nbsp;" +
-                hmsRa + ",&nbsp;" + hmsDec + "&nbsp;&nbsp;" + csys +
-                "</div>";
+                s = '<div class=\"on-dialog-help faded-text\" style=\"font-size:10px;\">' +
+                    lonStr + ',&nbsp;' + latStr + '&nbsp;&nbsp;' + csys +
+                    ' &nbsp;&nbsp;&nbsp;<i>or</i> &nbsp;&nbsp;&nbsp;' +
+                    hmsRa + ',&nbsp;' + hmsDec + '&nbsp;&nbsp;' + csys +
+                    '</div>';
             }
             else {
-                s = "<div class=on-dialog-help>" +
-                lonStr + ",&nbsp;" + latStr + "&nbsp;&nbsp;" + csys + "</div>";
+                s = '<div class=on-dialog-help>' +
+                lonStr + ',&nbsp;' + latStr + '&nbsp;&nbsp;' + csys + '</div>';
             }
             return s;
 

@@ -2,9 +2,9 @@
 /*jshint esnext:true*/
 'use strict';
 
-import {WorldPt} from 'ipac-firefly/visualize/Point.js';
+import {WorldPt} from '../visualize/Point.js';
+import * as StringUtils from './StringUtils.js';
 var CoordinateSys= require('ipac-firefly/visualize/CoordSys.js');
-var StringUtils= require('ipac-firefly/util/StringUtils.js');
 
 var PositionParsedInput={Name : 'Name', Position: 'Position'};
 

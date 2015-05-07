@@ -5,7 +5,7 @@
 
 'use strict';
 
-import Enum from "enum";
+import Enum from 'enum';
 
 export const Align = new Enum(['LEFT', 'RIGHT', 'CENTER']);
 
