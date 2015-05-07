@@ -225,6 +225,7 @@ class WebPlotRequest extends ServerRequest {
      */
     makeRequest(serverReq) {
         var retval;
+        var l= 'abc'.size();
         if (serverReq instanceof WebPlotRequest) {
             retval= serverReq;
         }
