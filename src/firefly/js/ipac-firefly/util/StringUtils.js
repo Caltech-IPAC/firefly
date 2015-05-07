@@ -140,9 +140,9 @@ var StringUtils= (function(retUtil) {
         var sAry= null;
         if (s) {
             sAry= s.split(splitToken,max+1);
-            if (sAry.length>max)  sAry= null;
+            if (sAry.length>max) { sAry = null; }
         }
-        if (!sAry) throw "wrong number of tokens in String";
+        if (!sAry) { throw "wrong number of tokens in String"; }
         return sAry;
 
     };
@@ -174,9 +174,9 @@ var StringUtils= (function(retUtil) {
     };
 
     var checkNull= function(s) {
-        if (!s)              return null;
-        else if (s==='null') return null;
-        else                 return s;
+        if (!s)              { return null; }
+        else if (s==='null') { return null; }
+        else                 { return s; }
     };
 
     retUtil.matchesIgCase= matchesIgCase;

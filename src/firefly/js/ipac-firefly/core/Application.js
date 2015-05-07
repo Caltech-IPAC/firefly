@@ -30,7 +30,7 @@ export const fireflyInit= function() {
 
     var touch= false; // ToDo: determine if we are on a touch device
     if (touch)  {
-        React.initializeTouchEvents(true)
+        React.initializeTouchEvents(true);
     }
 
     if (window.firefly) {

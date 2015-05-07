@@ -3,13 +3,15 @@
  * @author tatianag
  */
 
-"use strict";
+'use strict';
 
-import{StringUtil} from "ipac-firefly/util/StringUtils.js";
+var StringUtils= require('ipac-firefly/util/StringUtils.js');
+
+const HAS_ACCESS_CNAME='hasAccessCName';
 
 export class TableMeta {
 
-    constructor() {}
+    constructor() { this._attributes = new Map(); }
 
     get source() { return this._source; }
     set source(value) { this._source = value; }
@@ -29,15 +31,34 @@ export class TableMeta {
     get attributes() { return this._attributes; }
   	set attributes(value) { this._attributes = value; }
 
+    getAttribute(key) {
+        return this._attributes.get(key);
+    }
+
+    setAttributes(attributes) {
+        if (this._attributes) {
+            attributes.forEach(function (value, key) {
+                this._attributes.set(key,value);
+            });
+        }
+    }
+
+    clone() {
+        let ret = new TableMeta();
+        ret.attributes(this._attributes);
+    }
+
     // takes a string returns TableMeta object
     static parse(s) {
         const SPLIT_TOKEN = "--TableMeta--";
         const ELEMENT_TOKEN = "--TMElement--";
 
-        if (!s) return null;
+        if (!s) {
+            return null;
+        }
         var sAry = s.split(SPLIT_TOKEN, 7);
         let retval = new TableMeta();
-        if (sAry.length == 7) {
+        if (sAry.length === 7) {
             try {
                 var idx = 0;
                 retval.source = sAry[idx]==='null' ? null : sAry[idx];

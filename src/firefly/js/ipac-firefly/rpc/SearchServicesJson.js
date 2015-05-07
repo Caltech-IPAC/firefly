@@ -12,8 +12,10 @@
 
 "use strict";
 //import {application,NetworkMode} from "../core/Application.js";
-import {ServerParams} from "ipac-firefly/data/ServerParams.js";
-import {doService} from "ipac-firefly/core/JsonUtils.js";
+import {ServerParams} from '../data/ServerParams.js';
+import {RawDataSet} from '../data/table/RawDataSet.js';
+import {doService} from '../core/JsonUtils.js';
+
 import Enum from "enum";
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);

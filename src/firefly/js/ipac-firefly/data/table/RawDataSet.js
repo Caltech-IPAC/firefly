@@ -4,17 +4,19 @@
  */
 "use strict";
 
-import{StringUtil} from "ipac-firefly/util/StringUtils.js";
-import{TableMeta} from "./TableMeta.js";
+import {TableMeta, HAS_ACCESS_CNAME} from './TableMeta.js';
+
+var StringUtils= require('ipac-firefly/util/StringUtils.js');
+
 
 export class RawDataSet {
 
 
     /**
-     * @param meta TableMeta
-     * @param startingIndex
-     * @param totalRows
-     * @param dataSetString
+     * @param {TableMeta} meta
+     * @param {Number} startingIndex
+     * @param {Number} totalRows
+     * @param {String} dataSetString
      */
     constructor(meta, startingIndex, totalRows, dataSetString) {
         this._meta = meta;
@@ -26,7 +28,7 @@ export class RawDataSet {
     get meta() { return this._meta; }
     set meta(value) { this._meta = value; }
     get startingIndex() { return this._startingIndex; }
-    set startingIndex(value) { return this._startingIndex; }
+    set startingIndex(value) { this._startingIndex = value; }
     get totalRows() { return this._totalRows; }
     set totalRows(value) { this._totalRows = value; }
     get dataSetString() { return this._dataSetString; }
@@ -35,7 +37,7 @@ export class RawDataSet {
 
     static parse(s) {
         const SPLIT_TOKEN= '--RawDataSet--';
-        const NL_TOKEN=  '---nl---';
+        const NL_TOKEN=  /---nl---/g;
 
         try {
             var sAry = StringUtils.parseHelper(s,4,SPLIT_TOKEN);
