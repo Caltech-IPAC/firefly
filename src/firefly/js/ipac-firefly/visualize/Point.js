@@ -11,11 +11,11 @@
 /*jshint esnext:true*/
 /*jshint curly:false*/
 
-"use strict";
+'use strict';
 
-var CoordinateSys= require("./CoordSys.js");
-import Resolver from "ipac-firefly/astro/net/Resolver.js";
-import validator from "validator";
+import CoordinateSys from './CoordSys.js';
+import Resolver from 'ipac-firefly/astro/net/Resolver.js';
+import validator from 'validator';
 
 
 
@@ -34,11 +34,11 @@ class Pt {
         this.x= x;
         this.y= y;
     }
-    toString() { return this.x+";"+this.y; }
+    toString() { return this.x+';'+this.y; }
 
     static parse(inStr) {
         if (!inStr) return null;
-        var parts= inStr.split(";");
+        var parts= inStr.split(';');
         if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
             return new Pt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
         }
@@ -156,11 +156,11 @@ var makeWorldPt = function (params) {
          * @return {string}
          */
         toString() {
-            var retval = this.x + ";" + this.y + ";" + this.cSys.toString();
+            var retval = this.x + ';' + this.y + ';' + this.cSys.toString();
             if (this.objName) {
-                retval += ";" + this.objName;
+                retval += ';' + this.objName;
                 if (this.resolver) {
-                    retval += ";" + this.resolver.key;
+                    retval += ';' + this.resolver.key;
                 }
             }
             return retval;
@@ -171,17 +171,23 @@ var makeWorldPt = function (params) {
         }
     }
 
+    /**
+     *
+     * @param serializedWP
+     * @return {WorldPt}
+     */
     var parseWorldPt = function (serializedWP) {
+
 
         function stringAryToWorldPt(wpParts) {
             var retval= null;
             var parsedLon;
             var parseLat;
             var parsedCoordSys;
-            if (sAry.length===3) {
+            if (wpParts.length===3) {
                 parsedLon= wpParts[0];
                 parseLat= wpParts[1];
-                parsedCoordSys= CoordinateSys.parse(wpParts[2]) ;
+                parsedCoordSys= CoordinateSys.parse(wpParts[2]);
                 if (!isNaN(parsedLon) && !isNaN(parseLat) && parsedCoordSys!==null) {
                     retval= new WorldPt(parsedLon,parseLat,parsedCoordSys);
                 }
@@ -193,10 +199,10 @@ var makeWorldPt = function (params) {
                     retval= new WorldPt(parsedLon,parseLat);
                 }
             }
-            else  if (sAry.length===5 || sAry.length===4)  {
+            else if (wpParts.length===5 || wpParts.length===4) {
                 parsedLon= wpParts[0];
                 parseLat= wpParts[1];
-                parsedCoordSys= CoordinateSys.parse(wpParts[2]) ;
+                parsedCoordSys= CoordinateSys.parse(wpParts[2]);
                 var resolver= sAry.length===5 ? Resolver.parse(sAry[4]) : Resolver.UNKNOWN;
                 return new WorldPt(parsedLon,parseLat,parsedCoordSys, sAry[3],resolver);
             }
@@ -207,7 +213,7 @@ var makeWorldPt = function (params) {
         if (!serializedWP) {
             return null;
         }
-        var sAry= serializedWP.split(";");
+        var sAry= serializedWP.split(';');
         if (sAry.length<2 || sAry.length>5) {
             return null;
         }
@@ -221,5 +227,4 @@ exports.ImagePt= ImagePt;
 exports.ImageWorkSpacePt= ImageWorkSpacePt;
 exports.Pt= Pt;
 exports.parseWorldPt= parseWorldPt;
-    //exports.makePt= makePt;
 

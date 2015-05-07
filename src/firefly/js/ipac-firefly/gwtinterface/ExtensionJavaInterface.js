@@ -26,21 +26,13 @@ export class ExtensionJavaInterface {
     }
 
     getExtensionList(testPlotId) {
-        this.store.getExtensionList(testPlotId);
-    }
-
-
-    getExtLength() {
-        return this.store.state.extensionList.length;
+        return this.store.getExtensionList(testPlotId);
     }
 
     getRemoteChannel() {
         return this.store.state.remoteChannel;
     }
 
-    getExtension(idx) {
-        return this.store.state.extensionList[idx];
-    }
 
     fireExtAction(extension, extData) {
         this.actions.extensionActivate(extension,extData);
@@ -54,4 +46,14 @@ export class ExtensionJavaInterface {
         this.actions.channelActivate(channelId);
     }
 
+    //getExtLength() {
+    //    return this.store.state.extensionList.length;
+    //}
+    //getExtension(idx) {
+    //    return this.store.state.extensionList[idx];
+    //}
+
+    //getExtensionListTEST() {
+    //    return this.store.state.extensionList;
+    //}
 }

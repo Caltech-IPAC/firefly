@@ -9,16 +9,15 @@
 /*jshint esnext:true*/
 /*jshint curly:false*/
 
-"use strict";
+'use strict';
 
 import { Store } from 'flummox';
 import { ImagePt, WorldPt } from 'ipac-firefly/visualize/Point.js';
-import { AREA_SELECT,LINE_SELECT,POINT,NONE } from 'ipac-firefly/visualize/PlotCmdExtension.js';
-import {reportUserAction} from "ipac-firefly/rpc/SearchServicesJson.js";
+import {reportUserAction} from 'ipac-firefly/rpc/SearchServicesJson.js';
 
 
 
-const ALL_MPW=  "AllMpw";
+const ALL_MPW= 'AllMpw';
 
 export class ExternalAccessStore extends Store {
     constructor(flux) {
@@ -28,8 +27,8 @@ export class ExternalAccessStore extends Store {
             //commonCommands : [],
             //fitsViewerList : [],
             extensionList : [],
-            remoteChannel : null,
-        }
+            remoteChannel : null
+        };
 
         const fitViewActions= flux.getActions('ExternalAccessActions');
 
@@ -48,20 +47,22 @@ export class ExternalAccessStore extends Store {
     }
 
     activateExtension(data) {
+          /*eslint-disable no-multi-spaces */
 
         var netObj= data.resultData;
         if (data.extension && data.extension.callback) {
             var cbObj= Object.keys(netObj).reduce((obj,key) => {
-                if (key.startsWith("wp"))      obj[key]= WorldPt.parse(netObj[key]);
-                else if (key.startsWith("ip")) obj[key]= ImagePt.parse(netObj[key]);
+                if (key.startsWith('wp'))      obj[key]= WorldPt.parse(netObj[key]);
+                else if (key.startsWith('ip')) obj[key]= ImagePt.parse(netObj[key]);
                 else                           obj[key]= netObj[key];
                 return obj;
             }, {});
             data.extension.callback(cbObj);
         }
+        /*eslint-enable no-multi-spaces */
 
         if (this.state.remoteChannel) {
-            reportUserAction(this.state.remoteChannel,"todo- add desc",JSON.stringify(netObj));
+            reportUserAction(this.state.remoteChannel,'todo- add desc',JSON.stringify(netObj));
             // call remote here
         }
 
@@ -79,16 +80,17 @@ export class ExternalAccessStore extends Store {
     }
 
     updateChannel(channelId) {
-        this.setState({remoteChannel:channelId})
+        this.setState({remoteChannel:channelId});
     }
 
 
-    getExtensionList(testPlotId=ALL_MPW) {
-        return this.state.extensionList.filter(ext => {
-            if (!ext.plotId || testPlotId === ALL_MPW || ext.plotId === testPlotId) {
+    getExtensionList(testPlotId) {
+        var retList= this.state.extensionList.filter(ext => {
+            if (!testPlotId || !ext.plotId || testPlotId === ALL_MPW || ext.plotId === testPlotId) {
                 return ext;
             }
         });
+        return retList;
     }
 
 

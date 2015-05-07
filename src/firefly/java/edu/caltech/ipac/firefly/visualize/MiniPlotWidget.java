@@ -48,6 +48,7 @@ import edu.caltech.ipac.firefly.visualize.draw.PointSelection;
 import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.firefly.visualize.task.PlotFileTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
+import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -706,7 +707,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                     expandedTitleOptions= r.getExpandedTitleOptions();
                 }
                 if (r.containsParam(WebPlotRequest.PLOT_ID)) {
+                    String prevPlotId= plotId;
                     plotId= r.getPlotId();
+                    if (!ComparisonUtil.equals(prevPlotId,plotId)) {
+                       recomputeUserExtensionOptions();
+                    }
                 }
 
                 if (r.containsParam(WebPlotRequest.ADVERTISE) && r.isAdvertise()) {
@@ -1156,6 +1161,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //    }
 
     public void recomputeUserExtensionOptions()  {
+        if (!_initialized) return;
         areaSelectAdditionActionBar.clear();
         lineSelectAdditionActionBar.clear();
         pointSelectAdditionActionBar.clear();
@@ -1497,6 +1503,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //            GwtUtil.getClientLogger().log(Level.INFO, "I am here");
 //        }
 //    }
+
 
 
 

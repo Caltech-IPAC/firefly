@@ -1,39 +1,32 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
 
-import toBoolean from "underscore.string/toBoolean";
-import join from "underscore.string/join";
-import replaceAll from "underscore.string/replaceAll";
-import words from "underscore.string/words";
-import _ from "underscore";
-import validator from "validator";
-import Point from "ipac-firefly/visualize/Point.js";
+import toBoolean from 'underscore.string/toBoolean';
+import replaceAll from 'underscore.string/replaceAll';
+import words from 'underscore.string/words';
+import validator from 'validator';
+import Point from 'ipac-firefly/visualize/Point.js';
 
 
-const REQUEST_CLASS= "RequestClass";
-const SERVER_REQUEST_CLASS = "ServerRequest";
-const PARAM_SEP = "&";
-const URL_SUB = "URL_PARAM_SEP";
-const KW_DESC_SEP = "/";
-const KW_VAL_SEP = "=";
-const BACKGROUNDABLE = "bgable";
+const REQUEST_CLASS= 'RequestClass';
+const SERVER_REQUEST_CLASS = 'ServerRequest';
+const PARAM_SEP = '&';
+const URL_SUB = 'URL_PARAM_SEP';
+//const KW_DESC_SEP = '/';
+const KW_VAL_SEP = '=';
+const BACKGROUNDABLE = 'bgable';
 
-const ID_NOT_DEFINED = "ID_NOT_DEFINED";
+export const ID_NOT_DEFINED = 'ID_NOT_DEFINED';
 
-
-
-class ServerRequest {
+export class ServerRequest {
     constructor(id, copyFromReq) {
         this.params= {};
-        this.ID_KEY = "id";
+        this.ID_KEY = 'id';
         if (copyFromReq) {
             Object.assign(this.params, copyFromReq.params ? copyFromReq.params : copyFromReq);
         }
-        if (id)  this.setRequestId(id);
+        if (id) this.setRequestId(id);
         if (!this.params[this.ID_KEY]) this.params[this.ID_KEY]= ID_NOT_DEFINED;
         this.setRequestClass(SERVER_REQUEST_CLASS);
     }
@@ -45,9 +38,9 @@ class ServerRequest {
     /**
      * return true if this parameter is a user input parameter.
      * @param paramName
-     * @return
+     * @return {boolean}
      */
-    isInputParam(paramName) { return true; }
+    isInputParam() { return true; }
 
 
     getRequestId() { return this.getParam(this.ID_KEY); }
@@ -59,7 +52,7 @@ class ServerRequest {
     }
 
     setIsBackgroundable(isBackgroundable) {
-        this.setParam(BACKGROUNDABLE, isBackgroundable+"");
+        this.setParam(BACKGROUNDABLE, isBackgroundable+'');
     }
 
     getRequestClass() {
@@ -81,26 +74,31 @@ class ServerRequest {
     getParams() { return this.params; }
 
 
+    /**
+     * This method can take multiple types a parameter
+     * If a single object literal is passed then it will look for a name & value field.
+     * If two strings are passed the the first will me the name and the second will be the value.
+     * if more then two string are passed then the first is the name and the others are join tother as the value
+     * {object|string}
+     * {string}
+     */
     setParam() {
-        if (arguments.length===1 && typeof arguments[0] === 'object')  {
+        if (arguments.length===1 && typeof arguments[0] === 'object') {
             var v= arguments[0];
             if (v.name && v.value) this.params[v.name]= v.value;
         }
         else if (arguments.length===2) {
-            this.params[arguments[0]]= arguments[1]+"";
+            this.params[arguments[0]]= arguments[1]+'';
         }
         else if (arguments.length>2) {
             var values= [];
             for(var i=2; i<arguments.length; i++) {
                values.push(arguments[i]);
             }
-            this.setParamNameMultiValue(arguments[0],values);
+            this.params[arguments[0]]= values.join(',');
         }
     }
 
-    setParamNameMultiValue(key,valAry) {
-        this.params[arguments[0]]= join(valAry);
-    }
 
     setParams(params) {
          Object.assign(this.params, params);
@@ -121,6 +119,11 @@ class ServerRequest {
         this.params[name]= val ? replaceAll(val,PARAM_SEP,URL_SUB) : null;
     }
 
+    /**
+     *
+     * @param name
+     * @return {string}
+     */
     getSafeParam(name) {
         var val= this.params[name];
         return val ? replaceAll(val,URL_SUB,PARAM_SEP) : null;
@@ -133,9 +136,9 @@ class ServerRequest {
     /**
      * Add a predefined attribute
      * @param param the param to add
-     * @return true if this was a predefined attribute and was set, false it this is an unknow attribute
+     * @return {boolean} true if this was a predefined attribute and was set, false it this is an unknow attribute
      */
-    addPredefinedAttrib(param) { return false; }
+    addPredefinedAttrib() { return false; }
 
 //====================================================================
 
@@ -149,7 +152,7 @@ class ServerRequest {
      * This method is reciprocal to toString().
      * @param str
      * @param req
-     * @return the passed request
+     * @return {ServerRequest} the passed request
      */
     static parse(str,req) {
         if (!str) return null;
@@ -177,8 +180,8 @@ class ServerRequest {
      */
     toString() {
         var idStr= (this.ID_KEY+KW_VAL_SEP+this.params[this.ID_KEY]);
-        var retStr= _.keys(this.params).reduce((str,key) => {
-            if (key!==this.ID_KEY) str+= key+KW_VAL_SEP+this.params[key];
+        var retStr= Object.keys(this.params).reduce((str,key) => {
+            if (key!==this.ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);
         return retStr;
@@ -224,16 +227,32 @@ class ServerRequest {
         return !isNaN(retval) ? retval : def;
     }
 
+    /**
+     *
+     * @param key
+     * @param def
+     * @return {number}
+     */
     getFloatParam(key, def=0) {
         var retval= validator.toFloat(this.getParam(key));
         return !isNaN(retval) ? retval : def;
     }
 
+    /**
+     *
+     * @param key
+     * @return {Date}
+     */
     getDateParam(key) {
         var dateValue= validator.toInt(this.getParam(key));
         return !isNaN(dateValue) ? new Date(dateValue) : null;
     }
 
+    /**
+     *
+     * @param key
+     * @return {WorldPt}
+     */
     getWorldPtParam(key) {
         var wpStr= this.getParam(key);
         return wpStr ? Point.parseWorldPt(wpStr) : null;
@@ -257,6 +276,3 @@ class ServerRequest {
 //====================================================================
 
 }
-
-exports.ServerRequest= ServerRequest;
-exports.ID_NOT_DEFINED= ID_NOT_DEFINED;

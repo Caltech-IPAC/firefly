@@ -28,13 +28,13 @@
             <tr>
                 <td> WISE data  </td>
                 <td>
-                    <a href='javascript:firefly.expandedImageViewer.plotURL("http://shadev1.ipac.caltech.edu/demo/wise-m31-level1-3.fits")'>WISE level 1 m31</a>
+                    <a href='javascript:firefly.getExpandViewer().plotURL("http://shadev1.ipac.caltech.edu/demo/wise-m31-level1-3.fits")'>WISE level 1 m31</a>
                 </td>
             </tr>
             <tr>
                 <td> PTF data  </td>
                 <td>
-                    <a href='javascript:firefly.expandedImageViewer.plotURL("http://shadev1.ipac.caltech.edu/demo/ptf-m31-test-file.fits")'>PTF m31</a>
+                    <a href='javascript:firefly.getExternalViewer().plotURL("http://shadev1.ipac.caltech.edu/demo/ptf-m31-test-file.fits")'>PTF m31</a>
                 </td>
 
             </tr>
@@ -71,45 +71,45 @@
     </tr>
 </table>
 
-<table id="extTableDiv">
-    <tr>
-        <td>
-            <table cellspacing="5" cellpadding="3" style="padding-top: 20px;">
-                <tr style="font-weight: bold;">
-                    <td>Reqkey</td>
-                    <td>Comment</td>
-                    <td>FITS</td>
-                    <td>coadd_ID</td>
-                    <td>Band</td>
-                </tr>
-                <tr id="r0">
-                    <td>18945536</td>
-                    <td>test data</td>
-                    <td id="demoTable1">http://shadev1.ipac.caltech.edu/demo/1904-66_SFL.fits</td>
-                    <td>1384p681_ab41</td>
-                    <td>1</td>
-                </tr>
-                <tr id="r1">
-                    <td>18945536</td>
-                    <td>more test data</td>
-                    <td id="demoTable2">http://shadev1.ipac.caltech.edu/demo/dss-m31.fits</td>
-                    <td>1384p681_ab41</td>
-                    <td>2</td>
-                </tr>
-                <tr id="r2">
-                    <td>18945536</td>
-                    <td>another data</td>
-                    <td>http://shadev1.ipac.caltech.edu/demo/testnup.fits</td>
-                    <td>1384p681_ab41</td>
-                    <td>2</td>
-                </tr>
-            </table>
-        </td>
-        <td>
-            <div id="preview2Here" style="width: 300px; height: 300px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>
-        </td>
-    </tr>
-</table>
+<!--<table id="extTableDiv">-->
+    <!--<tr>-->
+        <!--<td>-->
+            <!--<table cellspacing="5" cellpadding="3" style="padding-top: 20px;">-->
+                <!--<tr style="font-weight: bold;">-->
+                    <!--<td>Reqkey</td>-->
+                    <!--<td>Comment</td>-->
+                    <!--<td>FITS</td>-->
+                    <!--<td>coadd_ID</td>-->
+                    <!--<td>Band</td>-->
+                <!--</tr>-->
+                <!--<tr id="r0">-->
+                    <!--<td>18945536</td>-->
+                    <!--<td>test data</td>-->
+                    <!--<td id="demoTable1">http://shadev1.ipac.caltech.edu/demo/1904-66_SFL.fits</td>-->
+                    <!--<td>1384p681_ab41</td>-->
+                    <!--<td>1</td>-->
+                <!--</tr>-->
+                <!--<tr id="r1">-->
+                    <!--<td>18945536</td>-->
+                    <!--<td>more test data</td>-->
+                    <!--<td id="demoTable2">http://shadev1.ipac.caltech.edu/demo/dss-m31.fits</td>-->
+                    <!--<td>1384p681_ab41</td>-->
+                    <!--<td>2</td>-->
+                <!--</tr>-->
+                <!--<tr id="r2">-->
+                    <!--<td>18945536</td>-->
+                    <!--<td>another data</td>-->
+                    <!--<td>http://shadev1.ipac.caltech.edu/demo/testnup.fits</td>-->
+                    <!--<td>1384p681_ab41</td>-->
+                    <!--<td>2</td>-->
+                <!--</tr>-->
+            <!--</table>-->
+        <!--</td>-->
+        <!--<td>-->
+            <!--<div id="preview2Here" style="width: 300px; height: 300px; padding: 5px 5px 5px 5px; border: solid 1px;"></div>-->
+        <!--</td>-->
+    <!--</tr>-->
+<!--</table>-->
 
 
 
@@ -163,12 +163,6 @@
                                        "QUERY_ID" : "table2Here"  },
                                    "previewHere" );
 
-            firefly.extTable.bind("extTableDiv",true,false);
-            firefly.addDataViewer( {"DataSource" : "URL",
-                                    "DataColumn" : "FITS",
-                                    "MinSize"    : "100x100",
-                                    "QUERY_ID" : "extTableDiv"  },
-                                   "preview2Here" );
 
             document.getElementById("r0").addEventListener("click",
                                                             connectEvents,
@@ -206,7 +200,7 @@
 
 
 //        alert("url= " + url);
-        firefly.extTable.fireEvent("extTableDiv","onRowHighlightChange", {"FITS" : url } );
+//        firefly.extTable.fireEvent("extTableDiv","onRowHighlightChange", {"FITS" : url } );
     }
 
 </script>

@@ -4,7 +4,6 @@
 
 /*jshint browserify:true*/
 /*jshint esnext:true*/
-"use strict";
 
-import {fireflyInit} from "ipac-firefly/core/Application.js";
+import {fireflyInit} from 'ipac-firefly/core/Application.js';
 fireflyInit();

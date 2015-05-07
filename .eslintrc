@@ -1,0 +1,36 @@
+{
+   "env": {
+        "es6": true,
+        "browser": true
+    },
+    "ecmaFeatures": {
+        "blockBindings": true,
+        "forOf": true,
+        "arrowFunctions" : true,
+        "binaryLiterals" : true,
+        "blockBindings" : true,
+        "classes" : true,
+        "defaultParams" : true,
+        "destructuring" : true,
+        "forOf" : true,
+        "modules" : true,
+        "objectLiteralComputedProperties" : true,
+        "objectLiteralShorthandMethods" : true,
+        "objectLiteralShorthandProperties" : true,
+        "octalLiterals" : true,
+        "spread" : true,
+        "superInFunctions" : true,
+        "templateStrings" : true,
+        "jsx": true
+    },
+    "rules": {
+        "semi": 2,
+        "curly": [2,"multi-line"],
+        "quotes" : [2, "single", "avoid-escape"],
+        "space-infix-ops" : false,
+        "comma-spacing" : false,
+        "key-spacing" : false,
+        "global-strict" : false,
+        "no-console" : false
+    }
+}

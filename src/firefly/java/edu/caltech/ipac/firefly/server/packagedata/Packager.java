@@ -150,7 +150,7 @@ public class Packager {
             long fSize= targetFile.length();
             bundle.addProcessedBytes(1, fSize, fSize, fSize);
             bundle.finish(url);
-            retval= new BackgroundStatus(_packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.SUCCESS);
+            retval= new BackgroundStatus(_packageID, BackgroundState.SUCCESS, BackgroundStatus.BgType.PACKAGE);
             _estimateStat.addAttribute(JobAttributes.Zipped);
             _estimateStat.addAttribute(JobAttributes.CanSendEmail);
             retval.setParam(BackgroundStatus.TOTAL_BYTES, fileInfo.getSizeInBytes()+"");
@@ -259,7 +259,7 @@ public class Packager {
         }
         PackagedBundle bundle= new PackagedBundle(0, 0, totalFiles, totalSize);
         bundleList.add(bundle);
-        _estimateStat = new BackgroundStatus( _packageID, BackgroundStatus.BgType.PACKAGE, BackgroundState.WAITING);
+        _estimateStat = new BackgroundStatus( _packageID, BackgroundState.WAITING, BackgroundStatus.BgType.PACKAGE);
         _estimateStat.addAttribute(JobAttributes.Zipped);
         _estimateStat.addAttribute(JobAttributes.CanSendEmail);
         _estimateStat.addAttribute(JobAttributes.DownloadScript);

@@ -284,7 +284,7 @@ public class PackagingController {
     }
 
     private static BackgroundStatus makeFailStatus(String id) {
-        BackgroundStatus retval= new BackgroundStatus(id, BackgroundStatus.BgType.PACKAGE, BackgroundState.FAIL);
+        BackgroundStatus retval= new BackgroundStatus(id, BackgroundState.FAIL, BackgroundStatus.BgType.PACKAGE);
         retval.addAttribute(JobAttributes.Zipped);
         retval.addAttribute(JobAttributes.CanSendEmail);
         retval.addMessage("report is canceled or failed");

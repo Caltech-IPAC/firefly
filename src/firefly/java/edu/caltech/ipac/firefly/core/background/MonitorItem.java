@@ -215,7 +215,8 @@ public class MonitorItem {
 
         public void cancelTask() {
             BackgroundTask.cancel(_monItem.getID());
-            BackgroundStatus bgStat= new BackgroundStatus(BackgroundState.USER_ABORTED,_monItem.getStatus());
+//            BackgroundStatus bgStat= new BackgroundStatus(BackgroundState.USER_ABORTED,_monItem.getStatus());
+            BackgroundStatus bgStat= BackgroundStatus.cloneWithState(BackgroundState.USER_ABORTED,_monItem.getStatus());
             _monItem.setStatus(bgStat);
         }
     }

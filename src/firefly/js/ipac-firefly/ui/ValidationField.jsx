@@ -1,12 +1,12 @@
-/*jshint browserify:true*/
-/*jshint esnext:true*/
 
-"use strict";
+'use strict';
 import React from 'react/addons';
-//import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
-import InputFieldView from "./InputFieldView.jsx";
-import FormStoreLinkMixin from "ipac-firefly/ui/model/FormStoreLinkMixin.js";
 
+
+/*eslint-disable no-unused-vars */
+import InputFieldView from './InputFieldView.jsx';
+import FormStoreLinkMixin from 'ipac-firefly/ui/model/FormStoreLinkMixin.js';
+/*eslint-enable no-unused-vars */
 
 
 var ValidationField= React.createClass(
@@ -30,7 +30,6 @@ var ValidationField= React.createClass(
 
 
        render() {
-           /*jshint ignore:start */
            return (
                        <InputFieldView
                                valid={this.isValid()}
@@ -43,7 +42,6 @@ var ValidationField= React.createClass(
                                labelWidth={this.props.labelWidth||this.getLabelWidth()}
                        />
            );
-           /*jshint ignore:end */
        }
 
 

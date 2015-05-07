@@ -28,40 +28,37 @@ const makeURL= function(baseUrl, cmd, paramList, isJsonp) {
     if (cmd) paramList.push({name: ServerParams.COMMAND, value: cmd});
     if (isJsonp) paramList.push({name: ServerParams.DO_JSONP, value: "true"});
     return encodeServerUrl(baseUrl, paramList);
-}
+};
 
 
 export const defaultJsonpRequest= function(cmd, paramList, cb) {
     jsonpRequest(DEF_BASE_URL, cmd, paramList, cb);
-}
+};
 
 export const jsonpRequest= function(baseUrl, cmd, paramList, cb) {//TODO - convert
     var url = makeURL(baseUrl, cmd, paramList, true);
     // TODO: use the jsonp module here
-}
+};
 
 
 export const defaultJsonRequest= function(cmd, paramList) {
     return jsonRequest(DEF_PATH, cmd, paramList);
-}
+};
 
 /**
  *
  * @param baseUrl
  * @param cmd
  * @param paramList
- * @param cb
  */
 export const jsonRequest= function(baseUrl, cmd, paramList) {
     var url = makeURL(baseUrl, cmd, paramList, false);
 
-
-
-    var workerPromise= new Promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         var options= {
             path : url,
             host : getHost(),
-            port : getPort(),
+            port : getPort()
         };
         http.get(options, function (res) {
             res.on('data', function (buf) {
@@ -77,26 +74,24 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
             res.on('end', function () {
             });
             res.on('close', function (err) {
-                reject(new Error(err? 'Error Code:' +err.code : "unknown"))
+                reject(new Error(err? 'Error Code:' +err.code : "unknown"));
             });
         }.bind(this));
 
-    }).then(function(buf) { return JSON.parse(buf); });
-
-    return workerPromise;
-}
+    });
+};
 
 export const doSimpleService= function(doJsonP, cmd, asyncCB) {
     doService(doJsonP, cmd, [], asyncCB, (s) => s);
-}
+};
 
 
 export const doService= function(doJsonP, cmd, paramList) {
     if (doJsonP) {
         return defaultJsonpRequest(cmd, paramList);
     } else {
-        return defaultJsonRequest(cmd,paramList)
+        return defaultJsonRequest(cmd,paramList);
     }
-}
+};
 
 

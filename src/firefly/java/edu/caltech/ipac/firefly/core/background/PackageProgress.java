@@ -40,7 +40,7 @@ public class PackageProgress implements Serializable, HandSerialize {
         _totalBytes = totalBytes;
         _processedBytes = processedBytes;
         _finalCompressedBytes = finalCompressedBytes;
-        _url= url;
+        _url= url==null?"":url;
     }
 
     public int getTotalFiles() {
@@ -65,7 +65,7 @@ public class PackageProgress implements Serializable, HandSerialize {
 
     public String getURL() { return _url; }
 
-    public boolean isDone() { return _url!=null; }
+    public boolean isDone() { return !StringUtils.isEmpty(_url); }
 
     public String serialize() {
         return StringUtils.combine(SPLIT_TOKEN,

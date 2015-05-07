@@ -1,17 +1,17 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
-"use strict";
+'use strict';
 import React from 'react/addons';
 import _ from 'underscore';
 
 
-const UP_POPUP_POINTER = "images/up-pointer.gif";
-const LEFT_DOWN_POPUP_POINTER = "images/left-down-pointer.gif";
-const HOR_PTR_IMAGE_OFFSET= -6;
+const UP_POPUP_POINTER = 'images/up-pointer.gif';
+const LEFT_DOWN_POPUP_POINTER = 'images/left-down-pointer.gif';
+//const HOR_PTR_IMAGE_OFFSET= -6;
 
-const NONE = "none";
-const NORTH = "north";
-const SOUTH_WEST = "sWest";
+const NONE = 'none';
+const NORTH = 'north';
+const SOUTH_WEST = 'sWest';
 
 var PointerPopup = React.createClass(
    {
@@ -20,7 +20,7 @@ var PointerPopup = React.createClass(
        statics : {
            NONE,
            NORTH,
-           SOUTH_WEST,
+           SOUTH_WEST
        },
 
 
@@ -74,22 +74,22 @@ var PointerPopup = React.createClass(
                    left= 5;
 
                }
-               e.style.left= left +"px";
-               e.style.top= pos.y+"px";
+               e.style.left= left +'px';
+               e.style.top= pos.y+'px';
                var upPointer= React.findDOMNode(this.refs.upPointer);
-               upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+"px";
-               e.style.visibility="visible";
+               upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+'px';
+               e.style.visibility='visible';
            }
            else if (this.state.dir===SOUTH_WEST) {
-               e.style.left= (pos.x+20) +"px";
+               e.style.left= (pos.x+20) +'px';
                var top= pos.y - (e.offsetHeight/2+15);
                top= top<5 ? 5 : top;
-               e.style.top= top+"px";
+               e.style.top= top+'px';
                var leftDownPointer= React.findDOMNode(this.refs.leftDownPointer);
-               leftDownPointer.style.left= -20+"px";
-               leftDownPointer.style.top= 8+"px";
+               leftDownPointer.style.left= -20+'px';
+               leftDownPointer.style.top= 8+'px';
                leftDownPointer.style.paddingLeft= 0;
-               e.style.visibility="visible";
+               e.style.visibility='visible';
            }
 
        },
@@ -101,35 +101,34 @@ var PointerPopup = React.createClass(
        //
        //
        //componentWillUnmount : function() {
-       //    window.removeEventListener("resize",this.resizeListener)
+       //    window.removeEventListener('resize',this.resizeListener)
        //
        //},
 
        componentDidMount() {
            var e= React.findDOMNode(this);
-           this.updateOffsets(e)
+           this.updateOffsets(e);
            _.defer(function() {
                this.computeDir(e);
            }.bind(this));
-           //window.addEventListener("resize",this.resizeListener)
+           //window.addEventListener('resize',this.resizeListener)
        },
 
 
        componentDidUpdate() {
            var e= React.findDOMNode(this);
-           this.updateOffsets(e)
+           this.updateOffsets(e);
        },
 
 
        render() {
-           var retval;
            if (this.state.dir===NORTH || this.state.dir===NONE) {
                return (
-                       <div style={{position:"absolute",left:0,top:0, visibility:"hidden" }}>
-                           <img src={UP_POPUP_POINTER} ref="upPointer"/>
-                           <div className="standard-border" style= {{marginTop:"-3px"}}>
-                               <div style={{padding : "5px"}}
-                                       className="popup-pane-pointer-shadow firefly-popup-pointer-main-panel">
+                       <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}>
+                           <img src={UP_POPUP_POINTER} ref='upPointer'/>
+                           <div className='standard-border' style= {{marginTop:'-3px'}}>
+                               <div style={{padding : '5px'}}
+                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel'>
                               {this.props.message}
                                </div>
                            </div>
@@ -138,13 +137,13 @@ var PointerPopup = React.createClass(
            }
            else {
                return (
-                       <div style={{position:"absolute",left:0,top:0 }}>
+                       <div style={{position:'absolute',left:0,top:0 }}>
                            <img src={LEFT_DOWN_POPUP_POINTER}
-                                   ref="leftDownPointer"
-                                   style={{display:"inline-block", position:"absolute"}}/>
-                           <div className="standard-border" style= {{marginTop:"-5px",display:"inline-block"}}>
-                               <div style={{padding : "5px"}}
-                                       className="popup-pane-pointer-shadow firefly-popup-pointer-main-panel">
+                                   ref='leftDownPointer'
+                                   style={{display:'inline-block', position:'absolute'}}/>
+                           <div className='standard-border' style= {{marginTop:'-5px',display:'inline-block'}}>
+                               <div style={{padding : '5px'}}
+                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel'>
                               {this.props.message}
                                </div>
                            </div>
