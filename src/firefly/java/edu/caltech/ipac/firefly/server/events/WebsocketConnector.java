@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +33,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         this.session = session;
         try {
             Map<String, List<String>> params = session.getRequestParameterMap();
-            channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID)) :
+            channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID).get(0)) :
                                         ServerContext.getRequestOwner().getUserKey();
             ServerEventQueue eventQueue = new ServerEventQueue(session.getId(), channelID, this);
             ServerEvent connected = new ServerEvent(Name.EVT_CONN_EST, ServerEvent.Scope.SELF, "{\"connID\": \"" + session.getId() + "\", \"channel\": \"" + channelID + "\"}");
@@ -46,12 +47,15 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
     @OnMessage
     public void onMessage(String message) {
         try {
+
+            if (StringUtils.isEmpty(message)) return;  // ignore empty messages
+
             ServerEvent event = ServerEventQueue.parseJsonEvent(message);
             event.setFrom(session.getId());
             if (event.getTarget().getScope() == ServerEvent.Scope.CHANNEL ) {
                 event.getTarget().setChannel(channelID);
             } else {
-                event.getTarget().setConnID(ServerEvent.SERVER_CONN_ID);
+                event.getTarget().setConnID(session.getId());
             }
             ServerEventManager.fireEvent(event);
         } catch (Exception e) {

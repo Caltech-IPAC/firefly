@@ -10,8 +10,10 @@ package edu.caltech.ipac.firefly.data;
 
 
 import edu.caltech.ipac.firefly.util.event.Name;
+import org.apache.xpath.operations.*;
 
 import java.io.Serializable;
+import java.lang.String;
 
 /**
  * @author Trey Roby
@@ -78,6 +80,15 @@ public class ServerEvent implements Serializable {
 
     public String getFrom() {
         return from;
+    }
+
+    public String toJsonString() {
+        StringBuffer sb = new StringBuffer("{");
+        sb.append("\"name\":\"").append(name.getName()).append("\", ");
+        sb.append("\"scope\":\"").append(target.getScope().name()).append("\", ");
+        sb.append("\"dataType\":\"").append(dataType == null ? DataType.STRING.name() : dataType.name()).append("\", ");
+        sb.append("\"data\":\"").append(data == null ? "" : String.valueOf(data) + "\"").append("}");
+        return sb.toString();
     }
 
 //====================================================================

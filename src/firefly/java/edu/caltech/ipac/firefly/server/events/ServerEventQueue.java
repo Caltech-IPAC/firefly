@@ -83,7 +83,7 @@ public class ServerEventQueue {
         try {
             ServerEvent.EventTarget target = ev.getTarget();
             ServerEvent.Scope scope = (target == null || target.getScope() == null) ?
-                    ServerEvent.Scope.SELF : ServerEvent.Scope.CHANNEL;
+                    ServerEvent.Scope.SELF : target.getScope();
             JSONObject eventJ = new JSONObject();
             eventJ.put("name", ev.getName().getName());
             eventJ.put("scope", scope.name());

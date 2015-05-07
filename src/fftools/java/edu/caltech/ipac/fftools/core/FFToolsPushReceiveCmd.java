@@ -12,10 +12,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.RequestCmd;
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
-import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.data.fuse.ConverterStore;
@@ -64,14 +60,11 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
     private void setupBackgroundChannel() {
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
         String channel= exI.getRemoteChannel();
-        if (channel!=null && !receivers.containsKey(channel)) {
-            MonitorItem monItem = new MonitorItem(null, "i don't know", BackgroundUIHint.NONE);
-            monItem.setWatchable(false);
-            monItem.setStatus(new BackgroundStatus(channel, BackgroundState.STARTING));
-            Application.getInstance().getBackgroundMonitor().addItem(monItem);
+//        if (channel!=null && !receivers.containsKey(channel)) {  //TODO: LLY - need to figure this out.
+        if (!receivers.containsKey(channel)) {
 
             PushReceiver.ExternalPlotController plotController= new AppPlotController(aloneUI);
-            PushReceiver dpR= new PushReceiver(monItem,plotController);
+            PushReceiver dpR= new PushReceiver(plotController);
             receivers.put(channel,dpR);
         }
     }

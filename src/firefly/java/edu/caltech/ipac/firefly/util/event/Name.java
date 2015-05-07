@@ -289,6 +289,15 @@ public class Name implements Serializable {
     public static final Name EVT_CONN_EST =  new Name("EVT_CONN_EST",
                                              "Event connection established.  Along with this event, you can expect connID and channel in the event's data. ie. {connID: val, channel: val}");
 
+//====================================================================
+//  A list of PUSH events available: {WEB_PLOT_REQUEST, REGION_FILE_NAME, TABLE_FILE_NAME, FITS_COMMAND_EXT }
+    public static final Name PUSH_WEB_PLOT_REQUEST  =  new Name("PUSH_WEB_PLOT_REQUEST", "Load this webplot.  Expect WebPlotRequest as data");
+    public static final Name PUSH_REGION_FILE       =  new Name("PUSH_REGION_FILE", "Overlay this region file.  Expect TableInfo as data");
+    public static final Name PUSH_TABLE_FILE        =  new Name("PUSH_TABLE_FILE", "Load this table file.  Expect TableInfo as data");
+    public static final Name PUSH_FITS_COMMAND_EXT  =  new Name("PUSH_FITS_COMMAND_EXT", "Add an extension command.  Expect ExtInfo as data");
+//====================================================================
+
+
     private final String _name;
     private final String _desc;
 

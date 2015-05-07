@@ -318,13 +318,8 @@ public class FFToolEnv {
         if (channel!=null && !ComparisonUtil.equals(channel,pushChannel)) {
             pushChannel= channel;
             GwtUtil.getClientLogger().log(Level.INFO, "here:" + channel);
-            MonitorItem monItem = new MonitorItem(null, "i don't know", BackgroundUIHint.NONE);
-            monItem.setWatchable(false);
-            monItem.setStatus(new BackgroundStatus(channel, BackgroundState.STARTING));
-            Application.getInstance().getBackgroundMonitor().addItem(monItem);
-
             PushReceiver.ExternalPlotController plotController= new ApiPlotController();
-            new PushReceiver(monItem,plotController);
+            new PushReceiver(plotController);
         }
     }
 

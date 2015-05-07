@@ -32,14 +32,18 @@ public class ServerEventManager {
 
 
     public static void fireEvent(ServerEvent sev) {
-        if (!sev.getTarget().hasDestination()) {
-            if (sev.getTarget().getScope() == ServerEvent.Scope.CHANNEL) {
-                sev.getTarget().setChannel(ServerContext.getRequestOwner().getEventChannel());
-            } else {
-                sev.getTarget().setConnID(ServerContext.getRequestOwner().getEventConnID());
+        if (sev == null || sev.getTarget() == null) {
+            LOG.warn("Something is wrong with this ServerEvent: " + String.valueOf(sev));
+        } else {
+            if (!sev.getTarget().hasDestination()) {
+                if (sev.getTarget().getScope() == ServerEvent.Scope.CHANNEL) {
+                    sev.getTarget().setChannel(ServerContext.getRequestOwner().getEventChannel());
+                } else {
+                    sev.getTarget().setConnID(ServerContext.getRequestOwner().getEventConnID());
+                }
             }
+            eventWorker.deliver(sev);
         }
-        eventWorker.deliver(sev);
     }
 
     public static ServerEventQueue addEventQueue(ServerEventQueue queue) {

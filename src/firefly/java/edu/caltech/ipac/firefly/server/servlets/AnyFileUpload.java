@@ -11,7 +11,12 @@ import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.util.BufferedFile;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -19,8 +24,11 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Date: Feb 16, 2011
@@ -31,9 +39,12 @@ import java.util.List;
 public class AnyFileUpload extends BaseHttpServlet {
     private static final Logger.LoggerImpl _LOG = Logger.getLogger();
     public static final String DEST_PARAM  = "dest";
+    public static final String PRELOAD_PARAM = "preload";
+    private static final ExecutorService executor =  Executors.newSingleThreadExecutor();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         String dest = req.getParameter(DEST_PARAM);
+        boolean doPreload = req.getParameterMap().containsKey(PRELOAD_PARAM);
         File destDir = ServerContext.getTempWorkDir();
         if (!StringUtils.isEmpty(dest)) {
             destDir = VisContext.convertToFile(dest);
@@ -63,12 +74,34 @@ public class AnyFileUpload extends BaseHttpServlet {
                 String ext = StringUtils.isEmpty(fileName) ? "" : FileUtil.getExtension(fileName);
                 ext = StringUtils.isEmpty(ext) ? ".tmp" : "." + ext;
                 try {
-                    File uf = File.createTempFile("upload_", ext, destDir);
-                    item.write(uf);
+                    final File uf = File.createTempFile("upload_", ext, destDir);
                     String retFName = VisContext.replaceWithPrefix(uf);
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
                     String fileCacheKey= overrideKey!=null ? overrideKey : retFName;
                     UserCache.getInstance().put(new StringKey(fileCacheKey), fi);
+
+                    if (doPreload) {
+                        if (ext.equals("fits")) {
+                            final Fits fits = new Fits(item.getInputStream());
+                            CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM).put(new StringKey(fileCacheKey), fits);
+                            executor.submit(new Runnable() {
+                                public void run() {
+                                    try {
+                                        BufferedFile bf = new BufferedFile(uf, "rw");
+                                        fits.write(bf);
+                                        bf.close();
+                                    } catch (Exception e) {
+                                        Logger.error(e, "Unexpected error while writing uploaded fits file:" + uf.getPath());
+                                    }
+                                }
+                            });
+                        } else {
+                            item.write(uf);
+                        }
+                    } else {
+                        item.write(uf);
+                    }
+
                     sendReturnMsg(res, 200, null, fileCacheKey);
                     Counters.getInstance().increment(Counters.Category.Upload, fi.getContentType());
                 } catch (Exception e) {

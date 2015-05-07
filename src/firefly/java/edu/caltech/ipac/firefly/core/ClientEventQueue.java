@@ -53,7 +53,7 @@ public class ClientEventQueue {
                 WebEventManager.getAppEvManager().fireEvent(ev);
                 GwtUtil.getClientLogger().log(Level.INFO, "Event: Name:" + name.getName() + ", Data: " + ev.getData());
             } else {
-                WebEvent<String> ev= new WebEvent<String>(ClientEventQueue.class,name,sEvent.getData().toString());
+                WebEvent<String> ev= new WebEvent<String>(ClientEventQueue.class,name, String.valueOf(data));
                 WebEventManager.getAppEvManager().fireEvent(ev);
                 GwtUtil.getClientLogger().log(Level.INFO, "Event: Name:" + name.getName() + ", Data: " + sEvent.getData());
             }
@@ -64,51 +64,70 @@ public class ClientEventQueue {
 
     public static void onError(String error) {
         GwtUtil.getClientLogger().log(Level.INFO, "onError: " + error);
-        delayedReactivate();
     }
 
-    public static void onClose() {
+    public static void onClose(String reason) {
         GwtUtil.getClientLogger().log(Level.INFO, "onClose");
-        delayedReactivate();
     }
 
-    public native void sendMessage(String msg) /*-{
+    public static void sendEvent(ServerEvent sevt) {
+        sendMessage(sevt.toJsonString());
+    }
+
+    public static native void sendMessage(String msg) /*-{
         try {
-            $wnd.firefly.ClientEventManager.send(msg);
+            $wnd.firefly.ClientEventQueue.send(msg);
         } catch(ex) {
             console.log("Exception sending message: " + msg);
         }
     }-*/;
 
-    public static native void start() /*-{
-
-        if (!$wnd.firefly) {
-            $wnd.firefly = {};
-        }
-
-        var l = window.location;
-        var proto = (l.protocol === "https:") ? "wss://" : "ws://";
-        var port = (l.port != 80 && l.port != 443) ? ":" + l.port : ""
-        var pathname = l.pathname.substring(0, l.pathname.lastIndexOf('/'));
-        var baseurl = proto + l.hostname + port + "/" + pathname;
-        $wnd.firefly.ClientEventManager = new WebSocket(baseurl + "/sticky/firefly/events");
-
-        $wnd.firefly.ClientEventManager.onopen = function(){
-            @edu.caltech.ipac.firefly.core.ClientEventQueue::onOpen();
-        };
-        $wnd.firefly.ClientEventManager.onerror = function (error) {
-            @edu.caltech.ipac.firefly.core.ClientEventQueue::onError(Ljava/lang/String;)(error);
-        };
-        $wnd.firefly.ClientEventManager.onclose = function() {
-            @edu.caltech.ipac.firefly.core.ClientEventQueue::onClose();
-        }
-        $wnd.firefly.ClientEventManager.onmessage = function(msg){
-            @edu.caltech.ipac.firefly.core.ClientEventQueue::onMessage(Ljava/lang/String;)(msg.data);
-        };
+    private native void closeConnection() /*-{
+        $wnd.firefly.ClientEventQueue.close();
     }-*/;
 
-    private native void closeConnection() /*-{
-        $wnd.firefly.ClientEventManager.close();
+    public static native void start() /*-{
+
+        var nRetries = 0;
+        function doWSConnect() {
+            if (!$wnd.firefly) {
+                $wnd.firefly = {};
+            }
+
+            var l = window.location;
+            var proto = (l.protocol === "https:") ? "wss://" : "ws://";
+            var port = (l.port != 80 && l.port != 443) ? ":" + l.port : ""
+            var pathname = l.pathname.substring(0, l.pathname.lastIndexOf('/'));
+            var baseurl = proto + l.hostname + port + "/" + pathname;
+            var queryString = l.hash ? "?" + decodeURIComponent(l.hash.substring(1)) : "";
+            console.log("Connecting to " + baseurl + "/sticky/firefly/events" + queryString);
+
+            $wnd.firefly.ClientEventQueue = new WebSocket(baseurl + "/sticky/firefly/events" + queryString);
+            var pingIt = null;
+
+            $wnd.firefly.ClientEventQueue.onopen = function(){
+                @edu.caltech.ipac.firefly.core.ClientEventQueue::onOpen();
+
+                nRetries = 0;
+                if (pingIt) clearInterval(pingIt);
+                pingIt = setInterval(function () {$wnd.firefly.ClientEventQueue.send("")}, 5000);
+            };
+
+            $wnd.firefly.ClientEventQueue.onerror = function(event) {
+                console.log("onerror:lsdfjdsklfj");
+            };
+
+            $wnd.firefly.ClientEventQueue.onclose = function(event) {
+                console.log("onclose:" + event);
+                @edu.caltech.ipac.firefly.core.ClientEventQueue::onClose(Ljava/lang/String;)(event.data);
+            }
+
+            $wnd.firefly.ClientEventQueue.onmessage = function(event){
+                @edu.caltech.ipac.firefly.core.ClientEventQueue::onMessage(Ljava/lang/String;)(event.data);
+            };
+        }
+
+        doWSConnect();
     }-*/;
 
 //====================================================================
@@ -140,22 +159,4 @@ public class ClientEventQueue {
             return null;
         }
     }
-
-    private static void delayedReactivate() {
-        if (retries < 10) {
-            if (reactivateTimer==null) {
-                reactivateTimer= new Timer() {
-                    @Override
-                    public void run() {
-                        GwtUtil.getClientLogger().log(Level.INFO, "Attempting to reconnect with server events...");
-                        start();
-                        retries++;
-                    }
-                };
-            }
-
-            reactivateTimer.schedule(retries * 1000); // 10 sec
-        }
-    }
-
 }

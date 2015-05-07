@@ -55,8 +55,10 @@ public class BackgroundInfoCacher {
         BackgroundInfo info= getInfo();
         if (info!=null) {
             updateInfo(bgStat, info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), info.isCanceled());
+            ServerEvent.EventTarget target = info.getEventTarget() == null ?
+                            new ServerEvent.EventTarget(ServerEvent.Scope.SELF) : info.getEventTarget();
             ServerEvent ev= new ServerEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
-                                                    info.getEventTarget(), bgStat);
+                                                    target, bgStat);
             ServerEventManager.fireEvent(ev);
         }
     }
