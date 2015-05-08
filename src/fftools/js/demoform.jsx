@@ -6,7 +6,6 @@
 import {fireflyInit} from 'ipac-firefly/core/Application.js';
 fireflyInit();
 
-require('babel/polyfill');
 import React from 'react/addons';
 
 import InputFormModel from 'ipac-firefly/ui/model/InputFormModel.js';

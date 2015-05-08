@@ -1,0 +1,107 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name='gwt:module' content='edu.caltech.ipac.fftools.FFToolsDebug.gwt.xml'>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
+    <title>Firefly Tools with Spectra</title>
+
+
+</head>
+
+<body>
+
+<form>
+    <table border="0">
+        <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/samplehistdata.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
+        <tr><td>Desciption:</td><td><input size="50" type="text" id="descr-field" name="descr" value="Sample data"/></td></tr>
+    </table>
+</form>
+
+
+<script type="text/javascript">
+    {
+         // process set input fields values from GET parameters
+         var url = window.location.href.split("?");
+         if(url.length > 1) {
+             var terms = url[1].split("&");
+             for(var i = 0; i < terms.length; i++) {
+                 var key = terms[i].split('=')[0];
+                 var value = unescape((terms[i].split('=')[1]).replace(/[+]/g," "));
+                 document.getElementById(key+"-field").value = value;
+             }
+         }
+     }
+</script>
+
+<div style="margin: 20px 0px 20px 20px;font-size: 20pt;">Firefly Tools with Histogram</div>
+
+
+<div style="white-space: nowrap;">
+    <div id="plotHere"  style="display:inline-block; width: 800px; height: 500px;
+                                padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+</div>
+
+
+<script type="text/javascript">
+    {
+       function onFireflyLoaded() {
+           firefly.debug= true;
+
+           firefly.showHistogram(
+                   {
+                       'descr' : document.getElementById('descr-field').value,
+
+                       // specify the parameters that tell how to get data
+                       // for now it's a URL to an IPAC table or CVS with two cols:
+                       // first col - center of the bin, second col - num. points in the bin
+                       'source' : document.getElementById('tableurl-field').value
+                       // OR
+                       // specify the data to plot histogram
+                       // for now it's an array of rows,
+                       // first col - center of the bin, second col - num. points in the bin
+                       // This needs to change to binMin, binMax, nPoints to support variable length bins
+                       /*
+                       'data' : [
+                           [-2.3138013781265, 1],
+                           [-2.0943590644815, 4],
+                           [-1.8749167508365, 11],
+                           [-1.6554744371915, 12],
+                           [-1.4360321235466, 18],
+                           [-1.2165898099016, 18],
+                           [-0.99714749625658, 24],
+                           [-0.77770518261159, 21],
+                           [-0.55826286896661, 36],
+                           [-0.33882055532162, 40],
+                           [-0.11937824167663, 51],
+                           [0.10006407196835, 40],
+                           [0.31950638561334, 42],
+                           [0.53894869925832, 36],
+                           [0.75839101290331, 40],
+                           [0.9778333265483, 36],
+                           [1.1972756401933, 23],
+                           [1.4167179538383, 18],
+                           [1.6361602674833, 9],
+                           [1.8556025811282, 12],
+                           [2.0750448947732, 3],
+                           [2.2944872084182, 4]
+                       ]
+                       */
+                   },
+                   "plotHere");
+       }
+    }
+</script>
+
+
+<script type="text/javascript" language='javascript' src='http://localhost:8080/fftools/fftools.nocache.js'></script>
+
+</body>
+</html>
