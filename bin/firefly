@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# A script to start Firefly as an end-user application.
+#
+# It starts up a Tomcat instance on two randomly chosen ports (one for http
+# and one for control socket).  The sockets can be overridden by setting
+# FFPORTS (e.g., `env FFPORTS="8080 8004" firefly').
+#
+# Multiple apps can be launched at the same time (each will run on a
+# different port).
+#
+# Implementation: the script creates a temporary minimal $CATALINA_BASE
+# directory, into which it links the webapps/ and conf/ dirs from
+# $FIREFLY_DIR/tomcat.  The directory is deleted on exit, unless FFDEBUG=1
+# is set. 
+#
+# This script should work when invoked from the source directory as well
+# (assuming firefly was built).  In that case, $FIREFLY_DIR/tomcat is used
+# as the $CATALINA_BASE.
+#
+
+set -e
+
+test -z "$CATALINA_HOME" && { echo "\$CATALINA_HOME must be defined and point to your Tomcat installation. Exiting."; exit -1; }
+
+# Establish our location
+if [[ -z "$FIREFLY_DIR" ]]; then
+	FIREFLY_DIR=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
+fi
+
+CATALINA_BASE=
+THROWAWAY_CATALINA_BASE=0
+cleanup()
+{
+	# Shut down Tomcat
+	if [[ "$TOMCAT_STARTED" == "1" ]]; then
+		JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]}" "$CATALINA_HOME/bin/catalina.sh" stop > "$CATALINA_BASE/logs/stop.log"
+	fi
+
+	# Delete the temporary Tomcat configuration directory
+	if [[ "$THROWAWAY_CATALINA_BASE" == "1" ]]; then
+		rm -rf "$CATALINA_BASE"
+	fi
+}
+trap cleanup EXIT;
+
+#
+# Set up CATALINA_BASE. If running from the source directory, use
+# $FIREFLY_DIR/tomcat; set up a throwaway temp CATALINA_BASE otherwise
+#
+if [[ -d "$FIREFLY_DIR/.git" ]]; then
+	# Running from source directory
+	CATALINA_BASE="$FIREFLY_DIR/tomcat"
+
+	# Make sure the expanded webapp is regenerated from WAR
+	rm -rf "$CATALINA_BASE/webapps/fftools"
+else
+	# Running from installed product
+	CATALINA_BASE="$(mktemp -d -t firefly.$(id -un).XXXXX)"
+	if [[ $FFDEBUG != "1" ]]; then
+		THROWAWAY_CATALINA_BASE=1
+	fi
+
+	mkdir -p "$CATALINA_BASE"/{logs,temp,work,webapps}
+	ln -s "$FIREFLY_DIR/tomcat/webapps/fftools" "$CATALINA_BASE/webapps/"
+	ln -s "$FIREFLY_DIR/tomcat/conf"            "$CATALINA_BASE/"
+fi
+export CATALINA_BASE
+
+# Find two available ports, for http and control (shutdown)
+FFPORTS=${FFPORTS:-$($FIREFLY_DIR/bin/__findports.py)}
+FFPORTS=($FFPORTS)
+
+# Start Tomcat with apropriate port overrides
+TOMCAT_STARTED=1
+JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]}" "$CATALINA_HOME/bin/catalina.sh" start > "$CATALINA_BASE/logs/start.log"
+
+echo CATALINA_BASE: $CATALINA_BASE
+echo port.http:     ${FFPORTS[0]}
+echo port.shutdown: ${FFPORTS[1]}
+echo
+echo "# Firefly started on http://$(hostname):${FFPORTS[0]}/fftools. Hit CTRL-C to quit."
+
+# stay resident & wait for CTRL-C
+# the cleanup() trap will clean things up once the script exits
+cat

@@ -1,0 +1,5 @@
+setupRequired(gradle)
+setupRequired(tomcat)
+setupRequired(node)
+
+envPrepend(PATH, ${PRODUCT_DIR}/bin)
