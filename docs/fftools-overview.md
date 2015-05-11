@@ -50,7 +50,7 @@ following
 
 | Method | Description |
 | ---------- | ----------- |
-| `plot` | plot a fits images, takes an object literal as only parameters. See below for parameters |
+| `plot` | plot a fits images |
 | `plotURL` | convenience method to plot a url |
 | `plotFile` | convenience method to plot a file on the server |
 | `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
@@ -59,13 +59,16 @@ following
 
 
 
+####ImageViewer.plot() method
 
 The following is a list of possible params for the ImageViewer plotting. Almost all parameters are optional.
     Note that the request `Type` parameter can
     be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
 
+| Parameter  | Description |
+| ---------- | ----------- |
+| object     | object literal with name/value pairs for all parameters |
 
- *Parameters For FITS Image Viewer plot method*
  
  - **Type**: Set the type of request. Based on the Type then 1 or more other parameters are required.
 Options are:
@@ -165,35 +168,35 @@ Note-See documentation on WorldPt to find proper syntax
  - **UniqueKey**: TODO: Document this param
 
 
+####ImageViewer.plotURL() method
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| url     | string with the url of a FITS file to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-<div class="ret">Methods:</div>
-<ul>
-    <li>
-        <code>plot(params)</code> - plot a fits image.
-        <table style="font-size: smaller;">
-            <tr>
-                <td><span class="paramsTitle">Parameters:</span></td>
-            </tr>
-            <tr>
-                <td><span class="pName">params</span></td>
-                <td>- the plotting parameters, anonymous class with name values pairs.</td>
-            </tr>
-        </table>
-    </li>
-    <li>
-        <code>plotURL(url)</code> - plot a fits image.
-        <table style="font-size: smaller;">
-            <tr>
-                <td><span class="paramsTitle">Parameters:</span></td>
-            </tr>
-            <tr>
-                <td><span class="pName">url</span></td>
-                <td>- a url of a fits file to plot, all other parameter come from the defaults</td>
-            </tr>
-        </table>
-    </li>
-</ul>
+####ImageViewer.plotFile() method
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| file     | string with full path of a FITS file on the server to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
+
+
+####ImageViewer.plotFileOrURL() method
+
+This shortcut method can be used when there are two ways to access the same file but for some reason the local access is not always available.
+It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)|
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| file     | string with full path of a FITS file on the server to plot |
+| url     | string with the url of a FITS file to plot |
+
+
+
+
+
+
 
 <div class="ret">Methods specific to firefly.getExternalViewer() object:</div>
 <ul>

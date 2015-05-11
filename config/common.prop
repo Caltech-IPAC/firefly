@@ -42,3 +42,7 @@ sso.server.url=@sso.server.url@
 sso.user.profile.url=@sso.user.profile.url@
 
 help.base.url=@help.base.url@
+
+
+
+visualize.fits.MaxSizeInBytes= @visualize.fits.MaxSizeInBytes@
