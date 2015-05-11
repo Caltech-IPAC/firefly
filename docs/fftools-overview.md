@@ -34,7 +34,7 @@ following
  - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified fits file.
 
 
-**Inline Image Viewer**
+###Inline Image Viewer
 
 The following methods and objects available on `firefly` object to create an fits image viewer.
     `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
@@ -53,286 +53,104 @@ The following is a list of possible params for the ImageViewer plotting. Almost 
     be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
 
 
-| Parameter  | Description |
-| ---------- | ----------- |
-| Type |Set the type of request. Based on the Type then 1 or more other parameters are required. |
-||Options are:<ul>
-||<li>`SERVICE`, for a image service | 
-||<li>`FILE` for file on the server |
-||<li>`URL` for any url accessible fits file |
-||<li>`TRY_FILE_THEN_URL` try a file on the server first then try the url |
-||<li>`BLANK` make a blank image |
-||<li>`ALL_SKY` </ul> |
+ *Parameters For FITS Image Viewer*
+ 
+ - **Type**: Set the type of request. Based on the Type then 1 or more other parameters are required.
+Options are:
+    - `SERVICE`, for a image service
+    - `FILE` for file on the server
+    - `URL` for any url accessible fits file
+    - `TRY_FILE_THEN_URL` try a file on the server first then try the url
+    - `BLANK` make a blank image
+    - `ALL_SKY`
 
-| File | File name of a file on the server. Required if Type==FILE or if you want to plot a file on the server. |
-| URL  | Retrieve and plot the file from the specified URL. Required if Type==URL or if you want to plot a URL. |
-       |The url can be absolute or relative. If it is relative then one of two things happen. |
-       |  
-       |    - The url is made absolute based on the host web page url.  |
-       |    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)` |
+ - **File**: File name of a file on the server. Required if Type==FILE or if you want to plot a file on the server.
+ - **URL**: Retrieve and plot the file from the specified URL. Required if Type==URL or if you want to plot a URL.
+ The url can be absolute or relative. If it is relative then one of two things happen.
+    - The url is made absolute based on the host web page url. 
+    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)` 
        
-       
-       
-           test test 
-            
-            
-</tr>
-<tr>
-    <td>Service</td>
-    <td class="paramsDesc">Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.<br>
-        Required if Type=SERVICE or if you want to use a service
+ - **Service**
+    - Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.
+Required if Type=SERVICE or if you want to use a service
+ - **WorldPt**:  This is target for service request for `Type===SERVICE`.
+    - WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.
+    - The general syntax is `lon;lat;coordinate_sys`, e.g. `'12.2;33.4;EQ_J2000'` or `'11.1;22.2;GALACTIC'`
+    - coordinate system can be: `'EQ_J2000'`, `'EQ_B1950'`, `'EC_J2000'`, `'EC_B1950'`, `'GALACTIC'`, or `'SUPERGALACTIC'`;
+    
+ - **SizeInDeg**  The radius or side (in degrees) depending of the service type, used with `Type===SERVICE`
+ -  **SurveyKey**:  Required if `Type==='SERVICE'`
+The value of SurveyKey depends on the value of "Service".
+The following are possible values for SurveyKey.<br>If service is:
+        
+    - IRIS: 12, 25, 60, or 100
+    - ISSA: 12, 25, 60, or 100
+    - DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2, or phase2_gsc1
+    - SDSS: u, g, r, i, or z
+    - TWOMASS: j, h, or k
+    - MSX: 3, 4, 5, or 6
+    - WISE: 1b or 3a
     </td>
-</tr>
-<tr>
-    <td>WorldPt</td>
-    <td class="paramsDesc">This is target for service request, Type==SERVICE.
-        <ul>
-            <li>WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.</li>
-            <li>The general syntax is "lon;lat;coordinate_sys"</li>
-            <li>coordinate system can be:
-                EQ_J2000, EQ_B1950, EC_J2000, EC_B1950, GALACTIC, or SUPERGALACTIC";
-            </li>
-        </ul>
-
-    </td>
-</tr>
-<tr>
-    <td>SizeInDeg</td>
-    <td class="paramsDesc">The radius or side (in degrees) depending of the service type, used with Type==SERVICE</td>
-</tr>
-<tr>
-    <td>SurveyKey</td>
-    <td class="paramsDesc">
-        Required if Type==SERVICE
-        The value of SurveyKey depends on the value of "Service".
-        The following are possible values for ServeyKey.<br>If service is:
-        <ul>
-            <li>IRIS: 12, 25, 60, or 100</li>
-            <li>ISSA: 12, 25, 60, or 100</li>
-            <li>DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2, or
-                phase2_gsc1
-            </li>
-            <li>SDSS: u, g, r, i, or z</li>
-            <li>TWOMASS: j, h, or k</li>
-            <li>MSX: 3, 4, 5, or 6</li>
-            <li>WISE: 1b or 3a</li>
-        </ul>
-    </td>
-</tr>
-<tr>
-    <td>SurveyKeyBand</td>
-    <td class="paramsDesc">So far only used with Type==SERVICE and SurveyKey==WISE. Possible values are: 1, 2, 3, 4</td>
-</tr>
-<tr>
-    <td>ZoomType</td>
-    <td class="paramsDesc">
-        sets the zoom type, based on the ZoomType other zoom set methods may be required
-        Notes for ZoomType:
-        <ul>
-            <li>STANDARD - default, when set you may optionally define <code>InitZoomLevel</code> or the zoom will
-                default to be 1x
-            </li>
-            <li>TO_WIDTH - you must define <code>ZoomToWidth</code> and set a pixel width</li>
-            <li>FULL_SCREEN - you must define <code>ZoomToWidth</code> with a width and <code>ZoomToHeight</code> with a
-                height
-            </li>
-            <li>ARCSEC_PER_SCREEN_PIX - you must define <code>ZoomArcsecPerScreenPix</code></li>
-        </ul>
-    </td>
-</tr>
-<tr>
-    <td>TitleOptions</td>
-    <td class="paramsDesc">
-        Set others ways to title the plot.
-        Options for title;
-        <ul>
-            <li>NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description
-                that come from the server
-            </li>
-            <li>PLOT_DESC - Use the plot description set by the server. This is meaningful when the server is using a service,
-                otherwise it will be an empty string. <i>example-</i> 2mass or IRIS
-            </li>
-            <li>FILE_NAME - Use the name of the fits file. This is useful when plotting a upload file name or a URL.
-            </li>
-            <li>HEADER_KEY - Use the value of a fits header name key.  This parameter <code>HeaderForKeyTitle</code> must be
-                set to the card name.
-            </li>
-            <li>PLOT_DESC_PLUS - Use the server plot description but append some string to it.  The string is set in
-                <code>PlotDescAppend</code>
-            </li>
-        </ul>
-    </td>
-</tr>
-<tr>
-    <td>InitZoomLevel</td>
-    <td class="paramsDesc">The level to zoom the image to. Used with ZoomType==STANDARD (which is the default). Example
+ - **SurveyKeyBand**: So far only used with `'Type===SERVICE'` and `'SurveyKey===WISE`'. Possible values are: 1, 2, 3, 4
+ - **ZoomType**:  Sets the zoom type, based on the ZoomType other zoom set methods may be required
+Notes for ZoomType:
+    - STANDARD - default, when set you may optionally define `'InitZoomLevel'` or the zoom will default to be 1x
+    - TO_WIDTH - you must define <code>ZoomToWidth</code> and set a pixel width</li>
+    - FULL_SCREEN - you must define <code>ZoomToWidth</code> with a width and `'ZoomToHeight'` with a height
+    - ARCSEC_PER_SCREEN_PIX - you must define <code>ZoomArcsecPerScreenPix</code></li>
+ - **TitleOptions**:  Set others ways to title the plot. Options for title:
+    - NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description that come from the server
+    - PLOT_DESC - Use the plot description set by the server. This is meaningful when the server is using a service, otherwise it will be an empty string. <i>example-</i> 2mass or IRIS
+    - FILE_NAME - Use the name of the fits file. This is useful when plotting a upload file name or a URL.
+    - HEADER_KEY - Use the value of a fits header name key.  This parameter <code>HeaderForKeyTitle</code> must be set to the card name.
+    - PLOT_DESC_PLUS - Use the server plot description but append some string to it.  The string is set in `'PlotDescAppend'`
+ - **InitZoomLevel**: The level to zoom the image to. Used with ZoomType==STANDARD (which is the default). Example
         .5,2,8,.125
-    </td>
-
-</tr>
-<tr>
-    <td>Title</td>
-    <td class="paramsDesc">Title of the plot</td>
-</tr>
-
-<tr>
-    <td>PostTitle</td>
-    <td class="paramsDesc">A String to append at the end of the title of the plot. This parameter is useful if you are
+ - **Title**: Title of the plot
+ - **PostTitle**: A String to append at the end of the title of the plot. This parameter is useful if you are
     using one of the computed <code>TitleOpions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
-</tr>
-
-<tr>
-    <td>PreTitle</td>
-    <td class="paramsDesc">A String to append at the beginning of the title of the plot. This parameter is useful if you are
+ - **PreTitle**: A String to append at the beginning of the title of the plot. This parameter is useful if you are
         using one of the computed <code>TitleOptions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
-</tr>
-
-<tr>
-    <td>TitleFilenameModePfx</td>
-    <td class="paramsDesc">A String to replace the default "from" when <code>TitleMode</code> is <code>FILE_NAME</code>, and the mode is <code>URL</code>.
+ - **TitleFilenameModePfx**: A String to replace the default "from" when <code>TitleMode</code> is <code>FILE_NAME</code>, and the mode is <code>URL</code>.
     If the url contains a fits file name and there are more options then the firefly viewer added a "from" to the front of the title.
     This parameter allows that string to be changed to something such as "cutout".
-</tr>
-
-<tr>
-    <td>PlotDescAppend</td>
-    <td class="paramsDesc">A string to apppend to the end of the plot description set by the server.  This will be
+ - **PlotDescAppend**: A string to apppend to the end of the plot description set by the server.  This will be
     used as the plot title if the <code>TitleOptions</code> parameter is set to <code>PlotDescAppend</code>. </td>
-</tr>
-
-<tr>
-    <td>RotateNorth</td>
-    <td class="paramsDesc">Plot should come up rotated north, should be "true" to rotate north</td>
-</tr>
-<tr>
-    <td>RotateNorthType</td>
-    <td class="paramsDesc">coordinate system to rotate north on, options: EQ_J2000, EQ_B1950, EC_J2000, EC_B1950,
+ - **RotateNorth**: Plot should come up rotated north, should be "true" to rotate north</td>
+ - **RotateNorthType**: coordinate system to rotate north on, options: EQ_J2000, EQ_B1950, EC_J2000, EC_B1950,
         GALACTIC, or SUPERGALACTIC"
-    </td>
-</tr>
-<tr>
-    <td>Rotate</td>
-    <td class="paramsDesc">set to rotate, if "true", the angle should also be set</td>
-</tr>
-<tr>
-    <td>RotationAngle</td>
-    <td class="paramsDesc">the angle to rotate to, use with "Rotate"</td>
-</tr>
-<tr>
-    <td>FlipY</td>
-    <td class="paramsDesc">Flip this image on the Y axis</td>
-</tr>
-<tr>
-    <td>HeaderKeyForTitle</td>
-    <td class="paramsDesc">Use the value of a specified header for the title of the plot, use with multi image fits
-        files
-    </td>
-</tr>
-<tr>
-    <td>RangeValues</td>
-    <td class="paramsDesc">A complex string for specify the stretch of this plot. Use the method
+ - **Rotate**: set to rotate, if "true", the angle should also be set</td>
+ - **RotationAngle**: the angle to rotate to, use with "Rotate"</td>
+ - **FlipY**: Flip this image on the Y axis</td>
+ - **HeaderKeyForTitle**: Use the value of a specified header for the title of the plot, use with multi image fits files
+ - **RangeValues**: A complex string for specify the stretch of this plot. Use the method
         firefly.serializeRangeValues() to produce this string
-    </td>
-</tr>
-<tr>
-    <td>ColorTable</td>
-    <td class="paramsDesc">value 0 - 21 to represent different predefine color tables</td>
-</tr>
-<tr>
-    <td>ZoomToWidth</td>
-    <td class="paramsDesc">used with "ZoomType==TO_WIDTH" or "ZoomType==FULL_SCREEN", this is the width in pixels</td>
-</tr>
-<tr>
-    <td>ZoomToHeight</td>
-    <td class="paramsDesc">used with "ZoomType==FULL_SCREEN", this is the height in pixels</td>
-</tr>
-<tr>
-    <td>PostCrop</td>
-    <td class="paramsDesc">
-        Crop the image before returning it. If rotation is set then the crop will happen post rotation.
-        Note: CropPt1 & CropPt2 <i>or</i> CropWorldPt1 & CropWorldPt1 are required to crop
-    </td>
-</tr>
-<tr>
-    <td>PostCropAndCenter</td>
-    <td class="paramsDesc">
-        Crop & center the image before returning it. If rotation is set then the crop will happens post rotation.
-        Note: SizeInDeg & WorldPt are required to do PostCropAndCenter
-    </td>
-</tr>
-<tr>
-    <td>CropPt1</td>
-    <td class="paramsDesc">One corner of the rectangle, in image coordinates, to crop out of the image, used with
-        CropPt2
-        CropPt1 and CropPt2 are diagonal of each other
-        <br>Syntax is "x;y" example: 12;1.5
-
-    </td>
-</tr>
-<tr>
-    <td>CropPt2</td>
-    <td class="paramsDesc">Second corner of the rectangle, in image coordinates, to crop out of the image, used with
-        CropPt1
-        CropPt1 and CropPt2 are diagonal of each other
-        <br>Syntax is "x;y" example: 12;1.5
-    </td>
-</tr>
-<tr>
-    <td>CropWorldPt1</td>
-    <td class="paramsDesc">One corner of the rectangle, in world coordinates, to crop out of the image, used with
-        CropPt2
-        CropPt1 and CropPt2 are diagonal of each other.<br>
-        <i>Note- </i> See documentation on WorldPt to find proper syntax
-    </td>
-</tr>
-<tr>
-    <td>CropWorldPt2</td>
-    <td class="paramsDesc">Second corner of the rectangle, in world coordinates, to crop out of the image, used with
-        CropWorldPt1.
-        CropWorldPt1 and CropWorldPt2 are diagonal of each other.<br>
-        <i>Note-</i> See documentation on WorldPt to find proper syntax
-    </td>
-</tr>
-<tr>
-    <td>ZoomArcsecPerScreenPix</td>
-    <td class="paramsDesc">Set the zoom level so it have the specified arcsec per screen pixel. Use with
+ - **ColorTable**: value 0 - 21 to represent different predefine color tables</td>
+ - **ZoomToWidth**: used with "ZoomType==TO_WIDTH" or "ZoomType==FULL_SCREEN", this is the width in pixels</td>
+ - **ZoomToHeight**: used with "ZoomType==FULL_SCREEN", this is the height in pixels</td>
+ - **PostCrop**: Crop and center the image before returning it. If rotation is set then the crop will happens post rotation.
+Note: `SizeInDeg` and `WorldPt` are required to do `PostCropAndCenter`
+ - **CropPt1**: One corner of the rectangle, in image coordinates, to crop out of the image, used with CropPt2 CropPt1 and CropPt2 are diagonal of each other
+Syntax is "x;y" example: 12;1.5
+ - **CropPt2**: Second corner of the rectangle, in image coordinates, to crop out of the image, used with `'CropPt1'`
+`CropPt1` and `CropPt2` are diagonal of each other
+Syntax is "x;y" example: 12;1.5
+ - **CropWorldPt1**: One corner of the rectangle, in world coordinates, to crop out of the image, used with `'CropPt2'`
+`CropPt1` and `CropPt2` are diagonal of each other.
+Note-  See documentation on WorldPt to find proper syntax
+ - **CropWorldPt2**: Second corner of the rectangle, in world coordinates, to crop out of the image, used with CropWorldPt1.
+CropWorldPt1 and CropWorldPt2 are diagonal of each other.
+Note-See documentation on WorldPt to find proper syntax
+ - **ZoomArcsecPerScreenPix**: Set the zoom level so it have the specified arcsec per screen pixel. Use with
         "ZoomType==ARCSEC_PER_SCREEN_PIX" and "ZoomToWidth"
-    </td>
-</tr>
-<tr>
-    <td>ContinueOnFail</td>
-    <td class="paramsDesc">For 3 color, if this request fails then keep trying to make a plot with the other request
-    </td>
-</tr>
-<tr>
-    <td>ObjectName</td>
-    <td class="paramsDesc">the object name that can be looked up by NED or Simbad</td>
-</tr>
-<tr>
-    <td>Resolver</td>
-    <td class="paramsDesc">The object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF
-    </td>
-</tr>
-<tr>
-    <td>GridOn</td>
-    <td class="paramsDesc">Turn the grid on after the plot is completed. Normally the grid is turned on by a user action.  This option
+ - **ContinueOnFail**: For 3 color, if this request fails then keep trying to make a plot with the other request
+ - **ObjectName**: the object name that can be looked up by NED or Simbad</td>
+ - **Resolver**: The object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF
+ - **GridOn**: Turn the grid on after the plot is completed. Normally the grid is turned on by a user action.  This option
          forces the grid to be on my default. Boolean value: true or false
-    </td>
-</tr>
-<tr>
-    <td>SurveyKeyAlt</td>
-    <td class="paramsDesc">TODO: Document this param</td>
-</tr>
-<tr>
-    <td>UserDesc</td>
-    <td class="paramsDesc">TODO: Document this param</td>
-</tr>
-<tr>
-    <td>UniqueKey</td>
-    <td class="paramsDesc">TODO: Document this param
-    </td>
-</tr>
-</table>
+ - **SurveyKeyAl**: TODO: Document this param</td>
+ - **UserDesc**: TODO: Document this param</td>
+ - **UniqueKey**: TODO: Document this param
 
 
 <br><br>
