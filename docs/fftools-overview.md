@@ -36,8 +36,7 @@ following
 
 ###Inline Image Viewer
 
-The following methods and objects available on `firefly` object to create an fits image viewer.
-    `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
+`firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
     parameters:
     
 | Parameter  | Description |
@@ -47,13 +46,26 @@ The following methods and objects available on `firefly` object to create an fit
 | *return*  | an ImageViewer object |
 
 
+`ImageViewer` has the follows methods.
+
+| Method | Description |
+| ---------- | ----------- |
+| `plot` | plot a fits images, takes an object literal as only parameters. See below for parameters |
+| `plotURL` | convenience method to plot a url |
+| `plotFile` | convenience method to plot a file on the server |
+| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
+| `setDefaultParams`  |  set param that will apply to call `plot` calls |
+| `serializeRangeValues`  |  make a serialized range values object 
+
+
+
 
 The following is a list of possible params for the ImageViewer plotting. Almost all parameters are optional.
     Note that the request `Type` parameter can
     be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
 
 
- *Parameters For FITS Image Viewer*
+ *Parameters For FITS Image Viewer plot method*
  
  - **Type**: Set the type of request. Based on the Type then 1 or more other parameters are required.
 Options are:
@@ -153,16 +165,7 @@ Note-See documentation on WorldPt to find proper syntax
  - **UniqueKey**: TODO: Document this param
 
 
-<br><br>
-<b>Image Viewer</b><br><br>
 
-The following methods are available on <code>ImageViewer</code>. A ImageViewer is created or referenced by calling the
-following
-<ul>
-    <li><code>firefly.makeImageViewer()</code> - to make a image viewer for a div</li>
-    <li><code>firefly.getExpandViewer()</code> - to get the image viewer that will popup on top of the page</li>
-    <li><code>firefly.getExternalViewer()</code> - to get the image viewer that will make a new page or tab</li>
-</ul>
 
 <div class="ret">Methods:</div>
 <ul>
