@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -67,25 +68,25 @@ public class PlotStateUtil {
         state.setZoomLevel(initializerState.getZoomLevel());
     }
 
-    static void setPixelAccessInfo(ImagePlot plot, PlotState state) {
+    static void setPixelAccessInfo(ImagePlot plot, PlotState state, ActiveFitsReadGroup frGroup) {
         if (plot.isThreeColor()) {
-            if (plot.isColorBandInUse(Band.RED)) {
-                setPixelAccessInfoBand(plot,state, Band.RED);
+            if (plot.isColorBandInUse(Band.RED, frGroup)) {
+                setPixelAccessInfoBand(plot,frGroup,state, Band.RED);
             }
-            if (plot.isColorBandInUse(Band.GREEN)) {
-                setPixelAccessInfoBand(plot,state, Band.GREEN);
+            if (plot.isColorBandInUse(Band.GREEN, frGroup)) {
+                setPixelAccessInfoBand(plot,frGroup,state, Band.GREEN);
             }
-            if (plot.isColorBandInUse(Band.BLUE)) {
-                setPixelAccessInfoBand(plot,state, Band.BLUE);
+            if (plot.isColorBandInUse(Band.BLUE, frGroup)) {
+                setPixelAccessInfoBand(plot,frGroup,state, Band.BLUE);
             }
         }
         else {
-            setPixelAccessInfoBand(plot,state, Band.NO_BAND);
+            setPixelAccessInfoBand(plot,frGroup,state, Band.NO_BAND);
         }
     }
 
-    static void setPixelAccessInfoBand(ImagePlot plot, PlotState state, Band band) {
-        FitsRead resultFr= plot.getHistogramOps(band).getFitsRead();
+    static void setPixelAccessInfoBand(ImagePlot plot, ActiveFitsReadGroup frGroup, PlotState state, Band band) {
+        FitsRead resultFr= plot.getHistogramOps(band,frGroup).getFitsRead();
         ImageHeader ih= resultFr.getImageHeader();
         state.setFitsHeader(ih.makeMiniHeader(), band);
     }

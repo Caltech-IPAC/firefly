@@ -22,6 +22,7 @@ import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.GridLayer;
 import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
 import edu.caltech.ipac.visualize.draw.VectorObject;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -88,6 +89,7 @@ public class PlotServUtils {
     }
 
     static void createThumbnail(ImagePlot plot,
+                                ActiveFitsReadGroup frGroup,
                                 PlotImages images,
                                 boolean justName,
                                 int     thumbnailSize) throws IOException, FitsException {
@@ -102,7 +104,7 @@ public class PlotServUtils {
         File f= new File(ServerContext.getVisSessionDir(),images.getTemplateName()+"_thumb" +"."+JPG_NAME_EXT);
         String relFile= ServerContext.replaceWithUsersBaseDirPrefix(f);
 
-        if (!justName) new PlotOutput(plot).writeThumbnail(f,PlotOutput.JPEG);
+        if (!justName) new PlotOutput(plot,frGroup).writeThumbnail(f,PlotOutput.JPEG);
 
         PlotImages.ThumbURL tn= new PlotImages.ThumbURL(relFile,plot.getScreenWidth(),plot.getScreenHeight());
         images.setThumbnail(tn);
@@ -111,25 +113,26 @@ public class PlotServUtils {
     }
 
 
-    static void writeThumbnail(ImagePlot plot, File f, int thumbnailSize) throws IOException, FitsException {
-        ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot();
+    static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
+        ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
         int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
 
         tPlot.getPlotGroup().setZoomTo(thumbnailSize/(float)div);
 
         int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
 
-        new PlotOutput(tPlot).writeThumbnail(f,ext);
+        new PlotOutput(tPlot,frGroup).writeThumbnail(f,ext);
         tPlot.freeResources();
     }
 
     static PlotImages writeImageTiles(File      imagefileDir,
                                       String    root,
                                       ImagePlot plot,
+                                      ActiveFitsReadGroup frGroup,
                                       boolean   fullScreen,
                                       int tileCnt) throws IOException {
 
-        PlotOutput po= new PlotOutput(plot);
+        PlotOutput po= new PlotOutput(plot,frGroup);
         List<PlotOutput.TileFileInfo> results;
         int outType= (plot.getPlotGroup().getZoomFact()<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
         if (fullScreen) {
@@ -248,6 +251,7 @@ public class PlotServUtils {
 
 
     public static File createImageFile(ImagePlot plot,
+                                       ActiveFitsReadGroup frGroup,
                                        String fname,
                                        int x,
                                        int y,
@@ -256,22 +260,22 @@ public class PlotServUtils {
 
         File f= ServerContext.convertToFile(fname);
         if (!f.canRead()) {
-            f= createOneTile(plot, f,x,y,width,height);
+            f= createOneTile(plot, frGroup, f,x,y,width,height);
         }
         return f;
     }
 
-    public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot) throws IOException {
+    public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
 
         File f= getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
-        createFullTile(plot, f);
+        createFullTile(plot, frGroup,f);
         FileUtil.writeFileToStream(f, oStream);
     }
 
-    public static File createImageThumbnail(String fname, ImagePlot plot, int thumbnailSize)
+    public static File createImageThumbnail(String fname, ImagePlot plot, ActiveFitsReadGroup frGroup, int thumbnailSize)
                                                                     throws FitsException, IOException {
         File f= ServerContext.convertToFile(fname);
-        if (!f.canRead()) writeThumbnail(plot,f,thumbnailSize);
+        if (!f.canRead()) writeThumbnail(plot,frGroup,f,thumbnailSize);
         return f;
     }
 
@@ -291,27 +295,29 @@ public class PlotServUtils {
         return (ServerContext.convertToFile(f.getPath())!=null);
     }
 
-    static File createFullTile(ImagePlot plot, File f) throws IOException {
-        return  createOneTile(plot,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT);
+    static File createFullTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f) throws IOException {
+        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT);
     }
 
     static File createFullTile(ImagePlot plot,
+                               ActiveFitsReadGroup frGroup,
                                File f,
                                List<FixedObjectGroup> fog,
                                List<VectorObject> vectorList,
                                List<ScalableObjectPosition> scaleList,
                                GridLayer gridLayer) throws IOException {
-        return  createOneTile(plot,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
+        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
                               fog,vectorList, scaleList, gridLayer);
     }
 
 
-    static File createOneTile(ImagePlot plot, File f, int x, int y, int width, int height) throws IOException {
-        return createOneTile(plot,f,x,y,width,height,null,null,null,null);
+    static File createOneTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int x, int y, int width, int height) throws IOException {
+        return createOneTile(plot,frGroup,f,x,y,width,height,null,null,null,null);
     }
 
 
     static File createOneTile(ImagePlot plot,
+                              ActiveFitsReadGroup frGroup,
                               File f,
                               int x,
                               int y,
@@ -322,7 +328,7 @@ public class PlotServUtils {
                               List<ScalableObjectPosition> scaleList,
                               GridLayer gridLayer) throws IOException {
 
-        PlotOutput po= new PlotOutput(plot);
+        PlotOutput po= new PlotOutput(plot,frGroup);
         if (fogList!=null) po.setFixedObjectGroupList(fogList);
         if (gridLayer!=null) po.setGridLayer(gridLayer);
         if (vectorList!=null) po.setVectorList(vectorList);
@@ -532,13 +538,13 @@ public class PlotServUtils {
         return f;
     }
 
-    static ImagePlot makeImagePlot(FitsRead  fr,
+    static ImagePlot makeImagePlot(ActiveFitsReadGroup frGroup,
                                    float     initialZoomLevel,
                                    boolean   threeColor,
                                    Band      band,
                                    int       initColorID,
                                    RangeValues stretch) throws FitsException {
-        return new ImagePlot(null, fr,initialZoomLevel, threeColor, band, initColorID, stretch);
+        return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
     }
 
 

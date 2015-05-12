@@ -17,7 +17,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.RegionPoint;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -43,10 +42,10 @@ public class PngRetrieve {
 
         try {
             importPlotState(request, plotStateStr);
-            ImagePlot plot= ImagePlotBuilder.create(request);
+            ImagePlotBuilder.SimpleResults plotR= ImagePlotBuilder.create(request);
             List<StaticDrawInfo> drawInfoList = parseDrawInfoListStr(request, drawInfoListStr, artifactList);
-            if (request.getPlotDescAppend()!=null) request.setTitle( plot.getPlotDesc());
-            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plot, drawInfoList));
+            if (request.getPlotDescAppend()!=null) request.setTitle( plotR.getPlot().getPlotDesc());
+            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plotR.getPlot(),plotR.getFrGroup() ,drawInfoList));
         } catch (Exception e) {
             _log.error(e,"Could not create png file");
 

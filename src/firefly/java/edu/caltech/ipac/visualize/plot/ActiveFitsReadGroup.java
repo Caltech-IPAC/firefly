@@ -10,6 +10,7 @@ package edu.caltech.ipac.visualize.plot;
  */
 
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 
 import java.io.Serializable;
@@ -23,12 +24,12 @@ public class ActiveFitsReadGroup implements Serializable {
 
     private FitsRead fitsReadAry[]= new FitsRead[LENGTH];
     private boolean inUse[]= new boolean[LENGTH];
-//    private String cacheKey[]= new String[LENGTH];
-//    private int imageIdx[]= new int[LENGTH];
-//    private File fitsFile[]= new File[LENGTH];
 
 
     public void setFitsRead(Band band, FitsRead fr) {
+        if (band.getIdx()==0 && fr==null) {
+            Logger.info("Setting null for band 0");
+        }
         fitsReadAry[band.getIdx()]= fr;
         inUse[band.getIdx()]= (fr!=null);
     }
@@ -39,25 +40,6 @@ public class ActiveFitsReadGroup implements Serializable {
 
     public FitsRead[] getFitsReadAry() { return fitsReadAry; }
 
-//    public String getCacheKey(Band band) {
-//        return cacheKey[band.getIdx()];
-//    }
-//
-//    public void setCacheKey(Band band, String cacheKey) {
-//        this.cacheKey[band.getIdx()] = cacheKey;
-//    }
-//
-//    public int getImageIdx(Band band) {
-//        return imageIdx[band.getIdx()];
-//    }
-//
-//    public void setImageIdx(Band band, int imageIdx) {
-//        this.imageIdx[band.getIdx()] = imageIdx;
-//    }
-
-//    public File getFitsFile(Band band) {
-//        return fitsFile[band.getIdx()];
-//    }
 
     public void freeResources(boolean freeFRResource) {
         for(int i= 0; (i<fitsReadAry.length);i++) {
@@ -70,9 +52,6 @@ public class ActiveFitsReadGroup implements Serializable {
         ActiveFitsReadGroup copy= new ActiveFitsReadGroup();
         for(int i=0; i<fitsReadAry.length; i++) {
             copy.fitsReadAry[i]= fitsReadAry[i];
-//            copy.cacheKey[i]= cacheKey[i];
-//            copy.imageIdx[i]= imageIdx[i];
-//            copy.fitsFile[i]= fitsFile[i];
         }
         return copy;
     }

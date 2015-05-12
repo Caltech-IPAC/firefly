@@ -123,7 +123,7 @@ public abstract class Plot implements PlotPaintListener {
      * change. 
      * @return Plot a new plot that shares image data.
      */
-    public abstract Plot    makeSharedDataPlot();
+    public abstract Plot    makeSharedDataPlot(ActiveFitsReadGroup frGroup);
 
     /**
      * This method work like a clone except is makes a plot so it shares
@@ -133,7 +133,7 @@ public abstract class Plot implements PlotPaintListener {
      * @param plotGroup the PlotGroup to make this plot in
      * @return Plot a new plot that shares image data.
      */
-    public abstract Plot    makeSharedDataPlot(PlotGroup plotGroup);
+    public abstract Plot    makeSharedDataPlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup);
 
     /**
      * Determine if a world point is in the plot boundaries.
@@ -163,14 +163,14 @@ public abstract class Plot implements PlotPaintListener {
      * @throws PixelValueException if the pixel is invalid
      */
 
-    public abstract double getFlux(ImageWorkSpacePt pt)
+    public abstract double getFlux(ImageWorkSpacePt pt, ActiveFitsReadGroup frGroup)
                                       throws PixelValueException;
 
     /**
      * get units that this flux data is in.
      * @return String the units.
      */
-    public abstract String getFluxUnits();
+    public abstract String getFluxUnits(ActiveFitsReadGroup frGroup);
 
     /**
      * get the scale (usually in arcseconds) that on image pixel of data
@@ -440,7 +440,7 @@ public abstract class Plot implements PlotPaintListener {
 
 
 
-   public abstract void paint(PlotPaintEvent ev);
+   public abstract void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup);
 
     /**
      * zoom this plot

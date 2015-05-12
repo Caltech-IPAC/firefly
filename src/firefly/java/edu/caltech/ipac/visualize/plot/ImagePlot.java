@@ -4,6 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
@@ -45,17 +46,17 @@ public class ImagePlot extends Plot implements Serializable {
     private   int            imageScaleFactor;
     private Band             refBand;
 
-    private ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
+//    private ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
     private boolean  _threeColor;
-    private boolean  _makeSharedDataPlot = false;
+    private boolean _isSharedDataPlot = false;
 
 
 
-   public ImagePlot(PlotGroup plotGroup) { super(plotGroup); }
+   public ImagePlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup) { super(plotGroup); }
 
 
     public ImagePlot(PlotGroup plotGroup,
-                     FitsRead  fitsRead,
+                     ActiveFitsReadGroup frGroup,
                      float     initialZoomLevel,
                      boolean   threeColor,
                      Band      band,
@@ -64,8 +65,7 @@ public class ImagePlot extends Plot implements Serializable {
         super(plotGroup);
         refBand= band;
         setInitialZoomLevel(initialZoomLevel);
-        imageScaleFactor= fitsRead.getImageScaleFactor();
-        frGroup.setFitsRead(refBand, fitsRead);
+        imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
         _threeColor= threeColor;
         if (_threeColor) {
             _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_24_BIT,
@@ -75,25 +75,19 @@ public class ImagePlot extends Plot implements Serializable {
             _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
                                             initColorID,stretch,SQUARE, false);
         }
-        configureImage();
+        configureImage(frGroup);
     }
-
-    public ActiveFitsReadGroup getActiveFitsReadGroup() { return frGroup; }
-
-    public void clearFitsReadGroup() { frGroup.freeResources(false); }
-
-
 
     public boolean isThreeColor() { return _threeColor; }
 
 
-    public void setThreeColorBand(FitsRead colorBandFitsRead, Band band)
+    public void setThreeColorBand(FitsRead colorBandFitsRead, Band band, ActiveFitsReadGroup frGroup)
                                    throws GeomException, 
                                           FitsException,
                                           IOException {
         threeColorOK(band);
-        ImagePlot basePlot= (ImagePlot)getPlotGroup().getBasePlot();
-        FitsRead refFitsRead= basePlot.frGroup.getFitsRead(refBand);
+//        ImagePlot basePlot= (ImagePlot)getPlotGroup().getBasePlot();
+        FitsRead refFitsRead= frGroup.getFitsRead(refBand);
 
         if (refFitsRead.isSameProjection(colorBandFitsRead)) {
             frGroup.setFitsRead(band,colorBandFitsRead);
@@ -105,7 +99,7 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
 
-    public void removeThreeColorBand(Band band) {
+    public void removeThreeColorBand(Band band, ActiveFitsReadGroup frGroup) {
         threeColorOK(band);
         if (band==refBand) { // replace the ref band
             for(Band b : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
@@ -122,12 +116,12 @@ public class ImagePlot extends Plot implements Serializable {
 
     public Projection getProjection() { return _projection; }
 
-    public boolean isColorBandInUse(Band band) {
+    public boolean isColorBandInUse(Band band, ActiveFitsReadGroup frGroup) {
         threeColorOK(band);
         return frGroup.getFitsRead(band)!=null;
     }
 
-    public boolean isColorBandVisible(Band band) {
+    public boolean isColorBandVisible(Band band, ActiveFitsReadGroup frGroup) {
         threeColorOK(band);
         return frGroup.getFitsRead(band)!=null;
     }
@@ -203,7 +197,7 @@ public class ImagePlot extends Plot implements Serializable {
    public CoordinateSys getCoordinatesOfPlot() { return _imageCoordSys; }
 
 
-    public void paint(PlotPaintEvent ev) {
+    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
         Graphics2D g2= ev.getGraphics();
         if (shouldPaint()) {
             SaveG2Stuff  saveStuff= prePaint(g2,imageScaleFactor, getPercentOpaque());
@@ -212,6 +206,7 @@ public class ImagePlot extends Plot implements Serializable {
                              Math.round(getOffsetX()/imageScaleFactor) + id.getX(),
                              Math.round(getOffsetY()/imageScaleFactor) + id.getY(),
                              getPlotGroup().getPlotView());
+                id.freeImage();
             }
 
             postPaint(saveStuff);
@@ -237,15 +232,17 @@ public class ImagePlot extends Plot implements Serializable {
         g2.setTransform(saveStuff._trans);
     }
 
-    public void paintTile(Graphics2D g2, int x, int y, int width, int height) {
+    public void paintTile(Graphics2D g2, ActiveFitsReadGroup frGroup, int x, int y, int width, int height) {
         SaveG2Stuff  saveStuff= prePaint(g2, imageScaleFactor, getPercentOpaque());
         AffineTransform trans= g2.getTransform();
         float zfact= _plotGroup.getZoomFact();
+        int cnt= 0;
         for(ImageData id : _imageData) {
             if (intersect(trans, x,y,width,height,id)) {
                 int drawX= (int)((float)getOffsetX()/(float)imageScaleFactor + id.getX() - x/zfact);
                 int drawY= (int)((float)getOffsetY()/(float)imageScaleFactor + id.getY() + y/zfact);
                 g2.drawImage(id.getImage(frGroup.getFitsReadAry()), drawX, drawY, null);
+                id.freeImage();
             }
         }
         postPaint(saveStuff);
@@ -552,29 +549,30 @@ public class ImagePlot extends Plot implements Serializable {
      * @throws PixelValueException if the pixel value is not on the image
      */
 
-    public double getFlux(ImageWorkSpacePt iwspt) throws PixelValueException {
+    public double getFlux(ImageWorkSpacePt iwspt, ActiveFitsReadGroup frGroup) throws PixelValueException {
 
-        return  getFluxFromFitsRead(frGroup.getFitsRead(refBand), iwspt);
+        return  getFluxFromFitsRead(frGroup.getFitsRead(refBand), frGroup, iwspt);
     }
 
 
 
     /**
      * get the flux of a given image point point on the plot.
+     * @param frGroup fits read group
      * @param band the three color band to get the flux for
      * @param iwspt the image pt
      * @return double the flux value
      * @throws PixelValueException if the pixel value is not on the image
      */
 
-    public double getFlux(Band band, ImageWorkSpacePt iwspt) throws PixelValueException {
+    public double getFlux(ActiveFitsReadGroup frGroup, Band band, ImageWorkSpacePt iwspt) throws PixelValueException {
         double retval;
         if (band==Band.NO_BAND && !_threeColor) {
-            retval= getFlux(iwspt);
+            retval= getFlux(iwspt, frGroup);
         }
         else {
             threeColorOK(band);
-            retval= getFluxFromFitsRead(frGroup.getFitsRead(band), iwspt);
+            retval= getFluxFromFitsRead(frGroup.getFitsRead(band), frGroup, iwspt);
 
         }
         return  retval;
@@ -585,13 +583,13 @@ public class ImagePlot extends Plot implements Serializable {
      * @param band the three color band to get source description for
      * @return String source description
      */
-    public String getPlotDesc(Band band) {
+    public String getPlotDesc(Band band, ActiveFitsReadGroup frGroup) {
         threeColorOK(band);
         return frGroup.getFitsRead(band).getSourceDec();
     }
 
     
-    private void acceptFitsRead(FitsRead fr) {
+    private void acceptFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup) {
         Assert.argTst(fr==null      ||
                       fr==frGroup.getFitsRead(Band.NO_BAND) ||
                       fr==frGroup.getFitsRead(Band.GREEN) ||
@@ -617,23 +615,23 @@ public class ImagePlot extends Plot implements Serializable {
      * @throws PixelValueException if the pixel value is not on the image
      */
 
-   private double getFluxFromFitsRead(FitsRead fr, ImageWorkSpacePt sipt)
+   private double getFluxFromFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup, ImageWorkSpacePt sipt)
                    throws PixelValueException {
-       acceptFitsRead(fr);
+       acceptFitsRead(fr,frGroup);
        double retval= Double.NaN;
        if (fr!=null) {
            int iScaleFactor= fr.getImageScaleFactor();
            double xpass= (sipt.getX()- ((double)getOffsetX()))/iScaleFactor;
            double ypass= (sipt.getY()- ((double)getOffsetY()))/ iScaleFactor;
-	   ImagePt ipt = new ImagePt(xpass, ypass);
+           ImagePt ipt = new ImagePt(xpass, ypass);
 
            retval=  fr.getFlux(ipt);
        }
        return retval;
    }
 
-   private String getFluxUnitsFromFitsRead(FitsRead fr) {
-       acceptFitsRead(fr);
+   private String getFluxUnitsFromFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup) {
+       acceptFitsRead(fr,frGroup);
        String retval= null;
        if (fr!=null)  retval= fr.getFluxUnits();
        return retval;
@@ -643,15 +641,15 @@ public class ImagePlot extends Plot implements Serializable {
      * get units that this flux data is in.
      * @return String the units.
      */
-   public String getFluxUnits() {  return getFluxUnits(refBand);}
+   public String getFluxUnits(ActiveFitsReadGroup frGroup) {  return getFluxUnits(refBand,frGroup);}
 
     /**
      * get units that this flux data is in.
      * @param band the band to get the flux unit for
      * @return String the units.
      */
-    public String getFluxUnits(Band band) {
-        return getFluxUnitsFromFitsRead(frGroup.getFitsRead(band));
+    public String getFluxUnits(Band band, ActiveFitsReadGroup frGroup) {
+        return getFluxUnitsFromFitsRead(frGroup.getFitsRead(band), frGroup);
     }
 
     /**
@@ -700,16 +698,17 @@ public class ImagePlot extends Plot implements Serializable {
      * specifically release any resources held by this object
      */
    public void freeResources() {
+       Logger.info("free resources called");
        if (_isPlotted) {
            if (_imageData!=null) {
-               if (_makeSharedDataPlot)
+               if (_isSharedDataPlot)
                     _imageData = null;
                else
                     _imageData.freeResources();
            }
 
 
-           frGroup.freeResources(!_makeSharedDataPlot );
+           Logger.info("freeing frGroup: " + !_isSharedDataPlot);
 
            _projection   = null;
            _imageData    = null;
@@ -728,8 +727,8 @@ public class ImagePlot extends Plot implements Serializable {
      * change. 
      * @return Plot a new plot that shares image data.
      */
-   public Plot makeSharedDataPlot() {
-        return makeSharedDataPlot(null);
+   public Plot makeSharedDataPlot(ActiveFitsReadGroup frGroup) {
+        return makeSharedDataPlot(null,frGroup);
    }
 
     /**
@@ -739,11 +738,10 @@ public class ImagePlot extends Plot implements Serializable {
      * change. 
      * @return Plot a new plot that shares image data.
      */
-   public Plot makeSharedDataPlot(PlotGroup plotGroup) {
-        ImagePlot p         = new ImagePlot(plotGroup); 
+   public Plot makeSharedDataPlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup) {
+        ImagePlot p         = new ImagePlot(plotGroup, frGroup.makeCopy());
         p._projection       = _projection;
         p._imageData        = _imageData;
-        p.frGroup           = frGroup.makeCopy();
         p._isPlotted        = _isPlotted;
         p._available        = _available;
         p._imageCoordSys    = _imageCoordSys;
@@ -753,11 +751,11 @@ public class ImagePlot extends Plot implements Serializable {
         p._attributes       = _attributes;
         p.imageScaleFactor  = imageScaleFactor;
         p.setZoomTo(        1.0F );
-        if (plotGroup != null) p.computeOffsetXY();
+        if (plotGroup != null) p.computeOffsetXY(frGroup);
         p.getPlotGroup().addToPlotted();
         p.setPlotDesc(      getPlotDesc() );
         p.setShortPlotDesc( getShortPlotDesc() );
-        p._makeSharedDataPlot = true;
+        p._isSharedDataPlot = true;
         return p;
    }
     
@@ -765,11 +763,8 @@ public class ImagePlot extends Plot implements Serializable {
 
     public ImageDataGroup getImageData() { return _imageData; }
 
-    public FitsRead getFitsRead() { return getFitsRead(refBand); }
-    public FitsRead getFitsRead(Band band) { return frGroup.getFitsRead(band); }
 
-
-    public HistogramOps getHistogramOps(Band band) {
+    public HistogramOps getHistogramOps(Band band, ActiveFitsReadGroup frGroup) {
         FitsRead fr= frGroup.getFitsRead(band);
         Assert.argTst(fr!=null, "You have not set a fits read for the passed band");
         return new HistogramOps(frGroup.getFitsReadAry(),band, _imageData);
@@ -828,7 +823,7 @@ public class ImagePlot extends Plot implements Serializable {
 
 //======================
 
-   private void configureImage() throws FitsException {
+   private void configureImage(ActiveFitsReadGroup frGroup) throws FitsException {
       try {
 
          PlotGroup plotGroup= getPlotGroup();
@@ -841,13 +836,13 @@ public class ImagePlot extends Plot implements Serializable {
          _isPlotted= true;
          computeMinMaxPoint();
          try {
-             determineCoordSys();
+             determineCoordSys(frGroup);
              _projection= imageHeader.createProjection(_imageCoordSys );
              if (plotGroup.isBasePlot(this)) {
                  setZoomTo(getInitialZoomLevel());
              }
              else {
-                 computeOffsetXY();
+                 computeOffsetXY(frGroup);
              }
              plotGroup.addToPlotted();
              firePlotStatusNewPlot();
@@ -875,9 +870,9 @@ public class ImagePlot extends Plot implements Serializable {
       }
    }
 
-   private void computeOffsetXY() {
+   private void computeOffsetXY(ActiveFitsReadGroup frGroup) { //todo: if we ever do offset again this method must be fix, see spot-common
          ImagePlot p= (ImagePlot)getPlotGroup().getBasePlot();
-         ImageHeader baseHDR= p.frGroup.getFitsRead(refBand).getImageHeader();
+         ImageHeader baseHDR= frGroup.getFitsRead(refBand).getImageHeader();
          ImageHeader thisHDR= frGroup.getFitsRead(refBand).getImageHeader();
 
 
@@ -890,7 +885,7 @@ public class ImagePlot extends Plot implements Serializable {
 	     (thisHDR.crpix2-0.5)*imageScaleFactor ));
    }
 
-   private void determineCoordSys() throws FitsException {
+   private void determineCoordSys(ActiveFitsReadGroup frGroup) throws FitsException {
        ImageHeader   hdr=  frGroup.getFitsRead(refBand).getImageHeader();
        int sys= hdr.getJsys();
        _imageCoordSys= CoordinateSys.makeCoordinateSys( sys, hdr.getEquinox() );

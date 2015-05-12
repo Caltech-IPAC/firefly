@@ -12,6 +12,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
@@ -47,7 +48,6 @@ public class PlotClientCtx implements Serializable {
 
     private volatile transient long _minimumHoldTime = -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
-    private final transient AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
     private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
 
     private final String _key;
@@ -70,28 +70,22 @@ public class PlotClientCtx implements Serializable {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public ImagePlot getPlot() {
-        ImagePlot p= _plot.get();
-        if (p==null) {
-            Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-            p= (ImagePlot)memCache.get(_imagePlotCacheKey);
-            if (p!=null) _plot.set(p);
-        }
-        return p;
+    public ImagePlot getCachedPlot() {
+        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+        return (ImagePlot)memCache.get(_imagePlotCacheKey);
     }
 
 
     public void setPlot(ImagePlot p) {
         Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
         memCache.put(_imagePlotCacheKey,p);
-        _plot.set(p);
         updateAccessTime();
         if (p!=null) initHoldTime();
     }
 
     public PlotImages getImages() { return _images.get(); }
     public void setImages(PlotImages images) {
-        _images.set(images);
+        _images.getAndSet(images);
         updateAccessTime();
         _allImagesList.add(images);
     }
@@ -104,7 +98,7 @@ public class PlotClientCtx implements Serializable {
     public String getKey() { return _key; }
 
     public void setPlotState(PlotState state) {
-        _state.set(state);
+        _state.getAndSet(state);
         updateAccessTime();
     }
     public PlotState getPlotState() { return _state.get(); }
@@ -139,9 +133,8 @@ public class PlotClientCtx implements Serializable {
 
         _allImagesList= null;
         _previousZoomList.clear();
-//        _plot.set(null);
-        _images.set(null);
-        _state.set(null);
+        _images.getAndSet(null);
+        _state.getAndSet(null);
     }
 
 
@@ -149,7 +142,7 @@ public class PlotClientCtx implements Serializable {
 
 
     public boolean freeResources(Free freeType) {
-        ImagePlot p= getPlot();
+        ImagePlot p= getCachedPlot();
         if (p==null) return true;
         boolean doFree= false;
         long actualHoldTime= 0;
@@ -181,20 +174,20 @@ public class PlotClientCtx implements Serializable {
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();
                 Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-                memCache.put(_imagePlotCacheKey,null);
+                memCache.put(_imagePlotCacheKey, null);
             }
         }
         return doFree;
     }
 
-    public void extractColorInfo() {
+    public void extractColorInfo(ActiveFitsReadGroup frGroup) {
         RangeValues rv;
-        ImagePlot p= getPlot();
+        ImagePlot p= getCachedPlot();
         PlotState state= _state.get();
         if (p!=null) {
             if (p.isThreeColor()) {
                 for(Band band : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
-                    if (p.isColorBandInUse(band)) {
+                    if (p.isColorBandInUse(band, frGroup)) {
                         state.setRangeValues(FitsRead.getDefaultRangeValues(), band);
                     }
                 }
@@ -209,14 +202,6 @@ public class PlotClientCtx implements Serializable {
     }
 
 
-    /**
-     * should be call at the end of a servlet call.  This will clean up the temp copy of the ImagePlot
-     */
-    public void flushToCache() {
-        ImagePlot p= _plot.get();
-        _plot.set(null);
-        if (p!=null) p.clearFitsReadGroup();
-    }
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

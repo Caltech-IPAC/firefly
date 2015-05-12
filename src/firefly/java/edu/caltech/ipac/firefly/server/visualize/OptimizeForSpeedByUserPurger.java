@@ -35,7 +35,7 @@ public class OptimizeForSpeedByUserPurger implements MemoryPurger {
                     for(Map.Entry<String,PlotClientCtx> entry : CtxControl.getMap().entrySet()) {
                         testCtx= entry.getValue();
                         if (!testCtx.getKey().equals(excludeKey)) {
-                            if (testCtx.getPlot()!=null) {  // if we are using memory
+                            if (testCtx.getCachedPlot()!=null) {  // if we are using memory
                                 if (cnt>USER_ALLOWED_SIZE_MB) {
                                     freed= testCtx.freeResources(PlotClientCtx.Free.YOUNG);
                                     if (!freed) cnt+= testCtx.getDataSizeMB();

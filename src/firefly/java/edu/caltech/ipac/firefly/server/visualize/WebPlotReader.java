@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Crop;
@@ -252,7 +253,9 @@ public class WebPlotReader {
             Pt pt1;
             Pt pt2;
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {
-                ImagePlot tmpIM = new ImagePlot(null, fr, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+                ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
+                frGroup.setFitsRead(Band.NO_BAND,fr);
+                ImagePlot tmpIM = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
                 try {
                     pt1 = tmpIM.getImageCoords((WorldPt) getCropPt1(req));
                     pt2 = tmpIM.getImageCoords((WorldPt) getCropPt2(req));

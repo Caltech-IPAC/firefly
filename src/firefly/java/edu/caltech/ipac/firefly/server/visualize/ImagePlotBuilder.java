@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
@@ -49,20 +50,20 @@ public class ImagePlotBuilder {
 //======================================================================
 
 
-    public static ImagePlot create(WebPlotRequest wpr) throws FailedRequestException, GeomException {
-        List<ImagePlot> retList= createList(wpr, PlotState.MultiImageAction.USE_FIRST);
+    public static SimpleResults create(WebPlotRequest wpr) throws FailedRequestException, GeomException {
+        List<SimpleResults> retList= createList(wpr, PlotState.MultiImageAction.USE_FIRST);
         return (retList!=null && retList.size()>0) ? retList.get(0) : null;
     }
 
-    public static List<ImagePlot> createList(WebPlotRequest wpr)
-            throws FailedRequestException, GeomException {
-        return createList(wpr, PlotState.MultiImageAction.USE_ALL);
-    }
+//    public static List<ImagePlot> createList(WebPlotRequest wpr)
+//            throws FailedRequestException, GeomException {
+//        return createList(wpr, PlotState.MultiImageAction.USE_ALL);
+//    }
 
-    public static ImagePlot create3Color(WebPlotRequest redRequest,
+    public static SimpleResults create3Color(WebPlotRequest redRequest,
                                          WebPlotRequest greenRequest,
                                          WebPlotRequest blueRequest) throws FailedRequestException, GeomException {
-        ImagePlot retval= null;
+        SimpleResults retval= null;
         LinkedHashMap<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(5);
 
         if (redRequest != null) requestMap.put(RED, redRequest);
@@ -72,9 +73,8 @@ public class ImagePlotBuilder {
         try {
             Results allPlots= build(null, requestMap, PlotState.MultiImageAction.USE_FIRST,
                                                      null, true);
-
             ImagePlotInfo piAry[]= allPlots.getPlotInfoAry();
-            if (piAry!=null && piAry.length>0)  retval= piAry[0].getPlot();
+            if (piAry!=null && piAry.length>0)  retval= new SimpleResults(piAry[0].getPlot(), piAry[0].getFrGroup());
         } catch (FailedRequestException e) {
             throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
         } catch (FitsException e) {
@@ -89,16 +89,16 @@ public class ImagePlotBuilder {
 
 
 
-    private static List<ImagePlot> createList(WebPlotRequest wpr, PlotState.MultiImageAction multiAction)
+    private static List<SimpleResults> createList(WebPlotRequest wpr, PlotState.MultiImageAction multiAction)
             throws FailedRequestException, GeomException {
         wpr.setProgressKey(null); // this just makes sure in update progress caching does not happen
-        List<ImagePlot> retList= new ArrayList<ImagePlot>(10);
+        List<SimpleResults> retList= new ArrayList<SimpleResults>(10);
 
         try {
             Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
             requestMap.put(NO_BAND, wpr);
             Results allPlots= build(null, requestMap, multiAction, null, false);
-            for(ImagePlotInfo pi : allPlots.getPlotInfoAry())  retList.add(pi.getPlot());
+            for(ImagePlotInfo pi : allPlots.getPlotInfoAry())  retList.add(new SimpleResults(pi.getPlot(),pi.getFrGroup()));
         } catch (FailedRequestException e) {
             throw new FailedRequestException("Could not create plot. " + e.getMessage(), e.getDetailMessage());
         } catch (FitsException e) {
@@ -514,5 +514,18 @@ public class ImagePlotBuilder {
     }
 
 
+    public static class SimpleResults {
+        private final ImagePlot plot;
+        private final ActiveFitsReadGroup frGroup;
+
+        public SimpleResults(ImagePlot plot, ActiveFitsReadGroup frGroup) {
+            this.plot = plot;
+            this.frGroup = frGroup;
+        }
+
+        public ImagePlot getPlot() { return plot; }
+
+        public ActiveFitsReadGroup getFrGroup() { return frGroup; }
+    }
 }
 

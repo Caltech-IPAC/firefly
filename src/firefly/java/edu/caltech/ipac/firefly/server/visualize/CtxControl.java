@@ -47,16 +47,17 @@ public class CtxControl {
     private final static long CHECK_DIR_DELTA = 1000 * 60 * 60 * 12; // 12 hours
     private static Counters counters= Counters.getInstance();
 
-    static boolean revalidatePlot(PlotClientCtx ctx)  {
-        boolean retval= true;
+    static ActiveCallCtx revalidatePlot(PlotClientCtx ctx)  {
+        ActiveCallCtx retval= null;
         synchronized (ctx)  { // keep the test from happening at the same time with this ctx
             try {
-                ImagePlot plot= ctx.getPlot();
+                ImagePlot plot= ctx.getCachedPlot();
                 PlotState state= ctx.getPlotState();
                 if (plot==null) {
                     long start= System.currentTimeMillis();
                     boolean first= true;
                     StringBuilder lenStr= new StringBuilder(30);
+                    ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
                     for(Band band : state.getBands()) {
                         if (lenStr.length()>0) lenStr.append(", ");
                         File fitsFile=   PlotStateUtil.getWorkingFitsFile(state, band);
@@ -70,20 +71,21 @@ public class CtxControl {
                             else       fr= FitsCacher.readFits(fitsFile);
                             RangeValues rv= state.getRangeValues(band);
                             int imageIdx= state.getImageIdx(band);
+                            frGroup.setFitsRead(band,fr[imageIdx]);
                             if (first) {
-                                plot= PlotServUtils.makeImagePlot(fr[imageIdx],
+                                plot= PlotServUtils.makeImagePlot(frGroup,
                                                                   state.getZoomLevel(),
                                                                   state.isThreeColor(),
                                                                   band,
                                                                   state.getColorTableId(), rv);
                                 plot.getPlotGroup().setZoomTo(state.getZoomLevel());
-                                if (state.isThreeColor()) plot.setThreeColorBand(fr[imageIdx],band);
+                                if (state.isThreeColor()) plot.setThreeColorBand(fr[imageIdx],band,frGroup);
                                 ctx.setPlot(plot);
                                 first= false;
                             }
                             else {
-                                plot.setThreeColorBand(fr[imageIdx],band);
-                                plot.getHistogramOps(band).recomputeStretch(rv);
+                                plot.setThreeColorBand(fr[imageIdx],band,frGroup);
+                                plot.getHistogramOps(band,frGroup).recomputeStretch(rv);
                             }
                             Counters.getInstance().incrementVis("Revalidate");
                             lenStr.append(FileUtil.getSizeAsString(fitsFile.length()));
@@ -91,15 +93,19 @@ public class CtxControl {
                     }
                     ctx.setPlot(plot);
                     plot.getPlotGroup().setZoomTo(state.getZoomLevel());
-                    retval= true;
+                    retval= new ActiveCallCtx(ctx,plot,frGroup);
                     String sizeStr= (state.isThreeColor() ? ", 3 Color: file sizes: " : ", file size: ");
                     long elapse= System.currentTimeMillis()-start;
                     log.info("revalidation success: " + ctx.getKey(),
                               "time: " + UTCTimeUtil.getHMSFromMills(elapse) +
                                       sizeStr + lenStr);
+
+                    if (frGroup.getFitsRead(Band.NO_BAND)==null) {
+                        Logger.info("frGroup 0 band is null after recreate");
+                    }
                 }
                 else {
-                    ActiveFitsReadGroup afrg= plot.getActiveFitsReadGroup();
+                    ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
                     FitsRead fr[];
                     for(Band band : state.getBands()) {
                         boolean blank= PlotServUtils.isBlank(state, band);
@@ -108,13 +114,18 @@ public class CtxControl {
 
                         if (blank) fr= PlotServUtils.createBlankFITS(state.getWebPlotRequest(band));
                         else       fr= FitsCacher.readFits(fitsFile);  //this call should get data from cache if it exist
-                        afrg.setFitsRead(band,fr[imageIdx]);
+                        frGroup.setFitsRead(band, fr[imageIdx]);
                     }
+
+                    if (frGroup.getFitsRead(Band.NO_BAND)==null) {
+                        Logger.info("frGroup 0 band is null after reread");
+                    }
+                    retval= new ActiveCallCtx(ctx,plot,frGroup);
                 }
             } catch (Exception e) {
                 log.warn(e, "revalidation failed: this should rarely happen: ",
                           e.toString());
-                retval= false;
+                retval= null;
             }
             ctx.updateAccessTime();
 
@@ -128,13 +139,10 @@ public class CtxControl {
         return ctx;
     }
 
-    public static PlotClientCtx prepare(PlotState state) throws FailedRequestException {
-       return prepare(state,true);
-    }
 
-
-    public static PlotClientCtx prepare(PlotState state, boolean withRevalidation) throws FailedRequestException {
+    public static ActiveCallCtx prepare(PlotState state) throws FailedRequestException {
         try {
+            ActiveCallCtx retval;
             PlotClientCtx ctx= getPlotCtx(state.getContextString());
             if (ctx==null) {
                 String oldCtxStr= state.getContextString();
@@ -144,22 +152,25 @@ public class CtxControl {
                 ctx.setPlotState(state);
 
                 log.info("Plot context not found, creating new context.",
-                          "Old context string: " + oldCtxStr,
-                          "New context string: " + ctxStr);
+                         "Old context string: " + oldCtxStr,
+                         "New context string: " + ctxStr);
                 WebPlotFactory.recreate(state);
+                retval= revalidatePlot(ctx);
                 counters.incrementVis("Revalidate");
+
             }
             else {
                 ctx.setPlotState(state);
                 boolean success;
-                if (withRevalidation) success= revalidatePlot(ctx);
-                else                  success= confirmFileData(ctx);
-                if (!success) {
+                retval= revalidatePlot(ctx);
+//                else                  success= confirmFileData(ctx);
+                if (retval==null) {
                     WebPlotFactory.recreate(state);
+                    retval= revalidatePlot(ctx);
                     counters.incrementVis("Revalidate");
                 }
             }
-            return ctx;
+            return retval;
         } catch (FailedRequestException e) {
             log.warn(e, "prepare failed - failed to re-validate plot: " +
                               "User Msg: " + e.getUserMessage(),
@@ -170,12 +181,6 @@ public class CtxControl {
             throw new FailedRequestException("prepare failed, geom error", "this should almost never happen", e);
         }
     }
-
-    public static void flush(PlotClientCtx ctx) {
-        if (ctx!=null) ctx.flushToCache();
-    }
-
-
 
     private static boolean confirmFileData(PlotClientCtx ctx)  {
         boolean retval= true;
@@ -266,7 +271,7 @@ public class CtxControl {
                     log.briefInfo("Removed " + EXPIRE_DAYS + " day old directory: " + entry.getKey().getPath());
                 }
             }
-            _lastDirCheck.set(System.currentTimeMillis());
+            _lastDirCheck.getAndSet(System.currentTimeMillis());
         }
     }
 

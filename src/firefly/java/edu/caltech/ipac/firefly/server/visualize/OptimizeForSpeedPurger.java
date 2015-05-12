@@ -63,7 +63,7 @@ public class OptimizeForSpeedPurger implements MemoryPurger {
                     for(Map.Entry<String,PlotClientCtx> entry : map.entrySet()) {
                         ctx= entry.getValue();
                         if (!ctx.getKey().equals(excludeKey)) {
-                            if (ctx.getPlot()!=null) {  // if we are using memory
+                            if (ctx.getCachedPlot()!=null) {  // if we are using memory
                                 freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
                                 if (freed)  {
                                     totalCnt++;

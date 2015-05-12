@@ -10,6 +10,7 @@ import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.GridLayer;
 import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
 import edu.caltech.ipac.visualize.draw.VectorObject;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.Plot;
@@ -45,13 +46,15 @@ public class PlotOutput {
     private static final int _trySizes[]= {512,640,500,630,748,760,494,600,700,420,800,825,650};
     public static final int CREATE_ALL= -1;
     private final ImagePlot _plot;
+    private final ActiveFitsReadGroup _frGroup;
     private GridLayer _gridLayer;
     private List<FixedObjectGroup> _fogList= null;
     private List<VectorObject> _vectorList= null;
     private List<ScalableObjectPosition> _scaleList= null;
 
-    public PlotOutput(Plot plot) {
+    public PlotOutput(Plot plot, ActiveFitsReadGroup frGroup) {
         _plot= (ImagePlot)plot;
+        _frGroup= frGroup;
     }
 
     public void setFixedObjectGroupList(List<FixedObjectGroup> fogList) {
@@ -90,7 +93,7 @@ public class PlotOutput {
             container= new PlotContainerImpl();
             ((PlotContainerImpl)container).getPlotList().add(_plot);
         }
-        container.firePlotPaint(_plot, g2);
+        container.firePlotPaint(_plot, _frGroup, g2);
         saveImage(image,outType,out);
     }
 
@@ -419,13 +422,13 @@ public class PlotOutput {
                            BufferedImage image ) throws IOException {
         if (image==null)  image= createImage(width,height, Quality.MEDIUM);
         Graphics2D g2= image.createGraphics();
-        g2.setClip(0,0, width, height);
+        g2.setClip(0, 0, width, height);
         _plot.getPlotGroup().beginPainting(g2);
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
         g2.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 //        g2.setComposite(AlphaComposite.Src);
-        _plot.paintTile(g2,x,y,width,height);
+        _plot.paintTile(g2,_frGroup,x,y,width,height);
 
         PlotContainerImpl container= new PlotContainerImpl();
         container.getPlotList().add(_plot);
@@ -450,7 +453,7 @@ public class PlotOutput {
 
         if (_scaleList!=null && _scaleList.size()>0) {
             for(ScalableObjectPosition s : _scaleList) {
-                s.drawOnPlot(_plot,g2);
+                s.drawOnPlot(_plot,_frGroup, g2);
             }
 
         }

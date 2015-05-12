@@ -72,7 +72,7 @@ window.firefly= function() {
                 reqAry[i]= this.combineParams(reqAry[i]);
             }
             ffPrivate.plotOneFileGroup(reqAry,plotGroup);
-        };
+       };
 
 
 

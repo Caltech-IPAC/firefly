@@ -11,6 +11,9 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -32,6 +35,7 @@ public class FitsCacher {
 
     private static Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
     private static final Map<CacheKey, Object> activeRequest = new ConcurrentHashMap<CacheKey, Object>(61);
+    private static final Logger.LoggerImpl _log = Logger.getLogger();
 
     static FitsRead[] readFits(File fitsFile) throws FitsException, FailedRequestException, IOException {
         CacheKey key= new StringKey(fitsFile.getPath());
@@ -49,6 +53,9 @@ public class FitsCacher {
                     lockKey= new Object();
                     activeRequest.put(key,lockKey);
                 }
+                else {
+                    _log.briefInfo("Found lock key for:"+ key);
+                }
                 synchronized (lockKey) {
                     if (memCache!=null && memCache.isCached(key)) {
                         frAry= (FitsRead[])memCache.get(key);
@@ -57,8 +64,14 @@ public class FitsCacher {
                     else {
                         Fits fits= new Fits(fitsFile.getPath());
                         try {
+                            long start = System.currentTimeMillis();
                             frAry= FitsRead.createFitsReadArray(fits);
                             if (memCache!=null) memCache.put(key,frAry);
+                            long elapse = System.currentTimeMillis() - start;
+                            String timeStr= UTCTimeUtil.getHMSFromMills(elapse);
+                            _log.briefInfo("Read Fits: "+timeStr+ ", "+
+                                                   FileUtil.getSizeAsString(fitsFile.length()) +
+                                                   ": "+fitsFile.getName());
                             return frAry;
                         } finally {
                             fits.getStream().close();

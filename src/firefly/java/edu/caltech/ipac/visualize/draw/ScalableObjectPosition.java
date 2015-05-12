@@ -4,6 +4,7 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
@@ -137,12 +138,12 @@ public class ScalableObjectPosition implements PlotPaintListener,
     * @param p the plot to draw on
     * @param g2
     */
-   public void drawOnPlot(Plot p, Graphics2D g2) {
+   public void drawOnPlot(Plot p, ActiveFitsReadGroup frGroup, Graphics2D g2) {
       PlotInfo pInfo= _plotMap.get(p);
       ScalableObject.DrawOnPlotReturn soReturn;
       Assert.tst(pInfo);
       if (pInfo._showing && _showing && pInfo._positionSet) {
-         soReturn= _viewObject.drawOnPlot(p, g2, pInfo._pt, pInfo._pt2,
+         soReturn= _viewObject.drawOnPlot(p,frGroup, g2, pInfo._pt, pInfo._pt2,
                                               pInfo._rotation, pInfo._offset,
                                               null,true);
          pInfo._repairArea= soReturn.getRepairArea();
@@ -240,8 +241,8 @@ public class ScalableObjectPosition implements PlotPaintListener,
    // ------------------  Methods  from PlotPaintListener ---------------
    // ===================================================================
 
-    public void paint(PlotPaintEvent ev) {
-         drawOnPlot( ev.getPlot(), ev.getGraphics() );
+    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
+         drawOnPlot( ev.getPlot(), frGroup, ev.getGraphics() );
     }
 
 //===================================================================

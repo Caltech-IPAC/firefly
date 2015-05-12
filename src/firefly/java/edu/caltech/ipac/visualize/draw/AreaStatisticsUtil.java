@@ -8,6 +8,7 @@ import edu.caltech.ipac.astro.target.TargetUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
@@ -307,7 +308,7 @@ public class AreaStatisticsUtil {
      * @param boundingBox if not null, region of calculation will be intersection of shape and boundingBox
      * @return map of calculated metrics by metric id
      */
-    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, Band selectedBand, Shape shape, Rectangle2D boundingBox) {
+    public static HashMap<Metrics, Metric> getStatisticMetrics(ImagePlot plot, ActiveFitsReadGroup frGroup, Band selectedBand, Shape shape, Rectangle2D boundingBox) {
 
         //comment    
         if (boundingBox == null) boundingBox = shape.getBounds2D();
@@ -330,7 +331,7 @@ public class AreaStatisticsUtil {
         double yfSum = 0d;
         double xSum = 0d;
         double ySum = 0d;
-        FitsRead fitsRead = plot.getFitsRead(selectedBand);
+        FitsRead fitsRead = frGroup.getFitsRead(selectedBand);
         int imageScaleFactor = fitsRead.getImageScaleFactor();
         if (imageScaleFactor < 1) imageScaleFactor = 1;
         // to calculate the number of pixels (and integratedFlux) correctly in overlay plots,
@@ -363,9 +364,9 @@ public class AreaStatisticsUtil {
                 try {
                     if (!shape.contains(x, y)) continue;
                     if (selectedBand == Band.NO_BAND) {
-                        flux = plot.getFlux(new ImageWorkSpacePt(x, y));
+                        flux = plot.getFlux(new ImageWorkSpacePt(x, y),frGroup);
                     } else {
-                        flux = plot.getFlux(selectedBand, new ImageWorkSpacePt(x, y));
+                        flux = plot.getFlux(frGroup, selectedBand, new ImageWorkSpacePt(x, y));
                     }
                     //if (SUTDebug.isDebug()) System.out.println("x = "+x+";   y = "+y);
 		    if (Double.isNaN(flux))
@@ -402,7 +403,7 @@ public class AreaStatisticsUtil {
             return metrics;
         }
 
-        String fluxUnits = ((selectedBand == Band.NO_BAND) ? plot.getFluxUnits() : plot.getFluxUnits(selectedBand));
+        String fluxUnits = ((selectedBand == Band.NO_BAND) ? plot.getFluxUnits(frGroup) : plot.getFluxUnits(selectedBand,frGroup));
 
 
         // calculate the centroid position

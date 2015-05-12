@@ -4,9 +4,11 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.ActiveCallCtx;
 import edu.caltech.ipac.firefly.server.visualize.CtxControl;
-import edu.caltech.ipac.firefly.server.visualize.PlotClientCtx;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -51,7 +53,7 @@ public class ImageDownload extends BaseHttpServlet {
         PlotState state= PlotState.parse(stateStr);
 
         if (type==null) type= TYPE_ANY;
-        PlotClientCtx ctx= null;
+        ActiveCallCtx ctx= null;
         try {
 
             String fname= getFileName(req);
@@ -69,7 +71,10 @@ public class ImageDownload extends BaseHttpServlet {
                     int width= Integer.parseInt(widthStr);
                     int height= Integer.parseInt(heightStr);
                     ctx= CtxControl.prepare(state);
-                    File outputFile= PlotServUtils.createImageFile(ctx.getPlot(),fname,x,y,width,height);
+                    if (ctx.getFitsReadGroup().getFitsRead(Band.NO_BAND)==null) {
+                        Logger.info("frGroup 0 band is null after recreate");
+                    }
+                    File outputFile= PlotServUtils.createImageFile(ctx.getPlot(),ctx.getFitsReadGroup(),fname,x,y,width,height);
                     insertCacheHeaders(res,outputFile.lastModified()+"");
                     FileUtil.writeFileToStream(outputFile,out);
                 }
@@ -80,7 +85,7 @@ public class ImageDownload extends BaseHttpServlet {
             else if (type.equals(TYPE_THUMBNAIL)) {
                 if (isNonMatch(fname,req)) {
                     ctx= CtxControl.prepare(state);
-                    File outputFile= PlotServUtils.createImageThumbnail(fname,ctx.getPlot(), state.getThumbnailSize());
+                    File outputFile= PlotServUtils.createImageThumbnail(fname,ctx.getPlot(),ctx.getFitsReadGroup(), state.getThumbnailSize());
                     insertCacheHeaders(res,outputFile.lastModified()+"");
                     FileUtil.writeFileToStream(outputFile,out);
                 }
@@ -91,7 +96,7 @@ public class ImageDownload extends BaseHttpServlet {
             else if (type.equals(TYPE_FULL)) {
                 res.setHeader("Content-Disposition", "attachment; filename=fits-image.png");
                 ctx= CtxControl.prepare(state);
-                PlotServUtils.writeFullImageFileToStream(out,ctx.getPlot());
+                PlotServUtils.writeFullImageFileToStream(out,ctx.getPlot(),ctx.getFitsReadGroup());
             }
             else {
                 File f= ServerContext.convertToFile(fname);
@@ -101,9 +106,6 @@ public class ImageDownload extends BaseHttpServlet {
             throw new ServletException(e.toString(),e);
         } catch (FitsException e) {
             throw new ServletException(e.toString(),e);
-        }
-        finally {
-            CtxControl.flush(ctx);
         }
     }
 

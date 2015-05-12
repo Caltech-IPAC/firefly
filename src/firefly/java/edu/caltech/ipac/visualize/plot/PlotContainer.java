@@ -61,7 +61,7 @@ public interface PlotContainer extends Iterable<Plot> {
      */
     public void reorderPlotPaintListeners(PlotPaintListener  reorderAry[]);
 
-    public void firePlotPaint(Plot p, Graphics2D g2);
+    public void firePlotPaint(Plot p, ActiveFitsReadGroup frgroup, Graphics2D g2);
 
 }
 

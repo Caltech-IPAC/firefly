@@ -13,6 +13,7 @@ public interface PlotPaintListener extends EventListener {
        /**
         * Called when ...
         * @param ev the event
+        * @param frGroup
         */
-       public abstract void paint(PlotPaintEvent ev);
+       public abstract void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup);
 }

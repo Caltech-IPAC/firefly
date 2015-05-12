@@ -24,7 +24,7 @@ Firefly tools also allows you to get expand certain components and get events ba
  
 
 
-##Fits Visualization
+###Fits Visualization
 
 The following methods are available to create a fits image viewer.  A FITS `ImageViewer` is created or referenced by calling the
 following
@@ -34,7 +34,7 @@ following
  - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified fits file.
 
 
-###Inline Image Viewer
+####ImageViewer
 
 `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
     parameters:
@@ -59,7 +59,7 @@ following
 
 
 
-####ImageViewer.plot() method
+#####ImageViewer.plot() method
 
 The following is a list of possible params for the ImageViewer plotting. Almost all parameters are optional.
     Note that the request `Type` parameter can
@@ -168,21 +168,21 @@ Note-See documentation on WorldPt to find proper syntax
  - **UniqueKey**: TODO: Document this param
 
 
-####ImageViewer.plotURL() method
+#####ImageViewer.plotURL() method
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | url     | string with the url of a FITS file to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-####ImageViewer.plotFile() method
+#####ImageViewer.plotFile() method
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | file     | string with full path of a FITS file on the server to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-####ImageViewer.plotFileOrURL() method
+#####ImageViewer.plotFileOrURL() method
 
 This shortcut method can be used when there are two ways to access the same file but for some reason the local access is not always available.
 It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)|
@@ -193,10 +193,45 @@ It will try the file first then the URL. All other parameters are defaulted, (se
 | url     | string with the url of a FITS file to plot |
 
 
+#####ImageViewer.setDefaultParams() method
+
+Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for detauls.
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| object     | object literal with name/value pairs for all parameters |
+
+
+#####ImageViewer.serializeRangeValues() method
+
+Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for detauls.
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| stretchType (string) | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
+| lowerValue (number) | object literal with name/value pairs for all parameters |
+| upperValue (number) | object literal with name/value pairs for all parameters |
+| algorithm | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
 
 
 
+####ExternalViewer
 
+`firefly.getExternalViewer()` - get the external ImageViewer object in the specified div.
+    parameters:
+    
+| Parameter  | Description |
+| ---------- | ----------- |
+| `plot` | plot a fits images |
+| `plotURL` | convenience method to plot a url |
+| `plotFile` | convenience method to plot a file on the server |
+| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
+| `setDefaultParams`  |  set param that will apply to call `plot` calls |
+| `serializeRangeValues`  |  make a serialized range values object 
+
+
+
+####ExpandedViewer
 
 <div class="ret">Methods specific to firefly.getExternalViewer() object:</div>
 <ul>

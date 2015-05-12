@@ -73,7 +73,7 @@ public class Counters {
 
     /**
      * increment the counter.  To minimize the synchronization required, do a unsynchronized get first. If the value is found
-     * do a synchronized increment on just that value.  if the value is not found then we might have to create it.
+     * do a Atomic increment on just that value.  if the value is not found then we might have to create it.
      * At that point do a synchronized lock on the map, do another get (a safe one this time) and if the value still have not
      * be created then create it. This way most of the time we will not have to lock the whole map which might affect
      * several server threads.
@@ -106,7 +106,7 @@ public class Counters {
         switch (action) {
             case INC: value.getAndAdd(modValue); break;
             case DEC: value.getAndAdd(-modValue); break;
-            case SET: value.set(modValue); break;
+            case SET: value.getAndSet(modValue); break;
         }
     }
 

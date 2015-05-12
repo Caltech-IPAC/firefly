@@ -26,6 +26,7 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.FileRetrieveException;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
@@ -131,7 +132,8 @@ public class WebPlotFactory {
     private static InsertBandInitializer insertBand(ImagePlot plot,
                                                     PlotState state,
                                                     FileData fd,
-                                                    Band band) throws FailedRequestException, GeomException {
+                                                    Band band,
+                                                    ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException {
 
         InsertBandInitializer retval;
 
@@ -144,22 +146,22 @@ public class WebPlotFactory {
 
             FileReadInfo frInfo[] = new WebPlotReader().readOneFits(fd, band, null);
 
-            ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0]);
+            ModFileWriter modWriter = ImagePlotCreator.createBand(state, plot, frInfo[0],frGroup);
 
-            WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, band, frInfo[0].getOriginalFile());
-            PlotStateUtil.setPixelAccessInfo(plot, state);
+            WebFitsData wfData = ImagePlotCreator.makeWebFitsData(plot, frGroup, band, frInfo[0].getOriginalFile());
+            PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
 
             ImagePlotBuilder.initState(state, frInfo[0], band, null);
 
 
-            PlotImages images = createImages(state, plot, true, false);
+            PlotImages images = createImages(state, plot, frGroup, true, false);
 
             if (modWriter != null) {
                 if (modWriter.getCreatesOnlyOneImage()) state.setImageIdx(0, band);
                 modWriter.go(state);
             }
 
-            PlotServUtils.createThumbnail(plot, images, true,state.getThumbnailSize());
+            PlotServUtils.createThumbnail(plot, frGroup, images, true,state.getThumbnailSize());
 
             retval = new InsertBandInitializer(state, images, band, wfData, frInfo[0].getDataDesc());
 
@@ -260,7 +262,8 @@ public class WebPlotFactory {
     public static InsertBandInitializer addBand(ImagePlot plot,
                                                 PlotState state,
                                                 WebPlotRequest request,
-                                                Band band) throws FailedRequestException, GeomException, SecurityException {
+                                                Band band,
+                                                ActiveFitsReadGroup frGroup) throws FailedRequestException, GeomException, SecurityException {
         long start = System.currentTimeMillis();
         InsertBandInitializer retval = null;
 
@@ -286,7 +289,7 @@ public class WebPlotFactory {
 
         if (file != null) {
             long insertStart = System.currentTimeMillis();
-            retval = insertBand(plot, state, fd, band);
+            retval = insertBand(plot, state, fd, band,frGroup);
             long insertElapse = System.currentTimeMillis() - insertStart;
             long elapse = System.currentTimeMillis() - start;
 
@@ -305,12 +308,12 @@ public class WebPlotFactory {
                                                                                                          IOException {
         PlotState state = pInfo.getState();
 
-        PlotImages images = createImages(state, pInfo.getPlot(), makeFiles,
+        PlotImages images = createImages(state, pInfo.getPlot(), pInfo.getFrGroup(),makeFiles,
                                          zoomChoice.getZoomType() == ZoomType.FULL_SCREEN);
 
         WebPlotInitializer wpInit = makeWebPlotInitializer(state, images, pInfo);
 
-        initPlotCtx(pInfo.getPlot(), state, images);
+        initPlotCtx(pInfo.getPlot(), pInfo.getFrGroup(), state, images);
 
         return wpInit;
     }
@@ -333,13 +336,14 @@ public class WebPlotFactory {
                                       plot.getProjection(),
                                       imageData.getImageWidth(),
                                       imageData.getImageHeight(),
-                                      plot.getFitsRead().getImageScaleFactor(),
+                                      pInfo.getFrGroup().getFitsRead(Band.NO_BAND).getImageScaleFactor(),
                                       wfDataAry,
                                       plot.getPlotDesc(),
                                       pInfo.getDataDesc());
     }
 
     private static void initPlotCtx(ImagePlot plot,
+                                    ActiveFitsReadGroup frGroup,
                                     PlotState state,
                                     PlotImages images) throws FitsException,
                                                               IOException {
@@ -347,24 +351,25 @@ public class WebPlotFactory {
         ctx.setImages(images);
         ctx.setPlotState(state);
         ctx.setPlot(plot);
-        ctx.extractColorInfo();
+        ctx.extractColorInfo(frGroup);
         ctx.addZoomLevel(plot.getPlotGroup().getZoomFact());
-        PlotStateUtil.setPixelAccessInfo(plot, state);
+        PlotStateUtil.setPixelAccessInfo(plot, state, frGroup);
         CtxControl.putPlotCtx(ctx);
 //        _log.briefInfo("creating context for new plot: " + ctx.getKey());
-        PlotServUtils.createThumbnail(plot, images, true, state.getThumbnailSize());
+        PlotServUtils.createThumbnail(plot, frGroup, images, true, state.getThumbnailSize());
         state.setNewPlot(false);
     }
 
     private static PlotImages createImages(PlotState state,
                                            ImagePlot plot,
+                                           ActiveFitsReadGroup frGroup,
                                            boolean makeFiles,
                                            boolean fullScreen) throws IOException {
 //        if (plot.getPlotView() == null) new PlotView().addPlot(plot);
         String base = PlotServUtils.makeTileBase(state);
 
         return PlotServUtils.writeImageTiles(ServerContext.getVisSessionDir(),
-                                             base, plot, fullScreen,
+                                             base, plot, frGroup, fullScreen,
                                              makeFiles ? 2 : 0);
 
     }

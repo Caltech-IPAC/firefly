@@ -109,7 +109,7 @@ public class RequestOwner implements Cloneable {
                 userKey = newUserKey();
                 updateUserKey("Guest");
             }
-            Logger.briefInfo("establishing userKey: " + userKey);
+//            Logger.briefInfo("establishing userKey: " + userKey);
         }
         return userKey;
     }

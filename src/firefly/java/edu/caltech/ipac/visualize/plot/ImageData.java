@@ -13,28 +13,25 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ImageData implements Serializable {
 
 
     public enum ImageType {TYPE_8_BIT, TYPE_24_BIT}
-    public static final int NO_BAND= 0;
-    public static final int RED= 0;
-    public static final int GREEN= 1;
-    public static final int BLUE= 2;
-
     private       ImageType       _imageType;
     private RangeValues rangeValues;
     private IndexColorModel _cm;
     private int             _colorTableID= 0;   // this is not as flexible as color model and will be set to -1 when color model is set
     private BufferedImage   _bufferedImage;
     private boolean         _imageOutOfDate= true;
-    private int             _imageWidth= 0;
-    private int             _imageHeight= 0;
     private final int       _x;
     private final int       _y;
     private final int       _width;
     private final int       _height;
+    private final int       _lastPixel;
+    private final int       _lastLine;
+    private AtomicInteger inUseCnt= new AtomicInteger(0);
 
     private WritableRaster  _raster; // currently only used with 24 bit images
 
@@ -54,6 +51,8 @@ public class ImageData implements Serializable {
         _y= y;
         _width= width;
         _height= height;
+        _lastPixel= _x+_width-1;
+        _lastLine= _y+_height-1;
 
         _imageType= imageType;
         _colorTableID= colorTableID;
@@ -69,6 +68,13 @@ public class ImageData implements Serializable {
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
         if (_imageOutOfDate) constructImage(fitsReadAry);
         return _bufferedImage;
+    }
+
+    public void freeImage() {
+        if (inUseCnt.get()==0) {
+//            _imageOutOfDate= true;
+//            _bufferedImage= null;
+        }
     }
 
     public void freeResources() {
@@ -87,10 +93,10 @@ public class ImageData implements Serializable {
 
     private byte[] getDataArray(int idx) {
         DataBufferByte db;
-        if (_raster==null) {
+        if (_raster==null) { // means an 8 bit image
             db= (DataBufferByte) _bufferedImage.getRaster().getDataBuffer();
         }
-        else {
+        else { // 24 bit image
             db= (DataBufferByte) _raster.getDataBuffer();
         }
         return db.getData(idx);
@@ -105,10 +111,6 @@ public class ImageData implements Serializable {
 
     public int getColorTableId() { return _colorTableID; }
 
-    public void setColorTableId(int colorTableID) {
-        setColorModel(ColorTable.getColorModel(colorTableID));
-        _colorTableID= colorTableID;
-    }
 
     /**
      * don't compute the color model.  Should only be call from ImageDataGroup
@@ -127,8 +129,8 @@ public class ImageData implements Serializable {
 
     public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues, boolean force) {
 
-        int width= _x + _width - 1;
-        int height= _y + _height - 1;
+
+        inUseCnt.incrementAndGet();
         boolean mapBlankPixelToZero= (_imageType == ImageType.TYPE_24_BIT);
 
 
@@ -141,13 +143,14 @@ public class ImageData implements Serializable {
             _imageOutOfDate= true;
             if (force) {
                 fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
-                             mapBlankPixelToZero, _x, width, _y, height);
+                             mapBlankPixelToZero, _x, _lastLine, _y, _lastLine);
             }
         }
         else {
             fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
-                                       mapBlankPixelToZero, _x, width, _y, height);
+                                       mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
         }
+        inUseCnt.decrementAndGet();
     }
 
 
@@ -155,25 +158,22 @@ public class ImageData implements Serializable {
 
     private void constructImage(FitsRead fitsReadAry[]) {
 
+        inUseCnt.incrementAndGet();
         if (_imageType==ImageType.TYPE_8_BIT) {
             _raster= null;
             _bufferedImage= new BufferedImage(_width,_height,
                                               BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            fitsReadAry[NO_BAND].doStretch(rangeValues, getDataArray(NO_BAND),false,
-                                        _x,_x+_width-1,
-                                        _y, _y+_height-1);
+            fitsReadAry[0].doStretch(rangeValues, getDataArray(0),false, _x,_lastPixel, _y, _lastLine);
         }
         else if (_imageType==ImageType.TYPE_24_BIT) {
             _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
 
             for(int i=0; (i<fitsReadAry.length); i++) {
+                byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, getDataArray(i),true,
-                                               _x,_x+_width-1,
-                                               _y, _y+_height-1);
+                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
                 }
                 else {
-                    byte array[]= getDataArray(i);
                     for(int j=0; j<array.length; j++) array[j]= 0;
                 }
             }
@@ -184,9 +184,8 @@ public class ImageData implements Serializable {
         else {
             Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");
         }
-        _imageWidth= _bufferedImage.getWidth();
-        _imageHeight= _bufferedImage.getHeight();
         _imageOutOfDate=false;
+        inUseCnt.decrementAndGet();
 
     }
 }
