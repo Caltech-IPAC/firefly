@@ -451,7 +451,7 @@
      THIS CACHE IS DISTRIBUTED.
     -->
     <cache name="TEMP_FILE"
-           maxElementsInMemory="200"
+           maxElementsInMemory="5000"
            eternal="true"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="false"
