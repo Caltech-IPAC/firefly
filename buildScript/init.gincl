@@ -11,30 +11,35 @@ task loadConfig {
   project.ext.build_date = new Date().format("yyyy-MM-dd")
 
   doLast {
-    project.ext["env"] = project.hasProperty("env") ? project.env : 'local'
-    println ">> Environment is set to $env"
+    project.ext["env"] = project.hasProperty("env") ? project.env : "local"
+    println ">> Environment is set to $project.env"
 
-    project.ext.appConfigProps = new Properties()
+    ConfigRepo configRepo = new ConfigRepo();
 
     if (file("$rootDir/config/app.config").exists()) {
-      def cs = new ConfigSlurper(project.env).parse(new File("$rootDir/config/app.config").toURL())
-      appConfigProps.putAll(cs.toProperties())
+      configRepo.merge(ConfigRepo.parse(project.env, file("$rootDir/config/app.config")))
     }
 
     if (project.hasProperty("appConfig")) {
-      def cs = new ConfigSlurper(project.env).parse(new ClosureScript(closure: project.appConfig))
-      appConfigProps.putAll(cs.toProperties())
-      logger.info(">> script's appConfig added")
+      configRepo.merge(ConfigRepo.parse(project.env, project.appConfig))
     }
 
-    logger.info ">> loading build.config for env: $project.env"
-    loadConfFile(project.env, "$rootDir/buildScript/build.config")
-    loadConfFile(project.env, "$gradle.gradleUserHomeDir/build.config")
-//  project.ext.properties.each{ k, v -> println "${k}:${v}" }
+    if (file("$rootDir/buildScript/build.config").exists()) {
+      configRepo.merge(ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config")))
+    }
 
+    project.ext.appConfigProps = configRepo.flatten();
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+
+    if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
+      logger.info ">> loading user's build.config for env: $project.env"
+      def overrides = ConfigRepo.parse(project.env, file("$gradle.gradleUserHomeDir/build.config")).flatten()
+      appConfigProps.putAll(overrides)
+    }
     appConfigProps.putAll(project.ext.properties)
     appConfigProps.putAll(System.properties)
-//  appConfigProps.each{ k, v -> println "${k} => ${v}" }
+
+//    appConfigProps.each{ k, v -> println "${k} => ${v}" }
 
   }
 }
@@ -59,7 +64,7 @@ task createVersionTag  {
 }
 
 /**
- * this is used by loadConfig to extra the information from a script into a properties object.
+ * this is used by loadConfig to extract the information from a script into a properties object.
  */
 class ClosureScript extends groovy.lang.Script {
   Closure closure
@@ -70,15 +75,43 @@ class ClosureScript extends groovy.lang.Script {
   }
 }
 
-def loadConfFile(env, cfile) {
-  if (file(cfile).exists()) {
-    def cs = new ConfigSlurper(env).parse(new File(cfile).toURL())
-    logger.info ">> add properties from $cfile"
-    cs.toProperties().each { k, v ->
-      logger.info ">>    $k : $v"
-      project.ext.set(k, v)
-    }
+class ConfigRepo {
+  def baseConf
+  def envConf
+
+  ConfigRepo() {
+    baseConf = new Properties()
+    envConf = new Properties()
   }
+
+  ConfigRepo(baseConf, envConf) {
+    this.baseConf = baseConf
+    this.envConf = envConf
+  }
+
+  public static final ConfigRepo parse(env, source) {
+    source = source instanceof File ? source.toURL() : source instanceof Closure ? new ClosureScript(closure: source) : source
+    def baseConf = new ConfigSlurper().parse(source).toProperties()
+    def envConf =  new ConfigSlurper(env).parse(source).toProperties()
+
+    baseConf.each{ k, v ->
+      if (envConf.get(k).equals(v)) {
+        envConf.remove(k)
+      }
+    }
+    return new ConfigRepo(baseConf, envConf)
+  }
+
+  public Properties flatten() {
+    def props = new Properties()
+    props.putAll(baseConf)
+    props.putAll(envConf)
+    return props
+  }
+
+  public void merge(configRepo) {
+    baseConf.putAll(configRepo.baseConf)
+    envConf.putAll(configRepo.envConf)
+  }
+
 }
-
-
