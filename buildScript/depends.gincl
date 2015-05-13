@@ -1,7 +1,7 @@
 ext {
 
   apache_lib = [':commons-fileupload',
-                     ':commons-io',
+                     ':commons-io-2.4',
                      ':commons-httpclient',
                      ':commons-codec',
                      ':commons-lang',
