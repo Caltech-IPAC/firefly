@@ -20,7 +20,7 @@
 
 <form>
     <table border="0">
-        <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/samplehistdata.tbl" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
+        <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/samplehistdata.csv" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
         <tr><td>Desciption:</td><td><input size="50" type="text" id="descr-field" name="descr" value="Sample data"/></td></tr>
     </table>
 </form>
@@ -62,38 +62,37 @@
                        // specify the parameters that tell how to get data
                        // for now it's a URL to an IPAC table or CVS with two cols:
                        // first col - center of the bin, second col - num. points in the bin
-                       'source' : document.getElementById('tableurl-field').value
+                       //'source' : document.getElementById('tableurl-field').value
                        // OR
                        // specify the data to plot histogram
                        // for now it's an array of rows,
-                       // first col - center of the bin, second col - num. points in the bin
-                       // This needs to change to binMin, binMax, nPoints to support variable length bins
-                       /*
+                       // first col - num. points in the bin, second col - bin min, third col - bin max
+
                        'data' : [
-                           [-2.3138013781265, 1],
-                           [-2.0943590644815, 4],
-                           [-1.8749167508365, 11],
-                           [-1.6554744371915, 12],
-                           [-1.4360321235466, 18],
-                           [-1.2165898099016, 18],
-                           [-0.99714749625658, 24],
-                           [-0.77770518261159, 21],
-                           [-0.55826286896661, 36],
-                           [-0.33882055532162, 40],
-                           [-0.11937824167663, 51],
-                           [0.10006407196835, 40],
-                           [0.31950638561334, 42],
-                           [0.53894869925832, 36],
-                           [0.75839101290331, 40],
-                           [0.9778333265483, 36],
-                           [1.1972756401933, 23],
-                           [1.4167179538383, 18],
-                           [1.6361602674833, 9],
-                           [1.8556025811282, 12],
-                           [2.0750448947732, 3],
-                           [2.2944872084182, 4]
+                           [1,-2.5138013781265,-2.0943590644815],
+                           [4,-2.0943590644815,-1.8749167508365],
+                           [11,-1.8749167508365,-1.6554744371915],
+                           [12,-1.6554744371915,-1.4360321235466],
+                           [18,-1.4360321235466,-1.2165898099016],
+                           [15,-1.2165898099016,-0.99714749625658],
+                           [24,-0.99714749625658,-0.77770518261159],
+                           [21,-0.77770518261159,-0.55826286896661],
+                           [36,-0.55826286896661,-0.33882055532162],
+                           [40,-0.33882055532162,-0.11937824167663],
+                           [51,-0.11937824167663,0.10006407196835],
+                           [40,0.10006407196835,0.31950638561334],
+                           [42,0.31950638561334,0.53894869925832],
+                           [36,0.53894869925832,0.75839101290331],
+                           [40,0.75839101290331,0.9778333265483],
+                           [36,0.9778333265483,1.1972756401933],
+                           [23,1.1972756401933,1.4167179538383],
+                           [18,1.4167179538383,1.6361602674833],
+                           [9,1.6361602674833,1.8556025811282],
+                           [12,1.8556025811282,2.0750448947732],
+                           [0,2.0750448947732,2.2944872084182],
+                           [4,2.2944872084182,2.412472786789]
                        ]
-                       */
+
                    },
                    "plotHere");
        }
