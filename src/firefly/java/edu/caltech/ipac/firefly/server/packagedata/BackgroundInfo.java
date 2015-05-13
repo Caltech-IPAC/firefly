@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.server.sse.EventTarget;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 
 import java.io.Serializable;
 /**
@@ -24,7 +24,7 @@ class BackgroundInfo implements Serializable {
     private final String email;
     private final String baseFileName;
     private final String title;
-    private final EventTarget eventTarget;
+    private final ServerEvent.EventTarget eventTarget;
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
@@ -33,7 +33,7 @@ class BackgroundInfo implements Serializable {
                           String email,
                           String baseFileName,
                           String title,
-                          EventTarget eventTarget,
+                          ServerEvent.EventTarget eventTarget,
                           boolean canceled) {
         this.bgStat= bgStat;
         this.canceled= canceled;
@@ -57,6 +57,6 @@ class BackgroundInfo implements Serializable {
 
     public String getTitle() { return title; }
 
-    public EventTarget getEventTarget() { return eventTarget; }
+    public ServerEvent.EventTarget getEventTarget() { return eventTarget; }
 }
 

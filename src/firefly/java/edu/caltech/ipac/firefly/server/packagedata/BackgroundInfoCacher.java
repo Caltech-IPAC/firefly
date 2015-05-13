@@ -5,10 +5,8 @@ package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.server.query.BackgroundEnv;
-import edu.caltech.ipac.firefly.server.sse.EventData;
-import edu.caltech.ipac.firefly.server.sse.EventTarget;
-import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
-import edu.caltech.ipac.firefly.server.sse.ServerSentEvent;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.event.ServerSentEventNames;
 import edu.caltech.ipac.util.cache.Cache;
@@ -42,7 +40,7 @@ public class BackgroundInfoCacher {
      * @param baseFileName base name
      * @param title title
      */
-    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, EventTarget target) {
+    public BackgroundInfoCacher(String key, String email, String baseFileName, String title, ServerEvent.EventTarget target) {
         this(key);
         updateInfo(null, email, baseFileName, title, target, false);
     }
@@ -57,8 +55,10 @@ public class BackgroundInfoCacher {
         BackgroundInfo info= getInfo();
         if (info!=null) {
             updateInfo(bgStat, info.getEmailAddress(), info.getBaseFileName(), info.getTitle(), info.getEventTarget(), info.isCanceled());
-            ServerSentEvent ev= new ServerSentEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
-                                                    info.getEventTarget(), new EventData(bgStat));
+            ServerEvent.EventTarget target = info.getEventTarget() == null ?
+                            new ServerEvent.EventTarget(ServerEvent.Scope.SELF) : info.getEventTarget();
+            ServerEvent ev= new ServerEvent(ServerSentEventNames.SVR_BACKGROUND_REPORT,
+                                                    target, bgStat);
             ServerEventManager.fireEvent(ev);
         }
     }
@@ -114,7 +114,7 @@ public class BackgroundInfoCacher {
     }
 
 
-    public EventTarget getEventTarget() {
+    public ServerEvent.EventTarget getEventTarget() {
         BackgroundInfo info= getInfo();
         return info==null ? null : info.getEventTarget();
     }
@@ -127,7 +127,7 @@ public class BackgroundInfoCacher {
                             String email,
                             String baseFileName,
                             String title,
-                            EventTarget target,
+                            ServerEvent.EventTarget target,
                             boolean canceled) {
         BackgroundInfo info= new BackgroundInfo(status,email, baseFileName, title, target, canceled);
         BackgroundEnv.getCache().put(_key, info);

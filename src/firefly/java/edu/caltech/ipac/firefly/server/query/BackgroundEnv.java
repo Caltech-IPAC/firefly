@@ -3,11 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import com.gargoylesoftware.htmlunit.javascript.host.EventNode;
 import edu.caltech.ipac.firefly.core.background.BackgroundState;
 import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
 import edu.caltech.ipac.firefly.core.background.JobAttributes;
 import edu.caltech.ipac.firefly.core.background.PackageProgress;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -15,8 +17,6 @@ import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
-import edu.caltech.ipac.firefly.server.sse.EventTarget;
-import edu.caltech.ipac.firefly.server.sse.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
@@ -346,8 +346,10 @@ public class BackgroundEnv {
         return status;
     }
 
+    @Deprecated
     public static void addIDToPushCriteria(String id) {
-        ServerEventManager.addSessionExtraEventTarget(new EventTarget.BackgroundID(id));
+        // TODO: need to investigate...  do nothing for now.
+//        ServerEventManager.addSessionExtraEventTarget(new EventTarget.BackgroundID(id));
     }
 
     private static BackgroundStatus createUncachedStatus(String id, boolean polling) {
@@ -429,7 +431,7 @@ public class BackgroundEnv {
                                    String dataSource,
                                    RequestOwner requestOwner,
                                    String bid,
-                                   EventTarget target) {
+                                   ServerEvent.EventTarget target) {
             this(worker,null,title,null,dataSource,requestOwner,bid,target);
         }
 
@@ -440,7 +442,7 @@ public class BackgroundEnv {
                                    String dataSource,
                                    RequestOwner requestOwner,
                                    String bid,
-                                   EventTarget evTarget) {
+                                   ServerEvent.EventTarget evTarget) {
             _bid = bid!=null ? bid : makeBackgroundID();
             _worker= worker;
             _baseFileName= baseFileName;
@@ -448,8 +450,7 @@ public class BackgroundEnv {
             _email= email;
             _dataSource= dataSource;
             _requestOwner= requestOwner;
-            EventTarget target= evTarget==null ? new EventTarget.Session(requestOwner.getUserKey()) : evTarget;
-            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, target); // force a cache entry here
+            piCacher= new BackgroundInfoCacher(_bid, _email, _baseFileName, _title, evTarget); // force a cache entry here
         }
 
 

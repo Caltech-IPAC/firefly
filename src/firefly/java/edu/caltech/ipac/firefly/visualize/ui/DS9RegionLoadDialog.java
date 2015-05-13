@@ -97,7 +97,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
             public void onFailure(Throwable caught) { }
 
             public void onSuccess(String fileKey) {
-                loadRegFile(fileKey,cb,null);
+                loadRegFile(fileKey,cb);
 //                new VisTask().getDS9Region(fileKey,new AsyncCallback<RegionData>() {
 //                    public void onFailure(Throwable caught) {
 //                        PopupUtil.showInfo("failed");
@@ -114,7 +114,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
         });
     }
 
-    public static void loadRegFile(String fileOnServer, final AsyncCallback<String> cb, final MonitorItem monItem) {
+    public static void loadRegFile(String fileOnServer, final AsyncCallback<String> cb) {
         new VisTask().getDS9Region(fileOnServer,new AsyncCallback<RegionData>() {
             public void onFailure(Throwable caught) {
                 PopupUtil.showInfo("failed");
@@ -123,14 +123,13 @@ public class DS9RegionLoadDialog extends BaseDialog {
             public void onSuccess(RegionData result) {
                 loadRegion(result.getTitle(),
                            result.getRegionTextData(),
-                           result.getRegionParseErrors(),
-                           monItem);
+                           result.getRegionParseErrors());
                 if (cb!=null) cb.onSuccess("ok");
             }
         });
     }
 
-    private static void loadRegion(String title, String regText, String regErr, MonitorItem monItem) {
+    private static void loadRegion(String title, String regText, String regErr) {
         DrawingManager drawMan;
         List<String> retStrList= StringUtils.parseStringList(regText, StringUtils.STRING_SPLIT_TOKEN,0);
         List<String> errStrList= StringUtils.parseStringList(regErr);

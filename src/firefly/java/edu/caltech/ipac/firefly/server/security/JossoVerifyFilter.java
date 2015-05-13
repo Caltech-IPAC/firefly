@@ -4,6 +4,8 @@
 package edu.caltech.ipac.firefly.server.security;
 
 import edu.caltech.ipac.firefly.core.JossoUtil;
+import edu.caltech.ipac.firefly.server.RequestOwner;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Base64;
@@ -49,11 +51,14 @@ public class JossoVerifyFilter implements Filter {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpServletResponse resp = (HttpServletResponse) response;
+            ServerContext.clearRequestOwner();  // ensure a new one is created.
+            RequestOwner owner = ServerContext.getRequestOwner();   // establish a new one.
+            owner.setRequestAgent(ServerContext.getHttpRequestAgent(req, resp));
 
             String id = req.getParameter(JOSSO_ASSERT_ID);
             String token = JOSSOAdapter.resolveAuthToken(id);
             if (token != null) {
-                WebAuthModule.updateAuthKey(token, resp);
+                owner.getRequestAgent().updateAuthInfo(token);
                 logger.briefInfo("Verifying user with verId=" + id + "  ==> returned auth token:" + token);
 
 //            createVerifyCookie(resp);

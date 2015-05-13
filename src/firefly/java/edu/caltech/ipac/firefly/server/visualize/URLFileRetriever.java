@@ -6,19 +6,18 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.security.WebAuthModule;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 import edu.caltech.ipac.visualize.plot.GeomException;
 
-import javax.servlet.http.Cookie;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Map;
 /**
  * User: roby
  * Date: Feb 26, 2010
@@ -32,7 +31,6 @@ import java.util.Arrays;
 public class URLFileRetriever implements FileRetriever {
 
     public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours
-    public static final String SECURITY_COOKIE_NAME = WebAuthModule.AUTH_KEY; // 4 hours
     public static final String FITS = "fits";
 
     public FileData getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
@@ -55,16 +53,16 @@ public class URLFileRetriever implements FileRetriever {
         try {
             AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey());
             RequestOwner ro = ServerContext.getRequestOwner();
-            Cookie cookies[] = ro.getCookies();
+            Map<String, String> cookies = ro.getCookieMap();
             if (cookies != null) {
-                for (Cookie c : cookies) {
-                    params.addCookie(c.getName(), c.getValue());
+                for (String name : cookies.keySet()) {
+                    params.addCookie(name, cookies.get(name));
                 }
             }
             if (!ro.getUserInfo().isGuestUser()) {
                 params.setCacheLifespanInSec(EXPIRE_IN_SEC);
                 params.setLoginName(ro.getUserInfo().getLoginName());
-                params.setSecurityCookie(SECURITY_COOKIE_NAME);
+                params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
             }
             params.setCheckForNewer(true);
             params.setLocalFileExtensions(Arrays.asList(FileUtil.FITS, FileUtil.GZ)); //assuming WebPlotRequest ONLY expect FITS or GZ file.

@@ -122,7 +122,7 @@ public class SSEClient {
 //======================================================================
 
     private void evaluateMessage(String message) {
-        if (message.endsWith(Name.HEART_BEAT.getName())) {
+        if (message.endsWith(Name.EVT_CONN_EST.getName())) {
            // do nothing
             GwtUtil.getClientLogger().log(Level.INFO, "Heartbeat");
         }

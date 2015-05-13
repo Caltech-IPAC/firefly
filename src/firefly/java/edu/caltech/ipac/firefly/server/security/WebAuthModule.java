@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author loi
  * @version $Id: WebAuthModule.java,v 1.12 2012/09/08 00:50:26 loi Exp $
  */
+@Deprecated
 public class WebAuthModule {
     public static String AUTH_KEY = "JOSSO_SESSIONID";
     public static String TO_BE_DELETE = "-";

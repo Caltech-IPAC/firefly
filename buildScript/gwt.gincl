@@ -24,6 +24,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT Compile'
   group = GWT_GROUP
 
+  outputs.upToDateWhen { false }
   inputs.source sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
   outputs.dir gwt.buildDir
@@ -124,6 +125,7 @@ task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
     args "-nosuperDevMode"
     args "-startupUrl", "$context/$gwt.startupUrl"
     args "-XjsInteropMode", "JS"
+    args "-nosuperDevMode"
     args gwt.modules
   }
 }

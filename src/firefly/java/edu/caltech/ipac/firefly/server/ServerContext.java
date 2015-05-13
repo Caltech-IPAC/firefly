@@ -15,6 +15,10 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import org.apache.log4j.PropertyConfigurator;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.websocket.HandshakeResponse;
+import javax.websocket.server.HandshakeRequest;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -302,6 +306,28 @@ public class ServerContext {
         return dir;
     }
 
+    //====================================================================
+    //  Factory methods for RequestAgent
+    //====================================================================
+    public static final RequestAgent getHttpRequestAgent(HttpServletRequest request, HttpServletResponse response) {
+        // this is an abstraction point.  this class can be loaded from configuration.
+        return new RequestAgent.HTTP(request, response);
+    }
+
+    public static final RequestAgent getWsRequestAgent(HandshakeRequest request, HandshakeResponse response) {
+        // this is an abstraction point.  this class can be loaded from configuration.
+        if (request instanceof HttpServletRequest) {
+            return new RequestAgent.HTTP((HttpServletRequest) request, (HttpServletResponse) response);
+        } else {
+            return null;
+        }
+    }
+
+    //====================================================================
+    //
+    //====================================================================
+
+
     private static void initDir(File dir) {
         if (!dir.exists()) {
             dir.mkdirs();
@@ -355,7 +381,7 @@ public class ServerContext {
                     retval= new File(getIrsaRoot(), relFile);
                 }
                 else if (prefix.equals(WEBAPP_ROOT)) {
-                    String rp= getRequestOwner().getRequest().getRealPath(relFile);
+                    String rp= getRequestOwner().getRequestAgent().getRealPath(relFile);
                     retval= new File(rp);
                 }
                 else if (prefix.equals(SEARCH_PATH_PREFIX)) {

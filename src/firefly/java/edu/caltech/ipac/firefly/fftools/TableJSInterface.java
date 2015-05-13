@@ -173,8 +173,12 @@ public class TableJSInterface {
             String val = params.get(key);
 
             if (key.equals(TBL_SOURCE)) {
-                String url = FFToolEnv.modifyURLToFull(val);
-                dataReq.setParam(key, url);
+                if (val == null || val.startsWith("$") || val.startsWith("/")) {
+                    dataReq.setParam(key, val);
+                } else {
+                    String url = FFToolEnv.modifyURLToFull(val);
+                    dataReq.setParam(key, url);
+                }
             } else if (key.equals(TBL_FILTER_BY) && !StringUtils.isEmpty(val)) {
                 dataReq.setFilters(StringUtils.asList(val, ","));
             } else if (key.equals(TBL_SORT_INFO) && !StringUtils.isEmpty(val)) {
