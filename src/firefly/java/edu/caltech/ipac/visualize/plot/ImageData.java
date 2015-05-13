@@ -121,6 +121,8 @@ public class ImageData implements Serializable {
         _imageOutOfDate= true;
     }
 
+    public boolean isImageOutOfDate() { return _imageOutOfDate; }
+
     public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues, boolean force) {
 
 

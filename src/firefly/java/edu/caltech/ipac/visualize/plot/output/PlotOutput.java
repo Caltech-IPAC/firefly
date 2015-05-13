@@ -421,6 +421,7 @@ public class PlotOutput {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
         g2.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 //        g2.setComposite(AlphaComposite.Src);
+        _plot.preProcessImageTiles(_frGroup);
         _plot.paintTile(g2,_frGroup,x,y,width,height);
 
         PlotContainerImpl container= new PlotContainerImpl();

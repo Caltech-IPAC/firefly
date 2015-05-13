@@ -91,6 +91,12 @@ public class ImageDataGroup implements Iterable<ImageData> {
     public int getImageWidth() { return _width; }
     public int getImageHeight() { return _height; }
 
+    public boolean isUpToDate() {
+        for(ImageData id : _imageDataAry) {
+            if (id.isImageOutOfDate()) return false;
+        }
+        return true;
+    }
 
     public int getColorTableId() { return _imageDataAry[0].getColorTableId(); }
 

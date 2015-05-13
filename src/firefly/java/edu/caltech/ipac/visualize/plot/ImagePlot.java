@@ -26,6 +26,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the major subclass implementation of Plot.  This class plots 
@@ -37,12 +40,12 @@ public class ImagePlot extends Plot implements Serializable {
 
     public static final int  SQUARE = 1500; // this is the size of the image data tiles
 
-    protected Projection     _projection;
-    protected ImageDataGroup _imageData;
-    protected boolean        _isPlotted    = false;
-    protected CoordinateSys  _imageCoordSys= CoordinateSys.UNDEFINED;
-    protected ImagePt        _minPt;
-    protected ImagePt        _maxPt;
+    private Projection     _projection;
+    private ImageDataGroup _imageData;
+    private boolean        _isPlotted    = false;
+    private CoordinateSys  _imageCoordSys= CoordinateSys.UNDEFINED;
+    private ImagePt        _minPt;
+    private ImagePt        _maxPt;
     private   int            imageScaleFactor;
     private Band             refBand;
 
@@ -190,6 +193,34 @@ public class ImagePlot extends Plot implements Serializable {
         g2.setComposite(saveStuff._composite);
         g2.setTransform(saveStuff._trans);
     }
+
+    public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
+        if (_imageData.isUpToDate()) return;
+        synchronized (this) {
+            if (_imageData.size()<10) {
+                for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
+            }
+            else {
+                ExecutorService executor = Executors.newFixedThreadPool(8);
+                for(ImageData id : _imageData)  {
+                    final ImageData idSave= id;
+                    Runnable worker = new Runnable() {
+                        public void run() {
+                            idSave.getImage(frGroup.getFitsReadAry());
+                        }
+                    };
+                    executor.execute(worker);
+                }
+                executor.shutdown();
+                try {
+                    executor.awaitTermination(5000, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    // just return
+                }
+            }
+        }
+    }
+
 
     public void paintTile(Graphics2D g2, ActiveFitsReadGroup frGroup, int x, int y, int width, int height) {
         SaveG2Stuff  saveStuff= prePaint(g2, imageScaleFactor, getPercentOpaque());
