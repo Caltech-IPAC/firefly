@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -96,11 +97,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         try {
             URL url = makeUrl(source);
             if (url == null) {
-                inf = new File(source);
-//                if (f.canRead()) {
-//                    inf = createFile(request, ".tbl");
-//                    FileUtils.copyFile(f, inf);
-//                }
+                inf = ServerContext.convertToFile(source);
             } else {
                 HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 int rcode = conn.getResponseCode();

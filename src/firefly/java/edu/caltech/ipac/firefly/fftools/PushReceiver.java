@@ -135,7 +135,10 @@ public class PushReceiver implements WebEventListener {
             title= req.getParam(ServerParams.TITLE);
         }
         else if (req.containsParam(ServerParams.SOURCE)) { // find another way to make a title
-            req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(req.getParam(ServerParams.SOURCE)));
+            String val = req.getParam(ServerParams.SOURCE);
+            if ( !(val == null || val.startsWith("$") || val.startsWith("/")) ) {
+                req.setParam(ServerParams.SOURCE, FFToolEnv.modifyURLToFull(val));
+            }
             String url = req.getParam(ServerParams.SOURCE);
             int idx = url.lastIndexOf('/');
             if (idx<0) idx = url.lastIndexOf('\\');
