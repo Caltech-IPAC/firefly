@@ -167,7 +167,7 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
                 table.showToolBar(false);
                 table.showPagingBar(false);
                 table.showOptionsButton(false);
-                table.getTable().showFilters(false); //true if you want to see filters
+                if (table.getTable()!=null) table.getTable().showFilters(false); //true if you want to see filters
 
                 // TODO: this does not work here
                 if (table.getDataset().getColumns().size()>5) {

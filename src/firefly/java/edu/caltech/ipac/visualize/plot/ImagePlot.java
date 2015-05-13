@@ -52,7 +52,7 @@ public class ImagePlot extends Plot implements Serializable {
 
 
 
-   public ImagePlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup) { super(plotGroup); }
+   public ImagePlot(PlotGroup plotGroup) { super(plotGroup); }
 
 
     public ImagePlot(PlotGroup plotGroup,
@@ -127,21 +127,6 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
 
-//    public void setThreeColorBandVisible(int band, boolean visible) {
-//        threeColorOK(band);
-//        if (visible) {
-//            if (_imageData.getFitsRead(band)==null) {
-//                _imageData.setFitsRead(_fitsReadAry[band], band);
-//            }
-//        }
-//        else {
-//            if (_imageData.getFitsRead(band)!=null) {
-//                _imageData.setFitsRead(null, band);
-//            }
-//        }
-//    }
-
-
    /**
     * Writes a FITS file with (possible) FITS extension images 
     *
@@ -165,31 +150,6 @@ public class ImagePlot extends Plot implements Serializable {
       output_fits.write(new DataOutputStream(stream));
    }
 
-
-//   public void writeFile(OutputStream stream) throws FitsException {
-//      Fits myFits = _fitsRead.getFits();
-//
-//      /* The next several lines make sure that FITS stuff is in memory */
-//      BasicHDU[] myHDUs = myFits.read();
-//       for (BasicHDU myHDU : myHDUs) {
-//           //myHDUs[i].info();
-//
-//           try {
-//               Data myData = myHDU.getData();
-//               if (myData.getData() != null) {
-//                   String description =
-//                           ArrayFuncs.arrayDescription(myData.getData());
-//               }
-//           }
-//           catch (Exception e) {
-//               //System.out.println("      Unable to get data");
-//           }
-//       }
-//      /* OK, it's in memory - now write it out */
-//      myFits.write(new DataOutputStream(stream));
-//   }
-
-
     /**
      * get the coordinate system of the plot.
      * @return  CoordinateSys  the coordinate system.
@@ -197,21 +157,20 @@ public class ImagePlot extends Plot implements Serializable {
    public CoordinateSys getCoordinatesOfPlot() { return _imageCoordSys; }
 
 
-    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-        Graphics2D g2= ev.getGraphics();
-        if (shouldPaint()) {
-            SaveG2Stuff  saveStuff= prePaint(g2,imageScaleFactor, getPercentOpaque());
-            for(ImageData id : _imageData) {
-                g2.drawImage(id.getImage(frGroup.getFitsReadAry()),
-                             Math.round(getOffsetX()/imageScaleFactor) + id.getX(),
-                             Math.round(getOffsetY()/imageScaleFactor) + id.getY(),
-                             getPlotGroup().getPlotView());
-                id.freeImage();
-            }
-
-            postPaint(saveStuff);
-        }
-    }
+//    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
+//        Graphics2D g2= ev.getGraphics();
+//        if (shouldPaint()) {
+//            SaveG2Stuff  saveStuff= prePaint(g2,imageScaleFactor, getPercentOpaque());
+//            for(ImageData id : _imageData) {
+//                g2.drawImage(id.getImage(frGroup.getFitsReadAry()),
+//                             Math.round(getOffsetX()/imageScaleFactor) + id.getX(),
+//                             Math.round(getOffsetY()/imageScaleFactor) + id.getY(),
+//                             null);
+//            }
+//
+//            postPaint(saveStuff);
+//        }
+//    }
 
 
 
@@ -242,7 +201,6 @@ public class ImagePlot extends Plot implements Serializable {
                 int drawX= (int)((float)getOffsetX()/(float)imageScaleFactor + id.getX() - x/zfact);
                 int drawY= (int)((float)getOffsetY()/(float)imageScaleFactor + id.getY() + y/zfact);
                 g2.drawImage(id.getImage(frGroup.getFitsReadAry()), drawX, drawY, null);
-                id.freeImage();
             }
         }
         postPaint(saveStuff);
@@ -285,10 +243,7 @@ public class ImagePlot extends Plot implements Serializable {
 
 
     private boolean  shouldPaint() {
-        PlotView pv= getPlotGroup().getPlotView();
-        boolean overlayOK= true;
-        if (pv!=null) overlayOK= (pv.getPrimaryPlot()==getPlotGroup().getBasePlot());
-        return isShowing() && _isPlotted && overlayOK;
+        return isShowing() && _isPlotted;
     }
 
     /**
@@ -665,25 +620,12 @@ public class ImagePlot extends Plot implements Serializable {
      */
    public boolean isPlotted() {return _isPlotted; }
 
-    /**
-     * zoom this plot
-     * @param dir the zoom direction.  Must be Plot.UP or Plot.DOWN.
-     */
-   public void zoom(int dir) { getPlotGroup().zoom(dir); }
 
    /**
     * zoom to an exact Size
     * @param level the new zoom level
     */
    public void setZoomTo(float level) { getPlotGroup().setZoomTo(level); }
-
-//   public boolean isProjectionImplemented() {
-//      return (_projection != null) && _projection.isImplemented();
-//   }
-//
-//   public boolean isProjectionSpecified() {
-//      return (_projection != null) && _projection.isSpecified();
-//   }
 
     /**
      * return the factor this plot is scaled to (in other words, how much or little
@@ -739,7 +681,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @return Plot a new plot that shares image data.
      */
    public Plot makeSharedDataPlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup) {
-        ImagePlot p         = new ImagePlot(plotGroup, frGroup.makeCopy());
+        ImagePlot p         = new ImagePlot(plotGroup);
         p._projection       = _projection;
         p._imageData        = _imageData;
         p._isPlotted        = _isPlotted;
@@ -768,10 +710,6 @@ public class ImagePlot extends Plot implements Serializable {
         FitsRead fr= frGroup.getFitsRead(band);
         Assert.argTst(fr!=null, "You have not set a fits read for the passed band");
         return new HistogramOps(frGroup.getFitsReadAry(),band, _imageData);
-    }
-
-    public static void setDefaultFutureStretch(RangeValues rangeValues) {
-        FitsRead.setDefaultFutureStretch(rangeValues);
     }
 
     //======================
@@ -871,11 +809,8 @@ public class ImagePlot extends Plot implements Serializable {
    }
 
    private void computeOffsetXY(ActiveFitsReadGroup frGroup) { //todo: if we ever do offset again this method must be fix, see spot-common
-         ImagePlot p= (ImagePlot)getPlotGroup().getBasePlot();
          ImageHeader baseHDR= frGroup.getFitsRead(refBand).getImageHeader();
          ImageHeader thisHDR= frGroup.getFitsRead(refBand).getImageHeader();
-
-
 
 
 	 /* subtract 0.5 from crpix to put it in ImagePt coordinates */

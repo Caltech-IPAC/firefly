@@ -4,14 +4,8 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
-import edu.caltech.ipac.visualize.plot.PlotPaintListener;
-import edu.caltech.ipac.visualize.plot.PlotView;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
 
 import java.awt.Graphics2D;
 import java.beans.PropertyChangeListener;
@@ -25,9 +19,7 @@ import java.util.Map;
  * @version $Id: GridLayer.java,v 1.5 2009/03/03 21:45:39 roby Exp $
  * @author		Xiuqin Wu
 **/
-public class GridLayer implements PlotViewStatusListener,
-                                  PlotPaintListener
-{
+public class GridLayer  {
    public static final String COORD_SYSTEM         = "CoordSystem";
 
      /*  the coordinate system that user wants the Grid to be drawn 
@@ -88,30 +80,11 @@ public class GridLayer implements PlotViewStatusListener,
       return _grid;
    }
 
-   public void setShowGrid(boolean show) {
-      _showing = show;
-   }
-
     public void drawOnPlot(Plot p, Graphics2D g2){
        if (_showing) _grid.paint(g2, p);
     }
 
 
-    public void addPlotView(PlotView pv) {
-        for(Plot p : pv)  addPlot(p);
-        pv.addPlotViewStatusListener( this);
-        pv.addPlotPaintListener(this);
-    }
-
-    public void removePlotView(PlotView pv) {
-        for(Plot p : pv)  removePlot(p);
-        pv.removePlotViewStatusListener( this);
-        pv.removePlotPaintListener(this);
-    }
-
-    public boolean isOnAnyPlot() {
-        return (_plotMap.size()>0);
-    }
     //=====================================================================
     //----------- add / remove property Change listener methods -----------
     //=====================================================================
@@ -131,25 +104,6 @@ public class GridLayer implements PlotViewStatusListener,
     public void removePropertyChangeListener (PropertyChangeListener p) {
        _propChange.removePropertyChangeListener (p);
     }
-
-   // ===================================================================
-   // --------  Methods from PlotViewStatusListener Interface-----------
-   // ===================================================================
-    public void plotAdded(PlotViewStatusEvent ev) {
-         addPlot(ev.getPlot());
-    }
-    public void plotRemoved(PlotViewStatusEvent ev) {
-         removePlot(ev.getPlot());
-    }
-
-   // ===================================================================
-   // ---------  Methods from PlotPaintListener Interface---------------
-   // ===================================================================
-
-    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-         drawOnPlot( ev.getPlot(), ev.getGraphics() );
-    }
-
 
 
     //=====================================================================

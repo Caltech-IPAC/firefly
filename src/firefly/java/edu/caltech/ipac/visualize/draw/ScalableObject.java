@@ -4,9 +4,9 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -15,8 +15,6 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -46,7 +44,7 @@ import java.util.Map;
  * @version $Id: ScalableObject.java,v 1.13 2011/09/01 16:53:08 roby Exp $
  *
  */
-public class ScalableObject implements PlotViewStatusListener {
+public class ScalableObject {
 
 
     private static final boolean SPITZER_STYLE_ROTATION=
@@ -62,48 +60,6 @@ public class ScalableObject implements PlotViewStatusListener {
        _worldFocalPlane= copyWF(worldFocalPlane);
     }    
 
-    /**
-     * Set an array of Shapes to draw on the image.
-     * @param worldFocalPlane ShapeInfo[] an array of shape information in world coordinates
-     */
-    public void setWorldFocalPlane(ShapeInfo worldFocalPlane[]) {
-       _worldFocalPlane= copyWF(worldFocalPlane);
-        for(CachePtInfo cpInfo: _plotMap.values()) {
-          cpInfo._cachePt= null;
-       }
-    }    
-
-
-    /**
-     * Compute the shape in image coordinates and draw it on the image.
-     * @param p Plot the plot image to draw on
-     * @param g2 Graphics2D we all know what that is
-     * @param wpt Plot.Worldpt the point on the image plot to draw the shape
-     * @return DrawOnPlotReturn the object contains the bounding box info and
-     *                          CachePtInfo
-     */
-//    public DrawOnPlotReturn drawOnPlot(Plot p, Graphics2D g2, WorldPt wpt) {
-//       return drawOnPlot(p, g2, wpt, new RotationInfo(0.0F, wpt),
-//                         null,null);
-//    }
-
-    /**
-     * Compute the shape in image coordinates and draw it on the image.
-     * @param p Plot the plot image to draw on
-     * @param g2 Graphics2D we all know what that is
-     * @param wpt Plot.Worldpt the point on the image plot to draw the shape
-     * @param rotation RotationInfo rotation how the shape is rotated
-     * @param offset WorldPt how much to offset the shape drawing point
-     * @return DrawOnPlotReturn the object contains the bounding box info and
-     *                          CachePtInfo
-     */
-//    public DrawOnPlotReturn drawOnPlot(Plot         p,
-//                                       Graphics2D   g2,
-//                                       WorldPt      wpt,
-//                                       RotationInfo rotation,
-//                                       WorldPt      offset) {
-//       return drawOnPlot(p,g2,wpt,null,rotation,offset,null);
-//    }
 
     /**
      * Compute the shape in image coordinates and draw it on the image.
@@ -341,13 +297,7 @@ public class ScalableObject implements PlotViewStatusListener {
           p= (Plot)j.next();
           addPlot(p);
        }
-       container.addPlotViewStatusListener( this);
    }
-
-
-
-
-
 
 
    public void removePlotView(PlotContainer container) {
@@ -357,19 +307,7 @@ public class ScalableObject implements PlotViewStatusListener {
           p= (Plot)j.next();
           removePlot(p);
        }
-       container.removePlotViewStatusListener( this);
    }
-
-   // ===================================================================
-   // ------------------  Methods  from PlotViewStatusListener -----------
-   // ===================================================================
-    public void plotAdded(PlotViewStatusEvent ev) {
-         addPlot(ev.getPlot());
-    }
-    public void plotRemoved(PlotViewStatusEvent ev) {
-         removePlot(ev.getPlot());
-    }
-
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------

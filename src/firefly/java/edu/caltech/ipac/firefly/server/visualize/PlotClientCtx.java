@@ -15,8 +15,8 @@ import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
+import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
-import edu.caltech.ipac.visualize.plot.PlotView;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.io.File;
@@ -169,7 +169,7 @@ public class PlotClientCtx implements Serializable {
             if (doFree) {
                 //Logger.debug("freeing memory for ctx: " + getKey());
                 PlotGroup group= p.getPlotGroup();
-                PlotView pv=(group!=null) ? group.getPlotView() : null;
+                PlotContainer pv=(group!=null) ? group.getPlotView() : null;
                 p.freeResources();
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();

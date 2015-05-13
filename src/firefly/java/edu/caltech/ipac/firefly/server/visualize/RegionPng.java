@@ -226,25 +226,25 @@ public class RegionPng {
         FixedObject fo= pointFG.makeFixedObject(rp.getPt());
         pointFG.add(fo);
         SkyShape shape;
+        int rpSize= rp.getPointSize()>0 ? rp.getPointSize() : 5;
         switch (rp.getPointType()) {
             case X:
-                shape = makeX(rp);
+                shape = makeX(rpSize);
                 break;
             case Box:
             case BoxCircle:
-                Rectangle2D rec= new Rectangle2D.Double(0,0, rp.getPointSize(),
-                                                        rp.getPointSize());
+                Rectangle2D rec= new Rectangle2D.Double(0,0, rpSize, rpSize);
                 shape= new SkyShape(rec);
                 break;
             case Cross:
             case Arrow:
-                shape = makeCross(rp);
+                shape = makeCross(rpSize);
                 break;
             case Diamond:
-                shape = makeDiamond(rp);
+                shape = makeDiamond(rpSize);
                 break;
             case Circle:
-                Ellipse2D circle= new Ellipse2D.Double(0,0, rp.getPointSize()*2,rp.getPointSize()*2);
+                Ellipse2D circle= new Ellipse2D.Double(0,0, rpSize*2,rpSize*2);
                 shape= new SkyShape(circle);
                 break;
             default:
@@ -257,9 +257,8 @@ public class RegionPng {
         fgList.add(pointFG);
     }
 
-    private static SkyShape makeX(RegionPoint rp) {
+    private static SkyShape makeX(int size) {
         GeneralPath gp= new GeneralPath();
-        int size= rp.getPointSize();
         gp.moveTo(0,0);
         gp.lineTo(size,size);
         gp.moveTo(0,size);
@@ -267,9 +266,9 @@ public class RegionPng {
         return new SkyShape(gp);
     }
 
-    private static SkyShape makeDiamond(RegionPoint rp) {
+    private static SkyShape makeDiamond(int rpSize) {
         GeneralPath gp= new GeneralPath();
-        int h= rp.getPointSize();
+        int h= rpSize;
         int size= h*2;
         gp.moveTo(h,0);
         gp.lineTo(size,h);
@@ -279,9 +278,9 @@ public class RegionPng {
         return new SkyShape(gp);
     }
 
-    private static SkyShape makeCross(RegionPoint rp) {
+    private static SkyShape makeCross(int rpSize) {
         GeneralPath gp= new GeneralPath();
-        int h= rp.getPointSize();
+        int h= rpSize;
         int size= h*2;
         gp.moveTo(0,h);
         gp.lineTo(size,h);

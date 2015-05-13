@@ -7,7 +7,6 @@ import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.astro.conv.LonLat;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
@@ -35,7 +34,7 @@ import java.util.Map;
  * @author Trey Roby
  * @version $Id: Plot.java,v 1.20 2010/12/10 21:52:10 roby Exp $
  */
-public abstract class Plot implements PlotPaintListener {
+public abstract class Plot {
 
     /**
      * used for the zoom call.  the call will zoom up.
@@ -440,13 +439,8 @@ public abstract class Plot implements PlotPaintListener {
 
 
 
-   public abstract void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup);
+//   public abstract void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup);
 
-    /**
-     * zoom this plot
-     * @param dir the zoom direction.  Must be Plot.UP or Plot.DOWN.
-     */
-    public abstract void zoom(int dir);
 
     /**
      * return if this plot is actually plotted.
@@ -536,13 +530,6 @@ public abstract class Plot implements PlotPaintListener {
 
 
 
-    /**
-     * Get the PlotView.
-     * A plot contains a reference to the PlotView that contains it.
-     * A plot may be in only one PlotView.
-     * @return PlotView the PlotView this plot is in.
-     */
-    public PlotView getPlotView() { return _plotGroup.getPlotView(); }
 
     /**
      * Get the base plot.  This return a non-null plot if this plot
@@ -555,11 +542,11 @@ public abstract class Plot implements PlotPaintListener {
      * repair a potion of this plot.
      * @param r  the area to repair.
      */
-    public void repair(Rectangle r) { _plotGroup.repair(r); }
+//    public void repair(Rectangle r) { _plotGroup.repair(r); }
     /**
      * repair the whole plot
      */
-    public void repair() { repair(null); }
+//    public void repair() { repair(null); }
 
     /**
      * set whether to show or hide this plot

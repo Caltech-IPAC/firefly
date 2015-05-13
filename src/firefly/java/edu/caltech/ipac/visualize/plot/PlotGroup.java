@@ -4,19 +4,15 @@
 package edu.caltech.ipac.visualize.plot;
 
 
-import edu.caltech.ipac.util.Assert;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.awt.image.IndexColorModel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * This class manages groups of plots.  This is primary necessary for overlays.
@@ -43,7 +39,7 @@ public class PlotGroup implements Iterable<Plot> {
 
     private Plot            _basePlot;
     private List<Plot>      _plotList  = new ArrayList<Plot>(3);
-    private PlotView        _plotView;
+    private PlotContainer    _plotView;
     private AffineTransform _trans;
     private AffineTransform _inverseTrans;
  
@@ -61,7 +57,7 @@ public class PlotGroup implements Iterable<Plot> {
      * A PlotGroup may be in only one PlotView.
      * @return PlotView the PlotView this plot is in.
      */
-    public PlotView getPlotView() { return _plotView; }
+    public PlotContainer getPlotView() { return _plotView; }
 
     /**
      * Return the base plot for the plot group.  The base plot is the plot that
@@ -78,47 +74,13 @@ public class PlotGroup implements Iterable<Plot> {
         _basePlot= null;
     }
     
-    public boolean isOverlayPlot(Plot p) {
-        boolean retval= false;
-        if (_plotList.contains(p)) {
-            retval= (p!=_basePlot);
-        }
-        return retval;
-    }
 
     public boolean isOverlayEnabled() { return _overlayEnabled; }
     public void    setOverlayEnabled(boolean enabled) { 
        _overlayEnabled= enabled;
     }
 
-    /**
-     * Remove the PlotView.
-     * @param pv the PlotView to remove
-     */
-    public void removePlotView(PlotView pv) {
-       Assert.tst(_plotView == pv);
-       _plotView= null;
-       for(Plot p: _plotList) {
-           if (!isBasePlot(p)) pv.removePlotPaintListener(p);
-       }
-    }
 
-    /**
-     * remove all plots and free all plot resources.  Calling this function will
-     * free a lot of memory
-     */
-    public void removeAllAndFree() {
-        Plot p;
-        if (_plotList.size() > 0) {
-            for(Iterator<Plot> i= _plotList.iterator(); (i.hasNext()); ) {
-                  p= i.next();
-                  i.remove();
-                  removePlotCleanup(p);
-                  p.freeResources();
-            }
-        } // end if
-    }
-    
     public int getScreenWidth()      { return _screenWidth;  }
     public int getScreenHeight()     { return _screenHeight; }
     public int getGroupImageWidth()  { return _imageWidth;   }
@@ -135,24 +97,6 @@ public class PlotGroup implements Iterable<Plot> {
      */
     public Iterator<Plot> iterator() { return _plotList.iterator(); }
 
-    /**
-     * Return the plot list. The list if unmodifiable
-     * @return unmodifiable list of type Plot
-     */
-    public List<Plot> getPlotList() {
-        return Collections.unmodifiableList(_plotList);
-    }
-
-
-    public void setColorModelOnAllPlots(IndexColorModel colorModel) {
-        ImagePlot ip;
-        for(Plot p : _plotList) {
-             if (p instanceof ImagePlot) {
-                 ip= (ImagePlot)p;
-                 ip.getImageData().setColorModel(colorModel);
-             }
-        }
-    }
 
     /** 
      * called right before the listeners are called
@@ -175,34 +119,6 @@ public class PlotGroup implements Iterable<Plot> {
         return (x >= _minX && x <= _maxX && y >= _minY && y <= _maxY );
     }
 
-    /**
-     * zoom this plot
-     * @param dir the zoom direction.  Must be Plot.UP or Plot.DOWN.
-     */
-   public void zoom(int dir) {
-        if ((_screenWidth > 40 && _screenHeight > 40) || dir==Plot.UP) {
-            Assert.tst(_basePlot.isPlotted());
-            Assert.tst(dir == Plot.UP || dir == Plot.DOWN);
-            AffineTransform trans= getTransform();
-            double scaleX= trans.getScaleX();
-            double scaleY= trans.getScaleY();
-            float zfactor= (dir==Plot.UP) ?
-                           _basePlot.getZoomFactor() : 1.0F / _basePlot.getZoomFactor();
-            _maxYscale    *= zfactor;
-            _minXscale    *= zfactor;
-            _screenWidth  *= zfactor;
-            _screenHeight *= zfactor;
-            scaleX        *= zfactor;
-            scaleY        *= zfactor;
-            setTransform(new AffineTransform(scaleX,0,0,scaleY,
-                                             _minXscale,_maxYscale));
-            repair();
-        }
-       //System.out.println("zoom: factor: "+ zfactor);
-       //System.out.println("zoom: _minXScale: "+ _minXscale);
-       //System.out.println("zoom: _maxYScale: "+ _maxYscale);
-       //System.out.println("");
-   }
 
     /**
      * zoom to a certain level.  The flow can be any number. 1.0 is original size,
@@ -218,15 +134,6 @@ public class PlotGroup implements Iterable<Plot> {
        double scaleY = -1.0 * level;
        setTransform(new AffineTransform(scaleX,0,0,scaleY,
                                         _minXscale,_maxYscale) ); 
-       //System.out.println(this);
-       //System.out.println("zoomTo: min/max X:"+ _minX+ ","+_maxX);
-       //System.out.println("zoomTo: min/max Y:"+ _minY+ ","+_maxY);
-       //System.out.println("zoomTo: level: "+ level);
-       //System.out.println("zoomTo: scaleX: "+ scaleX);
-       //System.out.println("zoomTo: scaleY: "+ scaleY);
-       //System.out.println("zoomTo: _minXScale: "+ _minXscale);
-       //System.out.println("zoomTo: _maxYScale: "+ _maxYscale);
-       //System.out.println("");
    }
 
     public float getZoomFact() {
@@ -270,18 +177,9 @@ public class PlotGroup implements Iterable<Plot> {
   // ------------------------------------------------------------
   // ================= Package methods ==========================
   // ------------------------------------------------------------
-    void setPlotView(PlotView plotView) {
-       _plotView= plotView;
-      for(Plot p : _plotList) {
-          if(!isBasePlot(p)) _plotView.addPlotPaintListener(p);
-      }
-    }
 
     void addPlot(Plot p) {
        _plotList.add(p);
-       if (_plotView!=null && !isBasePlot(p)) {
-           _plotView.addPlotPaintListener(p);
-       }
     }
 
     void removePlot(Plot p) {
@@ -291,11 +189,6 @@ public class PlotGroup implements Iterable<Plot> {
        }
     }
 
-
-    void repair(Rectangle r) {
-       if (_plotView != null) _plotView.repair(r);
-    }
-    void repair() { repair(null); }
 
 
     /**
@@ -333,15 +226,12 @@ public class PlotGroup implements Iterable<Plot> {
       computeMinMax();
       if (_trans==null) setZoomTo(_basePlot.getInitialZoomLevel());
       else              setZoomTo((float)_trans.getScaleX());
-      if (_plotView!=null) _plotView.reconfigure();
    }
 
    void removeFromPlotted() {
       if (_basePlot.isPlotted()) {
         computeMinMax();
-        setZoomTo((float)_trans.getScaleX());
-        if (_plotView!=null) _plotView.reconfigure();
-        repair();
+        setZoomTo((float) _trans.getScaleX());
       }
    }
 
@@ -350,8 +240,6 @@ public class PlotGroup implements Iterable<Plot> {
   // ================= Private / Protected methods ==============
   // ------------------------------------------------------------
     private void removePlotCleanup(Plot p) {
-       if (_plotView!=null && !isBasePlot(p)) 
-                            _plotView.removePlotPaintListener(p);
     }
 
     /**
@@ -387,12 +275,8 @@ public class PlotGroup implements Iterable<Plot> {
 
 
 
-//    static boolean _alternate= true;
    public void clear(Graphics2D g2) {
        g2.setPaint( _fillColor );
-//       Color c= _alternate ? Color.RED : Color.BLUE;
-//       _alternate= !_alternate;
-//       g2.setPaint( c );
        g2.fill( new Rectangle(_minX,_minY, _imageWidth, _imageHeight) );
    }
 

@@ -3,19 +3,16 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
-import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
+import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
-import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
+import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
 
 import javax.swing.SwingUtilities;
 import java.awt.Graphics2D;
@@ -178,38 +175,19 @@ public class VectorObject implements ShapeObject {
             rNew.y= rNew.y - scale;
             rNew.width = rNew.width + (2*scale);
             rNew.height= rNew.height+ (2*scale);
-            pInfo._plot.repair(rNew);
+//            pInfo._plot.repair(rNew);
         }
     }
 
 
     public void addPlotView(PlotContainer container) {
         for(Plot p : container) addPlot(p);
-        container.addPlotViewStatusListener( this);
-        container.addPlotPaintListener(this);
     }
 
     public void removePlotView(PlotContainer container) {
         for(Plot p : container) removePlot(p);
-        container.removePlotViewStatusListener( this);
-        container.removePlotPaintListener(this);
     }
 
-    public void removeAllPlots() {
-        Iterator j= _plotMap.entrySet().iterator();
-        PlotInfo pInfo;
-        Map.Entry entry;
-        while( j.hasNext() ) {
-            entry= (Map.Entry)j.next();
-            pInfo= (PlotInfo)entry.getValue();
-            j.remove();
-            if (pInfo._plot.getPlotView()!=null) {
-                pInfo._plot.getPlotView().removePlotPaintListener(this);
-            }
-            pInfo._plot.repair();
-        }
-
-    }
 
     public WorldPt getWorldPt(int i) {
         Assert.argTst(_pts.isWorldCoordSys(),"This Vector Object does not " +
@@ -271,23 +249,7 @@ public class VectorObject implements ShapeObject {
                                "coordinates to use this method.");
         }
     }
-    // ===================================================================
-    // ------------------  Methods  from PlotViewStatusListener -----------
-    // ===================================================================
-    public void plotAdded(PlotViewStatusEvent ev) {
-        addPlot(ev.getPlot());
-    }
-    public void plotRemoved(PlotViewStatusEvent ev) {
-        removePlot(ev.getPlot());
-    }
 
-    // ===================================================================
-    // ------------------  Methods  from PlotPaintListener ---------------
-    // ===================================================================
-
-    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-        drawOnPlot( ev.getPlot(), ev.getGraphics() );
-    }
     //===================================================================
     //----------------------- Add / Remove Listener Methods -------------
     //===================================================================

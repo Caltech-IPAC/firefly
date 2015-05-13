@@ -14,7 +14,6 @@ import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.PlotContainerImpl;
 
 import javax.imageio.ImageIO;
@@ -65,37 +64,34 @@ public class PlotOutput {
     public void setVectorList(List<VectorObject> vectorList) { _vectorList= vectorList; }
     public void setScaleList(List<ScalableObjectPosition> scaleList) { _scaleList= scaleList; }
 
-    public void save(OutputStream out, int outType) throws IOException {
-
-        Assert.tst(outType == JPEG ||
-                   outType == BMP  ||
-                   outType == PNG  ||
-                   outType == GIF);
-
-        BufferedImage   image;
-        if (outType==JPEG) {
-            image= new BufferedImage(_plot.getScreenWidth(),
-                                     _plot.getScreenHeight(),
-                                     BufferedImage.TYPE_BYTE_INDEXED);
-        }
-        else {
-            image= createImage(_plot.getScreenWidth(),
-                                    _plot.getScreenHeight(),
-                                    Quality.HIGH);
-        }
-        Graphics2D g2= image.createGraphics();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g2.setClip(0,0, _plot.getScreenWidth(), _plot.getScreenHeight() );
-        _plot.getPlotGroup().beginPainting(g2);
-
-        PlotContainer container= _plot.getPlotView();
-        if (container==null) {
-            container= new PlotContainerImpl();
-            ((PlotContainerImpl)container).getPlotList().add(_plot);
-        }
-        container.firePlotPaint(_plot, _frGroup, g2);
-        saveImage(image,outType,out);
-    }
+//    public void save(OutputStream out, int outType) throws IOException {
+//
+//        Assert.tst(outType == JPEG ||
+//                   outType == BMP  ||
+//                   outType == PNG  ||
+//                   outType == GIF);
+//
+//        BufferedImage   image;
+//        if (outType==JPEG) {
+//            image= new BufferedImage(_plot.getScreenWidth(),
+//                                     _plot.getScreenHeight(),
+//                                     BufferedImage.TYPE_BYTE_INDEXED);
+//        }
+//        else {
+//            image= createImage(_plot.getScreenWidth(),
+//                                    _plot.getScreenHeight(),
+//                                    Quality.HIGH);
+//        }
+//        Graphics2D g2= image.createGraphics();
+//        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+//        g2.setClip(0,0, _plot.getScreenWidth(), _plot.getScreenHeight() );
+//        _plot.getPlotGroup().beginPainting(g2);
+//
+//        PlotContainer container= new PlotContainerImpl();
+//        ((PlotContainerImpl)container).getPlotList().add(_plot);
+//        container.firePlotPaint(_plot, _frGroup, g2);
+//        saveImage(image,outType,out);
+//    }
 
 
     /**
@@ -104,77 +100,77 @@ public class PlotOutput {
      * @return the file size
      */
 
-    private int findTileSizeEXPERIMENTAL() {
-
-        int retval= -1;
-        float zoomLevel= _plot.getZoomFactor();
-        int intZoomLevel= (int)zoomLevel;
-
-        int baseTile;
-        int w= _plot.getImageDataWidth();
-        if (w>4000) baseTile= 200;
-        else if (w>2000) baseTile= 160;
-        else if (w>1000) baseTile= 100;
-        else if (w>500) baseTile= 80;
-        else baseTile= 60;
-
-        if (intZoomLevel<.50001 && intZoomLevel>.49999) {
-            retval= baseTile/2;
-        }
-
-        if (intZoomLevel<.250001 && intZoomLevel>.24999) {
-            retval= baseTile/4;
-        }
-
-
-        if (intZoomLevel==1 ||
-            intZoomLevel==2 ||
-            intZoomLevel==4 ||
-            intZoomLevel==8 ||
-            intZoomLevel==16 ) {
-            retval= baseTile*intZoomLevel;
-        }
-
-
-
-        if (retval==-1) {
-            if (_plot.getZoomFactor()<0) {
-                retval= 500;
-            }
-            else {
-
-                for(int size : _trySizes) {
-                    if ((size % intZoomLevel) == 0) {
-                        retval= size;
-                        break;
-                    }
-                }
-
-
-                if (retval==-1) {
-                    if (intZoomLevel < 21) {
-                        retval= intZoomLevel*35;
-                    }
-                    else if (intZoomLevel < 31) {
-                        retval= intZoomLevel*25;
-                    }
-                    else if (intZoomLevel < 41) {
-                        retval= intZoomLevel*15;
-                    }
-                    else if (intZoomLevel < 51) {
-                        retval= intZoomLevel*12;
-                    }
-                    else {
-                        retval= intZoomLevel*10;
-                    }
-                }
-            }
-        }
-
-
-
-        return retval;
-    }
+//    private int findTileSizeEXPERIMENTAL() {
+//
+//        int retval= -1;
+//        float zoomLevel= _plot.getZoomFactor();
+//        int intZoomLevel= (int)zoomLevel;
+//
+//        int baseTile;
+//        int w= _plot.getImageDataWidth();
+//        if (w>4000) baseTile= 200;
+//        else if (w>2000) baseTile= 160;
+//        else if (w>1000) baseTile= 100;
+//        else if (w>500) baseTile= 80;
+//        else baseTile= 60;
+//
+//        if (intZoomLevel<.50001 && intZoomLevel>.49999) {
+//            retval= baseTile/2;
+//        }
+//
+//        if (intZoomLevel<.250001 && intZoomLevel>.24999) {
+//            retval= baseTile/4;
+//        }
+//
+//
+//        if (intZoomLevel==1 ||
+//            intZoomLevel==2 ||
+//            intZoomLevel==4 ||
+//            intZoomLevel==8 ||
+//            intZoomLevel==16 ) {
+//            retval= baseTile*intZoomLevel;
+//        }
+//
+//
+//
+//        if (retval==-1) {
+//            if (_plot.getZoomFactor()<0) {
+//                retval= 500;
+//            }
+//            else {
+//
+//                for(int size : _trySizes) {
+//                    if ((size % intZoomLevel) == 0) {
+//                        retval= size;
+//                        break;
+//                    }
+//                }
+//
+//
+//                if (retval==-1) {
+//                    if (intZoomLevel < 21) {
+//                        retval= intZoomLevel*35;
+//                    }
+//                    else if (intZoomLevel < 31) {
+//                        retval= intZoomLevel*25;
+//                    }
+//                    else if (intZoomLevel < 41) {
+//                        retval= intZoomLevel*15;
+//                    }
+//                    else if (intZoomLevel < 51) {
+//                        retval= intZoomLevel*12;
+//                    }
+//                    else {
+//                        retval= intZoomLevel*10;
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//
+//        return retval;
+//    }
 
     private int findTileSize() {
 
@@ -293,11 +289,8 @@ public class PlotOutput {
 
 
         ImagePlot plot= _plot;
-        PlotContainer container= _plot.getPlotView();
-        if (container==null) {
-            container= new PlotContainerImpl();
-            ((PlotContainerImpl)container).getPlotList().add(_plot);
-        }
+        PlotContainerImpl container= new PlotContainerImpl();
+        container.getPlotList().add(_plot);
 
 
         Assert.tst(outType == JPEG ||

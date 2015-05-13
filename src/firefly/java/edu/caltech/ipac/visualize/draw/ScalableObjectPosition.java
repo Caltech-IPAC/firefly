@@ -7,10 +7,6 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
-import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
-import edu.caltech.ipac.visualize.plot.PlotPaintListener;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.awt.Graphics2D;
@@ -28,8 +24,7 @@ import java.util.Map;
  * @version $Id: ScalableObjectPosition.java,v 1.7 2009/07/23 16:29:21 roby Exp $
  *
  */
-public class ScalableObjectPosition implements PlotPaintListener, 
-                                               PlotViewStatusListener {
+public class ScalableObjectPosition {
 
    private ScalableObject _viewObject; 
    private boolean        _showing= true;
@@ -157,7 +152,7 @@ public class ScalableObjectPosition implements PlotPaintListener,
    public void repair(Plot p) {
       PlotInfo pInfo= _plotMap.get(p);
       Assert.tst(pInfo);
-      p.repair(pInfo._repairArea);
+//      p.repair(pInfo._repairArea);
    }
 
    /**
@@ -169,7 +164,7 @@ public class ScalableObjectPosition implements PlotPaintListener,
       for(Map.Entry<Plot,PlotInfo> entry: _plotMap.entrySet()) {
           plot= (Plot)entry.getKey();
           pInfo= (PlotInfo)entry.getValue();
-          plot.repair(pInfo._repairArea);
+//          plot.repair(pInfo._repairArea);
       }
    }
 
@@ -212,8 +207,6 @@ public class ScalableObjectPosition implements PlotPaintListener,
           p= (Plot)j.next();
           addPlot(p);
        }
-       container.addPlotViewStatusListener( this);
-       container.addPlotPaintListener(this);
    }
 
    public void removePlotView(PlotContainer container) {
@@ -223,27 +216,8 @@ public class ScalableObjectPosition implements PlotPaintListener,
           p= (Plot)j.next();
           removePlot(p);
        }
-       container.removePlotViewStatusListener( this);
-       container.removePlotPaintListener(this);
    }
 
-   // ===================================================================
-   // ------------------  Methods  from PlotViewStatusListener -----------
-   // ===================================================================
-    public void plotAdded(PlotViewStatusEvent ev) {
-         addPlot(ev.getPlot());
-    }
-    public void plotRemoved(PlotViewStatusEvent ev) {
-         removePlot(ev.getPlot());
-    }
-
-   // ===================================================================
-   // ------------------  Methods  from PlotPaintListener ---------------
-   // ===================================================================
-
-    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-         drawOnPlot( ev.getPlot(), frGroup, ev.getGraphics() );
-    }
 
 //===================================================================
 //------------------------- Private Methods -------------------------

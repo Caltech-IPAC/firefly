@@ -14,21 +14,15 @@ import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.TableConnectionList;
 import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.VisConstants;
-import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationEvent;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationListener;
 import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
-import edu.caltech.ipac.visualize.plot.PlotPaintComplexListener;
-import edu.caltech.ipac.visualize.plot.PlotPaintEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusEvent;
-import edu.caltech.ipac.visualize.plot.PlotViewStatusListener;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -51,8 +45,6 @@ import java.util.List;
  */
 public class FixedObjectGroup implements TableConnectionList,
                                          PropertyChangeListener,
-                                         PlotViewStatusListener,
-                                         PlotPaintComplexListener,
                                          Serializable,
                                          Iterable<FixedObject> {
 
@@ -137,19 +129,14 @@ public class FixedObjectGroup implements TableConnectionList,
    private ArrayList<FixedObject> _objects= new ArrayList<FixedObject>(200);
    private int            _selectedCount;
    private boolean        _doingBulkUpdates  = false;
-   private boolean        _targetNameEditable= false;
    private DataGroup      _extraData;
    private transient List<PlotInfo> _plots= null;
-   private transient SkyShape _allShape;
    private transient PropertyChangeSupport _propChange;
    private boolean        _showPosInDecimal= AppProperties.getBooleanProperty(
                                      VisConstants.COORD_DEC_PROP, false);
    private String         _csysDesc= AppProperties.getProperty(
                                            VisConstants.COORD_SYS_PROP,
                                            CoordinateSys.EQ_J2000_STR);
-   private Color        _allHighLightColor= Color.blue;
-   private Color        _allSelectedColor = Color.orange;
-   private Color        _allStandardColor = Color.red;
 
    private int         _extraDataColumnRemap[]= null;
 
@@ -474,7 +461,6 @@ public class FixedObjectGroup implements TableConnectionList,
     public DataGroup getExtraData() { return _extraData; }
 
     public void setAllShapes(SkyShape shape) {
-         _allShape= shape;
          if (size() > 0) {
             beginBulkUpdate();
             for (FixedObject  fixedObj: _objects) {
@@ -499,12 +485,6 @@ public class FixedObjectGroup implements TableConnectionList,
                      colorType == COLOR_TYPE_STANDARD   ||
                      colorType == COLOR_TYPE_SELECTED);
          beginBulkUpdate();
-         switch (colorType) {
-               case COLOR_TYPE_HIGHLIGHT : _allHighLightColor= c; break;
-               case COLOR_TYPE_STANDARD :  _allStandardColor = c; break;
-               case COLOR_TYPE_SELECTED :  _allSelectedColor = c; break;
-               default :                   Assert.tst(false);     break;
-         } // end switch
          for (FixedObject  fixedObj: _objects) {
              switch (colorType) {
                   case COLOR_TYPE_HIGHLIGHT :
@@ -564,20 +544,10 @@ public class FixedObjectGroup implements TableConnectionList,
         Plot p;
         for(PlotInfo plotInfo: getPlots()) {
              p= plotInfo._p;
-             p.repair();
+//             p.repair();
         }
     }
 
-    public void doRepair(FixedObject fixedObj) {
-        Rectangle r;
-        Plot p;
-        for(PlotInfo plotInfo: getPlots()) {
-             p= plotInfo._p;
-             r= fixedObj.getDrawer().computeRepair( p.getTransform(),
-                                     getPlots().indexOf(plotInfo) );
-             if (r != null) p.repair(r);
-        }
-    }
 
     public void drawOnPlot(Plot p, Graphics2D g2) {
        int idx= findPlot(p);
@@ -593,14 +563,10 @@ public class FixedObjectGroup implements TableConnectionList,
 
     public void addPlotView(PlotContainer container) {
        for(Plot p: container) addPlot(p);
-       container.addPlotViewStatusListener( this);
-       container.addPlotPaintListener(this);
     }
 
     public void removePlotView(PlotContainer container) {
        for(Plot p: container) removePlot(p);
-       container.removePlotViewStatusListener( this);
-       container.removePlotPaintListener(this);
     }
 
 
@@ -624,26 +590,22 @@ public class FixedObjectGroup implements TableConnectionList,
                updateSelectedCount(
                               ((Boolean)ev.getNewValue()).booleanValue());
                FixedObject fixedObj= (FixedObject)ev.getSource();
-               if (!_doingBulkUpdates) doRepair(fixedObj);
            }
            else if (propName.equals(FixedObject.POSITION)) {
                FixedObject fixedObj= (FixedObject)ev.getSource();
                computeAllTransformsForObject(fixedObj);
                int idx= _objects.indexOf(fixedObj);
                Assert.tst(idx >= 0);
-               if (!_doingBulkUpdates) doRepair(fixedObj);
            }
            else if (propName.equals(FixedObject.SHOW_NAME)) {
                FixedObject fixedObj= (FixedObject)ev.getSource();
                if (!_doingBulkUpdates && fixedObj.isEnabled()) {
-                   doRepair(fixedObj);
                    getPropChange().firePropertyChange ( ENTRY_UPDATED, null,
                                                     fixedObj);
                }
            }
            else if (propName.equals(FixedObject.ENABLED)) {
                FixedObject fixedObj= (FixedObject)ev.getSource();
-               doRepair(fixedObj);
                getPropChange().firePropertyChange ( ENTRY_UPDATED, null,
                                                 fixedObj);
            }
@@ -679,23 +641,6 @@ public class FixedObjectGroup implements TableConnectionList,
     public String getColumnName(int idx) { return _colNames[idx]; } //TODO: remove
 
 
-   // ===================================================================
-   // --------  Methods from PlotViewStatusListener Interface-----------
-   // ===================================================================
-    public void plotAdded(PlotViewStatusEvent ev) {
-         addPlot(ev.getPlot());
-    }
-    public void plotRemoved(PlotViewStatusEvent ev) {
-         removePlot(ev.getPlot());
-    }
-
-   // ===================================================================
-   // ---------  Methods from PlotPaintListener Interface---------------
-   // ===================================================================
-
-    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
-         drawOnPlot( ev.getPlot(), ev.getGraphics() );
-    }
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
 //======================================================================

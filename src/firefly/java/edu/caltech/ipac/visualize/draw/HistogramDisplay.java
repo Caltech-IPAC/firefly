@@ -27,12 +27,6 @@ public class HistogramDisplay extends JComponent implements Icon {
 
     private int             _histogram[] = null;
     private IndexColorModel _model       = null;
-    private int             _lineDataSize[];
-    private int             _orginalHistogramIdx[];
-    private int             _upperBounds= -1;
-    private int             _lowerBounds= -1;
-    private int             _upperBounds2= -1;
-    private int             _lowerBounds2= -1;
     private boolean         _do2nd= false;
     private boolean         _boundsEnabled= true;
     private byte            _histColorIdx[];
@@ -67,7 +61,13 @@ public class HistogramDisplay extends JComponent implements Icon {
     }
 
     public void paintComponent(Graphics g) {
-       int hist[]= _histogram;
+        int             _lineDataSize[];
+        int             _orginalHistogramIdx[];
+        int             _upperBounds= -1;
+        int             _lowerBounds= -1;
+        int             _upperBounds2= -1;
+        int             _lowerBounds2= -1;
+        int hist[]= _histogram;
 
        if (hist != null && hist.length > 1) {
 

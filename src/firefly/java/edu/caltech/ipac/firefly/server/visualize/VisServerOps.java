@@ -95,9 +95,6 @@ import static edu.caltech.ipac.visualize.draw.AreaStatisticsUtil.WhichReadout.RI
  */
 public class VisServerOps {
 
-
-    public static final long THUMBNAIL_MAX= 10*FileUtil.MEG;
-
     private static final Logger.LoggerImpl _log= Logger.getLogger();
     private static Counters counters= Counters.getInstance();
 
@@ -109,10 +106,6 @@ public class VisServerOps {
         VisContext.init();
         VisContext.initCounters();
     }
-
-
-
-
 
     /**
      * create a new 3 color plot
@@ -1577,28 +1570,6 @@ public class VisServerOps {
                 (state.getOperations().size()==multiCnt && !state.hasOperation(op)));
     }
 
-
-//    private static void optimizePostCreateResources(WebPlotResult plotCreateResults, PlotState state) {
-//        if (plotCreateResults.isSuccess()) {  // if plot creation was successful
-//            CreatorResults results= (CreatorResults)plotCreateResults.getResult(WebPlotResult.PLOT_CREATE);
-//            if (results.getInitializers()[0].getInitImages().size() <=2) {  // if all the tiles have already been generated
-//                if (state.isFilesOriginal()) {  // todo: important check(but i forgot why), document why it is important
-//                    String fName= results.getInitializers()[0].getInitImages().getThumbnail().getURL();
-//                    PlotClientCtx ctx= VisContext.getPlotCtx(state.getContextString());
-//                    ImagePlot plot= ctx.getPlot();
-//                    if (PlotServUtils.getTotalSize(state) > THUMBNAIL_MAX) { // if this is a big file then write the thumbnail first
-//                        File f= VisContext.convertToFile(fName);
-//                        try {
-//                            PlotServUtils.writeThumbnail(plot, f);
-//                        } catch (Exception e) {
-//                            _log.error(e,"Thumbnail creation failed.");
-//                        }
-//                    }
-//                    ctx.freeResources(true);
-//                }
-//            }
-//        }
-//    }
 
     private static WebPlotResult makeNewPlotResult(WebPlotInitializer wpInit[]) {
         PlotState state= wpInit[0].getPlotState();

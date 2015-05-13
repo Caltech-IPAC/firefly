@@ -17,8 +17,6 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.PixelValueException;
 import edu.caltech.ipac.visualize.plot.Plot;
-import edu.caltech.ipac.visualize.plot.PlotGroup;
-import edu.caltech.ipac.visualize.plot.PlotView;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -92,17 +90,6 @@ public class AreaStatisticsUtil {
     private static final int [] hcolumns = {MEAN, STDEV, INTEGRATED_FLUX};
 
     // text fields
-
-
-    private static Class controlClass;
-
-    // marks the location of min/max/centrod/fw_centroid on the image
-    private final static SkyShape MARKER_SKY_SHAPE = SkyShapeFactory.getInstance().getSkyShape("bigX");
-    // private final static StringShape MARKER_STRING_SHAPE = new StringShape(8, StringShape.EAST, new Font("Arial", Font.PLAIN, 18));
-    private FixedObjectGroup    _currentPts;
-    private PlotView            _currentPV;
-    private PlotGroup           _currentPlotGroup;
-    private ShapeObject         _shapeObject;
 
 
 

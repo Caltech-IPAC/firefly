@@ -70,12 +70,6 @@ public class ImageData implements Serializable {
         return _bufferedImage;
     }
 
-    public void freeImage() {
-        if (inUseCnt.get()==0) {
-//            _imageOutOfDate= true;
-//            _bufferedImage= null;
-        }
-    }
 
     public void freeResources() {
         _imageType= null;
