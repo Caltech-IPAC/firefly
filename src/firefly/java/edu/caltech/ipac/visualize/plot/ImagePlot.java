@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImagePlot extends Plot implements Serializable {
 
-//    private static final int CORE_CNT= Runtime.getRuntime().availableProcessors();
-    private static final int CORE_CNT= 1;
+    private static final int CORE_CNT= Runtime.getRuntime().availableProcessors();
+//    private static final int CORE_CNT= 1;
     public static final int  SQUARE = 1500; // this is the size of the image data tiles
 
     private Projection     _projection;
