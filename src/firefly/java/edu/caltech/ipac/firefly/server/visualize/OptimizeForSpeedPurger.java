@@ -45,25 +45,25 @@ public class OptimizeForSpeedPurger implements MemoryPurger {
 
 
     public void purgeOtherPlots(PlotState excludeState) {
-        PlotClientCtx excludeCtx= VisContext.getPlotCtx(excludeState.getContextString());
+        PlotClientCtx excludeCtx= CtxControl.getPlotCtx(excludeState.getContextString());
         String excludeKey= excludeCtx!=null ? excludeCtx.getKey() : null;
         synchronized (VisContext.class) {
             long totalInUseK= 0;
             long totalCnt= 0;
             long startTotal= 0;
             List<PlotClientCtx> allInUseCtx= new ArrayList<PlotClientCtx>(500);
-            Cache cache= VisContext.getCache();
+            Cache cache= CtxControl.getCache();
             List<String> keys= cache.getKeys();
             boolean freed;
             for(String key: keys) {
                 Object o= cache.get(new StringKey(key));
-                if (o instanceof VisContext.UserCtx) {
-                    Map<String,PlotClientCtx> map= ((VisContext.UserCtx)o).getMap();
+                if (o instanceof CtxControl.PlotClientCtxContainer) {
+                    Map<String,PlotClientCtx> map= ((CtxControl.PlotClientCtxContainer)o).getMap();
                     PlotClientCtx ctx;
                     for(Map.Entry<String,PlotClientCtx> entry : map.entrySet()) {
                         ctx= entry.getValue();
                         if (!ctx.getKey().equals(excludeKey)) {
-                            if (ctx.getPlot()!=null) {  // if we are using memory
+                            if (ctx.getCachedPlot()!=null) {  // if we are using memory
                                 freed= entry.getValue().freeResources(PlotClientCtx.Free.OLD);
                                 if (freed)  {
                                     totalCnt++;

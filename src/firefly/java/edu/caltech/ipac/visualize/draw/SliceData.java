@@ -4,11 +4,22 @@
 package edu.caltech.ipac.visualize.draw;
 
 
-import edu.caltech.ipac.visualize.plot.*;
+import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
+import edu.caltech.ipac.visualize.plot.PixelValueException;
+import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.PlotGroup;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Data for Slice
@@ -22,21 +33,21 @@ public class SliceData  implements Iterable<SliceData.Series> {
             new Color(0, 102, 102, 200),
             new Color(102, 0, 102, 200) };
 
-    public enum Band {
-        RED(ImagePlot.RED, "Red", new Color(204, 0, 0, 200)),
-        GREEN(ImagePlot.GREEN, "Green", new Color(0, 204, 0, 200)),
-        BLUE(ImagePlot.BLUE, "Blue", new Color(0, 0, 204, 200));
+    public enum SliceBand {
+        RED( Band.RED, "Red", new Color(204, 0, 0, 200)),
+        GREEN(Band.GREEN, "Green", new Color(0, 204, 0, 200)),
+        BLUE(Band.BLUE, "Blue", new Color(0, 0, 204, 200));
 
-        int getBand() { return _band;}
+        Band getBand() { return _band;}
         String getLabel() {return _label;}
         Color getColor() {return _color;}
 
-        Band(int band, String label, Color color) {
+        SliceBand(Band band, String label, Color color) {
             _band = band;
             _label = label;
             _color = color;
         }
-        int _band;
+        Band _band;
         String _label;
         Color _color;
     }
@@ -45,6 +56,7 @@ public class SliceData  implements Iterable<SliceData.Series> {
     private final int MAX_DIST = 8;
 
     private ImagePlot _plot;
+    private ActiveFitsReadGroup _frGroup;
     private WorldPt [] _pts;
     private ImageWorkSpacePt [] _ipts;
     private int _size;
@@ -66,9 +78,10 @@ public class SliceData  implements Iterable<SliceData.Series> {
 
 
 
-    public SliceData(ImagePlot plot, VectorObject vectObject) {
+    public SliceData(ImagePlot plot, ActiveFitsReadGroup frGroup, VectorObject vectObject) {
 
         _plot = plot;
+        _frGroup = frGroup;
         _spts = null;
         _scale = -10000.0;
 
@@ -186,15 +199,14 @@ public class SliceData  implements Iterable<SliceData.Series> {
                     imagePlot = (ImagePlot)p;
                     if (imagePlot.isThreeColor()) {
                         // process three-color
-                        for (Band b : Band.values() ) {
-                            int band = b.getBand();
-                            if (imagePlot.isColorBandVisible(band)) {
+                        for (SliceBand b : SliceBand.values() ) {
+                            if (imagePlot.isColorBandVisible(b.getBand(),frGroup)) {
                                 // set flux for the band
                                 boolean skipSeries = false;
                                 double flux[] = new double[_size];
                                 for (int i=0; i<_size; i++) {
                                     try {
-                                        flux[i] = imagePlot.getFlux(band, _ipts[i]);
+                                        flux[i] = imagePlot.getFlux(frGroup,  b.getBand(), _ipts[i]);
                                     } catch (PixelValueException pve) {
                                         //initOnError("Color band flux is not available.");
                                         //return;
@@ -215,7 +227,7 @@ public class SliceData  implements Iterable<SliceData.Series> {
                         double flux[] = new double[_size];
                         for (int i=0; i<_size; i++) {
                             try {
-                                flux[i] = imagePlot.getFlux(_ipts[i]);
+                                flux[i] = imagePlot.getFlux(_ipts[i], frGroup);
                             } catch (PixelValueException pve) {
                                 //initOnError("Overlay flux is not available.");
                                 //return;
@@ -371,7 +383,7 @@ public class SliceData  implements Iterable<SliceData.Series> {
 
         private ImagePlot _imagePlot;
         private boolean   _isThreeColor;
-        private Band      _band;
+        private SliceBand _band;
         private double    _flux[];
 
         Series(double[] flux, ImagePlot imagePlot) {
@@ -379,7 +391,7 @@ public class SliceData  implements Iterable<SliceData.Series> {
 
         }
 
-        Series(double[] flux, ImagePlot imagePlot, Band band) {
+        Series(double[] flux, ImagePlot imagePlot, SliceBand band) {
             _flux = flux;
             _imagePlot = imagePlot;
             _band = band;
@@ -388,7 +400,7 @@ public class SliceData  implements Iterable<SliceData.Series> {
 
         ImagePlot getImagePlot() { return _imagePlot;}
         boolean isThreeColor() { return _isThreeColor;}
-        Band getBand() { return _band;}
+        SliceBand getBand() { return _band;}
         double getFlux(int sampleIdx) { return _flux[sampleIdx]; }
 
     }

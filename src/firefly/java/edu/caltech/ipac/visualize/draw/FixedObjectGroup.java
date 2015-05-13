@@ -14,6 +14,7 @@ import edu.caltech.ipac.util.ServerStringUtil;
 import edu.caltech.ipac.util.TableConnectionList;
 import edu.caltech.ipac.util.action.ClassProperties;
 import edu.caltech.ipac.visualize.VisConstants;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationEvent;
 import edu.caltech.ipac.visualize.plot.NewPlotNotificationListener;
@@ -692,7 +693,7 @@ public class FixedObjectGroup implements TableConnectionList,
    // ---------  Methods from PlotPaintListener Interface---------------
    // ===================================================================
 
-    public void paint(PlotPaintEvent ev) {
+    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
          drawOnPlot( ev.getPlot(), ev.getGraphics() );
     }
 //======================================================================

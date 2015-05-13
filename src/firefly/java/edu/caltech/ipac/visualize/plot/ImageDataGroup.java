@@ -27,49 +27,49 @@ public class ImageDataGroup implements Iterable<ImageData> {
 
     private final int _width;
     private final int _height;
-    private final int _tileSize;
 
-    private final int _xPanels;
-    private final int _yPanels;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public ImageDataGroup(FitsRead fr,
+    public ImageDataGroup(FitsRead fitsReadAry[],
                           ImageData.ImageType imageType,
                           int colorTableID,
                           RangeValues rangeValues,
                           int tileSize,
                           boolean constructNow) throws FitsException {
+        FitsRead fr= null;
+        for(FitsRead testFr : fitsReadAry) {
+            if (testFr!=null) {
+                fr= testFr;
+                break;
+            }
+        }
+        Assert.argTst(fr, "fitsReadAry must have one non-null element.");
         ImageHeader hdr= fr.getImageHeader();
         _imageType= imageType;
         _width = hdr.naxis1;
         _height = hdr.naxis2;
-        _tileSize= tileSize;
 
         int totWidth= hdr.naxis1;
         int totHeight= hdr.naxis2;
 
-        int xPanels= totWidth / _tileSize;
-        int yPanels= totHeight / _tileSize;
-        if (totWidth % _tileSize > 0) xPanels++;
-        if (totHeight % _tileSize > 0) yPanels++;
+        int xPanels= totWidth / tileSize;
+        int yPanels= totHeight / tileSize;
+        if (totWidth % tileSize > 0) xPanels++;
+        if (totHeight % tileSize > 0) yPanels++;
 
-        _xPanels= xPanels;
-        _yPanels= yPanels;
 
-        _imageDataAry= new ImageData[_xPanels * _yPanels];
+        _imageDataAry= new ImageData[xPanels * yPanels];
 
         int width;
         int height;
-        for(int i= 0; i<_xPanels; i++) {
-            for(int j= 0; j<_yPanels; j++) {
-                width= (i<_xPanels-1) ? _tileSize : ((totWidth-1) % _tileSize + 1);
-                height= (j<_yPanels-1) ? _tileSize : ((totHeight-1) % _tileSize + 1);
-//                width= (i<_xPanels-1) ? _tileSize : (totWidth % _tileSize);
-//                height= (j<_yPanels-1) ? _tileSize : (totHeight % _tileSize);
-                _imageDataAry[(i*_yPanels) +j]= new ImageData(fr,imageType,
+        for(int i= 0; i<xPanels; i++) {
+            for(int j= 0; j<yPanels; j++) {
+                width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
+                height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
+                _imageDataAry[(i*yPanels) +j]= new ImageData(fitsReadAry,imageType,
                                                   colorTableID,rangeValues,
                                                   tileSize*i,tileSize*j,
                                                   width, height, constructNow);
@@ -112,42 +112,23 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-
-    public void setFitsRead(FitsRead fr, int colorBand) {
-        Assert.argTst( (colorBand==ImageData.RED ||
-                        colorBand==ImageData.GREEN ||
-                        colorBand==ImageData.BLUE),
-                       "colorBand must be RED, GREEN, or BLUE");
+    public void markImageOutOfDate() {
         for(ImageData id : _imageDataAry) {
-            id.setFitsRead(fr,colorBand);
-        }
-    }
-
-    public FitsRead getFitsRead(int colorBand) {
-        Assert.argTst( (colorBand==ImageData.RED ||
-                        colorBand==ImageData.GREEN ||
-                        colorBand==ImageData.BLUE),
-                       "colorBand must be RED, GREEN, or BLUE");
-        return _imageDataAry[0].getFitsRead(colorBand);
-    }
-
-
-    public void releaseImage() {
-        for(ImageData id : _imageDataAry) {
-            id.releaseImage();
+            id.markImageOutOfDate();
         }
     }
 
 
-    public void recomputeStretch(FitsRead fr, RangeValues rangeValues) {
-        recomputeStretch(fr,rangeValues,false);
-    }
+//    public void recomputeStretch(FitsRead fitsReadAry[], int idx, RangeValues rangeValues) {
+//        recomputeStretch(fitsReadAry,idx,rangeValues,false);
+//    }
 
-    public void recomputeStretch(FitsRead fr,
+    public void recomputeStretch(FitsRead fitsReadAry[],
+                                 int idx,
                                  RangeValues rangeValues,
                                  boolean force) {
         for(ImageData id : _imageDataAry) {
-            id.recomputeStretch(fr,rangeValues, force);
+            id.recomputeStretch(fitsReadAry,idx,rangeValues, force);
         }
     }
 

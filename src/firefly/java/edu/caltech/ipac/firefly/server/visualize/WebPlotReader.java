@@ -9,11 +9,13 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Crop;
@@ -72,27 +74,6 @@ public class WebPlotReader {
 
 
 
-    /**
-     * @param fd file data
-     * @return the ReadInfo[] object
-     * @throws java.io.IOException        any io problem
-     * @throws nom.tam.fits.FitsException problem reading the fits file
-     * @throws edu.caltech.ipac.util.download.FailedRequestException
-     *                                    any other problem
-     * @throws edu.caltech.ipac.visualize.plot.GeomException
-     *                                    problem reprojecting
-     */
-    public FitsRead[] readFits(FileData fd)
-            throws IOException,
-                   FitsException,
-                   FailedRequestException,
-                   GeomException {
-
-        return PlotServUtils.readFits(fd.getFile());
-    }
-
-
-
 
 
     /**
@@ -116,14 +97,18 @@ public class WebPlotReader {
 
         File originalFile = fd.getFile();
         String uploadedName= null;
-        if (VisContext.isInUploadDir(originalFile)) {
+        if (ServerContext.isInUploadDir(originalFile)) {
             uploadedName= fd.getDesc();
         }
 
         modFileWriter= null;
         this.imageIdx= imageIdx;
+        FitsRead inFitsRead= fitsRead;
         if (req!=null) {
-            fitsRead= applyPipeline(req, fitsRead, this.imageIdx, Band.NO_BAND, originalFile);
+            fitsRead= applyPipeline(req, inFitsRead, this.imageIdx, Band.NO_BAND, originalFile);
+            if (modFileWriter!=null && inFitsRead!=fitsRead) {
+                FitsCacher.addFitsReadToCache(modFileWriter.getTargetFile(), new FitsRead[]{fitsRead});
+            }
         }
         checkUnzip(this.imageIdx,Band.NO_BAND,originalFile);
 
@@ -168,11 +153,11 @@ public class WebPlotReader {
             imageIdx= 0;
             File originalFile = fd.getFile();
             String uploadedName= null;
-            if (VisContext.isInUploadDir(originalFile)) {
+            if (ServerContext.isInUploadDir(originalFile)) {
                 uploadedName= fd.getDesc();
             }
 
-            FitsRead frAry[]= PlotServUtils.readFits(originalFile);
+            FitsRead frAry[]= FitsCacher.readFits(originalFile);
             retval = new FileReadInfo[frAry.length];
             for (int i = 0; (i < frAry.length); i++) {
                 imageIdx= i;
@@ -268,7 +253,9 @@ public class WebPlotReader {
             Pt pt1;
             Pt pt2;
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {
-                ImagePlot tmpIM = new ImagePlot(null, fr, 1F, false, 0, FitsRead.getDefaultFutureStretch(), false);
+                ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
+                frGroup.setFitsRead(Band.NO_BAND,fr);
+                ImagePlot tmpIM = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
                 try {
                     pt1 = tmpIM.getImageCoords((WorldPt) getCropPt1(req));
                     pt2 = tmpIM.getImageCoords((WorldPt) getCropPt2(req));
@@ -332,7 +319,7 @@ public class WebPlotReader {
         FitsRead retval= fr;
         if (req.isFlipX()) {
             retval= new FlipXY(fr,"xAxis").doFlip();
-            File flipName= ModFileWriter.makeFlipYFileName(originalFile,imageIdx);
+            File flipName= ModFileWriter.makeFlipXFileName(originalFile,imageIdx);
             modFileWriter = new ModFileWriter.GeomFileWriter(flipName,retval,band);
         }
         return retval;

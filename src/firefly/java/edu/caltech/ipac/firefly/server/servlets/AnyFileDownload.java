@@ -4,10 +4,10 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.rpc.SearchServices;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.SrvParam;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -44,7 +44,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         boolean log= sp.getOptionalBoolean(LOG_PARAM,false);
         boolean track= sp.getOptionalBoolean(TRACK_PARAM,false);
 
-        File downloadFile= VisContext.convertToFile(fname);
+        File downloadFile= ServerContext.convertToFile(fname);
         if (downloadFile==null) {
             res.sendError(HttpServletResponse.SC_NOT_FOUND,"Could not convert input to a file" );
             _log.warn("Cannot convert file: "+ fname + " to valid path, returning 404");

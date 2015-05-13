@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.net.TargetNetwork;
-import edu.caltech.ipac.firefly.server.Counters;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -13,10 +13,8 @@ import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.UTCTimeUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -24,11 +22,11 @@ import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
 import edu.caltech.ipac.visualize.draw.GridLayer;
 import edu.caltech.ipac.visualize.draw.ScalableObjectPosition;
 import edu.caltech.ipac.visualize.draw.VectorObject;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
-import edu.caltech.ipac.visualize.plot.ImageHeader;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -76,7 +74,7 @@ public class PlotServUtils {
 
     private static final String JPG_NAME_EXT=FileUtil.jpg;
     private static final String PNG_NAME_EXT=FileUtil.png;
-    private static final String GIF_NAME_EXT=FileUtil.gif;
+//    private static final String GIF_NAME_EXT=FileUtil.gif;
     private static final String _hostname;
     private static final String _pngNameExt="." + PNG_NAME_EXT;
 
@@ -91,6 +89,7 @@ public class PlotServUtils {
     }
 
     static void createThumbnail(ImagePlot plot,
+                                ActiveFitsReadGroup frGroup,
                                 PlotImages images,
                                 boolean justName,
                                 int     thumbnailSize) throws IOException, FitsException {
@@ -102,10 +101,10 @@ public class PlotServUtils {
         float tZoomLevel= thumbnailSize /(float)div;
         plotGroup.setZoomTo(tZoomLevel);
 
-        File f= new File(VisContext.getVisSessionDir(),images.getTemplateName()+"_thumb" +"."+JPG_NAME_EXT);
-        String relFile= VisContext.replaceWithUsersBaseDirPrefix(f);
+        File f= new File(ServerContext.getVisSessionDir(),images.getTemplateName()+"_thumb" +"."+JPG_NAME_EXT);
+        String relFile= ServerContext.replaceWithUsersBaseDirPrefix(f);
 
-        if (!justName) new PlotOutput(plot).writeThumbnail(f,PlotOutput.JPEG);
+        if (!justName) new PlotOutput(plot,frGroup).writeThumbnail(f,PlotOutput.JPEG);
 
         PlotImages.ThumbURL tn= new PlotImages.ThumbURL(relFile,plot.getScreenWidth(),plot.getScreenHeight());
         images.setThumbnail(tn);
@@ -114,25 +113,26 @@ public class PlotServUtils {
     }
 
 
-    static void writeThumbnail(ImagePlot plot, File f, int thumbnailSize) throws IOException, FitsException {
-        ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot();
+    static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
+        ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
         int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
 
         tPlot.getPlotGroup().setZoomTo(thumbnailSize/(float)div);
 
         int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
 
-        new PlotOutput(tPlot).writeThumbnail(f,ext);
+        new PlotOutput(tPlot,frGroup).writeThumbnail(f,ext);
         tPlot.freeResources();
     }
 
     static PlotImages writeImageTiles(File      imagefileDir,
                                       String    root,
                                       ImagePlot plot,
+                                      ActiveFitsReadGroup frGroup,
                                       boolean   fullScreen,
                                       int tileCnt) throws IOException {
 
-        PlotOutput po= new PlotOutput(plot);
+        PlotOutput po= new PlotOutput(plot,frGroup);
         List<PlotOutput.TileFileInfo> results;
         int outType= (plot.getPlotGroup().getZoomFact()<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
         if (fullScreen) {
@@ -146,7 +146,7 @@ public class PlotServUtils {
         String relFile;
         int idx= 0;
         for(PlotOutput.TileFileInfo info : results) {
-            relFile= VisContext.replaceWithUsersBaseDirPrefix(info.getFile());
+            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
             imageURL= new PlotImages.ImageURL(relFile,
                                               info.getX(), info.getY(),
                                               info.getWidth(), info.getHeight(),
@@ -173,7 +173,7 @@ public class PlotServUtils {
         String relFile;
         int idx= 0;
         for(PlotOutput.TileFileInfo info : results) {
-            relFile= VisContext.replaceWithUsersBaseDirPrefix(info.getFile());
+            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
             imageurl= new PlotImages.ImageURL(relFile,
                                               info.getX(), info.getY(),
                                               info.getWidth(), info.getHeight(),
@@ -204,7 +204,7 @@ public class PlotServUtils {
         String fname= originalFile.getName();
         File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-north",
                                     "."+FileUtil.FITS,
-                                    VisContext.getVisSessionDir());
+                                    ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
         ImagePlot.writeFile(stream, new FitsRead[]{northFR});
         FileUtil.silentClose(stream);
@@ -220,7 +220,7 @@ public class PlotServUtils {
         String angleStr= String.format("%2f", angle);
         File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-"+angleStr,
                                     "."+FileUtil.FITS,
-                                    VisContext.getVisSessionDir());
+                                    ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
         ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
         FileUtil.silentClose(stream);
@@ -236,7 +236,7 @@ public class PlotServUtils {
         int idx= base.indexOf("-flip");
         if (idx>-1) base= base.substring(0,idx);
         File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
-                                    VisContext.getVisSessionDir());
+                                    ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
         ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
         FileUtil.silentClose(stream);
@@ -244,97 +244,39 @@ public class PlotServUtils {
     }
 
 
-    public static void initRequestFromState(WebPlotRequest req, PlotState oldState, Band band) {
-        req.setInitialRangeValues(oldState.getRangeValues(band));
-        req.setInitialColorTable(oldState.getColorTableId());
-        req.setInitialZoomLevel(oldState.getZoomLevel());
-    }
-
-    public static PlotState createInitializedState(WebPlotRequest req[], PlotState initializerState) {
-        PlotState state= new PlotState(initializerState.isThreeColor());
-        state.setContextString(PlotServUtils.makeAndCachePlotCtx());
-        initState(state, req, initializerState);
-        VisContext.getPlotCtx(state.getContextString()).setPlotState(state);
-        for(Band band : initializerState.getBands()) {
-            state.setOriginalFitsFileStr(initializerState.getOriginalFitsFileStr(band), band);
-        }
-        return state;
-    }
-
-
-    private static void initState(PlotState state, WebPlotRequest req[], PlotState initializerState) {
-        Band bands[]= initializerState.getBands();
-        Assert.argTst(req.length==bands.length,
-                      "there must be the same number of WebPlotRequest as there are bands in the initializerState");
-        for(int i= 0; (i<bands.length); i++) {
-            state.setWebPlotRequest(req[i],bands[i]);
-            state.setRangeValues(initializerState.getRangeValues(bands[i]), bands[i]);
-        }
-        state.setNewPlot(false);
-        state.setColorTableId(initializerState.getColorTableId());
-        state.setZoomLevel(initializerState.getZoomLevel());
-    }
-
     public static long getTileModTime(String fname) {
-        File f= VisContext.convertToFile(fname);
+        File f= ServerContext.convertToFile(fname);
         return f.canRead() ? f.lastModified() : -1;
     }
 
 
-    public static File createImageFile(String fname,
-                                       PlotState state,
+    public static File createImageFile(ImagePlot plot,
+                                       ActiveFitsReadGroup frGroup,
+                                       String fname,
                                        int x,
                                        int y,
                                        int width,
                                        int height) throws IOException {
 
-        File f= VisContext.convertToFile(fname);
+        File f= ServerContext.convertToFile(fname);
         if (!f.canRead()) {
-            f= createOneTile(state, f,x,y,width,height);
+            f= createOneTile(plot, frGroup, f,x,y,width,height);
         }
         return f;
     }
 
-    public static void writeFullImageFileToStream(OutputStream oStream, PlotState state) throws IOException {
+    public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
 
-        File f= getUniquePngFileName("imageDownload", VisContext.getVisSessionDir());
-        createFullTile(state, f);
+        File f= getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
+        createFullTile(plot, frGroup,f);
         FileUtil.writeFileToStream(f, oStream);
     }
 
-    public static File createImageThumbnail(String fname,
-                                            PlotState state,
-                                            String ctxStr) throws IOException {
-
-
-        try {
-            File f= VisContext.convertToFile(fname);
-            if (!f.canRead()) {
-                PlotClientCtx ctx= VisServerOps.prepare(state);
-                if (ctx!=null)  {
-                    boolean revalidated= revalidatePlot(ctx);
-                    if (revalidated) {
-                        try {
-                            writeThumbnail(ctx.getPlot(),f,state.getThumbnailSize());
-                        } catch (FitsException e) {
-                            IOException fe= new IOException("Could not create thumbnail for: " +ctxStr);
-                            fe.initCause(e);
-                            throw fe;
-                        }
-                    }
-                    else {
-                        throw new IOException("Could not find revalidate context for : " +ctxStr);
-                    }
-                }
-                else {
-                    throw new IOException("Could not find context for : " +ctxStr);
-                }
-            }
-            return f;
-        } catch (FailedRequestException e) {
-            throw new IOException("Could not find context for : " +ctxStr, e);
-        }
-
+    public static File createImageThumbnail(String fname, ImagePlot plot, ActiveFitsReadGroup frGroup, int thumbnailSize)
+                                                                    throws FitsException, IOException {
+        File f= ServerContext.convertToFile(fname);
+        if (!f.canRead()) writeThumbnail(plot,frGroup,f,thumbnailSize);
+        return f;
     }
 
 
@@ -350,71 +292,32 @@ public class PlotServUtils {
 
 
     public static boolean isValidForDownload(File f) {
-        return (VisContext.convertToFile(f.getPath())!=null);
+        return (ServerContext.convertToFile(f.getPath())!=null);
     }
 
-    static File createFullTile(PlotState state, File f) throws IOException {
-        return  createFullTile(state, f, null, null, null, null);
-    }
-
-    static File createFullTile(PlotState state, File f,
-                               List<FixedObjectGroup> fog,
-                               List<VectorObject> vectorList,
-                               List<ScalableObjectPosition> scaleList,
-                               GridLayer gridLayer) throws IOException {
-        return  createOneTile(state,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
-                              fog,vectorList, scaleList, gridLayer);
+    static File createFullTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f) throws IOException {
+        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT);
     }
 
     static File createFullTile(ImagePlot plot,
+                               ActiveFitsReadGroup frGroup,
                                File f,
                                List<FixedObjectGroup> fog,
                                List<VectorObject> vectorList,
                                List<ScalableObjectPosition> scaleList,
                                GridLayer gridLayer) throws IOException {
-        return  createOneTile(plot,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
+        return  createOneTile(plot,frGroup,f,0,0,PLOT_FULL_WIDTH,PLOT_FULL_HEIGHT,
                               fog,vectorList, scaleList, gridLayer);
     }
 
 
-
-    static File createOneTile(PlotState state, File f, int x, int y, int width, int height) throws IOException {
-        return createOneTile(state,f,x,y,width,height,null,null,null,null);
+    static File createOneTile(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int x, int y, int width, int height) throws IOException {
+        return createOneTile(plot,frGroup,f,x,y,width,height,null,null,null,null);
     }
 
-    static File createOneTile(PlotState state,
-                              File f,
-                              int x,
-                              int y,
-                              int width,
-                              int height,
-                              List<FixedObjectGroup> fogList,
-                              List<VectorObject> vectorList,
-                              List<ScalableObjectPosition> scaleList,
-                              GridLayer gridLayer)
-            throws IOException {
-
-        try {
-            PlotClientCtx ctx= VisServerOps.prepare(state);
-            if (ctx!=null)  {
-                boolean revalidated= revalidatePlot(ctx);
-                if (revalidated) {
-                    return createOneTile(ctx.getPlot(),f,x,y,width,height,fogList,vectorList,scaleList,gridLayer);
-                }
-                else {
-                    throw new IOException("Could not find revalidate context for : " +state.getContextString());
-                }
-            }
-            else {
-                throw new IOException("Could not find context for : " +state.getContextString());
-            }
-        } catch (FailedRequestException e) {
-            throw new IOException("Could not find context for : " +state.getContextString(), e);
-        }
-
-    }
 
     static File createOneTile(ImagePlot plot,
+                              ActiveFitsReadGroup frGroup,
                               File f,
                               int x,
                               int y,
@@ -425,7 +328,7 @@ public class PlotServUtils {
                               List<ScalableObjectPosition> scaleList,
                               GridLayer gridLayer) throws IOException {
 
-        PlotOutput po= new PlotOutput(plot);
+        PlotOutput po= new PlotOutput(plot,frGroup);
         if (fogList!=null) po.setFixedObjectGroupList(fogList);
         if (gridLayer!=null) po.setGridLayer(gridLayer);
         if (vectorList!=null) po.setVectorList(vectorList);
@@ -438,30 +341,12 @@ public class PlotServUtils {
         return f;
 
     }
-    static boolean confirmFileData(PlotClientCtx ctx)  {
-        boolean retval= true;
-        try {
-            PlotState state= ctx.getPlotState();
-
-            for(Band band : state.getBands()) {
-                if (!VisContext.getWorkingFitsFile(state,band).canRead() ||
-                    !VisContext.getOriginalFile(state,band).canRead()) {
-                    retval= false;
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            retval= false;
-        }
-        ctx.updateAccessTime();
-        return retval;
-    }
 
 
     static String makeTileBase(PlotState state) {
         File f= null;
         String fName= state.getOriginalFitsFileStr(state.firstBand());
-        if (fName!=null)  f= VisContext.convertToFile(fName);
+        if (fName!=null)  f= ServerContext.convertToFile(fName);
         String baseStr= null;
         if (f!=null) {
             baseStr= FileUtil.getBase(f);
@@ -586,77 +471,6 @@ public class PlotServUtils {
         return dateValue;
     }
 
-    public enum RevalidateSource { WORKING, ORIGINAL}
-
-    static boolean revalidatePlot(PlotClientCtx ctx)  {
-        return revalidatePlot(ctx,RevalidateSource.WORKING,false);
-    }
-
-    static boolean revalidatePlot(PlotClientCtx ctx, RevalidateSource source, boolean force)  {
-        boolean retval= true;
-        synchronized (ctx)  { // keep the test from happening at the same time with this ctx
-            try {
-                ImagePlot plot= ctx.getPlot();
-                if (plot==null || force) {
-
-                    PlotState state= ctx.getPlotState();
-                    long start= System.currentTimeMillis();
-                    boolean first= true;
-                    StringBuilder lenStr= new StringBuilder(30);
-                    for(Band band : state.getBands()) {
-                        if (lenStr.length()>0) lenStr.append(", ");
-                        int bandIdx= (band==Band.NO_BAND) ? ImagePlot.NO_BAND : band.getIdx();
-                        File fitsFile=  (source==RevalidateSource.WORKING) ?
-                                                 VisContext.getWorkingFitsFile(state,band) :
-                                                 VisContext.getOriginalFile(state,band);
-
-                        boolean blank= isBlank(state,band);
-
-                        if (fitsFile.canRead() || blank) {
-                            VisContext.purgeOtherPlots(state);
-                            FitsRead fr[];
-                            if (blank) fr= createBlankFITS(state.getWebPlotRequest(band));
-                            else       fr= readFits(fitsFile);
-                            RangeValues rv= state.getRangeValues(band);
-                            int imageIdx= state.getImageIdx(band);
-                            if (first) {
-                                plot= makeImagePlot(fr[imageIdx],
-                                                    state.getZoomLevel(),
-                                                    state.isThreeColor(),
-                                                    state.getColorTableId(), rv);
-                                plot.getPlotGroup().setZoomTo(state.getZoomLevel());
-                                if (state.isThreeColor()) plot.setThreeColorBand(fr[imageIdx],bandIdx);
-                                ctx.setPlot(plot);
-                                first= false;
-                            }
-                            else {
-                                plot.addThreeColorBand(fr[imageIdx],bandIdx);
-                                plot.getHistogramOps(bandIdx).recomputeStretch(rv);
-                            }
-                            Counters.getInstance().incrementVis("Revalidate");
-                            lenStr.append(FileUtil.getSizeAsString(fitsFile.length()));
-                        }
-                    }
-                    ctx.setPlot(plot);
-                    plot.getPlotGroup().setZoomTo(state.getZoomLevel());
-                    retval= true;
-                    String sizeStr= (state.isThreeColor() ? ", 3 Color: file sizes: " : ", file size: ");
-                    long elapse= System.currentTimeMillis()-start;
-                    _log.info("revalidation success: "+ ctx.getKey(),
-                              "time: " + UTCTimeUtil.getHMSFromMills(elapse)+
-                                      sizeStr +   lenStr);
-                }
-            } catch (Exception e) {
-                _log.warn(e,"revalidation failed: this should rarely happen: ",
-                          e.toString());
-                retval= false;
-            }
-            ctx.updateAccessTime();
-
-        }
-        return retval;
-    }
-
     public static boolean isBlank(PlotState state) {
         return isBlank(state,state.firstBand());
     }
@@ -709,89 +523,28 @@ public class PlotServUtils {
         String ext= FileUtil.getExtension(f);
         File retval= f;
         if (ext!=null && ext.equalsIgnoreCase(FileUtil.GZ)) {
-            retval= new File(VisContext.getVisSessionDir(), FileUtil.getBase(f.getName()));
+            retval= new File(ServerContext.getVisSessionDir(), FileUtil.getBase(f.getName()));
         }
         return retval;
     }
 
-      static FitsRead [] readFits(File fitsFile) throws FitsException,
-                                                        FailedRequestException,
-                                                        IOException {
-        Fits fits= new Fits(fitsFile.getPath());
-        FitsRead fr[];
-        try {
-            fr = FitsRead.createFitsReadArray(fits);
-        } finally {
-            fits.getStream().close();
-        }
-        return fr;
-    }
 
 
-    public static int cnvtBand(Band band) {
-        return (band== Band.NO_BAND) ? ImagePlot.NO_BAND : band.getIdx();
-    }
 
-    public static Band cnvtBand(int bIdx) {
-        Band retval;
-        switch (bIdx) {
-            case ImagePlot.NO_BAND :  retval= Band.NO_BAND; break;
-            case ImagePlot.RED     :  retval= Band.RED; break;
-            case ImagePlot.GREEN   :  retval= Band.GREEN; break;
-            case ImagePlot.BLUE    :  retval= Band.BLUE; break;
-            default : retval= Band.NO_BAND; break;
-        }
-        return retval;
-    }
-
-    public static String makeAndCachePlotCtx() {
-        PlotClientCtx ctx= new PlotClientCtx();
-        VisContext.putPlotCtx(ctx);
-        return ctx.getKey();
-    }
-
-    static void setPixelAccessInfo(ImagePlot plot, PlotState state) {
-        if (plot.isThreeColor()) {
-            if (plot.isColorBandInUse(ImagePlot.RED)) {
-                setPixelAccessInfoBand(plot,state, Band.RED);
-            }
-            if (plot.isColorBandInUse(ImagePlot.GREEN)) {
-                setPixelAccessInfoBand(plot,state, Band.GREEN);
-            }
-            if (plot.isColorBandInUse(ImagePlot.BLUE)) {
-                setPixelAccessInfoBand(plot,state, Band.BLUE);
-            }
-        }
-        else {
-            setPixelAccessInfoBand(plot,state, Band.NO_BAND);
-        }
-    }
-
-    static void setPixelAccessInfoBand(ImagePlot plot,
-                                       PlotState state,
-                                       Band band) {
-
-
-        FitsRead resultFr= plot.getHistogramOps(cnvtBand(band)).getFitsRead();
-        ImageHeader ih= resultFr.getImageHeader();
-        state.setFitsHeader(ih.makeMiniHeader(), band);
-    }
-
-
-     static File getUniquePngFileName(String nameBase, File dir) {
+    static File getUniquePngFileName(String nameBase, File dir) {
         File f= new File(dir,nameBase + "-" + _nameCnt +"-"+ _hostname+ _pngNameExt);
         f= FileUtil.createUniqueFileFromFile(f);
         _nameCnt++;
         return f;
     }
 
-    static ImagePlot makeImagePlot(FitsRead  fr,
+    static ImagePlot makeImagePlot(ActiveFitsReadGroup frGroup,
                                    float     initialZoomLevel,
                                    boolean   threeColor,
+                                   Band      band,
                                    int       initColorID,
                                    RangeValues stretch) throws FitsException {
-        return new ImagePlot(null, fr,initialZoomLevel, threeColor,
-                            initColorID, stretch,true);
+        return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
     }
 
 

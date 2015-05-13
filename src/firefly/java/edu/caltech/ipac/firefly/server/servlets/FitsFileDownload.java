@@ -3,9 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.SrvParam;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +25,7 @@ public class FitsFileDownload extends BaseHttpServlet {
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         SrvParam sp= new SrvParam(req.getParameterMap());
         String fname= sp.getRequired("file");
-        File downloadFile= VisContext.convertToFile(fname);
+        File downloadFile= ServerContext.convertToFile(fname);
         if (downloadFile==null) {
             throw new ServletException("File does not exist");
         }

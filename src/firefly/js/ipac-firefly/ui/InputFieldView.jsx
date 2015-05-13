@@ -134,8 +134,10 @@ var InputFieldView = React.createClass(
 
     makeInfoPopup() {
 
-        var retval= <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
-                message={this.makeMessage()}/>;
+        var retval= (
+                <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
+                message={this.makeMessage()}/>
+        );
         return retval;
     },
 

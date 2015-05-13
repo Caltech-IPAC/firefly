@@ -11,7 +11,7 @@ import edu.caltech.ipac.util.StringUtils;
  /**
  *
  * Get info about the Browser. Should be used on the server side or when
- * wrapped by Browser Info
+ * wrapped by BrowserUtil
  *
  * @author Trey
  * @version $Id: BrowserInfo.java,v 1.17 2012/09/26 22:08:20 roby Exp $

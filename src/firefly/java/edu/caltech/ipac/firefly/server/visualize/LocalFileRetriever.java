@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -30,7 +31,7 @@ public class LocalFileRetriever implements FileRetriever {
         if (fStr!=null) {
             Cache sessionCache= UserCache.getInstance();
             UploadFileInfo uFI= (UploadFileInfo)(sessionCache.get(new StringKey(fStr)));
-            File f= VisContext.convertToFile(fStr);
+            File f= ServerContext.convertToFile(fStr);
             if (f==null || !f.canRead()) {
                 f = (uFI!=null)? uFI.getFile() : null;
             }

@@ -5,26 +5,74 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-"use strict";
+'use strict';
 import React from 'react/addons';
 import Highcharts from 'react-highcharts';
 import numeral from 'numeral';
-import {getFormatString} from 'ipac-firefly/util/MathUtil.js';
+import {getFormatString} from '../util/MathUtil.js';
 
+import {ServerRequest} from '../data/ServerRequest.js';
+import {getRawDataSet} from '../rpc/SearchServicesJson.js';
+import {parseRawDataSet} from '../util/DataSetParser.js';
 
 module.exports= React.createClass(
     {
         propTypes: {
-            data: React.PropTypes.array.isRequired
+            //data: React.PropTypes.array.isRequired
+            data: React.PropTypes.array,
+            source: React.PropTypes.string,
+            desc: React.PropTypes.string
+        },
+
+        getInitialState: function() {
+            // if user passes the data as property, use it
+            // otherwise, asynchronously get the data from the source
+            return {
+                userData : (this.props.data ? this.props.data : [])
+            };
+        },
+
+        componentDidMount: function() {
+            if (!this.props.data && this.props.source) {
+                let extdata = [];
+                this.getData().then(function (rawDataSet) {
+                        let dataSet = parseRawDataSet(rawDataSet);
+                        let model = dataSet.getModel();
+                        for (var i = 0; i < model.size(); i++) {
+                            let arow = model.getRow(i);
+                            extdata.push(arow.map(val=>Number(val)));
+                        }
+                        if (this.isMounted()) {
+                            this.setState({
+                                userData: extdata
+                            });
+                        }
+                    }.bind(this)
+                ).catch(function (reason) {
+                        console.log('Histogram failure: ' + reason);
+                    }
+                );
+            }
+        },
+
+        /*
+         * @return {Promise}
+         */
+        getData() {
+            let req = new ServerRequest('IpacTableFromSource');
+            req.setParam({name : 'source', value : 'http://localhost/demo/histdata.tbl'});
+            req.setParam({name : 'startIdx', value : '0'});
+            req.setParam({name : 'pageSize', value : '10000'});
+            return getRawDataSet(req);
         },
 
         render() {
             var xrange = 0;
-            if (this.props.data.length > 1) {
-                xrange = this.props.data[1][0]-this.props.data[0][0];
+            if (this.state.userData.length > 1) {
+                xrange = this.state.userData[1][0]-this.state.userData[0][0];
             }
 
-            var config =  {
+            var config = {
                 chart: {
                     renderTo: 'container',
                     type: 'column',
@@ -75,9 +123,9 @@ module.exports= React.createClass(
                 series: [{
                     name: 'Sample Distribution',
                     data: [], // to be defined
-                    borderWidth: .5,
+                    borderWidth: 0.5,
                     borderColor: '#666',
-                    pointPadding: .015,
+                    pointPadding: 0.015,
                     groupPadding: 0,
                     color: '#e3e3e3'
                 }],
@@ -86,10 +134,16 @@ module.exports= React.createClass(
                 }
             };
 
-            config.series[0].data = this.props.data;
-            if (this.props.data.length > 1) {
-                // find the x range of the bin - assuming equal size
-                config.series[0].pointRange = xrange;
+            if (this.props.desc) {
+                config.series[0].name = this.props.desc;
+            }
+
+            if (this.state.userData && this.state.userData.length > 0) {
+                config.series[0].data = this.state.userData;
+                if (this.state.userData.length > 1) {
+                    // find the x range of the bin - assuming equal size
+                    config.series[0].pointRange = xrange;
+                }
             }
 
             /* jshint ignore:start */

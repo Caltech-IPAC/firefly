@@ -3,10 +3,12 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ComparisonUtil;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -105,7 +107,7 @@ public class ScalableObject implements PlotViewStatusListener {
 
     /**
      * Compute the shape in image coordinates and draw it on the image.
-     * @param p Plot the plot image to draw on
+     * @param plot the plot image to draw on
      * @param g2 Graphics2D we all know what that is
      * @param wpt Plot.Worldpt the point on the image plot to draw the shape
      * @param rotation RotationInfo - how the shape is rotated
@@ -116,19 +118,9 @@ public class ScalableObject implements PlotViewStatusListener {
      * @return DrawOnPlotReturn the object contains the bounding box info and
      *                          CachePtInfo
      */
-    public DrawOnPlotReturn drawOnPlot(Plot         p, 
-                                       Graphics2D   g2, 
-                                       WorldPt      wpt,
-                                       RotationInfo rotation,
-                                       WorldPt      offset,
-                                       CachePtInfo  overrideCPInfo,
-                                       boolean      enableDraw) {
-       return drawOnPlot(p,g2,wpt,null,rotation,offset,
-                         overrideCPInfo,enableDraw);
-    }
-
 
     public DrawOnPlotReturn drawOnPlot(Plot         plot,
+                                       ActiveFitsReadGroup frGroup,
                                        Graphics2D   g2,
                                        WorldPt      wpt,
                                        WorldPt      wpt2,
@@ -147,11 +139,11 @@ public class ScalableObject implements PlotViewStatusListener {
         g2.setStroke( stroke);
 
         if (wpt2==null) {
-            retval=   drawPoint(plot,g2,wpt,rotation,offset,
+            retval=   drawPoint(plot,frGroup,g2,wpt,rotation,offset,
                                 overrideCPInfo,enableDraw);
         }
         else {
-            retval=   drawScan(plot,g2,wpt,wpt2,rotation,offset,
+            retval=   drawScan(plot,frGroup,g2,wpt,wpt2,rotation,offset,
                                overrideCPInfo,enableDraw);
         }
         g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING,
@@ -160,6 +152,7 @@ public class ScalableObject implements PlotViewStatusListener {
     }
 
     private DrawOnPlotReturn drawPoint(Plot         plot,
+                                       ActiveFitsReadGroup frGroup,
                                        Graphics2D   g2,
                                        WorldPt      wpt,
                                        RotationInfo rotation,
@@ -209,7 +202,7 @@ public class ScalableObject implements PlotViewStatusListener {
                   screenRotation= cpInfo._screenRotation;
           }
           else {
-                  screenRotation= computeScreenRotation(plot, rotationToUse);
+                  screenRotation= computeScreenRotation(plot, frGroup, rotationToUse);
                   cpInfo._screenRotation= screenRotation;
                   cpInfo._rotation      = rotationToUse;
           }
@@ -252,6 +245,7 @@ public class ScalableObject implements PlotViewStatusListener {
 
 
     private DrawOnPlotReturn drawScan(Plot         plot,
+                                      ActiveFitsReadGroup frGroup,
                                       Graphics2D   g2,
                                       WorldPt      wpt,
                                       WorldPt      wpt2,
@@ -291,7 +285,7 @@ public class ScalableObject implements PlotViewStatusListener {
                 pt= cpInfo._cachePt;
             }
             else {
-                screenRotation= computeScreenRotation(plot, rotationToUse);
+                screenRotation= computeScreenRotation(plot, frGroup, rotationToUse);
                 cpInfo._screenRotation= screenRotation;
                 cpInfo._rotation      = rotationToUse;
                 // compute the shapes using the shape in world Coordinates
@@ -864,7 +858,7 @@ public class ScalableObject implements PlotViewStatusListener {
     /**
      * Get the rotation for the screen based on the rotation passed.
      */
-    private float computeScreenRotation(Plot plot,  RotationInfo rotation) {
+    private float computeScreenRotation(Plot plot,  ActiveFitsReadGroup frGroup, RotationInfo rotation) {
         float screenRotation= rotation.getRotation();
 
         WorldPt j2000p1;
@@ -875,7 +869,7 @@ public class ScalableObject implements PlotViewStatusListener {
         ImageWorkSpacePt p2;
         ImageWorkSpacePt p3;
         ImagePlot ip = (ImagePlot) plot;
-        double cdelt1 = ip.getFitsRead().getImageHeader().cdelt1;
+        double cdelt1 = frGroup.getFitsRead(Band.NO_BAND).getImageHeader().cdelt1;
         double degree= 0;
 
 

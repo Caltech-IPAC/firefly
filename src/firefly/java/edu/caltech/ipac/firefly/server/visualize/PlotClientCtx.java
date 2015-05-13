@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -11,6 +12,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
@@ -44,15 +46,13 @@ public class PlotClientCtx implements Serializable {
     private static final long   LONG_HOLD_TIME= 15*1000;
     private static final AtomicLong _cnt= new AtomicLong(0);
 
-    private final String _key;
-    private final CacheKey _cacheKey;
-//    private volatile transient ImagePlot _plot= null;
     private volatile transient long _minimumHoldTime = -1;
     private volatile transient List<PlotImages> _allImagesList= new ArrayList<PlotImages>(10);
     private volatile long _lastTime;           // this is not worth locking, an overwrite if not big deal
 
+    private final String _key;
+    private final CacheKey _imagePlotCacheKey;
     private final List<Integer> _previousZoomList= new ArrayList<Integer>(15);
-//    private final AtomicReference<ImagePlot> _plot= new AtomicReference<ImagePlot>(null);
     private final AtomicReference<PlotImages>_images= new AtomicReference<PlotImages>(null);
     private final AtomicReference<PlotState>_state= new AtomicReference<PlotState>(null);
 
@@ -63,31 +63,29 @@ public class PlotClientCtx implements Serializable {
     public PlotClientCtx () {
         long cnt= _cnt.incrementAndGet();
         _key = "WebPlot-"+HOST_NAME+"--"+cnt;
-        _cacheKey= new StringKey(_key);
+        _imagePlotCacheKey = new StringKey(_key);
     }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    public ImagePlot getPlot() {
+    public ImagePlot getCachedPlot() {
         Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-        ImagePlot p= (ImagePlot)memCache.get(_cacheKey);
-        return p;
+        return (ImagePlot)memCache.get(_imagePlotCacheKey);
     }
 
 
     public void setPlot(ImagePlot p) {
         Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-        memCache.put(_cacheKey,p);
-//        _plot.set(p);
+        memCache.put(_imagePlotCacheKey,p);
         updateAccessTime();
         if (p!=null) initHoldTime();
     }
 
     public PlotImages getImages() { return _images.get(); }
     public void setImages(PlotImages images) {
-        _images.set(images);
+        _images.getAndSet(images);
         updateAccessTime();
         _allImagesList.add(images);
     }
@@ -100,7 +98,7 @@ public class PlotClientCtx implements Serializable {
     public String getKey() { return _key; }
 
     public void setPlotState(PlotState state) {
-        _state.set(state);
+        _state.getAndSet(state);
         updateAccessTime();
     }
     public PlotState getPlotState() { return _state.get(); }
@@ -120,12 +118,12 @@ public class PlotClientCtx implements Serializable {
         try {
             for(PlotImages images : allImages) {
                 for(PlotImages.ImageURL image : images) {
-                    delFile=  VisContext.convertToFile(image.getURL());
+                    delFile=  ServerContext.convertToFile(image.getURL());
                     delFile.delete(); // if the file does not exist, I don't care
                 }
                 String thumbUrl= images.getThumbnail()!=null ? images.getThumbnail().getURL(): null;
                 if (thumbUrl!=null) {
-                    delFile=  VisContext.convertToFile(images.getThumbnail().getURL());
+                    delFile=  ServerContext.convertToFile(images.getThumbnail().getURL());
                     delFile.delete(); // if the file does not exist, I don't care
                 }
             }
@@ -135,9 +133,8 @@ public class PlotClientCtx implements Serializable {
 
         _allImagesList= null;
         _previousZoomList.clear();
-//        _plot.set(null);
-        _images.set(null);
-        _state.set(null);
+        _images.getAndSet(null);
+        _state.getAndSet(null);
     }
 
 
@@ -145,7 +142,7 @@ public class PlotClientCtx implements Serializable {
 
 
     public boolean freeResources(Free freeType) {
-        ImagePlot p= getPlot();
+        ImagePlot p= getCachedPlot();
         if (p==null) return true;
         boolean doFree= false;
         long actualHoldTime= 0;
@@ -177,30 +174,26 @@ public class PlotClientCtx implements Serializable {
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();
                 Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
-                memCache.put(_cacheKey,null);
+                memCache.put(_imagePlotCacheKey, null);
             }
         }
         return doFree;
     }
 
-    public void extractColorInfo() {
+    public void extractColorInfo(ActiveFitsReadGroup frGroup) {
         RangeValues rv;
-        ImagePlot p= getPlot();
+        ImagePlot p= getCachedPlot();
         PlotState state= _state.get();
         if (p!=null) {
             if (p.isThreeColor()) {
-                for(int i=0; i<3; i++) {
-                    if (p.isColorBandInUse(i)) {
-                        FitsRead fr= p.getHistogramOps(i).getFitsRead();
-                        rv= fr.getRangeValues();
-                        state.setRangeValues(rv, PlotServUtils.cnvtBand(i));
-
+                for(Band band : new Band[] {Band.RED,Band.GREEN,Band.BLUE}) {
+                    if (p.isColorBandInUse(band, frGroup)) {
+                        state.setRangeValues(FitsRead.getDefaultRangeValues(), band);
                     }
                 }
             }
             else {
-                rv= p.getFitsRead().getRangeValues();
-                state.setRangeValues(rv, Band.NO_BAND);
+                state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
                 int id= p.getImageData().getColorTableId();
                 if (id==-1) id= 0;
                 state.setColorTableId(id);
@@ -237,7 +230,7 @@ public class PlotClientCtx implements Serializable {
         PlotState state= _state.get();
         long length= 0;
         for(Band band : state.getBands()) {
-            File f= VisContext.getWorkingFitsFile(state,band);
+            File f= PlotStateUtil.getWorkingFitsFile(state, band);
             if (f!=null) length+= f.length();
         }
         return Math.round((double)length/(double)FileUtil.K);
@@ -247,5 +240,6 @@ public class PlotClientCtx implements Serializable {
     public long getDataSizeMB() {
         return getDataSizeK()/1024;
     }
+
 }
 

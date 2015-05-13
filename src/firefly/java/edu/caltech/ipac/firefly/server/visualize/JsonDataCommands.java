@@ -56,7 +56,7 @@ public class JsonDataCommands {
 
 
             if (outfile==null) {
-                outfile= VisContext.convertToFile(name);
+                outfile= ServerContext.convertToFile(name);
             }
 
             try {

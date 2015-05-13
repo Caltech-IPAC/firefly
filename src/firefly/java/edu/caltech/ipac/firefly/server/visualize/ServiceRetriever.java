@@ -272,7 +272,7 @@ public class ServiceRetriever implements FileRetriever {
 
         public void run() {
             try {
-                _retFile.set(getDssPlot(_surveyKey, _circle, 3000));
+                _retFile.getAndSet(getDssPlot(_surveyKey, _circle, 3000));
             } catch (Exception e) {
                 Logger.warn(e, "Dss background retrieve failed");
             }
@@ -297,7 +297,7 @@ public class ServiceRetriever implements FileRetriever {
             try {
                 String desc = getIrisDesc(_surveyKey);
                 File f = getIrsaPlot(_surveyKey, _circle, IrsaImageParams.IrsaTypes.IRIS);
-                _retFile.set(new FileData(f, desc));
+                _retFile.getAndSet(new FileData(f, desc));
             } catch (Exception e) {
                 Logger.warn(e, "IRIS background retrieve failed");
 

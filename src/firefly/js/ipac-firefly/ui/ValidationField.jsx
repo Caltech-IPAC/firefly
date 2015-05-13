@@ -14,6 +14,13 @@ var ValidationField= React.createClass(
 
        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
+
+       propTypes: {
+           dispatcher: React.PropTypes.object,
+           fieldKey: React.PropTypes.string
+       },
+
+
        onChange(ev) {
 
            var validateState= this.getValidator()(ev.target.value);

@@ -7,7 +7,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -40,7 +40,7 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
         String filePath = req.getParam("filePath");
         if (!StringUtils.isEmpty(filePath)) {
-            return VisContext.convertToFile(filePath);
+            return ServerContext.convertToFile(filePath);
         } else {
             throw new DataAccessException("filePath parameter is not found");
         }

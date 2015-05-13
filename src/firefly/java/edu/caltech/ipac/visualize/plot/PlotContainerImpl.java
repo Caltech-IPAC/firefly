@@ -121,7 +121,7 @@ public class PlotContainerImpl implements PlotContainer {
         _plotPaint.addAll(0,newList);
     }
 
-    public void firePlotPaint(Plot p, Graphics2D g2) {
+    public void firePlotPaint(Plot p, ActiveFitsReadGroup frGroup, Graphics2D g2) {
         List<PlotPaintListener> newlist;
         PlotPaintListener listener;
         PlotPaintEvent ev;
@@ -134,7 +134,7 @@ public class PlotContainerImpl implements PlotContainer {
         for(Iterator<PlotPaintListener> i= newlist.iterator(); i.hasNext(); j++) {
             ev= new PlotPaintEvent(this, p, g2, j, total);
             listener = i.next();
-            listener.paint(ev);
+            listener.paint(ev, frGroup);
         }
     }
 

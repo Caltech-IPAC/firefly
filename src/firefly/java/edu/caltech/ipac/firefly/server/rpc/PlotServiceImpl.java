@@ -9,11 +9,11 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.server.ResourceManager;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.visualize.FileData;
 import edu.caltech.ipac.firefly.server.visualize.FileRetriever;
 import edu.caltech.ipac.firefly.server.visualize.FileRetrieverFactory;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
@@ -212,7 +212,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
                 }
                 if (f==null) throw new IOException("file is null");
                 rds = (new ResourceManager()).getIpacTableView(f);
-                rds.getMeta().setSource(VisContext.replaceWithPrefix(f));
+                rds.getMeta().setSource(ServerContext.replaceWithPrefix(f));
             }
             result = new WebPlotResult();
             result.putResult(WebPlotResult.RAW_DATA_SET, new DataEntry.RawDataSetResult(rds));

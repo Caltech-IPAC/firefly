@@ -23,7 +23,6 @@ import edu.caltech.ipac.firefly.server.query.TableResultSearch;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.AppProperties;
@@ -90,7 +89,7 @@ public class ShowResult extends BaseHttpServlet {
             }
             else {
                 f= findTable(data);
-                String fileParam= VisContext.replaceWithPrefix(f);
+                String fileParam= ServerContext.replaceWithPrefix(f);
                 url= makeTableURL(data.getCacheKey().toString(), fileParam, smallIconUrl);
             }
 
@@ -269,7 +268,7 @@ public class ShowResult extends BaseHttpServlet {
                 URLDownload.getDataToFile(url, f, false);
             }
             else if (params.containsKey(TABLE_FILE)) {
-                File fromFile= VisContext.convertToFile(params.get(TABLE_FILE),true);
+                File fromFile= ServerContext.convertToFile(params.get(TABLE_FILE), true);
                 FileUtil.copyFile(fromFile,f);
             }
         } catch (FailedRequestException e) {

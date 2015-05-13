@@ -5,6 +5,7 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -284,7 +285,7 @@ public class VectorObject implements ShapeObject {
     // ------------------  Methods  from PlotPaintListener ---------------
     // ===================================================================
 
-    public void paint(PlotPaintEvent ev) {
+    public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
         drawOnPlot( ev.getPlot(), ev.getGraphics() );
     }
     //===================================================================

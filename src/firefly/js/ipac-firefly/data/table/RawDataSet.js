@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * @author tatianag
  */
-"use strict";
+'use strict';
 
-import {TableMeta, HAS_ACCESS_CNAME} from './TableMeta.js';
-
-var StringUtils= require('ipac-firefly/util/StringUtils.js');
+import {TableMeta} from './TableMeta.js';
+import {parseHelper, checkNull} from '../../util/StringUtils.js';
 
 
 export class RawDataSet {
@@ -19,33 +18,33 @@ export class RawDataSet {
      * @param {String} dataSetString
      */
     constructor(meta, startingIndex, totalRows, dataSetString) {
-        this._meta = meta;
-        this._startingIndex = startingIndex;
-        this._totalRows = totalRows;
-        this._dataSetString = dataSetString;
+        this.metaP = meta;
+        this.startingIndexP = startingIndex;
+        this.totalRowsP = totalRows;
+        this.dataSetStringP = dataSetString;
     }
 
-    get meta() { return this._meta; }
-    set meta(value) { this._meta = value; }
-    get startingIndex() { return this._startingIndex; }
-    set startingIndex(value) { this._startingIndex = value; }
-    get totalRows() { return this._totalRows; }
-    set totalRows(value) { this._totalRows = value; }
-    get dataSetString() { return this._dataSetString; }
-    set dataSetString(value) { this._dataSetString = value; }
+    get meta() { return this.metaP; }
+    set meta(value) { this.metaP = value; }
+    get startingIndex() { return this.startingIndexP; }
+    set startingIndex(value) { this.startingIndexP = value; }
+    get totalRows() { return this.totalRowsP; }
+    set totalRows(value) { this.totalRowsP = value; }
+    get dataSetString() { return this.dataSetStringP; }
+    set dataSetString(value) { this.dataSetStringP = value; }
 
 
     static parse(s) {
-        const SPLIT_TOKEN= '--RawDataSet--';
-        const NL_TOKEN=  /---nl---/g;
+        const SPLIT_TOKEN = '--RawDataSet--';
+        const NL_TOKEN = /---nl---/g;
 
         try {
-            var sAry = StringUtils.parseHelper(s,4,SPLIT_TOKEN);
+            var sAry = parseHelper(s,4,SPLIT_TOKEN);
             var i= 0;
-            var startingIndex= sAry[i++];
-            var totalRows=     sAry[i++];
+            var startingIndex = sAry[i++];
+            var totalRows = sAry[i++];
             var meta= TableMeta.parse(sAry[i++]);
-            var dsTmp= StringUtils.checkNull(sAry[i++]);
+            var dsTmp= checkNull(sAry[i]);
             var dataSetString= dsTmp.replace(NL_TOKEN,'\n');
             return new RawDataSet(meta,startingIndex,totalRows,dataSetString);
         } catch (e) {

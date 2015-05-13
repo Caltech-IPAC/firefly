@@ -8,21 +8,15 @@ import edu.caltech.ipac.util.Assert;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Iterator;
@@ -49,22 +43,13 @@ public class PlotView extends JComponent implements PlotContainer,
 
 
 
-    private static final int MAX_CACHE_WIDTH = 1500;
-    private static final int MAX_CACHE_HEIGHT= 1500;
-    private static final long MAX_CACHE_SIZE= MAX_CACHE_WIDTH*MAX_CACHE_HEIGHT;
     public  static final String PRIMARY_PLOT_IDX= "PrimaryPlotIndex";
 
   private int                   _primaryIndex= 0;
   private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
- // private MouseCentral          _mouse     = new MouseCentral(this);
   private boolean               _mayChangeSize;
   private Color                 _fillColor= new JLabel().getBackground();
 
-  private BufferedImage         _cacheImage     = null;
-  private int                   _cacheWidth;
-  private int                   _cacheHeight;
-  private boolean               _paintFromCache= false;
-  private boolean               _paintByRepair = false;
   private PlotContainerImpl _plotContainer = new PlotContainerImpl();
 
 
@@ -75,11 +60,6 @@ public class PlotView extends JComponent implements PlotContainer,
   public PlotView() {
       this(true);
   }
-
-  public Color getFillColor() {
-      return _fillColor;
-  }
-
 
 
   /**
@@ -101,7 +81,6 @@ public class PlotView extends JComponent implements PlotContainer,
         _propChange= null;
         //_mouse= null;
         _fillColor= null;
-        _cacheImage= null;
     }
 
   /**
@@ -135,7 +114,6 @@ public class PlotView extends JComponent implements PlotContainer,
     List<Plot> plots= _plotContainer.getPlotList();
     plots.remove(p);
     if (p == primary) {
-         _paintFromCache= false;
          _primaryIndex= 0;
          if (plots.size() > 1) configureForPlot(plots.get(0));
     }
@@ -145,12 +123,6 @@ public class PlotView extends JComponent implements PlotContainer,
     p.removePlotStatusListener(this);
     fireStatusChanged(PlotContainer.StatusChangeType.REMOVED, p);
   }
-
-    public void clearAllPlots() {
-        List<Plot> plots= _plotContainer.getPlotList();
-        Plot allPlots[]= plots.toArray(new Plot[plots.size()]);
-        for(Plot p : allPlots) removePlot(p);
-    }
 
   /**
    * Repair (redraw) an area of the primary plot.
@@ -178,76 +150,10 @@ public class PlotView extends JComponent implements PlotContainer,
    * @param r the are to repair
    */
   public void repair(Rectangle r) {
-     _paintFromCache= false;
-     _paintByRepair = true;
      if (r == null) repaint();
      else           repaint(r); 
   }
 
-
-  /**
-   * This method is called by the base class in response to a repaint call.
-   * Therefore any repair call ultimately ends up here. <i>WARNING- never
-   * call this method directly.</i> It is only public because the base class
-   * requires it. <br>
-   * paintComponent does the following:
-   * <ul> 
-   * <li>Loops through all it plots searching for the primary plot.  The
-   *     reason for the loop is because i plan (possibly) in the future 
-   *     to allow multiple plots to draw.
-   * <li>Find the plot to draw.
-   * <li>Make sure the clip is not greater then the size of the plot to draw.
-   * <li>If this <code>PlotView</code> is showing then call the 
-         <code>Plot</code>'s paint method.
-   * <li>If this <code>PlotView</code> is not showing the call the 
-          <code>Plot</code>'s paint method anyway but make sure the 
-          <code>Plot</code>'s showing flag set to false. (This allows the
-          <code>Plot</code> to draw its overlays).  Make sure the 
-          <code>Plot</code>'s showing flag is returned to its original state.
-   * </ul> 
-   */
-  public void paintCache() {
-
-     Plot primaryP= getPrimaryPlot();
-     int  pWidth  = primaryP.getScreenWidth();
-     int  pHeight = primaryP.getScreenHeight();
-
-     long testSize= (long)pWidth*(long)pHeight;
-     if (testSize < MAX_CACHE_SIZE  && !GraphicsEnvironment.isHeadless() ) {
-        //if (_cacheImage == null             ||
-        //    _cacheImage.getWidth() < pWidth ||
-        //    _cacheImage.getHeight()< pHeight ) {
-              //_cacheImage= new BufferedImage( pWidth, pHeight,
-              //                             BufferedImage.TYPE_BYTE_INDEXED);
-         GraphicsEnvironment ge=GraphicsEnvironment.getLocalGraphicsEnvironment();
-         GraphicsDevice gd= ge.getDefaultScreenDevice();
-         GraphicsConfiguration config= gd.getDefaultConfiguration();
-         try {
-             _cacheImage= config.createCompatibleImage(pWidth,pHeight);
-             //}
-             //else {
-             //   _cacheImage.flush();
-             //}
-             Graphics2D g2= _cacheImage.createGraphics();
-             g2.setTransform(new AffineTransform());
-             g2.clearRect(0,0,_cacheImage.getWidth(),_cacheImage.getHeight());
-             g2.setClip(0,0, pWidth, pHeight );
-             _cacheWidth=  pWidth;
-             _cacheHeight= pHeight;
-
-             doPaint(g2);
-             _paintFromCache= true;
-         } catch (IllegalArgumentException e) {
-             _paintFromCache= false;
-             _cacheImage= null;
-         }
-     }
-     else {
-        _paintFromCache =false;
-        _cacheImage= null;
-     }
-//--------------------
-  }
 
   public void doPaint(Graphics2D g2) {
        PlotGroup plotGroup;
@@ -268,20 +174,9 @@ public class PlotView extends JComponent implements PlotContainer,
   public void paintComponent(Graphics g) {
        Graphics2D g2 = (Graphics2D)g;
        clearOuterArea(g2);
-       if (_paintFromCache) {
-           g2.drawImage(_cacheImage, 0, 0, _cacheWidth, _cacheHeight, this);
-       }
-       else {
-           doPaint(g2);
-       }
-       if (!_paintFromCache && !_paintByRepair && isComplexPaint() ) 
-                paintCache();
- 
-       _paintByRepair= false;
+      doPaint(g2);
   }
 
-
-  //public MouseCentral getMouseCentral() { return _mouse; }
 
   /**
    * Return the plot that is primary.  This is the one that the user sees.
@@ -305,53 +200,6 @@ public class PlotView extends JComponent implements PlotContainer,
       return p;
   }
 
-  /**
-   * Return the number plots in this <code>PlotView</code>'s list.
-   * @return int the number of plots in the list
-   */
-  public int getPlotCount() { return _plotContainer.getPlotList().size(); }
-
-  /**
-   * Set the plot that the user sees.  This plot must already be in the list.
-   * If it is not in the list then the primary plot does not change.
-   * This new primary plot will be displayed on the <code>PLotView</code>.
-   * This method call <code>setPrimaryPlotIndex</code> which will call 
-   * a fire a PropertyChange event "PRIMARY_PLOT_IDX".
-   * @param p the Plot to becomes primary
-   */
-  public void setPrimaryPlot(Plot p) { 
-     int idx= _plotContainer.getPlotList().indexOf(p);
-     if (idx > -1) {
-         setPrimaryPlotIndex(idx);
-     }
-  }
-
-  /**
-   * Change the primary plot by setting a new index. 
-   * This new primary plot will be displayed on the <code>PLotView</code>.
-   * This method will fire a PropertyChange event "PRIMARY_PLOT_IDX".
-   * @param i the index of the Plot to becomes primary
-   */
-  public void setPrimaryPlotIndex(int i) {
-      List<Plot> plots= _plotContainer.getPlotList();
-      Assert.tst(i < plots.size() && i >=0);
-      int oldIndex= _primaryIndex;
-      Plot oldPlot;
-      _primaryIndex= i;
-      _propChange.firePropertyChange (PRIMARY_PLOT_IDX, oldIndex, _primaryIndex);
-      try {
-         oldPlot= plots.get(oldIndex);
-      } catch (IndexOutOfBoundsException e) {
-         oldPlot= null;
-      }
-      configureForPlot(plots.get(_primaryIndex), oldPlot );
-  }
-
-  /**
-   * Get the index of the primary plot. 
-   * @return int the index of the primary plot
-   */
-  public int  getPrimaryPlotIndex()      { return _primaryIndex;}
 
   /**
    * return a iterator though all the plots in this <code>PLotView</code>. 
@@ -395,30 +243,13 @@ public class PlotView extends JComponent implements PlotContainer,
       //                             } } );
   }
 
-  /**
-   * Zoom the primary all the plots up or down.  
-   * The zoom factor is set on the individual plots.
-   * @param dir the direction to zoom.  Must be either the constant
-   * <code>Plot.UP</code> or <code>Plot.DOWN</code>.
-   */
-  public void zoomAll(int dir) {
-      //DialogSupport.setWaitCursor(true);
-      Assert.tst( dir==Plot.UP || dir==Plot.DOWN);
-      Plot p;
-      Plot primary= getPrimaryPlot();
-      zoom(dir);
-      for(Iterator i= _plotContainer.getPlotList().iterator(); (i.hasNext()) ;) {
-         p= (Plot)i.next();
-         if (p!=primary) p.zoom(dir);
-      }
-      configureForPlot(getPrimaryPlot());
-      //DialogSupport.setWaitCursor(false);
-  }
+   public void firePlotPaint(Graphics2D g2) {
+       Assert.argTst(false, "should never be called");
+       _plotContainer.firePlotPaint(getPrimaryPlot(), null, g2);
+   }
 
-   public void firePlotPaint(Graphics2D g2) { _plotContainer.firePlotPaint(getPrimaryPlot(), g2); }
-
-    public void firePlotPaint(Plot p, Graphics2D g2) {
-        _plotContainer.firePlotPaint(getPrimaryPlot(), g2);
+    public void firePlotPaint(Plot p, ActiveFitsReadGroup frGroup, Graphics2D g2) {
+        _plotContainer.firePlotPaint(getPrimaryPlot(), frGroup, g2);
     }
     // ========================================================================
   // ----------------- PlotPaintListener listener methods -------------------
@@ -477,8 +308,8 @@ public class PlotView extends JComponent implements PlotContainer,
   // ========================================================================
   // ----------------- Methods form PlotPaintListener interface -------------
   // ========================================================================
-   public void paint(PlotPaintEvent ev) {
-       getPrimaryPlot().paint(ev);
+   public void paint(PlotPaintEvent ev, ActiveFitsReadGroup frGroup) {
+       getPrimaryPlot().paint(ev, frGroup);
    }
 
   // ------------------------------------------------------------
@@ -525,7 +356,6 @@ public class PlotView extends JComponent implements PlotContainer,
          setMaximumSize( dim);
          setSize( dim);
      }
-     paintCache();
       if (getParent()!=null) {
           (getParent()).invalidate();
           (getParent().getParent()).validate();

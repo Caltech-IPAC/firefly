@@ -14,8 +14,8 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.dyn.DynUtils;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.cache.Cache;
@@ -53,7 +53,7 @@ public class TableResultSearch extends DynQueryProcessor {
         addSearchParmsToData(req, isUpload);
         File f= null;
         if  (req.containsParam(LOAD_TABLE)) {
-            f= VisContext.convertToFile(req.getParam(LOAD_TABLE));
+            f= ServerContext.convertToFile(req.getParam(LOAD_TABLE));
         }
         return f;
     }

@@ -57,7 +57,6 @@ public class CropAndCenter
             System.out.println("RBH do_crop  min_x = " + min_x +
                     "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
         }
-        Fits inFits = in_fits_read.getFits();
         BasicHDU myHDU = in_fits_read.getHDU();
 
         BasicHDU out_HDU = null;
