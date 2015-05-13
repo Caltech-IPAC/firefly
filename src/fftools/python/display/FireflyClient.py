@@ -16,13 +16,7 @@ class FireflyClient(WebSocketClient):
 	"data":['channel']
     }
 
-    ws = {}
-    #r=requests.Session()
-    #urlroot='http://127.0.0.1:8080/fftools/sticky/CmdSrv'
-    #urlWS='ws://localhost:8080/fftools/sticky/firefly/events'
     fftoolsCmd = '/fftools/sticky/CmdSrv'
-    fftoolsWsEvt = '/fftools/sticky/firefly/events'
-    #host = 'http://127.0.0.1:8080/'
     true=1
     false=0
 
@@ -30,17 +24,15 @@ class FireflyClient(WebSocketClient):
     #the constructor, define instance variables for the object
     def __init__(self,host, channel=None):
              #assign instance variables
-
              if host.startswith("http://"):
                  host=host[7:]
 
              self.thisHost = host
-             url = 'ws://'+host+self.fftoolsWsEvt
+             #web socket event listener url
+             url = 'ws://'+host+ '/fftools/sticky/firefly/events'
              WebSocketClient.__init__(self, url)
              self.urlroot ='http://' +host+self.fftoolsCmd
              self.channel=channel
-             self.url=url
-
              self.session=requests.Session()
              self.connect()
 
@@ -57,7 +49,7 @@ class FireflyClient(WebSocketClient):
         sevent = json.loads(m.data.decode('utf8'))
         eventName= sevent['name']
         eventScope = sevent['scope']
-        eventData = sevent['data']
+        #eventData = sevent['data']
         eventDataType = sevent['data']
 
         if (eventName not in self.serverEvents['name']):
@@ -75,9 +67,6 @@ class FireflyClient(WebSocketClient):
     #overridde the superclass's method
     def received_message(self, m):
         #opcode = m.opcode
-        #print ('opcode='+str(opcode))
-
-        #self.verifyMessage(m)
         sevent = json.loads(m.data.decode('utf8'))
         eventName= sevent['name']
         eventData = sevent['data']
@@ -97,7 +86,7 @@ class FireflyClient(WebSocketClient):
              self.session.cookies['seinfo'] = seinfo
              self.onConnected( self.channel)
         except:
-           #self.msgCallback(m.data)
+
            self.verifyMessage(m)
 
     def msgCallback(self, message):
@@ -105,7 +94,9 @@ class FireflyClient(WebSocketClient):
 
     def onConnected(self,  channel):
        #open the browser
-       webbrowser.open('http://localhost:8080/fftools/app.html?id=Loader&channelID=' + channel)
+       url = 'http://'+self.thisHost+'/fftools/app.html?id=Loader&channelID=' + channel
+       #webbrowser.open('http://localhost:8080/fftools/app.html?id=Loader&channelID=' + channel)
+       webbrowser.open(url)
 
     def waitForEvents(self):
           WebSocketClient.run_forever()
@@ -126,16 +117,12 @@ class FireflyClient(WebSocketClient):
         self.close()
 
     def uploadImage(self, path):
-        print(self.host)
+
         url='http://'+self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
-        #url='http://localhost:8080/fftools/sticky/Firefly_FileUpload?preload=true'
-        print(url)
         files = {'file': open(path, 'rb')}
-        #m= self.session.json()['form']
         result=self.session.post(url,files=files)#, headers={'Content-Type': files.content_type} )#  data=path)
-        #return (r.json()['form'])
-        print('status='+str(result.status_code) )
-        print('result='+result.text)
+        #print('status='+str(result.status_code) )
+        #print('result='+result.text)
         index = result.text.find('$')
         return result.text[index:]
 
@@ -240,19 +227,7 @@ class FireflyClient(WebSocketClient):
         #do something
         return
 
-    def getVersion(self):
-       cur_version = sys.version_info
 
-       if 'major=3' in cur_version:
-           return 3
-       else:
-           return 2
 
-    def inputText(self,string):
-        version = self.getVersion()
-        if version==3:
-            input(string)
-        else:
-            raw_input(string)
 
 
