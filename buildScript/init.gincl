@@ -24,21 +24,21 @@ task loadConfig {
       configRepo.merge(ConfigRepo.parse(project.env, project.appConfig))
     }
 
-    if (file("$rootDir/buildScript/build.config").exists()) {
-      configRepo.merge(ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config")))
-    }
-
     project.ext.appConfigProps = configRepo.flatten();
 //    appConfigProps.each{ k, v -> println "${k} => ${v}" }
+
+    if (file("$rootDir/buildScript/build.config").exists()) {
+      def buildProps = ConfigRepo.parse(project.env, file("$rootDir/buildScript/build.config")).flatten()
+      buildProps.each { k, v -> project.ext.set(k,v)}
+    }
 
     if (file("$gradle.gradleUserHomeDir/build.config").exists()) {
       logger.info ">> loading user's build.config for env: $project.env"
       def overrides = ConfigRepo.parse(project.env, file("$gradle.gradleUserHomeDir/build.config")).flatten()
-      appConfigProps.putAll(overrides)
+      overrides.each { k, v -> project.ext.set(k,v)}
     }
     appConfigProps.putAll(project.ext.properties)
     appConfigProps.putAll(System.properties)
-
 //    appConfigProps.each{ k, v -> println "${k} => ${v}" }
 
   }
