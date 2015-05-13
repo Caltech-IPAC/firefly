@@ -3,6 +3,9 @@ __author__ = 'zhang'
 
 from FireflyClient import *
 
+
+
+
 try:
 
     path="/Users/zhang/lsstDev/data/"
@@ -12,24 +15,29 @@ try:
     host ='localhost:8080'
     fc =FireflyClient(host)
 
-    pathInfo= fc.uploadImage(path+"c.fits")
-    print(pathInfo)
+    fitsPathInfo= fc.uploadImage(path+"c.fits")
+
 
     #push a fits file
-    raw_input("Load a FITS file.   Press Enter to continue...")
-    fc.showFits( path+"c.fits" )
+    #raw_input("Load a FITS file.   Press Enter to continue...")
+    fc.inputText("Load a FITS file.   Press Enter to continue...")
+    fc.showFits( fitsPathInfo )
 
+    regPathInfo= fc.uploadImage(path+"c.reg")
     raw_input("Overlay a region file.   Press Enter to continue...")
-    fc.overylayRegion( path+"c.reg" )
+    fc.overylayRegion( regPathInfo )
 
 
 
 
-    raw_input("Add extension.   Press Enter to continue...")
+    #raw_input("Add extension.   Press Enter to continue...")
+    fc.inputText("Add extension.   Press Enter to continue...")
     fc.addExtension("AREA_SELECT", "testButton","myPlotID",  "myID")
 
-    raw_input("Load table file.   Press Enter to continue...")
-    fc.showTable( path+"2mass-m31-2412rows.tbl" )
+    tablePathInfo = fc.uploadImage(path+"2mass-m31-2412rows.tbl")
+    #raw_input("Load table file.   Press Enter to continue...")
+    fc.inputText("Load table file.   Press Enter to continue...")
+    fc.showTable( tablePathInfo )
 
 
     #open a second browser window
@@ -37,8 +45,9 @@ try:
     fc1 =FireflyClient(host, channel='newChannel')
 
     #push a fits file
-    raw_input("Load a FITS file.   Press Enter to continue...")
-    fc1.showFits( path+"c.fits" )
+    #raw_input("Load a FITS file.   Press Enter to continue...")
+    fc.inputText("Load a FITS file.   Press Enter to continue...")
+    fc1.showFits( fitsPathInfo )
 
 
 

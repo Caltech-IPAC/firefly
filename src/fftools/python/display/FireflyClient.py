@@ -6,6 +6,7 @@ from ws4py.client.threadedclient import WebSocketClient
 import requests
 import webbrowser
 import json
+import sys
 class FireflyClient(WebSocketClient):
 
     #class variables
@@ -29,9 +30,11 @@ class FireflyClient(WebSocketClient):
     #the constructor, define instance variables for the object
     def __init__(self,host, channel=None):
              #assign instance variables
+
              if host.startswith("http://"):
                  host=host[7:]
 
+             self.thisHost = host
              url = 'ws://'+host+self.fftoolsWsEvt
              WebSocketClient.__init__(self, url)
              self.urlroot ='http://' +host+self.fftoolsCmd
@@ -40,6 +43,7 @@ class FireflyClient(WebSocketClient):
 
              self.session=requests.Session()
              self.connect()
+
 
     #overridde the superclass's method
     def opened(self):
@@ -122,11 +126,18 @@ class FireflyClient(WebSocketClient):
         self.close()
 
     def uploadImage(self, path):
-        url=self.urlroot + 'fftools/sticky/Firefly_FileUpload?preload=true'
-        result=self.session.post(url, data=path)
+        print(self.host)
+        url='http://'+self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
+        #url='http://localhost:8080/fftools/sticky/Firefly_FileUpload?preload=true'
+        print(url)
+        files = {'file': open(path, 'rb')}
+        #m= self.session.json()['form']
+        result=self.session.post(url,files=files)#, headers={'Content-Type': files.content_type} )#  data=path)
         #return (r.json()['form'])
-        print(result.status_code)
-        return result.text
+        print('status='+str(result.status_code) )
+        print('result='+result.text)
+        index = result.text.find('$')
+        return result.text[index:]
 
 
     def uploadTable(self, path):
@@ -229,5 +240,19 @@ class FireflyClient(WebSocketClient):
         #do something
         return
 
+    def getVersion(self):
+       cur_version = sys.version_info
+
+       if 'major=3' in cur_version:
+           return 3
+       else:
+           return 2
+
+    def inputText(self,string):
+        version = self.getVersion()
+        if version==3:
+            input(string)
+        else:
+            raw_input(string)
 
 
