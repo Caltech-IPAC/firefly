@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImagePlot extends Plot implements Serializable {
 
+    private static final int CORE_CNT= Runtime.getRuntime().availableProcessors();
     public static final int  SQUARE = 1500; // this is the size of the image data tiles
 
     private Projection     _projection;
@@ -197,11 +198,11 @@ public class ImagePlot extends Plot implements Serializable {
     public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
-            if (_imageData.size()<10) {
+            if (_imageData.size()<4) {
                 for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
             }
             else {
-                ExecutorService executor = Executors.newFixedThreadPool(8);
+                ExecutorService executor = Executors.newFixedThreadPool(CORE_CNT/2);
                 for(ImageData id : _imageData)  {
                     final ImageData idSave= id;
                     Runnable worker = new Runnable() {
