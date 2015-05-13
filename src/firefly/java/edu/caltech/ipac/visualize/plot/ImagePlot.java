@@ -198,11 +198,11 @@ public class ImagePlot extends Plot implements Serializable {
     public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
-            if (_imageData.size()<4) {
+            if (_imageData.size()<4 || CORE_CNT<4) {
                 for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
             }
             else {
-                ExecutorService executor = Executors.newFixedThreadPool(CORE_CNT/2);
+                ExecutorService executor = Executors.newFixedThreadPool((CORE_CNT/2)+1);
                 for(ImageData id : _imageData)  {
                     final ImageData idSave= id;
                     Runnable worker = new Runnable() {
