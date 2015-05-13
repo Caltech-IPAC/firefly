@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -29,7 +28,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Date: Feb 16, 2011
@@ -70,9 +68,9 @@ public class AnyFileUpload extends BaseHttpServlet {
 
                 // creating destDir
                 if (!StringUtils.isEmpty(dest)) {
-                    destDir = VisContext.convertToFile(dest);
+                    destDir = ServerContext.convertToFile(dest);
                 } else if (ext.equals(".fits")) {
-                    destDir = VisContext.getVisCacheDir();
+                    destDir = ServerContext.getVisCacheDir();
                 }
                 if (!destDir.exists()) {
                     sendReturnMsg(res, 400, "Destination path does not exists: " + dest, "");
@@ -80,7 +78,7 @@ public class AnyFileUpload extends BaseHttpServlet {
 
                 try {
                     final File uf = File.createTempFile("upload_", ext, destDir);
-                    String retFName = VisContext.replaceWithPrefix(uf);
+                    String retFName = ServerContext.replaceWithPrefix(uf);
                     UploadFileInfo fi= new UploadFileInfo(retFName,uf,item.getName(),item.getContentType());
                     String fileCacheKey= overrideKey!=null ? overrideKey : retFName;
                     UserCache.getInstance().put(new StringKey(fileCacheKey), fi);

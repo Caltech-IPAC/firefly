@@ -381,7 +381,7 @@ public class ServerContext {
                     retval= new File(getIrsaRoot(), relFile);
                 }
                 else if (prefix.equals(WEBAPP_ROOT)) {
-                    String rp= getRequestOwner().getRequest().getRealPath(relFile);
+                    String rp= getRequestOwner().getRequestAgent().getRealPath(relFile);
                     retval= new File(rp);
                 }
                 else if (prefix.equals(SEARCH_PATH_PREFIX)) {
