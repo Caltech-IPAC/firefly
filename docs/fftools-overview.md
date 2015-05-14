@@ -7,7 +7,7 @@ Firefly tools is an API that can me use from JavaScript. It allows you to user t
 
  - Fits Visualizer
  - Table
- -  [XY Plotter](#xyplot)
+ - [XY Plotter](#XY-Plot-Visualization)
   
  
 Beyond that some of the components can be setup to share the same data model.  Therefore you can do the following combinations.
@@ -40,31 +40,30 @@ following
 `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
     parameters:
     
-| Parameter  | Description |
-| ---------- | ----------- |
-| `div` | The div to put the ImageViewer in. |
-| `group` (optional) | The plot group to associate this image viewer. All ImageViewers with the same group name will  operate together for zooming, color, etc. |
-| *return*  | an ImageViewer object |
+| Parameter  | type | Description |
+| ---------- | ---- | ----------- |
+| `div` | string |The div to put the ImageViewer in. |
+| `group` | string (optional) | The plot group to associate this image viewer. All ImageViewers with the same group name will  operate together for zooming, color, etc. |
+| *return*  | ImageViewer | an ImageViewer object |
 
 
 `ImageViewer` has the follows methods.
 
 | Method | Description |
 | ---------- | ----------- |
-| `plot` | plot a fits images |
-| `plotURL` | convenience method to plot a url |
-| `plotFile` | convenience method to plot a file on the server |
-| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
-| `setDefaultParams`  |  set param that will apply to call `plot` calls |
-| `serializeRangeValues`  |  make a serialized range values object 
+| `plot()` | plot a fits images |
+| `plotURL()` | convenience method to plot a url |
+| `plotFile()` | convenience method to plot a file on the server |
+| `plotFileOrURL()` | convenience method reference a file to plot by both URL and file |
+| `setDefaultParams()`  |  set param that will apply to call `plot` calls |
 
 
 
 #####ImageViewer.plot() method
 
 The following is a list of possible params for the ImageViewer plotting. Almost all parameters are optional.
-    Note that the request `Type` parameter can
-    be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
+ Note that the request `Type` parameter can
+ be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
 
 | Parameter  | Description |
 | ---------- | ----------- |
@@ -84,8 +83,7 @@ Options are:
  - **URL**: Retrieve and plot the file from the specified URL. Required if Type==URL or if you want to plot a URL.
  The url can be absolute or relative. If it is relative then one of two things happen.
     - The url is made absolute based on the host web page url. 
-    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)` 
-       
+    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)`        
  - **Service**
     - Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.
 Required if Type=SERVICE or if you want to use a service
@@ -93,7 +91,6 @@ Required if Type=SERVICE or if you want to use a service
     - WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.
     - The general syntax is `lon;lat;coordinate_sys`, e.g. `'12.2;33.4;EQ_J2000'` or `'11.1;22.2;GALACTIC'`
     - coordinate system can be: `'EQ_J2000'`, `'EQ_B1950'`, `'EC_J2000'`, `'EC_B1950'`, `'GALACTIC'`, or `'SUPERGALACTIC'`;
-    
  - **SizeInDeg**  The radius or side (in degrees) depending of the service type, used with `Type===SERVICE`
  -  **SurveyKey**:  Required if `Type==='SERVICE'`
 The value of SurveyKey depends on the value of "Service".
@@ -167,6 +164,32 @@ Note-See documentation on WorldPt to find proper syntax
  - **SurveyKeyAl**: TODO: Document this param</td>
  - **UserDesc**: TODO: Document this param</td>
  - **UniqueKey**: TODO: Document this param
+<br>
+Examples- 
+
+```js
+var primaryViewer= firefly.makeImageViewer('primaryID');
+primaryViewer.plot({
+    "URL"       : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits",
+    "Title"     : "Some WISE image",
+    "ZoomType"  : "TO_WIDTH"
+});
+```
+*or*
+```js
+var iv= firefly.makeImageViewer("serviceHere","group1");
+iv.plot( {  "Type"      : "SERVICE",
+            "Service"   : "TWOMASS",
+            "UserDesc"  : "Test",
+            "Title"     : "2mass from service",
+            "ZoomType"  : "STANDARD",
+            "InitZoomLevel" : "1",
+            "GridOn"     : "true",
+            "SurveyKey"  : "k",
+            "WorldPt"    : "10.68479;41.26906;EQ_J2000",
+            "SizeInDeg"  : ".12",
+            "AllowImageSelection" : "true" } );
+```
 
 
 #####ImageViewer.plotURL() method
@@ -204,61 +227,46 @@ Set parameters that will apply to call future FITS plots. See the documentation 
 
 
 
-####ExternalViewer
+####ExternalViewer and ExpandedViewer 
 
 `firefly.getExternalViewer()` - Get access to the firefly tools viewer.  Used to ask it to plot a file. The firefly tools viewer will run in another tab.
+ 
+ `firefly.getExpandedViewer()` - plot a file in the expanded viewer.  This is the viewer that you used to popout an image to full screen in the same tab.  This is a little used feature.
+   
+Both viewers have the same methods.
     
 | Method  | Description |
 | ---------- | ----------- |
-| `plot` | plot a fits images |
-| `plotURL` | convenience method to plot a url |
-| `plotFile` | convenience method to plot a file on the server |
-| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
-| `setDefaultParams`  |  set param that will apply to call `plot` calls |
-| `serializeRangeValues`  |  make a serialized range values object 
-
-See the ImageViewer for the details of each method.
-
-
-####ExpandedViewer
-
-`firefly.getExpandedViewer()` - plot a file in the expanded viewer.  This is the viewer that you used to popout an image to full screen in the same tab.  This is a little used feature.
-
-    
-| Method  | Description |
-| ---------- | ----------- |
-| `plot` | plot a fits images |
-| `plotURL` | convenience method to plot a url |
-| `plotFile` | convenience method to plot a file on the server |
-| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
-| `setDefaultParams`  |  set param that will apply to call `plot` calls |
-| `serializeRangeValues`  |  make a serialized range values object 
+| `plot()` | plot a fits images |
+| `plotURL()` | convenience method to plot a url |
+| `plotFile()` | convenience method to plot a file on the server |
+| `plotFileOrURL()` | convenience method reference a file to plot by both URL and file |
+| `setDefaultParams()`  |  set param that will apply to call `plot` calls |
 
 See the ImageViewer for the details of each method.
 
 #####firefly.serializeRangeValues() method
 
+`firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
-`firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string,
-    for use with the "RangeValues" parameter
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
+| stretchType | string | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
+| lowerValue  |number | lower value of stretch, based on stretchType |
+| upperValue  |number | upper value of stretch, based on stretchType |
+| algorithm | string | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
+| *return* | string | a serialized version of range values to be passed as a viewer parameter |
 
-| Parameter  | Description |
-| ---------- | ----------- |
-| stretchType (string) | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
-| lowerValue (number) | lower value of stretch, based on stretchType |
-| upperValue (number) | upper value of stretch, based on stretchType |
-| algorithm | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
-
-example:
+Example:
                 
                 
 ```js
-iv.plot( {  "Type"      : "SERVICE",
-            "Service"   : "TWOMASS",
-            "SurveyKey" : "k",
-            "ObjectName": "m33",
-            "Title"     : "FITS Data",
-            "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
+iv.plot( {  'Type'      : 'SERVICE',
+            'Service'   : 'TWOMASS',
+            'SurveyKey' : 'k',
+            'ObjectName': 'm33',
+            'Title'     : 'FITS Data',
+            'RangeValues' : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
             });
 ```
 
@@ -328,7 +336,6 @@ The Table tools currently supports the following file formats:
 
 
 ###XY Plot Visualization
-
 *todo put xy plot visualization docs here*
 
 ###Adding Extensions to FITS viewer
