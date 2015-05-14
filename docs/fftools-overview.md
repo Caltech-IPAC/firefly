@@ -327,7 +327,6 @@ The Table tools currently supports the following file formats:
 
 
 
-[xyplot]:
 ###XY Plot Visualization
 
 *todo put xy plot visualization docs here*
@@ -341,53 +340,30 @@ The Table tools currently supports the following file formats:
 *todo put event docs here*
 
 ###Connecting FITS Viewers to table
-<ul>
-    <code>firefly.addDataViewer(params, div)</code> - add a data viewer to a div<br>
-    <table style="font-size: smaller;">
-        <tr>
-            <td><span class="paramsTitle">Parameters:</span></td>
-        </tr>
-        <tr>
-            <td><span class="pName">params-</span></td>
-            <td>Plotting parameters for FITS Viewer plus additional parameters.
-                In addition to the standard ImageViewer parameters the following are also supported.
 
-                <table cellspacing=5 class="requestDoc">
-                    <tr>
-                        <td>QUERY_ID</td>
-                        <td class="paramsDesc">Required. This is the string that connects this DataViewer to the table.
-                            It should be
-                            the same string that you specified as the div parameter when you created the table
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>DataSource</td>
-                        <td class="paramsDesc">Required. How the fits file is accessed. Can be URL, .....
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>DataColumn</td>
-                        <td class="paramsDesc">Required. Column where to find the file name
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>MinSize</td>
-                        <td class="paramsDesc">Required. This parameter is required but will probably not be necessary
-                            in the future. Needs
-                            to the a width and height in the form "widthXheight". For example "100X100".
-                        </td>
-                    </tr>
-                </table>
-            </td>
+If you have created a table, and that table has image metadata so that a line in the table references a fits file, then you can connect a FITS ImageViewer to the table.
 
-        </tr>
-        <tr>
-            <td><span class="pName">div-</span></td>
-            <td>The div to put the ImageViewer in.</td>
-        </tr>
-        <td class="ret">examples:</td>
-        <td>
-            <pre>
+`firefly.addDataViewer(params, div)` 
+
+
+| parameters | type        |
+| ---------- | ----------- |
+|params      | object literal |
+|div         | string, the div to put the image viewer into |
+
+parameters:
+
+Plotting parameters for FITS Viewer plus additional parameters. In addition to the standard ImageViewer parameters the following are also supported.
+
+ - **QUERY_ID**: Required. This is the string that connects this DataViewer to the table.
+                            It should be the same string that you specified as the div parameter when you created the table
+ - **DataSource**: Required. How the fits file is accessed. Can be URL, .....
+ - **DataColumn**: Required. Column where to find the file name
+ - **MinSize**: Required. This parameter is required but will probably not be necessary in the future. Needs
+                            to the a width and height in the form "widthXheight". 
+                            For example "100X100".
+    
+```js
             firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
                              "tableHere");
 
@@ -398,91 +374,50 @@ The Table tools currently supports the following file formats:
                                     "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear"),
                                     "QUERY_ID"    : "tableHere"  },
                                    "previewHere" );
-            </pre>
-        </td>
-    </table>
+```
 
-    <code>firefly.addCoveragePlot(params, div)</code> - add a coverage plot to a div<br>
-    <table style="font-size: smaller;">
-        <tr>
-            <td><span class="paramsTitle">Parameters:</span></td>
-        </tr>
-        <tr>
-            <td><span class="pName">params-</span></td>
-            <td>Plotting parameters for FITS Viewer plus additional parameters.
-                In addition to the standard ImageViewer parameters the following are also required.
+###Connecting Coverage plot to table
 
-                <table cellspacing=5 class="requestDoc">
-                    <tr>
-                        <td>QUERY_ID</td>
-                        <td class="paramsDesc">This is the string that connects this DataViewer to the table. It should
-                            be
-                            the same string that you specified as the div parameter when you created the table
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>MinSize</td>
-                        <td class="paramsDesc">This parameter is required but will probably not be necessary in the
-                            future. Needs
-                            to the a width and height in the form "widthXheight". For example "100X100".
-                        </td>
-                    </tr>
-                </table>
-        </tr>
-        <tr>
-            <td colspan="2">Coverage is computed by looking at columns in the tables. The coverage can show coverage for
-                point sources
-                by showing an x for the RA and Dec. It can also show a box if the four corners are specified. If you use
-                the default
-                column names you do not have to specify how to determine the center or the four corners.
-            </td>
-        </tr>
-        <tr>
-            <td><span class="pName">params to <br>compute coverage</span></td>
-            <td>
-                <table cellspacing=5 class="requestDoc">
-                    <tr>
-                        <td>CornerColumns</td>
-                        <td class="paramsDesc">
-                            Determines if the coverage will use the box style and what corners will be used.
+`firefly.addCoveragePlot(params, div)` - add a coverage plot to a div
+
+| parameters | type        |
+| ---------- | ----------- |
+|params      | object literal |
+|div         | string, the div to put the image viewer into |
+
+param:
+
+Plotting parameters for FITS Viewer plus additional parameters. In addition to the standard ImageViewer parameters the following are also required.
+
+ - **QUERY_ID**: Required. This is the string that connects this DataViewer to the table.
+                            It should be the same string that you specified as the div parameter when you created the table
+ - **MinSize**: Required. This parameter is required but will probably not be necessary in the future. Needs
+                            to the a width and height in the form "widthXheight". 
+                            For example "100X100".
+                            
+Coverage is computed by looking at columns in the tables. The coverage can show coverage for point sources by showing an x for the RA and Dec. 
+It can also show a box if the four corners are specified. 
+If you use the default column names you do not have to specify how to determine the center or the four corners.
+
+ - **CornerColumns**:  Determines if the coverage will use the box style and what corners will be used.
                             Should be specified as a string with the values comma separated. For example-
                             "ra1,dec1,ra2,dec2,ra3,dec3,ra4,dec4". If this parameter is not specified then the example
                             is the default.
                             If you specify "CornerColumns" then you must also specify "CenterColumns".
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>CenterColumns</td>
-                        <td class="paramsDesc">
-                            Determines if the coverage will use the x style (if "CornerColumns" is not specified)
+ - **CenterColumns**:   Determines if the coverage will use the x style (if "CornerColumns" is not specified)
                             and what is the center point.
                             Should be specified as a string with the values comma separated. For example-
                             "ra,dec". If this parameter is not specified then the example is the default.
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <td class="ret">examples:</td>
-            <td>
-            <pre>
-            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
-                             "tableHere");
+                            
+```js
+firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
+                   "tableHere");
 
-            firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
-                                     "CornerColumns" : "lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4",
-                                     "CenterColumns" : "lon,lat",
-                                     "MinSize"    : "100x100" },
-                                     "coverageHere" );
-
-            </pre>
-            </td>
-        </tr>
-        </td>
-        </td>
-
-    </table>
-</ul>
+firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
+                         "CornerColumns" : "lon1,lat1,lon2,lat2,lon3,lat3,lon4,lat4",
+                         "CenterColumns" : "lon,lat",
+                         "MinSize"    : "100x100" },
+                         "coverageHere" );
+```                                     
 
 
