@@ -7,7 +7,8 @@ Firefly tools is an API that can me use from JavaScript. It allows you to user t
 
  - Fits Visualizer
  - Table
- - XY Plotter
+ -  [XY Plotter](#xyplot)
+  
  
 Beyond that some of the components can be setup to share the same data model.  Therefore you can do the following combinations.
  
@@ -195,32 +196,19 @@ It will try the file first then the URL. All other parameters are defaulted, (se
 
 #####ImageViewer.setDefaultParams() method
 
-Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for detauls.
+Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for defaults.
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | object     | object literal with name/value pairs for all parameters |
 
 
-#####ImageViewer.serializeRangeValues() method
-
-Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for detauls.
-
-| Parameter  | Description |
-| ---------- | ----------- |
-| stretchType (string) | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
-| lowerValue (number) | object literal with name/value pairs for all parameters |
-| upperValue (number) | object literal with name/value pairs for all parameters |
-| algorithm | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
-
-
 
 ####ExternalViewer
 
-`firefly.getExternalViewer()` - get the external ImageViewer object in the specified div.
-    parameters:
+`firefly.getExternalViewer()` - Get access to the firefly tools viewer.  Used to ask it to plot a file. The firefly tools viewer will run in another tab.
     
-| Parameter  | Description |
+| Method  | Description |
 | ---------- | ----------- |
 | `plot` | plot a fits images |
 | `plotURL` | convenience method to plot a url |
@@ -229,31 +217,64 @@ Set parameters that will apply to call future FITS plots. See the documentation 
 | `setDefaultParams`  |  set param that will apply to call `plot` calls |
 | `serializeRangeValues`  |  make a serialized range values object 
 
+See the ImageViewer for the details of each method.
 
 
 ####ExpandedViewer
 
-<div class="ret">Methods specific to firefly.getExternalViewer() object:</div>
-<ul>
-    <li>
-        <code>setTarget(target)</code> - sets the target window name to open
-        <table style="font-size: smaller;">
-            <tr>
-                <td><span class="paramsTitle">Parameters:</span></td>
-            </tr>
-            <tr>
-                <td><span class="pName">target</span></td>
-                <td>- a string. The name of target window, if not defined or
-                    null then "_blank" is used.
-                </td>
-            </tr>
-        </table>
-    </li>
-</ul>
+`firefly.getExpandedViewer()` - plot a file in the expanded viewer.  This is the viewer that you used to popout an image to full screen in the same tab.  This is a little used feature.
 
-<b>Table Visualization</b><br><br>
+    
+| Method  | Description |
+| ---------- | ----------- |
+| `plot` | plot a fits images |
+| `plotURL` | convenience method to plot a url |
+| `plotFile` | convenience method to plot a file on the server |
+| `plotFileOrURL` | convenience method reference a file to plot by both URL and file |
+| `setDefaultParams`  |  set param that will apply to call `plot` calls |
+| `serializeRangeValues`  |  make a serialized range values object 
+
+See the ImageViewer for the details of each method.
+
+#####firefly.serializeRangeValues() method
 
 
+`firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string,
+    for use with the "RangeValues" parameter
+
+| Parameter  | Description |
+| ---------- | ----------- |
+| stretchType (string) | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
+| lowerValue (number) | lower value of stretch, based on stretchType |
+| upperValue (number) | upper value of stretch, based on stretchType |
+| algorithm | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
+
+example:
+                
+                
+```js
+iv.plot( {  "Type"      : "SERVICE",
+            "Service"   : "TWOMASS",
+            "SurveyKey" : "k",
+            "ObjectName": "m33",
+            "Title"     : "FITS Data",
+            "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
+            });
+```
+
+
+####Other Utility Methods for fits visualization 
+
+| Method  | parameters | Description |
+| ------- | ---------- | ----------- |
+|firefly.setGlobalDefaultParams(params) | a object literal such as ImageViewer.plot() uses |set global fallback params for every image plotting call |
+|firefly.setRootPath(rootURLPath) |the root URL to be prepended to any relative URL. |sets the root path for any relative URL. If this
+    method has not been called then relative URLs use the page's root.|
+
+
+
+
+###Table Visualization
 <pre>
     Usage: firefly.showTable(parameters, div)
 
@@ -306,96 +327,20 @@ The Table tools currently supports the following file formats:
 
 
 
+[xyplot]:
+###XY Plot Visualization
 
-<br><br><b>Firefly Object - creating Image viewers</b>
+*todo put xy plot visualization docs here*
 
-<br><br>
-<ul>
-    <code>firefly.getExpandViewer()</code> - return the ExpandedImageViewer object. This is a specialized ImageViewer
-    object.
-    This is the viewer that you used to popout an image to full screen.<br>
-</ul>
-<ul>
-    <code>firefly.setGlobalDefaultParams(params)</code> - set global fallback params for every image plotting call<br>
-    <table style="font-size: smaller;">
-        <tr>
-            <td><span class="paramsTitle">Parameters:</span></td>
-        </tr>
-        <tr>
-            <td><span class="pName">params-</span></td>
-            <td>the fallback plotting parameters</td>
-        </tr>
-    </table>
-</ul>
-<ul>
-    <code>firefly.setRootPath(rootURLPath)</code> - sets the root path for any relative URL. If this
-    method has not been called then relative URLs use the page's root.<br>
-    <table style="font-size: smaller;">
-        <tr>
-            <td><span class="paramsTitle">Parameters:</span></td>
-        </tr>
-        <tr>
-            <td><span class="pName">rootURLPath</span></td>
-            <td> - the root URL to be prepended to any relative URL.</td>
-        </tr>
-    </table>
-</ul>
+###Adding Extensions to FITS viewer
 
-<ul>
-    <code>firefly.serializeRangeValues(stretchType,lowerValue,upperVaue,algorithm)</code> - serialze a stretch request
-    into a string,
-    for use with the "RangeValues" parameter<br><br>
-    <table style="font-size: smaller;">
-        <tr>
-            <td><span class="paramsTitle">Parameters:</span></td>
-        </tr>
-        <tr>
-            <td><span class="pName">stretchType-</span></td>
-            <td>the stretch type, possible values: "Percent", "Absolute", "Sigma"</td>
-        </tr>
-        <tr>
-            <td><span class="pName">lowerValue-</span></td>
-            <td>lower value of stretch, based on stretchType.
-            </td>
-        </tr>
-        <tr>
-            <td><span class="pName">upperValue-</span></td>
-            <td>upper value of stretch, based on stretchType.
-            </td>
-        <tr>
-            <td><span class="pName">algorithm-</span></td>
-            <td>The stretch algorithm, possible values "Linear", "Log", "LogLog", "Equal", "Squared", "Sqrt"
-            </td>
-        </tr>
-        <tr>
-            <td class="ret">return:</td>
-            <td>a serialized version of the stretch to use with the "RangeValues" parameter</td>
-        </tr>
-        <td class="ret">examples:</td>
-        <td>
-            <ul>
-                <li>var s= firefly.serializeRangeValues("Sigma",-2,8,"Linear")</li>
-                <li>var s= firefly.serializeRangeValues("Percent",4,97,"Linear")</li>
-                <li>var s= firefly.serializeRangeValues("Percent",2,99,"Log")</li>
-                <li><pre>
-                iv.plot( {  "Type"      : "SERVICE",
-                            "Service"   : "TWOMASS",
-                            "SurveyKey" : "k",
-                            "ObjectName": "m33",
-                            "Title"     : "FITS Data",
-                            "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear")
-                          });
-                </pre>
-                </li>
+*todo put extension docs here*
 
-            </ul>
-        </td>
+###Getting Events
 
-    </table>
-</ul>
+*todo put event docs here*
 
-
-<b>Firefly Object - Connecting FITS Viewers to table</b><br><br>
+###Connecting FITS Viewers to table
 <ul>
     <code>firefly.addDataViewer(params, div)</code> - add a data viewer to a div<br>
     <table style="font-size: smaller;">
