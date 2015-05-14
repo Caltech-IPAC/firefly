@@ -19,10 +19,10 @@ class FireflyClient(WebSocketClient):
     fftoolsCmd = '/fftools/sticky/CmdSrv'
     true=1
     false=0
-
+    myLocalhost='localhost:8080'
 
     #the constructor, define instance variables for the object
-    def __init__(self,host, channel=None):
+    def __init__(self,host=myLocalhost, channel=None):
              #assign instance variables
              if host.startswith("http://"):
                  host=host[7:]
