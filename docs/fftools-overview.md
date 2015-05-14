@@ -6,23 +6,22 @@
 Firefly tools is an API that can me use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
 
  - [Fits Visualizer](#fits-visualization)
- - [Table](#table-Visualization)
+ - [Table](#table-visualization)
  - [XY Plotter](#xy-plot-visualization)
   
  
 Beyond that some of the components can be setup to share the same data model.  Therefore you can do the following combinations.
  
- - A table with a fits viewer coverage plot
- - A table that has a list of fits file metadata and a fits viewer showing the fits file from the highlighted row.
- - A Table with any data and a XY Plot showing plots from any two columns of that table.
- - A Table, fits coverage, and XY Plot together showing the same data.
+ - [Connect FITS viewer coverage plot to a table](#connecting-coverage-plot-to-table)
+ - [Connecting FITS Viewers to table with image meta data](#connecting-fits-viewers-to-table). As user selects different rows in the table the FITS images changes.
+ - [Connecting XY Viewers to table](#connecting-xy-viewers-to-table). A Table with any data and a XY Plot showing plots from any two columns of that table.
+ - Tri-view: A Table, fits coverage, and XY Plot together showing the same data.
   
-Firefly tools also allows you to get expand certain components and get events back with certain actions happen.
+Firefly tools also allows you to get expand certain components and receive events back when actions happen.
 
- - You can [add context menus](#adding-context-extensions-to-fits-viewer) for when a user selects a box, line, circle, highlights a point.
- - You can [get events](#getting-events) from these context menus and from any overlay data plotted .
+ - [Add context menus](#adding-context-extensions-to-fits-viewer) for when a user selects a box, line, circle, highlights a point.
+ - [Receive events](#getting-events) from these context menus and from any overlay data plotted .
  
-
 
 ###Fits Visualization
 
@@ -298,7 +297,7 @@ iv.plot( {  'Type'      : 'SERVICE',
         startIdx    : positive integer
         fixedLength : true|false, default to true
         tableOptions : see below
-        (varibles)* : value
+        (variables)* : value
 
         tableOptions:  option=true|false [,option=true|false]*
             show-filter
@@ -339,7 +338,59 @@ The Table tools currently supports the following file formats:
 
 ###Adding Context Extensions to FITS viewer
 
-*todo put extension docs here*
+Context extensions all the FITS viewer to present extra menu items when the FITS viewer is doing some operations.
+
+ - Area Select (square)
+ - Line Select
+ - Point Select
+ - Circle Select (*coming soon*)
+
+The best way to describe how to add an extension, is to see the code.
+
+```js
+  var extFunc= function(data) {
+      // do something when the extension is selected called.
+  }
+
+ var extension= {  // object literal to create extension definition
+                id : "MySpecialExt",       // extension id
+                plotId : "primaryID",      // plot to put extension on
+                title : "Get Quadrant",    // title use sees
+                toolTip : "a tool tip",    // tooltip
+                extType: "POINT",          // type of extension
+                callback: extFunc          // function (defined above) for callback
+            };
+
+ // get the actions object and call extension add
+var actions= firefly.appFlux.getActions('ExternalAccessActions');
+actions.extensionAdd(extension);
+```
+
+
+
+To add an extension to a fits viewer create a object literal with the following fields.
+
+| name | type | description |
+| ---- | ---- | ----- |
+| id   | string | any string id that you want to give the extension |
+| plotId | string | the plot ID to put the extension on.  (will be the same as the div name)|
+| imageURL | string, url |url of an image icon (icon should be 24x24) to show in the context menu | 
+| title | string | title that the user will see if not image icon is supplied |
+| toolTip | string | tooltip the viewer will use for your extension |
+| extType | string | extension type, must be 'AREA_SELECT', 'LINE_SELECT', 'POINT', or 'CIRCLE_SELECT' (*details below*) |
+| callback | function | the function to call when the extension is selected (*details below*) |
+
+ extType details:
+ 
+ - 'AREA_SELECT' - When the user draws a square this menu will be activate
+ - 'LINE_SELECT' -When the user draw a line this menu will be activated.
+ - 'POINT' - When any point on the plot is clicked 
+ - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
+
+callback function takes one parameter,  an object literal, the fields vary depend on the extension type-
+ *todo - need to document callback object literal parameters*
+
+
 
 ###Getting Events
 
@@ -370,16 +421,18 @@ Plotting parameters for FITS Viewer plus additional parameters. In addition to t
                             For example "100X100".
     
 ```js
-            firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl"},
-                             "tableHere");
+firefly.showTable(
+   {'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl'},
+   'tableHere');
 
-            firefly.addDataViewer( {"DataSource"  : "URL",
-                                    "DataColumn"  : "file",
-                                    "MinSize"     : "100x100",
-                                    "ColorTable"  : "10",
-                                    "RangeValues" : firefly.serializeRangeValues("Sigma",-2,8,"Linear"),
-                                    "QUERY_ID"    : "tableHere"  },
-                                   "previewHere" );
+firefly.addDataViewer( {'DataSource'  : 'URL',
+                        'DataColumn'  : 'file',
+                        'MinSize'     : '100x100',
+                        'ColorTable'  : '10',
+                        'RangeValues'  firefly.serializeRangeValues(
+                                                     "Sigma",-2,8,"Linear"),
+                        'QUERY_ID'    : 'tableHere'  },
+                                   'previewHere' );
 ```
 
 ###Connecting Coverage plot to table
