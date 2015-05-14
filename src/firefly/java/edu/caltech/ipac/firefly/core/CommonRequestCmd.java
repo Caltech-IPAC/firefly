@@ -256,7 +256,8 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
         } else {
             mask = new DefaultWorkingWidget(cancel);
         }
-        return new Masker(new MaskPane(form, mask), mask);
+        Widget mw = form == null ? searchPanel : form;
+        return new Masker(new MaskPane(mw, mask), mask);
     }
 
     public boolean canBackground() {
@@ -379,7 +380,8 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
             }
 
             if (table != null && table.getDataModel().getTotalRows() > 0) {
-                Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION).collapse();
+                Region r = Application.getInstance().getLayoutManager().getRegion(LayoutManager.DROPDOWN_REGION);
+                if (r != null) r.collapse();
             }
         }
     }

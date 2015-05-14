@@ -236,7 +236,7 @@ public class PopupUtil {
 
     public static void showSevereError(final Throwable caught) {
 
-        String eMsg= caught!=null ? caught.getMessage() : "unknown";
+        String eMsg= caught == null || caught.getMessage() == null ? "unknown" : caught.getMessage();
         GWT.log(eMsg, caught);
 
         String msgExtra= "<span class=\"faded-text\">" +
