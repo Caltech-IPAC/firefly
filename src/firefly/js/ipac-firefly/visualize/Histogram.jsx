@@ -17,18 +17,25 @@ import {parseRawDataSet} from '../util/DataSetParser.js';
 
 module.exports= React.createClass(
     {
+
         propTypes: {
             //data: React.PropTypes.array.isRequired
-            data: React.PropTypes.array, // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
+            data: React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
             source: React.PropTypes.string, // url with the histogram table in IPAC Table or CVS format
+            height: React.PropTypes.number,
             desc: React.PropTypes.string,
-            binColor: React.PropTypes.string
+            binColor: function(props, propName, componentName) {
+                if (!/^#[0-9a-f]{6}/.test(props[propName])) {
+                    return new Error('Invalid bin color in '+componentName+', should be hex with exactly 7 characters long.');
+                }
+            }
         },
 
         getDefaultProps : function() {
             return {
                 data: undefined,
                 source: undefined,
+                height: 300,
                 desc: 'Sample Distribution',
                 binColor: '#d1d1d1'
             };
@@ -87,6 +94,43 @@ module.exports= React.createClass(
             return '#'+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
         },
 
+        /*
+         * Expecting an 2 dimensional array of numbers
+         * each row is an array of 3 values:
+         * [0] number of points in a bin,
+         * [1] minimum of a bin
+         * [2] maximum of a bin
+         */
+        validateData(data) {
+            if (!data) { return false; }
+            let valid = true;
+            try {
+                data.sort(function(row1, row2){
+                    // [1] is minimum bin edge
+                    return row1[1]-row2[1];
+                });
+                if (data) {
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].length !== 3) {
+                            console.error("Invalid histogram data in row "+i+" ["+data[i]+"]");
+                            valid = false;
+                        } else if (data[i][1]>data[i][2]) {
+                            console.error("Histogram data row "+i+": minimum is more than maximum. ["+data[i]+"]");
+                            valid=false;
+                        } else if (data[i+1] && Math.abs(data[i][2]-data[i+1][1])>Number.EPSILON &&
+                                data[i][2]>data[i+1][1]) {
+                            console.error("Histogram data row "+i+": bin range overlaps the following row. ["+data[i]+"]");
+                            valid=false;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Invalid data passed to Histogram: "+e);
+                valid = false;
+            }
+            return valid;
+        },
+
 
         /*
          * @param config
@@ -96,21 +140,59 @@ module.exports= React.createClass(
             if (!this.state.userData || this.state.userData.length < 1) {
                 return false;
             }
+
+            if (!this.validateData(this.state.userData)) {
+                console.error("Invalid histogram data, check console for specifics.");
+            }
+
             var points = [], zones=[];
             var lighterColor = this.shadeColor(this.props.binColor, 0.1);
             var error;
+
             try {
+                let lastBinMax = this.state.userData[0][1];
+                // point before the first one
+                points.push({
+                    name: '',
+                    range: '',
+                    x: lastBinMax-Number.EPSILON,
+                    y: 0
+                });
                 this.state.userData.forEach(function (value, index) {
                         let xrange = this.state.userData[index][2] - this.state.userData[index][1];
                         let formatStr = getFormatString(xrange,2);
                         let centerStr = numeral(this.state.userData[index][1]+xrange/2.0).format(formatStr);
                         let rangeStr = numeral(this.state.userData[index][1]).format(formatStr)+' to '+numeral(this.state.userData[index][2]).format(formatStr);
+
+                        // chack for gaps and add points in necessary
+                        if (Math.abs(this.state.userData[index][1])-lastBinMax > Number.EPSILON &&
+                            this.state.userData[index][1]>lastBinMax) {
+                            console.warn("Gap in histogram data before row "+index+" ["+this.state.userData[index]+"]");
+                            let gapRange = this.state.userData[index][1]-lastBinMax;
+                            let gapCenterStr = numeral(lastBinMax+gapRange/2.0).format(formatStr);
+                            let gapRangeStr = numeral(lastBinMax).format(formatStr)+' to '+numeral(this.state.userData[index][1]).format(formatStr);
+
+                            points.push({
+                                name: gapCenterStr,
+                                range: gapRangeStr,
+                                x: lastBinMax+Number.EPSILON,
+                                y: 0
+                            });
+                            points.push({
+                                name: gapCenterStr,
+                                range: gapRangeStr,
+                                x: this.state.userData[index][1]-Number.EPSILON,
+                                y: 0
+                            });
+                        }
+                        lastBinMax = this.state.userData[index][2];
+
                         // a point for the bin's left edge (minimum)
                         points.push({
                             // name - formatted bin center
                             name: centerStr,
                             range: rangeStr,
-                            // x - middle of the bin
+                            // x - bin min
                             x: this.state.userData[index][1],
                             // y - number of points in the bin
                             y: this.state.userData[index][0]
@@ -120,7 +202,7 @@ module.exports= React.createClass(
                             // name - formatted bin center
                             name: centerStr,
                             range: rangeStr,
-                            // x - middle of the bin
+                            // x - binmax
                             x: this.state.userData[index][2]-xrange/1000.0,
                             // y - number of points in the bin
                             y: this.state.userData[index][0]
@@ -132,6 +214,14 @@ module.exports= React.createClass(
                         });
                     }.bind(this)
                 );
+                // point after the last one
+                points.push({
+                    name: '',
+                    range: '',
+                    x: lastBinMax+Number.EPSILON,
+                    y: 0
+                });
+
             }
             catch(e) {
                 error = e;
@@ -150,10 +240,14 @@ module.exports= React.createClass(
                     renderTo: 'container',
                     type: 'area',
                     alignTicks: false,
-                    marginTop: 25
+                    marginTop: 25,
+                    height: Number(this.props.height)
                 },
                 exporting: {
                     enabled: true
+                },
+                legend: {
+                    enabled: false
                 },
                 title: {
                     text: ''
@@ -162,9 +256,9 @@ module.exports= React.createClass(
                     followPointer: true,
                     borderWidth: 1,
                     formatter: function () {
-                        return '<b>Bin center:</b> '+this.point.name+
-                            '<br><b>Range:</b> '+this.point.range+
-                            '<br><b>Count:</b> ' + this.y;
+                        return (this.point.name ? '<b>Bin center:</b> '+this.point.name+'<br>' : '')+
+                            (this.point.range ? '<b>Range:</b> '+this.point.range+'<br>' : '')+
+                            '<b>Count:</b> ' + this.y;
                     }
                 },
                 plotOptions: {
@@ -189,7 +283,10 @@ module.exports= React.createClass(
                 },
                 xAxis: {
                     lineColor: '#999',
-                    tickColor: '#ccc'
+                    tickColor: '#ccc',
+                    title: {
+                        text: this.props.desc
+                    }
                 },
                 yAxis: {
                     title: {
@@ -203,7 +300,7 @@ module.exports= React.createClass(
                     endOnTick: false
                 },
                 series: [{
-                    name: this.props.desc,
+                    name: 'data points',
                     turboThreshhold: 0,
                     color: this.props.binColor,
                     data: []

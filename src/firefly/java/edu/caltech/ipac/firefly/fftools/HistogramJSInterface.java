@@ -14,16 +14,18 @@ public class HistogramJSInterface {
     public static void plotHistogram(JscriptRequest jspr, String div) {
 
         JSONObject jsonObj = new JSONObject();
-        if (jspr.containsKey("descr")) {
-            jsonObj.put("descr", new JSONString(jspr.getParam("descr")));
+
+        for (String p : jspr.keySet()) {
+            if (p.equals("source")) {
+                String url =  FFToolEnv.modifyURLToFull(jspr.getParam("source"));
+                jsonObj.put("source", new JSONString(url));
+            } else if (p.equals("data")) {
+                jsonObj.put("data", new JSONString(jspr.getParam("data")));
+            } else {
+                jsonObj.put(p, new JSONString(jspr.getParam(p)));
+            }
         }
 
-        if (jspr.containsKey("source")) {
-            String url =  FFToolEnv.modifyURLToFull(jspr.getParam("source"));
-            jsonObj.put("source", new JSONString(url));
-        } else if (jspr.containsKey("data")) {
-            jsonObj.put("data", new JSONString(jspr.getParam("data")));
-        }
         ReactUIWrapper.ReactJavaInterface reactInterface = getReactInterface();
         reactInterface.createHistogram(jsonObj, div);
     }

@@ -18,7 +18,9 @@ export class ReactJavaInterface {
             el = <div><Histogram data={parsedParams.data}/></div>;
         } else {
             if (parsedParams.source) {
-                el = <div><Histogram source={parsedParams.source} desc={parsedParams.descr}/></div>;
+                el = <div><Histogram source={parsedParams.source}
+                                     desc={parsedParams.descr}
+                                     binColor={parsedParams.binColor}/></div>;
             }
         }
         if (el) {

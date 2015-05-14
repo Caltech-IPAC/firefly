@@ -11,8 +11,8 @@
 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
-    <title>Firefly Tools with Spectra</title>
-
+    <title>Firefly Tools with Histogram</title>
+    <script type="text/javascript" src="http://jscolor.com/jscolor/jscolor.js"></script>
 
 </head>
 
@@ -22,6 +22,7 @@
     <table border="0">
         <tr><td>URL:</td><td><input size="80" type="text" id="tableurl-field" name="tableurl" value="http://localhost:8080/fftools/samplehistdata.csv" onfocus="this.select();" /> <input type="submit" value="Plot" /></td></tr>
         <tr><td>Desciption:</td><td><input size="50" type="text" id="descr-field" name="descr" value="Sample data"/></td></tr>
+        <tr><td>Bin Color:</td><td><input size="10" id="binColor-field" name="binColor" type="text" class="color {hash:true,caps:false,pickerFaceColor:'transparent',pickerFace:3,pickerBorder:0}" value="#d1d1d1"/></td></tr>
     </table>
 </form>
 
@@ -45,8 +46,8 @@
 
 
 <div style="white-space: nowrap;">
-    <div id="plotHere"  style="display:inline-block; width: 800px; height: 500px;
-                                padding: 5px 5px 5px 5px; border: solid 1px;"></div>
+    <div id="plotHere"  style="display:inline-block; width: 800px; height: 400px;
+                                padding: 5px 5px 5px 5px; border: solid 1px; overflow: auto"></div>
 </div>
 
 
@@ -58,7 +59,7 @@
            firefly.showHistogram(
                    {
                        'descr' : document.getElementById('descr-field').value,
-
+                       'binColor' : document.getElementById('binColor-field').value,
                        // specify the parameters that tell how to get data
                        // for now it's a URL to an IPAC table or CVS with two cols:
                        // first col - center of the bin, second col - num. points in the bin
@@ -74,13 +75,15 @@
                            [11,-1.8749167508365,-1.6554744371915],
                            [12,-1.6554744371915,-1.4360321235466],
                            [18,-1.4360321235466,-1.2165898099016],
-                           [15,-1.2165898099016,-0.99714749625658],
-                           [24,-0.99714749625658,-0.77770518261159],
+                           [15,-1.2165898099016,-1.1571474962565],
+                           [20,-1.15714749625658,-0.85720518261159],
+                           [24,-0.85720518261159,-0.77770518261159],
                            [21,-0.77770518261159,-0.55826286896661],
                            [36,-0.55826286896661,-0.33882055532162],
                            [40,-0.33882055532162,-0.11937824167663],
                            [51,-0.11937824167663,0.10006407196835],
-                           [40,0.10006407196835,0.31950638561334],
+                           [59,0.10006407196835,0.21850638561334],
+                           [40,0.21850638561334,0.31950638561334],
                            [42,0.31950638561334,0.53894869925832],
                            [36,0.53894869925832,0.75839101290331],
                            [40,0.75839101290331,0.9778333265483],
@@ -90,9 +93,8 @@
                            [9,1.6361602674833,1.8556025811282],
                            [12,1.8556025811282,2.0750448947732],
                            [0,2.0750448947732,2.2944872084182],
-                           [4,2.2944872084182,2.412472786789]
+                           [4,2.2944872084182,2.312472786789]
                        ]
-
                    },
                    "plotHere");
        }
