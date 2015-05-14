@@ -7,7 +7,7 @@ Firefly tools is an API that can me use from JavaScript. It allows you to user t
 
  - Fits Visualizer
  - Table
- - [XY Plotter](#XY-Plot-Visualization)
+ - [XY Plotter](#xy-plot-visualization)
   
  
 Beyond that some of the components can be setup to share the same data model.  Therefore you can do the following combinations.
