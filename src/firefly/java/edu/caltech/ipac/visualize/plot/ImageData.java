@@ -139,7 +139,7 @@ public class ImageData implements Serializable {
             _imageOutOfDate= true;
             if (force) {
                 fitsReadAry[idx].doStretch(rangeValues, getDataArray(idx),
-                             mapBlankPixelToZero, _x, _lastLine, _y, _lastLine);
+                             mapBlankPixelToZero, _x, _lastPixel, _y, _lastLine);
             }
         }
         else {

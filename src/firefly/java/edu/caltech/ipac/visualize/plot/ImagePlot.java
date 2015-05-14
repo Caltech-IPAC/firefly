@@ -38,8 +38,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImagePlot extends Plot implements Serializable {
 
-    private static final int CORE_CNT= Runtime.getRuntime().availableProcessors();
-//    private static final int CORE_CNT= 1;
+    private static final int CORE_CNT;
     public static final int  SQUARE = 1500; // this is the size of the image data tiles
 
     private Projection     _projection;
@@ -55,6 +54,14 @@ public class ImagePlot extends Plot implements Serializable {
     private boolean  _threeColor;
     private boolean _isSharedDataPlot = false;
 
+    static {
+        int cores= Runtime.getRuntime().availableProcessors();
+        if      (cores<4)  CORE_CNT= 1;
+        else if (cores<=5) CORE_CNT= cores-1;
+        else if (cores<16) CORE_CNT= cores-2;
+        else if (cores<22) CORE_CNT= cores-4;
+        else               CORE_CNT= cores-6;
+    }
 
 
    public ImagePlot(PlotGroup plotGroup) { super(plotGroup); }
@@ -199,11 +206,11 @@ public class ImagePlot extends Plot implements Serializable {
     public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
-            if (_imageData.size()<4 || CORE_CNT<4) {
+            if (_imageData.size()<4 || CORE_CNT==1) {
                 for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
             }
             else {
-                ExecutorService executor = Executors.newFixedThreadPool((CORE_CNT/2)+1);
+                ExecutorService executor = Executors.newFixedThreadPool(CORE_CNT);
                 for(ImageData id : _imageData)  {
                     final ImageData idSave= id;
                     Runnable worker = new Runnable() {
