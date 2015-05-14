@@ -421,3 +421,6 @@ firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
 ```                                     
 
 
+###Connecting XY Viewers to table
+
+*todo put xy plot visualization docs here*
