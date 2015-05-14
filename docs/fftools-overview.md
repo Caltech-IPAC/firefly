@@ -5,8 +5,8 @@
 
 Firefly tools is an API that can me use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
 
- - Fits Visualizer
- - Table
+ - [Fits Visualizer](#fits-visualization)
+ - [Table](#table-Visualization)
  - [XY Plotter](#xy-plot-visualization)
   
  
@@ -19,9 +19,8 @@ Beyond that some of the components can be setup to share the same data model.  T
   
 Firefly tools also allows you to get expand certain components and get events back with certain actions happen.
 
- - You can add context menus for when a user selects a box, line, circle, highlights a point.
- - You can get events from these context menus.
- - You can get events from any overlay data plotted on the FITS Viewer.
+ - You can [add context menus](#adding-context-extensions-to-fits-viewer) for when a user selects a box, line, circle, highlights a point.
+ - You can [get events](#getting-events) from these context menus and from any overlay data plotted .
  
 
 
@@ -338,7 +337,7 @@ The Table tools currently supports the following file formats:
 ###XY Plot Visualization
 *todo put xy plot visualization docs here*
 
-###Adding Extensions to FITS viewer
+###Adding Context Extensions to FITS viewer
 
 *todo put extension docs here*
 
