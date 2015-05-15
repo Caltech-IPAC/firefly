@@ -155,8 +155,7 @@ Note-See documentation on WorldPt to find proper syntax
  - **UserDesc**: TODO: Document this param</td>
  - **UniqueKey**: TODO: Document this param
 <br>
-Examples- 
-
+*Examples*- 
 ```js
 var primaryViewer= firefly.makeImageViewer('primaryID');
 primaryViewer.plot({
@@ -182,21 +181,21 @@ iv.plot( {  "Type"      : "SERVICE",
 ```
 
 
-#####<b>ImageViewer.plotURL() method
+#####**ImageViewer.plotURL() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | url     | string with the url of a FITS image to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####<b>ImageViewer.plotFile() method
+#####**ImageViewer.plotFile() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | file     | string with full path of a FITS file on the server to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####<b>ImageViewer.plotFileOrURL() method
+#####**ImageViewer.plotFileOrURL()** method
 
 This shortcut method can be used when there are two ways to access the same file but for some reason the local access is not always available.
 It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)
@@ -207,7 +206,7 @@ It will try the file first then the URL. All other parameters are defaulted, (se
 | url     | string with the url of a FITS image file to plot |
 
 
-#####<b>ImageViewer.setDefaultParams() method
+#####**ImageViewer.setDefaultParams()** method
 
 
 Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for defaults.
@@ -218,7 +217,7 @@ Set parameters that will apply to call future FITS plots. See the documentation 
 
 
 
-####<b>ExternalViewer and ExpandedViewer 
+####**ExternalViewer** and **ExpandedViewer** 
 
 `firefly.getExternalViewer()` - Get access to the Firefly tools viewer.  The firefly tools viewer will run in a browser tab or window.  It is used to plot an image.
  
@@ -235,7 +234,7 @@ Both viewers have the same methods as <b>ImageViewer</b>.
 
 See the <b>ImageViewer</b> for the details of each method.
 
-#####<b>firefly.serializeRangeValues() method
+#####**firefly.serializeRangeValues()** method
 
 `firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
@@ -247,9 +246,7 @@ See the <b>ImageViewer</b> for the details of each method.
 | algorithm | string | the stretch algorithm to use, may be 'Linear', 'Log', 'LogLog', 'Equal', 'Squared', 'Sqrt' |
 | *return* | string | a serialized version of range values to be passed as a viewer parameter |
 
-Example:
-                
-                
+*Example*:                               
 ```js
 iv.plot( {  'Type'      : 'SERVICE',
             'Service'   : 'TWOMASS',
@@ -261,7 +258,7 @@ iv.plot( {  'Type'      : 'SERVICE',
 ```
 
 
-#####<b>Other Utility Methods for FITS visualization 
+#####Other Utility Methods for FITS visualization 
 
 | Method  | parameters | Description |
 | ------- | ---------- | ----------- |
@@ -275,7 +272,7 @@ iv.plot( {  'Type'      : 'SERVICE',
 <pre>
     Usage: firefly.showTable(parameters, div)
 
-    parameters are an object attributes.  div is the div to load the table into.
+    parameters are an object literal.  div is the div to load the table into.
     below is a list of all possible parameters.
 
     parameters:
@@ -299,69 +296,71 @@ iv.plot( {  'Type'      : 'SERVICE',
             show-paging
             show-save
 
-
-    javascript example:
-
-        var params = new Object();
-            params.source = "http://web.ipac.caltech.edu/tbl_test/test.tbl";
-            params.alt_source = "/Users/loi/test.tbl";
-            params.pageSize = "100";
-            params.tableOptions = "show-popout=false,show-units=true";
-            params.var1 = "value1";
-            params.var2 = "value2";
-
-        firefly.showTable(params, fv1);
-
-
 </pre>
+    *Example-*
+```js
+var params = {
+     source : 'http://web.ipac.caltech.edu/tbl_test/test.tbl',
+     alt_source : '/Users/loi/test.tbl',
+     pageSize : '100',
+     tableOptions : 'show-popout=false,show-units=true',
+     var1 : 'value1',
+     var2 : 'value2'
+}
+firefly.showTable(params, fv1);
+```
 
+#####Supported Formats
 The Table tools currently supports the following file formats:
-<ul>
-    <li>IPAC Table file format</li>
-    <li>CSV - first row should be column headers</li>
-    <li>TSV - first row should be column headers</li>
-</ul>
 
-
+ - IPAC Table file format
+ - CSV - first row should be column headers
+ - TSV - first row should be column header
+ - FITS Tables
 
 ###XY Plot Visualization
-<pre>
-    Usage: firefly.showPlot(parameters, div)
 
-    parameters are an object attributes.  div is the div to load the XY Plot into.
-    below is a list of all possible parameters.
+Usage: firefly.showPlot(parameters, div)
 
-    parameters:
-        source      : required; location of the ipac table.  url or file path.
-        chartTitle  : title of the chart
-        xCol        : required; column to use for x values (can be an expression, containing multiple column names)
-        yCol        : required; column to use for y values (can be an expression, containing multiple column names)
-        errorCol    : column to use for y value errors (must be column name, expressions are not supported)
-        orderCol    : column to use to separate series from each other, different series are shown in different colors
-        plotStyle   : line|linePoints|points, defaults to points
-        showLegend  : always|onExpand, defaults to onExpand
-        plotTitle   : header for the plot
+ - parameters are an object attributes
+ - div is the div to load the XY Plot into.
 
-    javascript example:
-        firefly.showPlot({
-            'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl'
-            'chartTitle' : 'SPITZER_S5_3539456_01_merge.tbl',
-            'xCol' : 'wavelength',
-            'yCol' : 'flux_density',
-            'errorCol' : 'error',
-            'orderCol' : 'order',
-            'plotStyle' : 'line',
-            'showLegend' : 'always', 
-            'plotTitle' : 'Sample Merged Spectra Table'
-        }, 'divname');
-</pre>
+Parameters object literal can contain the following values
 
- XY Plot supports the same table formats as Table tools:
- <ul>
-     <li>IPAC Table file format</li>
-     <li>CSV - first row should be column headers</li>
-     <li>TSV - first row should be column headers</li>
- </ul>
+| Paremeter | Description |
+| ------------ | ------------- |
+| source | required; location of the ipac table.  url or file path.|
+|chartTitle |title of the chart |
+|xCol | required; column to use for x values (can be an expression, containing multiple column names) |
+| yCol | required; column to use for y values (can be an expression, containing multiple column names) |
+| errorCol | column to use for y value errors (must be column name, expressions are not supported) |
+| orderCol | column to use to separate series from each other, different series are shown in different colors |
+| plotStyle | line|linePoints|points, defaults to points |
+| showLegend | always|onExpand, defaults to onExpand |
+| plotTitle | header for the plot |
+
+
+*example-*
+```js
+firefly.showPlot(
+    {'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl'
+    'chartTitle' : 'SPITZER_S5_3539456_01_merge.tbl',
+    'xCol' : 'wavelength',
+    'yCol' : 'flux_density',
+    'errorCol' : 'error',
+    'orderCol' : 'order',
+    'plotStyle' : 'line',
+    'showLegend' : 'always', 
+    'plotTitle' : 'Sample Merged Spectra Table'
+   }, 'divname');
+```
+
+XY Plot supports the same table formats as Table does:
+
+ - IPAC Table file format
+ - CSV - first row should be column headers
+ - TSV - first row should be column headers
+ - FITS Tables
 
 ###Adding Context Extensions to FITS viewer
 
@@ -429,7 +428,6 @@ If you have created a table, and that table has image metadata so that a line in
 
 `firefly.addDataViewer(params, div)` 
 
-
 | parameters | type        |
 | ---------- | ----------- |
 |params      | object literal |
@@ -466,7 +464,7 @@ firefly.addDataViewer( {'DataSource'  : 'URL',
 
 `firefly.addCoveragePlot(params, div)` - add a coverage plot to a div
 
-| parameters | type        |
+| Parameters | Type        |
 | ---------- | ----------- |
 |params      | object literal |
 |div         | string, the div to put the image viewer into |
@@ -528,10 +526,10 @@ param:
                       If no column is specified, the first numeric non-x column is used as a y column. 
 
 
-<pre>
+```js
 firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
                                            "type" : "selectable"}, "tableHere");
 firefly.addXYPlot({"QUERY_ID" : "tableHere",
                    "xCol" : "frame_num",
                    "yCol" : "band"}, "xyPlotHere" );
-</pre>
+```

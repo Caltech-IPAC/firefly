@@ -8,7 +8,7 @@ The python class name is **FireflyClient**.  It is located in python directory u
 
  -  **Pre-requirements**
 
-		 1. Install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
+		 1. install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
 		 2. Set up python enviroment
 			 setenv PYTHONPATH /path/to/firefly/python
 	
