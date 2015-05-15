@@ -3,7 +3,7 @@ __author__ = 'zhang'
 
 import sys
 import os
-sys.path.append('/Users/roby/dev/firefly/src/fftools/python/display/')
+sys.path.append('/hydra/cm/firefly/src/fftools/python/display/')
 
 from FireflyClient import *
 

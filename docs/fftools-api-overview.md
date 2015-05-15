@@ -269,25 +269,26 @@ iv.plot( {  'Type'      : 'SERVICE',
 
 
 ###Table Visualization
-<pre>
-    Usage: firefly.showTable(parameters, div)
 
-    parameters are an object literal.  div is the div to load the table into.
-    below is a list of all possible parameters.
+Usage: firefly.showTable(parameters, div)
 
-    parameters:
-        source      : required; location of the ipac table.  url or file path.
-        alt_source  : use this if source does not exists.
-        type        : basic or selectable; default to basic if not given
-        filters     : col_name [=|!=|<|>|<=|>=] value OR col_name IN (v1[,v2]*)
-        sortInfo    : SortInto=ASC|DESC,col_name
-        pageSize    : positive integer
-        startIdx    : positive integer
-        fixedLength : true|false, default to true
-        tableOptions : see below
-        (variables)* : value
+Parameters ia an object literal.  div is the div to load the table into.
+Below is a list of all possible parameters.
 
-        tableOptions:  option=true|false [,option=true|false]*
+| Parameter | Description |
+| ------------ | -------------- |
+| source      | required; location of the ipac table.  url or file path.|
+| alt_source  | use this if source does not exists.|
+|type        | basic or selectable; default to basic if not given|
+|filters     | `col_name` [=\|!=\|<\|>\|<=\|>=\] `value` *or* `col_name` `IN` (v1[,v2]*)|`
+|sortInfo    | SortInto=`ASC`\|`DESC`,`col_name`|
+|pageSize    | positive integer|
+|startIdx    | positive integer|
+|fixedLength | true|false, default to true|
+|tableOptions | see below|
+|(variables)* | value|
+
+tableOptions:  option=true|false [,option=true|false]*
             show-filter
             show-popout
             show-title
@@ -296,8 +297,8 @@ iv.plot( {  'Type'      : 'SERVICE',
             show-paging
             show-save
 
-</pre>
-    *Example-*
+
+*Example-*
 ```js
 var params = {
      source : 'http://web.ipac.caltech.edu/tbl_test/test.tbl',
@@ -309,8 +310,6 @@ var params = {
 }
 firefly.showTable(params, fv1);
 ```
-
-#####Supported Formats
 The Table tools currently supports the following file formats:
 
  - IPAC Table file format
