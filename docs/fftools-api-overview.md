@@ -3,9 +3,9 @@
 
 # JavaScript Firefly Tools API
 
-Firefly tools is an API that can me use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
+Firefly tools is an API that can be use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
 
- - [Fits Visualizer](#fits-visualization)
+ - [FITS Visualizer](#fits-visualization)
  - [Table](#table-visualization)
  - [XY Plotter](#xy-plot-visualization)
   
@@ -15,25 +15,24 @@ Beyond that some of the components can be setup to share the same data model.  T
  - [Connect FITS viewer coverage plot to a table](#connecting-coverage-plot-to-table)
  - [Connecting FITS Viewers to table with image meta data](#connecting-fits-viewers-to-table). As user selects different rows in the table the FITS images changes.
  - [Connecting XY Viewers to table](#connecting-xy-viewers-to-table). A Table with any data and a XY Plot showing plots from any two columns of that table.
- - Tri-view: A Table, fits coverage, and XY Plot together showing the same data.
+ - Tri-view: A Table, FITS coverage, and XY Plot together showing the same data.
   
-Firefly tools also allows you to get expand certain components and receive events back when actions happen.
+Firefly tools also allows you to expand certain components and receive events back when actions happen.
 
  - [Add context menus](#adding-context-extensions-to-fits-viewer) for when a user selects a box, line, circle, highlights a point.
  - [Receive events](#getting-events) from these context menus and from any overlay data plotted .
  
 
-###Fits Visualization
+###FITS Visualization
 
-The following methods are available to create a fits image viewer.  A FITS `ImageViewer` is created or referenced by calling the
-following
+The following methods are available to create a FITS image viewer.  A FITS `ImageViewer` is created or referenced by calling the following
 
- - `firefly.makeImageViewer()`  - make a inline image viewer for a html document
- - `firefly.getExpandViewer()`  - makes a image viewer that will popup in the html document.
- - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified fits file.
+ - `firefly.makeImageViewer()`  - make an inline image viewer for a html document
+ - `firefly.getExpandViewer()`  - makes an image viewer that will popup in the html document.
+ - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified FITS file.
 
 
-####ImageViewer
+#### <b>ImageViewer
 
 `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
     parameters:
@@ -41,7 +40,7 @@ following
 | Parameter  | type | Description |
 | ---------- | ---- | ----------- |
 | `div` | string |The div to put the ImageViewer in. |
-| `group` | string (optional) | The plot group to associate this image viewer. All ImageViewers with the same group name will  operate together for zooming, color, etc. |
+| `group` | string (optional) | The plot group to associate this image viewer. All ImageViewers with the same group name will  operate together for zooming, color changing, etc. |
 | *return*  | ImageViewer | an ImageViewer object |
 
 
@@ -49,17 +48,17 @@ following
 
 | Method | Description |
 | ---------- | ----------- |
-| `plot()` | plot a fits images |
-| `plotURL()` | convenience method to plot a url |
-| `plotFile()` | convenience method to plot a file on the server |
-| `plotFileOrURL()` | convenience method reference a file to plot by both URL and file |
-| `setDefaultParams()`  |  set param that will apply to call `plot` calls |
+| `plot()` | plot a FITS image |
+| `plotURL()` | convenience method to plot an image referenced by url |
+| `plotFile()` | convenience method to plot an image file on the server |
+| `plotFileOrURL()` | convenience method to plot an image referenced by file or url |
+| `setDefaultParams()`  |  set parameters that will apply to  `plot` calls |
 
 
 
-#####ImageViewer.plot() method
+#####<b> ImageViewer.plot() method
 
-The following is a list of possible params for the ImageViewer plotting. Almost all parameters are optional.
+The following is a list of possible parameters for the ImageViewer plotting. Almost all parameters are optional.
  Note that the request `Type` parameter can
  be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
 
@@ -68,78 +67,75 @@ The following is a list of possible params for the ImageViewer plotting. Almost 
 | object     | object literal with name/value pairs for all parameters |
 
  
- - **Type**: Set the type of request. Based on the Type then 1 or more other parameters are required.
+ - **Type**: Set the type of request. Based on the Type then one or more other parameters are required.
 Options are:
-    - `SERVICE`, for a image service
+    - `SERVICE`, for an image service
     - `FILE` for file on the server
-    - `URL` for any url accessible fits file
+    - `URL` for any url accessible FITS image file
     - `TRY_FILE_THEN_URL` try a file on the server first then try the url
     - `BLANK` make a blank image
     - `ALL_SKY`
 
- - **File**: File name of a file on the server. Required if Type==FILE or if you want to plot a file on the server.
- - **URL**: Retrieve and plot the file from the specified URL. Required if Type==URL or if you want to plot a URL.
- The url can be absolute or relative. If it is relative then one of two things happen.
+ - **File**: File name of a file on the server. Required if Type=='FILE' or if you want to plot a file on the server.
+ - **URL**: Retrieve and plot the file from the specified URL. Required if Type=='URL' or if you want to plot an image referenced by URL.
+ The url can be absolute or relative. If it is relative, one of two things happen:
+    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)` .      
     - The url is made absolute based on the host web page url. 
-    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)`        
+    
  - **Service**
     - Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.
-Required if Type=SERVICE or if you want to use a service
- - **WorldPt**:  This is target for service request for `Type===SERVICE`.
+Required if Type=='SERVICE' or if you want to use a service
+ - **WorldPt**:  This is target for service request for `Type=='SERVICE'`.
     - WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.
     - The general syntax is `lon;lat;coordinate_sys`, e.g. `'12.2;33.4;EQ_J2000'` or `'11.1;22.2;GALACTIC'`
     - coordinate system can be: `'EQ_J2000'`, `'EQ_B1950'`, `'EC_J2000'`, `'EC_B1950'`, `'GALACTIC'`, or `'SUPERGALACTIC'`;
- - **SizeInDeg**  The radius or side (in degrees) depending of the service type, used with `Type===SERVICE`
- -  **SurveyKey**:  Required if `Type==='SERVICE'`
+ - **SizeInDeg**  The radius or side (in degrees) depending of the service type, used with `Type=='SERVICE'`
+ -  **SurveyKey**:  Required if `Type=='SERVICE'`
 The value of SurveyKey depends on the value of "Service".
-The following are possible values for SurveyKey.<br>If service is:
-        
-    - IRIS: 12, 25, 60, or 100
-    - ISSA: 12, 25, 60, or 100
-    - DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2, or phase2_gsc1
-    - SDSS: u, g, r, i, or z
-    - TWOMASS: j, h, or k
-    - MSX: 3, 4, 5, or 6
-    - WISE: 1b or 3a
+The possible values for SurveyKey are listed below for each service:        
+    - IRIS: 12, 25, 60, 100
+    - ISSA: 12, 25, 60, 100
+    - DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2,  phase2_gsc1
+    - SDSS: u, g, r, i, z
+    - TWOMASS: j, h, k
+    - MSX: 3, 4, 5, 6
+    - WISE: 1b, 3a
     </td>
- - **SurveyKeyBand**: So far only used with `'Type===SERVICE'` and `'SurveyKey===WISE`'. Possible values are: 1, 2, 3, 4
- - **ZoomType**:  Sets the zoom type, based on the ZoomType other zoom set methods may be required
+ - **SurveyKeyBand**: So far only used with `'Type===SERVICE'` and `'Service===WISE'`. Possible values are: 1, 2, 3, 4
+ - **ZoomType**:  Set the zoom type, based on the ZoomType other zoom set methods may be required
 Notes for ZoomType:
-    - STANDARD - default, when set you may optionally define `'InitZoomLevel'` or the zoom will default to be 1x
+    - STANDARD - default, when set, you may optionally define `'InitZoomLevel'` or the zoom will default to be 1x
     - TO_WIDTH - you must define <code>ZoomToWidth</code> and set a pixel width</li>
     - FULL_SCREEN - you must define <code>ZoomToWidth</code> with a width and `'ZoomToHeight'` with a height
     - ARCSEC_PER_SCREEN_PIX - you must define <code>ZoomArcsecPerScreenPix</code></li>
- - **TitleOptions**:  Set others ways to title the plot. Options for title:
+ - **InitZoomLevel**: The level to zoom the image to. Used with ZoomType=='STANDARD' (which is the default).  <br>Example:  .5,2,8,.125
+ - **ZoomToWidth**: used with ZoomType=='TO_WIDTH or ZoomType=='FULL_SCREEN', this is the width in pixels. </td>
+ - **ZoomToHeight**: used with "ZoomType==FULL_SCREEN", this is the height in pixels. </td>
+ - **TitleOptions**:  Set other ways to title the plot. Options for title:
     - NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description that come from the server
     - PLOT_DESC - Use the plot description set by the server. This is meaningful when the server is using a service, otherwise it will be an empty string. <i>example-</i> 2mass or IRIS
-    - FILE_NAME - Use the name of the fits file. This is useful when plotting a upload file name or a URL.
-    - HEADER_KEY - Use the value of a fits header name key.  This parameter <code>HeaderForKeyTitle</code> must be set to the card name.
+    - FILE_NAME - Use the name of the FITS file. This is useful when plotting an uploaded file or a URL.
+    - HEADER_KEY - Use the value of a FITS header name key.  This parameter <code>HeaderForKeyTitle</code> must be set to the card name.
     - PLOT_DESC_PLUS - Use the server plot description but append some string to it.  The string is set in `'PlotDescAppend'`
- - **InitZoomLevel**: The level to zoom the image to. Used with ZoomType==STANDARD (which is the default). Example
-        .5,2,8,.125
+
  - **Title**: Title of the plot
- - **PostTitle**: A String to append at the end of the title of the plot. This parameter is useful if you are
-    using one of the computed <code>TitleOpions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
- - **PreTitle**: A String to append at the beginning of the title of the plot. This parameter is useful if you are
-        using one of the computed <code>TitleOptions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
+ - **PostTitle**: A String to append at the end of the title of the plot. This parameter is useful if you are using one of the computed <code>TitleOpions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
+ - **PreTitle**: A String to append at the beginning of the title of the plot. This parameter is useful if you are using one of the computed <code>TitleOptions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code> </td>
  - **TitleFilenameModePfx**: A String to replace the default "from" when <code>TitleMode</code> is <code>FILE_NAME</code>, and the mode is <code>URL</code>.
     If the url contains a fits file name and there are more options then the firefly viewer added a "from" to the front of the title.
     This parameter allows that string to be changed to something such as "cutout".
- - **PlotDescAppend**: A string to apppend to the end of the plot description set by the server.  This will be
-    used as the plot title if the <code>TitleOptions</code> parameter is set to <code>PlotDescAppend</code>. </td>
+ - **PlotDescAppend**: A string to apppend to the end of the plot description set by the server.  This will be used as the plot title if the <code>TitleOptions</code> parameter is set to <code>PlotDescAppend</code>. </td>
  - **RotateNorth**: Plot should come up rotated north, should be "true" to rotate north</td>
  - **RotateNorthType**: coordinate system to rotate north on, options: EQ_J2000, EQ_B1950, EC_J2000, EC_B1950,
         GALACTIC, or SUPERGALACTIC"
  - **Rotate**: set to rotate, if "true", the angle should also be set</td>
  - **RotationAngle**: the angle to rotate to, use with "Rotate"</td>
  - **FlipY**: Flip this image on the Y axis</td>
- - **HeaderKeyForTitle**: Use the value of a specified header for the title of the plot, use with multi image fits files
- - **RangeValues**: A complex string for specify the stretch of this plot. Use the method
-        firefly.serializeRangeValues() to produce this string
- - **ColorTable**: value 0 - 21 to represent different predefine color tables</td>
- - **ZoomToWidth**: used with "ZoomType==TO_WIDTH" or "ZoomType==FULL_SCREEN", this is the width in pixels</td>
- - **ZoomToHeight**: used with "ZoomType==FULL_SCREEN", this is the height in pixels</td>
- - **PostCrop**: Crop and center the image before returning it. If rotation is set then the crop will happens post rotation.
+ - **HeaderKeyForTitle**: Use the value of a specified header for the title of the plot, use with multi image FITS files
+ - **RangeValues**: A complex string for specify the stretch of this plot. Use the method firefly.serializeRangeValues() to produce this string
+ - **ColorTable**: value 0 - 21 to represent different predefined color tables</td>
+
+ - **PostCrop**: Crop and center the image before returning it. If rotation is set then the crop will happen post rotation.
 Note: `SizeInDeg` and `WorldPt` are required to do `PostCropAndCenter`
  - **CropPt1**: One corner of the rectangle, in image coordinates, to crop out of the image, used with CropPt2 CropPt1 and CropPt2 are diagonal of each other
 Syntax is "x;y" example: 12;1.5
@@ -153,12 +149,11 @@ Note-  See documentation on WorldPt to find proper syntax
 CropWorldPt1 and CropWorldPt2 are diagonal of each other.
 Note-See documentation on WorldPt to find proper syntax
  - **ZoomArcsecPerScreenPix**: Set the zoom level so it have the specified arcsec per screen pixel. Use with
-        "ZoomType==ARCSEC_PER_SCREEN_PIX" and "ZoomToWidth"
+        ZoomType=='ARCSEC_PER_SCREEN_PIX' and 'ZoomToWidth'
  - **ContinueOnFail**: For 3 color, if this request fails then keep trying to make a plot with the other request
  - **ObjectName**: the object name that can be looked up by NED or Simbad</td>
  - **Resolver**: The object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF
- - **GridOn**: Turn the grid on after the plot is completed. Normally the grid is turned on by a user action.  This option
-         forces the grid to be on my default. Boolean value: true or false
+ - **GridOn**: Turn the coordinate grid on after the image is plotted. Normally the grid is turned on by a user action.  This option forces the grid to be on by default. Boolean value: true or false
  - **SurveyKeyAl**: TODO: Document this param</td>
  - **UserDesc**: TODO: Document this param</td>
  - **UniqueKey**: TODO: Document this param
@@ -190,32 +185,33 @@ iv.plot( {  "Type"      : "SERVICE",
 ```
 
 
-#####ImageViewer.plotURL() method
+#####<b>ImageViewer.plotURL() method
 
 | Parameter  | Description |
 | ---------- | ----------- |
-| url     | string with the url of a FITS file to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
+| url     | string with the url of a FITS image to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####ImageViewer.plotFile() method
+#####<b>ImageViewer.plotFile() method
 
 | Parameter  | Description |
 | ---------- | ----------- |
 | file     | string with full path of a FITS file on the server to plot, all other parameters are defaulted, (see ImageViewer.setDefaultParams)|
 
 
-#####ImageViewer.plotFileOrURL() method
+#####<b>ImageViewer.plotFileOrURL() method
 
 This shortcut method can be used when there are two ways to access the same file but for some reason the local access is not always available.
-It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)|
+It will try the file first then the URL. All other parameters are defaulted, (see ImageViewer.setDefaultParams)
 
 | Parameter  | Description |
 | ---------- | ----------- |
-| file     | string with full path of a FITS file on the server to plot |
-| url     | string with the url of a FITS file to plot |
+| file     | string with full path of a FITS image file on the server to plot |
+| url     | string with the url of a FITS image file to plot |
 
 
-#####ImageViewer.setDefaultParams() method
+#####<b>ImageViewer.setDefaultParams() method
+
 
 Set parameters that will apply to call future FITS plots. See the documentation on `plot()` for defaults.
 
@@ -225,25 +221,24 @@ Set parameters that will apply to call future FITS plots. See the documentation 
 
 
 
-####ExternalViewer and ExpandedViewer 
+####<b>ExternalViewer and ExpandedViewer 
 
-`firefly.getExternalViewer()` - Get access to the firefly tools viewer.  Used to ask it to plot a file. The firefly tools viewer will run in another tab.
+`firefly.getExternalViewer()` - Get access to the Firefly tools viewer.  The firefly tools viewer will run in a browser tab or window.  It is used to plot an image.
  
- `firefly.getExpandedViewer()` - plot a file in the expanded viewer.  This is the viewer that you used to popout an image to full screen in the same tab.  This is a little used feature.
+ `firefly.getExpandedViewer()` -  Get access to the Firefly tools viewer in the expanded mode.  It is used to plot an image to full screen in a browser tab or window.  This is a little used feature.
    
-Both viewers have the same methods.
-    
-| Method  | Description |
+Both viewers have the same methods as <b>ImageViewer</b>.
+| Method | Description |
 | ---------- | ----------- |
-| `plot()` | plot a fits images |
-| `plotURL()` | convenience method to plot a url |
-| `plotFile()` | convenience method to plot a file on the server |
-| `plotFileOrURL()` | convenience method reference a file to plot by both URL and file |
-| `setDefaultParams()`  |  set param that will apply to call `plot` calls |
+| `plot()` | plot a FITS image |
+| `plotURL()` | convenience method to plot an image referenced by url |
+| `plotFile()` | convenience method to plot an image file on the server |
+| `plotFileOrURL()` | convenience method to plot an image referenced by file or url |
+| `setDefaultParams()`  |  set parameters that will apply to  `plot` calls |
 
-See the ImageViewer for the details of each method.
+See the <b>ImageViewer</b> for the details of each method.
 
-#####firefly.serializeRangeValues() method
+#####<b>firefly.serializeRangeValues() method
 
 `firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
@@ -269,13 +264,12 @@ iv.plot( {  'Type'      : 'SERVICE',
 ```
 
 
-####Other Utility Methods for fits visualization 
+#####<b>Other Utility Methods for FITS visualization 
 
 | Method  | parameters | Description |
 | ------- | ---------- | ----------- |
 |firefly.setGlobalDefaultParams(params) | a object literal such as ImageViewer.plot() uses |set global fallback params for every image plotting call |
-|firefly.setRootPath(rootURLPath) |the root URL to be prepended to any relative URL. |sets the root path for any relative URL. If this
-    method has not been called then relative URLs use the page's root.|
+|firefly.setRootPath(rootURLPath) |the root URL to be prepended to any relative URL. |sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.|
 
 
 
