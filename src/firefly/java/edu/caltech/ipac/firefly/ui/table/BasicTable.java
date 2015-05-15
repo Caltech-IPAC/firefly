@@ -8,7 +8,6 @@ import com.google.gwt.gen2.table.client.FixedWidthGrid;
 import com.google.gwt.gen2.table.client.ScrollTable;
 import com.google.gwt.gen2.table.client.SortableGrid;
 import com.google.gwt.gen2.table.client.TableModelHelper;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -143,8 +142,8 @@ public class BasicTable extends ScrollTable {
                 return super.getColumnSorter(true);
             }
         };
-
-        table.unsinkEvents(Event.ONMOUSEOVER | Event.ONMOUSEDOWN | Event.ONCLICK);
+        // TG commented the line below to get RowSelectionEvents in GWT2.7 (when selection is enabled)
+        // table.unsinkEvents(Event.ONMOUSEOVER | Event.ONMOUSEDOWN | Event.ONCLICK);
         table.setSelectionEnabled(false);
 
         return table;
