@@ -515,4 +515,29 @@ firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
 
 ###Connecting XY Viewers to table
 
-*todo put xy plot visualization docs here*
+`firefly.addXYPlot(params, div)` - add an XY Plot to a div
+
+| parameters | type        |
+| ---------- | ----------- |
+|params      | object literal |
+|div         | string, the div to put the image viewer into |
+
+
+param:
+
+ - **QUERY_ID**: Required. This is the string that connects this XY Plot to the table.
+                     It should be the same string that you specified as the div 
+                     parameter when you created the table.
+ - **xCol**:     The name of x column, can be an expression based on multiple columns. 
+                     If no column is specified, the first numeric column is used as an x column.
+ - **yCol**:     The name of y column, can be an expression based on multiple columns. 
+                      If no column is specified, the first numeric non-x column is used as a y column. 
+
+
+<pre>
+firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
+                                           "type" : "selectable"}, "tableHere");
+firefly.addXYPlot({"QUERY_ID" : "tableHere",
+                   "xCol" : "frame_num",
+                   "yCol" : "band"}, "xyPlotHere" );
+</pre>
