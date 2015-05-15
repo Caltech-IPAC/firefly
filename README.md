@@ -31,13 +31,11 @@ Firefly provides a first-class FITS visualization on the Web without any plugins
 Firefly shows 2D line graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define equations from the rows for the XY Plot, such as (row1*row2/tan(row3)
 
 
-
 ## Setup
 
 #### Prerequisites
  -  [Java 1.6.+] (http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase6-419409.html)
     This is the version Firefly is tested on.  Later versions should work as well, although it is not fully tested.
-
 
  -  [Gradle 2.3.+] (https://gradle.org/downloads)
     Gradle is an open source build automation system.
@@ -49,15 +47,10 @@ Firefly shows 2D line graphs interactively so that a user can read the data poin
  -  [Node 0.12.0.+] (https://nodejs.org/download/)
     Javascript interpreter for command line environment, used for development tools
 
-#### How to get Firefly source:
-
-Go to page https://github.com/Caltech-IPAC/firefly.  Click on `Download ZIP`.  Expand the zip file after downloaded.
-Another option if you have git installed is to run:
-
-    $ git clone https://github.com/Caltech-IPAC/firefly.git
-
 
 #### How to build Firefly:
+
+First `git clone` the firefly repository or download the zip (and unzip) to your target machine. Then install the prerequisites (node, java, tomcat).
 
 In a terminal, cd into the `firefly` directory, then run:
 
@@ -65,8 +58,6 @@ In a terminal, cd into the `firefly` directory, then run:
 
 This generates firefly.jar located at ./jars/build/.
 You may include this jar into your project to build advanced astronomy web applications.
-
-
 
 
 #### How to build and deploy Firefly Viewer:
