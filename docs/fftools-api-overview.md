@@ -536,6 +536,6 @@ firefly.addXYPlot({"QUERY_ID" : "tableHere",
 
 ###More Code Examples
 
-[see fftools-api-code-examples.md](#fftools-api-code-examples.md)
+[see fftools-api-code-examples.md](fftools-api-code-examples.md)
 
 
