@@ -36,7 +36,7 @@ public class EmailFieldDef extends StringFieldDef {
             else if (s.indexOf(".") == 0) {  // e-mail starts with a dot
                 throw new ValidationException(getErrMsg() + "- an email address cannot start with dot");
             }
-            else if (s.indexOf("") != -1) {
+            else if (s.indexOf("..") != -1) {
                 throw new ValidationException(getErrMsg() + "- an email address cannot have two dots together");
             }
             else if (s.indexOf(",") != -1) {  // found "," in email address
@@ -103,7 +103,7 @@ public class EmailFieldDef extends StringFieldDef {
                 throw new ValidationException(getErrMsg() + "- your host name is incorrect");
             }
 
-            if (host.indexOf("") != -1)  {// ".." in host name
+            if (host.indexOf("..") != -1)  {// ".." in host name
                 throw new ValidationException(getErrMsg() + "- you cannot have two dots in the host name");
             }
 
