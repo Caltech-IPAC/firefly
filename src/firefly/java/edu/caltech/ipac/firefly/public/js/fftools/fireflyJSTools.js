@@ -5,15 +5,12 @@
  * @namespace the firefly object.
  * Access to the Firefly tools utilities.
  */
-window.firefly= function() {
+window.firefly= (function(retFF) {
     "use strict";
 
     var globalPlotParams= null;
-    var retFF= null;
     var ffPrivate= {};
 
-    if (!("firefly" in window))  retFF= {};
-    else  retFF= firefly;
 
     if (!("debug" in retFF)) {
         if ("fireflyDebug" in window)  retFF.debug= window.fireflyDebug;
@@ -276,7 +273,7 @@ window.firefly= function() {
 
 
 
-}();
+}(window.firefly || {} ));
 
 
 

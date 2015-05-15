@@ -33,16 +33,15 @@ export const fireflyInit= function() {
         React.initializeTouchEvents(true);
     }
 
-    if (window.firefly) {
-        if (!window.firefly.gwt) {
-            window.firefly.gwt= {};
-        }
-        window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
-        window.firefly.appFlux= appFlux;
-        window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
-        window.firefly.gwt.ExtensionResult= ExtensionResult;
-        window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
+    if (!window.firefly) window.firefly= {};
+    if (!window.firefly.gwt) {
+        window.firefly.gwt= {};
     }
+    window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
+    window.firefly.appFlux= appFlux;
+    window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
+    window.firefly.gwt.ExtensionResult= ExtensionResult;
+    window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
 };
 
 class Application {
