@@ -358,18 +358,20 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                 }
 
                                 public void onSuccess(RawDataSet rawDataSet) {
-                                    TableDataView ds = cachedModel.getCurrentData();
-                                    DataSet enums = DataSetParser.parse(rawDataSet);
-                                    for (TableDataView.Column c : enums.getColumns()) {
-                                        if (c.getEnums() != null && c.getEnums().length > 0) {
-                                            TableDataView.Column fc = ds.findColumn(c.getName());
-                                            if (fc != null) {
-                                                fc.setEnums(c.getEnums());
+                                    if (rawDataSet != null && rawDataSet.getTotalRows() > 0) {
+                                        TableDataView ds = cachedModel.getCurrentData();
+                                        DataSet enums = DataSetParser.parse(rawDataSet);
+                                        for (TableDataView.Column c : enums.getColumns()) {
+                                            if (c.getEnums() != null && c.getEnums().length > 0) {
+                                                TableDataView.Column fc = ds.findColumn(c.getName());
+                                                if (fc != null) {
+                                                    fc.setEnums(c.getEnums());
+                                                }
                                             }
                                         }
-                                    }
-                                    if (table != null) {
-                                        table.updateHeaderTable(true);
+                                        if (table != null) {
+                                            table.updateHeaderTable(true);
+                                        }
                                     }
                                 }
                             });

@@ -1,6 +1,3 @@
-
-
-
 # JavaScript Firefly Tools API
 
 Firefly tools is an API that can be use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
@@ -278,7 +275,7 @@ iv.plot( {  'Type'      : 'SERVICE',
 <pre>
     Usage: firefly.showTable(parameters, div)
 
-    parameters is an object attributes.  div is the div to load the table into.
+    parameters are an object attributes.  div is the div to load the table into.
     below is a list of all possible parameters.
 
     parameters:
@@ -317,18 +314,54 @@ iv.plot( {  'Type'      : 'SERVICE',
 
 
 </pre>
-<i>Table File Support:</i>
+
 The Table tools currently supports the following file formats:
 <ul>
     <li>IPAC Table file format</li>
-    <li>CSV - first row should be the title</li>
-    <li>TSV - first row should be the title</li>
+    <li>CSV - first row should be column headers</li>
+    <li>TSV - first row should be column headers</li>
 </ul>
 
 
 
 ###XY Plot Visualization
-*todo put xy plot visualization docs here*
+<pre>
+    Usage: firefly.showPlot(parameters, div)
+
+    parameters are an object attributes.  div is the div to load the XY Plot into.
+    below is a list of all possible parameters.
+
+    parameters:
+        source      : required; location of the ipac table.  url or file path.
+        chartTitle  : title of the chart
+        xCol        : required; column to use for x values (can be an expression, containing multiple column names)
+        yCol        : required; column to use for y values (can be an expression, containing multiple column names)
+        errorCol    : column to use for y value errors (must be column name, expressions are not supported)
+        orderCol    : column to use to separate series from each other, different series are shown in different colors
+        plotStyle   : line|linePoints|points, defaults to points
+        showLegend  : always|onExpand, defaults to onExpand
+        plotTitle   : header for the plot
+
+    javascript example:
+        firefly.showPlot({
+            'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl'
+            'chartTitle' : 'SPITZER_S5_3539456_01_merge.tbl',
+            'xCol' : 'wavelength',
+            'yCol' : 'flux_density',
+            'errorCol' : 'error',
+            'orderCol' : 'order',
+            'plotStyle' : 'line',
+            'showLegend' : 'always', 
+            'plotTitle' : 'Sample Merged Spectra Table'
+        }, 'divname');
+</pre>
+
+ XY Plot supports the same table formats as Table tools:
+ <ul>
+     <li>IPAC Table file format</li>
+     <li>CSV - first row should be column headers</li>
+     <li>TSV - first row should be column headers</li>
+ </ul>
 
 ###Adding Context Extensions to FITS viewer
 
@@ -476,4 +509,29 @@ firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
 
 ###Connecting XY Viewers to table
 
-*todo put xy plot visualization docs here*
+`firefly.addXYPlot(params, div)` - add an XY Plot to a div
+
+| parameters | type        |
+| ---------- | ----------- |
+|params      | object literal |
+|div         | string, the div to put the image viewer into |
+
+
+param:
+
+ - **QUERY_ID**: Required. This is the string that connects this XY Plot to the table.
+                     It should be the same string that you specified as the div 
+                     parameter when you created the table.
+ - **xCol**:     The name of x column, can be an expression based on multiple columns. 
+                     If no column is specified, the first numeric column is used as an x column.
+ - **yCol**:     The name of y column, can be an expression based on multiple columns. 
+                      If no column is specified, the first numeric non-x column is used as a y column. 
+
+
+<pre>
+firefly.showTable({"source" : "http://web.ipac.caltech.edu/staff/roby/demo/wd/WiseQuery.tbl",
+                                           "type" : "selectable"}, "tableHere");
+firefly.addXYPlot({"QUERY_ID" : "tableHere",
+                   "xCol" : "frame_num",
+                   "yCol" : "band"}, "xyPlotHere" );
+</pre>
