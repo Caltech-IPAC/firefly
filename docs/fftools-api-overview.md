@@ -533,3 +533,9 @@ firefly.addXYPlot({"QUERY_ID" : "tableHere",
                    "xCol" : "frame_num",
                    "yCol" : "band"}, "xyPlotHere" );
 ```
+
+###More Code Examples
+
+[see fftools-api-code-examples.md](#fftools-api-code-examples.md)
+
+
