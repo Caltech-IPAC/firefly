@@ -223,7 +223,8 @@ Set parameters that will apply to call future FITS plots. See the documentation 
  
  `firefly.getExpandedViewer()` -  Get access to the Firefly tools viewer in the expanded mode.  It is used to plot an image to full screen in a browser tab or window.  This is a little used feature.
    
-Both viewers have the same methods as <b>ImageViewer</b>.
+Both viewers have the same methods as `ImageViewer`.
+
 | Method | Description |
 | ---------- | ----------- |
 | `plot()` | plot a FITS image |
