@@ -51,8 +51,12 @@ The python class name is **FireflyClient**.  It is located in python directory u
      tablePathInfo = fc.uploadImage(table)
      
      fc.showTable(tablePathInfo)
+<<<<<<< Updated upstream
  
 
+=======
+		 			
+>>>>>>> Stashed changes
  - **Run in python prompt**
  
       1. start python session by typing "python" in the terminal
