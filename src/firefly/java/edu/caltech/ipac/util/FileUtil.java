@@ -294,6 +294,27 @@ public class FileUtil
         }
     }
 
+    public static void writeToFile(InputStream inStream, File toFile) throws IOException {
+        BufferedOutputStream out = null;
+        BufferedInputStream in = null;
+        try {
+            in = new BufferedInputStream(inStream, BUFFER_SIZE);
+            out= new BufferedOutputStream( new FileOutputStream(toFile),BUFFER_SIZE);
+
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = inStream.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+        } catch (EOFException e) {
+            // do nothing we are done
+        } finally {
+            silentClose(in);
+            silentClose(out);
+        }
+    }
+
+
     public static String readFile(File file) throws IOException {
         DataInputStream in=null;
         DataOutputStream out=null;
