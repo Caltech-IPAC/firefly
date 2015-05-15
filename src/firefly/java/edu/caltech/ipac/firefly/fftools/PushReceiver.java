@@ -28,7 +28,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ui.DS9RegionLoadDialog;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.logging.Level;
 
 /**
@@ -65,7 +64,7 @@ public class PushReceiver implements WebEventListener {
             prepareRequest(wpr);
         } else if (name.equals(Name.PUSH_REGION_FILE)) {
             DS9RegionLoadDialog.loadRegFile(data,null);
-        } else if (name == Name.PUSH_FITS_COMMAND_EXT) {
+        } else if (name.equals(Name.PUSH_FITS_COMMAND_EXT)) {
             Ext.Extension ext= parsePlotCmdExtension(data);
             Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
             exI.fireExtAdd(ext);
