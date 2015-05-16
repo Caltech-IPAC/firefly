@@ -18,6 +18,45 @@ Firefly tools also allows you to expand certain components and receive events ba
 
  - [Add context menus](#adding-context-extensions-to-fits-viewer) for when a user selects a box, line, circle, highlights a point.
  - [Receive events](#getting-events) from these context menus and from any overlay data plotted .
+
+
+###Starting Firefly Tools in JavaScript
+Getting started with firefly tools involves three basic steps.
+
+ 1. Load the javascript file `fftools.nocache.js`
+ 2. When the file load it will call the functions `onFireflyLoaded()`, so you need to define this function.
+ 3. Define some divs in you html document where you will load the viewer widgets.
+
+This is all best explained with a code example. This examples creates a div with id "myID", loads firefly, and plots a fits fiIe in the `onFireflyLoaded` function.
+
+```html
+<!doctype html>
+<html>
+<head><title>Demo of Firefly Tools</title></head>
+<body>
+
+<!-- need a div id to plot to -->
+<div id="myID" style="width: 350px; height: 350px;"></div>
+
+<script type="text/javascript">
+ {
+      // this function must exist, called when fftools loads
+   var onFireflyLoaded= function() {        
+       var primaryViewer= firefly.makeImageViewer('myID');
+       primaryViewer.plot({
+          "URL"       : "http://someHost.org/someFile.fits",
+          "ZoomType"  : "TO_WIDTH"});
+   };
+ }
+</script>
+
+<!-- script name is fftools.nocache.js -->
+<script src='fftools.nocache.js'></script>
+
+</body>
+</html>
+```
+
  
 
 ###FITS Visualization
@@ -29,7 +68,7 @@ The following methods are available to create a FITS image viewer.  A FITS `Imag
  - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified FITS file.
 
 
-#### <b>ImageViewer
+#### ImageViewer
 
 `firefly.makeImageViewer(div,group)` - Create a new ImageViewer object in the specified div.
     parameters:
