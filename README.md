@@ -86,3 +86,7 @@ Goto http://localhost:8080/fftools/ to launch Firefly Viewer.
 
 ### Setting up the Server correctly for FITS files
 [see server-settings-for-fits-files.md](docs/server-settings-for-fits-files.md)
+
+### Changing the Firefly runtime environment
+[see firefly-environment.md](docs/firefly-environment.md)
+
