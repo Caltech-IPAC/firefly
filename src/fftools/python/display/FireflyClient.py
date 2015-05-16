@@ -144,7 +144,7 @@ class FireflyClient(WebSocketClient):
                 dictStr = dictStr + '&' + key + '=' + addtlParams[key]
 
         if (plotID != None):
-            url = url + "&plotID=" + plotID
+            url = url + "&plotId=" + plotID
         url = url + dictStr
         self.session.post(url, data={'file': path})
 

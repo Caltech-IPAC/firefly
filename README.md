@@ -75,18 +75,18 @@ Goto http://localhost:8080/fftools/ to launch Firefly Viewer.
 
 ## More Docs
 
-### Firefly Tools JavaScript API overview
+####Firefly Tools JavaScript API overview
 [see fftools-api-overview.md](docs/fftools-api-overview.md)
 
-### Firefly Tools Remote API using Python overview
+####Firefly Tools Remote API using Python overview
 [see firefly-python-wrapper.md](docs/firefly-python-wrapper.md)
 
-### Code Examples Using Firefly Tools
+####Code Examples Using Firefly Tools
 [see fftools-api-code-examples.md](docs/fftools-api-code-examples.md)
 
-### Setting up the Server correctly for FITS files
+####Setting up the Server correctly for FITS files
 [see server-settings-for-fits-files.md](docs/server-settings-for-fits-files.md)
 
-### Changing the Firefly runtime environment
+####Changing the Firefly runtime environment
 [see firefly-environment.md](docs/firefly-environment.md)
 
