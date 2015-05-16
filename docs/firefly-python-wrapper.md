@@ -2,9 +2,9 @@
 
 ## Firefly python wrapper user guide ##
 
-This document explains how to use the python library included in Firefly to interactive with firefly image viewer. 
+This document explains how to use the python library included in Firefly to interact with firefly image viewer. 
 
-The python class name is **FireflyClient**.  It is located in python directory under firefly.   
+The python class name is **FireflyClient**.  It is located in firefly/src/fftools/python.   
 
  -  **Pre-requirements**
 
@@ -51,12 +51,7 @@ The python class name is **FireflyClient**.  It is located in python directory u
      tablePathInfo = fc.uploadImage(table)
      
      fc.showTable(tablePathInfo)
-<<<<<<< Updated upstream
- 
 
-=======
-		 			
->>>>>>> Stashed changes
  - **Run in python prompt**
  
       1. start python session by typing "python" in the terminal
