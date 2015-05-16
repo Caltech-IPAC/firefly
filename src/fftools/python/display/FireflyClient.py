@@ -38,9 +38,6 @@ class FireflyClient(WebSocketClient):
         self.channel = channel
         self.session = requests.Session()
 
-        #self.connect()
-
-
     #overridde the superclass's method
     def opened(self):
         print ("Opening websocket connection to fftools")
@@ -49,28 +46,16 @@ class FireflyClient(WebSocketClient):
     def closed(self, code, reason=None):
         print ("Closed down", code, reason)
 
-    def verifyMessage(self, m):
-        sevent = json.loads(m.data.decode('utf8'))
-        eventName = sevent['name']
-        eventScope = sevent['scope']
-        eventDataType = sevent['data']
-
-        if (eventName not in self.serverEvents['name']):
-            self.msgCallback(m.data)
-
-        if (eventScope not in self.serverEvents['scope']):
-            self.msgCallback(m.data)
-
-        if ('channel' not in self.serverEvents['data']):
-            self.msgCallback(m.data)
-
-        if (eventDataType not in self.serverEvents['dataType']):
-            self.msgCallback(m.data)
 
     def addListener(self, name, callback):
 
         self.listeners['name'] = name
         self.listeners['callback'] = callback
+
+    def removeListener(self, rname):
+         if rname in a:
+               del self.listeners['name']
+
 
     def handleEvent(self, sevent):
 
@@ -102,7 +87,7 @@ class FireflyClient(WebSocketClient):
                 self.session.cookies['seinfo'] = seinfo
                 #self.onConnected(self.channel)
             except:
-                self.verifyMessage(m)
+                self.msgCallback(m)
         else:
             self.handleEvent(sevent)
 
@@ -149,11 +134,6 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-    def _isUrl(self, path):
-        if 'http' in path:
-            return self.true
-        else:
-            return self.false
 
     def showFits(self, path, plotID=None, addtlParams=None):
 
@@ -166,25 +146,9 @@ class FireflyClient(WebSocketClient):
         if (plotID != None):
             url = url + "&plotID=" + plotID
         url = url + dictStr
-
-        #result = self.session.post(url, data={'file': self.uploadFile(path)})
-
-        result = self.session.post(url, data={'file': path})
-
-        self.checkResult(result)
+        self.session.post(url, data={'file': path})
 
 
-    def isConnected(self):
-        res = self.false
-        self.send('Hello, world')
-        try:
-            data = self.recv(1024)
-            if (data != None):
-                res = self.true
-                pass
-        except:
-            res=self.false
-        return res
 
     def showTable(self, path, title=None, pageSize=None):
 
@@ -199,10 +163,9 @@ class FireflyClient(WebSocketClient):
 
         url = url + titleStr + pageSizeStr
 
+        self.session.post(url, data={'file': path})
 
-        result = self.session.post(url, data={'file': path})
 
-        self.checkResult(result)
 
     def overylayRegion(self, path, extType='reg', title=None, id=None, image=None):
 
@@ -217,26 +180,13 @@ class FireflyClient(WebSocketClient):
 
         result = self.session.post(url, data={'file': path})
 
-        self.checkResult(result)
-        '''
-        #I don't understand why this way does not work???
-        dataStr=''
-        if (isURL):
-              dataStr = "{'url':"+url+'}'
-        else:
-            dataStr="{'file':"+path+'}'
-
-        self.r.post(url,data=dataStr)
-        '''
-
     def addExtension(self, extType, title, plotId, id, image=None):
 
 
         url = self.urlroot + "?cmd=pushExt" + "&plotId=" + plotId + "&id=" + id + "&extType=" + extType + "&Title=" + title
         if (image != None):
             url = url + "&image=" + image
-        result = self.session.post(url, allow_redirects=True)
-        self.checkResult(result)
+        self.session.post(url, allow_redirects=True)
 
     def zoom(self, factor):
         return

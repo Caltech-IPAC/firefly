@@ -115,13 +115,15 @@ print('===================================================')
 
 
 x=''
+name=None
+
 while true:
 
    x=raw_input("input>")
    if(x==''):
        pass
 
-   fc.addListener(None,x)
+   fc.addListener(name,x)
    xList=split(x, (',' ';', ' ') )
 
    if x=='-v':
