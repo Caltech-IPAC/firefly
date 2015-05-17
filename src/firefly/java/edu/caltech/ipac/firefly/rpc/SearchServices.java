@@ -45,7 +45,7 @@ public interface SearchServices extends RemoteService {
     String getEmail(String id);
     boolean resendEmail(List<String> idList, String email);
     boolean clearPushEntry(String id, int idx);
-    boolean reportUserAction(String id, String desc, String data);
+    boolean reportUserAction(String channel, String desc, String data);
     String createDownloadScript(String id,
                                         String fname,
                                         String dataSource,

@@ -141,8 +141,8 @@ public class SearchServicesImpl extends BaseRemoteService implements SearchServi
         return true;
     }
 
-    public boolean reportUserAction(String id, String desc, String data) {
-        BackgroundEnv.reportUserAction(id,desc,data);
+    public boolean reportUserAction(String channel, String desc, String data) {
+        BackgroundEnv.reportUserAction(channel,desc,data);
         return true;
     }
 

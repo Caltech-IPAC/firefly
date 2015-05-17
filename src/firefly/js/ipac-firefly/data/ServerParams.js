@@ -57,6 +57,7 @@ export const ServerParams = {
         RESOLVER : 'resolver',
         ID : 'id',
         BID : 'bid',
+        CHANNEL_ID : 'channelID',
         PLOT_ID : 'plotId',
         POLLING : 'polling',
         EMAIL : 'email',

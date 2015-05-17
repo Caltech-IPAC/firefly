@@ -36,7 +36,7 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
     }
 
     protected void doExecute(final Request req, AsyncCallback<String> callback) {
-        String bid = req.getParam("BID");
+        String bid = req.getParam("channelID");
             Ext.ExtensionInterface exI= Ext.makeExtensionInterfaceWithListener(this, getStoreCBForJs());
             exI.fireChannelActivate(bid);
         if (!aloneUI.hasResults()) {

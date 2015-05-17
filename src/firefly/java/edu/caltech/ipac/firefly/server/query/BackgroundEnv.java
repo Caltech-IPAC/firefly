@@ -3,22 +3,19 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import com.gargoylesoftware.htmlunit.javascript.host.EventNode;
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.JobAttributes;
-import edu.caltech.ipac.firefly.core.background.PackageProgress;
-import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
+import edu.caltech.ipac.firefly.core.background.*;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.BackgroundInfoCacher;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -31,11 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 /**
  * User: roby
  * Date: Aug 23, 2010
@@ -134,15 +127,22 @@ public class BackgroundEnv {
         }
     }
 
-    public static void reportUserAction(String id, String desc, String data) {
-        BackgroundInfoCacher pi= new BackgroundInfoCacher(id);
-        BackgroundStatus bgStat= pi.getStatus();
-        if (bgStat!=null) {
-            if (bgStat.getRequestedCnt()>0) {
-                bgStat.addResponseData(desc, data);
-                pi.setStatus(bgStat);
-            }
-        }
+    public static void reportUserAction(String channel, String desc, String data) {
+        ServerEvent userAction = new ServerEvent(Name.REPORT_USER_ACTION, ServerEvent.Scope.CHANNEL, data);
+        ServerEventManager.fireEvent(userAction);
+
+//
+//
+//
+//       //
+//        BackgroundInfoCacher pi= new BackgroundInfoCacher(channel);
+//        BackgroundStatus bgStat= pi.getStatus();
+//        if (bgStat!=null) {
+//            if (bgStat.getRequestedCnt()>0) {
+//                bgStat.addResponseData(desc, data);
+//                pi.setStatus(bgStat);
+//            }
+//        }
     }
 
     public static ScriptRet createDownloadScript(String id,

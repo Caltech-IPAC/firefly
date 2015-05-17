@@ -199,10 +199,10 @@ public class SearchServerCommands {
         @Override
         public String doCommand(Map<String, String[]> paramMap) throws Exception {
             SrvParam sp= new SrvParam(paramMap);
-            String id= sp.getRequired(ServerParams.ID);
+            String channel= sp.getRequired(ServerParams.CHANNEL_ID);
             String desc= sp.getRequired(ServerParams.DESC);
             String data= sp.getRequired(ServerParams.DATA);
-            new SearchServicesImpl().reportUserAction(id,desc,data);
+            new SearchServicesImpl().reportUserAction(channel,desc,data);
             return "true";
         }
     }

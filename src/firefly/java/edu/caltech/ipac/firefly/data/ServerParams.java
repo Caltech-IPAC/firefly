@@ -56,6 +56,7 @@ public class ServerParams {
     public static final String RESOLVER = "resolver";
     public static final String ID = "id";
     public static final String BID = "bid";
+    public static final String CHANNEL_ID = "channelID";
     public static final String PLOT_ID = "plotId";
     public static final String POLLING = "polling";
     public static final String EMAIL = "email";
