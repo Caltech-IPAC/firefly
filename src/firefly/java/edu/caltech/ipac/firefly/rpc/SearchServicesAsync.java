@@ -46,7 +46,7 @@ public interface SearchServicesAsync {
 
     public void getEmail(String id, AsyncCallback<String> async);
     public void clearPushEntry(String id, int idx, AsyncCallback<Boolean> async);
-    public void  reportUserAction(String id, String desc, String data, AsyncCallback<Boolean> async);
+    public void  reportUserAction(String channel, String desc, String data, AsyncCallback<Boolean> async);
 
     public void resendEmail(List<String> idList, String email, AsyncCallback<Boolean> async);
 

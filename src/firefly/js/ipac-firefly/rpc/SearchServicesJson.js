@@ -232,9 +232,9 @@ export const clearPushEntry= function(id, idx ) {
  * @param {string} data
  * @return {Promise}
  */
-export const reportUserAction= function(id, desc, data) {
+export const reportUserAction= function(channel, desc, data) {
     var paramList = [];
-    paramList.push({name: ServerParams.ID, value: id});
+    paramList.push({name: ServerParams.CHANNEL_ID, value: channel});
     paramList.push({name: ServerParams.DATA, value: data});
     paramList.push({name: ServerParams.DESC, value: desc});
     return doService(doJsonP(), ServerParams.REPORT_USER_ACTION, paramList

@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.util.event;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 
 /**
  * User: roby
@@ -295,6 +294,7 @@ public class Name implements Serializable {
     public static final Name PUSH_REGION_FILE       =  new Name("PUSH_REGION_FILE", "Overlay this region file.  Expect TableInfo as data");
     public static final Name PUSH_TABLE_FILE        =  new Name("PUSH_TABLE_FILE", "Load this table file.  Expect TableInfo as data");
     public static final Name PUSH_FITS_COMMAND_EXT  =  new Name("PUSH_FITS_COMMAND_EXT", "Add an extension command.  Expect ExtInfo as data");
+    public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
 //====================================================================
 
 

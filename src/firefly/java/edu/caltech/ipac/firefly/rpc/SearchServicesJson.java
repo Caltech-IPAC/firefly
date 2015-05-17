@@ -205,9 +205,9 @@ public class SearchServicesJson implements SearchServicesAsync {
         });
     }
 
-    public void  reportUserAction(String id, String desc, String data, AsyncCallback<Boolean> async) {
+    public void  reportUserAction(String channel, String desc, String data, AsyncCallback<Boolean> async) {
         List<Param> paramList = new ArrayList<Param>(1);
-        paramList.add(new Param(ServerParams.ID, id));
+        paramList.add(new Param(ServerParams.CHANNEL_ID, channel));
         paramList.add(new Param(ServerParams.DATA, data));
         JsonUtils.doService(doJsonP, ServerParams.REPORT_USER_ACTION, paramList, async, new JsonUtils.Converter<Boolean>() {
             public Boolean convert(String s) {
