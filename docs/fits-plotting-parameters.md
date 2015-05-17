@@ -85,10 +85,10 @@ The possible values for SurveyKey are listed below for each service:
 | --------- | ----------- |
 | `PostCrop` | `'true'` to crop.  If rotation is set then the crop will happen post rotation.|
 | `PostCropAndCenter` | `'true'` to Crop and center the image before returning it. Note: `SizeInDeg` and `WorldPt` are required |
- | `CropPt1` | One corner of the rectangle, in image coordinates, to crop out of the image, used with `CropPt2`. Syntax is "x;y" example: 12;1.5 |
- | `CropPt2` | Second corner of the rectangle, in image coordinates, to crop out of the image, used with `'CropPt1'`. Syntax is "x;y" example: 12;1.5 |
- |  `CropWorldPt1` | One corner of the rectangle, in world coordinates, to crop out of the image, used with `'CropWorldPt2'`   |
- | `CropWorldPt2`| Second corner of the rectangle, in world coordinates, to crop out of the image, used with `CropWorldPt1`.|
+| `CropPt1` | One corner of the rectangle, in image coordinates, to crop out of the image, used with `CropPt2`. Syntax is "x;y" example: 12;1.5 |
+| `CropPt2` | Second corner of the rectangle, in image coordinates, to crop out of the image, used with `'CropPt1'`. Syntax is "x;y" example: 12;1.5 |
+|  `CropWorldPt1` | One corner of the rectangle, in world coordinates, to crop out of the image, used with `'CropWorldPt2'`   |
+| `CropWorldPt2`| Second corner of the rectangle, in world coordinates, to crop out of the image, used with `CropWorldPt1`.|
 
 Notes- 
 
@@ -127,10 +127,10 @@ Notes for ZoomType:
 | --------- | ----------- |
 | `Title` |  Title of the plot |
 | `PostTitle` |  A String to append at the end of the title of the plot. This parameter is useful if you are using one of the computed `TitleOpions` such as `FILE_NAME` or `HEADER_KEY` |
- | `PreTitle` | A String to append at the beginning of the title of the plot. This parameter is useful if you are using one of the computed `TitleOptions` such as `FILE_NAME` or `HEADER_KEY` |
- | `TitleFilenameModePfx` | A String to replace the default "from" when `TitleMode` is `FILE_NAME`, and the mode is `URL`. If the url contains a fits file name and there are more options then the firefly viewer will add a "from" to the front of the title. This parameter allows that string to be changed to something such as "cutout". |
- | `PlotDescAppend` | A string to apppend to the end of the plot description set by the server.  This will be used for the plot title if the `TitleOptions` parameter is set to `PlotDescAppend`. |
- | `HeaderKeyForTitle` | Sets the title to the fits header key if `TitleOptions` is set to `HEADER_KEY` |
+| `PreTitle` | A String to append at the beginning of the title of the plot. This parameter is useful if you are using one of the computed `TitleOptions` such as `FILE_NAME` or `HEADER_KEY` |
+| `TitleFilenameModePfx` | A String to replace the default "from" when `TitleMode` is `FILE_NAME`, and the mode is `URL`. If the url contains a fits file name and there are more options then the firefly viewer will add a "from" to the front of the title. This parameter allows that string to be changed to something such as "cutout". |
+| `PlotDescAppend` | A string to apppend to the end of the plot description set by the server.  This will be used for the plot title if the `TitleOptions` parameter is set to `PlotDescAppend`. |
+| `HeaderKeyForTitle` | Sets the title to the fits header key if `TitleOptions` is set to `HEADER_KEY` |
 
 
 ###The Type parameter
