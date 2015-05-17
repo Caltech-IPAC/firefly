@@ -102,97 +102,13 @@ The following is a list of possible parameters for the ImageViewer plotting. Alm
 | ---------- | ----------- |
 | object     | object literal with name/value pairs for all parameters |
 
+
+The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
+Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. 
+You can also specify three color parameters and the associated files.
+
+For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
  
- - **Type**: Set the type of request. Based on the Type then one or more other parameters are required.
-Options are:
-    - `SERVICE`, for an image service
-    - `FILE` for file on the server
-    - `URL` for any url accessible FITS image file
-    - `TRY_FILE_THEN_URL` try a file on the server first then try the url
-    - `BLANK` make a blank image
-    - `ALL_SKY`
-
- - **File**: File name of a file on the server. Required if Type=='FILE' or if you want to plot a file on the server.
- - **URL**: Retrieve and plot the file from the specified URL. Required if Type=='URL' or if you want to plot an image referenced by URL.
- The url can be absolute or relative. If it is relative, one of two things happen:
-    - The url is made absolute based on the root path set in the method `firefly.setRootPath(path)` .      
-    - The url is made absolute based on the host web page url. 
-    
- - **Service**
-    - Available services are: IRIS, ISSA, DSS, SDSS, TWOMASS, MSX, DSS_OR_IRIS, WISE.
-Required if Type=='SERVICE' or if you want to use a service
- - **WorldPt**:  This is target for service request for `Type=='SERVICE'`.
-    - WorldPt uses the format "12.33;45.66;EQ_J2000" for j2000.
-    - The general syntax is `lon;lat;coordinate_sys`, e.g. `'12.2;33.4;EQ_J2000'` or `'11.1;22.2;GALACTIC'`
-    - coordinate system can be: `'EQ_J2000'`, `'EQ_B1950'`, `'EC_J2000'`, `'EC_B1950'`, `'GALACTIC'`, or `'SUPERGALACTIC'`;
- - **SizeInDeg**  The radius or side (in degrees) depending of the service type, used with `Type=='SERVICE'`
- -  **SurveyKey**:  Required if `Type=='SERVICE'`
-The value of SurveyKey depends on the value of "Service".
-The possible values for SurveyKey are listed below for each service:        
-    - IRIS: 12, 25, 60, 100
-    - ISSA: 12, 25, 60, 100
-    - DSS: poss2ukstu_red, poss2ukstu_ir, poss2ukstu_blue, poss1_red, poss1_blue, quickv, phase2_gsc2,  phase2_gsc1
-    - SDSS: u, g, r, i, z
-    - TWOMASS: j, h, k
-    - MSX: 3, 4, 5, 6
-    - WISE: 1b, 3a
-    </td>
- - **SurveyKeyBand**: So far only used with `'Type===SERVICE'` and `'Service===WISE'`. Possible values are: 1, 2, 3, 4
- - **ZoomType**:  Set the zoom type, based on the ZoomType other zoom set methods may be required
-Notes for ZoomType:
-    - STANDARD - default, when set, you may optionally define `'InitZoomLevel'` or the zoom will default to be 1x
-    - TO_WIDTH - you must define <code>ZoomToWidth</code> and set a pixel width</li>
-    - FULL_SCREEN - you must define <code>ZoomToWidth</code> with a width and `'ZoomToHeight'` with a height
-    - ARCSEC_PER_SCREEN_PIX - you must define <code>ZoomArcsecPerScreenPix</code></li>
- - **InitZoomLevel**: The level to zoom the image to. Used with ZoomType=='STANDARD' (which is the default).  <br>Example:  .5,2,8,.125
- - **ZoomToWidth**: used with ZoomType=='TO_WIDTH or ZoomType=='FULL_SCREEN', this is the width in pixels. </td>
- - **ZoomToHeight**: used with "ZoomType==FULL_SCREEN", this is the height in pixels. </td>
- - **TitleOptions**:  Set other ways to title the plot. Options for title:
-    - NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description that come from the server
-    - PLOT_DESC - Use the plot description set by the server. This is meaningful when the server is using a service, otherwise it will be an empty string. <i>example-</i> 2mass or IRIS
-    - FILE_NAME - Use the name of the FITS file. This is useful when plotting an uploaded file or a URL.
-    - HEADER_KEY - Use the value of a FITS header name key.  This parameter <code>HeaderForKeyTitle</code> must be set to the card name.
-    - PLOT_DESC_PLUS - Use the server plot description but append some string to it.  The string is set in `'PlotDescAppend'`
-
- - **Title**: Title of the plot
- - **PostTitle**: A String to append at the end of the title of the plot. This parameter is useful if you are using one of the computed <code>TitleOpions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code></td>
- - **PreTitle**: A String to append at the beginning of the title of the plot. This parameter is useful if you are using one of the computed <code>TitleOptions</code> such as <code>FILE_NAME</code> or <code>HEADER_KEY</code> </td>
- - **TitleFilenameModePfx**: A String to replace the default "from" when <code>TitleMode</code> is <code>FILE_NAME</code>, and the mode is <code>URL</code>.
-    If the url contains a fits file name and there are more options then the firefly viewer added a "from" to the front of the title.
-    This parameter allows that string to be changed to something such as "cutout".
- - **PlotDescAppend**: A string to apppend to the end of the plot description set by the server.  This will be used as the plot title if the <code>TitleOptions</code> parameter is set to <code>PlotDescAppend</code>. </td>
- - **RotateNorth**: Plot should come up rotated north, should be "true" to rotate north</td>
- - **RotateNorthType**: coordinate system to rotate north on, options: EQ_J2000, EQ_B1950, EC_J2000, EC_B1950,
-        GALACTIC, or SUPERGALACTIC"
- - **Rotate**: set to rotate, if "true", the angle should also be set</td>
- - **RotationAngle**: the angle to rotate to, use with "Rotate"</td>
- - **FlipY**: Flip this image on the Y axis</td>
- - **HeaderKeyForTitle**: Use the value of a specified header for the title of the plot, use with multi image FITS files
- - **RangeValues**: A complex string for specify the stretch of this plot. Use the method firefly.serializeRangeValues() to produce this string
- - **ColorTable**: value 0 - 21 to represent different predefined color tables</td>
-
- - **PostCrop**: Crop and center the image before returning it. If rotation is set then the crop will happen post rotation.
-Note: `SizeInDeg` and `WorldPt` are required to do `PostCropAndCenter`
- - **CropPt1**: One corner of the rectangle, in image coordinates, to crop out of the image, used with CropPt2 CropPt1 and CropPt2 are diagonal of each other
-Syntax is "x;y" example: 12;1.5
- - **CropPt2**: Second corner of the rectangle, in image coordinates, to crop out of the image, used with `'CropPt1'`
-`CropPt1` and `CropPt2` are diagonal of each other
-Syntax is "x;y" example: 12;1.5
- - **CropWorldPt1**: One corner of the rectangle, in world coordinates, to crop out of the image, used with `'CropPt2'`
-`CropPt1` and `CropPt2` are diagonal of each other.
-Note-  See documentation on WorldPt to find proper syntax
- - **CropWorldPt2**: Second corner of the rectangle, in world coordinates, to crop out of the image, used with CropWorldPt1.
-CropWorldPt1 and CropWorldPt2 are diagonal of each other.
-Note-See documentation on WorldPt to find proper syntax
- - **ZoomArcsecPerScreenPix**: Set the zoom level so it have the specified arcsec per screen pixel. Use with
-        ZoomType=='ARCSEC_PER_SCREEN_PIX' and 'ZoomToWidth'
- - **ContinueOnFail**: For 3 color, if this request fails then keep trying to make a plot with the other request
- - **ObjectName**: the object name that can be looked up by NED or Simbad</td>
- - **Resolver**: The object name resolver to use, options are: NED, Simbad, NedThenSimbad, SimbadThenNed, PTF
- - **GridOn**: Turn the coordinate grid on after the image is plotted. Normally the grid is turned on by a user action.  This option forces the grid to be on by default. Boolean value: true or false
- - **SurveyKeyAl**: TODO: Document this param</td>
- - **UserDesc**: TODO: Document this param</td>
- - **UniqueKey**: TODO: Document this param
 <br>
 *Examples*- 
 ```js

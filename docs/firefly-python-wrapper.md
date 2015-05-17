@@ -28,11 +28,18 @@ The python class name is **FireflyClient**.  It is located in firefly/src/fftool
 
  - **Show a Fits image**
  
+ ```python
       data = /your/path/yourFits.fits'
-   
       fitsPathInfo= fc.uploadImage(data)
-   
       fc.showFits(fitsPathInfo)
+```   
+  
+ <br> 
+The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
+Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. 
+You can also specify three color parameters and the associated files.
+
+For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
       
 
  - **Overlay a region**
