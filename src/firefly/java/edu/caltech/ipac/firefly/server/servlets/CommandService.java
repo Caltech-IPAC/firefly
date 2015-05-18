@@ -82,7 +82,7 @@ public class CommandService extends BaseHttpServlet {
             sb.append("}]");
             jsonData = sb.toString();
             // remove the last comma from json object
-            int lastCommaIdx = jsonData.lastIndexOf(',');
+            int lastCommaIdx = jsonData.lastIndexOf(",}]");
             if (lastCommaIdx>0) {
                 jsonData = new StringBuilder(jsonData).replace(lastCommaIdx, lastCommaIdx+1,"").toString();
             }

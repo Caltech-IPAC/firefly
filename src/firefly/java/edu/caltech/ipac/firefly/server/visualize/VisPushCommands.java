@@ -61,9 +61,19 @@ public class VisPushCommands {
 
 
             SrvParam sp= new SrvParam(paramMap);
-            String file= sp.getRequired(ServerParams.FILE);
+            String file= sp.getOptional(ServerParams.FILE);
             String plotID= sp.getOptional(ServerParams.PLOT_ID);
-            WebPlotRequest wpr= WebPlotRequest.makeFilePlotRequest(file);
+            WebPlotRequest wpr;
+            if (file!=null) {
+                wpr= WebPlotRequest.makeFilePlotRequest(file);
+            }
+            else {
+                wpr= new WebPlotRequest();
+            }
+            for(Map.Entry<String,String[]> entry : paramMap.entrySet()) {
+                wpr.setParam(entry.getKey(),entry.getValue()[0]);
+            }
+
             if (plotID!=null) {
                 wpr.setPlotId(plotID);
             }
@@ -116,7 +126,7 @@ public class VisPushCommands {
 
             String jsonData = JSTART +
                     "\"success\" :  \"" + success + JLINE_END +
-                    "\"id\" :  \"" + id + JLAST_END +
+                    "\"id\" :  \"" + id + JLINE_END +
                     "\"plotId\" :  \"" + plotId + JLAST_END +
                     JEND;
 

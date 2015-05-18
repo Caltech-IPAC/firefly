@@ -1,6 +1,5 @@
 __author__ = 'zhang'
 
-# import requests
 from ws4py.client.threadedclient import WebSocketClient
 import requests
 import webbrowser
@@ -40,33 +39,15 @@ class FireflyClient(WebSocketClient):
         self.listeners = {}
         self.channel = channel
         self.session = requests.Session()
-        self.connect();
+        self.connect()
 
 
-    #overridde the superclass method
-    def opened(self):
-        print ("Opening websocket connection to fftools")
+    # def opened(self):
+    #     print ("Opening websocket connection to fftools")
 
-    #overridde the superclass method
-    def closed(self, code, reason=None):
-        print ("Closed down", code, reason)
+    # def closed(self, code, reason=None):
+    #     print ("Closed down", code, reason)
 
-
-    def addListener(self, callback, name=ALL):
-        if callback not in self.listeners.keys():
-            self.listeners[callback]= []
-        if name not in self.listeners[callback]:
-            self.listeners[callback].append(name)
-        # print 'there are %d members in callback dict' % len(self.listeners)
-        # for key, value  in self.listeners.items():
-        #     print 'value=%s' % value
-
-    def removeListener(self, callback, name=ALL):
-        if callback in self.listeners.keys():
-           if name in self.listeners[callback]:
-               self.listeners[callback].remove(name);
-           if len(self.listeners[callback])==0:
-               self.listeners.pop(callback)
 
     def handleEvent(self, sevent):
         for callback, eventIDList  in self.listeners.items():
@@ -74,7 +55,7 @@ class FireflyClient(WebSocketClient):
                 callback(sevent)
 
 
-    #overridde the superclass's method
+                 #overridde the superclass's method
     def received_message(self, m):
         sevent = json.loads(m.data.decode('utf8'))
         eventName = sevent['name']
@@ -101,6 +82,12 @@ class FireflyClient(WebSocketClient):
             # print sevent
             self.handleEvent(sevent)
 
+    def sendURLAsGet(self,url):
+        response= self.session.get(url)
+        print response.text
+        status = json.loads(response.text)
+        return status[0]
+
 
     # def onConnected(self, channel):
     #     #open the browser
@@ -108,7 +95,33 @@ class FireflyClient(WebSocketClient):
     #     webbrowser.open('http://localhost:8080/fftools/app.html?id=Loader&channelID=' + channel)
     #     webbrowser.open(url)
 
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
+# Public API Begins
+#-----------------------------------------------------------------
+#-----------------------------------------------------------------
 
+    #  callback - set the function to be called when a event happens on the firefly client
+    #  name - set the name of the events, default to all events
+    def addListener(self, callback, name=ALL):
+        if callback not in self.listeners.keys():
+            self.listeners[callback]= []
+        if name not in self.listeners[callback]:
+            self.listeners[callback].append(name)
+
+
+    #  callback - remove a callback
+    #  name - set the name of the events, default to all events
+    def removeListener(self, callback, name=ALL):
+        if callback in self.listeners.keys():
+            if name in self.listeners[callback]:
+                self.listeners[callback].remove(name)
+            if len(self.listeners[callback])==0:
+                self.listeners.pop(callback)
+
+
+    # Pause and do not exit.  Wait over events from the server.
+    # This is optional. Event will get call anyway.
     def waitForEvents(self):
         WebSocketClient.run_forever(self)
 
@@ -117,6 +130,10 @@ class FireflyClient(WebSocketClient):
     #     if 'true' not in result.text:
     #         print("Error:" + result.text)
 
+    # Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
+    # will be call without any parameters.
+    # url - the url, overriding the default
+    # channel - a different channel than the default
     def launchBrowser(self, url=None, channel=None):
         if channel is None:
             channel = self.channel
@@ -132,6 +149,9 @@ class FireflyClient(WebSocketClient):
     def disconnect(self):
         self.close()
 
+    # Upload a file to the Firefly Server
+    # uploaded file can be fits, region, and various types of table files
+    # path - the path to the upload file
     def uploadFile(self, path):
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
         files = {'file': open(path, 'rb')}
@@ -140,7 +160,10 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-        # TODO: i think this is the concept for how this method should work, need to test
+    # Upload a file like object to the Firefly server. The method should allows file like data
+    # to be streamed without using a actual file.
+    # Uploaded data can be fits, region, and various types of table files
+    # TODO: i think this is the concept for how this method should work, need to tested
     def uploadFitsData(self, stream, contentType='image/x-fits'):
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
         myHeaders={'Content-Type': contentType}
@@ -149,21 +172,35 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-    def showFits(self, path, plotID=None, addtlParams=None):
+    # Show a fits image
+    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
+    #                  then it is the return value of the method. Otherwise it is a file that
+    #                  firefly has direct read access to.
+    # plotID         - the id you assigned to the plot. This is necessary to further controlling
+    #                  the plot
+    # additionalParam- dictionary of any valid fits viewer plotting parameter,
+    #                  see firefly/docs/fits-plotting-parameters.md
+    def showFits(self, fileOnServer=None, plotID=None, additionalParams=None):
         url = self.urlroot + "?cmd=pushFits"
         dictStr = ''
-        if addtlParams is not None:
-            for key, value in addtlParams:
+        if additionalParams is not None:
+            for key, value in additionalParams.items():
                 dictStr+= '&' + key + '=' + value
-
         if plotID is not None:
             url = url + "&plotId=" + plotID
+        if fileOnServer is not None:
+            url = url + "&file=" + fileOnServer
         url = url + dictStr
-        self.session.post(url, data={'file': path})
+        return self.sendURLAsGet(url)
 
 
-
-    def showTable(self, path, title=None, pageSize=None):
+    # Show a table in Firefly
+    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
+    #                  then it is the return value of the method. Otherwise it is a file that
+    #                  firefly has direct read access to.
+    # title          - title on table
+    # pageSize       - how many rows are shown.
+    def showTable(self, fileOnServer, title=None, pageSize=None):
         url = self.urlroot + "?cmd=pushTable"
         titleStr = ''
         if title is not None:
@@ -172,40 +209,51 @@ class FireflyClient(WebSocketClient):
         pageSizeStr = ''
         if pageSize is not None:
             pageSizeStr = 'pageSize=' + pageSize
+        if fileOnServer is not None:
+            url+= "&file=" + fileOnServer
+        url+= titleStr + pageSizeStr
+        return self.sendURLAsGet(url)
 
-        url = url + titleStr + pageSizeStr
-
-        self.session.post(url, data={'file': path})
 
 
-
-    def overylayRegion(self, path, extType='reg', title=None, id=None, image=None):
+    # Overlay a region on the loaded FITS images
+    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
+    #                  then it is the return value of the method. Otherwise it is a file that
+    #                  firefly has direct read access to.
+    # title          - title of the region file
+    def overlayRegion(self, fileOnServer, extType='reg', title=None):
 
         url = self.urlroot + "?cmd=pushRegion" + '&extType=' + extType
+        url+= "&file=" + fileOnServer
         if title is not None:
-            url = url + '&Title=' + title
-        if id is not None:
-            url = url + '&id=' + id
+            url+= '&title=' + title
+        return self.sendURLAsGet(url)
 
+
+    # Add an extension to the plot.  Extensions are context menus that allows you extend
+    # what firefly can so when certain actions happen
+    #  extType - May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
+    #  title - The title that the user sees
+    #  plotId - The it of the plot to put the extension on
+    #  extensionId - The id of the extension
+    #  image - An url of an icon to display the toolbar instead of title
+    def addExtension(self, extType, title, plotId, extensionId, image=None):
+        url = self.urlroot + "?cmd=pushExt" + "&plotId=" + plotId + "&id=" + extensionId + "&extType=" + extType + "&Title=" + title
         if image is not None:
             url = url + "&image=" + image
-
-        result = self.session.post(url, data={'file': path})
-
-
-    def addExtension(self, extType, title, plotId, id, image=None):
-        url = self.urlroot + "?cmd=pushExt" + "&plotId=" + plotId + "&id=" + id + "&extType=" + extType + "&Title=" + title
-        if image is not None:
-            url = url + "&image=" + image
-        self.session.post(url, allow_redirects=True)
+        return self.sendURLAsGet(url)
 
 
-    def zoom(self, factor):
+    # Zoom the image
+    # todo
+    def zoom(self, plotId, factor):
         #todo - add when http api supports this
         return
 
 
-    def pan(self, direction, factor):
+    # Pan or scroll the image
+    # todo
+    def pan(self, plotId, direction, factor):
         #todo - add when http api supports this
         return
 
