@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.BufferedOutputStream;
@@ -43,8 +42,10 @@ abstract class ModFileWriter implements Runnable {
     }
 
     protected File getTargetFile() { return _targetFile; }
-    protected boolean doThread() { return true; }
+    protected boolean doTask() { return true; }
+    private boolean doAsThread() { return false; }
 
+//    protected boolean doThread() { return true; }
     /**
      * Start the file writing in separate thread.  This method also update the working fits file to the name that is about
      * to be created.
@@ -55,10 +56,15 @@ abstract class ModFileWriter implements Runnable {
         if (_markAsOriginal) {
             PlotStateUtil.setOriginalFitsFile(state, _targetFile, _band);
         }
-        if (doThread()) {
-            Thread thread= new Thread(this);
-            thread.setDaemon(true);
-            thread.start();
+        if (doTask()) {
+            if (doAsThread()) {
+                Thread thread= new Thread(this);
+                thread.setDaemon(true);
+                thread.start();
+            }
+            else {
+                write();
+            }
         }
     }
 
@@ -85,7 +91,7 @@ abstract class ModFileWriter implements Runnable {
             _unzipNecessary= (ext!=null && ext.equalsIgnoreCase(FileUtil.GZ));
         }
 
-        protected boolean doThread() { return _unzipNecessary; }
+        protected boolean doTask() { return _unzipNecessary; }
 
         protected void write() {
             try {
@@ -137,7 +143,8 @@ abstract class ModFileWriter implements Runnable {
             File f= getTargetFile();
             try {
                 OutputStream os= new BufferedOutputStream(new FileOutputStream(f), 1024*16);
-                ImagePlot.writeFile(os, new FitsRead[]{_fr});
+//                ImagePlot.writeFile(os, new FitsRead[]{_fr});
+                _fr.writeSimpleFitsFile(os);
                 FileUtil.silentClose(os);
             } catch (Exception e) {
                 _log.warn(e,"geom write failed", "geom file: "+f.getPath());

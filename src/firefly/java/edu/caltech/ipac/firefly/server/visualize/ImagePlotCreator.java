@@ -218,7 +218,7 @@ public class ImagePlotCreator {
         }
         String s= req.getPlotDescAppend();
         plot.setPlotDesc("");
-        Header header= frGroup.getFitsRead(Band.NO_BAND).getHeader();
+        Header header= frGroup.getFitsRead(state.firstBand()).getHeader();
 
 
         switch (titleOps) {

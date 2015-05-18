@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ActiveCallCtx;
 import edu.caltech.ipac.firefly.server.visualize.CtxControl;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -71,8 +70,8 @@ public class ImageDownload extends BaseHttpServlet {
                     int width= Integer.parseInt(widthStr);
                     int height= Integer.parseInt(heightStr);
                     ctx= CtxControl.prepare(state);
-                    if (ctx.getFitsReadGroup().getFitsRead(Band.NO_BAND)==null) {
-                        Logger.info("frGroup 0 band is null after recreate");
+                    if (ctx.getFitsReadGroup().getFitsRead(state.firstBand())==null) {
+                        Logger.info("frGroup "+ state.firstBand()+ " is null after recreate");
                     }
                     File outputFile= PlotServUtils.createImageFile(ctx.getPlot(),ctx.getFitsReadGroup(),fname,x,y,width,height);
                     insertCacheHeaders(res,outputFile.lastModified()+"");

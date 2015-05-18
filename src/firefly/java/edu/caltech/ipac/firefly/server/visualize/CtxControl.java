@@ -117,8 +117,8 @@ public class CtxControl {
                         frGroup.setFitsRead(band, fr[imageIdx]);
                     }
 
-                    if (frGroup.getFitsRead(Band.NO_BAND)==null) {
-                        Logger.info("frGroup 0 band is null after reread");
+                    if (frGroup.getFitsRead(state.firstBand())==null) {
+                        Logger.info("frGroup "+ state.firstBand()+ " is null after reread");
                     }
                     retval= new ActiveCallCtx(ctx,plot,frGroup);
                 }

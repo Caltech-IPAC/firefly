@@ -59,7 +59,6 @@ public class IrsaImageGetter {
 
         String sugestedFileName= getURL(hp, cgiapp, parms, file);
 
-        ClientLog.message("Done.");
         return sugestedFileName;
     }
 

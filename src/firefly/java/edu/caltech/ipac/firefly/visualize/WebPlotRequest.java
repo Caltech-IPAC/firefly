@@ -1283,7 +1283,7 @@ public class WebPlotRequest extends ServerRequest {
      * @return the deserialized WebPlotRequest
      */
     public static WebPlotRequest parse(String str) {
-        return ServerRequest.parse(str, new WebPlotRequest());
+        return (str==null || "null".equalsIgnoreCase(str)) ? null : ServerRequest.parse(str, new WebPlotRequest());
     }
 
     public WebPlotRequest makeCopy() {

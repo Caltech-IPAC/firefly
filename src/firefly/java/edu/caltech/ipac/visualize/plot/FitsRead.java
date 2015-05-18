@@ -2,15 +2,24 @@ package edu.caltech.ipac.visualize.plot;
 
 
 import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
-import nom.tam.fits.*;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Data;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
+import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
-import edu.caltech.ipac.util.Assert;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +44,6 @@ public class FitsRead implements Serializable {
 
     private int planeNumber;
     private int extension_number;
-//    private byte[] pixeldata;
     private float[] float1d;
     private Fits fits;
     private ImageHeader imageHeader;
@@ -43,12 +51,9 @@ public class FitsRead implements Serializable {
     private BasicHDU hdu;
     private Histogram hist = null;
     private double blankValue;
-//    private RangeValues rangeValues = (RangeValues) DEFAULT_RANGE_VALUE.clone();
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-//    private double slow = 0.0;
-//    private double shigh = 0.0;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -62,7 +67,7 @@ public class FitsRead implements Serializable {
     private FitsRead(Fits fits, ImageHDU imageHdu) throws FitsException {
 
         //assign some instant variables
-        this.fits = fits;
+//        this.fits = fits;
         hdu = imageHdu;
         header = imageHdu.getHeader();
         planeNumber = header.getIntValue("SPOT_PL", 0);
@@ -75,7 +80,7 @@ public class FitsRead implements Serializable {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
-        float1d = getImageHDUDataInFloatArray(fits, imageHdu);
+        float1d = getImageHDUDataInFloatArray(imageHdu);
 
     }
 
@@ -621,7 +626,7 @@ public class FitsRead implements Serializable {
         return float1d;
     }
 
-    private float[] getImageHDUDataInFloatArray(Fits fits, ImageHDU imageHDU) throws FitsException {
+    private float[] getImageHDUDataInFloatArray(ImageHDU imageHDU) throws FitsException {
 
 
         //convert data to float if the bitpix is not 32
@@ -1168,9 +1173,9 @@ public class FitsRead implements Serializable {
     }
 
 
-    public Fits getFits() {
-        return (fits);
-    }
+//    public Fits getFits() {
+//        return (fits);
+//    }
 
     public BasicHDU getHDU() {
         return hdu;
@@ -1318,10 +1323,38 @@ public class FitsRead implements Serializable {
 
     public void freeResources() {
         float1d = null;
-        fits = null;
+//        fits = null;
         imageHeader = null;
         header = null;
         hist = null;
+    }
+
+    public void writeSimpleFitsFile(OutputStream stream) throws FitsException, IOException{
+        createNewFits().write(new DataOutputStream(stream));
+    }
+
+    public Fits createNewFits() throws FitsException {
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
+        int dims2[] = new int[]{naxis1, naxis2};
+        float [][] outData = (float[][]) ArrayFuncs.curl(float1d, dims2);
+        ImageData imageData= new ImageData(outData);
+        ImageHDU newHDU = new ImageHDU(cloneHeader(header), imageData);
+        Fits outputFits = new Fits();
+        outputFits.addHDU(newHDU);
+        return outputFits;
+    }
+
+    public static void writeFitsFile(OutputStream stream, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException{
+        Fits output_fits = new Fits();
+        for(FitsRead fr : fitsReadAry) {
+            BasicHDU one_image_hdu = refFits.getHDU(0);
+            Header header = one_image_hdu.getHeader();
+            Data data = one_image_hdu.getData();
+            ImageHDU image_hdu = new ImageHDU(header, data);
+            output_fits.addHDU(image_hdu);
+        }
+        output_fits.write(new DataOutputStream(stream));
     }
 
 

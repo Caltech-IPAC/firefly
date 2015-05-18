@@ -249,7 +249,8 @@ public class WebPlotReader {
                                                          IOException {
         FitsRead retval= fr;
         if (req.getPostCrop()) {
-            Fits inFits = fr.getFits();
+//            Fits inFits = fr.getFits();
+            Fits inFits = fr.createNewFits();
             Pt pt1;
             Pt pt2;
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {

@@ -594,8 +594,7 @@ public class URLDownload {
         if (retFile != null) {
             List<String> outList = new ArrayList<String>(2);
             outList.add(urlStr);
-            outList.add("Download Complete- 1 file");
-            outList.add(String.format("%s : %d bytes", retFile.getFile().getName(), retFile.getFile().length()));
+            outList.add(String.format("Download Complete: %s : %d bytes", retFile.getFile().getName(), retFile.getFile().length()));
             ClientLog.message(outList);
         }
     }

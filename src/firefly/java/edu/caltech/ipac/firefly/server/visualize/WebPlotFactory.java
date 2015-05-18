@@ -336,7 +336,7 @@ public class WebPlotFactory {
                                       plot.getProjection(),
                                       imageData.getImageWidth(),
                                       imageData.getImageHeight(),
-                                      pInfo.getFrGroup().getFitsRead(Band.NO_BAND).getImageScaleFactor(),
+                                      pInfo.getFrGroup().getFitsRead(state.firstBand()).getImageScaleFactor(),
                                       wfDataAry,
                                       plot.getPlotDesc(),
                                       pInfo.getDataDesc());
@@ -391,16 +391,16 @@ public class WebPlotFactory {
         String more = String.format("%s%9s%s%9s",
                                     ", Find-", UTCTimeUtil.getHMSFromMills(findElapse),
                                     time3String, UTCTimeUtil.getHMSFromMills(readElapse));
-        out.add(majType + " - " + minType + ": Total: " + UTCTimeUtil.getHMSFromMills(elapse) + more);
+        out.add(majType + " - " + minType + ": Total: " + UTCTimeUtil.getHMSFromMills(elapse) + more +
+                ", Ctx:"+state.getContextString());
 
-        out.add("Context String: " + state.getContextString());
         if (bandAdded) {
             String bStr = newBand.toString() + " - ";
             File f = PlotStateUtil.getWorkingFitsFile(state, newBand);
             out.add("band: " + newBand + " added");
             if (!PlotServUtils.isBlank(state, newBand)) {
-                out.add(bStr + "filename: " + f.getPath());
-                out.add(bStr + "size:     " + FileUtil.getSizeAsString(f.length()));
+                String sizeStr= FileUtil.getSizeAsString(f.length());
+                out.add(bStr + "filename "+"("+sizeStr+ ")" +": " + f.getPath());
                 totSize = f.length();
             } else {
                 out.add(bStr + "Blank Image");
@@ -410,8 +410,8 @@ public class WebPlotFactory {
                 String bStr = state.isThreeColor() ? StringUtils.pad(5, band.toString()) + " - " : "";
                 File f = PlotStateUtil.getWorkingFitsFile(state, band);
                 if (!PlotServUtils.isBlank(state, band)) {
-                    out.add(bStr + "filename: " + f.getPath());
-                    out.add(bStr + "size:     " + FileUtil.getSizeAsString(f.length()));
+                    String sizeStr= FileUtil.getSizeAsString(f.length());
+                    out.add(bStr + "filename "+"("+sizeStr+ ")" +": " + f.getPath());
                     totSize += f.length();
                 } else {
                     out.add(bStr + "Blank Image");

@@ -554,7 +554,7 @@ public class VisServerOps {
 
                 if (saveCropFits) {
                     BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(cropFile), 4096);
-                    ImagePlot.writeFile(stream, fr);
+                    FitsRead.writeFitsFile(stream, fr, cropFits);
                     FileUtil.silentClose(stream);
                 }
 
@@ -1501,8 +1501,15 @@ public class VisServerOps {
     private static WebPlotResult createError(String logMsg, PlotState state, WebPlotRequest reqAry[], Exception e) {
         WebPlotResult retval;
         boolean userAbort= false;
-        String progressKey= (reqAry!=null && reqAry.length>0) ? reqAry[0].getProgressKey() : "";
-        if (progressKey==null) progressKey= "";
+        String progressKey= "";
+        if (reqAry!=null) {
+            for(int i=0; (i<reqAry.length);i++) {
+                if (reqAry[i]!=null) {
+                    progressKey= reqAry[i].getProgressKey();
+                    break;
+                }
+            }
+        }
 
         if (e instanceof FileRetrieveException) {
             FileRetrieveException fe= (FileRetrieveException)e;

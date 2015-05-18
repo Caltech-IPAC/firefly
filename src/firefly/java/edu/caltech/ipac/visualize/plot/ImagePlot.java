@@ -4,27 +4,16 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
-import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Data;
-import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
-import nom.tam.fits.Header;
-import nom.tam.fits.ImageHDU;
 
-import java.awt.AlphaComposite;
-import java.awt.Composite;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,7 +90,7 @@ public class ImagePlot extends Plot implements Serializable {
 //        ImagePlot basePlot= (ImagePlot)getPlotGroup().getBasePlot();
         FitsRead refFitsRead= frGroup.getFitsRead(refBand);
 
-        if (refFitsRead.isSameProjection(colorBandFitsRead)) {
+        if (refFitsRead==colorBandFitsRead || refFitsRead.isSameProjection(colorBandFitsRead)) {
             frGroup.setFitsRead(band,colorBandFitsRead);
         }
         else {
@@ -148,19 +137,30 @@ public class ImagePlot extends Plot implements Serializable {
     * @throws IOException  if problem is in writing the file
     */
 
-   static public void writeFile(OutputStream stream, FitsRead[] fitsRead)
-				   throws FitsException, IOException{
-      Fits output_fits = new Fits();
-       for(FitsRead fr : fitsRead) {
-	  Fits one_fits = fr.getFits();
-	  BasicHDU one_image_hdu = one_fits.getHDU(0);
-	  Header header = one_image_hdu.getHeader();
-	  Data data = one_image_hdu.getData();
-	  ImageHDU image_hdu = new ImageHDU(header, data);
-	  output_fits.addHDU(image_hdu);
-      }
-      output_fits.write(new DataOutputStream(stream));
-   }
+//    static public void writeFile(OutputStream stream, FitsRead[] fitsReadAry) throws FitsException, IOException{
+//        Fits output_fits = new Fits();
+//        for(FitsRead fr : fitsReadAry) {
+//            Fits refFits = fr.getFits();
+//            BasicHDU one_image_hdu = refFits.getHDU(0);
+//            Header header = one_image_hdu.getHeader();
+//            Data data = one_image_hdu.getData();
+//            ImageHDU image_hdu = new ImageHDU(header, data);
+//            output_fits.addHDU(image_hdu);
+//        }
+//        output_fits.write(new DataOutputStream(stream));
+//    }
+
+//    static public void writeFile(OutputStream stream, Fits refFits) throws FitsException, IOException{
+//        Fits output_fits = new Fits();
+//        BasicHDU one_image_hdu = refFits.getHDU(0);
+//        Header header = one_image_hdu.getHeader();
+//        Data data = one_image_hdu.getData();
+//        ImageHDU image_hdu = new ImageHDU(header, data);
+//        output_fits.addHDU(image_hdu);
+//        output_fits.write(new DataOutputStream(stream));
+//    }
+
+
 
     /**
      * get the coordinate system of the plot.
@@ -680,7 +680,6 @@ public class ImagePlot extends Plot implements Serializable {
      * specifically release any resources held by this object
      */
    public void freeResources() {
-       Logger.info("free resources called");
        if (_isPlotted) {
            if (_imageData!=null) {
                if (_isSharedDataPlot)
@@ -688,10 +687,6 @@ public class ImagePlot extends Plot implements Serializable {
                else
                     _imageData.freeResources();
            }
-
-
-           Logger.info("freeing frGroup: " + !_isSharedDataPlot);
-
            _projection   = null;
            _imageData    = null;
            _available    = false;

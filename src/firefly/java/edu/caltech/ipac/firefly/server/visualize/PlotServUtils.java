@@ -206,7 +206,8 @@ public class PlotServUtils {
                                     "."+FileUtil.FITS,
                                     ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        ImagePlot.writeFile(stream, new FitsRead[]{northFR});
+//        ImagePlot.writeFile(stream, new FitsRead[]{northFR});
+        if (northFR!=null) northFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
     }
@@ -222,7 +223,8 @@ public class PlotServUtils {
                                     "."+FileUtil.FITS,
                                     ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
+//        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
+        if (rotateFR!=null) rotateFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
     }
@@ -238,7 +240,8 @@ public class PlotServUtils {
         File f= File.createTempFile(base+"-flip", "."+FileUtil.FITS,
                                     ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
-        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
+//        ImagePlot.writeFile(stream, new FitsRead[]{rotateFR});
+        rotateFR.writeSimpleFitsFile(stream);
         FileUtil.silentClose(stream);
         return f;
     }

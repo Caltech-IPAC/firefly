@@ -673,7 +673,7 @@ public class CropAndCenter
         try
         {
             FitsRead newFitsRead = CropAndCenter.do_crop(fits_read_0, ra, dec, radius);
-            newFits = newFitsRead.getFits();
+            newFits = newFitsRead.createNewFits();
 
             FileOutputStream fo = new java.io.FileOutputStream(out_name);
             BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
