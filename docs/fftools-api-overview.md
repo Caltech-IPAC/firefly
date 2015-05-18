@@ -1,6 +1,6 @@
 # JavaScript Firefly Tools API
 
-Firefly tools is an API that can be use from JavaScript. It allows you to user the main components of Firefly via an API. The following components are available.
+Firefly tools is an API that can be used from JavaScript. It allows you to use the main components of Firefly via an API. The following components are available.
 
  - [FITS Visualizer](#fits-visualization)
  - [Table](#table-visualization)
@@ -24,10 +24,10 @@ Firefly tools also allows you to expand certain components and receive events ba
 Getting started with firefly tools involves three basic steps.
 
  1. Load the javascript file `fftools.nocache.js`
- 2. When the file load it will call the functions `onFireflyLoaded()`, so you need to define this function.
- 3. Define some divs in you html document where you will load the viewer widgets.
-
-This is all best explained with a code example. This examples creates a div with id "myID", loads firefly, and plots a fits fiIe in the `onFireflyLoaded` function.
+ 2. Define some divs in you html document where you will load the viewer widgets.
+ 3. Define `onFireflyLoaded()` function. When `fftools.nocache.js` loads it will call this function.
+ 
+This is all best explained with a code example. This examples creates a div with id `myID`, loads firefly, and plots a fits fiIe in the `onFireflyLoaded` function.
 
 ```html
 <!doctype html>
@@ -61,9 +61,9 @@ This is all best explained with a code example. This examples creates a div with
 
 ###FITS Visualization
 
-The following methods are available to create a FITS image viewer.  A FITS `ImageViewer` is created or referenced by calling the following
+A FITS `ImageViewer` is created or referenced by calling the following methods:
 
- - `firefly.makeImageViewer()`  - make an inline image viewer for a html document
+ - `firefly.makeImageViewer()`  - makes an inline image viewer for a html document
  - `firefly.getExpandViewer()`  - makes an image viewer that will popup in the html document.
  - `firefly.getExternalViewer()` - gives a handle to launch the firefly tools web applications with a specified FITS file.
 
@@ -94,18 +94,12 @@ The following methods are available to create a FITS image viewer.  A FITS `Imag
 
 #####<b> ImageViewer.plot() method
 
-The following is a list of possible parameters for the ImageViewer plotting. Almost all parameters are optional.
- Note that the request `Type` parameter can
- be set specifically or it is implied from the `File`, `URL` or `Service` parameters which are mutually exclusive.
-
 | Parameter  | Description |
 | ---------- | ----------- |
 | object     | object literal with name/value pairs for all parameters |
 
 
-The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
-Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. 
-You can also specify three color parameters and the associated files.
+The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. There are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
 
 For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
  
@@ -214,7 +208,7 @@ iv.plot( {  'Type'      : 'SERVICE',
 ```
 
 
-#####Other Utility Methods for FITS visualization 
+#####**Other Utility Methods for FITS visualization** 
 
 | Method  | parameters | Description |
 | ------- | ---------- | ----------- |
@@ -319,12 +313,12 @@ XY Plot supports the same table formats as Table does:
 
 ###Adding Context Extensions to FITS viewer
 
-Context extensions all the FITS viewer to present extra menu items when the FITS viewer is doing some operations.
+Context extensions make it possible to add user-defined actions on certain operations. When an extension is added, FITS viewer will present an extra menu item in the context menu of the operation, on which the extension is defined. These are the operations on which context extensions can be added:
 
- - Area Select (square)
- - Line Select
- - Point Select
- - Circle Select (*coming soon*)
+  - Area Select (square)
+  -  Line Select
+  - Point Select
+  - Circle Select (*coming soon*)
 
 The best way to describe how to add an extension, is to see the code.
 
@@ -363,10 +357,10 @@ To add an extension to a fits viewer create a object literal with the following 
 
  extType details:
  
- - 'AREA_SELECT' - When the user draws a square this menu will be activate
- - 'LINE_SELECT' -When the user draw a line this menu will be activated.
- - 'POINT' - When any point on the plot is clicked 
- - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
+  - 'AREA_SELECT' - When the user draws a square this menu will be activate
+  -  'LINE_SELECT' -When the user draw a line this menu will be activated. 
+  - 'POINT' - When any point on the plot is clicked
+  - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
 
 callback function takes one parameter,  an object literal, the fields vary depend on the extension type-
  *todo - need to document callback object literal parameters*
@@ -386,7 +380,7 @@ If you have created a table, and that table has image metadata so that a line in
 | parameters | type        |
 | ---------- | ----------- |
 |params      | object literal |
-|div         | string, the div to put the image viewer into |
+|div         | string, the div id to put the image viewer into |
 
 parameters:
 
@@ -492,5 +486,3 @@ firefly.addXYPlot({"QUERY_ID" : "tableHere",
 ###More Code Examples
 
 [see fftools-api-code-examples.md](fftools-api-code-examples.md)
-
-
