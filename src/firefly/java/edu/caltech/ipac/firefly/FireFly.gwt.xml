@@ -18,7 +18,6 @@
 
 
     <!-- Inherit more stuff.                  -->
-    <inherits name="net.zschech.gwt.comet.Comet" />
     <inherits name='com.googlecode.gchart.GChart'/>
     <inherits name='com.thoughtworks.xstream.XStream'/>
 

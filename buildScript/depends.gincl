@@ -50,7 +50,7 @@ ext {
              ':gwt-incubator-2.1-r1766-striped',
              ':gchart' ]
 
-  firefly_ext_lib = [ ':gwt-comet', ':xstream-gwt', ':simbad_ws' ]
+  firefly_ext_lib = [ ':xstream-gwt', ':simbad_ws' ]
 
   firefly_lib = [ firefly_ext_lib, ':firefly' ]
 

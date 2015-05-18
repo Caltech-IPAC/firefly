@@ -9,9 +9,6 @@
    Copyright 2010 Google Inc
    Apache License 2.0
 
-**gwt-comet**
-   Richard Zschech,Thomas Pornin,  Apache License 2.0
-
 **ACM ImageEncoder, GifEncoder**   
    Copyright (C) 1996 by Jef Poskanzer <jef@acme.com>
    Redistribution and use in source and binary forms, with or without

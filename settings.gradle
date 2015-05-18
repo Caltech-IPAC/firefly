@@ -1,8 +1,7 @@
 rootProject.name = 'firefly_root'
 
-include 'gwt-comet', 'simbad', 'xstream', 'firefly', 'fftools'
+include 'simbad', 'xstream', 'firefly', 'fftools'
 
-project(":gwt-comet").projectDir = file('src/external/gwt-comet')
 project(":simbad").projectDir   = file('src/external/simbad')
 project(":xstream").projectDir  = file('src/external/xstream')
 project(":firefly").projectDir  = file('src/firefly')

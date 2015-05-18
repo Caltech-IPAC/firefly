@@ -40,7 +40,6 @@ firefly/java/src/edu/caltech/ipac/uman/null*
 # ------- Ignore jar files that we build - these are artifacts 
 #
 jars/build/
-jars/gwt-comet.jar
 jars/fuse.jar
 jars/solrclient.jar
 jars/firefly.jar
