@@ -36,7 +36,7 @@ public class Downloader {
     private long _downloadSize;
     private long _maxDownloadSize= 0L;
     private List<DownloadListener> _listenerList = new ArrayList<DownloadListener>(2);
-    private static final int BUFFER_SIZE = (int) (16 * FileUtil.K);
+    private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
 
 

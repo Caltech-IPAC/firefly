@@ -71,13 +71,13 @@ public class PlotClientCtx implements Serializable {
 //======================================================================
 
     public ImagePlot getCachedPlot() {
-        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+        Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
         return (ImagePlot)memCache.get(_imagePlotCacheKey);
     }
 
 
     public void setPlot(ImagePlot p) {
-        Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+        Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
         memCache.put(_imagePlotCacheKey,p);
         updateAccessTime();
         if (p!=null) initHoldTime();
@@ -173,7 +173,7 @@ public class PlotClientCtx implements Serializable {
                 p.freeResources();
                 if (group!=null) group.freeResources();
                 if (pv!=null) pv.freeResources();
-                Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+                Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
                 memCache.put(_imagePlotCacheKey, null);
             }
         }

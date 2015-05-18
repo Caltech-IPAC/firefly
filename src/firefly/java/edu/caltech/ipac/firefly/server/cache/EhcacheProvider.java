@@ -11,7 +11,6 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.Cleanupable;
 import edu.caltech.ipac.util.cache.FileHolder;
-import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -20,7 +19,6 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -41,14 +39,14 @@ public class EhcacheProvider implements Cache.Provider {
     private static final boolean enableJMX = AppProperties.getBooleanProperty("ehcache.jmx.monitor", true);
     private static final int cleanupIntervalMin = AppProperties.getIntProperty("ehcache.cleanup.internal.minutes", 5);
     private static final String cleanupTypes[] = findCleanupCacheTypes();
-    private static float pctVisSharedMemSize = AppProperties.getFloatProperty("pct.vis.shared.mem.size", 0F);
     //    private static final MemCleanup cleanup= new MemCleanup();
     private static HashMap<String, Boolean> fileListenersReg = new HashMap<String, Boolean>();
     private static HashMap<String, Boolean> logListenersReg = new HashMap<String, Boolean>();
+    private static long curConfModTime = 0;
 
     static {
         URL url = null;
-        File f = ServerContext.getConfigFile("ehcache.xml");
+        File f = getConfFile("ehcache.xml");
         if (f != null && f.canRead()) {
             try {
                 url = f.toURI().toURL();
@@ -57,42 +55,23 @@ public class EhcacheProvider implements Cache.Provider {
             }
             _log.info("cache manager config file: " + url);
         }
-        if (url == null) {
-            url = EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/ehcache.xml");
-        }
 
         _log.info("loading ehcache config file: " + url);
 
         manager = net.sf.ehcache.CacheManager.newInstance(url);
 
 
-        File sharedConfig = ServerContext.getConfigFile("shared_ehcache.xml");
-        if (sharedConfig == null) {
-            sharedConfig = new File(ServerContext.getWebappConfigDir(), "shared_ehcache.xml");
-            try {
-                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/shared_ehcache.xml"), sharedConfig);
-            } catch (Exception e) {
-                _log.error("Unable to extract shared_ehcache.xml from jar file");
-            }
-        }
+        // Due to the shared nature of this file, we only want to pick up the latest version.
+        // Latest is based on when ehcache.xml is modified.
+        if (f.lastModified() > curConfModTime) {
+            curConfModTime = f.lastModified();
 
-        File ignoreSizeOf = ServerContext.getConfigFile("ignore_sizeof.txt");
-        if (ignoreSizeOf == null) {
-            ignoreSizeOf = new File(ServerContext.getWebappConfigDir(), "ignore_sizeof.txt");
-            try {
-                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/ignore_sizeof.txt"), ignoreSizeOf);
-            } catch (Exception e) {
-                _log.error("Unable to extract ignore_sizeof.txt from jar file");
-            }
-        }
+            File sharedConfig = getConfFile("shared_ehcache.xml");
+            File ignoreSizeOf = getConfFile("ignore_sizeof.txt");
+            System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
 
-        if (sharedConfig.exists()) {
-            if (ignoreSizeOf.exists()) {
-                System.setProperty("net.sf.ehcache.sizeof.filter", ignoreSizeOf.getAbsolutePath());
-            } else {
-                _log.error("Unable to locate ignore_sizeof.txt file.");
-            }
             sharedManager = CacheManager.create(sharedConfig.getAbsolutePath());
+            float pctVisSharedMemSize = AppProperties.getFloatProperty("pct.vis.shared.mem.size", 0F);
 
             // check to see if vis.shared.mem.size is setup in the environment or setup for auto-config.
             String sharedMemSize = System.getProperty("vis.shared.mem.size");
@@ -115,6 +94,19 @@ public class EhcacheProvider implements Cache.Provider {
         }
     }
 
+    private static File getConfFile(String fname) {
+        File confFile = ServerContext.getConfigFile(fname);
+        if (confFile == null) {
+            confFile = new File(ServerContext.getWebappConfigDir(), fname);
+            try {
+                URLDownload.getDataToFile(EhcacheImpl.class.getResource("/edu/caltech/ipac/firefly/server/cache/resources/" + fname), confFile);
+            } catch (Exception e) {
+                _log.error("Unable to extract " + fname + " from jar file");
+            }
+        }
+        return confFile;
+    }
+
     private static String[] findCleanupCacheTypes() {
         String ctypes[]= new String[0];
         String in= AppProperties.getProperty("ehcache.cleanup.cache.types", null);
@@ -124,21 +116,9 @@ public class EhcacheProvider implements Cache.Provider {
         return ctypes;
     }
 
-    public Cache getSharedCache(String type) {
-        EhcacheImpl cache;
-        Ehcache ehcache = sharedManager.getCache(type);
-        if (ehcache == null) {
-            throw new IllegalArgumentException("Unknow cache type.  Make sure cache type '" +
-                    type + "' is defined in your shared_ehcache.xml file");
-        }
-        cache = new EhcacheImpl(ehcache);
-        ensureLoggingEventListener(ehcache);
-        return cache;
-    }
-
     public Cache getCache(String type) {
         EhcacheImpl cache;
-        Ehcache ehcache = manager.getCache(type);
+        Ehcache ehcache = getEhcacheManager(type).getCache(type);
         if (ehcache == null) {
             throw new IllegalArgumentException("Unknow cache type.  Make sure cache type '" +
                     type + "' is defined in your ehcache.xml file");
@@ -169,6 +149,14 @@ public class EhcacheProvider implements Cache.Provider {
 
     public CacheManager getSharedManager() {
         return sharedManager;
+    }
+
+    private net.sf.ehcache.CacheManager getEhcacheManager(String name) {
+        if (name != null && name.equals(Cache.TYPE_VIS_SHARED_MEM)) {
+            return sharedManager;
+        } else {
+            return manager;
+        }
     }
 
     /**

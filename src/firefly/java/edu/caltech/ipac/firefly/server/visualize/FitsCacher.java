@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FitsCacher {
 
-    private static Cache memCache= CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+    private static Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
     private static final Map<CacheKey, Object> activeRequest = new ConcurrentHashMap<CacheKey, Object>(61);
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
@@ -95,7 +95,7 @@ public class FitsCacher {
       }
   }
 
-    static void addFitsReadToCache(File fitsFile, FitsRead frAry[]) {
+    public static void addFitsReadToCache(File fitsFile, FitsRead frAry[]) {
         addFitsReadToCache(fitsFile.getPath(), frAry);
     }
 

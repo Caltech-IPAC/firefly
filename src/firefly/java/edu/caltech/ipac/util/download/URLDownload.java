@@ -48,7 +48,7 @@ public class URLDownload {
     public static final String PATTERN_ASCTIME = "EEE MMM d HH:mm:ss yyyy";
 
     public static final String DEFAULT_PATTERNS[] = {PATTERN_ASCTIME, PATTERN_RFC1036, PATTERN_RFC1123};
-    private static final int BUFFER_SIZE = (int) (64 * FileUtil.K);
+    private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
 
     private static final SimpleDateFormat _browserDateParser;

@@ -23,7 +23,7 @@
 
     Subdirectories can be specified below the property e.g. java.io.tmpdir/one
     -->
-    <diskStore path="/hydra/server/ehcache"/>
+    <diskStore path="java.io.tmpdir/ehcache/shared"/>
 
     <!--
     CacheManagerEventListener
@@ -366,9 +366,11 @@
     <!--
      The data store in this cache is large and are meant to not exceed a specified max memory allocation.
      This cache is shared among all web applications in the container.  it will NOT be replicated.
+     The maxBytesLocalHeap is not important here because we will automatically calculate it based on
+     pct.vis.shared.mem.size property.
     -->
     <cache name="VIS_SHARED_MEM"
-           maxBytesLocalHeap="@vis.shared.mem.size@"
+           maxBytesLocalHeap="100M"
            eternal="false"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="false"

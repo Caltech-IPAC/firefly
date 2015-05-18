@@ -135,7 +135,7 @@ public class ServerStatus extends BaseHttpServlet {
                     System.out.print("    alloc:" + runtime.totalMemory()/1024);
                     System.out.println("    free:" + runtime.freeMemory()/1024);
                     System.out.println("----------------------------");
-                    Cache testcache = edu.caltech.ipac.util.cache.CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM);
+                    Cache testcache = edu.caltech.ipac.util.cache.CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
                     for (int i = 0; i < 1000; i++) {
                         double[] data = new double[1000000];
                         Arrays.fill(data, 12F);

@@ -48,6 +48,5 @@ public interface Cache {
 
     interface Provider {
         Cache getCache(String type);
-        Cache getSharedCache(String type);
     }
 }

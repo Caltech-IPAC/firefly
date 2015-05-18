@@ -7,7 +7,9 @@ import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
+import edu.caltech.ipac.firefly.server.visualize.FitsCacher;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -23,6 +25,7 @@ import org.apache.commons.io.input.TeeInputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,8 +55,9 @@ public class AnyFileUpload extends BaseHttpServlet {
         String fileType= req.getParameter(FILE_TYPE);
 
         if (! ServletFileUpload.isMultipartContent(req)) {
-            sendReturnMsg(res, 400, "Is not a Multi-Part request. Request aborted.", "");
+            sendReturnMsg(res, 400, "Is not a Multipart request. Request rejected.", "");
         }
+        StopWatch.getInstance().start("Upload File");
 
         ServletFileUpload upload = new ServletFileUpload();
         FileItemIterator iter = upload.getItemIterator(req);
@@ -62,9 +66,9 @@ public class AnyFileUpload extends BaseHttpServlet {
 
             if (!item.isFormField()) {
                 String fileName = item.getName();
-                InputStream inStream = item.openStream();
+                InputStream inStream = new BufferedInputStream(item.openStream(), IpacTableUtil.FILE_IO_BUFFER_SIZE);
                 String ext = resolveExt(fileName);
-                FileType fType = resolveType(fileType, fileName);
+                FileType fType = resolveType(fileType, ext, item.getContentType());
                 File destDir = resolveDestDir(dest, fType);
                 boolean doPreload = resolvePreload(preload, fType);
 
@@ -78,10 +82,14 @@ public class AnyFileUpload extends BaseHttpServlet {
                 if (doPreload && fType == FileType.FITS) {
                     BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(uf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
                     TeeInputStream tee = new TeeInputStream(inStream, bos);
-                    final Fits fits = new Fits(tee);
-                    FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
-                    CacheManager.getSharedCache(Cache.TYPE_VIS_SHARED_MEM).put(new StringKey(uf.getAbsoluteFile()), frAry);
-                    FileUtil.silentClose(bos);
+                    try {
+                        final Fits fits = new Fits(tee);
+                        FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
+                        FitsCacher.addFitsReadToCache(uf, frAry);
+                    } finally {
+                        FileUtil.silentClose(bos);
+                        FileUtil.silentClose(tee);
+                    }
                 } else {
                     FileUtil.writeToFile(inStream, uf);
                 }
@@ -90,6 +98,7 @@ public class AnyFileUpload extends BaseHttpServlet {
                 return;
             }
         }
+        StopWatch.getInstance().printLog("Upload File");
     }
 
     private File resolveDestDir(String dest, FileType fType) throws FileNotFoundException {
@@ -112,7 +121,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         return ext;
     }
 
-    private FileType resolveType(String fileType, String fileExtension) {
+    private FileType resolveType(String fileType, String fileExtension, String contentType) {
         FileType ftype = FileType.UNKNOWN;
         try {
             ftype = FileType.valueOf(fileType);
@@ -124,6 +133,13 @@ public class AnyFileUpload extends BaseHttpServlet {
                     ftype = FileType.TABLE;
                 } else if (fileExtension.matches(".reg")) {
                     ftype = FileType.REGION;
+                }
+            } else {
+                // guess using contentType
+                if (!StringUtils.isEmpty(contentType)) {
+                    if (contentType.matches("image/fits|application/fits")) {
+                        ftype = FileType.FITS;
+                    }
                 }
             }
         }

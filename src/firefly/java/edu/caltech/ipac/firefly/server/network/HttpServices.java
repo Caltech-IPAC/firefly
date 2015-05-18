@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -32,7 +33,7 @@ import java.util.Map;
  * @version $Id: $
  */
 public class HttpServices {
-    public static final int BUFFER_SIZE = 4096 * 16;    // 64k
+    public static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;    // 64k
     private static HttpClient httpClient;
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 

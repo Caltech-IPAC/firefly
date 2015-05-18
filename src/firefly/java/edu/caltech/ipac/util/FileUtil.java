@@ -70,7 +70,7 @@ public class FileUtil
     public static final long K            = 1024;
 
     private static String[] CHARSETS_TO_BE_TESTED = {"ISO-8859-1","windows-1252", "windows-1253","UTF-8", "UTF-16",};
-    private static final int BUFFER_SIZE = (int) (16 * FileUtil.K);
+    public static final int BUFFER_SIZE = (int) (32 * FileUtil.K);
 
     public enum ConvertTo {MEG,GIG,K}
 

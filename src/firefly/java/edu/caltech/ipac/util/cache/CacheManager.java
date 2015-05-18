@@ -34,17 +34,6 @@ public class CacheManager {
         return new EmptyCache();
     }
 
-    public static Cache getSharedCache(String type) {
-        if (!isDisabled) {
-            try {
-                return getCacheProvider().getSharedCache(type);
-            } catch (Exception e){
-                System.err.println("Unable to get SharedCache type:" + type + " returning EmptyCache.");
-            }
-        }
-        return new EmptyCache();
-    }
-
     public static Cache.Provider getCacheProvider() {
         if (cacheProvider == null) {
             cacheProvider = newInstanceOf(DEF_PROVIDER);
