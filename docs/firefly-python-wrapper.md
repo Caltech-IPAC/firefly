@@ -10,8 +10,11 @@ The python class name is **FireflyClient**.  It is located in firefly/src/fftool
 
 		 1. install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
 		 2. Set up python enviroment
-			 setenv PYTHONPATH /path/to/firefly/python
+			 setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display
 	
+	
+	
+ - There are three test python scripts you can look at to get a feel for API in `firefly/src/fftools/test`:  `initFF.py`, `initFF2.py`, `testAll.py`.  If you want to sit at the python prompt and makes calls then initFF2.py is the best.
 
  - **Import the FireflyClient into your script**
    from FireflyClient import *
