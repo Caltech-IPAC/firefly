@@ -6,9 +6,26 @@ You can also specify three color parameters and the associated files.
 
 All parameters and values are strings.
 
-The following is a overview of possible plotting parameters by category. Almost all parameters are optional. 
+The following is a overview of possible plotting parameters by category. Almost all parameters are optional.
 
-###Parameters plotting FITS file from a URL or on the server
+Categories of parameters:
+
+ - [Parameters for specifying FITS file from a URL or on the server](#parameters-for-specifying-fits-file-from-a-url-or-on-the-server)
+ - [Parameters for specifying FITS files retrieved from a service](#parameters-for-specifying-fits-files-retrieved-from-a-service)
+ - [Parameters that Color and Stretch](#parameters-that-color-and-stretch)
+ - [Parameters that control Flipping](#parameters-that-control-flipping)
+ - [Parameters that control Rotation](#parameters-that-control-rotation)
+ - [Parameters that control Cropping](#parameters-that-control-cropping)
+ - [Parameters that control Zoom](#parameters-that-control-zoom)
+ - [Parameters that control the plot title](#parameters-that-control-the-plot-title)
+ - [The Type parameter](#the-type-parameter)
+ - [Less commonly used parameters](#less-commonly-used-parameters)
+ 
+
+
+ 
+
+###Parameters for specifying FITS file from a URL or on the server
 
 | Parameter | Description |
 | --------- | ----------- |
@@ -21,7 +38,7 @@ If you specify `URL` and it is relative then one of two things happen:
   - The url is made absolute based on the host web page url. 
     
 
-###Parameters plotting FITS files retrieved from a service
+###Parameters for specifying FITS files retrieved from a service
 
 | Service Parameter | Description |
 | --------- | ----------- |
@@ -58,7 +75,7 @@ The possible values for SurveyKey are listed below for each service:
 
 
 
-###Parameters that control the Flipping
+###Parameters that control Flipping
 
 | Flip Parameter | Description |
 | --------- | ----------- |
@@ -66,7 +83,7 @@ The possible values for SurveyKey are listed below for each service:
 | `FlipY` | Flip this image on the Y axis |
 
 
-###Parameters that control the Rotate
+###Parameters that control Rotation
 
 | Rotate north Parameter | Description |
 | --------- | ----------- |
@@ -79,7 +96,7 @@ The possible values for SurveyKey are listed below for each service:
 | `RotationAngle` | the angle to rotate to, use with `Rotate` |
 
 
-###Parameters that control the Cropping
+###Parameters that control Cropping
 
 | Crop Parameter | Description |
 | --------- | ----------- |
@@ -95,7 +112,7 @@ Notes-
  - `CropPt1` and `CropPt2` are diagonal of each other and `CropWorldPt1` and `CropWorldPt2` are diagonal of each other.
  - See documentation on WorldPt to find proper syntax
 
-###Parameters that control the Zoom
+###Parameters that control Zoom
   
    `ZoomType`:  Set the zoom type, based on the ZoomType other zoom set methods may be required
 Notes for ZoomType:
@@ -113,7 +130,7 @@ Notes for ZoomType:
 
       
       
-###Parameters that control the title of the plot
+###Parameters that control the plot title
 `TitleOptions`:  The parameter sets other ways to title the plot. The following 4 values are options for title:
 
  - NONE - The default, use the value set in <code>Title</code>, if this is empty use the plot description that come from the server
@@ -149,7 +166,7 @@ Options are:
   - `BLANK` make a blank image
   - `ALL_SKY`
 
-###Other less commonly used parameters 
+###Less commonly used parameters 
 
 | Title Parameter | Description |
 | --------- | ----------- |
