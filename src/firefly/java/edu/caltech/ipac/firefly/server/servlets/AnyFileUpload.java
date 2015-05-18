@@ -137,7 +137,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             } else {
                 // guess using contentType
                 if (!StringUtils.isEmpty(contentType)) {
-                    if (contentType.matches("image/fits|application/fits")) {
+                    if (contentType.matches("image/fits|application/fits|image/fits")) {
                         ftype = FileType.FITS;
                     }
                 }

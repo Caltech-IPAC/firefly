@@ -164,7 +164,7 @@ class FireflyClient(WebSocketClient):
     # to be streamed without using a actual file.
     # Uploaded data can be fits, region, and various types of table files
     # TODO: i think this is the concept for how this method should work, need to tested
-    def uploadFitsData(self, stream, contentType='image/x-fits'):
+    def uploadFitsData(self, stream, contentType='image/fits'):
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
         myHeaders={'Content-Type': contentType}
         result = self.session.post(url, data=stream, headers=myHeaders)

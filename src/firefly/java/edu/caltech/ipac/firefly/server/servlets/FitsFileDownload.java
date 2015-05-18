@@ -33,7 +33,7 @@ public class FitsFileDownload extends BaseHttpServlet {
             long fileLength= downloadFile.length();
             if(fileLength <= Integer.MAX_VALUE) res.setContentLength((int)fileLength);
             else                                res.addHeader("Content-Length", fileLength+"");
-            res.addHeader("Content-Type", "image/x-fits");
+            res.addHeader("Content-Type", "image/fits");
             res.addHeader("Content-Disposition",
                           "attachment; filename="+downloadFile.getName());
             PlotServUtils.writeFileToStream(downloadFile,res.getOutputStream());

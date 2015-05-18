@@ -18,6 +18,7 @@ def helloCallback(event):
     print "worldpt 1: " +event['data']['wpt1']
 
 fc =FireflyClient(host,'tt')
+fc.launchBrowser()
 fc.addListener(helloCallback)
 file= fc.uploadFile('data/c.fits')
 status= fc.showFits(file,'p1')

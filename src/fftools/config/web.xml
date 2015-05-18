@@ -256,12 +256,12 @@
 
     <mime-mapping>
         <extension>fits</extension>
-        <mime-type>image/x-fits</mime-type>
+        <mime-type>image/fits</mime-type>
     </mime-mapping>
 
     <mime-mapping>
         <extension>fit</extension>
-        <mime-type>image/x-fits</mime-type>
+        <mime-type>image/fits</mime-type>
     </mime-mapping>
 
     <welcome-file-list>
