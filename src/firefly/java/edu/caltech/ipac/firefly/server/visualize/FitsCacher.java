@@ -91,7 +91,7 @@ public class FitsCacher {
           if (memCache!=null) memCache.put(key,frAry);
           return frAry;
       } finally {
-          fits.getStream().close();
+          if (fits.getStream()!=null) fits.getStream().close();
       }
   }
 
