@@ -1,34 +1,46 @@
 __author__ = 'roby'
 
 import sys
-import os
-sys.path.append('/hydra/cm/firefly/src/fftools/python/display/')
+import json
+
+# add to the path directory with the data
+sys.path.append('../python/display/')
 
 from FireflyClient import *
 
-host ='localhost:8080'
+host='localhost:8080'
 
+# from prompt: execfile('./initFF2.py')
 
-# fc.addListener(helloCallback, "de")
-
-# use with execfile('./initFF2.py')
-
-def helloCallback(event):
+# callback, where you can define what to do when an event is received
+#
+def myCallback(event):
     # print event
-    print "worldpt 1: " +event['data']['wpt1']
+    print "Event Received: "+json.dumps(event['data']);
 
-fc =FireflyClient(host,'tt')
+fc= FireflyClient(host,'myChannel')
+
 fc.launchBrowser()
-fc.addListener(helloCallback)
-file= fc.uploadFile('data/c.fits')
-status= fc.showFits(file,'p1')
-print 'success: %s' % status['success']
-fc.addExtension('AREA_SELECT','myop','p1','as1')
+# walkaround to make sure other actions do not happen before the browser is ready to receive events
+raw_input("Wait for browser to load Firefly Tools.   Press Enter to continue...")
 
-pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits',
-           'ColorTable' : '5'}
-status= fc.showFits(fileOnServer=None, plotID='abc', additionalParams=pParams)
-print 'success: %s' % status['success']
-    # fc.run_forever()
+fc.addListener(myCallback)
+
+# upload FITS file
+file= fc.uploadFile('data/c.fits')
+print 'uploadFile'
+
+# show uploaded FITS
+status= fc.showFits(file,'p1')
+print 'showFits success: %s' % status['success']
+
+# add user-defined action MyOp in the context menu of 'p1' FITS viewer
+status= fc.addExtension('AREA_SELECT','MyOp','p1','MyOpExtension')
+print 'addExtension success: %s' % status['success']
+
+# show another FITS from the URL
+pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits','ColorTable' : '5'}
+status= fc.showFits(fileOnServer=None, plotID='p2', additionalParams=pParams)
+print 'showFits success: %s' % status['success']
 
 

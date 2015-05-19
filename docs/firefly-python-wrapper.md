@@ -1,151 +1,152 @@
-
-
 ## Firefly python wrapper user guide ##
 
 This document explains how to use the python library included in Firefly to interact with firefly image viewer. 
 
 The python class name is **FireflyClient**.  It is located in firefly/src/fftools/python.   
 
- -  **Pre-requirements**
+**Pre-requirements**
 
-		 1. install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
-		 2. Set up python enviroment
-			 setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display
+1. Install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
+   (If you are using conda package manager, you can use [conda-pipbuild](http://conda.pydata.org/docs/commands/build/conda-pipbuild.html) tool for building conda packages just using pip install.) 
+2. Set up python enviroment
+			 `setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display`
 	
-	
-	
- - There are three test python scripts you can look at to get a feel for API in `firefly/src/fftools/test`:  `initFF.py`, `initFF2.py`, `testAll.py`.  If you want to sit at the python prompt and makes calls then initFF2.py is the best.
+To get a feel for API `cd firefly/src/fftools/test` and take a look at `initFF.py`, `initFF2.py`, `testAll.py`. If you are within an interpreter, `execfile('./initFF2.py')` is the best, because it leaves the connection to the browser open while allowing you to execute other commands.
 
- - **Import the FireflyClient into your script**
-   from FireflyClient import *
+**Import the FireflyClient into your script**
+
+   `from FireflyClient import *`
    
 
- - **Create an instance of the FireflyClient**
- 
-      fc = FireflyClient( 'localhost:8080')
-      
-      or 
-      
-      fc=FireflyClient('localhost:8080', channel='myNewChannel')
- 
+**Create an instance of the FireflyClient**
 
- - **Show a Fits image**
+`fc = FireflyClient( 'localhost:8080')`
+ or 
+`fc=FireflyClient('localhost:8080', channel='myNewChannel')`
  
- ```python
-      data = /your/path/yourFits.fits'
-      fitsPathInfo= fc.uploadImage(data)
-      fc.showFits(fitsPathInfo)
+**Launch Browser and load Firefly Tools**
+ 
+`fc.launchBrowser()` 
+
+Wait until Firefly Tools finish loading and you see 'Waiting for data' before sending other commands.
+ 
+**Show a Fits image**
+ 
+```python
+     data = '/your/path/yourFits.fits'
+     fitsPathInfo= fc.uploadFile(data)
+     fc.showFits(fitsPathInfo)
 ```   
-  
- <br> 
-The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server.
-Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. 
-You can also specify three color parameters and the associated files.
+<br>  
+The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
 
 For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
       
 
- - **Overlay a region**
- 
+**Overlay a region**
+
+```python 
      regFile=/your/path/yourRegion.reg
-     
-     regPathInfo= fc.uploadImage(regFile)
-     
+     regPathInfo= fc.uploadFile(regFile)
      fc.overlayRegion(regPathInfo)
+``` 
 
-
- - **Show a table**
+**Show a table**
  
-     table =/your/path/yourTable.tbl
-     
+```python 
+     table ='/your/path/yourTable.tbl'    
      tablePathInfo = fc.uploadImage(table)
-     
      fc.showTable(tablePathInfo)
+```
 
- - **Run in python prompt**
- 
-      1. start python session by typing "python" in the terminal
-      2. enter: execfile("yourScript.py") at the python prompt
+**Run in python prompt**
 
- - **Run in iPyton**
- 
-       1. start the iPython session by typing "iPython" in the terminal
-       2. enter the script name at the ipython prompt
+1. start python session by typing `python` in the terminal
+2. enter: `execfile("yourScript.py")` at the python prompt
 
- - **Run in iPython notebook**
- 
-          1. open a cell
-          2. type : "%run yourScript.py" into the cell
-          3. click run
+**Run in iPyton**
 
+1. start the iPython session by typing `iPython` in the terminal
+2. enter the script name at the ipython prompt
 
- - **Example** (webSocketTest.py) 
+**Run in iPython notebook**
+  
+1. open a cell
+2. type : `%run yourScript.py` into the cell
+3. click run
 
 
+**Example** (initFF.py) 
 
+```python
 
-    
-    from FireflyClient import *
-    try:
-      #open the first browser
-      path="/Users/zhang/lsstDev/data/"
-      host ='localhost:8080'
-      fc =FireflyClient(host)
+import sys
+import json
 
-	
-	  #push a fits file
-      raw_input("Load a FITS file.   Press Enter to continue...")
-      fitsPathInfo= fc.uploadImage(path+"c.fits"
-      fc.showFits( fitsPathInfo )
+# add to the path directory with the data
+sys.path.append('../python/display/')
 
-      raw_input("Overlay a region file.   Press Enter to continue...")
-      regPathInfo= fc.uploadImage(path+"c.reg")
-      fc.overylayRegion(regPathInfo )
-    
+from FireflyClient import *
 
-      print("showing the extension...")
-      raw_input("Add extension.   Press Enter to continue...")
-      fc.addExtension("AREA_SELECT", "testButton","myID")
+host='localhost:8080'
 
-      raw_input("Load table file.   Press Enter to continue...")
-      tablePathInfo = fc.uploadImage(path+"2mass-m31-2412rows.tbl")
-      fc.showTable( tablePathInfo )
+def myCallback(event):
+    # print event
+    print "Event Received: "+json.dumps(event['data']);
 
-      #open a second browser window
-      fc1 =FireflyClient(channel='newChannel')
+fc= FireflyClient(host,'myChannel')
 
-      #push a fits file
-      raw_input("Load a FITS file.   Press Enter to continue...")
-      fc1.showFits( fitsPathInfo )
+fc.launchBrowser()
+# make sure user waits until the browser is ready to receive events
+raw_input("Wait for browser to load Firefly Tools.   Press Enter to continue...")
 
-      fc.run_forever()
+try:
+    fc.addListener(myCallback)
 
-    except KeyboardInterrupt:
-        raw_input("Press enter key to exit...")
-        print ("Exiting main")
-        fc.disconnect()
-        fc.sesson.close()
+    # upload FITS file
+    file= fc.uploadFile('data/c.fits')
+    print 'uploadFile'
 
-    
+    # show uploaded FITS
+    status= fc.showFits(file,'p1')
+    print 'showFits success: %s' % status['success']
 
- - **FireflyClient's methods**
+    # add user-defined action MyOp in the context menu of 'p1' FITS viewer
+    status= fc.addExtension('AREA_SELECT','MyOp','p1','MyOpExtension')
+    print 'addExtension success: %s' % status['success']
+
+    # show another FITS from the URL
+    pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits','ColorTable' : '5'}
+    status= fc.showFits(fileOnServer=None, plotID='p2', additionalParams=pParams)
+    print 'showFits success: %s' % status['success']
+
+    # wait for events - do not exit the script
+    print 'Waiting for events. Press Ctrl C to exit.'
+    fc.waitForEvents()
+
+except KeyboardInterrupt:
+    fc.disconnect()
+    fc.session.close()
+
+```
+	    
+**FireflyClient's methods**
  
 		 
-     - *showFits(self, path, plotID=None, addtlParams=None)* 
+- *showFits(self, path, plotID=None, addtlParams=None)* 
      	 
        This method will load the fits located in the **path** and display the image in  
    the IRSA viewer.
       	 
-     - *showTable(self, path, title=None, pageSize=None)*
-     
-         This method will display the table located in the path 
+- *showTable(self, path, title=None, pageSize=None)*
+
+   This method displays the table located in the path 
            
-      
-     - *overylayRegion(self, path,  extType='reg', title=None, id=None, image=None)*
+- *overylayRegion(self, path,  extType='reg', title=None, id=None, image=None)*
      
-         This method is going to overlay a region or an image on the existing image
+    This method overlays a region or an image on the existing image
      
-    - *addExtension(self, extType, title, plotId, id, image=None)*
+- *addExtension(self, extType, title, plotId, id, image=None)*
     
-	    This method is going to add a extension to the image
+    This method adds a extension to the image
 

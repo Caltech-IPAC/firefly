@@ -1,12 +1,13 @@
 __author__ = 'zhang'
 
+import sys
 
 from FireflyClient import *
 
 
 try:
 
-    path="/Users/zhang/lsstDev/data/"
+    path="../../test/data/"
 
     pythonVersion = sys.version_info[0]
     if(pythonVersion!=2):
@@ -24,7 +25,7 @@ try:
     raw_input("Load a FITS file.   Press Enter to continue...")
     fc.showFits( fitsPathInfo )
 
-    regPathInfo= fc.uploadFile(path+"c.reg")
+    #regPathInfo= fc.uploadFile(path+"c.reg")
     raw_input("Overlay a region file.   Press Enter to continue...")
     fc.overylayRegion( regPathInfo )
 
@@ -45,12 +46,10 @@ try:
     fc1.showFits( fitsPathInfo )
 
 
-
-
-    fc.run_forever()
+    fc.waitForEvents()
 
 except KeyboardInterrupt:
     raw_input("Press enter key to exit...")
     print ("Exiting main")
     fc.disconnect()
-    fc.sesson.close()
+    fc.session.close()
