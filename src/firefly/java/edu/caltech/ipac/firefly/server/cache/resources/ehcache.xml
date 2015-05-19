@@ -23,7 +23,7 @@
 
     Subdirectories can be specified below the property e.g. java.io.tmpdir/one
     -->
-    <diskStore path="java.io.tmpdir/ehcache"/>
+    <diskStore path="java.io.tmpdir/ehcache/firefly"/>
 
     <!--
     CacheManagerEventListener
@@ -109,7 +109,6 @@
     The hostname is the hostname of the remote CacheManager peer. The port is the listening
     port of the RMICacheManagerPeerListener of the remote CacheManager peer.
 
-    -->
     <cacheManagerPeerProviderFactory
             class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
             properties="peerDiscovery=automatic,
@@ -118,7 +117,6 @@
             propertySeparator=","
             />
 
-    <!--
     CacheManagerPeerListener
     ========================
     (Enable for distributed operation)
@@ -152,7 +150,6 @@
       messages to the listener. This should be long enough for the slowest message.
       If not specified it defaults 120000ms.
 
-    -->
     <cacheManagerPeerListenerFactory
             class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"
             properties="socketTimeoutMillis=300000"
@@ -160,7 +157,6 @@
 
 
 
-    <!--
     Cache configuration
     ===================
 
@@ -375,11 +371,11 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="300"
         >
-        <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
+        <!--<cacheEventListenerFactory-->
+               <!--class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"-->
+               <!--properties="asynchronousReplicationIntervalMillis=250,-->
+                           <!--replicateAsynchronously=true"-->
+               <!--propertySeparator=","/>-->
     </cache>
 
     <!--
@@ -396,11 +392,11 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="600"
        >
-       <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
+       <!--<cacheEventListenerFactory-->
+               <!--class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"-->
+               <!--properties="asynchronousReplicationIntervalMillis=250,-->
+                           <!--replicateAsynchronously=true"-->
+               <!--propertySeparator=","/>-->
      </cache>
 
     <!--
@@ -434,12 +430,12 @@
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="600"
         >
-        <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-           />
+        <!--<cacheEventListenerFactory-->
+               <!--class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"-->
+               <!--properties="asynchronousReplicationIntervalMillis=250,-->
+                           <!--replicateAsynchronously=true"-->
+               <!--propertySeparator=","/>-->
+           <!--/>-->
 
     </cache>
 
@@ -451,18 +447,18 @@
      THIS CACHE IS DISTRIBUTED.
     -->
     <cache name="TEMP_FILE"
-           maxElementsInMemory="200"
+           maxElementsInMemory="5000"
            eternal="true"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="false"
            diskPersistent="false"
         >
-        <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-           />
+        <!--<cacheEventListenerFactory-->
+               <!--class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"-->
+               <!--properties="asynchronousReplicationIntervalMillis=250,-->
+                           <!--replicateAsynchronously=true"-->
+               <!--propertySeparator=","/>-->
+           <!--/>-->
 
     </cache>
 
@@ -471,14 +467,12 @@
      The data store in this cache is large.  it will NOT be replicated.
     -->
     <cache name="VISUALIZE"
-           maxElementsInMemory="10"
+           maxElementsInMemory="1000"
            eternal="false"
-           timeToIdleSeconds="600"
+           timeToIdleSeconds="7200"
            memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="true"
-           maxElementsOnDisk="500"
-           diskSpoolBufferSizeMB="30"
-           diskExpiryThreadIntervalSeconds="600"
+           overflowToDisk="false"
+           diskPersistent="false"
        />
 
 </ehcache>

@@ -19,20 +19,24 @@ ext.appConfig = {
   BuildMajor  = "2"
   BuildMinor  = "4"
   BuildRev    = "0"
+  ehcache.replicate = false
 
   FireflyTools.Advertise = ""
   ehcache.multicast.port = "4016"
   environments {
     dev {
       ehcache.multicast.port = "5016"
+      ehcache.replicate = true
     }
 
     test {
       ehcache.multicast.port = "6016"
+      ehcache.replicate = true
     }
 
     ops {
       ehcache.multicast.port = "7016"
+      ehcache.replicate = true
     }
   }
 }

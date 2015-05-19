@@ -81,6 +81,10 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       into gwt.warDir
     }
 
+    if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
+      exclude "ehcache.xml"
+    }
+
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.appConfigProps)
   }
 }
