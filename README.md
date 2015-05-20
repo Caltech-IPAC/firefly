@@ -34,14 +34,14 @@ Firefly shows 2D line graphs interactively so that a user can read the data poin
 ## Setup
 
 #### Prerequisites
- -  [Java 1.6.+] (http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase6-419409.html)
+ -  [Java 1.7+] (http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html)
     This is the version Firefly is tested on.  Later versions should work as well, although it is not fully tested.
 
- -  [Gradle 2.3.+] (https://gradle.org/downloads)
+ -  [Gradle 2.3+] (https://gradle.org/downloads)
     Gradle is an open source build automation system.
 
 
- -  [Tomcat 7.0.+] (http://tomcat.apache.org/download-70.cgi)
+ -  [Tomcat 7+] (http://tomcat.apache.org/download-70.cgi)
     Apache Tomcat is an open source software implementation of the Java Servlet and JavaServer Pages technologies.
 
  -  [Node 0.12.0.+] (https://nodejs.org/download/)
