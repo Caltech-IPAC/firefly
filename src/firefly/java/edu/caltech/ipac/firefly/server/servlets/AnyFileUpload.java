@@ -22,6 +22,7 @@ import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.input.TeeInputStream;
+import org.apache.xpath.operations.Bool;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -150,7 +151,7 @@ public class AnyFileUpload extends BaseHttpServlet {
         if (StringUtils.isEmpty(preload)) {
             return fileType == FileType.FITS;
         } else {
-            return true;
+            return Boolean.parseBoolean(preload);
         }
     }
 
