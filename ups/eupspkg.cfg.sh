@@ -13,7 +13,12 @@ prep()
 
 	# make sure that JAVA_HOME is set
 	if [[ -z "$JAVA_HOME" ]]; then
-		die "Please set the JAVA_HOME environmental variable to the location of your JDK."
+		# Try to autodetect it on OS X
+		if [[ -x /usr/libexec/java_home ]]; then
+			export JAVA_HOME=$(/usr/libexec/java_home)
+		else
+			die "Please set the JAVA_HOME environmental variable to the location of your JDK."
+		fi
 	fi
 
 	default_prep
