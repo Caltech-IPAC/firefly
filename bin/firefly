@@ -28,13 +28,19 @@ if [[ -z "$FIREFLY_DIR" ]]; then
 	FIREFLY_DIR=$(cd "$(dirname "$BASH_SOURCE")/.."; pwd)
 fi
 
+catalina()
+{
+	# Run catalina.sh with customized JAVA_OPTS, and logging of the output
+	JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]} $JAVA_OPTS" "$CATALINA_HOME/bin/catalina.sh" "$1" > "$CATALINA_BASE/logs/$1.log"
+}
+
 CATALINA_BASE=
 THROWAWAY_CATALINA_BASE=0
 cleanup()
 {
 	# Shut down Tomcat
 	if [[ "$TOMCAT_STARTED" == "1" ]]; then
-		JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]}" "$CATALINA_HOME/bin/catalina.sh" stop > "$CATALINA_BASE/logs/stop.log"
+		catalina stop
 	fi
 
 	# Delete the temporary Tomcat configuration directory
@@ -73,9 +79,10 @@ FFPORTS=($FFPORTS)
 
 # Start Tomcat with apropriate port overrides
 TOMCAT_STARTED=1
-JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]}" "$CATALINA_HOME/bin/catalina.sh" start > "$CATALINA_BASE/logs/start.log"
+catalina start
 
 echo CATALINA_BASE: $CATALINA_BASE
+echo                This directory will be deleted on exit. Set FFDEBUG=1 environment variable to keep it.
 echo port.http:     ${FFPORTS[0]}
 echo port.shutdown: ${FFPORTS[1]}
 echo
