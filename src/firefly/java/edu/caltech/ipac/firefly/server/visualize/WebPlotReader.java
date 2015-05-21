@@ -249,8 +249,6 @@ public class WebPlotReader {
                                                          IOException {
         FitsRead retval= fr;
         if (req.getPostCrop()) {
-//            Fits inFits = fr.getFits();
-            Fits inFits = fr.createNewFits();
             Pt pt1;
             Pt pt2;
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {
@@ -269,8 +267,10 @@ public class WebPlotReader {
                 pt2 = getCropPt2(req);
             }
             if (pt1 != null && pt2 != null) {
+//              Fits inFits = fr.getFits();
+                Fits inFits = fr.createNewFits();
                 Fits cropFits = Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
-                                             (int) pt2.getX(), (int) pt2.getY());
+                                                     (int) pt2.getX(), (int) pt2.getY());
                 FitsRead tmpFr[] = FitsRead.createFitsReadArray(cropFits);
                 retval = tmpFr[0];
                 File rotName= ModFileWriter.makeRotFileName(originalFile,imageIdx, req.getRotationAngle());
@@ -377,20 +377,20 @@ public class WebPlotReader {
         return r!=null && ((r.getRotate() && !Double.isNaN(r.getRotationAngle())) || r.getRotateNorth());
     }
 
-    private Pt getCropPt1(WebPlotRequest r) {
+    private static Pt getCropPt1(WebPlotRequest r) {
         return r.getCropImagePt1() != null ? r.getCropImagePt1() : r.getCropWorldPt1();
     }
 
-    private Pt getCropPt2(WebPlotRequest r) {
+    private static Pt getCropPt2(WebPlotRequest r) {
         return r.getCropImagePt2() != null ? r.getCropImagePt2() : r.getCropWorldPt2();
     }
 
-    private WorldPt getCropCenter(WebPlotRequest r) {
+    private static WorldPt getCropCenter(WebPlotRequest r) {
         Circle c=PlotServUtils.getRequestArea(r);
         return (c!=null) ? c.getCenter() : null;
     }
 
-    private double getImageSize(WebPlotRequest r) {
+    private static double getImageSize(WebPlotRequest r) {
         Circle c=PlotServUtils.getRequestArea(r);
         return (c!=null) ? c.getRadius() : 0.0;
     }

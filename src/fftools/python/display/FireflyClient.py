@@ -30,6 +30,7 @@ class FireflyClient(WebSocketClient):
         self.thisHost = host
         #web socket event listener url
         url = 'ws://' + host + '/fftools/sticky/firefly/events'
+        print 'websocket url:' + url
         if channel is not None:
             url+= '?channelID='+channel
         WebSocketClient.__init__(self, url)
@@ -75,7 +76,8 @@ class FireflyClient(WebSocketClient):
                 self.session.cookies['seinfo'] = seinfo
                 #self.onConnected(self.channel)
             except:
-                print ("from callback exception: "+ m)
+                print ("from callback exception: ")
+                print (m)
         else:
             # print "call calling handleEvnet"
             # print sevent
@@ -144,11 +146,11 @@ class FireflyClient(WebSocketClient):
     def disconnect(self):
         self.close()
 
-    # Upload a file to the Firefly Server
-    # uploaded file can be fits, region, and various types of table files
-    # path - the path to the upload file
-    def uploadFile(self, path):
-        url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
+    def uploadFile(self, path, preLoad=True):
+        """ Upload a file to the Firefly Server
+        :param path: uploaded file can be fits, region, and various types of table files
+        """
+        url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=%s' % preLoad
         files = {'file': open(path, 'rb')}
         result = self.session.post(url, files=files)  #, headers={'Content-Type': files.content_type} )#  data=path)
         index = result.text.find('$')
@@ -161,21 +163,23 @@ class FireflyClient(WebSocketClient):
     # TODO: i think this is the concept for how this method should work, need to tested
     def uploadFitsData(self, stream, contentType='image/fits'):
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
-        myHeaders={'Content-Type': contentType}
-        result = self.session.post(url, data=stream, headers=myHeaders)
+        # myHeaders={'Content-Type': contentType}
+        dataPack= {'data' : stream}
+        result = self.session.post(url, files=dataPack)
         index = result.text.find('$')
         return result.text[index:]
 
 
-    # Show a fits image
-    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
-    #                  then it is the return value of the method. Otherwise it is a file that
-    #                  firefly has direct read access to.
-    # plotID         - the id you assigned to the plot. This is necessary to further controlling
-    #                  the plot
-    # additionalParam- dictionary of any valid fits viewer plotting parameter,
-    #                  see firefly/docs/fits-plotting-parameters.md
     def showFits(self, fileOnServer=None, plotID=None, additionalParams=None):
+        """ Show a fits image
+        :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                          then it is the return value of the method. Otherwise it is a file that
+                          firefly has direct read access to.
+        :param: plotID: the id you assigned to the plot. This is necessary to further controlling
+                          the plot
+        :param: additionalParam: dictionary of any valid fits viewer plotting parameter,
+                          see firefly/docs/fits-plotting-parameters.md
+        """
         url = self.urlroot + "?cmd=pushFits"
         dictStr = ''
         if additionalParams is not None:
