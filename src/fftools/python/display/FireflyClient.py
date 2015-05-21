@@ -4,8 +4,7 @@ from ws4py.client.threadedclient import WebSocketClient
 import requests
 import webbrowser
 import json
-# import sys
-# import os
+import time
 
 
 class FireflyClient(WebSocketClient):
@@ -125,11 +124,6 @@ class FireflyClient(WebSocketClient):
     def waitForEvents(self):
         WebSocketClient.run_forever(self)
 
-
-    # def checkResult(self, result):
-    #     if 'true' not in result.text:
-    #         print("Error:" + result.text)
-
     # Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
     # will be call without any parameters.
     # url - the url, overriding the default
@@ -140,8 +134,9 @@ class FireflyClient(WebSocketClient):
         if url=='' or url is None:
             url=self.urlBW
         webbrowser.open(url + channel)
+        time.sleep(5)
         return channel
-        #return
+
 
     def stayConnected(self):
         self.ws.run()
