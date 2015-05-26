@@ -131,22 +131,62 @@ except KeyboardInterrupt:
 ```
 	    
 **FireflyClient's methods**
+
+- *addListener(self, callback, name=ALL)*
+   
+   Sets the **callback** function to be called when the events with specified names happen on the firefly client.
+
+- *removeListener(self, callback, name=ALL)*
+
+  Removes the callback on the events with specified names.
+
+- *waitForEvents(self)*
+   
+   Informs the client to pause and wait for the events from the server.
+
+- *launchBrowser(self, url=None, channel=None)*
+
+   Launches a browser with the Firefly Tools viewer. Do not specify any parameters unless you'd like to override the defaults. 
+
+- *disconnect(self)*
+
+   Disconnects from the Firefly Tools server, closes the communication channel.
+
+- *uploadFile(self, path, preLoad=True)*
+
+   Uploads a file to the Firefly Server. The uploaded file can be fits, region, and various types of table files.
+
+- *uploadFitsData(self, stream, contentType='image/fits')*
  
-		 
-- *showFits(self, path, plotID=None, addtlParams=None)* 
-     	 
-       This method will load the fits located in the **path** and display the image in  
-   the IRSA viewer.
-      	 
-- *showTable(self, path, title=None, pageSize=None)*
+   Uploads a file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
 
-   This method displays the table located in the path 
-           
-- *overylayRegion(self, path,  extType='reg', title=None, id=None, image=None)*
-     
-    This method overlays a region or an image on the existing image
-     
-- *addExtension(self, extType, title, plotId, id, image=None)*
-    
-    This method adds a extension to the image
+- *showFits(self, fileOnServer=None, plotID=None, additionalParams=None)*
 
+   Shows a fits image.
+    **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
+    **plotID** - the id you assigned to the plot. This is necessary to further controlling the plot
+    **additionalParam** - dictionary of any valid fits viewer plotting parameter, see [see server-settings-for-fits-files.md](fits-plotting-parameters.md)
+
+
+- *showTable(self, fileOnServer, title=None, pageSize=None)*
+
+  Shows a table.
+   **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
+   **title** - title on table
+   **pageSize** - how many rows are shown
+
+- *overlayRegion(self, fileOnServer, extType='reg', title=None)*
+
+   Overlays a region on the loaded FITS images.
+    **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
+    **title** - title of the region file
+
+- *addExtension(self, extType, title, plotId, extensionId, image=None)*
+
+   Adds an extension to the plot. Extensions are context menus that allows you extend what firefly can do when certain actions happen.
+    **extType** - may be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
+    **title** - the title that the user sees
+    **plotId** - the id of the plot to put the extension on
+    **extensionId** - the id of the extension
+    **image** - a url of an icon to display in the toolbar instead of title
+ 

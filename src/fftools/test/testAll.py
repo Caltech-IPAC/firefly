@@ -25,11 +25,11 @@ try:
 
     #push a fits file
     raw_input("Load a FITS file.   Press Enter to continue...")
-    fc.showFits( fitsPathInfo )
+    fc.showFits( fitsPathInfo, 'p1' )
 
     regPathInfo= fc.uploadFile(path+"c.reg")
     raw_input("Overlay a region file.   Press Enter to continue...")
-    fc.overylayRegion( regPathInfo )
+    fc.overlayRegion( regPathInfo )
 
     raw_input("Add extension.   Press Enter to continue...")
     fc.addExtension("AREA_SELECT", "testButton","myPlotID",  "myID")
@@ -44,4 +44,4 @@ except KeyboardInterrupt:
     raw_input("Press enter key to exit...")
     print ("Exiting main")
     fc.disconnect()
-    fc.sesson.close()
+    fc.session.close()

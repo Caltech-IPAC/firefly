@@ -27,7 +27,7 @@ try:
 
     #regPathInfo= fc.uploadFile(path+"c.reg")
     raw_input("Overlay a region file.   Press Enter to continue...")
-    fc.overylayRegion( regPathInfo )
+    fc.overlayRegion( regPathInfo )
 
     raw_input("Add extension.   Press Enter to continue...")
     fc.addExtension("AREA_SELECT", "testButton","myPlotID",  "myID")

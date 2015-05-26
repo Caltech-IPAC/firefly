@@ -102,8 +102,8 @@ class FireflyClient(WebSocketClient):
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 
-    #  callback - set the function to be called when a event happens on the firefly client
-    #  name - set the name of the events, default to all events
+    #  callback - set the function to be called when an event happens on the firefly client
+    #  name - set the name of the events, defaults to all events
     def addListener(self, callback, name=ALL):
         if callback not in self.listeners.keys():
             self.listeners[callback]= []
@@ -112,7 +112,7 @@ class FireflyClient(WebSocketClient):
 
 
     #  callback - remove a callback
-    #  name - set the name of the events, default to all events
+    #  name - set the name of the events, defaults to all events
     def removeListener(self, callback, name=ALL):
         if callback in self.listeners.keys():
             if name in self.listeners[callback]:
@@ -121,12 +121,12 @@ class FireflyClient(WebSocketClient):
                 self.listeners.pop(callback)
 
 
-    # Pause and do not exit.  Wait over events from the server.
-    # This is optional. Event will get call anyway.
+    # Pause and do not exit.  Wait for events from the server.
+    # This is optional. Events will be received anyway unless the client disconnects or exists.
     def waitForEvents(self):
         WebSocketClient.run_forever(self)
 
-    # Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
+    # Launch a browser with the Firefly Tools viewer and the channel set. Normally this method
     # will be call without any parameters.
     # url - the url, overriding the default
     # channel - a different channel than the default
@@ -157,8 +157,8 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-    # Upload a file like object to the Firefly server. The method should allows file like data
-    # to be streamed without using a actual file.
+    # Upload a file like object to the Firefly server. The method should allow file like data
+    # to be streamed without using an actual file.
     # Uploaded data can be fits, region, and various types of table files
     # TODO: i think this is the concept for how this method should work, need to tested
     def uploadFitsData(self, stream, contentType='image/fits'):
@@ -175,9 +175,8 @@ class FireflyClient(WebSocketClient):
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
                           then it is the return value of the method. Otherwise it is a file that
                           firefly has direct read access to.
-        :param: plotID: the id you assigned to the plot. This is necessary to further controlling
-                          the plot
-        :param: additionalParam: dictionary of any valid fits viewer plotting parameter,
+        :param: plotID: the id you assigned to the plot. This is necessary to further control the plot
+        :param: additionalParam: dictionary of any valid fits viewer plotting parameters,
                           see firefly/docs/fits-plotting-parameters.md
         """
         url = self.urlroot + "?cmd=pushFits"
@@ -194,11 +193,11 @@ class FireflyClient(WebSocketClient):
 
 
     # Show a table in Firefly
-    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
+    # fileOnServer   - the name of the file on the server.  If you used uploadFile()
     #                  then it is the return value of the method. Otherwise it is a file that
     #                  firefly has direct read access to.
     # title          - title on table
-    # pageSize       - how many rows are shown.
+    # pageSize       - how many rows to show
     def showTable(self, fileOnServer, title=None, pageSize=None):
         url = self.urlroot + "?cmd=pushTable"
         titleStr = ''
@@ -216,7 +215,7 @@ class FireflyClient(WebSocketClient):
 
 
     # Overlay a region on the loaded FITS images
-    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
+    # fileOnServer   - the name of the file on the server.  If you used uploadFile()
     #                  then it is the return value of the method. Otherwise it is a file that
     #                  firefly has direct read access to.
     # title          - title of the region file
@@ -230,12 +229,12 @@ class FireflyClient(WebSocketClient):
 
 
     # Add an extension to the plot.  Extensions are context menus that allows you extend
-    # what firefly can so when certain actions happen
+    # what firefly can do when certain actions happen
     #  extType - May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
     #  title - The title that the user sees
-    #  plotId - The it of the plot to put the extension on
+    #  plotId - The id of the plot to put the extension on
     #  extensionId - The id of the extension
-    #  image - An url of an icon to display the toolbar instead of title
+    #  image - A url of an icon to display in the toolbar instead of title
     def addExtension(self, extType, title, plotId, extensionId, image=None):
         url = self.urlroot + "?cmd=pushExt" + "&plotId=" + plotId + "&id=" + extensionId + "&extType=" + extType + "&Title=" + title
         if image is not None:
