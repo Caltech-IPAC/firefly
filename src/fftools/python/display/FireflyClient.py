@@ -29,12 +29,12 @@ class FireflyClient(WebSocketClient):
 
         self.thisHost = host
         #web socket event listener url
-        url = 'ws://' + host + '/fftools/sticky/firefly/events'
-        print 'websocket url:' + url
+        url = 'ws://%s/fftools/sticky/firefly/events' % host
+        print 'websocket url:%s' % url
         if channel is not None:
-            url+= '?channelID='+channel
+            url+= '?channelID=%s' % channel
         WebSocketClient.__init__(self, url)
-        self.urlroot = 'http://' + host + self.fftoolsCmd
+        self.urlRoot = 'http://' + host + self.fftoolsCmd
         self.urlBW = 'http://' + self.thisHost + '/fftools/app.html?id=Loader&channelID='
         self.listeners = {}
         self.channel = channel
@@ -49,20 +49,20 @@ class FireflyClient(WebSocketClient):
     #     print ("Closed down", code, reason)
 
 
-    def handleEvent(self, sevent):
+    def handleEvent(self, ev):
         for callback, eventIDList  in self.listeners.items():
-            if sevent['name'] in eventIDList or self.ALL in eventIDList:
-                callback(sevent)
+            if ev['name'] in eventIDList or self.ALL in eventIDList:
+                callback(ev)
 
 
                  #overridde the superclass's method
     def received_message(self, m):
-        sevent = json.loads(m.data.decode('utf8'))
-        eventName = sevent['name']
+        ev = json.loads(m.data.decode('utf8'))
+        eventName = ev['name']
 
         if eventName == 'EVT_CONN_EST':
             try:
-                connInfo = sevent['data']
+                connInfo = ev['data']
                 if self.channel is None:
                     self.channel = connInfo['channel']
                 connID = ''
@@ -81,7 +81,7 @@ class FireflyClient(WebSocketClient):
         else:
             # print "call calling handleEvnet"
             # print sevent
-            self.handleEvent(sevent)
+            self.handleEvent(ev)
 
     def sendURLAsGet(self,url):
         response= self.session.get(url)
@@ -102,18 +102,26 @@ class FireflyClient(WebSocketClient):
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
 
-    #  callback - set the function to be called when a event happens on the firefly client
-    #  name - set the name of the events, default to all events
     def addListener(self, callback, name=ALL):
+        """
+        Add a function to listen for events on the firefly client
+        :param callback: set the function to be called when a event happens on the firefly client
+        :param name: set the name of the events, default to all events
+        :return:
+        """
         if callback not in self.listeners.keys():
             self.listeners[callback]= []
         if name not in self.listeners[callback]:
             self.listeners[callback].append(name)
 
 
-    #  callback - remove a callback
-    #  name - set the name of the events, default to all events
     def removeListener(self, callback, name=ALL):
+        """
+        remove a callback
+        :param callback: a previous set function that is to be removed
+        :param name: set the name of the event, default to all events
+        :return:
+        """
         if callback in self.listeners.keys():
             if name in self.listeners[callback]:
                 self.listeners[callback].remove(name)
@@ -121,16 +129,21 @@ class FireflyClient(WebSocketClient):
                 self.listeners.pop(callback)
 
 
-    # Pause and do not exit.  Wait over events from the server.
-    # This is optional. Event will get call anyway.
     def waitForEvents(self):
+        """
+        Pause and do not exit.  Wait over events from the server.
+        This is optional. Event will get call anyway.
+        """
         WebSocketClient.run_forever(self)
 
-    # Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
-    # will be call without any parameters.
-    # url - the url, overriding the default
-    # channel - a different channel than the default
     def launchBrowser(self, url=None, channel=None):
+        """
+        Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
+        will be call without any parameters.
+        :param url: the url, overriding the default
+        :param channel: a different channel than the default
+        :return: the channel
+        """
         if channel is None:
             channel = self.channel
         if url=='' or url is None:
@@ -152,18 +165,19 @@ class FireflyClient(WebSocketClient):
         """
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=%s' % preLoad
         files = {'file': open(path, 'rb')}
-        result = self.session.post(url, files=files)  #, headers={'Content-Type': files.content_type} )#  data=path)
+        result = self.session.post(url, files=files)
         index = result.text.find('$')
         return result.text[index:]
 
 
-    # Upload a file like object to the Firefly server. The method should allows file like data
-    # to be streamed without using a actual file.
-    # Uploaded data can be fits, region, and various types of table files
-    # TODO: i think this is the concept for how this method should work, need to tested
-    def uploadFitsData(self, stream, contentType='image/fits'):
+    def uploadFitsData(self, stream):
+        """
+        Upload a file like object to the Firefly server. The method should allows file like data
+        to be streamed without using a actual file.
+        :param stream: a file like object
+        :return: status
+        """
         url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload=true'
-        # myHeaders={'Content-Type': contentType}
         dataPack= {'data' : stream}
         result = self.session.post(url, files=dataPack)
         index = result.text.find('$')
@@ -179,67 +193,76 @@ class FireflyClient(WebSocketClient):
                           the plot
         :param: additionalParam: dictionary of any valid fits viewer plotting parameter,
                           see firefly/docs/fits-plotting-parameters.md
+        :return: status of call
         """
-        url = self.urlroot + "?cmd=pushFits"
+        url = self.urlRoot + "?cmd=pushFits"
         dictStr = ''
         if additionalParams is not None:
             for key, value in additionalParams.items():
-                dictStr+= '&' + key + '=' + value
+                dictStr+= '%s&=%s' % (key,value)
         if plotID is not None:
-            url = url + "&plotId=" + plotID
+            url+= "&plotId=%s" % plotID
         if fileOnServer is not None:
-            url = url + "&file=" + fileOnServer
+            url+= "&file=%s" % fileOnServer
         url = url + dictStr
         return self.sendURLAsGet(url)
 
 
-    # Show a table in Firefly
-    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
-    #                  then it is the return value of the method. Otherwise it is a file that
-    #                  firefly has direct read access to.
-    # title          - title on table
-    # pageSize       - how many rows are shown.
     def showTable(self, fileOnServer, title=None, pageSize=None):
-        url = self.urlroot + "?cmd=pushTable"
+        """
+        Show a table in Firefly
+        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                       then it is the return value of the method. Otherwise it is a file that
+                       firefly has direct read access to.
+        :param title: title on table
+        :param pageSize: how many rows are shown.
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushTable"
         titleStr = ''
         if title is not None:
-            titleStr = '&titile=' + title
+            titleStr = '&titile=%s' % title
 
         pageSizeStr = ''
         if pageSize is not None:
-            pageSizeStr = 'pageSize=' + pageSize
+            pageSizeStr = 'pageSize=%s' % pageSize
         if fileOnServer is not None:
-            url+= "&file=" + fileOnServer
+            url+= "&file=%s" % fileOnServer
         url+= titleStr + pageSizeStr
         return self.sendURLAsGet(url)
 
 
 
-    # Overlay a region on the loaded FITS images
-    # fileOnServer   - the is the name of the file on the server.  If you used uploadFile()
-    #                  then it is the return value of the method. Otherwise it is a file that
-    #                  firefly has direct read access to.
-    # title          - title of the region file
-    def overlayRegion(self, fileOnServer, extType='reg', title=None):
-
-        url = self.urlroot + "?cmd=pushRegion" + '&extType=' + extType
-        url+= "&file=" + fileOnServer
+    def overlayRegion(self, fileOnServer, title=None):
+        """
+        Overlay a region on the loaded FITS images
+        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                       then it is the return value of the method. Otherwise it is a file that
+                       firefly has direct read access to.
+        :param title: title of the region file
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushRegion"
+        url+= "&file=%s" % fileOnServer
         if title is not None:
-            url+= '&title=' + title
+            url+= '&title=%s' % title
         return self.sendURLAsGet(url)
 
 
-    # Add an extension to the plot.  Extensions are context menus that allows you extend
-    # what firefly can so when certain actions happen
-    #  extType - May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
-    #  title - The title that the user sees
-    #  plotId - The it of the plot to put the extension on
-    #  extensionId - The id of the extension
-    #  image - An url of an icon to display the toolbar instead of title
     def addExtension(self, extType, title, plotId, extensionId, image=None):
-        url = self.urlroot + "?cmd=pushExt" + "&plotId=" + plotId + "&id=" + extensionId + "&extType=" + extType + "&Title=" + title
+        """
+        Add an extension to the plot.  Extensions are context menus that allows you extend
+        what firefly can so when certain actions happen
+        :param extType: May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
+        :param title: The title that the user sees
+        :param plotId: The it of the plot to put the extension on
+        :param extensionId: The id of the extension
+        :param image: An url of an icon to display the toolbar instead of title
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushExt&plotId=%s&id=%s&extType=%s&Title=%s" % (plotId,extensionId,extType,title)
         if image is not None:
-            url = url + "&image=" + image
+            url+= "&image=%s" % image
         return self.sendURLAsGet(url)
 
 
