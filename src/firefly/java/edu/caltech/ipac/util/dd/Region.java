@@ -72,6 +72,20 @@ public abstract class Region implements Serializable, HandSerialize, RegionFileE
         return retval;
     }
 
+    public static Region parseWithErrorChecking(String s) throws RegParseException {
+        Region retval= null;
+        List<RegionFileElement> resultList= RegionFactory.parsePart(s);
+        for(RegionFileElement result : resultList) {
+            if (result instanceof Region) {
+                retval= (Region)result;
+                break;
+            }
+        }
+        return retval;
+    }
+
+
+
     public String toString() {
         return getDesc() + "  " + pt.toString() +"  " + options.serialize();
     }
@@ -79,5 +93,19 @@ public abstract class Region implements Serializable, HandSerialize, RegionFileE
     public boolean isHighlighted() { return highlighted; }
 
     public void setHighlighted(boolean selected) { this.highlighted = selected; }
+
+    @Override
+    public int hashCode() {
+        return serialize().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        boolean retval= false;
+        if (obj instanceof Region) {
+            retval= this.serialize().equals((((Region) obj).serialize()));
+        }
+        return retval;
+    }
 }
 

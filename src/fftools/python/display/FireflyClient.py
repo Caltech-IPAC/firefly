@@ -172,7 +172,7 @@ class FireflyClient(WebSocketClient):
 
     def uploadFitsData(self, stream):
         """
-        Upload a file like object to the Firefly server. The method should allows file like data
+        Upload a FITS file like object to the Firefly server. The method should allows file like data
         to be streamed without using a actual file.
         :param stream: a file like object
         :return: status
@@ -182,6 +182,25 @@ class FireflyClient(WebSocketClient):
         result = self.session.post(url, files=dataPack)
         index = result.text.find('$')
         return result.text[index:]
+
+    def uploadTextData(self, stream):
+        """
+        Upload a Text file like object to the Firefly server. The method should allows file like data
+        to be streamed without using a actual file.
+        :param stream: a file like object
+        :return: status
+        """
+        return self.uploadData(stream,'UNKNOWN')
+
+
+    def uploadData(self, stream, dataType):
+        url = 'http://' + self.thisHost + '/fftools/sticky/Firefly_FileUpload?preload='
+        url+= 'true&type=FITS' if dataType=='FITS' else 'false&type=UNKNOWN'
+        dataPack= {'data' : stream}
+        result = self.session.post(url, files=dataPack)
+        index = result.text.find('$')
+        return result.text[index:]
+
 
 
     def showFits(self, fileOnServer=None, plotID=None, additionalParams=None):
@@ -199,14 +218,13 @@ class FireflyClient(WebSocketClient):
         dictStr = ''
         if additionalParams is not None:
             for key, value in additionalParams.items():
-                dictStr+= '%s&=%s' % (key,value)
+                dictStr+= '&%s=%s' % (key,value)
         if plotID is not None:
             url+= "&plotId=%s" % plotID
         if fileOnServer is not None:
             url+= "&file=%s" % fileOnServer
         url = url + dictStr
         return self.sendURLAsGet(url)
-
 
     def showTable(self, fileOnServer, title=None, pageSize=None):
         """
@@ -221,7 +239,7 @@ class FireflyClient(WebSocketClient):
         url = self.urlRoot + "?cmd=pushTable"
         titleStr = ''
         if title is not None:
-            titleStr = '&titile=%s' % title
+            titleStr = '&Titile=%s' % title
 
         pageSizeStr = ''
         if pageSize is not None:
@@ -229,23 +247,6 @@ class FireflyClient(WebSocketClient):
         if fileOnServer is not None:
             url+= "&file=%s" % fileOnServer
         url+= titleStr + pageSizeStr
-        return self.sendURLAsGet(url)
-
-
-
-    def overlayRegion(self, fileOnServer, title=None):
-        """
-        Overlay a region on the loaded FITS images
-        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
-                       then it is the return value of the method. Otherwise it is a file that
-                       firefly has direct read access to.
-        :param title: title of the region file
-        :return: status of call
-        """
-        url = self.urlRoot + "?cmd=pushRegion"
-        url+= "&file=%s" % fileOnServer
-        if title is not None:
-            url+= '&title=%s' % title
         return self.sendURLAsGet(url)
 
 
@@ -278,5 +279,91 @@ class FireflyClient(WebSocketClient):
     def pan(self, plotId, direction, factor):
         #todo - add when http api supports this
         return
+
+
+    #-----------------------------------------------------------------
+    # Region Stuff
+    #-----------------------------------------------------------------
+
+
+    def overlayRegion(self, fileOnServer, title=None, regionId=None):
+        """
+        Overlay a region on the loaded FITS images
+        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                       then it is the return value of the method. Otherwise it is a file that
+                       firefly has direct read access to.
+        :param title: title of the region file
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushRegion&file=%s" % fileOnServer
+        if title is not None:
+            url+= '&Title=%s' % title
+        if regionId is not None:
+            url+= '&id=%s' % regionId
+        return self.sendURLAsGet(url)
+
+
+    def removeRegion(self, regionId):
+        """
+        Overlay a region on the loaded FITS images
+        :param regionData: a list of region entries
+        :param title: title of the region file
+        :return: status of call
+        """
+        regDataToPass= '['
+        url = self.urlRoot + "?cmd=pushRemoveRegionData&id=%s" % regionId
+        return self.sendURLAsGet(url)
+
+
+    def overlayRegionData(self, regionData, regionId, title=None):
+        """
+        Overlay a region on the loaded FITS images
+        :param regionData: a list of region entries
+        :param regionId: id of region overlay to create or add too
+        :param title: title of the region file
+        :return: status of call
+        """
+        regDataToPass= '['
+        for i in range(len(regionData)):
+            if i==0:
+                regDataToPass+=regionData[i]
+            else:
+                regDataToPass+="--STR--%s" % regionData[i]
+
+        regDataToPass+=']'
+        url = self.urlRoot + "?cmd=pushRegionData"
+        url+= "&id=%s" % regionId
+        if title is not None:
+            url+= '&Title=%s' % title
+
+        response = self.session.post(url, data={'ds9RegionData' : regDataToPass})
+        print response.text
+        status = json.loads(response.text)
+        return status[0]
+
+
+    def removeRegionData(self, regionData, regionId):
+        """
+        Remove the specified region entries
+        :param regionData: a list of region entries
+        :param regionId: id of region to remove entries from
+        :return: status of call
+        """
+        regDataToPass= '['
+        for i in range(len(regionData)):
+            if i==0:
+                regDataToPass+=regionData[i]
+            else:
+                regDataToPass+="--STR--%s" % regionData[i]
+
+        regDataToPass+=']'
+        url = self.urlRoot + "?cmd=pushRemoveRegionData"
+        url+= "&id=%s" % regionId
+
+        response = self.session.post(url, data={'ds9RegionData' : regDataToPass})
+        print response.text
+        status = json.loads(response.text)
+        return status[0]
+
 
 

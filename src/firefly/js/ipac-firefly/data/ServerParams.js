@@ -78,6 +78,7 @@ export const ServerParams = {
         EXT_TYPE: 'extType',
         IMAGE: 'image',
         TOOL_TIP:  'toolTip',
+        DS9_REGION_DATA: "ds9RegionData",
 
 
 
@@ -130,6 +131,9 @@ export const ServerParams = {
         VIS_PUSH_CREATE_ID: 'createID',
         VIS_PUSH_FITS: 'pushFits',
         VIS_PUSH_REG: 'pushRegion',
+        VIS_PUSH_REMOVE_REG: "pushRemoveRegion",
+        VIS_PUSH_REG_DATA: "pushRegionData",
+        VIS_PUSH_REMOVE_REG_DATA: "pushRemoveRegionData",
         VIS_PUSH_TABLE: 'pushTable',
         VIS_PUSH_EXT: 'pushExt',
         VIS_QUERY_ACTION: 'queryAction',

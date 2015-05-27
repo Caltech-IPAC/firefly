@@ -10,9 +10,7 @@ package edu.caltech.ipac.firefly.fftools;
  */
 
 
-import edu.caltech.ipac.firefly.core.ClientEventQueue;
 import edu.caltech.ipac.firefly.core.SearchAdmin;
-import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -23,9 +21,9 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.Ext;
+import edu.caltech.ipac.firefly.visualize.RegionLoader;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ui.DS9RegionLoadDialog;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.logging.Level;
@@ -36,10 +34,11 @@ import java.util.logging.Level;
 public class PushReceiver implements WebEventListener {
     public enum ExtType { AREA_SELECT, LINE_SELECT, POINT, NONE }
     public static final String TABLE_SEARCH_PROC_ID = "IpacTableFromSource";
-    public final ExternalPlotController plotController;
-
     private static final String IMAGE_CMD_PLOT_ID= "ImagePushPlotID";
     private static int idCnt= 0;
+
+    public final ExternalPlotController plotController;
+
 
     public PushReceiver(ExternalPlotController plotController) {
         this.plotController= plotController;
@@ -52,39 +51,33 @@ public class PushReceiver implements WebEventListener {
 
         GwtUtil.getClientLogger().log(Level.INFO, "name//data: " + name.getName() + " // " + data);
         if (name.equals(Name.PUSH_WEB_PLOT_REQUEST)) {
-            WebPlotRequest wpr= WebPlotRequest.parse(data);
-            String id;
-            if (wpr.getPlotId()!=null) {
-                id= wpr.getPlotId();
-            } else {
-                id=IMAGE_CMD_PLOT_ID + idCnt;
-                idCnt++;
-            }
-            wpr.setPlotId(id);
-            prepareRequest(wpr);
+            prepareRequest(data);
+        } else if (name.equals(Name.PUSH_REGION_DATA)) {
+            loadRegionData(data);
+        } else if (name.equals(Name.REMOVE_REGION_DATA)) {
+            removeRegionData(data);
         } else if (name.equals(Name.PUSH_REGION_FILE)) {
-            DS9RegionLoadDialog.loadRegFile(data,null);
+            loadRegionFile(data);
+        } else if (name.equals(Name.PUSH_REMOVE_REGION_FILE)) {
+            removeRegionFile(data);
         } else if (name.equals(Name.PUSH_FITS_COMMAND_EXT)) {
-            Ext.Extension ext= parsePlotCmdExtension(data);
-            Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
-            exI.fireExtAdd(ext);
+            addPlotCmdExtension(data);
         } else if (name.equals(Name.PUSH_TABLE_FILE)) {
             loadTable(data);
-        } else if (name.equals(Name.PUSH_FITS_COMMAND_EXT)) {
-
         }
 
-        // TODO: LLY- remove later.. just test code.
-        else {
-            if (name.equals(Name.WINDOW_RESIZE)) {
-                if (!ev.getSource().equals(ClientEventQueue.class)) {
-                    ServerEvent sevt = new ServerEvent(Name.WINDOW_RESIZE,
-                            ServerEvent.Scope.CHANNEL, ServerEvent.DataType.STRING, data);
-                    ClientEventQueue.sendEvent(sevt);
-                }
-            }
-            // not an event this receiver cares for...
-        }
+
+//        // TODO: LLY- remove later.. just test code.
+//        else {
+//            if (name.equals(Name.WINDOW_RESIZE)) {
+//                if (!ev.getSource().equals(ClientEventQueue.class)) {
+//                    ServerEvent sevt = new ServerEvent(Name.WINDOW_RESIZE,
+//                            ServerEvent.Scope.CHANNEL, ServerEvent.DataType.STRING, data);
+//                    ClientEventQueue.sendEvent(sevt);
+//                }
+//            }
+//            // not an event this receiver cares for...
+//        }
     }
 
 
@@ -93,19 +86,33 @@ public class PushReceiver implements WebEventListener {
 //======================================================================
 
 
-    private static Ext.Extension parsePlotCmdExtension(String in) {
+    private static void addPlotCmdExtension(String in) {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
 
-        return Ext.makeExtension(req.getRequestId(),
+        Ext.Extension ext= Ext.makeExtension(
+                req.getRequestId(),
                 req.getParam(ServerParams.PLOT_ID),
                 StringUtils.getEnum(req.getParam(ServerParams.EXT_TYPE), ExtType.NONE).toString(),
                 req.getParam(ServerParams.IMAGE),
                 req.getParam(ServerParams.TITLE),
                 req.getParam(ServerParams.TOOL_TIP));
+        exI.fireExtAdd(ext);
     }
 
 
-    private void prepareRequest(ServerRequest req) { deferredPlot(req); }
+    private void prepareRequest(String data) {
+        WebPlotRequest wpr= WebPlotRequest.parse(data);
+        String id;
+        if (wpr.getPlotId()!=null) {
+            id= wpr.getPlotId();
+        } else {
+            id=IMAGE_CMD_PLOT_ID + idCnt;
+            idCnt++;
+        }
+        wpr.setPlotId(id);
+        deferredPlot(wpr);
+    }
 
     private void deferredPlot(ServerRequest req) {
         WebPlotRequest wpReq= WebPlotRequest.makeRequest(req);
@@ -118,7 +125,7 @@ public class PushReceiver implements WebEventListener {
         plotController.update(wpReq);
     }
 
-    protected void loadTable(final String fileName) {
+    private void loadTable(final String fileName) {
 
         final TableServerRequest req = new TableServerRequest(TABLE_SEARCH_PROC_ID);
         req.setStartIndex(0);
@@ -127,6 +134,37 @@ public class PushReceiver implements WebEventListener {
         String title= findTitle(req);
         SearchAdmin.getInstance().submitSearch(req, title);
     }
+
+
+    private void loadRegionFile(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String id= req.getRequestId();
+        String regFile= req.getParam(ServerParams.FILE);
+//        String title= req.getParam(ServerParams.TITLE);
+        RegionLoader.loadRegFile(regFile, id, null);
+    }
+
+    private void removeRegionFile(final String id) {
+//        RegionLoader.removeRegionFile(id);
+    }
+
+
+    private void loadRegionData(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String id= req.getRequestId();
+        String regData= req.getParam(ServerParams.DS9_REGION_DATA);
+        String title= req.getParam(ServerParams.TITLE);
+        RegionLoader.loadRegion(title,regData,null,id);
+    }
+    private void removeRegionData(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String id= req.getRequestId();
+        String regData= req.getParam(ServerParams.DS9_REGION_DATA);
+        RegionLoader.removeFromRegion(regData,id);
+    }
+
+
+
 
     private static String findTitle(TableServerRequest req) {
         String title= "Loaded Table";

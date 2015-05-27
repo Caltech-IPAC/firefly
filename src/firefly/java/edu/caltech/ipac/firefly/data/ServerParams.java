@@ -77,6 +77,7 @@ public class ServerParams {
     public static final String EXT_TYPE= "extType";
     public static final String IMAGE= "image";
     public static final String TOOL_TIP=  "toolTip";
+    public static final String DS9_REGION_DATA= "ds9RegionData";
 
 
 
@@ -129,6 +130,9 @@ public class ServerParams {
     public static final String VIS_PUSH_CREATE_ID= "createID";
     public static final String VIS_PUSH_FITS= "pushFits";
     public static final String VIS_PUSH_REG= "pushRegion";
+    public static final String VIS_PUSH_REMOVE_REG= "pushRemoveRegion";
+    public static final String VIS_PUSH_REG_DATA= "pushRegionData";
+    public static final String VIS_PUSH_REMOVE_REG_DATA= "pushRemoveRegionData";
     public static final String VIS_PUSH_TABLE= "pushTable";
     public static final String VIS_PUSH_EXT= "pushExt";
     public static final String VIS_QUERY_ACTION= "queryAction";

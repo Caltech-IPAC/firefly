@@ -760,25 +760,39 @@ public class WebPlot {
         ImagePt imagePt= conversionCache.get(wpt);
 
         if (imagePt==null) {
-            WorldPt originalWp= wpt;
-            if (!_imageCoordSys.equals(wpt.getCoordSys())) {
-                wpt= VisUtil.convert(wpt,_imageCoordSys);
-            }
-
-            ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
-            if (proj_pt!=null) {
-                double imageX= proj_pt.getX()  + 0.5;
-                double imageY= proj_pt.getY()  + 0.5;
-                putInConversionCache(originalWp, new ImagePt(imageX,imageY));
-                double imageWorkspaceX= imageX-_offsetX;
-                double imageWorkspaceY= imageY-_offsetY;
-
-                int sx= (int)(imageWorkspaceX*zfact);
-                int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
-
-                retPt.setX(sx-_viewPortX);
-                retPt.setY(sy-_viewPortY);
+            CoordinateSys csys= wpt.getCoordSys();
+            if (csys.equals(CoordinateSys.SCREEN_PIXEL)) {
+                retPt.setX(wpt.getX()-_viewPortX);
+                retPt.setY(wpt.getY()- _viewPortY);
                 success= true;
+            }
+            else if (csys.equals(CoordinateSys.PIXEL)) {
+                ScreenPt sp= getScreenCoords(new ImagePt(wpt.getX(), wpt.getY()));
+                retPt.setX(sp.getX()-_viewPortX);
+                retPt.setY(sp.getY()- _viewPortY);
+                success= true;
+            }
+            else {
+                WorldPt originalWp= wpt;
+                if (!_imageCoordSys.equals(wpt.getCoordSys())) {
+                    wpt= VisUtil.convert(wpt,_imageCoordSys);
+                }
+
+                ProjectionPt proj_pt= _projection.getImageCoordsSilent(wpt.getLon(),wpt.getLat());
+                if (proj_pt!=null) {
+                    double imageX= proj_pt.getX()  + 0.5;
+                    double imageY= proj_pt.getY()  + 0.5;
+                    putInConversionCache(originalWp, new ImagePt(imageX,imageY));
+                    double imageWorkspaceX= imageX-_offsetX;
+                    double imageWorkspaceY= imageY-_offsetY;
+
+                    int sx= (int)(imageWorkspaceX*zfact);
+                    int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+
+                    retPt.setX(sx-_viewPortX);
+                    retPt.setY(sy-_viewPortY);
+                    success= true;
+                }
             }
         }
         else {

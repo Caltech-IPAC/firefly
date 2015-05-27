@@ -11,10 +11,10 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.visualize.JsonDataCommands;
+import edu.caltech.ipac.firefly.server.visualize.PushCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResolveServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.ResourceServerCommands;
 import edu.caltech.ipac.firefly.server.visualize.SearchServerCommands;
-import edu.caltech.ipac.firefly.server.visualize.VisPushCommands;
 import edu.caltech.ipac.firefly.server.visualize.VisServerCommands;
 
 import java.util.HashMap;
@@ -127,13 +127,16 @@ public class ServerCommandAccess {
 
         _cmdMap.put(ServerParams.RESOLVE_NAME,           new ResolveServerCommands.ResolveName());
 
-//        _cmdMap.put(ServerParams.VIS_PUSH_CREATE_ID,     new VisPushCommands.GetPushID());
-        _cmdMap.put(ServerParams.VIS_PUSH_FITS,          new VisPushCommands.PushFITS());
-        _cmdMap.put(ServerParams.VIS_PUSH_REG,          new VisPushCommands.PushRegion());
-        _cmdMap.put(ServerParams.VIS_PUSH_TABLE,        new VisPushCommands.PushTable());
-        _cmdMap.put(ServerParams.VIS_PUSH_EXT,          new VisPushCommands.PushExtension());
-//        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new VisPushCommands.QueryAction());
-//        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new VisPushCommands.PushFITS());
+//        _cmdMap.put(ServerParams.VIS_PUSH_CREATE_ID,     new PushCommands.GetPushID());
+        _cmdMap.put(ServerParams.VIS_PUSH_FITS,             new PushCommands.PushFITS());
+        _cmdMap.put(ServerParams.VIS_PUSH_REG,              new PushCommands.PushRegionFile());
+        _cmdMap.put(ServerParams.VIS_PUSH_REMOVE_REG,       new PushCommands.PushRemoveRegionFile());
+        _cmdMap.put(ServerParams.VIS_PUSH_REG_DATA,         new PushCommands.PushRegionData());
+        _cmdMap.put(ServerParams.VIS_PUSH_REMOVE_REG_DATA,  new PushCommands.PushRemoveRegionData());
+        _cmdMap.put(ServerParams.VIS_PUSH_TABLE,            new PushCommands.PushTable());
+        _cmdMap.put(ServerParams.VIS_PUSH_EXT,              new PushCommands.PushExtension());
+//        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new PushCommands.QueryAction());
+//        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new PushCommands.PushFITS());
 
 
         // maybe temporary

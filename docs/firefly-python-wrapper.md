@@ -1,3 +1,6 @@
+
+
+
 ## Firefly python wrapper user guide ##
 
 This document explains how to use the python library included in Firefly to interact with firefly image viewer. 
@@ -122,7 +125,7 @@ try:
 
     # wait for events - do not exit the script
     print 'Waiting for events. Press Ctrl C to exit.'
-    fc.waitForEvents()
+    fc.waitForEvents()  # optional, gives code a place to park when thread is done
 
 except KeyboardInterrupt:
     fc.disconnect()
@@ -142,11 +145,61 @@ except KeyboardInterrupt:
 
    This method displays the table located in the path 
            
-- *overylayRegion(self, path,  extType='reg', title=None, id=None, image=None)*
-     
-    This method overlays a region or an image on the existing image
-     
 - *addExtension(self, extType, title, plotId, id, image=None)*
     
     This method adds a extension to the image
 
+**FireflyClient's Region Methods**
+
+- ```overylayRegion(path, title=None, regionId=None)```
+     
+    This method overlays a region file on an image
+     
+- ```removeRegion(regionId=None)```
+     
+    This method removes a region file from an image
+    
+- ```overlayRegionData(regionData, regionId, title=None)```
+     
+    Overlay a region on the loaded FITS images
+       
+       - regionData: a list of region entries
+       - regionId: id of region overlay to create or add too
+       - title: title of the region file
+       - *return* status of call
+
+- ```removeRegionData(regionData, regionId, title=None)```
+
+ Remove the specified region entries
+ 
+     - param regionData: a list of region entries
+     - param regionId: id of region to remove entries from
+     - *return* status of call
+
+
+Examples of adding and removing:
+```python
+fc= FireflyClient(host,'tt') # init connection
+
+# to Add
+reg= ['physical;point 211 201 # color=pink point=cross 9', 
+      'physical;point 30 280 # color=red point=diamond 15 select=1',
+      'physical;point 100 180 # color=green point=cross 10 select=1'
+      ]
+fc.overlayRegionData(reg,'reg3', 'My Region Data')
+
+# to remove 2 or the 3 added
+delReg= ['physical;point 211 201 # color=pink point=cross 9', 
+         'physical;point 100 180 # color=green point=cross 10 select=1'
+         ]
+fc.removeRegionData(delReg,'reg3')
+```
+Examples of adding a call back to listen for region selection:
+```python
+fc= FireflyClient(host,'tt') # init connection
+def myCallback(event):
+        if 'region' in event['data']:
+        print 'selected region: %s' % event['data']['region']
+
+fc.addListener(myCallback)
+```

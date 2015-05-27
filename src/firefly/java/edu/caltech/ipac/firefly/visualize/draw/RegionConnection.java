@@ -145,7 +145,7 @@ public class RegionConnection implements DataConnection {
     }
 
 
-    public DrawObj makeRegionDrawObject(Region r, WebPlot plot, boolean highlight) {
+    public DrawObj makeRegionDrawObject(Region r, WebPlot plot, boolean highLight) {
         DrawObj retval= null;
         if (r.getOptions().isInclude()) {
             if      (r instanceof RegionAnnulus)    retval= makeAnnulus((RegionAnnulus) r, plot);
@@ -307,5 +307,48 @@ public class RegionConnection implements DataConnection {
     }
 
     public boolean isVeryLargeData() { return false; }
+
+    public void addRegions(List<Region> inAddList) {
+        List<Region> addList= new ArrayList<Region>(inAddList);
+        List<Integer> dupIdxList= new ArrayList<Integer>(addList.size());
+        for(Region r : regionList) {
+            for(int i=0; (i<addList.size()); i++) {
+                if (r.serialize().equals(addList.get(i).serialize())) {
+                    dupIdxList.add(i);
+                    break;
+                }
+            }
+        }
+        if (dupIdxList.size()>0) {
+            for(int j= dupIdxList.size()-1; j>-1; j--) {
+                addList.remove((int)dupIdxList.get(j));
+            }
+        }
+        regionList.addAll(addList);
+
+
+    }
+
+    public void removeRegions(List<Region> inRemoveList) {
+        List<Region> removeList= new ArrayList<Region>(inRemoveList);
+        List<Integer> removeIdxList= new ArrayList<Integer>(removeList.size());
+        Region targetRemoveRegion;
+        for(int i=0; (i<regionList.size()); i++) {
+            targetRemoveRegion= null;
+            for(Region r : removeList) {
+                if (r.serialize().equals(regionList.get(i).serialize())) {
+                    removeIdxList.add(i);
+                    targetRemoveRegion= r;
+                    break;
+                }
+            }
+            if (targetRemoveRegion!=null) removeList.remove(targetRemoveRegion);
+        }
+        if (removeIdxList.size()>0) {
+            for(int j= removeIdxList.size()-1; j>-1; j--) {
+                regionList.remove((int)removeIdxList.get(j));
+            }
+        }
+    }
 }
 
