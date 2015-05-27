@@ -204,15 +204,15 @@ except KeyboardInterrupt:
  
 **FireflyClient's Region Methods**
 
-- ```overylayRegion(path, title=None, regionId=None)```
+- `overylayRegion(path, title=None, regionId=None)`
      
     This method overlays a region file on an image
      
-- ```removeRegion(regionId=None)```
+- `removeRegion(regionId=None)`
      
     This method removes a region file from an image
     
-- ```overlayRegionData(regionData, regionId, title=None)```
+- `overlayRegionData(regionData, regionId, title=None)`
      
     Overlay a region on the loaded FITS images
        
@@ -221,7 +221,7 @@ except KeyboardInterrupt:
        - title: title of the region file
        - *return* status of call
 
-- ```removeRegionData(regionData, regionId, title=None)```
+- `removeRegionData(regionData, regionId, title=None)`
 
  Remove the specified region entries
  
@@ -256,5 +256,3 @@ def myCallback(event):
 
 fc.addListener(myCallback)
 ```
-=======
->>>>>>> 940472e1775eab11ca82631247738d80a8f474e0
