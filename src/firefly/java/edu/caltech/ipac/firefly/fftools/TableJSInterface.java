@@ -74,6 +74,7 @@ public class TableJSInterface {
     public static void showTable(JscriptRequest jspr, String tableID, String containerID, boolean doCache) {
 
         if (containerID==null) containerID= tableID;
+        else if (containerID.equals("none")) containerID = null;
         EventHub hub= FFToolEnv.getHub();
         TableServerRequest req = convertToRequest(jspr);
         Map<String, String> params = extractParams(jspr, TBL_OPTIONS);
