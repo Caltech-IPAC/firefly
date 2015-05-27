@@ -126,6 +126,19 @@ class FireflyClient(WebSocketClient):
     def waitForEvents(self):
         WebSocketClient.run_forever(self)
 
+
+    # Get URL to Firefly Tools viewer and the channel set. Normally this method
+    # will be call without any parameters.
+    # url - the url, overriding the default
+    # channel - a different channel than the default
+    def getFireflyUrl(self, url=None, channel=None):
+        if channel is None:
+            channel = self.channel
+        if url=='' or url is None:
+            url=self.urlBW
+        return url + channel
+
+
     # Launch a browser with the Firefly Tools viewer and the channel set. Normally this method
     # will be call without any parameters.
     # url - the url, overriding the default
@@ -135,7 +148,7 @@ class FireflyClient(WebSocketClient):
             channel = self.channel
         if url=='' or url is None:
             url=self.urlBW
-        webbrowser.open(url + channel)
+        webbrowser.open(self.getFireflyUrl(url,channel))
         time.sleep(5)
         return channel
 
@@ -202,11 +215,11 @@ class FireflyClient(WebSocketClient):
         url = self.urlroot + "?cmd=pushTable"
         titleStr = ''
         if title is not None:
-            titleStr = '&titile=' + title
+            titleStr = '&title=' + title
 
         pageSizeStr = ''
         if pageSize is not None:
-            pageSizeStr = 'pageSize=' + pageSize
+            pageSizeStr = '&pageSize=' + str(pageSize)
         if fileOnServer is not None:
             url+= "&file=" + fileOnServer
         url+= titleStr + pageSizeStr
