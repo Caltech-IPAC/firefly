@@ -255,7 +255,7 @@ class FireflyClient(WebSocketClient):
 
         pageSizeStr = ''
         if pageSize is not None:
-            pageSizeStr = 'pageSize=%d' % pageSize
+            pageSizeStr = '&pageSize=' + str(pageSize)
         if fileOnServer is not None:
             url+= "&file=%s" % fileOnServer
         url+= titleStr + pageSizeStr

@@ -159,9 +159,14 @@ except KeyboardInterrupt:
 
    Uploads a file to the Firefly Server. The uploaded file can be fits, region, and various types of table files.
 
-- *uploadFitsData(self, stream, contentType='image/fits')*
+- *uploadFitsData(self, stream)*
  
-   Uploads a file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
+   Uploads a FITS file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
+   
+- *uploadTextData(self, stream)*
+ 
+   Uploads a text file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
+   
 
 - *showFits(self, fileOnServer=None, plotID=None, additionalParams=None)*
 
