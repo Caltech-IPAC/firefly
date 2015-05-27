@@ -92,7 +92,7 @@ A FITS `ImageViewer` is created or referenced by calling the following methods:
 
 
 
-#####<b> ImageViewer.plot() method
+#####**ImageViewer.plot() method**
 
 | Parameter  | Description |
 | ---------- | ----------- |
@@ -182,7 +182,7 @@ Both viewers have the same methods as `ImageViewer`.
 | `plotFileOrURL()` | convenience method to plot an image referenced by file or url |
 | `setDefaultParams()`  |  set parameters that will apply to  `plot` calls |
 
-See the <b>ImageViewer</b> for the details of each method.
+See the **ImageViewer** for the details of each method.
 
 #####**firefly.serializeRangeValues()** method
 
@@ -279,8 +279,8 @@ Parameters object literal can contain the following values
 | Paremeter | Description |
 | ------------ | ------------- |
 | source | required; location of the ipac table.  url or file path.|
-|chartTitle |title of the chart |
-|xCol | required; column to use for x values (can be an expression, containing multiple column names) |
+| chartTitle |title of the chart |
+| xCol | required; column to use for x values (can be an expression, containing multiple column names) |
 | yCol | required; column to use for y values (can be an expression, containing multiple column names) |
 | errorCol | column to use for y value errors (must be column name, expressions are not supported) |
 | orderCol | column to use to separate series from each other, different series are shown in different colors |
@@ -310,6 +310,73 @@ XY Plot supports the same table formats as Table does:
  - CSV - first row should be column headers
  - TSV - first row should be column headers
  - FITS Tables
+
+###Histogram Visualization
+
+Usage: firefly.showHistogram((parameters, div)
+
+ - parameters are an object attributes
+ - div is the div to load the XY Plot into.
+
+Parameters object literal can contain the following values
+
+| Paremeter | Description |
+| ------------ | ------------- |
+| data | required unless *source* parameter is specified; bin data |
+| source | required unless *data* parameter is specified; location of the table with bin data - url or path on the server. The table should have 3 columns: first col - number of points in the bin, second col - binMin, third col - binMax. Gaps and variable bin size are supported|
+| descr |title of the histogram |
+| binColor | hex color,  |
+| height | height of the histogram, default is 400px |
+
+
+*example-*
+```js
+firefly.showHistogram(
+    {
+        'descr' : 'sample field histogram',
+        'binColor' : '#bdbdbd',
+        'height' : '200',
+        // specify the data to plot histogram
+        // for now it's an array of rows,
+        // first col - number of points in the bin, second col - binMin, third col - binMax
+        'data': [
+            [1,-2.5138013781265,-2.0943590644815],
+            [4,-2.0943590644815,-1.8749167508365],
+            [11,-1.8749167508365,-1.6554744371915],
+            [12,-1.6554744371915,-1.4360321235466],
+            [18,-1.4360321235466,-1.2165898099016],
+            [15,-1.2165898099016,-1.1571474962565],
+            [20,-1.15714749625658,-0.85720518261159],
+            [24,-0.85720518261159,-0.77770518261159],
+            [21,-0.77770518261159,-0.55826286896661],
+            [36,-0.55826286896661,-0.33882055532162],
+            [40,-0.33882055532162,-0.11937824167663],
+            [51,-0.11937824167663,0.10006407196835],
+            [59,0.10006407196835,0.21850638561334],
+            [40,0.21850638561334,0.31950638561334],
+            [42,0.31950638561334,0.53894869925832],
+            [36,0.53894869925832,0.75839101290331],
+            [40,0.75839101290331,0.9778333265483],
+            [36,0.9778333265483,1.1972756401933],
+            [23,1.1972756401933,1.4167179538383],
+            [18,1.4167179538383,1.6361602674833],
+            [9,1.6361602674833,1.8556025811282],
+            [12,1.8556025811282,2.0750448947732],
+            [0,2.0750448947732,2.2944872084182],
+            [4,2.2944872084182,2.312472786789]
+        ] 
+        // or specify the url or path to the source file       
+    },'divname'
+);
+```
+
+Histogram supports all table formats as Table does:
+
+ - IPAC Table file format
+ - CSV - first row should be column headers
+ - TSV - first row should be column headers
+ - FITS Tables
+
 
 ###Adding Context Extensions to FITS viewer
 

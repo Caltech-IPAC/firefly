@@ -16,10 +16,6 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
-import edu.caltech.ipac.firefly.core.background.BackgroundState;
-import edu.caltech.ipac.firefly.core.background.BackgroundStatus;
-import edu.caltech.ipac.firefly.core.background.BackgroundUIHint;
-import edu.caltech.ipac.firefly.core.background.MonitorItem;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -183,7 +179,9 @@ public class FFToolEnv {
 
     public static RootPanel getRootPanel(String div) {
         RootPanel rp = (div == null) ? RootPanel.get() : RootPanel.get(div);
-        rp.addStyleName(_ffCss.globalSettings());
+        if (rp != null) {
+            rp.addStyleName(_ffCss.globalSettings());
+        }
         return rp;
     }
 

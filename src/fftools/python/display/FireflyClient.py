@@ -136,6 +136,19 @@ class FireflyClient(WebSocketClient):
         """
         WebSocketClient.run_forever(self)
 
+
+    # Get URL to Firefly Tools viewer and the channel set. Normally this method
+    # will be call without any parameters.
+    # url - the url, overriding the default
+    # channel - a different channel than the default
+    def getFireflyUrl(self, url=None, channel=None):
+        if channel is None:
+            channel = self.channel
+        if url=='' or url is None:
+            url=self.urlBW
+        return url + channel
+
+
     def launchBrowser(self, url=None, channel=None):
         """
         Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
@@ -148,7 +161,7 @@ class FireflyClient(WebSocketClient):
             channel = self.channel
         if url=='' or url is None:
             url=self.urlBW
-        webbrowser.open(url + channel)
+        webbrowser.open(self.getFireflyUrl(url,channel))
         time.sleep(5)
         return channel
 
@@ -208,9 +221,8 @@ class FireflyClient(WebSocketClient):
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
                           then it is the return value of the method. Otherwise it is a file that
                           firefly has direct read access to.
-        :param: plotID: the id you assigned to the plot. This is necessary to further controlling
-                          the plot
-        :param: additionalParam: dictionary of any valid fits viewer plotting parameter,
+        :param: plotID: the id you assigned to the plot. This is necessary to further control the plot
+        :param: additionalParam: dictionary of any valid fits viewer plotting parameters,
                           see firefly/docs/fits-plotting-parameters.md
         :return: status of call
         """
@@ -243,7 +255,7 @@ class FireflyClient(WebSocketClient):
 
         pageSizeStr = ''
         if pageSize is not None:
-            pageSizeStr = 'pageSize=%s' % pageSize
+            pageSizeStr = 'pageSize=%d' % pageSize
         if fileOnServer is not None:
             url+= "&file=%s" % fileOnServer
         url+= titleStr + pageSizeStr

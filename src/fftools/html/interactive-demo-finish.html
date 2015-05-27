@@ -71,18 +71,23 @@
                     subset.plot( subsetParams);
                 }
                 else if (data.type==='LINE_SELECT') {
-                    firefly.showPlot({"source" : 'SPITZER_S5_3539456_01_merge.tbl',
-                                "chartTitle" : 'Sample Merged Spectra Table',
-                                "xCol" : 'wavelength',
-                                "yCol" : 'flux_density',
-                                "errorCol" : 'error',
-                                "orderCol" : 'order',
-                                "plotStyle" : 'linePoints',
-                                "showLegend" : "always",
-                                "plotTitle" : 'title',
-                                "maxPoints" : '1000'
+                    firefly.showHistogram(
+                            {
+                                'descr' : document.getElementById('descr-field').value,
+                                'binColor' : document.getElementById('binColor-field').value,
+                                // specify the parameters that tell how to get data
+                                // for now it's a URL to an IPAC table or CVS with two cols:
+                                // first col - center of the bin, second col - num. points in the bin
+                                'source' : document.getElementById('tableurl-field').value
+                                // OR
+                                // specify the data to plot histogram
+                                // for now it's an array of rows,
+                                // first col - center of the bin, second col - num. points in the bin
+                                // This needs to change to binMin, binMax, nPoints to support variable length bins
+
                             },
                             "plotHere");
+
                 }
             };
 

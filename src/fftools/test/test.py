@@ -36,20 +36,20 @@ def isExist(reg, xList):
 
 def handleOneArg(fc, x):
       if isExist('.fits',xList):
-          fc.showFits(fc.uploadFile(x[0]))
+          fc.showFits(fc.uploadFile(x[0]), 'p1')
       elif isExist('.tbl',xList):
          fc.showTable(fc.uploadFile(x[0]))
       elif isExist('.reg',xList):
-         fc.overylayRegion(fc.uploadFile(xList[0]))
+         fc.overlayRegion(fc.uploadFile(xList[0]))
 
 def handleTwoArgs(fc, xList):
     if isExist('.fits',xList)  and isExist('.reg',xList):
          if 'fits' in xList[0]:
               fc.showFits(fc.uploadFile(xList[0]))
-              fc.overylayRegion(fc.uploadFile(xList[1]))
+              fc.overlayRegion(fc.uploadFile(xList[1]))
          else:
               fc.showFits(fc.uploadFile(xList[1]))
-              fc.overylayRegion(fc.uploadFile(xList[0]))
+              fc.overlayRegion(fc.uploadFile(xList[0]))
 
     elif isExist('.fits',xList) and isExist('.tb1',xList) in xList:
            if 'fits' in xList[0]:
@@ -82,7 +82,7 @@ def handleMultiArgs(fc, xList):
 
     if fIdx>=0 and rIdx>=0  and tIdx >=0:
          fc.showFits(fc.uploadFile(xList[fIdx]))
-         fc.overylayRegion(fc.uploadFile(xList[rIdx]))
+         fc.overlayRegion(fc.uploadFile(xList[rIdx]))
          fc.showTable(fc.uploadFile(xList[tIdx ]))
 
     elif fIdx>=0 and rIdx<0  and tIdx>=0:
@@ -90,7 +90,7 @@ def handleMultiArgs(fc, xList):
          fc.showFits(fc.uploadFile(xList[fIdx]), xList[fIdx+1])
     elif fIdx>=0 and tIdx<0 and rIdx>=0:
          fc.showFits(fc.uploadFile(xList[fIdx]), xList[fIdx+1])
-         fc.overylayRegion(fc.uploadFile(xList[rIdx]))
+         fc.overlayRegion(fc.uploadFile(xList[rIdx]))
     elif fIdx>=0 and rIdx<0  and tIdx<0:
          fc.showFits(fc.uploadFile(xList[fIdx]), xList[fIdx+1], xList[fIdx+2])
 
@@ -142,9 +142,9 @@ while true:
              parm=parm+','+arg
 
        if len(parm)==0:
-          fc.lanuchBrowser()
+          fc.launchBrowser()
        else:
-          fc.lanuchBrowser(parm)
+          fc.launchBrowser(parm)
 
    else:
      n = len(xList)
@@ -160,5 +160,5 @@ while true:
 
    if x== KeyboardInterrupt:
       fc.disconnect()
-      fc.sesson.close()
+      fc.session.close()
       exit()
