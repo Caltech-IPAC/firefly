@@ -7,7 +7,9 @@ This document explains how to use the python library included in Firefly to inte
 
 The python class name is **FireflyClient**.  It is located in firefly/src/fftools/python.   
 
-**Pre-requirements**
+##Getting Started
+
+####Pre-requirements
 
 1. Install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
    (If you are using conda package manager, you can use [conda-pipbuild](http://conda.pydata.org/docs/commands/build/conda-pipbuild.html) tool for building conda packages just using pip install.) 
@@ -16,37 +18,43 @@ The python class name is **FireflyClient**.  It is located in firefly/src/fftool
 	
 To get a feel for API `cd firefly/src/fftools/test` and take a look at `initFF.py`, `initFF2.py`, `testAll.py`. If you are within an interpreter, `execfile('./initFF2.py')` is the best, because it leaves the connection to the browser open while allowing you to execute other commands.
 
-**Import the FireflyClient into your script**
+####Import the FireflyClient into your script
 
    `from FireflyClient import *`
    
+####Create an instance of the FireflyClient
 
-**Create an instance of the FireflyClient**
-
-`fc = FireflyClient( 'localhost:8080')`
+```python
+fc = FireflyClient( 'localhost:8080')
+```
  or 
-`fc=FireflyClient('localhost:8080', channel='myNewChannel')`
+```python
+fc=FireflyClient('localhost:8080', channel='myNewChannel')
+```
  
-**Launch Browser and load Firefly Tools**
+####Launch Browser and load Firefly Tools
  
-`fc.launchBrowser()` 
+```python
+fc.launchBrowser()
+```
 
 Wait until Firefly Tools finish loading and you see 'Waiting for data' before sending other commands.
  
-**Show a Fits image**
+####Show a Fits image
  
 ```python
      data = '/your/path/yourFits.fits'
      fitsPathInfo= fc.uploadFile(data)
      fc.showFits(fitsPathInfo)
 ```   
-<br>  
+
 The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
 
 For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
+
       
 
-**Overlay a region**
+####Overlay a region
 
 ```python 
      regFile=/your/path/yourRegion.reg
@@ -54,7 +62,7 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
      fc.overlayRegion(regPathInfo)
 ``` 
 
-**Show a table**
+####Show a table
  
 ```python 
      table ='/your/path/yourTable.tbl'    
@@ -62,17 +70,17 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
      fc.showTable(tablePathInfo)
 ```
 
-**Run in python prompt**
+###Run in python prompt
 
 1. start python session by typing `python` in the terminal
 2. enter: `execfile("yourScript.py")` at the python prompt
 
-**Run in iPyton**
+###Run in iPyton
 
 1. start the iPython session by typing `iPython` in the terminal
 2. enter the script name at the ipython prompt
 
-**Run in iPython notebook**
+###Run in iPython notebook
   
 1. open a cell
 2. type : `%run yourScript.py` into the cell
@@ -133,7 +141,7 @@ except KeyboardInterrupt:
 
 ```
 	    
-**FireflyClient's methods**
+##FireflyClient's methods
 
 - *addListener(self, callback, name=ALL)*
    
@@ -173,7 +181,7 @@ except KeyboardInterrupt:
    Shows a fits image.
     **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
     **plotID** - the id you assigned to the plot. This is necessary to further controlling the plot
-    **additionalParam** - dictionary of any valid fits viewer plotting parameter, see [see server-settings-for-fits-files.md](fits-plotting-parameters.md)
+    **additionalParam** - dictionary of any valid fits viewer plotting parameter, see [server-settings-for-fits-files.md](fits-plotting-parameters.md)
 
 
 - *showTable(self, fileOnServer, title=None, pageSize=None)*
@@ -202,7 +210,7 @@ except KeyboardInterrupt:
     **image** - a url of an icon to display in the toolbar instead of title
  
  
-**FireflyClient's Region Methods**
+###FireflyClient's Region Methods
 
 - `overylayRegion(path, title=None, regionId=None)`
      
@@ -256,3 +264,44 @@ def myCallback(event):
 
 fc.addListener(myCallback)
 ```
+
+###FireflyClient's Fits Stretch Help Methods
+
+The fits viewer method's (`FireflyClient.showFits()`)  last parameter is a dictionary which you can use to specify any of the parameters that the FITS viewer accepts ([see fits-plotting-parameters.md](fits-plotting-parameters.md)). One of this parameters, `'RangeValues'` , is used to specify the stretch algorithm and parameters. This parameter is serialized string that is too difficult construct yourself.  Therefore there are two helper methods that  will construct it.  They are `createRangeValuesStandard()` and `createRangeValuesZScale()`. These both returns a string that can be passed to  `showFits()`
+
+*Example-*
+
+```python
+rv= fc.createRangeValuesStandard('LogLog', 'Percent',9,98)
+params= {'RangeValues':rv}
+status= fc.showFits(file,'p1',params)
+```
+*or*
+```python
+rv= fc.createRangeValuesZScale('Log',80, 500,44)
+params= {'RangeValues':rv}
+status= fc.showFits(file,'p1',params)
+```
+
+**Methods**
+
+```python
+createRangeValuesStandard(algorithm, stretchType='Percent', lowerValue=1, upperValue=99)
+```
+
+  - stretchType: must be `'Percent'`,`'Absolute'`,`'Sigma'`
+  - lowerValue: number, lower end of stretch
+  - upperValue: number, upper end of stretch
+    - algorithm: must be `'Linear'`, `Log'`,`'LogLog'`,`'Equal'`,`'Squared'`, `'Sqrt'`
+  - *return:* a serialized range values string
+   
+```python
+createRangeValuesZScale(algorithm, zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120)
+```
+
+  - algorithm: must be `'Linear'`, `Log'`,`'LogLog'`,`'Equal'`,`'Squared'`, `'Sqrt'`
+  - zscaleContrast
+  - zscaleSamples
+  - zscaleSamplesPerLine
+  - *return:* a serialized range values string
+

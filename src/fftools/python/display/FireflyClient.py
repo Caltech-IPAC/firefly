@@ -12,20 +12,21 @@ class FireflyClient(WebSocketClient):
     # class variables
     serverEvents = {'name': ['EVT_CONN_EST', 'SvrBackgroundReport', 'WindowResize'],
                     'scope': ['SELF', 'CHANNEL'],
-                    "dataType": ['STRING', 'JSON', 'BG_STATUS'],
-                    "data": ['channel']
+                    'dataType': ['STRING', 'JSON', 'BG_STATUS'],
+                    'data': ['channel']
                     }
 
     fftoolsCmd = '/fftools/sticky/CmdSrv'
-    true = 1
-    false = 0
     myLocalhost = 'localhost:8080'
-    ALL = "ALL_EVENTS_ENABLED"
+    ALL = 'ALL_EVENTS_ENABLED'
+    stretchTypeDict={'Percent':88,'Absolute':90,'ZScale':91,'Sigma':92}
+    stretchAlgorithmDict={'Linear':44, 'Log':45,'LogLog':46,'Equal':47,'Squared':48, 'Sqrt':49}
+
 
     #the constructor, define instance variables for the object
     def __init__(self, host=myLocalhost, channel=None):
         #assign instance variables  todo-need to understand how to get the default channel
-        if host.startswith("http://"):
+        if host.startswith('http://'):
             host = host[7:]
 
         self.thisHost = host
@@ -71,13 +72,13 @@ class FireflyClient(WebSocketClient):
                     connID = connInfo['connID']
                 seinfo = self.channel
                 if (len(connID) ) > 0:
-                    seinfo = connID + "_" + seinfo
+                    seinfo = connID + '_' + seinfo
 
                 # print ("Connection established: " + seinfo)
                 self.session.cookies['seinfo'] = seinfo
                 #self.onConnected(self.channel)
             except:
-                print ("from callback exception: ")
+                print ('from callback exception: ')
                 print (m)
         else:
             # print "call calling handleEvnet"
@@ -101,6 +102,22 @@ class FireflyClient(WebSocketClient):
     #     url = 'http://' + self.thisHost + '/fftools/app.html?id=Loader&channelID=' + channel
     #     webbrowser.open('http://localhost:8080/fftools/app.html?id=Loader&channelID=' + channel)
     #     webbrowser.open(url)
+
+
+    @staticmethod
+    def createRV(stretchType, lowerValue, upperValue, algorithm,
+                 zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120):
+        retval= None
+        ffc= FireflyClient
+        if stretchType in ffc.stretchTypeDict and algorithm in ffc.stretchAlgorithmDict:
+            retval='%d,%f,%d,%f,%d,%d,%d,%d' % \
+                   (ffc.stretchTypeDict[stretchType], lowerValue,
+                    ffc.stretchTypeDict[stretchType], upperValue,
+                    ffc.stretchAlgorithmDict[algorithm],
+                    zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        return retval
+
+
 
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
@@ -233,13 +250,13 @@ class FireflyClient(WebSocketClient):
                           see firefly/docs/fits-plotting-parameters.md
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushFits"
+        url = self.urlRoot + '?cmd=pushFits'
         if additionalParams is not None:
             url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
         if plotID is not None:
-            url+= "&plotId=%s" % plotID
+            url+= '&plotId=%s' % plotID
         if fileOnServer is not None:
-            url+= "&file=%s" % fileOnServer
+            url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
 
 
@@ -258,7 +275,7 @@ class FireflyClient(WebSocketClient):
             url+= '&Titile=%s' % title
         if pageSize is not None:
             url+= '&pageSize=%s' % str(pageSize)
-        url+= "&file=%s" % fileOnServer
+        url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
 
 
@@ -354,4 +371,43 @@ class FireflyClient(WebSocketClient):
                                      data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
+
+    #-----------------------------------------------------------------
+    # Range Values
+    #-----------------------------------------------------------------
+
+    @staticmethod
+    def createRangeValuesStandard(algorithm, stretchType='Percent', lowerValue=1, upperValue=99):
+        """
+        :param stretchType: must be 'Percent','Absolute','Sigma'
+        :param lowerValue: number, lower end of stretch
+        :param upperValue: number, upper end of stretch
+        :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
+        :return: a serialized range values string
+        """
+        retval= FireflyClient.createRV(stretchType,lowerValue,upperValue,algorithm,25,600,120)
+        ffc= FireflyClient
+        if not retval:
+            t= stretchType if stretchType in ffc.stretchAlgorithmDict else 'Percent'
+            a= algorithm if algorithm in ffc.stretchAlgorithmDict else 'Linear'
+            retval= FireflyClient.createRV(t,1,99,a)
+        return retval
+
+
+    @staticmethod
+    def createRangeValuesZScale(algorithm, zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120):
+        """
+        :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
+        :param zscaleContrast: zscale contrast
+        :param zscaleSamples: zscale samples
+        :param zscaleSamplesPerLine: zscale sample per line
+        :return: a serialized range values string
+        """
+        retval= FireflyClient.createRV('ZScale',1,2,algorithm,zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        if not retval:
+            a= algorithm if algorithm in FireflyClient.stretchAlgorithmDict else 'Linear'
+            retval= FireflyClient.createRV('ZScale',1,2,a,25,600,120)
+        return retval
+
+
 
