@@ -23,9 +23,11 @@ module.exports= React.createClass(
             data: React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.number)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
             source: React.PropTypes.string, // url with the histogram table in IPAC Table or CVS format
             height: React.PropTypes.number,
+            logs: React.PropTypes.oneOf(['x','y','xy']),
+            reversed: React.PropTypes.oneOf(['x','y','xy']),
             desc: React.PropTypes.string,
             binColor: function(props, propName, componentName) {
-                if (!/^#[0-9a-f]{6}/.test(props[propName])) {
+                if (props[propName] && !/^#[0-9a-f]{6}/.test(props[propName])) {
                     return new Error('Invalid bin color in '+componentName+', should be hex with exactly 7 characters long.');
                 }
             }
@@ -36,6 +38,8 @@ module.exports= React.createClass(
                 data: undefined,
                 source: undefined,
                 height: 300,
+                logs: undefined,
+                reversed: undefined,
                 desc: 'Sample Distribution',
                 binColor: '#d1d1d1'
             };
@@ -123,6 +127,10 @@ module.exports= React.createClass(
                             valid=false;
                         }
                     }
+                    if (this.props.logs && this.props.logs.indexOf('x')>-1 && data[0][1]<=0) {
+                        console.error("Unable to plot histogram: zero or subzero values on logarithmic scale");
+                        valid = false;
+                    }
                 }
             } catch (e) {
                 console.error("Invalid data passed to Histogram: "+e);
@@ -143,11 +151,15 @@ module.exports= React.createClass(
 
             if (!this.validateData(this.state.userData)) {
                 console.error("Invalid histogram data, check console for specifics.");
+                return false;
             }
 
             var points = [], zones=[];
             var lighterColor = this.shadeColor(this.props.binColor, 0.1);
             var error;
+
+            // zones mess up log scale - do not do them
+            var doZones = (!this.props.logs || this.props.logs.indexOf('x')===-1);
 
             try {
                 let lastBinMax = this.state.userData[0][1];
@@ -164,7 +176,7 @@ module.exports= React.createClass(
                         let centerStr = numeral(this.state.userData[index][1]+xrange/2.0).format(formatStr);
                         let rangeStr = numeral(this.state.userData[index][1]).format(formatStr)+' to '+numeral(this.state.userData[index][2]).format(formatStr);
 
-                        // chack for gaps and add points in necessary
+                        // check for gaps and add points in necessary
                         if (Math.abs(this.state.userData[index][1])-lastBinMax > Number.EPSILON &&
                             this.state.userData[index][1]>lastBinMax) {
                             console.warn("Gap in histogram data before row "+index+" ["+this.state.userData[index]+"]");
@@ -203,15 +215,18 @@ module.exports= React.createClass(
                             name: centerStr,
                             range: rangeStr,
                             // x - binmax
-                            x: this.state.userData[index][2]-xrange/1000.0,
+                            x: this.state.userData[index][2]-Number.EPSILON,
                             // y - number of points in the bin
                             y: this.state.userData[index][0]
                         });
+
                         // zones allow to separate visually one bin from another
-                        zones.push({
-                            value: this.state.userData[index][2],
-                            color: (index%2===0)?this.props.binColor:lighterColor
-                        });
+                        if (doZones) {
+                            zones.push({
+                                value: this.state.userData[index][2],
+                                color: (index % 2 === 0) ? this.props.binColor : lighterColor
+                            });
+                        }
                     }.bind(this)
                 );
                 // point after the last one
@@ -230,17 +245,20 @@ module.exports= React.createClass(
                 return false;
             } else {
                 config.series[0].data = points;
-                config.plotOptions.area.zones = zones;
+                if (doZones) {
+                    config.plotOptions.area.zones = zones;
+                }
             }
         },
 
         render() {
+            let yReversed = (this.props.reversed && this.props.reversed.indexOf('y')>-1 ? true : false);
+
             var config = {
                 chart: {
                     renderTo: 'container',
                     type: 'area',
                     alignTicks: false,
-                    marginTop: 25,
                     height: Number(this.props.height)
                 },
                 exporting: {
@@ -286,22 +304,27 @@ module.exports= React.createClass(
                     tickColor: '#ccc',
                     title: {
                         text: this.props.desc
-                    }
+                    },
+                    opposite: yReversed,
+                    reversed: (this.props.reversed && this.props.reversed.indexOf('x')>-1 ? true : false),
+                    type: (this.props.logs && this.props.logs.indexOf('x')>-1 ? 'logarithmic' : 'linear')
                 },
                 yAxis: {
-                    title: {
-                        text: ''
-                    },
                     gridLineColor: '#e9e9e9',
                     tickWidth: 1,
                     tickLength: 3,
                     tickColor: '#ccc',
                     lineColor: '#ccc',
-                    endOnTick: false
+                    endOnTick: false,
+                    title: {
+                        text: ''
+                    },
+                    reversed: yReversed,
+                    type: (this.props.logs && this.props.logs.indexOf('y')>-1 ? 'logarithmic' : 'linear')
                 },
                 series: [{
                     name: 'data points',
-                    turboThreshhold: 0,
+                    turboThreshold: 0,
                     color: this.props.binColor,
                     data: []
                 }],

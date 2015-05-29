@@ -14,16 +14,14 @@ export class ReactJavaInterface {
         var parsedParams = JSON.parse(params);
         /* jshint ignore:start */
         var el;
-        if (parsedParams.data) {
+        {
             el = <div><Histogram data={parsedParams.data}
+                                 source={parsedParams.source}
                                  desc={parsedParams.descr}
-                                 binColor={parsedParams.binColor}/></div>;
-        } else {
-            if (parsedParams.source) {
-                el = <div><Histogram source={parsedParams.source}
-                                     desc={parsedParams.descr}
-                                     binColor={parsedParams.binColor}/></div>;
-            }
+                                 binColor={parsedParams.binColor}
+                                 height={parsedParams.height}
+                                 logs={parsedParams.logs}
+                                 reversed={parsedParams.reversed}/></div>;
         }
         if (el) {
             React.render(el, document.getElementById(divName));

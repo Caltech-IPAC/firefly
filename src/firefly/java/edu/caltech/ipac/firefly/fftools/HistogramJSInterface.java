@@ -22,7 +22,9 @@ public class HistogramJSInterface {
             } else if (p.equals("data")) {
                 jsonObj.put("data", new JSONString(jspr.getParam("data")));
             } else {
-                jsonObj.put(p, new JSONString(jspr.getParam(p)));
+                if (jspr.getParam(p) != null) {
+                    jsonObj.put(p, new JSONString(jspr.getParam(p)));
+                }
             }
         }
 
