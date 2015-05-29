@@ -145,7 +145,7 @@ public class PushReceiver implements WebEventListener {
     }
 
     private void removeRegionFile(final String id) {
-//        RegionLoader.removeRegionFile(id);
+        RegionLoader.removeRegion(id);
     }
 
 

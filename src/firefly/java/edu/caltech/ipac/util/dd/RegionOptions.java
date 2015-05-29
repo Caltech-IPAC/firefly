@@ -18,7 +18,7 @@ import java.io.Serializable;
  */
 public class RegionOptions implements Serializable, HandSerialize {
 
-    private String color= "red";
+    private String color= "green";
     private boolean editable= true;
     private boolean movable= true;
     private boolean rotatable= true;

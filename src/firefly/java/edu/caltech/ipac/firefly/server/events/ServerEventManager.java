@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.server.events;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -100,6 +101,21 @@ public class ServerEventManager {
         }
         return cnt;
     }
+
+
+    public static int getActiveQueueChannelCnt(String channel) {
+        int cnt = 0;
+        if (StringUtils.isEmpty(channel)) return 0;
+        for(ServerEventQueue queue : evQueueList) {
+            if (channel.equals(queue.getChannel()) && queue.getEventConnector().isOpen()) {
+                cnt++;
+            } else {
+                removeEventQueue(queue);
+            }
+        }
+        return cnt;
+    }
+
 
     public static long getTotalEventCnt() {
         return totalEventCnt;

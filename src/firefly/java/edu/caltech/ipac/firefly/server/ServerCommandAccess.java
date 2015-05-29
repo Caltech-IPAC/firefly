@@ -135,6 +135,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_REMOVE_REG_DATA,  new PushCommands.PushRemoveRegionData());
         _cmdMap.put(ServerParams.VIS_PUSH_TABLE,            new PushCommands.PushTable());
         _cmdMap.put(ServerParams.VIS_PUSH_EXT,              new PushCommands.PushExtension());
+        _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,      new PushCommands.PushAliveCheck());
 //        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new PushCommands.QueryAction());
 //        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new PushCommands.PushFITS());
 

@@ -110,7 +110,7 @@ public class CoordinateSys implements Serializable {
     public static final CoordinateSys SCREEN_PIXEL =
             new CoordinateSys(
                     -998, 0.0,
-                    PIXEL_DESC,
+                    SCREEN_PIXEL_DESC,
                     "screen pixel X: ", "screen pixel Y: ", "screen pixel: "
             );
     public static final CoordinateSys UNDEFINED =

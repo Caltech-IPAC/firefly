@@ -34,7 +34,8 @@ public class RegionValue {
         return (unit!=Unit.SCREEN_PIXEL &&
                 unit!=Unit.IMAGE_PIXEL &&
                 unit!=Unit.UNKNOWN) &&
-                unit!=Unit.CONTEXT; }
+                unit!=Unit.CONTEXT;
+    }
 
     public double toDegree() {
         if (!isWorldCoords()) {

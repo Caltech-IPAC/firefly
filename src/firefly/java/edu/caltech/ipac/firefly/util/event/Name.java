@@ -298,6 +298,8 @@ public class Name implements Serializable {
     public static final Name PUSH_TABLE_FILE        =  new Name("PUSH_TABLE_FILE", "Load this table file.  Expect TableInfo as data");
     public static final Name PUSH_FITS_COMMAND_EXT  =  new Name("PUSH_FITS_COMMAND_EXT", "Add an extension command.  Expect ExtInfo as data");
     public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
+    public static final Name REPORT_ALIVE           =  new Name("REPORT_ALIVE", "report if url is alive");
+    public static final Name RESPONDED_ALIVE        =  new Name("RESPONDED_ALIVE", "responded if url is alive");
 //====================================================================
 
 

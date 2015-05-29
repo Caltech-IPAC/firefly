@@ -151,7 +151,7 @@ public class RegionLoader {
         return sb.toString();
     }
 
-    private static void removeRegion(String id) {
+    public static void removeRegion(String id) {
         RegionDrawing rd= regMap.get(id);
         if (rd!=null) rd.freeResources();
         regMap.remove(id);

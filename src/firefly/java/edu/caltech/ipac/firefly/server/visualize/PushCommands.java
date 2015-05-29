@@ -176,7 +176,20 @@ public class PushCommands {
             map.put("success", success);
             return outJson.toJSONString();
         }
+    }
 
+    public static class PushAliveCheck extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String ip= sp.getRequired(ServerParams.IP_ADDRESS);
+            boolean active= PushJob.isBrowserClientActive(ip);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("active", active);
+            return outJson.toJSONString();
+        }
     }
 
 }

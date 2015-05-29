@@ -5,6 +5,7 @@ import requests
 import webbrowser
 import json
 import time
+import socket
 
 
 class FireflyClient(WebSocketClient):
@@ -30,7 +31,7 @@ class FireflyClient(WebSocketClient):
         self.thisHost = host
         #web socket event listener url
         url = 'ws://%s/fftools/sticky/firefly/events' % host
-        print 'websocket url:%s' % url
+        # print 'websocket url:%s' % url
         if channel is not None:
             url+= '?channelID=%s' % channel
         WebSocketClient.__init__(self, url)
@@ -72,7 +73,7 @@ class FireflyClient(WebSocketClient):
                 if (len(connID) ) > 0:
                     seinfo = connID + "_" + seinfo
 
-                print ("Connection established: " + seinfo)
+                # print ("Connection established: " + seinfo)
                 self.session.cookies['seinfo'] = seinfo
                 #self.onConnected(self.channel)
             except:
@@ -85,10 +86,15 @@ class FireflyClient(WebSocketClient):
 
     def sendURLAsGet(self,url):
         response= self.session.get(url)
-        print response.text
+        # print response.text
         status = json.loads(response.text)
         return status[0]
 
+    def isPageConnected(self):
+        ip=socket.gethostbyname(socket.gethostname())
+        url = self.urlRoot + '?cmd=pushAliveCheck&ipAddress=%s' % ip
+        retval= self.sendURLAsGet(url)
+        return retval['active']
 
     # def onConnected(self, channel):
     #     #open the browser
@@ -149,7 +155,7 @@ class FireflyClient(WebSocketClient):
         return url + channel
 
 
-    def launchBrowser(self, url=None, channel=None):
+    def launchBrowser(self, url=None, channel=None, force=False):
         """
         Launch a browsers with the Firefly Tools viewer and the channel set. Normally this method
         will be call without any parameters.
@@ -161,8 +167,10 @@ class FireflyClient(WebSocketClient):
             channel = self.channel
         if url=='' or url is None:
             url=self.urlBW
-        webbrowser.open(self.getFireflyUrl(url,channel))
-        time.sleep(5)
+        doOpen= True if force else not self.isPageConnected()
+        if doOpen:
+            webbrowser.open(self.getFireflyUrl(url,channel))
+        time.sleep(5) # todo: find something better to do than sleeping
         return channel
 
 
@@ -215,7 +223,6 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-
     def showFits(self, fileOnServer=None, plotID=None, additionalParams=None):
         """ Show a fits image
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
@@ -227,16 +234,14 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushFits"
-        dictStr = ''
         if additionalParams is not None:
-            for key, value in additionalParams.items():
-                dictStr+= '&%s=%s' % (key,value)
+            url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
         if plotID is not None:
             url+= "&plotId=%s" % plotID
         if fileOnServer is not None:
             url+= "&file=%s" % fileOnServer
-        url = url + dictStr
         return self.sendURLAsGet(url)
+
 
     def showTable(self, fileOnServer, title=None, pageSize=None):
         """
@@ -249,16 +254,11 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushTable"
-        titleStr = ''
         if title is not None:
-            titleStr = '&Titile=%s' % title
-
-        pageSizeStr = ''
+            url+= '&Titile=%s' % title
         if pageSize is not None:
-            pageSizeStr = '&pageSize=' + str(pageSize)
-        if fileOnServer is not None:
-            url+= "&file=%s" % fileOnServer
-        url+= titleStr + pageSizeStr
+            url+= '&pageSize=%s' % str(pageSize)
+        url+= "&file=%s" % fileOnServer
         return self.sendURLAsGet(url)
 
 
@@ -298,84 +298,60 @@ class FireflyClient(WebSocketClient):
     #-----------------------------------------------------------------
 
 
-    def overlayRegion(self, fileOnServer, title=None, regionId=None):
+    def overlayRegion(self, fileOnServer, title=None, regionLayerId=None):
         """
         Overlay a region on the loaded FITS images
         :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
                        then it is the return value of the method. Otherwise it is a file that
                        firefly has direct read access to.
         :param title: title of the region file
+        :param regionLayerId: id of layer to add
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRegion&file=%s" % fileOnServer
         if title is not None:
             url+= '&Title=%s' % title
-        if regionId is not None:
-            url+= '&id=%s' % regionId
+        if regionLayerId is not None:
+            url+= '&id=%s' % regionLayerId
         return self.sendURLAsGet(url)
 
 
-    def removeRegion(self, regionId):
+    def removeRegion(self, regionLayerId):
+        """
+        Overlay a region on the loaded FITS images
+        :param regionLayerId: regionLayer to remove
+        :return: status of call
+        """
+        return self.sendURLAsGet(self.urlRoot + "?cmd=pushRemoveRegion&id=%s" % regionLayerId)
+
+
+    def overlayRegionData(self, regionData, regionLayerId, title=None):
         """
         Overlay a region on the loaded FITS images
         :param regionData: a list of region entries
+        :param regionLayerId: id of region overlay to create or add too
         :param title: title of the region file
         :return: status of call
         """
-        regDataToPass= '['
-        url = self.urlRoot + "?cmd=pushRemoveRegionData&id=%s" % regionId
-        return self.sendURLAsGet(url)
-
-
-    def overlayRegionData(self, regionData, regionId, title=None):
-        """
-        Overlay a region on the loaded FITS images
-        :param regionData: a list of region entries
-        :param regionId: id of region overlay to create or add too
-        :param title: title of the region file
-        :return: status of call
-        """
-        regDataToPass= '['
-        for i in range(len(regionData)):
-            if i==0:
-                regDataToPass+=regionData[i]
-            else:
-                regDataToPass+="--STR--%s" % regionData[i]
-
-        regDataToPass+=']'
-        url = self.urlRoot + "?cmd=pushRegionData"
-        url+= "&id=%s" % regionId
+        url = self.urlRoot + "?cmd=pushRegionData&id=%s" % regionLayerId
         if title is not None:
             url+= '&Title=%s' % title
-
-        response = self.session.post(url, data={'ds9RegionData' : regDataToPass})
-        print response.text
+        response = self.session.post(url,
+                                     data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
 
 
-    def removeRegionData(self, regionData, regionId):
+    def removeRegionData(self, regionData, regionLayerId):
         """
         Remove the specified region entries
         :param regionData: a list of region entries
-        :param regionId: id of region to remove entries from
+        :param regionLayerId: id of region to remove entries from
         :return: status of call
         """
-        regDataToPass= '['
-        for i in range(len(regionData)):
-            if i==0:
-                regDataToPass+=regionData[i]
-            else:
-                regDataToPass+="--STR--%s" % regionData[i]
-
-        regDataToPass+=']'
-        url = self.urlRoot + "?cmd=pushRemoveRegionData"
-        url+= "&id=%s" % regionId
-
-        response = self.session.post(url, data={'ds9RegionData' : regDataToPass})
-        print response.text
+        url = self.urlRoot + "?cmd=pushRemoveRegionData&id=%s" % regionLayerId
+        response = self.session.post(url,
+                                     data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
-
-
 

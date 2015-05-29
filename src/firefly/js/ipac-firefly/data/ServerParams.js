@@ -74,6 +74,7 @@ export const ServerParams = {
         DESC: 'Desc',
         SPACIAL_TYPE: 'SpacialType',
         URL: 'URL',
+        IP_ADDRESS: "ipAddress",
 
         EXT_TYPE: 'extType',
         IMAGE: 'image',
@@ -131,13 +132,14 @@ export const ServerParams = {
         VIS_PUSH_CREATE_ID: 'createID',
         VIS_PUSH_FITS: 'pushFits',
         VIS_PUSH_REG: 'pushRegion',
-        VIS_PUSH_REMOVE_REG: "pushRemoveRegion",
-        VIS_PUSH_REG_DATA: "pushRegionData",
-        VIS_PUSH_REMOVE_REG_DATA: "pushRemoveRegionData",
+        VIS_PUSH_REMOVE_REG: 'pushRemoveRegion',
+        VIS_PUSH_REG_DATA: 'pushRegionData',
+        VIS_PUSH_REMOVE_REG_DATA: 'pushRemoveRegionData',
         VIS_PUSH_TABLE: 'pushTable',
         VIS_PUSH_EXT: 'pushExt',
         VIS_QUERY_ACTION: 'queryAction',
         VIS_PUSH_WPR: 'pushWPR',
+        VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt'

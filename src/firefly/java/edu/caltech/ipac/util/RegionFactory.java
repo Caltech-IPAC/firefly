@@ -83,13 +83,13 @@ public class RegionFactory {
 
 
     public static List<RegionFileElement> parsePart(String inString) throws RegParseException {
-        return parsePart(inString, RegionCsys.PHYSICAL, new Global(new RegionOptions()),false);
+        return parsePart(inString, RegionCsys.IMAGE, new Global(new RegionOptions()),false);
     }
 
     public static List<RegionFileElement> parsePart(String inString, RegionCsys coordSys, Global global, boolean allowHeader)
                      throws RegParseException{
 
-        if (coordSys==null) coordSys= RegionCsys.PHYSICAL;
+        if (coordSys==null) coordSys= RegionCsys.IMAGE;
         RegionOptions globalOps= global!=null ? global.getOptions() : null;
         String sAry[]= inString.split(";");
         List<RegionFileElement> retList= new ArrayList<RegionFileElement>(4);
@@ -420,10 +420,19 @@ public class RegionFactory {
         if (x.isWorldCoords() && y.isWorldCoords()) {
             wp= new WorldPt(x.toDegree(), y.toDegree(), csys);
         }
+        else if (isWorldCoords(coord_sys)) {
+            wp= new WorldPt(x.toDegree(), y.toDegree(), csys);
+        }
         else {
-            if (x.getType()==RegionValue.Unit.SCREEN_PIXEL) csys= CoordinateSys.SCREEN_PIXEL;
-            else if (x.getType()==RegionValue.Unit.IMAGE_PIXEL) csys= CoordinateSys.PIXEL;
-            else csys= CoordinateSys.SCREEN_PIXEL;
+            if (x.getType()==RegionValue.Unit.SCREEN_PIXEL) {
+                csys= CoordinateSys.SCREEN_PIXEL;
+            }
+            else if (x.getType()==RegionValue.Unit.IMAGE_PIXEL) {
+                csys= CoordinateSys.PIXEL;
+            }
+            else {
+                //otherwise just use the default
+            }
             wp= new WorldPt(x.getValue(), y.getValue(), csys);
         }
         return wp;
@@ -1143,7 +1152,7 @@ public class RegionFactory {
                 retval= "aqua";
             }
             else {
-                retval= "red";
+                retval= "green";
             }
         }
         return retval;
@@ -1170,5 +1179,15 @@ public class RegionFactory {
         return retval;
     }
 
+
+    public static boolean isWorldCoords(RegionCsys c) {
+        return (c!=RegionCsys.PHYSICAL &&
+                c!=RegionCsys.UNDEFINED &&
+                c!=RegionCsys.IMAGE &&
+                c!=RegionCsys.ICRS &&
+                c!=RegionCsys.AMPLIFIER &&
+                c!=RegionCsys.LINEAR &&
+                c!=RegionCsys.DETECTOR);
+    }
 }
 
