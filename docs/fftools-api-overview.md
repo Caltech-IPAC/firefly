@@ -292,7 +292,7 @@ Parameters object literal can contain the following values
 *example-*
 ```js
 firefly.showPlot(
-    {'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl'
+    {'source' : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl',
     'chartTitle' : 'SPITZER_S5_3539456_01_merge.tbl',
     'xCol' : 'wavelength',
     'yCol' : 'flux_density',
@@ -470,7 +470,7 @@ firefly.addDataViewer( {'DataSource'  : 'URL',
                         'DataColumn'  : 'file',
                         'MinSize'     : '100x100',
                         'ColorTable'  : '10',
-                        'RangeValues'  firefly.serializeRangeValues(
+                        'RangeValues' : firefly.serializeRangeValues(
                                                      "Sigma",-2,8,"Linear"),
                         'QUERY_ID'    : 'tableHere'  },
                                    'previewHere' );
