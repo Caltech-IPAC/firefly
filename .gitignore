@@ -12,6 +12,7 @@
 *.iml
 *.pyc
 .DS_Store
+*~
 #
 # -- ignore IntelliJ project files
 #
