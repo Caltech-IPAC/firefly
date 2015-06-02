@@ -57,7 +57,10 @@ fi
 catalina()
 {
 	# Run catalina.sh with customized JAVA_OPTS, and logging of the output
-	JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]} $JAVA_OPTS" "$CATALINA_HOME/bin/catalina.sh" "$1" > "$CATALINA_BASE/logs/$1.log"
+	
+	JAVA_OPTS="-Dport.shutdown=${FFPORTS[1]} -Dport.http=${FFPORTS[0]} $JAVA_OPTS" \
+	  CATALINA_PID="$CATALINA_BASE/logs/catalina.pid" \
+	  "$CATALINA_HOME/bin/catalina.sh" "$@" > "$CATALINA_BASE/logs/$1.log"
 }
 
 CATALINA_BASE=
@@ -66,7 +69,7 @@ cleanup()
 {
 	# Shut down Tomcat
 	if [[ "$TOMCAT_STARTED" == "1" ]]; then
-		catalina stop
+		catalina stop --force
 	fi
 
 	# Delete the temporary Tomcat configuration directory
