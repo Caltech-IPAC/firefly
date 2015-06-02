@@ -62,9 +62,6 @@ public class VisContext {
 //======================================================================
 
 
-    public static boolean isFileInPath(File f) { return ServerContext.validateFileInPath(f.getPath(), true)!=null; }
-
-
     public static void shouldContinue(PlotClientCtx ctx, ImagePlot plot) throws FailedRequestException {
         shouldContinue(ctx.getKey(), plot);
     }

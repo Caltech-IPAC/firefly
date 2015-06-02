@@ -296,7 +296,7 @@ public class WebPlotRequest extends ServerRequest {
                                                  String survey,
                                                  float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.ISSA, wp, survey, sizeInDeg);
-        req.setTitle("ISSA "+survey);
+        req.setTitle("ISSA: "+survey);
         return req;
     }
 
@@ -307,7 +307,7 @@ public class WebPlotRequest extends ServerRequest {
                                                  String survey,
                                                  float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.IRIS, wp, survey, sizeInDeg);
-        req.setTitle("IRIS "+survey);
+        req.setTitle("IRIS: "+survey);
         return req;
     }
 
@@ -318,7 +318,7 @@ public class WebPlotRequest extends ServerRequest {
                                                   String survey,
                                                   float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
-        req.setTitle("2MASS "+survey);
+        req.setTitle("2MASS: "+survey);
         return req;
     }
 
@@ -328,7 +328,7 @@ public class WebPlotRequest extends ServerRequest {
                                                 String survey,
                                                 float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
-        req.setTitle("MSX "+survey);
+        req.setTitle("MSX: "+survey);
         return req;
     }
 
@@ -339,7 +339,7 @@ public class WebPlotRequest extends ServerRequest {
                                                      String band,
                                                      float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
-        req.setTitle("SDSS "+band);
+        req.setTitle("SDSS: "+band);
         return req;
     }
     //======================== DSS =====================================
@@ -348,7 +348,9 @@ public class WebPlotRequest extends ServerRequest {
     public static WebPlotRequest makeDSSRequest(WorldPt wp,
                                                 String survey,
                                                 float sizeInDeg) {
-        return makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+        WebPlotRequest req= makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+        req.setTitle("DSS: "+survey);
+        return req;
     }
 
     //======================== Wise =====================================
@@ -566,9 +568,7 @@ public class WebPlotRequest extends ServerRequest {
     }
 
     public static boolean isSmartZoom(ZoomType type) {
-        return (type == ZoomType.SMART ||
-                type == ZoomType.SMART_SMALL ||
-                type == ZoomType.SMART_LARGE);
+        return type == ZoomType.SMART;
     }
 
     public boolean isSmartZoom() {

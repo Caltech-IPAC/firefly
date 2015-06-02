@@ -71,6 +71,7 @@ public class DataVisGrid {
     private static boolean renderFactoryInit= false;
     private static Map<String,GridRenderFactory> renderFactoryMap= new HashMap<String, GridRenderFactory>(7);
     private final String groupName;
+    private boolean primaryOnly= false;
 
 
     public DataVisGrid(EventHub hub,
@@ -130,6 +131,52 @@ public class DataVisGrid {
         nextPlotIsExpanded= true;
     }
 
+
+
+    public void showPrimaryOnly(boolean primaryOnly) {
+        this.primaryOnly= primaryOnly;
+        gridRenderer.showPrimaryOnly(primaryOnly);
+        redrawAndCenter();
+    }
+
+    public void iteratePrimary(boolean forward) {
+        if (primaryOnly) {
+            MiniPlotWidget mpwArray[]= mpwMap.values().toArray(new MiniPlotWidget[mpwMap.size()]);
+            MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
+            MiniPlotWidget targetMpw= mpwArray[0];
+            int len= mpwArray.length;
+            for(int i=0; (i<len);i++) {
+                if (mpwArray[i]==mpw) {
+                    if (forward) {
+                        targetMpw= i<len-1 ? mpwArray[i+1] : mpwArray[0];
+                    }
+                    else {
+                        targetMpw= i>0 ? mpwArray[i-1] : mpwArray[len-1];
+                    }
+                }
+            }
+            AllPlots.getInstance().setSelectedMPW(targetMpw);
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                @Override
+                public void execute() {
+                    redrawAndCenter();
+                }
+            });
+        }
+    }
+
+
+    private void redrawAndCenter() {
+        reinitGrid();
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            @Override
+            public void execute() {
+                for(MiniPlotWidget mpw : mpwMap.values()) {
+                    mpw.getPlotView().smartCenter();
+                }
+            }
+        });
+    }
 
     public void ensureMPWSelected() {
         for(MiniPlotWidget mpw : mpwMap.values()) {
@@ -378,6 +425,7 @@ public class DataVisGrid {
         if (req==null) return;
         if (req.getZoomToWidth()==0)  {
             req.setZoomToWidth(mpw.getOffsetWidth());
+            if (primaryOnly) req.setZoomToWidth(gridRenderer.getWidget().getOffsetWidth());
         }
         else { // if the request is TO_WIDTH and the width is set the set the widget also
             if (req.getZoomType()== ZoomType.TO_WIDTH || req.getZoomType()== ZoomType.FULL_SCREEN) {
@@ -386,6 +434,7 @@ public class DataVisGrid {
         }
         if (req.getZoomToHeight()==0) {
             req.setZoomToHeight(mpw.getOffsetHeight());
+            if (primaryOnly) req.setZoomToHeight(gridRenderer.getWidget().getOffsetHeight());
         }
         else {
             if (req.getZoomType()== ZoomType.TO_HEIGHT ||
@@ -570,13 +619,13 @@ public class DataVisGrid {
         }
     }
 
-    public static interface DeleteListener {
-        public void mpwDeleted(String id);
+    public interface DeleteListener {
+        void mpwDeleted(String id);
     }
 
-    public static interface MpwFactory {
-        public MiniPlotWidget make(String groupName);
-        public void addAttributes(MiniPlotWidget mpw);
+    public interface MpwFactory {
+        MiniPlotWidget make(String groupName);
+        void addAttributes(MiniPlotWidget mpw);
     }
 
     public static class DefaultMpwFactory implements MpwFactory {
@@ -587,8 +636,8 @@ public class DataVisGrid {
         public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
     }
 
-    public static interface GridRenderFactory {
-        public GridRenderer makeGridRenderer();
+    public interface GridRenderFactory {
+        GridRenderer makeGridRenderer();
     }
 
     public static GridRenderer makeGridRenderer(String typeString) {

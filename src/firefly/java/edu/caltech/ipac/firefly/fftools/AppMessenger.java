@@ -21,7 +21,6 @@ import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.WebUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
-import org.omg.CosNaming.NamingContextExtPackage.StringNameHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,11 +135,12 @@ public class AppMessenger {
 
 
     private String getViewerURL() {
+        String moduleName= GWT.getModuleName();
         if (GWT.isProdMode()) {
-            return FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html";
+            return FFToolEnv.getHost(GWT.getModuleBaseURL())+"/" + moduleName+ "/app.html";
         }
         else {
-            return FFToolEnv.getHost(GWT.getModuleBaseURL()) + "/fftools/app.html?gwt.codesvr=127.0.0.1:9997";
+            return FFToolEnv.getHost(GWT.getModuleBaseURL())+"/" + moduleName+ "/app.html?gwt.codesvr=127.0.0.1:9997";
         }
     }
 

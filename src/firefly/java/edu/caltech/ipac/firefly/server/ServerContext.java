@@ -277,11 +277,6 @@ public class ServerContext {
         workingDir = workDir;
     }
 
-//    public static File getAppConfigDir() {
-//        initDir(appConfigDir);
-//        return appConfigDir;
-//    }
-//
     public static File getPermWorkDir() {
         File dir = new File(getWorkingDir(), "perm_files");
         if (!dir.exists()) {
@@ -429,6 +424,8 @@ public class ServerContext {
         return foundFile;
     }
 
+    public static boolean isFileInPath(File f) { return validateFileInPath(f.getPath(), true)!=null; }
+
     public static File validateFileInPath(String fileStr, boolean useSecurity) {
         useSecurity= useSecurity && FITS_SECURITY;
         File foundFile= null;
@@ -443,7 +440,10 @@ public class ServerContext {
                 if (fileStr.startsWith(getVisCacheDir().getPath()) ||
                     fileStr.startsWith(getVisUploadDir().getPath()) ||
                     fileStr.startsWith(getVisSessionDir().getPath()) ||
-                    fileStr.startsWith(getUsersBaseDir().getPath())  ) {
+                    fileStr.startsWith(getUsersBaseDir().getPath())   ||
+                    fileStr.startsWith(getPermWorkDir().getPath())   ||
+                    fileStr.startsWith(getTempWorkDir().getPath())   ||
+                    fileStr.startsWith(getStageWorkDir().getPath()) )  {
                     foundFile= new File(fileStr);
                 }
             }
@@ -595,6 +595,7 @@ public class ServerContext {
     public static boolean isInUploadDir(File f) {
         return (f!=null &&f.getPath().startsWith(VIS_UPLOAD_PATH_STR));
     }
+
 
 
     private static class AssertLogger implements Assert.Logger {

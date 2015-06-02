@@ -36,6 +36,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.ExpandBehavior;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
@@ -628,17 +629,23 @@ public class PopoutControlsUI {
     }
 
     public Dimension getGridDimension() {
+        Widget p= _expandGrid.getParent();
+        if (!GwtUtil.isOnDisplay(p)) return null;
+        return getGridDimension( _expandGrid.getRowCount(), _expandGrid.getColumnCount());
+    }
+
+    public Dimension getGridDimension(int rows, int cols) {
         final int margin = 4;
         final int panelMargin =14;
         Widget p= _expandGrid.getParent();
         if (!GwtUtil.isOnDisplay(p)) return null;
-        int rows= _expandGrid.getRowCount();
-        int cols= _expandGrid.getColumnCount();
         int w= (p.getOffsetWidth() -panelMargin)/cols -margin;
         int h= (p.getOffsetHeight()-panelMargin)/rows -margin;
         return new Dimension(w,h);
-
     }
+
+
+
 
     class MyGridLayoutPanel extends Grid implements RequiresResize {
 
@@ -693,7 +700,11 @@ public class PopoutControlsUI {
             int curr= _expandDeck.getVisibleWidgetIndex();
             if (curr>-1) {
                 PopoutWidget popout= _expandedList.get(curr);
-                _behavior.onSingleResize(popout, new Dimension(w,h), adjustZoom);
+                boolean doResize= true;
+                if (popout instanceof MiniPlotWidget && ExpandBehavior.keepZoomLevel((MiniPlotWidget)popout)) {
+                    doResize= false;
+                }
+                if (doResize) _behavior.onSingleResize(popout, new Dimension(w,h), adjustZoom);
             }
         }
     }

@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-class ExpandBehavior extends PopoutWidget.Behavior {
+public class ExpandBehavior extends PopoutWidget.Behavior {
 
     private static final FireflyCss fireflyCss = CssData.Creator.getInstance().getFireflyCss();
     private WorldPt _pagingCenter;
@@ -387,12 +387,26 @@ class ExpandBehavior extends PopoutWidget.Behavior {
         return level;
     }
 
+    public static boolean keepZoomLevel(MiniPlotWidget mpw) {
+        boolean retval= false;
+        if (mpw!=null && mpw.getPlotView()!=null) {
+            WebPlot p= mpw.getPlotView().getPrimaryPlot();
+            if (p!=null && p.getPlotState()!=null) {
+                PlotState state= p.getPlotState();
+                WebPlotRequest wpr= state.getWebPlotRequest(state.firstBand());
+                retval= wpr.getZoomType()==ZoomType.FORCE_STANDARD;
+            }
+        }
+        return retval;
+    }
+
 
     private  void setSingleModeZoom(MiniPlotWidget mpw, Dimension dim) {
         WebPlotView pv= mpw.getPlotView();
+        WebPlot p= pv.getPrimaryPlot();
         float level = computeZoomFactorInOneMode(mpw, mpw.getCurrentPlot(), dim);
         level= getMaxZoomLevel(pv,level);
-        if (level!=pv.getPrimaryPlot().getZoomFact()) {
+        if (Math.abs(level-p.getZoomFact())>.03) {
             pv.setZoomTo(level, true, false);
         }
         else {
@@ -416,7 +430,7 @@ class ExpandBehavior extends PopoutWidget.Behavior {
 
     private static void setGridModeZoom(WebPlotView plotView, float level) {
         level= getMaxZoomLevel(plotView,level);
-        if (level!=plotView.getPrimaryPlot().getZoomFact()) {
+        if (Math.abs(level-plotView.getPrimaryPlot().getZoomFact())>.03) {
             plotView.setZoomTo(level, true, false);
         }
         else {

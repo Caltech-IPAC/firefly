@@ -341,19 +341,6 @@ public class ImagePlotCreator {
         else if (width< 30 && height< 30 )     zoomLevel= 4F;
         else                  zoomLevel= 1;
 
-        width*= zoomLevel;
-        height*= zoomLevel;
-        switch (zoomType) {
-            case SMART_SMALL:
-                if (width>600 || height > 600) zoomLevel/=4;
-                else if (width>200 || height > 200) zoomLevel/=2;
-                break;
-            case SMART_LARGE:
-                if (width<400 || height < 400) zoomLevel/=2;
-                zoomLevel*=2;
-                break;
-        }
-
         return zoomLevel;
     }
 

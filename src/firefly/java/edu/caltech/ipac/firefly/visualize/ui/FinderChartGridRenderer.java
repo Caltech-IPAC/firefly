@@ -14,15 +14,15 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
-import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet;
 
 import java.util.List;
 import java.util.Map;
+
+import static edu.caltech.ipac.firefly.data.FinderChartRequestUtil.ImageSet;
 
 /**
  * @author Trey Roby
@@ -35,6 +35,7 @@ public class FinderChartGridRenderer implements GridRenderer {
     private Map<String,MiniPlotWidget> mpwMap= null;
     private List<XYPlotWidget> xyList= null;
     private Dimension dimension= null;
+    private boolean primaryOnly = false;
 
     int dssRow= -1;
     int sdssRow= -1;
@@ -43,12 +44,47 @@ public class FinderChartGridRenderer implements GridRenderer {
     int irasRow= -1;
 
 
-
     public  void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList) {
+        if (mpwMap==null && xyList==null) return;
         this.mpwMap= mpwMap;
+        this.xyList= xyList;
+        if (primaryOnly) {
+            reinitSingle();
+        }
+        else {
+            reinitGridAsGrid();
+        }
+    }
+
+    public  void reinitSingle() {
         grid.clear();
         grid.removeAllRows();
-        if (mpwMap==null && xyList==null) return;
+        grid.setCellPadding(2);
+
+        int mpwSize= showMask==null ? mpwMap.size() : showMask.size();
+        if (mpwSize==0) return;
+        grid.setCellPadding(2);
+        MiniPlotWidget selectedMPW= AllPlots.getInstance().getMiniPlotWidget();
+        Widget p= grid.getParent();
+        int w = p.getOffsetWidth();
+        int h = p.getOffsetHeight();
+        for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()) {
+            if (showMask==null || showMask.contains(entry.getKey())) {
+                MiniPlotWidget mpw= entry.getValue();
+                if (selectedMPW==mpw) {
+                    grid.setWidget(0, 0, mpw);
+                    mpw.setPixelSize(w, h);
+                    mpw.onResize();
+                    break;
+                }
+            }
+        }
+
+    }
+
+    public  void reinitGridAsGrid() {
+        grid.clear();
+        grid.removeAllRows();
         int mpwSize= showMask==null ? mpwMap.size() : showMask.size();
         int size = mpwSize + xyList.size();
 
@@ -107,6 +143,11 @@ public class FinderChartGridRenderer implements GridRenderer {
 
         AllPlots.getInstance().updateUISelectedLook();
 
+    }
+
+    @Override
+    public void showPrimaryOnly(boolean primaryOnly) {
+        this.primaryOnly= primaryOnly;
     }
 
     public Element getMaskingElement(String key) {

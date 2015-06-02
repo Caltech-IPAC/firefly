@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.FileUtil;
@@ -65,7 +64,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
         DataGroupReader.Format format = DataGroupReader.guessFormat(inf);
 
-        if ( !VisContext.isFileInPath(inf) ) {
+        if ( !ServerContext.isFileInPath(inf) ) {
             throw new SecurityException("Access is not permitted.");
         }
 

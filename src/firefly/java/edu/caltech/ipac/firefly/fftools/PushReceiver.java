@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -29,7 +28,6 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * @author Trey Roby
@@ -52,7 +50,6 @@ public class PushReceiver implements WebEventListener {
         Name name = ev.getName();
         String data = String.valueOf(ev.getData());
 
-        GwtUtil.getClientLogger().log(Level.INFO, "name//data: " + name.getName() + " // " + data);
         if (name.equals(Name.PUSH_WEB_PLOT_REQUEST)) {
             prepareRequest(data);
         } else if (name.equals(Name.PUSH_REGION_DATA)) {

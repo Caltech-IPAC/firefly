@@ -349,6 +349,26 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         }
     }
 
+
+    public Dimension getGridFutureDimensions(String plotId) {
+
+        int size = _expandedList.size();
+        boolean addOne= true;
+        if (plotId!=null) {
+            for(PopoutWidget pw : _expandedList) {
+                if (pw instanceof MiniPlotWidget && plotId.equals(((MiniPlotWidget)pw).getPlotId())) {
+                    addOne= false;
+                    break;
+                }
+            }
+        }
+        if (addOne) size++;
+        Dimension gridSize= computeGridSize(size);
+        Dimension dim= _popoutUI.getGridDimension(gridSize.getHeight(), gridSize.getWidth());
+        return dim;
+    }
+
+
     public void setStartingExpanded(boolean startingExpanded) {
         _startingExpanded = startingExpanded;
     }
@@ -544,42 +564,11 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             if (currPopout != null) {
                 _popoutUI.updateExpandedTitle(currPopout);
             }
-
-            int rows = 1;
-            int cols = 1;
-            VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
-            if (currPopout instanceof MiniPlotWidget) {
-                cols = ((MiniPlotWidget)currPopout).getGroup().getGridPopoutColumns();
-                fullType = ((MiniPlotWidget)currPopout).getGroup().getGridPopoutZoomType();
-            }
-
-            if (fullType.equals(VisUtil.FullType.SMART)) {
-                rows = (int)(Math.ceil(size / (float)cols));
-            } else {
-                if (size >= 7) {
-                    rows = size / 4 + (size % 4);
-                    cols = 4;
-                } else if (size == 5 || size == 6) {
-                    rows = 2;
-                    cols = 3;
-                } else if (size == 4) {
-                    rows = 2;
-                    cols = 2;
-                } else if (size == 3) {
-                    rows = 1;
-                    cols = 3;
-                } else if (size == 2) {
-                    rows = 1;
-                    cols = 2;
-                }
-            }
+            Dimension gd= computeGridSize(size);
+            int cols = gd.getWidth();
+            int rows = gd.getHeight();
             int w = _expandRoot.getOffsetWidth() / cols;
             int h = _expandRoot.getOffsetHeight() / rows;
-//            _expandRoot.clear();
-//            _expandDeck.clear();
-//            if (_topBar!=null) _expandRoot.addNorth(_topBar, CONTROLS_HEIGHT);
-//            _expandRoot.add(_expandGrid);
-
             _popoutUI.reinit(ViewType.GRID, _expandRoot);
 
 
@@ -601,7 +590,6 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
                 col = (col < cols - 1) ? col + 1 : 0;
                 if (col == 0) row++;
             }
-//            _behavior.onGridResize(_expandedList, new Dimension(w, h), true);
             updateGridBorderStyle();
             _expandRoot.forceLayout();
             if (_expandedList.size() > 1) setViewType(ViewType.GRID);
@@ -609,6 +597,43 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
             AllPlots.getInstance().updateUISelectedLook();
         }
     }
+
+
+
+    private Dimension computeGridSize(int size) {
+        int rows = 1;
+        int cols = 1;
+        PopoutWidget currPopout = _behavior.chooseCurrentInExpandMode();
+        VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
+        if (currPopout instanceof MiniPlotWidget) {
+            cols = ((MiniPlotWidget)currPopout).getGroup().getGridPopoutColumns();
+            fullType = ((MiniPlotWidget)currPopout).getGroup().getGridPopoutZoomType();
+        }
+
+        if (fullType.equals(VisUtil.FullType.SMART)) {
+            rows = (int)(Math.ceil(size / (float)cols));
+        } else {
+            if (size >= 7) {
+                rows = size / 4 + (size % 4);
+                cols = 4;
+            } else if (size == 5 || size == 6) {
+                rows = 2;
+                cols = 3;
+            } else if (size == 4) {
+                rows = 2;
+                cols = 2;
+            } else if (size == 3) {
+                rows = 1;
+                cols = 3;
+            } else if (size == 2) {
+                rows = 1;
+                cols = 2;
+            }
+        }
+        return new Dimension(cols,rows);
+    }
+
+
 
     private void updateExpandRoot(Dimension dim) {
         _expandRoot.setPixelSize(dim.getWidth() - 10, dim.getHeight() - 10);

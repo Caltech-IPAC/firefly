@@ -8,6 +8,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.task.PlotGroupTask;
 import edu.caltech.ipac.firefly.visualize.task.PlotOneFileGroupTask;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
@@ -125,7 +126,8 @@ public class PlotWidgetOps {
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
-                if (plotExpanded) AllPlots.getInstance().forceExpand(mpwList.get(0));
+                AllPlots ap= AllPlots.getInstance();
+                if (plotExpanded) ap.forceExpand(mpwList.get(0));
                 for(int i=0; (i<requestList.size()); i++) {
                     MiniPlotWidget mpw= mpwList.get(i);
                     WebPlotRequest r= requestList.get(i);
@@ -136,8 +138,15 @@ public class PlotWidgetOps {
                     if (plotExpanded) {
                         if (mpw.getPlotView()!=null) mpw.getPlotView().clearAllPlots();
                         r.setZoomType(ZoomType.FULL_SCREEN);
-                        r.setZoomToWidth(200);
-                        r.setZoomToHeight(200);
+                        Dimension d;
+                        if (ap.isExpandSingleView()) {
+                            d= ap.getExpandedController().getPopoutContainer().getAvailableSize();
+                        }
+                        else {
+                            d= ap.getExpandedController().getGridFutureDimensions(r.getPlotId());
+                        }
+                        r.setZoomToWidth(d.getWidth()>10 ? d.getWidth() : 200);
+                        r.setZoomToHeight(d.getHeight()>10 ? d.getHeight() : 200);
                         mpw.prepare(r, null, null, false, true);
 
                     }
@@ -162,7 +171,8 @@ public class PlotWidgetOps {
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
-                if (plotExpanded) AllPlots.getInstance().forceExpand(mpwList.get(0));
+                AllPlots ap= AllPlots.getInstance();
+                if (plotExpanded) ap.forceExpand(mpwList.get(0));
                 for(int i=0; (i<requestList.size()); i++) {
                     MiniPlotWidget mpw= mpwList.get(i);
                     WebPlotRequest r= requestList.get(i);
@@ -172,11 +182,19 @@ public class PlotWidgetOps {
                     mpw.initMPW();
                     if (plotExpanded) {
                         if (mpw.getPlotView()!=null) mpw.getPlotView().clearAllPlots();
-                        r.setZoomType(ZoomType.FULL_SCREEN);
-                        r.setZoomToWidth(200);
-                        r.setZoomToHeight(200);
+                        if (r.getZoomType()!=ZoomType.FORCE_STANDARD) {
+                            r.setZoomType(ZoomType.FULL_SCREEN);
+                            Dimension d;
+                            if (ap.isExpandSingleView()) {
+                                d= ap.getExpandedController().getPopoutContainer().getAvailableSize();
+                            }
+                            else {
+                                d= ap.getExpandedController().getGridFutureDimensions(r.getPlotId());
+                            }
+                            r.setZoomToWidth(d.getWidth()>10 ? d.getWidth() : 200);
+                            r.setZoomToHeight(d.getHeight()>10 ? d.getHeight() : 200);
+                        }
                         mpw.prepare(r, null, null, false, true);
-
                     }
                     else {
                         List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);

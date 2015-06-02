@@ -57,8 +57,6 @@ public class MultiDataViewer {
     public static final String NO_PREVIEW_MESS=  "No Preview";
 
 
-    private static final IconCreator _ic= IconCreator.Creator.getInstance();
-    private static final VisIconCreator _icVis= VisIconCreator.Creator.getInstance();
 
     private static String groupNameRoot = "MultiViewGroup-";
     private GridCard activeGridCard= null;
@@ -493,7 +491,62 @@ public class MultiDataViewer {
 
     private void buildToolbar() {
 
-        popoutButton= GwtUtil.makeBadgeButton(new Image(_ic.getExpandToGridIcon()),
+        VisIconCreator vic = VisIconCreator.Creator.getInstance();
+        IconCreator ic= IconCreator.Creator.getInstance();
+        VisIconCreator icVis= VisIconCreator.Creator.getInstance();
+        Image oneTile = new Image(ic.getOneTile());
+        oneTile.setPixelSize(20, 20);
+        Image gridIcon= new Image(ic.getGrid());
+        gridIcon.setPixelSize(20,20);
+        Image goRightArrow = new Image(vic.getSideRightArrow());
+        Image goLeftArrow =  new Image(vic.getSideLeftArrow());
+
+
+        final BadgeButton left= GwtUtil.makeBadgeButton(goLeftArrow, "Previous Image", true,
+                new ClickHandler() {
+                    public void onClick(ClickEvent event) { iteratePrimary(false); }
+                });
+
+
+        final BadgeButton right= GwtUtil.makeBadgeButton(goRightArrow , "Next Image", true,
+                new ClickHandler() {
+                    public void onClick(ClickEvent event) { iteratePrimary(true); }
+                });
+
+
+        BadgeButton one= GwtUtil.makeBadgeButton(oneTile, "Show single image at full size", true,
+                new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        switchToOne();
+                        GwtUtil.setHidden(left.getWidget(), false);
+                        GwtUtil.setHidden(right.getWidget(), false);
+
+                    }
+                });
+
+
+        BadgeButton grid= GwtUtil.makeBadgeButton(gridIcon, "Show all as tiles", true,
+                new ClickHandler() {
+                    public void onClick(ClickEvent event) {
+                        switchToGrid();
+                        GwtUtil.setHidden(left.getWidget(), true);
+                        GwtUtil.setHidden(right.getWidget(), true);
+                    }
+                });
+
+
+        addToolbarWidget(one.getWidget());
+        addToolbarWidget(grid.getWidget());
+        addToolbarWidget(left.getWidget());
+        addToolbarWidget(right.getWidget());
+
+        GwtUtil.setHidden(left.getWidget(), true);
+        GwtUtil.setHidden(right.getWidget(), true);
+
+
+
+
+        popoutButton= GwtUtil.makeBadgeButton(new Image(ic.getExpandToGridIcon()),
                                                           "Expand this panel to take up a larger area",
                                                           true, new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -506,7 +559,7 @@ public class MultiDataViewer {
         });
 
 
-        threeColor= GwtUtil.makeBadgeButton(new Image(_icVis.getFITSInsert3Image()),
+        threeColor= GwtUtil.makeBadgeButton(new Image(icVis.getFITSInsert3Image()),
                                               "Insert 3 Color images",
                                               true, new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -585,6 +638,24 @@ public class MultiDataViewer {
     }
 
 
+    private void switchToOne() {
+        if (activeGridCard!=null) {
+            activeGridCard.getVisGrid().showPrimaryOnly(true);
+        }
+
+    }
+    private void switchToGrid() {
+        if (activeGridCard!=null) {
+            activeGridCard.getVisGrid().showPrimaryOnly(false);
+        }
+    }
+
+    private void iteratePrimary(boolean forward) {
+        if (activeGridCard!=null) {
+            activeGridCard.getVisGrid().iteratePrimary(forward);
+        }
+
+    }
 
 
     //======================================================================================================

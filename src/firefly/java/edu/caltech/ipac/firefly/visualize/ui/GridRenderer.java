@@ -24,14 +24,15 @@ import java.util.Map;
 public interface GridRenderer {
 
 
-    public void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList);
-    public void setShowMask(List<String> showMask);
-    public void setDimension(Dimension dim);
-    public void clear();
-    public void onResize();
-    public Widget getWidget();
-    public Element getMaskingElement(String key);
-    public void postPlotting();
+    void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList);
+    void setShowMask(List<String> showMask);
+    void setDimension(Dimension dim);
+    void clear();
+    void onResize();
+    Widget getWidget();
+    Element getMaskingElement(String key);
+    void postPlotting();
+    void showPrimaryOnly(boolean primaryOnly);
 
 }
 

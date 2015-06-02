@@ -34,13 +34,46 @@ public class AutoGridRenderer implements GridRenderer {
     private Map<String,MiniPlotWidget> mpwMap= null;
     private List<XYPlotWidget> xyList= null;
     private Dimension dimension= null;
-
+    private boolean primaryOnly = false;
 
     public  void reinitGrid(Map<String,MiniPlotWidget> mpwMap, List<XYPlotWidget> xyList) {
+        if (mpwMap==null && xyList==null) return;
         this.mpwMap= mpwMap;
         this.xyList= xyList;
+        if (primaryOnly) {
+            reinitSingle();
+        }
+        else {
+            reinitGridAsGrid();
+        }
+
+    }
+
+    public  void reinitSingle() {
         grid.clear();
-        if (mpwMap==null && xyList==null) return;
+        int mpwSize= showMask==null ? mpwMap.size() : showMask.size();
+        if (mpwSize==0) return;
+        grid.resize(1,1);
+        grid.setCellPadding(2);
+        MiniPlotWidget selectedMPW= AllPlots.getInstance().getMiniPlotWidget();
+        Widget p= grid.getParent();
+        int w = p.getOffsetWidth();
+        int h = p.getOffsetHeight();
+        for(Map.Entry<String,MiniPlotWidget> entry : mpwMap.entrySet()) {
+            if (showMask==null || showMask.contains(entry.getKey())) {
+                MiniPlotWidget mpw= entry.getValue();
+                if (selectedMPW==mpw) {
+                    grid.setWidget(0, 0, mpw);
+                    mpw.setPixelSize(w, h);
+                    mpw.onResize();
+                    break;
+                }
+            }
+        }
+    }
+
+    public  void reinitGridAsGrid() {
+        grid.clear();
         int mpwSize= showMask==null ? mpwMap.size() : showMask.size();
         int size = mpwSize + xyList.size();
         if (size > 0) {
@@ -131,7 +164,11 @@ public class AutoGridRenderer implements GridRenderer {
         return new Dimension(w,h);
     }
 
-
+    @Override
+    public void showPrimaryOnly(boolean primaryOnly) {
+        this.primaryOnly= primaryOnly;
+//        reinitGrid(mpwMap,xyList);
+    }
 
     private class MyGridLayoutPanel extends Grid implements RequiresResize {
         private GridResizeTimer _gridResizeTimer= new GridResizeTimer();

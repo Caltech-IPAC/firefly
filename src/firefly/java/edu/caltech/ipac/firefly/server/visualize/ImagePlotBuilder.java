@@ -14,8 +14,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -32,10 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.visualize.Band.BLUE;
-import static edu.caltech.ipac.firefly.visualize.Band.GREEN;
-import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
-import static edu.caltech.ipac.firefly.visualize.Band.RED;
+import static edu.caltech.ipac.firefly.visualize.Band.*;
 
 /**
  * @author Trey Roby
@@ -427,7 +422,7 @@ public class ImagePlotBuilder {
 
     private static void checkFileNames(PlotState state, File original, Band band) throws IllegalArgumentException {
         if (original != null && original.canRead() && state.getOriginalFitsFileStr(band) == null) {
-            if (!VisContext.isFileInPath(original)) {
+            if (!ServerContext.isFileInPath(original)) {
                 String s = "Cannot read file - Configuration may not be setup correctly, file not in path: " +
                         original.getPath();
                 _log.warn(s, "check property: " + ServerContext.VIS_SEARCH_PATH);
@@ -469,12 +464,8 @@ public class ImagePlotBuilder {
         FileReadInfo readInfo = readInfoMap.get(band)[0];
         boolean smartZoom;
 
-        long length = readInfo.getOriginalFile() != null ? readInfo.getOriginalFile().length() : 0;
-        if (length < 500 * FileUtil.K) {
-            smartZoom = (request.isSmartZoom() || request.getZoomType() == ZoomType.SMART_FOR_SMALL_FILE);
-        } else {
-            smartZoom = request.isSmartZoom();
-        }
+//        long length = readInfo.getOriginalFile() != null ? readInfo.getOriginalFile().length() : 0;
+        smartZoom = request.isSmartZoom();
 
         float zoomLevel = request.getInitialZoomLevel();
 

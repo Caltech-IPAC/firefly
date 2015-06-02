@@ -84,9 +84,7 @@ class StandaloneUI {
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
 //        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
 
-        if (xyPlotArea != null) {
-            xyPlotArea.addStyleName("standalone-xyplot");
-        }
+        xyPlotArea.addStyleName("standalone-xyplot");
         xyPlotArea.add(xyPlotter.getWidget());
 
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_ADDED, new WebEventListener() {
