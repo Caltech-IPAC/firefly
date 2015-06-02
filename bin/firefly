@@ -3,8 +3,9 @@
 # A script to start Firefly as an end-user application.
 #
 # It starts up a Tomcat instance on two randomly chosen ports (one for http
-# and one for control socket).  The sockets can be overridden by setting
-# FFPORTS (e.g., `env FFPORTS="8080 8004" firefly').
+# and one for control socket).  The sockets can be overridden via the -p
+# command line option ('-p httpPort,shutdownPort', or just '-p' to use 8080
+# and 8004 as the defaults).
 #
 # Multiple apps can be launched at the same time (each will run on a
 # different port).
@@ -22,6 +23,31 @@
 set -e
 
 test -z "$CATALINA_HOME" && { echo "\$CATALINA_HOME must be defined and point to your Tomcat installation. Exiting."; exit -1; }
+
+while getopts ":p:" opt; do
+  case $opt in
+    p)
+      FFPORTS=${OPTARG/,/ }
+      ;;
+    :)
+      case $OPTARG in
+        p)
+          FFPORTS="8080 8004"
+          ;;
+      esac
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      echo "Usage: $(basename $0) [-p [httpPort,shutdownPort]]" >&2
+      echo >&2
+      echo "Options:" >&2
+      echo "   -p [httpPort,shutdownPort]   Specify Tomcat ports. If no argument is" >&2
+      echo "                                given, the ports default to 8080 and 8004." >&2
+      echo >&2
+      exit -1
+      ;;
+  esac
+done
 
 # Establish our location
 if [[ -z "$FIREFLY_DIR" ]]; then
