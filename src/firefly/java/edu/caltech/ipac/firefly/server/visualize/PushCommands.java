@@ -14,6 +14,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.vispush.PushJob;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -92,6 +93,28 @@ public class PushCommands {
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
             boolean success= PushJob.pushTable(file);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            map.put("file", "");
+            return outJson.toJSONString();
+        }
+
+    }
+
+    public static class PushXYPlot extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+
+            SrvParam sp= new SrvParam(paramMap);
+            String file= sp.getRequired(ServerParams.FILE);
+            ServerRequest req = new ServerRequest();
+            for (String p : paramMap.keySet()) {
+                req.setParam(p, paramMap.get(p)[0]);
+            }
+            req.setParam(ServerParams.SOURCE, file);
+            boolean success= PushJob.pushXYPlot(req);
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();
             outJson.add(map);

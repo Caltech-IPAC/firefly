@@ -296,6 +296,7 @@ public class Name implements Serializable {
     public static final Name PUSH_REGION_DATA       =  new Name("PUSH_REGION_DATA", "Overlay this region date.  Expect region data");
     public static final Name REMOVE_REGION_DATA     =  new Name("REMOVE_REGION_DATA", "Overlay this region date.  Expect region data");
     public static final Name PUSH_TABLE_FILE        =  new Name("PUSH_TABLE_FILE", "Load this table file.  Expect TableInfo as data");
+    public static final Name PUSH_XYPLOT_FILE       =  new Name("PUSH_XYPLOT_FILE", "Load this table into XYPlotViewer. Expect XYPlot Viewer params");
     public static final Name PUSH_FITS_COMMAND_EXT  =  new Name("PUSH_FITS_COMMAND_EXT", "Add an extension command.  Expect ExtInfo as data");
     public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
     public static final Name REPORT_ALIVE           =  new Name("REPORT_ALIVE", "report if url is alive");

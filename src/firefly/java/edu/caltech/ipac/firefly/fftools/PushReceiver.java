@@ -11,6 +11,7 @@ package edu.caltech.ipac.firefly.fftools;
 
 
 import edu.caltech.ipac.firefly.core.SearchAdmin;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -26,6 +27,8 @@ import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -64,6 +67,8 @@ public class PushReceiver implements WebEventListener {
             addPlotCmdExtension(data);
         } else if (name.equals(Name.PUSH_TABLE_FILE)) {
             loadTable(data);
+        } else if (name.equals(Name.PUSH_XYPLOT_FILE)) {
+            loadXYPlot(data);
         }
 
 
@@ -133,6 +138,17 @@ public class PushReceiver implements WebEventListener {
         req.setParam("source", fileName);
         String title= findTitle(req);
         SearchAdmin.getInstance().submitSearch(req, title);
+    }
+
+    private void loadXYPlot(final String data) {
+
+        ServerRequest sreq = ServerRequest.parse(data, new ServerRequest());
+        final Map<String,String> params = new HashMap<String,String>();
+        for (Param p : sreq.getParams()) {
+            params.put (p.getName(), p.getValue());
+        }
+
+        XYPlotJSInterface.plotTable(params, null);
     }
 
 

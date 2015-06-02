@@ -11,6 +11,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
+import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
@@ -29,21 +30,26 @@ import java.util.Map;
  * @author tatianag
  */
 public class XYPlotJSInterface {
+    private static int xyIdCnt=0;
+
     public static void plotTable(JscriptRequest jspr, String div) {
-        int plotSizeX = 190, plotSizeY= 300;
-        Map<String,String> params = new HashMap<String,String>();
-        // extract meta parameters from JScriptRequest
-        Map<String, String> jsprParams = jspr.asMap();
-        for (String key : jsprParams.keySet()) {
+        plotTable(jspr.asMap(), div);
+    }
+
+    public static void plotTable(Map<String,String> params, String div) {
+
+        Map<String,String> plotParams = new HashMap<String,String>();
+        for (String key : params.keySet()) {
             if (CustomMetaSource.isValidParam(key)) {
-                params.put(key,jsprParams.get(key));
+                plotParams.put(key, params.get(key));
             }
         }
-        String plotTitle = jspr.getParam("plotTitle");
-        String maxPointsStr = jspr.getParam("maxPoints");
-        final String chartTitle = StringUtils.isEmpty(jspr.getParam("chartTitle")) ? "Sample Chart" : jspr.getParam("chartTitle");
+        String plotTitle = params.get("plotTitle");
+        String maxPointsStr = params.get("maxPoints");
+        final String chartTitle = StringUtils.isEmpty(params.get("chartTitle")) ? "Sample Chart" : params.get("chartTitle");
 
-        XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(params));
+        int plotSizeX = 190, plotSizeY= 300;
+        XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(plotParams));
         if (maxPointsStr != null) {
             try {
                 int maxPoints = Integer.parseInt(maxPointsStr);
@@ -52,11 +58,19 @@ public class XYPlotJSInterface {
         }
         final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
 
-
-        FFToolEnv.addToPanel(div, xyPlotWidget, "XY Plot");
+        if (div==null) {
+            String id="xyplot" + xyIdCnt;
+            xyIdCnt++;
+            final SimplePanel panel = new SimplePanel();
+            panel.setSize("100%", "100%");
+            panel.add(xyPlotWidget);
+            FFToolEnv.addToPanel(id,panel,"XY Plot");
+        } else {
+            FFToolEnv.addToPanel(div, xyPlotWidget, "XY Plot");
+        }
 
         BaseTableConfig<TableServerRequest> config =
-                new BaseTableConfig<TableServerRequest>(convertToRequest(jspr, 0), "XY plot from source", chartTitle);
+                new BaseTableConfig<TableServerRequest>(convertToRequest(params, 0), "XY plot from source", chartTitle);
         final DataSetTableModel tableModel = new DataSetTableModel(config.getLoader());
 
         tableModel.getData(new AsyncCallback<TableDataView>() {
@@ -72,12 +86,16 @@ public class XYPlotJSInterface {
     }
 
 
-    private static TableServerRequest convertToRequest(JscriptRequest jspr, int pageSize) {
+
+    private static TableServerRequest convertToRequest(Map<String,String> params, int pageSize) {
         TableServerRequest sreq = null;
-        if (jspr.containsKey("source")) {
-            String url =  FFToolEnv.modifyURLToFull(jspr.getParam("source"));
+        if (params.containsKey("source")) {
+            String fileOrUrl = params.get("source").trim();
+            if (fileOrUrl.charAt(0) != '/' && fileOrUrl.charAt(0) != '$') {
+                fileOrUrl =  FFToolEnv.modifyURLToFull(fileOrUrl);
+            }
             sreq = new TableServerRequest("IpacTableFromSource");
-            sreq.setParam("source", url);
+            sreq.setParam(ServerParams.SOURCE, fileOrUrl);
             sreq.setStartIndex(0);
             sreq.setPageSize(pageSize);
             sreq.setParam("rtime", String.valueOf(System.currentTimeMillis()));

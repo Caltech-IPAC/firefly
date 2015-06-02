@@ -272,9 +272,24 @@ class FireflyClient(WebSocketClient):
         """
         url = self.urlRoot + "?cmd=pushTable"
         if title is not None:
-            url+= '&Titile=%s' % title
+            url+= '&Title=%s' % title
         if pageSize is not None:
             url+= '&pageSize=%s' % str(pageSize)
+        url+= "&file=%s" % fileOnServer
+        return self.sendURLAsGet(url)
+
+    def showXYPlot(self, fileOnServer, additionalParams=None):
+        """
+        Show a table in Firefly
+        :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
+                       then it is the return value of the method. Otherwise it is a file that
+                       firefly has direct read access to.
+        :param additionalParams: XY Plot Viewer parameters
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushXYPlot"
+        if additionalParams is not None:
+            url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
         url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
 

@@ -135,6 +135,7 @@ public class ServerParams {
     public static final String VIS_PUSH_REG_DATA= "pushRegionData";
     public static final String VIS_PUSH_REMOVE_REG_DATA= "pushRemoveRegionData";
     public static final String VIS_PUSH_TABLE= "pushTable";
+    public static final String VIS_PUSH_XYPLOT= "pushXYPlot";
     public static final String VIS_PUSH_EXT= "pushExt";
     public static final String VIS_QUERY_ACTION= "queryAction";
     public static final String VIS_PUSH_WPR= "pushWPR";

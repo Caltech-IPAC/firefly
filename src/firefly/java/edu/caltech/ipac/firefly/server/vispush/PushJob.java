@@ -58,6 +58,13 @@ public class PushJob {
         return true;
     }
 
+    public static boolean pushXYPlot(ServerRequest r) {
+        fireEvent(r.toString(), Name.PUSH_XYPLOT_FILE);
+        return true;
+    }
+
+
+
     //================================
     //========== Region Stuff
     //================================
