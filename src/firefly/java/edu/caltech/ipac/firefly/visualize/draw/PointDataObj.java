@@ -318,7 +318,9 @@ public class PointDataObj extends DrawObj {
 
     public void drawCircle(Graphics jg, int x, int y, String color, boolean onlyAddToPath) {
         if (!onlyAddToPath) jg.beginPath(color,1);
-        jg.arc(x, y, size + 2, 0, 2 * Math.PI);
+        int radius= size+2;
+        jg.pathMoveTo(x+radius-1,y);
+        jg.arc(x, y, radius, 0, 2 * Math.PI);
         if (!onlyAddToPath) jg.drawPath();
 //        jg.drawCircle( color, 1, x,y,size+2);
     }
