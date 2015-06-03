@@ -51,4 +51,5 @@ public interface CoverageData {
     public boolean isTreatCatalogsAsOverlays();
     public WorldPt getQueryCenter();
     public FitType getFitType();
+    public boolean isUseTitleForPlot();
 }

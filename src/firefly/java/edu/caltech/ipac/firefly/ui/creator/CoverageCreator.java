@@ -97,6 +97,10 @@ public class CoverageCreator implements ObsResultCreator {
         boolean catalogsAsOverlays= DataViewCreator.getBooleanParam(params,CommonParams.CATALOGS_AS_OVERLAYS, true);
         covData.setTreatCatalogsAsOverlays(catalogsAsOverlays);
 
+        if (params.containsKey(CommonParams.TITLE)) {
+            covData.setTitle(params.get(CommonParams.TITLE));
+            covData.setUseTitleForPlot(true);
+        }
 
 
         if (params.containsKey(CommonParams.SHAPE)) {

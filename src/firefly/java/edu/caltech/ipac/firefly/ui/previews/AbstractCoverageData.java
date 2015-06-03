@@ -48,6 +48,9 @@ public abstract class AbstractCoverageData implements CoverageData {
     private WebPlotRequest.GridOnStatus gridOn= WebPlotRequest.GridOnStatus.FALSE;
     private FitType fitType= FitType.WIDTH;
     private boolean minimalReadout= false;
+    private String title= "Coverage";
+    private String tip= "Shows the coverage of the table";
+    private boolean useTitleForPlot= false;
 
     public AbstractCoverageData() {
         _colorMap.put(DEFAULT_VALUE,AutoColor.PT_1);
@@ -72,6 +75,17 @@ public abstract class AbstractCoverageData implements CoverageData {
     public void setTreatCatalogsAsOverlays(boolean treatCatalogsAsOverlays) {
         this.treatCatalogsAsOverlays = treatCatalogsAsOverlays;
     }
+
+
+    public String getTitle() { return title; }
+    public void setTitle(String  title) { this.title= title; }
+
+
+    public String getTip() { return tip; }
+    public void setTip(String  tip) { this.tip= tip; }
+
+    public boolean isUseTitleForPlot() { return useTitleForPlot; }
+    public void setUseTitleForPlot(boolean useTitleForPlot) { this.useTitleForPlot = useTitleForPlot; }
 
     public WebPlotRequest.GridOnStatus getGridOn() { return gridOn; }
     public void setGridOn(WebPlotRequest.GridOnStatus gridOn) { this.gridOn = gridOn; }

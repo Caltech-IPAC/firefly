@@ -38,13 +38,7 @@ public class SimpleCoverageData extends AbstractCoverageData {
     }
 
 
-    public String getTitle() {
-        return "Coverage";
-    }
 
-    public String getTip() {
-        return "Shows the coverage of the table";
-    }
 
 
     public boolean getHasCoverageData(TableCtx table) {

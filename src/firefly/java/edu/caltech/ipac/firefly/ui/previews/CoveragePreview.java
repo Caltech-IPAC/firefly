@@ -439,6 +439,13 @@ public class CoveragePreview extends AbstractTablePreview {
                                                                      _covData.getUseBlankPlot(),
                                                                      _covData.getGridOn(),
                                                                      width);
+
+
+            if (_covData.isUseTitleForPlot()) {
+                request.setTitle(_covData.getTitle());
+            }
+
+
             if (_covData.isMinimalReadout()) request.setMinimalReadout(true);
             if (_covData.getQueryCenter()!=null) {
                 request.setOverlayPosition(_covData.getQueryCenter());
@@ -456,6 +463,7 @@ public class CoveragePreview extends AbstractTablePreview {
                 request.setZoomToWidth(width);
                 request.setZoomToHeight(height);
             }
+
 
 
 
