@@ -38,6 +38,20 @@ public class XYPlotJSInterface {
 
     public static void plotTable(Map<String,String> params, String div) {
 
+        final XYPlotWidget xyPlotWidget = getXYPlotWidget(params);
+        if (div==null) {
+            String id="xyplot" + xyIdCnt;
+            xyIdCnt++;
+            final SimplePanel panel = makeCenter();
+            panel.add(xyPlotWidget);
+            FFToolEnv.addToPanel(id,panel,"XY Plot");
+        } else {
+            FFToolEnv.addToPanel(div, xyPlotWidget, "XY Plot");
+        }
+        loadData(xyPlotWidget, params);
+    }
+
+    public static XYPlotWidget getXYPlotWidget(Map<String,String> params) {
         Map<String,String> plotParams = new HashMap<String,String>();
         for (String key : params.keySet()) {
             if (CustomMetaSource.isValidParam(key)) {
@@ -45,10 +59,10 @@ public class XYPlotJSInterface {
             }
         }
         String plotTitle = params.get("plotTitle");
+        if (plotTitle == null) plotTitle = "none";
         String maxPointsStr = params.get("maxPoints");
-        final String chartTitle = StringUtils.isEmpty(params.get("chartTitle")) ? "Sample Chart" : params.get("chartTitle");
 
-        int plotSizeX = 190, plotSizeY= 300;
+        int plotSizeX = 600, plotSizeY= 400;
         XYPlotMeta meta = new XYPlotMeta(plotTitle, plotSizeX, plotSizeY, new CustomMetaSource(plotParams));
         if (maxPointsStr != null) {
             try {
@@ -56,18 +70,13 @@ public class XYPlotJSInterface {
                 meta.setMaxPoints(maxPoints);
             } catch (Exception ignored) {}
         }
-        final XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
+        XYPlotWidget xyPlotWidget = new XYPlotWidget(meta);
+        xyPlotWidget.setTitleAreaAlwaysHidden(true);
+        return xyPlotWidget;
+    }
 
-        if (div==null) {
-            String id="xyplot" + xyIdCnt;
-            xyIdCnt++;
-            final SimplePanel panel = new SimplePanel();
-            panel.setSize("100%", "100%");
-            panel.add(xyPlotWidget);
-            FFToolEnv.addToPanel(id,panel,"XY Plot");
-        } else {
-            FFToolEnv.addToPanel(div, xyPlotWidget, "XY Plot");
-        }
+    public static void loadData(final XYPlotWidget xyPlotWidget, final Map<String,String> params) {
+        final String chartTitle = StringUtils.isEmpty(params.get("chartTitle")) ? "XY Plot" : params.get("chartTitle");
 
         BaseTableConfig<TableServerRequest> config =
                 new BaseTableConfig<TableServerRequest>(convertToRequest(params, 0), "XY plot from source", chartTitle);
@@ -83,11 +92,10 @@ public class XYPlotJSInterface {
                 xyPlotWidget.makeNewChart(tableModel, chartTitle);
             }
         }, 0);
+
     }
 
-
-
-    private static TableServerRequest convertToRequest(Map<String,String> params, int pageSize) {
+    public static TableServerRequest convertToRequest(Map<String,String> params, int pageSize) {
         TableServerRequest sreq = null;
         if (params.containsKey("source")) {
             String fileOrUrl = params.get("source").trim();

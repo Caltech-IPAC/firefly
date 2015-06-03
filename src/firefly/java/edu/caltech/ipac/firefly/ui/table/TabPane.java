@@ -176,6 +176,8 @@ public class TabPane<T extends Widget> extends Composite
 
     }
 
+    public int getNTabs() { return tabs.size(); }
+
     void ensureHelpPos() {
         if (helpIcon != null && GwtUtil.isOnDisplay(helpIcon)) {
             wrapper.setWidgetPosition(helpIcon, wrapper.getOffsetWidth()-19, 3);

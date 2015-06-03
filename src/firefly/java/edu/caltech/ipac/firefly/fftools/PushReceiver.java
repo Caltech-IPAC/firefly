@@ -144,8 +144,7 @@ public class PushReceiver implements WebEventListener {
         for (Param p : sreq.getParams()) {
             params.put (p.getName(), p.getValue());
         }
-
-        XYPlotJSInterface.plotTable(params, null);
+        plotController.addXYPlot(params);
     }
 
 
@@ -204,5 +203,6 @@ public class PushReceiver implements WebEventListener {
 
     public interface ExternalPlotController {
         void update(WebPlotRequest wpr);
+        void addXYPlot(Map<String,String> params);
     }
 }

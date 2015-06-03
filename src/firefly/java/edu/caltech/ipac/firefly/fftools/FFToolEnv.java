@@ -28,6 +28,7 @@ import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -452,6 +453,8 @@ public class FFToolEnv {
         public void update(WebPlotRequest wpr) {
             FitsViewerJSInterface.plotNowToTarget(wpr.getPlotId(), wpr, null);
         }
+
+        public void addXYPlot(Map<String, String> params) { XYPlotJSInterface.plotTable(params, null); }
     }
 }
 

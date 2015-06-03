@@ -81,5 +81,9 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
             PlotData dynData= ConverterStore.get(ConverterStore.DYNAMIC).getPlotData();
             dynData.setID(wpr.getPlotId(),wpr);
         }
+
+        public void addXYPlot(Map<String, String> params) {
+            aloneUI.newXYPlot(params);
+        }
     }
 }

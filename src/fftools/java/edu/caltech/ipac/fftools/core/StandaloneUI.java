@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.fftools.XYPlotJSInterface;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
 import edu.caltech.ipac.firefly.ui.PopupContainerForRegion;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
@@ -47,6 +48,7 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.firefly.visualize.ui.DataVisGrid;
 
 import java.util.HashMap;
@@ -56,12 +58,13 @@ class StandaloneUI {
 
     public  static final String FITS_BUTTON = "FitsInput";
     public  static final String SEARCH_BUTTON = "Search";
+    private static final String XYVIEW_TAB_NAME = "XY View";
 
     private SplitLayoutPanelFirefly main= new SplitLayoutPanelFirefly();
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel searchResultWrapper = new LayoutPanel();
-    private LayoutPanel             xyPlotArea = new LayoutPanel();
+    private final TabPane<Widget>   xyPlots = new TabPane<Widget>();
 //    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
     private TableResultsDisplay     searchResults= new TableResultsDisplay();
     private final TabPane<Widget>   imageTabPane= new TabPane<Widget>();
@@ -84,12 +87,31 @@ class StandaloneUI {
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
 //        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
 
-        xyPlotArea.addStyleName("standalone-xyplot");
-        xyPlotArea.add(xyPlotter.getWidget());
+
+        //xyPlotArea.addStyleName("standalone-xyplot");
+        xyPlots.getEventManager().addListener(TabPane.TAB_ADDED, new WebEventListener<TabPane.Tab>() {
+            public void eventNotify(WebEvent<TabPane.Tab> ev) {
+                TabPane.Tab tab = ev.getData();
+                if (!tab.getName().equals(XYVIEW_TAB_NAME)) {
+                    XYPlotWidget w = (XYPlotWidget) tab.getContent();
+                    AllPlots.getInstance().registerPopout(w);
+                }
+            }
+        });
+        xyPlots.getEventManager().addListener(TabPane.TAB_REMOVED, new WebEventListener<TabPane.Tab>(){
+            public void eventNotify(WebEvent<TabPane.Tab> ev) {
+                TabPane.Tab tab = ev.getData();
+                if (!tab.getName().equals(XYVIEW_TAB_NAME)) {  // if not the tab with XYPlotter, containing table view
+                    XYPlotWidget w = (XYPlotWidget) tab.getContent();
+                    AllPlots.getInstance().deregisterPopout(w);
+                }
+            }
+        });
+
 
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_ADDED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                initialStart= false;
+                initialStart = false;
             }
         });
 
@@ -110,7 +132,7 @@ class StandaloneUI {
             }
 
             public void viewerRefreshed() {
-                if (AllPlots.getInstance().getAll().size()==1 && hasOnlyPlotResults()) {
+                if (AllPlots.getInstance().getAll().size() == 1 && hasOnlyPlotResults()) {
                     handleViewUpdates();
                 }
             }
@@ -253,15 +275,23 @@ class StandaloneUI {
         isInit= true;
     }
 
+    public void newXYPlot(Map<String,String> params) {
+        final XYPlotWidget xyPlotWidget = XYPlotJSInterface.getXYPlotWidget(params);
+        xyPlots.addTab(xyPlotWidget, "XY Data", "XY Plot", true);
+        xyPlots.selectTab(xyPlots.getNTabs() - 1);
 
+        relayoutMainArea();
+        XYPlotJSInterface.loadData(xyPlotWidget, params);
+    }
 
     public void relayoutMainArea() {
         Application.getInstance().getLayoutManager().getRegion(LayoutManager.RESULT_REGION).setDisplay(main);
         main.setSize("100%", "100%");
         main.clear();
 
-        if (hasCatalogResults() && xyPlotArea!=null) {
-            main.addSouth(xyPlotArea, 300);
+        if (xyPlots.getNTabs() > 0 ) {
+            main.addSouth(xyPlots, 300);
+            xyPlots.setSize("100%", "100%");
         }
 
 
@@ -326,6 +356,13 @@ class StandaloneUI {
                         dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "FITS Data Sets", "FITS Image", false);
                     }
                     imageTabPane.selectTab(dsMultiViewerTab);
+                }
+
+                if (hasCatalogResults()) {
+                     if (xyPlots.getTab(XYVIEW_TAB_NAME) == null) {
+                         xyPlots.addTab(0, xyPlotter.getWidget(), XYVIEW_TAB_NAME, "XY View of an active table", false, true);
+                         xyPlots.selectTab(0);
+                     }
                 }
 
                 relayoutMainArea();
