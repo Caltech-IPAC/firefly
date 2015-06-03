@@ -13,6 +13,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
@@ -64,6 +65,7 @@ class StandaloneUI {
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel searchResultWrapper = new LayoutPanel();
+    private SimplePanel xyPlotAreaStandalone = new SimplePanel();
     private final TabPane<Widget>   xyPlots = new TabPane<Widget>();
 //    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
     private TableResultsDisplay     searchResults= new TableResultsDisplay();
@@ -87,8 +89,10 @@ class StandaloneUI {
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
 //        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
 
+        if (xyPlotAreaStandalone != null) {
+            xyPlotAreaStandalone.addStyleName("standalone-xyplot");
+        }
 
-        //xyPlotArea.addStyleName("standalone-xyplot");
         xyPlots.getEventManager().addListener(TabPane.TAB_ADDED, new WebEventListener<TabPane.Tab>() {
             public void eventNotify(WebEvent<TabPane.Tab> ev) {
                 TabPane.Tab tab = ev.getData();
@@ -289,11 +293,18 @@ class StandaloneUI {
         main.setSize("100%", "100%");
         main.clear();
 
-        if (xyPlots.getNTabs() > 0 ) {
+        if (xyPlots.getNTabs() > 1 || (xyPlots.getNTabs() == 1 && xyPlots.getTab(XYVIEW_TAB_NAME)== null)) {
+            if (xyPlots.getTab(XYVIEW_TAB_NAME) != null) {
+                xyPlots.getTab(XYVIEW_TAB_NAME).setContent(xyPlotter.getWidget());
+            }
             main.addSouth(xyPlots, 300);
             xyPlots.setSize("100%", "100%");
-        }
+        } else if (hasCatalogResults() && xyPlotAreaStandalone !=null) {
+            xyPlotAreaStandalone.setWidget(xyPlotter.getWidget());
+            main.addSouth(xyPlotAreaStandalone, 300);
+            xyPlotAreaStandalone.setSize("100%", "100%");
 
+        }
 
         if (dynMultiViewerTab ==null && hasPlotResults()) {
             dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "FITS data", "FITS Image", false);
@@ -361,8 +372,8 @@ class StandaloneUI {
                 if (hasCatalogResults()) {
                      if (xyPlots.getTab(XYVIEW_TAB_NAME) == null) {
                          xyPlots.addTab(0, xyPlotter.getWidget(), XYVIEW_TAB_NAME, "XY View of an active table", false, true);
-                         xyPlots.selectTab(0);
                      }
+                     xyPlots.selectTab(0);
                 }
 
                 relayoutMainArea();
