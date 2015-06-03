@@ -1,6 +1,3 @@
-
-
-
 ## Firefly python wrapper user guide ##
 
 This document explains how to use the python library included in Firefly to interact with firefly image viewer. 
@@ -66,9 +63,19 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
  
 ```python 
      table ='/your/path/yourTable.tbl'    
-     tablePathInfo = fc.uploadImage(table)
+     tablePathInfo = fc.uploadFile(table)
      fc.showTable(tablePathInfo)
 ```
+
+####Show a XY Plot
+ 
+```python 
+     table ='/your/path/yourTable.tbl'    
+     tablePathInfo = fc.uploadImage(table)
+     fc.showXYPlot(fileOnServer=tablePathInfo, additionalParams={'xColExpr' : 'col1/col2', 'yCol' : 'col3', 'plotTitle' : 'col3 vs. col1/col2'})
+```
+See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-overview.md) for the available XY Plot parameters.
+
 
 ###Run in python prompt
 

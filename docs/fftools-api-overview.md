@@ -276,12 +276,14 @@ Usage: firefly.showPlot(parameters, div)
 
 Parameters object literal can contain the following values
 
-| Paremeter | Description |
+| Parameter | Description |
 | ------------ | ------------- |
 | source | required; location of the ipac table.  url or file path.|
 | chartTitle |title of the chart |
-| xCol | required; column to use for x values (can be an expression, containing multiple column names) |
-| yCol | required; column to use for y values (can be an expression, containing multiple column names) |
+| xCol | column to use for x values |
+| xColExpr | an expression to use for y values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
+| yCol | column to use for y values |
+| yColExpr | an expression to use for y values, can contain multiple column names ex. log(col) or (col1-col2)/col3 |
 | errorCol | column to use for y value errors (must be column name, expressions are not supported) |
 | orderCol | column to use to separate series from each other, different series are shown in different colors |
 | plotStyle | line|linePoints|points, defaults to points |

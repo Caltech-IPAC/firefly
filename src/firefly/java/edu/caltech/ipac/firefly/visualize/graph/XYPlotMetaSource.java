@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.visualize.graph;
 
+import edu.caltech.ipac.util.expr.Expression;
+
 /**
  * @author tatianag
  *         $Id: XYPlotMetaSource.java,v 1.4 2012/12/11 21:10:01 tatianag Exp $
@@ -36,4 +38,7 @@ public interface XYPlotMetaSource {
     public XYPlotMeta.PlotStyle getPlotStyle();
     public XYPlotMeta.ShowLegendRule getShowLegendRule();
     //public void addColNamesToDefault(String xCol, String yCol, String errorCol, String orderCol);
+
+    public Expression getXColExpr();
+    public Expression getYColExpr();
 }

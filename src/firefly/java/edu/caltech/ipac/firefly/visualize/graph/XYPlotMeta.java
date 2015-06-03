@@ -74,6 +74,8 @@ public class XYPlotMeta {
         xScale = LINEAR_SCALE;
         yScale = LINEAR_SCALE;
         this.userMeta = new UserMeta();
+        if (source.getXColExpr() != null) this.userMeta.xColExpr = source.getXColExpr();
+        if (source.getYColExpr() != null) this.userMeta.yColExpr = source.getYColExpr();
     }
     
     public XYPlotMeta deepCopy() {

@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.visualize.graph;
 
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.expr.Expression;
 
 import java.util.Map;
 
@@ -15,7 +16,9 @@ public class CustomMetaSource implements XYPlotMetaSource  {
 
 
     public static String XCOL_KEY = "xCol";
+    public static String XCOL_EXPR_KEY = "xColExpr";
     public static String YCOL_KEY = "yCol";
+    public static String YCOL_EXPR_KEY = "yColExpr";
     public static String XDEFUNITS_KEY = "xDefUnits";
     public static String YDEFUNITS_KEY = "yDefUnits";
     public static String ERRORCOL_KEY = "errorCol";
@@ -24,12 +27,14 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     public static String SHOW_LEGEND_KEY = "showLegend";
 
     private static String[] PARAM_KEYS = {
-            XCOL_KEY, YCOL_KEY, XDEFUNITS_KEY, YDEFUNITS_KEY, ERRORCOL_KEY, ORDERCOL_KEY, PLOT_STYLE_KEY, SHOW_LEGEND_KEY
+            XCOL_KEY, XCOL_EXPR_KEY, YCOL_KEY, YCOL_EXPR_KEY, XDEFUNITS_KEY, YDEFUNITS_KEY, ERRORCOL_KEY, ORDERCOL_KEY, PLOT_STYLE_KEY, SHOW_LEGEND_KEY
     };
 
 
     private String [] xCols;
+    private String xColExpr;
     private String [] yCols;
+    private String yColExpr;
     private String [] errorCols;
     private String [] orderCols;
     private String xDefaultUnits;
@@ -40,7 +45,9 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     public CustomMetaSource(Map<String, String> params) {
 
         xCols = getStringArray(params.get(XCOL_KEY));
+        xColExpr = params.get(XCOL_EXPR_KEY);
         yCols = getStringArray(params.get(YCOL_KEY));
+        yColExpr = params.get(YCOL_EXPR_KEY);
         errorCols = getStringArray(params.get(ERRORCOL_KEY));
         orderCols = getStringArray(params.get(ORDERCOL_KEY));
 
@@ -123,4 +130,16 @@ public class CustomMetaSource implements XYPlotMetaSource  {
     public XYPlotMeta.ShowLegendRule getShowLegendRule() {
             return showLegendRule;
         }
+
+    public Expression getXColExpr() {
+        if (xColExpr == null) return null;
+        Expression expr = new Expression(xColExpr, null);
+        return (expr.isValid() ? expr : null);
+    }
+
+    public Expression getYColExpr() {
+        if (yColExpr == null) return null;
+        Expression expr = new Expression(yColExpr, null);
+        return (expr.isValid() ? expr : null);
+    }
 }

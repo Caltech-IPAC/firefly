@@ -9,6 +9,8 @@ package edu.caltech.ipac.firefly.visualize.graph;
 //import java.util.List;
 
 
+import edu.caltech.ipac.util.expr.Expression;
+
 /**
  * @author tatianag
  *         $Id: SpectrumMetaSource.java,v 1.6 2012/12/11 21:10:01 tatianag Exp $
@@ -106,6 +108,15 @@ public class SpectrumMetaSource implements XYPlotMetaSource {
 
     public XYPlotMeta.ShowLegendRule getShowLegendRule() {
         return XYPlotMeta.ShowLegendRule.ON_EXPAND;
+    }
+
+
+    public Expression getXColExpr() {
+        return null;
+    }
+
+    public Expression getYColExpr() {
+        return null;
     }
 
     /*
