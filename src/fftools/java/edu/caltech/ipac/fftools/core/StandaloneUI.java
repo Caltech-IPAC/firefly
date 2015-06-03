@@ -336,12 +336,12 @@ class StandaloneUI {
 
         evMan.addListener(EventHub.ON_TABLE_SHOW, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                activeTable= (TablePanel)ev.getData();
+                activeTable= (TablePanel)ev.getSource();
             }
         });
         evMan.addListener(EventHub.ON_DATA_LOAD, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
-                activeTable= (TablePanel)ev.getData();
+                activeTable= (TablePanel)ev.getSource();
             }
         });
         evMan.addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
@@ -494,7 +494,13 @@ class StandaloneUI {
     public class PopupContainerForApp extends PopupContainerForRegion {
         @Override
         protected void dropDownCloseExecuted() {
-            relayoutMainArea();
+            if (hasTableResults()) {
+                relayoutMainArea();
+            }
+            else {
+                GeneralCommand cmd= Application.getInstance().getCommand(ImageSelectDropDownCmd.COMMAND_NAME);
+                if (cmd!=null) cmd.execute();
+            }
             super.dropDownCloseExecuted();
         }
 
