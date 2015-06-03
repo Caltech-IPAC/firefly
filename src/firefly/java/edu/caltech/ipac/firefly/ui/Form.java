@@ -191,7 +191,7 @@ public class Form extends Composite implements HasWidgets {
     private boolean populateRequestFromUngroupedFields(final Request req, AsyncCallbackGroup cbGroup) {
         boolean hasAsync= false;
         for (final InputField f : getUngroupedFieldsMap().values()) {
-            if (f!=null && (GwtUtil.isOnDisplay(f) || f instanceof HiddenField)) {
+            if (f!=null && isFieldVisible(f)) {
                 if (f instanceof HasSubmitField && cbGroup!=null) {
                     hasAsync= true;
                     AsyncCallback<String> cb = new AsyncCallback<String>() {
@@ -242,7 +242,7 @@ public class Form extends Composite implements HasWidgets {
     public void populateFields(Request req) {
         for(String k : getUngroupedFieldsMap().keySet()) {
             InputField f = getField(k);
-            if (f != null && (GwtUtil.isOnDisplay(f) || f instanceof HiddenField)) {
+            if (f != null && isFieldVisible(f)) {
                 if (req.containsParam(f.getName())) {
                     String v = req.getParam(f.getName());
                     f.setValue(v);
@@ -310,29 +310,39 @@ public class Form extends Composite implements HasWidgets {
     }
 
     /**
-     * if id is not found.. will find field by name with this priorty:
-     * visible, HIDDEN, then first field with the name.
+     * return a visible field given an id or name.
      * @param id
      * @return
      */
     public InputField getField(String id) {
+        return getField(id, true);
+    }
+
+    /**
+     * finds field based on ID and then name.  If onlyVisible is true,
+     * it will ignore fields that are not visible.
+     * @param id
+     * @return
+     */
+    public InputField getField(String id, boolean onlyVisible) {
         InputField f = getFieldsMap().get(id);
-        if (f == null) {
+        boolean tryByName = f == null || (onlyVisible && !isFieldVisible(f));
+
+        if (tryByName) {
             for (InputField item : getFieldsMap().values()) {
                 if (item.getName().equals(id)) {
-                    if (GwtUtil.isOnDisplay(item)) {
+                    if (!onlyVisible || isFieldVisible(item)) {
                         return item;
-                    } else {
-                        if (item instanceof HiddenField) {
-                            f = item;
-                        } else if (f == null) {
-                            f = item;
-                        }
                     }
                 }
             }
+
         }
         return f;
+    }
+
+    private boolean isFieldVisible(InputField f) {
+        return (f instanceof HiddenField) ? f.isVisible() : GwtUtil.isOnDisplay(f);
     }
 
     public FieldDef getFieldDef(String id) {

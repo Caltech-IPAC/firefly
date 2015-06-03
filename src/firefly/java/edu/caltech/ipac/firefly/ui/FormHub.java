@@ -182,62 +182,47 @@ public class FormHub {
     }
 
     public void setValue(Param param) {
-        if (form.containsField(param.getName())) {
-            form.getField(param.getName()).setValue(param.getValue());
-        }
+        form.setValue(param.getName(), param.getValue());
     }
 
     public String getValue(String name) {
         return form.getValue(name);
     }
 
-    public void setVisible(String name, boolean visible) {
-        if (form.containsField(name)) {
-            InputField f = form.getField(name);
+    public boolean setVisible(String name, boolean visible) {
+        InputField f = form.getField(name, false);
+        if (f != null) {
             f.setVisible(visible);
             FieldLabel label = f.getFieldLabel();
             if (label instanceof FieldLabel.Mutable) {
                 ((FieldLabel.Mutable) label).setVisible(visible);
+                return true;
             } else {
                 InputFieldContainer c = f.getContainer();
                 if (c != null) {
                     c.setVisible(visible);
-                    //if (visible)  c.addLabel(f);
-                    //else          c.clearLabel(f);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void setHidden(String name, boolean isHidden) {
+        InputField f = form.getField(name, false);
+        if (f != null) {
+            GwtUtil.setHidden(f, isHidden);
+            FieldLabel label = f.getFieldLabel();
+            if (label instanceof FieldLabel.Mutable) {
+                GwtUtil.setHidden(((FieldLabel.Mutable) label).getWidget(), isHidden);
+            } else {
+                InputFieldContainer c = f.getContainer();
+                if (c != null) {
+                    GwtUtil.setHidden(c.getWidget(), isHidden);
                 }
 
             }
         }
-
-    }
-
-    public void setHidden(String name, boolean isHidden) {
-        if (form.containsField(name)) {
-            setHidden(form.getField(name), isHidden);
-        }
-    }
-
-    private void setHidden(InputField f, boolean isHidden) {
-        GwtUtil.setHidden(f, isHidden);
-        FieldLabel label = f.getFieldLabel();
-        if (label instanceof FieldLabel.Mutable) {
-            GwtUtil.setHidden(((FieldLabel.Mutable) label).getWidget(), isHidden);
-        } else {
-            InputFieldContainer c = f.getContainer();
-            if (c != null) {
-                GwtUtil.setHidden(c.getWidget(), isHidden);
-            }
-
-        }
-    }
-
-    public boolean isVisible(String name) {
-        boolean retval = false;
-        if (form.containsField(name)) {
-            InputField f = form.getField(name);
-            GwtUtil.isVisible(f.getElement());
-        }
-        return retval;
     }
 
     public void tabSelected() {

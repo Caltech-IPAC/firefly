@@ -55,7 +55,18 @@ public class HiddenField extends InputField {
         initWidget(holder);
     }
 
-//======================================================================
+    @Override
+    public void setVisible(boolean visible) {
+        String v = visible ? fieldDef.getDefaultValueAsString() : "#disabled#";
+        setValue(v);
+    }
+
+    @Override
+    public boolean isVisible() {
+        return value != null && !value.equals("#disabled#");
+    }
+
+    //======================================================================
 //----------------- Implementation of InputField -----------
 //======================================================================
 

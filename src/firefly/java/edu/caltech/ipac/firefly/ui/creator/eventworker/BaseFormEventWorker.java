@@ -65,6 +65,15 @@ public abstract class BaseFormEventWorker implements FormEventWorker {
         }
     }
 
+
+
+    protected void setVisible(boolean isVisible, String... names) {
+        if (names == null) return;
+        for (String s : names) {
+            setVisible(s, isVisible);
+        }
+    }
+
     /**
      * this convenience method search for the name field and set visibility on it.
      * if there is not a field with the given name, it will try to find it by ID.
@@ -125,14 +134,5 @@ public abstract class BaseFormEventWorker implements FormEventWorker {
             }
         }
         return fnames;
-    }
-
-    protected boolean isVisible(String fname) {
-        for(FormHub h : hubs) {
-            if (h.isVisible(fname)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
