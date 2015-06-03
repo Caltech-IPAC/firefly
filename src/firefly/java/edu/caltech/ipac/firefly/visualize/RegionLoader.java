@@ -172,8 +172,7 @@ public class RegionLoader {
         }
 
         public void freeResources() {
-            List<MiniPlotWidget> mpwList = AllPlots.getInstance().getAll();
-            for (MiniPlotWidget mpw : mpwList) drawMan.removePlotView(mpw.getPlotView());
+            drawMan.dispose();
             drawMan = null;
             regionConnection= null;
         }

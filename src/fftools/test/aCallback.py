@@ -22,7 +22,7 @@ def myCallback(event):
         if event['data']['type']=='AREA_SELECT':
             #print '*************area select'
             pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits','ColorTable' : '5'}
-            status= fc.showFits(fileOnServer=None, plotID='p2', additionalParams=pParams)
+            status= fc.showFits(fileOnServer=None, plotId='p2', additionalParams=pParams)
     elif 'region' in event['data']:
         print 'selected region: %s' % event['data']['region']
 

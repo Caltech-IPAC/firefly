@@ -60,7 +60,7 @@ def handleTwoArgs(fc, xList):
                 fc.showTable(fc.uploadFile(xList[0]))
 
     elif isExist('.fits',xList) and  not isExist('.reg',xList) and not isExist('.tbl',xList): #fits argument
-         fc.showFits(fc.uploadFile(xList[0]), plotID=xList[1])
+         fc.showFits(fc.uploadFile(xList[0]), plotId=xList[1])
     elif not isExist('.fits',xList) and isExist('.tbl',xList):
          fc.showTable(fc.uploadFile(xList[0 ]),xList[1] )
 

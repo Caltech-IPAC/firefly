@@ -40,7 +40,7 @@ print 'addExtension success: %s' % status['success']
 
 # show another FITS from the URL
 pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits','ColorTable' : '5'}
-status= fc.showFits(fileOnServer=None, plotID='p2', additionalParams=pParams)
+status= fc.showFits(fileOnServer=None, plotId='p2', additionalParams=pParams)
 print 'showFits success: %s' % status['success']
 
 

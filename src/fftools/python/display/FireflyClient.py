@@ -10,30 +10,28 @@ import socket
 
 class FireflyClient(WebSocketClient):
     # class variables
-    serverEvents = {'name': ['EVT_CONN_EST', 'SvrBackgroundReport', 'WindowResize'],
-                    'scope': ['SELF', 'CHANNEL'],
-                    'dataType': ['STRING', 'JSON', 'BG_STATUS'],
-                    'data': ['channel']
-                    }
+    # serverEvents = {'name': ['EVT_CONN_EST', 'SvrBackgroundReport', 'WindowResize'],
+    #                 'scope': ['SELF', 'CHANNEL'],
+    #                 'dataType': ['STRING', 'JSON', 'BG_STATUS'],
+    #                 'data': ['channel']
+    #                 }
 
     fftoolsCmd = '/fftools/sticky/CmdSrv'
     myLocalhost = 'localhost:8080'
     ALL = 'ALL_EVENTS_ENABLED'
-    stretchTypeDict={'Percent':88,'Absolute':90,'ZScale':91,'Sigma':92}
-    stretchAlgorithmDict={'Linear':44, 'Log':45,'LogLog':46,'Equal':47,'Squared':48, 'Sqrt':49}
+
+    # for serializing the RangeValues object - modify when new stretch types added
+    stretchTypeDict={'percent':88,'absolute':90,'zscale':91,'sigma':92}
+    stretchAlgorithmDict={'linear':44, 'log':45,'loglog':46,'equal':47,'squared':48, 'sqrt':49}
 
 
     #the constructor, define instance variables for the object
     def __init__(self, host=myLocalhost, channel=None):
-        #assign instance variables  todo-need to understand how to get the default channel
         if host.startswith('http://'):
             host = host[7:]
-
         self.thisHost = host
-        #web socket event listener url
-        url = 'ws://%s/fftools/sticky/firefly/events' % host
-        # print 'websocket url:%s' % url
-        if channel is not None:
+        url = 'ws://%s/fftools/sticky/firefly/events' % host #web socket url
+        if channel:
             url+= '?channelID=%s' % channel
         WebSocketClient.__init__(self, url)
         self.urlRoot = 'http://' + host + self.fftoolsCmd
@@ -42,6 +40,7 @@ class FireflyClient(WebSocketClient):
         self.channel = channel
         self.session = requests.Session()
         self.connect()
+        # print 'websocket url:%s' % url
 
 
     # def opened(self):
@@ -53,7 +52,7 @@ class FireflyClient(WebSocketClient):
 
     def handleEvent(self, ev):
         for callback, eventIDList  in self.listeners.items():
-            if ev['name'] in eventIDList or self.ALL in eventIDList:
+            if ev['name'] in eventIDList or FireflyClient.ALL in eventIDList:
                 callback(ev)
 
 
@@ -109,11 +108,13 @@ class FireflyClient(WebSocketClient):
                  zscaleContrast=25, zscaleSamples=600, zscaleSamplesPerLine=120):
         retval= None
         ffc= FireflyClient
-        if stretchType in ffc.stretchTypeDict and algorithm in ffc.stretchAlgorithmDict:
+        st= stretchType.lower()
+        a= algorithm.lower()
+        if st in ffc.stretchTypeDict and a in ffc.stretchAlgorithmDict:
             retval='%d,%f,%d,%f,%d,%d,%d,%d' % \
-                   (ffc.stretchTypeDict[stretchType], lowerValue,
-                    ffc.stretchTypeDict[stretchType], upperValue,
-                    ffc.stretchAlgorithmDict[algorithm],
+                   (ffc.stretchTypeDict[st], lowerValue,
+                    ffc.stretchTypeDict[st], upperValue,
+                    ffc.stretchAlgorithmDict[a],
                     zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
         return retval
 
@@ -155,19 +156,23 @@ class FireflyClient(WebSocketClient):
     def waitForEvents(self):
         """
         Pause and do not exit.  Wait over events from the server.
-        This is optional. Event will get call anyway.
+        This is optional. You should not use this method in ipython notebook
+        Event will get called anyway.
         """
         WebSocketClient.run_forever(self)
 
 
-    # Get URL to Firefly Tools viewer and the channel set. Normally this method
-    # will be call without any parameters.
-    # url - the url, overriding the default
-    # channel - a different channel than the default
     def getFireflyUrl(self, url=None, channel=None):
-        if channel is None:
+        """
+        Get URL to Firefly Tools viewer and the channel set. Normally this method
+        will be call without any parameters.
+        :param url: the url string , overriding the default
+        :param channel: a different channel string than the default
+        :return: the full url string
+        """
+        if not channel:
             channel = self.channel
-        if url=='' or url is None:
+        if not url:
             url=self.urlBW
         return url + channel
 
@@ -180,9 +185,9 @@ class FireflyClient(WebSocketClient):
         :param channel: a different channel than the default
         :return: the channel
         """
-        if channel is None:
+        if not channel:
             channel = self.channel
-        if url=='' or url is None:
+        if not url :
             url=self.urlBW
         doOpen= True if force else not self.isPageConnected()
         if doOpen:
@@ -240,22 +245,22 @@ class FireflyClient(WebSocketClient):
         return result.text[index:]
 
 
-    def showFits(self, fileOnServer=None, plotID=None, additionalParams=None):
+    def showFits(self, fileOnServer=None, plotId=None, additionalParams=None):
         """ Show a fits image
         :param: fileOnServer: the is the name of the file on the server.  If you used uploadFile()
                           then it is the return value of the method. Otherwise it is a file that
                           firefly has direct read access to.
-        :param: plotID: the id you assigned to the plot. This is necessary to further control the plot
+        :param: plotId: the id you assigned to the plot. This is necessary to further control the plot
         :param: additionalParam: dictionary of any valid fits viewer plotting parameters,
                           see firefly/docs/fits-plotting-parameters.md
         :return: status of call
         """
         url = self.urlRoot + '?cmd=pushFits'
-        if additionalParams is not None:
+        if additionalParams:
             url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
-        if plotID is not None:
-            url+= '&plotId=%s' % plotID
-        if fileOnServer is not None:
+        if plotId:
+            url+= '&plotId=%s' % plotId
+        if fileOnServer:
             url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
 
@@ -271,9 +276,9 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushTable"
-        if title is not None:
+        if title:
             url+= '&Title=%s' % title
-        if pageSize is not None:
+        if pageSize:
             url+= '&pageSize=%s' % str(pageSize)
         url+= "&file=%s" % fileOnServer
         return self.sendURLAsGet(url)
@@ -306,7 +311,7 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushExt&plotId=%s&id=%s&extType=%s&Title=%s" % (plotId,extensionId,extType,title)
-        if image is not None:
+        if image:
             url+= "&image=%s" % image
         return self.sendURLAsGet(url)
 
@@ -341,9 +346,9 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRegion&file=%s" % fileOnServer
-        if title is not None:
+        if title:
             url+= '&Title=%s' % title
-        if regionLayerId is not None:
+        if regionLayerId:
             url+= '&id=%s' % regionLayerId
         return self.sendURLAsGet(url)
 
@@ -366,12 +371,12 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRegionData&id=%s" % regionLayerId
-        if title is not None:
+        if title:
             url+= '&Title=%s' % title
-        response = self.session.post(url,
-                                     data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
+        response = self.session.post(url, data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
+
 
 
     def removeRegionData(self, regionData, regionLayerId):
@@ -403,8 +408,8 @@ class FireflyClient(WebSocketClient):
         retval= FireflyClient.createRV(stretchType,lowerValue,upperValue,algorithm,25,600,120)
         ffc= FireflyClient
         if not retval:
-            t= stretchType if stretchType in ffc.stretchAlgorithmDict else 'Percent'
-            a= algorithm if algorithm in ffc.stretchAlgorithmDict else 'Linear'
+            t= stretchType if stretchType.lower() in ffc.stretchAlgorithmDict else 'percent'
+            a= algorithm if algorithm.lower() in ffc.stretchAlgorithmDict else 'linear'
             retval= FireflyClient.createRV(t,1,99,a)
         return retval
 
@@ -418,10 +423,10 @@ class FireflyClient(WebSocketClient):
         :param zscaleSamplesPerLine: zscale sample per line
         :return: a serialized range values string
         """
-        retval= FireflyClient.createRV('ZScale',1,2,algorithm,zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
+        retval= FireflyClient.createRV('zscale',1,2,algorithm,zscaleContrast, zscaleSamples, zscaleSamplesPerLine)
         if not retval:
-            a= algorithm if algorithm in FireflyClient.stretchAlgorithmDict else 'Linear'
-            retval= FireflyClient.createRV('ZScale',1,2,a,25,600,120)
+            a= algorithm if algorithm.lower() in FireflyClient.stretchAlgorithmDict else 'linear'
+            retval= FireflyClient.createRV('zscale',1,2,a,25,600,120)
         return retval
 
 
