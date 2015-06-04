@@ -719,7 +719,7 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
 
     private void initFillStyle() {
-        oneFillType= FillType.FIT;
+        oneFillType= FillType.CONTEXT;
         _behavior.setOnePlotFillStyle(oneFillType);
         if (gridFillType==FillType.OFF) gridFillType= FillType.CONTEXT;
         _behavior.setGridPlotFillStyle(gridFillType);

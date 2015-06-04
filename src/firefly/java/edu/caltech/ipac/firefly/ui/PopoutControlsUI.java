@@ -36,7 +36,6 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.ExpandBehavior;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.util.dd.EnumFieldDef;
 
@@ -701,11 +700,7 @@ public class PopoutControlsUI {
             int curr= _expandDeck.getVisibleWidgetIndex();
             if (curr>-1) {
                 PopoutWidget popout= _expandedList.get(curr);
-                boolean doResize= true;
-                if (popout instanceof MiniPlotWidget && ExpandBehavior.keepZoomLevel((MiniPlotWidget)popout)) {
-                    doResize= false;
-                }
-                if (doResize) _behavior.onSingleResize(popout, new Dimension(w,h), adjustZoom);
+                _behavior.onSingleResize(popout, new Dimension(w,h), adjustZoom);
             }
         }
     }

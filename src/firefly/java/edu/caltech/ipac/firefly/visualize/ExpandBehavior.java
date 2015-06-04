@@ -307,9 +307,14 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                 zLevel= plot.getZoomFact();
                 break;
             case CONTEXT:
-                VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
-                if (mpw.getGroup()!=null)  fullType = mpw.getGroup().getGridPopoutZoomType();
-                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, fullType, -1, 1);
+                if (isForceZooomToStandard(mpw.getCurrentPlot())) {
+                    zLevel= plot.getZoomFact();
+                }
+                else {
+                    VisUtil.FullType fullType = VisUtil.FullType.ONLY_WIDTH;
+                    if (mpw.getGroup()!=null)  fullType = mpw.getGroup().getGridPopoutZoomType();
+                    zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, fullType, -1, 1);
+                }
                 break;
             case FILL:
                 zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH,-1,1);
@@ -339,7 +344,9 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                 zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
                 break;
             case CONTEXT: // for now do a fit
-                zLevel = ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
+                zLevel= isForceZooomToStandard(plot) ?
+                        plot.getZoomFact() :
+                        ZoomUtil.getEstimatedFullZoomFactor(plot, nDim, VisUtil.FullType.WIDTH_HEIGHT );
                 break;
         }
         return zLevel;
@@ -389,15 +396,12 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
         return level;
     }
 
-    public static boolean keepZoomLevel(MiniPlotWidget mpw) {
+    public static boolean isForceZooomToStandard(WebPlot p) {
         boolean retval= false;
-        if (mpw!=null && mpw.getPlotView()!=null) {
-            WebPlot p= mpw.getPlotView().getPrimaryPlot();
-            if (p!=null && p.getPlotState()!=null) {
-                PlotState state= p.getPlotState();
-                WebPlotRequest wpr= state.getWebPlotRequest(state.firstBand());
-                retval= wpr.getZoomType()==ZoomType.FORCE_STANDARD;
-            }
+        if (p!=null && p.getPlotState()!=null) {
+            PlotState state= p.getPlotState();
+            WebPlotRequest wpr= state.getWebPlotRequest(state.firstBand());
+            retval= wpr.getZoomType()==ZoomType.FORCE_STANDARD;
         }
         return retval;
     }
