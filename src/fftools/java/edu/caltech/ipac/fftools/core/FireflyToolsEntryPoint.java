@@ -28,6 +28,11 @@ import edu.caltech.ipac.firefly.util.BrowserUtil;
 public class FireflyToolsEntryPoint implements EntryPoint {
 
     private static final boolean USE_CORS_IF_POSSIBLE= true;
+    private Application.EventMode eventMode = Application.EventMode.WebSocket;
+
+    public void setEventMode(Application.EventMode eventMode) {
+        this.eventMode = eventMode;
+    }
 
     public void onModuleLoad() {
         start(IrsaPlusLsstDataSetsFactory.getInstance(),
@@ -38,7 +43,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defCommandName) {
         boolean alone= isStandAloneApp();
         if (!alone) FFToolEnv.loadJS();
-        Application.setEventMode(Application.EventMode.WebSocket);  // -- uncomment for testing only, not ready  for production
+        Application.setEventMode(eventMode);  // -- uncomment for testing only, not ready  for production
         Application.setCreator(alone ?
                                new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile,defCommandName) :
                                new FireflyToolsEmbededCreator());
