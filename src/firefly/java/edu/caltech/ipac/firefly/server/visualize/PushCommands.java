@@ -138,7 +138,8 @@ public class PushCommands {
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
             String id= sp.getOptional(ServerParams.ID);
-            boolean success= PushJob.pushRegionFile(file, id);
+            String plotIDAry= sp.getOptional(ServerParams.PLOT_ID);
+            boolean success= PushJob.pushRegionFile(file, id, plotIDAry);
 
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();
@@ -175,7 +176,8 @@ public class PushCommands {
             String regData= sp.getRequired(ServerParams.DS9_REGION_DATA);
             String id= sp.getRequired(ServerParams.ID);
             String title= sp.getOptional(ServerParams.TITLE);
-            boolean success= PushJob.pushRegionData(title, id, regData);
+            String plotIDAry= sp.getOptional(ServerParams.PLOT_ID);
+            boolean success= PushJob.pushRegionData(title, id, regData, plotIDAry);
 
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();

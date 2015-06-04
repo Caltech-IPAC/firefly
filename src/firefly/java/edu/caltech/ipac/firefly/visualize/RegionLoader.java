@@ -24,6 +24,7 @@ import edu.caltech.ipac.util.dd.RegParseException;
 import edu.caltech.ipac.util.dd.Region;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,10 @@ public class RegionLoader {
     private static int cnt= 1;
     private static Map<String,RegionDrawing> regMap= new HashMap<String, RegionDrawing>(13);
 
-    public static void loadRegFile(String fileOnServer, final String regionId, final AsyncCallback<String> cb) {
+    public static void loadRegFile(String fileOnServer,
+                                   final String regionId,
+                                   final AsyncCallback<String> cb,
+                                   final String plotIds[]) {
         new VisTask().getDS9Region(fileOnServer,new AsyncCallback<RegionData>() {
             public void onFailure(Throwable caught) {
                 PopupUtil.showInfo("failed");
@@ -47,13 +51,13 @@ public class RegionLoader {
                 loadRegion(result.getTitle(),
                         result.getRegionTextData(),
                         result.getRegionParseErrors(),
-                        regionId);
+                        regionId, plotIds);
                 if (cb!=null) cb.onSuccess("ok");
             }
         });
     }
 
-    public static void loadRegion(String title, String regText, String regErr, String regionId) {
+    public static void loadRegion(String title, String regText, String regErr, String regionId, String plotIds[]) {
         DrawingManager drawMan;
         if (regMap.containsKey(regionId)) {
             addToRegion(regText,regionId);
@@ -72,9 +76,15 @@ public class RegionLoader {
                 RegionPrintable printable= new RegionPrintable(regList);
                 drawMan= new DrawingManager(id, rc, printable);
                 drawMan.setCanDoRegion(false); // we actually can do region but we want to do it manually
-                regMap.put(id,new RegionDrawing(id,drawMan, rc));
+                List<String> pIdList= (plotIds!=null && plotIds.length>0) ? Arrays.asList(plotIds) : null;
+                regMap.put(id,new RegionDrawing(id,drawMan, rc,pIdList));
                 for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
-                    drawMan.addPlotView(mpw.getPlotView());
+                    if (pIdList==null) {
+                        drawMan.addPlotView(mpw.getPlotView());
+                    }
+                    else if (mpw.getPlotId()!=null && pIdList.contains(mpw.getPlotId())) {
+                        drawMan.addPlotView(mpw.getPlotView());
+                    }
                 }
             }
             checkAndHandleError(regList,errStrList);
@@ -159,13 +169,15 @@ public class RegionLoader {
 
     private static class RegionDrawing {
         private final String id;
+        private final List<String> plotIDList;
         private DrawingManager drawMan;
         private RegionConnection regionConnection;
 
-        private RegionDrawing(String id, DrawingManager drawMan, RegionConnection regionConnection) {
+        private RegionDrawing(String id, DrawingManager drawMan, RegionConnection regionConnection, List<String> plotIDList) {
             this.id = id;
             this.drawMan = drawMan;
             this.regionConnection= regionConnection;
+            this.plotIDList= plotIDList;
             if (!WebLayerItem.hasUICreator(id)) {
                 WebLayerItem.addUICreator(id, new RegionUICreator());
             }

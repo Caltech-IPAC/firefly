@@ -152,8 +152,11 @@ public class PushReceiver implements WebEventListener {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());
         String id= req.getRequestId();
         String regFile= req.getParam(ServerParams.FILE);
+        String plotIdStr= req.getParam(ServerParams.PLOT_ID);
+        String pIDAry[]= !StringUtils.isEmpty(plotIdStr) ? plotIdStr.split(",") : null;
+
 //        String title= req.getParam(ServerParams.TITLE);
-        RegionLoader.loadRegFile(regFile, id, null);
+        RegionLoader.loadRegFile(regFile, id, null, pIDAry);
     }
 
     private void removeRegionFile(final String id) {
@@ -166,7 +169,9 @@ public class PushReceiver implements WebEventListener {
         String id= req.getRequestId();
         String regData= req.getParam(ServerParams.DS9_REGION_DATA);
         String title= req.getParam(ServerParams.TITLE);
-        RegionLoader.loadRegion(title,regData,null,id);
+        String plotIdStr= req.getParam(ServerParams.PLOT_ID);
+        String pIDAry[]= !StringUtils.isEmpty(plotIdStr) ? plotIdStr.split(",") : null;
+        RegionLoader.loadRegion(title,regData,null,id,pIDAry);
     }
     private void removeRegionData(final String in) {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());

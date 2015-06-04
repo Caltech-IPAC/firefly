@@ -335,7 +335,7 @@ class FireflyClient(WebSocketClient):
     #-----------------------------------------------------------------
 
 
-    def overlayRegion(self, fileOnServer, title=None, regionLayerId=None):
+    def overlayRegion(self, fileOnServer, title=None, regionLayerId=None, plotId=None):
         """
         Overlay a region on the loaded FITS images
         :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
@@ -343,6 +343,8 @@ class FireflyClient(WebSocketClient):
                        firefly has direct read access to.
         :param title: title of the region file
         :param regionLayerId: id of layer to add
+        :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+                       If non the tne region is overlay on all plots
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRegion&file=%s" % fileOnServer
@@ -350,6 +352,8 @@ class FireflyClient(WebSocketClient):
             url+= '&Title=%s' % title
         if regionLayerId:
             url+= '&id=%s' % regionLayerId
+        if plotId:
+            url+= '&plotId=%s' % (','.join(plotId) if type(plotId) is list else plotId)
         return self.sendURLAsGet(url)
 
 
@@ -362,17 +366,22 @@ class FireflyClient(WebSocketClient):
         return self.sendURLAsGet(self.urlRoot + "?cmd=pushRemoveRegion&id=%s" % regionLayerId)
 
 
-    def overlayRegionData(self, regionData, regionLayerId, title=None):
+    def overlayRegionData(self, regionData, regionLayerId, title=None, plotId=None):
         """
-        Overlay a region on the loaded FITS images
+        Overlay a region on the loaded FITS images. Note: the plotId is ignored if you have already put this
+        region id on a plot.  In that case it just add the regions to the existing id.
         :param regionData: a list of region entries
         :param regionLayerId: id of region overlay to create or add too
         :param title: title of the region file
+        :param plotId: plotId to which this region should be added, parameter may be string or a list of strings
+                       If non the tne region is overlay on all plots
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushRegionData&id=%s" % regionLayerId
         if title:
             url+= '&Title=%s' % title
+        if plotId:
+            url+= '&plotId=%s' % (','.join(plotId) if type(plotId) is list else plotId)
         response = self.session.post(url, data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]

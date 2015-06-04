@@ -76,7 +76,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
             public void onFailure(Throwable caught) { }
 
             public void onSuccess(String fileKey) {
-                RegionLoader.loadRegFile(fileKey, null, cb);
+                RegionLoader.loadRegFile(fileKey, null, cb, null);
             }
         });
     }

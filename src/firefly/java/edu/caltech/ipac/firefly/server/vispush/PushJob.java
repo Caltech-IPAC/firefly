@@ -69,9 +69,10 @@ public class PushJob {
     //========== Region Stuff
     //================================
 
-    public static boolean pushRegionFile(String fileName, String id) {
+    public static boolean pushRegionFile(String fileName, String id, String plotIdAry) {
         ServerRequest r = new ServerRequest(id);
         r.setParam(ServerParams.FILE, fileName);
+        if (plotIdAry!=null) r.setParam(ServerParams.PLOT_ID, plotIdAry);
         fireEvent(r.toString(), Name.PUSH_REGION_FILE);
         return true;
     }
@@ -82,10 +83,11 @@ public class PushJob {
     }
 
 
-    public static boolean pushRegionData(String title, String id, String data) {
+    public static boolean pushRegionData(String title, String id, String data, String plotIdAry) {
         ServerRequest r = new ServerRequest(id);
         r.setParam(ServerParams.TITLE, title);
         r.setParam(ServerParams.DS9_REGION_DATA, data);
+        if (plotIdAry!=null) r.setParam(ServerParams.PLOT_ID, plotIdAry);
         fireEvent(r.toString(), Name.PUSH_REGION_DATA);
         return true;
     }

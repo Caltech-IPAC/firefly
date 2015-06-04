@@ -118,6 +118,7 @@ Notes-
 Notes for ZoomType:
 
  - `STANDARD` - default, when set, you may optionally define `'InitZoomLevel'` or the zoom will default to be 1x
+ - `FORCE_STANDARD` - Acts just like `STANDARD` but overrides automatic zooming when in expanded mode.
  - `TO_WIDTH` - you must define `ZoomToWidth` and set a pixel width
  - `FULL_SCREEN` - you must define `ZoomToWidth` with a width and `'ZoomToHeight'` with a height
  - `ARCSEC_PER_SCREEN_PIX`- you must define `ZoomArcsecPerScreenPix`
