@@ -237,7 +237,6 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                 mpw.getGroup().setLastPoppedOut(mpw);
                 plotView.setScrollBarsEnabled(!ap.isWCSMatch());
                 mpw.setShowInlineTitle(false);
-                saveCurrentDrawingDim(dim);
             }
         } else {
             popout.widgetResized(dim.getWidth(), dim.getHeight());
@@ -253,6 +252,7 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
         AllPlots ap= AllPlots.getInstance();
         MiniPlotWidget mpwPrim= ap.getMiniPlotWidget();
         WebPlot primPlot= mpwPrim!=null ? mpwPrim.getCurrentPlot() : null;
+        boolean didZoom= false;
         for(PopoutWidget popout : popoutList) {
             if (popout instanceof MiniPlotWidget) {
                 MiniPlotWidget mpw = (MiniPlotWidget) popout;
@@ -263,10 +263,13 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                         float zlevel = computeZoomFactorInGridMode(mpwPrim, dim);
                         float arcsecPerPix= ZoomUtil.getArcSecPerPix(primPlot,zlevel);
                         ZoomUtil.wcsSyncToAS(mpwPrim, mpw, arcsecPerPix, ap.isWCSMatchIsNorth());
+                        didZoom= true;
                     }
                     else {
                         float zlevel = computeZoomFactorInGridMode(mpw, dim);
-                        setGridModeZoom(plotView, zlevel);
+                        if (setGridModeZoom(plotView, zlevel)) {
+                            didZoom= true;
+                        }
                     }
                     plotView.setScrollBarsEnabled(false);
                     mpw.setShowInlineTitle(true);
@@ -277,8 +280,7 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                 popout.widgetResized(dim.getWidth(), dim.getHeight());
             }
         }
-        saveCurrentDrawingDim(dim);
-
+        if (didZoom) saveCurrentDrawingDim(dim);
     }
 
 
@@ -406,8 +408,10 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
         WebPlot p= pv.getPrimaryPlot();
         float level = computeZoomFactorInOneMode(mpw, mpw.getCurrentPlot(), dim);
         level= getMaxZoomLevel(pv,level);
-        if (Math.abs(level-p.getZoomFact())>.03) {
+        float percent= level/p.getZoomFact();
+        if (percent>1.1 || percent<.9) {
             pv.setZoomTo(level, true, false);
+            saveCurrentDrawingDim(dim);
         }
         else {
             mpw.refreshWidget();
@@ -428,14 +432,18 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
     }
 
 
-    private static void setGridModeZoom(WebPlotView plotView, float level) {
+    private boolean setGridModeZoom(WebPlotView plotView, float level) {
+        boolean didZoom= false;
         level= getMaxZoomLevel(plotView,level);
-        if (Math.abs(level-plotView.getPrimaryPlot().getZoomFact())>.03) {
+        float percent= level/plotView.getPrimaryPlot().getZoomFact();
+        if (percent>1.1 || percent<.9) {
             plotView.setZoomTo(level, true, false);
+            didZoom= true;
         }
         else {
             plotView.getPrimaryPlot().refreshWidget();
         }
+        return didZoom;
     }
 
 

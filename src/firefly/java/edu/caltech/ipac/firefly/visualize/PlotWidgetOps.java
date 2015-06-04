@@ -145,8 +145,8 @@ public class PlotWidgetOps {
                         else {
                             d= ap.getExpandedController().getGridFutureDimensions(r.getPlotId());
                         }
-                        r.setZoomToWidth(d.getWidth()>10 ? d.getWidth() : 200);
-                        r.setZoomToHeight(d.getHeight()>10 ? d.getHeight() : 200);
+                        r.setZoomToWidth(d!=null && d.getWidth()>10 ? d.getWidth() : 200);
+                        r.setZoomToHeight(d!=null && d.getHeight()>10 ? d.getHeight() : 200);
                         mpw.prepare(r, null, null, false, true);
 
                     }
@@ -171,8 +171,8 @@ public class PlotWidgetOps {
 
         Vis.init(new Vis.InitComplete() {
             public void done() {
+                Element useForMask= maskElement;
                 AllPlots ap= AllPlots.getInstance();
-                if (plotExpanded) ap.forceExpand(mpwList.get(0));
                 for(int i=0; (i<requestList.size()); i++) {
                     MiniPlotWidget mpw= mpwList.get(i);
                     WebPlotRequest r= requestList.get(i);
@@ -180,6 +180,10 @@ public class PlotWidgetOps {
                     mpw.setStartingExpanded(plotExpanded);
                     mpw.setCanCollapse(true);
                     mpw.initMPW();
+                    if (i==0 && plotExpanded) {
+                        ap.forceExpand(mpwList.get(0));
+                        useForMask=ap.getExpandedController().getExpandRoot().getElement();
+                    }
                     if (plotExpanded) {
                         if (mpw.getPlotView()!=null) mpw.getPlotView().clearAllPlots();
                         if (r.getZoomType()!=ZoomType.FORCE_STANDARD) {
@@ -191,17 +195,17 @@ public class PlotWidgetOps {
                             else {
                                 d= ap.getExpandedController().getGridFutureDimensions(r.getPlotId());
                             }
-                            r.setZoomToWidth(d.getWidth()>10 ? d.getWidth() : 200);
-                            r.setZoomToHeight(d.getHeight()>10 ? d.getHeight() : 200);
+                            r.setZoomToWidth(d!=null && d.getWidth()>10 ? d.getWidth() : 200);
+                            r.setZoomToHeight(d!=null && d.getHeight()>10 ? d.getHeight() : 200);
                         }
                         mpw.prepare(r, null, null, false, true);
                     }
                     else {
                         List<WebPlotRequest> rl= mpw.prepare(r,null,null,false,true);
-                        requestList.set(i,rl.get(0));
+                        requestList.set(i, rl.get(0));
                     }
                 }
-                PlotGroupTask.plot(maskElement,requestList,mpwList,notify);
+                PlotGroupTask.plot(useForMask,requestList,mpwList,notify);
             }
         });
     }

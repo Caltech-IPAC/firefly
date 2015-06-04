@@ -94,6 +94,7 @@ public class PopoutControlsUI {
         _popoutWidget= popoutWidget;
         _expandedList= expandedList;
         _behavior= behavior;
+        _expandDeck.setStyleName("expand-deck");
         _originalExpandedList= originalExpandedList;
         popoutWidget.getExpandRoot().clear();
         initExpandControls();
