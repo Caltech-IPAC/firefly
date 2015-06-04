@@ -40,6 +40,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+
 /**
  * User: roby
  * Date: Mar 11, 2010
@@ -58,8 +59,8 @@ public class BandPanel extends Composite {
     private static final String EQUALIZATION_KEY = "equalization";
     private static final String SQUARED_KEY      = "squared";
     private static final String SQRT_KEY         = "sqrt";
-    private static final String ASINH_KEY         = "asinh";
-    private static final String POWERLAW_GAMMA_KEY         = "powerlaw_gamma";
+    private static final String ARCSINE_KEY         = "arcsine";
+    private static final String POWERLAW_GAMMA_KEY         = "powerLawGamma";
 
     private static final String TEMP_GIF=  GWT.getModuleBaseURL()+"images/transparent-20x20.gif";
 
@@ -92,6 +93,7 @@ public class BandPanel extends Composite {
     private SimpleInputField ifDR;
     private  SimpleInputField ifGamma;
 
+
     public BandPanel(WebPlot plot, Band band) {
         _band= band;
         _plot= plot;
@@ -99,6 +101,7 @@ public class BandPanel extends Composite {
         _minStretch= new StretchInputField(StretchInputField.Type.MIN,fData);
         _maxStretch= new StretchInputField(StretchInputField.Type.MAX,fData);
         _drStretch= new StretchInputField(StretchInputField.Type.DR,fData);
+
         _gammaStretch= new StretchInputField(StretchInputField.Type.GAMMA,fData);
 
         createContents();
@@ -115,8 +118,9 @@ public class BandPanel extends Composite {
         SimpleInputField ifMax= new  SimpleInputField(_maxStretch,new SimpleInputField.Config("100px"),true);
 
         ifDR= new  SimpleInputField(_drStretch,new SimpleInputField.Config("100px"),true);
+        //ifDR.setValue("100.0");
         ifGamma= new  SimpleInputField(_gammaStretch,new SimpleInputField.Config("100px"),true);
-
+        //ifGamma.setValue("2.0");
 
         VerticalPanel barPanel= new VerticalPanel();
 
@@ -140,6 +144,27 @@ public class BandPanel extends Composite {
         vp.add(GwtUtil.centerAlign(barPanel));
         vp.add(_colorHistReadout);
         vp.add(GwtUtil.centerAlign(_stretchType));
+        _stretchType.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<String> event) {
+                if (_stretchType.getField().getValue().equalsIgnoreCase("arcsine")) {
+                    ifDR.setVisible(true);
+                    ifGamma.setVisible(false);
+                    _useZScale.setEnabled(false);
+
+                } else if (_stretchType.getField().getValue().equalsIgnoreCase("powerLawGamma")) {
+                    ifGamma.setVisible(true);
+                    ifDR.setVisible(false);
+                    _useZScale.setEnabled(false);
+
+                } else {
+                    ifDR.setVisible(false);
+                    ifGamma.setVisible(false);
+                    _useZScale.setEnabled(true);
+
+                }
+            }
+        });
         vp.add(_stPanel);
         vp.add(GwtUtil.centerAlign(fp));
         vp.add(cbarCenter);
@@ -148,12 +173,14 @@ public class BandPanel extends Composite {
         DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
         VerticalPanel minmaxPanel= new VerticalPanel();
+        //minmaxPanel.add(GwtUtil.centerAlign(_stretchType));
         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
         minmaxPanel.add(ifDR);
-        ifDR.setVisible(false);
+       // ifDR.setVisible(false);
         minmaxPanel.add(ifGamma);
-        ifGamma.setVisible(false);
+      //  ifGamma.setVisible(false);
+
         _rangeForm.add(minmaxPanel);
 
 
@@ -206,48 +233,50 @@ public class BandPanel extends Composite {
         RangeValues rv= _plot.getPlotState().getRangeValues(_band);
         int sType= rv.getStretchAlgorithm();
         setStretch(sType);
-        if (rv.getLowerWhich()==RangeValues.ZSCALE) {
-            setUseZScale(true);
 
+        //LZ 5/21/15 add these two blocks
+        if (sType== RangeValues.STRETCH_ARCSINE ){
+            _drStretch.setValue(rv.getDrValue() + "");
+        }
+        else if (sType== RangeValues.STRETCH_POWERLAW_GAMMA) {
+            _gammaStretch.setValue(rv.getGammaValue()+ "");
         }
         else {
-            setUseZScale(false);
+            if (rv.getLowerWhich() == RangeValues.ZSCALE) {
+                setUseZScale(true);
 
-            if (rv.getLowerWhich()==RangeValues.PERCENTAGE) {
-                _minStretch.setUnits(StretchInputField.Units.PERCENT);
-                _minStretch.setValue(rv.getLowerValue()+"");
-            }
-            else if (rv.getLowerWhich()==RangeValues.SIGMA) {
-                _minStretch.setUnits(StretchInputField.Units.SIGMA);
-                _minStretch.setValue(rv.getLowerValue()+"");
-            }
-            else if (rv.getLowerWhich()==RangeValues.ABSOLUTE) {
-                _minStretch.setUnits(StretchInputField.Units.DATA);
-                _minStretch.setValue(rv.getLowerValue()+"");
-            }
-            else {
-                _minStretch.setUnits(StretchInputField.Units.MINMAX);
-            }
+            } else {
+                setUseZScale(false);
 
-            if (rv.getUpperWhich()==RangeValues.PERCENTAGE) {
-                _maxStretch.setUnits(StretchInputField.Units.PERCENT);
-                _maxStretch.setValue(rv.getUpperValue()+"");
-            }
-            else if (rv.getUpperWhich()==RangeValues.SIGMA) {
-                _maxStretch.setUnits(StretchInputField.Units.SIGMA);
-                _maxStretch.setValue(rv.getUpperValue()+"");
-            }
-            else if (rv.getUpperWhich()==RangeValues.ABSOLUTE) {
-                _maxStretch.setUnits(StretchInputField.Units.DATA);
-                _maxStretch.setValue(rv.getUpperValue()+"");
-            }
-            else {
-                _maxStretch.setUnits(StretchInputField.Units.MINMAX);
+                if (rv.getLowerWhich() == RangeValues.PERCENTAGE) {
+                    _minStretch.setUnits(StretchInputField.Units.PERCENT);
+                    _minStretch.setValue(rv.getLowerValue() + "");
+                } else if (rv.getLowerWhich() == RangeValues.SIGMA) {
+                    _minStretch.setUnits(StretchInputField.Units.SIGMA);
+                    _minStretch.setValue(rv.getLowerValue() + "");
+                } else if (rv.getLowerWhich() == RangeValues.ABSOLUTE) {
+                    _minStretch.setUnits(StretchInputField.Units.DATA);
+                    _minStretch.setValue(rv.getLowerValue() + "");
+                } else {
+                    _minStretch.setUnits(StretchInputField.Units.MINMAX);
+                }
+
+                if (rv.getUpperWhich() == RangeValues.PERCENTAGE) {
+                    _maxStretch.setUnits(StretchInputField.Units.PERCENT);
+                    _maxStretch.setValue(rv.getUpperValue() + "");
+                } else if (rv.getUpperWhich() == RangeValues.SIGMA) {
+                    _maxStretch.setUnits(StretchInputField.Units.SIGMA);
+                    _maxStretch.setValue(rv.getUpperValue() + "");
+                } else if (rv.getUpperWhich() == RangeValues.ABSOLUTE) {
+                    _maxStretch.setUnits(StretchInputField.Units.DATA);
+                    _maxStretch.setValue(rv.getUpperValue() + "");
+                } else {
+                    _maxStretch.setUnits(StretchInputField.Units.MINMAX);
+                }
+
             }
 
         }
-
-
     }
 
     boolean isBandVisible() {
@@ -258,6 +287,8 @@ public class BandPanel extends Composite {
 
         float min= _minStretch.getNumberValue().floatValue();
         float max= _maxStretch.getNumberValue().floatValue();
+        float dr = _drStretch.getNumberValue().floatValue();
+        float gamma = _gammaStretch.getNumberValue().floatValue();
 
         _minStretch.getDataType();
 
@@ -274,7 +305,7 @@ public class BandPanel extends Composite {
         }
         else {
             range=  new RangeValues( _minStretch.getDataType(), min,
-                                     _maxStretch.getDataType(), max,
+                                     _maxStretch.getDataType(), max, dr, gamma,
                                      getStretch());
         }
         return range;
@@ -305,6 +336,8 @@ public class BandPanel extends Composite {
             case RangeValues.STRETCH_EQUAL :   _stretchType.setValue(EQUALIZATION_KEY); break;
             case RangeValues.STRETCH_SQUARED : _stretchType.setValue(SQUARED_KEY); break;
             case RangeValues.STRETCH_SQRT :    _stretchType.setValue(SQRT_KEY); break;
+            case RangeValues.STRETCH_ARCSINE :    _stretchType.setValue(ARCSINE_KEY ); break;
+            case RangeValues.STRETCH_POWERLAW_GAMMA :    _stretchType.setValue(POWERLAW_GAMMA_KEY ); break;
             default:
                 assert false;  // if we end up here then there is a new stretch type that has been added
                 break;
@@ -314,8 +347,8 @@ public class BandPanel extends Composite {
      int getStretch() {
 
         String sTypeStr= _stretchType.getValue();
-         ifDR.setVisible(false);
-         ifGamma.setVisible(false);
+         //ifDR.setVisible(false);
+        // ifGamma.setVisible(false);
         int sType;
         if      (sTypeStr.equals(LINEAR_KEY))       sType= RangeValues.STRETCH_LINEAR;
         else if (sTypeStr.equals(LOG_KEY))          sType= RangeValues.STRETCH_LOG;
@@ -324,18 +357,19 @@ public class BandPanel extends Composite {
         else if (sTypeStr.equals(SQUARED_KEY))      sType= RangeValues.STRETCH_SQUARED;
 
         else if (sTypeStr.equals(SQRT_KEY))         sType= RangeValues.STRETCH_SQRT;
-        else if (sTypeStr.equals(ASINH_KEY))        {
-            sType= RangeValues.STRETCH_ASINH;
-            ifDR.setVisible(true);
+        else if (sTypeStr.equals(ARCSINE_KEY))        {
+            sType= RangeValues.STRETCH_ARCSINE;
         }
         else if (sTypeStr.equals(POWERLAW_GAMMA_KEY))   {
             sType= RangeValues.STRETCH_POWERLAW_GAMMA;
-            ifGamma.setVisible(true);
+
         }
         else {
             sType= -1;
             assert false;  // if we end up here then there is a new stretch type that has been added
         }
+
+
 
         return sType;
     }
@@ -425,6 +459,8 @@ public class BandPanel extends Composite {
 
         public void onValueChange(ValueChangeEvent<Boolean> ev) {
             setUseZScale(ev.getValue());
+            //TODO hide arcsine and powerLawGamma in the _stretchType
+
         }
     }
 }

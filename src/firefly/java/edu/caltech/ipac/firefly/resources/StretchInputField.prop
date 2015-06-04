@@ -30,3 +30,21 @@ StretchInputField.minStretch.MinMax.Name= Data Min
 StretchInputField.minStretch.Sigma.Name= Sigma
 
 
+StretchInputField.drStretch.DataType= Float
+StretchInputField.drStretch.Min=0
+StretchInputField.drStretch.Max=1
+StretchInputField.drStretch.Precision=4
+StretchInputField.drStretch.Title= DR
+StretchInputField.drStretch.ShortDescription= The DR value of the arcsine Stretch
+StretchInputField.drStretch.ErrorDescription= The DR value of the arcsine Stretch:  data value
+
+StretchInputField.powerLawGammaStretch.DataType= Float
+StretchInputField.powerLawGammaStretch.Min=0
+StretchInputField.powerLawGammaStretch.Max=1
+StretchInputField.powerLawGammaStretch.Precision=4
+StretchInputField.powerLawGammaStretch.Title= Gamma
+StretchInputField.powerLawGammaStretch.ShortDescription= The Gamma value of the Power Law Gamma Stretch
+StretchInputField.powerLawGammaStretch.ErrorDescription= The DR value of the Power Law Gamma Stretch: Enter the percent, data value
+
+
+

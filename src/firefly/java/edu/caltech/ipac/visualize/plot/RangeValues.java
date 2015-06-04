@@ -23,6 +23,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
+    public static final double DR = 10.0;
+    public static final double GAMMA=2.0;
 
     public static final String LINEAR_STR= "Linear";
     public static final String LOG_STR= "Log";
@@ -31,7 +33,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final String SQUARED_STR= "Squared";
     public static final String SQRT_STR= "Sqrt";
 
-    public static final String ASINH_STR= "Asinh";
+    public static final String ASINH_STR= "arcsine";
     public static final String POWERLAW_GAMMA_STR= "powerlaw_gamma";
 
 
@@ -41,7 +43,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final int STRETCH_EQUAL = 47;
     public static final int STRETCH_SQUARED = 48;
     public static final int STRETCH_SQRT    = 49;
-    public static final int STRETCH_ASINH   = 50;
+    public static final int STRETCH_ARCSINE   = 50;
     public static final int STRETCH_POWERLAW_GAMMA   = 51;
 
 
@@ -49,8 +51,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _lowerValue;
     private int    _upperWhich;
     private double _upperValue;
-    private double _drValue;
-    private double _gammaValue;
+    private double _drValue=100;
+    private double _gammaValue=2;
     private int    _algorithm= STRETCH_LINEAR;
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
@@ -59,16 +61,177 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _contrast;
 
     public RangeValues() {
-       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, STRETCH_LINEAR, 25, 600, 120);
+       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, STRETCH_LINEAR, 25, 600, 120);
+    }
+
+    public RangeValues(int algorithm ) {
+
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, algorithm, 25, 600, 120);
+    }
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                     int    algorithm) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue, algorithm, 25, 600, 120);
+    }
+
+    //added
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        double drValue,
+                        double gammaValue,
+                        int    algorithm) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue, gammaValue, algorithm, 25, 600, 120);
+    }
+
+        public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line) {
+
+        this( lowerWhich, lowerValue, upperWhich, upperValue, DR, GAMMA, algorithm,
+                zscale_contrast, zscale_samples, zscale_samples_per_line,
+                0.5, 1.0);
+    }
+   //LZ added
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        double drValue,
+                        double gammaValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line) {
+
+        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue, gammaValue, algorithm,
+                zscale_contrast, zscale_samples, zscale_samples_per_line,
+                0.5, 1.0);
+    }
+
+
+    //LZ  added
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        double drValue,
+                        double gammaValue,
+
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line,
+                        double bias,
+                        double contrast) {
+
+        _lowerWhich= lowerWhich;
+        _lowerValue= lowerValue;
+        _upperWhich= upperWhich;
+        _upperValue= upperValue;
+        _algorithm = algorithm;
+         _drValue = drValue;
+         _gammaValue=gammaValue;
+        _zscale_contrast = zscale_contrast;
+        _zscale_samples = zscale_samples;
+        _zscale_samples_per_line = zscale_samples_per_line;
+        _bias = bias;
+        _contrast = contrast;
+    }
+    /**
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        int    algorithm) {
+       this( lowerWhich, lowerValue, upperWhich, upperValue,100.0, 2.0, algorithm,  25, 600, 120);
+    }
+
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue, double drValue, double gammaValue,
+                        int    algorithm) {
+        this( lowerWhich, lowerValue, upperWhich, upperValue, drValue, gammaValue, algorithm,  25, 600, 120);
     }
 
     public RangeValues( int    lowerWhich,
                         double lowerValue,
                         int    upperWhich,
                         double upperValue,
-                        int    algorithm) {
-       this( lowerWhich, lowerValue, upperWhich, upperValue, algorithm, 25, 600, 120);
+                        double drValue,
+                        double gammaValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line) {
+
+       this( lowerWhich, lowerValue, upperWhich, upperValue,drValue, gammaValue, algorithm,
+               zscale_contrast, zscale_samples, zscale_samples_per_line,
+               0.5, 1.0 );
     }
+
+    public RangeValues( int    lowerWhich,
+                        double lowerValue,
+                        int    upperWhich,
+                        double upperValue,
+                        double drValue,
+                        double gammaValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line,
+                        double bias,
+                        double contrast) {
+
+       _lowerWhich= lowerWhich;
+       _lowerValue= lowerValue;
+       _upperWhich= upperWhich;
+       _upperValue= upperValue;
+       _algorithm = algorithm;
+        //LZ 5/21/15 hard code those two values here
+        if (algorithm ==STRETCH_ARCSINE) _drValue = drValue;
+        if (algorithm ==STRETCH_POWERLAW_GAMMA)  _gammaValue=gammaValue;
+
+       _zscale_contrast = zscale_contrast;
+       _zscale_samples = zscale_samples;
+       _zscale_samples_per_line = zscale_samples_per_line;
+       _bias = bias;
+       _contrast = contrast;
+    }
+
+
+    public RangeValues( double drValue,
+                        double gammaValue,
+                        int    algorithm,
+                        int    zscale_contrast,
+                        int    zscale_samples,
+                        int    zscale_samples_per_line,
+                        double bias,
+                        double contrast)    {
+
+
+
+        //LZ 5/21/15 hard code those two values here
+
+        _algorithm = algorithm;
+        if (algorithm ==STRETCH_ARCSINE) _drValue = drValue;
+        if (algorithm ==STRETCH_POWERLAW_GAMMA)  _gammaValue=gammaValue;
+        _zscale_contrast = zscale_contrast;
+        _zscale_samples = zscale_samples;
+        _zscale_samples_per_line = zscale_samples_per_line;
+        _bias = bias;
+        _contrast = contrast;
+    }
+
 
     public RangeValues( int    lowerWhich,
                         double lowerValue,
@@ -79,9 +242,9 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    zscale_samples,
                         int    zscale_samples_per_line) {
 
-       this( lowerWhich, lowerValue, upperWhich, upperValue, algorithm,
-               zscale_contrast, zscale_samples, zscale_samples_per_line,
-               0.5, 1.0);
+        this( lowerWhich, lowerValue, upperWhich, upperValue, algorithm,
+                zscale_contrast, zscale_samples, zscale_samples_per_line,
+                0.5, 1.0);
     }
 
     public RangeValues( int    lowerWhich,
@@ -95,18 +258,18 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         double bias,
                         double contrast) {
 
-       _lowerWhich= lowerWhich;
-       _lowerValue= lowerValue;
-       _upperWhich= upperWhich;
-       _upperValue= upperValue;
-       _algorithm = algorithm;
-       _zscale_contrast = zscale_contrast;
-       _zscale_samples = zscale_samples;
-       _zscale_samples_per_line = zscale_samples_per_line;
-       _bias = bias;
-       _contrast = contrast;
+        _lowerWhich= lowerWhich;
+        _lowerValue= lowerValue;
+        _upperWhich= upperWhich;
+        _upperValue= upperValue;
+        _algorithm = algorithm;
+        _zscale_contrast = zscale_contrast;
+        _zscale_samples = zscale_samples;
+        _zscale_samples_per_line = zscale_samples_per_line;
+        _bias = bias;
+        _contrast = contrast;
     }
-
+    */
     /**
      *
      * @param stretchType the stretch type, possible values:  "Percent", "Absolute", "Sigma"
@@ -134,13 +297,17 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
             else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
             else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
-            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
+            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ARCSINE;
             else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
         }
         return new RangeValues(s,lowerValue,s,upperValue,a);
     }
 
+
+   //LZ 05/21/15 add the following two lines
+    public double getDrValue() { return _drValue; }
+    public double getGammaValue() { return _gammaValue; }
 
 
     public int    getLowerWhich() { return _lowerWhich; }
@@ -169,7 +336,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
 
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
-		_upperValue, _algorithm,
+		_upperValue, _drValue, _gammaValue, _algorithm,
 		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _bias, _contrast );
     }
 
@@ -182,9 +349,12 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static RangeValues makeDefaultPercent() {
         return new RangeValues(PERCENTAGE,-2F,PERCENTAGE,10F,STRETCH_LINEAR);
     }
+
+
     public static RangeValues makeDefaultZScale() {
         return new RangeValues(ZSCALE,1F,ZSCALE,1F,STRETCH_LINEAR,25, 600, 120);
     }
+
 
     public static RangeValues parse(String sIn) {
         if (StringUtils.isEmpty(sIn)) return null;

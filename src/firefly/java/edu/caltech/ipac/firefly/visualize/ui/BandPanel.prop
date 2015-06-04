@@ -6,7 +6,7 @@
 BandPanel.stretchType.type.DataType= EnumString
 BandPanel.stretchType.type.Title= Stretch Type
 BandPanel.stretchType.type.ShortDescription= Choose Stretch algorithm
-BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt asinh, powerLawGamma
+BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt arcsine powerLawGamma
 BandPanel.stretchType.type.Default=linear
 BandPanel.stretchType.type.linear.Name= Linear
 BandPanel.stretchType.type.log.Name=    Log
@@ -14,8 +14,10 @@ BandPanel.stretchType.type.loglog.Name= Log-Log
 BandPanel.stretchType.type.equalization.Name= Histogram Equalization
 BandPanel.stretchType.type.squared.Name= Squared
 BandPanel.stretchType.type.sqrt.Name= Sqrt
-BandPanel.stretchType.type.sqrt.Name= Asinh
-BandPanel.stretchType.type.sqrt.Name= PowerLawGamma
+//LZ 5/23/Add Arcsine and PowerLawGamma
+BandPanel.stretchType.type.arcsine.Name= Arcsine
+BandPanel.stretchType.type.powerLawGamma.Name= PowerLawGamma
+
 BandPanel.stretchType.type.linear.IntValue= 44
 BandPanel.stretchType.type.log.IntValue=    45
 BandPanel.stretchType.type.loglog.IntValue= 46
@@ -30,7 +32,7 @@ BandPanel.stretchType.type.powerLayGamma.IntValue= 51
 BandPanel.contrast.DataType= Integer
 BandPanel.contrast.Title= Contrast (%)
 BandPanel.contrast.ShortDescription= Zscale algorithm contrast parameter
-BandPanel.contrast.ErrorDescription= Zscale algorithm contrast parameter: Must be an integer bwtween 1 and 100
+BandPanel.contrast.ErrorDescription= Zscale algorithm contrast parameter: Must be an integer bewtween 1 and 100
 BandPanel.contrast.Min= 1
 BandPanel.contrast.Max= 100
 BandPanel.contrast.Default= 25
