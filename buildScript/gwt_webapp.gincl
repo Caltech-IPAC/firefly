@@ -81,6 +81,13 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       into gwt.warDir
     }
 
+    // temporary solution to take in javascript built by firefly
+    copy {
+      from ("$fireflyPath/jars/build/") { include '*.js*' }
+      from ("$rootDir/jars/build/") { include '*.js*' }
+      into gwt.warDir
+    }
+
     if (project.appConfigProps["ehcache.replicate"] && !project.appConfigProps["ehcache.replicate"].toBoolean()) {
       exclude "ehcache.xml"
     }
@@ -93,40 +100,6 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
 task webapp {
   outputs.upToDateWhen { false }
   ext.baseWarName = jar.baseName
-}
-
-task buildClient (dependsOn: loadConfig) {
-
-  outputs.upToDateWhen { false }
-
-  doLast {
-
-    try {
-      def process = "node -v".execute()
-    } catch (Exception e) {
-        println ">> node.js not found.  Skipping buildClient."
-        throw new StopExecutionException("node.js not found.  Skipping buildClient.")
-    }
-
-    if (!file("webpack.config.js").exists()) {
-      println ">> webpack.config.js not found.  Skipping buildClient."
-      throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
-    }
-
-    exec {
-      executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
-      args "-d"
-    }
-    exec {
-      executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
-      args "-d"
-      args "--config", "webpack-ffapp.config.js"
-    }
-    copy {
-      from("html/tmp-stuff/")
-      into gwt.warDir
-    }
-  }
 }
 
 war {

@@ -6,8 +6,8 @@ var webpack = require('webpack');
 //var strUtil = require('underscore.string');
 
 
-
 var release = (process.env.NODE_ENV === 'production');
+
 
 //if (release)  {
 //  plugins.push(new webpack.DefinePlugin({
@@ -25,8 +25,8 @@ var release = (process.env.NODE_ENV === 'production');
 
 var entryPoint= "fireflyJSLib.js";
 var ffRoot= path.resolve(__dirname+ '/../../') + "/";
-var project = {buildDir : ffRoot+"build/"};
 var outScriptName= 'fflib.js';
+var build_dir = process.env.WP_BUILD_DIR || ffRoot + "jars/build ";
 
 var namePlugin= new webpack.DefinePlugin({
     __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
@@ -40,7 +40,7 @@ var retval= module.exports = {
 
   entry: __dirname+'/js/'+entryPoint,
   output: {
-    path: project.buildDir+'gwt/fftools',
+    path: build_dir,
     filename: outScriptName
   },
 

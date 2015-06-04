@@ -100,3 +100,33 @@ repositories {
 jar.destinationDir = file ("$rootDir/jars/build")
 buildDir = "$rootDir/build"
 
+
+task buildClient (dependsOn: loadConfig) {
+
+  outputs.upToDateWhen { false }
+
+  doLast {
+
+    try {
+      def process = "node -v".execute()
+    } catch (Exception e) {
+      println ">> Task failed due to missing node.js"
+      throw new GradleException("Task failed due to missing node.js.", e)
+    }
+
+    if (!file("webpack.config.js").exists()) {
+      println ">> webpack.config.js not found.  Skipping buildClient."
+      throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
+    }
+
+    exec {
+      environment 'WP_BUILD_DIR': jar.destinationDir
+      executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
+
+      if (project.hasProperty('webpackDebug') && project['webpackDebug'] == "true") {
+        args "-d"
+      }
+    }
+  }
+}
+
