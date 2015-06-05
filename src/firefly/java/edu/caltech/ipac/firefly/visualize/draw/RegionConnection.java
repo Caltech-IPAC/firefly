@@ -183,6 +183,13 @@ public class RegionConnection implements DataConnection {
             retval= ShapeDataObj.makeCircle( pt, (int)(v.toDegree()*3600),
                                              ShapeDataObj.UnitType.ARCSEC);
         }
+        else if (v.getType()== RegionValue.Unit.CONTEXT && pt instanceof WorldPt) {
+            retval= ShapeDataObj.makeCircle( pt, (int)(v.getValue()*3600),
+                    ShapeDataObj.UnitType.ARCSEC);
+        }
+        else if (v.getType()== RegionValue.Unit.IMAGE_PIXEL) {
+            retval= ShapeDataObj.makeCircle( pt, (int)v.getValue(), ShapeDataObj.UnitType.IMAGE_PIXEL);
+        }
         else {
             retval= ShapeDataObj.makeCircle( pt, getValueInScreenPixel(plot,v));
         }
@@ -222,6 +229,10 @@ public class RegionConnection implements DataConnection {
             retval= ShapeDataObj.makeRectangle(pt, (int)(w.toDegree()*3600),
                                                    (int)(h.toDegree()*3600),
                                                    ShapeDataObj.UnitType.ARCSEC);
+        }
+        else if (w.getType()==RegionValue.Unit.IMAGE_PIXEL) {
+            retval= ShapeDataObj.makeRectangle( pt, (int)w.getValue(), (int)h.getValue(),
+                                                ShapeDataObj.UnitType.IMAGE_PIXEL);
         }
         else {
             retval= ShapeDataObj.makeRectangle( pt, getValueInScreenPixel(plot,w),

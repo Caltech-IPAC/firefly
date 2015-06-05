@@ -606,6 +606,11 @@ public class WebPlot {
         return _projection.getPixelScaleArcSec()/3600.0;
     }
 
+
+//    public double convertImagePixelSizeToScreenPixelSize(double iPixSize){
+//        return iPixSize*getZoomFact();
+//    }
+
 //========================================================================================
 //----------------------------- Conversion to ImageWorkSpacePt Methods  ------------------
 //========================================================================================

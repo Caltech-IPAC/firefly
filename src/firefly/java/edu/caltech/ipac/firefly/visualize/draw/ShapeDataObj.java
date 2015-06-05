@@ -52,7 +52,7 @@ public class ShapeDataObj extends DrawObj {
     public static final String HTML_DEG= "&deg;";
 
     public enum Style {STANDARD,HANDLED}
-    public enum UnitType {PIXEL,ARCSEC}
+    public enum UnitType {PIXEL,ARCSEC,IMAGE_PIXEL}
     public enum ShapeType {Line, Text,Circle, Rectangle}
 
     private Pt _pts[];
@@ -334,6 +334,7 @@ public class ShapeDataObj extends DrawObj {
         if (_pts.length==1 && _size1 <Integer.MAX_VALUE) {
             switch (unitType) {
                 case PIXEL: screenRadius= _size1; break;
+                case IMAGE_PIXEL: screenRadius= (int)(plot.getZoomFact()*_size1); break;
                 case ARCSEC: screenRadius= getValueInScreenPixel(plot,_size1); break;
             }
             centerPt= plot.getViewPortCoords(_pts[0]);
@@ -379,10 +380,32 @@ public class ShapeDataObj extends DrawObj {
             textPt= pt0;
             if (plot.pointInViewPort(pt0)) {
                 inView= true;
+                int w;
+                int h;
+
+                switch (unitType) {
+                    case PIXEL:
+                        w= _size1;
+                        h= _size2;
+                        break;
+                    case ARCSEC:
+                        w= getValueInScreenPixel(plot,_size1);
+                        h= getValueInScreenPixel(plot,_size2);
+                        break;
+                    case IMAGE_PIXEL:
+                        double scale= plot.getZoomFact();
+                        w= (int)(scale*_size1);
+                        h= (int)(scale*_size2);
+                    break;
+                    default:
+                        w= _size1;
+                        h= _size2;
+                        break;
+                }
+
+
                 int x= pt0.getIX();
                 int y= pt0.getIY();
-                int w= _size1;
-                int h= _size2;
                 if (h<0) {
                     h*=-1;
                     y-=h;
