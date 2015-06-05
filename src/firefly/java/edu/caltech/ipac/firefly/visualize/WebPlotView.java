@@ -511,7 +511,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         String tStr= (y==AUTO) ? "auto" : y+"px" ;
         GwtUtil.setStyles(_masterPanel, "marginLeft",  lStr,
                                         "marginRight","auto",
-                                        "marginTop",tStr
+                                        "marginTop",tStr,
+                                        "cursor","crosshair"
                                      );
     }
 
