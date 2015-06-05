@@ -53,6 +53,25 @@ public class PushJob {
         return true;
     }
 
+    public static boolean pushPan(String plotId,
+                                  String xStr,
+                                  String yStr) {
+        ServerRequest r = new ServerRequest(plotId);
+        r.setParam(ServerParams.SCROLL_X, xStr);
+        r.setParam(ServerParams.SCROLL_Y, yStr);
+        fireEvent(r.toString(), Name.PUSH_PAN);
+        return true;
+    }
+
+    public static boolean pushZoom(String plotId, String zFactStr) {
+        ServerRequest r = new ServerRequest(plotId);
+        r.setParam(ServerParams.ZOOM_FACTOR, zFactStr);
+        fireEvent(r.toString(), Name.PUSH_ZOOM);
+        return true;
+    }
+
+
+
     public static boolean pushTable(String fileName) {
         fireEvent(fileName, Name.PUSH_TABLE_FILE);
         return true;

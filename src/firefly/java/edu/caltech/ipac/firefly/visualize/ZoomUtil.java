@@ -55,11 +55,17 @@ public class ZoomUtil {
 //        }
     }
 
-    public static void zoomGroup(final float level) {
-        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
-        final WebPlot plot= AllPlots.getInstance().getMiniPlotWidget().getCurrentPlot();
+    public static void zoomGroupManual(MiniPlotWidget mpw, final float level) {
+        AllPlots.getInstance().setSelectedMPW(mpw,false);
+        final WebPlot plot= mpw.getCurrentPlot();
+        AllPlots ap= AllPlots.getInstance();
         if (mpw.isExpandedSingleView()) {
+            PopoutWidget.getExpandBehavior().setOnePlotFillStyle(PopoutWidget.FillType.OFF);
             plot.getPlotView().setZoomTo(level, false, true);
+        }
+        else if (ap.isExpanded() && !ap.isExpandSingleView()) { // expanded grid
+            PopoutWidget.getExpandBehavior().setGridPlotFillStyle(PopoutWidget.FillType.OFF);
+            zoomGroupTo(level);
         }
         else {
             zoomGroupTo(level);

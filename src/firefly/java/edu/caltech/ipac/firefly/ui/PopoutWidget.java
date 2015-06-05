@@ -310,6 +310,10 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _behavior = behavior;
     }
 
+    public static Behavior getExpandBehavior() {
+        return _behavior;
+    }
+
     public void setOneFillType(FillType oneFillType) {
         if (isPrimaryExpanded()) {
             this.oneFillType = oneFillType;

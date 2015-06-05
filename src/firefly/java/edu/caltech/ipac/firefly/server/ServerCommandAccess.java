@@ -137,6 +137,8 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VIS_PUSH_XYPLOT,           new PushCommands.PushXYPlot());
         _cmdMap.put(ServerParams.VIS_PUSH_EXT,              new PushCommands.PushExtension());
         _cmdMap.put(ServerParams.VIS_PUSH_ALIVE_CHECK,      new PushCommands.PushAliveCheck());
+        _cmdMap.put(ServerParams.VIS_PUSH_PAN,              new PushCommands.PushPan());
+        _cmdMap.put(ServerParams.VIS_PUSH_ZOOM,             new PushCommands.PushZoom());
 //        _cmdMap.put(ServerParams.VIS_QUERY_ACTION,      new PushCommands.QueryAction());
 //        _cmdMap.put(ServerParams.VIS_PUSH_WPR,           new PushCommands.PushFITS());
 

@@ -75,6 +75,8 @@ export const ServerParams = {
         SPACIAL_TYPE: 'SpacialType',
         URL: 'URL',
         IP_ADDRESS: "ipAddress",
+        SCROLL_X: 'scrollX',
+        SCROLL_Y: 'scrollY',
 
         EXT_TYPE: 'extType',
         IMAGE: 'image',

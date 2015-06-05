@@ -20,10 +20,13 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Ext;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.RegionLoader;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.ZoomUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.HashMap;
@@ -64,6 +67,10 @@ public class PushReceiver implements WebEventListener {
             addPlotCmdExtension(data);
         } else if (name.equals(Name.PUSH_TABLE_FILE)) {
             loadTable(data);
+        } else if (name.equals(Name.PUSH_PAN)) {
+            externalPan(data);
+        } else if (name.equals(Name.PUSH_ZOOM)) {
+            externalZoom(data);
         } else if (name.equals(Name.PUSH_XYPLOT_FILE)) {
             loadXYPlot(data);
         }
@@ -147,6 +154,30 @@ public class PushReceiver implements WebEventListener {
         plotController.addXYPlot(params);
     }
 
+    private void externalPan(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String plotIdStrAry= req.getRequestId();
+        String pIDAry[]= plotIdStrAry.split(",");
+        int x= req.getIntParam(ServerParams.SCROLL_X);
+        int y= req.getIntParam(ServerParams.SCROLL_Y);
+        MiniPlotWidget mpw;
+        for(String plotId : pIDAry) {
+            mpw= AllPlots.getInstance().getMiniPlotWidgetById(plotId);
+            if (mpw!=null)  mpw.getPlotView().setScrollXY(x,y);
+        }
+    }
+
+    private void externalZoom(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String plotIdStrAry= req.getRequestId();
+        String pIDAry[]= plotIdStrAry.split(",");
+        float zFactor= req.getFloatParam(ServerParams.ZOOM_FACTOR);
+        MiniPlotWidget mpw;
+        for(String plotId : pIDAry) {
+            mpw= AllPlots.getInstance().getMiniPlotWidgetById(plotId);
+            if (mpw!=null) ZoomUtil.zoomGroupManual(mpw,zFactor);
+        }
+    }
 
     private void loadRegionFile(final String in) {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());

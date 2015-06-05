@@ -64,6 +64,43 @@ public class PushCommands {
         }
     }
 
+
+    public static class PushPan extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String plotID= sp.getRequired(ServerParams.PLOT_ID);
+            String xStr= sp.getRequired(ServerParams.SCROLL_X);
+            String yStr= sp.getRequired(ServerParams.SCROLL_Y);
+
+
+            boolean success= PushJob.pushPan(plotID,xStr,yStr);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            return outJson.toJSONString();
+        }
+    }
+
+    public static class PushZoom extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String plotID= sp.getRequired(ServerParams.PLOT_ID);
+            String zoomFactStr= sp.getRequired(ServerParams.ZOOM_FACTOR);
+
+
+            boolean success= PushJob.pushZoom(plotID,zoomFactStr);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            return outJson.toJSONString();
+        }
+    }
+
+
     public static class PushExtension extends BaseVisPushCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

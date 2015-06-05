@@ -67,6 +67,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -398,6 +399,20 @@ public class AllPlots implements HasWebEventManager {
         Vis.assertInitialized();
         return _primaryMPWSel != null ? _primaryMPWSel.getPlotView() : null;
     }
+
+    public MiniPlotWidget getMiniPlotWidgetById(String plotId) {
+        MiniPlotWidget retval= null;
+        if (!StringUtils.isEmpty(plotId)) {
+            for(MiniPlotWidget mpw : _allMpwList) {
+                if (plotId.equals(mpw.getPlotId())) {
+                    retval= mpw;
+                    break;
+                }
+            }
+        }
+        return retval;
+    }
+
 
     public MiniPlotWidget getMiniPlotWidget() { return _primaryMPWSel; }
 

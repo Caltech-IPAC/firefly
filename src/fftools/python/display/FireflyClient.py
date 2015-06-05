@@ -319,15 +319,27 @@ class FireflyClient(WebSocketClient):
     # Zoom the image
     # todo
     def zoom(self, plotId, factor):
-        #todo - add when http api supports this
-        return
+        """
+        :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+        :param factor: number, zoom factor for the image
+        :return:
+        """
+        plotIdStr= ','.join(plotId) if type(plotId) is list else plotId
+        url = self.urlRoot + "?cmd=pushZoom&plotId=%s&zoomFactor=%.3f" % (plotIdStr,factor)
+        return self.sendURLAsGet(url)
 
 
     # Pan or scroll the image
-    # todo
-    def pan(self, plotId, direction, factor):
-        #todo - add when http api supports this
-        return
+    def pan(self, plotId, x, y):
+        """
+        :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+        :param x: number, new x position to scroll to
+        :param y: number, new y position to scroll to
+        :return:
+        """
+        plotIdStr= ','.join(plotId) if type(plotId) is list else plotId
+        url = self.urlRoot + "?cmd=pushPan&plotId=%s&scrollX=%d&scrollY=%d" % (plotIdStr,x,y)
+        return self.sendURLAsGet(url)
 
 
     #-----------------------------------------------------------------

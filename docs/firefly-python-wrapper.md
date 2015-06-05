@@ -1,6 +1,3 @@
-
-
-
 ## Firefly python wrapper user guide ##
 
 This document explains how to use the python library included in Firefly to interact with firefly image viewer. 
@@ -66,9 +63,19 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
  
 ```python 
      table ='/your/path/yourTable.tbl'    
-     tablePathInfo = fc.uploadImage(table)
+     tablePathInfo = fc.uploadFile(table)
      fc.showTable(tablePathInfo)
 ```
+
+####Show a XY Plot
+ 
+```python 
+     table ='/your/path/yourTable.tbl'    
+     tablePathInfo = fc.uploadImage(table)
+     fc.showXYPlot(fileOnServer=tablePathInfo, additionalParams={'xColExpr' : 'col1/col2', 'yCol' : 'col3', 'plotTitle' : 'col3 vs. col1/col2'})
+```
+See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-overview.md) for the available XY Plot parameters.
+
 
 ###Run in python prompt
 
@@ -209,24 +216,39 @@ except KeyboardInterrupt:
     **extensionId** - the id of the extension
     **image** - a url of an icon to display in the toolbar instead of title
  
+- `pan(self, plotId, x, y)`
+
+    Scroll the image around.
+
+    - plotId: the id of the plot to pan
+    - x: x position
+    - y: y position
+    - *return* status of call
+
  
 ###FireflyClient's Region Methods
 
-- `overylayRegion(path, title=None, regionId=None)`
+- `overylayRegion(path, title=None, regionLayerId=None, plotId=None)`
      
     This method overlays a region file on an image
+   
+       - regionId: id of region overlay to create or add too
+       - title: title of the region file
+       - plotId: Target plotId to overlay the region on. may be a string or a list of strings. If None the the region is overlaid on all plots.
+       - *return* status of call
      
 - `removeRegion(regionId=None)`
      
     This method removes a region file from an image
     
-- `overlayRegionData(regionData, regionId, title=None)`
+- `overlayRegionData(regionData, regionLayerId, title=None, plotId=None)`
      
     Overlay a region on the loaded FITS images
        
        - regionData: a list of region entries
        - regionId: id of region overlay to create or add too
        - title: title of the region file
+       - plotId: Target plotId to overlay the region on. may be a string or a list of strings. If None the the region is overlaid on all plots.
        - *return* status of call
 
 - `removeRegionData(regionData, regionId, title=None)`
