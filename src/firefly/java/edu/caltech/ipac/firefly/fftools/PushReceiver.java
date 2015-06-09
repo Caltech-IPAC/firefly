@@ -21,13 +21,18 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.Ext;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.RegionLoader;
 import edu.caltech.ipac.firefly.visualize.RequestType;
+import edu.caltech.ipac.firefly.visualize.StretchData;
+import edu.caltech.ipac.firefly.visualize.WebHistogramOps;
+import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -71,6 +76,8 @@ public class PushReceiver implements WebEventListener {
             externalPan(data);
         } else if (name.equals(Name.PUSH_ZOOM)) {
             externalZoom(data);
+        } else if (name.equals(Name.PUSH_RANGE_VALUES)) {
+            externalRangeValues(data);
         } else if (name.equals(Name.PUSH_XYPLOT_FILE)) {
             loadXYPlot(data);
         }
@@ -179,6 +186,25 @@ public class PushReceiver implements WebEventListener {
         }
     }
 
+    private void externalRangeValues(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String plotIdStrAry= req.getRequestId();
+        String pIDAry[]= plotIdStrAry.split(",");
+        String rvStr= req.getParam(ServerParams.RANGE_VALUES);
+        RangeValues rv= RangeValues.parse(rvStr);
+        MiniPlotWidget mpw;
+        if (rv!=null) {
+            StretchData sData[]= new StretchData[] {new StretchData(Band.NO_BAND,rv,true)};
+            for(String plotId : pIDAry) {
+                mpw= AllPlots.getInstance().getMiniPlotWidgetById(plotId);
+                if (mpw!=null) {
+                    WebPlot plot= mpw.getCurrentPlot();
+                    if (plot!=null && !plot.isThreeColor()) WebHistogramOps.recomputeStretch(plot,sData);
+                }
+            }
+        }
+    }
+
     private void loadRegionFile(final String in) {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());
         String id= req.getRequestId();
@@ -190,8 +216,12 @@ public class PushReceiver implements WebEventListener {
         RegionLoader.loadRegFile(regFile, id, null, pIDAry);
     }
 
-    private void removeRegionFile(final String id) {
-        RegionLoader.removeRegion(id);
+    private void removeRegionFile(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String id= req.getRequestId();
+        String plotIdStr= req.getParam(ServerParams.PLOT_ID);
+        String pIDAry[]= !StringUtils.isEmpty(plotIdStr) ? plotIdStr.split(",") : null;
+        RegionLoader.removeRegion(id, pIDAry);
     }
 
 
@@ -210,8 +240,6 @@ public class PushReceiver implements WebEventListener {
         String regData= req.getParam(ServerParams.DS9_REGION_DATA);
         RegionLoader.removeFromRegion(regData,id);
     }
-
-
 
 
     private static String findTitle(TableServerRequest req) {

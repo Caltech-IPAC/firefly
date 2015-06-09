@@ -287,6 +287,10 @@ public class CoordinateSys implements Serializable {
         return (_jsys == CoordConv.EQUATORIAL_J ||
                 _jsys == CoordConv.EQUATORIAL_B);
     }
+
+    public static boolean isWorld(CoordinateSys csys) {
+        return !csys.equals(PIXEL) &&  !csys.equals(SCREEN_PIXEL) &&  !csys.equals(UNDEFINED);
+    }
 }
 
 

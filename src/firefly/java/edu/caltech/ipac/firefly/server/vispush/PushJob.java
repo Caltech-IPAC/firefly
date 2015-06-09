@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.visualize.plot.RangeValues;
 
 /**
  * @author Trey Roby
@@ -70,6 +71,12 @@ public class PushJob {
         return true;
     }
 
+    public static boolean pushRangeValues(String plotId, RangeValues rv) {
+        ServerRequest r = new ServerRequest(plotId);
+        r.setParam(ServerParams.RANGE_VALUES, rv.toString());
+        fireEvent(r.toString(), Name.PUSH_RANGE_VALUES);
+        return true;
+    }
 
 
     public static boolean pushTable(String fileName) {
@@ -96,8 +103,10 @@ public class PushJob {
         return true;
     }
 
-    public static boolean pushRemoveRegionFile(String id) {
-        fireEvent(id, Name.PUSH_REMOVE_REGION_FILE);
+    public static boolean pushRemoveRegionFile(String id, String plotIdAry) {
+        ServerRequest r = new ServerRequest(id);
+        if (plotIdAry!=null) r.setParam(ServerParams.PLOT_ID, plotIdAry);
+        fireEvent(r.toString(), Name.PUSH_REMOVE_REGION_FILE);
         return true;
     }
 

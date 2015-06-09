@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.vispush.PushJob;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.visualize.plot.RangeValues;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -100,6 +101,27 @@ public class PushCommands {
         }
     }
 
+    public static class PushRangeValues extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String plotID= sp.getRequired(ServerParams.PLOT_ID);
+            String rvString= sp.getRequired(ServerParams.RANGE_VALUES);
+            RangeValues rv= RangeValues.parse(rvString);
+
+
+            boolean success= false;
+            if (rv!=null) {
+                success= PushJob.pushRangeValues(plotID,rv);
+            }
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            if (!success) map.put("reason", "could not parse range values string");
+            return outJson.toJSONString();
+        }
+    }
 
     public static class PushExtension extends BaseVisPushCommand {
 
@@ -195,7 +217,8 @@ public class PushCommands {
 
             SrvParam sp= new SrvParam(paramMap);
             String id= sp.getRequired(ServerParams.ID);
-            boolean success= PushJob.pushRemoveRegionFile(id);
+            String plotId= sp.getOptional(ServerParams.PLOT_ID);
+            boolean success= PushJob.pushRemoveRegionFile(id, plotId);
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();
             outJson.add(map);

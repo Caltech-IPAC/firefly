@@ -115,13 +115,13 @@ public class ShapeDataObj extends DrawObj {
         return s;
     }
 
-    public static ShapeDataObj makeRectangle(WorldPt pt1, WorldPt pt2) {
+    public static ShapeDataObj makeRectangle(Pt pt1, Pt pt2) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Rectangle);
         s._pts= new Pt[] {pt1, pt2};
         return s;
     }
 
-    public static ShapeDataObj makeRectangle(WorldPt pt1, int width, int height, UnitType unitType) {
+    public static ShapeDataObj makeRectangle(Pt pt1, int width, int height, UnitType unitType) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Rectangle);
         s._pts= new Pt[] {pt1};
         s._size1 = width;
@@ -129,11 +129,12 @@ public class ShapeDataObj extends DrawObj {
         s.unitType= unitType;
         return s;
     }
-    public static ShapeDataObj makeRectangle(ScreenPt pt1, int widthInPix, int heightInPix) {
+    public static ShapeDataObj makeRectangle(Pt pt1, int widthInPix, int heightInPix) {
         ShapeDataObj s= new ShapeDataObj(ShapeType.Rectangle);
         s._pts= new Pt[] {pt1};
         s._size1 = widthInPix;
         s._size2 = heightInPix;
+        s.unitType= UnitType.PIXEL;
         return s;
     }
 

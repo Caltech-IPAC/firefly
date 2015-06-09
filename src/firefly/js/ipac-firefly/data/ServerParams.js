@@ -77,6 +77,8 @@ export const ServerParams = {
         IP_ADDRESS: "ipAddress",
         SCROLL_X: 'scrollX',
         SCROLL_Y: 'scrollY',
+        ZOOM_FACTOR: 'zoomFactor',
+        RANGE_VALUES: 'rangeValues',
 
         EXT_TYPE: 'extType',
         IMAGE: 'image',
@@ -142,6 +144,9 @@ export const ServerParams = {
         VIS_QUERY_ACTION: 'queryAction',
         VIS_PUSH_WPR: 'pushWPR',
         VIS_PUSH_ALIVE_CHECK: 'pushAliveCheck',
+        VIS_PUSH_PAN: 'pushPan',
+        VIS_PUSH_ZOOM: 'pushZoom',
+        VIS_PUSH_RANGE_VALUES: 'pushRangeValues',
 
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt'

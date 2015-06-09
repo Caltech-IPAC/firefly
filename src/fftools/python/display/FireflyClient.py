@@ -119,6 +119,9 @@ class FireflyClient(WebSocketClient):
         return retval
 
 
+    def makePidParam(self,plotId):
+        return ','.join(plotId) if type(plotId) is list else plotId
+
 
 #-----------------------------------------------------------------
 #-----------------------------------------------------------------
@@ -316,29 +319,36 @@ class FireflyClient(WebSocketClient):
         return self.sendURLAsGet(url)
 
 
-    # Zoom the image
-    # todo
     def zoom(self, plotId, factor):
         """
+        Zoom the image
         :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
         :param factor: number, zoom factor for the image
         :return:
         """
-        plotIdStr= ','.join(plotId) if type(plotId) is list else plotId
-        url = self.urlRoot + "?cmd=pushZoom&plotId=%s&zoomFactor=%.3f" % (plotIdStr,factor)
+        url = self.urlRoot + "?cmd=pushZoom&plotId=%s&zoomFactor=%.3f" % (self.makePidParam(plotId),factor)
         return self.sendURLAsGet(url)
 
 
-    # Pan or scroll the image
     def pan(self, plotId, x, y):
         """
+        Pan or scroll the image
         :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
         :param x: number, new x position to scroll to
         :param y: number, new y position to scroll to
         :return:
         """
-        plotIdStr= ','.join(plotId) if type(plotId) is list else plotId
-        url = self.urlRoot + "?cmd=pushPan&plotId=%s&scrollX=%d&scrollY=%d" % (plotIdStr,x,y)
+        url = self.urlRoot + "?cmd=pushPan&plotId=%s&scrollX=%d&scrollY=%d" % (self.makePidParam(plotId),x,y)
+        return self.sendURLAsGet(url)
+
+    def stretch(self, plotId, serializedRV):
+        """
+        Change the stretch of the image
+        :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+        :param serializedRV: the range values parameter
+        :return:
+        """
+        url = self.urlRoot + "?cmd=pushRangeValues&plotId=%s&rangeValues=%s" % (self.makePidParam(plotId),serializedRV)
         return self.sendURLAsGet(url)
 
 
@@ -365,17 +375,20 @@ class FireflyClient(WebSocketClient):
         if regionLayerId:
             url+= '&id=%s' % regionLayerId
         if plotId:
-            url+= '&plotId=%s' % (','.join(plotId) if type(plotId) is list else plotId)
+            url+= '&plotId=%s' % self.makePidParam(plotId)
         return self.sendURLAsGet(url)
 
 
-    def removeRegion(self, regionLayerId):
+    def removeRegion(self, regionLayerId, plotId=None):
         """
         Overlay a region on the loaded FITS images
         :param regionLayerId: regionLayer to remove
         :return: status of call
         """
-        return self.sendURLAsGet(self.urlRoot + "?cmd=pushRemoveRegion&id=%s" % regionLayerId)
+        url= self.urlRoot +"?cmd=pushRemoveRegion&id=%s" % regionLayerId
+        if plotId:
+            url+= '&plotId=%s' % self.makePidParam(plotId)
+        return self.sendURLAsGet(url)
 
 
     def overlayRegionData(self, regionData, regionLayerId, title=None, plotId=None):
@@ -393,7 +406,7 @@ class FireflyClient(WebSocketClient):
         if title:
             url+= '&Title=%s' % title
         if plotId:
-            url+= '&plotId=%s' % (','.join(plotId) if type(plotId) is list else plotId)
+            url+= '&plotId=%s' % self.makePidParam(plotId)
         response = self.session.post(url, data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
@@ -420,10 +433,10 @@ class FireflyClient(WebSocketClient):
     @staticmethod
     def createRangeValuesStandard(algorithm, stretchType='Percent', lowerValue=1, upperValue=99):
         """
+        :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
         :param stretchType: must be 'Percent','Absolute','Sigma'
         :param lowerValue: number, lower end of stretch
         :param upperValue: number, upper end of stretch
-        :param algorithm: must be 'Linear', 'Log','LogLog','Equal','Squared', 'Sqrt'
         :return: a serialized range values string
         """
         retval= FireflyClient.createRV(stretchType,lowerValue,upperValue,algorithm,25,600,120)

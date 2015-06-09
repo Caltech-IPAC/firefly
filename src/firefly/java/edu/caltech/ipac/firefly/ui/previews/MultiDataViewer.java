@@ -80,7 +80,10 @@ public class MultiDataViewer {
     private EventHub hub= null;
     private static int groupNum=0;
     private PreviewTimer _pvTimer= new PreviewTimer();
-
+    private BadgeButton one;
+    private BadgeButton grid;
+    private BadgeButton left;
+    private BadgeButton right;
 
     public MultiDataViewer() {
         plotDeck.add(noDataAvailable);
@@ -354,19 +357,19 @@ public class MultiDataViewer {
                                          final GridCard gridCard) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                DataVisGrid grid= gridCard.getVisGrid();
+                DataVisGrid visGrid= gridCard.getVisGrid();
                 addNewToGrid(gridCard,reqMap.keySet(),true);
                 if (!relatedView.getValue() && reqMap.size()==1) {
-                    grid.setShowMask(new ArrayList<String>(reqMap.keySet()));
+                    visGrid.setShowMask(new ArrayList<String>(reqMap.keySet()));
                 }
-                grid.getWidget().onResize();
-                grid.load(reqMap,info, new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) { }
+                visGrid.getWidget().onResize();
+                visGrid.load(reqMap, info, new AsyncCallback<String>() {
+                    public void onFailure(Throwable caught) {
+                    }
 
                     public void onSuccess(String result) {
-                        if (refreshListener!=null) refreshListener.viewerRefreshed();
-                        //todo???
-                        GwtUtil.setHidden(popoutButton.getWidget(),  gridCard.getVisGrid().getImageShowCount()<2);
+                        if (refreshListener != null) refreshListener.viewerRefreshed();
+                        updateToolbar();
                         ensureMPWSelected();
                     }
                 });
@@ -374,6 +377,17 @@ public class MultiDataViewer {
         });
     }
 
+    private void updateToolbar() {
+        boolean hideGridMultiOps = activeGridCard.getVisGrid().getImageShowCount() < 2;
+        GwtUtil.setHidden(popoutButton.getWidget(), hideGridMultiOps);
+        GwtUtil.setHidden(one.getWidget(), hideGridMultiOps);
+        GwtUtil.setHidden(grid.getWidget(), hideGridMultiOps);
+        if (hideGridMultiOps) {
+            GwtUtil.setHidden(left.getWidget(), true);
+            GwtUtil.setHidden(right.getWidget(), true);
+            switchToGrid();
+        }
+    }
 
 
     private void updateGridThreeStep2(final Map<String, List<WebPlotRequest>> reqMap,
@@ -381,15 +395,16 @@ public class MultiDataViewer {
                                       final GridCard gridCard) {
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-                DataVisGrid grid= gridCard.getVisGrid();
+                DataVisGrid visGrid= gridCard.getVisGrid();
                 addNewToGrid(gridCard,reqMap.keySet(),true);
-                grid.getWidget().onResize();
-                grid.load3Color(reqMap,new AsyncCallback<String>() {
-                    public void onFailure(Throwable caught) { }
+                visGrid.getWidget().onResize();
+                visGrid.load3Color(reqMap, new AsyncCallback<String>() {
+                    public void onFailure(Throwable caught) {
+                    }
 
                     public void onSuccess(String result) {
-                        if (refreshListener!=null) refreshListener.viewerRefreshed();
-                        GwtUtil.setHidden(popoutButton.getWidget(),  gridCard.getVisGrid().getImageShowCount()<2);
+                        if (refreshListener != null) refreshListener.viewerRefreshed();
+                        updateToolbar();
                         //todo???
                     }
                 });
@@ -486,6 +501,7 @@ public class MultiDataViewer {
             plotDeck.setWidget(noDataAvailable);
             GwtUtil.setHidden(toolbar, true);
         }
+        updateToolbar();
     }
 
 
@@ -502,19 +518,19 @@ public class MultiDataViewer {
         Image goLeftArrow =  new Image(vic.getSideLeftArrow());
 
 
-        final BadgeButton left= GwtUtil.makeBadgeButton(goLeftArrow, "Previous Image", true,
+        left= GwtUtil.makeBadgeButton(goLeftArrow, "Previous Image", true,
                 new ClickHandler() {
                     public void onClick(ClickEvent event) { iteratePrimary(false); }
                 });
 
 
-        final BadgeButton right= GwtUtil.makeBadgeButton(goRightArrow , "Next Image", true,
+        right= GwtUtil.makeBadgeButton(goRightArrow , "Next Image", true,
                 new ClickHandler() {
                     public void onClick(ClickEvent event) { iteratePrimary(true); }
                 });
 
 
-        BadgeButton one= GwtUtil.makeBadgeButton(oneTile, "Show single image at full size", true,
+        one= GwtUtil.makeBadgeButton(oneTile, "Show single image at full size", true,
                 new ClickHandler() {
                     public void onClick(ClickEvent event) {
                         switchToOne();
@@ -525,7 +541,7 @@ public class MultiDataViewer {
                 });
 
 
-        BadgeButton grid= GwtUtil.makeBadgeButton(gridIcon, "Show all as tiles", true,
+        grid= GwtUtil.makeBadgeButton(gridIcon, "Show all as tiles", true,
                 new ClickHandler() {
                     public void onClick(ClickEvent event) {
                         switchToGrid();
@@ -543,6 +559,8 @@ public class MultiDataViewer {
         GwtUtil.setHidden(left.getWidget(), true);
         GwtUtil.setHidden(right.getWidget(), true);
 
+        GwtUtil.setHidden(one.getWidget(), true);
+        GwtUtil.setHidden(grid.getWidget(), true);
 
 
 

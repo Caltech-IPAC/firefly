@@ -77,6 +77,7 @@ public class ServerParams {
     public static final String SCROLL_X= "scrollX";
     public static final String SCROLL_Y= "scrollY";
     public static final String ZOOM_FACTOR= "zoomFactor";
+    public static final String RANGE_VALUES= "rangeValues";
 
     public static final String EXT_TYPE= "extType";
     public static final String IMAGE= "image";
@@ -145,6 +146,7 @@ public class ServerParams {
     public static final String VIS_PUSH_ALIVE_CHECK= "pushAliveCheck";
     public static final String VIS_PUSH_PAN= "pushPan";
     public static final String VIS_PUSH_ZOOM= "pushZoom";
+    public static final String VIS_PUSH_RANGE_VALUES= "pushRangeValues";
 
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";

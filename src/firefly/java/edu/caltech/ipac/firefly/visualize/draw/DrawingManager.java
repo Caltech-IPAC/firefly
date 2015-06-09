@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 /**
  * User: roby
  * Date: Jun 19, 2008
@@ -582,15 +583,18 @@ public class DrawingManager implements AsyncDataLoader {
             }
 
             subVisControl.setDataConnect(_dataConnect);
-            for(WebPlotView pv : _allPV.keySet()) {
-                if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
-            }
-            updateVisibilityBasedOnSubgroupAll();
-            if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
+        for(WebPlotView pv : _allPV.keySet()) {
+            if (pv.getDrawingSubGroup()!=null) subVisControl.enableSubgroupingIfSupported();
         }
+        updateVisibilityBasedOnSubgroupAll();
+        if (_dataConnect.isPointData()) WebLayerItem.addUICreator(_id, new PointUICreator());
     }
+}
 
 
+    public Set<WebPlotView> getPlotViewSet() {
+        return _allPV.keySet();
+    }
 
     private void checkAndSetupPerPlotData(final WebPlotView pv, Drawer drawer) {
         if (_dataConnect!=null && _dataConnect.getHasPerPlotData()) {

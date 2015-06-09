@@ -21,11 +21,14 @@ import edu.caltech.ipac.util.dd.RegionOptions;
 import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.util.dd.RegionText;
 import edu.caltech.ipac.util.dd.RegionValue;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 /**
  * User: roby
@@ -141,7 +144,7 @@ public class RegionConnection implements DataConnection {
                 if (retval!=null) retval.setHighlighted(true);
             }
         }
-        return (retval==null) ? null : Arrays.asList(retval);
+        return (retval==null) ? null : Collections.singletonList(retval);
     }
 
 
@@ -183,11 +186,14 @@ public class RegionConnection implements DataConnection {
             retval= ShapeDataObj.makeCircle( pt, (int)(v.toDegree()*3600),
                                              ShapeDataObj.UnitType.ARCSEC);
         }
-        else if (v.getType()== RegionValue.Unit.CONTEXT && pt instanceof WorldPt) {
+        else if (v.getType()== RegionValue.Unit.CONTEXT && isWorldPt(pt)) {
             retval= ShapeDataObj.makeCircle( pt, (int)(v.getValue()*3600),
                     ShapeDataObj.UnitType.ARCSEC);
         }
         else if (v.getType()== RegionValue.Unit.IMAGE_PIXEL) {
+            retval= ShapeDataObj.makeCircle( pt, (int)v.getValue(), ShapeDataObj.UnitType.IMAGE_PIXEL);
+        }
+        else if (isImagePt(pt) && v.getType()== RegionValue.Unit.CONTEXT) {
             retval= ShapeDataObj.makeCircle( pt, (int)v.getValue(), ShapeDataObj.UnitType.IMAGE_PIXEL);
         }
         else {
@@ -223,7 +229,7 @@ public class RegionConnection implements DataConnection {
         return retval;
 
     }
-    private static ShapeDataObj makeRectangle(WorldPt pt, RegionValue w, RegionValue h, WebPlot plot) {
+    private static ShapeDataObj makeRectangle(Pt pt, RegionValue w, RegionValue h, WebPlot plot) {
         ShapeDataObj retval;
         if (w.isWorldCoords()) {
             retval= ShapeDataObj.makeRectangle(pt, (int)(w.toDegree()*3600),
@@ -233,6 +239,10 @@ public class RegionConnection implements DataConnection {
         else if (w.getType()==RegionValue.Unit.IMAGE_PIXEL) {
             retval= ShapeDataObj.makeRectangle( pt, (int)w.getValue(), (int)h.getValue(),
                                                 ShapeDataObj.UnitType.IMAGE_PIXEL);
+        }
+        else if (isImagePt(pt) && w.getType()==RegionValue.Unit.CONTEXT) {
+            retval= ShapeDataObj.makeRectangle( pt, (int)w.getValue(), (int)h.getValue(),
+                    ShapeDataObj.UnitType.IMAGE_PIXEL);
         }
         else {
             retval= ShapeDataObj.makeRectangle( pt, getValueInScreenPixel(plot,w),
@@ -360,6 +370,14 @@ public class RegionConnection implements DataConnection {
                 regionList.remove((int)removeIdxList.get(j));
             }
         }
+    }
+
+    private static boolean isImagePt(Pt pt) {
+        return pt instanceof ImagePt || (pt instanceof WorldPt && ((WorldPt)pt).getCoordSys()==CoordinateSys.PIXEL);
+    }
+
+    private static boolean isWorldPt(Pt pt) {
+        return (pt instanceof WorldPt && CoordinateSys.isWorld(((WorldPt) pt).getCoordSys()));
     }
 }
 

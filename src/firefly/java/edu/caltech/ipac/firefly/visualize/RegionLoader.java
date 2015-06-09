@@ -25,9 +25,12 @@ import edu.caltech.ipac.util.dd.Region;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Trey Roby
@@ -161,17 +164,45 @@ public class RegionLoader {
         return sb.toString();
     }
 
-    public static void removeRegion(String id) {
+    public static void removeRegion(String id, String plotIdAry[]) {
         RegionDrawing rd= regMap.get(id);
-        if (rd!=null) rd.freeResources();
-        regMap.remove(id);
+        if (rd!=null) {
+            List plotIdList= Collections.emptyList();
+            boolean removeAll=  plotIdAry==null || plotIdAry.length==0;
+            if (!removeAll) plotIdList= Arrays.asList(plotIdAry);
+            Set<WebPlotView> pvSet= new HashSet<WebPlotView>(rd.drawMan.getPlotViewSet());
+            if (!removeAll && plotIdAry.length==pvSet.size()) {
+                removeAll= true;
+                for(WebPlotView pv : pvSet) {
+                    if (!plotIdList.contains(pv.getMiniPlotWidget().getPlotId())){
+                        removeAll= true;
+                    }
+                }
+            }
+            if (removeAll){
+                rd.freeResources();
+                regMap.remove(id);
+            }
+            else {
+                for(WebPlotView pv : pvSet) {
+                    String plotId= pv.getMiniPlotWidget().getPlotId();
+                    if (!StringUtils.isEmpty(plotId) && plotIdList.contains(plotId)) {
+                        rd.drawMan.removePlotView(pv);
+                    }
+                }
+                if (rd.drawMan.getPlotViewSet().size()==0) {
+                    rd.freeResources();
+                    regMap.remove(id);
+                }
+            }
+        }
     }
 
     private static class RegionDrawing {
-        private final String id;
-        private final List<String> plotIDList;
-        private DrawingManager drawMan;
-        private RegionConnection regionConnection;
+        public final String id;
+        public final List<String> plotIDList;
+        public DrawingManager drawMan;
+        public RegionConnection regionConnection;
 
         private RegionDrawing(String id, DrawingManager drawMan, RegionConnection regionConnection, List<String> plotIDList) {
             this.id = id;
@@ -195,7 +226,7 @@ public class RegionLoader {
 
         private RegionUICreator() { super(false,true); }
 
-        public void delete(WebLayerItem item) { removeRegion(item.getID()); }
+        public void delete(WebLayerItem item) { removeRegion(item.getID(),null); }
     }
 
     private static class RegionPrintable implements PrintableOverlay {

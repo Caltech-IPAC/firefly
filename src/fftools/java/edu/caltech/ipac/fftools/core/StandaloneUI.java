@@ -42,7 +42,6 @@ import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
 import edu.caltech.ipac.firefly.ui.table.TableResultsDisplay;
-import edu.caltech.ipac.firefly.util.CrossDocumentMessage;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -70,10 +69,10 @@ class StandaloneUI {
 //    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
     private TableResultsDisplay     searchResults= new TableResultsDisplay();
     private final TabPane<Widget>   imageTabPane= new TabPane<Widget>();
-    private boolean closeButtonClosesWindow= false;
+//    private boolean closeButtonClosesWindow= false;
     private boolean isInit= false;
     private TabPane.Tab<Widget> coverageTab= null;
-    private CrossDocumentMessage xOrMsg;
+//    private CrossDocumentMessage xOrMsg;
     private XYPlotter xyPlotter= new XYPlotter(FFToolEnv.getHub());
     private CoveragePreview covPrev= null;
     private boolean initialStart= true;
@@ -176,7 +175,7 @@ class StandaloneUI {
     public MultiDataViewer getMultiViewer() { return dynMultiViewer; }
 
     public boolean isInitialStart() { return initialStart; }
-    public void initStartComplete() { initialStart= false; }
+//    public void initStartComplete() { initialStart= false; }
 
     public void ensureDynImageTabShowing() {
         imageTabPane.selectTab(dynMultiViewerTab);
@@ -339,9 +338,9 @@ class StandaloneUI {
 //        return mpw;
 //    }
 
-    public boolean isCloseButtonClosesWindow() {
-        return closeButtonClosesWindow;
-    }
+//    public boolean isCloseButtonClosesWindow() {
+//        return closeButtonClosesWindow;
+//    }
 
 
     private void configureNewTableListening() {
@@ -396,6 +395,7 @@ class StandaloneUI {
         evMan.addListener(EventHub.ON_TABLE_REMOVED, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
                 if (ev.getData()==activeTable) activeTable= null;
+//                FFToolEnv.getHub().getCatalogDisplay().removeCatalog(activeTable);
             }
         });
 
@@ -561,13 +561,13 @@ class StandaloneUI {
         public boolean isImageSelectionShowing() { return true; }
     }
 
-    private static native void doCloseBrowserWindow()    /*-{
-        $wnd.close();
-    }-*/;
-
-    private static native void doFocus()    /*-{
-        $wnd.focus();
-    }-*/;
+//    private static native void doCloseBrowserWindow()    /*-{
+//        $wnd.close();
+//    }-*/;
+//
+//    private static native void doFocus()    /*-{
+//        $wnd.focus();
+//    }-*/;
 
 
 
