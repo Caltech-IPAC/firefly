@@ -152,13 +152,11 @@ public class XYPlotter {
                     AllPlots.getInstance().deregisterPopout(xyPlotWidget);
                 }
             }
-            else {
-                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                    public void execute() {
-                        xyPlotWidget.onResize();
-                    }
-                });
-            }
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                public void execute() {
+                    xyPlotWidget.onResize();
+                }
+            });
             card.updateDataCtx();
             card.updateAccess();
         }
@@ -229,6 +227,7 @@ public class XYPlotter {
 
         private void setTable(TablePanel table) {
             this.table = table;
+            req = null;
         }
 
 
