@@ -65,7 +65,7 @@ class StandaloneUI {
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
     private LayoutPanel searchResultWrapper = new LayoutPanel();
-    private SimplePanel xyPlotAreaStandalone = new SimplePanel();
+    private LayoutPanel xyPlotAreaStandalone = new LayoutPanel();
     private final TabPane<Widget>   xyPlots = new TabPane<Widget>();
 //    private TabPane<Widget>         tableTabPane = new TabPane<Widget>();
     private TableResultsDisplay     searchResults= new TableResultsDisplay();
@@ -300,7 +300,8 @@ class StandaloneUI {
             main.addSouth(xyPlots, 300);
             xyPlots.setSize("100%", "100%");
         } else if (hasCatalogResults() && xyPlotAreaStandalone !=null) {
-            xyPlotAreaStandalone.setWidget(xyPlotter.getWidget());
+            xyPlotAreaStandalone.clear();
+            xyPlotAreaStandalone.add(xyPlotter.getWidget());
             main.addSouth(xyPlotAreaStandalone, 300);
             xyPlotAreaStandalone.setSize("100%", "100%");
 
