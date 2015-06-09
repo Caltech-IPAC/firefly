@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.HelpManager;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
@@ -393,8 +394,8 @@ public class TabPane<T extends Widget> extends Composite
             tabs.remove(tab);
             hideTab(tab);
             eventManager.fireEvent(new WebEvent<Tab>(this, TAB_REMOVED, tab));
-            if (tab.getContent() instanceof Component) {
-                ((Component)tab.getContent()).onHide();
+            if (tab.getContent() instanceof TablePanel) {
+                Application.getInstance().getEventHub().getEventManager().fireEvent(new WebEvent<TablePanel>(this, EventHub.ON_TABLE_REMOVED, (TablePanel) tab.getContent()));
             }
         }
     }
