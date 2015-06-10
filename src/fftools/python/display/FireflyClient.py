@@ -296,7 +296,7 @@ class FireflyClient(WebSocketClient):
         :return: status of call
         """
         url = self.urlRoot + "?cmd=pushXYPlot"
-        if additionalParams is not None:
+        if additionalParams:
             url+= '&' + '&'.join(['%s=%s' % (k, v) for (k, v) in additionalParams.items()])
         url+= '&file=%s' % fileOnServer
         return self.sendURLAsGet(url)
@@ -332,10 +332,10 @@ class FireflyClient(WebSocketClient):
 
     def pan(self, plotId, x, y):
         """
-        Pan or scroll the image
+        Pan or scroll the image to center on the image coordinates passed
         :param plotId: plotId to which this region should be added, parameter may be string or a list of strings.
-        :param x: number, new x position to scroll to
-        :param y: number, new y position to scroll to
+        :param x: number, new center x position to scroll to
+        :param y: number, new center y position to scroll to
         :return:
         """
         url = self.urlRoot + "?cmd=pushPan&plotId=%s&scrollX=%d&scrollY=%d" % (self.makePidParam(plotId),x,y)

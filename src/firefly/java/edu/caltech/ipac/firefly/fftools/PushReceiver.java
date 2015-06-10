@@ -32,6 +32,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.HashMap;
@@ -170,7 +171,8 @@ public class PushReceiver implements WebEventListener {
         MiniPlotWidget mpw;
         for(String plotId : pIDAry) {
             mpw= AllPlots.getInstance().getMiniPlotWidgetById(plotId);
-            if (mpw!=null)  mpw.getPlotView().setScrollXY(x,y);
+//            if (mpw!=null)  mpw.getPlotView().setScrollXY(x,y);
+            if (mpw!=null)  mpw.getPlotView().centerOnPoint(new ImagePt(x,y));
         }
     }
 

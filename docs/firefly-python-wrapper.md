@@ -10,8 +10,10 @@ The python class name is **FireflyClient**.  It is located in firefly/src/fftool
 
 1. Install [ws4py](http://ws4py.readthedocs.org/en/latest/sources/install )
    (If you are using conda package manager, you can use [conda-pipbuild](http://conda.pydata.org/docs/commands/build/conda-pipbuild.html) tool for building conda packages just using pip install.) 
-2. Set up python enviroment
-			 `setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display`
+2. Set up python environment
+```bash
+setenv PYTHONPATH /where-git-repository-is/firefly/src/fftools/python/display
+```
 	
 To get a feel for API `cd firefly/src/fftools/test` and take a look at `initFF.py`, `initFF2.py`, `testAll.py`. If you are within an interpreter, `execfile('./initFF2.py')` is the best, because it leaves the connection to the browser open while allowing you to execute other commands.
 
@@ -40,9 +42,9 @@ Wait until Firefly Tools finish loading and you see 'Waiting for data' before se
 ####Show a Fits image
  
 ```python
-     data = '/your/path/yourFits.fits'
-     fitsPathInfo= fc.uploadFile(data)
-     fc.showFits(fitsPathInfo)
+data = '/your/path/yourFits.fits'
+fitsPathInfo= fc.uploadFile(data)
+fc.showFits(fitsPathInfo)
 ```   
 
 The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
@@ -54,25 +56,25 @@ For the details of FITS plotting parameters see: [see fits-plotting-parameters.m
 ####Overlay a region
 
 ```python 
-     regFile=/your/path/yourRegion.reg
-     regPathInfo= fc.uploadFile(regFile)
-     fc.overlayRegion(regPathInfo)
+regFile=/your/path/yourRegion.reg
+regPathInfo= fc.uploadFile(regFile)
+fc.overlayRegion(regPathInfo)
 ``` 
 
 ####Show a table
  
 ```python 
-     table ='/your/path/yourTable.tbl'    
-     tablePathInfo = fc.uploadFile(table)
-     fc.showTable(tablePathInfo)
+table ='/your/path/yourTable.tbl'    
+tablePathInfo = fc.uploadFile(table)
+fc.showTable(tablePathInfo)
 ```
 
 ####Show a XY Plot
  
 ```python 
-     table ='/your/path/yourTable.tbl'    
-     tablePathInfo = fc.uploadImage(table)
-     fc.showXYPlot(fileOnServer=tablePathInfo, additionalParams={'xColExpr' : 'col1/col2', 'yCol' : 'col3', 'plotTitle' : 'col3 vs. col1/col2'})
+table ='/your/path/yourTable.tbl'    
+tablePathInfo = fc.uploadImage(table)
+fc.showXYPlot(fileOnServer=tablePathInfo, additionalParams={'xColExpr' : 'col1/col2', 'yCol' : 'col3', 'plotTitle' : 'col3 vs. col1/col2'})
 ```
 See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-overview.md) for the available XY Plot parameters.
 
@@ -215,17 +217,34 @@ except KeyboardInterrupt:
     **plotId** - the id of the plot to put the extension on
     **extensionId** - the id of the extension
     **image** - a url of an icon to display in the toolbar instead of title
- 
+
+###FireflyClient's Image control Methods 
+
 - `pan(self, plotId, x, y)`
 
-    Scroll the image around.
+    Pan or scroll the image to center on the image coordinates passed.
 
-    - plotId: the id of the plot to pan
-    - x: x position
-    - y: y position
+    - plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+    - x: number, new center x position to scroll to
+    - y: number, new center y position to scroll to
     - *return* status of call
 
+- `zoom(self, plotId, x, y)`
+
+    Zoom the image
+
+    - plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+    - factor:  number, zoom factor for the image
+    - *return* status of call
  
+- `stretch(self, plotId, serializedRV)`
+
+      Change the stretch of the image
+
+    - plotId: plotId to which this region should be added, parameter may be string or a list of strings.
+    - serializedRV: the range values parameter [see Fits Stretch help methods](#fireflyclients-fits-stretch-help-methods)
+    - *return* status of call
+
 ###FireflyClient's Region Methods
 
 - `overylayRegion(path, title=None, regionLayerId=None, plotId=None)`
@@ -289,7 +308,13 @@ fc.addListener(myCallback)
 
 ###FireflyClient's Fits Stretch Help Methods
 
-The fits viewer method's (`FireflyClient.showFits()`)  last parameter is a dictionary which you can use to specify any of the parameters that the FITS viewer accepts ([see fits-plotting-parameters.md](fits-plotting-parameters.md)). One of this parameters, `'RangeValues'` , is used to specify the stretch algorithm and parameters. This parameter is serialized string that is too difficult construct yourself.  Therefore there are two helper methods that  will construct it.  They are `createRangeValuesStandard()` and `createRangeValuesZScale()`. These both returns a string that can be passed to  `showFits()`
+When setting the stretch through `FireflyClient.showFits()` or `FireflyClient.stretch()` you must create a serialized range values string.
+
+There are two helper methods that  will construct it.  They are `createRangeValuesStandard()` and `createRangeValuesZScale()`. These both returns a string that can be passed to  `showFits()` or `stretch()`
+
+The fits viewer method's (`FireflyClient.showFits()`)  last parameter is a dictionary which you can use to specify any of the parameters that the FITS viewer accepts ([see fits-plotting-parameters.md](fits-plotting-parameters.md)). One of this parameters, `'RangeValues'` , is used to specify the stretch algorithm and parameters. This parameter is serialized string that is too difficult construct yourself.  
+
+
 
 *Example-*
 
@@ -304,7 +329,11 @@ rv= fc.createRangeValuesZScale('Log',80, 500,44)
 params= {'RangeValues':rv}
 status= fc.showFits(file,'p1',params)
 ```
-
+*or*
+```python
+rv= fc.createRangeValuesZScale(`Linear','Percent', 2,94)
+status= fc.stretch('p1',rv)
+```
 **Methods**
 
 ```python
