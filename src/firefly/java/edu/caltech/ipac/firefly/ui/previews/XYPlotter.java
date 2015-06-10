@@ -10,7 +10,8 @@ package edu.caltech.ipac.firefly.ui.previews;
 
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.DeckLayoutPanel;
+import com.google.gwt.user.client.ui.SimpleLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
@@ -24,19 +25,25 @@ import edu.caltech.ipac.firefly.visualize.graph.XYPlotMeta;
 import edu.caltech.ipac.firefly.visualize.graph.XYPlotWidget;
 import edu.caltech.ipac.util.ComparisonUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Trey Roby
  */
 public class XYPlotter {
 
-    private static final int MAX_CARDS= 2;
+//    private static final int MAX_CARDS= 2;
+    private static final int MAX_ROWS= 10000;
 
-    private final DeckLayoutPanel panel= new DeckLayoutPanel();
-    private final List<XYCard> cardList= new ArrayList<XYCard>(MAX_CARDS);
+    private final SimpleLayoutPanel panel= new SimpleLayoutPanel();
+//    private final SimplePanel panel= new SimplePanel();
+    private final List<XYCard> cardList= new ArrayList<XYCard>(10);
     private HashMap<TablePanel, XYPlotMeta> metas = new HashMap<TablePanel, XYPlotMeta>(10);
-    private int currentShowingCard= -1;
+    private XYCard activeCard= null;
     private final EventHub hub;
 
     public XYPlotter(EventHub hub) {
@@ -59,7 +66,8 @@ public class XYPlotter {
         });
     }
 
-    public DeckLayoutPanel getWidget() { return panel;
+    public Widget getWidget() {
+        return panel;
     }
 
 //======================================================================
@@ -80,14 +88,13 @@ public class XYPlotter {
                 card.getXyPlotWidget().setVisible(false);
                 AllPlots.getInstance().deregisterPopout(card.getXyPlotWidget());
                 cardList.remove(card);
-                if (card.getCardIdx()==currentShowingCard) currentShowingCard= -1;
+                if (card==activeCard) activeCard= null;
+                panel.clear();
             }
         }
     }
 
-    public boolean getHasPlots() {
-        return currentShowingCard>-1;
-    }
+    public boolean getHasPlots() { return activeCard!=null; }
 
     private void updateXyPlot() {
 
@@ -105,41 +112,41 @@ public class XYPlotter {
         final XYPlotWidget xyPlotWidget;
         XYPlotMeta restoredMeta = metas.get(table);
 
+        if (activeCard!=null) {
+            XYPlotWidget oldXYPlotWidget = activeCard.getXyPlotWidget();
+            AllPlots.getInstance().deregisterPopout(oldXYPlotWidget);
+        }
+
+
         if (card==null) {
-            if (cardList.size()<MAX_CARDS) {
-                XYPlotMeta meta = getXYPlotMeta(table);
-                xyPlotWidget = new XYPlotWidget(meta);
-                xyPlotWidget.setTitleAreaAlwaysHidden(true);
-                panel.add(xyPlotWidget);
-                int cardNum= panel.getWidgetIndex(xyPlotWidget);
-                card = new XYCard(cardNum,xyPlotWidget,table);
-                cardList.add(card);
-            }
-            else {
-                card= getOldestCard();
-                card.setTable(table);
-                xyPlotWidget= card.getXyPlotWidget();
-                if (restoredMeta == null) {
-                    restoredMeta = getXYPlotMeta(table);
+            if (!isUnderTotalRows(table)) {
+                List<XYCard>delCards= getOldestCardsToDelete(table);
+                for(XYCard c : delCards) {
+                    panel.remove(c.getXyPlotWidget());
+                    AllPlots.getInstance().deregisterPopout(c.getXyPlotWidget());
+                    cardList.remove(c);
                 }
             }
+            XYPlotMeta meta = getXYPlotMeta(table);
+            xyPlotWidget = new XYPlotWidget(meta);
+            xyPlotWidget.setTitleAreaAlwaysHidden(true);
+            card = new XYCard(xyPlotWidget,table);
+            cardList.add(card);
         }
         else {
             xyPlotWidget= card.getXyPlotWidget();
         }
 
-        if (currentShowingCard>=0) {
-            XYPlotWidget oldXYPlotWidget = cardList.get(currentShowingCard).getXyPlotWidget();
-            AllPlots.getInstance().deregisterPopout(oldXYPlotWidget);
-        }
         AllPlots.getInstance().registerPopout(xyPlotWidget);
 
-        // can we assume that oldest card is never current showing?
-        if (card.getCardIdx()!=currentShowingCard) {
-            panel.showWidget(card.getCardIdx());
-            currentShowingCard= card.getCardIdx();
+
+
+        if (card!=activeCard) {
+            panel.clear();
+            panel.setWidget(xyPlotWidget);
+            activeCard= card;
             if (card.isDataChange()) {
-                if (table.getDataModel() != null && table.getDataModel().getTotalRows()>0) {
+                if (table.getDataModel() != null && getRows(table)>0) {
                     xyPlotWidget.setVisible(true);
                     if (restoredMeta != null) {
                         //plotMeta need to be restored
@@ -191,6 +198,63 @@ public class XYPlotter {
         return retval;
     }
 
+    private boolean isUnderTotalRows(TablePanel newTable) {
+        int total= getRows(newTable);
+        TablePanel t;
+        for(XYCard c : cardList) {
+            total+= getRows(c.getTable());
+        }
+        return total<MAX_ROWS;
+    }
+
+    private List<XYCard> getOldestCardsToDelete(TablePanel newTableToFit) {
+
+        // 1. if less then 2 entries then nothing to delete
+        if (cardList.size()<3) return Collections.emptyList();
+
+        // 2. if total with new table less than max then nothing to delete
+        int totalRows= getRows(newTableToFit);
+        for(XYCard c : cardList) {
+            totalRows+= getRows(c.getTable());
+        }
+        if (totalRows<MAX_ROWS) return Collections.emptyList();
+
+
+        // sort to know which tables are the first to go
+        Collections.sort(cardList, new Comparator<XYCard>() {
+            public int compare(XYCard c1, XYCard c2) {
+                return ComparisonUtil.doCompare(c2.getAccessTime(), c1.getAccessTime());
+            }
+        });
+
+        // 3. it the new table is bigger than max rows then return array with all but the youngest entry
+        List<XYCard> retList;
+        if (getRows(newTableToFit)>MAX_ROWS) {
+            retList= new ArrayList<XYCard>(cardList);
+            retList.remove(retList.size()-1);
+        }
+        // 4. return a list of the oldest that will max us under the max
+        else {
+            retList= new ArrayList<XYCard>(cardList.size());
+            for(XYCard c : cardList) {
+                totalRows-= getRows(c.getTable());
+                retList.add(c);
+                if (totalRows< MAX_ROWS) {
+                    break;
+                }
+            }
+        }
+
+        return retList;
+    }
+
+
+    private static int getRows(TablePanel t) {
+        int r= t.getDataModel().getTotalRows();
+        return r>30000 ? 30000 : r;
+    }
+
+
     private XYCard getOldestCard() {
         if (cardList.size()==0) return null;
         if (cardList.size()==1) return cardList.get(0);
@@ -201,7 +265,6 @@ public class XYPlotter {
             }
         });
         return cardList.get(0);
-
     }
 
 //======================================================================
@@ -211,12 +274,10 @@ public class XYPlotter {
     private static class XYCard {
         private long accessTime;
         private TablePanel table;
-        final int cardIdx;
         final private XYPlotWidget xyPlotWidget;
         private ServerRequest req= null;
 
-        public XYCard(int cardIdx, XYPlotWidget xyPlotWidget, TablePanel table) {
-            this.cardIdx = cardIdx;
+        public XYCard(XYPlotWidget xyPlotWidget, TablePanel table) {
             this.xyPlotWidget = xyPlotWidget;
             this.table = table;
         }
@@ -231,9 +292,6 @@ public class XYPlotter {
         }
 
 
-        public int getCardIdx() {
-            return cardIdx;
-        }
 
         public XYPlotWidget getXyPlotWidget() {
             return xyPlotWidget;
