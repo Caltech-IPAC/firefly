@@ -63,7 +63,7 @@ public class RegionLoader {
     public static void loadRegion(String title, String regText, String regErr, String regionId, String plotIds[]) {
         DrawingManager drawMan;
         if (regMap.containsKey(regionId)) {
-            addToRegion(regText,regionId);
+            addToRegion(regText,regionId,plotIds);
         }
         else {
             List<String> retStrList= StringUtils.parseStringList(regText, StringUtils.STRING_SPLIT_TOKEN, 0);
@@ -94,7 +94,7 @@ public class RegionLoader {
         }
     }
 
-    private static void addToRegion(String regText, String regId) {
+    private static void addToRegion(String regText, String regId, String plotIds[]) {
         List<String> retStrList= StringUtils.parseStringList(regText, StringUtils.STRING_SPLIT_TOKEN, 0);
         List<String> errStrList= new ArrayList<String>();
         List<Region> regList= new ArrayList<Region>(retStrList.size());
@@ -113,6 +113,19 @@ public class RegionLoader {
             RegionConnection rc= regionDrawing.regionConnection;
             rc.addRegions(regList);
             regionDrawing.drawMan.redraw();
+
+
+            if (plotIds!=null && plotIds.length>0) {
+                List<String> pIdList= Arrays.asList(plotIds);
+                Set currPVSet= new HashSet<WebPlotView>(regionDrawing.drawMan.getPlotViewSet());
+                for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
+                    if (mpw.getPlotId()!=null && pIdList.contains(mpw.getPlotId())) {
+                        if (!currPVSet.contains(mpw)) {
+                            regionDrawing.drawMan.addPlotView(mpw.getPlotView());
+                        }
+                    }
+                }
+            }
         }
         checkAndHandleError(regList,errStrList);
     }
