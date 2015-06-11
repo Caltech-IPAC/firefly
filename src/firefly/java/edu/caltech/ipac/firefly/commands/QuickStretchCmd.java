@@ -17,17 +17,20 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
-
+/**
+ * LZ 6/11/15
+ * Modified to call arcsine and power law gamma algorithm
+ */
 public class QuickStretchCmd extends BaseGroupVisCmd {
     private RangeValues _range;
     private final String _baseLabel;
-
+    private static final float DR = 10;
+    private static final float GAMMA=2;
 
     public QuickStretchCmd(String commandName,
                            float percent) {
-        this(commandName,100-percent, percent,RangeValues.PERCENTAGE);
+        this(commandName,100-percent, percent, RangeValues.PERCENTAGE );
     }
-
 
     public QuickStretchCmd(String commandName,
                            float lowerFactor,
@@ -37,11 +40,36 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
 
         _baseLabel= getLabel();
         _range=  new RangeValues(stretchType, lowerFactor,
-                                 stretchType, upperFactor,
+                stretchType, upperFactor,
+                RangeValues.STRETCH_LINEAR);
+        updateLabel();
+
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor, DR, GAMMA);
+
+        AllPlots.getInstance().addListener(Name.REPLOT, l);
+        AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
+
+    }
+
+    public QuickStretchCmd(String commandName,
+                           float percent, float drValue, float gammaValue) {
+        this(commandName,100-percent, percent,drValue, gammaValue , RangeValues.PERCENTAGE );
+    }
+
+
+    public QuickStretchCmd(String commandName,
+                           float lowerFactor,
+                           float upperFactor,  float drFactor, float gammaFactor,
+                           int   stretchType) {
+        super(commandName);
+
+        _baseLabel= getLabel();
+        _range=  new RangeValues(stretchType, lowerFactor,
+                                 stretchType, upperFactor, drFactor, gammaFactor,
                                  RangeValues.STRETCH_LINEAR);
         updateLabel();
 
-        Listener l= new Listener(stretchType, lowerFactor,upperFactor);
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor,drFactor, gammaFactor);
 
         AllPlots.getInstance().addListener(Name.REPLOT, l);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
@@ -90,6 +118,8 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
             case RangeValues.STRETCH_EQUAL : label= "Histogram Equalization: "+_baseLabel; break;
             case RangeValues.STRETCH_SQUARED : label= "Squared: "+_baseLabel; break;
             case RangeValues.STRETCH_SQRT : label= "Square Root: "+_baseLabel; break;
+            case RangeValues.STRETCH_ARCSINE : label= "Arcsine: "+_baseLabel; break;
+            case RangeValues.STRETCH_POWERLAW_GAMMA : label= "PowerLawGamma: "+_baseLabel; break;
         }
         setLabel(label);
     }
@@ -100,11 +130,18 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
 
         private final float _lowerFactor;
         private final float _upperFactor;
+        private final float _drFactor;
+        private final float _gammaFactor;
+
         private final int _stretchType;
-        Listener(int stretchType, float lowerFactor, float upperFactor )  {
+
+
+        Listener(int stretchType, float lowerFactor, float upperFactor, float drFactor, float gammaFactor )  {
             _lowerFactor= lowerFactor;
             _upperFactor= upperFactor;
             _stretchType= stretchType;
+            _drFactor = drFactor;
+            _gammaFactor=gammaFactor;
         }
 
 
@@ -122,6 +159,8 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
                                              _lowerFactor,
                                              _stretchType,
                                              _upperFactor,
+                                             _drFactor,
+                                              _gammaFactor,
                                              getCurrentRV().getStretchAlgorithm());
                     updateLabel();
                 }

@@ -9,6 +9,10 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 
+/**
+ * LZ 6/11/15
+ * Modified in order to run the new stretch algorithm arcsine and power law gamma
+ */
 
 public class RangeValues implements Cloneable, Serializable,HandSerialize {
 
@@ -53,7 +57,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _upperValue;
     private double _drValue;
     private double _gammaValue;
-    private int    _algorithm= STRETCH_LINEAR;
+    private int    _algorithm= STRETCH_ARCSINE; //STRETCH_LINEAR;
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
     private int    _zscale_samples_per_line; /* optimal number of pixels per line */
@@ -181,6 +185,31 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
         return new RangeValues(s,lowerValue,s,upperValue,a);
     }
 
+    //LZ 6/11/15 added this method
+    public static RangeValues create(String stretchType,
+                                     double lowerValue,
+                                     double upperValue, double drValue, double gammaValue,
+                                     String algorithm) {
+        int s= PERCENTAGE;
+        if (!StringUtils.isEmpty(stretchType)) {
+            if (stretchType.equalsIgnoreCase(PERCENTAGE_STR)) s=PERCENTAGE;
+            else if (stretchType.equalsIgnoreCase(ABSOLUTE_STR)) s=ABSOLUTE;
+            else if (stretchType.equalsIgnoreCase(SIGMA_STR)) s=SIGMA;
+        }
+        int a= STRETCH_LINEAR;
+        if (!StringUtils.isEmpty(algorithm)) {
+            if (algorithm.equalsIgnoreCase(LINEAR_STR)) a= STRETCH_LINEAR;
+            else if (algorithm.equalsIgnoreCase(LOG_STR)) a=STRETCH_LOG;
+            else if (algorithm.equalsIgnoreCase(LOGLOG_STR)) a= STRETCH_LOGLOG;
+            else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
+            else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
+            else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
+            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ARCSINE;
+            else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
+
+        }
+        return new RangeValues(s,lowerValue,s,upperValue,drValue, gammaValue, a);
+    }
 
    //LZ 05/21/15 add the following two lines
     public double getDrValue() { return _drValue; }
@@ -243,6 +272,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             double lowerValue=              StringUtils.parseDouble(s[i++]);
             int    upperWhich=              Integer.parseInt(s[i++]);
             double upperValue=              StringUtils.parseDouble(s[i++]);
+            double drValue=                 StringUtils.parseDouble(s[i++]);
+            double gammaValue=              StringUtils.parseDouble(s[i++]);
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
             int    zscale_samples=          Integer.parseInt(s[i++]);
@@ -252,6 +283,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                                    lowerValue,
                                    upperWhich,
                                    upperValue,
+                                   drValue,
+                                   gammaValue,
                                    algorithm,
                                    zscale_contrast,
                                    zscale_samples,
@@ -270,6 +303,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                getLowerValue()+","+
                getUpperWhich()+","+
                getUpperValue()+","+
+               getDrValue()+","+
+               getGammaValue()+","+
                getStretchAlgorithm()+","+
                getZscaleContrast()+","+
                getZscaleSamples()+","+

@@ -4,6 +4,9 @@
 
 /*jshint esnext:true*/
 /*jshint curly:false*/
+
+//LZ 06/11/15 add arcsine and power law gamma parameters
+
 import validator from "validator";
 
 
@@ -25,12 +28,18 @@ export const EQUAL_STR= "Equal";
 export const SQUARED_STR= "Squared";
 export const SQRT_STR= "Sqrt";
 
+export const ASINH_STR= "arcsine";
+export const POWERLAW_GAMMA_STR= "powerlaw_gamma";
+
+
 export const STRETCH_LINEAR= 44;
 export const STRETCH_LOG   = 45;
 export const STRETCH_LOGLOG= 46;
 export const STRETCH_EQUAL = 47;
 export const STRETCH_SQUARED = 48;
 export const STRETCH_SQRT    = 49;
+export const  STRETCH_ARCSINE   = 50;
+export const STRETCH_POWERLAW_GAMMA   = 51;
 
 
 const BYTE_MAX_VALUE= 127;
@@ -42,6 +51,8 @@ class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
+                 drValue=10.0,
+                 gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
                  zscaleSamples= 600,
@@ -52,6 +63,8 @@ class RangeValues {
         this.lowerValue= lowerValue;
         this.upperWhich= upperWhich;
         this.upperValue= upperValue;
+        this.drValue = drValue;
+        this.gammaValue=gammaValue;
         this.algorithm=  algorithm;
         this.zscaleContrast= zscaleContrast;
         this.zscaleSamples= zscaleSamples; /* desired number of pixels in sample */
@@ -69,7 +82,7 @@ class RangeValues {
      *
      * @return
      */
-    static create(stretchType, lowerValue, upperValue, algorithm) {
+    static create(stretchType, lowerValue, upperValue, drValue, gammaValue, algorithm) {
         var s= PERCENTAGE;
         if (stretchType) {
             stretchType= stretchType.toLowerCase();
@@ -86,8 +99,10 @@ class RangeValues {
             else if (algorithm===EQUAL_STR.toLowerCase()) a= STRETCH_EQUAL;
             else if (algorithm===SQUARED_STR.toLowerCase()) a= STRETCH_SQUARED;
             else if (algorithm===SQRT_STR.toLowerCase()) a= STRETCH_SQRT;
+            else if (algorithm===ASINH_STR.toLowerCase()) a= STRETCH_ARCSINE;
+             else if (algorithm===POWERLAW_GAMMA_STR_STR.toLowerCase()) a= STRETCH_POWERLAW_GAMMA;
         }
-        return new RangeValues(s,lowerValue,s,upperValue,a);
+        return new RangeValues(s,lowerValue,s,upperValue,drValue, gammaValue, a);
     }
 
 
@@ -109,7 +124,7 @@ class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-                                this.upperValue, this.algorithm,
+                                this.upperValue, this.drValue, this.gammaValue, this.algorithm,
                                 this.zscaleContrast, this.zscaleSamples,
                                 this.zscaleSamplesPerLine,
                                 this.bias, this.contrast );
