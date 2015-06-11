@@ -115,7 +115,7 @@ public class StretchInputField extends InputField {
 
     public void setWebFitsData(WebFitsData wFitsData) {
         _wFitsData= wFitsData;
-        if (_type==Type.DR|| _type==Type.GAMMA) return;
+     //   if (_type==Type.DR|| _type==Type.GAMMA) return;
        if (_listBox.getSelectedIndex() != PERCENT_IDX) {
            updateFieldDef();
        }

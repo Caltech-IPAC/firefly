@@ -215,19 +215,7 @@ public class BandPanel extends Composite {
 
     public void newPlot(WebPlot plot) {
         _plot= plot;
-        RangeValues rv= _plot.getPlotState().getRangeValues(_band);
-
-        int lowerWhich = rv.getLowerWhich();
-        int upperWhich = rv.getUpperWhich();
-        if (!_drStretch.getValue().isEmpty()) {
-            double lowerValue = _minStretch.getNumberValue().doubleValue();
-            double upperValue = _maxStretch.getNumberValue().doubleValue();
-            double drValue = _drStretch.getNumberValue().doubleValue();
-            double gammaValue = _gammaStretch.getNumberValue().doubleValue();
-            RangeValues rvNew = new RangeValues(lowerWhich, lowerValue, upperWhich, upperValue, drValue, gammaValue, rv.getStretchAlgorithm());
-            _plot.getPlotState().setRangeValues(rvNew, _band);
-        }
-
+       
         WebFitsData fData= plot.getFitsData(_band);
         _minStretch.setWebFitsData(fData);
         _maxStretch.setWebFitsData(fData);
