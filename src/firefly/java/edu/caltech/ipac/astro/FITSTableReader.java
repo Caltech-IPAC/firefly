@@ -204,6 +204,7 @@ public final class FITSTableReader
 		{
 		    case TABLE_INT:
 			int int_array[] = (int[])(row[i]);
+
 			int_value = int_array[0];
 			//System.out.println("got int value : " + int_value);
 			Integer java_int = new Integer(int_value);

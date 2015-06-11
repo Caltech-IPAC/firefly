@@ -15,18 +15,13 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DeckPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.input.ListBoxInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.StretchInputField;
 import edu.caltech.ipac.firefly.util.PropFile;
@@ -40,6 +35,9 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.visualize.plot.RangeValues;
+
+import java.util.Iterator;
+
 
 /**
  * User: roby
@@ -118,16 +116,13 @@ public class BandPanel extends Composite {
         SimpleInputField ifMax= new  SimpleInputField(_maxStretch,new SimpleInputField.Config("100px"),true);
 
         ifDR= new  SimpleInputField(_drStretch,new SimpleInputField.Config("100px"),true);
-        //ifDR.setValue("100.0");
+
         ifGamma= new  SimpleInputField(_gammaStretch,new SimpleInputField.Config("100px"),true);
-        //ifGamma.setValue("2.0");
 
         VerticalPanel barPanel= new VerticalPanel();
 
         DOM.setStyleAttribute(barPanel.getElement(), "border", "1px solid black");
-//        barPanel.add(_colorHist);
         barPanel.add(_dataHist);
-//        barPanel.add(_cbar);
         Widget cbarCenter= GwtUtil.centerAlign(_cbar);
         DOM.setStyleAttribute(cbarCenter.getElement(), "padding", "5px 1px 5px 1px");
 
@@ -151,11 +146,13 @@ public class BandPanel extends Composite {
                     ifDR.setVisible(true);
                     ifGamma.setVisible(false);
                     _useZScale.setEnabled(false);
+                    ifDR.setValue(event.getValue());
 
                 } else if (_stretchType.getField().getValue().equalsIgnoreCase("powerLawGamma")) {
                     ifGamma.setVisible(true);
                     ifDR.setVisible(false);
                     _useZScale.setEnabled(false);
+                    ifGamma.setValue(event.getValue());
 
                 } else {
                     ifDR.setVisible(false);
@@ -173,13 +170,11 @@ public class BandPanel extends Composite {
         DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
         VerticalPanel minmaxPanel= new VerticalPanel();
-        //minmaxPanel.add(GwtUtil.centerAlign(_stretchType));
-        minmaxPanel.add(ifMin);
+         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
         minmaxPanel.add(ifDR);
-       // ifDR.setVisible(false);
+
         minmaxPanel.add(ifGamma);
-      //  ifGamma.setVisible(false);
 
         _rangeForm.add(minmaxPanel);
 
@@ -220,9 +215,24 @@ public class BandPanel extends Composite {
 
     public void newPlot(WebPlot plot) {
         _plot= plot;
+        RangeValues rv= _plot.getPlotState().getRangeValues(_band);
+
+        int lowerWhich = rv.getLowerWhich();
+        int upperWhich = rv.getUpperWhich();
+        if (!_drStretch.getValue().isEmpty()) {
+            double lowerValue = _minStretch.getNumberValue().doubleValue();
+            double upperValue = _maxStretch.getNumberValue().doubleValue();
+            double drValue = _drStretch.getNumberValue().doubleValue();
+            double gammaValue = _gammaStretch.getNumberValue().doubleValue();
+            RangeValues rvNew = new RangeValues(lowerWhich, lowerValue, upperWhich, upperValue, drValue, gammaValue, rv.getStretchAlgorithm());
+            _plot.getPlotState().setRangeValues(rvNew, _band);
+        }
+
         WebFitsData fData= plot.getFitsData(_band);
         _minStretch.setWebFitsData(fData);
         _maxStretch.setWebFitsData(fData);
+        _drStretch.setWebFitsData(fData);
+        _gammaStretch.setWebFitsData(fData);
         if (_showBand!=null) _showBand.setValue(_plot.getPlotState().isBandVisible(_band));
         updatePlotStatus();
         updateColorHistogram();
@@ -231,17 +241,15 @@ public class BandPanel extends Composite {
 
     private void updatePlotStatus() {
         RangeValues rv= _plot.getPlotState().getRangeValues(_band);
+
         int sType= rv.getStretchAlgorithm();
         setStretch(sType);
 
-        //LZ 5/21/15 add these two blocks
-        if (sType== RangeValues.STRETCH_ARCSINE ){
+              //LZ 5/21/15 add these two blocks
             _drStretch.setValue(rv.getDrValue() + "");
-        }
-        else if (sType== RangeValues.STRETCH_POWERLAW_GAMMA) {
             _gammaStretch.setValue(rv.getGammaValue()+ "");
-        }
-        else {
+
+
             if (rv.getLowerWhich() == RangeValues.ZSCALE) {
                 setUseZScale(true);
 
@@ -276,7 +284,7 @@ public class BandPanel extends Composite {
 
             }
 
-        }
+       // }
     }
 
     boolean isBandVisible() {
@@ -454,13 +462,46 @@ public class BandPanel extends Composite {
         public void onMouseOut(MouseOutEvent ev) { clearReadout(); }
     }
 
-
+    /**
+      LZ
+      when the checkBox is selected, the Arcsine and PowerLawGamma will be removed since the zscale
+     is not applied to them.  When the checkbox is not selected, add Arcsine and PowerLawGamma back.
+     */
     private class ZScaleChange implements ValueChangeHandler<Boolean> {
 
         public void onValueChange(ValueChangeEvent<Boolean> ev) {
             setUseZScale(ev.getValue());
-            //TODO hide arcsine and powerLawGamma in the _stretchType
 
+
+            if (ev.getValue()) {
+
+                Iterator<Widget> iterator = _stretchType.iterator();
+                while (iterator.hasNext()) {
+                    Widget w = iterator.next();
+                    if (w instanceof ListBoxInputField) {
+                        ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
+                        l.removeItem(7);
+                        l.removeItem(6);
+
+                    }
+                }
+
+            }
+            else {
+
+                Iterator<Widget> iterator = _stretchType.iterator();
+                while (iterator.hasNext()) {
+                    Widget w = iterator.next();
+                    if (w instanceof ListBoxInputField) {
+                        ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
+                        l.addItem("Arcsine");
+                        l.addItem("PowerLawGamma");
+
+                    }
+                }
+
+
+            }
         }
     }
 }

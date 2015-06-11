@@ -44,7 +44,6 @@ public class StretchInputField extends InputField {
     private int _whichView= -1;
     private WebFitsData _wFitsData;
     private final TextBoxInputField _inputField;
-
     static {
         _minUnitStrs[PERCENT_IDX]= _prop.getName("minStretch.percent");
         _minUnitStrs[ABSOLUTE_IDX]= _prop.getName("minStretch.absolute");
@@ -64,6 +63,7 @@ public class StretchInputField extends InputField {
     public StretchInputField(Type type, WebFitsData wFitsData) {
 
         _inputField = new TextBoxInputField(makeFieldDef(type),true);
+
         _type= type;
         _inputField.getTextBox().setMaxLength(10);
         if (type==Type.MIN) {
@@ -92,30 +92,33 @@ public class StretchInputField extends InputField {
 
 
         _inputField.getTextBox().setWidth("115px");
-        /*_inputField.addValueChangeHandler(new ValueChangeHandler<String>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<String> event) {
-                _inputField.getFieldDef().getDefaultValueAsString()
-            }
-        });*/
+
 
         _listBox.setWidth("85px");
         GwtUtil.setStyle(_listBox, "fontSize", "12px");
 
         HorizontalPanel hp= new HorizontalPanel();
         hp.add(_inputField.getTextBox());
-        if(type ==Type.MIN || type ==Type.MAX  )
+
+        //LZ modified in June 2015
+        if(type ==Type.MIN || type ==Type.MAX  ) {
             hp.add(_listBox);
+            setUnits(PERCENT_IDX);
+
+        }
+
 
         initWidget(hp);
-
-        setUnits(PERCENT_IDX);
         setWebFitsData(wFitsData);
     }
 
+
     public void setWebFitsData(WebFitsData wFitsData) {
         _wFitsData= wFitsData;
-        if (_listBox.getSelectedIndex()!=PERCENT_IDX) updateFieldDef();
+        if (_type==Type.DR|| _type==Type.GAMMA) return;
+       if (_listBox.getSelectedIndex() != PERCENT_IDX) {
+           updateFieldDef();
+       }
     }
 
     public static DoubleFieldDef makeFieldDef(Type type) {
@@ -130,13 +133,13 @@ public class StretchInputField extends InputField {
         //LZ 5/23/15 add for arcsine and power gamma
         else if (type==Type.DR) {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("drStretch")));
-            fd.setDefaultValue("100.0");
+
 
         }
         //LZ 5/23/15 add for power law gamma
         else if (type==Type.GAMMA) {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("powerLawGammaStretch")));
-            fd.setDefaultValue("2.0");
+
 
         }
         else {
@@ -195,62 +198,74 @@ public class StretchInputField extends InputField {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
-    private String getdef(){
-        String def="";
-        if (_type==Type.MIN ) {
-            def= "1.0";
-        }
-       else  if (_type==Type.MAX) {
-            def="99.0";
-        }
-        else if (_type==Type.DR){
-            def="100.0";
-        } else if (_type==Type.GAMMA){
-            def = "2.0";
-        }
-        return def;
-    }
+
     private void updateFieldDef() {
-        int which= _listBox.getSelectedIndex();
-        if (which != _whichView) {
-            DoubleFieldDef fd= (DoubleFieldDef)getFieldDef();
-            String def;
-            switch (which) {
-                case PERCENT_IDX :
-                    def= _type==Type.MIN ? "1.0" : "99.0";
-                    fd.setMinValue(0D, RangeFieldDef.INCLUSIVE);
-                    fd.setMaxValue(100D, RangeFieldDef.INCLUSIVE);
-                    fd.setDefaultValue(def);
-                    setValue(def);
-                    break;
-                case SIGMA_IDX :
-                    def= _type==Type.MIN ? "-2.0" : "10.0";
 
-                    fd.setMinValue(-100D, RangeFieldDef.INCLUSIVE);
-                    fd.setMaxValue(100D, RangeFieldDef.INCLUSIVE);
-                    fd.setDefaultValue(def);
-                    setValue(def);
-                    break;
-                case ABSOLUTE_IDX :
-                    def= _type==Type.MIN ? _wFitsData.getDataMin()+"" : _wFitsData.getDataMax()+"";
-                    fd.setMinBoundType(null);
-                    fd.setMaxBoundType(null);
-                    fd.setDefaultValue(def);
-                    setValue(def);
-                    break;
-                case MINMAX_IDX :
-                    def= _type==Type.MIN ? _wFitsData.getDataMin()+"" : _wFitsData.getDataMax()+"";
-                    fd.setMinValue(_wFitsData.getDataMin(), RangeFieldDef.INCLUSIVE);
-                    fd.setMaxValue(_wFitsData.getDataMax(), RangeFieldDef.INCLUSIVE);
-                    fd.setDefaultValue(def);
-                    setValue(def);
-                    break;
-                default :
-                    break;
-            }
-            _whichView= which;
+
+        if (_type==Type.DR) {
+
+            DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
+            String def = "10.0";
+            fd.setMinValue(1D, RangeFieldDef.INCLUSIVE);
+            fd.setMaxValue(100000D, RangeFieldDef.INCLUSIVE);
+            fd.setDefaultValue(def);
+            setValue(def);
+
+
         }
+        else if (_type==Type.GAMMA){
 
+                DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
+                String def = "2.0";
+                 fd.setMinValue(2D, RangeFieldDef.INCLUSIVE);
+                fd.setMaxValue(10D, RangeFieldDef.INCLUSIVE);
+                fd.setDefaultValue(def);
+
+                setValue(def);
+
+
+        }
+        else {
+            int which = _listBox.getSelectedIndex();
+            if (which != _whichView) {
+                DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
+                String def;
+                switch (which) {
+                    case PERCENT_IDX:
+                        def = _type == Type.MIN ? "1.0" : "99.0";
+                        fd.setMinValue(0D, RangeFieldDef.INCLUSIVE);
+                        fd.setMaxValue(100D, RangeFieldDef.INCLUSIVE);
+                        fd.setDefaultValue(def);
+                        setValue(def);
+                        break;
+                    case SIGMA_IDX:
+                        def = _type == Type.MIN ? "-2.0" : "10.0";
+
+                        fd.setMinValue(-100D, RangeFieldDef.INCLUSIVE);
+                        fd.setMaxValue(100D, RangeFieldDef.INCLUSIVE);
+                        fd.setDefaultValue(def);
+                        setValue(def);
+                        break;
+                    case ABSOLUTE_IDX:
+                        def = _type == Type.MIN ? _wFitsData.getDataMin() + "" : _wFitsData.getDataMax() + "";
+                        fd.setMinBoundType(null);
+                        fd.setMaxBoundType(null);
+                        fd.setDefaultValue(def);
+                        setValue(def);
+                        break;
+                    case MINMAX_IDX:
+                        def = _type == Type.MIN ? _wFitsData.getDataMin() + "" : _wFitsData.getDataMax() + "";
+                        fd.setMinValue(_wFitsData.getDataMin(), RangeFieldDef.INCLUSIVE);
+                        fd.setMaxValue(_wFitsData.getDataMax(), RangeFieldDef.INCLUSIVE);
+                        fd.setDefaultValue(def);
+                        setValue(def);
+                        break;
+                    default:
+                        break;
+                }
+                _whichView = which;
+            }
+        }
     }
 
 
