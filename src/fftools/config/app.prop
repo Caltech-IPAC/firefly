@@ -19,3 +19,4 @@ lsst.schema.pass = @lsst.schema.pass@
 
 visualize.fits.Security= @visualize.fits.Security@
 
+python.exe= @python.exe@

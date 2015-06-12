@@ -285,6 +285,14 @@ public class ServerContext {
         return dir;
     }
 
+    public static File getExternalPermWorkDir() {
+        File dir = new File(getPermWorkDir(), "external");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
     public static File getTempWorkDir() {
         File dir = new File(getWorkingDir(), "temp_files");
         if (!dir.exists()) {
@@ -292,6 +300,16 @@ public class ServerContext {
         }
         return dir;
     }
+
+
+    public static File getExternalTempWorkDir() {
+        File dir = new File(getTempWorkDir(), "external");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
 
     public static File getStageWorkDir() {
         File dir = new File(getWorkingDir(), "stage");

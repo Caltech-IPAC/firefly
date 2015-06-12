@@ -220,7 +220,7 @@ public class FileUtil
             retval= f;
         }
         else {
-            retval= new File(setExtension(extension, path, false));
+            retval= new File(setExtension(extension, path, true));
         }
         return retval;
     }
