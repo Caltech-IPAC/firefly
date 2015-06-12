@@ -149,7 +149,7 @@ public class ImagePlotCreator {
 
         RangeValues rv= state.getPrimaryRangeValues();
         if (rv==null) {
-            rv= FitsRead.getDefaultFutureStretch();
+            rv= FitsRead.getDefaultRangeValues();
             state.setRangeValues(rv,state.firstBand());
         }
 

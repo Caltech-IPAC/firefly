@@ -657,7 +657,8 @@ public class FitsRead implements Serializable {
 
         byte pixelData[] = passedPixelData;
 
-        Histogram hist= getHistogram();
+        //Histogram hist= getHistogram();
+        hist= getHistogram();
 
         double slow = getSlow(rangeValues, float1d, imageHeader,hist);
         double shigh = getShigh(rangeValues, float1d, imageHeader,hist);
@@ -1272,7 +1273,7 @@ public class FitsRead implements Serializable {
 
     Histogram getHistogram() {
         if (hist == null) {
-            computeHistogram();
+           hist= computeHistogram();
         }
         return hist;
     }
