@@ -67,7 +67,7 @@
    Oracle java license
    http://www.oracle.com/technetwork/java/javase/terms/license/index.html
    
-**regclient.jar, stil.jar**
+**rayreg.jar, regclient.jar, stil.jar**
     LGPL
     starlink votable reader/writer
 
