@@ -1,19 +1,30 @@
 package edu.caltech.ipac.visualize.plot;
 
 
+
 import edu.caltech.ipac.firefly.visualize.VisUtil;
+import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
-import nom.tam.fits.*;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Data;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
+import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
-import edu.caltech.ipac.util.Assert;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+
 
 /**
  * Lijun Zhang
@@ -34,8 +45,6 @@ public class FitsRead implements Serializable {
 
     private int planeNumber;
     private int extension_number;
-    private byte[] pixeldata;
-    private int[] pixelhist = new int[256];
     private float[] float1d;
     private Fits fits;
     private ImageHeader imageHeader;
@@ -43,12 +52,10 @@ public class FitsRead implements Serializable {
     private BasicHDU hdu;
     private Histogram hist = null;
     private double blankValue;
-    private RangeValues rangeValues = (RangeValues) DEFAULT_RANGE_VALUE.clone();
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-    private double slow = 0.0;
-    private double shigh = 0.0;
+
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -60,11 +67,6 @@ public class FitsRead implements Serializable {
      * @throws FitsException
      */
     private FitsRead(Fits fits, ImageHDU imageHdu) throws FitsException {
-
-        //initialize all the range vlaues
-        RangeValues rangeValuesArcsine = new RangeValues(RangeValues.STRETCH_ARCSINE);
-        RangeValues rangeValuesgamma = new RangeValues(RangeValues.STRETCH_POWERLAW_GAMMA);
-
 
         //assign some instant variables
         this.fits = fits;
@@ -80,7 +82,7 @@ public class FitsRead implements Serializable {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
-        float1d = getImageHDUDataInFloatArray(this.fits, imageHdu);
+        float1d = getImageHDUDataInFloatArray(imageHdu);
 
     }
 
@@ -626,7 +628,7 @@ public class FitsRead implements Serializable {
         return float1d;
     }
 
-    private float[] getImageHDUDataInFloatArray(Fits fits, ImageHDU imageHDU) throws FitsException {
+    private float[] getImageHDUDataInFloatArray(ImageHDU imageHDU) throws FitsException {
 
 
         //convert data to float if the bitpix is not 32
@@ -642,40 +644,37 @@ public class FitsRead implements Serializable {
 
 
 
-    public synchronized void doStretch(byte passedPixelData[], boolean mapBlankToZero,
-                                            int startPixel, int lastPixel, int startLine, int lastLine) {
+    public synchronized void doStretch(RangeValues rangeValues,
+                                       byte passedPixelData[],
+                                       boolean mapBlankToZero,
+                                       int startPixel,
+                                       int lastPixel,
+                                       int startLine,
+                                       int lastLine) {
 
 
-       byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        pixeldata = passedPixelData;
+        byte pixelData[] = passedPixelData;
 
-        if (hist == null) {
-            if (((rangeValues.getLowerWhich() != RangeValues.ABSOLUTE) &&
-                    (rangeValues.getLowerWhich() != RangeValues.ZSCALE)) ||
-                    ((rangeValues.getUpperWhich() != RangeValues.ABSOLUTE) &&
-                            (rangeValues.getUpperWhich() != RangeValues.ZSCALE))) {
+        Histogram hist= getHistogram();
 
-            hist = computeHistogram();
-
-            }
-        }
-
-        slow = getSlow(imageHeader.bzero, imageHeader.bscale);
-        shigh = getShigh(imageHeader.bzero, imageHeader.bscale);
+        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader,hist);
         if (SUTDebug.isDebug()) {
-            printInfo(slow, shigh, imageHeader.bitpix);
+            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
         }
 
 
-        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
-                blank_pixel_value, float1d, pixeldata, pixelhist);
+        int[] pixelhist = new int[256];
+        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
+                blank_pixel_value, float1d, pixelData, pixelhist, rangeValues,slow,shigh);
+
 
 
     }
 
-
-    private Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader) {
+    private static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {
 
         double contrast = rangeValues.getZscaleContrast();
         int optSize = rangeValues.getZscaleSamples();
@@ -691,11 +690,11 @@ public class FitsRead implements Serializable {
         return zscaleRetval;
     }
 
-    private double getSlow(double bzero, double bscale) {
+       private static double getSlow(RangeValues rangeValues,  float float1d[], ImageHeader imageHeader, Histogram hist) {
         double slow = 0.0;
         switch (rangeValues.getLowerWhich()) {
             case RangeValues.ABSOLUTE:
-                slow = (rangeValues.getLowerValue() - bzero) / bscale;
+                slow = (rangeValues.getLowerValue() - imageHeader.bzero) /imageHeader.bscale;
                 break;
             case RangeValues.PERCENTAGE:
                 slow = hist.get_pct(rangeValues.getLowerValue(), false);
@@ -708,7 +707,7 @@ public class FitsRead implements Serializable {
                 break;
             case RangeValues.ZSCALE:
 
-                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader);
+                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
                 slow = zscale_retval.getZ1();
                 break;
             default:
@@ -716,13 +715,11 @@ public class FitsRead implements Serializable {
         }
         return slow;
     }
-
-
-    private double getShigh(double bzero, double bscale) {
+    private double getShigh(RangeValues rangeValues, float float1d[], ImageHeader imageHeader, Histogram hist) {
         double shigh = 0.0;
         switch (rangeValues.getUpperWhich()) {
             case RangeValues.ABSOLUTE:
-                shigh = (rangeValues.getUpperValue() - bzero) / bscale;
+                shigh = (rangeValues.getUpperValue() - imageHeader.bzero) / imageHeader.bscale;
                 break;
             case RangeValues.PERCENTAGE:
                 shigh = hist.get_pct(rangeValues.getUpperValue(), true);
@@ -735,7 +732,7 @@ public class FitsRead implements Serializable {
                 break;
             case RangeValues.ZSCALE:
 
-                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader);
+                Zscale.ZscaleRetval zscale_retval = getZscaleValue(float1d, imageHeader, rangeValues);
                 shigh = zscale_retval.getZ2();
                 break;
             default:
@@ -744,7 +741,9 @@ public class FitsRead implements Serializable {
         return shigh;
     }
 
-    private void printInfo(double slow, double shigh, int bitpix) {
+
+
+    private void printInfo(double slow, double shigh, int bitpix, RangeValues rangeValues) {
 
         System.out.println("slow = " + slow + "    shigh = " + shigh +
                 "   bitpix = " + bitpix);
@@ -797,9 +796,19 @@ public class FitsRead implements Serializable {
      * @param lastLine
        * @param blank_pixel_value
      */
-    private void stretchPixels(int startPixel, int lastPixel, int startLine, int lastLine,
-                               int naxis1, byte blank_pixel_value,
-                               float[] float1dArray, byte[] pixeldata, int[] pixelhist) {
+    private static void stretchPixels(int startPixel,
+                                      int lastPixel,
+                                      int startLine,
+                                      int lastLine,
+                                      int naxis1,
+                                      Histogram hist,
+                                      byte blank_pixel_value,
+                                      float[] float1dArray,
+                                      byte[] pixeldata,
+                                      int[] pixelhist,
+                                      RangeValues rangeValues,
+                                      double slow,
+                                      double shigh) {
 
 
         double sdiff = slow == shigh ? 1.0 : shigh - slow;
@@ -807,7 +816,7 @@ public class FitsRead implements Serializable {
         double[] dtbl = new double[255];
         if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
                 || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
-            dtbl = getLogDtbl(sdiff, slow);
+            dtbl = getLogDtbl(sdiff, slow, rangeValues);
         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
            dtbl = hist.getTblArray();
         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED
@@ -863,7 +872,7 @@ public class FitsRead implements Serializable {
 
     }
 
-    private double getPowerLawGammaStretchedPixelValue(double x, double gamma, double zp, double mp){
+    private static double getPowerLawGammaStretchedPixelValue(double x, double gamma, double zp, double mp){
 
 
 
@@ -876,7 +885,7 @@ public class FitsRead implements Serializable {
 
     }
 
-    private double getArcSineStretchedPixelValue(double x, double dr, double zp, double mp){
+    private static double getArcSineStretchedPixelValue(double x, double dr, double zp, double mp){
         double  bp=0.0;
         double wp=dr;
 
@@ -892,7 +901,7 @@ public class FitsRead implements Serializable {
 
 
 
-    private int getNoneLinerStretchedPixelValue(double dRunVal,  double[] dtbl, int delta) {
+    private static int getNoneLinerStretchedPixelValue(double dRunVal,  double[] dtbl, int delta) {
 
         int pixval = 128;
 
@@ -943,7 +952,7 @@ public class FitsRead implements Serializable {
      *
      * @return
      */
-    private byte getLinearStrectchedPixelValue(double dRenVal) {
+    private static byte getLinearStrectchedPixelValue(double dRenVal) {
 
         if (dRenVal < 0)
             return 0;
@@ -953,7 +962,9 @@ public class FitsRead implements Serializable {
             return (byte) dRenVal;
     }
 
-    private double[] getLogDtbl(double sdiff, double slow) {
+
+
+    private static double[] getLogDtbl(double sdiff, double slow, RangeValues rangeValues) {
 
         double[] dtbl = new double[256];
         for (int j = 0; j < 255; ++j) {
@@ -981,7 +992,7 @@ public class FitsRead implements Serializable {
      *
      * @return array of byte (4096 elements)
      */
-    public byte[] getHistColors() {
+    public byte[] getHistColors(RangeValues rangeValues) {
         int start_pixel = 0;
         int last_pixel = 4095;
         int start_line = 0;
@@ -998,21 +1009,24 @@ public class FitsRead implements Serializable {
             hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
+        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
 
-        stretchPixels(start_pixel, last_pixel, start_line, last_line, naxis1,
-                blank_pixel_value, hist_bin_values, pixeldata, pixelhist);
-
-
+        stretchPixels(start_pixel, last_pixel,
+                start_line, last_line, naxis1, hist,
+                blank_pixel_value, hist_bin_values,
+                pixeldata, pixelhist, rangeValues,slow,shigh);
 
         return pixeldata;
     }
 
 
 
+
     /**
      * fill the 256 element table with values for a squared stretch
      */
-    private double[] getSquareDbl(double sdiff, double slow) {
+    private static double[] getSquareDbl(double sdiff, double slow) {
         double[] dtbl = new double[255];
 
         for (int j = 0; j < 255; ++j) {
@@ -1024,16 +1038,6 @@ public class FitsRead implements Serializable {
     }
 
 
-
-    public byte[] getData8() {
-        return (pixeldata);
-    }
-
-
-    public int[] getScreenHistogram() {
-        pixelhist[255] = 0;  // pixelhist[255] is count of blank pixels
-        return (pixelhist);
-    }
 
     /**
      * Get flux of pixel at given "ImagePt" coordinates
@@ -1235,12 +1239,11 @@ public class FitsRead implements Serializable {
         return (imageHeader);
     }
 
-    public RangeValues getRangeValues() {
-        return (rangeValues);
-    }
 
-    public void setRangeValues(RangeValues rangeValues) {
-        this.rangeValues = rangeValues;
+
+    public static RangeValues getDefaultRangeValues() {
+        return (RangeValues) DEFAULT_RANGE_VALUE.clone();
+
     }
 
     public int getImageScaleFactor() {
@@ -1372,24 +1375,44 @@ public class FitsRead implements Serializable {
         return floatData;
     }
 
-    public long getDataSize() {
-        long retval = 0;
-        if (pixeldata != null) retval += pixeldata.length;
-        if (pixelhist != null) retval += pixelhist.length * 4;
-        if (float1d != null) retval += float1d.length * 8;
-        return retval;
-    }
 
     public void freeResources() {
-        pixeldata = null;
-        pixelhist = null;
         float1d = null;
         fits = null;
         imageHeader = null;
         header = null;
         hist = null;
-        rangeValues = null;
+
     }
+
+    public void writeSimpleFitsFile(OutputStream stream) throws FitsException, IOException{
+        createNewFits().write(new DataOutputStream(stream));
+    }
+
+    public Fits createNewFits() throws FitsException {
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
+        int dims2[] = new int[]{naxis1, naxis2};
+        float [][] outData = (float[][]) ArrayFuncs.curl(float1d, dims2);
+        ImageData imageData= new ImageData(outData);
+        ImageHDU newHDU = new ImageHDU(cloneHeader(header), imageData);
+        Fits outputFits = new Fits();
+        outputFits.addHDU(newHDU);
+        return outputFits;
+    }
+
+    public static void writeFitsFile(OutputStream stream, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException{
+        Fits output_fits = new Fits();
+        for(FitsRead fr : fitsReadAry) {
+            BasicHDU one_image_hdu = refFits.getHDU(0);
+            Header header = one_image_hdu.getHeader();
+            Data data = one_image_hdu.getData();
+            ImageHDU image_hdu = new ImageHDU(header, data);
+            output_fits.addHDU(image_hdu);
+        }
+        output_fits.write(new DataOutputStream(stream));
+    }
+
 
 
 }
