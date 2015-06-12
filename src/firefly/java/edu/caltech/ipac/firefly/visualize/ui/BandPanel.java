@@ -170,7 +170,7 @@ public class BandPanel extends Composite {
         DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
         VerticalPanel minmaxPanel= new VerticalPanel();
-        minmaxPanel.add(ifMin);
+         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
         minmaxPanel.add(ifDR);
 
@@ -343,7 +343,8 @@ public class BandPanel extends Composite {
      int getStretch() {
 
         String sTypeStr= _stretchType.getValue();
-
+         //ifDR.setVisible(false);
+        // ifGamma.setVisible(false);
         int sType;
         if      (sTypeStr.equals(LINEAR_KEY))       sType= RangeValues.STRETCH_LINEAR;
         else if (sTypeStr.equals(LOG_KEY))          sType= RangeValues.STRETCH_LOG;

@@ -42,7 +42,6 @@ public class StretchInputField extends InputField {
     private final ListBox _listBox= new ListBox();
     private final Type _type;
     private int _whichView= -1;
-
     private WebFitsData _wFitsData;
     private final TextBoxInputField _inputField;
     static {
@@ -104,11 +103,11 @@ public class StretchInputField extends InputField {
         //LZ modified in June 2015
         if(type ==Type.MIN || type ==Type.MAX  ) {
             hp.add(_listBox);
-           // setUnits(PERCENT_IDX);
+            setUnits(PERCENT_IDX);
 
         }
 
-        setUnits(PERCENT_IDX);
+
         initWidget(hp);
         setWebFitsData(wFitsData);
     }
@@ -116,13 +115,10 @@ public class StretchInputField extends InputField {
 
     public void setWebFitsData(WebFitsData wFitsData) {
         _wFitsData= wFitsData;
-
-        if (_listBox.getSelectedIndex() != PERCENT_IDX) {
-                updateFieldDef();
-
-        }
-
-
+     //   if (_type==Type.DR|| _type==Type.GAMMA) return;
+       if (_listBox.getSelectedIndex() != PERCENT_IDX) {
+           updateFieldDef();
+       }
     }
 
     public static DoubleFieldDef makeFieldDef(Type type) {
@@ -221,7 +217,7 @@ public class StretchInputField extends InputField {
 
                 DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
                 String def = "2.0";
-                fd.setMinValue(2D, RangeFieldDef.INCLUSIVE);
+                 fd.setMinValue(2D, RangeFieldDef.INCLUSIVE);
                 fd.setMaxValue(10D, RangeFieldDef.INCLUSIVE);
                 fd.setDefaultValue(def);
 

@@ -222,15 +222,6 @@ public class FitsViewerJSInterface {
         FFToolEnv.addToPanel(div, panel, "FITS Image");
     }
 
-    //LZ 6/11/15 add this method
-    public static String serializeRangeValues(String stretchType,
-                                              double lowerValue,
-                                              double upperValue, double drValue, double gammaValue,
-                                              String algorithm) {
-        RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,drValue, gammaValue, algorithm);
-        return rv.serialize();
-    }
-
     public static String serializeRangeValues(String stretchType,
                                               double lowerValue,
                                               double upperValue,
@@ -238,6 +229,7 @@ public class FitsViewerJSInterface {
         RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,algorithm);
         return rv.serialize();
     }
+
     public static void setCloseButtonClosesWindow(boolean closeWindow) {
         _closeButtonClosesWindow= closeWindow;
     }
