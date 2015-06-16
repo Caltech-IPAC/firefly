@@ -16,7 +16,7 @@ import edu.caltech.ipac.firefly.data.fuse.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.data.fuse.config.SelectedRowData;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
-import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
+import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
@@ -38,12 +38,22 @@ import java.util.Set;
 public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
 
-    private ActiveTargetLayer targetLayer= null;
-    private final String activeTargetLayerName= "target";
+
+
+//    private ActiveTargetLayer targetLayer= null;
+//    private final String activeTargetLayerName= "target";
     private final PlotData dynPlotData= new PlotData(null,false,true,false);
     private final DynImagePlotDefinition imagePlotDefinition= new DynImagePlotDefinition();
+    private final Map<String, List<String>> viewLayers= new HashMap<String, List<String>>(0);
 
-
+    public DynamicOnlyDataSetInfoConverter() {
+        Map<String,String> params= new HashMap<String, String>(5);
+        params.put(EventWorker.ID, "target");
+        params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
+        EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
+        targetLayer.bind(Application.getInstance().getEventHub());
+        viewLayers.put(CommonParams.ALL, Collections.singletonList("target"));
+    }
 
     public PlotData getDynamicData() {
         return dynPlotData;
@@ -65,23 +75,26 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
 
     public ImagePlotDefinition getImagePlotDefinition() { return imagePlotDefinition; }
 
-    public ActiveTargetLayer initActiveTargetLayer() {
-        if (targetLayer==null) {
-            Map<String,String> m= new HashMap<String, String>(5);
-            m.put(EventWorker.ID,activeTargetLayerName);
-            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
-            m.put(CommonParams.TARGET_COLUMNS, "in_ra,in_dec");
-            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
-            Application.getInstance().getEventHub().bind(targetLayer);
-            targetLayer.bind(Application.getInstance().getEventHub());
-        }
-        return targetLayer;
-    }
+//    public ActiveTargetLayer initActiveTargetLayer() {
+//        if (targetLayer==null) {
+//            Map<String,String> m= new HashMap<String, String>(5);
+//            m.put(EventWorker.ID,activeTargetLayerName);
+//            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
+//            m.put(CommonParams.TARGET_COLUMNS, "in_ra,in_dec");
+//            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
+//            Application.getInstance().getEventHub().bind(targetLayer);
+//            targetLayer.bind(Application.getInstance().getEventHub());
+//        }
+//        return targetLayer;
+//    }
 
     public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub) { return null; }
 
 
     public class DynImagePlotDefinition implements ImagePlotDefinition {
+
+
+
         public int getImageCount() {
             return 0;
         }
@@ -95,7 +108,7 @@ public class DynamicOnlyDataSetInfoConverter implements DatasetInfoConverter {
         }
 
         public Map<String, List<String>> getViewerToDrawingLayerMap() {
-            return new HashMap<String, List<String>>(0);
+            return viewLayers;
         }
 
         public String  getGridLayout() {

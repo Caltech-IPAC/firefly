@@ -11,7 +11,6 @@ package edu.caltech.ipac.firefly.data.fuse;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.fuse.config.SelectedRowData;
-import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -41,7 +40,7 @@ public interface DatasetInfoConverter {
 
     public List<WebPlotRequest> getSpectrumRequest(SelectedRowData selRowData);
 
-    public ActiveTargetLayer initActiveTargetLayer();
+//    public ActiveTargetLayer initActiveTargetLayer();
     public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub);
 
 }

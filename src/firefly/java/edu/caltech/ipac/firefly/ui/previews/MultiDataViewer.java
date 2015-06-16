@@ -29,6 +29,7 @@ import edu.caltech.ipac.firefly.resbundle.images.IconCreator;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.BadgeButton;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -421,6 +422,9 @@ public class MultiDataViewer {
         for(String key : keys) {
             if (!grid.containsKey(key) && !gridCard.containsDeletedID(key)) {
                 plotViewerIDList= viewToLayerMap.get(key);
+                if (plotViewerIDList==null) {
+                    plotViewerIDList= viewToLayerMap.get(CommonParams.ALL);
+                }
                 grid.addWebPlotImage(key,plotViewerIDList,addToGroup,true,false);
                 addedKey= true;
             }

@@ -51,6 +51,7 @@ public abstract class AbstractCoverageData implements CoverageData {
     private String title= "Coverage";
     private String tip= "Shows the coverage of the table";
     private boolean useTitleForPlot= false;
+    private CoverageType coverageType = CoverageType.GUESS;
 
     public AbstractCoverageData() {
         _colorMap.put(DEFAULT_VALUE,AutoColor.PT_1);
@@ -80,6 +81,8 @@ public abstract class AbstractCoverageData implements CoverageData {
     public String getTitle() { return title; }
     public void setTitle(String  title) { this.title= title; }
 
+    public CoverageType getCoverageType() { return coverageType; }
+    public void setCoverageType(CoverageType coverageType) { this.coverageType = coverageType; }
 
     public String getTip() { return tip; }
     public void setTip(String  tip) { this.tip= tip; }

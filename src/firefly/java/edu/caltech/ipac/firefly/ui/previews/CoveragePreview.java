@@ -659,9 +659,27 @@ public class CoveragePreview extends AbstractTablePreview {
 
     public CoverageData.CoverageType getCoverageType(TablePanel table)  {
         CoverageData.CoverageType retval= CoverageData.CoverageType.X;
-        if (!getInfo(table).isAllSky() && _covData.canDoCorners(new TableCtx(table))) retval= CoverageData.CoverageType.BOX;
+        boolean cornerSupported= !getInfo(table).isAllSky() && _covData.canDoCorners(new TableCtx(table));
+        switch (_covData.getCoverageType()) {
+            case X:
+                retval= CoverageData.CoverageType.X;
+                break;
+            case BOX:
+                if (cornerSupported) retval= CoverageData.CoverageType.BOX;
+                break;
+            case BOTH:
+                if (cornerSupported) retval= CoverageData.CoverageType.BOTH;
+                break;
+            case GUESS:
+                if (cornerSupported) retval= CoverageData.CoverageType.BOX;
+                break;
+            default:
+                retval= CoverageData.CoverageType.X;
+                break;
+        }
         return retval;
     }
+
 
 
     public TablePlotInfo getInfo(TablePanel table)  {
@@ -793,9 +811,9 @@ public class CoveragePreview extends AbstractTablePreview {
                     _graphObj.add(obj);
                 }
 
-            } else if (covType == CoverageData.CoverageType.BOX) {
+            } else if (covType == CoverageData.CoverageType.BOX || covType == CoverageData.CoverageType.BOTH) {
                 for(int i= 0; i<tabSize; i++) {
-                    _graphObj.add(makeFootprintObj(tableCtx,model.getRow(i)));
+                    _graphObj.addAll(makeFootprintObj(tableCtx, model.getRow(i),false));
                 }
             }
 
@@ -806,7 +824,7 @@ public class CoveragePreview extends AbstractTablePreview {
 
 
         public List<DrawObj> getHighlightDataImpl() {
-            DrawObj retval= null;
+            List<DrawObj> retval= new ArrayList<DrawObj>(2);
 
             TablePanel table= getTable();
             TableCtx tableCtx= new TableCtx(table);
@@ -818,14 +836,14 @@ public class CoveragePreview extends AbstractTablePreview {
 
             if (covType == CoverageData.CoverageType.X) {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
-                retval= makePointObj(table, r, cols.getLonCol(),cols.getLatCol(),cols.getCoordinateSys());
+                DrawObj d= makePointObj(table, r, cols.getLonCol(),cols.getLatCol(),cols.getCoordinateSys());
+                if (d!=null) d.setHighlighted(true);
 
-            } else if (covType == CoverageData.CoverageType.BOX) {
-                retval= makeFootprintObj(tableCtx,r);
+            } else if (covType == CoverageData.CoverageType.BOX || covType == CoverageData.CoverageType.BOTH) {
+                retval= makeFootprintObj(tableCtx,r, true);
             }
 
-            if (retval!=null) retval.setHighlighted(true);
-            return Arrays.asList(retval);
+            return retval;
 
 
         }
@@ -847,12 +865,11 @@ public class CoveragePreview extends AbstractTablePreview {
         }
 
 
-        private FootprintObj makeFootprintObj(TableCtx tableCtx, TableData.Row<String> row) {
+        private List<DrawObj> makeFootprintObj(TableCtx tableCtx, TableData.Row<String> row, boolean highlighted) {
             TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
             WorldPt [] wpts = new WorldPt[cornerCols.length];
             int idx= 0;
             for(TableMeta.LonLatColumns  corner : cornerCols) {
-
                 WorldPt graphPt = getWorldPt(row, corner.getLonCol(), corner.getLatCol(), corner.getCoordinateSys());
                 if (graphPt != null)
                     wpts[idx++] = graphPt;
@@ -860,7 +877,23 @@ public class CoveragePreview extends AbstractTablePreview {
                     break;
             }
             List<WorldPt[]> cAry= _covData.modifyBox(wpts, tableCtx, row);
-            return new FootprintObj(cAry);
+            List<DrawObj> retval= new ArrayList<DrawObj>(2);
+            FootprintObj fp= new FootprintObj(cAry);
+            fp.setHighlighted(highlighted);
+            retval.add(fp);
+            if (covType== CoverageData.CoverageType.BOTH) {
+                TablePanel table= getTable();
+                TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
+                if (cols!=null) {
+                    DrawObj d= makePointObj(table, row, cols.getLonCol(), cols.getLatCol(),
+                                            cols.getCoordinateSys());
+                    if (d!=null) {
+                        d.setHighlighted(highlighted);
+                        retval.add(d);
+                    }
+                }
+            }
+            return retval;
         }
 
 
@@ -871,11 +904,16 @@ public class CoveragePreview extends AbstractTablePreview {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
                 colList.add(cols.getLonCol());
                 colList.add(cols.getLatCol());
-            } else if (covType == CoverageData.CoverageType.BOX) {
+            } else if (covType == CoverageData.CoverageType.BOX || covType == CoverageData.CoverageType.BOTH) {
                 TableMeta.LonLatColumns cornerCols[]= _covData.getCornersColumns(tableCtx);
                 for(TableMeta.LonLatColumns  corner : cornerCols) {
                     colList.add(corner.getLonCol());
                     colList.add(corner.getLatCol());
+                }
+                if (covType == CoverageData.CoverageType.BOTH) {
+                    TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
+                    colList.add(cols.getLonCol());
+                    colList.add(cols.getLatCol());
                 }
             }
 
