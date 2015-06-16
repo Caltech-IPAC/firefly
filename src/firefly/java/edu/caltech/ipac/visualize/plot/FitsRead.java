@@ -1353,6 +1353,9 @@ public class FitsRead implements Serializable {
      *
      * This method returns the physical pixel values in the given imageHDU as a two dimensional array
      */
+    
+    //LZ 6/16/15 this method seems not used.  I comment it out.
+    /**
     public static float[][] getDataFloat(ImageHDU imageHDU)
             throws FitsException {
         Header header = imageHDU.getHeader();
@@ -1376,6 +1379,7 @@ public class FitsRead implements Serializable {
 
         return floatData;
     }
+    */
 
 
     public void freeResources() {
