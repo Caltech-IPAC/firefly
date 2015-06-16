@@ -34,6 +34,11 @@ import java.util.Arrays;
  *
  * 04/08/15
  * reactor doStretch and related methods
+ *
+ * 6/12/15
+ * Refactored stretch related methods and renamed all methods using the camelCase name
+ * Add the Arcsine and Power Law Gamma algorithms
+ * Cleaned up some unused methods
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -814,15 +819,19 @@ public class FitsRead implements Serializable {
 
         double sdiff = slow == shigh ? 1.0 : shigh - slow;
 
-        double[] dtbl = new double[255];
+        double[] dtbl = new double[256];
         if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
                 || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
             dtbl = getLogDtbl(sdiff, slow, rangeValues);
-        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
            dtbl = hist.getTblArray();
-        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED
-                || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
-            dtbl = getSquareDbl(sdiff, slow);
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
+        }
+        else if( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
         }
 
 
@@ -845,23 +854,21 @@ public class FitsRead implements Serializable {
                 if (Double.isNaN(float1dArray[index])) { //orignal pixel value is NaN, assign it to blank
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {   // stretch each pixel
-                    if (rangeValues.getStretchAlgorithm() ==
-                            RangeValues.STRETCH_LINEAR) {
+                    if (rangeValues.getStretchAlgorithm() ==RangeValues.STRETCH_LINEAR) {
+
                         double dRunval = ((float1dArray[index] - slow ) * 254 / sdiff);
                         pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
+
                     } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ARCSINE) {
-                        double dRunval = float1dArray[index];
-                        pixeldata[pixelCount] = (byte) getArcSineStretchedPixelValue(dRunval, dr, slow, shigh);
+                        pixeldata[pixelCount] = (byte) getArcSineStretchedPixelValue(float1dArray[index], dr, slow, shigh);
                     }
                     else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_POWERLAW_GAMMA) {
-                         double dRunval = float1dArray[index];
 
-
-                        pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(dRunval, gamma, slow, shigh);
+                        pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
                     }
                     else {
-                        double dRunval = float1dArray[index];
-                        pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(dRunval,  dtbl, deltasav);
+
+                        pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index],  dtbl, deltasav);
                     }
                     pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
                     pixelhist[pixeldata[pixelCount] & 0xff]++;
@@ -875,12 +882,9 @@ public class FitsRead implements Serializable {
 
     private static double getPowerLawGammaStretchedPixelValue(double x, double gamma, double zp, double mp){
 
-
-
         double  rd =  x-zp;
         double  nsd = Math.pow(rd, 1.0 / gamma)/ Math.pow(mp - zp, 1.0 / gamma);
         double pixValue = 255*nsd;
-
 
         return pixValue;
 
@@ -949,8 +953,6 @@ public class FitsRead implements Serializable {
     /**
      * The pixel value is in the range of 0-254
      *
-     *
-     *
      * @return
      */
     private static byte getLinearStrectchedPixelValue(double dRenVal) {
@@ -962,6 +964,7 @@ public class FitsRead implements Serializable {
         else
             return (byte) dRenVal;
     }
+
 
 
 
@@ -1022,19 +1025,23 @@ public class FitsRead implements Serializable {
     }
 
 
-
-
     /**
      * fill the 256 element table with values for a squared stretch
+     *
      */
-    private static double[] getSquareDbl(double sdiff, double slow) {
-        double[] dtbl = new double[255];
+    private static double[] getSquaredDbl(double sdiff, double slow,RangeValues rangeValues) {
+        double[] dtbl = new double[256];
 
         for (int j = 0; j < 255; ++j) {
-            double floati = Math.sqrt(sdiff * sdiff / 254 * j) + slow;
-            dtbl[j] = floati;
-        }
-        dtbl[255] = Float.MAX_VALUE;
+            if ( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
+                dtbl[j] = Math.sqrt(sdiff * sdiff / 254 * j) + slow;
+            }
+            else {
+               double dd = Math.sqrt(sdiff) / 254 * j;
+               dtbl[j] = dd * dd + slow;
+            }
+                   }
+        dtbl[255] = Double.MAX_VALUE;
         return dtbl;
     }
 
@@ -1207,11 +1214,11 @@ public class FitsRead implements Serializable {
         return result;
     }
 
-    public boolean isSameProjection(FitsRead second_fitsread) {
+    public boolean isSameProjection(FitsRead secondFitsread) {
         boolean result = false;
 
         ImageHeader H1 = getImageHeader();
-        ImageHeader H2 = second_fitsread.getImageHeader();
+        ImageHeader H2 = secondFitsread.getImageHeader();
 
         if (H1.maptype == H2.maptype) {
             if (H1.maptype == Projection.PLATE) {

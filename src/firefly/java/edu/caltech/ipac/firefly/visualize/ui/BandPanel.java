@@ -142,17 +142,20 @@ public class BandPanel extends Composite {
         _stretchType.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
             @Override
             public void onValueChange(ValueChangeEvent<String> event) {
+               RangeValues rv= _plot.getPlotState().getRangeValues(_band);
+
                 if (_stretchType.getField().getValue().equalsIgnoreCase("arcsine")) {
                     ifDR.setVisible(true);
                     ifGamma.setVisible(false);
                     _useZScale.setEnabled(false);
-                    ifDR.setValue(event.getValue());
+
+                    ifDR.setValue(new Double(rv.getDrValue()).toString());//event.getValue());
 
                 } else if (_stretchType.getField().getValue().equalsIgnoreCase("powerLawGamma")) {
                     ifGamma.setVisible(true);
                     ifDR.setVisible(false);
                     _useZScale.setEnabled(false);
-                    ifGamma.setValue(event.getValue());
+                    ifGamma.setValue(new Double(rv.getGammaValue()).toString());//event.getValue());
 
                 } else {
                     ifDR.setVisible(false);
