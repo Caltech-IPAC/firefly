@@ -10,24 +10,18 @@ package edu.caltech.ipac.firefly.data.fuse.provider;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.data.fuse.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.data.fuse.PlotData;
 import edu.caltech.ipac.firefly.data.fuse.config.SelectedRowData;
-import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.creator.drawing.ActiveTargetLayer;
 import edu.caltech.ipac.firefly.ui.creator.drawing.DatasetDrawingLayerProvider;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.ActiveTargetCreator;
-import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -70,18 +64,18 @@ public abstract class AbstractDataSetInfoConverter implements DatasetInfoConvert
 
     public ImagePlotDefinition getImagePlotDefinition() { return null; }
 
-    public ActiveTargetLayer initActiveTargetLayer() {
-        if (targetLayer==null) {
-            Map<String,String> m= new HashMap<String, String>(5);
-            m.put(EventWorker.ID,activeTargetLayerName);
-            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
-            m.put(CommonParams.TARGET_COLUMNS, "in_ra,in_dec");
-            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
-            Application.getInstance().getEventHub().bind(targetLayer);
-            targetLayer.bind(Application.getInstance().getEventHub());
-        }
-        return targetLayer;
-    }
+//    public ActiveTargetLayer initActiveTargetLayer() {
+//        if (targetLayer==null) {
+//            Map<String,String> m= new HashMap<String, String>(5);
+//            m.put(EventWorker.ID,activeTargetLayerName);
+//            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
+//            m.put(CommonParams.TARGET_COLUMNS, "in_ra,in_dec");
+//            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
+//            Application.getInstance().getEventHub().bind(targetLayer);
+//            targetLayer.bind(Application.getInstance().getEventHub());
+//        }
+//        return targetLayer;
+//    }
 
     public List<DatasetDrawingLayerProvider> initArtifactLayers(EventHub hub) { return null; }
 

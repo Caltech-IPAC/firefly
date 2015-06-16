@@ -62,19 +62,33 @@ public class FitsCacher {
                         return frAry;
                     }
                     else {
-                        Fits fits= new Fits(fitsFile.getPath());
+                        Fits fits= null;
                         try {
+                            fits= new Fits(fitsFile.getPath());
                             long start = System.currentTimeMillis();
-                            frAry= FitsRead.createFitsReadArray(fits);
-                            if (memCache!=null) memCache.put(key,frAry);
+                            frAry = FitsRead.createFitsReadArray(fits);
+                            if (memCache != null) memCache.put(key, frAry);
                             long elapse = System.currentTimeMillis() - start;
-                            String timeStr= UTCTimeUtil.getHMSFromMills(elapse);
-                            _log.briefInfo("Read Fits: "+timeStr+ ", "+
-                                                   FileUtil.getSizeAsString(fitsFile.length()) +
-                                                   ": "+fitsFile.getName());
+                            String timeStr = UTCTimeUtil.getHMSFromMills(elapse);
+                            _log.briefInfo("Read Fits: " + timeStr + ", " +
+                                    FileUtil.getSizeAsString(fitsFile.length()) +
+                                    ": " + fitsFile.getName());
                             return frAry;
+                        } catch (FitsException e) {
+                            File dir= fitsFile.getParentFile();
+                            if ( dir.equals(ServerContext.getVisCacheDir()) ||      // if in cache or upload dir, rename the file
+                                    dir.equals(ServerContext.getVisUploadDir()) ) {
+                                String newF= fitsFile.getAbsolutePath()+"--bad-file";
+                                fitsFile.renameTo(new File(newF));
+                                FitsException newE= new FitsException("bad fits file renamed to: "+newF);
+                                newE.initCause(e);
+                                throw newE;
+                            }
+                            else {
+                                throw e;
+                            }
                         } finally {
-                            fits.getStream().close();
+                            if (fits!=null) fits.getStream().close();
                         }
                     }
                 }

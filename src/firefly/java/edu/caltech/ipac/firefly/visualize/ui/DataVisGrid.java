@@ -19,6 +19,7 @@ import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.data.fuse.DatasetInfoConverter;
 import edu.caltech.ipac.firefly.data.fuse.ImagePlotDefinition;
 import edu.caltech.ipac.firefly.ui.PopoutWidget;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebAssert;
@@ -88,8 +89,11 @@ public class DataVisGrid {
 
         panel.add(gridRenderer.getWidget());
         for(String id : plotViewerIDList) {
-            final MiniPlotWidget mpw=makeMpw(this.groupName, id,
-                                             viewToLayerMap!=null ? viewToLayerMap.get(id) : null, false);
+            List<String> idList= null;
+            if (viewToLayerMap!= null) {
+                idList= viewToLayerMap.get(viewToLayerMap.containsKey(id) ? id : CommonParams.ALL);
+            }
+            final MiniPlotWidget mpw=makeMpw(this.groupName, id, idList, false);
             mpwMap.put(id,mpw);
         }
         for(int i=0; (i<xyPlotCount); i++) {

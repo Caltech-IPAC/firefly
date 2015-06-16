@@ -86,6 +86,7 @@ public class CommonParams {
     public static final String HAS_PREVIEW_DATA= "HasPreviewData";
     public static final String HAS_COVERAGE_DATA= "HasCoverageData";
     public static final String MULTI_COVERAGE= "MultiCoverage";
+    public static final String COVERAGE_TYPE= "CoverageType";
     public static final String CATALOGS_AS_OVERLAYS= "CatalogsAsOverlays";
     public static final String BLANK= "Blank";
     public static final String SHAPE= "Shape";

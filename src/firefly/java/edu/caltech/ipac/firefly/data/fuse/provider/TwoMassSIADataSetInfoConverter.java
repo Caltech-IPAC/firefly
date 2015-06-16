@@ -74,18 +74,18 @@ public class TwoMassSIADataSetInfoConverter extends AbstractDataSetInfoConverter
     }
 
 
-    public ActiveTargetLayer initActiveTargetLayer() {
-        if (targetLayer==null) {
-            Map<String,String> m= new HashMap<String, String>(5);
-            m.put(EventWorker.ID,"2mass_target");
-            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
-            m.put(CommonParams.TARGET_COLUMNS, "center_ra,center_dec");
-            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
-            Application.getInstance().getEventHub().bind(targetLayer);
-            targetLayer.bind(Application.getInstance().getEventHub());
-        }
-        return targetLayer;
-    }
+//    public ActiveTargetLayer initActiveTargetLayer() {
+//        if (targetLayer==null) {
+//            Map<String,String> m= new HashMap<String, String>(5);
+//            m.put(EventWorker.ID,"2mass_target");
+//            m.put(CommonParams.TARGET_TYPE,CommonParams.TABLE_ROW);
+//            m.put(CommonParams.TARGET_COLUMNS, "center_ra,center_dec");
+//            targetLayer= (ActiveTargetLayer)(new ActiveTargetCreator().create(m));
+//            Application.getInstance().getEventHub().bind(targetLayer);
+//            targetLayer.bind(Application.getInstance().getEventHub());
+//        }
+//        return targetLayer;
+//    }
 
 
 

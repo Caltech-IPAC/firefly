@@ -13,7 +13,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
@@ -272,7 +271,7 @@ class StandaloneUI {
         params.put(EventWorker.ID, "target");
         params.put(CommonParams.TARGET_TYPE, ActiveTargetCreator.TargetType.PlotFixedTarget.toString());
         EventWorker targetLayer= new WidgetFactory().createEventWorker(CommonParams.ACTIVE_TARGET, params);
-        targetLayer.bind(FFToolEnv.getHub());
+        targetLayer.bind(Application.getInstance().getEventHub());
 
 
         isInit= true;

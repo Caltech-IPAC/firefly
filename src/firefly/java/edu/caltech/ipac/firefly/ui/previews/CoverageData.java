@@ -21,35 +21,36 @@ import java.util.List;
 public interface CoverageData {
 
 
-    public enum CoverageType {X, BOX}
-    public enum FitType {WIDTH, WIDTH_HEIGHT}
+    enum CoverageType {X, BOX, BOTH, GUESS}
+    enum FitType {WIDTH, WIDTH_HEIGHT}
 
-    public String getTitle();
-    public String getTip();
-    public boolean getHasCoverageData(TableCtx table);
-    public String getCoverageBaseTitle(TableCtx panel);
+    String getTitle();
+    String getTip();
+    boolean getHasCoverageData(TableCtx table);
+    String getCoverageBaseTitle(TableCtx panel);
+    CoverageType getCoverageType();
 
-    public boolean canDoCorners(TableCtx table);
-    public List<WorldPt[]> modifyBox(WorldPt[] pts, TableCtx table, TableData.Row<String> row);
+    boolean canDoCorners(TableCtx table);
+    List<WorldPt[]> modifyBox(WorldPt[] pts, TableCtx table, TableData.Row<String> row);
 
-    public TableMeta.LonLatColumns[] getCornersColumns(TableCtx table);
-    public TableMeta.LonLatColumns getCenterColumns(TableCtx table);
-    public List<String> getExtraColumns();
-    public List<String> getEventWorkerList();
-    public ZoomType getSmartZoomHint();
-    public String getGroup();
-    public DrawSymbol getShape(String id);
-    public int getSymbolSize(String id);
-    public String getColor(String id);
-    public String getHighlightedColor(String id);
-    public boolean isMultiCoverage();
-    public WebPlotRequest.GridOnStatus getGridOn();
-    public boolean isMinimalReadout();
-    public int getMinWidth();
-    public int getMinHeight();
-    public boolean getUseBlankPlot();
-    public boolean isTreatCatalogsAsOverlays();
-    public WorldPt getQueryCenter();
-    public FitType getFitType();
-    public boolean isUseTitleForPlot();
+    TableMeta.LonLatColumns[] getCornersColumns(TableCtx table);
+    TableMeta.LonLatColumns getCenterColumns(TableCtx table);
+    List<String> getExtraColumns();
+    List<String> getEventWorkerList();
+    ZoomType getSmartZoomHint();
+    String getGroup();
+    DrawSymbol getShape(String id);
+    int getSymbolSize(String id);
+    String getColor(String id);
+    String getHighlightedColor(String id);
+    boolean isMultiCoverage();
+    WebPlotRequest.GridOnStatus getGridOn();
+    boolean isMinimalReadout();
+    int getMinWidth();
+    int getMinHeight();
+    boolean getUseBlankPlot();
+    boolean isTreatCatalogsAsOverlays();
+    WorldPt getQueryCenter();
+    FitType getFitType();
+    boolean isUseTitleForPlot();
 }
