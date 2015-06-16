@@ -48,6 +48,7 @@ public class FitsRead implements Serializable {
         FitsFactory.setUseHierarch(true);
     }
 
+    //private variables
     private int planeNumber;
     private int extension_number;
     private float[] float1d;
@@ -55,12 +56,9 @@ public class FitsRead implements Serializable {
     private ImageHeader imageHeader;
     private Header header;
     private BasicHDU hdu;
-    private Histogram hist = null;
-    private double blankValue;
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -82,7 +80,7 @@ public class FitsRead implements Serializable {
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
-        blankValue = imageHeader.blank_value;
+
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
@@ -655,22 +653,22 @@ public class FitsRead implements Serializable {
                                        int startPixel,
                                        int lastPixel,
                                        int startLine,
-                                       int lastLine) {
+                                       int lastLine){
 
 
-        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        byte pixelData[] = passedPixelData;
+        Histogram hist= getHistogram();
 
-        //Histogram hist= getHistogram();
-        hist= getHistogram();
 
-        double slow = getSlow(rangeValues, float1d, imageHeader,hist);
-        double shigh = getShigh(rangeValues, float1d, imageHeader,hist);
+        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
         if (SUTDebug.isDebug()) {
             printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
         }
 
+        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+
+        byte pixelData[] = passedPixelData;
 
         int[] pixelhist = new int[256];
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
@@ -771,20 +769,6 @@ public class FitsRead implements Serializable {
 
     }
 
-    private Histogram computeHistogram() {
-        double datamin = imageHeader.datamin;
-        double datamax = imageHeader.datamax;
-        double bscale = imageHeader.bscale;
-        double bzero = imageHeader.bzero;
-
-        return new Histogram(float1d, (datamin - bzero) / bscale,
-                (datamax - bzero) / bscale,
-                blankValue);
-
-    }
-
-
-
     /**
      * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
      * Each pixel store a value which represents the color of the map.
@@ -842,8 +826,8 @@ public class FitsRead implements Serializable {
          * stretch algorithm
          */
 
-        double dr= rangeValues.getDrValue(); //1000.0;
-        double gamma=rangeValues.getGammaValue(); //1000.0;
+        double dr= rangeValues.getDrValue();
+        double gamma=rangeValues.getGammaValue();
         int pixelCount = 0;
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -953,6 +937,8 @@ public class FitsRead implements Serializable {
     /**
      * The pixel value is in the range of 0-254
      *
+     *
+     *
      * @return
      */
     private static byte getLinearStrectchedPixelValue(double dRenVal) {
@@ -997,13 +983,9 @@ public class FitsRead implements Serializable {
      * @return array of byte (4096 elements)
      */
     public byte[] getHistColors(RangeValues rangeValues) {
-        int start_pixel = 0;
-        int last_pixel = 4095;
-        int start_line = 0;
-        int last_line = 0;
-        int naxis1 = 1;
-        byte blank_pixel_value = 0;
-        //calling stretch_pixel to calculate pixeldata, pixelhist
+
+        Histogram hist=getHistogram();
+          //calling stretch_pixel to calculate pixeldata, pixelhist
         byte[] pixeldata = new byte[4096];
         int[] pixelhist = new int[256];
 
@@ -1015,6 +997,13 @@ public class FitsRead implements Serializable {
 
         double slow = getSlow(rangeValues, float1d, imageHeader,hist);
         double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
+
+        int start_pixel = 0;
+        int last_pixel = 4095;
+        int start_line = 0;
+        int last_line = 0;
+        int naxis1 = 1;
+        byte blank_pixel_value = 0;
 
         stretchPixels(start_pixel, last_pixel,
                 start_line, last_line, naxis1, hist,
@@ -1279,10 +1268,15 @@ public class FitsRead implements Serializable {
     }
 
     Histogram getHistogram() {
-        if (hist == null) {
-           hist= computeHistogram();
-        }
-        return hist;
+
+
+        double bscale = imageHeader.bscale;
+        double bzero = imageHeader.bzero;
+
+        return new Histogram(float1d, (imageHeader.datamin - bzero) / bscale,
+                (imageHeader.datamax - bzero) / bscale);
+
+
     }
 
     /**
@@ -1389,7 +1383,7 @@ public class FitsRead implements Serializable {
         fits = null;
         imageHeader = null;
         header = null;
-        hist = null;
+
 
     }
 
