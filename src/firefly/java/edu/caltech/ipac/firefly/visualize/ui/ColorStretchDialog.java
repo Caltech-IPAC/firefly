@@ -194,6 +194,8 @@ public class ColorStretchDialog extends BaseDialog {
                 int idx= band.getIdx();
                 if (_bandPanel[idx]!=null)  {
                     rv= _bandPanel[idx].getRangeValues();
+                    //LZ add this line to see if it works
+                    plot.getPlotState().setRangeValues(rv,band );
                     sd[i++]= new StretchData(band,rv,_bandPanel[idx].isBandVisible());
                 }
             }
