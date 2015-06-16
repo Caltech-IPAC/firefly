@@ -4,6 +4,9 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -88,6 +91,8 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class AllPlots implements HasWebEventManager {
 
     interface ColorTableFile extends PropFile { @Source("colorTable.prop") TextResource get(); }
@@ -205,7 +210,7 @@ public class AllPlots implements HasWebEventManager {
         else {
             wp= p.getPlotView().findCurrentCenterWorldPoint();
         }
-        enableWCSSync(wp, matchMode);
+        enableWCSSyncByPoint(wp, matchMode);
 
     }
 
@@ -214,7 +219,7 @@ public class AllPlots implements HasWebEventManager {
      *
      * @param wp world point to sync to, required when doSync is true
      */
-    public void enableWCSSync(WorldPt wp, WcsMatchMode matchMode) {
+    public void enableWCSSyncByPoint(WorldPt wp, WcsMatchMode matchMode) {
         if (_primaryMPWSel ==null || _primaryMPWSel.getCurrentPlot()==null || !isExpanded()) return;
         if (_matchWCS && matchMode==wcsMatchMode) return;
 
@@ -270,7 +275,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    public PlotWidgetGroup getGroup(String groupName) {
+    public PlotWidgetGroup getGroupByName(String groupName) {
         PlotWidgetGroup retval = null;
         if (_groups != null && groupName != null) {
             for (PlotWidgetGroup g : _groups) {
@@ -429,7 +434,7 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
-    public void forceExpand() {
+    public void forceExpandCurrent() {
         if (getMiniPlotWidget()!=null) forceExpand(getMiniPlotWidget());
     }
 
@@ -489,7 +494,7 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
-    public void updateExpanded() {
+    public void updateExpandedView() {
         updateExpanded(expandUpdateViewType);
     }
 
@@ -535,6 +540,7 @@ public class AllPlots implements HasWebEventManager {
         return retval;
     }
 
+    @JsNoExport
     public List<MiniPlotWidget> getAll(boolean ignoreUninitialized) {
         List<MiniPlotWidget> retval = new ArrayList<MiniPlotWidget>(_allMpwList.size());
         for (MiniPlotWidget mpw : _allMpwList) {
@@ -647,11 +653,13 @@ public class AllPlots implements HasWebEventManager {
     }
 
 
+    @JsNoExport
     public void setSelectedMPW(MiniPlotWidget mpw, boolean toggleShowMenuBar) {
         setSelectedMPW(mpw, false, toggleShowMenuBar);
     }
 
 
+    @JsNoExport
     public void setSelectedMPW(MiniPlotWidget mpw, boolean force, boolean toggleShowMenuBar) {
         _primaryExternal= null;
         if (mpw==null) {
@@ -775,8 +783,10 @@ public class AllPlots implements HasWebEventManager {
 
     public WebEventManager getEventManager() { return _emMan; }
     public void addListener(WebEventListener l) { _emMan.addListener(l); }
+    @JsNoExport
     public void addListener(Name eventName, WebEventListener l) { _emMan.addListener(eventName, l); }
     public void removeListener(WebEventListener l) { _emMan.removeListener(l); }
+    @JsNoExport
     public void removeListener(Name eventName, WebEventListener l) { _emMan.removeListener(eventName, l); }
     public void fireEvent(WebEvent ev) { _emMan.fireEvent(ev); }
 

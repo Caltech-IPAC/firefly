@@ -65,7 +65,7 @@ public class AllPlotsQueryWorker implements EventWorker, WebEventListener {
             PlotWidgetGroup group;
             WebPlot currentPlot;
             if (params.containsKey(PLOT_WIDGET_GROUP))
-                group = ap.getGroup(params.get(PLOT_WIDGET_GROUP));
+                group = ap.getGroupByName(params.get(PLOT_WIDGET_GROUP));
             else
                 group= ap.getActiveGroup(); // not safe approach.
 

@@ -10,5 +10,5 @@ public class ExpandCmd extends BaseGroupVisCmd {
 
     public ExpandCmd() { super(CommandName); }
 
-    protected void doExecute() { AllPlots.getInstance().forceExpand(); }
+    protected void doExecute() { AllPlots.getInstance().forceExpandCurrent(); }
 }

@@ -1271,7 +1271,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         if (_firstPlot)  {
             _firstPlot= false;
             if (AllPlots.getInstance().isExpanded()) {
-                AllPlots.getInstance().updateExpanded();
+                AllPlots.getInstance().updateExpandedView();
             }
         }
         AllPlots.getInstance().getMouseReadout().setEnabled(true);

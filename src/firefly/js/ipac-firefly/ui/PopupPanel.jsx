@@ -29,7 +29,8 @@ export var PopupPanel= React.createClass(
 
     propTypes: {
         layoutPosition : React.PropTypes.object.isRequired,
-        title : React.PropTypes.string
+        title : React.PropTypes.string,
+        closePromise : React.PropTypes.object
     },
 
     onClick: function(ev) {
@@ -73,6 +74,12 @@ export var PopupPanel= React.createClass(
         window.addEventListener("resize", this.browserResizeCallback);
         document.addEventListener("mousemove", this.moveCallback);
         document.addEventListener("mouseup", this.buttonUpCallback);
+        if (this.props.closePromise) {
+            this.props.closePromise.then(()=>  {
+                console.log('now closing dialog');
+                this.doClose();
+            });
+        }
     },
 
     doClose() {
@@ -118,6 +125,10 @@ export var PopupPanel= React.createClass(
 
 
         var title= this.props.title||"";
+        //var newChildren= React.Children.map(this.props.children, c => {
+        //        return React.cloneElement(c, {closeDialog:this.doClose.bind(this)})
+        //    })
+
         return (
             /*jshint ignore:start */
                 <div style={rootStyle} className={'popup-pane-shadow'}

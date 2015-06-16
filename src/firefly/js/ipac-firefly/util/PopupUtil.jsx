@@ -175,39 +175,39 @@ const freeElementList= [];
 
 
 
-var Dialog= React.createClass(
-{
-    propTypes: {
-        closeCallback : React.PropTypes.object.isRequired,
-        component: React.PropTypes.element,
-    },
-
-    componentWillUnmount() {
-    },
-
-    onClick: function(ev) {
-        this.props.closeCallback();
-    },
-
-    render: function() {
-
-        var s= {position : "absolute",
-            width : "100px",
-            height : "100px",
-            background : "white",
-            left : "40px",
-            right : "170px"};
-        /*jshint ignore:start */
-        return  (
-                <div style={s}>
-                    {this.props.children}
-                    <button type="button" onClick={this.onClick}>close</button>
-                </div>
-        );
-        /*jshint ignore:end */
-    }
-
-});
+//var Dialog= React.createClass(
+//{
+//    propTypes: {
+//        closeCallback : React.PropTypes.object.isRequired,
+//        component: React.PropTypes.element,
+//    },
+//
+//    componentWillUnmount() {
+//    },
+//
+//    onClick: function(ev) {
+//        this.props.closeCallback();
+//    },
+//
+//    render: function() {
+//
+//        var s= {position : "absolute",
+//            width : "100px",
+//            height : "100px",
+//            background : "white",
+//            left : "40px",
+//            right : "170px"};
+//        /*jshint ignore:start */
+//        return  (
+//                <div style={s}>
+//                    {this.props.children}
+//                    <button type="button" onClick={this.onClick}>close here</button>
+//                </div>
+//        );
+//        /*jshint ignore:end */
+//    }
+//
+//});
 
 
 
@@ -242,7 +242,7 @@ var IndependentWrapper = React.createClass(
 
 
 
-var showDialog= function(title,reactComponent) {
+var showDialog= function(title,reactComponent, closePromise) {
 
     var divElement;
     if (!freeElementList.length) {
@@ -256,7 +256,7 @@ var showDialog= function(title,reactComponent) {
     }
     var wrapper= (
             <IndependentWrapper divId={divElement.id}>
-                <PopupPanel title={title}>
+                <PopupPanel title={title} closePromise={closePromise}>
                     {reactComponent}
                 </PopupPanel>
             </IndependentWrapper>

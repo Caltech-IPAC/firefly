@@ -13,6 +13,7 @@ var _= require("underscore");
 //var SkyLight = require('react-skylight');
 var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
 var Modal = require('react-modal');
+var Promise= require("es6-promise").Promise;
 //import Portal from "react-portal";
 
 
@@ -72,14 +73,19 @@ var FormButton = module.exports= React.createClass(
                            buildString+=k+"=" +request[k];
                            if (idx<array.length-1) buildString+=', ';
                            return buildString;
-                       },"");
+                       },'');
                        //this.setState({results:true});
                        //this.showSimpleDialog();
                        //PopupUtil.showModal("here", "try this");
                        this.setState({modalOpen:true,
-                                      request:statStr+"::::: "+s});
+                                      request:statStr+'::::: '+s});
 
-                       PopupUtil.showDialog("Results",this.makeDialogContent(statStr,s));
+
+                       var resolver= null;
+                       var closePromise= new Promise(function(resolve, reject) {
+                           resolver= resolve;
+                       });
+                       PopupUtil.showDialog('Results',this.makeDialogContent(statStr,s,resolver),closePromise);
 
                    }.bind(this)
            );
@@ -89,11 +95,19 @@ var FormButton = module.exports= React.createClass(
        //   this.refs.simpleDialog.show();
        // },
 
-       makeDialogContent(statStr,s) {
+
+       onDialogClose(closePromise, ev) {
+           this.props.closeDialog();
+
+       },
+
+       makeDialogContent(statStr,s,closePromiseClick) {
+
            return (
                /*jshint ignore:start */
                    <div style={{padding:'5px'}}>
                        <br/>{statStr}<br/><br/>{s}
+                       <button type="button" onClick={closePromiseClick}>Another Close</button>
                    </div>
                /*jshint ignore:end */
                    );

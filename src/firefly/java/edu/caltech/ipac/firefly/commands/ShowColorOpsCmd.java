@@ -4,12 +4,14 @@
 package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.ui.RootPanel;
+import edu.caltech.ipac.firefly.visualize.JsColorStretchDialog;
 import edu.caltech.ipac.firefly.visualize.ui.ColorStretchDialog;
 
 
 public class ShowColorOpsCmd extends BaseGroupVisCmd {
     public static final String COMMAND_NAME= "showColorOps";
     ColorStretchDialog.AsyncCreator creator= null;
+    JsColorStretchDialog newJsDialog;
 
 
 
@@ -20,10 +22,14 @@ public class ShowColorOpsCmd extends BaseGroupVisCmd {
     @Override
     protected boolean init() {
         creator= new ColorStretchDialog.AsyncCreator(RootPanel.get());
+        newJsDialog= JsColorStretchDialog.Builder.makeDialog();
         return true;
     }
 
-    protected void doExecute() { creator.show(); }
+    protected void doExecute() {
+        creator.show();
+        newJsDialog.showDialog();
+    }
 
 
 //    @Override

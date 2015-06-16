@@ -21,10 +21,10 @@ import {ExtensionJavaInterface } from 'ipac-firefly/gwtinterface/ExtensionJavaIn
 import {ExtensionResult } from 'ipac-firefly/gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from 'ipac-firefly/visualize/PlotCmdExtension.js';
 import {ReactJavaInterface } from 'ipac-firefly/gwtinterface/ReactJavaInterface.jsx';
+import {ColorDialog } from "ipac-firefly/visualize/ui/ColorDialog.jsx";
 
 import {ServerRequest } from 'ipac-firefly/data/ServerRequest.js';
 import {getJsonData } from 'ipac-firefly/rpc/SearchServicesJson.js';
-
 
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
@@ -54,6 +54,7 @@ export const fireflyInit= function() {
             req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});
             return getJsonData(req);
         };
+    window.firefly.gwt.ColorDialog= ColorDialog;
 };
 
 class Application {
