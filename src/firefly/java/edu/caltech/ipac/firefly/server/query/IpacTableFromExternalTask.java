@@ -15,9 +15,6 @@ import edu.caltech.ipac.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -25,35 +22,20 @@ import java.util.List;
  *
  * @author tatianag
  */
-@SearchProcessorImpl(id = "IpacTableFromExternalTask")
+@SearchProcessorImpl(id = "TableFromExternalTask")
 public class IpacTableFromExternalTask extends IpacTablePartProcessor {
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
         String launcher = request.getParam("launcher");
-        String task = request.getParam("task");
-
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
-        Path workingDir = getWorkDir(task);
 
         try {
-            taskLauncher.setWorkDir(workingDir.toFile());
-            taskLauncher.addParam("-n", task);
-            taskLauncher.addParam("-d", workingDir.toString());
-            File outFile = getOutFile(task);
-            taskLauncher.addParam("-o", outFile.getAbsolutePath());
-            for (Param p : request.getParams()) {
-                if (p.getName().startsWith("-")) {
-                    taskLauncher.addParam(p.getName(), p.getValue());
-                }
-            }
-            ExternalTaskHandlerImpl handler = new ExternalTaskHandlerImpl();
+
+            ExternalTaskHandlerImpl handler = new ExternalTaskHandlerImpl(request.getParam("task"), request.getParam("taskParams"));
             taskLauncher.setHandler(handler);
 
-            int status = taskLauncher.execute();
-
-            if (status != ExternalTaskLauncher.NORMAL_EXIT) {
-                throw new DataAccessException("Failed to obtain data. " + handler.getError());
-            }
+            taskLauncher.execute();
+            File outFile = handler.getOutfile();
 
             boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
 
@@ -63,7 +45,6 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
             }
 
             DataGroupReader.Format format = DataGroupReader.guessFormat(outFile);
-
 
             File inf = outFile;
             if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
@@ -86,10 +67,7 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
             return inf;
 
         } finally {
-            if (isEmptyDir(workingDir)) {
-                Files.deleteIfExists(workingDir);
-            }
-        }
+       }
     }
 
     @Override
@@ -103,21 +81,5 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
     }
 
 
-    java.nio.file.Path getWorkDir(String task) throws IOException {
-        return Files.createTempDirectory(ServerContext.getExternalTempWorkDir().toPath(), task);
-    }
 
-    File getOutFile(String task) throws IOException {
-        // expecting binary fits table
-        return File.createTempFile(task, ".fits", ServerContext.getExternalPermWorkDir());
-    }
-
-    boolean isEmptyDir(Path dir) {
-        try {
-            DirectoryStream<Path> stream = Files.newDirectoryStream(dir);
-            return (!stream.iterator().hasNext());
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

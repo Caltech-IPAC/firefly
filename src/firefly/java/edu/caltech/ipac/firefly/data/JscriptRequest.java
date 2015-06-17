@@ -26,7 +26,11 @@ public class JscriptRequest extends JavaScriptObject {
 
     public final native String getParam(String param) /*-{
           if (param in this) {
-              return this[param];
+              if (typeof this[param] === 'string') {
+                  return this[param];
+              } else {
+                  return JSON.stringify(this[param]);
+              }
           }
           else {
               return null;

@@ -29,12 +29,11 @@ public class ExternalTaskLauncher {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-    static {
-    }
 
 //============================================================================
 //---------------------------- Constructors ----------------------------------
 //============================================================================
+
     public ExternalTaskLauncher(String launcher) {
 
         String exe = AppProperties.getProperty(launcher + ".exe", null);
@@ -55,13 +54,16 @@ public class ExternalTaskLauncher {
                 LOGGER.error("The "+launcher+" launcher path is not an executable: "+exe);
                 throw new IllegalArgumentException("The "+launcher+" launcher path is not an executable: "+exe);
             }
+
         } else {
-            LOGGER.error(launcher+".exe property is not defined");
+            LOGGER.error(launcher + ".exe property is not defined");
             throw new IllegalArgumentException(launcher+".exe property is not defined");
         }
-
-
     }
+
+
+
+
 //============================================================================
 //---------------------------- Public Methods --------------------------------
 //============================================================================
@@ -167,21 +169,34 @@ public class ExternalTaskLauncher {
         Process process=null;
         if ( getHandler() != null && !getHandler().abortExecution()) {
             try {
+
                 if ( getHandler() != null ) {
                     getHandler().setup(this, _procBuilder.environment());
                 }
 
                 List<String> command= new ArrayList<String>(_params.size()+1);
-                command.add( getCommand() );
+
+                command.add(getCommand());
                 command.addAll(_params);
 
                 _procBuilder.command(command);
 
                 process=_procBuilder.start();
-                new Thread(new StreamReader(StreamReader.STDOUT_TYPE, process.getInputStream(), process)).start();
-                new Thread(new StreamReader(StreamReader.STDERR_TYPE, process.getErrorStream(), process)).start();
 
-                status = process.waitFor();
+                // Withoout error stream redirect, you need to have two separate Threads,
+                // one reading from stdout and one reading from stderr,
+                // to avoid the standard error buffer filling
+                // while the standard output buffer was empty
+                // (causing the child process to hang), or vice versa.
+                Thread outHandler = new Thread(new StreamReader(StreamReader.STDOUT_TYPE, process.getInputStream(), process));
+                Thread errHandler = new Thread(new StreamReader(StreamReader.STDERR_TYPE, process.getErrorStream(), process));
+                outHandler.start();
+                errHandler.start();
+
+                status = process.waitFor();  // synchronous call, returns when process is done
+                errHandler.join();
+                outHandler.join();
+
             } catch( InterruptedException e ) {
                 status = ABORTED_BY_INTERRUPT;
                 if (process!=null) process.destroy();
@@ -206,7 +221,6 @@ public class ExternalTaskLauncher {
 //============================================================================
 //---------------------------- Private / Protected Methods -------------------
 //============================================================================
-
 
 
 //============================================================================
