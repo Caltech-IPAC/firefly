@@ -9,11 +9,13 @@ package edu.caltech.ipac.firefly.fftools;
  */
 
 
+import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.JscriptRequest;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.ResolvedWorldPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -113,7 +115,11 @@ public class RequestConverter {
                                   WebPlotRequest.GRID_ID,
                                   WebPlotRequest.CROP_PT1,
                                   WebPlotRequest.CROP_PT2,
-                                  WebPlotRequest.PLOT_ID
+                                  WebPlotRequest.PLOT_ID,
+                                  ServerRequest.ID_KEY,
+                                  CommonParams.LAUNCHER,
+                                  CommonParams.TASK,
+                                  CommonParams.TASK_PARAMS
         );
 
         setIntValues(jspr, wpr, WebPlotRequest.INIT_COLOR_TABLE,

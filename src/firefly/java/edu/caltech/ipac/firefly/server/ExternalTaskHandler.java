@@ -1,6 +1,10 @@
 package edu.caltech.ipac.firefly.server;
 
+import edu.caltech.ipac.firefly.ui.creator.CommonParams;
+
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,6 +13,12 @@ import java.util.Map;
  * @author tatianag
  */
 public interface ExternalTaskHandler {
+
+    String LAUNCHER = CommonParams.LAUNCHER;
+    String TASK = CommonParams.TASK;
+    String TASK_PARAMS = CommonParams.TASK_PARAMS;
+    List<String> ALL_PARAMS = Arrays.asList(LAUNCHER,TASK,TASK_PARAMS);
+
     /**
      * ExternalTaskLauncher will invoke this method only once, before the execution of this task.
      * This method will be invoked first, before any other methods in this interface.

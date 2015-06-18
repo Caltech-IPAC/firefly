@@ -94,6 +94,11 @@ public class CommonParams {
     public static final String FIT_TYPE= "FitType";
     public static final String URL = "URL";
 
+    // external task launcher params
+    public static final String LAUNCHER = "launcher";
+    public static final String TASK = "task";
+    public static final String TASK_PARAMS = "taskParams";
+
 
     public static final String PREVIEW_SOURCE_HEADER = "PreviewSource";
     public static final String PREVIEW_COLUMN_HEADER = "PreviewColumn";
