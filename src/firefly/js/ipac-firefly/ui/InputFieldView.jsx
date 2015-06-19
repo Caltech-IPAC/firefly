@@ -19,9 +19,12 @@ var InputFieldView = React.createClass(
            message : React.PropTypes.string,
            tooltip : React.PropTypes.string,
            label : React.PropTypes.string,
+           inline : React.PropTypes.bool,
            value   : React.PropTypes.string.isRequired,
            onChange : React.PropTypes.func.isRequired
        },
+
+       warnIcon : null,
 
        getDefaultProps() {
            return {
@@ -36,7 +39,9 @@ var InputFieldView = React.createClass(
            return {
                hasFocus : false,
                infoPopup : false,
-               onChange : null
+               onChange : null,
+               warningOffsetX : 0,
+               warningOffsetY : 0,
            };
        },
 
@@ -47,6 +52,7 @@ var InputFieldView = React.createClass(
        },
 
        alertEntry(ev) {
+
            this.setState({infoPopup:true});
        },
        alertLeave(ev) {
@@ -55,22 +61,27 @@ var InputFieldView = React.createClass(
 
        onFocus(ev) {
            if (!this.state.hasFocus) {
-               this.setState({hasFocus:true});
+               this.setState({hasFocus:true, infoPopup:false});
            }
        },
 
 
        onBlur(ev) {
-           this.setState({hasFocus:false});
+           this.setState({hasFocus:false, infoPopup:false});
        },
 
        makeWarningArea(warn) {
            /*jshint ignore:start */
            var warnIcon= '';
            if (warn) {
+               //this.computeWarningXY(this.warnIcon);
                warnIcon= (
                        <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
-                           <img ref={(c) => this.computeWarningXY(c)}
+                           <img ref={(c) => {
+                                             this.computeWarningXY(c);
+                                             this.warnIcon= c;
+                                            }
+                           }
                                 src={EXCLAMATION}/>
                        </div>
                );
@@ -112,8 +123,6 @@ var InputFieldView = React.createClass(
            );
        },
 
-    warningOffsetX : 0,
-    warningOffsetY : 0,
 
     componentDidMount() {
         //if (!this.props.valid) {
@@ -122,20 +131,25 @@ var InputFieldView = React.createClass(
 
     },
 
+    componentDidUpdate() {
+        this.computeWarningXY(this.warnIcon);
+    },
+
     computeWarningXY(warnIcon) {
         if (warnIcon) {
             var e= React.findDOMNode(warnIcon);
             var bodyRect = document.body.getBoundingClientRect();
             var elemRect = e.getBoundingClientRect();
-            this.warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
-            this.warningOffsetY = elemRect.top - bodyRect.top;
+            var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
+            var warningOffsetY = elemRect.top - bodyRect.top;
+            this.setState({warningOffsetX, warningOffsetY} )
         }
     },
 
     makeInfoPopup() {
 
         var retval= (
-                <PointerPopup x={this.warningOffsetX} y={this.warningOffsetY}
+                <PointerPopup x={this.state.warningOffsetX} y={this.state.warningOffsetY}
                 message={this.makeMessage()}/>
         );
         return retval;
@@ -145,7 +159,7 @@ var InputFieldView = React.createClass(
         var retval= null;
         if (this.props.visible) {
             retval= (
-                <div style={{whiteSpace:'nowrap'}}>
+                <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'} }>
                     <InputFieldLabel label={this.props.label}
                         tooltip={this.props.tooltip}
                         labelWidth={this.props.labelWidth}

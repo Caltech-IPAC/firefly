@@ -3,6 +3,7 @@
 
 var React= require('react/addons');
 var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
+import formActions from '../actions/FormActions.js'
 
 import InputFieldLabel from "./InputFieldLabel.jsx";
 
@@ -28,8 +29,7 @@ var RadioGroupInputField= React.createClass(
             var checked = ev.target.checked;
 
             if (checked) {
-                this.props.dispatcher.dispatch({
-                    evType: 'valueChange',
+                formActions.valueChange({
                     fieldKey: this.props.fieldKey,
                     newValue: val,
                     fieldState: this.state.fieldState

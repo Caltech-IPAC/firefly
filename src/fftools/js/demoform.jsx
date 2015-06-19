@@ -3,10 +3,11 @@
 /*jshint esnext:true*/
 
 /*eslint-disable no-unused-vars */
-import {fireflyInit} from 'ipac-firefly/core/Application.js';
+import {fireflyInit, application} from 'ipac-firefly/core/Application.js';
 fireflyInit();
 
 import React from 'react/addons';
+import Alt from 'alt';
 
 import InputFormModel from 'ipac-firefly/ui/model/InputFormModel.js';
 import TargetPanel from 'ipac-firefly/ui/TargetPanel.jsx';
@@ -29,33 +30,43 @@ import FormButton from './FormButton.jsx';
 import {WorldPt, ImagePt, Pt} from 'ipac-firefly/visualize/Point.js';
 /*eslint-enable no-unused-vars */
 
-var testFormModel= new InputFormModel.FormModel(
-    {
-        field1: {
-            fieldKey: 'field1',
-            value: '3',
-            validator: Validate.intRange.bind(null, 1, 10, 'my test field'),
-            tooltip: 'this is a tip for field 1',
-            label : 'Int Value:'
-        },
-        field2: {
-            fieldKey: 'field2',
-            value: '',
-            validator: Validate.floatRange.bind(null, 1.2, 22.4, 2,'a float field'),
-            tooltip: 'field 2 tool tip',
-            label : 'Float Value:',
-            labelWidth : 100
-        },
-        field4: {
-            fieldKey: 'field4',
-            value: '',
-            validator: Validate.validateEmail.bind(null, 'an email field'),
-            tooltip: 'Please enter an email',
-            label : 'Email:'
-        }
+import InputFormBaseStore from 'ipac-firefly/store/InputFormBaseStore.js';
+
+
+
+class TestFormStore extends InputFormBaseStore {
+    constructor() {
+        super();
+        this.fields= {
+            field1: {
+                fieldKey: 'field1',
+                value: '3',
+                validator: Validate.intRange.bind(null, 1, 10, 'my test field'),
+                tooltip: 'this is a tip for field 1',
+                label : 'Int Value:'
+            },
+            field2: {
+                fieldKey: 'field2',
+                value: '',
+                validator: Validate.floatRange.bind(null, 1.2, 22.4, 2,'a float field'),
+                tooltip: 'field 2 tool tip',
+                label : 'Float Value:',
+                labelWidth : 100
+            },
+            field4: {
+                fieldKey: 'field4',
+                value: '',
+                validator: Validate.validateEmail.bind(null, 'an email field'),
+                tooltip: 'Please enter an email',
+                label : 'Email:'
+            }
+        };
+        this.formKey= 'DEMO_FORM';
     }
-);
-testFormModel.initDispatcher(myDispatcher);
+}
+
+var testFormStore= application.alt.createStore(TestFormStore, 'TestFormStore' );
+
 
 var sr= new ServerRequest();
 sr.setParam('AA',2);
@@ -63,7 +74,111 @@ sr.setParam('BB',3);
 var wpr= new WebPlotRequest();
 console.log(wpr);
 
+
+
+var AllTest = React.createClass({
+
+    /*eslint-enable no-unused-vars */
+
+    //setCardNumber: function() { },
+
+    render: function() {
+        /* jshint ignore:start */
+        var histogramDivStyle = {
+            width: '400px',
+            height: '200px',
+            overflow: 'auto'
+        };
+        return (
+            <div>
+                <InputGroup labelWidth={130}>
+                    <TargetPanel  formStore={testFormStore} />
+                    <ValidationField  fieldKey={'field1'}
+                                      formStore={testFormStore}/>
+                    <ValidationField  fieldKey='field2'
+                                     formStore={testFormStore}/>
+                    <ValidationField  fieldKey='field3'
+                                     initialState= {{
+                            fieldKey: 'field3',
+                            value: '12',
+                            validator: Validate.floatRange.bind(null, 1.23, 1000, 3,'field 3'),
+                            tooltip: 'more tipping',
+                            label : 'Another Float:',
+                            labelWidth : 100
+                        }}
+                                     formStore={testFormStore}/>
+                    <ValidationField fieldKey={'field4'}
+                                     formStore={testFormStore}/>
+
+                    <br/><br/>
+                    <CheckboxGroupInputField
+                                             initialState= {{
+                            value: '_all_',
+                            tooltip: 'Please select some boxes',
+                            label : 'Checkbox Group:'
+                        }}
+                                             options={
+                            [
+                                {label: 'Apple', value: 'A'},
+                                {label: 'Banana', value: 'B'},
+                                {label: 'Cranberry', value: 'C'},
+                                {label: 'Dates', value: 'D'},
+                                {label: 'Grapes', value: 'G'}
+                            ]
+                            }
+                                             fieldKey='checkBoxGrpFld'
+                                             formStore={testFormStore}/>
+
+                    <br/><br/>
+                    <RadioGroupInputField  initialState= {{
+                            tooltip: 'Please select an option',
+                            label : 'Radio Group:'
+                        }}
+                                           options={
+                                                [
+                                                    {label: 'Option 1', value: 'opt1'},
+                                                    {label: 'Option 2', value: 'opt2'},
+                                                    {label: 'Option 3', value: 'opt3'},
+                                                    {label: 'Option 4', value: 'opt4'}
+                                                ]
+                                                }
+                                           fieldKey='radioGrpFld'
+                                           formStore={testFormStore}/>
+                    <br/><br/>
+
+                    <ListBoxInputField  initialState= {{
+                            tooltip: 'Please select an option',
+                            label : 'ListBox Field:'
+                        }}
+                                       options={
+                            [
+                                {label: 'Item 1', value: 'i1'},
+                                {label: 'Another Item 2', value: 'i2'},
+                                {label: 'Yet Another 3', value: 'i3'},
+                                {label: 'And one more 4', value: 'i4'}
+                            ]
+                            }
+                                       multiple={false}
+                                       fieldKey='listBoxFld'
+                                       formStore={testFormStore}/>
+                    <br/><br/>
+
+                    <FormButton formStore={testFormStore} label='submit'/>
+                </InputGroup>
+            </div>
+
+        );
+        /* jshint ignore:end */
+    }
+});
+
+
+
 /*eslint-disable no-unused-vars */
+
+
+
+
 var All = React.createClass({
 
     /*eslint-enable no-unused-vars */
@@ -82,9 +197,8 @@ var All = React.createClass({
                 <InputGroup labelWidth={130}>
                     <TargetPanel dispatcher={myDispatcher}
                         formModel={testFormModel} />
-                    <ValidationField dispatcher={myDispatcher}
-                        fieldKey={'field1'}
-                        formModel={testFormModel}/>
+                    <ValidationField  fieldKey={'field1'}
+                        formStore={testFormStore}/>
                     <ValidationField dispatcher={myDispatcher}
                         fieldKey='field2'
                         formModel={testFormModel}/>
@@ -158,9 +272,9 @@ var All = React.createClass({
                         formModel={testFormModel}/>
                     <br/><br/>
 
-                    <FormButton dispatcher={myDispatcher}
-                        formModel={testFormModel}
-                        label='Submit'/>
+                    <formbutton dispatcher={mydispatcher}
+                        formmodel={testformmodel}
+                        label='submit'/>
 
                 </InputGroup>
                 <div style={histogramDivStyle}>
@@ -204,7 +318,8 @@ var All = React.createClass({
 
 window.onFireflyLoaded= function() {
     /* jshint ignore:start */
-    React.render(<All />, document.getElementById('example'));
+    //React.render(<All />, document.getElementById('example'));
+    React.render(<AllTest />, document.getElementById('example'));
     /* jshint ignore:end */
 };
 

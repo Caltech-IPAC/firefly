@@ -12,7 +12,7 @@ var React= require('react/addons');
 //var ModalDialog= require('ipac-firefly/ui/ModalDialog.jsx');
 var Modal = require('react-modal');
 
-import {PopupPanel, LayoutType} from 'ipac-firefly/ui/PopupPanel.jsx';
+import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
 //import Portal from "react-portal";
 
 var modalDiv= null;

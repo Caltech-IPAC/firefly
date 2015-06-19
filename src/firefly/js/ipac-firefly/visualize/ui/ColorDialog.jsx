@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 /*globals console*/
-/*globals ffgwtVisualize*/
+/*globals ffgwt*/
 var React= require('react/addons');
 var Promise= require("es6-promise").Promise;
 var Dispatcher = require("flux").Dispatcher;
@@ -12,7 +12,7 @@ import InputFormModel from '../../ui/model/InputFormModel.js';
 import InputGroup from '../../ui/InputGroup.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
-import Validate from 'ipac-firefly/util/Validate.js';
+import Validate from '../../util/Validate.js';
 
 var cDialogDispatcher= new Dispatcher();
 
@@ -28,14 +28,14 @@ export class ColorDialog {
                 lowerRange: {
                     fieldKey: 'lowerRange',
                     value: '0',
-                    validator: Validate.floatRange.bind(null, 0, 100, 'Lower range'),
+                    validator: Validate.floatRange.bind(null, 0, 100, 1,'Lower range'),
                     tooltip: 'Lower range of the Stretch',
                     label : 'Lower range:'
                 },
                 upperRange: {
                     fieldKey: 'upperRange',
                     value: '99',
-                    validator: Validate.floatRange.bind(null, 0, 100, 'Upper range'),
+                    validator: Validate.floatRange.bind(null, 0, 100, 1,'Upper range'),
                     tooltip: 'Upper range of the Stretch',
                     label : 'Upper range:'
                 },
@@ -44,7 +44,7 @@ export class ColorDialog {
         this.bandPanelModel.initDispatcher(cDialogDispatcher);
     }
     showDialog() {
-        var mpw= ffgwtVisualize.AllPlots.getInstance().getMiniPlotWidget();
+        var mpw= ffgwt.Visualize.AllPlots.getInstance().getMiniPlotWidget();
         var content= (
             <ColorDialogPanel mpw={mpw} dispatcher={cDialogDispatcher} formModel={this.bandPanelModel}/>
         );
@@ -93,29 +93,74 @@ var ColorDialogPanel= React.createClass(
         var d= this.props.dispatcher;
         var m= this.props.formModel;
         return (
-            <InputGroup labelWidth={130}>
-                <ValidationField dispatcher={d}
-                                 fieldKey={'lowerRange'}
-                                 formModel={m}/>
-
-                <ValidationField dispatcher={d}
-                                 fieldKey={'upperRange'}
-                                 formModel={m}/>
-                <ListBoxInputField dispatcher = {d}
-                                   initialState= {{
-                                        tooltip: 'Type of lower',
-                                        label : ''
-                                    }}
+            <div style={{padding:'5px'}}>
+                <div style={{display:'table', margin:'auto auto'}}>
+                <ListBoxInputField dispatcher={d}
+                                   key='stretchType'
+                                   inline={true}
+                                   labelWidth={60}
+                                   initialState= {{ tooltip: 'Choose Stretch algorithm', label : 'Stretch Type: ' }}
                                    options={ [
-                                       {label: '%', value: 'i1'},
-                                       {label: 'Data', value: 'i2'},
-                                       {label: 'Data Min', value: 'i3'},
-                                       {label: 'Sigma', value: 'i4'}
-                                   ]}
+                                                                     {label: 'Linear', value: 'linear'},
+                                                                     {label: 'Log', value: 'log'},
+                                                                     {label: 'LogLog', value: 'loglog'},
+                                                                     {label: 'Histogram Equalization', value: 'equalization'},
+                                                                     {label: 'Squared', value: 'squared '},
+                                                                     {label: 'Sqrt', value: 'sqrt'}
+                                                                 ]}
                                    multiple={false}
-                                   fieldKey={'lowerType'}
-                                   formModel={m}/>
-            </InputGroup>
+                                   fieldKey={'stretchType'}
+                                   formModel={m}
+                    />
+                </div>
+                <div style={{ whiteSpace:'no-wrap'}}>
+                    <ValidationField dispatcher={d}
+                                     key='lowerRange'
+                                     inline={true}
+                                     labelWidth={90}
+                                     fieldKey={'lowerRange'}
+                                     formModel={m}
+                        />
+                    <ListBoxInputField dispatcher={d}
+                                       key='lowerType'
+                                       inline={true}
+                                       labelWidth={0}
+                                       initialState= {{ tooltip: 'Type of lower', label : '' }}
+                                       options={ [
+                                                                     {label: '%', value: 'i1'},
+                                                                     {label: 'Data', value: 'i2'},
+                                                                     {label: 'Data Min', value: 'i3'},
+                                                                     {label: 'Sigma', value: 'i4'}
+                                                                 ]}
+                                       multiple={false}
+                                       fieldKey={'lowerType'}
+                                       formModel={m}
+                        />
+                </div>
+                <div style={{ whiteSpace:'no-wrap'}}>
+                    <ValidationField dispatcher={d}
+                                     labelWidth={90}
+                                     inline={true}
+                                     fieldKey={'upperRange'}
+                                     formModel={m}
+                        />
+                    <ListBoxInputField dispatcher={d}
+                                       key='upperType'
+                                       inline={true}
+                                       labelWidth={0}
+                                       initialState= {{ tooltip: 'Type of lower', label : '' }}
+                                       options={ [
+                                                                     {label: '%', value: 'i1'},
+                                                                     {label: 'Data', value: 'i2'},
+                                                                     {label: 'Data Min', value: 'i3'},
+                                                                     {label: 'Sigma', value: 'i4'}
+                                                                 ]}
+                                       multiple={false}
+                                       fieldKey={'upperType'}
+                                       formModel={m}
+                        />
+                </div>
+            </div>
         );
     }
 });

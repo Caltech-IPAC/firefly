@@ -9,11 +9,12 @@
 
 "use strict";
 var React= require('react/addons');
-var _= require("underscore");
+//var _= require("underscore");
 //var SkyLight = require('react-skylight');
 var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
 var Modal = require('react-modal');
 var Promise= require("es6-promise").Promise;
+import formActions from 'ipac-firefly/actions/FormActions.js'
 //import Portal from "react-portal";
 
 
@@ -25,71 +26,66 @@ Modal.setAppElement(appElement);
 var FormButton = module.exports= React.createClass(
    {
 
-       //mixins : [React.addons.PureRenderMixin],
-       //
-       //propTypes: {
-       //    dispatcher : React.PropTypes.object.isRequired,
-       //    formModel : React.PropTypes.object.isRequired,
-       //    label : React.PropTypes.string.isRequired
-       //},
+       validUpdate(ev) {
+           var formStore= this.props.formStore;
+           var statStr= "validate state: "+ formStore.getState().formValid;
+           console.log(statStr);
+           var request= formStore.getResults();
+           console.log("request:");
+           console.log(request);
 
-       //getInitialState : function() {
-       //
-       //},
-       //
-       //
-       //componentWillMount : function() {
-       //},
-       //
-       //
-       //componentDidMount : function() {
-       //},
-       //
-       //componentWillUnmount : function () {
-       //},
-       //
-       //updateState : function() {
-       //},
+           var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+               buildString+=k+"=" +request[k];
+               if (idx<array.length-1) buildString+=', ';
+               return buildString;
+           },'');
+           this.setState({modalOpen:true, request:statStr+'::::: '+s});
+
+
+           var resolver= null;
+           var closePromise= new Promise(function(resolve, reject) {
+               resolver= resolve;
+           });
+           PopupUtil.showDialog('Results',this.makeDialogContent(statStr,s,resolver),closePromise);
+
+       },
 
        getInitialState : function() {
+           this.validUpdate= this.validUpdate.bind(this);
            return { results : false,
                     modalOpen : false};
        },
 
-
-       onClick: function(ev) {
-           this.props.formModel.validateForm().then(
-                   function(state) {
-                       var statStr= "validate state: "+ state;
-                       console.log(statStr);
-                       var request= {};
-                       _.keys(this.props.formModel.attributes).forEach(function(fieldKey) {
-                           request[fieldKey] = this.props.formModel[fieldKey].value;
-                       },this);
-                       console.log("request:");
-                       console.log(request);
-
-                       var s= _.keys(request).reduce(function(buildString,k,idx,array){
-                           buildString+=k+"=" +request[k];
-                           if (idx<array.length-1) buildString+=', ';
-                           return buildString;
-                       },'');
-                       //this.setState({results:true});
-                       //this.showSimpleDialog();
-                       //PopupUtil.showModal("here", "try this");
-                       this.setState({modalOpen:true,
-                                      request:statStr+'::::: '+s});
-
-
-                       var resolver= null;
-                       var closePromise= new Promise(function(resolve, reject) {
-                           resolver= resolve;
-                       });
-                       PopupUtil.showDialog('Results',this.makeDialogContent(statStr,s,resolver),closePromise);
-
-                   }.bind(this)
-           );
+       componentDidMount() {
+           this.props.formStore.getEventEmitter().addListener('formValid', this.validUpdate);
+           formActions.mountComponent( {
+               formKey: this.getFormKey(),
+               fieldKey : this.props.fieldKey,
+               mounted : true,
+               value: this.getValue(),
+               fieldState: this.props.initialState,
+           } );
        },
+
+       componentWillUnmount() {
+           this.props.formStore.getEventEmitter().removeListener('formValid', this.validUpdate);
+           formActions.mountComponent( {
+               formKey: this.getFormKey(),
+               fieldKey : this.props.fieldKey,
+               mounted : false,
+               value: this.getValue()
+           } );
+
+           //formActions.mountComponent(this.getFormKey(),this.props.fieldKey,false,this.getValue(),this.props.initialState)
+       },
+
+
+       onClick(ev) {
+           formActions.validateForm();
+       },
+
+
+
 
        //showSimpleDialog: function(){
        //   this.refs.simpleDialog.show();
@@ -135,7 +131,6 @@ var FormButton = module.exports= React.createClass(
 
        render: function() {
            /*jshint ignore:start */
-           var button= <button type="button" onClick={this.onClick}>submit</button>;
            return (
                    <div>
                        <button type="button" onClick={this.onClick}>submit</button>

@@ -572,7 +572,7 @@ public class MultiDataViewer {
                                                           "Expand this panel to take up a larger area",
                                                           true, new ClickHandler() {
             public void onClick(ClickEvent event) {
-                AllPlots.getInstance().forceExpand();
+                AllPlots.getInstance().forceExpandCurrent();
                 MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
                 if (mpw!=null) {
                     mpw.forceSwitchToGrid();

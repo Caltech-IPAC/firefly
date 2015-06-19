@@ -12,7 +12,7 @@ import Enum from 'enum';
 
 "use strict";
 
-var canExpand= false;
+var canExpand= true;
 const MARGIN= 10;
 
 const MOUSE_EV= "mouse";
@@ -54,7 +54,7 @@ var setCursorShape= function(popup,titleBar,ev) {
     if (!canExpand) return;
     var x= getAbsoluteX(ev);
     var y= getAbsoluteY(ev);
-    r= findRegion(popup,titleBar,x,y);
+    var r= findRegion(popup,titleBar,x,y);
     if (r===PopupRegion.SE_CORNER) {
         popup.style.cursor="se-resize";
     }
@@ -72,6 +72,7 @@ export const humanStart= function(ev,popup,titleBar) {
     var x= ev.clientX;
     var y= ev.clientY;
     var popupRegion= findRegion(popup,titleBar,x,y);
+    console.log('region: ' + popupRegion.key)
     var ctx= null;
 
     if (popupRegion===PopupRegion.TITLE_BAR) {
@@ -288,7 +289,14 @@ const performResize= function(w, width, height) {
 }
 
 
-
+/**
+ *
+ * @param popup
+ * @param titleBar
+ * @param mx
+ * @param my
+ * @return {PopupRegion}
+ */
 var findRegion= function(popup,titleBar,mx, my) {
 
     var retval= PopupRegion.NONE;

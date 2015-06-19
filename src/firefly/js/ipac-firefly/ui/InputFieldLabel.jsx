@@ -27,7 +27,7 @@ var InputFieldLabel= React.createClass(
             var currStyle = this.props.labelStyle;
             currStyle.width = this.props.labelWidth;
             return (
-                <div style={currStyle} title={this.props.tooltip}>
+                <div style={currStyle} title={this.props.tooltip} className={'disable-select'} >
                         {this.props.label}
                 </div>
             );

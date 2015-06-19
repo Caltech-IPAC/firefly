@@ -1309,6 +1309,12 @@ a.linkTypeButton, .linkTypeButton {
     background-color: white;
 }
 
+.firefly-popup-pointer-curve-radius {
+    \-moz-border-radius: 5px 5px 5px 5px;
+    \-webkit-border-radius: 5px 5px 5px 5px;
+    border-radius: 5px 5px 5px 5px;
+}
+
 .popup-pane-pointer-shadow {
     \-moz-box-shadow: 0 5px 14px rgba(0, 0, 0, 0.66);
     \-webkit-box-shadow: 0 5px 14px rgba(0, 0, 0, 0.66);
@@ -1642,11 +1648,19 @@ a.linkTypeButton, .linkTypeButton {
 }
 
 .disable-select {
-    \-moz-user-select : literal("\-moz-none");
+    \-moz-user-select : none;
     \-khtml-user-select : none;
     \-webkit-user-select : none;
     \-o-user-select :  none;
     user-select :  none;
+}
+
+.enable-text-select {
+    \-moz-user-select : text;
+    \-khtml-user-select : text;
+    \-webkit-user-select : text;
+    \-o-user-select :  text;
+    user-select :  text;
 }
 
 .web-plot-view {

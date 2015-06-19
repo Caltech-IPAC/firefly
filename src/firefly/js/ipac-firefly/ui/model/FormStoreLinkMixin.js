@@ -10,23 +10,32 @@
 "use strict";
 
 import React from 'react/addons';
+import formActions from '../../actions/FormActions.js'
+
+
+
+
 
 
 var FormStoreLinkMixin=  {
+
+        storeListenerRemove : null,
+
         propTypes: {
-            dispatcher : React.PropTypes.object.isRequired,
             fieldKey : React.PropTypes.string.isRequired,
-            formModel : React.PropTypes.object.isRequired,
+            formStore : React.PropTypes.object.isRequired,
             initialState : React.PropTypes.object,
             labelWidth : React.PropTypes.number
         },
 
         getInitialState() {
-            var fieldState = this.props.initialState || this.props.formModel[this.props.fieldKey];
+            var {formStore,fieldKey} = this.props;
+            var fieldState = this.props.initialState || formStore.getState().fields[fieldKey];
             return {
                 fieldState : fieldState
             };
         },
+
 
 
         componentWillMount() {
@@ -34,9 +43,11 @@ var FormStoreLinkMixin=  {
             this.isValid= this.getFromStore.bind(this,"valid",true);
             this.isVisible= this.getFromStore.bind(this,"visible",true);
             this.getValue= this.getFromStore.bind(this,"value","");
+            this.getDisplayValue= this.getFromStore.bind(this,'displayValue','');
             this.getTip= this.getFromStore.bind(this,"tooltip","");
             this.getLabel= this.getFromStore.bind(this,"label",null);
             this.getLabelWidth= this.getFromStore.bind(this,"labelWidth",undefined);
+            this.getExtraData= this.getFromStore.bind(this,"extraData",{});
             this.getValidator= this.getFromStore.bind(this,"validator",function() {
                 return {valid:true,message:""};
             });
@@ -51,35 +62,41 @@ var FormStoreLinkMixin=  {
             return fieldState[key] !== undefined ? fieldState[key] : defValue;
         },
 
+        getFormKey() {
+            return this.props.formStore.getState().formKey;
+        },
+
         componentDidMount() {
-            this.props.formModel.on('change:'+this.props.fieldKey,this.updateFieldState);
-            var payload= {
-                evType : 'mountComponent',
+            this.storeListenerRemove= this.props.formStore.listen(this.updateFieldState);
+            formActions.mountComponent( {
+                formKey: this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 mounted : true,
-                value : this.getValue()
-            };
-            if (this.props.initialState) {
-                payload.fieldState= this.props.initialState;
-            }
-            this.props.dispatcher.dispatch(payload);
+                value: this.getValue(),
+                fieldState: this.props.initialState,
+            } );
         },
 
         componentWillUnmount() {
-            this.props.formModel.off('change:'+this.props.fieldKey,this.updateFieldState);
-            this.props.dispatcher.dispatch({
-                                               evType : 'mountComponent',
-                                               fieldKey : this.props.fieldKey,
-                                               mounted : false,
-                                               value : this.getValue()
-                                           });
+            if (this.storeListenerRemove) this.storeListenerRemove();
+            formActions.mountComponent( {
+                formKey: this.getFormKey(),
+                fieldKey : this.props.fieldKey,
+                mounted : false,
+                value: this.getValue()
+            } );
+
+            //formActions.mountComponent(this.getFormKey(),this.props.fieldKey,false,this.getValue(),this.props.initialState)
         },
 
         updateFieldState() {
-            var key= this.props.fieldKey;
-            this.setState( {fieldState : this.props.formModel[key]});
+            var {fieldKey, formStore}= this.props;
+            if (fieldKey===this.props.fieldKey && this.state.fieldState!==formStore.getState().fields[fieldKey]) {
+                this.setState( {fieldState : formStore.getState().fields[fieldKey]});
+            }
         }
+}
 
-};
+
 
 export default FormStoreLinkMixin;

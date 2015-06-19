@@ -3,6 +3,7 @@
 
 var React= require('react/addons');
 var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
+import formActions from '../actions/FormActions.js'
 
 import InputFieldLabel from "./InputFieldLabel.jsx";
 
@@ -11,6 +12,7 @@ var ListBoxInputField= React.createClass(
         mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
         propTypes: {
+            inline : React.PropTypes.bool,
             options : React.PropTypes.array.isRequired,
             multiple : React.PropTypes.bool
         },
@@ -34,15 +36,15 @@ var ListBoxInputField= React.createClass(
                 }
             }
 
-            var validateState= this.getValidator()(val.toString());
+            var {valid,message}=this.getValidator()(val.toString());
 
             // the value of this input field is a string
-            this.props.dispatcher.dispatch({
-                evType : 'valueChange',
+            formActions.valueChange({
+                formKey : this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 newValue : val.toString(),
-                message :validateState.message,
-                valid : validateState.valid,
+                message,
+                valid,
                 fieldState : this.state.fieldState
             });
         },
@@ -58,7 +60,7 @@ var ListBoxInputField= React.createClass(
 
         render() {
             return (
-                <div style={{whiteSpace:"nowrap"}}>
+                <div style={{whiteSpace:"nowrap", display: this.props.inline?'inline-block':'block'}}>
                     <InputFieldLabel label={this.getLabel()}
                         tooltip={this.getTip()}
                         labelWidth={this.props.labelWidth}

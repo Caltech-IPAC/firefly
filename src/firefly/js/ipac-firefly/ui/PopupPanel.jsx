@@ -50,8 +50,9 @@ export var PopupPanel= React.createClass(
         this.setState({activeLayoutType, posX:r.left, posY:r.top });
         //e.style.visibility="visible";
 
-    },  getInitialState() { return { activeLayoutType : LayoutType.NONE, posX : 0, posY : 0 };
     },
+
+    getInitialState() { return { activeLayoutType : LayoutType.NONE, posX : 0, posY : 0 }; },
 
 
 
@@ -114,12 +115,12 @@ export var PopupPanel= React.createClass(
         var rootStyle= {position : 'absolute',
             //width : "100px",
             //height : "100px",
-            //background : "white",
+            //background : 'white',
             visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
-            //left : "40px",
-            //right : "170px"
-            left : this.state.posX + "px",
-            top : this.state.posY + "px"
+            //left : '40px',
+            //right : '170px'
+            left : this.state.posX + 'px',
+            top : this.state.posY + 'px',
         };
 
 
@@ -131,14 +132,17 @@ export var PopupPanel= React.createClass(
 
         return (
             /*jshint ignore:start */
-                <div style={rootStyle} className={'popup-pane-shadow'}
-                     onMouseDownCapture={this.dialogMoveStart}
+                <div style={rootStyle} className={'popup-pane-shadow disable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
                      onTouchEnd={this.dialogMoveEnd} >
                     <div className={'standard-border'}>
-                        <div style={{position:'relative', height:'14px', width:'100%'}}
-                             className={'title-bar title-color popup-title-horizontal-background'}>
+                        <div style={{position:'relative', height:'14px', width:'100%', cursor:'default'}}
+                             className={'title-bar title-color popup-title-horizontal-background'}
+                            onTouchStart={this.dialogMoveStart}
+                            onTouchMove={this.dialogMove}
+                            onTouchEnd={this.dialogMoveEnd}
+                            onMouseDownCapture={this.dialogMoveStart}>
                             <div ref={(c) => this.titleBarRef=c}
                                  style= {{position:'absolute', left:'0px', top:'0px',width:'100%', padding: '3px 0 3px 10px'}}
                                  onMouseDownCapture={this.dialogMoveStart}

@@ -13,6 +13,10 @@
 'use strict';
 
 
+if (!window._babelPolyfill) {
+    require("babel/polyfill");
+}
+import Alt from 'alt';
 
 require('babel/polyfill');
 import { appFlux } from './Globals.js';
@@ -26,8 +30,24 @@ import {ColorDialog } from "ipac-firefly/visualize/ui/ColorDialog.jsx";
 import {ServerRequest } from 'ipac-firefly/data/ServerRequest.js';
 import {getJsonData } from 'ipac-firefly/rpc/SearchServicesJson.js';
 
-
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
+
+
+class Application {
+    constructor() {
+        this.networkMode= NetworkMode.JSON;
+        this.alt= new Alt();
+    }
+
+
+}
+
+export const application= new Application();
+
+
+
+
+
 
 export const fireflyInit= function() {
 
@@ -41,7 +61,7 @@ export const fireflyInit= function() {
     if (!window.firefly.gwt) {
         window.firefly.gwt= {};
     }
-    window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
+ //   window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
     window.firefly.appFlux= appFlux;
     window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
     window.firefly.gwt.ExtensionResult= ExtensionResult;
@@ -57,12 +77,3 @@ export const fireflyInit= function() {
     window.firefly.gwt.ColorDialog= ColorDialog;
 };
 
-class Application {
-    constructor() {
-        this.networkMode= NetworkMode.JSON;
-    }
-
-
-}
-
-export const application= new Application();

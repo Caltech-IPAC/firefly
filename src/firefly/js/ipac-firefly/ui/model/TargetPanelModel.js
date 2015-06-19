@@ -3,7 +3,7 @@
 //-----------------
 var Promise= require("es6-promise").Promise;
 var PositionParser= require("ipac-firefly/util/PositionParser");
-var PositionFieldDef= require("ipac-firefly/data/form/PositionFieldDef");
+var PositionFieldDef= require("../../data/form/PositionFieldDef");
 var Point= require("ipac-firefly/visualize/Point");
 var http= require('http');
 var AmpersandState = require('ampersand-state');

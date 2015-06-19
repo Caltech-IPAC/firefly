@@ -37,15 +37,18 @@ var PointerPopup = React.createClass(
            };
        },
 
-       computePosition(dir) {
+       computePosition(e,dir) {
            var retval= {};
+           var elemRect = e.getBoundingClientRect();
+           var x= this.props.x-elemRect.left;
+           var y= this.props.y-elemRect.top;
            if (dir===NORTH) {
-               retval.x= this.props.x;
-               retval.y= this.props.y+18;
+               retval.x= x;
+               retval.y= y+18;
            }
            else {
-               retval.x= this.props.x+10;
-               retval.y= this.props.y+5;
+               retval.x= x+10;
+               retval.y= y+5;
            }
            return retval;
 
@@ -65,7 +68,7 @@ var PointerPopup = React.createClass(
        },
 
        updateOffsets(e) {
-           var pos= this.computePosition(this.state.dir);
+           var pos= this.computePosition(e,this.state.dir);
            if (this.state.dir===NORTH) {
                var left= pos.x - e.offsetWidth/2;
                var adjust= 0;
@@ -105,12 +108,16 @@ var PointerPopup = React.createClass(
        //
        //},
 
-       componentDidMount() {
+       updatePosition() {
            var e= React.findDOMNode(this);
            this.updateOffsets(e);
            _.defer(function() {
                this.computeDir(e);
            }.bind(this));
+       },
+
+       componentDidMount() {
+           this.updatePosition();
            //window.addEventListener('resize',this.resizeListener)
        },
 
@@ -122,13 +129,14 @@ var PointerPopup = React.createClass(
 
 
        render() {
+           if (!this.props.x && !this.props.y) return;
            if (this.state.dir===NORTH || this.state.dir===NONE) {
                return (
                        <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}>
                            <img src={UP_POPUP_POINTER} ref='upPointer'/>
-                           <div className='standard-border' style= {{marginTop:'-3px'}}>
+                           <div className='firefly-popup-pointer-curve-radius' style= {{marginTop:'-3px'}}>
                                <div style={{padding : '5px'}}
-                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel'>
+                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel firefly-popup-pointer-curve-radius'>
                               {this.props.message}
                                </div>
                            </div>
@@ -141,9 +149,9 @@ var PointerPopup = React.createClass(
                            <img src={LEFT_DOWN_POPUP_POINTER}
                                    ref='leftDownPointer'
                                    style={{display:'inline-block', position:'absolute'}}/>
-                           <div className='standard-border' style= {{marginTop:'-5px',display:'inline-block'}}>
+                           <div className='firefly-popup-pointer-curve-radius' style= {{marginTop:'-5px',display:'inline-block'}}>
                                <div style={{padding : '5px'}}
-                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel'>
+                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel firefly-popup-pointer-curve-radius'>
                               {this.props.message}
                                </div>
                            </div>
