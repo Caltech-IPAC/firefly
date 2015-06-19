@@ -119,10 +119,10 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
         public WebPlotRequest getRequestForID(String id, SelectedRowData selData, boolean useWithThreeColor) {
             String inter= selData.getRequest().getParam("intersect");
             if (inter!=null && inter.equals("OVERLAPS")) {
-                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel"));
+                builder.setHeaderParams(Arrays.asList("mission", "ds"));
             }
             else {
-                builder.setHeaderParams(Arrays.asList("mission", "ImageSet", "ProductLevel", "subsize"));
+                builder.setHeaderParams(Arrays.asList("mission", "ds", "subsize"));
             }
 
             String b= getBandStr(ID.valueOf(id));
