@@ -142,20 +142,20 @@ public class BandPanel extends Composite {
         _stretchType.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
             @Override
             public void onValueChange(ValueChangeEvent<String> event) {
-               RangeValues rv= _plot.getPlotState().getRangeValues(_band);
+                //RangeValues rv= _plot.getPlotState().getRangeValues(_band);
 
                 if (_stretchType.getField().getValue().equalsIgnoreCase("arcsine")) {
                     ifDR.setVisible(true);
                     ifGamma.setVisible(false);
                     _useZScale.setEnabled(false);
 
-                    ifDR.setValue(new Double(rv.getDrValue()).toString());//event.getValue());
+                    //ifDR.setValue(new Double(rv.getDrValue()).toString());//event.getValue());
 
                 } else if (_stretchType.getField().getValue().equalsIgnoreCase("powerLawGamma")) {
                     ifGamma.setVisible(true);
                     ifDR.setVisible(false);
                     _useZScale.setEnabled(false);
-                    ifGamma.setValue(new Double(rv.getGammaValue()).toString());//event.getValue());
+                   // ifGamma.setValue(new Double(rv.getGammaValue()).toString());//event.getValue());
 
                 } else {
                     ifDR.setVisible(false);
@@ -296,7 +296,7 @@ public class BandPanel extends Composite {
 
         if (_useZScale.getValue()) {
             range= new RangeValues( RangeValues.ZSCALE, min,
-                                    RangeValues.ZSCALE, max,
+                                    RangeValues.ZSCALE, max,dr, gamma,
                                     getStretch(),
                                     _contrast.getNumberValue().intValue(),
                                     _numSamp.getNumberValue().intValue(),
@@ -485,8 +485,10 @@ public class BandPanel extends Composite {
                     Widget w = iterator.next();
                     if (w instanceof ListBoxInputField) {
                         ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
-                        l.addItem("Arcsine");
-                        l.addItem("PowerLawGamma");
+                        if (l.getItemCount()<8) {
+                            l.addItem("Arcsine");
+                            l.addItem("PowerLawGamma");
+                        }
 
                     }
                 }

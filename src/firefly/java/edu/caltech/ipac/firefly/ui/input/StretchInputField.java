@@ -28,8 +28,8 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 public class StretchInputField extends InputField {
     //public static enum Type {MIN, MAX}
     //LZ 4/24/15 modified to add dr and gamma
-    public static enum Type {MIN, MAX, DR, GAMMA}
-    public static enum Units {PERCENT, DATA, MINMAX, SIGMA}
+    public  enum Type {MIN, MAX, DR, GAMMA}
+    public  enum Units {PERCENT, DATA, MINMAX, SIGMA}
     private static WebClassProperties _prop= new WebClassProperties(StretchInputField.class);
 
      private static final int PERCENT_IDX= 0;
@@ -117,6 +117,7 @@ public class StretchInputField extends InputField {
     public void setWebFitsData(WebFitsData wFitsData) {
         _wFitsData= wFitsData;
 
+        if (_type==Type.DR || _type==Type.GAMMA) return;
         if (_listBox.getSelectedIndex() != PERCENT_IDX) {
                 updateFieldDef();
 
