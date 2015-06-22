@@ -28,7 +28,7 @@ export const EQUAL_STR= "Equal";
 export const SQUARED_STR= "Squared";
 export const SQRT_STR= "Sqrt";
 
-export const ASINH_STR= "arcsine";
+export const ASINH_STR= "asinh";
 export const POWERLAW_GAMMA_STR= "powerlaw_gamma";
 
 
@@ -38,7 +38,7 @@ export const STRETCH_LOGLOG= 46;
 export const STRETCH_EQUAL = 47;
 export const STRETCH_SQUARED = 48;
 export const STRETCH_SQRT    = 49;
-export const  STRETCH_ARCSINE   = 50;
+export const  STRETCH_ASINH   = 50;
 export const STRETCH_POWERLAW_GAMMA   = 51;
 
 

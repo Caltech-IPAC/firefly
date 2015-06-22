@@ -19,7 +19,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 
 /**
  * LZ 6/11/15
- * Modified to call arcsine and power law gamma algorithm
+ * Modified to call asinh and power law gamma algorithm
  */
 public class QuickStretchCmd extends BaseGroupVisCmd {
     private RangeValues _range;
@@ -118,7 +118,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
             case RangeValues.STRETCH_EQUAL : label= "Histogram Equalization: "+_baseLabel; break;
             case RangeValues.STRETCH_SQUARED : label= "Squared: "+_baseLabel; break;
             case RangeValues.STRETCH_SQRT : label= "Square Root: "+_baseLabel; break;
-            case RangeValues.STRETCH_ARCSINE : label= "Arcsine: "+_baseLabel; break;
+            case RangeValues.STRETCH_ASINH : label= "Asinh: "+_baseLabel; break;
             case RangeValues.STRETCH_POWERLAW_GAMMA : label= "PowerLawGamma: "+_baseLabel; break;
         }
         setLabel(label);

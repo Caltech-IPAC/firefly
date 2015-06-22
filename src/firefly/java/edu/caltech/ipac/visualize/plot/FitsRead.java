@@ -37,7 +37,7 @@ import java.util.Arrays;
  *
  * 6/12/15
  * Refactored stretch related methods and renamed all methods using the camelCase name
- * Add the Arcsine and Power Law Gamma algorithms
+ * Add the asinh and Power Law Gamma algorithms
  * Cleaned up some unused methods
  */
 public class FitsRead implements Serializable {
@@ -657,6 +657,7 @@ public class FitsRead implements Serializable {
 
 
 
+
         Histogram hist= getHistogram();
 
 
@@ -843,8 +844,8 @@ public class FitsRead implements Serializable {
                         double dRunval = ((float1dArray[index] - slow ) * 254 / sdiff);
                         pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
 
-                    } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ARCSINE) {
-                        pixeldata[pixelCount] = (byte) getArcSineStretchedPixelValue(float1dArray[index], dr, slow, shigh);
+                    } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
+                        pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh);
                     }
                     else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_POWERLAW_GAMMA) {
 
@@ -873,18 +874,23 @@ public class FitsRead implements Serializable {
         return pixValue;
 
     }
+    private static double asinh(double x) {
 
-    private static double getArcSineStretchedPixelValue(double x, double dr, double zp, double mp){
+        if(x==0) throw new IllegalArgumentException();
+        return Math.log(x + Math.sqrt(x * x + 1));
+
+    }
+    private static double getASinhStretchedPixelValue(double x, double dr, double zp, double mp)  {
+
         double  bp=0.0;
         double wp=dr;
 
+        double rd = dr * (x - zp) / mp; //in the range of 0 - dr (when zp=0.0)
+        double nsd = asinh(rd) / asinh(mp - zp); // in the range 0-1 when zp=0.0
+        double pixValue = 255 * (nsd - bp) / wp;
 
-        double  rd =  dr *(x-zp)/mp ; //in the range of 0 - dr (when zp=0.0)
-        double  nsd = Math.asin(rd)/Math.asin(mp - zp); // in the range 0-1 when zp=0.0
-        double pixValue = 255*(nsd-bp)/wp;
+         return pixValue;
 
-
-        return pixValue;
 
     }
 

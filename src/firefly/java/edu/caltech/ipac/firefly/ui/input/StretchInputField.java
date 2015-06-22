@@ -135,7 +135,7 @@ public class StretchInputField extends InputField {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("maxStretch")));
 
         }
-        //LZ 5/23/15 add for arcsine and power gamma
+        //LZ 5/23/15 add for asinh and power gamma
         else if (type==Type.DR) {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("drStretch")));
 

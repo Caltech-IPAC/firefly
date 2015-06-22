@@ -57,7 +57,7 @@ public class BandPanel extends Composite {
     private static final String EQUALIZATION_KEY = "equalization";
     private static final String SQUARED_KEY      = "squared";
     private static final String SQRT_KEY         = "sqrt";
-    private static final String ARCSINE_KEY         = "arcsine";
+    private static final String ASINH_KEY         = "asinh";
     private static final String POWERLAW_GAMMA_KEY         = "powerLawGamma";
 
     private static final String TEMP_GIF=  GWT.getModuleBaseURL()+"images/transparent-20x20.gif";
@@ -144,7 +144,7 @@ public class BandPanel extends Composite {
             public void onValueChange(ValueChangeEvent<String> event) {
                 //RangeValues rv= _plot.getPlotState().getRangeValues(_band);
 
-                if (_stretchType.getField().getValue().equalsIgnoreCase("arcsine")) {
+                if (_stretchType.getField().getValue().equalsIgnoreCase("asinh")) {
                     ifDR.setVisible(true);
                     ifGamma.setVisible(false);
                     _useZScale.setEnabled(false);
@@ -335,7 +335,7 @@ public class BandPanel extends Composite {
             case RangeValues.STRETCH_EQUAL :   _stretchType.setValue(EQUALIZATION_KEY); break;
             case RangeValues.STRETCH_SQUARED : _stretchType.setValue(SQUARED_KEY); break;
             case RangeValues.STRETCH_SQRT :    _stretchType.setValue(SQRT_KEY); break;
-            case RangeValues.STRETCH_ARCSINE :    _stretchType.setValue(ARCSINE_KEY ); break;
+            case RangeValues.STRETCH_ASINH :    _stretchType.setValue(ASINH_KEY ); break;
             case RangeValues.STRETCH_POWERLAW_GAMMA :    _stretchType.setValue(POWERLAW_GAMMA_KEY ); break;
             default:
                 assert false;  // if we end up here then there is a new stretch type that has been added
@@ -356,8 +356,8 @@ public class BandPanel extends Composite {
         else if (sTypeStr.equals(SQUARED_KEY))      sType= RangeValues.STRETCH_SQUARED;
 
         else if (sTypeStr.equals(SQRT_KEY))         sType= RangeValues.STRETCH_SQRT;
-        else if (sTypeStr.equals(ARCSINE_KEY))        {
-            sType= RangeValues.STRETCH_ARCSINE;
+        else if (sTypeStr.equals(ASINH_KEY))        {
+            sType= RangeValues.STRETCH_ASINH;
         }
         else if (sTypeStr.equals(POWERLAW_GAMMA_KEY))   {
             sType= RangeValues.STRETCH_POWERLAW_GAMMA;
@@ -455,8 +455,8 @@ public class BandPanel extends Composite {
 
     /**
       LZ
-      when the checkBox is selected, the Arcsine and PowerLawGamma will be removed since the zscale
-     is not applied to them.  When the checkbox is not selected, add Arcsine and PowerLawGamma back.
+      when the checkBox is selected, the Asinh and PowerLawGamma will be removed since the zscale
+     is not applied to them.  When the checkbox is not selected, add Asinh and PowerLawGamma back.
      */
     private class ZScaleChange implements ValueChangeHandler<Boolean> {
 
@@ -486,7 +486,7 @@ public class BandPanel extends Composite {
                     if (w instanceof ListBoxInputField) {
                         ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
                         if (l.getItemCount()<8) {
-                            l.addItem("Arcsine");
+                            l.addItem("Asinh");
                             l.addItem("PowerLawGamma");
                         }
 

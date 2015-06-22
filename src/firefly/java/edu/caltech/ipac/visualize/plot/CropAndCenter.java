@@ -8,22 +8,26 @@ import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.*;
 import nom.tam.fits.ImageData;
+import nom.tam.util.ArrayFuncs;
 import nom.tam.util.BufferedDataOutputStream;
 import nom.tam.util.Cursor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * 6/19/15 LZ
  * Refactor the codes
+ *
  */
 public class CropAndCenter
 {
 
-    FitsRead fits_read_temp=null; //delete this line after testing
+    //FitsRead fits_read_temp; //delete this line after testing
     public static FitsRead do_crop(FitsRead in_fits_read,
+    //public  FitsRead do_crop(FitsRead in_fits_read,
                                    double ra, double dec, double radius)
             throws FitsException
     {
@@ -62,7 +66,7 @@ public class CropAndCenter
             BasicHDU out_HDU1 = splitFITSCube(myHDU, min_x, min_y, max_x, max_y);
             ret_fits1.addHDU(out_HDU1);
             FitsRead[] fits_read_array1 = FitsRead.createFitsReadArray(ret_fits1);
-            FitsRead fits_read_1 = fits_read_array1[0];
+            //fits_read_temp = fits_read_array1[0];
             return(fits_read_0);
 
         }
@@ -790,9 +794,86 @@ public class CropAndCenter
         System.exit(0);
     }
 
+    private void validateHeader(Fits fits, Fits refFits) throws FitsException, IOException {
+
+        if (fits.getNumberOfHDUs() != refFits.getNumberOfHDUs()) {
+            new FitsException("new FitsRead does not have the same number of HDUS as the old one");
+        }
+        for (int i = 0; i < fits.getNumberOfHDUs(); i++) {
+            Cursor newCursor = fits.getHDU(i).getHeader().iterator();
+            Cursor oldCursor = refFits.getHDU(i).getHeader().iterator();
+            //check the header
+            boolean keyEqual = true;
+            //validate keys
+            while (newCursor.hasNext()) {
+                HeaderCard c1 = (HeaderCard) newCursor.next();
+                HeaderCard c2 = (HeaderCard) oldCursor.next();
+                if (!c1.getKey().trim().equalsIgnoreCase(c2.getKey().trim())) {
+                    System.out.println("c1.key=" + c1.getKey());
+                    System.out.println("c2.key=" + c2.getKey());
+                    keyEqual = false;
+                    System.out.println("the " + i + "th" + " fits HDU Keys are NOT equal ");
+                    break;
+                }
+            }
+            // if (keyEqual) System.out.println("the " + i + "th" + " fits HDU Keys are equal");
+            if (!keyEqual) System.out.println("The some header keys are NOT equal!");
+            //validate values
+            while (newCursor.hasNext()) {
+                HeaderCard c1 = (HeaderCard) newCursor.next();
+                HeaderCard c2 = (HeaderCard) oldCursor.next();
+                if (!c1.getValue().trim().equalsIgnoreCase(c2.getValue().trim())) {
+                    System.out.println("c1.key=" + c1.getValue());
+                    System.out.println("c2.key=" + c2.getValue());
+                    keyEqual = false;
+                    System.out.println("the " + i + "th" + " fits HDU Values are NOT equal ");
+                    break;
+                }
+            }
+            if (!keyEqual) System.out.println("The some header key Values are NOT equal!\"");
+        }
+    }
+
+    private void validateData(BasicHDU[] hdus, BasicHDU[] refHDUs) throws FitsException {
+
+        if (hdus.length!=refHDUs.length){
+            System.out.println("FitsReadLZ does not read HDU right");
+            System.exit(1);
+        }
+
+        for (int i=0; i<hdus.length; i++) {
+            Data data = hdus[i].getData();
+            Data refData = refHDUs[i].getData();
+
+            //check the data size
+            if (data.getSize() != refData.getSize()) {
+                System.out.println("FitsReadLZ does not read data size is not right");
+                System.exit(1);
+            }
+
+            //check the data
+            float[] dataArray =(float[])  ArrayFuncs.flatten(ArrayFuncs.convertArray(data.getData(), Float.TYPE));
+            float[] refDataArray =(float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(refData.getData(), Float.TYPE));
+            if (dataArray.length!= refDataArray.length) {
+                System.out.println("the data size is not right");
+                System.exit(1);
+            }
+            for (int j=0; j<dataArray.length; j++){
+
+                if (!Float.isNaN(dataArray[j])  && !Float.isNaN(refDataArray[j]) &&
+                        !Float.isInfinite(dataArray[j])  && !Float.isInfinite(refDataArray[j]) &&
+                        dataArray[j]!=refDataArray[j]){
+                    System.out.println("dataArray["+j+"]="+dataArray[j] + " and refDataArray["+j+"]="+refDataArray[j]);
+                    System.out.println("FitsReadLZ does not read data right");
+                    System.exit(1);
+                }
+            }
+        }
+
+    }
     // main is for testing only
-    public static void main(String[] args)
-    {
+    public static void main(String[] args)throws IOException {
+
         int i;
         double ra = Double.NaN;
         double dec = Double.NaN;
@@ -819,6 +900,8 @@ public class CropAndCenter
             System.out.println("bad number for ra or dec or radius");
             usage();
         }
+
+       // crop = new CropAndCenter();
         String out_name = args[4];
 
         File file = new File(in_name);
@@ -846,11 +929,19 @@ public class CropAndCenter
         try
         {
 
-            FitsRead newFitsRead = CropAndCenter.do_crop(fits_read_0, ra, dec, radius);
+            FitsRead newFitsRead = CropAndCenter.do_crop(fits_read_0, ra, dec, radius); //crop.do_crop(fits_read_0, ra, dec, radius); //
             newFits = newFitsRead.createNewFits();
             FileOutputStream fo = new java.io.FileOutputStream(out_name);
             BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
             newFits.write(o);
+
+            /*Fits testFits = crop.fits_read_temp.createNewFits();
+            crop.validateHeader(testFits, newFits);
+            BasicHDU hdu = newFitsRead.getHDU();
+            BasicHDU testHDU=crop.fits_read_temp.getHDU();
+            BasicHDU[] hs={hdu};
+            BasicHDU[] ths={testHDU};
+            crop.validateData(hs, ths);*/
         }
         catch (FileNotFoundException e)
         {

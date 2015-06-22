@@ -6,7 +6,7 @@
 BandPanel.stretchType.type.DataType= EnumString
 BandPanel.stretchType.type.Title= Stretch Type
 BandPanel.stretchType.type.ShortDescription= Choose Stretch algorithm
-BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt arcsine powerLawGamma
+BandPanel.stretchType.type.Items=  linear log loglog equalization squared sqrt asinh powerLawGamma
 BandPanel.stretchType.type.Default=linear
 BandPanel.stretchType.type.linear.Name= Linear
 BandPanel.stretchType.type.log.Name=    Log
@@ -15,7 +15,7 @@ BandPanel.stretchType.type.equalization.Name= Histogram Equalization
 BandPanel.stretchType.type.squared.Name= Squared
 BandPanel.stretchType.type.sqrt.Name= Sqrt
 //LZ 5/23/Add Arcsine and PowerLawGamma
-BandPanel.stretchType.type.arcsine.Name= Arcsine
+BandPanel.stretchType.type.asinh.Name= Asinh
 BandPanel.stretchType.type.powerLawGamma.Name= PowerLawGamma
 
 BandPanel.stretchType.type.linear.IntValue= 44
@@ -50,7 +50,7 @@ BandPanel.numSamp.Validation= range
 BandPanel.sampPerLine.DataType= Integer
 BandPanel.sampPerLine.Title= Samples per line
 BandPanel.sampPerLine.ShortDescription= Number of Samples per line
-BandPanel.sampPerLine.ErrorDescription= Number of Samples per line: Must be an integer bwtween 1 and 500
+BandPanel.sampPerLine.ErrorDescription= Number of Samples per line: Must be an integer bewtween 1 and 500
 BandPanel.sampPerLine.Min= 1
 BandPanel.sampPerLine.Max= 500
 BandPanel.sampPerLine.Default= 120

@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * LZ 6/11/15
- * Modified in order to run the new stretch algorithm arcsine and power law gamma
+ * Modified in order to run the new stretch algorithm STRETCH_ASINH and power law gamma
  */
 
 public class RangeValues implements Cloneable, Serializable,HandSerialize {
@@ -27,7 +27,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final int ZSCALE     = 91;
     public static final int SIGMA      = 92;
 
-    public static final double DR = 10.0;
+    public static final double DR = 1.0;
     public static final double GAMMA=2.0;
 
     public static final String LINEAR_STR= "Linear";
@@ -37,7 +37,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final String SQUARED_STR= "Squared";
     public static final String SQRT_STR= "Sqrt";
 
-    public static final String ASINH_STR= "arcsine";
+    public static final String ASINH_STR= "Asinh";
     public static final String POWERLAW_GAMMA_STR= "powerlaw_gamma";
 
 
@@ -47,7 +47,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     public static final int STRETCH_EQUAL = 47;
     public static final int STRETCH_SQUARED = 48;
     public static final int STRETCH_SQRT    = 49;
-    public static final int STRETCH_ARCSINE   = 50;
+    public static final int STRETCH_ASINH   = 50;
     public static final int STRETCH_POWERLAW_GAMMA   = 51;
 
 
@@ -57,7 +57,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _upperValue;
     private double _drValue;
     private double _gammaValue;
-    private int    _algorithm= STRETCH_ARCSINE; //STRETCH_LINEAR;
+    private int    _algorithm= STRETCH_LINEAR;
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
     private int    _zscale_samples_per_line; /* optimal number of pixels per line */
@@ -178,7 +178,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
             else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
             else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
-            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ARCSINE;
+            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
             else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
         }
@@ -204,7 +204,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             else if (algorithm.equalsIgnoreCase(EQUAL_STR)) a= STRETCH_EQUAL;
             else if (algorithm.equalsIgnoreCase(SQUARED_STR)) a= STRETCH_SQUARED;
             else if (algorithm.equalsIgnoreCase(SQRT_STR)) a= STRETCH_SQRT;
-            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ARCSINE;
+            else if (algorithm.equalsIgnoreCase(ASINH_STR)) a= STRETCH_ASINH;
             else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
         }

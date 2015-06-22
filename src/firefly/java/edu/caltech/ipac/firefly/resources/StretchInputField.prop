@@ -35,8 +35,8 @@ StretchInputField.drStretch.Min=0
 StretchInputField.drStretch.Max=1
 StretchInputField.drStretch.Precision=4
 StretchInputField.drStretch.Title= DR
-StretchInputField.drStretch.ShortDescription= The DR value of the arcsine Stretch
-StretchInputField.drStretch.ErrorDescription= The DR value of the arcsine Stretch:  data value
+StretchInputField.drStretch.ShortDescription= The DR value of the asinh Stretch
+StretchInputField.drStretch.ErrorDescription= The DR value of the asinh Stretch:  data value
 
 StretchInputField.powerLawGammaStretch.DataType= Float
 StretchInputField.powerLawGammaStretch.Min=0
