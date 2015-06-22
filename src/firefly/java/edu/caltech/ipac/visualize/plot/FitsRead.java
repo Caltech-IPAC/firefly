@@ -1273,11 +1273,7 @@ public class FitsRead implements Serializable {
         double bzero = imageHeader.bzero;
 
         return new Histogram(float1d, (imageHeader.datamin - bzero) / bscale,
-<<<<<<< HEAD
                 (imageHeader.datamax - bzero) / bscale);
-=======
-                (imageHeader.datamax - bzero) / bscale, blankValue);
->>>>>>> rc
 
 
     }
