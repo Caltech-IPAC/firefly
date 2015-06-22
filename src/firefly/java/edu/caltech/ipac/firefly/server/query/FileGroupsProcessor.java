@@ -40,7 +40,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
         try {
             DownloadRequest request= (DownloadRequest)sr;
             List<FileGroup> fileGroups = null;
-            StringKey key = new StringKey(FileInfoProcessor.class.getName(), getUniqueID(request));
+            StringKey key = new StringKey(FileGroupsProcessor.class.getName(), getUniqueID(request));
             Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
             fileGroups = (List<FileGroup>) cache.get(key);
 

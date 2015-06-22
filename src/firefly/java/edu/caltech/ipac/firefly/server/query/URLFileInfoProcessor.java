@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -11,11 +12,14 @@ import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -24,16 +28,24 @@ import java.util.List;
  * @author loi
  * @version $Id: URLFileInfoProcessor.java,v 1.6 2012/12/10 19:02:11 roby Exp $
  */
-abstract public class URLFileInfoProcessor implements SearchProcessor<FileInfo> {
-    public static final Logger.LoggerImpl _logger = Logger.getLogger();
+abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
 
-
-    public FileInfo getData(ServerRequest sr) throws DataAccessException {
+    protected FileInfo loadData(ServerRequest sr) throws IOException, DataAccessException {
         FileInfo retval= null;
         try {
             URL url= getURL(sr);
             if (url==null) throw new MalformedURLException("computed url is null");
-            retval= LockingVisNetwork.getFitsFile(url);
+
+            AnyUrlParams params = new AnyUrlParams(url);
+            if (identityAware()) {
+                Map<String, String> cookies = ServerContext.getRequestOwner().getIdentityCookies();
+                if (cookies != null && cookies.size() > 0) {
+                    for (String key : cookies.keySet()) {
+                        params.addCookie(key, cookies.get(key));
+                    }
+                }
+            }
+            retval= LockingVisNetwork.getFitsFile(params);
             _logger.info("retrieving URL:" + url.toString());
         } catch (FailedRequestException e) {
             _logger.warn(e, "Could not retrieve URL");
@@ -44,23 +56,9 @@ abstract public class URLFileInfoProcessor implements SearchProcessor<FileInfo> 
         return retval;
     }
 
-    public QueryDescResolver getDescResolver() {
-        return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
-    }
-
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
+    protected boolean identityAware() {
+        return false;
     }
 
     public abstract URL getURL(ServerRequest sr) throws MalformedURLException;
-
-    // ---------- following now used -------------------------
-    public String getUniqueID(ServerRequest request) { return null; }
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException { }
-    public boolean doCache() { return false;/* does not apply.. do nothing */ }
-    public void onComplete(ServerRequest request, FileInfo results) throws DataAccessException { }
-    public boolean doLogging() { return false; }
-    public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) { }
-
-
 }

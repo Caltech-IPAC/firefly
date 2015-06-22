@@ -32,59 +32,9 @@ import java.util.List;
  * @author loi
  * @version $Id: FileInfoProcessor.java,v 1.9 2012/06/21 18:23:53 loi Exp $
  */
-abstract public class FileInfoProcessor implements SearchProcessor<FileInfo>, Query {
+abstract public class QueryFileInfoProcessor extends BaseFileInfoProcessor implements Query {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        try {
-            TableServerRequest request= (TableServerRequest)sr;
-            FileInfo fi = null;
-            if (doCache()) {
-                StringKey key = new StringKey(FileInfoProcessor.class.getName(), getUniqueID(request));
-                Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
-                fi = (FileInfo) cache.get(key);
-            }
-            if (fi == null) {
-                fi = loadData(request);
-            }
-            onComplete(request, fi);
-            return fi;
-        } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
-            throw new DataAccessException("Request failed due to unexpected exception: ", e);
-        }
-    }
 
-    public QueryDescResolver getDescResolver() {
-        return new QueryDescResolver.DescBySearchResolver(new SearchDescResolver());
-    }
-
-    public ServerRequest inspectRequest(ServerRequest request) {
-        return request;
-    }
-
-    public String getUniqueID(ServerRequest request) {
-        return request.getRequestId() + "-" + StringUtils.toString(request.getParams());
-    }
-
-    public void writeData(OutputStream out, ServerRequest request) throws DataAccessException {
-        /* does not apply.. do nothing */
-    }
-
-    public boolean doCache() {
-        /* does not apply.. do nothing */
-        return false;
-    }
-
-    public void onComplete(ServerRequest request, FileInfo results) throws DataAccessException {
-    }
-
-    public boolean doLogging() {
-        return false;
-    }
-
-    public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        /* this only applies to table-based results... do nothing here */
-    }
 
 //====================================================================
 //  implementing Query
