@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query.wise;
 
+import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
@@ -17,6 +18,7 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
@@ -25,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SearchProcessorImpl(id = "WiseFileRetrieve")
-public class WiseFileRetrieve extends URLFileInfoProcessor {
+public class WiseFileRetrieve extends BaseFileInfoProcessor {
 
     public static final boolean USE_HTTP_AUTHENTICATOR = false;
     public static final String WISE_DATA_RETRIEVAL_TYPE = AppProperties.getProperty("wise.data_retrieval_type", "filesystem");  // url or filesystem
@@ -199,9 +201,9 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         });
     }
 
-
-    public URL getURL(ServerRequest sr) throws MalformedURLException {
-        return getURL(sr, IMG_TYPE.INTENSITY);
+    @Override
+    protected FileInfo loadData(ServerRequest sr) throws IOException, DataAccessException {
+        return null;  // not used.. override getData() directly
     }
 
     public static String getBaseURL(ServerRequest sr) {
