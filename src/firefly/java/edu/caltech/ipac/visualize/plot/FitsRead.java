@@ -978,7 +978,7 @@ public class FitsRead implements Serializable {
      * fill the 256 element table with values for a squared stretch
      */
     private static double[] getSquareDbl(double sdiff, double slow) {
-        double[] dtbl = new double[255];
+        double[] dtbl = new double[256];
 
         for (int j = 0; j < 255; ++j) {
             double floati = Math.sqrt(sdiff * sdiff / 254 * j) + slow;

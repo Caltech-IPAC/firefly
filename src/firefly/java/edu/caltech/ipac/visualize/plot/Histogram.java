@@ -912,7 +912,7 @@ public class Histogram
 
 	public double[]  getTblArray()
 	{
-		double[] tbl = new double[255];
+		double[] tbl = new double[256];
 		int goodpix, accum, tblindex, hist_index;
 		double next_goal, goodpix_255;
 
