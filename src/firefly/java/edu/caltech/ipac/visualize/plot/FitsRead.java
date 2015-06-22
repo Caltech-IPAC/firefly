@@ -809,7 +809,7 @@ public class FitsRead implements Serializable {
 
         double sdiff = slow == shigh ? 1.0 : shigh - slow;
 
-        double[] dtbl = new double[255];
+        double[] dtbl = new double[256];
         if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
                 || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
             dtbl = getLogDtbl(sdiff, slow, rangeValues);
