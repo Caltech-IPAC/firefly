@@ -982,9 +982,8 @@ public class FitsRead implements Serializable {
      *
      * @return array of byte (4096 elements)
      */
-    public byte[] getHistColors(RangeValues rangeValues) {
+    public byte[] getHistColors(Histogram hist, RangeValues rangeValues) {
 
-        Histogram hist=getHistogram();
           //calling stretch_pixel to calculate pixeldata, pixelhist
         byte[] pixeldata = new byte[4096];
         int[] pixelhist = new int[256];
