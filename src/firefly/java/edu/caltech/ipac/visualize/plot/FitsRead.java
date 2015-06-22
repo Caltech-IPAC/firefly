@@ -944,7 +944,7 @@ public class FitsRead implements Serializable {
      *
      * @return array of byte (4096 elements)
      */
-    public byte[] getHistColors(RangeValues rangeValues) {
+    public byte[] getHistColors(Histogram hist, RangeValues rangeValues) {
         int start_pixel = 0;
         int last_pixel = 4095;
         int start_line = 0;
@@ -1219,8 +1219,15 @@ public class FitsRead implements Serializable {
     }
 
     Histogram getHistogram() {
-        if (hist == null) hist= computeHistogram();
-        return hist;
+
+
+        double bscale = imageHeader.bscale;
+        double bzero = imageHeader.bzero;
+
+        return new Histogram(float1d, (imageHeader.datamin - bzero) / bscale,
+                (imageHeader.datamax - bzero) / bscale, blankValue);
+
+
     }
 
     /**

@@ -22,6 +22,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.HistogramOps;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -347,7 +348,8 @@ public class ImagePlotCreator {
     public static WebFitsData makeWebFitsData(ImagePlot plot, ActiveFitsReadGroup frGroup, Band band, File f) {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
         HistogramOps ops= plot.getHistogramOps(band,frGroup);
-        return new WebFitsData( ops.getDataMin(), ops.getDataMax(),
+        Histogram hist= ops.getDataHistogram();
+        return new WebFitsData( ops.getDataMin(hist), ops.getDataMax(hist),
                                 fileLength, plot.getFluxUnits(band,frGroup));
     }
 }
