@@ -65,7 +65,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _contrast;
 
     public RangeValues() {
-       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, STRETCH_ARCSINE, 25, 600, 120);
+       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, STRETCH_LINEAR, 25, 600, 120);
     }
 
     public RangeValues(int algorithm ) {
