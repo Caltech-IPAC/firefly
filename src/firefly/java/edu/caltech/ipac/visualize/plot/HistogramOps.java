@@ -43,32 +43,29 @@ public class HistogramOps {
     public FitsRead getFitsRead() { return fitsReadAry[band.getIdx()]; }
 
 
-    public int [] getDataHistogram() {
-        return fitsReadAry[band.getIdx()].getHistogram().getHistogramArray();
+    public Histogram getDataHistogram() {
+        return fitsReadAry[band.getIdx()].getHistogram();
     }
 
-    public byte [] getDataHistogramColors(RangeValues rangeValues) {
-        return fitsReadAry[band.getIdx()].getHistColors(rangeValues);
+    public byte [] getDataHistogramColors(Histogram hist, RangeValues rangeValues) {
+        return fitsReadAry[band.getIdx()].getHistColors(hist, rangeValues);
     }
 
-    public double getDataMin() {
+    public double getDataMin(Histogram hist) {
         ImageHeader imageHeader= fitsReadAry[band.getIdx()].getImageHeader();
-        return fitsReadAry[band.getIdx()].getHistogram().getDNMin() *
-               imageHeader.bscale + imageHeader.bzero;
+        return hist.getDNMin() * imageHeader.bscale + imageHeader.bzero;
     }
-    public double getDataMax() {
+    public double getDataMax(Histogram hist) {
         ImageHeader imageHeader= fitsReadAry[band.getIdx()].getImageHeader();
-        return fitsReadAry[band.getIdx()].getHistogram().getDNMax() *
-               imageHeader.bscale + imageHeader.bzero;
+        return hist.getDNMax() * imageHeader.bscale + imageHeader.bzero;
     }
     /**
      * @param bin The bin index in the histogram
      * @return    The mean value in the image corresponding to the specified bin
      */
-    public double getMeanValueFromBin(int bin) {
+    public double getMeanValueFromBin(Histogram hist, int bin) {
         ImageHeader imageHeader= fitsReadAry[band.getIdx()].getImageHeader();
-        return fitsReadAry[band.getIdx()].getHistogram().getDNfromBin(bin) *
-               imageHeader.bscale + imageHeader.bzero;
+        return hist.getDNfromBin(bin) * imageHeader.bscale + imageHeader.bzero;
     }
 
 //    /**

@@ -41,21 +41,7 @@ import edu.caltech.ipac.visualize.draw.ColorDisplay;
 import edu.caltech.ipac.visualize.draw.HistogramDisplay;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
-import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.CropFile;
-import edu.caltech.ipac.visualize.plot.FitsRead;
-import edu.caltech.ipac.visualize.plot.GeomException;
-import edu.caltech.ipac.visualize.plot.HistogramOps;
-import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.ImagePt;
-import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.MiniFitsHeader;
-import edu.caltech.ipac.visualize.plot.PixelValue;
-import edu.caltech.ipac.visualize.plot.PixelValueException;
-import edu.caltech.ipac.visualize.plot.PlotGroup;
-import edu.caltech.ipac.visualize.plot.ProjectionException;
-import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.*;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -1211,13 +1197,14 @@ public class VisServerOps {
             else  {
                 hOps= plot.getHistogramOps(band,ctx.getFitsReadGroup());
             }
+            Histogram hist= hOps.getDataHistogram();
 
-            dHist= hOps.getDataHistogram();
-            dHistColors= hOps.getDataHistogramColors(state.getRangeValues(band));
+            dHist= hist.getHistogramArray();
+            dHistColors= hOps.getDataHistogramColors(hist,state.getRangeValues(band));
 
             double meanDataAry[]= new double[dHist.length];
             for(int i= 0; i<meanDataAry.length; i++) {
-                meanDataAry[i]= hOps.getMeanValueFromBin(i);
+                meanDataAry[i]= hOps.getMeanValueFromBin(hist,i);
             }
 
 
