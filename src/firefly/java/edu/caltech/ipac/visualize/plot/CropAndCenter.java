@@ -15,15 +15,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
-
+/**
+ * 6/19/15 LZ
+ * Refactor the codes
+ */
 public class CropAndCenter
 {
 
+    FitsRead fits_read_temp=null; //delete this line after testing
     public static FitsRead do_crop(FitsRead in_fits_read,
                                    double ra, double dec, double radius)
             throws FitsException
     {
-        int min_x, min_y, max_x, max_y;
+
 
         ImageHeader imageHeader= in_fits_read.getImageHeader();
         CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
@@ -36,11 +40,30 @@ public class CropAndCenter
             int center_y = (int) proj_pt.getFline();
             double cdelt2 = imageHeader.cdelt2;
             int radius_pixels = (int) (radius / cdelt2);
-            min_x = center_x - radius_pixels;
-            max_x = center_x + radius_pixels;
-            min_y = center_y - radius_pixels;
-            max_y = center_y + radius_pixels;
+            int min_x = center_x - radius_pixels;
+            int max_x = center_x + radius_pixels;
+            int  min_y = center_y - radius_pixels;
+            int max_y = center_y + radius_pixels;
 
+            if (SUTDebug.isDebug())
+            {
+                System.out.println("RBH do_crop  min_x = " + min_x +
+                        "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
+            }
+            BasicHDU myHDU = in_fits_read.getHDU();
+
+            Fits ret_fits = new Fits();
+            BasicHDU out_HDU = split_FITS_cube(myHDU, min_x, min_y, max_x, max_y);
+            ret_fits.addHDU(out_HDU);
+            FitsRead[] fits_read_array = FitsRead.createFitsReadArray(ret_fits);
+            FitsRead fits_read_0 = fits_read_array[0];
+
+            Fits ret_fits1 = new Fits();
+            BasicHDU out_HDU1 = splitFITSCube(myHDU, min_x, min_y, max_x, max_y);
+            ret_fits1.addHDU(out_HDU1);
+            FitsRead[] fits_read_array1 = FitsRead.createFitsReadArray(ret_fits1);
+            FitsRead fits_read_1 = fits_read_array1[0];
+            return(fits_read_0);
 
         }
         catch (ProjectionException pe)
@@ -52,21 +75,8 @@ public class CropAndCenter
             throw new FitsException("Could not crop image.\n -  got ProjectionException: " + pe.getMessage());
         }
 
-        if (SUTDebug.isDebug())
-        {
-            System.out.println("RBH do_crop  min_x = " + min_x +
-                    "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
-        }
-        BasicHDU myHDU = in_fits_read.getHDU();
 
-        BasicHDU out_HDU = null;
-        Fits ret_fits = new Fits();
 
-        out_HDU = split_FITS_cube(myHDU, min_x, min_y, max_x, max_y);
-        ret_fits.addHDU(out_HDU);
-        FitsRead[] fits_read_array = FitsRead.createFitsReadArray(ret_fits);
-        FitsRead fits_read_0 = fits_read_array[0];
-        return(fits_read_0);
     }
 
     private static BasicHDU split_FITS_cube(BasicHDU hdu,
@@ -593,6 +603,169 @@ public class CropAndCenter
         return retval;
     }
 
+
+    private static void flipMinMax(int[] minMax){
+        if (minMax[0] >minMax[1]) {
+            int temp_x = minMax[0];
+            minMax[0] = minMax[1];
+            minMax[1] = temp_x;
+        }
+
+    }
+    private static void updateXYMinMax(BasicHDU hdu,int[] xyMinMax,
+                         int naxis2, int naxis3, int naxis4) throws FitsException {
+
+          float cdelt2 = hdu.getHeader().getFloatValue("CDELT2", Float.NaN);
+          if ((naxis3 > 1) || (naxis4 > 1)){
+                throw new FitsException("cannot crop a FITS cube");
+            }
+
+            int[] xMinMax = {xyMinMax[0],xyMinMax[2] };
+
+
+            flipMinMax(xMinMax);
+
+           if (cdelt2 < 0) {
+               xyMinMax[1] = naxis2 - xyMinMax[1] - 1;
+               xyMinMax[3] = naxis2 - xyMinMax[3] - 1;
+           }
+
+           int[] yMinMax = {xyMinMax[1],xyMinMax[3] };
+           flipMinMax(yMinMax);
+
+
+    }
+    private static Header getNewHeader(Header headerIn, int newNaxis1,int newNaxis2, int min_x, int min_y) throws HeaderCardException {
+        Header newHeader = clone_header(headerIn);
+
+        newHeader.addValue("NAXIS1" , newNaxis1, null);
+        newHeader.addValue("NAXIS2" , newNaxis2, null);
+
+        float crpix1 = headerIn.getFloatValue("CRPIX1",Float.NaN);
+        float crpix2 = headerIn.getFloatValue("CRPIX2",Float.NaN);
+        float cnpix1 = headerIn.getFloatValue("CNPIX1",Float.NaN);
+        float cnpix2 = headerIn.getFloatValue("CNPIX2",Float.NaN);
+
+        if (headerIn.containsKey("PLTRAH"))
+        {
+            /* it's a PLATE projection */
+            newHeader.addValue("CNPIX1" , cnpix1 + min_x, null);
+            newHeader.addValue("CNPIX2" , cnpix2 + min_y, null);
+        }
+        else
+        {
+
+
+            newHeader.addValue("CRPIX1" , crpix1 - min_x, null);
+            newHeader.addValue("CRPIX2" , crpix2 - min_y, null);
+        }
+        return newHeader;
+    }
+
+    /**
+     * Convert float[0][0][axis2][naxis1] to float[1][1][ newNaxis2][newNaxi1]
+     *
+     * @return
+     */
+    private static Object getNewData(Object dataIn, int naxis,
+                                            int naxis1, int naxis2,
+                                            int newNaxis1, int newNaxis2,
+
+                                            int minX, int maxX,
+                                            int minY, int maxY) {
+        Object newData;
+        if (naxis==4){
+            newData= new float[1][1][newNaxis2][newNaxis1];
+        }
+        else if(naxis==3){
+            newData= new float[1][newNaxis2][newNaxis1];
+        }
+        else {
+            newData= new float[newNaxis2][newNaxis1];
+        }
+
+        int yOut = 0;
+        for (int y = minY; y <= maxY; y++) {
+            int xOut = 0;
+            for (int x = minX; x <= maxX; x++) {
+
+                    if ((x < 0) || (x >= naxis1) || (y < 0) || (y >= naxis2)) {
+                        if (naxis==4){
+                            float[][][][] data= (float[][][][]) newData;
+                            data[0][0][yOut][xOut] = Float.NaN;
+                            newData=data;
+                        }
+                        else if (naxis==3){
+                            float[][][] data= (float[][][]) newData;
+                            data[0][yOut][xOut] = Float.NaN;
+                            newData=data;
+                        }
+                        else {
+                            float[][] data= (float[][]) newData;
+                            data[yOut][xOut] = Float.NaN;
+                            newData=data;
+                        }
+                    } else {
+
+                        if (naxis==4){
+                            float[][][][] data= (float[][][][]) newData;
+                            data[0][0][yOut][xOut] = ((float[][][][]) dataIn)[0][0][y][x];
+                            newData=data;
+                        }
+                        else if (naxis==3){
+                            float[][][] data=  (float[][][] ) newData;
+                            data[0][yOut][xOut] = ((float[][][]) dataIn)[0][y][x];;
+                            newData=data;
+                        }
+                        else {
+                            float[][] data= (float[][]) newData;
+                            data[yOut][xOut] = ((float[][]) dataIn)[y][x];
+                            newData=data;
+                        }
+
+                    }
+                    xOut++;
+                }
+                yOut++;
+
+
+        }
+        return newData;
+    }
+
+    private static BasicHDU splitFITSCube(BasicHDU hdu,
+                                            int min_x, int min_y, int max_x, int max_y)
+            throws FitsException
+    {
+
+        Header header = hdu.getHeader();
+        int naxis = header.getIntValue("NAXIS",0);
+        int naxis1 = header.getIntValue("NAXIS1",0);
+        int naxis2 = header.getIntValue("NAXIS2",0);
+        int naxis3 = naxis > 2?header.getIntValue("NAXIS3",0): 0;
+        int naxis4 = naxis > 3?header.getIntValue("NAXIS4",0):0;
+        int[] xyMinMax = {min_x, min_y, max_x, max_y};
+        //update the min_x, min_y, max_x and max_y values
+        updateXYMinMax(hdu, xyMinMax, naxis2, naxis3, naxis4);
+
+        int newNaxis1 = xyMinMax[2] - xyMinMax[0] + 1;
+        int newNaxis2 = xyMinMax[3] - xyMinMax[1] + 1;
+        Header newHeader =getNewHeader(header, newNaxis1, newNaxis2,xyMinMax[0], xyMinMax[1] );
+
+
+
+
+         Object dataIn = hdu.getData().getData();
+         Object dataOut = getNewData(dataIn,  naxis, naxis1, naxis2,
+         newNaxis1, newNaxis2,xyMinMax[0],  xyMinMax[2], xyMinMax[1],  xyMinMax[3]);
+         ImageData newImageData =new ImageData (dataOut);
+
+
+        return  new ImageHDU(newHeader, newImageData);
+
+
+    }
+
     static Header clone_header(Header header)
     {
         // first collect cards from old header
@@ -672,9 +845,9 @@ public class CropAndCenter
 
         try
         {
+
             FitsRead newFitsRead = CropAndCenter.do_crop(fits_read_0, ra, dec, radius);
             newFits = newFitsRead.createNewFits();
-
             FileOutputStream fo = new java.io.FileOutputStream(out_name);
             BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
             newFits.write(o);
