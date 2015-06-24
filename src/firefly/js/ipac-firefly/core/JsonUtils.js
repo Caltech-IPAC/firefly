@@ -58,7 +58,15 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
             res.on('data', function (buf) {
                 var result= JSON.parse(buf);
                 if (result[0].success) {
-                    resolve(result[0].data);
+                    if (result[0].success === 'true') {
+                        resolve(result[0].data);
+                    } else {
+                        if (result[0].error) {
+                            reject(new Error(result[0].error));
+                        } else {
+                            reject(new Error('Unknown failure: ' + buf));
+                        }
+                    }
                 }
                 else {
                     reject(new Error('Could not parse: '+ buf));

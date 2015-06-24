@@ -73,19 +73,17 @@ public class CommandService extends BaseHttpServlet {
             StringBuilder sb = new StringBuilder(500);
             sb.append("[{");
             sb.append("\"success\" :  \"").append(false).append("\",");
-            int cnt = 0;
-            for (Throwable t = e; (t != null); t = t.getCause()) {
-                sb.append("\"e").append(cnt).append("\" :  \"").append(t.toString()).append("\"");
-                if (e.getCause() != null) sb.append(", ");
+
+            // need to escape double quotes - otherwise JSON will be messed
+            sb.append("\"error\" : \"").append(e.toString().replace("\"", "\\\"")).append("\"");
+
+            int cnt = 1;
+            for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
+                sb.append(", ").append("\"cause").append(cnt).append("\" :  \"").append(t.toString().replace("\"", "\\\"")).append("\"");
                 cnt++;
             }
             sb.append("}]");
             jsonData = sb.toString();
-            // remove the last comma from json object
-            int lastCommaIdx = jsonData.lastIndexOf(",}]");
-            if (lastCommaIdx>0) {
-                jsonData = new StringBuilder(jsonData).replace(lastCommaIdx, lastCommaIdx+1,"").toString();
-            }
         }
 
         String retval;
@@ -99,11 +97,12 @@ public class CommandService extends BaseHttpServlet {
         if ((b.isIE() && b.getMajorVersion()<=9)) {
             res.setContentType("text/html");
         }
-        else if (doJsonp) {
-            res.setContentType("application/javascript");
-        }
         else {
-            res.setContentType("application/json");
+            if (doJsonp) {
+                res.setContentType("application/javascript");
+            } else {
+                res.setContentType("application/json");
+            }
         }
         res.setContentLength(retval.length());
         ServletOutputStream out = res.getOutputStream();

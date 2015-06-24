@@ -70,7 +70,7 @@ module.exports= React.createClass(
                         }
                     }.bind(this)
                 ).catch(function (reason) {
-                        console.log('Histogram failure: ' + reason);
+                        console.error('Histogram failure: ' + reason);
                     }
                 );
             }
