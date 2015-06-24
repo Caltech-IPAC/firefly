@@ -24,7 +24,7 @@ export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', '
 const doJsonP= function() {
     return false;
     //return application.networkMode===NetworkMode.JSON;
-}
+};
 
 //TODO: convert RawDataSet
 //TODO: convert FileStatus
@@ -32,7 +32,7 @@ const doJsonP= function() {
 
 /**
  *
- * @param (ServerRequest) request
+ * @param {ServerRequest} request
  * @return {Promise}
  */
 export const getRawDataSet= function(request) {
@@ -41,7 +41,20 @@ export const getRawDataSet= function(request) {
 
     return doService(doJsonP(), ServerParams.RAW_DATA_SET, paramList
     ).then(data => {return RawDataSet.parse(data); });
-}
+};
+
+/**
+ *
+ * @param {ServerRequest} request
+ * @return {Promise}
+ */
+export const getJsonData = function(request) {
+    var paramList = [];
+    paramList.push({name:ServerParams.REQUEST, value: request.toString()});
+
+    return doService(doJsonP(), ServerParams.JSON_DATA, paramList
+    ).then(data => {return JSON.parse(data); });
+};
 
 /**
  *
@@ -54,7 +67,7 @@ export const getFileStatus= function(filePath) {
 
     return doService(doJsonP(), ServerParams.CHK_FILE_STATUS, paramList
     ).then(data => {return FileStatus.parse(data); });
-}
+};
 
 /**
  *
@@ -66,7 +79,7 @@ export const getFileStatus= function(filePath) {
 export const submitBackgroundSearch= function(request, clientRequest, waitMillis) {
     var paramList = [];
     paramList.push({name: ServerParams.REQUEST, value: request.toString()});
-    if (clientRequest != null) {
+    if (clientRequest !== null) {
         paramList.push({name: ServerParams.CLIENT_REQUEST, value: clientRequest.toString()});
     }
     paramList.push({name: ServerParams.WAIT_MILS, value: waitMillis + ""});
@@ -75,7 +88,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
     ).then(data => {
                return BackgroundStatus.parse(data);
            });
-}
+};
 
 /**
  *
@@ -89,7 +102,7 @@ export const getStatus= function(id, polling) {
     paramList.push({name: ServerParams.POLLING, value: polling+""});
     return doService(doJsonP(), ServerParams.GET_STATUS, paramList
     ).then(data => {return BackgroundStatus.parse(data); });
-}
+};
 
 /**
  *
@@ -101,7 +114,7 @@ export const cancel= function(id) {
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.CANCEL, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
@@ -113,7 +126,7 @@ export const addIDToPushCriteria= function(id) {
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.ADD_ID_TO_CRITERIA, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
@@ -125,36 +138,37 @@ export const cleanup= function(id) {
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.CLEAN_UP, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
- * @param (string) fileKey
+ * @param {string} fileKey
  * @return {Promise}
  */
 export const getDownloadProgress= function(fileKey) {
     var paramList = [];
     paramList.push({name: ServerParams.FILE, value: fileKey});
     return doService(doJsonP(), ServerParams.DOWNLOAD_PROGRESS, paramList
-    ).then(data => {return DownloadProgress.get(data) });
-}
+    ).then(data => {return DownloadProgress.get(data); });
+};
 
 /**
  *
- * @param (string) filePath
+ * @param {string} filePath
  * @return {Promise}
  */
 export const getEnumValues= function(filePath) {
     var paramList = [];
     paramList.push({name: ServerParams.SOURCE, value: filePath});
     return doService(doJsonP(), ServerParams.GET_ENUM_VALUES, paramList
-    ).then(data => {return RawDataSet.parse(data) });
-}
+    ).then(data => {return RawDataSet.parse(data); });
+};
 
 
 /**
  *
- * @param (array|string) one id or an array of ids
+ * @param {array|string} ids - one id or an array of ids
+ * @param {string} email
  * @return {Promise}
  */
 export const setEmail= function(ids, email) {
@@ -165,7 +179,7 @@ export const setEmail= function(ids, email) {
     paramList.push({name:ServerParams.EMAIL, value:email});
     return doService(doJsonP(), ServerParams.SET_EMAIL, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
@@ -181,7 +195,7 @@ export const setAttribute= function(ids, attribute) {
     paramList.push({name:ServerParams.ATTRIBUTE, value:attribute.toString()});
     return doService(doJsonP(), ServerParams.SET_ATTR, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
@@ -192,13 +206,13 @@ export const getEmail= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.GET_EMAIL, paramList
-    ).then(data => {return data });
-}
+    ).then(data => {return data; });
+};
 
 /**
  *
- * @param (array|string) one id or an array of ids
- * @param (string) email
+ * @param {array|string} ids - one id or an array of ids
+ * @param {string} email
  * @return {Promise}
  */
 export const resendEmail= function(ids, email) {
@@ -209,7 +223,7 @@ export const resendEmail= function(ids, email) {
     paramList.push({name:ServerParams.EMAIL, value:email});
     return doService(doJsonP(), ServerParams.RESEND_EMAIL, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
@@ -223,11 +237,11 @@ export const clearPushEntry= function(id, idx ) {
     paramList.push({name: ServerParams.IDX, value: idx+""});
     return doService(doJsonP(), ServerParams.CLEAR_PUSH_ENTRY, paramList
     ).then(data => true);
-}
+};
 
 /**
  *
- * @param {string} id
+ * @param {string} channel
  * @param {string} desc
  * @param {string} data
  * @return {Promise}
@@ -239,7 +253,7 @@ export const reportUserAction= function(channel, desc, data) {
     paramList.push({name: ServerParams.DESC, value: desc});
     return doService(doJsonP(), ServerParams.REPORT_USER_ACTION, paramList
     ).then( data => true);
-}
+};
 
 
 /**
@@ -259,7 +273,7 @@ export const createDownloadScript= function(id, fname, dataSource, attributes) {
     paramList.push({name: ServerParams.FILE, value: fname});
     paramList.push({name: ServerParams.SOURCE, value: dataSource});
     return doService(doJsonP(), ServerParams.CREATE_DOWNLOAD_SCRIPT, paramList);
-}
+};
 
 /**
  *
@@ -277,6 +291,6 @@ export const getDataFileValues= function(filePath, rowsAry, colName) {
     paramList.push({name: ServerParams.COL_NAME, value: colName});
     return doService(doJsonP(), ServerParams.GET_DATA_FILE_VALUES, paramList
     ).then(data => data.split(', '));
-}
+};
 
 

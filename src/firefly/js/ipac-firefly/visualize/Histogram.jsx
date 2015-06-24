@@ -116,24 +116,24 @@ module.exports= React.createClass(
                 if (data) {
                     for (var i = 0; i < data.length; i++) {
                         if (data[i].length !== 3) {
-                            console.error("Invalid histogram data in row "+i+" ["+data[i]+"]");
+                            console.error('Invalid histogram data in row '+i+' ['+data[i]+']');
                             valid = false;
                         } else if (data[i][1]>data[i][2]) {
-                            console.error("Histogram data row "+i+": minimum is more than maximum. ["+data[i]+"]");
+                            console.error('Histogram data row '+i+': minimum is more than maximum. ['+data[i]+']');
                             valid=false;
                         } else if (data[i+1] && Math.abs(data[i][2]-data[i+1][1])>Number.EPSILON &&
                                 data[i][2]>data[i+1][1]) {
-                            console.error("Histogram data row "+i+": bin range overlaps the following row. ["+data[i]+"]");
+                            console.error('Histogram data row '+i+': bin range overlaps the following row. ['+data[i]+']');
                             valid=false;
                         }
                     }
                     if (this.props.logs && this.props.logs.indexOf('x')>-1 && data[0][1]<=0) {
-                        console.error("Unable to plot histogram: zero or subzero values on logarithmic scale");
+                        console.error('Unable to plot histogram: zero or subzero values on logarithmic scale');
                         valid = false;
                     }
                 }
             } catch (e) {
-                console.error("Invalid data passed to Histogram: "+e);
+                console.error('Invalid data passed to Histogram: '+e);
                 valid = false;
             }
             return valid;
@@ -150,7 +150,7 @@ module.exports= React.createClass(
             }
 
             if (!this.validateData(this.state.userData)) {
-                console.error("Invalid histogram data, check console for specifics.");
+                console.error('Invalid histogram data, check console for specifics.');
                 return false;
             }
 
@@ -179,7 +179,7 @@ module.exports= React.createClass(
                         // check for gaps and add points in necessary
                         if (Math.abs(this.state.userData[index][1])-lastBinMax > Number.EPSILON &&
                             this.state.userData[index][1]>lastBinMax) {
-                            console.warn("Gap in histogram data before row "+index+" ["+this.state.userData[index]+"]");
+                            console.warn('Gap in histogram data before row '+index+' ['+this.state.userData[index]+']');
                             let gapRange = this.state.userData[index][1]-lastBinMax;
                             let gapCenterStr = numeral(lastBinMax+gapRange/2.0).format(formatStr);
                             let gapRangeStr = numeral(lastBinMax).format(formatStr)+' to '+numeral(this.state.userData[index][1]).format(formatStr);
@@ -295,7 +295,7 @@ module.exports= React.createClass(
                                 enabled: false
                             }
                         },
-                        zoneAxis: "x",
+                        zoneAxis: 'x',
                         zones: [] // color ajacent bins slightly different by defining zones
                     }
                 },

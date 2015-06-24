@@ -109,6 +109,7 @@ export const ServerParams = {
         USER_KEY : 'CmdUserKey',
         VERSION : 'CmdVersion',
         RAW_DATA_SET : 'RawDataSet',
+        JSON_DATA : 'JsonData',
         CHK_FILE_STATUS : 'CmdChkFileStatus',
         GET_ENUM_VALUES : 'getEnumValues',
         RESOLVE_NAME: 'CmdResolveName',

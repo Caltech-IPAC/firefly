@@ -52,6 +52,19 @@ public class SearchServerCommands {
 
     }
 
+    public static class GetJSONData extends BaseSearchServerCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+
+            SrvParam sp= new SrvParam(paramMap);
+            String reqString = sp.getRequired(ServerParams.REQUEST);
+            ServerRequest request = ServerRequest.parse(reqString, new ServerRequest());
+            String data = new SearchManager().getJSONData(request);
+            return data;
+        }
+
+    }
+
     public static class ChkFileStatus extends BaseSearchServerCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

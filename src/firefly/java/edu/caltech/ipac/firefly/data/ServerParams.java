@@ -108,6 +108,7 @@ public class ServerParams {
     public static final String USER_KEY = "CmdUserKey";
     public static final String VERSION = "CmdVersion";
     public static final String RAW_DATA_SET = "RawDataSet";
+    public static final String JSON_DATA = "JsonData";
     public static final String CHK_FILE_STATUS = "CmdChkFileStatus";
     public static final String GET_ENUM_VALUES = "getEnumValues";
     public static final String RESOLVE_NAME= "CmdResolveName";

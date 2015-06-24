@@ -24,6 +24,8 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.util.Assert;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +59,26 @@ public class SearchManager {
         } else {
             throw new DataAccessException("Request fail inspection.  Operation aborted.");
         }
+    }
 
+    public String getJSONData(ServerRequest request) throws DataAccessException {
+        SearchProcessor processor = getProcessor(request.getRequestId());
+        ServerRequest req = processor.inspectRequest(request);
+        if (req != null) {
+            String jsonText = (String) processor.getData(req);
+            // validate JSON
+            JSONParser parser = new JSONParser();
+            try{
+                parser.parse(jsonText);
+                return jsonText;
+            }
+            catch(ParseException pe){
+                LOGGER.error(processor.getUniqueID(request) + " return invalid JSON; position: " + pe.getPosition() + "; " + pe.getMessage() + "; " + jsonText);
+                throw new DataAccessException("Request failed: invalid JSON; position: " + pe.getPosition() + "; " + pe.getMessage());
+            }
+        } else {
+            throw new DataAccessException("Request fail inspection.  Operation aborted.");
+        }
     }
 
     public DataGroupPart getDataGroup(TableServerRequest request) throws DataAccessException {

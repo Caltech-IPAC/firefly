@@ -20,10 +20,14 @@ import java.util.Map;
 public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
 
     /**
-        There might be debugging output in standard output stream
+        There might be debugging result in standard result stream
         Discard everything until STATUS_KEYWORD
      */
-    private final String STATUS_KEYWORD = "___TASK STATUS___";
+    private final static String STATUS_KEYWORD = "___TASK STATUS___";
+    private final static String OUTFILE_KEY = "outfile";
+    private final static String ERROR_KEY = "error";
+    private final static String RESULT_KEY = "result";
+
 
     private String task;
     private String taskParams; // JSON task parameters as a string
@@ -39,6 +43,7 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
     private StringBuffer status = new StringBuffer();
     private String error = null;
     private String outfile = null;
+    private String result = null;
     private int statusCode = -1;
 
     public ExternalTaskHandlerImpl(String task, String jsonTaskParams) {
@@ -115,15 +120,21 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
             if (status.length() > 0) {
                 JSONObject statusJSON = (JSONObject) JSONValue.parse(status.toString());
                 if (statusJSON != null) {
-                    Object errorObj = statusJSON.get("error");
+                    Object errorObj = statusJSON.get(ERROR_KEY);
                     if (errorObj != null) {
                         error = errorObj.toString();
                     }
-                    Object outfileObj = statusJSON.get("outfile");
+                    Object outfileObj = statusJSON.get(OUTFILE_KEY);
                     if (outfileObj != null) {
                         outfile = outfileObj.toString();
+                    } else {
+                        Object resultObj = statusJSON.get(RESULT_KEY);
+                        if (resultObj != null) {
+                            result = resultObj.toString();
+                        } else {
+                            result = status.toString();
+                        }
                     }
-
                 }
             }
 
@@ -165,12 +176,21 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         } else {
             if (outfile == null) {
                 throw new DataAccessException("Output file is not available");
+            } else {
+                File ofile = new File(outfile);
+                if (!ofile.canRead()) {
+                    throw new DataAccessException("No read access to " + outfile);
+                }
+                return ofile;
             }
-            File ofile = new File(outfile);
-            if (!ofile.canRead()) {
-                throw new DataAccessException("No read access to "+outfile);
-            }
-            return ofile;
+        }
+    }
+
+    public String getResult() throws DataAccessException {
+        if (statusCode != ExternalTaskLauncher.NORMAL_EXIT) {
+            throw new DataAccessException("Failed to obtain data. " + getError());
+        } else {
+            return result;
         }
     }
 

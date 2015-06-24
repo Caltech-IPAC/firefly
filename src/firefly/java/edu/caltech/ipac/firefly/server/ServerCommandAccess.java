@@ -108,6 +108,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.VERSION,      new ResourceServerCommands.GetVersion());
 
         _cmdMap.put(ServerParams.RAW_DATA_SET,           new SearchServerCommands.GetRawDataSet());
+        _cmdMap.put(ServerParams.JSON_DATA,              new SearchServerCommands.GetJSONData());
         _cmdMap.put(ServerParams.CHK_FILE_STATUS,        new SearchServerCommands.ChkFileStatus());
         _cmdMap.put(ServerParams.GET_ENUM_VALUES,        new SearchServerCommands.GetEnumValues());
         _cmdMap.put(ServerParams.SUB_BACKGROUND_SEARCH,  new SearchServerCommands.SubmitBackgroundSearch());
