@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class IpacTableUtil {
 
-    public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
+    public static final int FILE_IO_BUFFER_SIZE = 2*FileUtil.BUFFER_SIZE;
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
         String type, line;
