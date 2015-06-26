@@ -876,7 +876,6 @@ public class FitsRead implements Serializable {
     }
     private static double asinh(double x) {
 
-        if(x==0) throw new IllegalArgumentException();
         return Math.log(x + Math.sqrt(x * x + 1));
 
     }
