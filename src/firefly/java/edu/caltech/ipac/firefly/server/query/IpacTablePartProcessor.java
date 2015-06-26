@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
@@ -145,7 +146,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             DataGroupPart page = null;
             // get the page requested
             if (dgFile == null || !dgFile.exists() || dgFile.length() == 0) {
-                DataGroupPart.TableDef def = new DataGroupPart.TableDef();
+                TableDef def = new TableDef();
                 def.setStatus(DataGroupPart.State.COMPLETED);
                 page = new DataGroupPart(def, new DataGroup("No result found", new DataType[0]), 0, 0);
             } else {
@@ -211,7 +212,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
             File inf = getDataFile(request);
             if (inf != null && inf.canRead()) {
-                int rows = IpacTableParser.getMetaInfo(inf).getRowCount();
+                int rows = IpacTableUtil.getMetaInfo(inf).getRowCount();
 
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out),
                         IpacTableUtil.FILE_IO_BUFFER_SIZE);
@@ -454,7 +455,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 long fileSize = 0;
                 if (cfile != null) {
                     try {
-                        DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(cfile);
+                        TableDef meta = IpacTableUtil.getMetaInfo(cfile);
                         if (meta.getStatus() == DataGroupPart.State.INPROGRESS) {
                             fileSize = (meta.getRowCount() * meta.getLineWidth()) + meta.getRowStartOffset();
                         } else {

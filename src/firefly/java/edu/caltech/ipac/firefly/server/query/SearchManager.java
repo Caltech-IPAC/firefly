@@ -23,7 +23,9 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.util.IpacTableUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +90,7 @@ public class SearchManager {
 
     public FileStatus getFileStatus(File inf) {
         try {
-            DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(inf);
+            TableDef headers = IpacTableUtil.getMetaInfo(inf);
             FileStatus fs = new FileStatus();
             fs.setState(FileStatus.State.valueOf(headers.getStatus().name()));
             fs.setRowCount(headers.getRowCount());
@@ -174,7 +176,7 @@ public class SearchManager {
     public RawDataSet getEnumValues(File file) throws IOException {
         DataGroupPart dgp = new DataGroupPart();
         if (file.canRead()) {
-            DataGroupPart.TableDef headers = IpacTableParser.getMetaInfo(file);
+            TableDef headers = IpacTableUtil.getMetaInfo(file);
             dgp.setTableDef(headers);
             dgp.setData(DataGroupReader.getEnumValues(file, 10));
         }

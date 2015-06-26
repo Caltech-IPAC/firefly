@@ -9,11 +9,6 @@ import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Date: May 14, 2009
  *
@@ -120,97 +115,5 @@ public class DataGroupPart implements HasAccessInfos {
 //====================================================================
 //
 //====================================================================
-
-    public static class TableDef {
-        private List<DataType> cols = new ArrayList<DataType>();
-        private LinkedHashMap<String, DataGroup.Attribute> attributes = new LinkedHashMap<String, DataGroup.Attribute>();
-        private int lineWidth;
-        private int rowCount;
-        private int colCount;
-        private int rowStartOffset;
-        private String sourceFile;
-        private int lineSepLength;
-
-        public void addAttribute(DataGroup.Attribute... attributes) {
-            if (attributes != null) {
-                for(DataGroup.Attribute a : attributes) {
-                    this.attributes.put(a.getKey(), a);
-                }
-            }
-        }
-
-        public List<DataType> getCols() {
-            return cols;
-        }
-
-        public void addCols(DataType col) {
-            cols.add(col);
-        }
-
-        public Map<String, DataGroup.Attribute> getAttributes() {
-            return attributes;
-        }
-
-        public void setStatus(State status) {
-            addAttribute(new DataGroup.Attribute(LOADING_STATUS, status.name()));
-        }
-
-        public State getStatus() {
-            DataGroup.Attribute a = attributes.get(LOADING_STATUS);
-            if (a != null && !StringUtils.isEmpty(a.getValue())) {
-                return State.valueOf(String.valueOf(a.getValue()));
-            } else {
-                return State.COMPLETED;
-            }
-        }
-
-        public int getLineSepLength() {
-            return lineSepLength;
-        }
-
-        public void setLineSepLength(int lineSepLength) {
-            this.lineSepLength = lineSepLength;
-        }
-
-        public int getLineWidth() {
-            return lineWidth;
-        }
-
-        public void setLineWidth(int lineWidth) {
-            this.lineWidth = lineWidth;
-        }
-
-        public int getRowCount() {
-            return rowCount;
-        }
-
-        public void setRowCount(int rowCount) {
-            this.rowCount = rowCount < 0 ? 0 : rowCount;
-        }
-
-        public int getColCount() {
-            return colCount;
-        }
-
-        public void setColCount(int colCount) {
-            this.colCount = colCount;
-        }
-
-        public int getRowStartOffset() {
-            return rowStartOffset;
-        }
-
-        public void setRowStartOffset(int rowStartOffset) {
-            this.rowStartOffset = rowStartOffset;
-        }
-
-        public String getSource() {
-            return sourceFile;
-        }
-
-        public void setSource(String sourceFile) {
-            this.sourceFile = sourceFile;
-        }
-    }
 
 }

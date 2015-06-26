@@ -14,10 +14,10 @@ import edu.caltech.ipac.firefly.data.dyn.xstream.QueryTag;
 import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.dyn.DynConfigManager;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -46,7 +46,7 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
         if (q != null) {
             for (ParamTag p : q.getParams()) {
                 if (p.getKey().equals(SortInfo.SORT_INFO_TAG)) {
-                    DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(dataFile);
+                    TableDef meta = IpacTableUtil.getMetaInfo(dataFile);
                     if (meta.getRowCount() < 100000) {
                         SortInfo si = SortInfo.parse(p.getValue());
                         if (si != null) {

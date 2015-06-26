@@ -20,6 +20,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -84,11 +85,12 @@ public class DataGroupFilter {
 
         StopWatch.getInstance().start("DataGroupFilter");
 
+        TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
+        List<DataGroup.Attribute> attributes = tableMeta.getAttributeList();
+        List<DataType> headers = tableMeta.getCols();
+
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
         reader = new BufferedReader(new FileReader(source), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-
-        List<DataGroup.Attribute> attributes = IpacTableUtil.readAttributes(reader);
-        List<DataType> headers = IpacTableUtil.readColumns(reader);
 
         // if this file does not contain ROWID, add it.
         if (!DataGroup.containsKey(headers.toArray(new DataType[headers.size()]), DataGroup.ROWID_NAME)) {
