@@ -387,7 +387,9 @@ public class CatalogSearchDropDown {
         req.setUse(CatalogRequest.Use.CATALOG_OVERLAY);
         if (useSearchAdmin) {
             hide();
-            SearchAdmin.getInstance().submitSearch(req, req.getQueryCatName());
+            String title = req.getParam(CatalogRequest.CATALOG_PROJECT) == null ? "" : req.getParam(CatalogRequest.CATALOG_PROJECT) + "-";
+            title = title + req.getQueryCatName();
+            SearchAdmin.getInstance().submitSearch(req, title);
         }
         else {
             Widget w= _mainPanel.getParent();

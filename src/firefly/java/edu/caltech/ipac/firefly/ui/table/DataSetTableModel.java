@@ -346,7 +346,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                     isDataStale = false;
                 }
 
-                String cfilter = StringUtils.toString(loader.getRequest().getFilters());
+                String cfilter = StringUtils.toString(loader.getFilters());
 
                 if (enumFor.equals(cfilter)) return;
 
