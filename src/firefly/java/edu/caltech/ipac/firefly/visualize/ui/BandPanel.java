@@ -90,7 +90,7 @@ public class BandPanel extends Composite {
     private WebPlot _plot;
     private SimpleInputField ifDR;
     private  SimpleInputField ifGamma;
-
+    VerticalPanel minmaxPanel;
 
     public BandPanel(WebPlot plot, Band band) {
         _band= band;
@@ -143,10 +143,16 @@ public class BandPanel extends Composite {
             @Override
             public void onValueChange(ValueChangeEvent<String> event) {
                 //RangeValues rv= _plot.getPlotState().getRangeValues(_band);
-                _useZScale.setVisible(false);
+               // _useZScale.setVisible(false);
 
                 if (_stretchType.getField().getValue().equalsIgnoreCase("asinh")) {
                     ifDR.setVisible(true);
+                    minmaxPanel.getWidget(0).setTitle("Zero Point");
+                    _minStretch.getFieldDef().setLabel("Zero ");
+                    _minStretch.getFocusWidget().setTitle("zero");
+                   // _minStretch.setTitle("Zero Point");
+                   // minmaxPanel.getWidget(1).setTitle("Max Point");
+
                     ifGamma.setVisible(false);
                    // _useZScale.setEnabled(false);
 
@@ -161,7 +167,10 @@ public class BandPanel extends Composite {
                 } else {
                     ifDR.setVisible(false);
                     ifGamma.setVisible(false);
-                    _useZScale.setVisible(true);
+                    minmaxPanel.getWidget(0).setTitle("Lower Range");
+                    minmaxPanel.getWidget(1).setTitle("Upper Range");
+
+                    //_useZScale.setVisible(true);
 
                 }
             }
@@ -173,7 +182,9 @@ public class BandPanel extends Composite {
 
         DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
-        VerticalPanel minmaxPanel= new VerticalPanel();
+        //VerticalPanel minmaxPanel= new VerticalPanel();
+         minmaxPanel= new VerticalPanel();
+
         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
         minmaxPanel.add(ifDR);
@@ -219,7 +230,7 @@ public class BandPanel extends Composite {
 
     public void newPlot(WebPlot plot) {
         _plot= plot;
-       
+
         WebFitsData fData= plot.getFitsData(_band);
         _minStretch.setWebFitsData(fData);
         _maxStretch.setWebFitsData(fData);
@@ -465,7 +476,7 @@ public class BandPanel extends Composite {
             setUseZScale(ev.getValue());
 
 
-            if (ev.getValue()) {
+           /* if (ev.getValue()) {
 
                 Iterator<Widget> iterator = _stretchType.iterator();
                 while (iterator.hasNext()) {
@@ -495,7 +506,7 @@ public class BandPanel extends Composite {
                 }
 
 
-            }
+            }*/
         }
     }
 }
