@@ -36,7 +36,7 @@ StretchInputField.drStretch.Max=1
 StretchInputField.drStretch.Precision=4
 StretchInputField.drStretch.Title= DR
 StretchInputField.drStretch.ShortDescription= The DR value of the asinh Stretch
-StretchInputField.drStretch.ErrorDescription= The DR value of the asinh Stretch:  data value
+StretchInputField.drStretch.ErrorDescription= The DR value of the asinh Stretch, the value range is betwee 1 to 10,0000
 
 StretchInputField.powerLawGammaStretch.DataType= Float
 StretchInputField.powerLawGammaStretch.Min=0
@@ -44,7 +44,6 @@ StretchInputField.powerLawGammaStretch.Max=1
 StretchInputField.powerLawGammaStretch.Precision=4
 StretchInputField.powerLawGammaStretch.Title= Gamma
 StretchInputField.powerLawGammaStretch.ShortDescription= The Gamma value of the Power Law Gamma Stretch
-StretchInputField.powerLawGammaStretch.ErrorDescription= The DR value of the Power Law Gamma Stretch: Enter the percent, data value
-
+StretchInputField.powerLawGammaStretch.ErrorDescription= The DR value of the Power Law Gamma Stretch
 
 

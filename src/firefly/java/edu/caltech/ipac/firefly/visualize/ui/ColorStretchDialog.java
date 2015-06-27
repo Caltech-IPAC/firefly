@@ -77,7 +77,7 @@ public class ColorStretchDialog extends BaseDialog {
         this.addButtonAreaWidgetBefore(_applyAll);
         _applyAll.setVisible(false);
 
-        _topPanel.setSize("360px", "350px");
+        _topPanel.setSize("360px", "390px");
         this.setWidget(_topPanel);
     }
 

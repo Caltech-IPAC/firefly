@@ -6,7 +6,7 @@
 /*jshint curly:false*/
 
 //LZ 06/11/15 add arcsine and power law gamma parameters
-
+//LZ 06/26/15 add zp and wp parameters
 import validator from "validator";
 
 
@@ -51,7 +51,9 @@ class RangeValues {
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
                  upperValue= 99.0,
-                 drValue=10.0,
+                 drValue=1.0,
+                 bpValue=0.0,
+                 wpValue=1.0,
                  gammaValue=2.0,
                  algorithm= STRETCH_LINEAR,
                  zscaleContrast= 25,
@@ -64,6 +66,8 @@ class RangeValues {
         this.upperWhich= upperWhich;
         this.upperValue= upperValue;
         this.drValue = drValue;
+        this.bValue = bpValue;
+        this.wpValue = wpValue;
         this.gammaValue=gammaValue;
         this.algorithm=  algorithm;
         this.zscaleContrast= zscaleContrast;
@@ -102,7 +106,7 @@ class RangeValues {
             else if (algorithm===ASINH_STR.toLowerCase()) a= STRETCH_ARCSINE;
              else if (algorithm===POWERLAW_GAMMA_STR_STR.toLowerCase()) a= STRETCH_POWERLAW_GAMMA;
         }
-        return new RangeValues(s,lowerValue,s,upperValue,drValue, gammaValue, a);
+        return new RangeValues(s,lowerValue,s,upperValue,drValue,bpValue, wpValue, gammaValue, a);
     }
 
 
@@ -124,7 +128,7 @@ class RangeValues {
      */
     static clone() {
         return new RangeValues( this.lowerWhich, this.lowerValue, this.upperWhich,
-                                this.upperValue, this.drValue, this.gammaValue, this.algorithm,
+                                this.upperValue, this.drValue, this.bpValue, this.wpValue, this.gammaValue, this.algorithm,
                                 this.zscaleContrast, this.zscaleSamples,
                                 this.zscaleSamplesPerLine,
                                 this.bias, this.contrast );
@@ -180,6 +184,8 @@ class RangeValues {
                this.upperWhich+","+
                this.upperValue+","+
                this.drValue+","+
+               this.bpValue+","+
+               this.wpValue+","+
                this.gammaValue+","+
                this.stretchAlgorithm+","+
                this.zscaleContrast+","+

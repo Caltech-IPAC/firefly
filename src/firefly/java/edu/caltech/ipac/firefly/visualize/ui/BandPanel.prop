@@ -14,7 +14,8 @@ BandPanel.stretchType.type.loglog.Name= Log-Log
 BandPanel.stretchType.type.equalization.Name= Histogram Equalization
 BandPanel.stretchType.type.squared.Name= Squared
 BandPanel.stretchType.type.sqrt.Name= Sqrt
-//LZ 5/23/Add Arcsine and PowerLawGamma
+
+#LZ 5/23/Add Arcsine and PowerLawGamma
 BandPanel.stretchType.type.asinh.Name= Asinh
 BandPanel.stretchType.type.powerLawGamma.Name= PowerLawGamma
 
@@ -57,9 +58,48 @@ BandPanel.sampPerLine.Default= 120
 BandPanel.sampPerLine.Validation= range
 
 
-
 BandPanel.useZScale.Name= Use ZScale for bounds
 BandPanel.useZScale.ShortDescription= Use Z Scale for bounds instead of entering them manually
 
 BandPanel.useBand.Name= Show Color Band
 BandPanel.useBand.ShortDescription= Show this color band in the plot
+
+
+#LZ 6/23/15 add more fields
+BandPanel.DR.DataType= Float
+BandPanel.DR.Min=1
+BandPanel.DR.Max=1000000
+BandPanel.DR.Default= 1.0
+BandPanel.DR.Precision=4
+BandPanel.DR.Title= Dynamic Range
+BandPanel.DR.ShortDescription= The dynamic range scaling factor of data
+BandPanel.DR.ErrorDescription= The dynamic range scaling factor of data:  Enter data value
+
+BandPanel.Gamma.DataType= Float
+BandPanel.Gamma.Min=0
+BandPanel.Gamma.Max=100
+BandPanel.Gamma.Default= 2.0
+BandPanel.Gamma.Precision=4
+BandPanel.Gamma.Title= Gamma
+BandPanel.Gamma.ShortDescription= The Gamma value of the Power Law Gamma Stretch
+BandPanel.Gamma.ErrorDescription= The Gamma value of the Power Law Gamma Stretch
+
+BandPanel.BP.DataType= Float
+BandPanel.BP.Min=0
+BandPanel.BP.Max=1000000
+BandPanel.BP.Default= 0.0
+BandPanel.BP.Precision=4
+BandPanel.BP.Title= Black Point
+BandPanel.BP.ShortDescription= black point for image display
+BandPanel.BP.ErrorDescription= black point for image display  (rescaled units)
+
+BandPanel.WP.DataType= Float
+BandPanel.WP.Min=0
+BandPanel.WP.Max=100000
+BandPanel.WP.Default= 1.0
+BandPanel.WP.Precision=4
+BandPanel.WP.Title= White Point
+BandPanel.WP.ShortDescription= white point for image display
+BandPanel.WP.ErrorDescription= white point for image display (rescaled units)
+
+
