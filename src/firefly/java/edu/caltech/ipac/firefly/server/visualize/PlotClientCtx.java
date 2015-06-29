@@ -193,7 +193,9 @@ public class PlotClientCtx implements Serializable {
                 }
             }
             else {
-                state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
+                if (state.getRangeValues(Band.NO_BAND)==null) {
+                    state.setRangeValues(FitsRead.getDefaultRangeValues(), Band.NO_BAND);
+                }
                 int id= p.getImageData().getColorTableId();
                 if (id==-1) id= 0;
                 state.setColorTableId(id);
