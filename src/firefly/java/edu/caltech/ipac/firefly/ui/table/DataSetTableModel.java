@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.FileStatus;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.data.table.TableData;
@@ -23,6 +22,7 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
+import edu.jhu.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -247,7 +247,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private BasicPagingTable table;
         private List<ModelEventHandler> handlers = new ArrayList<ModelEventHandler>();
         private CheckFileStatusTimer checkStatusTimer = null;
-        private boolean gotEnums;
+        private String enumFor = "";
         private boolean isDataStale = true;
 
         ModelAdapter(Loader<TableDataView> loader) {
@@ -346,9 +346,11 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                     isDataStale = false;
                 }
 
-                if (gotEnums) return;
+                String cfilter = StringUtils.toString(loader.getFilters());
 
-                gotEnums = true;
+                if (enumFor.equals(cfilter)) return;
+
+                enumFor = cfilter;
                 String source = cachedModel.getCurrentData().getMeta().getSource();
                 if (!StringUtils.isEmpty(source)) {
                     SearchServices.App.getInstance().getEnumValues(source,

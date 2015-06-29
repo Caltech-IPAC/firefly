@@ -25,6 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,10 +88,10 @@ public class DataGroupReader {
 
     public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
 
-        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        List<DataGroup.Attribute> attributes = IpacTableUtil.readAttributes(reader);
-        List<DataType> cols = IpacTableUtil.readColumns(reader);
-        
+        TableDef tableMeta = IpacTableUtil.getMetaInfo(inf);
+        Collection<DataGroup.Attribute> attributes = tableMeta.getAttributes().values();
+        List<DataType> cols = tableMeta.getCols();
+
         if (readAsString) {
             for (DataType dt : cols) {
                 dt.setDataType(String.class);
@@ -124,6 +125,8 @@ public class DataGroupReader {
 
         String line = null;
         int lineNum = 0;
+
+        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         try {
             line = reader.readLine();
             lineNum++;
@@ -160,10 +163,12 @@ public class DataGroupReader {
     }
 
     public static DataGroup getEnumValues(File inf, int cutoffPoint)  throws IOException {
+
+        TableDef tableMeta = IpacTableUtil.getMetaInfo(inf);
+        List<DataType> cols = tableMeta.getCols();
+
         HashMap<DataType, List<String>> enums = new HashMap<DataType, List<String>>();
         ArrayList<DataType> workList = new ArrayList<DataType>();
-        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        List<DataType> cols = IpacTableUtil.readColumns(reader);
 
         for (DataType dt : cols) {
             if (dt.getDataType().isAssignableFrom(Float.class) ||
@@ -175,6 +180,7 @@ public class DataGroupReader {
         }
         DataGroup dg = new DataGroup(null, cols);
 
+        BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         String line = null;
         int lineNum = 0;
         try {

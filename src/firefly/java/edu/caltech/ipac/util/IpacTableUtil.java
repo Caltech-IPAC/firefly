@@ -4,10 +4,14 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -83,62 +87,6 @@ public class IpacTableUtil {
         writer.println(" ");
     }
 
-
-    /**
-     * 
-     * @param reader
-     * @return
-     * @throws IOException
-     */
-    public static List<DataType> readColumns(BufferedReader reader) throws IOException {
-
-        reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        List<DataType> cols = new ArrayList<DataType>();
-        try {
-            String line = reader.readLine();
-            // skip to column desc
-            while (line != null) {
-                line = line.trim();
-                if (line.startsWith("\\")) {
-                    // attributes.. skip
-                } else if (line.startsWith("|")) {
-                    break;
-                } else if (line.length() == 0) {
-                    //  skip this line
-                } else {
-                    // data row begins.
-                    throw new IOException("Table without column headers");
-                }
-                line = reader.readLine();
-            }
-
-            cols = createColumnDefs(line);
-            if (cols.size() == 0) return cols;
-
-            // column type
-            line = reader.readLine();
-            if (line != null && line.startsWith("|")) {
-                setDataType(cols, line);
-
-                // column unit
-                line = reader.readLine();
-                if (line != null && line.startsWith("|")) {
-                    setDataUnit(cols, line);
-
-                    // column null string identifier
-                    line = reader.readLine();
-                    if (line != null && line.startsWith("|")) {
-                        setDataNullStr(cols, line);
-                    }
-                }
-            }
-
-        } finally {
-            reader.reset();
-        }
-
-        return cols;
-    }
 
     public static  List<DataType> createColumnDefs(String line) {
         ArrayList<DataType> cols = new ArrayList<DataType>();
@@ -224,36 +172,6 @@ public class IpacTableUtil {
 
     }
 
-    public static List<DataGroup.Attribute> readAttributes(BufferedReader reader) throws IOException {
-
-        reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
-
-        ArrayList<DataGroup.Attribute> attributes = new ArrayList<DataGroup.Attribute>();
-        try {
-            String line = reader.readLine();
-            while (line != null) {
-                line = line.trim();
-                if (line.startsWith("\\")) {
-                    DataGroup.Attribute attrib = parseAttribute(line);
-                    if (attrib != null) {
-                        attributes.add(attrib);
-                    }
-                } else if (line.startsWith("|")) {
-                    break;
-                } else if (line.length() == 0) {
-                    //  skip this line
-                } else {
-                    // data row begins.
-                    break;
-                }
-                line = reader.readLine();
-            }
-        } finally {
-            reader.reset();
-        }
-        return attributes;
-    }
-
     public static DataObject parseRow(DataGroup source, String line) {
         return parseRow(source,  line, true);
     }
@@ -329,10 +247,6 @@ public class IpacTableUtil {
         return null;
     }
 
-    private static String[] parseHeadings(String line) {
-        return line.substring(1).split("\\|");
-    }
-
     public static DataGroup.Attribute parseAttribute(String line) {
         DataGroup.Attribute retval = null;
 
@@ -359,6 +273,127 @@ public class IpacTableUtil {
         }
         return retval;
     }
+
+    public static TableDef getMetaInfo(File inf) throws IOException {
+        FileReader infReader = null;
+        try {
+            infReader = new FileReader(inf);
+            return getMetaInfo(new BufferedReader(infReader,FILE_IO_BUFFER_SIZE), inf);
+
+        } finally {
+            FileUtil.silentClose(infReader);
+        }
+
+    }
+
+    public static TableDef getMetaInfo(BufferedReader reader, File src) throws IOException {
+        TableDef meta = new TableDef();
+        if (src != null) {
+            meta.setSource(src.getAbsolutePath());
+        }
+
+        int nlchar = findLineSepLength(reader);
+        meta.setLineSepLength(nlchar);
+
+        List<DataGroup.Attribute> attribs = new ArrayList<DataGroup.Attribute>();
+        List<DataType> cols = null;
+        int dataStartOffset = 0;
+
+        String line = reader.readLine();
+        // skip to column desc
+        while (line != null) {
+            if (line.length() == 0) {
+                //  skip empty line
+                dataStartOffset += line.length() + nlchar;
+                line = reader.readLine();
+            } else if (line.startsWith("\\")) {
+                DataGroup.Attribute attrib = parseAttribute(line);
+                if (attrib != null) {
+                    attribs.add(attrib);
+                }
+                dataStartOffset += line.length() + nlchar;
+                line = reader.readLine();
+            } else if (line.startsWith("|")) {
+                // column name
+                cols = createColumnDefs(line);
+
+                // column type
+                dataStartOffset += line.length() + nlchar;
+                line = reader.readLine();
+                if (line != null && line.startsWith("|")) {
+                    setDataType(cols, line);
+
+                    // column unit
+                    dataStartOffset += line.length() + nlchar;
+                    line = reader.readLine();
+                    if (line != null && line.startsWith("|")) {
+                        setDataUnit(cols, line);
+
+                        // column null string identifier
+                        dataStartOffset += line.length() + nlchar;
+                        line = reader.readLine();
+                        if (line != null && line.startsWith("|")) {
+                            setDataNullStr(cols, line);
+                            dataStartOffset += line.length() + nlchar;
+                            line = reader.readLine();
+                        }
+                    }
+                }
+            } else {
+                // data row begins.
+                meta.setLineWidth(line.length() + nlchar);
+                break;
+            }
+        }
+
+        meta.setRowStartOffset(dataStartOffset);
+        if (attribs.size() > 0) {
+            meta.addAttribute(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
+        }
+        if (cols != null) {
+            for (DataType c : cols) {
+                meta.addCols(c);
+            }
+            meta.setColCount(cols.size());
+        }
+        if (src != null) {
+            long totalRow = meta.getLineWidth() == 0 ? 0 :
+                    (src.length() - (long) meta.getRowStartOffset()) / meta.getLineWidth();
+            meta.setRowCount((int) totalRow);
+        }
+        return meta;
+    }
+
+    //====================================================================
+    //
+    //====================================================================
+
+    private static int findLineSepLength(Reader reader) throws IOException {
+        reader.mark(FILE_IO_BUFFER_SIZE);
+        int rval = 0;
+        int pc = -1;
+        int c = reader.read();
+        while (c != -1) {
+            if (c == '\n') {
+                if (pc == '\r') {
+                    rval = 2;
+                    break;
+                } else {
+                    rval = 1;
+                    break;
+                }
+            }
+            pc = c;
+            c = reader.read();
+        }
+        reader.reset();
+        return rval;
+    }
+
+    private static String[] parseHeadings(String line) {
+        return line.substring(1).split("\\|");
+    }
+
 
 }
 

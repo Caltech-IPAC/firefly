@@ -11,7 +11,7 @@ Search.Title = Searches
 Search.ShortDescription= Open search panel
 
 
-ImageSelectDropDownCmd.Title= Single Image: Add/Modify...
+ImageSelectDropDownCmd.Title= Images
 ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
 
 ImageSelectDropDownDynCmd.Title= Single Image: Add/Modify...
