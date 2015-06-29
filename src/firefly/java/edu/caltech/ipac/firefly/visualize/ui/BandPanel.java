@@ -20,8 +20,8 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.ui.Form;
 import edu.caltech.ipac.firefly.ui.FormBuilder;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.input.FieldLabel;
 import edu.caltech.ipac.firefly.ui.input.InputField;
-import edu.caltech.ipac.firefly.ui.input.ListBoxInputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.StretchInputField;
 import edu.caltech.ipac.firefly.util.PropFile;
@@ -43,6 +43,9 @@ import java.util.Iterator;
  * User: roby
  * Date: Mar 11, 2010
  * Time: 3:26:14 PM
+ *
+ * 6/26/15
+ * LZ Add widgets for asinh and power law gamma stretches
  */
 
 
@@ -71,11 +74,9 @@ public class BandPanel extends Composite {
     private       CheckBox _showBand= null;
     private final StretchInputField _minStretch;
     private final StretchInputField _maxStretch;
-    private final StretchInputField _drStretch;
-    private final StretchInputField _gammaStretch;
 
     private final DeckPanel _stPanel   = new DeckPanel();
-    //    private final Image             _colorHist = new Image(TEMP_GIF);
+    //private final Image             _colorHist = new Image(TEMP_GIF);
     private final Image _dataHist  = new Image(TEMP_GIF);
     private final Image             _cbar      = new Image(TEMP_GIF);
     private final Form _zscaleForm= new Form(false);
@@ -85,12 +86,17 @@ public class BandPanel extends Composite {
     private InputField _contrast;
     private InputField  _numSamp;
     private InputField  _sampPerLine;
+    private InputField _bp;
+    private InputField  _wp;
+    private InputField _dr;
+    private InputField  _gamma;
+    private Widget _asinhPanel;
+    private Widget _gammaPanel;
     private WebHistogramOps _histOps= null;
     private final Band _band;
     private WebPlot _plot;
-    private SimpleInputField ifDR;
-    private  SimpleInputField ifGamma;
-    VerticalPanel minmaxPanel;
+     VerticalPanel minmaxPanel;
+    //SimpleInputField ifMin;
 
     public BandPanel(WebPlot plot, Band band) {
         _band= band;
@@ -98,12 +104,9 @@ public class BandPanel extends Composite {
         WebFitsData fData= plot.getFitsData(band);
         _minStretch= new StretchInputField(StretchInputField.Type.MIN,fData);
         _maxStretch= new StretchInputField(StretchInputField.Type.MAX,fData);
-        _drStretch= new StretchInputField(StretchInputField.Type.DR,fData);
-
-        _gammaStretch= new StretchInputField(StretchInputField.Type.GAMMA,fData);
 
         createContents();
-        _dataHist.setPixelSize(340,55);
+        _dataHist.setPixelSize(340, 55);
     }
 
 
@@ -112,12 +115,8 @@ public class BandPanel extends Composite {
         VerticalPanel vp= new VerticalPanel();
         initWidget(vp);
 
-        SimpleInputField ifMin= new  SimpleInputField(_minStretch,new SimpleInputField.Config("100px"),true);
-        SimpleInputField ifMax= new  SimpleInputField(_maxStretch,new SimpleInputField.Config("100px"),true);
-
-        ifDR= new  SimpleInputField(_drStretch,new SimpleInputField.Config("100px"),true);
-
-        ifGamma= new  SimpleInputField(_gammaStretch,new SimpleInputField.Config("100px"),true);
+        SimpleInputField  ifMin= new  SimpleInputField(_minStretch,new SimpleInputField.Config("100px"),true);
+        SimpleInputField  ifMax= new  SimpleInputField(_maxStretch,new SimpleInputField.Config("100px"),true);
 
         VerticalPanel barPanel= new VerticalPanel();
 
@@ -142,35 +141,22 @@ public class BandPanel extends Composite {
         _stretchType.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
             @Override
             public void onValueChange(ValueChangeEvent<String> event) {
-                //RangeValues rv= _plot.getPlotState().getRangeValues(_band);
-               // _useZScale.setVisible(false);
+               // Label fl = (Label) ifMin.getField().getFieldLabel();
+                 if (_stretchType.getField().getValue().equalsIgnoreCase("asinh")) {
+                     _asinhPanel.setVisible(true);
 
-                if (_stretchType.getField().getValue().equalsIgnoreCase("asinh")) {
-                    ifDR.setVisible(true);
-                    minmaxPanel.getWidget(0).setTitle("Zero Point");
-                    _minStretch.getFieldDef().setLabel("Zero ");
-                    _minStretch.getFocusWidget().setTitle("zero");
-                   // _minStretch.setTitle("Zero Point");
-                   // minmaxPanel.getWidget(1).setTitle("Max Point");
-
-                    ifGamma.setVisible(false);
-                   // _useZScale.setEnabled(false);
-
-                    //ifDR.setValue(new Double(rv.getDrValue()).toString());//event.getValue());
+                    // fl.setText("Zero Point:");
+                    _gammaPanel.setVisible(false);
 
                 } else if (_stretchType.getField().getValue().equalsIgnoreCase("powerLawGamma")) {
-                    ifGamma.setVisible(true);
-                    ifDR.setVisible(false);
-                   // _useZScale.setEnabled(false);
-                   // ifGamma.setValue(new Double(rv.getGammaValue()).toString());//event.getValue());
+
+                    _asinhPanel.setVisible(false);
+                    _gammaPanel.setVisible(true);
 
                 } else {
-                    ifDR.setVisible(false);
-                    ifGamma.setVisible(false);
-                    minmaxPanel.getWidget(0).setTitle("Lower Range");
-                    minmaxPanel.getWidget(1).setTitle("Upper Range");
-
-                    //_useZScale.setVisible(true);
+                   //  fl.setText("Lower Range:");
+                    _asinhPanel.setVisible(false);
+                    _gammaPanel.setVisible(false);
 
                 }
             }
@@ -182,30 +168,42 @@ public class BandPanel extends Composite {
 
         DOM.setStyleAttribute(_colorHistReadout.getElement(), "padding", "5px 1px 5px 1px");
 
-        //VerticalPanel minmaxPanel= new VerticalPanel();
-         minmaxPanel= new VerticalPanel();
+
+        minmaxPanel= new VerticalPanel();
 
         minmaxPanel.add(ifMin);
         minmaxPanel.add(ifMax);
-        minmaxPanel.add(ifDR);
-        ifDR.setVisible(false);
-        minmaxPanel.add(ifGamma);
-        ifGamma.setVisible(false);
-        _rangeForm.add(minmaxPanel);
 
+
+        //create DR, BP,  WP and gamma
+        _dr= FormBuilder.createField(_prop.makeBase("DR"));
+        _bp= FormBuilder.createField(_prop.makeBase("BP"));
+        _wp= FormBuilder.createField(_prop.makeBase("WP"));
+        _asinhPanel= FormBuilder.createPanel(90,_dr, _bp, _wp);
+
+        _gamma= FormBuilder.createField(_prop.makeBase("Gamma"));
+        _gammaPanel= FormBuilder.createPanel(90,_gamma);
+
+
+        minmaxPanel.add(_asinhPanel);
+        minmaxPanel.add(_gammaPanel);
+        _asinhPanel.setVisible(false);
+        _gammaPanel.setVisible(false);
+
+        _rangeForm.add(minmaxPanel);
 
 
         _contrast= FormBuilder.createField(_prop.makeBase("contrast"));
         _numSamp= FormBuilder.createField(_prop.makeBase("numSamp"));
         _sampPerLine= FormBuilder.createField(_prop.makeBase("sampPerLine"));
-
-        Widget zscalePanel= FormBuilder.createPanel(150, _contrast, _numSamp, _sampPerLine);
+         Widget zscalePanel= FormBuilder.createPanel(140, _contrast, _numSamp, _sampPerLine);
         _zscaleForm.add(zscalePanel);
+
 
         _stPanel.add(_rangeForm);
         _stPanel.add(_zscaleForm);
-        _stPanel.setSize("350px", "11em");
-
+        _stPanel.setSize("350px", "13.0em");
+        //vp.setSize("360px", "15em");
 
         setUseZScale(false);
 
@@ -234,8 +232,6 @@ public class BandPanel extends Composite {
         WebFitsData fData= plot.getFitsData(_band);
         _minStretch.setWebFitsData(fData);
         _maxStretch.setWebFitsData(fData);
-        _drStretch.setWebFitsData(fData);
-        _gammaStretch.setWebFitsData(fData);
         if (_showBand!=null) _showBand.setValue(_plot.getPlotState().isBandVisible(_band));
         updatePlotStatus();
         updateColorHistogram();
@@ -248,9 +244,6 @@ public class BandPanel extends Composite {
         int sType= rv.getStretchAlgorithm();
         setStretch(sType);
 
-              //LZ 5/21/15 add these two blocks
-            _drStretch.setValue(rv.getDrValue() + "");
-            _gammaStretch.setValue(rv.getGammaValue()+ "");
 
 
             if (rv.getLowerWhich() == RangeValues.ZSCALE) {
@@ -298,8 +291,12 @@ public class BandPanel extends Composite {
 
         float min= _minStretch.getNumberValue().floatValue();
         float max= _maxStretch.getNumberValue().floatValue();
-        float dr = _drStretch.getNumberValue().floatValue();
-        float gamma = _gammaStretch.getNumberValue().floatValue();
+
+        float zp = _bp.getNumberValue().floatValue();
+        float wp = _bp.getNumberValue().floatValue();
+
+        float dr = _dr.getNumberValue().floatValue();
+        float gamma = _gamma.getNumberValue().floatValue();
 
         _minStretch.getDataType();
 
@@ -308,7 +305,7 @@ public class BandPanel extends Composite {
 
         if (_useZScale.getValue()) {
             range= new RangeValues( RangeValues.ZSCALE, min,
-                                    RangeValues.ZSCALE, max,dr, gamma,
+                                    RangeValues.ZSCALE, max,dr,zp, wp, gamma,
                                     getStretch(),
                                     _contrast.getNumberValue().intValue(),
                                     _numSamp.getNumberValue().intValue(),
@@ -316,7 +313,7 @@ public class BandPanel extends Composite {
         }
         else {
             range=  new RangeValues( _minStretch.getDataType(), min,
-                                     _maxStretch.getDataType(), max, dr, gamma,
+                                     _maxStretch.getDataType(), max, dr,zp, wp, gamma,
                                      getStretch());
         }
         return range;
@@ -465,49 +462,11 @@ public class BandPanel extends Composite {
         public void onMouseOut(MouseOutEvent ev) { clearReadout(); }
     }
 
-    /**
-      LZ
-      when the checkBox is selected, the Asinh and PowerLawGamma will be removed since the zscale
-     is not applied to them.  When the checkbox is not selected, add Asinh and PowerLawGamma back.
-     */
-    private class ZScaleChange implements ValueChangeHandler<Boolean> {
+      private class ZScaleChange implements ValueChangeHandler<Boolean> {
 
         public void onValueChange(ValueChangeEvent<Boolean> ev) {
             setUseZScale(ev.getValue());
-
-
-           /* if (ev.getValue()) {
-
-                Iterator<Widget> iterator = _stretchType.iterator();
-                while (iterator.hasNext()) {
-                    Widget w = iterator.next();
-                    if (w instanceof ListBoxInputField) {
-                        ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
-                        l.removeItem(7);
-                        l.removeItem(6);
-
-                    }
-                }
-
-            }
-            else {
-
-                Iterator<Widget> iterator = _stretchType.iterator();
-                while (iterator.hasNext()) {
-                    Widget w = iterator.next();
-                    if (w instanceof ListBoxInputField) {
-                        ListBox l = (ListBox) ((ListBoxInputField) w).getFocusWidget();
-                        if (l.getItemCount()<8) {
-                            l.addItem("Asinh");
-                            l.addItem("PowerLawGamma");
-                        }
-
-                    }
-                }
-
-
-            }*/
-        }
+       }
     }
 }
 

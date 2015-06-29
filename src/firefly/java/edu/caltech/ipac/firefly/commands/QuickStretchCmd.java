@@ -20,12 +20,16 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 /**
  * LZ 6/11/15
  * Modified to call asinh and power law gamma algorithm
+ * 6/26/15
+ * Add ZP and MP codes
  */
 public class QuickStretchCmd extends BaseGroupVisCmd {
     private RangeValues _range;
     private final String _baseLabel;
-    private static final float DR = 10;
+    private static final float DR = 1;
     private static final float GAMMA=2;
+    private static final float ZP = 0;
+    private static final float WP=1;
 
     public QuickStretchCmd(String commandName,
                            float percent) {
@@ -44,7 +48,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
                 RangeValues.STRETCH_LINEAR);
         updateLabel();
 
-        Listener l= new Listener(stretchType, lowerFactor,upperFactor, DR, GAMMA);
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor, DR,ZP, WP, GAMMA);
 
         AllPlots.getInstance().addListener(Name.REPLOT, l);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
@@ -52,24 +56,24 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
     }
 
     public QuickStretchCmd(String commandName,
-                           float percent, float drValue, float gammaValue) {
-        this(commandName,100-percent, percent,drValue, gammaValue , RangeValues.PERCENTAGE );
+                           float percent, float drValue,float zpValue,float wpValue , float gammaValue) {
+        this(commandName,100-percent, percent,drValue,zpValue, wpValue, gammaValue , RangeValues.PERCENTAGE );
     }
 
 
     public QuickStretchCmd(String commandName,
                            float lowerFactor,
-                           float upperFactor,  float drFactor, float gammaFactor,
+                           float upperFactor,  float drFactor,float zpFactor,float wpFactor, float gammaFactor,
                            int   stretchType) {
         super(commandName);
 
         _baseLabel= getLabel();
         _range=  new RangeValues(stretchType, lowerFactor,
-                                 stretchType, upperFactor, drFactor, gammaFactor,
+                                 stretchType, upperFactor, drFactor, zpFactor, wpFactor, gammaFactor,
                                  RangeValues.STRETCH_LINEAR);
         updateLabel();
 
-        Listener l= new Listener(stretchType, lowerFactor,upperFactor,drFactor, gammaFactor);
+        Listener l= new Listener(stretchType, lowerFactor,upperFactor,drFactor,zpFactor, wpFactor, gammaFactor);
 
         AllPlots.getInstance().addListener(Name.REPLOT, l);
         AllPlots.getInstance().addListener(Name.FITS_VIEWER_CHANGE, l);
@@ -132,15 +136,18 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
         private final float _upperFactor;
         private final float _drFactor;
         private final float _gammaFactor;
-
+        private final float _zpFactor;
+        private final float _wpFactor;
         private final int _stretchType;
 
 
-        Listener(int stretchType, float lowerFactor, float upperFactor, float drFactor, float gammaFactor )  {
+        Listener(int stretchType, float lowerFactor, float upperFactor, float drFactor,float zpFactor, float wpFactor, float gammaFactor )  {
             _lowerFactor= lowerFactor;
             _upperFactor= upperFactor;
             _stretchType= stretchType;
             _drFactor = drFactor;
+            _zpFactor = zpFactor;
+            _wpFactor = wpFactor;
             _gammaFactor=gammaFactor;
         }
 
@@ -160,6 +167,8 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
                                              _stretchType,
                                              _upperFactor,
                                              _drFactor,
+                                              _zpFactor,
+                                              _wpFactor,
                                               _gammaFactor,
                                              getCurrentRV().getStretchAlgorithm());
                     updateLabel();

@@ -3,16 +3,15 @@
  */
 package edu.caltech.ipac.util;
 
+import edu.caltech.ipac.astro.IpacTableWriter;
 import uk.ac.starlink.table.*;
-import uk.ac.starlink.votable.VOTableBuilder;
 import uk.ac.starlink.util.DataSource;
+import uk.ac.starlink.votable.VOTableBuilder;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
-
-import edu.caltech.ipac.astro.IpacTableWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Date: Dec 5, 2011
@@ -74,7 +73,7 @@ public class VoTableUtil {
 
         for (Object p : table.getParameters()) {
             DescribedValue dv = (DescribedValue)p;
-            dg.addAttributes(new DataGroup.Attribute(dv.getInfo().getName(), dv.getValueAsString(50)));
+            dg.addAttributes(new DataGroup.Attribute(dv.getInfo().getName(), dv.getValueAsString(50).replace("\n", " ")));
         }
         if (raCol != null && decCol != null) {
             dg.addAttributes(new DataGroup.Attribute("POS_EQ_RA_MAIN", raCol));

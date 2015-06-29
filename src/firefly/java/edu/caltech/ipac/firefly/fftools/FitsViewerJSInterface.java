@@ -6,6 +6,10 @@ package edu.caltech.ipac.firefly.fftools;
  * User: roby
  * Date: 12/7/11
  * Time: 1:33 PM
+ *
+ * 6/26/15
+ * User LZ
+ * Add ZP, MP parameters for asinh stretch
  */
 
 
@@ -225,9 +229,9 @@ public class FitsViewerJSInterface {
     //LZ 6/11/15 add this method
     public static String serializeRangeValues(String stretchType,
                                               double lowerValue,
-                                              double upperValue, double drValue, double gammaValue,
+                                              double upperValue, double drValue,double zpValue, double wpValue, double gammaValue,
                                               String algorithm) {
-        RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,drValue, gammaValue, algorithm);
+        RangeValues rv= RangeValues.create(stretchType,lowerValue,upperValue,drValue,zpValue, wpValue, gammaValue, algorithm);
         return rv.serialize();
     }
 

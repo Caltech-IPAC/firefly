@@ -122,7 +122,7 @@ class StandaloneUI {
         }
 
         dynMultiViewer.setMpwFactory(new MyMpwFactory());
-        dynMultiViewer.setNoDataMessage("No FITS data loaded, Choose Add/Modify Image to load.");
+        dynMultiViewer.setNoDataMessage("No image data loaded, Choose Images to load.");
         dynMultiViewer.setRefreshListener(new MultiDataViewer.RefreshListener() {
             public void preDataChange() {
                 handleViewUpdates();
@@ -306,7 +306,7 @@ class StandaloneUI {
         }
 
         if (dynMultiViewerTab ==null && hasPlotResults()) {
-            dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "FITS data", "FITS Image", false);
+            dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "Image data", "FITS Image", false);
         }
         else if (!hasPlotResults() && dynMultiViewerTab !=null) {
             imageTabPane.removeTab(dynMultiViewerTab);
@@ -363,7 +363,7 @@ class StandaloneUI {
 
                 if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) || meta.contains(MetaConst.DATASET_CONVERTER)) {
                     if (dsMultiViewerTab==null) {
-                        dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "FITS Data Sets", "FITS Image", false);
+                        dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "Image Data Sets", "FITS Image", false);
                     }
                     imageTabPane.selectTab(dsMultiViewerTab);
                 }

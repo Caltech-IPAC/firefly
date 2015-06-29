@@ -24,12 +24,12 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -78,7 +78,7 @@ public class QueryIBE extends IpacTablePartProcessor {
 
         SortInfo sortInfo = IBEUtils.getSortInfo(ibeDataSource);
         if (sortInfo != null) {
-            DataGroupPart.TableDef meta = IpacTableParser.getMetaInfo(ofile);
+            TableDef meta = IpacTableUtil.getMetaInfo(ofile);
             if (meta.getRowCount() < 100000) {
                 doSort(ofile, ofile, sortInfo, request.getPageSize());
             }

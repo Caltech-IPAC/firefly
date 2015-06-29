@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.ui;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -866,8 +867,12 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
 
     public void onResize() {
         if (GwtUtil.isOnDisplay(_movablePanel)) {
-            widgetResized(_movablePanel.getOffsetWidth(),
-                          _movablePanel.getOffsetHeight());
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                public void execute() {
+                    widgetResized(_movablePanel.getOffsetWidth(),
+                            _movablePanel.getOffsetHeight());
+                }
+            });
         }
     }
 

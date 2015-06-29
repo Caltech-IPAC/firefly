@@ -5,15 +5,11 @@ package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.IpacTableUtil;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +32,7 @@ public class IpacTableParser {
 
         Arrays.sort(colNames);
 
-        DataGroupPart.TableDef meta = getMetaInfo(inf);
+        TableDef meta = IpacTableUtil.getMetaInfo(inf);
 
         RandomAccessFile reader = new RandomAccessFile(inf,"r");
         try {
@@ -86,7 +82,7 @@ public class IpacTableParser {
 
 
     public static DataGroupPart getData(File inf, int start, int rows) throws IOException {
-        DataGroupPart.TableDef meta = getMetaInfo(inf);
+        TableDef meta = IpacTableUtil.getMetaInfo(inf);
 
         DataGroup dg = new DataGroup(null, meta.getCols());
         dg.setRowIdxOffset(start);
@@ -120,87 +116,6 @@ public class IpacTableParser {
         long totalRow = meta.getLineWidth() == 0 ? 0 :
                         (inf.length() - meta.getRowStartOffset())/meta.getLineWidth();
         return new DataGroupPart(meta, dg, start, (int) totalRow);
-    }
-
-    public static DataGroupPart.TableDef getMetaInfo(File inf) throws IOException {
-        DataGroupPart.TableDef meta = new DataGroupPart.TableDef();
-        meta.setSource(inf.getAbsolutePath());
-
-            FileReader infReader = new FileReader(inf);
-            BufferedReader reader = new BufferedReader(infReader, IpacTableUtil.FILE_IO_BUFFER_SIZE);
-
-        try {
-            int nlchar = findLineSepLength(reader);
-            meta.setLineSepLength(nlchar);
-
-        //====================================================================
-        // parse attributes; identify dataStartOffset, dataLineLenght
-            reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
-            List<DataGroup.Attribute> attribs = new ArrayList<DataGroup.Attribute>();
-            int dataStartOffset = 0;
-            String line = reader.readLine();
-            while (line != null) {
-                String nline = line.trim();
-                if (nline.length() == 0) {
-                    // blanks
-                } else if (nline.startsWith("\\")) {
-                    // attributes
-                    DataGroup.Attribute attrib = IpacTableUtil.parseAttribute(line);
-                    if (attrib != null) {
-                        attribs.add(attrib);
-                    }
-                } else if (nline.startsWith("|")) {
-                    // headers
-                } else {
-                    // data row begins.
-                    meta.setLineWidth(line.length() + nlchar);
-                    break;
-                }
-                dataStartOffset += line.length() + nlchar;
-                line = reader.readLine();
-            }
-            meta.setRowStartOffset(dataStartOffset);
-            if (attribs != null && attribs.size() > 0) {
-                meta.addAttribute(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
-            }
-            reader.reset();
-        //====================================================================
-
-            List<DataType> cols = IpacTableUtil.readColumns(reader);
-            for(DataType c : cols) {
-                meta.addCols(c);
-            }
-            meta.setColCount(cols.size());
-
-            long totalRow = meta.getLineWidth() == 0 ? 0 :
-                            (inf.length() - (long)meta.getRowStartOffset())/meta.getLineWidth();
-            meta.setRowCount((int) totalRow);
-        } finally {
-            infReader.close();
-        }
-        return meta;
-    }
-
-    private static int findLineSepLength(Reader reader) throws IOException {
-        reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        int rval = 0;
-        int pc = -1;
-        int c = reader.read();
-        while (c != -1) {
-            if (c == '\n') {
-                if (pc == '\r') {
-                    rval = 2;
-                    break;
-                } else {
-                    rval = 1;
-                    break;
-                }
-            }
-            pc = c;
-            c = reader.read();
-        }
-        reader.reset();
-        return rval;
     }
 
 //====================================================================

@@ -12,6 +12,9 @@ import java.io.Serializable;
 /**
  * LZ 6/11/15
  * Modified in order to run the new stretch algorithm STRETCH_ASINH and power law gamma
+ *
+ * 6/26/15
+ * Add ZP and WP codes
  */
 
 public class RangeValues implements Cloneable, Serializable,HandSerialize {
@@ -29,6 +32,10 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
 
     public static final double DR = 1.0;
     public static final double GAMMA=2.0;
+
+
+    public static final double BP = 0.0;
+    public static final double WP=1.0;
 
     public static final String LINEAR_STR= "Linear";
     public static final String LOG_STR= "Log";
@@ -57,6 +64,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _upperValue;
     private double _drValue;
     private double _gammaValue;
+    private double _bpValue;
+    private double _wpValue;
     private int    _algorithm= STRETCH_LINEAR;
     private int    _zscale_contrast;
     private int    _zscale_samples; /* desired number of pixels in sample */
@@ -65,12 +74,12 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     private double _contrast;
 
     public RangeValues() {
-       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, STRETCH_LINEAR, 25, 600, 120);
+       this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR,BP, WP, GAMMA, STRETCH_LINEAR, 25, 600, 120);
     }
 
     public RangeValues(int algorithm ) {
 
-        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, GAMMA, algorithm, 25, 600, 120);
+        this( PERCENTAGE, 1.0, PERCENTAGE, 99.0, DR, BP, WP, GAMMA, algorithm, 25, 600, 120);
     }
     public RangeValues( int    lowerWhich,
                         double lowerValue,
@@ -86,9 +95,11 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    upperWhich,
                         double upperValue,
                         double drValue,
+                        double bpValue,
+                        double wpValue,
                         double gammaValue,
                         int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue, gammaValue, algorithm, 25, 600, 120);
+        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue,bpValue, wpValue, gammaValue, algorithm, 25, 600, 120);
     }
 
         public RangeValues( int    lowerWhich,
@@ -100,7 +111,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    zscale_samples,
                         int    zscale_samples_per_line) {
 
-        this( lowerWhich, lowerValue, upperWhich, upperValue, DR, GAMMA, algorithm,
+        this( lowerWhich, lowerValue, upperWhich, upperValue, DR,BP, WP, GAMMA, algorithm,
                 zscale_contrast, zscale_samples, zscale_samples_per_line,
                 0.5, 1.0);
     }
@@ -110,13 +121,15 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    upperWhich,
                         double upperValue,
                         double drValue,
+                        double bpValue,
+                        double wpValue,
                         double gammaValue,
                         int    algorithm,
                         int    zscale_contrast,
                         int    zscale_samples,
                         int    zscale_samples_per_line) {
 
-        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue, gammaValue, algorithm,
+        this( lowerWhich, lowerValue, upperWhich, upperValue,drValue,bpValue, wpValue, gammaValue, algorithm,
                 zscale_contrast, zscale_samples, zscale_samples_per_line,
                 0.5, 1.0);
     }
@@ -128,6 +141,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    upperWhich,
                         double upperValue,
                         double drValue,
+                        double bpValue,
+                        double wpValue,
                         double gammaValue,
 
                         int    algorithm,
@@ -143,6 +158,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
         _upperValue= upperValue;
         _algorithm = algorithm;
          _drValue = drValue;
+        _bpValue = bpValue;
+        _wpValue = wpValue;
          _gammaValue=gammaValue;
         _zscale_contrast = zscale_contrast;
         _zscale_samples = zscale_samples;
@@ -188,7 +205,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
     //LZ 6/11/15 added this method
     public static RangeValues create(String stretchType,
                                      double lowerValue,
-                                     double upperValue, double drValue, double gammaValue,
+                                     double upperValue, double drValue,double bpValue, double wpValue, double gammaValue,
                                      String algorithm) {
         int s= PERCENTAGE;
         if (!StringUtils.isEmpty(stretchType)) {
@@ -208,12 +225,14 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             else if (algorithm.equalsIgnoreCase(POWERLAW_GAMMA_STR)) a= STRETCH_POWERLAW_GAMMA;
 
         }
-        return new RangeValues(s,lowerValue,s,upperValue,drValue, gammaValue, a);
+        return new RangeValues(s,lowerValue,s,upperValue,drValue,bpValue,wpValue, gammaValue, a);
     }
 
    //LZ 05/21/15 add the following two lines
     public double getDrValue() { return _drValue; }
     public double getGammaValue() { return _gammaValue; }
+    public double getBPValue() { return _bpValue; }
+    public double getWPValue() { return _wpValue; }
 
 
     public int    getLowerWhich() { return _lowerWhich; }
@@ -242,7 +261,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
 
     public Object clone() {
         return new RangeValues( _lowerWhich, _lowerValue, _upperWhich,
-		_upperValue, _drValue, _gammaValue, _algorithm,
+		_upperValue, _drValue, _bpValue, _wpValue, _gammaValue, _algorithm,
 		_zscale_contrast, _zscale_samples, _zscale_samples_per_line, _bias, _contrast );
     }
 
@@ -273,6 +292,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
             int    upperWhich=              Integer.parseInt(s[i++]);
             double upperValue=              StringUtils.parseDouble(s[i++]);
             double drValue=                 StringUtils.parseDouble(s[i++]);
+            double bpValue=                 StringUtils.parseDouble(s[i++]);
+            double wpValue=                 StringUtils.parseDouble(s[i++]);
             double gammaValue=              StringUtils.parseDouble(s[i++]);
             int    algorithm=               Integer.parseInt(s[i++]);
             int    zscale_contrast=         Integer.parseInt(s[i++]);
@@ -284,6 +305,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                                    upperWhich,
                                    upperValue,
                                    drValue,
+                                   bpValue,
+                                   wpValue,
                                    gammaValue,
                                    algorithm,
                                    zscale_contrast,
@@ -304,6 +327,8 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                getUpperWhich()+","+
                getUpperValue()+","+
                getDrValue()+","+
+               getBPValue()+","+
+               getWPValue()+","+
                getGammaValue()+","+
                getStretchAlgorithm()+","+
                getZscaleContrast()+","+

@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.ui.input;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -26,9 +25,9 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
  *         $Id: StretchInputField.java,v 1.11 2011/06/29 17:03:49 roby Exp $
  */
 public class StretchInputField extends InputField {
-    //public static enum Type {MIN, MAX}
-    //LZ 4/24/15 modified to add dr and gamma
-    public  enum Type {MIN, MAX, DR, GAMMA}
+    public static enum Type {MIN, MAX}
+
+   // public  enum Type {MIN, MAX, DR, GAMMA}
     public  enum Units {PERCENT, DATA, MINMAX, SIGMA}
     private static WebClassProperties _prop= new WebClassProperties(StretchInputField.class);
 
@@ -80,7 +79,7 @@ public class StretchInputField extends InputField {
             _listBox.addItem(_maxUnitStrs[SIGMA_IDX]);
         }
 
-        else if (type!=Type.DR && type!=Type.GAMMA) {
+        else {//if (type!=Type.DR && type!=Type.GAMMA) {
             assert false;
         }
 
@@ -102,11 +101,11 @@ public class StretchInputField extends InputField {
         hp.add(_inputField.getTextBox());
 
         //LZ modified in June 2015
-        if(type ==Type.MIN || type ==Type.MAX  ) {
+       // if(type ==Type.MIN || type ==Type.MAX  ) {
             hp.add(_listBox);
            // setUnits(PERCENT_IDX);
 
-        }
+       // }
 
         setUnits(PERCENT_IDX);
         initWidget(hp);
@@ -117,7 +116,7 @@ public class StretchInputField extends InputField {
     public void setWebFitsData(WebFitsData wFitsData) {
         _wFitsData= wFitsData;
 
-        if (_type==Type.DR || _type==Type.GAMMA) return;
+        //if (_type==Type.DR || _type==Type.GAMMA) return;
         if (_listBox.getSelectedIndex() != PERCENT_IDX) {
                 updateFieldDef();
 
@@ -135,7 +134,7 @@ public class StretchInputField extends InputField {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("maxStretch")));
 
         }
-        //LZ 5/23/15 add for asinh and power gamma
+       /* //LZ 5/23/15 add for asinh and power gamma
         else if (type==Type.DR) {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("drStretch")));
 
@@ -146,7 +145,7 @@ public class StretchInputField extends InputField {
             fd= FieldDefCreator.makeDoubleFieldDef(new WebPropFieldDefSource(_prop.makeBase("powerLawGammaStretch")));
 
 
-        }
+        }*/
         else {
             fd= null;
             assert false;
@@ -206,11 +205,11 @@ public class StretchInputField extends InputField {
 
     private void updateFieldDef() {
 
-
+/*
         if (_type==Type.DR) {
 
             DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
-            String def = "10.0";
+            String def = "1.0";
             fd.setMinValue(1D, RangeFieldDef.INCLUSIVE);
             fd.setMaxValue(100000D, RangeFieldDef.INCLUSIVE);
             fd.setDefaultValue(def);
@@ -230,7 +229,7 @@ public class StretchInputField extends InputField {
 
 
         }
-        else {
+        else {*/
             int which = _listBox.getSelectedIndex();
             if (which != _whichView) {
                 DoubleFieldDef fd = (DoubleFieldDef) getFieldDef();
@@ -270,7 +269,7 @@ public class StretchInputField extends InputField {
                 }
                 _whichView = which;
             }
-        }
+      //  }
     }
 
 
