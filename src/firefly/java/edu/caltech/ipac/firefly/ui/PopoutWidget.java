@@ -296,6 +296,8 @@ public abstract class PopoutWidget extends Composite implements RequiresResize {
         _movablePanel.forceLayout();
     }
 
+    protected int getTitleHeight() { return _titleHeight; }
+
     public PopoutContainer getPopoutContainer() {
         return _expandPopout;
     }
