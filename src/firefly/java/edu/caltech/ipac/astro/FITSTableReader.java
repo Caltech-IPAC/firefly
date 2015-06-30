@@ -66,10 +66,10 @@ public final class FITSTableReader
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
         String[] headerCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
 
-        //String strategy = "EXPAND_BEST_FIT";
+        String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
         //String strategy = "TOP_MOST";
-        String strategy = "FULLY_FLATTEN";
+        //String strategy = "FULLY_FLATTEN";
 
 
 
@@ -83,6 +83,11 @@ public final class FITSTableReader
             File output_file = new File(ipac_filename);
             DataGroup dg = dgListTotal.get(0);
             IpacTableWriter.save(output_file, dg);
+        }
+        catch (FitsException fe)
+        {
+            System.out.println("got FitsException: " + fe.getMessage());
+            fe.printStackTrace();
         }
         catch (TableFormatException te)
         {
@@ -129,7 +134,7 @@ public final class FITSTableReader
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy)
-        throws TableFormatException, IOException {
+        throws FitsException, IOException {
 
 
         TableSequence tseq = null;
@@ -140,8 +145,6 @@ public final class FITSTableReader
             for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
                 tList.add(tbl);
             }
-        } catch (TableFormatException te){
-            te.printStackTrace();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -149,8 +152,6 @@ public final class FITSTableReader
 
         List<DataGroup> dgListTotal = new ArrayList<DataGroup>();
         try {
-            //for testing:
-            //for (int i = 6; i < 7; i ++) {
             for (int i = 0; i < tList.size(); i++) {
                 StarTable table = (StarTable) tList.get(i);
 
@@ -158,20 +159,24 @@ public final class FITSTableReader
                 dgListTotal.addAll(dgList);
             }
         }
-        catch (FitsException fe)
-        {
-            System.out.println("got FitsException: " + fe.getMessage());
-            fe.printStackTrace();
-        }
-        catch (IpacTableException ite)
-        {
-            System.out.println(ite.getMessage());
-        }
         catch (IOException ioe)
         {
             System.out.println("got IOException: " + ioe.getMessage());
             ioe.printStackTrace();
         }
+        return dgListTotal;
+    }
+
+    public static List<DataGroup> convertFITSToDataGroup(int index,
+                                                         String FITS_filename,
+                                                         String[] dataCols,
+                                                         String[] headerCols,
+                                                         String strategy)
+            throws FitsException, TableFormatException, IOException {
+
+        List<DataGroup> dgListTotal = new ArrayList<DataGroup>();
+
+
         return dgListTotal;
     }
 
@@ -186,7 +191,7 @@ public final class FITSTableReader
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy)
-            throws FitsException, IOException, IpacTableException {
+            throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
         int nColumns = table.getColumnCount();
         long nRows = table.getRowCount();
@@ -197,18 +202,14 @@ public final class FITSTableReader
         List<ColumnInfo> columnInfoList = new ArrayList<ColumnInfo>(nColumns);
 
         String colName[] = new String[nColumns];
-        String[] classType = new String[nColumns];
-        String [] originalType = new String[nColumns];
         int[] repeats = new int[nColumns];
         int maxRepeat = 0;
-        boolean[] isCellArray = new boolean[nColumns];
+
+        List<DataType> dataTypeList = new ArrayList<DataType>(dataCols.length);
 
         for (int col = 0; col < nColumns; col++) {
             ColumnInfo colInfo = table.getColumnInfo(col);
             colName[col] = colInfo.getName();
-            classType[col] = DefaultValueInfo.formatClass(colInfo.getContentClass());
-            originalType[col] = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-            isCellArray[col] = colInfo.isArray();
             columnInfoList.add(colInfo);
             if (colInfo.getShape() != null) {
                 repeats[col] = colInfo.getShape()[0];
@@ -220,10 +221,11 @@ public final class FITSTableReader
                     maxRepeat = repeats[col];
                 }
             }
-        }
+            if (Arrays.asList(dataCols).contains(colName[col])){
+                dataTypeList.add(getDataTypeList(colInfo));
+            }
 
-        List<DataType> dataTypeList = new ArrayList<DataType>(dataCols.length);
-        dataTypeList = getDataTypeList(colName, classType, originalType, dataCols);
+        }
 
         List<DataGroup> dataGroupList = new ArrayList<DataGroup>();
 
@@ -233,24 +235,22 @@ public final class FITSTableReader
             for (long row = 0; row < nRows; row++) {
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
+                int dataTypeIndex = 0;
+                DataObject dataObj = new DataObject(dataGroup);
                 for (int col = 0; col < nColumns; col++) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
+                    //for "TOP_MOST":
+                    int repeat = 1;
                     Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])){
                         getDataArrayList(cell,
-                                isCellArray[col],
-                                classType[col],
-                                originalType[col],
-                                1,
+                                colInfo,
+                                repeat,
                                 maxRepeat,
                                 strategy,
                                 dataArrayList);
                     }
-                }
 
-                // Add dataObj/row to the dataGroup:
-                DataObject dataObj = new DataObject(dataGroup);
-                int dataTypeIndex = 0;
-                for (int col = 0; col < nColumns; col++) {
                     if (Arrays.asList(dataCols).contains(colName[col])) {
                         dataTypeIndex++;
                         String type = dataTypeList.get(dataTypeIndex - 1).toString();
@@ -267,23 +267,29 @@ public final class FITSTableReader
                         else if (type.contains("Double")){
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[0]);
                         }
-                        else if ((type.contains("String")) | (type.contains("Character"))) {
+                        else if ((type.contains("String")) | (type.contains("char"))) {
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[0]);
+                        }
+                        else {
+                            throw new FitsException(
+                                    "Unrecognized format character in FITS table file: " + type);
                         }
                     }
                 }
                 dataGroup.add(dataObj);
+
             }
 
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
+                ColumnInfo colInfo = columnInfoList.get(col);
                 if (Arrays.asList(headerCols).contains(colName[col])) {
                     List<Object> attArrayListTotal = new ArrayList<Object>();
                     for (long row = 0; row < nRows; row ++) {
                         Object cell = table.getCell(row, col);
                         List<Object> attArrayList = new ArrayList<Object>();
-                        attArrayList = getAttArrayList(cell, isCellArray[col], originalType[col], classType[col]);
+                        attArrayList = getAttArrayList(cell, colInfo);
                         attArrayListTotal.add(attArrayList.get(0));
                     }
                     attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayListTotal));
@@ -303,13 +309,13 @@ public final class FITSTableReader
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
                 for (int col = 0; col < nColumns; col++) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
+                    int repeat = repeats[col];
                     Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])) {
                         getDataArrayList(cell,
-                                isCellArray[col],
-                                classType[col],
-                                originalType[col],
-                                repeats[col],
+                                colInfo,
+                                repeat,
                                 maxRepeat,
                                 strategy,
                                 dataArrayList);
@@ -324,7 +330,6 @@ public final class FITSTableReader
                     DataObject dataObj = new DataObject(dataGroup);
                     int dataTypeIndex = 0;
                     for (int col = 0; col < nColumns; col++) {
-                        //for (Object o : dataArrayList){
                         if (Arrays.asList(dataCols).contains(colName[col])) {
                             dataTypeIndex++;
                             String type = dataTypeList.get(dataTypeIndex - 1).toString();
@@ -341,10 +346,13 @@ public final class FITSTableReader
                             else if (type.contains("Double")){
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[repeat]);
                             }
-                            else if ((type.contains("String")) | (type.contains("Character"))) {
+                            else if ((type.contains("String")) | (type.contains("char"))) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[repeat]);
                             }
-                            //dataGroup.add(dataObj);
+                            else {
+                                throw new FitsException(
+                                        "Unrecognized format character in FITS table file: " + type);
+                            }
                         }
                     }
                     dataGroup.add(dataObj);
@@ -354,12 +362,13 @@ public final class FITSTableReader
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
+                ColumnInfo colInfo = columnInfoList.get(col);
                 if (Arrays.asList(headerCols).contains(colName[col])) {
                     List<Object> attArrayListTotal = new ArrayList<Object>();
                     for (int row = 0; row < nRows; row++) {
                         List<Object> attArrayList = new ArrayList<Object>();
                         Object cell = table.getCell(row, col);
-                        attArrayList = getAttArrayList(cell, isCellArray[col], originalType[col], classType[col]);
+                        attArrayList = getAttArrayList(cell, colInfo);
                         attArrayListTotal.addAll(attArrayList);
                     }
                     attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayListTotal));
@@ -382,13 +391,13 @@ public final class FITSTableReader
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
                 for (int col = 0; col < nColumns; col++) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
+                    int repeat = repeats[col];
                     Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])){
                         getDataArrayList(cell,
-                                isCellArray[col],
-                                classType[col],
-                                originalType[col],
-                                repeats[col],
+                                colInfo,
+                                repeat,
                                 maxRepeat,
                                 strategy,
                                 dataArrayList);
@@ -416,8 +425,12 @@ public final class FITSTableReader
                             else if (type.contains("Double")){
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[repeat]);
                             }
-                            else if ((type.contains("String")) | (type.contains("Character"))) {
+                            else if ((type.contains("String")) | (type.contains("char"))) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[repeat]);
+                            }
+                            else {
+                                throw new FitsException(
+                                        "Unrecognized format character in FITS table file: " + type);
                             }
                         }
                     }
@@ -426,10 +439,11 @@ public final class FITSTableReader
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
                 for (int col = 0; col < nColumns; col++) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
                     if (Arrays.asList(headerCols).contains(colName[col])) {
                         List<Object> attArrayList = new ArrayList<Object>(repeats[col]);
                         Object cell = table.getCell(row, col);
-                        attArrayList = getAttArrayList(cell, isCellArray[col], originalType[col], classType[col]);
+                        attArrayList = getAttArrayList(cell, colInfo);
                         attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayList));
                         dataGroup.addAttributes(attribute);
                     }
@@ -444,28 +458,26 @@ public final class FITSTableReader
     /**
      *
      * @param cell
-     * @param isCellArray
-     * @param classType
-     * @param originalType
-     * @param repeats
+     * @param colInfo
+     * @param repeat
      * @param maxRepeat
      * @param strategy
      * @return dataArrayList
      */
     private static void getDataArrayList(Object cell,
-                                                  boolean isCellArray,
-                                                  String classType,
-                                                  String originalType,
-                                                  int repeats,
-                                                  int maxRepeat,
-                                                  String strategy,
-                                                  List<Object> dataArrayList)
+                                         ColumnInfo colInfo,
+                                         int repeat,
+                                         int maxRepeat,
+                                         String strategy,
+                                         List<Object> dataArrayList)
     throws FitsException {
 
-        //List<Object> dataArrayList = new ArrayList<Object>();
+        boolean isCellArray = colInfo.isArray();
+        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
+        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
 
         if ((classType.contains("boolean")) | (classType.contains("Boolean"))){
-            boolean [] data = new boolean[repeats];
+            boolean [] data = new boolean[repeat];
             if (isCellArray) {
                 data = (boolean [])cell;
             }
@@ -476,16 +488,16 @@ public final class FITSTableReader
             if (originalType.contains("L")){
                 //Logical:
                 String [] dataOut = new String[maxRepeat];
-                for (int repeat = 0; repeat < maxRepeat; repeat ++){
-                    if (repeat < data.length) {
-                        dataOut[repeat] = Boolean.toString(data[repeat]);
+                for (int rpt = 0; rpt < maxRepeat; rpt ++){
+                    if (rpt < data.length) {
+                        dataOut[rpt] = Boolean.toString(data[rpt]);
                     }
                     else {
                         if (strategy.equals("EXPAND_REPEAT")) {
-                            dataOut[repeat] = Boolean.toString(data[data.length -1 ]);
+                            dataOut[rpt] = Boolean.toString(data[data.length -1 ]);
                         }
                         else {
-                            dataOut[repeat] = null;
+                            dataOut[rpt] = null;
                         }
                     }
                 }
@@ -494,16 +506,16 @@ public final class FITSTableReader
             else if (originalType.contains("X")){
                 //Bits:
                 int[] dataOut = new int[maxRepeat];
-                for (int repeat = 0; repeat < maxRepeat; repeat ++){
-                    if (repeat < data.length) {
-                        dataOut[repeat] = data[repeat] ? 1 : 0;
+                for (int rpt = 0; rpt < maxRepeat; rpt ++){
+                    if (rpt < data.length) {
+                        dataOut[rpt] = data[rpt] ? 1 : 0;
                     }
                     else{
                         if (strategy.equals("EXPAND_REPEAT")) {
-                            dataOut[repeat] = data[data.length - 1] ? 1:0;
+                            dataOut[rpt] = data[data.length - 1] ? 1:0;
                         }
                         else {
-                            dataOut[repeat] = Integer.parseInt(null);
+                            dataOut[rpt] = Integer.parseInt(null);
                         }
                     }
                 }
@@ -511,7 +523,7 @@ public final class FITSTableReader
             }
         }
         else if ((classType.contains("short")) | (classType.contains("Short"))) {
-            int [] data = new int[repeats];
+            int [] data = new int[repeat];
             if (isCellArray) {
                 data = (int[])cell;
             }
@@ -519,23 +531,23 @@ public final class FITSTableReader
                 data[0] = (Integer) cell;
             }
             int[] dataOut = new int[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = Integer.MIN_VALUE;
+                        dataOut[rpt] = Integer.MIN_VALUE;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
         else if ((classType.contains("int")) | (classType.contains("Integer"))) {
-            int [] data = new int[repeats];
+            int [] data = new int[repeat];
             if (isCellArray) {
                 data = (int[])cell;;
             }
@@ -543,23 +555,23 @@ public final class FITSTableReader
                 data[0] = (Integer) cell;
             }
             int[] dataOut = new int[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = Integer.MIN_VALUE;
+                        dataOut[rpt] = Integer.MIN_VALUE;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
         else if ((classType.contains("long")) | (classType.contains("Long"))) {
-            long [] data = new long[repeats];
+            long [] data = new long[repeat];
             if (isCellArray) {
                 data = (long[])cell;;
             }
@@ -567,23 +579,23 @@ public final class FITSTableReader
                 data[0] = (Long) cell;
             }
             long[] dataOut = new long[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = Long.MIN_VALUE;
+                        dataOut[rpt] = Long.MIN_VALUE;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
         else if ((classType.contains("float")) | (classType.contains("Float"))) {
-            float [] data = new float[repeats];
+            float [] data = new float[repeat];
             if (isCellArray) {
                 data = (float[])cell;;
             }
@@ -591,23 +603,23 @@ public final class FITSTableReader
                 data[0] = (Float) cell;
             }
             float[] dataOut = new float[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = Float.NaN;
+                        dataOut[rpt] = Float.NaN;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
         else if ((classType.contains("double")) | (classType.contains("Double"))) {
-            double [] data = new double[repeats];
+            double [] data = new double[repeat];
             if (isCellArray) {
                 data = (double[])cell;;
             }
@@ -615,24 +627,23 @@ public final class FITSTableReader
                 data[0] = (Double) cell;
             }
             double[] dataOut = new double[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = Double.NaN;
+                        dataOut[rpt] = Double.NaN;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
         else if ((classType.contains("char")) | (classType.contains("String"))) {
-            //char [] data = new char[repeats];
-            String[] data = new String[repeats];
+            String[] data = new String[repeat];
             if (isCellArray) {
                 data = (String[])cell;
             }
@@ -640,39 +651,42 @@ public final class FITSTableReader
                 data[0] = (String)cell;
             }
             String[] dataOut = new String[maxRepeat];
-            for (int repeat = 0; repeat < maxRepeat; repeat++){
-                if (repeat < data.length) {
-                    dataOut[repeat] = data[repeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[repeat] = data[data.length - 1];
+                        dataOut[rpt] = data[data.length - 1];
                     }
                     else {
-                        dataOut[repeat] = null;
+                        dataOut[rpt] = null;
                     }
                 }
             }
             dataArrayList.add(dataOut);
         }
-        //return dataArrayList;
+        else {
+            throw new FitsException(
+                    "Unrecognized format character in FITS table file: " + classType);
+        }
     }
 
     /** Get attribute data array from a cell.
      * @param cell: Input cell data
-     * @param isCellArray: if the cell is an array
-     * @param originalType
-     * @param classType: The class type of this cell
+     * @param colInfo: column information
      * @return attArrayList: attribute data
      */
     private static List<Object> getAttArrayList(Object cell,
-                                                boolean isCellArray,
-                                                String originalType,
-                                                String classType){
+                                                ColumnInfo colInfo)
+    throws FitsException {
+
+        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
+        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
 
         List<Object> attArrayList = new ArrayList<Object>();
 
-        if (isCellArray) {
+        if (colInfo.isArray()) {
 
             if ((classType.contains("boolean")) | (classType.contains("boolean"))){
                 boolean[] data = (boolean [])cell;
@@ -724,6 +738,10 @@ public final class FITSTableReader
                     attArrayList.add(dataOut[i]);
                 }
             }
+            else {
+                throw new FitsException(
+                        "Unrecognized format character in FITS table file: " + classType);
+            }
         } else {
             attArrayList.add(cell);
         }
@@ -747,81 +765,64 @@ public final class FITSTableReader
     }
 
     /**
-     * Define data type list
-     * @param colName
-     * @param classType
-     * @param originalType
-     * @param dataCols
-     * @return dataTypeList
+     *
+     * @param colInfo
+     * @return dataType
+     * @throws FitsException
      */
-    public static List<DataType> getDataTypeList(String [] colName, String[] classType, String [] originalType, String [] dataCols)
-            throws FitsException
-    {
+    public static DataType getDataTypeList (ColumnInfo colInfo)
+    throws FitsException{
 
-        int nColumns = classType.length;
-        List<DataType> dataTypeList = new ArrayList<DataType>(nColumns);
+        String colName = colInfo.getName();
+        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
+        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
+        String unit = colInfo.getUnitString();
+
+        DataType dataType = new DataType(colName, null);
         Class java_class = null;
         String primitive_type = null;
 
-        for (int col = 0; col < nColumns; col ++){
-            //ColumnInfo colInfo = columnInfoList.get(i);
-
-            if (Arrays.asList(dataCols).contains(colName[col])){
-                //classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
-                if ((classType[col].contains("boolean")) | (classType[col].contains("Boolean"))) {
-                    if (originalType[col].contains("L")){
-                        //Logical:
-                        java_class = String.class;
-                        primitive_type = "char";
-                    }
-                    else if (originalType[col].contains("X")){
-                        //Bits:
-                        java_class = Integer.class;
-                        primitive_type = "int";
-                    }
-                }
-                else if ((classType[col].contains("byte")) | (classType[col].contains("Byte"))) {
-                    java_class = Integer.class;
-                    primitive_type = "int";
-                }
-                else if ((classType[col].contains("short")) | (classType[col].contains("Short"))) {
-                    java_class = Integer.class;
-                    primitive_type = "int";
-                }
-                else if ((classType[col].contains("int")) | (classType[col].contains("Integer"))) {
-                    java_class = Integer.class;
-                    primitive_type = "int";
-                }
-                else if ((classType[col].contains("long")) | (classType[col].contains("Long"))) {
-                    java_class = Long.class;
-                    primitive_type = "long";
-                }
-                else if ((classType[col].contains("float")) | (classType[col].contains("Float"))) {
-                    java_class = Float.class;
-                    primitive_type = "float";
-                }
-                else if ((classType[col].contains("double")) | (classType[col].contains("Double"))) {
-                    java_class = Double.class;
-                    primitive_type = "double";
-                }
-                else if ((classType[col].contains("String")) | (classType[col].contains("char"))) {
-                    java_class = String.class;
-                    primitive_type = "char";
-                }
-                else
-                {
-                    throw new FitsException(
-                            "Unrecognized format character in FITS table file: " + classType);
-                }
-                DataType dataType = new DataType(colName[col], java_class);
-                dataType.setTypeDesc(primitive_type);
-
-                dataTypeList.add(dataType);
+        if ((classType.contains("boolean")) | (classType.contains("Boolean"))) {
+            if (originalType.contains("L")) {
+                //Logical:
+                java_class = String.class;
+                primitive_type = "char";
+            } else if (originalType.contains("X")) {
+                //Bits:
+                java_class = Integer.class;
+                primitive_type = "int";
             }
-
+        } else if ((classType.contains("byte")) | (classType.contains("Byte"))) {
+            java_class = Integer.class;
+            primitive_type = "int";
+        } else if ((classType.contains("short")) | (classType.contains("Short"))) {
+            java_class = Integer.class;
+            primitive_type = "int";
+        } else if ((classType.contains("int")) | (classType.contains("Integer"))) {
+            java_class = Integer.class;
+            primitive_type = "int";
+        } else if ((classType.contains("long")) | (classType.contains("Long"))) {
+            java_class = Long.class;
+            primitive_type = "long";
+        } else if ((classType.contains("float")) | (classType.contains("Float"))) {
+            java_class = Float.class;
+            primitive_type = "float";
+        } else if ((classType.contains("double")) | (classType.contains("Double"))) {
+            java_class = Double.class;
+            primitive_type = "double";
+        } else if ((classType.contains("String")) | (classType.contains("char"))) {
+            java_class = String.class;
+            primitive_type = "char";
+        } else {
+            throw new FitsException(
+                    "Unrecognized format character in FITS table file: " + classType);
         }
-        return (dataTypeList);
+        dataType.setDataType(java_class);
+        dataType.setTypeDesc(primitive_type);
+        dataType.setUnits(unit);
+        return dataType;
     }
+
 
     /**
     * Convert a FITS binary table file on disk to a list of DataGroup
