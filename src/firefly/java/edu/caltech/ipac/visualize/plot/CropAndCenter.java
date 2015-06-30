@@ -25,9 +25,9 @@ import java.io.IOException;
 public class CropAndCenter
 {
 
-    //FitsRead fits_read_temp; //delete this line after testing
+    //FitsRead  fits_read_temp; //delete this line after testing
     public static FitsRead do_crop(FitsRead in_fits_read,
-    //public  FitsRead do_crop(FitsRead in_fits_read,
+   // public  FitsRead do_crop(FitsRead in_fits_read,
                                    double ra, double dec, double radius)
             throws FitsException
     {
@@ -66,8 +66,59 @@ public class CropAndCenter
             BasicHDU out_HDU1 = splitFITSCube(myHDU, min_x, min_y, max_x, max_y);
             ret_fits1.addHDU(out_HDU1);
             FitsRead[] fits_read_array1 = FitsRead.createFitsReadArray(ret_fits1);
-            //fits_read_temp = fits_read_array1[0];
+           // fits_read_temp = fits_read_array1[0];
             return(fits_read_0);
+
+        }
+        catch (ProjectionException pe)
+        {
+            if (SUTDebug.isDebug())
+            {
+                System.out.println("CropAndCenter: got ProjectionException: " + pe.getMessage());
+            }
+            throw new FitsException("Could not crop image.\n -  got ProjectionException: " + pe.getMessage());
+        }
+
+
+
+    }
+
+    public static FitsRead doCrop(FitsRead in_fits_read,
+                                   // public  FitsRead do_crop(FitsRead in_fits_read,
+                                   double ra, double dec, double radius)
+            throws FitsException
+    {
+
+
+        ImageHeader imageHeader= in_fits_read.getImageHeader();
+        CoordinateSys in_coordinate_sys = CoordinateSys.makeCoordinateSys(
+                imageHeader.getJsys(), imageHeader.file_equinox);
+        Projection proj = imageHeader.createProjection(in_coordinate_sys);
+        try
+        {
+            ProjectionPt proj_pt = proj.getImageCoords( ra, dec);
+            int center_x = (int) proj_pt.getFsamp();
+            int center_y = (int) proj_pt.getFline();
+            double cdelt2 = imageHeader.cdelt2;
+            int radius_pixels = (int) (radius / cdelt2);
+            int min_x = center_x - radius_pixels;
+            int max_x = center_x + radius_pixels;
+            int  min_y = center_y - radius_pixels;
+            int max_y = center_y + radius_pixels;
+
+            if (SUTDebug.isDebug())
+            {
+                System.out.println("RBH do_crop  min_x = " + min_x +
+                        "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
+            }
+            BasicHDU myHDU = in_fits_read.getHDU();
+
+            Fits ret_fits = new Fits();
+            BasicHDU out_HDU = splitFITSCube(myHDU, min_x, min_y, max_x, max_y);;
+            ret_fits.addHDU(out_HDU);
+            FitsRead[] fits_read_array = FitsRead.createFitsReadArray(ret_fits);
+             
+            return(fits_read_array[0]);
 
         }
         catch (ProjectionException pe)
@@ -879,9 +930,9 @@ public class CropAndCenter
         double dec = Double.NaN;
         double radius = Double.NaN;
         Fits inFits = null;
-        Fits refFits = null;
+       // Fits refFits = null;
         Fits newFits;
-        CropAndCenter crop;
+       // CropAndCenter crop;
         FitsRead[] fits_read_array;
         FitsRead fits_read_0 = null;
 
@@ -935,7 +986,7 @@ public class CropAndCenter
             BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
             newFits.write(o);
 
-            /*Fits testFits = crop.fits_read_temp.createNewFits();
+          /*  Fits testFits = crop.fits_read_temp.createNewFits();
             crop.validateHeader(testFits, newFits);
             BasicHDU hdu = newFitsRead.getHDU();
             BasicHDU testHDU=crop.fits_read_temp.getHDU();
