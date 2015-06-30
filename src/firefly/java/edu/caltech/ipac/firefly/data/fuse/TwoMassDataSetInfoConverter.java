@@ -129,7 +129,7 @@ public class TwoMassDataSetInfoConverter extends AbstractDataSetInfoConverter {
             WebPlotRequest r = builder.makeServerRequest("ibe_file_retrieve", id, selData, Arrays.asList(new Param("band", b)));
 
             if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
-            else r.setTitle("2MASS: "+b);
+            else r.setTitle("2MASS: "+b.toUpperCase());
 
             r.setZoomType(ZoomType.FULL_SCREEN);
             return r;

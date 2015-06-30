@@ -54,7 +54,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
         Request home = null;
         if (alone) {
-            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Add/Modify Image...", true, false);
+            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Images", true, false);
         }
         else {
             Window.addResizeHandler(new ResizeHandler() {
