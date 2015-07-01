@@ -29,6 +29,11 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
     private static final boolean USE_CORS_IF_POSSIBLE= true;
     private Application.EventMode eventMode = Application.EventMode.WebSocket;
+    private String appHelpName = null;
+
+    public void setAppHelpName(String appHelpName) {
+        this.appHelpName = appHelpName;
+    }
 
     public void setEventMode(Application.EventMode eventMode) {
         this.eventMode = eventMode;
@@ -54,7 +59,7 @@ public class FireflyToolsEntryPoint implements EntryPoint {
 
         Request home = null;
         if (alone) {
-            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Add/Modify Image...", true, false);
+            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Images", true, false);
         }
         else {
             Window.addResizeHandler(new ResizeHandler() {
@@ -71,8 +76,10 @@ public class FireflyToolsEntryPoint implements EntryPoint {
             FFToolEnv.postInitialization();
             if (isStandAloneApp()) {
                 Application.getInstance().hideDefaultLoadingDiv();
-            }
-            else {
+                if (appHelpName != null) {
+                    Application.getInstance().getHelpManager().setAppHelpName(appHelpName);
+                }
+            } else {
                 Application.getInstance().getHelpManager().setAppHelpName("fftools-api");
             }
         }

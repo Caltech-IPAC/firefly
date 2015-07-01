@@ -318,7 +318,7 @@ public class WebPlotRequest extends ServerRequest {
                                                   String survey,
                                                   float sizeInDeg) {
         WebPlotRequest req= makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
-        req.setTitle("2MASS: "+survey);
+        req.setTitle("2MASS: "+survey.toUpperCase());
         return req;
     }
 

@@ -125,13 +125,13 @@ public class EhcacheProvider implements Cache.Provider {
         }
         if (type.equals(Cache.TYPE_PERM_FILE)) {
             cache = new FileCache(ehcache);
-            ensureFileEventListener(ehcache);
+//            ensureFileEventListener(ehcache);
         } else if (type.equals(Cache.TYPE_TEMP_FILE)) {
             cache = new FileCache(ehcache);
-            ensureFileEventListener(ehcache);
+//            ensureFileEventListener(ehcache);
         } else {
             cache = new EhcacheImpl(ehcache);
-            ensureLoggingEventListener(ehcache);
+//            ensureLoggingEventListener(ehcache);
         }
 
         return cache;
