@@ -15,6 +15,7 @@ import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.AbstractTablePreview;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -432,13 +433,17 @@ public class CoveragePreview extends AbstractTablePreview {
             _overlayTitle= _covData.getUseBlankPlot() ? _covData.getTitle() : _covData.getCoverageBaseTitle(tableCtx);
             updateOverlayTitleTitle(table);
 
-            int width=  w.getOffsetWidth()-15;
-            int height= w.getOffsetHeight()-10;
+            MiniPlotWidget mpw= _plotDeck.getMPW();
+            Dimension dim= mpw.getEstimatedFitSize(w);
+
+
+
+
             WebPlotRequest request= new CoverageChooser().getRequest(wp,(float)radiusD,_overlayTitle+" ",
                                                                      _covData.getSmartZoomHint(),
                                                                      _covData.getUseBlankPlot(),
                                                                      _covData.getGridOn(),
-                                                                     width);
+                                                                     dim.getWidth());
 
 
             if (_covData.isUseTitleForPlot()) {
@@ -454,14 +459,14 @@ public class CoveragePreview extends AbstractTablePreview {
                 request.setOverlayPosition(tableCtx.getOverlayPosition());
             }
 
-            if (width>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
+            if (dim.getWidth()>50 && _covData.getFitType()== CoverageData.FitType.WIDTH) {
                 request.setZoomType(ZoomType.TO_WIDTH);
-                request.setZoomToWidth(width);
+                request.setZoomToWidth(dim.getWidth());
             }
-            else if (width>50 && height>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
+            else if (dim.getWidth()>50 && dim.getHeight()>50 && _covData.getFitType()== CoverageData.FitType.WIDTH_HEIGHT) {
                 request.setZoomType(ZoomType.FULL_SCREEN);
-                request.setZoomToWidth(width);
-                request.setZoomToHeight(height);
+                request.setZoomToWidth(dim.getWidth());
+                request.setZoomToHeight(dim.getHeight());
             }
 
 

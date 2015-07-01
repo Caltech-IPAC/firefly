@@ -149,7 +149,7 @@ public class TwoMassSIADataSetInfoConverter extends AbstractDataSetInfoConverter
             String workingURL= convertTo(imageURL,b);
             WebPlotRequest r= WebPlotRequest.makeURLPlotRequest(workingURL, "2 MASS " + b);
             if (useWithThreeColor) r.setTitle("2MASS: 3 Color");
-            else r.setTitle("2MASS: "+b);
+            else r.setTitle("2MASS: "+b.toUpperCase());
             r.setZoomType(ZoomType.TO_WIDTH);
             return r;
         }

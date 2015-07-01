@@ -40,6 +40,7 @@ import edu.caltech.ipac.firefly.ui.VisibleListener;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.util.Browser;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
+import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
@@ -296,6 +297,12 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
         }
         return retval;
 
+    }
+
+    public Dimension getEstimatedFitSize(Widget w) {
+        int width=  w.getOffsetWidth()-10;
+        int height= w.getOffsetHeight()-getTitleHeight()-6;
+        return new Dimension(width,height);
     }
 
     public Panel makeFailureMessage(String message, int width, int height, boolean decorated) {
