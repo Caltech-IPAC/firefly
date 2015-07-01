@@ -53,25 +53,23 @@ public final class FITSTableReader
 
 
         //for lsst:
-        String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
+        //String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] dataCols = {"id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] dataCols = {"flags"};
-        String[] headerCols = {"id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
+        //String[] headerCols = {"id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] headerCols = { "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma", "coord_ra","coord_dec", "parent", "footprint"};
         //String[] headerCols ={"flags"};
 
         //for lsst_cat:
         //String[] dataCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components","name" };
-        //String[] dataCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        String[] dataCols = {"id", "name", "kernel", "spatialfunctions", "components", "coefficients", "image", "ctype1", "A", "Ap"};
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
-        //String[] headerCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        String[] headerCols = {"id", "name", "kernel", "spatialfunctions", "components", "coefficients", "image", "ctype1", "A", "Ap"};
 
         String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
         //String strategy = "TOP_MOST";
         //String strategy = "FULLY_FLATTEN";
-
-
 
         try {
             List<DataGroup> dgListTotal = fits_to_ipac.convertFITSToDataGroup(
@@ -100,9 +98,7 @@ public final class FITSTableReader
             ioe.printStackTrace();
         }
 
-
         if (true) return;
-
 
 
         try
@@ -152,6 +148,8 @@ public final class FITSTableReader
 
         List<DataGroup> dgListTotal = new ArrayList<DataGroup>();
         try {
+            //for testing:
+            //for (int i = 2; i < 3; i++){
             for (int i = 0; i < tList.size(); i++) {
                 StarTable table = (StarTable) tList.get(i);
 
@@ -193,18 +191,19 @@ public final class FITSTableReader
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
+        if ((strategy.equals(null)) | !(strategy.equals("FULLY_FLATTEN")) | !(strategy.equals("EXPAND_BEST_FIT")) | !(strategy.equals("EXPAND_REPEAT"))){
+            strategy = "TOP_MOST";
+        }
+
         int nColumns = table.getColumnCount();
         long nRows = table.getRowCount();
         String tableName = table.getName();
 
         //Handle the data types:
-
         List<ColumnInfo> columnInfoList = new ArrayList<ColumnInfo>(nColumns);
-
         String colName[] = new String[nColumns];
         int[] repeats = new int[nColumns];
         int maxRepeat = 0;
-
         List<DataType> dataTypeList = new ArrayList<DataType>(dataCols.length);
 
         for (int col = 0; col < nColumns; col++) {
@@ -224,12 +223,17 @@ public final class FITSTableReader
             if (Arrays.asList(dataCols).contains(colName[col])){
                 dataTypeList.add(getDataTypeList(colInfo));
             }
-
         }
 
+        //Build the data objects and put them into the data groups:
         List<DataGroup> dataGroupList = new ArrayList<DataGroup>();
-
         if (strategy.equals("TOP_MOST")) {
+            /**
+             * "TOP_MOST": Ignore the repeat count portion of the TFORMn Keyword
+             * returning only the first value of the field, even if repeat count is more than 1.
+             * This should produce exactly one DataGroup. This is the default strategy if not given.
+             */
+
             // One data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
             for (long row = 0; row < nRows; row++) {
@@ -300,7 +304,11 @@ public final class FITSTableReader
             dataGroupList.add(dataGroup);
 
         } else if (strategy.equals("FULLY_FLATTEN")) {
-
+            /**
+             * "FULLY_FLATTEN": Generates one DataGroup row for each value of an HDU field.
+             * Because each field may have different repeat count (dimension), insert blank
+             * when no data is available. This should produce exactly one DataGroup.
+             */
 
             // define one whole data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
@@ -370,7 +378,11 @@ public final class FITSTableReader
 
             dataGroupList.add(dataGroup);
 
-        } else {
+        } else if ((strategy.equals("EXPAND_BEST_FIT")) | strategy.equals("EXPAND_REPEAT")) {
+            /**
+             * "EXPAND_BEST_FIT": Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
+             * "EXPAND_REPEAT": Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
+             */
 
             for (int row = 0; row < nRows; row++) {
 
