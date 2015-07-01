@@ -53,18 +53,18 @@ public final class FITSTableReader
 
 
         //for lsst:
-        //String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
+        String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] dataCols = {"id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] dataCols = {"flags"};
-        //String[] headerCols = {"id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
+        String[] headerCols = {"id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] headerCols = { "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma", "coord_ra","coord_dec", "parent", "footprint"};
         //String[] headerCols ={"flags"};
 
         //for lsst_cat:
         //String[] dataCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components","name" };
-        String[] dataCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        //String[] dataCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
-        String[] headerCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        //String[] headerCols = {"name", "kernel", "components", "coefficients", "image", "ctype1", "A", "Ap"};
 
         String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
@@ -301,10 +301,11 @@ public final class FITSTableReader
 
         } else if (strategy.equals("FULLY_FLATTEN")) {
 
+
             // define one whole data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
 
-            List<Object> dataArrayListTotal = new ArrayList<Object>();
+            //List<Object> dataArrayListTotal = new ArrayList<Object>();
             for (long row = 0; row < nRows; row++) {
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
@@ -320,12 +321,7 @@ public final class FITSTableReader
                                 strategy,
                                 dataArrayList);
                     }
-                    dataArrayListTotal.addAll(dataArrayList);
                 }
-            }
-
-            for (long row = 0; row < nRows; row++) {
-                // Add dataObj per repeat to the dataGroup:
                 for (int repeat = 0; repeat < maxRepeat; repeat++) {
                     DataObject dataObj = new DataObject(dataGroup);
                     int dataTypeIndex = 0;
@@ -333,23 +329,18 @@ public final class FITSTableReader
                         if (Arrays.asList(dataCols).contains(colName[col])) {
                             dataTypeIndex++;
                             String type = dataTypeList.get(dataTypeIndex - 1).toString();
-                            Object value = dataArrayListTotal.get(dataTypeIndex - 1);
-                            if (type.contains("Integer")){
-                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])value)[repeat]);
-                            }
-                            else if (type.contains("Long")){
-                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((long [])value)[repeat]);
-                            }
-                            else if (type.contains("Float")){
-                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float [])value)[repeat]);
-                            }
-                            else if (type.contains("Double")){
-                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[repeat]);
-                            }
-                            else if ((type.contains("String")) | (type.contains("char"))) {
-                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[repeat]);
-                            }
-                            else {
+                            Object value = dataArrayList.get(dataTypeIndex - 1);
+                            if (type.contains("Integer")) {
+                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int[]) value)[repeat]);
+                            } else if (type.contains("Long")) {
+                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((long[]) value)[repeat]);
+                            } else if (type.contains("Float")) {
+                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float[]) value)[repeat]);
+                            } else if (type.contains("Double")) {
+                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double[]) value)[repeat]);
+                            } else if ((type.contains("String")) | (type.contains("char"))) {
+                                dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String[]) value)[repeat]);
+                            } else {
                                 throw new FitsException(
                                         "Unrecognized format character in FITS table file: " + type);
                             }
@@ -358,6 +349,7 @@ public final class FITSTableReader
                     dataGroup.add(dataObj);
                 }
             }
+
 
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
