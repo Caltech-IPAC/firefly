@@ -67,11 +67,11 @@ public final class FITSTableReader
         String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
 
         //String strategy = "EXPAND_BEST_FIT";
-        String strategy = "EXPAND_REPEAT";
+        //String strategy = "EXPAND_REPEAT";
         //String strategy = "TOP_MOST";
-        //String strategy = "FULLY_FLATTEN";
+        String strategy = "FULLY_FLATTEN";
 
-        int whichOne = 22;
+        int whichDG = 3;
 
         try {
             List<DataGroup> dgListTotal = fits_to_ipac.convertFITSToDataGroup(
@@ -81,7 +81,7 @@ public final class FITSTableReader
                     strategy);
 
             File output_file = new File(ipac_filename);
-            DataGroup dg = dgListTotal.get(whichOne);
+            DataGroup dg = dgListTotal.get(whichDG);
             IpacTableWriter.save(output_file, dg);
         }
         catch (FitsException fe)
@@ -250,7 +250,7 @@ public final class FITSTableReader
                         dataTypeIndex++;
                         ColumnInfo colInfo = columnInfoList.get(col);
                         Object cell = table.getCell(row, col);
-                        getDataArrayList(cell,
+                        dataArrayList = getDataArrayList(cell,
                                 colInfo,
                                 repeat,
                                 maxRepeat,
@@ -320,7 +320,7 @@ public final class FITSTableReader
                         ColumnInfo colInfo = columnInfoList.get(col);
                         int repeat = repeats[col];
                         Object cell = table.getCell(row, col);
-                        getDataArrayList(cell,
+                        dataArrayList = getDataArrayList(cell,
                                 colInfo,
                                 repeat,
                                 maxRepeat,
@@ -396,7 +396,7 @@ public final class FITSTableReader
                         ColumnInfo colInfo = columnInfoList.get(col);
                         int repeat = repeats[col];
                         Object cell = table.getCell(row, col);
-                        getDataArrayList(cell,
+                        dataArrayList = getDataArrayList(cell,
                                 colInfo,
                                 repeat,
                                 maxRepeat,
@@ -463,9 +463,10 @@ public final class FITSTableReader
      * @param repeat
      * @param maxRepeat
      * @param strategy
+     * @param dataArrayList
      * @return dataArrayList
      */
-    private static void getDataArrayList(Object cell,
+    private static List<Object> getDataArrayList(Object cell,
                                          ColumnInfo colInfo,
                                          int repeat,
                                          int maxRepeat,
@@ -476,6 +477,7 @@ public final class FITSTableReader
         boolean isCellArray = colInfo.isArray();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
+        dataArrayList = (dataArrayList.size() ==0)?  new ArrayList<Object>() : dataArrayList;
 
         if ((classType.contains("boolean")) || (classType.contains("Boolean"))){
             boolean [] data = new boolean[repeat];
@@ -671,7 +673,10 @@ public final class FITSTableReader
             throw new FitsException(
                     "Unrecognized format character in FITS table file: " + classType);
         }
+        return dataArrayList;
     }
+
+
 
     /** Get attribute data array from a cell.
      * @param cell: Input cell data
