@@ -62,14 +62,16 @@ public final class FITSTableReader
 
         //for lsst_cat:
         //String[] dataCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components","name" };
-        String[] dataCols = {"id", "name", "kernel", "spatialfunctions", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        String[] dataCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
-        String[] headerCols = {"id", "name", "kernel", "spatialfunctions", "components", "coefficients", "image", "ctype1", "A", "Ap"};
+        String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
 
-        String strategy = "EXPAND_BEST_FIT";
-        //String strategy = "EXPAND_REPEAT";
+        //String strategy = "EXPAND_BEST_FIT";
+        String strategy = "EXPAND_REPEAT";
         //String strategy = "TOP_MOST";
         //String strategy = "FULLY_FLATTEN";
+
+        int whichOne = 22;
 
         try {
             List<DataGroup> dgListTotal = fits_to_ipac.convertFITSToDataGroup(
@@ -79,7 +81,7 @@ public final class FITSTableReader
                     strategy);
 
             File output_file = new File(ipac_filename);
-            DataGroup dg = dgListTotal.get(0);
+            DataGroup dg = dgListTotal.get(whichOne);
             IpacTableWriter.save(output_file, dg);
         }
         catch (FitsException fe)
@@ -133,7 +135,7 @@ public final class FITSTableReader
         throws FitsException, IOException {
 
 
-        TableSequence tseq = null;
+        TableSequence tseq;
         StarTableFactory stFactory = new StarTableFactory();
         List tList = new ArrayList();
         try {
@@ -191,7 +193,7 @@ public final class FITSTableReader
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
-        if (!(strategy.equals("FULLY_FLATTEN")) || !(strategy.equals("EXPAND_BEST_FIT")) || !(strategy.equals("EXPAND_REPEAT"))){
+        if (!(strategy.equals("FULLY_FLATTEN")) && !(strategy.equals("EXPAND_BEST_FIT")) && !(strategy.equals("EXPAND_REPEAT"))){
             strategy = "TOP_MOST";
         }
 
@@ -234,6 +236,8 @@ public final class FITSTableReader
              * This should produce exactly one DataGroup. This is the default strategy if not given.
              */
 
+            int repeat = 1;
+
             // One data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
             for (long row = 0; row < nRows; row++) {
@@ -242,22 +246,17 @@ public final class FITSTableReader
                 int dataTypeIndex = 0;
                 DataObject dataObj = new DataObject(dataGroup);
                 for (int col = 0; col < nColumns; col++) {
-                    ColumnInfo colInfo = columnInfoList.get(col);
-                    //for "TOP_MOST":
-                    int repeat = 1;
-                    Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])){
+                        dataTypeIndex++;
+                        ColumnInfo colInfo = columnInfoList.get(col);
+                        Object cell = table.getCell(row, col);
                         getDataArrayList(cell,
                                 colInfo,
                                 repeat,
                                 maxRepeat,
                                 strategy,
                                 dataArrayList);
-                    }
-
-                    if (Arrays.asList(dataCols).contains(colName[col])) {
-                        dataTypeIndex++;
-                        String type = dataTypeList.get(dataTypeIndex - 1).toString();
+                        String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
                         Object value = dataArrayList.get(dataTypeIndex - 1);
                         if (type.contains("Integer")){
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])value)[0]);
@@ -281,27 +280,26 @@ public final class FITSTableReader
                     }
                 }
                 dataGroup.add(dataObj);
-
             }
 
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
-                ColumnInfo colInfo = columnInfoList.get(col);
                 if (Arrays.asList(headerCols).contains(colName[col])) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
                     List<Object> attArrayListTotal = new ArrayList<Object>();
                     for (long row = 0; row < nRows; row ++) {
                         Object cell = table.getCell(row, col);
-                        List<Object> attArrayList = new ArrayList<Object>();
+                        List<Object> attArrayList; //= new ArrayList<Object>();
                         attArrayList = getAttArrayList(cell, colInfo);
                         attArrayListTotal.add(attArrayList.get(0));
                     }
                     attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayListTotal));
-
                     dataGroup.addAttributes(attribute);
                 }
             }
             dataGroupList.add(dataGroup);
+
 
         } else if (strategy.equals("FULLY_FLATTEN")) {
             /**
@@ -336,7 +334,7 @@ public final class FITSTableReader
                     for (int col = 0; col < nColumns; col++) {
                         if (Arrays.asList(dataCols).contains(colName[col])) {
                             dataTypeIndex++;
-                            String type = dataTypeList.get(dataTypeIndex - 1).toString();
+                            String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
                             Object value = dataArrayList.get(dataTypeIndex - 1);
                             if (type.contains("Integer")) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int[]) value)[repeat]);
@@ -385,7 +383,6 @@ public final class FITSTableReader
              */
 
             for (int row = 0; row < nRows; row++) {
-
                 // define dataGroup per row:
                 String dgTitle = tableName + " Row#: " + row;
 
@@ -415,7 +412,7 @@ public final class FITSTableReader
                         //for (Object o : dataArrayList){
                         if (Arrays.asList(dataCols).contains(colName[col])) {
                             dataTypeIndex++;
-                            String type = dataTypeList.get(dataTypeIndex - 1).toString();
+                            String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
                             Object value = dataArrayList.get(dataTypeIndex - 1);
                             if (type.contains("Integer")){
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])value)[repeat]);
