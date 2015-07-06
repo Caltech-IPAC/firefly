@@ -3,7 +3,6 @@
 
 var React= require('react/addons');
 var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
-import formActions from '../actions/FormActions.js'
 
 import InputFieldLabel from "./InputFieldLabel.jsx";
 
@@ -39,7 +38,7 @@ var ListBoxInputField= React.createClass(
             var {valid,message}=this.getValidator()(val.toString());
 
             // the value of this input field is a string
-            formActions.valueChange({
+            this.fireValueChange({
                 formKey : this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 newValue : val.toString(),

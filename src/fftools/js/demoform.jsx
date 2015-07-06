@@ -9,7 +9,6 @@ fireflyInit();
 import React from 'react/addons';
 import Alt from 'alt';
 
-import InputFormModel from 'ipac-firefly/ui/model/InputFormModel.js';
 import TargetPanel from 'ipac-firefly/ui/TargetPanel.jsx';
 import InputGroup from 'ipac-firefly/ui/InputGroup.jsx';
 import Validate from 'ipac-firefly/util/Validate.js';

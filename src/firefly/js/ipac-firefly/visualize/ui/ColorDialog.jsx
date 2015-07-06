@@ -8,7 +8,6 @@ var Promise= require("es6-promise").Promise;
 var Dispatcher = require("flux").Dispatcher;
 
 import PopupUtil from '../../util/PopupUtil.jsx';
-import InputFormModel from '../../ui/model/InputFormModel.js';
 import InputGroup from '../../ui/InputGroup.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';

@@ -144,37 +144,3 @@ var FormButton = module.exports= React.createClass(
    });
 
 
-//<PopupUtil.ModalDialog
-//        message={this.state.request ? this.state.request : ""}
-//        modalOpen={this.state.modalOpen}
-//        title={"results"}
-//        closeRequest={this.closeModal}
-///>
-
-//<Portal isOpen={this.state.modalOpen}>
-//    <div style={s}>
-//        {this.state.title}<br/>
-//        {this.state.request ? this.state.request : ""}
-//    </div>
-//</Portal>
-
-//<Portal openbyClickOn={button2} closeOnEsc={true}>
-//    <div style={s}>
-//        {this.state.title}<br/>
-//        {this.state.request ? this.state.request : ""}
-//    </div>
-//</Portal>
-
-
-//<PopupUtil.Dialog openComponent={button}
-//                  message={this.state.request ? this.state.request : ""}
-//                  title={"results"} />
-
-                       //
-//<PopupUtil.ModalDialog
-//        message={this.state.request ? this.state.request : ""}
-//        modalOpen={this.state.modalOpen}
-//        title={"results"}
-//        closeRequest={this.closeModal}
-//        />
-

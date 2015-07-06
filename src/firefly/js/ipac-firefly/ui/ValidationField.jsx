@@ -6,7 +6,6 @@ import React from 'react/addons';
 /*eslint-disable no-unused-vars */
 import InputFieldView from './InputFieldView.jsx';
 import FormStoreLinkMixin from 'ipac-firefly/ui/model/FormStoreLinkMixin.js';
-import formActions from '../actions/FormActions.js'
 /*eslint-enable no-unused-vars */
 
 
@@ -27,14 +26,14 @@ var ValidationField= React.createClass(
 
            var {valid,message}= this.getValidator()(ev.target.value);
 
-           formActions.valueChange({
-                           formKey : this.getFormKey(),
-                           fieldKey : this.props.fieldKey,
-                           newValue : ev.target.value,
-                           message,
-                           valid,
-                           fieldState : this.state.fieldState
-                     });
+           this.fireValueChange({
+               formKey : this.getFormKey(),
+               fieldKey : this.props.fieldKey,
+               newValue : ev.target.value,
+               message,
+               valid,
+               fieldState : this.state.fieldState
+           });
        },
 
 
