@@ -243,8 +243,8 @@ public final class FITSTableReader
             for (long row = 0; row < nRows; row++) {
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
-                int dataTypeIndex = 0;
                 DataObject dataObj = new DataObject(dataGroup);
+                int dataTypeIndex = 0;
                 for (int col = 0; col < nColumns; col++) {
                     if (Arrays.asList(dataCols).contains(colName[col])){
                         dataTypeIndex++;
@@ -316,10 +316,10 @@ public final class FITSTableReader
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
                 for (int col = 0; col < nColumns; col++) {
-                    ColumnInfo colInfo = columnInfoList.get(col);
-                    int repeat = repeats[col];
-                    Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])) {
+                        ColumnInfo colInfo = columnInfoList.get(col);
+                        int repeat = repeats[col];
+                        Object cell = table.getCell(row, col);
                         getDataArrayList(cell,
                                 colInfo,
                                 repeat,
@@ -360,8 +360,8 @@ public final class FITSTableReader
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
-                ColumnInfo colInfo = columnInfoList.get(col);
                 if (Arrays.asList(headerCols).contains(colName[col])) {
+                    ColumnInfo colInfo = columnInfoList.get(col);
                     List<Object> attArrayListTotal = new ArrayList<Object>();
                     for (int row = 0; row < nRows; row++) {
                         List<Object> attArrayList = new ArrayList<Object>();
@@ -392,10 +392,10 @@ public final class FITSTableReader
                 // Save data into an arrayList and then use:
                 List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
                 for (int col = 0; col < nColumns; col++) {
-                    ColumnInfo colInfo = columnInfoList.get(col);
-                    int repeat = repeats[col];
-                    Object cell = table.getCell(row, col);
                     if (Arrays.asList(dataCols).contains(colName[col])){
+                        ColumnInfo colInfo = columnInfoList.get(col);
+                        int repeat = repeats[col];
+                        Object cell = table.getCell(row, col);
                         getDataArrayList(cell,
                                 colInfo,
                                 repeat,
@@ -440,9 +440,9 @@ public final class FITSTableReader
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
                 for (int col = 0; col < nColumns; col++) {
-                    ColumnInfo colInfo = columnInfoList.get(col);
                     if (Arrays.asList(headerCols).contains(colName[col])) {
-                        List<Object> attArrayList = new ArrayList<Object>(repeats[col]);
+                        ColumnInfo colInfo = columnInfoList.get(col);
+                        List<Object> attArrayList;
                         Object cell = table.getCell(row, col);
                         attArrayList = getAttArrayList(cell, colInfo);
                         attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayList));
