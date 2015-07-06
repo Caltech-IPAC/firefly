@@ -191,7 +191,7 @@ public final class FITSTableReader
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
-        if ((strategy.equals(null)) | !(strategy.equals("FULLY_FLATTEN")) | !(strategy.equals("EXPAND_BEST_FIT")) | !(strategy.equals("EXPAND_REPEAT"))){
+        if (!(strategy.equals("FULLY_FLATTEN")) || !(strategy.equals("EXPAND_BEST_FIT")) || !(strategy.equals("EXPAND_REPEAT"))){
             strategy = "TOP_MOST";
         }
 
@@ -271,7 +271,7 @@ public final class FITSTableReader
                         else if (type.contains("Double")){
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[0]);
                         }
-                        else if ((type.contains("String")) | (type.contains("char"))) {
+                        else if ((type.contains("String")) || (type.contains("char"))) {
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[0]);
                         }
                         else {
@@ -346,7 +346,7 @@ public final class FITSTableReader
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float[]) value)[repeat]);
                             } else if (type.contains("Double")) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double[]) value)[repeat]);
-                            } else if ((type.contains("String")) | (type.contains("char"))) {
+                            } else if ((type.contains("String")) || (type.contains("char"))) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String[]) value)[repeat]);
                             } else {
                                 throw new FitsException(
@@ -378,7 +378,7 @@ public final class FITSTableReader
 
             dataGroupList.add(dataGroup);
 
-        } else if ((strategy.equals("EXPAND_BEST_FIT")) | strategy.equals("EXPAND_REPEAT")) {
+        } else if ((strategy.equals("EXPAND_BEST_FIT")) || strategy.equals("EXPAND_REPEAT")) {
             /**
              * "EXPAND_BEST_FIT": Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
              * "EXPAND_REPEAT": Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
@@ -429,7 +429,7 @@ public final class FITSTableReader
                             else if (type.contains("Double")){
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[repeat]);
                             }
-                            else if ((type.contains("String")) | (type.contains("char"))) {
+                            else if ((type.contains("String")) || (type.contains("char"))) {
                                 dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[repeat]);
                             }
                             else {
@@ -480,7 +480,7 @@ public final class FITSTableReader
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
 
-        if ((classType.contains("boolean")) | (classType.contains("Boolean"))){
+        if ((classType.contains("boolean")) || (classType.contains("Boolean"))){
             boolean [] data = new boolean[repeat];
             if (isCellArray) {
                 data = (boolean [])cell;
@@ -526,7 +526,7 @@ public final class FITSTableReader
                 dataArrayList.add(dataOut);
             }
         }
-        else if ((classType.contains("short")) | (classType.contains("Short"))) {
+        else if ((classType.contains("short")) || (classType.contains("Short"))) {
             int [] data = new int[repeat];
             if (isCellArray) {
                 data = (int[])cell;
@@ -550,10 +550,10 @@ public final class FITSTableReader
             }
             dataArrayList.add(dataOut);
         }
-        else if ((classType.contains("int")) | (classType.contains("Integer"))) {
+        else if ((classType.contains("int")) || (classType.contains("Integer"))) {
             int [] data = new int[repeat];
             if (isCellArray) {
-                data = (int[])cell;;
+                data = (int[])cell;
             }
             else {
                 data[0] = (Integer) cell;
@@ -574,10 +574,10 @@ public final class FITSTableReader
             }
             dataArrayList.add(dataOut);
         }
-        else if ((classType.contains("long")) | (classType.contains("Long"))) {
+        else if ((classType.contains("long")) || (classType.contains("Long"))) {
             long [] data = new long[repeat];
             if (isCellArray) {
-                data = (long[])cell;;
+                data = (long[])cell;
             }
             else {
                 data[0] = (Long) cell;
@@ -598,10 +598,10 @@ public final class FITSTableReader
             }
             dataArrayList.add(dataOut);
         }
-        else if ((classType.contains("float")) | (classType.contains("Float"))) {
+        else if ((classType.contains("float")) || (classType.contains("Float"))) {
             float [] data = new float[repeat];
             if (isCellArray) {
-                data = (float[])cell;;
+                data = (float[])cell;
             }
             else {
                 data[0] = (Float) cell;
@@ -622,10 +622,10 @@ public final class FITSTableReader
             }
             dataArrayList.add(dataOut);
         }
-        else if ((classType.contains("double")) | (classType.contains("Double"))) {
+        else if ((classType.contains("double")) || (classType.contains("Double"))) {
             double [] data = new double[repeat];
             if (isCellArray) {
-                data = (double[])cell;;
+                data = (double[])cell;
             }
             else {
                 data[0] = (Double) cell;
@@ -646,7 +646,7 @@ public final class FITSTableReader
             }
             dataArrayList.add(dataOut);
         }
-        else if ((classType.contains("char")) | (classType.contains("String"))) {
+        else if ((classType.contains("char")) || (classType.contains("String"))) {
             String[] data = new String[repeat];
             if (isCellArray) {
                 data = (String[])cell;
@@ -692,7 +692,7 @@ public final class FITSTableReader
 
         if (colInfo.isArray()) {
 
-            if ((classType.contains("boolean")) | (classType.contains("boolean"))){
+            if ((classType.contains("boolean")) || (classType.contains("boolean"))){
                 boolean[] data = (boolean [])cell;
                 for (int repeat = 0; repeat < data.length; repeat ++){
                     if (originalType.contains("L")){
@@ -706,37 +706,37 @@ public final class FITSTableReader
                     }
                 }
             }
-            else if ((classType.contains("short")) | (classType.contains("Short"))) {
+            else if ((classType.contains("short")) || (classType.contains("Short"))) {
                 int[] dataOut = (int [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
-            else if ((classType.contains("int")) | (classType.contains("Integer"))) {
+            else if ((classType.contains("int")) || (classType.contains("Integer"))) {
                 int[] dataOut = (int [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
-            else if ((classType.contains("long")) | (classType.contains("Long"))) {
+            else if ((classType.contains("long")) || (classType.contains("Long"))) {
                 long[] dataOut = (long [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
-            else if ((classType.contains("float")) | (classType.contains("Float"))) {
+            else if ((classType.contains("float")) || (classType.contains("Float"))) {
                 int[] dataOut = (int [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
-            else if ((classType.contains("double")) | (classType.contains("Double"))) {
+            else if ((classType.contains("double")) || (classType.contains("Double"))) {
                 double[] dataOut = (double [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
-            else if ((classType.contains("char")) | (classType.contains("String"))) {
+            else if ((classType.contains("char")) || (classType.contains("String"))) {
                 String[] dataOut = (String [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
@@ -786,7 +786,7 @@ public final class FITSTableReader
         Class java_class = null;
         String primitive_type = null;
 
-        if ((classType.contains("boolean")) | (classType.contains("Boolean"))) {
+        if ((classType.contains("boolean")) || (classType.contains("Boolean"))) {
             if (originalType.contains("L")) {
                 //Logical:
                 java_class = String.class;
@@ -796,25 +796,25 @@ public final class FITSTableReader
                 java_class = Integer.class;
                 primitive_type = "int";
             }
-        } else if ((classType.contains("byte")) | (classType.contains("Byte"))) {
+        } else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
             java_class = Integer.class;
             primitive_type = "int";
-        } else if ((classType.contains("short")) | (classType.contains("Short"))) {
+        } else if ((classType.contains("short")) || (classType.contains("Short"))) {
             java_class = Integer.class;
             primitive_type = "int";
-        } else if ((classType.contains("int")) | (classType.contains("Integer"))) {
+        } else if ((classType.contains("int")) || (classType.contains("Integer"))) {
             java_class = Integer.class;
             primitive_type = "int";
-        } else if ((classType.contains("long")) | (classType.contains("Long"))) {
+        } else if ((classType.contains("long")) || (classType.contains("Long"))) {
             java_class = Long.class;
             primitive_type = "long";
-        } else if ((classType.contains("float")) | (classType.contains("Float"))) {
+        } else if ((classType.contains("float")) || (classType.contains("Float"))) {
             java_class = Float.class;
             primitive_type = "float";
-        } else if ((classType.contains("double")) | (classType.contains("Double"))) {
+        } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
             primitive_type = "double";
-        } else if ((classType.contains("String")) | (classType.contains("char"))) {
+        } else if ((classType.contains("String")) || (classType.contains("char"))) {
             java_class = String.class;
             primitive_type = "char";
         } else {
