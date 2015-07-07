@@ -6,6 +6,9 @@ package edu.caltech.ipac.firefly.server.visualize;
  * User: roby
  * Date: 2/16/11
  * Time: 3:49 PM
+ *
+ * 07/07/15
+ * The Crop class is deprecated. The same function is added to CropAndCenter.
  */
 
 
@@ -18,7 +21,7 @@ import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Crop;
+//import edu.caltech.ipac.visualize.plot.Crop;
 import edu.caltech.ipac.visualize.plot.CropAndCenter;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.FlipXY;
@@ -269,8 +272,10 @@ public class WebPlotReader {
             if (pt1 != null && pt2 != null) {
 //              Fits inFits = fr.getFits();
                 Fits inFits = fr.createNewFits();
-                Fits cropFits = Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
-                                                     (int) pt2.getX(), (int) pt2.getY());
+                Fits cropFits = CropAndCenter.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
+                        (int) pt2.getX(), (int) pt2.getY());
+                        //Crop.do_crop(inFits, (int) pt1.getX(), (int) pt1.getY(),
+                         //                            (int) pt2.getX(), (int) pt2.getY());
                 FitsRead tmpFr[] = FitsRead.createFitsReadArray(cropFits);
                 retval = tmpFr[0];
                 File rotName= ModFileWriter.makeRotFileName(originalFile,imageIdx, req.getRotationAngle());

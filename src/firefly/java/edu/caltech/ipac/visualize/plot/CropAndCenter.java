@@ -25,7 +25,7 @@ import java.io.IOException;
  * I saved the CropAndCenter in myTestBranch where it contains both old and new codes.
  * I Use the TestFitsRead.java class to test this CropAndCenter. The test showed newly refactored codes produce
  * the same results as the old ones.  I am deleting the old codes in the master branch.  If something is wrong,
- * using "myTestBranch" to test it again.
+ * using "myTestBranch
  *
  *
  */
@@ -77,6 +77,22 @@ public class CropAndCenter  {
 
 
 
+    }
+
+    public static Fits do_crop(Fits inFits, int min_x, int min_y, int max_x, int max_y)
+            throws FitsException
+    {
+        if (SUTDebug.isDebug())
+        {
+            System.out.println("RBH do_crop  min_x = " + min_x +
+                    "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
+        }
+        BasicHDU out_HDU = null;
+        Fits ret_fits = new Fits();
+        BasicHDU[] myHDUs = inFits.read();
+        out_HDU = splitFITSCube(myHDUs[0], min_x, min_y, max_x, max_y);
+        ret_fits.addHDU(out_HDU);
+        return(ret_fits);
     }
     /*
       This method create a new Fits header based on the input Fits header
