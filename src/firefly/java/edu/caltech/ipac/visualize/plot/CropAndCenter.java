@@ -25,12 +25,21 @@ import java.io.IOException;
  * I saved the CropAndCenter in myTestBranch where it contains both old and new codes.
  * I Use the TestFitsRead.java class to test this CropAndCenter. The test showed newly refactored codes produce
  * the same results as the old ones.  I am deleting the old codes in the master branch.  If something is wrong,
- * using "myTestBranch" to test it again.
+ * using "myTestBranch
  *
  *
  */
 public class CropAndCenter  {
 
+    /**
+     * This static method returns a cropped and centered FitsRead Object
+     * @param in_fits_read : a FitsRead parameter
+     * @param ra           : the right ascension
+     * @param dec          : the declination
+     * @param radius       : The radius
+     * @return             : a FitsRead object
+     * @throws FitsException
+     */
     public static FitsRead do_crop(FitsRead in_fits_read,
                                     double ra, double dec, double radius)
             throws FitsException {
@@ -50,6 +59,8 @@ public class CropAndCenter  {
             int max_x = center_x + radius_pixels;
             int  min_y = center_y - radius_pixels;
             int max_y = center_y + radius_pixels;
+
+
 
             if (SUTDebug.isDebug())
             {
@@ -75,8 +86,32 @@ public class CropAndCenter  {
             throw new FitsException("Could not crop image.\n -  got ProjectionException: " + pe.getMessage());
         }
 
+    }
 
+    /**
+     *
+     * @param inFits      : a Fits object
+     * @param min_x       : double
+     * @param min_y       : double
+     * @param max_x       : double
+     * @param max_y       : double
+     * @return            : a cropped  Fits data
+     * @throws FitsException
+     */
+    public static Fits do_crop(Fits inFits, int min_x, int min_y, int max_x, int max_y)
+            throws FitsException {
 
+        if (SUTDebug.isDebug()) {
+
+            System.out.println("RBH do_crop  min_x = " + min_x +
+                    "  min_y = " + min_y + "  max_x = " + max_x + "  max_y = " + max_y);
+        }
+        BasicHDU out_HDU = null;
+        Fits ret_fits = new Fits();
+        BasicHDU[] myHDUs = inFits.read();
+        out_HDU = splitFITSCube(myHDUs[0], min_x, min_y, max_x, max_y);
+        ret_fits.addHDU(out_HDU);
+        return(ret_fits);
     }
     /*
       This method create a new Fits header based on the input Fits header
