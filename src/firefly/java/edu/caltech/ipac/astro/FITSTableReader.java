@@ -68,8 +68,8 @@ public final class FITSTableReader
 
         //String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
-        //String strategy = "TOP_MOST";
-        String strategy = "FULLY_FLATTEN";
+        String strategy = "TOP_MOST";
+        //String strategy = "FULLY_FLATTEN";
 
         int whichDG = 3;
 
@@ -232,7 +232,7 @@ public final class FITSTableReader
         if (strategy.equals("TOP_MOST")) {
             /**
              * "TOP_MOST": Ignore the repeat count portion of the TFORMn Keyword
-             * returning only the first value of the field, even if repeat count is more than 1.
+             * returning only the first datum of the field, even if repeat count is more than 1.
              * This should produce exactly one DataGroup. This is the default strategy if not given.
              */
 
@@ -257,21 +257,21 @@ public final class FITSTableReader
                                 strategy,
                                 dataArrayList);
                         String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
-                        Object value = dataArrayList.get(dataTypeIndex - 1);
+                        Object data = dataArrayList.get(dataTypeIndex - 1);
                         if (type.contains("Integer")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])value)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])data)[0]);
                         }
                         else if (type.contains("Long")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((long [])value)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((long [])data)[0]);
                         }
                         else if (type.contains("Float")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float [])value)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float [])data)[0]);
                         }
                         else if (type.contains("Double")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])value)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])data)[0]);
                         }
                         else if ((type.contains("String")) || (type.contains("char"))) {
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])value)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])data)[0]);
                         }
                         else {
                             throw new FitsException(
@@ -318,7 +318,7 @@ public final class FITSTableReader
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
-                dataGroup = fillDataGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataToGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
 
             }
 
@@ -359,7 +359,7 @@ public final class FITSTableReader
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
-                dataGroup = fillDataGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataToGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
 
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
@@ -380,7 +380,21 @@ public final class FITSTableReader
         return dataGroupList;
     }
 
-    private static DataGroup fillDataGroup(int nColumns,
+    /**
+     * Fill the dataObj with the dataArralyList and dataTypeList and then add the dataObj to the dataGroup.
+     * One dataObj collects the data from all the columns at one repeat.
+     * One dataGroup contains dataObjs from all the repeats.
+     * @param nColumns
+     * @param maxRepeat
+     * @param dataCols
+     * @param colName
+     * @param dataArrayList
+     * @param dataTypeList
+     * @param dataGroup
+     * @return
+     * @throws FitsException
+     */
+    private static DataGroup fillDataToGroup(int nColumns,
                                            int maxRepeat,
                                            String[] dataCols,
                                            String[] colName,
@@ -397,8 +411,8 @@ public final class FITSTableReader
                     dataTypeIndex++;
                     DataType dataType = dataTypeList.get(dataTypeIndex - 1);
                     String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
-                    Object value = dataArrayList.get(dataTypeIndex - 1);
-                    dataObj = fillDataObj(repeat, value, type, dataType, dataObj);
+                    Object data = dataArrayList.get(dataTypeIndex - 1);
+                    dataObj = fillDataObj(repeat, data, type, dataType, dataObj);
                 }
             }
             dataGroup.add(dataObj);
@@ -407,27 +421,40 @@ public final class FITSTableReader
         return dataGroup;
     }
 
+    /**
+     * Depending on the data type, cast data array into a corresponding primitive type array.
+     * Fill the dataObj with the data at [repeat] and the dataType.
+     * Will handle complex type later.
+     *
+     * @param repeat
+     * @param data
+     * @param type
+     * @param dataType
+     * @param dataObj
+     * @return
+     * @throws FitsException
+     */
     private static DataObject fillDataObj(int repeat,
-                                          Object value,
+                                          Object data,
                                           String type,
                                           DataType dataType,
                                           DataObject dataObj)
     throws FitsException {
 
         if (type.contains("Integer")){
-            dataObj.setDataElement(dataType, ((int [])value)[repeat]);
+            dataObj.setDataElement(dataType, ((int [])data)[repeat]);
         }
         else if (type.contains("Long")){
-            dataObj.setDataElement(dataType, ((long [])value)[repeat]);
+            dataObj.setDataElement(dataType, ((long [])data)[repeat]);
         }
         else if (type.contains("Float")){
-            dataObj.setDataElement(dataType, ((float [])value)[repeat]);
+            dataObj.setDataElement(dataType, ((float [])data)[repeat]);
         }
         else if (type.contains("Double")){
-            dataObj.setDataElement(dataType, ((double [])value)[repeat]);
+            dataObj.setDataElement(dataType, ((double [])data)[repeat]);
         }
         else if ((type.contains("String")) || (type.contains("char"))) {
-            dataObj.setDataElement(dataType, ((String [])value)[repeat]);
+            dataObj.setDataElement(dataType, ((String [])data)[repeat]);
         }
         else {
             throw new FitsException(
@@ -438,13 +465,16 @@ public final class FITSTableReader
     }
 
     /**
-     *
+     * To get dataArrayList which contains the data from one row in the table.
+     * Each element in dataArrayList is  the data in the cell[row, col] which could be a singl datum or a data array.
+     * Only the columns in the list dataCols will be put in dataArrayList.
      * @param table
-     * @param row
-     * @param repeats
-     * @param maxRepeat
-     * @param dataCols
-     * @param strategy
+     * @param row: the row number
+     * @param repeats: Repeats at all the columns.
+     * @param maxRepeat: The maximum repeat.
+     * @param dataCols: The columns the caller wants to put in the IPAC table data part.
+     * @param strategy: "TOP_MOST", "EXPAND_BEST_FIT", "EXPAND_REPEAT", "FULLY_FLATTEN".
+     *
      * @return dataArrayList
      */
     private static List<Object> getDataArrayList(StarTable table,
@@ -475,9 +505,16 @@ public final class FITSTableReader
     }
 
     /**
+     * To get dataArrayList: If the dataArrayList has content, add the cell data to it. If the dataArrayList is empty, make a new one and add the cell data to it.
+     * Cast the cell to a primitive data array, data[], based on the class type of the cell.
+     * Convert data[repeat] to dataOut[maxRepeat]: fill the missing data with null or the last value, based on the strategy.
+     * Convert data type to dataOut type: short or Short to dataOut int[], char or String to dataOut String[].
+     * Since StarTable package converts bits type to boolean, we need to find out the original type for the boolean inputs:
+     *          if the original type was bits, convert boolean to integer, 0 or 1; if it was logical, convert boolean to String 'true' or 'false'.
+     * (remaining issue: how to fill null if the data is int[] or long[]?  and else for strategy?)
      *
-     * @param cell
-     * @param colInfo
+     * @param cell the data at the row and the column
+     * @param colInfo the column info at the col.
      * @param repeat
      * @param maxRepeat
      * @param strategy
@@ -517,8 +554,11 @@ public final class FITSTableReader
                         if (strategy.equals("EXPAND_REPEAT")) {
                             dataOut[rpt] = Boolean.toString(data[data.length -1 ]);
                         }
-                        else {
+                        else if (strategy.equals("EXPAND_BEST_FIT")){
                             dataOut[rpt] = null;
+                        }
+                        else {
+                            //dataOut[rpt] = null;
                         }
                     }
                 }
@@ -535,8 +575,11 @@ public final class FITSTableReader
                         if (strategy.equals("EXPAND_REPEAT")) {
                             dataOut[rpt] = data[data.length - 1] ? 1:0;
                         }
-                        else {
+                        else if (strategy.equals("EXPAND_BEST_FIT")){
                             dataOut[rpt] = Integer.parseInt(null);
+                        }
+                        else {
+                            //
                         }
                     }
                 }
@@ -560,8 +603,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = Integer.MIN_VALUE;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -584,8 +630,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = Integer.MIN_VALUE;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -608,8 +657,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = Long.MIN_VALUE;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -632,8 +684,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = Float.NaN;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -656,8 +711,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = Double.NaN;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -680,8 +738,11 @@ public final class FITSTableReader
                     if (strategy.equals("EXPAND_REPEAT")) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else {
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
                         dataOut[rpt] = null;
+                    }
+                    else {
+                        //
                     }
                 }
             }
@@ -694,9 +755,16 @@ public final class FITSTableReader
         return dataArrayList;
     }
 
-
-
-    /** Get attribute data array from a cell.
+    /**
+     * To get the attribute data ArrayList, attArrayList, from a cell. Each element is one datum in the cell.
+     * Cast the cell to a primitive data array, dataOut[], based on the class type of the cell.
+     * Convert the type from the cell to dataOut:
+     *      short or Short to dataOut int[];
+     *      char or String to dataOut String[].
+     *      Since StarTable package converts FITS bits type to boolean, we need to convert
+     *          boolean to int (1 or 0) if original is bits;
+     *          boolean to to String ('true' or 'false') if original is logical.
+     *
      * @param cell: Input cell data
      * @param colInfo: column information
      * @return attArrayList: attribute data
@@ -772,9 +840,11 @@ public final class FITSTableReader
         return attArrayList;
     }
 
-    /** Get attribute value (String) from one cell
+    /** Get the attribute value (String) from the attArrayList:
+     * Concatenate the numbers in the list and the divider "," to a string, value, and return.
+     *
      * @param attArrayList: attribute data list
-     * @return attribute value (concatenated string)
+     * @return attribute value
      */
     private static String getAttributeValue(List<Object> attArrayList) throws IOException {
 
