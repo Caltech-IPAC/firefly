@@ -68,8 +68,8 @@ public final class FITSTableReader
 
         //String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
-        String strategy = "TOP_MOST";
-        //String strategy = "FULLY_FLATTEN";
+        //String strategy = "TOP_MOST";
+        String strategy = "FULLY_FLATTEN";
 
         int whichDG = 3;
 
@@ -223,7 +223,8 @@ public final class FITSTableReader
                 }
             }
             if (Arrays.asList(dataCols).contains(colName[col])){
-                dataTypeList.add(convertToDataTypeList(colInfo));
+                //dataTypeList only contains the columns in dataCols:
+                dataTypeList.add(convertToDataType(colInfo));
             }
         }
 
@@ -318,7 +319,7 @@ public final class FITSTableReader
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
-                dataGroup = fillDataToGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataToGroup(maxRepeat, dataArrayList, dataTypeList, dataGroup);
 
             }
 
@@ -349,7 +350,7 @@ public final class FITSTableReader
 
             for (int row = 0; row < nRows; row++) {
                 // define dataGroup per row:
-                String dgTitle = tableName + " Row#: " + row;
+                String dgTitle = tableName + " Row #: " + row;
 
                 //One data group per row:
                 DataGroup dataGroup = new DataGroup(dgTitle, dataTypeList);
@@ -359,7 +360,7 @@ public final class FITSTableReader
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
-                dataGroup = fillDataToGroup(nColumns, maxRepeat, dataCols, colName, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataToGroup(maxRepeat, dataArrayList, dataTypeList, dataGroup);
 
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
@@ -381,49 +382,40 @@ public final class FITSTableReader
     }
 
     /**
-     * Fill the dataObj with the dataArralyList and dataTypeList and then add the dataObj to the dataGroup.
+     * Fill the dataObj with the dataArralyList[maxRepeat] and dataTypeList[nColumn] and then add the dataObj to the dataGroup.
      * One dataObj collects the data from all the columns at one repeat.
      * One dataGroup contains dataObjs from all the repeats.
-     * @param nColumns
      * @param maxRepeat
-     * @param dataCols
-     * @param colName
      * @param dataArrayList
      * @param dataTypeList
      * @param dataGroup
      * @return
      * @throws FitsException
      */
-    private static DataGroup fillDataToGroup(int nColumns,
-                                           int maxRepeat,
-                                           String[] dataCols,
-                                           String[] colName,
+    private static DataGroup fillDataToGroup(int maxRepeat,
                                            List<Object> dataArrayList,
                                            List<DataType> dataTypeList,
                                            DataGroup dataGroup)
     throws FitsException {
 
+        int size = dataArrayList.size();
         for (int repeat = 0; repeat < maxRepeat; repeat++) {
             DataObject dataObj = new DataObject(dataGroup);
-            int dataTypeIndex = 0;
-            for (int col = 0; col < nColumns; col++) {
-                if (Arrays.asList(dataCols).contains(colName[col])) {
-                    dataTypeIndex++;
-                    DataType dataType = dataTypeList.get(dataTypeIndex - 1);
-                    String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
-                    Object data = dataArrayList.get(dataTypeIndex - 1);
-                    dataObj = fillDataObj(repeat, data, type, dataType, dataObj);
-                }
+            for (int col = 0; col < size; col++) {
+                DataType dataType = dataTypeList.get(col);
+                String type = dataTypeList.get(col).getDataType().toString();
+                Object data = dataArrayList.get(col);
+                dataObj = fillDataObj(repeat, data, type, dataType, dataObj);
             }
             dataGroup.add(dataObj);
         }
-
         return dataGroup;
     }
 
     /**
      * Depending on the data type, cast data array into a corresponding primitive type array.
      * Fill the dataObj with the data at [repeat] and the dataType.
+     * When filling dataArrayList, we only have the data types of Integer, Long, Float, Double, and String???.
      * Will handle complex type later.
      *
      * @param repeat
@@ -586,34 +578,9 @@ public final class FITSTableReader
                 dataArrayList.add(dataOut);
             }
         }
-        else if ((classType.contains("short")) || (classType.contains("Short"))) {
-            int [] data = new int[repeat];
-            if (isCellArray) {
-                data = (int[])cell;
-            }
-            else {
-                data[0] = (Integer) cell;
-            }
-            int[] dataOut = new int[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
-                }
-                else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
-                        dataOut[rpt] = Integer.MIN_VALUE;
-                    }
-                    else {
-                        //
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("int")) || (classType.contains("Integer"))) {
+        else if ((classType.contains("byte")) || (classType.contains("Byte")) ||
+                 (classType.contains("short")) || (classType.contains("Short")) ||
+                 (classType.contains("int")) || (classType.contains("Integer"))) {
             int [] data = new int[repeat];
             if (isCellArray) {
                 data = (int[])cell;
@@ -794,13 +761,9 @@ public final class FITSTableReader
                     }
                 }
             }
-            else if ((classType.contains("short")) || (classType.contains("Short"))) {
-                int[] dataOut = (int [])cell;
-                for (int i = 0; i < dataOut.length; i++){
-                    attArrayList.add(dataOut[i]);
-                }
-            }
-            else if ((classType.contains("int")) || (classType.contains("Integer"))) {
+            else if ((classType.contains("byte")) || (classType.contains("Byte")) ||
+                     (classType.contains("short")) || (classType.contains("Short")) ||
+                     (classType.contains("int")) || (classType.contains("Integer"))) {
                 int[] dataOut = (int [])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
@@ -859,12 +822,20 @@ public final class FITSTableReader
     }
 
     /**
+     * Convert the column info, provided by StarTable, to dataType.
+     * The originalType is the original data type stored in FITS table. StarTable stores it in the column info.
+     * The classType is the data type StarTable converts from the originalType (say Bits -> Boolean).
+     * Based on classType and originalType, we set java_class (dataType.setDataType(java_class)):
+     *  (1)Boolean/boolean -> Integer if originalType is Bits; Boolean/boolean -> String if originalType is logical
+     *  (2)Short/short -> Integer
+     * Based on classType set primitive_class, dataType.setTypeDesc(primitive_type); (not use?)
+     * Set unit.
      *
      * @param colInfo
      * @return dataType
      * @throws FitsException
      */
-    public static DataType convertToDataTypeList (ColumnInfo colInfo)
+    public static DataType convertToDataType (ColumnInfo colInfo)
     throws FitsException{
 
         String colName = colInfo.getName();
@@ -1088,4 +1059,3 @@ public final class FITSTableReader
 	return _dataGroupList;
     }
 }
-
