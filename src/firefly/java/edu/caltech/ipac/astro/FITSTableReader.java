@@ -41,6 +41,7 @@ public final class FITSTableReader
 
     public static void main(String[] args)
     {
+
         if (args.length != 2)
         {
             usage();
@@ -66,10 +67,10 @@ public final class FITSTableReader
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
         String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
 
-        //String strategy = "EXPAND_BEST_FIT";
+        String strategy = "EXPAND_BEST_FIT";
         //String strategy = "EXPAND_REPEAT";
         //String strategy = "TOP_MOST";
-        String strategy = "FULLY_FLATTEN";
+        //String strategy = "FULLY_FLATTEN";
 
         int whichDG = 3;
 
@@ -260,16 +261,16 @@ public final class FITSTableReader
                         String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
                         Object data = dataArrayList.get(dataTypeIndex - 1);
                         if (type.contains("Integer")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((int [])data)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Integer [])data)[0]);
                         }
                         else if (type.contains("Long")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((long [])data)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Long [])data)[0]);
                         }
                         else if (type.contains("Float")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((float [])data)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Float [])data)[0]);
                         }
                         else if (type.contains("Double")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((double [])data)[0]);
+                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Double [])data)[0]);
                         }
                         else if ((type.contains("String")) || (type.contains("char"))) {
                             dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])data)[0]);
@@ -434,16 +435,16 @@ public final class FITSTableReader
     throws FitsException {
 
         if (type.contains("Integer")){
-            dataObj.setDataElement(dataType, ((int [])data)[repeat]);
+            dataObj.setDataElement(dataType, ((Integer [])data)[repeat]);
         }
         else if (type.contains("Long")){
-            dataObj.setDataElement(dataType, ((long [])data)[repeat]);
+            dataObj.setDataElement(dataType, ((Long [])data)[repeat]);
         }
         else if (type.contains("Float")){
-            dataObj.setDataElement(dataType, ((float [])data)[repeat]);
+            dataObj.setDataElement(dataType, ((Float [])data)[repeat]);
         }
         else if (type.contains("Double")){
-            dataObj.setDataElement(dataType, ((double [])data)[repeat]);
+            dataObj.setDataElement(dataType, ((Double [])data)[repeat]);
         }
         else if ((type.contains("String")) || (type.contains("char"))) {
             dataObj.setDataElement(dataType, ((String [])data)[repeat]);
@@ -550,7 +551,7 @@ public final class FITSTableReader
                             dataOut[rpt] = null;
                         }
                         else {
-                            //dataOut[rpt] = null;
+                            //
                         }
                     }
                 }
@@ -558,7 +559,7 @@ public final class FITSTableReader
             }
             else if (originalType.contains("X")){
                 //Bits:
-                int[] dataOut = new int[maxRepeat];
+                Integer[] dataOut = new Integer[maxRepeat];
                 for (int rpt = 0; rpt < maxRepeat; rpt ++){
                     if (rpt < data.length) {
                         dataOut[rpt] = data[rpt] ? 1 : 0;
@@ -568,7 +569,7 @@ public final class FITSTableReader
                             dataOut[rpt] = data[data.length - 1] ? 1:0;
                         }
                         else if (strategy.equals("EXPAND_BEST_FIT")){
-                            dataOut[rpt] = Integer.parseInt(null);
+                            dataOut[rpt] = null;
                         }
                         else {
                             //
@@ -588,7 +589,7 @@ public final class FITSTableReader
             else {
                 data[0] = (Integer) cell;
             }
-            int[] dataOut = new int[maxRepeat];
+            Integer[] dataOut = new Integer[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
                 if (rpt < data.length) {
                     dataOut[rpt] = data[rpt];
@@ -598,7 +599,7 @@ public final class FITSTableReader
                         dataOut[rpt] = data[data.length - 1];
                     }
                     else if (strategy.equals("EXPAND_BEST_FIT")){
-                        dataOut[rpt] = Integer.MIN_VALUE;
+                        dataOut[rpt] = null;
                     }
                     else {
                         //
@@ -615,7 +616,7 @@ public final class FITSTableReader
             else {
                 data[0] = (Long) cell;
             }
-            long[] dataOut = new long[maxRepeat];
+            Long[] dataOut = new Long[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
                 if (rpt < data.length) {
                     dataOut[rpt] = data[rpt];
@@ -625,7 +626,7 @@ public final class FITSTableReader
                         dataOut[rpt] = data[data.length - 1];
                     }
                     else if (strategy.equals("EXPAND_BEST_FIT")){
-                        dataOut[rpt] = Long.MIN_VALUE;
+                        dataOut[rpt] = null;
                     }
                     else {
                         //
@@ -642,7 +643,7 @@ public final class FITSTableReader
             else {
                 data[0] = (Float) cell;
             }
-            float[] dataOut = new float[maxRepeat];
+            Float[] dataOut = new Float[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
                 if (rpt < data.length) {
                     dataOut[rpt] = data[rpt];
@@ -669,7 +670,7 @@ public final class FITSTableReader
             else {
                 data[0] = (Double) cell;
             }
-            double[] dataOut = new double[maxRepeat];
+            Double[] dataOut = new Double[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
                 if (rpt < data.length) {
                     dataOut[rpt] = data[rpt];
