@@ -17,8 +17,11 @@ import edu.caltech.ipac.firefly.ui.table.builder.TableConfig;
  * @author Trey Roby
 */
 public class NewTableResults {
+    public static final String BRING_TO_FRONT = "BringToFront";
+
     private TableConfig config;
     private String _tableType;
+    private boolean bringToFront = true;
 
     public NewTableResults(TableConfig config, String tableType) {
         this.config = config;
@@ -33,6 +36,14 @@ public class NewTableResults {
 
     public TableConfig getConfig() {
         return config;
+    }
+
+    public boolean isBringToFront() {
+        return bringToFront;
+    }
+
+    public void setBringToFront(boolean bringToFront) {
+        this.bringToFront = bringToFront;
     }
 }
 

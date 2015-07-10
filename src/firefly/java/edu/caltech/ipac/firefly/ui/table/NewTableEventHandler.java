@@ -71,7 +71,7 @@ public class NewTableEventHandler implements WebEventListener {
     public void eventNotify(WebEvent ev) {
 
         if ( ev.getData() instanceof NewTableResults) {
-            NewTableResults tableInfo = (NewTableResults) ev.getData();
+            final NewTableResults tableInfo = (NewTableResults) ev.getData();
             if (tab == null || (!GwtUtil.isOnDisplay(tab) && hiddenCleanup) ) {
                 WebEventManager.getAppEvManager().removeListener(Name.NEW_TABLE_RETRIEVED,this);
             }
@@ -93,7 +93,9 @@ public class NewTableEventHandler implements WebEventListener {
                             table.addDownloadButton(tconfig.getDownloadSelectionIF(), dlreq.getRequestId(),
                                     dlreq.getFilePrefix(), dlreq.getTitlePrefix(), null);
                         }
-                        tab.selectTab(tabItem);
+                        if (tableInfo.isBringToFront()) {
+                            tab.selectTab(tabItem);
+                        }
                         if (table instanceof TablePrimaryDisplay) {
                             TablePanel tp= ((TablePrimaryDisplay)table).getTable();
                             tp.getTable().setShowUnits(true);

@@ -35,7 +35,7 @@ public class PrivateCache implements Cache {
     }
 
     public void put(CacheKey key, Object value, int lifespanInSecs) {
-        cache.put(getPrivateKey(key), value);
+        cache.put(getPrivateKey(key), value, lifespanInSecs);
     }
 
     public Object get(CacheKey key) {

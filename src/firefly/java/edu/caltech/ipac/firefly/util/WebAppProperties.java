@@ -190,7 +190,11 @@ public class WebAppProperties {
       return getBooleanProp(key,def,false);
   }
 
-  /**
+  public boolean getBooleanProperty(String key, boolean def, boolean isPref) {
+        return getBooleanProp(key,def,isPref);
+    }
+
+    /**
    * return as a boolean the requested property value.
    * @param key the request property
    * @param def the default value to return if the property does not

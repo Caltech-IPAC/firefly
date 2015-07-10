@@ -51,8 +51,10 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|1b", "links-allsky/l1b-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLSKY_4BAND+"|3a", "links-allsky/l3a-4band/");
         PROD_LEVEL_MAP.put(WiseRequest.ALLWISE_MULTIBAND+"|3a", "links-allwise/l3a/");
-        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-allsky/l1b-merge/");  // exists under links-allsky
-        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-allwise/l3a-merge/");  // exists under links-allwise
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|1b", "links-merge/l1b/");  // was under links-allsky
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE+"|3a", "links-merge/l3a/");  // was under links-allwise
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE_INT+"|1b", "links-merge/l1b/");  // same link tree as ops(?)
+        PROD_LEVEL_MAP.put(WiseRequest.MERGE_INT+"|3a", "links-merge/l3a/");  // same link tree as ops(?)
         PROD_LEVEL_MAP.put(WiseRequest.NEOWISER +"|1b", "links-neowiser/l1b/");
 
 
@@ -211,7 +213,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
         String table = req.getTable();
-        String schema = WiseRequest.getTableSchema(req.getSchema());
+        String schema = WiseRequest.getTableSchema(req, req.getSchema());
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table;
     }
@@ -310,7 +312,7 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
 
         String schema = sr.getSafeParam(WiseRequest.SCHEMA);
         if (schema.contains(",")) {
-            schema = WiseRequest.MERGE;
+            schema = sr.getBooleanParam(WiseRequest.PUBLIC_RELEASE, true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
         }
 
         if (productLevel.equalsIgnoreCase("1b")) {

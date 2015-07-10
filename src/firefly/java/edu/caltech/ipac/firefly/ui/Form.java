@@ -33,6 +33,7 @@ import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.util.AsyncCallbackGroup;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.FieldDef;
+import edu.caltech.ipac.util.dd.StringFieldDef;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -291,6 +292,12 @@ public class Form extends Composite implements HasWidgets {
         submitButton = button;
     }
 
+    public void addHiddenField(String name, String value) {
+        getUngroupedFieldsMap();
+        HiddenField hf = new HiddenField(new StringFieldDef(name));
+        hf.setValue(value);
+        ungroupedFields.put(name, hf);
+    }
 
     public static List<InputField> searchForFields(Widget parent) {
         List<InputField> fields = new ArrayList<InputField>();

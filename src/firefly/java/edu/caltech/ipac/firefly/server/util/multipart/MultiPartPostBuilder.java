@@ -60,6 +60,7 @@ public class MultiPartPostBuilder {
     public void addFile(String name, File file) {
         try {
             parts.add(new FilePart(name, file));
+            params.add(new Param(name, file.getPath()));
         } catch (FileNotFoundException e) {
             LOG.error(e, "Unable to add to MultiPartPostBuilder.  File not found:" + file);
         }
@@ -129,12 +130,13 @@ public class MultiPartPostBuilder {
 
     private void logStart() {
         List<String> logList= new ArrayList<String>(20);
+        logList.add("Post URL: " + targetURL);
         logList.add("Post Params");
         for(Param param : params) {
           logList.add("   " + param.getName()+ "=" + param.getValue());
         }
         String sary[]= logList.toArray(new String[logList.size()]);
-        Logger.debug(sary);
+        LOG.debug(sary);
 
     }
 

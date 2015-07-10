@@ -240,7 +240,7 @@ public class QueryWise extends IBESearchProcessor {
                                                   IOException {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = WiseRequest.getTableSchema(req.getSchema());
+        String schema = WiseRequest.getTableSchema(req, req.getSchema());
         String table = req.getTable();
 
         String urlString = makeBaseSearchURL(host, schemaGroup, schema, table);
@@ -577,7 +577,7 @@ public class QueryWise extends IBESearchProcessor {
         WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = WiseRequest.getTableSchema(req.getSchema());
+        String schema = WiseRequest.getTableSchema(req, req.getSchema());
         String table = req.getTable();
         return makeDDURL(host, schemaGroup, schema, table);
     }

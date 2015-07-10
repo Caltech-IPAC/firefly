@@ -105,13 +105,15 @@ public abstract class TableDataConnection implements DataConnection {
             DrawObj drawObj= _lastDataReturn.get(idx);
             Pt pt= drawObj.getCenterPt();
             Ext.ExtensionResult r= Ext.makeExtensionResult();
-            ImagePt ipt= p.getImageCoords(pt);
-            WorldPt wpt= p.getWorldCoords(pt);
-            if (ipt!=null) r.setExtValue("ipt",ipt.serialize());
-            if (wpt!=null) r.setExtValue("wpt",wpt.serialize());
-            r.setExtValue("plotId", mpw.getPlotId());
-            r.setExtValue("title", getTitle(null));
-            Ext.fireExtAction(null,r);
+            if (r!= null) {
+                ImagePt ipt= p.getImageCoords(pt);
+                WorldPt wpt= p.getWorldCoords(pt);
+                if (ipt!=null) r.setExtValue("ipt",ipt.serialize());
+                if (wpt!=null) r.setExtValue("wpt",wpt.serialize());
+                r.setExtValue("plotId", mpw.getPlotId());
+                r.setExtValue("title", getTitle(null));
+                Ext.fireExtAction(null,r);
+            }
         }
 
 

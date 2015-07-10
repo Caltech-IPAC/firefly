@@ -17,10 +17,22 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.http.client.methods.HttpGet;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Map;
 
@@ -58,6 +70,27 @@ public class HttpServices {
         connectionManager.setParams(params);
         httpClient = new HttpClient(connectionManager);
         httpClient.setHostConfiguration(hostConfig);
+    }
+
+    public static int getDataViaUrl(URL url, File results) throws FileNotFoundException {
+        return getDataViaUrl(url, new BufferedOutputStream(new FileOutputStream(results), FileUtil.BUFFER_SIZE));
+    }
+
+    public static int getDataViaUrl(URL url, OutputStream results) {
+        GetMethod getter = null;
+        try {
+            getter = new GetMethod(url.toURI().toString());
+            executeMethod(getter);
+            readBody(results, getter.getResponseBodyAsStream());
+            return getter.getStatusLine().getStatusCode();
+        } catch (Exception e) {
+            LOG.error(e);
+        } finally {
+            if (getter != null) {
+                getter.releaseConnection();
+            }
+        }
+        return 500;
     }
 
     public static boolean executeMethod(HttpMethod method) {
@@ -131,5 +164,21 @@ public class HttpServices {
         return null;
     }
 
+
+    static void readBody(OutputStream os, InputStream body) {
+        BufferedInputStream bis = new BufferedInputStream(body);
+        BufferedOutputStream bos = new BufferedOutputStream(os);
+        try {
+            int b;
+            while ((b = bis.read()) != -1) {
+                bos.write(b);
+            }
+
+            bos.flush();
+
+        } catch (IOException e) {
+            LOG.error(e, "Error while reading response body");
+        }
+    }
 
 }

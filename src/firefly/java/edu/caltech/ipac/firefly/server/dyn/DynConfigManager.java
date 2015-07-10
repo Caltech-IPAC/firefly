@@ -91,7 +91,7 @@ public class DynConfigManager {
         long xmlLastModified = getLastModified(xmlFileName);
 
         CacheKey cacheKey = new StringKey("HydraProjectList");
-        logger.info("cache key: " + cacheKey.getUniqueString());
+        logger.debug("cache key: " + cacheKey.getUniqueString());
         Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
         ProjectListCache pCache = (ProjectListCache) cache.get(cacheKey);
         if (pCache == null || pCache.getXmlTimestamp() < xmlLastModified) {
@@ -194,7 +194,7 @@ public class DynConfigManager {
 
         } else {
             obj = pCache.getData();
-            logger.info("Using server-side cached xml object: " + xmlFileName);
+            logger.debug("Using server-side cached xml object: " + xmlFileName);
         }
 
         return obj;

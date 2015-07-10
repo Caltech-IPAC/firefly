@@ -42,6 +42,18 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
     private final String              _title;
     private final int _animationX;
     private final int _animationY;
+    private boolean doAnimation = true;
+    private boolean showImmediately = false;
+
+    public static IrsaCatalogTask getCatalog(Widget w,
+                                             CatalogRequest req,
+                                             CatalogSearchResponse response,
+                                             String title,
+                                             boolean showImmediately) {
+        IrsaCatalogTask task = getCatalog(w, req, response, -1, -1, title);
+        task.showImmediately = showImmediately;
+        return task;
+    }
 
 
     public static IrsaCatalogTask getCatalog(Widget w,
@@ -76,12 +88,13 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
         _title= title;
         _animationX= animationX;
         _animationY= animationY;
+        doAnimation = _animationX >= 0 && _animationY >= 0;
     }
 
     @Override
     public void onSuccess(BackgroundStatus bgStat) {
         WebEventManager.getAppEvManager().fireEvent(new WebEvent(this, Name.CATALOG_SEARCH_IN_PROCESS));
-        MonitorItem monItem= new MonitorItem(_req, _title, BackgroundUIHint.CATALOG, false);
+        MonitorItem monItem = new MonitorItem(_req, _title, BackgroundUIHint.CATALOG, false);
         monItem.setStatus(bgStat);
         monItem.setActivateOnCompletion(true);
         if (bgStat.isSuccess()) {
@@ -103,8 +116,11 @@ public class IrsaCatalogTask extends ServerTask<BackgroundStatus> {
             @Override
             public void run() {
                 BackgroundMonitor monitor= Application.getInstance().getBackgroundMonitor();
-                Application.getInstance().getBackgroundManager().animateToManager(_animationX, _animationY, 1300);
+                if (doAnimation) {
+                    Application.getInstance().getBackgroundManager().animateToManager(_animationX, _animationY, 1300);
+                }
                 monItem.setWatchable(true);
+                monItem.setImmediately(showImmediately);
                 monitor.addItem(monItem);
                 _response.status(CatalogSearchResponse.RequestStatus.BACKGROUNDING);
                 maskPane.hide();

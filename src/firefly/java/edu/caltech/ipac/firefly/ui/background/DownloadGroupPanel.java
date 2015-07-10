@@ -151,7 +151,7 @@ public class DownloadGroupPanel extends Composite {
                         _monItem.getActivateOnCompletion() &&
                         !_monItem.getStatus().isMultiPart()) {
                     _calledAutoActivation= true;
-                    ActivationFactory.getInstance().activate(_monItem,0,true);
+                    ActivationFactory.getInstance().activate(_monItem,0,!_monItem.getImmediately());
                 }
             }
         }

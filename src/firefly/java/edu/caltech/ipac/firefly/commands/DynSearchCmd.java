@@ -61,6 +61,7 @@ import edu.caltech.ipac.firefly.ui.creator.TablePanelCreator;
 import edu.caltech.ipac.firefly.ui.creator.TablePrimaryDisplay;
 import edu.caltech.ipac.firefly.ui.creator.WidgetFactory;
 import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
+import edu.caltech.ipac.firefly.ui.creator.eventworker.FormEventWorker;
 import edu.caltech.ipac.firefly.ui.gwtclone.SplitLayoutPanelFirefly;
 import edu.caltech.ipac.firefly.ui.input.InputFieldGroup;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
@@ -90,6 +91,7 @@ public class DynSearchCmd extends CommonRequestCmd {
     private String projectId;
     private SearchTypeTag searchTypeTag;
     private Form searchForm;
+    private List<FormEventWorker> formEventWorkers = new ArrayList<FormEventWorker>();
 
 
     public DynSearchCmd(String projectId, String cmdId, SearchTypeTag searchTypeTag) {
@@ -99,7 +101,7 @@ public class DynSearchCmd extends CommonRequestCmd {
     }
 
     protected Form createForm() {
-        searchForm = GwtUtil.createSearchForm(searchTypeTag.getForm(), null);
+        searchForm = GwtUtil.createSearchForm(searchTypeTag.getForm(), null, formEventWorkers);
 
         // add helpId
         String helpId = searchTypeTag.getHelpId();
@@ -162,6 +164,10 @@ public class DynSearchCmd extends CommonRequestCmd {
     protected void processRequest(final Request inputReq, final AsyncCallback<String> callback) {
         WidgetFactory factory = Application.getInstance().getWidgetFactory();
         EventHub hub = new EventHub();
+        for (FormEventWorker few : formEventWorkers) {
+            few.bind(hub);
+        }
+
         PrimaryTableUILoader loader = getTableUiLoader();
 
         if (Boolean.parseBoolean(searchTypeTag.getLayoutSelector())) {

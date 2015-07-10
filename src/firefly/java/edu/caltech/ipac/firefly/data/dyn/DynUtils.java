@@ -254,7 +254,7 @@ public class DynUtils {
             if (formTag != null) {
                 List<FieldGroupTag> dlFg = formTag.getFieldGroups();
                 if (dlFg != null) {
-                    Form dlform = GwtUtil.createForm(false, formTag, null, form);
+                    Form dlform = GwtUtil.createForm(false, formTag, null, form, null);
                     ddsd.addFieldDefPanel(dlform);
                 }
             }

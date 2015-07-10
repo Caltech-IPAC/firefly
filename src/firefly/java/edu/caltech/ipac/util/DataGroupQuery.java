@@ -188,8 +188,7 @@ public class DataGroupQuery {
 
         // querying for headers
         ArrayList<DataGroup.Attribute> headerResults = new ArrayList<DataGroup.Attribute>();
-        CollectionUtil.filter(src.getAttributes().values(), headerResults,
-                getHeaderFilters().toArray(new CollectionUtil.Filter[0]));
+        CollectionUtil.filter(src.getAttributes().values(), headerResults, getHeaderFilters());
 
         for(Iterator itr = headerResults.iterator(); itr.hasNext(); ) {
             DataGroup.Attribute attrib = (DataGroup.Attribute) itr.next();
