@@ -50,14 +50,17 @@ var ListBoxInputField= React.createClass(
 
         getCurrentValueArr() {
             var curValue = this.getValue();
-            if (curValue==="") {
-                return [];
-            } else {
-                return curValue.split(',');
+            if (curValue) {
+                return (typeof curValue === 'string') ? curValue.split(',') : [curValue];
+            }
+            else {
+                return []
             }
         },
 
+
         render() {
+            var vAry= this.getCurrentValueArr();
             return (
                 <div style={{whiteSpace:"nowrap", display: this.props.inline?'inline-block':'block'}}>
                     <InputFieldLabel label={this.getLabel()}
@@ -65,14 +68,14 @@ var ListBoxInputField= React.createClass(
                         labelWidth={this.props.labelWidth}
                     />
                     <select name={this.props.fieldKey}
-                        multiple={this.props.multiple}
-                        defaultValue={this.props.multiple?this.getCurrentValueArr():this.getValue()}
-                        onChange={this.onChange}>
-                        {this.props.options.map((function(option) {
-                            return <option key={option["value"]} value={option["value"]}>
-                            &nbsp;{option["label"]}&nbsp;
+                            title={this.getTip()}
+                            multiple={this.props.multiple}
+                            onChange={this.onChange}>
+                        {this.props.options.map(( (option) => {
+                            return <option value={option.value} selected={vAry.indexOf(option.value)>-1}>
+                                &nbsp;{option.label}&nbsp;
                             </option>;
-                        }).bind(this))}
+                        }))}
                     </select>
                 </div>
             )

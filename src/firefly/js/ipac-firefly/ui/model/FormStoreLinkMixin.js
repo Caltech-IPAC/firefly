@@ -11,6 +11,7 @@
 
 import React from 'react/addons';
 import formActions from '../../actions/FormActions.js'
+import _ from 'underscore';
 
 
 
@@ -67,39 +68,53 @@ var FormStoreLinkMixin=  {
         return fieldState[key] !== undefined ? fieldState[key] : defValue;
     },
 
+    componentWillReceiveProps(nextProps) {
+        this.updateFieldStateWithProps(nextProps);
+    },
+
     getFormKey() {
         return this.props.formStore.getState().formKey;
     },
 
     componentDidMount() {
-        this.storeListenerRemove= this.props.formStore.listen(this.updateFieldState);
-        formActions.mountComponent( {
-            formKey: this.getFormKey(),
-            fieldKey : this.props.fieldKey,
-            mounted : true,
-            value: this.getValue(),
-            fieldState: this.props.initialState,
-        } );
+        //this.storeListenerRemove= this.props.formStore.listen(this.updateFieldStateOnMount.bind(this));
+        this.storeListenerRemove= this.props.formStore.listen( ()=> this.updateFieldStateWithProps(this.props));
+        _.defer(()=> {
+            formActions.mountComponent( {
+                formKey: this.getFormKey(),
+                fieldKey : this.props.fieldKey,
+                mounted : true,
+                value: this.getValue(),
+                fieldState: this.props.initialState,
+            } );
+        });
     },
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
-        formActions.mountComponent( {
-            formKey: this.getFormKey(),
-            fieldKey : this.props.fieldKey,
-            mounted : false,
-            value: this.getValue()
-        } );
+        _.defer(()=> {
+            formActions.mountComponent( {
+                formKey: this.getFormKey(),
+                fieldKey : this.props.fieldKey,
+                mounted : false,
+                value: this.getValue()
+            } );
+        });
 
         //formActions.mountComponent(this.getFormKey(),this.props.fieldKey,false,this.getValue(),this.props.initialState)
     },
 
-    updateFieldState() {
-        var {fieldKey, formStore}= this.props;
-        if (fieldKey===this.props.fieldKey && this.state.fieldState!==formStore.getState().fields[fieldKey]) {
+    //updateFieldStateOnMount() {
+    //    this.updateFieldStateWithProps(this.props)
+    //},
+
+    updateFieldStateWithProps(props) {
+        var {fieldKey, formStore}= props;
+        if (fieldKey===props.fieldKey && this.state.fieldState!==formStore.getState().fields[fieldKey]) {
             this.setState( {fieldState : formStore.getState().fields[fieldKey]});
         }
     }
+
 }
 
 

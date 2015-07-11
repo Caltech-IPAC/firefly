@@ -98,6 +98,7 @@ class InputFormBaseStore {
                 mounted, value, displayValue,
             });
         }
+        return false;
     }
 
 

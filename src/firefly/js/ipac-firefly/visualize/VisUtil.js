@@ -4,6 +4,7 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 /*jshint curly:false*/
+/*globals ffgwt*/
 
 /**
  * Shared by client and server
@@ -16,6 +17,8 @@
 import Enum from "enum";
 import {WorldPt,Pt,ImageWorkSpacePt} from "./Point.js";
 import CoordinateSys from "./CoordSys.js";
+
+var {AllPlots} = ffgwt.Visualize;
 
 
 export const DtoR = Math.PI / 180.0;
@@ -417,6 +420,15 @@ export const getArrowCoords= function(x1, y1, x2, y2) {
         textY : extY
     };
 };
+
+export const getCurrentPlot= function() {
+    var retval= null;
+    var mpw= AllPlots.getInstance().getMiniPlotWidget();
+    if (mpw) {
+        retval= mpw.getCurrentPlot()
+    }
+    return retval;
+}
 
 /**
  *

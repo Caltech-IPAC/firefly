@@ -103,10 +103,10 @@ class RangeValues {
             else if (algorithm===EQUAL_STR.toLowerCase()) a= STRETCH_EQUAL;
             else if (algorithm===SQUARED_STR.toLowerCase()) a= STRETCH_SQUARED;
             else if (algorithm===SQRT_STR.toLowerCase()) a= STRETCH_SQRT;
-            else if (algorithm===ASINH_STR.toLowerCase()) a= STRETCH_ARCSINE;
-             else if (algorithm===POWERLAW_GAMMA_STR_STR.toLowerCase()) a= STRETCH_POWERLAW_GAMMA;
+            else if (algorithm===ASINH_STR.toLowerCase()) a= STRETCH_ASINH;
+            else if (algorithm===POWERLAW_GAMMA_STR.toLowerCase()) a= STRETCH_POWERLAW_GAMMA;
         }
-        return new RangeValues(s,lowerValue,s,upperValue,drValue,bpValue, wpValue, gammaValue, a);
+        return new RangeValues(s,lowerValue,s,upperValue,drValue,0, 1, gammaValue, a);
     }
 
 
@@ -163,17 +163,12 @@ class RangeValues {
      * @param sIn serialized string representation of RangeValues
      * @return {RangeValues}
      */
-    parse(sIn) {
+    static parse(sIn) {
         if (!sIn) return null;
 
 
-        var params= sIn.split(",").map(v=>{
-            validator.toFloat(v);
-        });
-
-        var valid= params.reduce((v,value)=>{
-            return (v&&!isNaN(value));
-        },true);
+        var params= sIn.split(",").map( (v) => validator.toFloat(v) );
+        var valid= params.every( (v)=> typeof v !== 'undefined' && !isNaN(v) );
 
         return valid ? new RangeValues(...params) : false;
     }
@@ -187,7 +182,7 @@ class RangeValues {
                this.bpValue+","+
                this.wpValue+","+
                this.gammaValue+","+
-               this.stretchAlgorithm+","+
+               this.algorithm+","+
                this.zscaleContrast+","+
                this.zscaleSamples+","+
                this.zscaleSamplesPerLine;

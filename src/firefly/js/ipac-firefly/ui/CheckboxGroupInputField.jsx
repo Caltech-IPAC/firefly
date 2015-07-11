@@ -35,7 +35,7 @@ var CheckboxGroupInputField= React.createClass(
 
             var {valid,message}= this.getValidator()(curValueArr.toString());
 
-            this.props.dispatcher.dispatch({
+            this.fireValueChange({
                 formKey : this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 newValue : curValueArr.toString(),
@@ -43,6 +43,7 @@ var CheckboxGroupInputField= React.createClass(
                 valid,
                 fieldState : this.state.fieldState
             });
+
         },
 
         componentWillMount() {

@@ -96,5 +96,26 @@ exports.floatRange = function(min,max,precision, description, valStr) {
     return validateRange(min,max,precision,description,typeInject.asFloat,valStr);
 };
 
+exports.isFloat = function(description, valStr) {
+    var retval= { valid : true, message : '' };
+    if (valStr) {
+        if (!validator.isFloat(valStr)) {
+            retval.valid = false;
+            retval.message = description + ': must be a float';
+        }
+    }
+    return retval;
+};
 
+
+exports.isInt = function(description, valStr) {
+    var retval= { valid : true, message : '' };
+    if (valStr) {
+        if (!validator.isInt(valStr)) {
+            retval.valid = false;
+            retval.message = description + ': must be an int';
+        }
+    }
+    return retval;
+};
 
