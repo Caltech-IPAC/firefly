@@ -75,7 +75,7 @@ In a terminal, cd into the `firefly` directory, then run:
 
     $ gradle :fftools:war
 
-This generates fftools.war located at ./build/lib/.
+This generates fftools.war located at ./build/libs/.
 Simply drop this file into your $CATALINA_HOME/webapps/ directory to deploy it.
 $CATALINA_HOME is your Tomcat server installation directory.
 
