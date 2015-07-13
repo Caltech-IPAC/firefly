@@ -41,7 +41,6 @@ public final class FITSTableReader
 
     public static void main(String[] args)
     {
-
         if (args.length != 2)
         {
             usage();
@@ -72,7 +71,7 @@ public final class FITSTableReader
         //String strategy = "TOP_MOST";
         //String strategy = "FULLY_FLATTEN";
 
-        int whichDG = 3;
+        int whichDG = 0;
 
         try {
             List<DataGroup> dgListTotal = fits_to_ipac.convertFITSToDataGroup(
@@ -404,9 +403,8 @@ public final class FITSTableReader
             DataObject dataObj = new DataObject(dataGroup);
             for (int col = 0; col < size; col++) {
                 DataType dataType = dataTypeList.get(col);
-                String type = dataTypeList.get(col).getDataType().toString();
                 Object data = dataArrayList.get(col);
-                dataObj = fillDataObj(repeat, data, type, dataType, dataObj);
+                dataObj = fillDataObj(repeat, data, dataType, dataObj);
             }
             dataGroup.add(dataObj);
         }
@@ -414,14 +412,13 @@ public final class FITSTableReader
     }
 
     /**
-     * Depending on the data type, cast data array into a corresponding primitive type array.
-     * Fill the dataObj with the data at [repeat] and the dataType.
-     * When filling dataArrayList, we only have the data types of Integer, Long, Float, Double, and String???.
+     * Fill the dataObj with the data at the given repeat and column and with the dataType.
+     * Depending on the data type, cast data array into a corresponding reference type array.
+     * When filling dataArrayList, we only have the data types of Integer, Long, Float, Double, and String.
      * Will handle complex type later.
      *
      * @param repeat
      * @param data
-     * @param type
      * @param dataType
      * @param dataObj
      * @return
@@ -429,38 +426,40 @@ public final class FITSTableReader
      */
     private static DataObject fillDataObj(int repeat,
                                           Object data,
-                                          String type,
                                           DataType dataType,
                                           DataObject dataObj)
     throws FitsException {
 
-        if (type.contains("Integer")){
+        String classType = dataType.getDataType().toString();
+
+        if (classType.contains("Integer")){
             dataObj.setDataElement(dataType, ((Integer [])data)[repeat]);
         }
-        else if (type.contains("Long")){
+        else if (classType.contains("Long")){
             dataObj.setDataElement(dataType, ((Long [])data)[repeat]);
         }
-        else if (type.contains("Float")){
+        else if (classType.contains("Float")){
             dataObj.setDataElement(dataType, ((Float [])data)[repeat]);
         }
-        else if (type.contains("Double")){
+        else if (classType.contains("Double")){
             dataObj.setDataElement(dataType, ((Double [])data)[repeat]);
         }
-        else if ((type.contains("String")) || (type.contains("char"))) {
+        else if ((classType.contains("String")) || (classType.contains("char"))) {
             dataObj.setDataElement(dataType, ((String [])data)[repeat]);
         }
         else {
             throw new FitsException(
-                    "Unrecognized format character in FITS table file: " + type);
+                    "Unrecognized format character in FITS table file: " + classType);
         }
 
         return dataObj;
     }
 
     /**
-     * To get dataArrayList which contains the data from one row in the table.
-     * Each element in dataArrayList is  the data in the cell[row, col] which could be a singl datum or a data array.
-     * Only the columns in the list dataCols will be put in dataArrayList.
+     * To get the dataArrayList which contains the data from one row in a table.
+     * Each element in dataArrayList is  the data in a cell[row, col] which could be a single datum or a data array.
+     * Only the columns in the list dataCols will be put in the dataArrayList.
+     *
      * @param table
      * @param row: the row number
      * @param repeats: Repeats at all the columns.
@@ -498,13 +497,13 @@ public final class FITSTableReader
     }
 
     /**
-     * To get dataArrayList: If the dataArrayList has content, add the cell data to it. If the dataArrayList is empty, make a new one and add the cell data to it.
-     * Cast the cell to a primitive data array, data[], based on the class type of the cell.
-     * Convert data[repeat] to dataOut[maxRepeat]: fill the missing data with null or the last value, based on the strategy.
-     * Convert data type to dataOut type: short or Short to dataOut int[], char or String to dataOut String[].
-     * Since StarTable package converts bits type to boolean, we need to find out the original type for the boolean inputs:
-     *          if the original type was bits, convert boolean to integer, 0 or 1; if it was logical, convert boolean to String 'true' or 'false'.
-     * (remaining issue: how to fill null if the data is int[] or long[]?  and else for strategy?)
+     * Collect the cell data to dataArrayList: If the dataArrayList has content, keep adding the cell data to it. If the dataArrayList is empty, make a new one and add the cell data to it.
+     * If the cell is an array, the classType should be primitive. Cast the cell to a primitive data array, data[], based on the class type of the cell.
+     * If the cell is a single value, the classType should be the reference type, like Integer. Cast the cell into a reference type based on the class type and put it in the data[].
+     * Convert data[repeat] to dataOut[maxRepeat] which is declared at the corresponding reference type:
+     *      (1)Convert boolean[] to Integer[] (1 or 0) if original type is bits; to String[]("true"/"false") if the original type is logical.
+     *      (2)Convert byte[]/short[] to Integer[].
+     *      (3)Fill the missing data with null or the last value, based on the strategy "EXPAND_BEST_FIT" or "EXPAND_REPEAT".
      *
      * @param cell the data at the row and the column
      * @param colInfo the column info at the col.
@@ -579,20 +578,72 @@ public final class FITSTableReader
                 dataArrayList.add(dataOut);
             }
         }
-        else if ((classType.contains("byte")) || (classType.contains("Byte")) ||
-                 (classType.contains("short")) || (classType.contains("Short")) ||
-                 (classType.contains("int")) || (classType.contains("Integer"))) {
+        else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
+            byte [] data = new byte[repeat];
+            if (isCellArray) {
+                data = (byte[])cell;
+            }
+            else {
+                data[0] = (Byte)cell;
+            }
+            Integer[] dataOut = new Integer[maxRepeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = (int)data[rpt];
+                }
+                else {
+                    if (strategy.equals("EXPAND_REPEAT")) {
+                        dataOut[rpt] = (int)data[data.length - 1];
+                    }
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                        dataOut[rpt] = null;
+                    }
+                    else {
+                        //
+                    }
+                }
+            }
+            dataArrayList.add(dataOut);
+        }
+        else if ((classType.contains("short")) || (classType.contains("Short"))) {
+            short [] data = new short[repeat];
+            if (isCellArray) {
+                data = (short[])cell;
+            }
+            else {
+                data[0] = (Short)cell;
+            }
+            Integer[] dataOut = new Integer[maxRepeat];
+            for (int rpt = 0; rpt < maxRepeat; rpt++){
+                if (rpt < data.length) {
+                    dataOut[rpt] = (int)data[rpt];
+                }
+                else {
+                    if (strategy.equals("EXPAND_REPEAT")) {
+                        dataOut[rpt] = (int)data[data.length - 1];
+                    }
+                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                        dataOut[rpt] = null;
+                    }
+                    else {
+                        //
+                    }
+                }
+            }
+            dataArrayList.add(dataOut);
+        }
+        else if ((classType.contains("int")) || (classType.contains("Integer"))) {
             int [] data = new int[repeat];
             if (isCellArray) {
                 data = (int[])cell;
             }
             else {
-                data[0] = (Integer) cell;
+                data[0] = (Integer)cell;
             }
             Integer[] dataOut = new Integer[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
                 if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
+                    dataOut[rpt] = (Integer)data[rpt];
                 }
                 else {
                     if (strategy.equals("EXPAND_REPEAT")) {
@@ -614,7 +665,7 @@ public final class FITSTableReader
                 data = (long[])cell;
             }
             else {
-                data[0] = (Long) cell;
+                data[0] = (Long)cell;
             }
             Long[] dataOut = new Long[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
@@ -641,7 +692,7 @@ public final class FITSTableReader
                 data = (float[])cell;
             }
             else {
-                data[0] = (Float) cell;
+                data[0] = (Float)cell;
             }
             Float[] dataOut = new Float[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
@@ -653,7 +704,7 @@ public final class FITSTableReader
                         dataOut[rpt] = data[data.length - 1];
                     }
                     else if (strategy.equals("EXPAND_BEST_FIT")){
-                        dataOut[rpt] = Float.NaN;
+                        dataOut[rpt] = null;//Float.NaN;
                     }
                     else {
                         //
@@ -668,7 +719,7 @@ public final class FITSTableReader
                 data = (double[])cell;
             }
             else {
-                data[0] = (Double) cell;
+                data[0] = (Double)cell;
             }
             Double[] dataOut = new Double[maxRepeat];
             for (int rpt = 0; rpt < maxRepeat; rpt++){
@@ -680,7 +731,7 @@ public final class FITSTableReader
                         dataOut[rpt] = data[data.length - 1];
                     }
                     else if (strategy.equals("EXPAND_BEST_FIT")){
-                        dataOut[rpt] = Double.NaN;
+                        dataOut[rpt] = null; //Double.NaN;
                     }
                     else {
                         //
@@ -724,17 +775,11 @@ public final class FITSTableReader
     }
 
     /**
-     * To get the attribute data ArrayList, attArrayList, from a cell. Each element is one datum in the cell.
-     * Cast the cell to a primitive data array, dataOut[], based on the class type of the cell.
-     * Convert the type from the cell to dataOut:
-     *      short or Short to dataOut int[];
-     *      char or String to dataOut String[].
-     *      Since StarTable package converts FITS bits type to boolean, we need to convert
-     *          boolean to int (1 or 0) if original is bits;
-     *          boolean to to String ('true' or 'false') if original is logical.
+     * To get the attribute data ArrayList, attArrayList, from a cell (a single value or an array). Each element in the arraylist is one datum from the cell.
+     * Only convert the data type from boolean to int (if original type is bits) or String (if original type is logical).
      *
-     * @param cell: Input cell data
-     * @param colInfo: column information
+     * @param cell: A single value or an array
+     * @param colInfo: The column information of the cell
      * @return attArrayList: attribute data
      */
     private static List<Object> getAttArrayList(Object cell,
@@ -748,8 +793,8 @@ public final class FITSTableReader
 
         if (colInfo.isArray()) {
 
-            if ((classType.contains("boolean")) || (classType.contains("boolean"))){
-                boolean[] data = (boolean [])cell;
+            if ((classType.contains("boolean")) || (classType.contains("Boolean"))){
+                boolean[] data = (boolean[])cell;
                 for (int repeat = 0; repeat < data.length; repeat ++){
                     if (originalType.contains("L")){
                         //Logical:
@@ -762,34 +807,44 @@ public final class FITSTableReader
                     }
                 }
             }
-            else if ((classType.contains("byte")) || (classType.contains("Byte")) ||
-                     (classType.contains("short")) || (classType.contains("Short")) ||
-                     (classType.contains("int")) || (classType.contains("Integer"))) {
-                int[] dataOut = (int [])cell;
+            else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
+                byte[] dataOut = (byte[])cell;
+                for (int i = 0; i < dataOut.length; i++){
+                    attArrayList.add(dataOut[i]);
+                }
+            }
+            else if ((classType.contains("short")) || (classType.contains("Short"))) {
+                short[] dataOut = (short[])cell;
+                for (int i = 0; i < dataOut.length; i++){
+                    attArrayList.add(dataOut[i]);
+                }
+            }
+            else if ((classType.contains("int")) || (classType.contains("Integer"))) {
+                int[] dataOut = (int[])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
             else if ((classType.contains("long")) || (classType.contains("Long"))) {
-                long[] dataOut = (long [])cell;
+                long[] dataOut = (long[])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
             else if ((classType.contains("float")) || (classType.contains("Float"))) {
-                int[] dataOut = (int [])cell;
+                float[] dataOut = (float[])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
             else if ((classType.contains("double")) || (classType.contains("Double"))) {
-                double[] dataOut = (double [])cell;
+                double[] dataOut = (double[])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
             }
             else if ((classType.contains("char")) || (classType.contains("String"))) {
-                String[] dataOut = (String [])cell;
+                String[] dataOut = (String[])cell;
                 for (int i = 0; i < dataOut.length; i++){
                     attArrayList.add(dataOut[i]);
                 }
@@ -805,7 +860,7 @@ public final class FITSTableReader
     }
 
     /** Get the attribute value (String) from the attArrayList:
-     * Concatenate the numbers in the list and the divider "," to a string, value, and return.
+     * Concatenate the values in the list and the divider "," to a string and return.
      *
      * @param attArrayList: attribute data list
      * @return attribute value
@@ -824,12 +879,13 @@ public final class FITSTableReader
 
     /**
      * Convert the column info, provided by StarTable, to dataType.
-     * The originalType is the original data type stored in FITS table. StarTable stores it in the column info.
+     * The originalType is the original data type stored in the FITS table. StarTable stores it in the column info.
      * The classType is the data type StarTable converts from the originalType (say Bits -> Boolean).
      * Based on classType and originalType, we set java_class (dataType.setDataType(java_class)):
      *  (1)Boolean/boolean -> Integer if originalType is Bits; Boolean/boolean -> String if originalType is logical
      *  (2)Short/short -> Integer
-     * Based on classType set primitive_class, dataType.setTypeDesc(primitive_type); (not use?)
+     *  (3)char -> String
+     *  (4)No change for other types
      * Set unit.
      *
      * @param colInfo
@@ -846,45 +902,45 @@ public final class FITSTableReader
 
         DataType dataType = new DataType(colName, null);
         Class java_class = null;
-        String primitive_type = null;
+        //String primitive_type = null;
 
         if ((classType.contains("boolean")) || (classType.contains("Boolean"))) {
             if (originalType.contains("L")) {
                 //Logical:
                 java_class = String.class;
-                primitive_type = "char";
+                //primitive_type = "char";
             } else if (originalType.contains("X")) {
                 //Bits:
                 java_class = Integer.class;
-                primitive_type = "int";
+                //primitive_type = "int";
             }
         } else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
             java_class = Integer.class;
-            primitive_type = "int";
+            //primitive_type = "int";
         } else if ((classType.contains("short")) || (classType.contains("Short"))) {
             java_class = Integer.class;
-            primitive_type = "int";
+            //primitive_type = "int";
         } else if ((classType.contains("int")) || (classType.contains("Integer"))) {
             java_class = Integer.class;
-            primitive_type = "int";
+            //primitive_type = "int";
         } else if ((classType.contains("long")) || (classType.contains("Long"))) {
             java_class = Long.class;
-            primitive_type = "long";
+            //primitive_type = "long";
         } else if ((classType.contains("float")) || (classType.contains("Float"))) {
             java_class = Float.class;
-            primitive_type = "float";
+            //primitive_type = "float";
         } else if ((classType.contains("double")) || (classType.contains("Double"))) {
             java_class = Double.class;
-            primitive_type = "double";
-        } else if ((classType.contains("String")) || (classType.contains("char"))) {
+            //primitive_type = "double";
+        } else if ((classType.contains("char")) || (classType.contains("String"))) {
             java_class = String.class;
-            primitive_type = "char";
+            //primitive_type = "char";
         } else {
             throw new FitsException(
                     "Unrecognized format character in FITS table file: " + classType);
         }
         dataType.setDataType(java_class);
-        dataType.setTypeDesc(primitive_type);
+        //dataType.setTypeDesc(primitive_type);
         dataType.setUnits(unit);
         return dataType;
     }
