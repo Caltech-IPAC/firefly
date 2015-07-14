@@ -102,7 +102,7 @@ public class RequestAgent {
     //====================================================================
     public String getAuthKey() { return null; }
     public String getAuthToken() { return null;}
-    public UserInfo getUserInfo(String authToken) { return null; }
+    public UserInfo getUserInfo() { return null; }
     public void clearAuthInfo() {}
     public Map<String, String> getIdentities() { return null; }
     public void updateAuthInfo(String authToken) {}
@@ -129,6 +129,9 @@ public class RequestAgent {
                 remoteIP = request.getRemoteAddr();
             }
             setRemoteIP(remoteIP);
+            setProtocol(request.getProtocol());
+            setRequestUrl(request.getRequestURL().toString());
+
             setBaseUrl(request.getRequestURL().toString().replace(request.getRequestURI(), request.getContextPath()) + "/");
         }
 
@@ -193,7 +196,8 @@ public class RequestAgent {
         }
 
         @Override
-        public UserInfo getUserInfo(String authToken) {
+        public UserInfo getUserInfo() {
+            String authToken = getAuthToken();
             return StringUtils.isEmpty(authToken) ? null :
                     JOSSOAdapter.getUserInfo(authToken);
         }

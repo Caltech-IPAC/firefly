@@ -42,13 +42,9 @@ public class RequestOwner implements Cloneable {
     private File workingDir;
     private String host;
     private String referrer;
-    private String baseUrl;
-    private String remoteIP;
-    private String protocol;
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
     // ------ these are lazy-load variables.. make sure you access it via getter. --------
     private String userKey;
-    private String authKey;
     private String eventChannel;
     private String eventConnID;
 
@@ -70,10 +66,7 @@ public class RequestOwner implements Cloneable {
     public void setRequestAgent(RequestAgent requestAgent) {
         this.requestAgent = requestAgent;
         host = requestAgent.getHeader("host");
-        protocol = requestAgent.getProtocol();
         referrer = requestAgent.getHeader("Referer");
-        baseUrl = requestAgent.getBaseUrl();
-        remoteIP = requestAgent.getRemoteIP();
 
         String sei = requestAgent.getCookie("seinfo");
         if (!StringUtils.isEmpty(sei)) {
@@ -114,7 +107,7 @@ public class RequestOwner implements Cloneable {
     }
 
     public String getRemoteIP() {
-        return remoteIP;
+        return requestAgent.getRemoteIP();
     }
 
     public Date getStartTime() {
@@ -161,7 +154,7 @@ public class RequestOwner implements Cloneable {
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
-                userInfo = requestAgent.getUserInfo(getAuthToken());
+                userInfo = requestAgent.getUserInfo();
                 if (userInfo == null) {
                     requestAgent.clearAuthInfo();
                 } else {
@@ -187,19 +180,15 @@ public class RequestOwner implements Cloneable {
         ro.requestAgent = requestAgent;
         ro.workingDir = workingDir;
         ro.attributes = (HashMap<String, Object>) attributes.clone();
-        ro.remoteIP = getRemoteIP();
-        ro.authKey = getAuthToken();
         ro.userInfo = userInfo;
         ro.referrer = referrer;
         ro.host = host;
-        ro.baseUrl = baseUrl;
-        ro.protocol = protocol;
         ro.wsManager = wsManager;
         return ro;
     }
 
     public String getProtocol() {
-        return protocol;
+        return requestAgent.getProtocol();
     }
 
     public String getReferrer() {
@@ -207,7 +196,7 @@ public class RequestOwner implements Cloneable {
     }
 
     public String getBaseUrl() {
-        return baseUrl;
+        return requestAgent.getBaseUrl();
     }
 
     /**
