@@ -14,9 +14,7 @@ import uk.ac.starlink.table.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
 * Convert an Ipac table file to a FITS binary table file 
@@ -31,11 +29,30 @@ public final class FITSTableReader
     private static final int TABLE_STRING = 4;
     private static final int TABLE_SHORT = 5;
 
+    /**
+     * Declare the strategies to handle the FITS data:
+     *
+     * TOP_MOST: Ignore the repeat count portion of the TFORMn Keyword
+     * returning only the first datum of the field, even if repeat count is more than 1.
+     * This should produce exactly one DataGroup. This is the default strategy if not given.
+     *
+     * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
+     * Because each field may have different repeat count (dimension), insert blank
+     * when no data is available. This should produce exactly one DataGroup.
+     *
+     * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
+     * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
+     */
+    private static final String TOP_MOST = "TOP_MOST";
+    private static final String EXPAND_BEST_FIT = "EXPAND_BEST_FIT";
+    private static final String EXPAND_REPEAT = "EXPAND_REPEAT";
+    private static final String FULLY_FLATTEN = "FULLY_FLATTEN";
+
     private static final int maxNumAttriValues = 80;
 
     static void usage()
     {
-	System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <FITS_filename> <ipac_filename>");
+	System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <fits_filename> <ipac_filename>");
 	System.exit(1);
     }
 
@@ -45,7 +62,7 @@ public final class FITSTableReader
         {
             usage();
         }
-        String FITS_filename = args[0];
+        String fits_filename = args[0];
         String ipac_filename = args[1];
 
 
@@ -62,20 +79,34 @@ public final class FITSTableReader
 
         //for lsst_cat:
         //String[] dataCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components","name" };
-        String[] dataCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        //String[] dataCols = {"id", "cat.archive", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        String[] dataCols = null;
         //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
         String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        //String[] headerCols = null;
 
-        String strategy = "EXPAND_BEST_FIT";
-        //String strategy = "EXPAND_REPEAT";
-        //String strategy = "TOP_MOST";
-        //String strategy = "FULLY_FLATTEN";
+        String strategy = EXPAND_BEST_FIT;
+        //String strategy = EXPAND_REPEAT;
+        //String strategy = TOP_MOST;
+        //String strategy = FULLY_FLATTEN;
 
         int whichDG = 0;
+        if (strategy == EXPAND_BEST_FIT){
+            whichDG = 13;
+        }
+        else if (strategy == EXPAND_REPEAT) {
+            whichDG = 13;
+        }
+        else if (strategy == TOP_MOST) {
+            whichDG = 0;
+        }
+        else if (strategy == FULLY_FLATTEN) {
+            whichDG = 3;
+        }
 
         try {
-            List<DataGroup> dgListTotal = fits_to_ipac.convertFITSToDataGroup(
-                    FITS_filename,
+            List<DataGroup> dgListTotal = fits_to_ipac.convertFitsToDataGroup(
+                    fits_filename,
                     dataCols,
                     headerCols,
                     strategy);
@@ -105,7 +136,7 @@ public final class FITSTableReader
 
         try
         {
-            List<DataGroup> dgList = fits_to_ipac.convertFITSToDataGroup(FITS_filename, null);
+            List<DataGroup> dgList = fits_to_ipac.convertFITSToDataGroup(fits_filename, null);
 
             File output_file = new File(ipac_filename);
             DataGroup dg = dgList.get(1);
@@ -128,47 +159,57 @@ public final class FITSTableReader
 
     }
 
-    public static List<DataGroup> convertFITSToDataGroup(String FITS_filename,
+    /**
+     * Convert a FITS file to a list of DataGroup.
+     * @param fits_filename
+     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
+     *                If dataCols = null, get all the columns into the data group.
+     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
+     *                If headerCols = null, get none of the columns into the header of the data group.
+     * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
+     * @return
+     * @throws FitsException
+     * @throws IOException
+     */
+    public static List<DataGroup> convertFitsToDataGroup(String fits_filename,
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy)
         throws FitsException, IOException {
 
+        List tList = getStarTableList(fits_filename);
 
-        TableSequence tseq;
-        StarTableFactory stFactory = new StarTableFactory();
-        List tList = new ArrayList();
-        try {
-            tseq = stFactory.makeStarTables(FITS_filename, null);
-            for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
-                tList.add(tbl);
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        List<DataGroup> dgListTotal = new ArrayList<DataGroup>();
-        try {
-            //for testing:
-            //for (int i = 2; i < 3; i++){
-            for (int i = 0; i < tList.size(); i++) {
-                StarTable table = (StarTable) tList.get(i);
-
-                List<DataGroup> dgList = convertFITSToDataGroup(table, dataCols, headerCols, strategy);
-                dgListTotal.addAll(dgList);
-            }
-        }
-        catch (IOException ioe)
-        {
-            System.out.println("got IOException: " + ioe.getMessage());
-            ioe.printStackTrace();
+        List<DataGroup> dgListTotal = new ArrayList();
+        for (int i = 0; i < tList.size(); i++) {
+            StarTable table = (StarTable) tList.get(i);
+            List<DataGroup> dgList = convertFitsToDataGroup(table, dataCols, headerCols, strategy);
+            dgListTotal.addAll(dgList);
         }
         return dgListTotal;
     }
 
-    public static List<DataGroup> convertFITSToDataGroup(int index,
-                                                         String FITS_filename,
+    /**
+     * Get a list of star tables from a FITS file.
+     * @param fits_filename
+     * @return List of star tables.
+     * @throws IOException
+     */
+    public static List getStarTableList(String fits_filename) throws IOException {
+
+        TableSequence tseq;
+        StarTableFactory stFactory = new StarTableFactory();
+        tseq = stFactory.makeStarTables(fits_filename, null);
+        List tList = new ArrayList();
+        for (StarTable tbl; (tbl = tseq.nextTable()) != null; ) {
+            tList.add(tbl);
+        }
+        return tList;
+    }
+
+    /**
+
+    public static List<DataGroup> convertFitsToDataGroup(int index,
+                                                         String fits_filename,
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy)
@@ -180,21 +221,25 @@ public final class FITSTableReader
         return dgListTotal;
     }
 
-    /** Convert a binary table hdu (StarTable) into an ipac table.
+     */
+
+    /** Convert a binary table (StarTable) into a list of DataGroup.
      * @param table input StarTable from one HDU
-     * @param dataCols An array of column names used to construct the ipac table data.
-     * @param headerCols An array of column names used to construct the ipac table header.
+     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
+     *                If dataCols = null, get all the columns into the data group.
+     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
+     *                If headerCols = null, get none of the columns into the header of the data group.
      * @param strategy A list of strategies used to deal with the repeat count (dimension) of the data in the given dataCols columns.
      * @return List<DataGroup> A list of DataGroups
      */
-    public static List<DataGroup> convertFITSToDataGroup(StarTable table,
+    public static List<DataGroup> convertFitsToDataGroup(StarTable table,
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
-        if (!(strategy.equals("FULLY_FLATTEN")) && !(strategy.equals("EXPAND_BEST_FIT")) && !(strategy.equals("EXPAND_REPEAT"))){
-            strategy = "TOP_MOST";
+        if (!(strategy.equals(FULLY_FLATTEN)) && !(strategy.equals(EXPAND_BEST_FIT)) && !(strategy.equals(EXPAND_REPEAT))){
+            strategy = TOP_MOST;
         }
 
         int nColumns = table.getColumnCount();
@@ -202,11 +247,11 @@ public final class FITSTableReader
         String tableName = table.getName();
 
         //Handle the data types:
-        List<ColumnInfo> columnInfoList = new ArrayList<ColumnInfo>(nColumns);
+        List<ColumnInfo> columnInfoList = new ArrayList(nColumns);
         String colName[] = new String[nColumns];
         int[] repeats = new int[nColumns];
         int maxRepeat = 0;
-        List<DataType> dataTypeList = new ArrayList<DataType>(dataCols.length);
+        List<DataType> dataTypeList = new ArrayList();
 
         for (int col = 0; col < nColumns; col++) {
             ColumnInfo colInfo = table.getColumnInfo(col);
@@ -217,20 +262,17 @@ public final class FITSTableReader
             } else {
                 repeats[col] = 1;
             }
-            if (Arrays.asList(dataCols).contains(colName[col])){
+            if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName[col]))){
                 if (repeats[col] > maxRepeat) {
                     maxRepeat = repeats[col];
                 }
-            }
-            if (Arrays.asList(dataCols).contains(colName[col])){
-                //dataTypeList only contains the columns in dataCols:
                 dataTypeList.add(convertToDataType(colInfo));
             }
         }
 
         //Build the data objects and put them into the data groups:
-        List<DataGroup> dataGroupList = new ArrayList<DataGroup>();
-        if (strategy.equals("TOP_MOST")) {
+        List<DataGroup> dataGroupList = new ArrayList();
+        if (strategy.equals(TOP_MOST)) {
             /**
              * "TOP_MOST": Ignore the repeat count portion of the TFORMn Keyword
              * returning only the first datum of the field, even if repeat count is more than 1.
@@ -243,11 +285,11 @@ public final class FITSTableReader
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
             for (long row = 0; row < nRows; row++) {
                 // Save data into an arrayList and then use:
-                List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
+                List dataArrayList = new ArrayList();
                 DataObject dataObj = new DataObject(dataGroup);
                 int dataTypeIndex = 0;
                 for (int col = 0; col < nColumns; col++) {
-                    if (Arrays.asList(dataCols).contains(colName[col])){
+                    if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName[col]))){
                         dataTypeIndex++;
                         ColumnInfo colInfo = columnInfoList.get(col);
                         Object cell = table.getCell(row, col);
@@ -286,12 +328,12 @@ public final class FITSTableReader
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
-                if (Arrays.asList(headerCols).contains(colName[col])) {
+                if ((headerCols != null) && (Arrays.asList(headerCols).contains(colName[col]))) {
                     ColumnInfo colInfo = columnInfoList.get(col);
-                    List<Object> attArrayListTotal = new ArrayList<Object>();
+                    List attArrayListTotal = new ArrayList();
                     for (long row = 0; row < nRows; row ++) {
                         Object cell = table.getCell(row, col);
-                        List<Object> attArrayList; //= new ArrayList<Object>();
+                        List attArrayList; //???
                         attArrayList = getAttArrayList(cell, colInfo);
                         attArrayListTotal.add(attArrayList.get(0));
                     }
@@ -302,9 +344,9 @@ public final class FITSTableReader
             dataGroupList.add(dataGroup);
 
 
-        } else if (strategy.equals("FULLY_FLATTEN")) {
+        } else if (strategy.equals(FULLY_FLATTEN)) {
             /**
-             * "FULLY_FLATTEN": Generates one DataGroup row for each value of an HDU field.
+             * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
              * Because each field may have different repeat count (dimension), insert blank
              * when no data is available. This should produce exactly one DataGroup.
              */
@@ -312,27 +354,24 @@ public final class FITSTableReader
             // define one whole data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
 
-            //List<Object> dataArrayListTotal = new ArrayList<Object>();
             for (long row = 0; row < nRows; row++) {
                 // Save data into an arrayList and then use:
-                List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
+                List dataArrayList = new ArrayList(maxRepeat);
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
                 dataGroup = fillDataToGroup(maxRepeat, dataArrayList, dataTypeList, dataGroup);
-
             }
 
             // Add attributes to dataGroup:
             DataGroup.Attribute attribute;
             for (int col = 0; col < nColumns; col++) {
-                if (Arrays.asList(headerCols).contains(colName[col])) {
+                if ((headerCols != null) && (Arrays.asList(headerCols).contains(colName[col]))) {
                     ColumnInfo colInfo = columnInfoList.get(col);
-                    List<Object> attArrayListTotal = new ArrayList<Object>();
+                    List attArrayListTotal = new ArrayList();
                     for (int row = 0; row < nRows; row++) {
-                        List<Object> attArrayList = new ArrayList<Object>();
                         Object cell = table.getCell(row, col);
-                        attArrayList = getAttArrayList(cell, colInfo);
+                        List attArrayList = getAttArrayList(cell, colInfo);
                         attArrayListTotal.addAll(attArrayList);
                     }
                     attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayListTotal));
@@ -342,10 +381,10 @@ public final class FITSTableReader
             //Only one dataGroup for each table:
             dataGroupList.add(dataGroup);
 
-        } else if ((strategy.equals("EXPAND_BEST_FIT")) || strategy.equals("EXPAND_REPEAT")) {
+        } else if ((strategy.equals(EXPAND_BEST_FIT)) || strategy.equals(EXPAND_REPEAT)) {
             /**
-             * "EXPAND_BEST_FIT": Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
-             * "EXPAND_REPEAT": Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
+             * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
+             * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
              */
 
             for (int row = 0; row < nRows; row++) {
@@ -356,7 +395,7 @@ public final class FITSTableReader
                 DataGroup dataGroup = new DataGroup(dgTitle, dataTypeList);
 
                 // Save data into an arrayList and then use:
-                List<Object> dataArrayList = new ArrayList<Object>(maxRepeat);
+                List dataArrayList = new ArrayList(maxRepeat);
                 dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
 
                 // Fill the data into the dataGroup:
@@ -365,11 +404,10 @@ public final class FITSTableReader
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
                 for (int col = 0; col < nColumns; col++) {
-                    if (Arrays.asList(headerCols).contains(colName[col])) {
+                    if ((headerCols != null) && (Arrays.asList(headerCols).contains(colName[col]))) {
                         ColumnInfo colInfo = columnInfoList.get(col);
-                        List<Object> attArrayList;
                         Object cell = table.getCell(row, col);
-                        attArrayList = getAttArrayList(cell, colInfo);
+                        List attArrayList = getAttArrayList(cell, colInfo);
                         attribute = new DataGroup.Attribute(colName[col], getAttributeValue(attArrayList));
                         dataGroup.addAttributes(attribute);
                     }
@@ -393,7 +431,7 @@ public final class FITSTableReader
      * @throws FitsException
      */
     private static DataGroup fillDataToGroup(int maxRepeat,
-                                           List<Object> dataArrayList,
+                                           List dataArrayList,
                                            List<DataType> dataTypeList,
                                            DataGroup dataGroup)
     throws FitsException {
@@ -465,24 +503,25 @@ public final class FITSTableReader
      * @param repeats: Repeats at all the columns.
      * @param maxRepeat: The maximum repeat.
      * @param dataCols: The columns the caller wants to put in the IPAC table data part.
-     * @param strategy: "TOP_MOST", "EXPAND_BEST_FIT", "EXPAND_REPEAT", "FULLY_FLATTEN".
+     *                If dataCols = null, all the columns will be put in the dataArrayList.
+     * @param strategy: TOP_MOST, EXPAND_BEST_FIT, EXPAND_REPEAT, FULLY_FLATTEN.
      *
      * @return dataArrayList
      */
-    private static List<Object> getDataArrayList(StarTable table,
+    private static List getDataArrayList(StarTable table,
                                                  long row,
                                                  int[] repeats,
                                                  int maxRepeat,
                                                  String[] dataCols,
                                                  String strategy,
-                                                 List<Object> dataArrayList)
+                                                 List dataArrayList)
             throws FitsException, IOException {
 
         int nColumns = table.getColumnCount();
         for (int col = 0; col < nColumns; col++) {
             ColumnInfo colInfo = table.getColumnInfo(col);
             String colName = colInfo.getName();
-            if (Arrays.asList(dataCols).contains(colName)) {
+            if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName))) {
                 int repeat = repeats[col];
                 Object cell = table.getCell(row, col);
                 dataArrayList = getDataArrayList(cell,
@@ -503,7 +542,7 @@ public final class FITSTableReader
      * Convert data[repeat] to dataOut[maxRepeat] which is declared at the corresponding reference type:
      *      (1)Convert boolean[] to Integer[] (1 or 0) if original type is bits; to String[]("true"/"false") if the original type is logical.
      *      (2)Convert byte[]/short[] to Integer[].
-     *      (3)Fill the missing data with null or the last value, based on the strategy "EXPAND_BEST_FIT" or "EXPAND_REPEAT".
+     *      (3)Fill the missing data with null or the last value, based on the strategy EXPAND_BEST_FIT or EXPAND_REPEAT.
      *
      * @param cell the data at the row and the column
      * @param colInfo the column info at the col.
@@ -513,18 +552,18 @@ public final class FITSTableReader
      * @param dataArrayList
      * @return dataArrayList
      */
-    private static List<Object> getDataArrayList(Object cell,
+    private static List getDataArrayList(Object cell,
                                          ColumnInfo colInfo,
                                          int repeat,
                                          int maxRepeat,
                                          String strategy,
-                                         List<Object> dataArrayList)
+                                         List dataArrayList)
     throws FitsException {
 
         boolean isCellArray = colInfo.isArray();
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-        dataArrayList = (dataArrayList.size() ==0)?  new ArrayList<Object>() : dataArrayList;
+        dataArrayList = (dataArrayList.size() ==0)?  new ArrayList() : dataArrayList;
 
         if ((classType.contains("boolean")) || (classType.contains("Boolean"))){
             boolean [] data = new boolean[repeat];
@@ -543,14 +582,11 @@ public final class FITSTableReader
                         dataOut[rpt] = Boolean.toString(data[rpt]);
                     }
                     else {
-                        if (strategy.equals("EXPAND_REPEAT")) {
+                        if (strategy.equals(EXPAND_REPEAT)) {
                             dataOut[rpt] = Boolean.toString(data[data.length -1 ]);
                         }
-                        else if (strategy.equals("EXPAND_BEST_FIT")){
+                        else if (strategy.equals(EXPAND_BEST_FIT)){
                             dataOut[rpt] = null;
-                        }
-                        else {
-                            //
                         }
                     }
                 }
@@ -564,14 +600,11 @@ public final class FITSTableReader
                         dataOut[rpt] = data[rpt] ? 1 : 0;
                     }
                     else{
-                        if (strategy.equals("EXPAND_REPEAT")) {
+                        if (strategy.equals(EXPAND_REPEAT)) {
                             dataOut[rpt] = data[data.length - 1] ? 1:0;
                         }
-                        else if (strategy.equals("EXPAND_BEST_FIT")){
+                        else if (strategy.equals(EXPAND_BEST_FIT)){
                             dataOut[rpt] = null;
-                        }
-                        else {
-                            //
                         }
                     }
                 }
@@ -592,14 +625,11 @@ public final class FITSTableReader
                     dataOut[rpt] = (int)data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = (int)data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -619,14 +649,11 @@ public final class FITSTableReader
                     dataOut[rpt] = (int)data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = (int)data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -646,14 +673,11 @@ public final class FITSTableReader
                     dataOut[rpt] = (Integer)data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -673,14 +697,11 @@ public final class FITSTableReader
                     dataOut[rpt] = data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -700,14 +721,11 @@ public final class FITSTableReader
                     dataOut[rpt] = data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;//Float.NaN;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -727,14 +745,11 @@ public final class FITSTableReader
                     dataOut[rpt] = data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null; //Double.NaN;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -754,14 +769,11 @@ public final class FITSTableReader
                     dataOut[rpt] = data[rpt];
                 }
                 else {
-                    if (strategy.equals("EXPAND_REPEAT")) {
+                    if (strategy.equals(EXPAND_REPEAT)) {
                         dataOut[rpt] = data[data.length - 1];
                     }
-                    else if (strategy.equals("EXPAND_BEST_FIT")){
+                    else if (strategy.equals(EXPAND_BEST_FIT)){
                         dataOut[rpt] = null;
-                    }
-                    else {
-                        //
                     }
                 }
             }
@@ -782,14 +794,14 @@ public final class FITSTableReader
      * @param colInfo: The column information of the cell
      * @return attArrayList: attribute data
      */
-    private static List<Object> getAttArrayList(Object cell,
+    private static List getAttArrayList(Object cell,
                                                 ColumnInfo colInfo)
     throws FitsException {
 
         String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
 
-        List<Object> attArrayList = new ArrayList<Object>();
+        List attArrayList = new ArrayList();
 
         if (colInfo.isArray()) {
 
@@ -865,7 +877,7 @@ public final class FITSTableReader
      * @param attArrayList: attribute data list
      * @return attribute value
      */
-    private static String getAttributeValue(List<Object> attArrayList) throws IOException {
+    private static String getAttributeValue(List attArrayList) throws IOException {
 
         String value = "";
         //for (int repeat = 0; repeat < cell.length; repeat ++){
@@ -957,12 +969,12 @@ public final class FITSTableReader
     {
 
 	DataGroup   _dataGroup;
-	List<DataGroup> _dataGroupList = new ArrayList<DataGroup>();
+	List<DataGroup> _dataGroupList = new ArrayList();
 
-	Fits fits_file = new Fits(FITS_filename);
+	Fits FITS_file = new Fits(FITS_filename);
 	while (true)
 	{
-	BasicHDU current_hdu = fits_file.readHDU();
+	BasicHDU current_hdu = FITS_file.readHDU();
 	if (current_hdu == null)
 	{
 	    break;
@@ -976,9 +988,9 @@ public final class FITSTableReader
 	    int ncolumns = bhdu.getNCols();
 	    //System.out.println("getNCols() = " + ncolumns);
 	    int format[] = new int[ncolumns];
-	    List<DataType> extraDataList = new ArrayList<DataType>(ncolumns);
+	    List<DataType> extraDataList = new ArrayList(ncolumns);
 	    DataType extraData[];
-	    DataType dataType= null;
+	    DataType dataType;
 	    String primitive_type;
 	    Class java_class;
 	    int width = 0;
