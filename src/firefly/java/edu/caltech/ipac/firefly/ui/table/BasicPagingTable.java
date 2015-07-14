@@ -201,6 +201,11 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
         }
     }
 
+    /**
+     * returns the index of the highlighted row.
+     * This index is from 0 to the total number of rows -1.
+     * @return -1 if no row is highlighted
+     */
     public int getHighlightedRowIdx() {
         Set<Integer> srows = getDataTable().getSelectedRows();
         if (srows != null && srows.size() > 0) {
