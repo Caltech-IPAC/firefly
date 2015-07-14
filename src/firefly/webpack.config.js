@@ -57,7 +57,7 @@ var retval= module.exports = {
           { test: /\.(js|jsx)$/,
             exclude: /node_modules/,
             //loader: 'jsx-loader?harmony'
-            loader: 'babel-loader'
+            loader: 'babel-loader?stage=1'
           }
         ]
   }

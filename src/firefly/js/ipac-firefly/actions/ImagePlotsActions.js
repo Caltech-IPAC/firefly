@@ -9,7 +9,7 @@ class ImagePlotsActions {
 
     constructor() {
         //this.generateActions(
-        //    'initState', 'mountComponent', 'validateForm'
+        //    'somethingHere', 'somethingElseHere'
         //);
     }
 

@@ -8,7 +8,6 @@
 
 import FormActions from '../actions/FormActions.js'
 
-var icepick= require("icepick");
 var Promise= require("es6-promise").Promise;
 
 
@@ -22,7 +21,7 @@ var Promise= require("es6-promise").Promise;
 //        message : 'string',         // default ""
 //        visible : 'boolean',        // field is visible, default true
 //        mounted : 'boolean/,    // field is mounted, default false
-//        asyncUpdate : 'boolean' field is in a async update, default false
+//        asyncUpdatePromise : 'boolean' field is in a async update, default false
 //    }
 //
 //});
@@ -68,10 +67,20 @@ class InputFormBaseStore {
                 message :payload.message||"",
                 valid : (payload.hasOwnProperty('valid') ? payload.valid :true),
                 value : payload.newValue,
-                asyncUpdate : payload.asyncUpdate||false,
+                asyncUpdatePromise : payload.asyncUpdatePromise||false,
                 displayValue : payload.displayValue,
                 extraData: payload.extraData
             });
+        //fields[payload.fieldKey]=
+        //    {
+        //        ...fields[payload.fieldKey],
+        //        message :payload.message||"",
+        //        valid : (payload.hasOwnProperty('valid') ? payload.valid :true),
+        //        value : payload.newValue,
+        //        asyncUpdatePromise : payload.asyncUpdatePromise||false,
+        //        displayValue : payload.displayValue,
+        //        extraData: payload.extraData
+        //    };
 
     }
 
@@ -91,7 +100,6 @@ class InputFormBaseStore {
                 displayValue,
                 extraData
             } );
-            //Object.freeze(fields[fieldKey]);
         }
         else {
             fields[fieldKey]= Object.assign({},fields[fieldKey], {
@@ -144,8 +152,8 @@ class InputFormBaseStore {
     makeValidationPromise(fieldKey) {
         var retval;
         var fields= this.fields;
-        if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdate) {
-            retval= fields[fieldKey].asyncUpdate;
+        if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
+            retval= fields[fieldKey].asyncUpdatePromise;
         }
         else {
             retval= Promise.resolve(fieldKey);

@@ -10,16 +10,16 @@ class FormActions {
 
     constructor() {
         this.generateActions(
-            'initState', 'mountComponent', 'validateForm'
+            'initFieldGroup', 'initState', 'mountComponent', 'mountFieldGroup', 'validateForm'
         );
         //'initState', 'valueChange', 'mountComponent'
     }
 
     valueChange(data) {
         this.dispatch(data);
-        if (data.asyncUpdate) {
+        if (data.asyncUpdatePromise) {
             var action= this;
-            data.asyncUpdate.then((payload) => {
+            data.asyncUpdatePromise.then((payload) => {
                 action.dispatch(payload);
             }).catch(e => console.log(e));
         }

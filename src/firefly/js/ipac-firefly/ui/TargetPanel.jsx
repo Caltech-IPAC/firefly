@@ -46,7 +46,7 @@ var TargetPanel= module.exports= React.createClass(
                newValue : parseResults.wpt ? parseResults.wpt.toString() : "",
                message : "Enter something valid",
                valid : parseResults.valid,
-               asyncUpdate : resolvePromise,
+               asyncUpdatePromise : resolvePromise,
                displayValue,
                wpt : parseResults.wpt,
                extraData: parseResults,

@@ -11,7 +11,7 @@ var DEFAULT_TRUNC_LENGTH = 30,
 var reFlags = /\w*$/;
 
 /**
- * Truncates `string` if it is longer than the given maximum string length.
+ * Truncates `string` if it's longer than the given maximum string length.
  * The last characters of the truncated string are replaced with the omission
  * string which defaults to "...".
  *
@@ -43,7 +43,7 @@ var reFlags = /\w*$/;
  *   'length': 24,
  *   'separator': /,? +/
  * });
- * //=> 'hi-diddly-ho there...'
+ * // => 'hi-diddly-ho there...'
  *
  * _.trunc('hi-diddly-ho there, neighborino', {
  *   'omission': ' [...]'
@@ -52,7 +52,7 @@ var reFlags = /\w*$/;
  */
 function trunc(string, options, guard) {
   if (guard && isIterateeCall(string, options, guard)) {
-    options = null;
+    options = undefined;
   }
   var length = DEFAULT_TRUNC_LENGTH,
       omission = DEFAULT_TRUNC_OMISSION;

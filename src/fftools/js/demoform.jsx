@@ -30,6 +30,8 @@ import {WorldPt, ImagePt, Pt} from 'ipac-firefly/visualize/Point.js';
 /*eslint-enable no-unused-vars */
 
 import InputFormBaseStore from 'ipac-firefly/store/InputFormBaseStore.js';
+import FieldGroupStore from 'ipac-firefly/store/FieldGroupStore.js';
+import FieldGroupActions from 'ipac-firefly/actions/FieldGroupActions.js';
 
 
 
@@ -63,8 +65,51 @@ class TestFormStore extends InputFormBaseStore {
         this.formKey= 'DEMO_FORM';
     }
 }
-
 var testFormStore= application.alt.createStore(TestFormStore, 'TestFormStore' );
+
+
+var testReducer= function(inFields, actionsConst) {
+    if (!inFields)  {
+        var fields= {
+            field1: {
+                fieldKey: 'field1',
+                value: '3',
+                validator: Validate.intRange.bind(null, 1, 10, 'my test field'),
+                tooltip: 'this is a tip for field 1',
+                label: 'Int Value:'
+            },
+            field2: {
+                fieldKey: 'field2',
+                value: '',
+                validator: Validate.floatRange.bind(null, 1.2, 22.4, 2, 'a float field'),
+                tooltip: 'field 2 tool tip',
+                label: 'Float Value:',
+                labelWidth: 100
+            },
+            field4: {
+                fieldKey: 'field4',
+                value: '',
+                validator: Validate.validateEmail.bind(null, 'an email field'),
+                tooltip: 'Please enter an email',
+                label: 'Email:'
+            }
+        };
+        return fields;
+    }
+    else {
+        return inFields;
+    }
+};
+
+
+FieldGroupActions.initFieldGroup({
+        groupKey : 'DEMO_FORM',
+        reducer : testReducer,
+        validator: null,
+        keepState: false
+    }
+);
+
 
 
 var sr= new ServerRequest();
