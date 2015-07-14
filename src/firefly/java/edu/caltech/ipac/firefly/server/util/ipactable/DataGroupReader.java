@@ -4,33 +4,15 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.astro.FITSTableReader;
-import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
-import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.DataGroup;
-import edu.caltech.ipac.util.DataObject;
-import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.IpacTableUtil;
-import edu.caltech.ipac.util.StringUtils;
-import nom.tam.fits.FitsException;
+import edu.caltech.ipac.util.*;
 import org.apache.commons.csv.CSVFormat;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 
 /**
@@ -58,7 +40,9 @@ public class DataGroupReader {
             return DsvToDataGroup.parse(inf, format.type);
         } else if (format == Format.FITS ) {
             try {
-                List<DataGroup> retval = FITSTableReader.convertFITSToDataGroup(inf.getAbsolutePath(), null);
+                // Switch to the new function:
+                //List<DataGroup> retval = FITSTableReader.convertFITSToDataGroup(inf.getAbsolutePath(), null);
+                List<DataGroup> retval = FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), null, null, "TOP_MOST");
                 if (retval != null && retval.size() > 0) {
                     return retval.get(0);
                 } else {
