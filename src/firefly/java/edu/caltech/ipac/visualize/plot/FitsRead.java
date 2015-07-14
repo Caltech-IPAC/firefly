@@ -59,6 +59,8 @@ public class FitsRead implements Serializable {
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
+    private int[] masks=null;
+    private static boolean searchedMask=false;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -85,10 +87,78 @@ public class FitsRead implements Serializable {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
+
         float1d = getImageHDUDataInFloatArray(imageHdu);
+
 
     }
 
+
+    /**
+     * This constructor may not be needed it.
+     * @param fits
+     * @param imageHdu
+     * @param hasMask
+     * @throws FitsException
+     */
+     private FitsRead(Fits fits, ImageHDU imageHdu, boolean hasMask) throws FitsException {
+
+        //assign some instant variables
+        this.fits = fits;
+        hdu = imageHdu;
+        header = imageHdu.getHeader();
+        planeNumber = header.getIntValue("SPOT_PL", 0);
+        extension_number = header.getIntValue("SPOT_EXT", -1);
+        checkHeader();
+        long HDUOffset = getHDUOffset(imageHdu);
+        imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
+
+        if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
+            System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
+        }
+        //get the data and store into float array
+        float1d = getImageHDUDataInFloatArray(imageHdu);
+        //masks = getMasksInFits(fits);
+         if (hasMask && header.getStringValue("EXTTYPE").equalsIgnoreCase("mask")) {
+             masks = (int[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(hdu.getData().getData(), Integer.TYPE));
+
+         }
+
+
+     }
+
+
+    private int[] getMasksInFits(Fits fits) throws FitsException {
+
+        //get all the Header Data Unit from the fits file
+        BasicHDU[] HDUs = fits.read();
+        int maskExtension=-1;
+
+
+        for (int j = 0; j < HDUs.length; j++) {
+            if (!(HDUs[j] instanceof ImageHDU)) {
+                continue;   //ignor non-image extensions
+            }
+            Header header =  HDUs[j].getHeader();
+            if (header == null) {
+                throw new FitsException("Missing header in FITS file");
+            }
+            if (header.getStringValue("EXTTYPE")==null) {
+                  continue;
+             }
+            else if (header.getStringValue("EXTTYPE").equalsIgnoreCase("mask")) {
+                maskExtension = j;
+                break;
+            }
+        }
+        if (maskExtension==-1){
+             System.out.println(" no mask data is found");
+            return null;
+        }
+        return   (int[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[maskExtension].getData().getData(), Integer.TYPE));
+
+
+     }
 
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
@@ -648,7 +718,7 @@ public class FitsRead implements Serializable {
 
 
     public synchronized void doStretch(RangeValues rangeValues,
-                                       byte passedPixelData[],
+                                       byte pixelData[],
                                        boolean mapBlankToZero,
                                        int startPixel,
                                        int lastPixel,
@@ -669,7 +739,7 @@ public class FitsRead implements Serializable {
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        byte pixelData[] = passedPixelData;
+        //byte pixelData[] = passedPixelData;
 
         int[] pixelhist = new int[256];
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
@@ -770,6 +840,20 @@ public class FitsRead implements Serializable {
 
     }
 
+    //TODO more about this later
+    private  void plotMasks(LSSTMask... maskColor){
+        if (maskColor == null) {
+            throw new NullPointerException("Please input valid LSSTMask, not null.");
+        }
+        int size = maskColor.length;
+
+        //update the mask according to the input LSSTMask
+        for (int i=0; i<maskColor.length; i++){
+            masks=maskColor[i].set(masks);
+        }
+
+
+    }
     /**
      * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
      * Each pixel store a value which represents the color of the map.
@@ -1344,7 +1428,9 @@ public class FitsRead implements Serializable {
         }
         return fData;
     }
-
+    public int[] getMasks(){
+        return masks;
+    }
     /**
      * This method seemed not being used.
      * Takes an open FITS file and returns a 2-dim float array of the pixels
