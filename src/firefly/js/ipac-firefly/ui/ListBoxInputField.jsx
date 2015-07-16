@@ -39,7 +39,6 @@ var ListBoxInputField= React.createClass(
 
             // the value of this input field is a string
             this.fireValueChange({
-                formKey : this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 newValue : val.toString(),
                 message,

@@ -1,3 +1,5 @@
+import validator from 'validator';
+
 /**
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Created by roby on 12/2/14.
@@ -169,3 +171,16 @@ export function checkNull(s) {
     else { return s; }
 }
 
+export function parseInt(s,failValue= 0) {
+    return (validator.isInt(s)) ? validator.toInt(s) : failValue;
+}
+
+export function parseFloat(s,failValue=0) {
+    return (validator.isFloat(s)) ? validator.toFloat(s) : failValue;
+}
+
+export function parseBoolean(s,failValue= false) {
+    return (validator.isBoolean(s)) ? validator.toBoolean(s) : failValue;
+}
+
+export function getStringWithNull(s) { return (s==='null'|| s==='NaN') ? null : s; }

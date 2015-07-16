@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {application, NetworkMode} from '../core/Application.js';
+//import {alt} from '../core/Application.js';
 
+import alt from '../core/AppAlt.js';
 
 
 
@@ -30,4 +31,4 @@ class FieldGroupActions {
 
 }
 
-export default application.alt.createActions(FieldGroupActions);
+export default alt.createActions(FieldGroupActions);

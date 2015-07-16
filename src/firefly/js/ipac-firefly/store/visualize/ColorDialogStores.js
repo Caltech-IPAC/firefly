@@ -18,7 +18,6 @@ import {getCurrentPlot} from '../../visualize/VisUtil.js';
 var {AllPlots, Band } = ffgwt.Visualize;
 
 
-
 class ColorPanelStore extends InputFormBaseStore {
     constructor(band) {
         super();

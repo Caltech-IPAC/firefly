@@ -7,7 +7,6 @@ import {fireflyInit, application} from 'ipac-firefly/core/Application.js';
 fireflyInit();
 
 import React from 'react/addons';
-import Alt from 'alt';
 
 import TargetPanel from 'ipac-firefly/ui/TargetPanel.jsx';
 import InputGroup from 'ipac-firefly/ui/InputGroup.jsx';
@@ -104,8 +103,8 @@ var testReducer= function(inFields, actionsConst) {
 
 FieldGroupActions.initFieldGroup({
         groupKey : 'DEMO_FORM',
-        reducer : testReducer,
-        validator: null,
+        reducerFunc : testReducer,
+        validatorFunc: null,
         keepState: false
     }
 );
@@ -128,20 +127,15 @@ var AllTest = React.createClass({
 
     render: function() {
         /* jshint ignore:start */
-        var histogramDivStyle = {
-            width: '400px',
-            height: '200px',
-            overflow: 'auto'
-        };
         return (
             <div>
                 <InputGroup labelWidth={130}>
-                    <TargetPanel  formStore={testFormStore} />
-                    <ValidationField  fieldKey={'field1'}
-                                      formStore={testFormStore}/>
-                    <ValidationField  fieldKey='field2'
-                                     formStore={testFormStore}/>
-                    <ValidationField  fieldKey='field3'
+                    <TargetPanel formStore='DEMO_FORM' />
+                    <ValidationField fieldKey={'field1'}
+                                     formStore='DEMO_FORM'/>
+                    <ValidationField fieldKey='field2'
+                                     formStore='DEMO_FORM'/>
+                    <ValidationField fieldKey='field3'
                                      initialState= {{
                             fieldKey: 'field3',
                             value: '12',
@@ -150,9 +144,9 @@ var AllTest = React.createClass({
                             label : 'Another Float:',
                             labelWidth : 100
                         }}
-                                     formStore={testFormStore}/>
+                                     formStore='DEMO_FORM'/>
                     <ValidationField fieldKey={'field4'}
-                                     formStore={testFormStore}/>
+                                     formStore='DEMO_FORM'/>
 
                     <br/><br/>
                     <CheckboxGroupInputField
@@ -171,7 +165,7 @@ var AllTest = React.createClass({
                             ]
                             }
                                              fieldKey='checkBoxGrpFld'
-                                             formStore={testFormStore}/>
+                                             formStore='DEMO_FORM'/>
 
                     <br/><br/>
                     <RadioGroupInputField  initialState= {{
@@ -187,7 +181,7 @@ var AllTest = React.createClass({
                                                 ]
                                                 }
                                            fieldKey='radioGrpFld'
-                                           formStore={testFormStore}/>
+                                           formStore='DEMO_FORM'/>
                     <br/><br/>
 
                     <ListBoxInputField  initialState= {{
@@ -204,10 +198,10 @@ var AllTest = React.createClass({
                             }
                                        multiple={false}
                                        fieldKey='listBoxFld'
-                                       formStore={testFormStore}/>
+                                       formStore='DEMO_FORM'/>
                     <br/><br/>
 
-                    <FormButton formStore={testFormStore} label='submit'/>
+                    <FormButton formStore='DEMO_FORM' label='submit'/>
                 </InputGroup>
             </div>
 

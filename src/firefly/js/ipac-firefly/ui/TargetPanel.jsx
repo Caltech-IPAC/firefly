@@ -41,7 +41,7 @@ var TargetPanel= module.exports= React.createClass(
 
        makePayload(displayValue, parseResults, resolvePromise) {
            return {
-               formKey : this.getFormKey(),
+               groupKey : this.props.groupKey,
                fieldKey : this.props.fieldKey,
                newValue : parseResults.wpt ? parseResults.wpt.toString() : "",
                message : "Enter something valid",

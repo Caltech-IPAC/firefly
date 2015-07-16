@@ -61,20 +61,20 @@ class RangeValues {
                  zscaleSamplesPerLine= 120,
                  bias= 0.5,
                  contrast= 1.0 ) {
-        this.lowerWhich= lowerWhich;
-        this.lowerValue= lowerValue;
-        this.upperWhich= upperWhich;
-        this.upperValue= upperValue;
-        this.drValue = drValue;
-        this.bpValue = bpValue;
-        this.wpValue = wpValue;
-        this.gammaValue=gammaValue;
-        this.algorithm=  algorithm;
-        this.zscaleContrast= zscaleContrast;
-        this.zscaleSamples= zscaleSamples; /* desired number of pixels in sample */
-        this.zscaleSamplesPerLine= zscaleSamplesPerLine; /* optimal number of pixels per line */
-        this.bias= bias;
-        this.contrast= contrast;
+        this.lowerWhich= Number.parseInt(lowerWhich);
+        this.lowerValue= Number.parseFloat(lowerValue);
+        this.upperWhich= Number.parseInt(upperWhich);
+        this.upperValue= Number.parseFloat(upperValue);
+        this.drValue = Number.parseFloat(drValue);
+        this.bpValue = Number.parseFloat(bpValue);
+        this.wpValue = Number.parseFloat(wpValue);
+        this.gammaValue=Number.parseFloat(gammaValue);
+        this.algorithm=  Number.parseInt(algorithm);
+        this.zscaleContrast= Number.parseInt(zscaleContrast);
+        this.zscaleSamples= Number.parseInt(zscaleSamples); /* desired number of pixels in sample */
+        this.zscaleSamplesPerLine= Number.parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
+        this.bias= Number.parseFloat(bias);
+        this.contrast= Number.parseFloat(contrast);
     }
 
     /**

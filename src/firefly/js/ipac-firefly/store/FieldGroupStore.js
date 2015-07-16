@@ -1,10 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
 /*jshint browserify:true*/
 "use strict";
 
@@ -12,7 +8,7 @@
 
 import FieldGroupActions from '../actions/FieldGroupActions.js'
 import ImagePlotActions from '../actions/ImagePlotsActions.js'
-import {application} from '../core/Application.js';
+import alt from '../core/AppAlt.js';
 
 var Promise= require("es6-promise").Promise;
 
@@ -32,6 +28,27 @@ var Promise= require("es6-promise").Promise;
 //
 //});
 
+
+
+export class FieldGroup {
+    constructor(fields, reducerFunc,validatorFunc,keepState) {
+        this.fields= fields||{};
+        this.reducerFunc= reducerFunc;
+        this.validatorFunc= validatorFunc;
+        this.keepState= keepState;
+        this.mounted = false;
+        this.fieldGroupValid= false;
+
+        Object.keys(fields).forEach( key => {
+            if (typeof fields[key].valid === 'undefined') {
+                fields[key].valid= true;
+            }
+        } );
+
+    }
+}
+
+
 class FieldGroupStore {
 
     constructor() {
@@ -46,8 +63,10 @@ class FieldGroupStore {
             allPlotUpdate : ImagePlotActions.anyChange
         });
         this.exportPublicMethods({
-             getResults: this.getResults.bind(this),
-           });
+            getResults: this.getResults.bind(this),
+            getGroupState: this.getGroupState.bind(this),
+            getGroupFields : this.getGroupFields.bind(this)
+        });
     }
 
 
@@ -55,21 +74,14 @@ class FieldGroupStore {
         if (!payload) return;
         var {groupKey, reducerFunc, validatorFunc, keepState}= payload;
 
-        var field= null;
+        var fields= null;
         if (this.fieldGroupMap[groupKey]) {
             fields= this.fieldGroupMap[groupKey].fields;
         }
 
-        var fields= reducerFunc ? reducerFunc(null, FormActions.INIT_FIELD_GROUP) : {};
+        fields= reducerFunc ? reducerFunc(null, groupKey, FieldGroupActions.INIT_FIELD_GROUP) : {};
 
-        this.fieldGroupMap[groupKey]= {
-            fields : [],
-            reducerFunc,
-            validatorFunc,
-            keepState,
-            mounted : false,
-            fieldGroupValid: false
-        };
+        this.fieldGroupMap[groupKey]= new FieldGroup(fields,reducerFunc,validatorFunc,keepState);
     }
 
     updateFieldGroupMount(payload) {
@@ -77,7 +89,8 @@ class FieldGroupStore {
         var {groupKey, mounted}= payload;
 
         if (payload.mounted) {
-            initFieldGroup(payload);
+            this.initFieldGroup(payload);
+            this.fieldGroupMap[groupKey].mounted= true;
         }
         else {
             if (groupKey && this.fieldGroupMap[groupKey]) {
@@ -86,12 +99,13 @@ class FieldGroupStore {
                 if (!fg.keepState) fg.fields= null;
             }
         }
+        return false;
     }
 
 
     updateData(payload) {
-        if (!payload.groupKey || this.fieldGroupMap[payload.groupKey]) return;
-        var fg= this.fieldGroupMap[payload.groupkey];
+        if (!payload.groupKey && !this.fieldGroupMap[payload.groupKey]) return;
+        var fg= this.fieldGroupMap[payload.groupKey];
         fg.fieldGroupValid= false;
 
         //var validateState= {valid:true, message:""};
@@ -112,7 +126,7 @@ class FieldGroupStore {
             });
 
 
-        fireReducer(fg, FieldGroupActions.VALUE_CHANGE);
+        this.fireReducer(fg, payload.groupKey, FieldGroupActions.VALUE_CHANGE);
         //fields[payload.fieldKey]=
         //    {
         //        ...fields[payload.fieldKey],
@@ -127,7 +141,7 @@ class FieldGroupStore {
     }
 
     updateMount(payload) {
-        if (!payload.groupKey || this.fieldGroupMap[payload.groupKey]) return;
+        if (!payload.groupKey && !this.fieldGroupMap[payload.groupKey]) return;
         var fg= this.fieldGroupMap[payload.groupKey];
 
         var {fieldKey,mounted,value,fieldState,displayValue,extraData}= payload;
@@ -148,6 +162,9 @@ class FieldGroupStore {
             fields[fieldKey]= Object.assign({},fields[fieldKey], {
                 mounted, value, displayValue,
             });
+        }
+        if (typeof fields[fieldKey].valid === 'undefined') {
+            fields[fieldKey].valid= true;
         }
         return false;
     }
@@ -214,28 +231,43 @@ class FieldGroupStore {
         return request;
     }
 
+    /**
+     * Export this method.
+     *
+     * @return {{}}
+     */
+    getGroupState(groupKey) {
+        return this.fieldGroupMap[groupKey] ? this.fieldGroupMap[groupKey] : null;
+    }
+    getGroupFields(groupKey) {
+        var retval= null;
+        if (this.fieldGroupMap[groupKey] && this.fieldGroupMap[groupKey].fields) {
+            retval= this.fieldGroupMap[groupKey].fields;
+        }
+        return retval;
+    }
 
     allPlotUpdate() {
-        fireAll(ImagePlotActions.ANY_CHANGE);
+        this.fireAll(ImagePlotActions.ANY_CHANGE);
     }
 
     fireAll(actionConst) {
         //TODO: finish this, go through a loop and get all that are active
 
-        Object.keys(fields).forEach((groupKey)=> {
+        Object.keys(this.fieldGroupMap).forEach((groupKey)=> {
             var fg= this.fieldGroupMap[groupKey];
-            if (fg.mounted) fireReducer(fg);
+            if (fg.mounted) this.fireReducer(fg,groupKey,actionConst);
         });
     }
 
     /**
      * @param fg  fieldgroup
      */
-    fireReducer(fg, acitonConst) {
-        if (fg.reducerFunc) fg.fields = fg.reducerFunc(fields, acitonConst);
+    fireReducer(fg, groupKey, acitonConst) {
+        if (fg.reducerFunc) fg.fields = fg.reducerFunc(fg.fields, groupKey, acitonConst);
     }
 
 }
 
-export default application.alt.createStore(FieldGroupStore, 'FieldGroupStore' );
+export default alt.createStore(FieldGroupStore, 'FieldGroupStore' );
 

@@ -2,8 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-
 import React from 'react/addons';
 import FieldGroupStore from '../store/FieldGroupStore.js';
 import FieldGroupActions from '../actions/FieldGroupActions.js';
@@ -15,7 +13,6 @@ var FieldGroup= React.createClass(
 
         propTypes: {
             groupKey : React.PropTypes.string.isRequired,
-            fields : React.PropTypes.object.isRequired,
             reducerFunc: React.PropTypes.func,
             validatorFunc: React.PropTypes.func,
             keepState : React.PropTypes.bool
@@ -29,7 +26,7 @@ var FieldGroup= React.createClass(
             };
         },
 
-        componentDidMount() {
+        componentWillMount() {
             var {groupKey, reducerFunc, validatorFunc, keepState}= this.props;
             FieldGroupActions.mountFieldGroup({groupKey, reducerFunc, validatorFunc, keepState, mounted:true})
         },

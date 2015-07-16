@@ -51,8 +51,6 @@ public class WebPlotResultParser {
             JsArrayString creatorAry= res.getStringArrayResult(WebPlotResult.PLOT_CREATE);
 //            String wpCreateStr= res.getResult(WebPlotResult.PLOT_CREATE);
             if (creatorAry!=null) {
-//                CreatorResults cr= CreatorResults.parse(wpCreateStr);
-//                retval.putResult(WebPlotResult.PLOT_CREATE, cr);
                     String ary[]= new String[creatorAry.length()];
                     for(int i= 0; (i<ary.length); i++) ary[i]= creatorAry.get(i);
                     List<WebPlotInitializer> wpInitList= new ArrayList<WebPlotInitializer>(ary.length);

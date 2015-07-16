@@ -27,7 +27,6 @@ var ValidationField= React.createClass(
            var {valid,message}= this.getValidator()(ev.target.value);
 
            this.fireValueChange({
-               formKey : this.getFormKey(),
                fieldKey : this.props.fieldKey,
                newValue : ev.target.value,
                message,

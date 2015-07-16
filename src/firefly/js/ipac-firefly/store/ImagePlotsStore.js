@@ -6,7 +6,7 @@
 /*globals ffgwt.Visualize*/
 
 import ImagePlotsActions from '../actions/ImagePlotsActions.js'
-import {application} from '../core/Application.js';
+import alt from '../core/AppAlt.js';
 
 class ImagePlotsStore {
 
@@ -21,7 +21,7 @@ class ImagePlotsStore {
     }
 }
 
-var imagePlotsStore= application.alt.createStore(ImagePlotsStore, 'ImagePlotsStore' );
+var imagePlotsStore= alt.createStore(ImagePlotsStore, 'ImagePlotsStore' );
 
 
 

@@ -1,6 +1,6 @@
 
 
-import {application, NetworkMode} from '../core/Application.js';
+import alt from '../core/AppAlt.js';
 
 
 
@@ -28,4 +28,4 @@ class FormActions {
 
 }
 
-export default application.alt.createActions(FormActions);
+export default alt.createActions(FormActions);

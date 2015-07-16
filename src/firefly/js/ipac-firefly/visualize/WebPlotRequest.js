@@ -124,6 +124,7 @@ const C= {
 
 };
 
+
 const allKeys =
         [C.FILE, C.WORLD_PT, C.URLKEY, C.SIZE_IN_DEG, C.SURVEY_KEY,
          C.SURVEY_KEY_ALT, C.SURVEY_KEY_BAND, C.TYPE, C.ZOOM_TYPE,
@@ -193,7 +194,6 @@ class WebPlotRequest extends ServerRequest {
 //class WebPlotRequest {
     constructor(type,userDesc,serviceType) {
         super(type);
-        this.WebPlotRequestConst= C;
         if (type) this.setRequestType(type);
 
         this.setRequestClass(WEB_PLOT_REQUEST_CLASS);
@@ -394,7 +394,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return TitleOptions
+     * @return {TitleOptions}
      */
     getTitleOptions() {
         return TitleOptions.get(this.getParam(C.ZOOM_TYPE)) || TitleOptions.NONE;
@@ -1276,4 +1276,5 @@ class WebPlotRequest extends ServerRequest {
 
 }
 
+export const WPConst= C;
 export default WebPlotRequest;

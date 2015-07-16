@@ -16,7 +16,8 @@
 if (!window._babelPolyfill) {
     require("babel/polyfill");
 }
-import Alt from 'alt';
+import AppAlt from './AppAlt.js';
+//import Alt from 'alt';
 
 require('babel/polyfill');
 import { appFlux } from './Globals.js';
@@ -32,11 +33,10 @@ import {getJsonData } from 'ipac-firefly/rpc/SearchServicesJson.js';
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
 
-
 class Application {
     constructor() {
         this.networkMode= NetworkMode.JSON;
-        this.alt= new Alt();
+        this.alt= AppAlt;
     }
 
 

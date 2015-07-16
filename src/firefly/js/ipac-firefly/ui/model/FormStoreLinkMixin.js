@@ -10,8 +10,9 @@
 "use strict";
 
 import React from 'react/addons';
-import formActions from '../../actions/FormActions.js'
 import _ from 'underscore';
+import FieldGroupStore from '../../store/FieldGroupStore.js';
+import FieldGroupActions from '../../actions/FieldGroupActions.js';
 
 
 
@@ -24,14 +25,14 @@ var FormStoreLinkMixin=  {
 
     propTypes: {
         fieldKey : React.PropTypes.string.isRequired,
-        formStore : React.PropTypes.object.isRequired,
+        groupKey : React.PropTypes.string.isRequired,
         initialState : React.PropTypes.object,
         labelWidth : React.PropTypes.number
     },
 
     getInitialState() {
-        var {formStore,fieldKey} = this.props;
-        var fieldState = this.props.initialState || formStore.getState().fields[fieldKey];
+        var {groupKey,fieldKey} = this.props;
+        var fieldState = this.props.initialState || FieldGroupStore.getGroupFields(groupKey)[fieldKey];
         return {
             fieldState : fieldState
         };
@@ -56,7 +57,8 @@ var FormStoreLinkMixin=  {
 
 
     fireValueChange(payload) {
-        formActions.valueChange(payload);
+        if (!payload.groupKey) payload.groupKey= this.props.groupKey;
+        FieldGroupActions.valueChange(payload);
     },
 
 
@@ -72,16 +74,12 @@ var FormStoreLinkMixin=  {
         this.updateFieldStateWithProps(nextProps);
     },
 
-    getFormKey() {
-        return this.props.formStore.getState().formKey;
-    },
 
     componentDidMount() {
-        //this.storeListenerRemove= this.props.formStore.listen(this.updateFieldStateOnMount.bind(this));
-        this.storeListenerRemove= this.props.formStore.listen( ()=> this.updateFieldStateWithProps(this.props));
+        this.storeListenerRemove= FieldGroupStore.listen( ()=> this.updateFieldStateWithProps(this.props));
         _.defer(()=> {
-            formActions.mountComponent( {
-                formKey: this.getFormKey(),
+            FieldGroupActions.mountComponent( {
+                groupKey: this.props.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : true,
                 value: this.getValue(),
@@ -93,8 +91,8 @@ var FormStoreLinkMixin=  {
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
         _.defer(()=> {
-            formActions.mountComponent( {
-                formKey: this.getFormKey(),
+            FieldGroupActions.mountComponent( {
+                groupKey: this.props.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : false,
                 value: this.getValue()
@@ -109,9 +107,12 @@ var FormStoreLinkMixin=  {
     //},
 
     updateFieldStateWithProps(props) {
-        var {fieldKey, formStore}= props;
-        if (fieldKey===props.fieldKey && this.state.fieldState!==formStore.getState().fields[fieldKey]) {
-            this.setState( {fieldState : formStore.getState().fields[fieldKey]});
+        var {groupKey, fieldKey}= props;
+        var groupState= FieldGroupStore.getGroupState(groupKey);
+        if (groupState && groupState.mounted && groupState.fields[fieldKey]) {
+            if (this.state.fieldState!==groupState.fields[fieldKey]) {
+                this.setState( {fieldState : groupState.fields[fieldKey]});
+            }
         }
     }
 

@@ -219,7 +219,7 @@ export class ServerRequest {
 //  convenience data converting routines
 //====================================================================
     getBooleanParam(key, def=false) {
-        return this.params[key] ? toBoolean(this.params[key]) : def;
+        return this.params[key] ? validator.toBoolean(this.params[key]) : def;
     }
 
     getIntParam(key, def=0) {

@@ -36,7 +36,6 @@ var CheckboxGroupInputField= React.createClass(
             var {valid,message}= this.getValidator()(curValueArr.toString());
 
             this.fireValueChange({
-                formKey : this.getFormKey(),
                 fieldKey : this.props.fieldKey,
                 newValue : curValueArr.toString(),
                 message,
@@ -82,7 +81,7 @@ var CheckboxGroupInputField= React.createClass(
                                 key={option["value"]}
                                 name={this.props.fieldKey}
                                 value={option["value"]}
-                                defaultChecked={this.isChecked(option["value"])}
+                                checked={this.isChecked(option["value"])}
                                 onChange={this.onChange}
                             >&nbsp;{option["label"]}&nbsp;&nbsp;</input>;
                         }).bind(this))}

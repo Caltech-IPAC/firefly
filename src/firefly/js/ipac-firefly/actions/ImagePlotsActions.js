@@ -3,7 +3,7 @@
  */
 
 
-import {application} from '../core/Application.js';
+import alt from '../core/AppAlt.js';
 
 class ImagePlotsActions {
 
@@ -21,7 +21,7 @@ class ImagePlotsActions {
 }
 
 
-var imagePlotsActions= application.alt.createActions(ImagePlotsActions);
+var imagePlotsActions= alt.createActions(ImagePlotsActions);
 
 
 var allPlots= ffgwt.Visualize.AllPlots.getInstance();
