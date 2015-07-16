@@ -11,6 +11,7 @@ import uk.ac.starlink.table.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,11 +28,11 @@ public final class FITSTableReader
      *
      * TOP_MOST: Ignore the repeat count portion of the TFORMn Keyword
      * returning only the first datum of the field, even if repeat count is more than 1.
-     * This should produce exactly one DataGroup. This is the default strategy if not given.
+     * This should produce exactly one DataGroup per table. This is the default strategy if not given.
      *
      * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
      * Because each field may have different repeat count (dimension), insert blank
-     * when no data is available. This should produce exactly one DataGroup.
+     * when no data is available. This should produce exactly one DataGroup per table.
      *
      * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
      * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
@@ -62,38 +63,34 @@ public final class FITSTableReader
         FITSTableReader fits_to_ipac = new FITSTableReader();
 
         //for lsst:
-        //String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
-        //String[] dataCols = {"id", "coord ra", "coord_dec", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
-        //String[] dataCols = {"flags"};
-        //String[] headerCols = {"id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
-        //String[] headerCols = { "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma", "coord_ra","coord_dec", "parent", "footprint"};
-        //String[] headerCols ={"flags"};
-
-        //for lsst_cat:
-        //String[] dataCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components","name" };
-        //String[] dataCols = {"id", "cat.archive", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
-        String[] dataCols = null;
-        //String[] headerCols = {"id", "cat.archive", "cat.persistable", "spatialfunctions", "components", "name"};
-        String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        String[] dataCols = {"flags", "id", "coord ra", "coord_dec", "parent", "footprint", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
+        //String[] dataCols = null;
+        String[] headerCols = {"flags", "id", "coord_ra","coord_dec", "parent", "footprint","base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         //String[] headerCols = null;
 
-        String strategy = EXPAND_BEST_FIT;
-        //String strategy = EXPAND_REPEAT;
+        //for lsst_cat:
+        //String[] dataCols = {"id", "cat.archive", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        //String[] dataCols = null;
+        //String[] headerCols = {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
+        //String[] headerCols = null;
+
+        //String strategy = EXPAND_BEST_FIT;
+        String strategy = EXPAND_REPEAT;
         //String strategy = TOP_MOST;
         //String strategy = FULLY_FLATTEN;
 
         int whichDG = 0;
         if (strategy == EXPAND_BEST_FIT){
-            whichDG = 13;
+            whichDG = 0;
         }
         else if (strategy == EXPAND_REPEAT) {
-            whichDG = 13;
+            whichDG = 0;//13;
         }
         else if (strategy == TOP_MOST) {
             whichDG = 0;
         }
         else if (strategy == FULLY_FLATTEN) {
-            whichDG = 3;
+            whichDG = 4;
         }
 
         try {
@@ -149,7 +146,6 @@ public final class FITSTableReader
     }
 
 
-
     /**
      * Convert a FITS file to a list of DataGroup.
      * @param fits_filename
@@ -171,6 +167,8 @@ public final class FITSTableReader
         List tList = getStarTableList(fits_filename);
 
         List<DataGroup> dgListTotal = new ArrayList();
+        // for testing:
+        //for (int i = 4; i < tList.size(); i++) {
         for (int i = 0; i < tList.size(); i++) {
             StarTable table = (StarTable) tList.get(i);
             List<DataGroup> dgList = convertFitsToDataGroup(table, dataCols, headerCols, strategy);
@@ -267,52 +265,13 @@ public final class FITSTableReader
             /**
              * "TOP_MOST": Ignore the repeat count portion of the TFORMn Keyword
              * returning only the first datum of the field, even if repeat count is more than 1.
-             * This should produce exactly one DataGroup. This is the default strategy if not given.
+             * This should produce exactly one DataGroup per table. This is the default strategy if not given.
              */
-            int repeat = 1;
 
             // One data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
-            for (long row = 0; row < nRows; row++) {
-                // Save data into an arrayList and then use:
-                List dataArrayList = new ArrayList();
-                DataObject dataObj = new DataObject(dataGroup);
-                int dataTypeIndex = 0;
-                for (int col = 0; col < nColumns; col++) {
-                    if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName[col]))){
-                        dataTypeIndex++;
-                        ColumnInfo colInfo = columnInfoList.get(col);
-                        Object cell = table.getCell(row, col);
-                        dataArrayList = getDataArrayList(cell,
-                                colInfo,
-                                repeat,
-                                maxRepeat,
-                                strategy,
-                                dataArrayList);
-                        String type = dataTypeList.get(dataTypeIndex - 1).getDataType().toString();
-                        Object data = dataArrayList.get(dataTypeIndex - 1);
-                        if (type.contains("Integer")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Integer [])data)[0]);
-                        }
-                        else if (type.contains("Long")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Long [])data)[0]);
-                        }
-                        else if (type.contains("Float")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Float [])data)[0]);
-                        }
-                        else if (type.contains("Double")){
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((Double [])data)[0]);
-                        }
-                        else if ((type.contains("String")) || (type.contains("char"))) {
-                            dataObj.setDataElement(dataTypeList.get(dataTypeIndex - 1), ((String [])data)[0]);
-                        }
-                        else {
-                            throw new FitsException(
-                                    "Unrecognized format character in FITS table file: " + type);
-                        }
-                    }
-                }
-                dataGroup.add(dataObj);
+            for (long row = 0; row < nRows; row++){
+                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
             }
 
             // Add attributes to dataGroup:
@@ -337,19 +296,15 @@ public final class FITSTableReader
             /**
              * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
              * Because each field may have different repeat count (dimension), insert blank
-             * when no data is available. This should produce exactly one DataGroup.
+             * when no data is available. This should produce exactly one DataGroup per table.
              */
 
             // define one whole data group per table:
             DataGroup dataGroup = new DataGroup(tableName, dataTypeList);
 
             for (long row = 0; row < nRows; row++) {
-                // Save data into an arrayList and then use:
-                List dataArrayList = new ArrayList(maxRepeat);
-                dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
-
                 // Fill the data into the dataGroup:
-                dataGroup = fillDataToGroup(maxRepeat, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
             }
 
             // Add attributes to dataGroup:
@@ -382,13 +337,7 @@ public final class FITSTableReader
 
                 //One data group per row:
                 DataGroup dataGroup = new DataGroup(dgTitle, dataTypeList);
-
-                // Save data into an arrayList and then use:
-                List dataArrayList = new ArrayList(maxRepeat);
-                dataArrayList = getDataArrayList(table, row, repeats, maxRepeat, dataCols, strategy, dataArrayList);
-
-                // Fill the data into the dataGroup:
-                dataGroup = fillDataToGroup(maxRepeat, dataArrayList, dataTypeList, dataGroup);
+                dataGroup = fillDataGroup(table, dataTypeList, maxRepeat, row, dataCols, strategy, dataGroup);
 
                 // Add attributes to dataGroup:
                 DataGroup.Attribute attribute;
@@ -408,30 +357,75 @@ public final class FITSTableReader
         return dataGroupList;
     }
 
+
     /**
-     * Fill the dataObj with the dataArralyList[maxRepeat] and dataTypeList[nColumn] and then add the dataObj to the dataGroup.
-     * One dataObj collects the data from all the columns at one repeat.
-     * One dataGroup contains dataObjs from all the repeats.
-     * @param maxRepeat
-     * @param dataArrayList
+     *
+     * @param table
      * @param dataTypeList
+     * @param maxRepeat
+     * @param row
+     * @param dataCols
+     * @param strategy
      * @param dataGroup
      * @return
+     * @throws IOException
      * @throws FitsException
      */
-    private static DataGroup fillDataToGroup(int maxRepeat,
-                                           List dataArrayList,
-                                           List<DataType> dataTypeList,
-                                           DataGroup dataGroup)
-    throws FitsException {
 
-        int size = dataArrayList.size();
-        for (int repeat = 0; repeat < maxRepeat; repeat++) {
+    private static DataGroup fillDataGroup(StarTable table,
+                                           List<DataType> dataTypeList,
+                                           int maxRepeat,
+                                           long row,
+                                           String[] dataCols,
+                                           String strategy,
+                                           DataGroup dataGroup)
+            throws IOException, FitsException {
+
+        if (strategy.equals(TOP_MOST)){
+            maxRepeat = 1;
+        }
+
+        for (int rpt = 0; rpt < maxRepeat; rpt ++) {
             DataObject dataObj = new DataObject(dataGroup);
-            for (int col = 0; col < size; col++) {
-                DataType dataType = dataTypeList.get(col);
-                Object data = dataArrayList.get(col);
-                dataObj = fillDataObj(repeat, data, dataType, dataObj);
+            int dataCol = 0;
+            for (int col = 0; col < table.getColumnCount(); col++) {
+                String colName = table.getColumnInfo(col).getName();
+                if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName))) {
+                    dataCol ++;
+                    ColumnInfo colInfo = table.getColumnInfo(col);
+                    String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
+                    String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
+                    Object cell = table.getCell(row, col);
+
+                    Object dataElement = null;
+                    if (table.getColumnInfo(col).isArray()) {
+                        if (rpt < Array.getLength(cell)) {
+                            dataElement = getDataElement(Array.get(cell, rpt), classType, originalType);
+                        }
+                        else {
+                            if (strategy.equals(EXPAND_REPEAT)) {
+                                dataElement = getDataElement(Array.get(cell, Array.getLength(cell)-1), classType, originalType);
+                            }
+                            else if ((strategy.equals(EXPAND_BEST_FIT)) || (strategy.equals(FULLY_FLATTEN)) ) {
+                                dataElement = null;
+                            }
+                        }
+                    }
+                    else {
+                        if (rpt == 0) {
+                            dataElement = getDataElement(cell, classType, originalType);
+                        }
+                        else {
+                            if (strategy.equals(EXPAND_REPEAT)) {
+                                dataElement = getDataElement(cell, classType, originalType);
+                            }
+                            else if ((strategy.equals(EXPAND_BEST_FIT)) || (strategy.equals(FULLY_FLATTEN)) ) {
+                                dataElement = null;
+                            }
+                        }
+                    }
+                    dataObj.setDataElement(dataTypeList.get(dataCol -1), dataElement);
+                }
             }
             dataGroup.add(dataObj);
         }
@@ -439,343 +433,31 @@ public final class FITSTableReader
     }
 
     /**
-     * Fill the dataObj with the data at the given repeat and column and with the dataType.
-     * Depending on the data type, cast data array into a corresponding reference type array.
-     * When filling dataArrayList, we only have the data types of Integer, Long, Float, Double, and String.
-     * Will handle complex type later.
      *
-     * @param repeat
-     * @param data
-     * @param dataType
-     * @param dataObj
+     * @param obj
+     * @param classType
+     * @param originalType
      * @return
-     * @throws FitsException
      */
-    private static DataObject fillDataObj(int repeat,
-                                          Object data,
-                                          DataType dataType,
-                                          DataObject dataObj)
-    throws FitsException {
+    private static Object getDataElement(Object obj, String classType, String originalType) {
 
-        String classType = dataType.getDataType().toString();
+        Object dataElement = obj;
 
-        if (classType.contains("Integer")){
-            dataObj.setDataElement(dataType, ((Integer [])data)[repeat]);
-        }
-        else if (classType.contains("Long")){
-            dataObj.setDataElement(dataType, ((Long [])data)[repeat]);
-        }
-        else if (classType.contains("Float")){
-            dataObj.setDataElement(dataType, ((Float [])data)[repeat]);
-        }
-        else if (classType.contains("Double")){
-            dataObj.setDataElement(dataType, ((Double [])data)[repeat]);
-        }
-        else if ((classType.contains("String")) || (classType.contains("char"))) {
-            dataObj.setDataElement(dataType, ((String [])data)[repeat]);
-        }
-        else {
-            throw new FitsException(
-                    "Unrecognized format character in FITS table file: " + classType);
-        }
-
-        return dataObj;
-    }
-
-    /**
-     * To get the dataArrayList which contains the data from one row in a table.
-     * Each element in dataArrayList is  the data in a cell[row, col] which could be a single datum or a data array.
-     * Only the columns in the list dataCols will be put in the dataArrayList.
-     *
-     * @param table
-     * @param row: the row number
-     * @param repeats: Repeats at all the columns.
-     * @param maxRepeat: The maximum repeat.
-     * @param dataCols: The columns the caller wants to put in the IPAC table data part.
-     *                If dataCols = null, all the columns will be put in the dataArrayList.
-     * @param strategy: TOP_MOST, EXPAND_BEST_FIT, EXPAND_REPEAT, FULLY_FLATTEN.
-     *
-     * @return dataArrayList
-     */
-    private static List getDataArrayList(StarTable table,
-                                                 long row,
-                                                 int[] repeats,
-                                                 int maxRepeat,
-                                                 String[] dataCols,
-                                                 String strategy,
-                                                 List dataArrayList)
-            throws FitsException, IOException {
-
-        int nColumns = table.getColumnCount();
-        for (int col = 0; col < nColumns; col++) {
-            ColumnInfo colInfo = table.getColumnInfo(col);
-            String colName = colInfo.getName();
-            if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName))) {
-                int repeat = repeats[col];
-                Object cell = table.getCell(row, col);
-                dataArrayList = getDataArrayList(cell,
-                        colInfo,
-                        repeat,
-                        maxRepeat,
-                        strategy,
-                        dataArrayList);
-            }
-        }
-        return dataArrayList;
-    }
-
-    /**
-     * Collect the cell data to dataArrayList:
-     *      If the dataArrayList has content, keep adding the cell data to it.
-     *      If the dataArrayList is empty, make a new one and add the cell data to it.
-     * If the cell is an array, the classType should be primitive. Cast the cell to a primitive data array, data[], based on the class type of the cell.
-     * If the cell is a single value, the classType should be the reference type, like Integer. Cast the cell into a reference type based on the class type and put it in the data[].
-     * Convert data[repeat] to dataOut[maxRepeat] which is declared at the corresponding reference type:
-     *      (1)Convert boolean[] to Integer[] (1 or 0) if original type is bits; to String[]("true"/"false") if the original type is logical.
-     *      (2)Convert byte[]/short[] to Integer[].
-     *      (3)Fill the missing data with null or the last value, based on the strategy EXPAND_BEST_FIT or EXPAND_REPEAT.
-     *
-     * @param cell the data at the row and the column
-     * @param colInfo the column info at the col.
-     * @param repeat
-     * @param maxRepeat
-     * @param strategy
-     * @param dataArrayList
-     * @return dataArrayList
-     */
-    private static List getDataArrayList(Object cell,
-                                         ColumnInfo colInfo,
-                                         int repeat,
-                                         int maxRepeat,
-                                         String strategy,
-                                         List dataArrayList)
-    throws FitsException {
-
-        boolean isCellArray = colInfo.isArray();
-        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
-        String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-        dataArrayList = (dataArrayList.size() ==0)?  new ArrayList() : dataArrayList;
-
-        if ((classType.contains("boolean")) || (classType.contains("Boolean"))){
-            boolean [] data = new boolean[repeat];
-            if (isCellArray) {
-                data = (boolean [])cell;
-            }
-            else {
-                data[0] = (Boolean) cell;
-            }
-
+        if (classType.contains("boolean")){
             if (originalType.contains("L")){
-                //Logical:
-                String [] dataOut = new String[maxRepeat];
-                for (int rpt = 0; rpt < maxRepeat; rpt ++){
-                    if (rpt < data.length) {
-                        dataOut[rpt] = Boolean.toString(data[rpt]);
-                    }
-                    else {
-                        if (strategy.equals(EXPAND_REPEAT)) {
-                            dataOut[rpt] = Boolean.toString(data[data.length -1 ]);
-                        }
-                        else if (strategy.equals(EXPAND_BEST_FIT)){
-                            dataOut[rpt] = null;
-                        }
-                    }
-                }
-                dataArrayList.add(dataOut);
+                dataElement = String.valueOf(obj);
             }
             else if (originalType.contains("X")){
-                //Bits:
-                Integer[] dataOut = new Integer[maxRepeat];
-                for (int rpt = 0; rpt < maxRepeat; rpt ++){
-                    if (rpt < data.length) {
-                        dataOut[rpt] = data[rpt] ? 1 : 0;
-                    }
-                    else{
-                        if (strategy.equals(EXPAND_REPEAT)) {
-                            dataOut[rpt] = data[data.length - 1] ? 1:0;
-                        }
-                        else if (strategy.equals(EXPAND_BEST_FIT)){
-                            dataOut[rpt] = null;
-                        }
-                    }
-                }
-                dataArrayList.add(dataOut);
+                dataElement = (Boolean)obj? 1:0;
             }
         }
-        else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
-            byte [] data = new byte[repeat];
-            if (isCellArray) {
-                data = (byte[])cell;
-            }
-            else {
-                data[0] = (Byte)cell;
-            }
-            Integer[] dataOut = new Integer[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = (int)data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = (int)data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
+        else if (classType.contains("byte") || classType.contains("short") ){
+            dataElement = (int)(Integer)obj;
         }
-        else if ((classType.contains("short")) || (classType.contains("Short"))) {
-            short [] data = new short[repeat];
-            if (isCellArray) {
-                data = (short[])cell;
-            }
-            else {
-                data[0] = (Short)cell;
-            }
-            Integer[] dataOut = new Integer[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = (int)data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = (int)data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("int")) || (classType.contains("Integer"))) {
-            int [] data = new int[repeat];
-            if (isCellArray) {
-                data = (int[])cell;
-            }
-            else {
-                data[0] = (Integer)cell;
-            }
-            Integer[] dataOut = new Integer[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = (Integer)data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("long")) || (classType.contains("Long"))) {
-            long [] data = new long[repeat];
-            if (isCellArray) {
-                data = (long[])cell;
-            }
-            else {
-                data[0] = (Long)cell;
-            }
-            Long[] dataOut = new Long[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("float")) || (classType.contains("Float"))) {
-            float [] data = new float[repeat];
-            if (isCellArray) {
-                data = (float[])cell;
-            }
-            else {
-                data[0] = (Float)cell;
-            }
-            Float[] dataOut = new Float[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;//Float.NaN;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("double")) || (classType.contains("Double"))) {
-            double [] data = new double[repeat];
-            if (isCellArray) {
-                data = (double[])cell;
-            }
-            else {
-                data[0] = (Double)cell;
-            }
-            Double[] dataOut = new Double[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null; //Double.NaN;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else if ((classType.contains("char")) || (classType.contains("String"))) {
-            String[] data = new String[repeat];
-            if (isCellArray) {
-                data = (String[])cell;
-            }
-            else {
-                data[0] = (String)cell;
-            }
-            String[] dataOut = new String[maxRepeat];
-            for (int rpt = 0; rpt < maxRepeat; rpt++){
-                if (rpt < data.length) {
-                    dataOut[rpt] = data[rpt];
-                }
-                else {
-                    if (strategy.equals(EXPAND_REPEAT)) {
-                        dataOut[rpt] = data[data.length - 1];
-                    }
-                    else if (strategy.equals(EXPAND_BEST_FIT)){
-                        dataOut[rpt] = null;
-                    }
-                }
-            }
-            dataArrayList.add(dataOut);
-        }
-        else {
-            throw new FitsException(
-                    "Unrecognized format character in FITS table file: " + classType);
-        }
-        return dataArrayList;
+
+        return dataElement;
     }
+
 
     /**
      * To get the attribute data ArrayList, attArrayList, from a cell (a single value or an array). Each element in the arraylist is one datum from the cell.
