@@ -6,6 +6,7 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.util.Assert;
 import nom.tam.fits.FitsException;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -152,7 +153,7 @@ public class ImageData implements Serializable {
 
 
 
-    private void constructImage(FitsRead fitsReadAry[]) {
+    private void constructImage_orig(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         if (_imageType==ImageType.TYPE_8_BIT) {
@@ -168,6 +169,42 @@ public class ImageData implements Serializable {
                 byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
                     fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
+                }
+                else {
+                    for(int j=0; j<array.length; j++) array[j]= 0;
+                }
+            }
+            _bufferedImage.setData(_raster);
+
+
+        }
+        else {
+            Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");
+        }
+        _imageOutOfDate=false;
+        inUseCnt.decrementAndGet();
+
+    }
+   //07/16/16 LZ
+    //TODO remove this after testing mask
+    private void constructImage(FitsRead fitsReadAry[]) {
+
+        inUseCnt.incrementAndGet();
+        LSSTMask lsstmask = new LSSTMask(0, Color.RED);
+        if (_imageType==ImageType.TYPE_8_BIT) {
+            _raster= null;
+            _bufferedImage= new BufferedImage(_width,_height,
+                    BufferedImage.TYPE_BYTE_INDEXED, _cm);
+            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lsstmask);
+        }
+
+        else if (_imageType==ImageType.TYPE_24_BIT) {
+            _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
+
+            for(int i=0; (i<fitsReadAry.length); i++) {
+                byte array[]= getDataArray(i);
+                if(fitsReadAry[i]!=null) {
+                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, lsstmask);
                 }
                 else {
                     for(int j=0; j<array.length; j++) array[j]= 0;

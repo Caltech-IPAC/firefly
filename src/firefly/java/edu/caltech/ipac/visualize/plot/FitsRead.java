@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.awt.Color;
+import java.util.Map;
 
 
 /**
@@ -59,8 +61,8 @@ public class FitsRead implements Serializable {
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-    private int[] masks=null;
-    private static boolean searchedMask=false;
+    private static short[] masks=null;
+    //private static boolean searchedMask=false;
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -77,7 +79,10 @@ public class FitsRead implements Serializable {
         this.fits = fits;
         hdu = imageHdu;
         header = imageHdu.getHeader();
+        // now get SPOT plane_number from FITS cube (zero if not from a cube)
         planeNumber = header.getIntValue("SPOT_PL", 0);
+        // now get SPOT extension_number from FITS header
+        // -1 if the image had no extensions
         extension_number = header.getIntValue("SPOT_EXT", -1);
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
@@ -87,12 +92,8 @@ public class FitsRead implements Serializable {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
-
         float1d = getImageHDUDataInFloatArray(imageHdu);
-
-
-    }
-
+     }
 
     /**
      * This constructor may not be needed it.
@@ -119,11 +120,6 @@ public class FitsRead implements Serializable {
         //get the data and store into float array
         float1d = getImageHDUDataInFloatArray(imageHdu);
         //masks = getMasksInFits(fits);
-         if (hasMask && header.getStringValue("EXTTYPE").equalsIgnoreCase("mask")) {
-             masks = (int[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(hdu.getData().getData(), Integer.TYPE));
-
-         }
-
 
      }
 
@@ -160,6 +156,21 @@ public class FitsRead implements Serializable {
 
      }
 
+     private static short[] getMasksInFits(ArrayList<BasicHDU> HDUList) throws FitsException {
+         for (int i=0; i<HDUList.size(); i++){
+             Header header =  HDUList.get(i).getHeader();
+             if (header == null) {
+                 throw new FitsException("Missing header in FITS file");
+             }
+             if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ) {
+                     return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
+             }
+
+         }
+         return null;
+
+     }
+
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
      *
@@ -179,7 +190,9 @@ public class FitsRead implements Serializable {
             throw new FitsException("Bad format in FITS file");
         }
 
+
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
+
 
         if (HDUList.size() == 0)
             throw new FitsException("No image headers in FITS file");
@@ -189,6 +202,10 @@ public class FitsRead implements Serializable {
             fitsReadAry[i] = new FitsRead(fits, (ImageHDU) HDUList.get(i));
             fitsReadAry[i].indexInFile = i;
         }
+
+        //check the input Fits file to see if it has a Mask extension.  If it has, read the mask data to an integer array
+        //if not, set mas to null;
+        masks = getMasksInFits(HDUList );
 
         return fitsReadAry;
     }
@@ -718,7 +735,7 @@ public class FitsRead implements Serializable {
 
 
     public synchronized void doStretch(RangeValues rangeValues,
-                                       byte pixelData[],
+                                       byte[] pixelData,
                                        boolean mapBlankToZero,
                                        int startPixel,
                                        int lastPixel,
@@ -743,9 +760,161 @@ public class FitsRead implements Serializable {
 
         int[] pixelhist = new int[256];
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
-                blank_pixel_value, float1d, pixelData, pixelhist, rangeValues,slow,shigh);
+                blank_pixel_value, float1d,  pixelData, pixelhist, rangeValues,slow,shigh);
 
 
+
+    }
+
+    /**
+     * Add the mask layer to the existing image
+     * @param rangeValues
+     * @param
+     * @param mapBlankToZero
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+     * @param lsstMask
+     */
+    public synchronized void doStretch(RangeValues rangeValues,
+                                       byte[] pixelData,
+                                       boolean mapBlankToZero,
+                                       int startPixel,
+                                       int lastPixel,
+                                       int startLine,
+                                       int lastLine, LSSTMask lsstMask){
+
+
+
+
+        Histogram hist= getHistogram();
+
+
+        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
+        if (SUTDebug.isDebug()) {
+            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
+        }
+
+        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+
+        //byte pixelData[] = passedPixelData;
+
+        int[] pixelhist = new int[256];
+
+
+       // for (int i=0; i<lsstMasks.length; i++){
+
+            stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
+                    blank_pixel_value, float1d, masks, pixelData, pixelhist, rangeValues, slow, shigh, lsstMask);//s[i]);
+
+
+       // }
+
+
+
+    }
+
+    /**
+     * add a new stretch method to do the mask plot
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+     * @param naxis1
+     * @param hist
+     * @param blank_pixel_value
+     * @param float1dArray
+     * @param masks
+     * @param pixeldata
+     * @param pixelhist
+     * @param rangeValues
+     * @param slow
+     * @param shigh
+     * @param lsstMask
+     */
+    private static void stretchPixels(int startPixel,
+                                      int lastPixel,
+                                      int startLine,
+                                      int lastLine,
+                                      int naxis1,
+                                      Histogram hist,
+                                      byte blank_pixel_value,
+                                      float[] float1dArray,
+                                      short[] masks,
+                                      byte[] pixeldata,
+                                      int[] pixelhist,
+                                      RangeValues rangeValues,
+                                      double slow,
+                                      double shigh, LSSTMask lsstMask) {
+
+
+        double sdiff = slow == shigh ? 1.0 : shigh - slow;
+
+        double[] dtbl = new double[256];
+        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
+                || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
+            dtbl = getLogDtbl(sdiff, slow, rangeValues);
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
+            dtbl = hist.getTblArray();
+        }
+        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
+        }
+        else if( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
+            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
+        }
+
+
+        int deltasav = sdiff > 0 ? 64 : -64;
+
+        /*
+         * This loop will go through all the pixels and assign them new values based on the
+         * stretch algorithm
+         */
+
+        double dr= rangeValues.getDrValue();
+        double gamma=rangeValues.getGammaValue();
+        int pixelCount = 0;
+        for (int line = startLine; line <= lastLine; line++) {
+            int start_index = line * naxis1 + startPixel;
+            int last_index = line * naxis1 + lastPixel;
+
+            for (int index = start_index; index <= last_index; index++) {
+
+                if (Double.isNaN(float1dArray[index])) { //orignal pixel value is NaN, assign it to blank
+                    pixeldata[pixelCount] = blank_pixel_value;
+                } else {   // stretch each pixel
+
+                    int mask = masks[index];
+                    if (lsstMask.isSet(mask)) { //assign the defined color
+                        pixeldata[pixelCount] = (byte) lsstMask.getColor().getRGB();
+                    } else {   // stretch each pixel
+                        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
+
+                            double dRunval = ((float1dArray[index] - slow) * 254 / sdiff);
+                            pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
+
+                        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_ASINH) {
+                            pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh);
+                        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_POWERLAW_GAMMA) {
+
+                            pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
+                        } else {
+
+                            pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index], dtbl, deltasav);
+                        }
+                        pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
+                   }
+
+                   pixelhist[pixeldata[pixelCount] & 0xff]++;
+                }
+                pixelCount++;
+
+            }
+        }
 
     }
 
@@ -840,20 +1009,6 @@ public class FitsRead implements Serializable {
 
     }
 
-    //TODO more about this later
-    private  void plotMasks(LSSTMask... maskColor){
-        if (maskColor == null) {
-            throw new NullPointerException("Please input valid LSSTMask, not null.");
-        }
-        int size = maskColor.length;
-
-        //update the mask according to the input LSSTMask
-        for (int i=0; i<maskColor.length; i++){
-            masks=maskColor[i].set(masks);
-        }
-
-
-    }
     /**
      * A pixel is a cell or small rectangle which stores the information the computer can handle. A discrete pixels make the map.
      * Each pixel store a value which represents the color of the map.
@@ -1428,7 +1583,7 @@ public class FitsRead implements Serializable {
         }
         return fData;
     }
-    public int[] getMasks(){
+    public short[] getMasks(){
         return masks;
     }
     /**

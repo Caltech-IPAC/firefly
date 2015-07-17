@@ -4,17 +4,24 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.output.PlotOutput;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
+import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +85,8 @@ public class ImagePlot extends Plot implements Serializable {
         }
         configureImage(frGroup);
     }
+
+
 
     public boolean isThreeColor() { return _threeColor; }
 
@@ -903,4 +912,64 @@ public class ImagePlot extends Plot implements Serializable {
         }
     }
 
+    private static String getPath(String inputName) {
+        String[] names = inputName.split("/");
+        String fileName = names[names.length - 1];
+
+        //return fileName.split("\\.")[0];
+        return (inputName.substring(0, inputName.length()-names[names.length-1].length()));
+
+
+    }
+    /**
+     * 7/14/15 by LZ
+     * Add this main to test mask over lay plot
+     * @param args
+     * @throws FitsException
+     */
+    public static void main(String [] args) throws FitsException, IOException {
+
+        if (args.length<1){
+            usage();
+            System.exit(0);
+        }
+
+
+        String inFitsPathName = args[0];
+        Fits fits = new Fits(inFitsPathName );
+        String path = getPath(inFitsPathName);
+
+        FitsRead fitsRead =  FitsRead.createFitsReadArray(fits)[0];
+        ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
+        frGroup.setFitsRead(Band.NO_BAND,fitsRead);
+        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+
+        PlotOutput po = new PlotOutput(imagePlot, frGroup);
+        List<PlotOutput.TileFileInfo> results;
+
+        File imagefileDir = new File(path, "test.png");
+        String    root="testMask";
+        int tileCnt=1;
+        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
+
+        PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
+        PlotImages.ImageURL imageURL;
+        String relFile;
+        int idx= 0;
+        for(PlotOutput.TileFileInfo info : results) {
+            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
+            imageURL= new PlotImages.ImageURL(relFile,
+                    info.getX(), info.getY(),
+                    info.getWidth(), info.getHeight(),
+                    idx++,
+                    info.isCreated());
+            images.add(imageURL);
+        }
+
+
+    }
+
+    private static void usage(){
+        System.out.println("executableName  fitsFile");
+    }
 }
