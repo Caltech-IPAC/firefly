@@ -79,10 +79,7 @@ public class FitsRead implements Serializable {
         this.fits = fits;
         hdu = imageHdu;
         header = imageHdu.getHeader();
-        // now get SPOT plane_number from FITS cube (zero if not from a cube)
         planeNumber = header.getIntValue("SPOT_PL", 0);
-        // now get SPOT extension_number from FITS header
-        // -1 if the image had no extensions
         extension_number = header.getIntValue("SPOT_EXT", -1);
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
@@ -92,8 +89,10 @@ public class FitsRead implements Serializable {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
         }
         //get the data and store into float array
+
         float1d = getImageHDUDataInFloatArray(imageHdu);
-     }
+
+    }
 
     /**
      * This constructor may not be needed it.
@@ -163,7 +162,8 @@ public class FitsRead implements Serializable {
                  throw new FitsException("Missing header in FITS file");
              }
              if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ) {
-                     return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
+                 Object data = HDUList.get(i).getData().getData();
+                 return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
              }
 
          }
@@ -193,6 +193,9 @@ public class FitsRead implements Serializable {
 
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
 
+        //check the input Fits file to see if it has a Mask extension.  If it has, read the mask data to an integer array
+        //if not, set mas to null;
+        masks = getMasksInFits(HDUList );
 
         if (HDUList.size() == 0)
             throw new FitsException("No image headers in FITS file");
@@ -202,10 +205,6 @@ public class FitsRead implements Serializable {
             fitsReadAry[i] = new FitsRead(fits, (ImageHDU) HDUList.get(i));
             fitsReadAry[i].indexInFile = i;
         }
-
-        //check the input Fits file to see if it has a Mask extension.  If it has, read the mask data to an integer array
-        //if not, set mas to null;
-        masks = getMasksInFits(HDUList );
 
         return fitsReadAry;
     }
