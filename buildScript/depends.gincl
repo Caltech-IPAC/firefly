@@ -55,15 +55,16 @@ ext {
   firefly_lib = [ firefly_ext_lib, ':firefly' ]
 
 
-  FIREFLY_RUNTIME = [apache_lib, spring_lib, fits_io_lib, webservices_lib,
-                     log4j_lib, josso_lib, xstream_lib, xbeanfinder_lib,
-                     gwt_lib_rt, ehcache_lib, starlink_lib, j2ee_rt_lib, json_lib]
+  FIREFLY_RUNTIME = fits_io_lib + apache_lib + spring_lib + webservices_lib +
+                     log4j_lib + josso_lib + xstream_lib + xbeanfinder_lib +
+                     gwt_lib_rt + ehcache_lib + starlink_lib + j2ee_rt_lib + json_lib
 
-  FIREFLY_COMPILE = [j2ee_lib, gwt_lib, FIREFLY_RUNTIME]
+  FIREFLY_COMPILE = j2ee_lib + gwt_lib + FIREFLY_RUNTIME
 }
 
 
 dependencies {
+  compile fits_io_lib
   compile FIREFLY_COMPILE
 }
 
