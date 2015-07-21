@@ -25,6 +25,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.Assert;
+import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -68,10 +69,12 @@ public class SearchManager {
         ServerRequest req = processor.inspectRequest(request);
         if (req != null) {
             String jsonText = (String) processor.getData(req);
-            // validate JSON
+            // validate JSON and replace file paths with prefixes
             JSONParser parser = new JSONParser();
             try{
-                parser.parse(jsonText);
+                Object obj = parser.parse(jsonText);
+                Object json = ServerContext.replaceWithPrefixes(obj);
+                jsonText = JSONValue.toJSONString(json);
                 return jsonText;
             }
             catch(ParseException pe){

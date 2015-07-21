@@ -14,6 +14,8 @@ import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.CacheManager;
 import org.apache.log4j.PropertyConfigurator;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -414,6 +416,45 @@ public class ServerContext {
         return retval;
     }
 
+    public static Object convertFilePaths(Object json) {
+
+        // look for unresolved path prefixes in
+        // org.json.simple.JSONObject, org.json.simple.JSONArray, java.lang.String
+        // otherwise return unchanged object
+        if (json instanceof String) {
+            if (((String) json).startsWith(ServerContext.PFX_START)) {
+                File f = convertToFile((String) json, false);
+                if (f != null && f.exists()) {
+                    return f.getAbsolutePath();
+                } else {
+                    return json;
+                }
+            } else {
+                return json;
+            }
+        } else if (json instanceof JSONObject) {
+            JSONObject obj = (JSONObject) json;
+            for (Object key : obj.keySet()) {
+                Object newval = convertFilePaths(obj.get(key));
+                if (newval != null) {
+                    obj.put(key, newval);
+                }
+            }
+            return obj;
+        } else if (json instanceof JSONArray) {
+            JSONArray arr = (JSONArray) json;
+            for (int i=0; i< arr.size(); i++) {
+                Object newval = convertFilePaths(arr.get(i));
+                if (newval != null) {
+                    arr.set(i, newval);
+                }
+            }
+            return arr;
+        } else {
+            return json;
+        }
+    }
+
     public static File findFile(String prefix, String relFile) {
         File retval= null;
         if (prefix.startsWith(PFX_START) && prefix.endsWith(PFX_END) && prefix.length()>PFX_TOTAL_CHAR) {
@@ -521,7 +562,7 @@ public class ServerContext {
     private static void makeDirs(File dir) {
         boolean success= dir.mkdirs();
         if (!success || !dir.exists()) {
-            Logger.getLogger().error("failed to create " +dir.getPath());
+            Logger.getLogger().error("failed to create " + dir.getPath());
         }
     }
 
@@ -594,6 +635,47 @@ public class ServerContext {
         }
         return retval;
     }
+
+    public static Object replaceWithPrefixes(Object json) {
+
+        // look for unresolved path prefixes in
+        // org.json.simple.JSONObject, org.json.simple.JSONArray, java.lang.String
+        // otherwise return unchanged object
+        if (json instanceof String && ((String)json).contains(File.separator)) {
+            File f = new File((String) json);
+            if (f.exists()) {
+                String encodedPath = replaceWithPrefix(f);
+                if (encodedPath != null) {
+                    return encodedPath;
+                } else {
+                    return json;
+                }
+            } else {
+                return json;
+            }
+        } else if (json instanceof JSONObject) {
+            JSONObject obj = (JSONObject) json;
+            for (Object key : obj.keySet()) {
+                Object newval = replaceWithPrefixes(obj.get(key));
+                if (newval != null) {
+                    obj.put(key, newval);
+                }
+            }
+            return obj;
+        } else if (json instanceof JSONArray) {
+            JSONArray arr = (JSONArray) json;
+            for (int i=0; i< arr.size(); i++) {
+                Object newval = replaceWithPrefixes(arr.get(i));
+                if (newval != null) {
+                    arr.set(i, newval);
+                }
+            }
+            return arr;
+        } else {
+            return json;
+        }
+    }
+
 
     private static String replacePrefix(String path,
                                         String oldDir,

@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.nio.file.DirectoryStream;
@@ -58,6 +59,11 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
         try {
             launcher.addParam("-n", task);
             if (taskParams != null) {
+                // resolve path prefixes in taskParams
+                Object parsedParams = JSONValue.parseWithException(taskParams);
+                Object paramsResolved = ServerContext.convertFilePaths(parsedParams);
+                taskParams = JSONValue.toJSONString(paramsResolved);
+
                 jsonParamsFile = File.createTempFile(task, ".json", ServerContext.getTempWorkDir());
                 FileUtil.writeStringToFile(jsonParamsFile, taskParams);
                 launcher.addParam("-i", jsonParamsFile);
@@ -69,7 +75,12 @@ public class ExternalTaskHandlerImpl implements ExternalTaskHandler {
             launcher.addParam("-o", ServerContext.getExternalPermWorkDir());
 
         } catch (Exception e) {
-            LOGGER.error(e);
+            if (e instanceof ParseException) {
+                ParseException pe = (ParseException)e;
+                LOGGER.error(e, "invalid JSON in taskParams; position: " + pe.getPosition() + "; " + pe.getMessage() + "; " +taskParams);
+            } else {
+                LOGGER.error(e);
+            }
             throw new InterruptedException(task+" launcher setup failed: "+e.getMessage());
         }
     }
