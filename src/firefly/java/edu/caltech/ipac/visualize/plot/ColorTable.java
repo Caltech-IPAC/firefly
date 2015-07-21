@@ -727,6 +727,8 @@ static int clt21[]=  {
 		    -1, -1, -1, -1
 		    };
 
+
+
 static IndexColorModel _defaultColorModel = null;
 
   public static IndexColorModel getCurrentColorModel() throws IOException
@@ -769,6 +771,7 @@ static IndexColorModel _defaultColorModel = null;
        int ct[];
 
 	int bitsPerPixel = 8;
+    //palette: 3 bytes per color * 256 colors = 768 bytes in length
 	byte[] paletteData = new byte[768];
 	int paletteLength = paletteData.length / 3;
 

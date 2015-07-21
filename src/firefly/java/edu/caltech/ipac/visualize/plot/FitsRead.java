@@ -24,8 +24,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.awt.Color;
-import java.util.Map;
 
 
 /**
@@ -61,8 +59,8 @@ public class FitsRead implements Serializable {
     private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
-    private static short[] masks=null;
-    //private static boolean searchedMask=false;
+    private  short[] masks=null;
+
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
 
@@ -79,6 +77,7 @@ public class FitsRead implements Serializable {
         this.fits = fits;
         hdu = imageHdu;
         header = imageHdu.getHeader();
+
         planeNumber = header.getIntValue("SPOT_PL", 0);
         extension_number = header.getIntValue("SPOT_EXT", -1);
         checkHeader();
@@ -92,16 +91,21 @@ public class FitsRead implements Serializable {
 
         float1d = getImageHDUDataInFloatArray(imageHdu);
 
+        if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
+            masks = getMasks(float1d);
+        }
+
+
     }
+
 
     /**
      * This constructor may not be needed it.
      * @param fits
      * @param imageHdu
-     * @param hasMask
      * @throws FitsException
      */
-     private FitsRead(Fits fits, ImageHDU imageHdu, boolean hasMask) throws FitsException {
+     private FitsRead(Fits fits, ImageHDU imageHdu, int maskExtension) throws FitsException {
 
         //assign some instant variables
         this.fits = fits;
@@ -118,12 +122,22 @@ public class FitsRead implements Serializable {
         }
         //get the data and store into float array
         float1d = getImageHDUDataInFloatArray(imageHdu);
-        //masks = getMasksInFits(fits);
+         masks = getMasksInFits(maskExtension);
+
 
      }
 
+    private short[] getMasksInFits(int maskExtension) throws FitsException {
 
-    private int[] getMasksInFits(Fits fits) throws FitsException {
+        //get all the Header Data Unit from the fits file
+        BasicHDU[] HDUs = fits.read();
+        return   (short[]) ArrayFuncs.flatten(HDUs[maskExtension].getData().getData());
+
+
+    }
+
+
+    /*private int[] getMasksInFits(Fits fits) throws FitsException {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
@@ -155,6 +169,7 @@ public class FitsRead implements Serializable {
 
      }
 
+    //The mask data is the phyiscal data, therefore, it needs to be converted.
      private static short[] getMasksInFits(ArrayList<BasicHDU> HDUList) throws FitsException {
          for (int i=0; i<HDUList.size(); i++){
              Header header =  HDUList.get(i).getHeader();
@@ -163,6 +178,12 @@ public class FitsRead implements Serializable {
              }
              if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ) {
                  Object data = HDUList.get(i).getData().getData();
+                 short[] sData =  (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
+                 masks = new short[sData.length];
+                 for (int ii = 0; i < sData.length; i++) {
+                     masks[i] = (short) (sData[i] * (short) maskImageHeader.bscale + (short) maskImageHeader.bzero);
+                 }
+
                  return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
              }
 
@@ -170,7 +191,7 @@ public class FitsRead implements Serializable {
          return null;
 
      }
-
+*/
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
      *
@@ -193,9 +214,6 @@ public class FitsRead implements Serializable {
 
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
 
-        //check the input Fits file to see if it has a Mask extension.  If it has, read the mask data to an integer array
-        //if not, set mas to null;
-        masks = getMasksInFits(HDUList );
 
         if (HDUList.size() == 0)
             throw new FitsException("No image headers in FITS file");
@@ -1582,8 +1600,27 @@ public class FitsRead implements Serializable {
         }
         return fData;
     }
+
+    /**
+     * get the masks data in the Fits file, null if there is no mask data
+     * @return
+     */
     public short[] getMasks(){
         return masks;
+    }
+    /**
+     * reeturn the physical data value
+     * @param mask
+     * @return
+     */
+   private  short[] getMasks(float[] mask){
+
+        short[] sMask = new short[mask.length];
+
+        for (int i = 0; i < mask.length; i++) {
+            sMask[i] = (short) (mask[i] * (short) imageHeader.bscale + (short) imageHeader.bzero);
+        }
+        return sMask;
     }
     /**
      * This method seemed not being used.

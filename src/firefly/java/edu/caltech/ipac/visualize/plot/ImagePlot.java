@@ -17,6 +17,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -86,6 +87,33 @@ public class ImagePlot extends Plot implements Serializable {
         configureImage(frGroup);
     }
 
+    /** 07/20/15 LZcm
+     * Create a ImagePlot with given IndexColorModel
+     * @param plotGroup
+     * @param frGroup
+     * @param initialZoomLevel
+     * @param band
+     * @param colorModel
+     * @param stretch
+     * @throws FitsException
+     */
+    public ImagePlot(PlotGroup plotGroup,
+                     ActiveFitsReadGroup frGroup,
+                     float     initialZoomLevel,
+                     Band      band,
+                     IndexColorModel colorModel,
+                     RangeValues stretch)  throws FitsException{
+        super(plotGroup);
+        refBand= band;
+        setInitialZoomLevel(initialZoomLevel);
+        imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
+        _threeColor= false;
+
+       _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
+               colorModel,stretch,SQUARE, false);
+
+        configureImage(frGroup);
+    }
 
 
     public boolean isThreeColor() { return _threeColor; }
@@ -921,6 +949,20 @@ public class ImagePlot extends Plot implements Serializable {
 
 
     }
+
+    private static IndexColorModel getIndexColorModel(Color[] colors){
+
+        int size = colors.length;
+        byte[] reds = new byte[size];
+        byte[] greens = new byte[size];
+        byte[] blues = new byte[size];
+        for (int i = 0; i < colors.length; i++) {
+            reds[i] = (byte) colors[i].getRed();
+            greens[i] = (byte) colors[i].getGreen();
+            blues[i] = (byte) colors[i].getBlue();
+        }
+        return new IndexColorModel(8, 8, reds, greens, blues);
+    }
     /**
      * 7/14/15 by LZ
      * Add this main to test mask over lay plot
@@ -939,10 +981,15 @@ public class ImagePlot extends Plot implements Serializable {
         Fits fits = new Fits(inFitsPathName );
         String path = getPath(inFitsPathName);
 
+
         FitsRead fitsRead =  FitsRead.createFitsReadArray(fits)[0];
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND,fitsRead);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+
+        //test only the red color
+        Color cRed = Color.red;
+        IndexColorModel cm = getIndexColorModel( (Color[]) new Color[]{cRed});
+        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F,  Band.NO_BAND, cm , FitsRead.getDefaultFutureStretch());
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         List<PlotOutput.TileFileInfo> results;

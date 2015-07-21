@@ -66,6 +66,35 @@ public class ImageData implements Serializable {
         if (constructNow) constructImage(fitsReadAry);
     }
 
+    //LZ 7/20/15
+    public ImageData(FitsRead fitsReadAry[],
+                     ImageType imageType,
+                     IndexColorModel cm,
+                     RangeValues rangeValues,
+                     int x,
+                     int y,
+                     int width,
+                     int height,
+                     boolean constructNow) throws FitsException {
+
+        _x= x;
+        _y= y;
+        _width= width;
+        _height= height;
+        _lastPixel= _x+_width-1;
+        _lastLine= _y+_height-1;
+
+        _imageType= imageType;
+
+        this.rangeValues= rangeValues;
+
+       _cm=cm;
+        if (imageType==ImageType.TYPE_24_BIT) {
+            _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
+        }
+        if (constructNow) constructImage(fitsReadAry);
+    }
+
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
         if (_imageOutOfDate) constructImage(fitsReadAry);
         return _bufferedImage;
@@ -191,11 +220,19 @@ public class ImageData implements Serializable {
 
         inUseCnt.incrementAndGet();
         LSSTMask lsstmask = new LSSTMask(0, Color.RED);
+
         if (_imageType==ImageType.TYPE_8_BIT) {
-            _raster= null;
-            _bufferedImage= new BufferedImage(_width,_height,
+            _raster = null;
+            if (lsstmask!=null){
+            _bufferedImage = new BufferedImage(_width, _height,
                     BufferedImage.TYPE_BYTE_INDEXED, _cm);
             fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lsstmask);
+        }
+            else {
+                _bufferedImage = new BufferedImage(_width, _height,
+                        BufferedImage.TYPE_BYTE_INDEXED, _cm);
+                fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
+         }
         }
 
         else if (_imageType==ImageType.TYPE_24_BIT) {
