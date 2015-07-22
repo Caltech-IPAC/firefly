@@ -13,7 +13,7 @@
         <Desc>Search WISE AllWISE Atlas</Desc>
         <DataSource searchProcId="ibe_processor">
             <Param key="mission" value="wise"/>
-            <Param key="ImageSet" value="allwise_multiband"/>
+            <Param key="ImageSet" value="allwise-multiband"/>
             <Param key="ProductLevel" value="3a"/>
         </DataSource>
 
