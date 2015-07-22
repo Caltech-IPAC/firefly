@@ -169,7 +169,6 @@ public class IpacTableUtil {
         }catch (Exception e){}
 
         type.setDataType(String.class);
-
     }
 
     public static DataObject parseRow(DataGroup source, String line) {
@@ -234,6 +233,16 @@ public class IpacTableUtil {
                     offset = endoffset;
                     if (type.getFormatInfo().isDefault()) {
                         IpacTableUtil.guessFormatInfo(type, rval);
+
+                        // guess Unit (only in some cases) if not set
+                        // this block should only be executed once, when formatInfo is not set.
+                        if (type.getDataType().isAssignableFrom(String.class)) {
+                            if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("null")) {
+                                if (rval.trim().matches("<[^>]+>.*")) {
+                                    type.setUnits("HTML");
+                                }
+                            }
+                        }
                     }
                 }
                 return row;

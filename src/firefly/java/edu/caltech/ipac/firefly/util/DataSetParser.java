@@ -32,6 +32,7 @@ public class DataSetParser {
     public static final String PREF_WIDTH_TAG = "col.@.PrefWidth";
     public static final String DESC_TAG = "col.@.ShortDescription";
     public static final String UNIT_TAG = "col.@.Unit";
+    public static final String SORTABLE_TAG = "col.@.Sortable";
     public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";
 
@@ -119,6 +120,11 @@ public class DataSetParser {
                 } catch(NumberFormatException nfe) {
                     //do nothing, use default width
                 }
+            }
+
+            String sortable = attribs.get( makeAttribKey(SORTABLE_TAG, c.getName()) );
+            if (sortable != null && !Boolean.parseBoolean(sortable)) {
+                c.setSortable(false);
             }
 
             String unit = attribs.get( makeAttribKey(UNIT_TAG, c.getName()) );
@@ -231,7 +237,11 @@ public class DataSetParser {
                     while(cols.hasMoreToken()) {
                         String u = cols.nextToken();
                         if (!StringUtils.isEmpty(u)) {
-                            columns.get(c).setUnits(StringUtils.trim(u));
+                            u = StringUtils.trim(u);
+                            columns.get(c).setUnits(u);
+                            if (u.equalsIgnoreCase("HTML")) {
+                                columns.get(c).setSortable(false);
+                            }
                         }
                         c++;
                     }
