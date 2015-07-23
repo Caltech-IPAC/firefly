@@ -90,3 +90,6 @@ Goto http://localhost:8080/fftools/ to launch Firefly Viewer.
 ####Changing the Firefly runtime environment
 [see firefly-environment.md](docs/firefly-environment.md)
 
+####Adding external task launcher or Python Launcher to Firefly
+[see firefly-python-launcher.md](docs/firefly-external-task-launcher.md)
+

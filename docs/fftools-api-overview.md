@@ -322,7 +322,7 @@ Usage: firefly.showHistogram((parameters, div)
 
 Parameters object literal can contain the following values
 
-| Paremeter | Description |
+| Parameter | Description |
 | ------------ | ------------- |
 | data | required unless *source* parameter is specified; bin data |
 | source | required unless *data* parameter is specified; location of the table with bin data - url or path on the server. The table should have 3 columns: first col - number of points in the bin, second col - binMin, third col - binMax. Gaps and variable bin size are supported|
@@ -335,9 +335,9 @@ Parameters object literal can contain the following values
 ```js
 firefly.showHistogram(
     {
-        'descr' : 'sample field histogram',
+        'descr' : 'sample histogram',
         'binColor' : '#bdbdbd',
-        'height' : '200',
+        'height' : 200,
         // specify the data to plot histogram
         // for now it's an array of rows,
         // first col - number of points in the bin, second col - binMin, third col - binMax
