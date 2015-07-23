@@ -53,35 +53,52 @@ module.exports= React.createClass(
             };
         },
 
+        fetchDataFromSource(source) {
+            let extdata = [];
+            this.getData(source).then(function (rawDataSet) {
+                    let dataSet = parseRawDataSet(rawDataSet);
+                    let model = dataSet.getModel();
+                    for (var i = 0; i < model.size(); i++) {
+                        let arow = model.getRow(i);
+                        extdata.push(arow.map(val=>Number(val)));
+                    }
+                    if (this.isMounted()) {
+                        this.setState({
+                            userData: extdata
+                        });
+                    }
+                }.bind(this)
+            ).catch(function (reason) {
+                    console.error('Histogram failure: ' + reason);
+                }
+            );
+        },
+
         componentDidMount: function() {
             if (!this.props.data && this.props.source) {
-                let extdata = [];
-                this.getData().then(function (rawDataSet) {
-                        let dataSet = parseRawDataSet(rawDataSet);
-                        let model = dataSet.getModel();
-                        for (var i = 0; i < model.size(); i++) {
-                            let arow = model.getRow(i);
-                            extdata.push(arow.map(val=>Number(val)));
-                        }
-                        if (this.isMounted()) {
-                            this.setState({
-                                userData: extdata
-                            });
-                        }
-                    }.bind(this)
-                ).catch(function (reason) {
-                        console.error('Histogram failure: ' + reason);
-                    }
-                );
+                this.fetchDataFromSource(this.props.source);
             }
         },
+
+        componentWillReceiveProps: function(nextProps) {
+            if (nextProps.data) {
+                this.setState({
+                    userData: nextProps.data
+                });
+            } else if (nextProps.source && this.props.source !== nextProps.source) {
+                this.setState({
+                    userData: []
+                });
+                this.fetchDataFromSource(nextProps.source);
+            }
+         },
 
         /*
          * @return {Promise}
          */
-        getData() {
+        getData(source) {
             let req = new ServerRequest('IpacTableFromSource');
-            req.setParam({name : 'source', value : this.props.source});
+            req.setParam({name : 'source', value : source});
             req.setParam({name : 'startIdx', value : '0'});
             req.setParam({name : 'pageSize', value : '10000'});
             return getRawDataSet(req);

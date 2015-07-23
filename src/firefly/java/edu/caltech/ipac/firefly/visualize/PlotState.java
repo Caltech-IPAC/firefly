@@ -12,7 +12,9 @@ import edu.caltech.ipac.visualize.plot.MiniFitsHeader;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 /**
  * User: roby
  * Date: Aug 7, 2008
@@ -309,6 +311,24 @@ public class PlotState implements DataEntry, HandSerialize {
                 if (i<_bandStateAry.length-1) sb.append(SPLIT_TOKEN);
         }
         return sb.toString();
+    }
+
+    public Map<String,String> originKeyValues() {
+        Map<String,String> keyVals = new LinkedHashMap<String,String>(5);
+        BandState firstBandState = get(firstBand());
+        keyVals.put("workingFile", firstBandState.getWorkingFitsFileStr());
+        if (firstBandState.isMultiImageFile()) {
+            keyVals.put("multiImageFile", firstBandState.isMultiImageFile()+"");
+            keyVals.put("imageIdx", firstBandState.getImageIdx()+"");
+        }
+        if (!firstBandState.isFileOriginal()) {
+            keyVals.put("originalFile",firstBandState.getOriginalFitsFileStr());
+            if (firstBandState.isMultiImageFile()) {
+                keyVals.put("originalImageIdx", firstBandState.getOriginalImageIdx()+"");
+            }
+
+        }
+        return keyVals;
     }
 
     public static PlotState parse(String s) {

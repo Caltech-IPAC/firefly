@@ -17,6 +17,8 @@ import edu.caltech.ipac.firefly.visualize.draw.RecSelection;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.Map;
+
 /**
  * @author Trey Roby
  */
@@ -90,7 +92,9 @@ public class ExtensionCommands {
             if (wpt!=null) {
                 result.setExtValue("wpt", wpt.serialize());
             }
-
+            for (Map.Entry<String,String> entry : p.getPlotState().originKeyValues().entrySet()) {
+                result.setExtValue(entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -119,7 +123,7 @@ public class ExtensionCommands {
             WebPlot p= mpw.getPlotView().getPrimaryPlot();
 
             ImagePt ipt0= p.getImageCoords(sel.getPt1());
-            ImagePt ipt1= p.getImageCoords(sel.getPt1());
+            ImagePt ipt1= p.getImageCoords(sel.getPt2());
 
             WorldPt wpt0= p.getWorldCoords(sel.getPt1());
             WorldPt wpt1= p.getWorldCoords(sel.getPt2());
@@ -134,7 +138,9 @@ public class ExtensionCommands {
                 result.setExtValue("wpt1", wpt1.serialize());
 
             }
-
+            for (Map.Entry<String,String> entry : p.getPlotState().originKeyValues().entrySet()) {
+                result.setExtValue(entry.getKey(), entry.getValue());
+            }
         }
     }
 
@@ -177,6 +183,10 @@ public class ExtensionCommands {
                 result.setExtValue("wpt0", wpt0.serialize());
                 result.setExtValue("wpt1", wpt1.serialize());
 
+            }
+
+            for (Map.Entry<String,String> entry : p.getPlotState().originKeyValues().entrySet()) {
+                result.setExtValue(entry.getKey(), entry.getValue());
             }
         }
     }
