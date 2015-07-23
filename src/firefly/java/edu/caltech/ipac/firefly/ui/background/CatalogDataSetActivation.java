@@ -129,7 +129,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
             WebEventManager.getAppEvManager().fireEvent(ev);
         }
         else {
-            PopupUtil.showError("No Rows returned", "The search did not find any data");
+            PopupUtil.showError(title, "The search did not find any data");
         }
     }
 

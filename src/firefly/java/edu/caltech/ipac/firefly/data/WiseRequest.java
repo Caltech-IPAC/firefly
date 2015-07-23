@@ -115,7 +115,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER_YR2 +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_i1bm_frm", "yr2_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
