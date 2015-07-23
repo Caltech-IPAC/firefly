@@ -5,6 +5,7 @@ package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.firefly.util.DataSetParser;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -234,13 +235,12 @@ public class IpacTableUtil {
                     if (type.getFormatInfo().isDefault()) {
                         IpacTableUtil.guessFormatInfo(type, rval);
 
-                        // guess Unit (only in some cases) if not set
+                        // disable sorting if value is HTML, or unit is 'html'
                         // this block should only be executed once, when formatInfo is not set.
                         if (type.getDataType().isAssignableFrom(String.class)) {
-                            if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("null")) {
-                                if (rval.trim().matches("<[^>]+>.*")) {
-                                    type.setUnits("HTML");
-                                }
+                            if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
+                                    rval.trim().matches("<[^>]+>.*")) {
+                                source.addAttributes(new DataGroup.Attribute(DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false"));
                             }
                         }
                     }
