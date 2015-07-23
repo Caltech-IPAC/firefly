@@ -225,7 +225,7 @@ public class GatorQuery extends BaseGator {
 
             }
             optionalPostParam(CatalogRequest.SELECTED_COLUMNS, req.getSelectedColumns());
-            optionalPostParam(CatalogRequest.CONSTRAINTS, encodeParams(req.getConstraints()));
+            optionalPostParam(CatalogRequest.CONSTRAINTS, req.getConstraints());
             optionalPostParam(CatalogRequest.DD_ONLIST, req.getDDOnList());
             optionalPostParam(CatalogRequest.GATOR_MISSION, req.getGatorMission());
 
