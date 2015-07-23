@@ -18,6 +18,7 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
+import java.awt.*;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -91,10 +92,12 @@ public class FitsRead implements Serializable {
 
         float1d = getImageHDUDataInFloatArray(imageHdu);
 
-        if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
-            masks = getMasks(float1d);
-        }
-
+        //mask in the Fits file, each FitsRead in the Fits file has the same mask data
+        masks =getMasksInFits(fits);
+        LSSTMask lsstMask = new LSSTMask(5, Color.RED);
+        int count = lsstMask.getSetCount(masks);
+        System.out.println("total masks ="+masks.length);
+        System.out.println("the set count is "+count);
 
     }
 
@@ -122,7 +125,7 @@ public class FitsRead implements Serializable {
         }
         //get the data and store into float array
         float1d = getImageHDUDataInFloatArray(imageHdu);
-         masks = getMasksInFits(maskExtension);
+        masks = getMasksInFits(maskExtension);
 
 
      }
@@ -131,18 +134,16 @@ public class FitsRead implements Serializable {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
-        return   (short[]) ArrayFuncs.flatten(HDUs[maskExtension].getData().getData());
-
+        short[] sMask=   (short[]) ArrayFuncs.flatten(HDUs[maskExtension].getData().getData());
+        return getMasks(HDUs[maskExtension].getHeader(), sMask);
 
     }
 
 
-    /*private int[] getMasksInFits(Fits fits) throws FitsException {
+    private short[] getMasksInFits(Fits fits) throws FitsException {
 
         //get all the Header Data Unit from the fits file
         BasicHDU[] HDUs = fits.read();
-        int maskExtension=-1;
-
 
         for (int j = 0; j < HDUs.length; j++) {
             if (!(HDUs[j] instanceof ImageHDU)) {
@@ -152,23 +153,16 @@ public class FitsRead implements Serializable {
             if (header == null) {
                 throw new FitsException("Missing header in FITS file");
             }
-            if (header.getStringValue("EXTTYPE")==null) {
-                  continue;
-             }
-            else if (header.getStringValue("EXTTYPE").equalsIgnoreCase("mask")) {
-                maskExtension = j;
-                break;
-            }
+             else  if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
+                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE));
+                return getMasks(header, mArray);
+           }
         }
-        if (maskExtension==-1){
-             System.out.println(" no mask data is found");
-            return null;
-        }
-        return   (int[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[maskExtension].getData().getData(), Integer.TYPE));
+        return null;
 
 
      }
-
+/*
     //The mask data is the phyiscal data, therefore, it needs to be converted.
      private static short[] getMasksInFits(ArrayList<BasicHDU> HDUList) throws FitsException {
          for (int i=0; i<HDUList.size(); i++){
@@ -214,7 +208,6 @@ public class FitsRead implements Serializable {
 
         ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
 
-
         if (HDUList.size() == 0)
             throw new FitsException("No image headers in FITS file");
 
@@ -226,6 +219,7 @@ public class FitsRead implements Serializable {
 
         return fitsReadAry;
     }
+
 
 
     /**
@@ -506,7 +500,7 @@ public class FitsRead implements Serializable {
         return fitsRead;
     }
 
-    private static boolean getImageCondition(Header aHeader) {
+    private static boolean isImageGood(Header aHeader) {
 
         int naxis = aHeader.getIntValue("NAXIS", -1);
         boolean goodImage = true;
@@ -551,8 +545,9 @@ public class FitsRead implements Serializable {
                 throw new FitsException("Missing header in FITS file");
 
 
+
             int naxis = header.getIntValue("NAXIS", -1);
-            boolean goodImage = getImageCondition(header);
+            boolean goodImage = isImageGood(header);
 
             if (goodImage) {
                 if (hasExtension) { // update this hdu by adding keywords/values
@@ -894,7 +889,10 @@ public class FitsRead implements Serializable {
 
         double dr= rangeValues.getDrValue();
         double gamma=rangeValues.getGammaValue();
+
+
         int pixelCount = 0;
+
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
             int last_index = line * naxis1 + lastPixel;
@@ -906,7 +904,8 @@ public class FitsRead implements Serializable {
                 } else {   // stretch each pixel
 
                     int mask = masks[index];
-                    if (lsstMask.isSet(mask)) { //assign the defined color
+                    if (lsstMask!=null && lsstMask.isSet(mask)) { //assign the defined color
+
                         pixeldata[pixelCount] = (byte) lsstMask.getColor().getRGB();
                     } else {   // stretch each pixel
                         if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
@@ -923,15 +922,23 @@ public class FitsRead implements Serializable {
 
                             pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index], dtbl, deltasav);
                         }
-                        pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
-                   }
 
+                        pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
+                        //check if the pixeldata happens to be the same as the mask value, if so, reassign it to gray color
+                        if (pixeldata[pixelCount] ==(byte) lsstMask.getColor().getRGB()){
+                            pixeldata[pixelCount]=(byte) Color.gray.getRGB();
+
+                        }
+
+                   }
+                  //  pixeldata[pixelCount] = (byte) Color.WHITE.getRGB();
                    pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
                 pixelCount++;
 
             }
         }
+
 
     }
 
@@ -1613,12 +1620,14 @@ public class FitsRead implements Serializable {
      * @param mask
      * @return
      */
-   private  short[] getMasks(float[] mask){
+   private  short[] getMasks(Header header, short[] mask){
 
         short[] sMask = new short[mask.length];
 
+        double bscale = header.getDoubleValue("BSCALE", 1.0);
+        double bzero = header.getDoubleValue("BZERO", 0.0);
         for (int i = 0; i < mask.length; i++) {
-            sMask[i] = (short) (mask[i] * (short) imageHeader.bscale + (short) imageHeader.bzero);
+            sMask[i] = (short) (mask[i] * bscale + bzero);
         }
         return sMask;
     }

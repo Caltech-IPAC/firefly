@@ -949,7 +949,27 @@ public class ImagePlot extends Plot implements Serializable {
 
 
     }
+    private static void updateOneColor( IndexColorModel colorModel, Color newColor){
 
+        int colorCount = colorModel.getMapSize();
+        byte[] reds = new byte[colorCount];
+        byte[] greens = new byte[colorCount];
+        byte[] blues = new byte[colorCount];
+        colorModel.getReds(reds);
+        colorModel.getGreens(greens);
+        colorModel.getBlues(blues);
+
+        Color red = Color.RED;
+        for(int i = 0; i < reds.length; i++) {
+            //newColor = new Color(reds[i]&0xff, greens[i]&0xff, blues[i]&0xff);
+            if(newColor.equals(red)) {
+                reds[i] = (byte)red.getRed();
+                greens[i] = (byte)red.getGreen();
+                blues[i] = (byte)red.getBlue();
+                break;
+            }
+        }
+    }
     private static IndexColorModel getIndexColorModel(Color[] colors){
 
         int size = colors.length;
@@ -961,7 +981,7 @@ public class ImagePlot extends Plot implements Serializable {
             greens[i] = (byte) colors[i].getGreen();
             blues[i] = (byte) colors[i].getBlue();
         }
-        return new IndexColorModel(8, 8, reds, greens, blues);
+        return new IndexColorModel(8, colors.length, reds, greens, blues);
     }
     /**
      * 7/14/15 by LZ
@@ -987,20 +1007,23 @@ public class ImagePlot extends Plot implements Serializable {
         frGroup.setFitsRead(Band.NO_BAND,fitsRead);
 
         //test only the red color
-        Color cRed = Color.red;
-        IndexColorModel cm = getIndexColorModel( (Color[]) new Color[]{cRed});
+
+        Color[] colors= {Color.red, Color.gray, Color.WHITE};
+        IndexColorModel cm = getIndexColorModel( colors);
+        IndexColorModel cm1 = ColorTable.getColorModel(0);
+        updateOneColor(cm1, Color.RED);
         ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F,  Band.NO_BAND, cm , FitsRead.getDefaultFutureStretch());
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         List<PlotOutput.TileFileInfo> results;
 
-        File imagefileDir = new File(path, "test.png");
+        File imagefileDir = new File(path);
         String    root="testMask";
         int tileCnt=1;
         results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
 
         PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
-        PlotImages.ImageURL imageURL;
+       /* PlotImages.ImageURL imageURL;
         String relFile;
         int idx= 0;
         for(PlotOutput.TileFileInfo info : results) {
@@ -1012,7 +1035,7 @@ public class ImagePlot extends Plot implements Serializable {
                     info.isCreated());
             images.add(imageURL);
         }
-
+*/
 
     }
 

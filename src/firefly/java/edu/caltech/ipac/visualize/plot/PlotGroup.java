@@ -46,6 +46,9 @@ public class PlotGroup implements Iterable<Plot> {
     static private Color    _fillColor= Color.black;
 
 
+    //LZ 7/21/15
+    public PlotGroup(){}
+
     public PlotGroup(Plot basePlot) {
        _basePlot= basePlot;
        addPlot(basePlot);

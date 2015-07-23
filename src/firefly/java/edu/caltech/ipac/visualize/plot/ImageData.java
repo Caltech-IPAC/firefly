@@ -219,7 +219,8 @@ public class ImageData implements Serializable {
     private void constructImage(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
-        LSSTMask lsstmask = new LSSTMask(0, Color.RED);
+        LSSTMask lsstmask = new LSSTMask(5, Color.RED);
+
 
         if (_imageType==ImageType.TYPE_8_BIT) {
             _raster = null;
