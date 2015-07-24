@@ -311,10 +311,6 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
         String productLevel = sr.getSafeParam("ProductLevel");
 
         String schema = sr.getSafeParam(WiseRequest.SCHEMA);
-        if (schema.contains(",")) {
-            schema = sr.getBooleanParam(WiseRequest.PUBLIC_RELEASE, true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
-        }
-
         if (productLevel.equalsIgnoreCase("1b")) {
             String scanId = sr.getSafeParam("scan_id");
             String frameNum = sr.getSafeParam("frame_num");
@@ -333,7 +329,15 @@ public class WiseFileRetrieve extends URLFileInfoProcessor {
     }
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
-        if (!sr.containsParam(WiseRequest.SCHEMA)) sr.setSafeParam(WiseRequest.SCHEMA, DEFAULT_SCHEMA);
+        if (!sr.containsParam(WiseRequest.SCHEMA)) {
+            sr.setSafeParam(WiseRequest.SCHEMA, DEFAULT_SCHEMA);
+        } else {
+            String schema = sr.getSafeParam(WiseRequest.SCHEMA);
+            if (schema.contains(",")) {
+                schema = sr.getBooleanParam(WiseRequest.PUBLIC_RELEASE, true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
+                sr.setParam(WiseRequest.SCHEMA, schema);
+            }
+        }
         if (sr.containsParam("subsize") && !StringUtils.isEmpty(sr.getParam("subsize"))) {
             return getCutoutData(sr);
         } else {
