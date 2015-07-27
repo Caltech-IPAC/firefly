@@ -304,42 +304,42 @@ public class BasicPagingTable extends PagingScrollTable<TableData.Row> {
     }
 
     protected void updateHeaderTable(List<ColumnDefinition<TableData.Row, ?>> colDefs, boolean force) {
-        
-        if (colDefs.equals(lastColDefs) && !force) {
-            filterSupport.ensureFilterShow();
-            return;    // same .. no need to update
-        }
 
-        lastColDefs = colDefs;
-        int numColumns = colDefs.size();
+        if (!colDefs.equals(lastColDefs) || force) {
+            lastColDefs = colDefs;
+            int numColumns = colDefs.size();
 
-        // clear the headers
-        clearTable(headers, numColumns);
+            // clear the headers
+            clearTable(headers, numColumns);
 
-        // Add the column and group headers
-        for (int i = 0; i < numColumns; i++) {
-            // Add the name
-            ColDef colDef = (ColDef) colDefs.get(i);
+            // Add the column and group headers
+            for (int i = 0; i < numColumns; i++) {
+                // Add the name
+                ColDef colDef = (ColDef) colDefs.get(i);
 
-            if (colDef == null) continue;       // skip if colDef is null
+                if (colDef == null) continue;       // skip if colDef is null
 
-            String title = colDef.isImmutable() ? "" : "<b>" + colDef.getTitle() + "</b>";
-            HTML label = new HTML(title, false);
-            label.setTitle(colDef.getShortDesc());
-            label.setWidth("10px");
-            DOM.setStyleAttribute(label.getElement(), "display", "inline");
+                String title = colDef.isImmutable() ? "" : "<b>" + colDef.getTitle() + "</b>";
+                HTML label = new HTML(title, false);
+                label.setTitle(colDef.getShortDesc());
+                label.setWidth("10px");
+                DOM.setStyleAttribute(label.getElement(), "display", "inline");
 
-            headers.setWidget(LABEL_IDX, i, label);
-            setColumnWidth(i, colDef.getPreferredColumnWidth());
-            headers.getFlexCellFormatter().setHorizontalAlignment(LABEL_IDX, i, HorizontalPanel.ALIGN_CENTER);
+                headers.setWidget(LABEL_IDX, i, label);
+                setColumnWidth(i, colDef.getPreferredColumnWidth());
+                headers.getFlexCellFormatter().setHorizontalAlignment(LABEL_IDX, i, HorizontalPanel.ALIGN_CENTER);
 
-            if (isShowUnits()) {
-                String u =  colDef.getColumn() == null || StringUtils.isEmpty(colDef.getColumn().getUnits()) ? "&nbsp;" : "(" + colDef.getColumn().getUnits() + ")";
-                label.setHTML(label.getHTML() + "<br>" + u);
+                if (isShowUnits()) {
+                    String u =  colDef.getColumn() == null || StringUtils.isEmpty(colDef.getColumn().getUnits()) ? "&nbsp;" : "(" + colDef.getColumn().getUnits() + ")";
+                    label.setHTML(label.getHTML() + "<br>" + u);
+                }
+                GwtUtil.setStyle(label, "display", "inline-table");
             }
-            GwtUtil.setStyle(label, "display", "inline-table");
+            filterSupport.onUpdateHeaders(colDefs);
         }
-        filterSupport.onUpdateHeaders(colDefs);
+
+        filterSupport.ensureFilterShow();
+
     }
 
     @Override
