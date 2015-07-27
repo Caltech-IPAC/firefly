@@ -18,7 +18,6 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
-import java.awt.*;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,6 +52,7 @@ public class FitsRead implements Serializable {
     private int planeNumber;
     private int extension_number;
     private float[] float1d;
+   // static private float[] physicalData;
     private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
@@ -91,13 +91,14 @@ public class FitsRead implements Serializable {
         //get the data and store into float array
 
         float1d = getImageHDUDataInFloatArray(imageHdu);
+        //physicalData = getDataFloat();
 
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
-        LSSTMask lsstMask = new LSSTMask(5, Color.RED);
-        int count = lsstMask.getSetCount(masks);
-        System.out.println("total masks ="+masks.length);
-        System.out.println("the set count is "+count);
+        //LSSTMask lsstMask = new LSSTMask(5, Color.RED);
+        //int count = lsstMask.getSetCount(masks);
+        //System.out.println("total masks ="+masks.length);
+        //System.out.println("the set count is "+count);
 
     }
 
@@ -774,7 +775,7 @@ public class FitsRead implements Serializable {
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
                 blank_pixel_value, float1d,  pixelData, pixelhist, rangeValues,slow,shigh);
 
-
+        System.out.println("debug:check pixelData here");
 
     }
 
@@ -889,6 +890,8 @@ public class FitsRead implements Serializable {
 
         double dr= rangeValues.getDrValue();
         double gamma=rangeValues.getGammaValue();
+        double bp= rangeValues.getBPValue();
+        double wp=rangeValues.getWPValue();
 
 
         int pixelCount = 0;
@@ -908,13 +911,15 @@ public class FitsRead implements Serializable {
 
                         pixeldata[pixelCount] = (byte) lsstMask.getColor().getRGB();
                     } else {   // stretch each pixel
-                        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
+
+                        pixeldata[pixelCount]=0;
+                       /* if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
 
                             double dRunval = ((float1dArray[index] - slow) * 254 / sdiff);
                             pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
 
                         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_ASINH) {
-                            pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh);
+                            pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
                         } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_POWERLAW_GAMMA) {
 
                             pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
@@ -928,7 +933,7 @@ public class FitsRead implements Serializable {
                         if (pixeldata[pixelCount] ==(byte) lsstMask.getColor().getRGB()){
                             pixeldata[pixelCount]=(byte) Color.gray.getRGB();
 
-                        }
+                        }*/
 
                    }
                   //  pixeldata[pixelCount] = (byte) Color.WHITE.getRGB();
@@ -958,7 +963,7 @@ public class FitsRead implements Serializable {
         return zscaleRetval;
     }
 
-       private static double getSlow(RangeValues rangeValues,  float float1d[], ImageHeader imageHeader, Histogram hist) {
+       private static double getSlow(RangeValues rangeValues,  float[] float1d, ImageHeader imageHeader, Histogram hist) {
         double slow = 0.0;
         switch (rangeValues.getLowerWhich()) {
             case RangeValues.ABSOLUTE:
@@ -983,7 +988,7 @@ public class FitsRead implements Serializable {
         }
         return slow;
     }
-    private double getShigh(RangeValues rangeValues, float float1d[], ImageHeader imageHeader, Histogram hist) {
+    private double getShigh(RangeValues rangeValues, float[] float1d, ImageHeader imageHeader, Histogram hist) {
         double shigh = 0.0;
         switch (rangeValues.getUpperWhich()) {
             case RangeValues.ABSOLUTE:
@@ -1092,6 +1097,8 @@ public class FitsRead implements Serializable {
 
         double dr= rangeValues.getDrValue();
         double gamma=rangeValues.getGammaValue();
+        double bp= rangeValues.getBPValue();
+        double wp=rangeValues.getWPValue();
         int pixelCount = 0;
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -1108,7 +1115,10 @@ public class FitsRead implements Serializable {
                         pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
 
                     } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
-                        pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh);
+                        //test simple asinh stretch
+
+                       // double asinh=asinh(float1dArray[index]);
+                        pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
                     }
                     else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_POWERLAW_GAMMA) {
 
@@ -1142,10 +1152,9 @@ public class FitsRead implements Serializable {
         return Math.log(x + Math.sqrt(x * x + 1));
 
     }
-    private static double getASinhStretchedPixelValue(double x, double dr, double zp, double mp)  {
+    private static double getASinhStretchedPixelValue(double x, double dr, double zp, double mp, double bp, double wp)  {
 
-        double  bp=0.0;
-        double wp=dr;
+
 
         double rd = dr * (x - zp) / mp; //in the range of 0 - dr (when zp=0.0)
         double nsd = asinh(rd) / asinh(mp - zp); // in the range 0-1 when zp=0.0
@@ -1202,13 +1211,7 @@ public class FitsRead implements Serializable {
         return pixval;
     }
 
-    /**
-     * The pixel value is in the range of 0-254
-     *
-     *
-     *
-     * @return
-     */
+
     private static byte getLinearStrectchedPixelValue(double dRenVal) {
 
         if (dRenVal < 0)
@@ -1329,6 +1332,7 @@ public class FitsRead implements Serializable {
 
         if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
             throw new PixelValueException("No flux available");
+
         }
 
         if (imageHeader.origin.startsWith("Palomar Transient Factory")) {

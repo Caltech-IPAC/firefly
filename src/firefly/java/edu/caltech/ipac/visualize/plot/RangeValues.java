@@ -86,7 +86,7 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         int    upperWhich,
                         double upperValue,
                      int    algorithm) {
-        this( lowerWhich, lowerValue, upperWhich, upperValue, algorithm, 25, 600, 120);
+        this( lowerWhich, lowerValue, upperWhich, upperValue, DR, BP, WP, GAMMA,algorithm, 25, 600, 120);
     }
 
     //added
@@ -144,7 +144,6 @@ public class RangeValues implements Cloneable, Serializable,HandSerialize {
                         double bpValue,
                         double wpValue,
                         double gammaValue,
-
                         int    algorithm,
                         int    zscale_contrast,
                         int    zscale_samples,

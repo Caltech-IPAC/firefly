@@ -66,7 +66,7 @@ class RangeValues {
         this.upperWhich= upperWhich;
         this.upperValue= upperValue;
         this.drValue = drValue;
-        this.bValue = bpValue;
+        this.bpValue = bpValue;
         this.wpValue = wpValue;
         this.gammaValue=gammaValue;
         this.algorithm=  algorithm;
@@ -86,7 +86,7 @@ class RangeValues {
      *
      * @return
      */
-    static create(stretchType, lowerValue, upperValue, drValue, gammaValue, algorithm) {
+    static create(stretchType, lowerValue, upperValue, drValue,bpValue, wpValue, gammaValue, algorithm) {
         var s= PERCENTAGE;
         if (stretchType) {
             stretchType= stretchType.toLowerCase();
