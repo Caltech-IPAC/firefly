@@ -34,6 +34,8 @@ public class MOSRequest extends TableServerRequest { // extends WiseRequest {
 
     public static final String RESULT_TABLE = "result_table";
     public static final String ORBITAL_PATH_TABLE = "orbital_path_table";
+    public static final String CAT_OVERLAY = "cat_overlay";
+    public static final String CAT_OVERLAY_FILE = "CatOverlayFile";
 
     public MOSRequest() {
         this.setRequestId(MOS_PROCESSOR);
@@ -102,5 +104,7 @@ public class MOSRequest extends TableServerRequest { // extends WiseRequest {
     }
     public String getOutputMode() { return getParam(OUTPUT_MODE); }
 
+    @Override
+    public ServerRequest newInstance() { return new MOSRequest(); }
 }
 

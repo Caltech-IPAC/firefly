@@ -22,7 +22,6 @@ import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.util.Constants;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.util.StringUtils;
-import edu.jhu.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -247,7 +246,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         private BasicPagingTable table;
         private List<ModelEventHandler> handlers = new ArrayList<ModelEventHandler>();
         private CheckFileStatusTimer checkStatusTimer = null;
-        private String enumFor = "";
+        private boolean gotEnums = false;
         private boolean isDataStale = true;
 
         ModelAdapter(Loader<TableDataView> loader) {
@@ -338,19 +337,22 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
         }
 
         private void onLoadCompleted() {
-            try {
-                if (isDataStale) {
-                    for (ModelEventHandler h : handlers) {
-                        h.onLoad(cachedModel.getCurrentData());
-                    }
-                    isDataStale = false;
+            if (isDataStale) {
+                for (ModelEventHandler h : handlers) {
+                    h.onLoad(cachedModel.getCurrentData());
                 }
+                isDataStale = false;
+            }
+            if (cachedModel.getCurrentData().getTotalRows() > 0) {
+                checkForEnumValues();
+            }
+        }
 
-                String cfilter = StringUtils.toString(loader.getFilters());
+        private void checkForEnumValues() {
+            try {
+                if (gotEnums) return;
 
-                if (enumFor.equals(cfilter)) return;
-
-                enumFor = cfilter;
+                gotEnums = true;
                 String source = cachedModel.getCurrentData().getMeta().getSource();
                 if (!StringUtils.isEmpty(source)) {
                     SearchServices.App.getInstance().getEnumValues(source,
@@ -360,7 +362,7 @@ public class DataSetTableModel extends CachedTableModel<TableData.Row> {
                                 }
 
                                 public void onSuccess(RawDataSet rawDataSet) {
-                                    if (rawDataSet != null && rawDataSet.getTotalRows() > 0) {
+                                    if (rawDataSet != null) {
                                         TableDataView ds = cachedModel.getCurrentData();
                                         DataSet enums = DataSetParser.parse(rawDataSet);
                                         for (TableDataView.Column c : enums.getColumns()) {

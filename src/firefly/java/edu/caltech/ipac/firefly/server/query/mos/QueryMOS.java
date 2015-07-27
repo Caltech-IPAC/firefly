@@ -5,6 +5,9 @@ package edu.caltech.ipac.firefly.server.query.mos;
 
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
+import edu.caltech.ipac.firefly.util.Ref;
+import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
@@ -40,7 +43,7 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 @SearchProcessorImpl(id = "MOSQuery")
 public class QueryMOS extends DynQueryProcessor {
 
-    String DEF_URL = AppProperties.getProperty("most.host", "default_most_host_url");
+    String MOST_HOST_URL = AppProperties.getProperty("most.host", "default_most_host_url");
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private static final String RESULT_TABLE_NAME = "imgframes_matched_final_table.tbl";
@@ -48,7 +51,10 @@ public class QueryMOS extends DynQueryProcessor {
     private static final String HEADER_ONLY_PARAM = "header_only";
 
 
-
+    @Override
+    public boolean doCache() {
+        return false;
+    }
 
     @Override
     protected File loadDynDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -74,45 +80,72 @@ public class QueryMOS extends DynQueryProcessor {
         return retFile;
     }
 
-    private File doSearch(MOSRequest req, String tblName, boolean headerOnly) throws IOException, DataAccessException, EndUserException {
-        File votable = getMOSResult(req);
-        DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), headerOnly);
-        if (groups != null) {
-            for (DataGroup dg : groups) {
-                if (dg.getTitle().equalsIgnoreCase(tblName)) {
-                    File f = File.createTempFile(tblName + "-", ".tbl", ServerContext.getTempWorkDir());
-                    IpacTableWriter.save(f, dg);
-                    return f;
-                }
-            }
-        }
-        return null;
-    }
-
-    private File getMOSResult(MOSRequest req) throws IOException, DataAccessException, EndUserException {
+    private File doSearch(final MOSRequest req, String tblName, boolean headerOnly) throws IOException, DataAccessException, EndUserException {
 
         URL url;
         try {
-            url = createURL(req);
+            url = createURL(req, false);
         } catch (EndUserException e) {
             _log.error(e, e.toString());
             throw new EndUserException(e.getEndUserMsg(), e.getMoreDetailMsg());
         }
-        StringKey cacheKey = new StringKey(url);
-        File f = (File) getCache().get(cacheKey);
-        if (f != null && f.canRead()) {
-            return f;
-        } else {
-            File outFile = null;
-            URLConnection conn = null;
+        StringKey cacheKey = new StringKey(url).appendToKey(tblName);
+        File outFile = (File) getCache().get(cacheKey);
 
+        if (outFile == null || !outFile.canRead()) {
+            URLConnection conn = null;
             try {
-                outFile = makeFileName(req);
+                _log.info("querying MOS:" + url);
+
+                final Ref<File> catOverlayFile = new Ref<File>(null);
+                Thread catSearchTread = null;
+                // pre-generate gator upload file for catalog overlay
+                if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
+                    catOverlayFile.setSource(File.createTempFile("mosCatOverlayFile-", ".tbl", ServerContext.getTempWorkDir()));
+                    Runnable r = new Runnable() {
+                        public void run() {
+                            try {
+//                                    HttpServices.getDataViaUrl(createURL(req, true), catOverlayFile.getSource());
+                                URLConnection aconn = URLDownload.makeConnection(createURL(req, true));
+                                aconn.setRequestProperty("Accept", "*/*");
+                                URLDownload.getDataToFile(aconn, catOverlayFile.getSource());
+                            } catch (Exception e) {
+                                _log.error(e);
+                            }
+                        }
+                    };
+                    catSearchTread = new Thread(r);
+                    catSearchTread.start();
+                }
+// workaround for MOS service bug when launching 2 simultaneously.
+Thread.sleep(1000);
+                File votable = makeFileName(req);
                 conn = URLDownload.makeConnection(url);
                 conn.setRequestProperty("Accept", "*/*");
 
-                URLDownload.getDataToFile(conn, outFile);
-                getCache().put(cacheKey, outFile, 60 * 60 * 24);    // 1 day
+                URLDownload.getDataToFile(conn, votable);
+
+                if (catSearchTread != null) {
+                    catSearchTread.join();
+                }
+
+                DataGroup[] groups = VoTableUtil.voToDataGroups(votable.getAbsolutePath(), headerOnly);
+                if (groups != null) {
+                    for (DataGroup dg : groups) {
+                        File tempFile = File.createTempFile(dg.getTitle() + "-", ".tbl", ServerContext.getTempWorkDir());
+
+                        if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.getSource() != null) {
+                                // save the generated file as ipac table headers
+                                dg.addAttributes(new DataGroup.Attribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath()));
+                        }
+
+                        IpacTableWriter.save(tempFile, dg);
+                        getCache().put(new StringKey(url).appendToKey(dg.getTitle()), tempFile, 60 * 60 * 24);    // 1 day
+                        if (dg.getTitle().equals(tblName)) {
+                            outFile = tempFile;
+                        }
+                    }
+                }
 
             } catch (MalformedURLException e) {
                 _log.error(e, "Bad URL");
@@ -142,31 +175,32 @@ public class QueryMOS extends DynQueryProcessor {
             } catch (Exception e) {
                 throw makeException(e, "MOS Query Failed.");
             }
-            return outFile;
         }
 
+        return outFile;
     }
-
 
     private String parseMessageFromServer(String response) {
         // no html, so just return
         return response.replaceAll("<br ?/?>", "");
     }
 
-    private URL createURL(MOSRequest req) throws EndUserException,
-            IOException {
-        String url = req.getUrl();
+    private URL createURL(MOSRequest req, boolean forGator) throws EndUserException, IOException {
+        MOSRequest request = (MOSRequest) req.cloneRequest();
+        String url = request.getUrl();
         if (url == null || url.length() < 5) {
-            url = DEF_URL;
+            url = MOST_HOST_URL;
         }
 
-        String paramStr = getParams(req);
+        if (forGator) {
+            request.setParam(MOSRequest.OUTPUT_MODE, "Gator");
+        }
+
+        String paramStr = getParams(request);
         if (paramStr.startsWith("&")) {
             paramStr = paramStr.substring(1);
         }
         url += "?" + paramStr;
-
-        _log.info("querying URL:" + url);
 
         return new URL(url);
     }
@@ -180,8 +214,13 @@ public class QueryMOS extends DynQueryProcessor {
             catalog = getMosCatalog(req);
         }
 
+        String outputMode = req.getParam(MOSRequest.OUTPUT_MODE);
+        if (StringUtils.isEmpty(outputMode)) {
+            outputMode = "VOTable";
+        }
+
         requiredParam(sb, MOSRequest.CATALOG, catalog);
-        requiredParam(sb, MOSRequest.OUTPUT_MODE, "VOTable");
+        requiredParam(sb, MOSRequest.OUTPUT_MODE, outputMode);
 
         // object name
         String objectName = req.getParam(MOSRequest.OBJ_NAME);
@@ -339,7 +378,6 @@ public class QueryMOS extends DynQueryProcessor {
         meta.setCorners(c1, c2, c3, c4);
 
         meta.setAttribute("DataType", "MOS");
-
     }
 
 

@@ -106,6 +106,7 @@ public class CatalogDataSetActivation implements BackgroundActivation {
                             WebEvent<NewTableResults> ev= new WebEvent<NewTableResults>(this,
                                                                                         Name.NEW_TABLE_RETRIEVED,
                                                                                         data);
+                            data.setBringToFront(req.getBooleanParam(NewTableResults.BRING_TO_FRONT, true));
                             WebEventManager.getAppEvManager().fireEvent(ev);
                             monItem.setActivated(0,true);
                         }
@@ -122,12 +123,13 @@ public class CatalogDataSetActivation implements BackgroundActivation {
         DataSet ds= DataSetParser.parse(rawDataSet);
         if (ds.getTotalRows()>0) {
             NewTableResults data= new NewTableResults(req, WidgetFactory.TABLE, title);
+            data.setBringToFront(req.getBooleanParam(NewTableResults.BRING_TO_FRONT, true));
             WebEvent<NewTableResults> ev= new WebEvent<NewTableResults>(this, Name.NEW_TABLE_RETRIEVED,
                                                                         data);
             WebEventManager.getAppEvManager().fireEvent(ev);
         }
         else {
-            PopupUtil.showError("No Rows returned", "The search did not find any data");
+            PopupUtil.showError(title, "The search did not find any data");
         }
     }
 

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.data;
 
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.util.StringUtils;
@@ -68,6 +69,8 @@ public class WiseRequest extends TableServerRequest {
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
 
+    public static final String PUBLIC_RELEASE = "wise_public_release";
+
     private final static Map<String,String> IMAGE_SET_DESC = new HashMap<String,String>(){
         {
             put(PRELIM,"Preliminary Release");
@@ -112,9 +115,9 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER_YR2 +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_i1bm_frm", "yr2_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
-            put(MERGE_INT+"|3a", new String[]{"merge_i3am_cdd", "merge_i3as_psd"});
+            put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
             put(PASS2_4BAND+"|3a", new String[]{"4band_i3am_cdd", "4band_i3as_psd"});
             put(PASS2_3BAND+"|1b", new String[]{"3band_i1bm_frm", "3band_i1bs_psd"});
@@ -170,6 +173,25 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR1,"wise_neowiser_yr1");
             put(NEOWISER_YR2,"wise_neowiser_yr2");
 
+        }
+    };
+
+    public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
+        {
+            put(PRELIM,"wise_prelim_p1bs_psd");
+            put(PRELIM_POSTCRYO,"wise_prelim_2band_p1bs_psd");
+            put(ALLWISE_MULTIBAND,"wise_allwise_p3as_psd");
+            put(ALLSKY_4BAND,"wise_allsky_4band_p1bs_psd");
+            put(CRYO_3BAND,"wise_allsky_3band_p1bs_psd");
+            put(POSTCRYO,"wise_allsky_2band_p1bs_psd");
+            put(NEOWISER,"neowiser_p1bs_psd");
+            put(PASS1,"wise_pass1_i1bs_psd_view");
+            put(PASS2_4BAND,"wise_pass2_4band_i1bs_psd_view");
+            put(PASS2_3BAND,"wise_pass2_3band_i1bs_psd_view");
+            put(PASS2_2BAND, "wise_pass2_2band_i1bs_psd_view");
+            put(NEOWISER_PROV,"neowiser_p1bs_psd");
+            put(NEOWISER_YR1,"neowiser_p1bs_psd");
+            put(NEOWISER_YR2,"neowiser_p1bs_psd");
         }
     };
 
@@ -231,9 +253,9 @@ public class WiseRequest extends TableServerRequest {
         return imageSet.contains(",");
     }
 
-    public static String getTableSchema(String imageSet) {
+    public static String getTableSchema(ServerRequest req, String imageSet) {
         if (useMergedTable(imageSet)) {
-            return MERGE;
+            return req.getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
         } else {
             String schema = imageSet;
             schema = schema.contains("-") ? schema.split("-")[0] : schema;
@@ -245,7 +267,7 @@ public class WiseRequest extends TableServerRequest {
     public String getTable() {
         String imageSet = getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
-            imageSet = MERGE;
+            imageSet = getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
         }
         String[] names = TABLE_MAP.get(imageSet + "|" + getParam("ProductLevel"));
         return names == null || names.length < 2 ? null : names[0];
@@ -308,7 +330,7 @@ public class WiseRequest extends TableServerRequest {
     public static String getMosCatalog(TableServerRequest req) {
         String imageSet = req.getParam(SCHEMA);
         if (useMergedTable(imageSet)) {
-            imageSet = MERGE;
+            imageSet = req.getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
         }
         return MOS_CATALOGS.get(imageSet);
     }
@@ -469,11 +491,11 @@ public class WiseRequest extends TableServerRequest {
         } else {
             if (scanNum < SCANID_MAP.get(PASS2_4BAND)[1] ||
                     (scanNum==SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a")) ) {
-                return new String[]{PASS1,PASS2_4BAND};
+                return new String[]{PASS1,PASS2_4BAND,ALLSKY_4BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_3BAND)[1]) {
-                return new String[]{PASS1,PASS2_3BAND};
+                return new String[]{PASS1,PASS2_3BAND,CRYO_3BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
-                return new String[]{PASS1,PASS2_2BAND};
+                return new String[]{PASS1,PASS2_2BAND,POSTCRYO};
             } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR2)[0] &&
                     scanNum <= SCANID_MAP.get(NEOWISER_YR2)[1]) {
                 return new String[]{NEOWISER_YR2};

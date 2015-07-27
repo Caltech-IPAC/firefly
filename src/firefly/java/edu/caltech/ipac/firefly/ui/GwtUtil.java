@@ -854,15 +854,15 @@ public class GwtUtil {
         }
     }
 
-    public static Form createSearchForm(FormTag fTag, EventHub eventHub) {
-        return createForm(true, fTag, eventHub, null);
+    public static Form createSearchForm(FormTag fTag, EventHub eventHub, List<FormEventWorker> workers) {
+        return createForm(true, fTag, eventHub, null, workers);
     }
 
     public static Form createForm(FormTag fTag, EventHub tpHub, Form searchForm) {
-        return createForm(true, fTag, tpHub, searchForm);
+        return createForm(true, fTag, tpHub, searchForm, null);
     }
 
-    public static Form createForm(boolean doSetBG, FormTag fTag, EventHub tpHub, Form searchForm) {
+    public static Form createForm(boolean doSetBG, FormTag fTag, EventHub tpHub, Form searchForm, List<FormEventWorker> workers) {
 
         Form form = new Form(doSetBG);
         searchForm = searchForm == null ? form : searchForm;
@@ -893,6 +893,8 @@ public class GwtUtil {
             }
 
             FormEventWorker w = wfactory.createFormEventWorker(type, params);
+            if (workers != null) workers.add(w);
+
             w.bind(form.getHub());
             if (searchForm != form) {
                 w.addHub(searchForm.getHub());

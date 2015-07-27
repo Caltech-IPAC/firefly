@@ -90,7 +90,7 @@ public class ImageSelectUI implements DataTypeSelectUI {
                                         currentImageSet = iltag.get(i);
                                         FormTag ftag = currentImageSet.getForm();
                                         if (form != null) panel.remove(1);
-                                        form = GwtUtil.createSearchForm(ftag, null);
+                                        form = GwtUtil.createSearchForm(ftag, null, null);
                                         GwtUtil.setStyles(form,
                                                 "backgroundColor", "white",
                                                 "border", "1px solid black",

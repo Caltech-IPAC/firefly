@@ -54,7 +54,7 @@ public class DummyInventoryUI implements SearchUI {
                 List<ImageSetTag> iltag = dt.getImagesetList();
                 if (iltag.size() > 0) {
                     FormTag ftag = iltag.get(0).getForm();
-                    Form form = GwtUtil.createSearchForm(ftag, null);
+                    Form form = GwtUtil.createSearchForm(ftag, null, null);
                     form.setStyleName("shadow");
                     panel.add(form);
                 }

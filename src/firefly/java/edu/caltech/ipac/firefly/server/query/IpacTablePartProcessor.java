@@ -258,6 +258,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         // go get original data
         File resultsFile = getBaseDataFile(request);      // caching already done..
 
+        // from here on.. we use resultsFile as the cache key.
+        // if the source file changes, we ignore previously cached temp files
+        key = new StringKey(resultsFile.getPath());
+
         // do filtering
         CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
@@ -266,9 +270,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             if (filterFile == null) {
                 filterFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 doFilter(filterFile, resultsFile, filters, request);
-                if (doCache()) {
-                    cache.put(key, filterFile);
-                }
+                cache.put(key, filterFile);
             }
             resultsFile = filterFile;
         }
@@ -281,9 +283,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             if (sortedFile == null) {
                 sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 doSort(resultsFile, sortedFile, sortInfo, request.getPageSize());
-                if (doCache()) {
-                    cache.put(key, sortedFile);
-                }
+                cache.put(key, sortedFile);
             }
             resultsFile = sortedFile;
         }
@@ -307,9 +307,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
                 DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE);
-                if (doCache()) {
-                    cache.put(key, deciFile);
-                }
+                cache.put(key, deciFile);
             }
             resultsFile = deciFile;
         }
@@ -327,9 +325,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 } catch (InvalidStatementException e) {
                     throw new DataAccessException("InvalidStatementException", e);
                 }
-                if (doCache()) {
-                    cache.put(key, subFile);
-                }
+                cache.put(key, subFile);
             }
             resultsFile = subFile;
         }

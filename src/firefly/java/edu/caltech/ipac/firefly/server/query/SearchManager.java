@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.IllegalFormatConversionException;
 import java.util.List;
 
 
@@ -48,20 +49,33 @@ public class SearchManager {
     public RawDataSet getRawDataSet(TableServerRequest request) throws DataAccessException {
         SearchProcessor processor = getProcessor(request.getRequestId());
         ServerRequest req = processor.inspectRequest(request);
+        String errMsg;
         if (req != null) {
-            DataGroupPart dgp = (DataGroupPart) processor.getData(req);
-            RawDataSet ds = QueryUtil.getRawDataSet(dgp);
-            DataGroupPart.State status = dgp.getTableDef().getStatus();
-            ds.getMeta().setIsLoaded(!status.equals(DataGroupPart.State.INPROGRESS));
+            DataGroupPart dgp = null;
+            try {
+                dgp = (DataGroupPart) processor.getData(req);
+                RawDataSet ds = QueryUtil.getRawDataSet(dgp);
+                DataGroupPart.State status = dgp.getTableDef().getStatus();
+                ds.getMeta().setIsLoaded(!status.equals(DataGroupPart.State.INPROGRESS));
 
-            processor.prepareTableMeta(ds.getMeta(),
-                    Collections.unmodifiableList(dgp.getTableDef().getCols()),
-                    req);
+                processor.prepareTableMeta(ds.getMeta(),
+                        Collections.unmodifiableList(dgp.getTableDef().getCols()),
+                        req);
 
-            return ds;
+                return ds;
+            } catch (Exception ex) {
+                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
+                errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source ;
+                LOGGER.error(ex, errMsg);
+            }
         } else {
-            throw new DataAccessException("Request fail inspection.  Operation aborted.");
+            errMsg ="Request fail inspection.  Operation aborted.";
         }
+
+        if (errMsg != null) {
+            throw new DataAccessException(errMsg);
+        }
+        return null;
     }
 
     public String getJSONData(ServerRequest request) throws DataAccessException {

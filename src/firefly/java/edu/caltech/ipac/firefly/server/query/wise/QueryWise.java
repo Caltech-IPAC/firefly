@@ -81,7 +81,15 @@ public class QueryWise extends IBESearchProcessor {
         try {
             setXmlParams(request);
             WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
-
+            if (!req.containsParam(WiseRequest.SCHEMA)) {
+                req.setSafeParam(WiseRequest.SCHEMA, WiseFileRetrieve.DEFAULT_SCHEMA);
+            } else {
+                String schema = req.getSafeParam(WiseRequest.SCHEMA);
+                if (schema.contains(",")) {
+                    schema = req.getBooleanParam(WiseRequest.PUBLIC_RELEASE, true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
+                    req.setParam(WiseRequest.SCHEMA, schema);
+                }
+            }
             StopWatch.getInstance().start("Wise Search");
             retFile = searchWise(req);
             StopWatch.getInstance().printLog("Wise Search");
@@ -240,7 +248,7 @@ public class QueryWise extends IBESearchProcessor {
                                                   IOException {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = WiseRequest.getTableSchema(req.getSchema());
+        String schema = WiseRequest.getTableSchema(req, req.getSchema());
         String table = req.getTable();
 
         String urlString = makeBaseSearchURL(host, schemaGroup, schema, table);
@@ -577,7 +585,7 @@ public class QueryWise extends IBESearchProcessor {
         WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
-        String schema = WiseRequest.getTableSchema(req.getSchema());
+        String schema = WiseRequest.getTableSchema(req, req.getSchema());
         String table = req.getTable();
         return makeDDURL(host, schemaGroup, schema, table);
     }
@@ -589,6 +597,7 @@ public class QueryWise extends IBESearchProcessor {
         setXmlParams(req);
 
         meta.setAttribute(WiseRequest.SCHEMA, request.getParam(WiseRequest.SCHEMA));
+        meta.setAttribute(WiseRequest.PUBLIC_RELEASE, request.getParam(WiseRequest.PUBLIC_RELEASE));
         // add cutout parameters, if applicable
         String subsize = request.getParam("subsize");
         if (subsize != null) {
