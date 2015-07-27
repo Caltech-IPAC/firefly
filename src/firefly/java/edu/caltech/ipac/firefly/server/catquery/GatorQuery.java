@@ -162,7 +162,7 @@ public class GatorQuery extends BaseGator {
 
 
         optionalParam(sb, CatalogRequest.SELECTED_COLUMNS, req.getSelectedColumns());
-        optionalParam(sb, CatalogRequest.CONSTRAINTS, encodeParams(req.getConstraints()));
+        optionalParam(sb, CatalogRequest.CONSTRAINTS, encodeParams(resolveConstraints(req.getConstraints())));
         optionalParam(sb, CatalogRequest.DD_ONLIST, req.getDDOnList());
         optionalParam(sb, CatalogRequest.GATOR_MISSION, req.getGatorMission());
 
@@ -225,7 +225,7 @@ public class GatorQuery extends BaseGator {
 
             }
             optionalPostParam(CatalogRequest.SELECTED_COLUMNS, req.getSelectedColumns());
-            optionalPostParam(CatalogRequest.CONSTRAINTS, req.getConstraints());
+            optionalPostParam(CatalogRequest.CONSTRAINTS, resolveConstraints(req.getConstraints()));
             optionalPostParam(CatalogRequest.DD_ONLIST, req.getDDOnList());
             optionalPostParam(CatalogRequest.GATOR_MISSION, req.getGatorMission());
 
@@ -385,11 +385,18 @@ public class GatorQuery extends BaseGator {
     private String encodeParams(String params) {
         if (!StringUtils.isEmpty(params)) {
             params = params.replace(" ", "+");
-            if (params.contains(",")) {
-                params = params.replace(",", "+and+");
-            }
         }
         return params;
+    }
+
+    // catalog dd panel creates multiple constraints, separated by comma
+    // it facilitates parsing constraints from a request
+    // comma is not a great separator - you have to make sure there os no comma in the where clause
+    private String resolveConstraints(String constraints) {
+        if (!StringUtils.isEmpty(constraints) && constraints.contains(",")) {
+            constraints = constraints.replace(",", " and ");
+        }
+        return constraints;
     }
 
     private static String findTargetName(List<DataType> columns) {
