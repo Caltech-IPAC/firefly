@@ -66,7 +66,7 @@ public class ImageData implements Serializable {
         if (constructNow) constructImage(fitsReadAry);
     }
 
-    //LZ 7/20/15
+    //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
     public ImageData(FitsRead fitsReadAry[],
                      ImageType imageType,
                      IndexColorModel cm,
@@ -92,7 +92,7 @@ public class ImageData implements Serializable {
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
-        if (constructNow) constructImage(fitsReadAry);
+        if (constructNow) constructImage_new(fitsReadAry);
     }
 
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
@@ -182,7 +182,7 @@ public class ImageData implements Serializable {
 
 
 
-    private void constructImage_orig(FitsRead fitsReadAry[]) {
+    private void constructImage(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         if (_imageType==ImageType.TYPE_8_BIT) {
@@ -216,7 +216,7 @@ public class ImageData implements Serializable {
     }
    //07/16/16 LZ
     //TODO remove this after testing mask
-    private void constructImage(FitsRead fitsReadAry[]) {
+    private void constructImage_new(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         LSSTMask lsstmask = new LSSTMask(5, Color.RED);

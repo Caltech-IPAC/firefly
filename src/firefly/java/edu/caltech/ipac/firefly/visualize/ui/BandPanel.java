@@ -293,7 +293,7 @@ public class BandPanel extends Composite {
         float max= _maxStretch.getNumberValue().floatValue();
 
         float zp = _bp.getNumberValue().floatValue();
-        float wp = _bp.getNumberValue().floatValue();
+        float wp = _wp.getNumberValue().floatValue();
 
         float dr = _dr.getNumberValue().floatValue();
         float gamma = _gamma.getNumberValue().floatValue();
