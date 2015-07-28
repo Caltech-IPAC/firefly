@@ -89,10 +89,10 @@ public class ImageData implements Serializable {
         this.rangeValues= rangeValues;
 
        _cm=cm;
-        if (imageType==ImageType.TYPE_24_BIT) {
-            _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
-        }
-        if (constructNow) constructImage_new(fitsReadAry);
+
+        if (constructNow) constructImage(fitsReadAry);
+
+        System.out.println("why the above line does not work???");
     }
 
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
@@ -182,7 +182,7 @@ public class ImageData implements Serializable {
 
 
 
-    private void constructImage(FitsRead fitsReadAry[]) {
+    private void constructImage_orig(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         if (_imageType==ImageType.TYPE_8_BIT) {
@@ -216,7 +216,7 @@ public class ImageData implements Serializable {
     }
    //07/16/16 LZ
     //TODO remove this after testing mask
-    private void constructImage_new(FitsRead fitsReadAry[]) {
+    private void constructImage(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         LSSTMask lsstmask = new LSSTMask(5, Color.RED);

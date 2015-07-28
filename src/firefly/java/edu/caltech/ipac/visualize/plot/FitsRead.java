@@ -91,7 +91,7 @@ public class FitsRead implements Serializable {
         //get the data and store into float array
 
         float1d = getImageHDUDataInFloatArray(imageHdu);
- 
+
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
 
@@ -221,9 +221,9 @@ public class FitsRead implements Serializable {
             throws FitsException {
 
 
-        if (hdu == null) {
+        if (hdu == null || hdu.getData()==null) {
             // Error: file doesn't seem to have any HDUs!
-            throw new FitsException("Bad format in FITS file");
+            return null;
         }
 
         BasicHDU[] HDUs={hdu};
