@@ -91,14 +91,9 @@ public class FitsRead implements Serializable {
         //get the data and store into float array
 
         float1d = getImageHDUDataInFloatArray(imageHdu);
-        //physicalData = getDataFloat();
-
+ 
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
-        //LSSTMask lsstMask = new LSSTMask(5, Color.RED);
-        //int count = lsstMask.getSetCount(masks);
-        //System.out.println("total masks ="+masks.length);
-        //System.out.println("the set count is "+count);
 
     }
 
