@@ -221,7 +221,7 @@ public class FitsRead implements Serializable {
             throws FitsException {
 
 
-        if (hdu == null || hdu.getData()==null) {
+        if (hdu == null || hdu.getData().getSize()==0) {
             // Error: file doesn't seem to have any HDUs!
             return null;
         }
