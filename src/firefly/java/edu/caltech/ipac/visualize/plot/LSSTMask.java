@@ -281,7 +281,7 @@ public class LSSTMask {
      * @param  mask value to check
      * @return <code>true</code> if any are set
      */
-    public final boolean isSet(final int mask) {
+    public final boolean isSet(final short mask) {
         return (check & mask) != 0;
     }
 
@@ -290,7 +290,7 @@ public class LSSTMask {
      * @param  mask  array of values in which to test the mask
      * @return <code>true</code> where any bit is set, for each element
      */
-    public Boolean[] isSet(final int[] mask) {
+    public Boolean[] isSet(final short[] mask) {
         Boolean[] b = new Boolean[mask.length];
         for (int i = 0; i < mask.length; i++) {
             b[i]=isSet(mask[i]);
@@ -391,6 +391,8 @@ public class LSSTMask {
 
         return combine(masks.toArray(new LSSTMask[0]));
     }
+
+
 
     /**
      * Change the bit value to 1

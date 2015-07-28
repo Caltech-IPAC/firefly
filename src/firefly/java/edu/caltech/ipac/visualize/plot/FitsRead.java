@@ -222,6 +222,29 @@ public class FitsRead implements Serializable {
     }
 
 
+    public static FitsRead[] createFitsReadArray(Fits fits, BasicHDU hdu)
+            throws FitsException {
+
+
+        if (hdu == null) {
+            // Error: file doesn't seem to have any HDUs!
+            throw new FitsException("Bad format in FITS file");
+        }
+
+        BasicHDU[] HDUs={hdu};
+        ArrayList<BasicHDU> HDUList = getHDUList(HDUs);
+
+        if (HDUList.size() == 0)
+            throw new FitsException("No image headers in FITS file");
+
+        FitsRead[] fitsReadAry = new FitsRead[HDUList.size()];
+        for (int i = 0; i < HDUList.size(); i++) {
+            fitsReadAry[i] = new FitsRead(fits, (ImageHDU) HDUList.get(i));
+            fitsReadAry[i].indexInFile = i;
+        }
+
+        return fitsReadAry;
+    }
 
     /**
      * Flip an image left to right so that pixels read backwards
@@ -819,8 +842,8 @@ public class FitsRead implements Serializable {
 
        // for (int i=0; i<lsstMasks.length; i++){
 
-            stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
-                    blank_pixel_value, float1d, masks, pixelData, pixelhist, rangeValues, slow, shigh, lsstMask);//s[i]);
+            stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
+                    blank_pixel_value, float1d, masks, pixelData, pixelhist,  lsstMask);//s[i]);
 
 
        // }
@@ -836,15 +859,13 @@ public class FitsRead implements Serializable {
      * @param startLine
      * @param lastLine
      * @param naxis1
-     * @param hist
+
      * @param blank_pixel_value
      * @param float1dArray
      * @param masks
      * @param pixeldata
      * @param pixelhist
-     * @param rangeValues
-     * @param slow
-     * @param shigh
+
      * @param lsstMask
      */
     private static void stretchPixels(int startPixel,
@@ -852,46 +873,14 @@ public class FitsRead implements Serializable {
                                       int startLine,
                                       int lastLine,
                                       int naxis1,
-                                      Histogram hist,
                                       byte blank_pixel_value,
                                       float[] float1dArray,
                                       short[] masks,
                                       byte[] pixeldata,
                                       int[] pixelhist,
-                                      RangeValues rangeValues,
-                                      double slow,
-                                      double shigh, LSSTMask lsstMask) {
+                                      LSSTMask lsstMask) {
 
 
-        double sdiff = slow == shigh ? 1.0 : shigh - slow;
-
-        double[] dtbl = new double[256];
-        if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOG
-                || rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LOGLOG) {
-            dtbl = getLogDtbl(sdiff, slow, rangeValues);
-        }
-        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_EQUAL) {
-            dtbl = hist.getTblArray();
-        }
-        else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQUARED){
-            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
-        }
-        else if( rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_SQRT) {
-            dtbl = getSquaredDbl(sdiff, slow, rangeValues);
-        }
-
-
-        int deltasav = sdiff > 0 ? 64 : -64;
-
-        /*
-         * This loop will go through all the pixels and assign them new values based on the
-         * stretch algorithm
-         */
-
-        double dr= rangeValues.getDrValue();
-        double gamma=rangeValues.getGammaValue();
-        double bp= rangeValues.getBPValue();
-        double wp=rangeValues.getWPValue();
 
 
         int pixelCount = 0;
@@ -906,37 +895,16 @@ public class FitsRead implements Serializable {
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {   // stretch each pixel
 
-                    int mask = masks[index];
+                    short mask = masks[index];
                     if (lsstMask!=null && lsstMask.isSet(mask)) { //assign the defined color
 
                         pixeldata[pixelCount] = (byte) lsstMask.getColor().getRGB();
                     } else {   // stretch each pixel
 
                         pixeldata[pixelCount]=0;
-                       /* if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_LINEAR) {
-
-                            double dRunval = ((float1dArray[index] - slow) * 254 / sdiff);
-                            pixeldata[pixelCount] = getLinearStrectchedPixelValue(dRunval);
-
-                        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_ASINH) {
-                            pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
-                        } else if (rangeValues.getStretchAlgorithm() == RangeValues.STRETCH_POWERLAW_GAMMA) {
-
-                            pixeldata[pixelCount] = (byte) getPowerLawGammaStretchedPixelValue(float1dArray[index], gamma, slow, shigh);
-                        } else {
-
-                            pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index], dtbl, deltasav);
-                        }
-
-                        pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
-                        //check if the pixeldata happens to be the same as the mask value, if so, reassign it to gray color
-                        if (pixeldata[pixelCount] ==(byte) lsstMask.getColor().getRGB()){
-                            pixeldata[pixelCount]=(byte) Color.gray.getRGB();
-
-                        }*/
 
                    }
-                  //  pixeldata[pixelCount] = (byte) Color.WHITE.getRGB();
+
                    pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
                 pixelCount++;
@@ -1116,9 +1084,7 @@ public class FitsRead implements Serializable {
 
                     } else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_ASINH) {
                         //test simple asinh stretch
-
-                       // double asinh=asinh(float1dArray[index]);
-                        pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
+                     pixeldata[pixelCount] = (byte) getASinhStretchedPixelValue(float1dArray[index], dr, slow, shigh, bp, wp);
                     }
                     else if (rangeValues.getStretchAlgorithm()==RangeValues.STRETCH_POWERLAW_GAMMA) {
 

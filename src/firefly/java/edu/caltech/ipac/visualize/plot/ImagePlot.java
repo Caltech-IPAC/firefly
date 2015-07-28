@@ -976,12 +976,15 @@ public class ImagePlot extends Plot implements Serializable {
         byte[] reds = new byte[size];
         byte[] greens = new byte[size];
         byte[] blues = new byte[size];
+        byte[] alpha = new byte[size];
         for (int i = 0; i < colors.length; i++) {
             reds[i] = (byte) colors[i].getRed();
             greens[i] = (byte) colors[i].getGreen();
             blues[i] = (byte) colors[i].getBlue();
+
         }
-        return new IndexColorModel(8, colors.length, reds, greens, blues);
+
+        return new IndexColorModel(8, colors.length, reds, greens, blues, 0);
     }
     /**
      * 7/14/15 by LZ
@@ -1006,8 +1009,8 @@ public class ImagePlot extends Plot implements Serializable {
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND,fitsRead);
 
-        //test only the red color
 
+        //test only the red color
         Color[] colors= {Color.red, Color.gray, Color.WHITE};
         IndexColorModel cm = getIndexColorModel( colors);
         IndexColorModel cm1 = ColorTable.getColorModel(0);
