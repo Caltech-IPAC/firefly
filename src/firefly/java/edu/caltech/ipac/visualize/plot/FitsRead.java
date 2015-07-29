@@ -1292,7 +1292,8 @@ public class FitsRead implements Serializable {
         double raw_dn = float1d[index];
 
         if ((raw_dn == imageHeader.blank_value) || (Double.isNaN(raw_dn))) {
-            throw new PixelValueException("No flux available");
+            //throw new PixelValueException("No flux available");
+            return Double.NaN;
 
         }
 
