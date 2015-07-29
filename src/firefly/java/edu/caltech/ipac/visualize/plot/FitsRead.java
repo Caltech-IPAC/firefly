@@ -910,6 +910,7 @@ public class FitsRead implements Serializable {
 
     }
 
+
     private static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {
 
         double contrast = rangeValues.getZscaleContrast();
