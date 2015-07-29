@@ -69,7 +69,7 @@ public class CatalogPopupPanel extends Composite implements InputFieldGroup, Use
 
                     List<Param> cpValue = new ArrayList<Param>();
                     // value format: key=value,key=value,...
-                    String[] valueArr = value.split(",");
+                    String[] valueArr = value.split(CatalogRequest.CONSTRAINTS_SEPARATOR);
                     for (String v : valueArr) {
                         String[] v2 = v.split("=");
                         if (v2.length == 2) {
@@ -164,7 +164,7 @@ public class CatalogPopupPanel extends Composite implements InputFieldGroup, Use
 
         int cnt = 0;
         if (selectedConstraints.length() > 0) {
-            cnt = selectedConstraints.split(",").length;
+            cnt = selectedConstraints.split(CatalogRequest.CONSTRAINTS_SEPARATOR).length;
         }
         selConstraintsHtml.setHTML("<i>&nbsp;&nbsp;Number of Column Filters: " + cnt + "</i>");
     }

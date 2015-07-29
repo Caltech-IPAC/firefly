@@ -263,7 +263,7 @@ public class CatddPanel extends Composite implements RequiresResize, InputFieldG
     }
 
     private void populateConstraints(String constraints) {
-        List<String> filters = Arrays.asList(constraints.split(","));
+        List<String> filters = Arrays.asList(constraints.split(CatalogRequest.CONSTRAINTS_SEPARATOR));
         panel.setFilters(filters);
 
     }
@@ -291,7 +291,7 @@ public class CatddPanel extends Composite implements RequiresResize, InputFieldG
                 if (currRow == 0) {
                     values = value;
                 } else {
-                    values = values + "," + value;
+                    values = values + CatalogRequest.CONSTRAINTS_SEPARATOR + value;
                 }
                 currRow++;
             }

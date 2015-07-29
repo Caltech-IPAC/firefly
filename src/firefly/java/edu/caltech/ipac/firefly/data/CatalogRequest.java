@@ -48,6 +48,12 @@ public class CatalogRequest extends TableServerRequest {
     public final static String CATALOG_PROJECT = "catalogProject";
     public static final String UPDLOAD_ROW_ID = "in_row_id";
 
+    // how do we separate multiple constraints -
+    // used in catalog dd panels, where each field can be constrained separately
+    // if we use comma, where clause can not contain comma:
+    //    "col in (1,2,3)" constraint is not possible
+    // " and " is not perfect either, we might think of a better separator later
+    public final static String CONSTRAINTS_SEPARATOR = ";";
 
     public enum RequestType {
         GATOR_QUERY("GatorQuery"),
