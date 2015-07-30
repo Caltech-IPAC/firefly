@@ -8,7 +8,7 @@ import nom.tam.fits.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,14 +43,14 @@ public class FitsImageCube {
         if (HDUs == null) {
             throw new FitsException("Bad format in FITS file. The FITS file doesn't have any HDUs.");
         }
-        boolean hasExtension = HDUs.length > 1 ? true : false;
+        boolean hasExtension = HDUs.length > 1 ? true : false; // what's this for?
 
-        fitsReadMap = new Hashtable();
-        dataTypeMap = new Hashtable();
+        fitsReadMap = new HashMap<String, FitsRead[]>();
+        dataTypeMap = new HashMap<String, DataType[]>();
         for (int j = 0; j < HDUs.length; j++){
             Header header = HDUs[j].getHeader();
             if (header == null)
-                throw new FitsException("Missing header in FITS file.");
+                throw new FitsException("The" + j + "th HDU missing header in FITS file.");
             int naxis = header.getIntValue("NAXIS", -1);
             int naxis3 = header.getIntValue("NAXIS3", -1);
             String extName = header.getStringValue("EXTNAME");
@@ -68,7 +68,7 @@ public class FitsImageCube {
             }
         }
         if (fitsReadMap.size() == 0){
-            throw new FitsException("The fits has no image cubes.");
+            throw new FitsException("The FITS has no image cubes.");
         }
     }
 
@@ -81,10 +81,10 @@ public class FitsImageCube {
 
     private Map<String, DataType[]> getDataTypeMap(Header header, Map<String, DataType[]> dataTypeMap) {
 
-        dataTypeMap = dataTypeMap.size() == 0 ? new Hashtable() : dataTypeMap;
+        //If the input dataTypeMap exists, keep adding elements to it. Otherwise make a new one.
+        dataTypeMap = dataTypeMap.size() == 0 ? new HashMap<String, DataType[]>() : dataTypeMap;
 
         // Only two dataTypes: the first one is for the 3rd WCS; the second one is for the flux.
-
         DataType[] dataTypeAry = new DataType[2];
         String extName = header.getStringValue("EXTNAME");
 
@@ -170,7 +170,9 @@ public class FitsImageCube {
         return dataGroup;
     }
 
-    //setters: ???
+    public Fits getFits() {
+        return (fits);
+    }
 
     static void usage()
     {
@@ -194,7 +196,10 @@ public class FitsImageCube {
         try {
 
             Fits fits = new Fits(fits_filename);
-            FitsImageCube fitsImageCube = new FitsImageCube(fits);
+            //FitsImageCube fitsImageCube = new FitsImageCube(fits);
+            FitsImageCube fitsImageCube = FitsRead.createFitsImageCube(fits);
+            Fits fits1 = fitsImageCube.getFits();
+            System.out.println("fits = " + fits1.toString());
             //valid pixel:
             ImagePt imagePt = new ImagePt(28,28);
             //Null value:
