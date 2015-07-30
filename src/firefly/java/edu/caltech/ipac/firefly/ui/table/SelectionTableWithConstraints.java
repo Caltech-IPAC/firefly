@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.ui.table;
 
 import com.google.gwt.gen2.table.client.CellRenderer;
 import com.google.gwt.http.client.URL;
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableDataView;
@@ -22,9 +23,10 @@ import java.util.List;
 
 /**
  * @author tatianag
- *         $Id: $
  */
 public class SelectionTableWithConstraints extends SelectionTable {
+
+    public final static String CONSTRAINTS_SEPARATOR = CatalogRequest.CONSTRAINTS_SEPARATOR;
 
     SelectionTableWithConstraintsDef tableDef;
 
@@ -45,7 +47,7 @@ public class SelectionTableWithConstraints extends SelectionTable {
     }
 
     public String getConstraints() {
-        return CollectionUtil.toString(tableDef.getConstraints(), ",");
+        return CollectionUtil.toString(tableDef.getConstraints(), CONSTRAINTS_SEPARATOR);
     }
 
     public static class SelectionTableWithConstraintsDef extends SelectionTableDef {
@@ -91,14 +93,26 @@ public class SelectionTableWithConstraints extends SelectionTable {
             });
         }
 
+        private void clearConstraints() {
+            for (String key : inputFieldMap.keySet()) {
+                inputFieldMap.get(key).setValue("");
+            }
+        }
+
         public void setConstraints(String constraintsStr) {
-            List<String> constraints = Arrays.asList(constraintsStr.split(","));
-            String val;
+            List<String> constraints = Arrays.asList(constraintsStr.split(CONSTRAINTS_SEPARATOR));
+            String currVal,val;
+            clearConstraints();
             for (String constr : constraints) {
                 for (String key : inputFieldMap.keySet()) {
                     if (constr.startsWith(key+" ")) {
                         val = constr.replace(key+" ","");
+                        currVal = inputFieldMap.get(key).getValue();
+                        if (!StringUtils.isEmpty(currVal)) {
+                            val += currVal+";"+val;
+                        }
                         inputFieldMap.get(key).setValue(val);
+
                     }
                 }
             }

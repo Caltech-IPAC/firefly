@@ -393,8 +393,8 @@ public class GatorQuery extends BaseGator {
     // it facilitates parsing constraints from a request
     // comma is not a great separator - you have to make sure there os no comma in the where clause
     private String resolveConstraints(String constraints) {
-        if (!StringUtils.isEmpty(constraints) && constraints.contains(",")) {
-            constraints = constraints.replace(",", " and ");
+        if (!StringUtils.isEmpty(constraints) && constraints.contains(CatalogRequest.CONSTRAINTS_SEPARATOR)) {
+            constraints = constraints.replace(CatalogRequest.CONSTRAINTS_SEPARATOR, " and ");
         }
         return constraints;
     }

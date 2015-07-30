@@ -91,7 +91,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
                 String val = p.getValue();
                 if (!StringUtils.isEmpty(val)) {
                     _log.briefDebug("CONSTRAINTS: "+val);
-                    constraints = val.split(",");
+                    constraints = val.split(CatalogRequest.CONSTRAINTS_SEPARATOR);
                 }
             }
         }
