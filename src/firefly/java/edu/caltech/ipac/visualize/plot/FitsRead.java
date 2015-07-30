@@ -39,6 +39,10 @@ import java.util.Arrays;
  * Refactored stretch related methods and renamed all methods using the camelCase name
  * Add the asinh and Power Law Gamma algorithms
  * Cleaned up some unused methods
+ * 7/29/15
+ *  Add a new method to createFitsReadArray(Fits, BasicHDU) for Herschel data
+ *  Add a new method to createFitsImageCube(Fits)
+ *  Add a new doStretch and stretchPixel for testing mask plot
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -241,6 +245,17 @@ public class FitsRead implements Serializable {
         return fitsReadAry;
     }
 
+    /**
+     * This method will return a FitsImageCube object
+     * This method is added in parallel as createFitsReadArray
+     * @param fits
+     * @return
+     * @throws FitsException
+     */
+    public static FitsImageCube createFitsImageCube(Fits fits)throws FitsException {
+
+        return new FitsImageCube(fits);
+    }
     /**
      * Flip an image left to right so that pixels read backwards
      *
