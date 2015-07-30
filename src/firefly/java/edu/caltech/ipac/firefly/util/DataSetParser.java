@@ -55,6 +55,8 @@ public class DataSetParser {
         dataset.setStartingIdx(raw.getStartingIndex());
         dataset.setTotalRows(raw.getTotalRows());
 
+        if (raw.getDataSetString() == null || raw.getDataSetString().length() == 0) return dataset;
+
         dataset.setColumns(parseColumns(raw.getDataSetString()));
         dataset.setModel(parseTableModel(dataset, raw.getDataSetString()));
 

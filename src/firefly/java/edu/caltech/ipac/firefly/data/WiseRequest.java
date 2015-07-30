@@ -191,7 +191,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, "wise_pass2_2band_i1bs_psd_view");
             put(NEOWISER_PROV,"neowiser_p1bs_psd");
             put(NEOWISER_YR1,"neowiser_p1bs_psd");
-            put(NEOWISER_YR2,"neowiser_p1bs_psd");
+            put(NEOWISER_YR2,"neowiser_i1bs_psd");
         }
     };
 

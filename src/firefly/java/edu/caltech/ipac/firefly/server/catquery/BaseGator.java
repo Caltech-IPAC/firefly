@@ -106,7 +106,7 @@ public abstract class BaseGator extends DynQueryProcessor {
                             Iterator iter = paramMap.entrySet().iterator();
                             while (iter.hasNext()) {
                                 Map.Entry<String, String> entry = (Map.Entry) iter.next();
-                                req.setParam(entry.getKey(), (String) dObj.getDataElement(entry.getValue()));
+                                req.setParam(entry.getKey(), String.valueOf(dObj.getDataElement(entry.getValue())));
                             }
 
                             if (StringUtils.isEmpty(req.getXPFFile())) {

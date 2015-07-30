@@ -85,6 +85,7 @@ public class GatorDD extends BaseGator {
             requiredParam(sb, CatalogRequest.SERVER, req.getServer());
             requiredParam(sb, CatalogRequest.DATABASE, req.getDatabase());
             optionalParam(sb, CatalogRequest.DD_FILE, req.getDDFile());
+            optionalParam(sb, CatalogRequest.DBMS, req.getParam(CatalogRequest.DBMS));
         }
         optionalParam(sb, CatalogRequest.GATOR_MISSION, req.getGatorMission());
 
