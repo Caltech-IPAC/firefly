@@ -34,6 +34,7 @@ public class CatalogRequest extends TableServerRequest {
     public final static String CONSTRAINTS = "constraints";
     public final static String SERVER = "server";
     public final static String DATABASE = "database";
+    public final static String DBMS = "dbms";
     public final static String DD_FILE = "ddfile";
     public final static String DD_SHORT = "short";
     public final static String DD_ONLIST = "onlist";

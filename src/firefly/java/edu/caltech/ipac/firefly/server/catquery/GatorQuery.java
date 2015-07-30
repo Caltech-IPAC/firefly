@@ -172,7 +172,8 @@ public class GatorQuery extends BaseGator {
             requiredParam(sb, CatalogRequest.SERVER, urlEncode(req.getServer()));
             requiredParam(sb, CatalogRequest.DATABASE, urlEncode(req.getDatabase()));
             optionalParam(sb, CatalogRequest.DD_FILE, urlEncode(req.getDDFile()));
-            sb.append(GP_DBMS20);
+            String dbms = req.containsParam(CatalogRequest.DBMS) ? "&dbms=" + req.getParam(CatalogRequest.DBMS) : GP_DBMS20;
+            sb.append(dbms);
         }
 
         return sb.toString();
@@ -221,7 +222,8 @@ public class GatorQuery extends BaseGator {
                 requiredPostParam(CatalogRequest.SERVER, req.getServer());
                 requiredPostParam(CatalogRequest.DATABASE, req.getDatabase());
                 optionalPostParam(CatalogRequest.DD_FILE, req.getDDFile());
-                requiredPostParam("dbms", 20);
+                String dbms = req.containsParam(CatalogRequest.DBMS) ? req.getParam(CatalogRequest.DBMS) : "20";
+                requiredPostParam(CatalogRequest.DBMS, dbms);
 
             }
             optionalPostParam(CatalogRequest.SELECTED_COLUMNS, req.getSelectedColumns());
@@ -297,6 +299,7 @@ public class GatorQuery extends BaseGator {
             if (param.getName().equals(CatalogRequest.GATOR_HOST)) req.setParam(param);
             if (param.getName().equals(CatalogRequest.SERVICE_ROOT)) req.setParam(param);
             if (param.getName().equals(CatalogRequest.CATALOG_PROJECT)) req.setParam(param);
+            if (param.getName().equals(CatalogRequest.DBMS)) req.setParam(param);
         }
 
         SearchManager sm = new SearchManager();
