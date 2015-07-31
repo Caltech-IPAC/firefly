@@ -40,7 +40,7 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
             Ext.ExtensionInterface exI= Ext.makeExtensionInterfaceWithListener(this, getStoreCBForJs());
             exI.fireChannelActivate(bid);
         if (!aloneUI.hasResults()) {
-            HTML message= new HTML("Waiting for data");
+            HTML message= new HTML("Ready!");
             GwtUtil.setStyles(message,  "width","100%",
                                         "fontSize", "16pt",
                                         "textAlign", "center");

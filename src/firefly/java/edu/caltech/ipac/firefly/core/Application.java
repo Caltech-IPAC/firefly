@@ -110,11 +110,11 @@ public class Application {
         }
         configureUncaughtExceptionHandling();
         if (creator == null) {
-            throw new ResourceNotFoundException("Provider is not set.");
+            throw new ResourceNotFoundException("Creator is not set.");
         }
 
         if (eventMode==EventMode.WebSocket && creator.isApplication()) {
-            ClientEventQueue.start();
+            ClientEventQueue.start(GWT.getModuleBaseURL());
             backgroundMonitor = new BackgroundMonitorEvent();
         }
         else {

@@ -16,8 +16,7 @@ import edu.caltech.ipac.firefly.ui.catalog.CatalogSearchDialog;
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class IrsaCatalogCmd extends GeneralCommand {
+public class IrsaCatalogCmd extends BaseGroupVisCmd {
     public static final String CommandName = "IrsaCatalog";
     private Map<String, CatalogSearchDialog> _dialogMap = new HashMap<String, CatalogSearchDialog>();
 

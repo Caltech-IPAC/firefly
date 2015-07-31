@@ -28,6 +28,8 @@ import java.util.List;
 
 @SearchProcessorImpl(id = "IpacTableFromSource")
 public class IpacTableFromSource extends IpacTablePartProcessor {
+    public static final String TBL_TYPE = "tblType";
+    public static final String TYPE_CATALOG = "catalog";
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -128,7 +130,10 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
                 defaults.setAttribute(p.getName(), p.getValue());
             }
         }
-        UserCatalogQuery.addCatalogMeta(defaults,columns,request);
+        String type = request.getParam(TBL_TYPE);
+        if (type == null || type.equals(TYPE_CATALOG)) {
+            UserCatalogQuery.addCatalogMeta(defaults,columns,request);
+        }
     }
 
     private URL makeUrl(String source) {

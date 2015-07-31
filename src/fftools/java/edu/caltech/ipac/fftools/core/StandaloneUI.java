@@ -291,22 +291,26 @@ class StandaloneUI {
         main.setSize("100%", "100%");
         main.clear();
 
+        boolean hasXY = false, hasImage = false, hasTable = false;
+        Widget xyLayout = null;
         if (xyPlots.getNTabs() > 1 || (xyPlots.getNTabs() == 1 && xyPlots.getTab(XYVIEW_TAB_NAME)== null)) {
             if (xyPlots.getTab(XYVIEW_TAB_NAME) != null) {
                 xyPlots.getTab(XYVIEW_TAB_NAME).setContent(xyPlotter.getWidget());
             }
-            main.addSouth(xyPlots, 300);
             xyPlots.setSize("100%", "100%");
+            xyLayout = xyPlots;
+            hasXY = true;
         } else if (hasCatalogResults() && xyPlotAreaStandalone !=null) {
             xyPlotAreaStandalone.clear();
             xyPlotAreaStandalone.add(xyPlotter.getWidget());
-            main.addSouth(xyPlotAreaStandalone, 300);
             xyPlotAreaStandalone.setSize("100%", "100%");
-
+            xyLayout = xyPlotAreaStandalone;
+            hasXY = true;
         }
 
         if (dynMultiViewerTab ==null && hasPlotResults()) {
             dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "Image data", "FITS Image", false);
+            hasImage = true;
         }
         else if (!hasPlotResults() && dynMultiViewerTab !=null) {
             imageTabPane.removeTab(dynMultiViewerTab);
@@ -314,15 +318,26 @@ class StandaloneUI {
         }
 
         if (coverageTab!=null || hasPlotResults()) {
+            hasImage = true;
+        }
+
+        if (hasXY) {
+            if (hasImage || hasTable) {
+                main.addSouth(xyLayout, 300);
+            } else {
+                main.add(xyLayout);
+            }
+        }
+        if (hasImage) {
             int eastSize= 400;
             int winWidth= Window.getClientWidth();
             if (winWidth>50) eastSize= (int)(.6*Window.getClientWidth());
             main.addEast(catalogDeck, eastSize);
             main.add(imageArea);
-        }
-        else {
+        } else {
             main.add(catalogDeck);
         }
+
         main.forceLayout();
     }
 
@@ -528,7 +543,10 @@ class StandaloneUI {
 
     public class MyMpwFactory implements DataVisGrid.MpwFactory  {
         public MiniPlotWidget make(String groupName) {
-            return new MiniPlotWidget(groupName, makePopoutContainerForApp());
+            MiniPlotWidget mpw = new MiniPlotWidget(groupName, makePopoutContainerForApp());
+            mpw.setImageSelection(true);
+            mpw.setCatalogButtonEnable(true);
+            return mpw;
         }
         public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
     }

@@ -86,20 +86,24 @@ public class ClientEventQueue {
         $wnd.firefly.ClientEventQueue.close();
     }-*/;
 
-    public static native void start() /*-{
+    public static native void start(String baseurl) /*-{
 
         var nRetries = 0;
         function doWSConnect() {
             if (!$wnd.firefly) {
                 $wnd.firefly = {};
             }
-
             var l = window.location;
-            var proto = (l.protocol === "https:") ? "wss://" : "ws://";
-            var port = (l.port != 80 && l.port != 443) ? ":" + l.port : ""
-            var pathname = l.pathname.substring(0, l.pathname.lastIndexOf('/'));
-            var baseurl = proto + l.hostname + port + "/" + pathname;
+            if (baseurl == null) {
+                var proto = (l.protocol === "https:") ? "wss://" : "ws://";
+                var port = (l.port != 80 && l.port != 443) ? ":" + l.port : ""
+                var pathname = l.pathname.substring(0, l.pathname.lastIndexOf('/'));
+                baseurl = proto + l.hostname + port + "/" + pathname;
+            } else {
+                baseurl = baseurl.replace("https:", "wss:").replace("http:", "ws:");
+            }
             var queryString = l.hash ? "?" + decodeURIComponent(l.hash.substring(1)) : "";
+
             console.log("Connecting to " + baseurl + "/sticky/firefly/events" + queryString);
 
             $wnd.firefly.ClientEventQueue = new WebSocket(baseurl + "/sticky/firefly/events" + queryString);

@@ -10,14 +10,17 @@ package edu.caltech.ipac.fftools.core;
 
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.Creator;
 import edu.caltech.ipac.firefly.core.NetworkMode;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
+import edu.caltech.ipac.firefly.rpc.DynService;
 import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
 import edu.caltech.ipac.firefly.task.IrsaPlusLsstDataSetsFactory;
 import edu.caltech.ipac.firefly.util.BrowserUtil;
@@ -30,6 +33,8 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     private static final boolean USE_CORS_IF_POSSIBLE= true;
     private Application.EventMode eventMode = Application.EventMode.WebSocket;
     private String appHelpName = null;
+    private enum DisplayMode {full, minimal, embedded}
+    private DisplayMode displayMode;
 
     public void setAppHelpName(String appHelpName) {
         this.appHelpName = appHelpName;
@@ -46,35 +51,41 @@ public class FireflyToolsEntryPoint implements EntryPoint {
     }
 
     public void start(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defCommandName) {
-        boolean alone= isStandAloneApp();
-        if (!alone) FFToolEnv.loadJS();
-        Application.setEventMode(eventMode);  // -- uncomment for testing only, not ready  for production
-        Application.setCreator(alone ?
-                               new FFToolsStandaloneCreator(factory,bannerOffset, footerHtmlFile,defCommandName) :
-                               new FireflyToolsEmbededCreator());
-        final Application app= Application.getInstance();
-        boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
-        app.setNetworkMode(alone ||  useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);
-        FFToolEnv.setApiMode(!alone);
 
+        Application.setEventMode(eventMode);  // -- uncomment for testing only, not ready  for production
+        boolean useCORSForXS= BrowserUtil.getSupportsCORS() && USE_CORS_IF_POSSIBLE;
         Request home = null;
-        if (alone) {
-            home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Images", true, false);
-        }
-        else {
+
+        displayMode = DisplayMode.valueOf(getDisplayMode());
+        if (displayMode == DisplayMode.embedded) {
+            FFToolEnv.loadJS();
+            Application.setCreator(new FireflyToolsEmbededCreator());
+            Application.getInstance().setNetworkMode(useCORSForXS ? NetworkMode.RPC : NetworkMode.JSONP);
+            FFToolEnv.setApiMode(true);
             Window.addResizeHandler(new ResizeHandler() {
                 public void onResize(ResizeEvent event) {
-                    app.resize();
+                    Application.getInstance().resize();
                 }
             });
+        } else {
+            if (displayMode == DisplayMode.full) {
+                Application.setCreator(new FFToolsStandaloneCreator(factory, bannerOffset, footerHtmlFile, defCommandName));
+                home = new Request(ImageSelectDropDownCmd.COMMAND_NAME, "Images", true, false);
+            } else {
+                Application.setCreator(new FFToolsStandaloneCreator(factory));
+                home = new Request(FFToolsPushReceiveCmd.COMMAND);
+            }
+            Application.getInstance().setNetworkMode(NetworkMode.RPC);
+            FFToolEnv.setApiMode(false);
         }
-        app.start(home, new AppReady());
+        Application.getInstance().start(home, new AppReady());
     }
 
     public class AppReady implements Application.ApplicationReady {
         public void ready() {
             FFToolEnv.postInitialization();
-            if (isStandAloneApp()) {
+            String displayMode = getDisplayMode();
+            if (displayMode.equals("minimal") || displayMode.equals("full")) {
                 Application.getInstance().hideDefaultLoadingDiv();
                 if (appHelpName != null) {
                     Application.getInstance().getHelpManager().setAppHelpName(appHelpName);
@@ -85,12 +96,16 @@ public class FireflyToolsEntryPoint implements EntryPoint {
         }
     }
 
-    public static native boolean isStandAloneApp() /*-{
-        if ("fireflyToolsApp" in $wnd) {
-            return $wnd.fireflyToolsApp;
+    /**
+     * Display mode can be one of 'full', 'minimal', or 'embedded'
+     * @return  returns 'embedded' is one is not present.
+     */
+    public static native String getDisplayMode() /*-{
+        if ("fireflyToolsMode" in $wnd) {
+            return $wnd.fireflyToolsMode;
         }
         else {
-            return false;
+            return "embedded";
         }
     }-*/;
 

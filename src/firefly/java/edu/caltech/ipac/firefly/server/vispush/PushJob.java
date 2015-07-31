@@ -79,8 +79,8 @@ public class PushJob {
     }
 
 
-    public static boolean pushTable(String fileName) {
-        fireEvent(fileName, Name.PUSH_TABLE_FILE);
+    public static boolean pushTable(ServerRequest req) {
+        fireEvent(req.toString(), Name.PUSH_TABLE_FILE);
         return true;
     }
 

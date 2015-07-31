@@ -1,4 +1,3 @@
-
 VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - zoomUp zoomDown zoomOriginal zoomFit zoomFill - colorTable stretchQuick - \
                        Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerTool \
                        NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader
@@ -100,9 +99,9 @@ zoomFit.ShortDescription= Zoom the image to fit into the visible space
 zoomFill.Title= Zoom To Fill
 zoomFill.ShortDescription= Zoom the image to Fill the visible space
 
-IrsaCatalog.title= Catalogs
+IrsaCatalog.Title= Catalogs
 IrsaCatalog.ShortDescription= Show a catalog
-
+IrsaCatalog.Icon =images/past_searches.jpg
 
 
 restore.Title= Restore to defaults

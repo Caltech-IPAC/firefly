@@ -151,7 +151,12 @@ public class PushCommands {
 
             SrvParam sp= new SrvParam(paramMap);
             String file= sp.getRequired(ServerParams.FILE);
-            boolean success= PushJob.pushTable(file);
+            ServerRequest req = new ServerRequest();
+            for (String p : paramMap.keySet()) {
+                req.setParam(p, paramMap.get(p)[0]);
+            }
+            req.setParam(ServerParams.SOURCE, file);
+            boolean success= PushJob.pushTable(req);
             JSONObject map = new JSONObject();
             JSONArray outJson = new JSONArray();
             outJson.add(map);

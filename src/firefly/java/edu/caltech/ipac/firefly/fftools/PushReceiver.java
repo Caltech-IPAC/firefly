@@ -142,12 +142,10 @@ public class PushReceiver implements WebEventListener {
         plotController.update(wpReq);
     }
 
-    private void loadTable(final String fileName) {
+    private void loadTable(final String data) {
 
-        final TableServerRequest req = new TableServerRequest(TABLE_SEARCH_PROC_ID);
-        req.setStartIndex(0);
-        req.setPageSize(100);
-        req.setParam("source", fileName);
+        TableServerRequest req = ServerRequest.parse(data, new TableServerRequest());
+        req.setRequestId(TABLE_SEARCH_PROC_ID);
         String title= findTitle(req);
         SearchAdmin.getInstance().submitSearch(req, title);
     }

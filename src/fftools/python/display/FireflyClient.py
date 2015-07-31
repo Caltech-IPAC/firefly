@@ -165,18 +165,20 @@ class FireflyClient(WebSocketClient):
         WebSocketClient.run_forever(self)
 
 
-    def getFireflyUrl(self, url=None, channel=None):
+    def getFireflyUrl(self, mode=None, channel=None):
         """
         Get URL to Firefly Tools viewer and the channel set. Normally this method
         will be call without any parameters.
-        :param url: the url string , overriding the default
+        :param mode: mode maybe one of 'full', or 'minimal'.  Defaults to minimal.
         :param channel: a different channel string than the default
         :return: the full url string
         """
         if not channel:
             channel = self.channel
-        if not url:
-            url=self.urlBW
+
+        url = 'http://' + self.thisHost + '/fftools/minimal.html?channelID='
+        if mode == "full" :
+            url = self.urlBW
         return url + channel
 
 
@@ -278,7 +280,7 @@ class FireflyClient(WebSocketClient):
         :param pageSize: how many rows are shown.
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushTable"
+        url = self.urlRoot + "?cmd=pushTable&tblType=pushed"
         if title:
             url+= '&Title=%s' % title
         if pageSize:

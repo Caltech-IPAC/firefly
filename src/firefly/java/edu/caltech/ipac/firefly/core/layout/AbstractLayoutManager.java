@@ -359,7 +359,7 @@ public abstract class AbstractLayoutManager implements LayoutManager {
 
 
         final HorizontalPanel ttdesc = new HorizontalPanel();
-        if (searchDescLine) {
+        if (title != null && searchDescLine) {
             ttdesc.setWidth("100%");
             if (backToArrow) {
                 ttdesc.add(img);
