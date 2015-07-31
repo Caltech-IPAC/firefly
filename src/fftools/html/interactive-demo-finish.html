@@ -100,12 +100,12 @@ Demo of Firefly Tools
 
 
             var extFunc= function(data) {
-                    document.getElementById('messages').innerHTML=
-                          'The <i>data</i> from the callback can be used to construct the parameters to other firefly methods.<br>'+ 
-                          'Here is the content of <i>data</i> object from the latest callback:<pre>'+JSON.stringify(data, null, 4)+'</pre>';
+                document.getElementById('messages').innerHTML=
+                        'The <i>data</i> from the callback can be used to construct the parameters to other firefly methods.<br>'+
+                        'Here is the content of <i>data</i> object from the latest callback:<pre>'+JSON.stringify(data, null, 4)+'</pre>';
 
                 if (data.type==='POINT' && data.PlotId==='primaryID' && data.ipt) {
-                 
+
                     var idx1= (data.ipt.y<300) ? '1' : '0';
                     var idx2= (data.ipt.x<300) ? '0' : '1';
                     subsetParams.URL= 'http://web.ipac.caltech.edu/staff/roby/demo/wise-'+idx1+idx2+'.fits';
@@ -113,62 +113,76 @@ Demo of Firefly Tools
                     subset.plot( subsetParams);
                 }
                 else if (data.type==='LINE_SELECT') {
-                    var launcher = 'python';
-                    var task = 'JsonTaskToGetHistogramData';
-                    var ipts  = data.ipt1.x-data.ipt0.x;
-                    var bins=25;
-                    if (ipts > 200) { bins = 200; }
-                    else if (ipts > 100) { bins = 100; }
-                    else if (ipts > 50) { bins = 50; }  
-                    //alert(ipts+" "+bins);
-                    
-                    var taskParams = { 'numbins': bins };
-                    firefly.getJsonFromTask(launcher, task, taskParams)
-                        .then(function (histdata) {
-                                  console.log('Returned JSON: '+JSON.stringify(histdata));
-                                  firefly.showHistogram(
-                                      {
-                                         'descr' : 'Histogram data returned from python JSON task',
-                                         'binColor' : '#3d3033',
-                                         'height' : 350,
-                                         'data': histdata
-                                      },
-                                      "chartHere");
+                    if (launcherAvailable) {
+                        document.getElementById("chartHere").innerHTML = "";
 
-                              }
+                        var launcher = 'python';
+                        var task = 'JsonTaskToGetHistogramData';
+                        var ipts = data.ipt1.x - data.ipt0.x;
+                        var bins = 25;
+                        if (ipts > 200) {
+                            bins = 200;
+                        }
+                        else if (ipts > 100) {
+                            bins = 100;
+                        }
+                        else if (ipts > 50) {
+                            bins = 50;
+                        }
+                        //alert(ipts+" "+bins);
+
+                        var taskParams = {'numbins': bins};
+                        firefly.getJsonFromTask(launcher, task, taskParams)
+                                .then(function (histdata) {
+                                    console.log('Returned JSON: ' + JSON.stringify(histdata));
+                                    firefly.showHistogram(
+                                            {
+                                                'descr': 'Histogram data returned from python JSON task',
+                                                'binColor': '#3d3033',
+                                                'height': 350,
+                                                'data': histdata
+                                            },
+                                            "chartHere");
+
+                                }
                         ).catch(function (reason) {
-                                   console.log('Error fetching JSON data from '+launcher+' task '+task+': '+reason);
-
-                                   // show a plot from a URL instead
-                                   var chartParams = {"source" : 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl',
-                                          "chartTitle" : 'Sample Merged Spectra Table',
-                                          "xCol" : 'wavelength',
-                                          "yCol" : 'flux_density',
-                                          "errorCol" : 'error',
-                                          "orderCol" : 'order',
-                                          "plotStyle" : 'line',
-                                          "showLegend" : "always",
-                                          "plotTitle" : 'Sample Chart'
-                                   };
-                                   firefly.showPlot(chartParams, "chartHere");
+                                     console.log('Error fetching JSON data from ' + launcher + ' task ' + task + ': ' + reason);
                                 }
                         );
+                    } else {
+                        document.getElementById("chartHere").innerHTML = "";
+                        // show a plot from a URL instead
+                        var chartParams = {
+                            "source": 'http://web.ipac.caltech.edu/staff/roby/demo/SPITZER_S5_3539456_01_merge.tbl',
+                            "chartTitle": 'Sample Merged Spectra Table',
+                            "xCol": 'wavelength',
+                            "yCol": 'flux_density',
+                            "errorCol": 'error',
+                            "orderCol": 'order',
+                            "plotStyle": 'line',
+                            "showLegend": "always",
+                            "plotTitle": 'Sample Chart'
+                        };
+                        firefly.showPlot(chartParams, "chartHere");
+                    }
                 }
                 else if (data.type==='AREA_SELECT') {
-                     if (launcherAvailable) {
-                         var tableData= { "processor" : "TableFromExternalTask",
-                         "launcher" : "python",
-                         "task" : "TableTask",
-                         "taskParams" : {
-                              "param1" : "str +1",
-                              "param2" : "str +2"
-                         }
-                       };
-                       firefly.showTable(tableData, "tableHere");
-                   } else {
-                       var tableData1= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl"};
-                       firefly.showTable(tableData1, "tableHere");
-                   }
+                    if (launcherAvailable) {
+                        var tableData= { "processor" : "TableFromExternalTask",
+                            "launcher" : "python",
+                            "task" : "TableTask",
+                            "taskParams" : {
+                                "param1" : "str +1",
+                                "param2" : "str +2"
+                            }
+                        };
+                        firefly.showTable(tableData, "tableHere");
+                    } else {
+                        document.getElementById("chartHere").innerHTML = "";
+
+                        var tableData1= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl"};
+                        firefly.showTable(tableData1, "tableHere");
+                    }
                 }
             };
 
@@ -211,8 +225,8 @@ Demo of Firefly Tools
 
 
         }
-   }
-   
+    }
+
 </script>
 
 
