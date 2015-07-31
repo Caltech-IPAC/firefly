@@ -85,7 +85,11 @@ Below are the details of the interface between Firefly and Python Launcher. (We 
 
 ### Examples
 
-A sample python launcher can be found in `firefly/src/fyrefly/python/SamplePythonLauncher.py`. A sample javascript, which builds up on the examples below can be found at `firefly/src/fftools/html/interactive-demo-finish`
+A sample python launcher can be found in 
+`firefly/src/fyrefly/python/SamplePythonLauncher.py` 
+
+A sample javascript, which builds up on the examples below is in
+`firefly/src/fftools/html/interactive-demo-finish.html`
 
 #### Example 1: Loading an image  
 
