@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.util.multipart;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -21,6 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,15 +40,30 @@ public class MultiPartPostBuilder {
     private List<Part> parts = new ArrayList<Part>();
     private List<Param> params = new ArrayList<Param>();
     private List<Param> headers = new ArrayList<Param>();
+    private String userId;
+    private String passwd;
 
     public MultiPartPostBuilder() {}
 
     public MultiPartPostBuilder(String targetURL) {
-        this.targetURL = targetURL;
+        setTargetURL(targetURL);
     }
 
     public void setTargetURL(String targetURL) {
         this.targetURL = targetURL;
+        try {
+            URL url = new URL(targetURL);
+            if (!StringUtils.isEmpty(url.getUserInfo())) {
+                String[] idPass = url.getUserInfo().split(":");
+                if (idPass.length == 2) {
+                    userId = idPass[0];
+                    passwd = idPass[1];
+                }
+            }
+        } catch (MalformedURLException e) {
+            // ignore
+        }
+
     }
 
     public void addParam(String name, String value) {
@@ -93,8 +111,7 @@ public class MultiPartPostBuilder {
                             filePost.getParams())
             );
 
-
-            HttpServices.executeMethod(filePost);
+            HttpServices.executeMethod(filePost, userId, passwd);
 
             MultiPartRespnse resp = new MultiPartRespnse(filePost.getResponseHeaders(),
                                                 filePost.getStatusCode(),

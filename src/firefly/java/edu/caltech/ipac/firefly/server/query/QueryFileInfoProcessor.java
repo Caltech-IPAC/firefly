@@ -35,7 +35,6 @@ import java.util.List;
 abstract public class QueryFileInfoProcessor extends BaseFileInfoProcessor implements Query {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
-
 //====================================================================
 //  implementing Query
 //====================================================================

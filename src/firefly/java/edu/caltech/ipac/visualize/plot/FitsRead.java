@@ -43,6 +43,8 @@ import java.util.Arrays;
  *  Add a new method to createFitsReadArray(Fits, BasicHDU) for Herschel data
  *  Add a new method to createFitsImageCube(Fits)
  *  Add a new doStretch and stretchPixel for testing mask plot
+ *  A method " public int[] getScreenHistogram()" is never used.  It is removed and so the pixelhist variables.
+ *  The pixelHist is removed from the input argument list in stretchPixel method
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -804,9 +806,9 @@ public class FitsRead implements Serializable {
 
         //byte pixelData[] = passedPixelData;
 
-        int[] pixelhist = new int[256];
+
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
-                blank_pixel_value, float1d,  pixelData, pixelhist, rangeValues,slow,shigh);
+                blank_pixel_value, float1d,  pixelData,  rangeValues,slow,shigh);
 
         System.out.println("debug:check pixelData here");
 
@@ -845,15 +847,12 @@ public class FitsRead implements Serializable {
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        //byte pixelData[] = passedPixelData;
-
-        int[] pixelhist = new int[256];
 
 
        // for (int i=0; i<lsstMasks.length; i++){
 
             stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
-                    blank_pixel_value, float1d, masks, pixelData, pixelhist,  lsstMask);//s[i]);
+                    blank_pixel_value, float1d, masks, pixelData,  lsstMask);//s[i]);
 
 
        // }
@@ -874,7 +873,7 @@ public class FitsRead implements Serializable {
      * @param float1dArray
      * @param masks
      * @param pixeldata
-     * @param pixelhist
+     *
 
      * @param lsstMask
      */
@@ -887,7 +886,7 @@ public class FitsRead implements Serializable {
                                       float[] float1dArray,
                                       short[] masks,
                                       byte[] pixeldata,
-                                      int[] pixelhist,
+
                                       LSSTMask lsstMask) {
 
 
@@ -915,7 +914,6 @@ public class FitsRead implements Serializable {
 
                    }
 
-                   pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
                 pixelCount++;
 
@@ -1043,7 +1041,6 @@ public class FitsRead implements Serializable {
                                       byte blank_pixel_value,
                                       float[] float1dArray,
                                       byte[] pixeldata,
-                                      int[] pixelhist,
                                       RangeValues rangeValues,
                                       double slow,
                                       double shigh) {
@@ -1106,7 +1103,6 @@ public class FitsRead implements Serializable {
                         pixeldata[pixelCount] = (byte) getNoneLinerStretchedPixelValue(float1dArray[index],  dtbl, deltasav);
                     }
                     pixeldata[pixelCount] = rangeValues.computeBiasAndContrast(pixeldata[pixelCount]);
-                    pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
                 pixelCount++;
 
@@ -1234,7 +1230,6 @@ public class FitsRead implements Serializable {
 
           //calling stretch_pixel to calculate pixeldata, pixelhist
         byte[] pixeldata = new byte[4096];
-        int[] pixelhist = new int[256];
 
 
         float[] hist_bin_values = new float[4096];
@@ -1255,7 +1250,7 @@ public class FitsRead implements Serializable {
         stretchPixels(start_pixel, last_pixel,
                 start_line, last_line, naxis1, hist,
                 blank_pixel_value, hist_bin_values,
-                pixeldata, pixelhist, rangeValues,slow,shigh);
+                pixeldata,  rangeValues,slow,shigh);
 
         return pixeldata;
     }

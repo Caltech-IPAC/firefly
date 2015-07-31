@@ -22,68 +22,74 @@ Below are the details of the interface between Firefly and Python Launcher. (We 
 
 1. Task parameters are passed via json file. The json input is coming directly from user: it's JSON.stringify from `taskParams` object below. 
 
-```js
- function onFireflyLoaded() {
-    var tableData= { "processor" : "TableFromExternalTask",
-                     "launcher" : "python",
-                     "task" : "TestTask",
-                     "taskParams" : {
-                          "param1" : "str-1",
-                          "param2" : 23456
-                     }
-                   };
-    firefly.showTable(tableData, "tableHere"); 
-```
+    ```js
+     function onFireflyLoaded() {
+        var tableData= { "processor" : "TableFromExternalTask",
+                         "launcher" : "python",
+                         "task" : "TestTask",
+                         "taskParams" : {
+                              "param1" : "str-1",
+                              "param2" : 23456
+                         }
+                       };
+        firefly.showTable(tableData, "tableHere"); 
+    ```
 
-In the above call the input json file will contain
+       In the above call the input json file will contain
 
       {"param1" : "str-1","param2" : 23456}
 
 2. All other parameters as passed via key/value pairs or options. This way there is no danger that the order or extra parameters will affect the existing behavior.
 
-This is the list of currently used options:
+    This is the list of currently used options:
+    | option                | description |
+    | --------------------- | ----------- |
+    |  `-d DIR, --work=DIR` | work directory             |
+    |  `-i FILE, --in=FILE` | json file with task params |
+    |  `-n TASK, --name=TASK` | task name (no spaces)      |
+    |  `-o DIR, --outdir=DIR` | directory for the final output file |
 
-|  -d DIR, --work=DIR   | work directory             |
-|  -i FILE, --in=FILE   | json file with task params |
-|  -n TASK, --name=TASK | task name (no spaces)      |
-|  -o DIR, --outdir=DIR | directory for the final output file |
 
+    In future:
+    | option                  | description |
+    | ----------------------- | ----------- |
+    |  `-s STR, --sep=STR`    |  separator string, after which task status is written <br>defaults to `___TASK STATUS___`  |   
 
-In future:
+    A suggested output directory is provided rather than a suggested output file. It's up to the python launcher to create a unique file in this directory.
 
-|  -s STR, --sep=STR    |  separator string, after which task status is written (default to "___TASK STATUS___") |   
+3. What is expected to be in standard error and standard output stream
 
-3. A suggested output directory is provided rather than a suggested output file. It's up to the python launcher to create a unique file in this directory.
+    STDERR (Standard Error Stream) - whatever is coming from it is logged as warnings for now - we might come with a better idea later. 
 
-4. What is expected to be in standard error and standard output stream
+    STDOUT (Standard Output Stream) - can contain debugging info, the final output must be a line with the keyword, followed by JSON, which contains error message if any.
 
-* STDERR (Standard Error Stream) - whatever is coming from it is logged as warnings for now - we might come with a better idea later. 
+    ```
+    ___TASK STATUS___
+    {
+        outfile: "/path/file.fits"
+    }
+    ```
 
-* STDOUT (Standard Output Stream) - can contain debugging info, the final output must be a line with the keyword, followed by JSON, which contains error message if any.
+      OR
 
-```
-___TASK STATUS___
-{
-    outfile: "/path/file.fits"
-}
-```
+    ```
+    ___TASK STATUS___
+    {
+        error: "Description of the error"
+    }        
+    ```
 
-OR
-
-```
-___TASK STATUS___
-{
-    error: "Description of the error"
-}        
-```
-
-5. External process exit status 0 means the execution was normal. Everything else means an error was encountered.
+4. External process exit status 0 means the execution was normal. Everything else means an error was encountered.
 
 
 
 ### Examples
 
-A sample python launcher can be found in `firefly/src/fyrefly/python/SamplePythonLauncher.py`. A sample javascript, which builds up on the examples below can be found at `firefly/src/fftools/html/interactive-demo-finish`
+A sample python launcher can be found in 
+`firefly/src/fyrefly/python/SamplePythonLauncher.py` 
+
+A sample javascript, which builds up on the examples below is in
+`firefly/src/fftools/html/interactive-demo-finish.html`
 
 #### Example 1: Loading an image  
 

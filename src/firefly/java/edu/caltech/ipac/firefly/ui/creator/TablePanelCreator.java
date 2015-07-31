@@ -71,7 +71,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
         tableRef.setSource(table);
         table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener(){
             public void eventNotify(WebEvent ev) {
-                if (params.containsKey(SHOW_FILTER)) {
+                if (params.containsKey(SHOW_FILTER) && table.getTable() != null) {
                     boolean flag = Boolean.parseBoolean(params.get(SHOW_FILTER));
                     table.showFiltersButton(flag);
                     table.getTable().showFilters(flag);
@@ -94,7 +94,7 @@ public class TablePanelCreator implements PrimaryTableCreator {
                 if (params.containsKey(SHOW_SAVE)) {
                     table.showSaveButton(Boolean.parseBoolean(params.get(SHOW_SAVE)));
                 }
-                if (params.containsKey(SHOW_UNITS)) {
+                if (params.containsKey(SHOW_UNITS) && table.getTable() != null) {
                     table.getTable().setShowUnits(Boolean.parseBoolean(params.get(SHOW_UNITS)));
                 }
                 if (params.containsKey(SHOW_TABLE_VIEW)) {

@@ -141,7 +141,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             TableServerRequest request = (TableServerRequest) sr;
 
             dgFile = getDataFile(request);
-            postProcessData(dgFile, request);
 
             DataGroupPart page = null;
             // get the page requested
@@ -151,6 +150,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 page = new DataGroupPart(def, new DataGroup("No result found", new DataType[0]), 0, 0);
             } else {
                 try {
+                    postProcessData(dgFile, request);
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
@@ -163,7 +163,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         } catch (DataAccessException dae) {
             throw dae;
         } catch (Exception e) {
-            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 256));
+            LOGGER.error(e, "Error while processing request:" + StringUtils.truncate(sr, 512));
             throw new DataAccessException("Unexpected error", e);
         } finally {
             if (!doCache()) {
@@ -257,6 +257,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         // go get original data
         File resultsFile = getBaseDataFile(request);      // caching already done..
+
+        if (resultsFile == null || !resultsFile.canRead()) return null;
 
         // from here on.. we use resultsFile as the cache key.
         // if the source file changes, we ignore previously cached temp files
