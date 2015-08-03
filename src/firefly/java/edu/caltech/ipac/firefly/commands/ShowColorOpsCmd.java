@@ -27,21 +27,21 @@ public class ShowColorOpsCmd extends BaseGroupVisCmd {
     }
 
     protected void doExecute() {
+        if (isExperimental()) {
+            newJsDialog.showDialog();
+        }
         creator.show();
-        newJsDialog.showDialog();
     }
 
 
-//    @Override
-//    protected Image createCmdImage() {
-//        VisIconCreator ic= VisIconCreator.Creator.getInstance();
-//        String iStr= this.getIconProperty();
-//        if (iStr!=null && iStr.equals(COMMAND_NAME+".Icon"))  {
-//            return new Image(ic.getStretch());
-//        }
-//        return null;
-//    }
 
     @Override
     public boolean hasIcon() { return false; }
+
+
+    private static native boolean isExperimental() /*-{
+        return ($wnd.firefly && $wnd.firefly.EXPERIMENTAL);
+    }-*/;
+
+
 }

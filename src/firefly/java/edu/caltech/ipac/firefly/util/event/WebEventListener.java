@@ -3,13 +3,16 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
-import java.util.EventListener;
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 
 /**
  * User: roby
  * Date: Dec 14, 2007
  * Time: 12:36:29 PM
  */
-public interface WebEventListener<DataType> extends EventListener {
+@JsExport
+@JsType
+public interface WebEventListener<DataType> {
     public void eventNotify(WebEvent<DataType> ev);
 }

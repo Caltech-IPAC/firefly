@@ -19,7 +19,7 @@ import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../
 import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../../visualize/RangeValues.js'
 import {getCurrentPlot} from '../../visualize/VisUtil.js';
 
-var {AllPlots, Band } = ffgwt.Visualize;
+var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 export const RED_PANEL= 'redPanel';
 export const GREEN_PANEL= 'greenPanel';
@@ -27,10 +27,13 @@ export const BLUE_PANEL= 'bluePanel';
 export const NO_BAND_PANEL= 'nobandPanel';
 
 const bandMap= {};
-bandMap[RED_PANEL]= Band.RED;
-bandMap[GREEN_PANEL]= Band.GREEN;
-bandMap[BLUE_PANEL]= Band.BLUE;
-bandMap[NO_BAND_PANEL]= Band.NO_BAND;
+
+if (Band) {
+    bandMap[RED_PANEL]= Band.RED;
+    bandMap[GREEN_PANEL]= Band.GREEN;
+    bandMap[BLUE_PANEL]= Band.BLUE;
+    bandMap[NO_BAND_PANEL]= Band.NO_BAND;
+}
 
 
 /**

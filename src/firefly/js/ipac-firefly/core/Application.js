@@ -26,7 +26,8 @@ import {ExtensionJavaInterface } from 'ipac-firefly/gwtinterface/ExtensionJavaIn
 import {ExtensionResult } from 'ipac-firefly/gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from 'ipac-firefly/visualize/PlotCmdExtension.js';
 import {ReactJavaInterface } from 'ipac-firefly/gwtinterface/ReactJavaInterface.jsx';
-import {ColorDialog } from "ipac-firefly/visualize/ui/ColorDialog.jsx";
+import ColorDialog from "ipac-firefly/visualize/ui/ColorDialog.jsx";
+import ExampleDialog  from "../ui/ExampleDialog.jsx";
 
 import {ServerRequest } from 'ipac-firefly/data/ServerRequest.js';
 import {getJsonData } from 'ipac-firefly/rpc/SearchServicesJson.js';
@@ -75,5 +76,6 @@ export const fireflyInit= function() {
             return getJsonData(req);
         };
     window.firefly.gwt.ColorDialog= ColorDialog;
+    window.firefly.gwt.ExampleDialog= ExampleDialog;
 };
 

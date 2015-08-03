@@ -12,7 +12,8 @@ var React= require('react/addons');
 var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
 var Modal = require('react-modal');
 var Promise= require("es6-promise").Promise;
-import formActions from 'ipac-firefly/actions/FormActions.js'
+import FieldGroupStore from '../store/FieldGroupStore.js';
+import FieldGroupActions from '../actions/FieldGroupActions.js';
 //import Portal from "react-portal";
 
 
@@ -21,14 +22,13 @@ Modal.setAppElement(appElement);
 //Modal.injectCSS();
 
 
-var FormButton = module.exports= React.createClass(
+var JunkFormButton = module.exports= React.createClass(
    {
 
        validUpdate(ev) {
-           var formStore= this.props.formStore;
-           var statStr= "validate state: "+ formStore.getState().formValid;
+           var statStr= "validate state: "+ FieldGroupStore.getGroupState(this.props.groupKey).fieldGroupValid;
            console.log(statStr);
-           var request= formStore.getResults();
+           var request= FieldGroupStore.getResults(this.props.groupKey);
            console.log("request:");
            console.log(request);
 
@@ -55,30 +55,30 @@ var FormButton = module.exports= React.createClass(
        },
 
        componentDidMount() {
-           this.props.formStore.getEventEmitter().addListener('formValid', this.validUpdate);
-           formActions.mountComponent( {
-               formKey: this.getFormKey(),
+           FieldGroupStore.getEventEmitter().addListener('fieldGroupValid', this.validUpdate);
+           FieldGroupActions.mountComponent( {
+               groupKey: this.props.groupKey,
                fieldKey : this.props.fieldKey,
                mounted : true,
-               value: this.getValue(),
-               fieldState: this.props.initialState,
+               value: true,
+               fieldState: this.props.initialState
            } );
        },
 
        componentWillUnmount() {
-           this.props.formStore.getEventEmitter().removeListener('formValid', this.validUpdate);
-           formActions.mountComponent( {
-               formKey: this.getFormKey(),
+           FieldGroupStore.getEventEmitter().removeListener('fieldGroupValid', this.validUpdate);
+           FieldGroupActions.mountComponent( {
+               groupKey: this.props.groupKey,
                fieldKey : this.props.fieldKey,
                mounted : false,
-               value: this.getValue()
+               value: true
            } );
 
        },
 
 
        onClick(ev) {
-           formActions.validateForm();
+           FieldGroupActions.validateFieldGroup(this.props.groupKey);
        },
 
 

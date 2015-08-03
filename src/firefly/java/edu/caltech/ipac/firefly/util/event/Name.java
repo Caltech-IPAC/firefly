@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
+import com.google.gwt.core.client.js.JsNoExport;
 import edu.caltech.ipac.util.ComparisonUtil;
 
 import java.io.Serializable;
@@ -315,6 +316,7 @@ public class Name implements Serializable {
         _desc= desc;
     }
 
+    @JsNoExport
     public Name() {
         this("unknown", "bad name.");
     }

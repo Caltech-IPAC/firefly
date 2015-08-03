@@ -7,6 +7,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.commands.AnyDataSetCmd;
+import edu.caltech.ipac.firefly.commands.ExampleJsDialogCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectDropDownCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogDropDownCmd;
@@ -27,6 +28,7 @@ import edu.caltech.ipac.firefly.task.DataSetInfoFactory;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.ui.panels.ToolbarDropdown;
+import edu.caltech.ipac.firefly.util.WebAppProperties;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.ui.ImageSelectDropDown;
@@ -35,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FFToolsStandaloneCreator extends DefaultCreator {
+
+    public static final boolean EXPERIMENTAL= isExperimental();
 
     public static final String APPLICATION_MENU_PROP = "AppMenu";
     private static final boolean SUPPORT_LOGIN= false;
@@ -98,6 +102,14 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
 
     public Map makeCommandTable() {
+
+        if (EXPERIMENTAL) {
+            WebAppProperties prop= Application.getInstance().getProperties();
+            String v= prop.getProperty("AppMenu.Items");
+            v+= " ExampleJsDialogCmd";
+            prop.setProperty("AppMenu.Items",v);
+        }
+
         Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
         aloneUI= new StandaloneUI();
@@ -117,6 +129,11 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
         commands.put(ImageSelectDropDownCmd.COMMAND_NAME, isddCmd);
         commands.put(IrsaCatalogDropDownCmd.COMMAND_NAME , new IrsaCatalogDropDownCmd(true));
 //        commands.put(ImageSelectDropDownDynCmd.COMMAND_NAME, new ImageSelectDropDownDynCmd(aloneUI));
+
+        if (EXPERIMENTAL) {
+            commands.put(ExampleJsDialogCmd.COMMAND_NAME , new ExampleJsDialogCmd());
+
+        }
 
         return commands;
     }
@@ -210,5 +227,13 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
             });
         }
     }
+
+
+
+    private static native boolean isExperimental() /*-{
+        return ($wnd.firefly && $wnd.firefly.EXPERIMENTAL);
+    }-*/;
+
+
 
 }

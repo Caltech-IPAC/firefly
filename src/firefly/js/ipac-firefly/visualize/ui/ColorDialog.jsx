@@ -14,7 +14,6 @@ import FieldGroup from '../../ui/FieldGroup.jsx';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
 import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
 import Validate from '../../util/Validate.js';
-import InputFormBaseStore from '../../store/InputFormBaseStore.js';
 import ImagePlotsStore from '../../store/ImagePlotsStore.js';
 import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from '../../visualize/RangeValues.js'
 import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../visualize/RangeValues.js'
@@ -29,10 +28,10 @@ import {RED_PANEL,
         colorPanelChange} from '../../store/visualize/ColorPanelReducer.js'
 
 
-var {AllPlots, Band } = ffgwt.Visualize;
+var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 
-export class ColorDialog {
+class ColorDialog {
     constructor() {
         this.init();
     }
@@ -263,3 +262,4 @@ var ColorDialogPanel= React.createClass(
     }
 });
 
+export default ColorDialog;

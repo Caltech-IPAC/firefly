@@ -354,10 +354,12 @@ var All = React.createClass({
     }
 });
 
-window.onFireflyLoaded= function() {
-    /* jshint ignore:start */
-    //React.render(<All />, document.getElementById('example'));
-    React.render(<AllTest />, document.getElementById('example'));
-    /* jshint ignore:end */
-};
+//React.render(<All />, document.getElementById('example'));
+React.render(<AllTest />, document.getElementById('example'));
+//window.onFireflyLoaded= function() {
+//    /* jshint ignore:start */
+//    //React.render(<All />, document.getElementById('example'));
+//    React.render(<AllTest />, document.getElementById('example'));
+//    /* jshint ignore:end */
+//};
 

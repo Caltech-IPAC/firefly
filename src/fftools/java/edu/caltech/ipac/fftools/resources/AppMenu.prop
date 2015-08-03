@@ -17,6 +17,10 @@ ImageSelectDropDownCmd.ShortDescription= Add/Modify Image and create a new tab
 ImageSelectDropDownDynCmd.Title= Single Image: Add/Modify...
 ImageSelectDropDownDynCmd.ShortDescription=Modify image or create a new Image in grid
 
+ExampleJsDialogCmd.Title= Example Js Dialog
+
+
+
 
 FitsInput.Title = Read FITS File
 FitsInput.ShortDescription= Read a FITS File

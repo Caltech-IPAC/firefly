@@ -18,7 +18,7 @@ import Enum from "enum";
 import {WorldPt,Pt,ImageWorkSpacePt} from "./Point.js";
 import CoordinateSys from "./CoordSys.js";
 
-var {AllPlots} = ffgwt.Visualize;
+var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
 
 export const DtoR = Math.PI / 180.0;

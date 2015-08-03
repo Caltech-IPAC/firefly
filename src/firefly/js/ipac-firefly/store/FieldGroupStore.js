@@ -177,7 +177,7 @@ class FieldGroupStore {
         var fg= this.fieldGroupMap[groupKey];
         var fields= fg.fields;
         var evEmmitter= this.getInstance().getEventEmitter();
-        return Promise.all( Object.keys(fields).map( (fieldKey => makeValidationPromise(fields,fieldKey)),this ) )
+        return Promise.all( Object.keys(fields).map( (fieldKey => FieldGroupStore.makeValidationPromise(fields,fieldKey)),this ) )
             .then( (allResults) =>
                 {
                     var valid = allResults.every(
@@ -195,7 +195,7 @@ class FieldGroupStore {
                             var f = fields[fieldKey];
                             return (f.valid !== undefined && f.mounted) ? f.valid : true;
                         });
-                    fg.valid= valid;
+                    fg.fieldGroupValid= valid;
                     evEmmitter.emit('fieldGroupValid');
                 }
             ).catch(e => console.log(e));
@@ -207,7 +207,7 @@ class FieldGroupStore {
      * @param fieldKey the field key to convert to non async
      * @return Promise
      */
-    makeValidationPromise(fields,fieldKey) {
+    static makeValidationPromise(fields,fieldKey) {
         if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
             return fields[fieldKey].asyncUpdatePromise;
         }

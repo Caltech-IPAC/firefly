@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import edu.caltech.ipac.util.ComparisonUtil;
@@ -22,6 +25,8 @@ import java.util.List;
  * You can add and fire listeners through this class.
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class WebEventManager {
 
     private final List<EvListenerContainer> _evListeners;
@@ -36,6 +41,7 @@ public class WebEventManager {
 //----------------------- Public Methods -------------------------------
 //======================================================================
 
+    @JsNoExport
     public WebEventManager() {this(10,2);}
 
     private WebEventManager(int evSize, int vetoSize) {
@@ -58,6 +64,7 @@ public class WebEventManager {
      * This methods adds events for all sources and names
      * @param l the listener
      */
+    @JsNoExport
     public void addListener(WebEventListener l) { addListener(null, null, l); }
 
     /**
@@ -66,10 +73,12 @@ public class WebEventManager {
      * @param eventName limit the event name to only this event, null means all events name
      * @param l the listener
      */
+    @JsNoExport
     public void addListener(Name eventName, WebEventListener l) {
         addListener(eventName, null, l);
     }
 
+    @JsNoExport
     public void addListener(int idx, Name eventName, WebEventListener l) {
         addListener(idx, eventName, null, l);
     }
@@ -80,6 +89,7 @@ public class WebEventManager {
  *         an instance Object for the source or a Class for the source.  If you specify a class then
      * @param l the listener
      */
+    @JsNoExport
     public void addListener(Name eventName, Object fromSource, WebEventListener l) {
         addListener(-1, eventName, fromSource, l);
     }
@@ -104,13 +114,16 @@ public class WebEventManager {
 
 
 
+    @JsNoExport
     public void removeListener(WebEventListener l) {
         removeListener(null, null, l);
     }
 
+    @JsNoExport
     public void removeListener(Name eventName, WebEventListener l) {
         removeListener(eventName, null, l);
     }
+    @JsNoExport
     public void removeListener(Name eventName, Object fromSource, WebEventListener l) {
         EvListenerContainer lc= findEvListener(l,eventName,fromSource);
         if (lc!=null) _evListeners.remove(lc);

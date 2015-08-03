@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
@@ -16,6 +19,8 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class WebFitsData implements Serializable {
 
     private final static String SPLIT_TOKEN= "--WebFitsData--";
@@ -25,6 +30,7 @@ public class WebFitsData implements Serializable {
     private long   _fitsFileSize;
     private String _fluxUnits;
 
+    @JsNoExport
     public WebFitsData() {}
 
     public WebFitsData(double dataMin,

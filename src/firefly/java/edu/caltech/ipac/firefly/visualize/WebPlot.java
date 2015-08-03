@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import edu.caltech.ipac.firefly.data.DataEntry;
@@ -42,6 +43,7 @@ import java.util.Map;
  * @version $Id: WebPlot.java,v 1.68 2012/12/14 23:59:58 roby Exp $
  */
 @JsExport
+@JsType
 public class WebPlot {
 
     public enum ZDir {UP,DOWN,ORIGINAL}
@@ -224,6 +226,7 @@ public class WebPlot {
         _tileDrawer.refreshWidget();
     }
 
+    @JsNoExport
     public void refreshWidget(PlotImages images, boolean overlay) {
         _tileDrawer.refreshWidget(images, overlay);
     }
