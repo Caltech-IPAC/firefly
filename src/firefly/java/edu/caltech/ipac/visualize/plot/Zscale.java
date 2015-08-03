@@ -3,18 +3,17 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Arrays;
-import java.util.List;
-
-
-import nom.tam.fits.FitsException;
-import nom.tam.fits.Fits;
-import nom.tam.fits.Header;
-import nom.tam.fits.BasicHDU;
-import nom.tam.util.ArrayFuncs;
 import edu.caltech.ipac.util.SUTDebug;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.util.ArrayFuncs;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -256,91 +255,106 @@ sampleImage (
 	int op = 0;
 	for (line = (line_step + 1)/2; line < nlines; line+=line_step) {
 	    /* Load a row of float values from the image */
-            switch (bitpix) {
-            case 8:
-		//byte bpix[] = new byte[npix];
-		byte bpix[] = (byte[]) im;
-		int bpix_index = (line-1) * nx;
-                for (i=0; i < nx; i++)
-		{
-		    if ((float) (bpix[bpix_index] & 0xff) == blank_value)
-		    {
-			row[i] = Float.NaN;
-		    }
-		    else
-		    {
-			row[i] = (float) ((bpix[bpix_index] & 0xff) );
-			//row[i] = (float) ((bpix[bpix_index] & 0xff) * bscale +
-			//    bzero);
-		    }
-		    bpix_index++;
-		    //System.out.println("row[" + i + "] = " + row[i]);
-		}
-                break;
-            case 16:
-		//spix = (short *) &im[(line-1) * nx * sizeof(short)];
-		short spix[] = (short[]) im;
-		int spix_index = (line-1) * nx;
-                for (i=0; i < nx; i++)
-		{
-		    if (((double) spix[spix_index]) == blank_value)
-		    {
-			row[i] = Float.NaN;
-		    }
-		    else
-		    {
-			row[i] = (float) (spix[spix_index] );
-			//row[i] = (float) (spix[spix_index] * bscale + bzero);
-		    }
-		    spix_index++;
-		    //System.out.println("row[" + i + "] = " + row[i]);
-		}
-                break;
-            case 32:
-		//ipix = (int *) &im[(line-1) * nx * sizeof(int)];
 		int ipix[] = (int []) im;
 		int ipix_index = (line-1) * nx;
-                for (i=0; i < nx; i++)
+		for (i=0; i < nx; i++)
 		{
-		    if (((float) ipix[ipix_index]) == blank_value)
-		    {
-			row[i] = Float.NaN;
-		    }
-		    else
-		    {
-			row[i] = (float) (ipix[ipix_index] );
-			//row[i] = (float) (ipix[ipix_index] * bscale + bzero);
-		    }
-		    ipix_index++;
+			if (((float) ipix[ipix_index]) == blank_value)
+			{
+				row[i] = Float.NaN;
+			}
+			else
+			{
+				row[i] = (float) (ipix[ipix_index] );
+				//row[i] = (float) (ipix[ipix_index] * bscale + bzero);
+			}
+			ipix_index++;
 		}
-                break;
-            case -32:
-		//fpix = (float *) &im[(line-1) * nx * sizeof(float)];
-		float fpix[] = (float []) im;
-		int fpix_index = (line-1) * nx;
-                for (i=0; i < nx; i++)
-		{
-		    row[i] = fpix[fpix_index];
-		    fpix_index++;
-		}
-                break;
-            case -64:
-		//dpix = (double *) &im[(line-1) * nx * sizeof(double)];
-		double dpix[] = (double []) im;
-		int dpix_index = (line-1) * nx;
-                for (i=0; i < nx; i++)
-		{
-		    row[i] = (new Double(dpix[dpix_index])).floatValue();
-		    dpix_index++;
-		}
-                break;
-            }
+//		switch (bitpix) {
+//			case 8:
+//				//byte bpix[] = new byte[npix];
+//				byte bpix[] = (byte[]) im;
+//				int bpix_index = (line-1) * nx;
+//				for (i=0; i < nx; i++)
+//				{
+//					if ((float) (bpix[bpix_index] & 0xff) == blank_value)
+//					{
+//						row[i] = Float.NaN;
+//					}
+//					else
+//					{
+//						row[i] = (float) ((bpix[bpix_index] & 0xff) );
+//						//row[i] = (float) ((bpix[bpix_index] & 0xff) * bscale +
+//						//    bzero);
+//					}
+//					bpix_index++;
+//					//System.out.println("row[" + i + "] = " + row[i]);
+//				}
+//				break;
+//			case 16:
+//				//spix = (short *) &im[(line-1) * nx * sizeof(short)];
+//				short spix[] = (short[]) im;
+//				int spix_index = (line-1) * nx;
+//				for (i=0; i < nx; i++)
+//				{
+//					if (((double) spix[spix_index]) == blank_value)
+//					{
+//						row[i] = Float.NaN;
+//					}
+//					else
+//					{
+//						row[i] = (float) (spix[spix_index] );
+//						//row[i] = (float) (spix[spix_index] * bscale + bzero);
+//					}
+//					spix_index++;
+//					//System.out.println("row[" + i + "] = " + row[i]);
+//				}
+//				break;
+//			case 32:
+//				//ipix = (int *) &im[(line-1) * nx * sizeof(int)];
+//				int ipix[] = (int []) im;
+//				int ipix_index = (line-1) * nx;
+//				for (i=0; i < nx; i++)
+//				{
+//					if (((float) ipix[ipix_index]) == blank_value)
+//					{
+//						row[i] = Float.NaN;
+//					}
+//					else
+//					{
+//						row[i] = (float) (ipix[ipix_index] );
+//						//row[i] = (float) (ipix[ipix_index] * bscale + bzero);
+//					}
+//					ipix_index++;
+//				}
+//				break;
+//			case -32:
+//				//fpix = (float *) &im[(line-1) * nx * sizeof(float)];
+//				float fpix[] = (float []) im;
+//				int fpix_index = (line-1) * nx;
+//				for (i=0; i < nx; i++)
+//				{
+//					row[i] = fpix[fpix_index];
+//					fpix_index++;
+//				}
+//				break;
+//			case -64:
+//				//dpix = (double *) &im[(line-1) * nx * sizeof(double)];
+//				double dpix[] = (double []) im;
+//				int dpix_index = (line-1) * nx;
+//				for (i=0; i < nx; i++)
+//				{
+//					row[i] = (new Double(dpix[dpix_index])).floatValue();
+//					dpix_index++;
+//				}
+//				break;
+//		}
 
-	    subSample (row, sample, op, npix_per_line, col_step);
-	    op += npix_per_line;
-	    npix += npix_per_line;
-	    if (npix > maxpix)
-		break;
+		subSample (row, sample, op, npix_per_line, col_step);
+		op += npix_per_line;
+		npix += npix_per_line;
+		if (npix > maxpix)
+			break;
 	}
 
 	//free ((float *)row);
