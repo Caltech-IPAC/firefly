@@ -4,6 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -398,9 +399,9 @@ private void set_out_from_in()
    ref_header.ap_order = in_header.ap_order;
    ref_header.b_order = in_header.b_order;
    ref_header.bp_order = in_header.bp_order;
-   for (int i=0; i < 5; i++)
+   for (int i=0; i < ProjectionParams.MAX_SIP_LENGTH; i++)
    {
-      for (int j=0; j < 5; j++)
+      for (int j=0; j < ProjectionParams.MAX_SIP_LENGTH; j++)
       {
 	   ref_header.a[i][j] = in_header.a[i][j];
 	   ref_header.ap[i][j] = in_header.ap[i][j];

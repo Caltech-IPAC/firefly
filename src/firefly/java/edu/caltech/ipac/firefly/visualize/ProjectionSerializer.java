@@ -197,10 +197,11 @@ public class ProjectionSerializer {
         p.bp_order= StringUtils.parseDouble(map.get("bp_order"));
 
 
-        p.a= strTo2DimArray(map.get("a"),5,5);
-        p.ap= strTo2DimArray(map.get("ap"),5,5);
-        p.b= strTo2DimArray(map.get("b"),5,5);
-        p.bp= strTo2DimArray(map.get("bp"),5,5);
+        int len= ProjectionParams.MAX_SIP_LENGTH;
+        p.a= strTo2DimArray(map.get("a"),len,len);
+        p.ap= strTo2DimArray(map.get("ap"),len,len);
+        p.b= strTo2DimArray(map.get("b"),len,len);
+        p.bp= strTo2DimArray(map.get("bp"),len,len);
 
         map.put("map_distortion", p.map_distortion+"");
         map.put("keyword", p.keyword+"");

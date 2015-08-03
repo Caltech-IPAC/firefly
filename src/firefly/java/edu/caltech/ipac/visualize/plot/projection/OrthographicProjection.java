@@ -96,9 +96,10 @@ public class OrthographicProjection{
 	    {
 		/* apply SIRTF distortion corrections */
 		fsamp_correction = 0.0;
-		for (i = 0; i <= hdr.ap_order; i++)
+		int len= (int)Math.min(hdr.ap_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		for (i = 0; i < len; i++)
 		{
-		    for (j = 0; j <= hdr.ap_order; j++)
+		    for (j = 0; j < len; j++)
 		    {
 			if (i + j <= hdr.ap_order)
 			{
@@ -114,9 +115,10 @@ public class OrthographicProjection{
 		*/
 
 		fline_correction = 0.0;
-		for (i = 0; i <= hdr.bp_order; i++)
+		len= (int)Math.min(hdr.bp_order+1, ProjectionParams.MAX_SIP_LENGTH);
+		for (i = 0; i < len; i++)
 		{
-		    for (j = 0; j <= hdr.bp_order; j++)
+		    for (j = 0; j < len; j++)
 		    {
 			if (i + j <= hdr.bp_order)
 			{
@@ -190,9 +192,10 @@ public class OrthographicProjection{
 	{
 	    /* apply SIRTF distortion corrections */
 	    fsamp_correction = 0.0;
-	    for (i = 0; i <= hdr.a_order; i++)
+		int len= (int)Math.min(hdr.a_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= hdr.a_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    if (i + j <= hdr.a_order)
 		    {
@@ -208,9 +211,10 @@ public class OrthographicProjection{
 	    */
 
 	    fline_correction = 0.0;
-	    for (i = 0; i <= hdr.b_order; i++)
+		len= (int)Math.min(hdr.b_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= hdr.b_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    if (i + j <= hdr.b_order)
 		    {

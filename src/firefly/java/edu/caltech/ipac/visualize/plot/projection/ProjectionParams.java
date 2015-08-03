@@ -9,6 +9,7 @@ import java.io.Serializable;
 
 
 public class ProjectionParams implements Serializable {
+    public static final int MAX_SIP_LENGTH = 10;
 
 
     // If you modify this class please modify -  edu.caltech.ipac.firefly.visualize.ProjectionSerializer
@@ -40,10 +41,10 @@ public class ProjectionParams implements Serializable {
     /* the following are for SIRTF distortion corrections to the */
     /* GNOMONIC projection (ctype1 ending in -SIP)*/
     public double a_order, ap_order, b_order, bp_order;
-    public double a[][] = new double[5][5];
-    public double ap[][] = new double[5][5];
-    public double b[][] = new double[5][5];
-    public double bp[][] = new double[5][5];
+    public double a[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double ap[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double b[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
+    public double bp[][] = new double[MAX_SIP_LENGTH][MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
 

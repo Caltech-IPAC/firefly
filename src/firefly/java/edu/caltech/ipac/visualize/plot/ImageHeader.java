@@ -64,11 +64,12 @@ public class ImageHeader implements Serializable
 
     /* the following are for SIRTF distortion corrections to the */
     /* GNOMONIC projection (ctype1 ending in -SIP)*/
-    public double a_order, ap_order, b_order, bp_order;
-    public double a[][] = new double[5][5];
-    public double ap[][] = new double[5][5];
-    public double b[][] = new double[5][5];
-    public double bp[][] = new double[5][5];
+
+	public double a_order, ap_order, b_order, bp_order;
+    public double a[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
+    public double ap[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
+    public double b[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
+    public double bp[][] = new double[ProjectionParams.MAX_SIP_LENGTH][ProjectionParams.MAX_SIP_LENGTH];
     public boolean map_distortion = false;
     public String keyword;
 
@@ -409,9 +410,10 @@ public class ImageHeader implements Serializable
 	a_order = header.getIntValue("A_ORDER");
 	if (a_order>= 0)
 	{
-	    for (i = 0; i <= a_order; i++)
+		int len= (int)Math.min(a_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= a_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    a[i][j] = 0.0;
 		    if (i + j <= a_order)
@@ -429,9 +431,10 @@ public class ImageHeader implements Serializable
 	b_order = header.getIntValue("B_ORDER");
 	if (b_order>= 0)
 	{
-	    for (i = 0; i <= b_order; i++)
+		int len= (int)Math.min(b_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= b_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    b[i][j] = 0.0;
 		    if (i + j <= b_order)
@@ -448,9 +451,10 @@ public class ImageHeader implements Serializable
 	ap_order = header.getIntValue("AP_ORDER");
 	if (ap_order>= 0)
 	{
-	    for (i = 0; i <= ap_order; i++)
+		int len= (int)Math.min(ap_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= ap_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    ap[i][j] = 0.0;
 		    if (i + j <= ap_order)
@@ -467,9 +471,10 @@ public class ImageHeader implements Serializable
 	bp_order = header.getIntValue("BP_ORDER");
 	if (bp_order>= 0)
 	{
-	    for (i = 0; i <= bp_order; i++)
+		int len= (int)Math.min(bp_order+1, ProjectionParams.MAX_SIP_LENGTH);
+	    for (i = 0; i < len; i++)
 	    {
-		for (j = 0; j <= bp_order; j++)
+		for (j = 0; j < len; j++)
 		{
 		    bp[i][j] = 0.0;
 		    if (i + j <= bp_order)
