@@ -6,7 +6,6 @@ package edu.caltech.ipac.fftools.core;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -18,10 +17,6 @@ import edu.caltech.ipac.firefly.core.layout.LayoutManager;
 import edu.caltech.ipac.firefly.core.layout.Region;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.panels.Toolbar;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
-import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 
 
@@ -84,7 +79,20 @@ public class MinimalLayoutManager extends AbstractLayoutManager {
         appBanner.add(pvOrIcoArea, "alt-app-icon");
         appBanner.add(visTB.getDisplay(), "vis-toolbar");
 
+
+// -experiment
+        Toolbar toolbar = Application.getInstance().getToolBar();
+        GwtUtil.setStyles(toolbar, "width", "100%", "height", "0", "position", "absolute");
+        GwtUtil.setStyles(toolbar.getDropdown(), "zIndex", "10", "position", "absolute");
+        getMenu().setDisplay(toolbar);
+// -experiment
+
+
+
         mainPanel.add(appBanner, DockPanel.NORTH);
+// -experiment
+        mainPanel.add(toolbar.getDropdown(), DockPanel.NORTH);
+// -experiment
         mainPanel.setCellHeight(appBanner, "1px");
         mainPanel.setSize("100%", "100%");
 
@@ -104,6 +112,11 @@ public class MinimalLayoutManager extends AbstractLayoutManager {
                 "minHeight", getMinHeight() + "px");
 
         Application.getInstance().getProperties().setProperty("BackToSearch.show", "false");
+
+
+
+
+
         ((FFToolsStandaloneCreator)Application.getInstance().getCreator()).getStandaloneUI().init();
 
     }

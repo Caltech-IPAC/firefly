@@ -162,8 +162,9 @@ public class ImageSelectDropDown {
         else {
             imSelPanel.showPanel();
         }
-        Application.getInstance().getToolBar().getDropdown().setTitle("Select Image");
-        Application.getInstance().getToolBar().getDropdown().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
+        Application app= Application.getInstance();
+        app.getToolBar().getDropdown().setTitle("Select Image");
+        app.getToolBar().getDropdown().setContent(mainPanel,true,null, ImageSelectDropDownCmd.COMMAND_NAME);
     }
 
 
