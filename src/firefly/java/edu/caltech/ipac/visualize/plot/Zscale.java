@@ -36,7 +36,7 @@ import java.util.List;
  * median value.
  *
  * 8/3/15
- * Refator it in the similar way as FitsRead (convert all data to float)
+ * Refactor it in the similar way as FitsRead (convert all data to float)
  */
 
 public class Zscale
@@ -52,13 +52,8 @@ public class Zscale
    static final int INDEF=-999;    /* INDEF value flag             */
 
 
-
-
-
   /* CDL_ZSCALE -- Sample the image and compute optimal Z1 and Z2 values.
   */
-
-
   static ZscaleRetval
     cdl_zscale (
     float[] float1d,		/* image data to be sampled		*/
@@ -68,9 +63,8 @@ public class Zscale
     double contrast,		/* adj. to slope of transfer function	*/
     int opt_size,		/* desired number of pixels in sample	*/
     int len_stdline,		/* optimal number of pixels per line	*/
-    double blank_value,		/* blank value from FITS header         */
-    double bscale,		
-    double bzero ){
+    double blank_value ){	/* blank value from FITS header         */
+
 
 
 	if (SUTDebug.isDebug())
@@ -86,35 +80,15 @@ public class Zscale
 	//sample = sample_retval.sample;
 
 	/* trim array to valid length (npix) */
-	Float[] sample = new Float[npix];
-	for (int i = 0; i < npix; i++)
-	{
+	float[] sample = new float[npix];
+	for (int i = 0; i < npix; i++){
 	    sample[i] = sample_retval.sample[i];
 	}
-	//List<Float> list = Arrays.asList(sample);
-
 
 	/* Sort the sample, compute the minimum, maximum, and median pixel
 	 * values.
 	 */
 	Arrays.sort(sample);
-	//System.out.println("npix = " + npix + "  sample.length = " + 
-	//    sample.length);
-	//qsort (sample, npix, sizeof (float), floatCompare);
-	//Collections.sort(list);
-
-
-	/*for (int i = 0; i < npix; i++)
-	{
-	    //System.out.println("RBH sample[" + i + "] = " + sample[i]);
-	    if (sample[i].isNaN())
-	    {
-		*//* throw out all Nan's,  i.e. BLANK pixels *//*
-		npix = i;
-		break;
-	    }
-	}*/
-
     npix = Arrays.binarySearch(sample, Float.NaN);
 	float zmin = sample[0];
 	float zmax = sample[npix-1];
@@ -127,10 +101,6 @@ public class Zscale
 
 
 	float median = ((npix % 2) == 1 || center_pixel >= npix) ? sample[left]: (sample[left] + sample[left+1]) / 2;
-	/*if ((npix % 2) == 1 || center_pixel >= npix)
-	      median = sample[left];
-	else
-	    median = (sample[left] + sample[left+1]) / 2;*/
 
 	/* Fit a line to the sorted sample vector.  If more than half of the
 	 * pixels in the sample are rejected give up and return the full range.
@@ -140,17 +110,16 @@ public class Zscale
 	 */
 	int minpix = Math.max (MIN_NPIXELS, (int) (npix * MAX_REJECT));
 	int ngrow =  Math.max (1, (int) Math.round( (npix * .01)));
-	FitLineRetval fit_line_retval = fitLine (sample, npix, 
-	    KREJ, ngrow, MAX_ITERATIONS);
-	int ngoodpix = fit_line_retval.ngoodpix;
-	float zstart = fit_line_retval.zstart;
-	float zslope = fit_line_retval.zslope;
+	FitLineRetval  fitLineRetval = fitLine (sample, npix,  KREJ, ngrow, MAX_ITERATIONS);
+	int ngoodpix = fitLineRetval.ngoodpix;
+	float zstart = fitLineRetval.zstart;
+	float zslope = fitLineRetval.zslope;
 
 
 	double z1 = Double.NaN;
 	double z2 = Double.NaN;
 	ZscaleRetval retval;
-	if (fit_line_retval.ngoodpix < minpix) {
+	if (fitLineRetval.ngoodpix < minpix) {
 	    retval = new ZscaleRetval(zmin, zmax);
 	} else {
 	    if (contrast > 0)
@@ -183,26 +152,13 @@ public class Zscale
   /** sampleImage -- Extract an evenly gridded subsample of the pixels from
   * a two-dimensional image into a one-dimensional vector.
   */
-  private static SampleRetval
-  sampleImage (
+  private static SampleRetval sampleImage (
     float[] float1d,		        /* image to be sampled			*/
     int nx,
     int ny,			/* image dimensions			*/
     int optimal_size,		/* desired number of pixels in sample	*/
     int len_stdline,		/* optimal number of pixels per line	*/
     double blank_value){	/* BLANK value from FITS header		*/
-
-	//int i;
-	//int  col_step, line_step, maxpix, line;
-	//int opt_npix_per_line, npix_per_line, npix = 0;
-	//int opt_nlines_in_sample, min_nlines_in_sample, max_nlines_in_sample;
-        //int     *ipix = NULL;
-        //float   *fpix = NULL;
-        //double  *dpix = NULL;
-        //short   *spix = NULL;
-        //unsigned char    *bpix = NULL;
-	//float sample[];		/* output vector containing the sample	*/
-
 
 
 	/* Compute the number of pixels each line will contribute to the sample,
@@ -211,13 +167,13 @@ public class Zscale
 	 */
 
 	int npix = 0;
-	int opt_npix_per_line = Math.max (1, Math.min (nx, len_stdline));
-	int col_step = Math.max (2, (nx + opt_npix_per_line-1) / opt_npix_per_line);
-	int npix_per_line = Math.max (1, (nx + col_step-1) / col_step);
+	int optNpixPerLine = Math.max (1, Math.min (nx, len_stdline));
+	int colStep = Math.max (2, (nx + optNpixPerLine-1) / optNpixPerLine);
+	int npixPerLine = Math.max (1, (nx + colStep-1) / colStep);
 	if (SUTDebug.isDebug())
 	    System.out.printf (
 	    "[sampleImage] opt_npix_per_line=%d col_step=%d npix_per_line=%d\n",
-		opt_npix_per_line, col_step, npix_per_line);
+				optNpixPerLine, colStep, npixPerLine);
 
 	/* Compute the number of lines to sample and the spacing between lines.
 	 * We must ensure that the image is adequately sampled despite its
@@ -228,66 +184,62 @@ public class Zscale
  	 * size divided by len_stdline, possibly more if the lines are very
  	 * short.
 	 */
-	int min_nlines_in_sample = Math.max (1, optimal_size / len_stdline);
-	int opt_nlines_in_sample = Math.max(min_nlines_in_sample, Math.min(ny,
-	    (optimal_size + npix_per_line-1) / npix_per_line));
-	int line_step = Math.max (2, ny / (opt_nlines_in_sample));
-	int max_nlines_in_sample = (ny + line_step-1) / line_step;
+	int minNlinesInSample = Math.max (1, optimal_size / len_stdline);
+	int optNlinesInSample = Math.max(minNlinesInSample, Math.min(ny,
+	    (optimal_size + npixPerLine-1) / npixPerLine));
+	int lineStep = Math.max (2, ny / (optNlinesInSample));
+	int maxNlinesInSample = (ny + lineStep-1) / lineStep;
 	if (SUTDebug.isDebug())
 	    System.out.printf (
         "[sampleImage] min_nlines_in_sample=%d opt_nlines_in_sample=%d line_step=%d max_nlines_in_sample=%d\n",
-		min_nlines_in_sample, opt_nlines_in_sample, line_step,
-		max_nlines_in_sample);
+		minNlinesInSample, optNlinesInSample, lineStep,
+				maxNlinesInSample);
 
 	/* Allocate space for the output vector.  Buffer must be freed by our
 	 * caller.
 	 */
-	int maxpix = npix_per_line * max_nlines_in_sample;
-	//*sample = (float *) malloc (maxpix * sizeof (float));
+	int maxpix = npixPerLine * maxNlinesInSample;
+
+
 	float[] sample = new float[maxpix];
-	//row = (float *) malloc (nx * sizeof (float));
-	float[] row = new float[nx];
-
-	/* Extract the vector. */
 	int op = 0;
-	for (int line = (line_step + 1)/2; line < ny; line+=line_step) {
+	for (int line = (lineStep + 1)/2; line < ny; line+=lineStep) {
 	    /* Load a row of float values from the image */
-
-		int ipix_index = (line-1) * nx;
-		for (int i=0; i < nx; i++)
-		{
-			if ((float1d[ipix_index]) == blank_value)
-			{
-				row[i] = Float.NaN;
-			}
-			else
-			{
-				row[i] = float1d[ipix_index];
-				//row[i] = (float) (ipix[ipix_index] * bscale + bzero);
-			}
-			ipix_index++;
-		}
-
-
-		subSample (row, sample, op, npix_per_line, col_step);
-		op += npix_per_line;
-		npix += npix_per_line;
+		int ipixIndex = (line-1) * nx;
+		float[] row= getDataSlice(ipixIndex, nx, float1d, blank_value );
+		subSample (row, sample, op, npixPerLine, colStep);
+		op += npixPerLine;
+		npix += npixPerLine;
 		if (npix > maxpix)
 			break;
 	}
 
-	//free ((float *)row);
-	return new SampleRetval(npix, sample);
-}
 
+	return new SampleRetval(npix, sample);
+  }
+	
+  private static float[] getDataSlice(int start, int length, float[] data,double blank_value ){
+	  int ipixIndex = start;
+	  float[] row = new float[length];
+	  for (int i=0; i < length; i++){
+		  if ( data[ipixIndex] == blank_value){
+			  row[i] = Float.NaN;
+		  }
+		  else {
+			  row[i] = data[ipixIndex];
+
+		  }
+		  ipixIndex++;
+	  }
+	  return row;
+  }
 
 /** subSample -- Subsample an image line.  Extract the first pixel and
  * every "step"th pixel thereafter for a total of npix pixels.
  */
 
-private static void 
-subSample (float[] row, float[] sample, int op, int npix, int step)
-{
+ private static void  subSample (float[] row,
+     float[] sample, int op, int npix, int step){
 
 	if (step <= 1)
 	    System.arraycopy(row, 0, sample, op, npix);
@@ -311,22 +263,13 @@ subSample (float[] row, float[] sample, int op, int npix, int step)
  * is returned as the function value.
  */
 
-private static FitLineRetval
-fitLine (
-    Float[] data,		/* data to be fitted	  		  */
+  private static FitLineRetval fitLine (
+    float[] data,		/* data to be fitted	  		  */
     int npix,			/* number of pixels before rejection	  */
     float krej,			/* k-sigma pixel rejection factor	  */
     int ngrow,			/* number of pixels of growing		  */
-    int maxiter			/* max iterations			  */
-)
-{
-	//int	i, ngoodpix, last_ngoodpix, minpix, niter;
-	//double	xscale, z0, dz, o_dz, x, z, mean, sigma, threshold;
-	//double	sumxsqr, sumxz, sumz, sumx, rowrat;
-	//float zstart;
-	//float zslope;
-	//float 	*flat, *normx;
-	//char	*badpix;
+    int maxiter	) 	/* max iterations */   {
+
 
 	double	xscale;
 	if (npix <= 0)
@@ -339,10 +282,6 @@ fitLine (
 	/* Allocate a buffer for data minus fitted curve, another for the
 	 * normalized X values, and another to flag rejected pixels.
 	 */
-	//flat = (float *) malloc (npix * sizeof (float));
-	//normx = (float *) malloc (npix * sizeof (float));
-	//badpix = (char *) calloc (npix, sizeof(char));
-
 
 	byte[] badpix = new byte[npix];
 
@@ -387,7 +326,7 @@ fitLine (
 	int minpix = Math.max (MIN_NPIXELS, (int) (npix * MAX_REJECT));
 
 	for (int niter=0;  niter < maxiter;  niter++) {
-	   int  last_ngoodpix = ngoodpix;
+	   int  lastNgoodpix = ngoodpix;
 
 	    /* Subtract the fitted line from the data array. */
 		float[] flat = flattenData (data,  normx, npix, z0, dz);
@@ -425,7 +364,7 @@ fitLine (
 		   dz = (sumxz - z0 * sumx) / sumxsqr;
 	    }
 
-	    if (ngoodpix >= last_ngoodpix || ngoodpix < minpix)
+	    if (ngoodpix >= lastNgoodpix || ngoodpix < minpix)
 		break;
 	}
 
@@ -435,9 +374,7 @@ fitLine (
         if (Math.abs(zslope) < 0.001)
             zslope = (float) (o_dz * xscale);
 
-	//free ((float *)flat);
-	//free ((float *)normx);
-	//free ((char *)badpix);
+
 	return new FitLineRetval(ngoodpix, zstart, zslope);
 }
 
@@ -448,8 +385,8 @@ fitLine (
 
 
 private static float[]
-flattenData (
-    Float[] data,		/* raw data array			*/
+  flattenData (
+    float[] data,		/* raw data array			*/
     float x[],			/* x value of each pixel		*/
     int npix,			/* number of pixels			*/
     double z0,
@@ -472,21 +409,20 @@ private static ComputeSigmaRetval
 computeSigma (
     float[] a,			/* flattened data array			*/
     byte[] badpix,		/* bad pixel flags (!= 0 if bad pixel)	*/
-    int npix)
-{
-	float mean, sigma;
-	//float	pixval;
-	int	i, ngoodpix = 0;
-	double	sum = 0.0, sumsq = 0.0, temp;
+    int npix) {
 
+	int	ngoodpix = 0;
+	double	sum = 0.0, sumsq = 0.0, temp;
 	/* Accumulate sum and sum of squares. */
-	for (i=0; i < npix; i++)
+	for (int i=0; i < npix; i++)
 	    if (badpix[i] == GOOD_PIXEL) {
 		float pixval = a[i];
 		ngoodpix = ngoodpix + 1;
 		sum = sum + pixval;
 		sumsq = sumsq + pixval * pixval;
-	    }
+	}
+
+	float mean, sigma;
 
 	/* Compute mean and sigma. */
 	switch (ngoodpix) {
@@ -525,7 +461,7 @@ computeSigma (
 
 private static RejectPixelsRetval
 rejectPixels (
-    Float data[],		/* raw data array			*/
+    float data[],		/* raw data array			*/
     float flat[],		/* flattened data array			*/
     float normx[],		/* normalized x values of pixels	*/
     byte  badpix[],		/* bad pixel flags (!= 0 if bad pixel)	*/
@@ -536,21 +472,18 @@ rejectPixels (
     double sumz,               /* matrix sums				*/
     double threshold,		/* threshold for pixel rejection	*/
     int ngrow			/* number of pixels of growing		*/
-)
-{
-	int	ngoodpix, i, j;
-	float	residual, lcut, hcut;
-	double	x, z;
+ )
+ {
 
-	ngoodpix = npix;
-	lcut = (float) -threshold;
-	hcut = (float) threshold;
+	int ngoodpix = npix;
+	float lcut = (float) -threshold;
+	float hcut = (float) threshold;
 
-	for (i=0; i < npix; i++) {
+	for (int i=0; i < npix; i++) {
 	    if (badpix[i] == BAD_PIXEL)
 		ngoodpix = ngoodpix - 1;
 	    else {
-		residual = flat[i];
+		float residual = flat[i];
 		if (residual < lcut || residual > hcut) {
 		    /* Reject the pixel and its neighbors out to the growing
 		     * radius.  We must be careful how we do this to avoid
@@ -559,11 +492,11 @@ rejectPixels (
 		     * but do not reject until they have been thresholded.
 		     * If this is not done growing will not be symmetric.
 		     */
-		    for (j=Math.max(0,i-ngrow); j < Math.min(npix,i+ngrow); j++) {
+		    for (int j=Math.max(0,i-ngrow); j < Math.min(npix,i+ngrow); j++) {
 			if (badpix[j] != BAD_PIXEL) {
 			    if (j <= i) {
-				x = (double) normx[j];
-				z = (double) data[j];
+				double x = normx[j];
+				double z =  data[j];
 				sumxsqr = sumxsqr - (x * x);
 				sumxz = sumxz - z * x;
 				sumx = sumx - x;
@@ -626,28 +559,15 @@ public static void main(String args[])
 	int naxis1 = header.getIntValue("NAXIS1");
 	int naxis2 = header.getIntValue("NAXIS2");
 	double blank_value = header.getDoubleValue("BLANK", Double.NaN);
-	double bscale = header.getDoubleValue("BSCALE", 0.0);
-	double bzero = header.getDoubleValue("BZERO", 0.0);
 
-    //contrast = 1.0;
-    //opt_size = 100;    /* desired number of pixels in sample   */
-    //len_stdline = 10;  /* optimal number of pixels per line    */
     contrast = 0.25;
     opt_size = 600;    /* desired number of pixels in sample   */
     len_stdline = 120;  /* optimal number of pixels per line    */
 
     onedimdata = (float[]) ArrayFuncs.flatten( ArrayFuncs.convertArray( pixel_data, Float.TYPE));
 
-    /*
-    for (int i = 0; i < 500; i++)
-    {
-    int pixval = onedimdata8[i] & 0xff;
-    System.out.println("i = " + i + "  pixval = " + pixval);
-    }
-    */
-
     ZscaleRetval zscale_retval = cdl_zscale(onedimdata, naxis1, naxis2,
-	bitpix, contrast, opt_size, len_stdline, blank_value, bscale, bzero);
+	bitpix, contrast, opt_size, len_stdline, blank_value);
     double z1 = zscale_retval.getZ1();
     double z2 = zscale_retval.getZ2();
     System.out.println("z1 = " + z1 + "  z2 = " + z2);

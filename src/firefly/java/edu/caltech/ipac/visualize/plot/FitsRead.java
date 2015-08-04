@@ -934,9 +934,8 @@ public class FitsRead implements Serializable {
         Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d,
                 imageHeader.naxis1, imageHeader.naxis2,
                 imageHeader.bitpix, contrast / 100.0, optSize, lenStdline,
-                imageHeader.blank_value,
-                imageHeader.bscale,
-                imageHeader.bzero);
+                imageHeader.blank_value );
+
         return zscaleRetval;
     }
 
