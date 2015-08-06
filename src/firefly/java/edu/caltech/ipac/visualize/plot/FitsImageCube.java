@@ -174,13 +174,6 @@ public class FitsImageCube {
         FitsRead[] fitsReadAry = fitsReadMap.get(mapKey);
         int numOfFitsReads = fitsReadAry.length;
 
-        double wcs3Min = fitsReadAry[0].getHeader().getFloatValue("CRVAL3", -1);
-        double wcs3Delt = fitsReadAry[0].getHeader().getFloatValue("CDELT3", -1);
-
-        if ( (wcs3Min == Double.NaN) || (wcs3Delt == Double.NaN) ){
-            throw new FitsException("The FITS doesn't have WCS3 information.");
-        }
-
         for (int z = 0; z < numOfFitsReads; z ++) {
             // For each image, set the dataObj: the 3rd WCS (wavelength or frequency or time) and the data value (eg. flux).
 
@@ -190,9 +183,17 @@ public class FitsImageCube {
             DataObject dataObj = new DataObject(dataGroup);
 
             // Get the value of the 3rd WCS (eg. wavelength) at zth image:
-            wcs3Min = header.getFloatValue("CRVAL3", -1);
-            wcs3Delt = header.getFloatValue("CDELT3", -1);
-            double wcs3Val = wcs3Min + wcs3Delt * z;
+
+            double wcs3Min = header.getDoubleValue("CRVAL3", Double.NaN );
+            double wcs3Delt = header.getDoubleValue("CDELT3", Double.NaN);
+            double wcs3Val;
+            if ( !Double.isNaN(wcs3Min) && !Double.isNaN(wcs3Delt) ){
+                wcs3Val = wcs3Min + wcs3Delt * z;
+            }
+            else {
+                // if not enough wcs3 information, use the index:
+                wcs3Val = z;
+            }
 
             // Set the 3rd WCS value at the zth image to the first value of the dataObj:
             dataObj.setDataElement(dataTypeAry[0], wcs3Val);
@@ -200,10 +201,10 @@ public class FitsImageCube {
             // Get the image value at the zth image and the imagePt:
             double imgVal = fitsRead.getFlux(imagePt);
 
-            // Set the flux at the zth image and the imagePt to the second value of the dataObj:
+            // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
             dataObj.setDataElement(dataTypeAry[1], imgVal);
 
-            // Add the dataobj to the dataGroup:
+            // Add the dataObj to the dataGroup:
             dataGroup.add(dataObj);
         }
         return dataGroup;
