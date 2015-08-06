@@ -69,7 +69,7 @@ public final class FITSTableReader
         //String strategy = TOP_MOST;
         //String strategy = FULLY_FLATTEN;
 
-        //for lsst:
+        //Test src-004192-i4-0300.fits:
         String[] dataCols =   {"flags", "id", "coord_ra", "coord_dec", "parent", "footprint", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         String[] headerCols = null;
         if (!strategy.equals(FULLY_FLATTEN)){
@@ -77,7 +77,7 @@ public final class FITSTableReader
         }
 
         /**
-        //for lsst_cat:
+        //Test calexp-004192-i4-0300.fits:
         String[] dataCols = {"id", "cat.archive", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
         String[] headerCols = null;
         if (!strategy.equals(FULLY_FLATTEN)) {
@@ -86,6 +86,7 @@ public final class FITSTableReader
          */
 
         /**
+         * // Test all nulls:
         strategy = null;
         dataCols = null;
         headerCols = null;
