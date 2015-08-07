@@ -240,8 +240,9 @@ public final class FITSTableReader
                                                          String[] headerCols,
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
-        
-        if (strategy == null){
+
+        if ((strategy == null) ||
+                (!(strategy.equals(FULLY_FLATTEN)) && !(strategy.equals(EXPAND_BEST_FIT)) && !(strategy.equals(EXPAND_REPEAT)))){
             strategy = TOP_MOST;
         }
 
