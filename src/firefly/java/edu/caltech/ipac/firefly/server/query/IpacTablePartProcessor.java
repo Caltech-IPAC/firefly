@@ -6,9 +6,6 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.DataGroupQueryStatement;
 import edu.caltech.ipac.astro.InvalidStatementException;
 import edu.caltech.ipac.astro.IpacTableException;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.core.SearchDescResolver;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
@@ -30,6 +27,7 @@ import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -40,6 +38,8 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.util.expr.Expression;
 import org.apache.commons.httpclient.HttpStatus;
 
@@ -425,6 +425,23 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         boolean isFromCache = true;
         if (cfile == null) {
             cfile = loadDataFile(request);
+
+            // if the file is not in IPAC table format - convert
+            DataGroupReader.Format format = DataGroupReader.guessFormat(cfile);
+            boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
+            if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
+                // file is already in ipac table format
+            } else {
+                if ( format != DataGroupReader.Format.UNKNOWN) {
+                    // format is unknown.. convert it into ipac table format
+                    DataGroup dg = DataGroupReader.readAnyFormat(cfile);
+                    cfile = createFile(request, ".tbl");
+                    DataGroupWriter.write(cfile, dg, 0);
+                } else {
+                    throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(cfile));
+                }
+            }
+
 
             if (doCache()) {
                 cache.put(key, cfile);

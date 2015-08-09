@@ -37,6 +37,7 @@ public class FileUploadField extends InputField implements HasSubmitField {
     private AsyncCallback<String> callback;
     private FieldLabel _label= null;
     private String uploadKey= "FileUploadField_"+cnt;
+    private String uploadType = null;
 
     public FileUploadField(FileUploadFieldDef fieldDef) {
         this.fieldDef = fieldDef;
@@ -98,6 +99,10 @@ public class FileUploadField extends InputField implements HasSubmitField {
         cnt++;
     }
 
+    public void setUploadType(String type) {
+        this.uploadType = type;
+    }
+
     public FieldDef getFieldDef() {
         return fieldDef;
     }
@@ -152,14 +157,19 @@ public class FileUploadField extends InputField implements HasSubmitField {
     }
 
     public void submit(String action, AsyncCallback<String> callback) {
-
         this.callback = callback;
         if (action==null) {
             if (FFToolEnv.isAPIMode()) {
                 action= GWT.getModuleBaseURL() + "/sticky/Firefly_FileUpload?cacheKey="+uploadKey;
+                if (!StringUtils.isEmpty(uploadType)) {
+                    action += "&type="+uploadType;
+                }
             }
             else {
                 action= GWT.getModuleBaseURL() + "/sticky/Firefly_FileUpload";
+                if (!StringUtils.isEmpty(uploadType)) {
+                    action += "?type="+uploadType;
+                }
             }
 
         }

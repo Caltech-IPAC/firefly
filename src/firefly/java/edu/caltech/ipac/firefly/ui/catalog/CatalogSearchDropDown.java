@@ -158,6 +158,7 @@ public class CatalogSearchDropDown {
     private Widget createLoadCatalogsContent() {
         SimpleInputField field = SimpleInputField.createByProp(_prop.makeBase("upload"));
         final FileUploadField _uploadField= (FileUploadField)field.getField();
+        _uploadField.setUploadType("TABLE");
 
         ButtonBase ok= GwtUtil.makeFormButton("Upload", new ClickHandler() {
             public void onClick(ClickEvent ev) {
