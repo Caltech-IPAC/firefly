@@ -80,6 +80,12 @@ task prepareWebapp (type:Copy, dependsOn: [gwt, loadConfig, createVersionTag]) {
       from ("html/") { include '**/*' }
       into gwt.warDir
     }
+    copy {
+      from { // use of closure defers evaluation until execution time
+        configurations.webappLib
+      }
+      into "${gwt.warDir}/WEB-INF/lib"
+    }
 
     // temporary solution to take in javascript built by firefly
     copy {
