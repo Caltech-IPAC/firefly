@@ -3,7 +3,7 @@
 
     <properties>
         <tomcat.version>7.0.56</tomcat.version>
-        <build.dir>/hydra/cm/firefly/build/</build.dir>
+        <build.dir>${project.basedir}/../../build</build.dir>
     </properties>
 
     <modelVersion>4.0.0</modelVersion>
