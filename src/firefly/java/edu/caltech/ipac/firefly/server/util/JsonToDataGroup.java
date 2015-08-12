@@ -88,16 +88,18 @@ public class JsonToDataGroup {
 
             Object rows = json.get("results");
             if (rows != null && rows instanceof List) {
-                Object firstRow = ((List) rows).get(0);
                 List<DataType> columns = new ArrayList<DataType>();
+                if (((List)rows).size() > 0) {
+                    Object firstRow = ((List) rows).get(0);
 
-                if (firstRow instanceof List) {
-                    int ctr = 1;
-                    String colName;
-                    for (Object value : (List)firstRow) {
-                        colName = ctr<=colNames.size() ? colNames.get(ctr-1) : "fld" + ctr;
-                        columns.add(new DataType(colName, value.getClass()));
-                        ctr++;
+                    if (firstRow instanceof List) {
+                        int ctr = 1;
+                        String colName;
+                        for (Object value : (List) firstRow) {
+                            colName = ctr <= colNames.size() ? colNames.get(ctr - 1) : "fld" + ctr;
+                            columns.add(new DataType(colName, value.getClass()));
+                            ctr++;
+                        }
                     }
                 }
                 DataGroup dg = new DataGroup(null, columns);

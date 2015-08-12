@@ -158,13 +158,21 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
 
             List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
                     Catalog.makeTableRow("lsst","lsst-all","Science CCD Exposure", "SERVER","Science_Ccd_Exposure",
-                                         "46","26528","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                                         "46","1998219","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Coadd", "SERVER","DeepCoadd",
-                                         "34","48","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                                         "34","5022","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Source", "SERVER","DeepSource",
-                                         "55","135978","7200","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                                         "55","14670597","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Forced Source", "SERVER","DeepForcedSource",
-                                         "59","33349940","3600","","", "LSSTCatalogQuery","LSSTCatalogDD")
+                                         "59","3870141868","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                    Catalog.makeTableRow("lsst","lsst-all","AvgForcedPhot", "SERVER","AvgForcedPhot",
+                                         "28","14667816","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                    Catalog.makeTableRow("lsst","lsst-all","AvgForcedPhotYearly", "SERVER","AvgForcedPhotYearly",
+                                         "23","12615828948","1800","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                    Catalog.makeTableRow("lsst","lsst-all","RefObject", "SERVER","RefObject",
+                                         "30","15855006","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                    Catalog.makeTableRow("lsst","lsst-all","Science_Ccd_Exposure_coadd_r", "SERVER","Science_Ccd_Exposure_coadd_r",
+                                         "41","666399","3600","","", "LSSTCatalogQuery","LSSTCatalogDD")
 
             );
 

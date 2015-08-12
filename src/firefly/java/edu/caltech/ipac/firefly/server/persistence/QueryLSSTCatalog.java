@@ -3,29 +3,25 @@
  */
 package edu.caltech.ipac.firefly.server.persistence;
 
-import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.db.spring.mapper.IpacTableExtractor;
 import edu.caltech.ipac.firefly.server.query.*;
+import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.*;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.Statement;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.util.DataSetParser.DESC_TAG;
@@ -46,9 +42,8 @@ import static edu.caltech.ipac.firefly.util.DataSetParser.makeAttribKey;
 public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
-    private static String QSERV_URI = AppProperties.getProperty("lsst.qserv.uri");
-    private static String QSERV_USER = AppProperties.getProperty("lsst.qserv.user");
-    private static String QSERV_PASS = AppProperties.getProperty("lsst.qserv.pass");
+    private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
+    private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");  //"DC_W13_Stripe82"
 
 
     private static final String RA_COL = "ra";
@@ -57,23 +52,24 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
-        File file = createFile(request);
+
 
         WorldPt pt = request.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         pt = VisUtil.convertToJ2000(pt);
+
+        // output file will be in json format
+        File file = createFile(request, ".json");
         doGetData(file, request.getParams(), pt);
-        return file;
+
+        DataGroup dg = JsonToDataGroup.parse(file);
+        File inf = createFile(request, ".tbl");
+        DataGroupWriter.write(inf, dg, 0);
+
+        return inf;
     }
 
     //qserv_areaspec_circle does not work at the moment, only qserv_areaspec_box works
     void doGetData(File oFile, List<Param> params, WorldPt wpt) throws DataAccessException {
-        DbInstance dbinstance = new DbInstance(
-                false, //pooled
-                "null", //datasourcePath
-                QSERV_URI, //dbUrl
-                QSERV_USER, StringUtils.isEmpty(QSERV_PASS)?null:QSERV_PASS, "com.mysql.jdbc.Driver",
-                "lsstdb");
-        DataSource ds = JdbcFactory.getDataSource(dbinstance);
 
         String searchMethod = null;
         String catTable =  null;
@@ -112,7 +108,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             //qserv_areaspec_circle(ra, dec, radius)
             //sql="select * from "+catTable+" where qserv_areaspec_circle("+wpt.getLon()+", "+wpt.getLat()+", "+radius+")";
             //Per Serge, the above query only can not be applied to unpartitioned table
-            sql="select "+selectedColumns+" from "+catTable+" where scisql_s2PtInCircle(ra, decl, "+wpt.getLon()+", "+wpt.getLat()+", "+radius+")=1";
+            sql="select "+selectedColumns+" from "+DATABASE+"."+catTable+" where scisql_s2PtInCircle(ra, decl, "+wpt.getLon()+", "+wpt.getLat()+", "+radius+")=1";
         } else if (searchMethod != null && searchMethod.equals(CatalogRequest.Method.BOX.getDesc())) {
             double size = 0.0;
             for (Param p : params) {
@@ -134,7 +130,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             //qserv_areaspec_box(raA, decA, raB, decB)
             //sql="select * from "+catTable+" where qserv_areaspec_box("+lon1+", "+lat1+", "+lon2+", "+lat2+")";
             //Per Serge, the above query only can not be applied to unpartitioned table
-            sql="select * from "+catTable+" where scisql_s2PtInBox(ra, decl, "+lon1+", "+lat1+", "+lon2+", "+lat2+")=1";
+            sql="select * from "+DATABASE+"."+catTable+" where scisql_s2PtInBox(ra, decl, "+lon1+", "+lat1+", "+lon2+", "+lat2+")=1";
 
         } else {
             throw new RuntimeException(searchMethod+" search is not Implemented");
@@ -148,30 +144,25 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
         }
 
         // workaround for https://jira.lsstcorp.org/browse/DM-1841
-        sql += " LIMIT 3000";
+        // sql += " LIMIT 3000";
 
-        Connection conn = null;
-        Statement stmt = null;
+
         try {
-            conn = DataSourceUtils.getConnection(ds);
             long cTime = System.currentTimeMillis();
-            stmt = conn.createStatement();
+             String url = DATA_ACCESS_URI+"sql="+ URLEncoder.encode(sql, "UTF-8");
             _log.briefDebug ("Executing SQL query: " + sql);
-            //ResultSet rs = stmt.executeQuery(sql);
-            IpacTableExtractor.query(null, ds, oFile, 10000, sql);
+            try {
+                URLConnection uc = URLDownload.makeConnection(new URL(url));
+                uc.setRequestProperty("Accept", "text/plain");
+                URLDownload.getDataToFile(uc, oFile, null);
+            } catch (FailedRequestException e) {
+                throw new IOException("Request Failed", e);
+            }
+
             _log.briefDebug ("SELECT took "+(System.currentTimeMillis()-cTime)+"ms");
         } catch (Exception e) {
             _log.error(e);
             throw new DataAccessException("Query failed: "+e.getMessage());
-        } finally {
-            if (stmt != null) {
-                try {
-                    closeStatement(stmt);
-                } catch (Exception e1) {}
-            }
-            if (conn != null) {
-                DataSourceUtils.releaseConnection(conn, ds);
-            }
         }
     }
 
@@ -219,21 +210,12 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
 
     }
 
-    static void closeStatement(Statement stmt) {
-        if (stmt != null) {
-            try {
-                stmt.close();
-            } catch (Throwable th) {
-                // log and ignore
-                _log.warn(th, "Failed to close statement: "+th.getMessage());
-            }
-        }
-    }
+
 
     protected void setColumnTips(TableMeta meta, ServerRequest request) {
 
         TableServerRequest req = new TableServerRequest("LSSTCatalogDD");
-        req.setPageSize(1000);
+        //req.setPageSize(1000);
         req.setParam(CatalogRequest.CATALOG, request.getParam(ServerParams.REQUESTED_DATA_SET));
 
         SearchManager sm = new SearchManager();
@@ -270,44 +252,29 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     }
 
     public static void main(String[] args) {
-        DbInstance dbinstance = new DbInstance(
-                false, //pooled
-                "null", //datasourcePath
-                "<REPLACE_WITH_DB_URL>", //dbUrl
-                "qsmaster", null, "com.mysql.jdbc.Driver",
-                "lsstdb");
-        DataSource ds = JdbcFactory.getDataSource(dbinstance);
 
-        String sql="select * from DeepSource where qserv_areaspec_box(0.4, 1.05, 0.5, 1.15)";
+        //String sql="select * from DeepSource where qserv_areaspec_box(0.4, 1.05, 0.5, 1.15)";
+        String sql="SELECT ra,decl,filterName FROM DC_W13_Stripe82.Science_Ccd_Exposure WHERE scisql_s2PtInBox(ra,decl,330,-0.1,335.1,-0.08)=1";
 
 
-        Connection conn = null;
         try {
-            conn = DataSourceUtils.getConnection(ds);
             long cTime = System.currentTimeMillis();
-
-            Statement stmt = null;
+            String url = "http://localhost:8661/db/v0/query?sql="+ URLEncoder.encode(sql, "UTF-8");
+            System.out.println("Executing SQL query: " + sql);
             try {
-                stmt = conn.createStatement();
-                _log.briefDebug ("Executing SQL query: " + sql);
-                //ResultSet rs = stmt.executeQuery(sql);
-                //_log.briefDebug ("SELECT took "+(System.currentTimeMillis()-cTime)+"ms");
-                File file = new File("/tmp/lsstTest.tbl");
-                IpacTableExtractor.query(null, ds, file, 10000, sql);
-                _log.briefDebug ("SELECT took "+(System.currentTimeMillis()-cTime)+"ms");
-            } catch (Exception e) {
-                System.out.println("Exception "+e.getMessage());
-            } finally {
-                closeStatement(stmt);
+                URLConnection uc = URLDownload.makeConnection(new URL(url));
+                uc.setRequestProperty("Accept", "text/plain");
+                URLDownload.getDataToFile(uc, new File("/tmp/result.json"), null);
+            } catch (FailedRequestException e) {
+                throw new IOException("Request Failed", e);
             }
 
-        } catch (Exception e) {
+            System.out.println("SELECT took " + (System.currentTimeMillis() - cTime) + "ms");
+
+
+       } catch (Exception e) {
             System.out.println("Exception "+e.getMessage());
             e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                DataSourceUtils.releaseConnection(conn, ds);
-            }
         }
     }
 

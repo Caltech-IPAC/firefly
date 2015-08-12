@@ -9,19 +9,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.data.DataSetInfo;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.SpacialType;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-
-import static edu.caltech.ipac.firefly.data.SpacialType.Box;
-import static edu.caltech.ipac.firefly.data.SpacialType.Cone;
 
 /**
  * @author tatianag
@@ -51,7 +44,8 @@ public class LSSTCatalogSearchUI  implements SearchUI {
                         adjustSpacialHeight();
                     }
                 });
-        spacialArea.setSpacialOptions(new HashSet<SpacialType>(Arrays.asList(Cone, Box)), DataSetInfo.DataTypes.CATALOGS);
+        spacialArea.setSpacialOptions(new HashSet<SpacialType>(Arrays.asList(SpacialType.Cone, SpacialType.Box)), DataSetInfo.DataTypes.CATALOGS);
+        spacialArea.updateSearchMax(3600);
         mainPanel.setSize("100%", "100%");
 
         topArea= new DockLayoutPanel(Style.Unit.PX);
@@ -74,6 +68,7 @@ public class LSSTCatalogSearchUI  implements SearchUI {
         final ServerRequest r= new ServerRequest("LSSTCatalogQuery");
 
         r.setParam(ServerParams.REQUESTED_DATA_SET, "DeepSource");
+        r.setParam(ServerParams.DATA_TYPE, DataSetInfo.DataTypes.CATALOGS.toString());
 
         spacialArea.getFieldValuesAsync(new AsyncCallback<List<Param>>() {
             public void onFailure(Throwable caught) {
@@ -84,7 +79,7 @@ public class LSSTCatalogSearchUI  implements SearchUI {
                 r.setParams(l);
                 cb.onSuccess(r);
             }
-        });
+                });
     }
 
     public boolean setServerRequest(ServerRequest request) {

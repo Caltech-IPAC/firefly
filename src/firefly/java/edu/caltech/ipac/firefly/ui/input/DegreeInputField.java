@@ -128,6 +128,7 @@ public class DegreeInputField extends InputField {
             retval = _degreeDef.validate(_inputField.getValue());
         } catch (ValidationException e) {
             retval= false;
+            _inputField.forceInvalid(e.getMessage());
         }
         return retval;
     }
