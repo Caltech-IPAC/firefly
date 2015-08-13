@@ -47,7 +47,7 @@ fitsPathInfo= fc.uploadFile(data)
 fc.showFits(fitsPathInfo)
 ```   
 
-The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. The are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
+The FITS viewer can take many, many possible parameters.  Some parameters control how to get an image, a image can be retrieved from a service, a url, of a file on the server. Others control the zoom, stretch, and color, title, and default overlays. There are also parameters to pre-process an image, such as crop, rotate or flip. You can also specify three color parameters and the associated files.
 
 For the details of FITS plotting parameters see: [see fits-plotting-parameters.md](fits-plotting-parameters.md)
 
@@ -87,7 +87,7 @@ See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-
 ###Run in iPyton
 
 1. start the iPython session by typing `iPython` in the terminal
-2. enter the script name at the ipython prompt
+2. type : 'run yourScript.py' at the ipython prompt
 
 ###Run in iPython notebook
 
