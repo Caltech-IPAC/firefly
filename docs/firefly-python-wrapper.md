@@ -91,26 +91,17 @@ See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-
 
 ###Run in iPython notebook
 
+Enter the python code below to initializes Firefly.
+Beside opening Firefly in the current cell, it also
+creates a callback (myCallback) and registers it with
+FireflyClient.
+host defaults to localhost:8080 if not given.
+channel is optional.  If not given, a random one will be assigned.
 
-
-
-
-
-
-
-
-
-1. open a cell
-2. type : `%run yourScript.py` into the cell
-3. click run
-
-
-**Example** (initFF.py) 
 
 ```python
-
 import sys
-import json
+from IPython.display import IFrame
 
 # add to the path directory with the data
 sys.path.append('../python/display/')
@@ -118,47 +109,44 @@ sys.path.append('../python/display/')
 from FireflyClient import *
 
 host='localhost:8080'
+channel = 'myChannel8'
+
+fc= FireflyClient(host,channel)
+print 'url: %s' % fc.getFireflyUrl()
 
 def myCallback(event):
     # print event
     print "Event Received: "+json.dumps(event['data']);
 
-fc= FireflyClient(host,'myChannel')
+fc.addListener(myCallback)
 
-fc.launchBrowser()
-# make sure user waits until the browser is ready to receive events
-raw_input("Wait for browser to load Firefly Tools.   Press Enter to continue...")
-
-try:
-    fc.addListener(myCallback)
-
-    # upload FITS file
-    file= fc.uploadFile('data/c.fits')
-    print 'uploadFile'
-
-    # show uploaded FITS
-    status= fc.showFits(file,'p1')
-    print 'showFits success: %s' % status['success']
-
-    # add user-defined action MyOp in the context menu of 'p1' FITS viewer
-    status= fc.addExtension('AREA_SELECT','MyOp','p1','MyOpExtension')
-    print 'addExtension success: %s' % status['success']
-
-    # show another FITS from the URL
-    pParams= { 'URL' : 'http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits','ColorTable' : '5'}
-    status= fc.showFits(fileOnServer=None, plotID='p2', additionalParams=pParams)
-    print 'showFits success: %s' % status['success']
-
-    # wait for events - do not exit the script
-    print 'Waiting for events. Press Ctrl C to exit.'
-    fc.waitForEvents()  # optional, gives code a place to park when thread is done
-
-except KeyboardInterrupt:
-    fc.disconnect()
-    fc.session.close()
-
+IFrame(fc.getFireflyUrl(), 1100, 600)
 ```
-	    
+
+In another cell, enter the code to perform the desire tasks
+
+```python
+
+# To load a FITS image
+file= fc.uploadFile('data/c.fits')
+status= fc.showFits(file, plotId="abcde")
+print 'showFits success: %s' % status['success']
+
+# To load a table
+file= fc.uploadFile('data/sample.tbl')
+status = fc.showTable(file, 'My Table', 50)
+print 'showTable success: %s' % status['success']
+
+# To load a catalog
+file= fc.uploadFile('data/2mass-m31-2412rows.tbl')
+status = fc.showTable(file, 'My 2MASS Catalog', 50)
+print 'showTable success: %s' % status['success']
+
+#  To display a XY plot on the previous catalog
+status = fc.showXYPlot(fileOnServer=file, additionalParams={'xColExpr' : 'h_m-k_m', 'yCol' : 'j_m', 'plotTitle' : 'j_m vs h_m-k_m'})
+print 'showXYPlot success: %s' % status['success']
+```
+
 ##FireflyClient's methods
 
 - *addListener(self, callback, name=ALL)*
