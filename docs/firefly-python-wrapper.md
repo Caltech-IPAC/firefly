@@ -90,7 +90,16 @@ See *XY Plot Visualization* parameters in [fftools-api-overview.md](fftools-api-
 2. enter the script name at the ipython prompt
 
 ###Run in iPython notebook
-  
+
+
+
+
+
+
+
+
+
+
 1. open a cell
 2. type : `%run yourScript.py` into the cell
 3. click run

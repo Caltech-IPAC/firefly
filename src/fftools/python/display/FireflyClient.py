@@ -270,7 +270,7 @@ class FireflyClient(WebSocketClient):
         return self.sendURLAsGet(url)
 
 
-    def showTable(self, fileOnServer, title=None, pageSize=None):
+    def showTable(self, fileOnServer, title=None, pageSize=None, isCatalog=True):
         """
         Show a table in Firefly
         :param fileOnServer: the is the name of the file on the server.  If you used uploadFile()
@@ -280,7 +280,10 @@ class FireflyClient(WebSocketClient):
         :param pageSize: how many rows are shown.
         :return: status of call
         """
-        url = self.urlRoot + "?cmd=pushTable&tblType=pushed"
+        url = self.urlRoot + "?cmd=pushTable"
+
+        if not isCatalog:
+            url+= '&tblType=table'
         if title:
             url+= '&Title=%s' % title
         if pageSize:
