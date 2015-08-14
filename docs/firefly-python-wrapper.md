@@ -149,7 +149,7 @@ print 'showXYPlot success: %s' % status['success']
 
 ##FireflyClient's methods
 
-- *addListener(self, callback, name=ALL)*
+- *addListener(callback, name=ALL)*
    
    Sets the **callback** function to be called when the events with specified names happen on the firefly client.
 
@@ -157,7 +157,7 @@ print 'showXYPlot success: %s' % status['success']
 
   Removes the callback on the events with specified names.
 
-- *waitForEvents(self)*
+- *waitForEvents()*
    
    Informs the client to pause and wait for the events from the server.
 
@@ -165,24 +165,24 @@ print 'showXYPlot success: %s' % status['success']
 
    Launches a browser with the Firefly Tools viewer. Do not specify any parameters unless you'd like to override the defaults. 
 
-- *disconnect(self)*
+- *disconnect()*
 
    Disconnects from the Firefly Tools server, closes the communication channel.
 
-- *uploadFile(self, path, preLoad=True)*
+- *uploadFile( path, preLoad=True)*
 
    Uploads a file to the Firefly Server. The uploaded file can be fits, region, and various types of table files.
 
-- *uploadFitsData(self, stream)*
+- *uploadFitsData(stream)*
  
    Uploads a FITS file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
    
-- *uploadTextData(self, stream)*
+- *uploadTextData(stream)*
  
    Uploads a text file like an object to the Firefly server. The method should allows file like data to be streamed without using an actual file.
    
 
-- *showFits(self, fileOnServer=None, plotID=None, additionalParams=None)*
+- *showFits(fileOnServer=None, plotID=None, additionalParams=None)*
 
    Shows a fits image.
     **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
@@ -190,23 +190,23 @@ print 'showXYPlot success: %s' % status['success']
     **additionalParam** - dictionary of any valid fits viewer plotting parameter, see [server-settings-for-fits-files.md](fits-plotting-parameters.md)
 
 
-- *showTable(self, fileOnServer, title=None, pageSize=None)*
+- *showTable(fileOnServer, title=None, pageSize=None)*
 
   Shows a table.
    **fileOnServer** - the name of the file on the server.  If you used uploadFile() then it is the return value of the method. Otherwise it is a file that firefly has direct read access to.
    **title** - title on table
    **pageSize** - how many rows are shown
 		 
-- *showFits(self, path, plotID=None, addtlParams=None)* 
+- *showFits(path, plotID=None, addtlParams=None)* 
      	 
        This method will load the fits located in the **path** and display the image in  
    the IRSA viewer.
       	 
-- *showTable(self, path, title=None, pageSize=None)*
+- *showTable(path, title=None, pageSize=None)*
 
    This method displays the table located in the path 
            
-- *addExtension(self, extType, title, plotId, extensionId, image=None)*
+- *addExtension( extType, title, plotId, extensionId, image=None)*
 
    Adds an extension to the plot. Extensions are context menus that allows you extend what firefly can do when certain actions happen.
     **extType** - may be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
@@ -217,7 +217,7 @@ print 'showXYPlot success: %s' % status['success']
 
 ###FireflyClient's Image control Methods 
 
-- `pan(self, plotId, x, y)`
+- `pan(plotId, x, y)`
 
     Pan or scroll the image to center on the image coordinates passed.
 
@@ -226,7 +226,7 @@ print 'showXYPlot success: %s' % status['success']
     - y: number, new center y position to scroll to
     - *return* status of call
 
-- `zoom(self, plotId, x, y)`
+- `zoom(plotId, factor)`
 
     Zoom the image
 
@@ -234,7 +234,7 @@ print 'showXYPlot success: %s' % status['success']
     - factor:  number, zoom factor for the image
     - *return* status of call
  
-- `stretch(self, plotId, serializedRV)`
+- `stretch( plotId, serializedRV)`
 
       Change the stretch of the image
 
