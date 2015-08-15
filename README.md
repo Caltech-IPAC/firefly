@@ -9,7 +9,7 @@ Firefly is being reused for various archives because it is a framework of archiv
 
 #### Firefly Viewer
 
-By default, this repository builds a default example webapp. This tool can be used for viewing fits data, catalogs, and xyplots. It is a general viewer tool for retrieving and viewing astronomy related data.
+By default, this repository builds a default example webapp. This tool can be used for viewing FITS data, catalogs, and xyplots. It is a general viewer tool for retrieving and viewing astronomy related data.
 
 #### Firefly Tools
 
@@ -24,18 +24,18 @@ The firefly components contain 3 main visualizers for astronomy data.
 #### Tabular Display
 Firefly has implemented “Excel-like” tables on the webpage. In an easy, interactive way, a user can sort the results, filter the data on multiple constraints, hide or show columns or select data for download or visualization. The Firefly Tools server is optimized to show very large tables without significant performance degradation. We have tested it with over 10 million rows, 50 column tables.
 
-#### Fits Visualization
+#### FITS Visualization
 Firefly provides a first-class FITS visualization on the Web without any plugins. All of the significant components you would expect to see in a basic desktop FITS application are available with data that Firefly displays. The FITS visualizer allows for plotting anything that the table shows that has a Lon and Lat. Therefore, users can overlay multiple catalogs over their FITS image and interact with it.
 
 #### 2D Line Graphs
-Firefly shows 2D line graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define equations from the rows for the XY Plot, such as (row1*row2/tan(row3)
+Firefly shows 2D line graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define equations from the rows for the XY Plot, such as (row1*row2/tan(row3))
 
 
 ## Setup
 
 #### Prerequisites
- -  [Java 1.7+] (http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html)
-    This is the version Firefly is tested on.  Later versions should work as well, although it is not fully tested.
+ -  [Java 1.8] http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+    This is the version we are using to compile and run Firefly.  
 
  -  [Gradle 2.3+] (https://gradle.org/downloads)
     Gradle is an open source build automation system.
@@ -46,6 +46,9 @@ Firefly shows 2D line graphs interactively so that a user can read the data poin
 
  -  [Node 0.12.0.+] (https://nodejs.org/download/)
     Javascript interpreter for command line environment, used for development tools
+
+#### Prepare before the build
+ - Make sure you have  <GRADLE>/bin, <JAVA>/bin, and <NODE>/bin in your PATH.
 
 
 #### How to build Firefly:
