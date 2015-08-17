@@ -176,7 +176,7 @@ class FireflyClient(WebSocketClient):
         if not channel:
             channel = self.channel
 
-        url = 'http://' + self.thisHost + '/fftools/minimal.html?channelID='
+        url = 'http://' + self.thisHost + '/fftools/minimal.html?id=Loader&channelID='
         if mode == "full" :
             url = self.urlBW
         return url + channel
