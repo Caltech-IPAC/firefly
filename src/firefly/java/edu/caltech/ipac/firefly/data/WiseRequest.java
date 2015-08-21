@@ -85,7 +85,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_PROV,"NEOWISER PROV");
             put(NEOWISER_YR1,"NEOWISER YR1 (2 Bands)");
             put(NEOWISER,"NEOWISER PUBLIC (2 Bands)");
-            put(NEOWISER_YR2,"NEOWISER (2 Bands)");
+            put(NEOWISER_YR2,"NEOWISER YR2 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
