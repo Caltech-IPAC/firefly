@@ -7,6 +7,7 @@ import edu.caltech.ipac.astro.FITSTableReader;
 import edu.caltech.ipac.firefly.server.db.spring.mapper.DataGroupUtil;
 import edu.caltech.ipac.firefly.server.query.TemplateGenerator;
 import edu.caltech.ipac.firefly.server.util.DsvToDataGroup;
+import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.*;
 import org.apache.commons.csv.CSVFormat;
@@ -26,7 +27,7 @@ public class DataGroupReader {
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
-    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS();
+    public static enum Format { TSV(CSVFormat.TDF), CSV(CSVFormat.DEFAULT), IPACTABLE(), UNKNOWN(), FIXEDTARGETS(), FITS(), JSON();
         CSVFormat type;
         Format() {}
         Format(CSVFormat type) {this.type = type;}
@@ -52,6 +53,8 @@ public class DataGroupReader {
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }
+        } else if (format == Format.JSON) {
+            return JsonToDataGroup.parse(inf);
         } else {
             throw new IOException("Unsupported format, file:" + inf);
         }
@@ -225,6 +228,8 @@ public class DataGroupReader {
                 return Format.IPACTABLE;
             } else if (fileExt.equalsIgnoreCase("fits")) {
                 return Format.FITS;
+            } else if (fileExt.equalsIgnoreCase("json")) {
+                return Format.JSON;
             }
         }
 
@@ -232,58 +237,65 @@ public class DataGroupReader {
         
         int row = 0;
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        String line = reader.readLine();
-        int[][] counts = new int[readAhead][2];
-        int csvIdx = 0, tsvIdx = 1;
-        while (line != null && row < readAhead) {
-            if (line.startsWith("|") || line.startsWith("\\")) {
-                return Format.IPACTABLE;
-            } else if (line.startsWith("COORD_SYSTEM: ") || line.startsWith("EQUINOX: ") ||
-                    line.startsWith("NAME-RESOLVER: ")) {
-                //NOTE: a fixed targets file contains the following lines at the beginning:
-                //COORD_SYSTEM: xxx
-                //EQUINOX: xxx
-                //NAME-RESOLVER: xxx
-                return Format.FIXEDTARGETS;
+        try {
+            String line = reader.readLine();
+            if (line.startsWith("{")) {
+                return Format.JSON;
             }
-            
-            counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();
-            counts[row][tsvIdx] = CSVFormat.TDF.parse(new StringReader(line)).iterator().next().size();
-            row++;
-            line = reader.readLine();
+            int[][] counts = new int[readAhead][2];
+            int csvIdx = 0, tsvIdx = 1;
+            while (line != null && row < readAhead) {
+                if (line.startsWith("|") || line.startsWith("\\")) {
+                    return Format.IPACTABLE;
+                } else if (line.startsWith("COORD_SYSTEM: ") || line.startsWith("EQUINOX: ") ||
+                        line.startsWith("NAME-RESOLVER: ")) {
+                    //NOTE: a fixed targets file contains the following lines at the beginning:
+                    //COORD_SYSTEM: xxx
+                    //EQUINOX: xxx
+                    //NAME-RESOLVER: xxx
+                    return Format.FIXEDTARGETS;
+                }
+
+                counts[row][csvIdx] = CSVFormat.DEFAULT.parse(new StringReader(line)).iterator().next().size();
+                counts[row][tsvIdx] = CSVFormat.TDF.parse(new StringReader(line)).iterator().next().size();
+                row++;
+                line = reader.readLine();
+            }
+            // check csv
+            int c = counts[0][csvIdx];
+            boolean cMatch = true;
+            for(int i = 1; i < row; i++) {
+                cMatch = cMatch && counts[i][csvIdx] == c;
+            }
+            // check tsv
+            int t = counts[0][tsvIdx];
+            boolean tMatch = true;
+            for(int i = 1; i < row; i++) {
+                tMatch = tMatch && counts[i][tsvIdx] == t;
+            }
+
+            if (cMatch && tMatch) {
+                if (t > c) {
+                    return Format.TSV;
+                } else {
+                    return Format.CSV;
+                }
+            } else {
+                if (cMatch) {
+                    return Format.CSV;
+                } else if (tMatch) {
+                    return Format.TSV;
+                } else {
+                    return Format.UNKNOWN;
+                }
+            }
+        } finally {
+            try {reader.close();} catch (Exception e) {e.printStackTrace();}
         }
 
-        // check csv
-        int c = counts[0][csvIdx];
-        boolean cMatch = true;
-        for(int i = 1; i < row; i++) {
-            cMatch = cMatch && counts[i][csvIdx] == c;
-        }
-        // check tsv
-        int t = counts[0][tsvIdx];
-        boolean tMatch = true;
-        for(int i = 1; i < row; i++) {
-            tMatch = tMatch && counts[i][tsvIdx] == t;
-        }
-
-        if (cMatch && tMatch) {
-            if (t > c) {
-                return Format.TSV;
-            } else {
-                return Format.CSV;
-            }
-        } else {
-            if (cMatch) {
-                return Format.CSV;
-            } else if (tMatch) {
-                return Format.TSV;
-            } else {
-                return Format.UNKNOWN;
-            }
-        }
     }
 
-    
+
 
 //====================================================================
 //

@@ -51,8 +51,10 @@ public class TableMeta implements Serializable, HandSerialize {
 
     public TableMeta(String source, String raColumnName, String decColumnName) {
         this.source = source;
-        LonLatColumns center = new LonLatColumns(raColumnName, decColumnName, CoordinateSys.EQ_J2000);
-        setCenterCoordColumns(center);
+        if (!StringUtils.isEmpty(raColumnName) && !StringUtils.isEmpty(decColumnName)) {
+            LonLatColumns center = new LonLatColumns(raColumnName, decColumnName, CoordinateSys.EQ_J2000);
+            setCenterCoordColumns(center);
+        }
         isFullyLoaded = true;
     }
 

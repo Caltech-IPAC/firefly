@@ -24,6 +24,7 @@ public class FitsImageCube {
     //private variables:
     private Map <String, FitsRead[]> fitsReadMap;
     private Map <String, DataType[]> dataTypeMap;
+    private String[] extNames;
     private Fits fits;
 
 
@@ -47,16 +48,34 @@ public class FitsImageCube {
 
         fitsReadMap = new HashMap<String, FitsRead[]>();
         dataTypeMap = new HashMap<String, DataType[]>();
+        extNames = new String[HDUs.length];
+
         for (int j = 0; j < HDUs.length; j++){
             Header header = HDUs[j].getHeader();
             if (header == null)
                 throw new FitsException("The" + j + "th HDU missing header in FITS file.");
             int naxis = header.getIntValue("NAXIS", -1);
             int naxis3 = header.getIntValue("NAXIS3", -1);
-            String extName = header.getStringValue("EXTNAME");
 
             if (!(HDUs[j] instanceof ImageHDU) || naxis <3 || naxis3 < 1) {
                 continue;   //ignore non-image and non-cube extensions
+            }
+
+            String extName;
+            if (header.getStringValue("EXTNAME") != null){
+                extName = header.getStringValue("EXTNAME");
+            }
+            else{
+                extName = "The " + String.valueOf(j) + "th extension";
+            }
+            extNames[j] = extName;
+
+            String wcs3Name;
+            if (header.getStringValue("CTYPE3") != null){
+                wcs3Name = header.getStringValue("CTYPE3");
+            }
+            else {
+                wcs3Name = "WCS3";
             }
 
             FitsRead[] fitsReadAry = FitsRead.createFitsReadArray(fits, HDUs[j]);
@@ -64,13 +83,14 @@ public class FitsImageCube {
                 // Make the fitsReadMap:
                 fitsReadMap.put(extName, fitsReadAry);
                 // Make the dataTypeMap: <key = extName, value = dataTypeAry>
-                dataTypeMap = getDataTypeMap(header, dataTypeMap);
+                dataTypeMap = getDataTypeMap(extName, wcs3Name, header, dataTypeMap);
             }
         }
         if (fitsReadMap.size() == 0){
             throw new FitsException("The FITS has no image cubes.");
         }
     }
+
 
     /**
      * Build the data type map for one HDU
@@ -79,16 +99,15 @@ public class FitsImageCube {
      * @return
      */
 
-    private Map<String, DataType[]> getDataTypeMap(Header header, Map<String, DataType[]> dataTypeMap) {
+    private Map<String, DataType[]> getDataTypeMap(String extName, String wcs3Name, Header header, Map<String, DataType[]> dataTypeMap) {
 
         //If the input dataTypeMap exists, keep adding elements to it. Otherwise make a new one.
         dataTypeMap = dataTypeMap.size() == 0 ? new HashMap<String, DataType[]>() : dataTypeMap;
 
         // Only two dataTypes: the first one is for the 3rd WCS; the second one is for the flux.
         DataType[] dataTypeAry = new DataType[2];
-        String extName = header.getStringValue("EXTNAME");
 
-        dataTypeAry[0] = new DataType(header.getStringValue("CTYPE3"), null);
+        dataTypeAry[0] = new DataType(wcs3Name, null);
         dataTypeAry[0].setDataType(Double.class);
         dataTypeAry[0].setUnits(header.getStringValue("CUNIT3"));
         dataTypeAry[0].setKeyName(header.getStringValue("CTYPE3"));
@@ -99,7 +118,20 @@ public class FitsImageCube {
         dataTypeAry[1].setKeyName(extName);
 
         dataTypeMap.put(extName, dataTypeAry);
+
         return dataTypeMap;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String[] getExtNames(){
+        return extNames;
+    }
+
+    public Object[] getMapKeys(){
+        return fitsReadMap.keySet().toArray();
     }
 
     /**
@@ -121,25 +153,25 @@ public class FitsImageCube {
     }
 
     /**
-     * At given extension and image point, return a data group:
+     * At a given map key (fits extension) and an image point, return a data group:
      *     Each dataObj contains the 3rd dimension value (wavelength, frequency or time in WCS) and
      *     the image data (image flux or error or coverage).
      *
-     * @param extName
+     * @param mapKey
      * @param imagePt: image point
      * @return dataGroup
      */
-    public DataGroup getDataGroup(String extName, ImagePt imagePt)
-        throws PixelValueException {
+    public DataGroup getDataGroup(String mapKey, ImagePt imagePt)
+        throws PixelValueException, FitsException {
 
         // Get the dataTypeAry for this extension:
-        DataType[] dataTypeAry = dataTypeMap.get(extName);
+        DataType[] dataTypeAry = dataTypeMap.get(mapKey);
 
         // Initialize the dataGroup:
-        DataGroup dataGroup = new DataGroup(extName, dataTypeAry);
+        DataGroup dataGroup = new DataGroup(mapKey, dataTypeAry);
 
         // Get the fitsReadAry for this extension:
-        FitsRead[] fitsReadAry = fitsReadMap.get(extName);
+        FitsRead[] fitsReadAry = fitsReadMap.get(mapKey);
         int numOfFitsReads = fitsReadAry.length;
 
         for (int z = 0; z < numOfFitsReads; z ++) {
@@ -151,9 +183,17 @@ public class FitsImageCube {
             DataObject dataObj = new DataObject(dataGroup);
 
             // Get the value of the 3rd WCS (eg. wavelength) at zth image:
-            double wcs3Min = header.getFloatValue("CRVAL3", -1);
-            double wcs3Del = header.getFloatValue("CDELT3", -1);
-            double wcs3Val = wcs3Min + wcs3Del * z;
+
+            double wcs3Min = header.getDoubleValue("CRVAL3", Double.NaN );
+            double wcs3Delt = header.getDoubleValue("CDELT3", Double.NaN);
+            double wcs3Val;
+            if ( !Double.isNaN(wcs3Min) && !Double.isNaN(wcs3Delt) ){
+                wcs3Val = wcs3Min + wcs3Delt * z;
+            }
+            else {
+                // if not enough wcs3 information, use the index:
+                wcs3Val = z;
+            }
 
             // Set the 3rd WCS value at the zth image to the first value of the dataObj:
             dataObj.setDataElement(dataTypeAry[0], wcs3Val);
@@ -161,10 +201,10 @@ public class FitsImageCube {
             // Get the image value at the zth image and the imagePt:
             double imgVal = fitsRead.getFlux(imagePt);
 
-            // Set the flux at the zth image and the imagePt to the second value of the dataObj:
+            // Set the image data value at the zth image and the imagePt to the second value of the dataObj:
             dataObj.setDataElement(dataTypeAry[1], imgVal);
 
-            // Add the dataobj to the dataGroup:
+            // Add the dataObj to the dataGroup:
             dataGroup.add(dataObj);
         }
         return dataGroup;
@@ -182,9 +222,6 @@ public class FitsImageCube {
 
     public static void main(String[] args)
     {
-
-        int a = 1;
-
         if (args.length != 2)
         {
             usage();
@@ -204,7 +241,8 @@ public class FitsImageCube {
             ImagePt imagePt = new ImagePt(28,28);
             //Null value:
             //ImagePt imagePt = new ImagePt(20,20);
-            DataGroup dg = fitsImageCube.getDataGroup("error", imagePt);
+            Object[] keys = fitsImageCube.getMapKeys();
+            DataGroup dg = fitsImageCube.getDataGroup((String)keys[0], imagePt);
             File output_file = new File(ipac_filename);
             IpacTableWriter.save(output_file, dg);
         }

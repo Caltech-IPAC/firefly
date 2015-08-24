@@ -69,21 +69,29 @@ public final class FITSTableReader
         //String strategy = TOP_MOST;
         //String strategy = FULLY_FLATTEN;
 
-        /**
-        //for lsst:
+        //Test src-004192-i4-0300.fits:
         String[] dataCols =   {"flags", "id", "coord_ra", "coord_dec", "parent", "footprint", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         String[] headerCols = null;
         if (!strategy.equals(FULLY_FLATTEN)){
             headerCols = new String[] {"flags", "id", "coord_ra", "coord_dec", "parent", "footprint", "base_ClassificationExtendedness_value", "base_SdssCentroid_xSigma"};
         }
-         */
 
-        //for lsst_cat:
+        /**
+        //Test calexp-004192-i4-0300.fits:
         String[] dataCols = {"id", "cat.archive", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
         String[] headerCols = null;
         if (!strategy.equals(FULLY_FLATTEN)) {
             headerCols = new String[] {"id", "name", "kernel", "center_x", "spatialfunctions", "components", "coefficients", "image", "cd", "ctype1", "A", "Ap"};
         }
+         */
+
+        /**
+         * // Test all nulls:
+        strategy = null;
+        dataCols = null;
+        headerCols = null;
+         */
+
 
         int whichDG = 0;
         if (strategy == EXPAND_BEST_FIT){
@@ -233,7 +241,8 @@ public final class FITSTableReader
                                                          String strategy)
             throws FitsException, TableFormatException, IllegalArgumentException, IOException {
 
-        if (!(strategy.equals(FULLY_FLATTEN)) && !(strategy.equals(EXPAND_BEST_FIT)) && !(strategy.equals(EXPAND_REPEAT))){
+        if ((strategy == null) ||
+                (!(strategy.equals(FULLY_FLATTEN)) && !(strategy.equals(EXPAND_BEST_FIT)) && !(strategy.equals(EXPAND_REPEAT)))){
             strategy = TOP_MOST;
         }
 

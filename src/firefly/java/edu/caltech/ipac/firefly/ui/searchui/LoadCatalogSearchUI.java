@@ -95,6 +95,7 @@ public class LoadCatalogSearchUI implements SearchUI {
     private Widget createLoadCatalogsContent() {
         SimpleInputField field = SimpleInputField.createByProp(_prop.makeBase("upload"));
         _uploadField= (FileUploadField)field.getField();
+        _uploadField.setUploadType("TABLE");
 
         HTML text = GwtUtil.makeFaddedHelp("Custom catalog in IPAC table format&nbsp;&nbsp;");
 

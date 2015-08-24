@@ -307,7 +307,6 @@ class StandaloneUI {
             xyLayout = xyPlotAreaStandalone;
             hasXY = true;
         }
-
         if (dynMultiViewerTab ==null && hasPlotResults()) {
             dynMultiViewerTab = imageTabPane.addTab(dynMultiViewer.getWidget(), "Image data", "FITS Image", false);
             hasImage = true;
@@ -376,12 +375,19 @@ class StandaloneUI {
                     if (coverageTab==null && !hasPlotResults())  addCoverageTab();
                 }
 
-                if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) || meta.contains(MetaConst.DATASET_CONVERTER)) {
+//TODO: Not used at the moment.  removed 'CATALOG_OVERLAY_TYPE' from condition for now.  Should revisit this when we start working on FUSE again.
+                if (meta.contains(MetaConst.DATASET_CONVERTER)) {
                     if (dsMultiViewerTab==null) {
                         dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "Image Data Sets", "FITS Image", false);
                     }
                     imageTabPane.selectTab(dsMultiViewerTab);
                 }
+//                if (!meta.contains(MetaConst.CATALOG_OVERLAY_TYPE) || meta.contains(MetaConst.DATASET_CONVERTER)) {
+//                    if (dsMultiViewerTab==null) {
+//                        dsMultiViewerTab = imageTabPane.addTab(dsMultiViewer.getWidget(), "Image Data Sets", "FITS Image", false);
+//                    }
+//                    imageTabPane.selectTab(dsMultiViewerTab);
+//                }
 
                 if (hasCatalogResults()) {
                      if (xyPlots.getTab(XYVIEW_TAB_NAME) == null) {

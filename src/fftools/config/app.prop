@@ -9,13 +9,16 @@ twomass.ibe.host=@twomass.ibe.host@
 FireflyTools.Advertise= @FireflyTools.Advertise@
 ignore.auth=true
 
-lsst.qserv.uri=@lsst.qserv.uri@
-lsst.qserv.user=@lsst.qserv.user@
-lsst.qserv.pass=@lsst.qserv.pass@
+lsst.dataAccess.uri = @lsst.dataAccess.uri@
+lsst.dataAccess.db = @lsst.dataAccess.db@
 
-lsst.schema.uri = @lsst.schema.uri@
-lsst.schema.user = @lsst.schema.user@
-lsst.schema.pass = @lsst.schema.pass@
+# not used at the moment - since Aug 2015 - may come back
+#lsst.qserv.uri=@lsst.qserv.uri@
+#lsst.qserv.user=@lsst.qserv.user@
+#lsst.qserv.pass=@lsst.qserv.pass@
+#lsst.schema.uri = @lsst.schema.uri@
+#lsst.schema.user = @lsst.schema.user@
+#lsst.schema.pass = @lsst.schema.pass@
 
 visualize.fits.Security= @visualize.fits.Security@
 
