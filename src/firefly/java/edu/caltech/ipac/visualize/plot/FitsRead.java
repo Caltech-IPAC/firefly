@@ -18,10 +18,7 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -223,6 +220,13 @@ public class FitsRead implements Serializable {
     }
 
 
+    /**
+     * This method is used by FitsImageCube only
+     * @param fits
+     * @param hdu
+     * @return
+     * @throws FitsException
+     */
     public static FitsRead[] createFitsReadArray(Fits fits, BasicHDU hdu)
             throws FitsException {
 
@@ -1662,30 +1666,78 @@ public class FitsRead implements Serializable {
     }
 
     public Fits createNewFits() throws FitsException {
-        int naxis1 = header.getIntValue("NAXIS1");
+        /*int naxis1 = header.getIntValue("NAXIS1");
         int naxis2 = header.getIntValue("NAXIS2");
         int dims2[] = new int[]{naxis1, naxis2};
         float [][] outData = (float[][]) ArrayFuncs.curl(float1d, dims2);
-        ImageData imageData= new ImageData(outData);
-        ImageHDU newHDU = new ImageHDU(cloneHeader(header), imageData);
+        ImageData imageData= new ImageData(outData)*/;
+
+        ImageHDU newHDU = new ImageHDU(cloneHeader(header), getImageData(header, float1d));
         Fits outputFits = new Fits();
         outputFits.addHDU(newHDU);
         return outputFits;
     }
 
+    private ImageData getImageData(Header header, float[] float1d){
+        int naxis1 = header.getIntValue("NAXIS1");
+        int naxis2 = header.getIntValue("NAXIS2");
+        int dims2[] = new int[]{naxis1, naxis2};
+        float [][]  data =  (float[][]) ArrayFuncs.curl(float1d,dims2);
+        ImageData imageData= new ImageData(data);
+        return imageData;
+    }
     public static void writeFitsFile(OutputStream stream, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException{
         Fits output_fits = new Fits();
         for(FitsRead fr : fitsReadAry) {
             BasicHDU one_image_hdu = refFits.getHDU(0);
             Header header = one_image_hdu.getHeader();
-            Data data = one_image_hdu.getData();
-            ImageHDU image_hdu = new ImageHDU(header, data);
+            //Data data = one_image_hdu.getData();
+            //ImageHDU image_hdu = new ImageHDU(header, data);
+            /*int naxis1 = header.getIntValue("NAXIS1");
+            int naxis2 = header.getIntValue("NAXIS2");
+            int dims2[] = new int[]{naxis1, naxis2};
+            float [][]  data =  (float[][]) ArrayFuncs.curl(fr.float1d,dims2);
+            ImageData imageData= new ImageData(data);*/
+            ImageHDU image_hdu = new ImageHDU(header,  fr.getImageData(header, fr.float1d));
             output_fits.addHDU(image_hdu);
         }
         output_fits.write(new DataOutputStream(stream));
     }
 
+    static void usage()
+    {
+        System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <fits_filename> <ipac_filename>");
+        System.exit(1);
+    }
 
+    /**
+     * Test the FitsImaegCube
+     * @param args
+     * @throws FitsException
+     * @throws IOException
+     */
+    public static void main(String[] args) throws FitsException, IOException {
+        if (args.length != 2) {
+            usage();
+        }
+
+        String inFitsName = args[0];
+        String outFitsName = args[1];
+        Fits fits = new Fits(inFitsName);
+        FitsImageCube fic = FitsRead.createFitsImageCube(fits);
+
+        Object[] keys = fic.getMapKeys();
+
+        FitsRead fitsRead0 = fic.getFitsReadMap().get(keys[0])[0];
+        FileOutputStream fo = new java.io.FileOutputStream(outFitsName+"fitsRead0ReadAsImageCube.fits");
+        fitsRead0.writeSimpleFitsFile(fo);
+
+
+        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
+
+        fo = new java.io.FileOutputStream(outFitsName+"fitsRead0ReadAsFitsRead.fits");
+        fry[0].writeSimpleFitsFile(fo);
+    }
 
 }
 
