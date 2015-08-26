@@ -7,7 +7,6 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Data;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.FitsFactory;
@@ -560,14 +559,16 @@ public class FitsRead implements Serializable {
     }
 
 
-    private static void updateHeader(Header header, BasicHDU HDU, int pos)
+    private static void updateHeader(Header header, int pos, long hduOffset)
+
             throws FitsException {
         header.addLine(new HeaderCard(
                 "SPOT_EXT", pos, "EXTENSION NUMBER (IN SPOT)"));
 
         header.addLine(new HeaderCard(
-                "SPOT_OFF", HDU.getFileOffset(),
+                "SPOT_OFF", hduOffset,
                 "EXTENSION OFFSET (IN SPOT)"));
+        header.resetOriginalSize();
     }
 
 
@@ -591,30 +592,31 @@ public class FitsRead implements Serializable {
 
             if (goodImage) {
                 if (hasExtension) { // update this hdu by adding keywords/values
-                    updateHeader(header, HDUs[j], j);
+                    updateHeader(header, j, HDUs[j].getFileOffset());
                 }
 
                 int naxis3 = header.getIntValue("NAXIS3", -1);
                 if ((naxis > 2) && (naxis3 > 1)) { //it is a cube data
                     if (SUTDebug.isDebug())
                         System.out.println("GOT A FITS CUBE");
-                    BasicHDU[] splitHDUs = splitFitsCube(HDUs[j]);
+                    BasicHDU[] splitHDUs = splitFitsCube( (ImageHDU) HDUs[j]);
                     /* for each plane of cube */
-                    for (int jj = 0; jj < splitHDUs.length; jj++)
+                    for (int jj = 0; jj < splitHDUs.length; jj++) {
                         HDUList.add(splitHDUs[jj]);
+                    }
                 } else {
                     HDUList.add(HDUs[j]);
                 }
             }
 
             //when the header is added to the new fits file, the card number could be increased if the header is a primary
-            header.resetOriginalSize();
+            //header.resetOriginalSize();
 
         } //end j loop
         return HDUList;
     }
 
-    private static BasicHDU[] splitFitsCube(BasicHDU hdu)
+    private static BasicHDU[] splitFitsCube(ImageHDU hdu)
             throws FitsException {
 
         Header header = hdu.getHeader();
@@ -628,34 +630,17 @@ public class FitsRead implements Serializable {
         int naxis3 = header.getIntValue("NAXIS3", 0);
         float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
 
-        BasicHDU[] retval = new BasicHDU[naxis3];
+        BasicHDU[] hduList = new BasicHDU[naxis3];
         for (int i = 0; i < naxis3; i++) {
-            Header newHeader = cloneHeader(header);
+            hduList[i] = makeHDU(hdu,data32[i] );
+            hdu.addValue("SPOT_PL", i + 1, "PLANE OF FITS CUBE (IN SPOT)");
+            hdu.getHeader().resetOriginalSize();
+         }
 
-            ImageData newImageData = new ImageData(data32[i]);
-            retval[i] = new ImageHDU(newHeader, newImageData);
-            retval[i].addValue("SPOT_PL", i + 1, "PLANE OF FITS CUBE (IN SPOT)");
-
-            newHeader.resetOriginalSize();
-        }
-
-        return retval;
+        return hduList;
     }
 
 
-    static Header cloneHeader(Header header) {
-        // first collect cards from old header
-        Cursor iter = header.iterator();
-        String cards[] = new String[header.getNumberOfCards()];
-        int i = 0;
-        while (iter.hasNext()) {
-            HeaderCard card = (HeaderCard) iter.next();
-            //System.out.println("RBH card.toString() = " + card.toString());
-            cards[i] = card.toString();
-            i++;
-        }
-        return (new Header(cards));
-    }
 
     public static RangeValues getDefaultFutureStretch() {
         return DEFAULT_RANGE_VALUE;
@@ -676,7 +661,7 @@ public class FitsRead implements Serializable {
      * @param pixels The 2-dim float array of new pixels
      * @return The new ImageHDU
      */
-    public static ImageHDU makeHDU(ImageHDU hdu, float[][] pixels)
+    private static ImageHDU makeHDU(ImageHDU hdu, float[][] pixels)
             throws FitsException {
         Header header = hdu.getHeader();
 
@@ -690,27 +675,27 @@ public class FitsRead implements Serializable {
             cards[i] = card.toString();
             i++;
         }
-        Header new_header = new Header(cards);
+        Header newHeader = new Header(cards);
 
-        new_header.deleteKey("BITPIX");
-        new_header.setBitpix(-32);
-        new_header.deleteKey("NAXIS");
-        new_header.setNaxes(2);
-        new_header.deleteKey("NAXIS1");
-        new_header.setNaxis(1, pixels[0].length);
-        new_header.deleteKey("NAXIS2");
-        new_header.setNaxis(2, pixels.length);
+        newHeader.deleteKey("BITPIX");
+        newHeader.setBitpix(-32);
+        newHeader.deleteKey("NAXIS");
+        newHeader.setNaxes(2);
+        newHeader.deleteKey("NAXIS1");
+        newHeader.setNaxis(1, pixels[0].length);
+        newHeader.deleteKey("NAXIS2");
+        newHeader.setNaxis(2, pixels.length);
 
-        new_header.deleteKey("DATAMAX");
-        new_header.deleteKey("DATAMIN");
-        new_header.deleteKey("NAXIS3");
-        new_header.deleteKey("NAXIS4");
-        new_header.deleteKey("BLANK");
-        new_header.deleteKey("BSCALE");
-        new_header.deleteKey("BZERO");
+        newHeader.deleteKey("DATAMAX");
+        newHeader.deleteKey("DATAMIN");
+        newHeader.deleteKey("NAXIS3");
+        newHeader.deleteKey("NAXIS4");
+        newHeader.deleteKey("BLANK");
+        //new_header.deleteKey("BSCALE");
+        //new_header.deleteKey("BZERO");
 
         ImageData new_image_data = new ImageData(pixels);
-        hdu = new ImageHDU(new_header, new_image_data);
+        hdu = new ImageHDU(newHeader, new_image_data);
         return hdu;
     }
 
@@ -1660,18 +1645,36 @@ public class FitsRead implements Serializable {
 
 
     }
+    static Header cloneHeader(Header header) {
+        // first collect cards from old header
+        Cursor iter = header.iterator();
+        String cards[] = new String[header.getNumberOfCards()];
+        int i = 0;
+        while (iter.hasNext()) {
+            HeaderCard card = (HeaderCard) iter.next();
+            //System.out.println("RBH card.toString() = " + card.toString());
+            cards[i] = card.toString();
+            i++;
+        }
+
+        Header clonedHeader = new Header(cards);
+
+        clonedHeader.resetOriginalSize();
+        return clonedHeader;
+    }
 
     public void writeSimpleFitsFile(OutputStream stream) throws FitsException, IOException{
         createNewFits().write(new DataOutputStream(stream));
     }
 
-    public Fits createNewFits() throws FitsException {
-  
-        ImageHDU newHDU = new ImageHDU(cloneHeader(header), getImageData(header, float1d));
+    public Fits createNewFits() throws FitsException, IOException {
+
+        ImageHDU newHDU =  new ImageHDU(header, getImageData(header, float1d));
         Fits outputFits = new Fits();
         outputFits.addHDU(newHDU);
         return outputFits;
     }
+
 
     private ImageData getImageData(Header header, float[] float1d){
         int naxis1 = header.getIntValue("NAXIS1");
@@ -1689,8 +1692,8 @@ public class FitsRead implements Serializable {
             //Data data = one_image_hdu.getData();
             //ImageHDU image_hdu = new ImageHDU(header, data);
 
-            ImageHDU image_hdu = new ImageHDU(header,  fr.getImageData(header, fr.float1d));
-            output_fits.addHDU(image_hdu);
+            ImageHDU imageHDU = new ImageHDU(header,  fr.getImageData(header, fr.float1d));
+            output_fits.addHDU(imageHDU);
         }
         output_fits.write(new DataOutputStream(stream));
     }
@@ -1699,6 +1702,40 @@ public class FitsRead implements Serializable {
     {
         System.out.println("usage java edu.caltech.ipac.astro.FITSTableReader <fits_filename> <ipac_filename>");
         System.exit(1);
+    }
+
+
+    /**
+     * Test the FitsImaegCube
+     * @param args
+     * @throws FitsException
+     * @throws IOException
+     */
+    public static void main(String[] args) throws FitsException, IOException {
+        if (args.length != 2) {
+            usage();
+        }
+
+        String inFitsName = args[0];
+        String outFitsName = args[1];
+        Fits fits = new Fits(inFitsName);
+
+        FitsImageCube fic = FitsRead.createFitsImageCube(fits);
+        Object[] keys = fic.getMapKeys();
+         FitsRead fitsRead0 = fic.getFitsReadMap().get(keys[0])[1];
+        FileOutputStream fo = new java.io.FileOutputStream(outFitsName+"fitsRead1ReadAsImageCube.fits");
+        fitsRead0.writeSimpleFitsFile(fo);
+        fo.close();
+
+        FitsRead[] fry = FitsRead.createFitsReadArray(fits);
+        fo  = new java.io.FileOutputStream(outFitsName+"fitsRead1ReadAsFitsRead.fits");//"f-32AsFitsRead.fits");//
+        fry[1].writeSimpleFitsFile(fo);
+        fo.close();
+
+        Fits newFits = new Fits(outFitsName+"fitsRead1ReadAsFitsRead.fits");
+        BasicHDU[] hdus = newFits.read();
+
+
     }
 
 }
