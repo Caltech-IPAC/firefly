@@ -296,9 +296,11 @@ public class WebGridLayer implements WebEventListener{
             }
         }
         public void delete(WebLayerItem item) {
-            MiniPlotWidget mpw= item.getDrawer().getPlotView().getMiniPlotWidget();
-            GridCmd cmd= (GridCmd )AllPlots.getInstance().getCommand(GridCmd.CommandName);
-            cmd.setGridEnable(mpw, false, true, false);
+            if (item.getDrawer() instanceof Drawer) {
+                MiniPlotWidget mpw= ((Drawer)item.getDrawer()).getPlotView().getMiniPlotWidget();
+                GridCmd cmd= (GridCmd )AllPlots.getInstance().getCommand(GridCmd.CommandName);
+                cmd.setGridEnable(mpw, false, true, false);
+            }
         }
     }
 

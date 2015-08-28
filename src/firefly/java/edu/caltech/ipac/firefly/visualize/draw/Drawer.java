@@ -40,7 +40,7 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
  * A Drawer  can take one data set and draw it on one WebPlotView.
  * @version $Id: Drawer.java,v 1.54 2012/09/21 23:35:38 roby Exp $
  */
-public class Drawer implements WebEventListener {
+public class Drawer implements WebEventListener, LayerDrawer {
 
     public static boolean ENABLE_COLORMAP= false;
     public static enum DataType {VERY_LARGE, NORMAL}
@@ -207,8 +207,10 @@ public class Drawer implements WebEventListener {
             _drawingEnabled= enable;
             if (_drawingEnabled) redraw();
         }
-
     }
+
+    @Override
+    public boolean getSupportsRegions() { return true; }
 
     public void setEnableDecimationDrawing(boolean d) {
         decimate= d;
@@ -300,6 +302,9 @@ public class Drawer implements WebEventListener {
     public List<DrawObj> getData() {
         return _data;
     }
+
+    @Override
+    public boolean hasData() { return _data!=null; }
 
     public void setVisible(boolean v) {
         if (alive) {

@@ -1,12 +1,12 @@
 VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - zoomUp zoomDown zoomOriginal zoomFit zoomFill - colorTable stretchQuick - \
                        Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerTool \
-                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader
+                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader maskOverlay
 
 VisMenuBar.row1.Items = FitsDownload ImageSelect - zoomUp zoomDown zoomOriginal zoomFit zoomFill - \
                        Rotate RotateNorth FlipImage centerPlotonQuery
 
 VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea DistanceTool MarkerTool \
-                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader
+                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader maskOverlay
 
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
@@ -38,6 +38,10 @@ ds9Region.ToolbarButtonType= COMMAND
 
 FlipImage.Title= Flip
 FlipImage.ShortDescription= Flip the image on the Y Axis
+
+
+maskOverlay.Title= Overlay Mask
+maskOverlay.ShortDescription= Overlay a mask Image
 
 
 zscaleLinear.Title= Z Scale Linear Stretch

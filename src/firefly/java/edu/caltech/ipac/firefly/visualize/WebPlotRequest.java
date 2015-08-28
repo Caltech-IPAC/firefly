@@ -7,6 +7,7 @@ import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -15,6 +16,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 /**
  * User: roby
@@ -95,6 +97,11 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HAS_MAX_ZOOM_LEVEL = "HasMaxZoomLevel";
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
+
+    public static final String SELECTED_IMAGE_IDX= "SelectedImageIdx";
+    public static final String MASK_BITS= "MaskBits";
+    public static final String PLOT_AS_MASK= "PlotAsMask";
+    public static final String MASK_COLORS= "MaskColors";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -1137,6 +1144,30 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getPlotId() { return getParam(PLOT_ID); }
 
+
+    public void setSelectedImageIdx(int idx) { setParam(SELECTED_IMAGE_IDX,idx+""); }
+    public int getSelectedImageIdx() { return containsParam(SELECTED_IMAGE_IDX) ? getIntParam(SELECTED_IMAGE_IDX) : 0;}
+
+    public void setMaskBits(int idx) { setParam(MASK_BITS,idx+""); }
+    public int getMaskBits() { return containsParam(MASK_BITS) ? getIntParam(MASK_BITS) : 0;}
+
+    public void setPlotAsMask(boolean plotAsMask) { setParam(PLOT_AS_MASK, plotAsMask+"");}
+    public boolean isPlotAsMask() { return getBooleanParam(PLOT_AS_MASK);}
+
+
+    public void setMaskColors(String colors[]) {
+        setParam(MASK_COLORS, StringUtils.combineAry(";", colors));
+    }
+
+    public List<String> getMaskColors() {
+        if (containsParam(MASK_COLORS)) {
+            String data= getParam(MASK_COLORS);
+            return StringUtils.parseStringList(data,";");
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
 
 
     /**

@@ -151,14 +151,11 @@ public class TileDrawer {
                                                              image.getHeight());
             _imageWidget.add(imw, widgetData._x, widgetData._y);
             imw.setPixelSize(widgetData._width, widgetData._height);
-            // ---- experimental
             float zfact = _plot.getZoomFact();
             int offX = (int) (_plot.getOffsetX() * zfact);
             int offY = (int) (_plot.getOffsetY() * zfact);
             _imageWidget.setWidgetPosition(imw, widgetData._x + offX, widgetData._y + offY);
-            // ---- experimental
             _hregList.add(imw.addLoadHandler(new PlotLoadHandler(widgetData)));
-//            _hregList.add(imw.addErrorHandler(_loadError));
             _imageStateMap.put(image, widgetData);
             if (image.isCreated()) {
                 getTileImage(image);

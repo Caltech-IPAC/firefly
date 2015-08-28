@@ -9,7 +9,7 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 
@@ -22,7 +22,7 @@ public interface PrintableOverlay {
 
     public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
                                   WebPlot plot,
-                                  Drawer drawer,
+                                  LayerDrawer drawer,
                                   WebLayerItem item);
 }
 

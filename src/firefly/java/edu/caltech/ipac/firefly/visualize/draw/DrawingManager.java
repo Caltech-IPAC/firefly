@@ -1119,37 +1119,40 @@ public class DrawingManager implements AsyncDataLoader {
         public Map<WebLayerItem,HandlerRegistration> handlers= new HashMap<WebLayerItem, HandlerRegistration>(5);
 
         public Widget makeExtraColumnWidget(final WebLayerItem item) {
-            List<DrawObj> l= item.getDrawer().getData();
             Widget retval= null;
-            if (l!=null && l.size()>0 && l.get(0) instanceof PointDataObj) {
-                PointDataObj pd= (PointDataObj)l.get(0);
-                final DrawSymbol symbol= pd.getSymbol();
-                final DefaultDrawable drawable= new DefaultDrawable();
+            if (item.getDrawer() instanceof Drawer) {
+                final Drawer drawer= (Drawer)item.getDrawer();
+                List<DrawObj> l= drawer.getData();
+                if (l!=null && l.size()>0 && l.get(0) instanceof PointDataObj) {
+                    PointDataObj pd= (PointDataObj)l.get(0);
+                    final DrawSymbol symbol= pd.getSymbol();
+                    final DefaultDrawable drawable= new DefaultDrawable();
 
-                redraw(item, drawable,symbol);
-                retval= drawable.getDrawingPanelContainer();
+                    redraw(item, drawable,drawer,symbol);
+                    retval= drawable.getDrawingPanelContainer();
 
-                if (handlers.containsKey(item)) handlers.get(item).removeHandler();
-                HandlerRegistration reg= item.addValueChangeHandler(new ValueChangeHandler<String>() {
-                    public void onValueChange(ValueChangeEvent<String> ev) {
-                        redraw(item, drawable,symbol);
-                    }
-                });
-                handlers.put(item,reg);
+                    if (handlers.containsKey(item)) handlers.get(item).removeHandler();
+                    HandlerRegistration reg= item.addValueChangeHandler(new ValueChangeHandler<String>() {
+                        public void onValueChange(ValueChangeEvent<String> ev) {
+                            redraw(item, drawable,drawer, symbol);
+                        }
+                    });
+                    handlers.put(item,reg);
 
+                }
             }
             return retval;
         }
 
-        private static void redraw(WebLayerItem item, DefaultDrawable drawable, DrawSymbol symbol) {
-            WebPlot p= item.getDrawer().getPlotView().getPrimaryPlot();
+        private static void redraw(WebLayerItem item, DefaultDrawable drawable, Drawer drawer, DrawSymbol symbol) {
+            WebPlot p= drawer.getPlotView().getPrimaryPlot();
             if (p!=null) {
                 Graphics g= Drawer.makeGraphics(drawable, "icon-layer");
                 drawable.addDrawingArea(g.getWidget(),false);
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
                 pointDataObj.setSize(4);
-                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),item.getDrawer().getDefaultColor()),true, false);
+                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),drawer.getDefaultColor()),true, false);
             }
         }
     }

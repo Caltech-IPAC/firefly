@@ -134,7 +134,6 @@ public class PlotFileTaskHelper {
 
 
     public void handleSuccess(WebPlotResult result) {
-        long start = System.currentTimeMillis();
         List<WebPlot> successList= new ArrayList<WebPlot>(10);
         WebPlotView pv= _mpw.getPlotView();
         try {

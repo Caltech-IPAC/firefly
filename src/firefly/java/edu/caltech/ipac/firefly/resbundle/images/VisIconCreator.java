@@ -228,6 +228,8 @@ public interface VisIconCreator extends ClientBundle {
     @Source("icons-2014/DS9.png")
     public ImageResource getDS9Symbol();
 
+    @Source("tmp-icon.png")
+    public ImageResource getImageMask();
 
 //    @Source("step-right-16x16.png")
 //    public ImageResource getStepRight();
