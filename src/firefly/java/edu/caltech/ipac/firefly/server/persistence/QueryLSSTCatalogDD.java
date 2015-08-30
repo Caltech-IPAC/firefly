@@ -36,7 +36,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
     private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
-    private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");
+    //private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -49,7 +49,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
         }
 
         //String sql = "select name, description, type, unit, IF(notNull>0,\"y\",\"n\") as sel from md_Column where tableId in (select tableId from md_Table where name='"+catTable+"')";
-        String sql = "SHOW COLUMNS FROM "+catTable+" IN "+DATABASE;  //http://localhost:8661/db/v0/query?sql=SHOW+COLUMNS+FROM+DeepSource+IN+DC_W13_Stripe82
+        String sql = "SHOW COLUMNS FROM "+catTable;  //http://localhost:8661/db/v0/query?sql=SHOW+COLUMNS+FROM+DeepSource+IN+DC_W13_Stripe82
 
         try {
             long cTime = System.currentTimeMillis();
@@ -69,15 +69,18 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
                 DataType typeType = defs[1];
                 DataType nullType = defs[2];
 
-                DataType nameTypeR = new DataType("name", String.class);
-                DataType typeTypeR = new DataType("type", String.class);
+                DataType nameTypeR = (DataType)nameType.clone();
+                nameTypeR.setKeyName("name");
+                DataType typeTypeR = (DataType)typeType.clone();
+                typeTypeR.setKeyName("type");
                 DataType selTypeR = new DataType("sel", String.class);
+
 
                 DataType[] columns = new DataType[]{
                         nameTypeR,
                         new DataType("description", String.class),
                         typeTypeR,
-                        new DataType("unit", String.class),
+                        new DataType("units", String.class),
                         selTypeR
                 };
                 DataGroup toReturn = new DataGroup(catTable + "-dd", columns);
@@ -90,7 +93,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
 
                     toReturn.add(dObjReturn);
                 }
-
+                toReturn.shrinkToFitData();
                 File inf = createFile(request, ".tbl");
                 DataGroupWriter.write(inf, toReturn, 0);
                 return inf;
@@ -111,7 +114,7 @@ public class QueryLSSTCatalogDD extends IpacTablePartProcessor {
         if (catTable == null) {
             return request.getRequestId();
         } else {
-            return catTable+"-dd";
+            return catTable+"-dd-";
         }
 
     }

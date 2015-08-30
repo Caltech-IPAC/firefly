@@ -155,8 +155,8 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
             }
 
             // Add test LSST data support
-
-            List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
+           List<BaseTableData.RowData> lsstCatalogList= Arrays.asList(
+                    /*
                     Catalog.makeTableRow("lsst","lsst-all","Science CCD Exposure", "SERVER","Science_Ccd_Exposure",
                                          "46","1998219","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Deep Coadd", "SERVER","DeepCoadd",
@@ -173,8 +173,39 @@ public class IrsaPlusLsstDataSetsFactory implements DataSetInfoFactory {
                                          "30","15855006","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
                     Catalog.makeTableRow("lsst","lsst-all","Science_Ccd_Exposure_coadd_r", "SERVER","Science_Ccd_Exposure_coadd_r",
                                          "41","666399","3600","","", "LSSTCatalogQuery","LSSTCatalogDD")
+                                         */
+                   // from SMM:
+                   // - ignore all the tables named run_XXX, since the corresponding XXX view is the same thing
+                   // with the addition of column aliases.
+                   // - ignore deepCoadd_det and deepCoadd_mergeDet - they don’t seem to contain much other
+                   // than an ID and position, and the RA/Dec columns (coord_ra, coord_dec) are always NULL.
 
-            );
+                   // from smm_bremerton  table that have coord_ra, coord_dec columns
+/*
+                   for f in 'smm_bremerton.deepCoadd_forced_src' 'smm_bremerton.deepCoadd_meas' 'smm_bremerton.deepCoadd_ref' 'smm_bremerton.icSrc' 'smm_bremerton.src' 'sdss_dr9.fink_v5b'; do
+                       curl "http://localhost:8661/db/v0/query?sql=SELECT+COUNT(*)+FROM+$f";echo $f
+                   done
+*/
+                   Catalog.makeTableRow("lsst","lsst-all","src table", "SERVER","smm_bremerton.src",
+                           "0","2731622","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                   Catalog.makeTableRow("lsst","lsst-all","icSrc table", "SERVER","smm_bremerton.icSrc",
+                           "0","543128","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                   Catalog.makeTableRow("lsst","lsst-all","deepCoadd_ref from MergeMeasurementsTask", "SERVER","smm_bremerton.deepCoadd_ref",
+                           "0","10983","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+//                    Catalog.makeTableRow("lsst","lsst-all","deepCoadd_mergeDet table", "SERVER","smm_bremerton.deepCoadd_mergeDet",
+//                                         "0","0","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                   Catalog.makeTableRow("lsst","lsst-all","deepCoadd_meas from MeasureMergedCoaddSourcesTask", "SERVER","smm_bremerton.deepCoadd_meas",
+                           "0","32949","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                   Catalog.makeTableRow("lsst","lsst-all","deepCoadd_forced_src table", "SERVER","smm_bremerton.deepCoadd_forced_src",
+                           "0","32949","1800","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+//                    Catalog.makeTableRow("lsst","lsst-all","deepCoadd_det table", "SERVER","smm_bremerton.deepCoadd_det",
+//                                         "0","0","3600","","", "LSSTCatalogQuery","LSSTCatalogDD"),
+                   // from sdss_dr9
+                   Catalog.makeTableRow("lsst","lsst-all","Reference catalog (sdss_dr9.fink_v5b)", "SERVER","sdss_dr9.fink_v5b",
+                           "0","116324519","3600","","", "LSSTCatalogQuery","LSSTCatalogDD")
+
+
+           );
 
             DataSetInfo dsInfo= new DataSetInfo("LSST", "LSST");
             Proj proj= new Proj("LSST");
