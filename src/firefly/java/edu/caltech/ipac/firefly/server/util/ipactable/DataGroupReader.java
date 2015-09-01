@@ -220,12 +220,12 @@ public class DataGroupReader {
 
         String fileExt = FileUtil.getExtension(inf);
         if (fileExt != null) {
-            if (fileExt.equalsIgnoreCase("csv")) {
+            if (fileExt.equalsIgnoreCase("tbl")) {
+                return Format.IPACTABLE;
+            } else if (fileExt.equalsIgnoreCase("csv")) {
                 return Format.CSV;
             } else if (fileExt.equalsIgnoreCase("tsv")) {
                 return Format.TSV;
-            } else if (fileExt.equalsIgnoreCase("tbl")) {
-                return Format.IPACTABLE;
             } else if (fileExt.equalsIgnoreCase("fits")) {
                 return Format.FITS;
             } else if (fileExt.equalsIgnoreCase("json")) {

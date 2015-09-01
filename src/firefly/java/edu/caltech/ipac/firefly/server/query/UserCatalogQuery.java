@@ -40,7 +40,8 @@ public class UserCatalogQuery extends DynQueryProcessor {
 
         String filePath = req.getParam("filePath");
         if (!StringUtils.isEmpty(filePath)) {
-            return ServerContext.convertToFile(filePath);
+            File f = ServerContext.convertToFile(filePath);
+            return convertToIpacTable(f, req);
         } else {
             throw new DataAccessException("filePath parameter is not found");
         }

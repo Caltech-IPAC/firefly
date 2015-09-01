@@ -33,6 +33,7 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -426,23 +427,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         if (cfile == null) {
             cfile = loadDataFile(request);
 
-            // if the file is not in IPAC table format - convert
-            DataGroupReader.Format format = DataGroupReader.guessFormat(cfile);
-            boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
-            if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
-                // file is already in ipac table format
-            } else {
-                if ( format != DataGroupReader.Format.UNKNOWN) {
-                    // format is unknown.. convert it into ipac table format
-                    DataGroup dg = DataGroupReader.readAnyFormat(cfile);
-                    cfile = createFile(request, ".tbl");
-                    DataGroupWriter.write(cfile, dg, 0);
-                } else {
-                    throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(cfile));
-                }
-            }
-
-
             if (doCache()) {
                 cache.put(key, cfile);
                 if (useWorkspace) {
@@ -546,6 +530,34 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected static void writeLine(BufferedWriter writer, String text) throws IOException {
         writer.write(text);
         writer.newLine();
+    }
+
+    protected static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException{
+        // if the file is not in IPAC table format - convert
+        DataGroupReader.Format format = DataGroupReader.guessFormat(tblFile);
+        boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
+        if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
+            // file is already in ipac table format
+            return tblFile;
+        } else {
+            if ( format != DataGroupReader.Format.UNKNOWN) {
+                // format is unknown.. convert it into ipac table format
+                DataGroup dg = DataGroupReader.readAnyFormat(tblFile);
+                File convertedFile; //= createFile(request, ".tbl");
+                if (format == DataGroupReader.Format.IPACTABLE) {
+                    convertedFile = FileUtil.createUniqueFileFromFile(tblFile);
+                } else {
+                    convertedFile = FileUtil.modifyFile(tblFile, "tbl");
+                    if (convertedFile.exists())
+                        convertedFile = FileUtil.createUniqueFileFromFile(convertedFile);
+                }
+
+                DataGroupWriter.write(convertedFile, dg, 0);
+                return convertedFile;
+            } else {
+                throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
+            }
+        }
     }
 
 }
