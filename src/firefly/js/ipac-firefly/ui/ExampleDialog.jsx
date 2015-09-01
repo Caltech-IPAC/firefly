@@ -22,20 +22,26 @@ import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
 import JunkFormButton from './JunkFormButton.jsx';
+import CompleteButton from './CompleteButton.jsx';
 import {WorldPt, ImagePt, Pt} from '../visualize/Point.js';
 import FieldGroupStore from '../store/FieldGroupStore.js';
 import FieldGroupActions from '../actions/FieldGroupActions.js';
-import PopupUtil from '../util/PopupUtil.jsx';
 import FieldGroup from '../ui/FieldGroup.jsx';
+import {defineDialog} from '../ui/DialogRootContainer.jsx';
+import PopupPanel from '../ui/PopupPanel.jsx';
+import DialogActions from '../actions/DialogActions.js';
 
 
 
 
 class ExampleDialog {
     constructor() {
-    }
-
-    showDialog() {
+        var popup= (
+            //<PopupPanel title={'Example Dialog'} closePromise={closePromise}>
+            <PopupPanel title={'Example Dialog'} >
+                <AllTest  groupKey={'DEMO_FORM'} />
+            </PopupPanel>
+        );
 
         FieldGroupActions.initFieldGroup({
 
@@ -45,15 +51,22 @@ class ExampleDialog {
                 keepState: true
             }
         );
+        defineDialog('ExampleDialog', popup);
+    }
 
-        var content= (
-            <AllTest  groupKey={'DEMO_FORM'} />
-        );
-        PopupUtil.showDialog('Modify Color Stretch',content);
+    showDialog() {
+
+        DialogActions.showDialog({dialogId: 'ExampleDialog'});
     }
 }
 
 
+/**
+ *
+ * @param inFields
+ * @param actionsConst
+ * @return {*}
+ */
 var testReducer= function(inFields, actionsConst) {
     if (!inFields)  {
         var fields= {
@@ -91,6 +104,55 @@ var testReducer= function(inFields, actionsConst) {
 var AllTest = React.createClass({
 
     /*eslint-enable no-unused-vars */
+
+    showResults : function(success, request) {
+        var statStr= "validate state: "+ success;
+        //var request= FieldGroupUtils.getResults(this.props.groupKey);
+        console.log(statStr);
+        console.log(request);
+
+        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+            buildString+=k+"=" +request[k];
+            if (idx<array.length-1) buildString+=', ';
+            return buildString;
+        },'');
+
+
+        var resolver= null;
+        var closePromise= new Promise(function(resolve, reject) {
+            resolver= resolve;
+        });
+
+        var results= (
+            <PopupPanel title={'Example Dialog'} closePromise={closePromise} >
+                {this.makeResultInfoContent(statStr,s,resolver)}
+            </PopupPanel>
+        );
+
+        defineDialog('ResultsFromExampleDialog', results);
+        DialogActions.showDialog({dialogId: 'ResultsFromExampleDialog'});
+    },
+
+
+    makeResultInfoContent(statStr,s,closePromiseClick) {
+        return (
+            <div style={{padding:'5px'}}>
+                <br/>{statStr}<br/><br/>{s}
+                <button type="button" onClick={closePromiseClick}>Another Close</button>
+                <CompleteButton dialogId='ResultsFromExampleDialog' />
+            </div>
+        );
+    },
+
+
+
+    resultsFail(request) {
+        this.showResults(false,request);
+    },
+
+    resultsSuccess(request) {
+        this.showResults(true,request);
+    },
 
     render: function() {
         /* jshint ignore:start */
@@ -156,7 +218,7 @@ var AllTest = React.createClass({
                             tooltip: 'Please select an option',
                             label : 'ListBox Field:'
                         }}
-                                            options={
+                          options={
                             [
                                 {label: 'Item 1', value: 'i1'},
                                 {label: 'Another Item 2', value: 'i2'},
@@ -169,7 +231,11 @@ var AllTest = React.createClass({
                                             groupKey='DEMO_FORM'/>
                         <br/><br/>
 
-                        <JunkFormButton groupKey='DEMO_FORM' label='submit'/>
+                        <CompleteButton groupKey='DEMO_FORM'
+                                        onSuccess={this.resultsSuccess.bind(this)}
+                                        onFail={this.resultsFail.bind(this)}
+                                        dialogId='ExampleDialog'
+                            />
                     </InputGroup>
                 </FieldGroup>
             </div>
@@ -180,6 +246,7 @@ var AllTest = React.createClass({
 });
 
 
+//<JunkFormButton groupKey='DEMO_FORM' label='submit'/>
 
 const LABEL_WIDTH= 105;
 

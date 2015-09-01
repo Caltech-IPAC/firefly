@@ -1,6 +1,6 @@
 /*jshint node:true*/
+/*global require*/
 //var webpack = require('webpack');
-"use strict";
 var path = require('path');
 var webpack = require('webpack');
 var fs = require('fs');
@@ -26,11 +26,11 @@ var release = (process.env.NODE_ENV === 'production');
 //  jsxLoader = ['react-hot', 'jsx?harmony'];
 //}
 
-var entryPoint= process.env.WP_ENTRY_POINT || "fireflyJSLib.js";
-var ffRoot= path.resolve(__dirname+ '/../../') + "/";
+var entryPoint= process.env.WP_ENTRY_POINT || 'fireflyJSLib.js';
+var ffRoot= path.resolve(__dirname+ '/../../') + '/';
 var outScriptName= process.env.WP_ENTRY_POINT || 'fflib.js';
 outScriptName = outScriptName.substring(outScriptName.lastIndexOf('/') + 1, outScriptName.length);
-var build_dir = process.env.WP_BUILD_DIR || ffRoot + "jars/build";
+var build_dir = process.env.WP_BUILD_DIR || ffRoot + 'jars/build';
 
 var namePlugin= new webpack.DefinePlugin({
     __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
@@ -70,7 +70,11 @@ var retval= module.exports = {
           { test: /\.(js|jsx)$/,
             exclude: /node_modules/,
             //loader: 'jsx-loader?harmony'
-            loader: 'babel-loader?stage=1'
+            //loader: 'babel-loader?stage=0'
+            // loader: 'babel-loader',
+            // query : {stage:0}
+               loader: 'babel',
+               query : {stage:0}
           }
         ]
   }
@@ -92,9 +96,9 @@ var retval= module.exports = {
 //    return retval;
 //},null);
 //console.log("myRoot="+myRoot);
-console.log("ffRoot: "+ffRoot);
-console.log("entry Point: "+retval.entry);
-console.log("output file: "+retval.output.path + "/"+ retval.output.filename);
+console.log('ffRoot: '+ffRoot);
+console.log('entry Point: '+retval.entry);
+console.log('output file: '+retval.output.path + '/'+ retval.output.filename);
 //console.log("ffRoot="+ffRoot);
 //console.log("0="+module.exports.resolve.root[0]);
 //console.log("output.path="+module.exports.output.path);

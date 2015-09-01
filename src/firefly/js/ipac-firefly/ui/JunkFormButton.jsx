@@ -2,34 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*globals console*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
 "use strict";
 var React= require('react/addons');
-var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
-var Modal = require('react-modal');
 var Promise= require("es6-promise").Promise;
-import FieldGroupStore from '../store/FieldGroupStore.js';
 import FieldGroupActions from '../actions/FieldGroupActions.js';
-//import Portal from "react-portal";
-
-
-var appElement = document.getElementById('modal-element');
-Modal.setAppElement(appElement);
-//Modal.injectCSS();
+import {defineDialog} from '../ui/DialogRootContainer.jsx';
+import DialogActions from '../actions/DialogActions.js';
+import PopupPanel from '../ui/PopupPanel.jsx';
+import FieldGroupUtils from 'ipac-firefly/store/util/FieldGroupUtils.js';
 
 
 var JunkFormButton = module.exports= React.createClass(
    {
 
-       validUpdate(ev) {
-           var statStr= "validate state: "+ FieldGroupStore.getGroupState(this.props.groupKey).fieldGroupValid;
+       validUpdate(valid) {
+           var statStr= "validate state: "+ valid;
+           var request= FieldGroupUtils.getResults(this.props.groupKey);
            console.log(statStr);
-           var request= FieldGroupStore.getResults(this.props.groupKey);
-           console.log("request:");
            console.log(request);
 
            var s= Object.keys(request).reduce(function(buildString,k,idx,array){
@@ -37,97 +26,65 @@ var JunkFormButton = module.exports= React.createClass(
                if (idx<array.length-1) buildString+=', ';
                return buildString;
            },'');
-           this.setState({modalOpen:true, request:statStr+'::::: '+s});
 
 
            var resolver= null;
            var closePromise= new Promise(function(resolve, reject) {
                resolver= resolve;
            });
-           PopupUtil.showDialog('Results',this.makeDialogContent(statStr,s,resolver),closePromise);
 
+           var results= (
+               <PopupPanel title={'Example Dialog'} closePromise={closePromise} >
+                   {this.makeResultInfoContent(statStr,s,resolver)}
+               </PopupPanel>
+               );
+
+           defineDialog('ResultsFromExampleDialog', results);
+           DialogActions.showDialog({dialogId: 'ResultsFromExampleDialog'});
        },
 
        getInitialState : function() {
            this.validUpdate= this.validUpdate.bind(this);
-           return { results : false,
-                    modalOpen : false};
+           return { };
        },
 
        componentDidMount() {
-           FieldGroupStore.getEventEmitter().addListener('fieldGroupValid', this.validUpdate);
+           var {groupKey, fieldKey}= this.props;
            FieldGroupActions.mountComponent( {
-               groupKey: this.props.groupKey,
-               fieldKey : this.props.fieldKey,
-               mounted : true,
-               value: true,
+               groupKey, fieldKey, mounted : true, value: true,
                fieldState: this.props.initialState
            } );
        },
 
        componentWillUnmount() {
-           FieldGroupStore.getEventEmitter().removeListener('fieldGroupValid', this.validUpdate);
+           var {groupKey, fieldKey}= this.props;
            FieldGroupActions.mountComponent( {
-               groupKey: this.props.groupKey,
-               fieldKey : this.props.fieldKey,
-               mounted : false,
-               value: true
+               groupKey, fieldKey, mounted : false, value: true
            } );
 
        },
 
 
        onClick(ev) {
-           FieldGroupActions.validateFieldGroup(this.props.groupKey);
+           FieldGroupUtils.validate(this.props.groupKey, this.validUpdate)
        },
 
 
-       onDialogClose(closePromise, ev) {
-           this.props.closeDialog();
-
-       },
-
-       makeDialogContent(statStr,s,closePromiseClick) {
-
+       makeResultInfoContent(statStr,s,closePromiseClick) {
            return (
-               /*jshint ignore:start */
                    <div style={{padding:'5px'}}>
                        <br/>{statStr}<br/><br/>{s}
                        <button type="button" onClick={closePromiseClick}>Another Close</button>
                    </div>
-               /*jshint ignore:end */
                    );
        },
 
-       makeModel : function() {
-           var retval= null;
-           /*jshint ignore:start */
-
-           if (this.state.results) {
-               retval= (
-                       <FormResultTmp/>
-               );
-
-           }
-
-           /*jshint ignore:end */
-           return retval;
-       },
-
-       closeModal : function() {
-           this.setState({modalOpen:false});
-
-       },
-
        render: function() {
-           /*jshint ignore:start */
            return (
                    <div>
-                       <button type="button" onClick={this.onClick}>submit</button>
-
+                       <button type="button" onClick={this.onClick}>submit now</button>
                    </div>
            );
-           /*jshint ignore:end */
        }
 
 
