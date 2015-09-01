@@ -45,6 +45,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -81,15 +82,7 @@ public class QueryWise extends IBESearchProcessor {
         try {
             setXmlParams(request);
             WiseRequest req = QueryUtil.assureType(WiseRequest.class, request);
-            if (!req.containsParam(WiseRequest.SCHEMA)) {
-                req.setSafeParam(WiseRequest.SCHEMA, WiseFileRetrieve.DEFAULT_SCHEMA);
-            } else {
-                String schema = req.getSafeParam(WiseRequest.SCHEMA);
-                if (schema.contains(",")) {
-                    schema = req.getBooleanParam(WiseRequest.PUBLIC_RELEASE, true) ? WiseRequest.MERGE : WiseRequest.MERGE_INT;
-                    req.setParam(WiseRequest.SCHEMA, schema);
-                }
-            }
+
             StopWatch.getInstance().start("Wise Search");
             retFile = searchWise(req);
             StopWatch.getInstance().printLog("Wise Search");
@@ -377,42 +370,52 @@ public class QueryWise extends IBESearchProcessor {
         String productLevel = req.getSafeParam("ProductLevel");
 
         String schema = req.getSchema();
-        String imageSets[] = schema.split(",");
-        if (WiseRequest.useMergedTable(schema) && imageSets.length<4) {
+        List<String> imageSets = Arrays.asList(schema.split(","));
+        if (WiseRequest.useMergedTable(schema) && imageSets.size() < 6) {   // 6 means all were selected.  no constraint is needed.
             int n = 0;
             String imageSetConstraint = "image_set";
-            if (imageSets.length > 1) {
+            if (imageSets.size() > 1) {
                 imageSetConstraint += " IN (";
             } else {
                 imageSetConstraint += "=";
             }
-            if (schema.contains(WiseRequest.ALLWISE_MULTIBAND)) {
+            if (imageSets.contains(WiseRequest.ALLWISE_MULTIBAND)) {
                 imageSetConstraint += "5";
                 n++;
             }
-            if (schema.contains(WiseRequest.ALLSKY_4BAND)) {
+            if (imageSets.contains(WiseRequest.ALLSKY_4BAND)) {
                 if (n>0) imageSetConstraint += ",4";
                 else imageSetConstraint += "4";
                 n++;
             }
-            if (schema.contains(WiseRequest.CRYO_3BAND)) {
+            if (imageSets.contains(WiseRequest.CRYO_3BAND)) {
                 if (n>0) imageSetConstraint += ",3";
                 else imageSetConstraint += "3";
                 n++;
             }
-            if (schema.contains(WiseRequest.POSTCRYO)) {
+            if (imageSets.contains(WiseRequest.POSTCRYO)) {
                 if (n>0) imageSetConstraint += ",2";
                 else imageSetConstraint += "2";
                 n++;
             }
-            if (schema.contains(WiseRequest.NEOWISER_YR1)) {
+            if (imageSets.contains(WiseRequest.NEOWISER_YR1)) {
                 if (n>0) imageSetConstraint += ",6";
                 else imageSetConstraint += "6";
                 n++;
             }
+            if (imageSets.contains(WiseRequest.NEOWISER_YR2)) {
+                if (n>0) imageSetConstraint += ",7";
+                else imageSetConstraint += "7";
+                n++;
+            }
 
+            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge of yr1, yr2, and yr3.  currently only yr1 is available.
+                if (n > 0) imageSetConstraint += ",6";
+                else imageSetConstraint += "6";
+                n++;
+            }
 
-            if (imageSets.length > 1) {
+            if (imageSets.size() > 1) {
                 imageSetConstraint += ")";
             }
             if (n>0) {

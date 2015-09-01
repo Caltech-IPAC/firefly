@@ -168,9 +168,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             throw new DataAccessException("Unexpected error", e);
         } finally {
             if (!doCache()) {
-                if (dgFile != null) {
-                    dgFile.delete();
-                }
+// do not delete file even if it's not to be cached.  download still relies on it.
+//                if (dgFile != null) {
+//                    dgFile.delete();
+//                }
             }
         }
 
