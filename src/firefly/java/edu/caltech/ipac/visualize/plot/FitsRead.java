@@ -18,8 +18,7 @@ import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 
 /**
@@ -41,6 +40,9 @@ import java.util.Arrays;
  *  Add a new doStretch and stretchPixel for testing mask plot
  *  A method " public int[] getScreenHistogram()" is never used.  It is removed and so the pixelhist variables.
  *  The pixelHist is removed from the input argument list in stretchPixel method
+ *
+ * 8/25/15 Fixed the HDU bug at spliting HDU
+ *
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -812,7 +814,7 @@ public class FitsRead implements Serializable {
      * @param lastPixel
      * @param startLine
      * @param lastLine
-     * @param lsstMask
+     * @param lsstMasks
      */
     public synchronized void doStretch(RangeValues rangeValues,
                                        byte[] pixelData,
@@ -820,7 +822,7 @@ public class FitsRead implements Serializable {
                                        int startPixel,
                                        int lastPixel,
                                        int startLine,
-                                       int lastLine, LSSTMask lsstMask){
+                                       int lastLine, ImageMask[] lsstMasks){
 
 
 
@@ -836,15 +838,18 @@ public class FitsRead implements Serializable {
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
+        //byte pixelData[] = passedPixelData;
+
+        int[] pixelhist = new int[256];
 
 
-       // for (int i=0; i<lsstMasks.length; i++){
-
-            stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
-                    blank_pixel_value, float1d, masks, pixelData,  lsstMask);//s[i]);
 
 
-       // }
+        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
+                blank_pixel_value, float1d, masks, pixelData, pixelhist,  lsstMasks);
+
+
+
 
 
 
@@ -862,9 +867,7 @@ public class FitsRead implements Serializable {
      * @param float1dArray
      * @param masks
      * @param pixeldata
-     *
-
-     * @param lsstMask
+     * @param pixelhist
      */
     private static void stretchPixels(int startPixel,
                                       int lastPixel,
@@ -875,13 +878,19 @@ public class FitsRead implements Serializable {
                                       float[] float1dArray,
                                       short[] masks,
                                       byte[] pixeldata,
-
-                                      LSSTMask lsstMask) {
+                                      int[] pixelhist,
+                                      ImageMask[] lsstMasks) {
 
 
 
 
         int pixelCount = 0;
+
+
+        ImageMask[] bitOffsetOrderedMasks = sortLSSTMaskArrayInOrder(lsstMasks);
+
+        ImageMask combinedMask = ImageMask.combine(lsstMasks);
+
 
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
@@ -893,16 +902,25 @@ public class FitsRead implements Serializable {
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {   // stretch each pixel
 
-                    short mask = masks[index];
-                    if (lsstMask!=null && lsstMask.isSet(mask)) { //assign the defined color
 
-                        pixeldata[pixelCount] = (byte) lsstMask.getColor().getRGB();
-                    } else {   // stretch each pixel
+                    if (combinedMask.isSet( masks[index])) {
 
-                        pixeldata[pixelCount]=0;
 
-                   }
+                        for (int i = 0; i < lsstMasks.length; i++) {
+                            if (bitOffsetOrderedMasks[i].isSet(masks[index])) {
+                                pixeldata[pixelCount] = (byte) bitOffsetOrderedMasks[i].getValue();
+                                break;
+                            }
+                        }
+                    }
+                    else {
 
+                        pixeldata[pixelCount]= (byte) 256; //transparent;
+
+
+                    }
+
+                    pixelhist[pixeldata[pixelCount] & 0xff]++;
                 }
                 pixelCount++;
 
@@ -911,6 +929,17 @@ public class FitsRead implements Serializable {
 
 
     }
+    private static ImageMask[] sortLSSTMaskArrayInOrder(ImageMask[] lsstMasks){
+
+        Map<Integer, ImageMask> unsortedMap= new HashMap<Integer, ImageMask>();
+        for (int i=0;i<lsstMasks.length; i++){
+            unsortedMap.put(new Integer((int) lsstMasks[i].getValue()), lsstMasks[i]);
+        }
+
+        Map<Integer, ImageMask> treeMap = new TreeMap<Integer, ImageMask>(unsortedMap);
+        return treeMap.values().toArray(new ImageMask[0]);
+    }
+
 
 
     private static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {

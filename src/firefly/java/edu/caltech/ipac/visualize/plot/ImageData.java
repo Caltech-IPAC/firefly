@@ -14,6 +14,7 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ImageData implements Serializable {
@@ -92,7 +93,6 @@ public class ImageData implements Serializable {
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
-
         if (constructNow) constructImage(fitsReadAry);
 
 
@@ -192,6 +192,13 @@ public class ImageData implements Serializable {
             _raster= null;
             _bufferedImage= new BufferedImage(_width,_height,
                                               BufferedImage.TYPE_BYTE_INDEXED, _cm);
+
+            //LZ comment for my only understanding here
+            /*the BufferedImage has a raster associated with it.  The getDataArray(0), point to the same data buffer
+              db= (DataBufferByte) _bufferedImage.getRaster().getDataBuffer();
+              when the array = getDataArray(0) is updated, the same data buffer is updated.
+            */
+
             fitsReadAry[0].doStretch(rangeValues, getDataArray(0),false, _x,_lastPixel, _y, _lastLine);
         }
         else if (_imageType==ImageType.TYPE_24_BIT) {
@@ -217,24 +224,56 @@ public class ImageData implements Serializable {
         inUseCnt.decrementAndGet();
 
     }
-   //07/16/16 LZ
-    //TODO remove this after testing mask
-    private void constructImage_new(FitsRead fitsReadAry[]) {
+   // Testing Mask 07/16/16 LZ
+
+    /**
+     * This method will create a dynamic IndexColorModel based on the users' color choices.
+     * It has 256 colors.  The pixel value is the same as the mask value, where the same pixel stores the
+     * corresponding color as three byte array.
+     * The pixel=256 is a transparent pixel
+     * None specified pixel assigned to black color for default
+     *
+     * @param lsstMasks
+     * @return
+     */
+    private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
+
+        byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
+        Arrays.fill(cMap, (byte) 0); //file all pixel with black color
+
+        for (int i=0; i<lsstMasks.length; i++){
+            int cMapIndex = ( int) (3* lsstMasks[i].getValue());
+            for (int j=0; j<3; j++){
+                cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
+                cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
+                cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
+            }
+        }
+        return new IndexColorModel(8, 256, cMap,0, false, 256);
+
+    }
+    // Testing Mask
+    private void constructImage_lz(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
-        LSSTMask lsstmask = new LSSTMask(5, Color.RED);
+        ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
+        ImageMask lsstmaskBlue = new ImageMask(1, Color.BLUE);
+        ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
+
+        ImageMask[] lmasks=  {lsstmaskRed, lsstmaskGreen,lsstmaskBlue};
 
 
         if (_imageType==ImageType.TYPE_8_BIT) {
             _raster = null;
-            if (lsstmask!=null){
+            if (lmasks.length!=0){
             _bufferedImage = new BufferedImage(_width, _height,
                     BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lsstmask);
+            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lmasks);
         }
             else {
+                IndexColorModel cm = getIndexColorModel(lmasks);
                 _bufferedImage = new BufferedImage(_width, _height,
-                        BufferedImage.TYPE_BYTE_INDEXED, _cm);
+                        BufferedImage.TYPE_BYTE_INDEXED, cm);
                 fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
          }
         }
@@ -245,7 +284,7 @@ public class ImageData implements Serializable {
             for(int i=0; (i<fitsReadAry.length); i++) {
                 byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, lsstmask);
+                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, lmasks);
                 }
                 else {
                     for(int j=0; j<array.length; j++) array[j]= 0;

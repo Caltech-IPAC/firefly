@@ -6,9 +6,8 @@ import java.util.*;
 /**
  * Created by zhang on 7/7/15.
  */
-public class LSSTMask {
+public class ImageMask {
 
-    private static Map<Color, Class<? extends LSSTMask>> registry = new HashMap<Color, Class<? extends LSSTMask>>();
 
     private Color color; // name of this mask item
     private String name;
@@ -18,22 +17,17 @@ public class LSSTMask {
     private int ignore; // mask of bits to ignore
     private int check; // bit with ignore removed
     public static final int MASK32 = 0xffffffff;
+
     /**
-     * Create a mask definition with the given color, name and bit offset.
-     *
-     * @param  bitOffset  index of the mask
-     * @param  color       of the mask
-     * @throws IllegalArgumentException if the offset is less than 0 or more than 63
+     * contrusctor to createa new ImageMask
+     * Example:
+     *   ImageMask m = new ImageMask(0, Color.RED)
+     *   it creates a new ImageMask object which the bit (bitoffste=0) set, the Color is read
+     *   when the mask data has the first bit set, the color of the pixel will be red
+     * @param bitOffset
+     * @param color
      */
-    public LSSTMask(int bitOffset, Color color, String name) {
-        if (bitOffset < 0 || bitOffset >= 32) {
-            throw new IllegalArgumentException("bit offset must be >= 0 and < 64, not " + bitOffset);
-        }
-
-        init(1 << bitOffset, color, bitOffset, name);
-    }
-
-    public LSSTMask(int bitOffset, Color color) {
+    public ImageMask(int bitOffset, Color color) {
         if (bitOffset < 0 || bitOffset >= 32) {
             throw new IllegalArgumentException("bit offset must be >= 0 and < 64, not " + bitOffset);
         }
@@ -41,20 +35,27 @@ public class LSSTMask {
         init(1 << bitOffset, color, bitOffset, color.toString());
     }
     /**
-     * Register a class containing mask definitions.
-     * @param color to be used as a lookup by the {@link #get(Color)} method
-     * @param c class extending this one containing the definitions
+     * Create a mask definition with the given color, name and bit offset.
+     *
+     * @param  bitOffset  index of the mask
+     * @param  color       of the mask
+     * @throws IllegalArgumentException if the offset is less than 0 or more than 63
      */
-    public static void register(Color color, Class<? extends LSSTMask> c) {
-        registry.put(color, c);
+    public ImageMask(int bitOffset, Color color, String name) {
+        if (bitOffset < 0 || bitOffset >= 32) {
+            throw new IllegalArgumentException("bit offset must be >= 0 and < 32, not " + bitOffset);
+        }
+       init(1 << bitOffset, color, bitOffset, name);
     }
+
+
 
     /**
      * Create a mask object from the given integer mask. Both single and multi-bit masks may be
      * created in this way.
      * @param mask integer mask
      */
-    public LSSTMask(int mask) {
+    public ImageMask(int mask) {
 
         int index = -1;
         String name = "multi-bit";
@@ -62,7 +63,7 @@ public class LSSTMask {
         // Find the number of bits set and the index of the MSB:
         int[] r = countBits(mask);
 
-        if (r[0] == 1) {
+        if (r[0] == 1) { //only one bit is set
             index = r[1];
             name = "bit-" + index;
         }
@@ -70,22 +71,6 @@ public class LSSTMask {
         init(mask, null, index,  name);
     }
 
-    /**
-     * Get the registry of all classes defining masks.
-     * @return the defensive copy of registry
-     */
-    protected static Map<Color, Class<? extends LSSTMask>> getRegistry() {
-        return new HashMap<Color, Class<? extends LSSTMask>>(registry);
-    }
-
-    /**
-     * Get the class registered with the given name.
-     * @param color  the one the class was registered with
-     * @return the class corresponding to that name
-     */
-    public static Class<? extends LSSTMask> get(Color color) {
-        return registry.get(color);
-    }
 
     /**
      * Get all the masks defined by the given subclass.
@@ -93,7 +78,7 @@ public class LSSTMask {
      * @param c a subclass defining mask fields
      * @return all the mask objects defined by those fields
      */
-    public static <T extends LSSTMask> Collection<T> getMasks(Class<T> c) {
+    public static <T extends ImageMask> Collection<T> getMasks(Class<T> c) {
         Collection<T> list = new ArrayList<T>();
 
         for (Field field : c.getDeclaredFields()) {
@@ -138,7 +123,7 @@ public class LSSTMask {
      * Get the integer value of this mask.
      * @return the value
      */
-    public long getValue() {
+    public int getValue() {
         return bit;
     }
 
@@ -160,52 +145,6 @@ public class LSSTMask {
         return index == -1;
     }
 
-    /**
-     * Set the behaviour of the <code>isSet</code> methods to <em>ignore</em> the bit being set.
-     * Note that this <em>does not</em> change the behaviour of the <code>set</code> or
-     * <code>unset</code> methods. The purpose of this is to be able to turn off the applicability
-     * of the bit during data processing without modifying the mask itself.
-     * <p>
-     * If set to <code>true</code>, then this is equivalent to setting the ignore mask for a single bit
-     * only. It has no effect if the mask is multi-bit. If set to <code>false</code>, then the effect
-     * is to clear the ignore mask.
-     * @param ignore  if set to true, then the isSet methods will return false
-     *
-     */
-    public void setIgnore(boolean ignore) {
-        if (!ignore) {
-            setIgnoreMask(0);
-        } else if (index >= 0) {
-            setIgnoreMask(1 << index);
-        }
-    }
-
-    /**
-     * The purpose of this is to be able to turn off the applicability of the bits during data processing
-     * without modifying the mask itself.
-     * @param mask of bits to be ignored
-     */
-    public void setIgnoreMask(int mask) {
-        ignore = mask;
-       check = bit & (ignore ^ MASK32);
-    }
-
-    /**
-     * Get the mask of bits ignored by the <code>isSet</code> method.
-     * @return mask of bits to be ignored
-     */
-    public int getIgnoreMask() {
-        return ignore;
-    }
-
-    /**
-     * Get the "ignore" attribute of this mask. This is true if an ignore mask is set.
-     * @return the ignore attribute
-     * @see #setIgnore(boolean)
-     */
-    public boolean isIgnore() {
-        return ignore != 0;
-    }
 
     /**
      * Set the bits of this mask in the given argument.
@@ -310,9 +249,9 @@ public class LSSTMask {
      * @param  rhs mask to apply
      * @return combined mask
      */
-    public final LSSTMask or(LSSTMask rhs) {
+    public final ImageMask or(ImageMask rhs) {
         Color usingColor = bit<rhs.bit? color: rhs.color;
-        return new LSSTMask(bit | rhs.bit, usingColor, name + " | " + rhs.name);
+        return new ImageMask(bit | rhs.bit, usingColor, name + " | " + rhs.name);
     }
 
     /**Logic exclusive or
@@ -324,9 +263,9 @@ public class LSSTMask {
      * @param  rhs mask to apply
      * @return combined mask
      */
-    public final LSSTMask xor(LSSTMask rhs) {
+    public final ImageMask xor(ImageMask rhs) {
         Color usingColor = bit<rhs.bit? color: rhs.color;
-        return new LSSTMask( bit ^ rhs.bit, usingColor,name + " | " + rhs.name);
+        return new ImageMask( bit ^ rhs.bit, usingColor,name + " | " + rhs.name);
     }
 
     /**
@@ -337,7 +276,7 @@ public class LSSTMask {
      */
 
     public boolean equals(Object mask) {
-        return bit == ((LSSTMask ) mask).bit;
+        return bit == ((ImageMask) mask).bit;
     }
 
 
@@ -352,44 +291,18 @@ public class LSSTMask {
      * @return a combined mask with all the input bits sets
      * @throws NullPointerException if the input is <code>null</code>.
      */
-    public static LSSTMask combine(LSSTMask... masks) {
+    public static ImageMask combine(ImageMask... masks) {
         if (masks == null) {
             throw new NullPointerException("Please input valid FixedMask, not null.");
         } else if (masks.length == 0) {
-            return new LSSTMask(0);
+            return new ImageMask(0);
         } else {
-            LSSTMask mask = masks[0];
+            ImageMask mask = masks[0];
             for (int i = 1; i < masks.length; i++) {
                 mask = mask.or(masks[i]);
             }
             return mask;
         }
-    }
-
-    /**
-     * Convenience method for creating a combination mask by specifying which masks to
-     * include and which to exclude. If the same mask is present in both it is excluded.
-     * This mask can then be used to test if <em>any</em> of the mask bits included are set.
-     * @param masksToInclude individual input masks to include
-     * @param masksToExclude individual input masks to exclude
-     * @return a combined mask with all the included bits sets
-     * @throws NullPointerException if any input is <code>null</code>.
-     */
-    public static LSSTMask combine(LSSTMask[] masksToInclude,LSSTMask[] masksToExclude) {
-
-        if (masksToInclude == null || masksToExclude == null) {
-            throw new NullPointerException("All inputs should be FixedMask arrays, not null.");
-        }
-
-        Set<LSSTMask> masks = new HashSet<LSSTMask>();
-        for (LSSTMask mask : masksToInclude) {
-            masks.add(mask);
-        }
-        for (LSSTMask mask : masksToExclude) {
-            masks.remove(mask);
-        }
-
-        return combine(masks.toArray(new LSSTMask[0]));
     }
 
 
@@ -431,12 +344,8 @@ public class LSSTMask {
      * Count the bits that are set in an integer/mask. This method also returns the index of the MSB.
      * @param n the input
      * @return a two-element array containing:
-     * <ol>
-     * <li>The number of bits set.</li>
-     * <li>The index of the MSB set. This is -1 if no bits are set.</li>
-     * </ol>
      */
-    public static int[] countBits(int n) {
+    private static int[] countBits(int n) {
 
         int count = 0;
         int index = -1;
