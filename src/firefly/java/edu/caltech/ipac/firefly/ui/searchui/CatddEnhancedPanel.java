@@ -68,14 +68,17 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 
         FlowPanel topArea = new FlowPanel();
         mainPanel.addSouth(topArea, 30);
-        GwtUtil.setPadding(topArea,5,0,0,0);
+        GwtUtil.setPadding(topArea, 5, 0, 0, 0);
         mainPanel.add(tableWrapper);
         mainPanel.setSize("100%", "100%");
-        GwtUtil.setPadding(tableWrapper,0,15,0,20);
+        GwtUtil.setPadding(tableWrapper, 0, 15, 0, 20);
 
-        CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
-        req.setRequestId(ddSearchProcessor);
-        req.setQueryCatName(catalogName);
+        //CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
+        //req.setRequestId(ddSearchProcessor);
+        //req.setQueryCatName(catalogName);
+
+        TableServerRequest req = new TableServerRequest(ddSearchProcessor);
+        req.setParam(CatalogRequest.CATALOG, catalogName);
 
         reqParams = req.getParams();
         columns = cols;
@@ -83,16 +86,19 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         reqColumnsList = StringUtils.asList(reqCols, ",");
         constraints = cons;
         if (!StringUtils.isEmpty(ddform)) formToSelect = ddform;
+
         _defSelect = defSelect;
 //        GwtUtil.setStyle(mainPanel, "paddingLeft", "20px");
 
         try {
-            HorizontalPanel formType = new HorizontalPanel();
-            formType.add(new HTML("<b>Please select Long or Short Form display:<b>&nbsp;&nbsp;&nbsp;"));
-            formType.add(createListBox());
-            formType.add(new HTML("<br><br>"));
-            topArea.add(formType);
-            buildPanel(true);
+            if (!formToSelect.equals("none")) {
+                HorizontalPanel formType = new HorizontalPanel();
+                formType.add(new HTML("<b>Please select Long or Short Form display:<b>&nbsp;&nbsp;&nbsp;"));
+                formType.add(createListBox());
+                formType.add(new HTML("<br><br>"));
+                topArea.add(formType);
+            }
+            buildPanel(formToSelect);
 
         } catch (Exception e) {
             throw new Exception(e.getMessage());
@@ -112,10 +118,16 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
 //------------------ PrivateMethods -----------------------
 //======================================================================
 
-    private void buildPanel(boolean ddShort) {
-        CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
+    private void buildPanel(String formToSelect) {
+        //CatalogRequest req = new CatalogRequest(CatalogRequest.RequestType.GATOR_DD);
+        //req.setParams(reqParams);
+        //req.setDDShort(ddShort);
+
+        TableServerRequest req = new TableServerRequest();
         req.setParams(reqParams);
-        req.setDDShort(ddShort);
+        if (!formToSelect.equals("none")) {
+            req.setParam(CatalogRequest.DD_SHORT, ""+formToSelect.equals("short"));
+        }
 
         table = loadCatalogTable(req);
 
@@ -157,20 +169,22 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         table.getEventManager().addListener(TablePanel.ON_INIT, new WebEventListener() {
             public void eventNotify(WebEvent ev) {
 
-                int selidx = lists.getSelectedIndex();
-                if (!lists.getValue(selidx).equals(formToSelect)) {
-                    lists.setSelectedIndex(selidx == 0 ? 1 : 0);
-                    changePanel(formToSelect);
-                    return;
+                if (!formToSelect.equals("none")) {
+                    int selidx = lists.getSelectedIndex();
+                    if (!lists.getValue(selidx).equals(formToSelect)) {
+                        lists.setSelectedIndex(selidx == 0 ? 1 : 0);
+                        changePanel(formToSelect);
+                        return;
+                    }
                 }
 
                 table.showToolBar(false);
                 table.showPagingBar(false);
                 table.showOptionsButton(false);
-                if (table.getTable()!=null) table.getTable().showFilters(false); //true if you want to see filters
+                if (table.getTable() != null) table.getTable().showFilters(false); //true if you want to see filters
 
                 // TODO: this does not work here
-                if (table.getDataset().getColumns().size()>5) {
+                if (table.getDataset().getColumns().size() > 5) {
                     table.getDataset().getColumn(5).setVisible(false);
                 }
 
@@ -223,9 +237,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         return lists;
     }
 
-    private void changePanel(String list) {
+    private void changePanel(String formToSelectOpt) {
         _columns.clear();
-        buildPanel(list.equalsIgnoreCase("short"));
+        buildPanel(formToSelectOpt);
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
                 onResize();
@@ -287,19 +301,16 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         }
     }
 
-    private SelectableTableWithConstraintsPanel loadCatalogTable(CatalogRequest req) {
+    private SelectableTableWithConstraintsPanel loadCatalogTable(TableServerRequest req) {
         BaseTableConfig<TableServerRequest> tableConfig = new BaseTableConfig<TableServerRequest>(req,
-                req.getQueryCatName(), req.getQueryCatName(), null, null, null);
+                req.getParam(CatalogRequest.CATALOG), req.getParam(CatalogRequest.CATALOG), null, null, null);
         Loader<TableDataView> loader = tableConfig.getLoader();
         loader.setPageSize(300);
         final SelectableTableWithConstraintsPanel table = new SelectableTableWithConstraintsPanel(loader);
         table.setMaskDelayMillSec(1);
-//        table.setSize("100%", "200px");
-
 
         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
             public void execute() {
-//                table.getTable().showFilters(true);
                 addListeners(table);
                 table.init();
             }
@@ -317,7 +328,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         List<Param> params = new ArrayList<Param>(3);
         params.add(new Param(SELECTED_COLS_KEY, getSelectedColumns()));
         params.add(new Param(CONSTRAINTS_KEY, getPopulatedConstraints()));
-        params.add(new Param(FORM_KEY, lists.getValue(lists.getSelectedIndex())));
+        if (StringUtils.isEmpty(this.formToSelect) || !this.formToSelect.equals("none")) {
+            params.add(new Param(FORM_KEY, lists.getValue(lists.getSelectedIndex())));
+        }
         return params;
     }
 
@@ -360,7 +373,9 @@ public class CatddEnhancedPanel extends Composite implements RequiresResize, Inp
         } else {
             if (!StringUtils.isEmpty(columnsToSelect)) columns = columnsToSelect;
             if (!StringUtils.isEmpty(constraintsToPopulate)) constraints = constraintsToPopulate;
-            this.formToSelect = formToSelect;
+            if (!this.formToSelect.equals("none")) {
+                this.formToSelect = formToSelect;
+            }
         }
     }
 

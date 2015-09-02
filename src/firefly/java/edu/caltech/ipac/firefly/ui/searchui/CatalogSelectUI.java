@@ -171,6 +171,9 @@ public class CatalogSelectUI implements DataTypeSelectUI {
 
         if (!StringUtils.isEmpty(currentCatalog.getDDSearchProcessor())) {
             try {
+                if (currentCatalog.getDDSearchProcessor().startsWith("LSST")) {
+                    selectedDDForm = "none"; // no short or long form selection
+                }
                 catDD = new CatddEnhancedPanel(currentCatalog.getDDSearchProcessor(),
                                                currentCatalog.getQueryCatName(), selectedColumns, "",
                                                selectedConstraints, selectedDDForm, StringUtils.isEmpty(selectedColumns));
