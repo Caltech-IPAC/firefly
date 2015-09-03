@@ -3,6 +3,9 @@
 "use strict";
 var path = require('path');
 var webpack = require('webpack');
+var fs = require('fs');
+var React = require('react');
+
 //var strUtil = require('underscore.string');
 
 
@@ -23,19 +26,30 @@ var release = (process.env.NODE_ENV === 'production');
 //  jsxLoader = ['react-hot', 'jsx?harmony'];
 //}
 
-var entryPoint= "fireflyJSLib.js";
+var entryPoint= process.env.WP_ENTRY_POINT || "fireflyJSLib.js";
 var ffRoot= path.resolve(__dirname+ '/../../') + "/";
-var outScriptName= 'fflib.js';
-var build_dir = process.env.WP_BUILD_DIR || ffRoot + "jars/build";
+var outScriptName= process.env.WP_ENTRY_POINT || 'fflib.js';
+outScriptName = outScriptName.substring(outScriptName.lastIndexOf('/') + 1, outScriptName.length);
+var build_dir = process.env.WP_BUILD_DIR || ffRoot + "build";
 
 var namePlugin= new webpack.DefinePlugin({
     __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
         });
 
+var markup = React.renderToStaticMarkup(
+    React.DOM.html({},
+        //React.DOM.link({ rel: 'stylesheet', href: '/shared.css' }),
+        React.DOM.body({},
+            React.DOM.div({ id: 'app' }),
+            React.DOM.script({ src: outScriptName })
+        )
+    )
+);
+
+fs.writeFileSync(build_dir + '/index.html', markup);
+console.log("index.html" + build_dir + 'index.html')
+
 var retval= module.exports = {
-
-
-
 
 
   entry: __dirname+'/js/'+entryPoint,
