@@ -30,7 +30,7 @@ var entryPoint= process.env.WP_ENTRY_POINT || "fireflyJSLib.js";
 var ffRoot= path.resolve(__dirname+ '/../../') + "/";
 var outScriptName= process.env.WP_ENTRY_POINT || 'fflib.js';
 outScriptName = outScriptName.substring(outScriptName.lastIndexOf('/') + 1, outScriptName.length);
-var build_dir = process.env.WP_BUILD_DIR || ffRoot + "build";
+var build_dir = process.env.WP_BUILD_DIR || ffRoot + "jars/build";
 
 var namePlugin= new webpack.DefinePlugin({
     __SCRIPT_NAME__ : "\'"+ outScriptName + "\'"
@@ -45,9 +45,8 @@ var markup = React.renderToStaticMarkup(
         )
     )
 );
-
+fs.mkdirSync(build_dir);
 fs.writeFileSync(build_dir + '/index.html', markup);
-console.log("index.html" + build_dir + 'index.html')
 
 var retval= module.exports = {
 
