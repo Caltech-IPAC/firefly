@@ -45,7 +45,7 @@ var markup = React.renderToStaticMarkup(
         )
     )
 );
-fs.mkdirSync(build_dir);
+if (!fs.existsSync(build_dir)) fs.mkdirSync(build_dir);
 fs.writeFileSync(build_dir + '/index.html', markup);
 
 var retval= module.exports = {
