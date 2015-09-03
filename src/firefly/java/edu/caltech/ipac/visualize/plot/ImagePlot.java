@@ -950,20 +950,21 @@ public class ImagePlot extends Plot implements Serializable {
     public static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
 
         byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill( cMap, (byte) 0 ); //file all pixel with black color
+        Arrays.fill( cMap, (byte) 255 ); //file all pixel with black color
         //Color white = new Color(0, 0, 0);
 
         for (int i=0; i<lsstMasks.length; i++){
-            int cMapIndex = ( int) (3* lsstMasks[i].getValue());
-            for (int j=0; j<3; j++){
-                cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
-                cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-                cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
-            }
-        }
-        return new IndexColorModel(8, 256, cMap,0, false, 256);
+            int cMapIndex = ( int) (3* lsstMasks[i].getIndex());
+            cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
+            cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
+             cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
 
-    }    /**
+        }
+
+        return new IndexColorModel(8, 256, cMap,0, false, 255);
+
+    }
+    /**
      * 7/14/15 by LZ
      * Add this main to test mask over lay plot
      * @param args
@@ -988,9 +989,8 @@ public class ImagePlot extends Plot implements Serializable {
 
 
         //test only the red color
-        //Color transparent = new Color(0,true);
         ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
-        ImageMask lsstmaskBlue = new ImageMask(1, Color.BLUE);
+        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
         ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };

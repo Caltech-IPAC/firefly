@@ -14,6 +14,7 @@ import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -185,7 +186,7 @@ public class ImageData implements Serializable {
 
 
 
-    private void constructImage(FitsRead fitsReadAry[]) {
+    private void constructImage_orig(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         if (_imageType==ImageType.TYPE_8_BIT) {
@@ -239,25 +240,28 @@ public class ImageData implements Serializable {
     private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
 
         byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill(cMap, (byte) 0); //file all pixel with black color
+        Arrays.fill( cMap, (byte) 255 ); //file all pixel with black color
+        //Color white = new Color(0, 0, 0);
 
         for (int i=0; i<lsstMasks.length; i++){
-            int cMapIndex = ( int) (3* lsstMasks[i].getValue());
-            for (int j=0; j<3; j++){
-                cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
-                cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-                cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
-            }
+            int cMapIndex = 3* lsstMasks[i].getIndex();
+            cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
+            cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
+            cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
+
         }
-        return new IndexColorModel(8, 256, cMap,0, false, 256);
+
+        return new IndexColorModel(8, 256, cMap,0, false, 255);
 
     }
+
+
     // Testing Mask
-    private void constructImage_lz(FitsRead fitsReadAry[]) {
+    private void constructImage(FitsRead fitsReadAry[]) {
 
         inUseCnt.incrementAndGet();
         ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
-        ImageMask lsstmaskBlue = new ImageMask(1, Color.BLUE);
+        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
         ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
 
         ImageMask[] lmasks=  {lsstmaskRed, lsstmaskGreen,lsstmaskBlue};

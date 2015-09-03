@@ -10,11 +10,9 @@ public class ImageMask {
 
 
     private Color color; // name of this mask item
-    private String name;
     private int index; // i.e. bit offset
     private int bit; // the bit mask itself
     private int inv; // the complement of _bit
-    private int ignore; // mask of bits to ignore
     private int check; // bit with ignore removed
     public static final int MASK32 = 0xffffffff;
 
@@ -24,30 +22,25 @@ public class ImageMask {
      *   ImageMask m = new ImageMask(0, Color.RED)
      *   it creates a new ImageMask object which the bit (bitoffste=0) set, the Color is read
      *   when the mask data has the first bit set, the color of the pixel will be red
-     * @param bitOffset
+     * @param index: the bit offset
      * @param color
      */
-    public ImageMask(int bitOffset, Color color) {
-        if (bitOffset < 0 || bitOffset >= 32) {
-            throw new IllegalArgumentException("bit offset must be >= 0 and < 64, not " + bitOffset);
+    public ImageMask(int index, Color color) {
+        if (index < 0 || index >= 32) {
+            throw new IllegalArgumentException("bit offset must be >= 0 and < 64, not " + index);
         }
 
-        init(1 << bitOffset, color, bitOffset, color.toString());
+        init(1 << index, color, index);
     }
     /**
      * Create a mask definition with the given color, name and bit offset.
-     *
-     * @param  bitOffset  index of the mask
-     * @param  color       of the mask
+     * @param  bit  the bit mask
+     * @param  color  the color of the mask
      * @throws IllegalArgumentException if the offset is less than 0 or more than 63
      */
-    public ImageMask(int bitOffset, Color color, String name) {
-        if (bitOffset < 0 || bitOffset >= 32) {
-            throw new IllegalArgumentException("bit offset must be >= 0 and < 32, not " + bitOffset);
-        }
-       init(1 << bitOffset, color, bitOffset, name);
+    public ImageMask(Color color, int bit) {
+        init(bit, color, -1);
     }
-
 
 
     /**
@@ -68,7 +61,7 @@ public class ImageMask {
             name = "bit-" + index;
         }
 
-        init(mask, null, index,  name);
+        init(mask, null, index);
     }
 
 
@@ -99,13 +92,13 @@ public class ImageMask {
         return list;
     }
 
-    private void init(int bitOffset, Color maskColor, int maskIndex, String maskName) {
-        bit = bitOffset;
-        check = bit;
-        inv = bit ^ MASK32;
+    private void init(int bit, Color maskColor, int maskIndex) {
+        this.bit = bit;
+        check = this.bit;
+        inv = this.bit ^ MASK32;
         color = maskColor;
         index = maskIndex;
-        name=maskName;
+
     }
 
     /**
@@ -116,9 +109,6 @@ public class ImageMask {
         return color;
     }
 
-    public String getName() {
-        return name;
-    }
     /**
      * Get the integer value of this mask.
      * @return the value
@@ -145,14 +135,13 @@ public class ImageMask {
         return index == -1;
     }
 
-
     /**
-     * Set the bits of this mask in the given argument.
-     * @param  mask  value in which to set the bits
-     * @return the updated value
+     *
+     * @param mask
+     * @return
      */
-    public final int set(int mask) {
-        return mask | bit;
+    public  int set(int  mask) {
+        return  bit|mask;
     }
 
     /**
@@ -220,7 +209,7 @@ public class ImageMask {
      * @param  mask value to check
      * @return <code>true</code> if any are set
      */
-    public final boolean isSet(final short mask) {
+    public final boolean isSet(final int mask) {
         return (check & mask) != 0;
     }
 
@@ -245,13 +234,13 @@ public class ImageMask {
      *       0101 (decimal 5)            0010 (decimal 2)
      *  OR   0011 (decimal 3)         OR 1000 (decimal 8)
      *     = 0111 (decimal 7)         = 1010 (decimal 10)
-     * Return a combined (or) mask
+     * Return a combined (or) mask with the color at the lower bitoffset
      * @param  rhs mask to apply
      * @return combined mask
      */
     public final ImageMask or(ImageMask rhs) {
-        Color usingColor = bit<rhs.bit? color: rhs.color;
-        return new ImageMask(bit | rhs.bit, usingColor, name + " | " + rhs.name);
+        Color usingColor = index<rhs.index? color: rhs.color;
+        return new ImageMask( usingColor, bit | rhs.bit);
     }
 
     /**Logic exclusive or
@@ -264,8 +253,8 @@ public class ImageMask {
      * @return combined mask
      */
     public final ImageMask xor(ImageMask rhs) {
-        Color usingColor = bit<rhs.bit? color: rhs.color;
-        return new ImageMask( bit ^ rhs.bit, usingColor,name + " | " + rhs.name);
+        Color usingColor = index<rhs.index? color: rhs.color;
+        return new ImageMask( usingColor,bit ^ rhs.bit);
     }
 
     /**
@@ -279,10 +268,6 @@ public class ImageMask {
         return bit == ((ImageMask) mask).bit;
     }
 
-
-    public String toString() {
-         return getName() + " @ " + index + " = " + getValue();
-    }
 
     /**
      * Convenience method for creating a combination mask by <em>or</em>ing the input masks. This mask can
@@ -307,36 +292,28 @@ public class ImageMask {
 
 
 
-    /**
-     * Change the bit value to 1
-     * @param bitOffset
-     * @param mask
-     * @return
-     */
-    public static int set(int bitOffset, int mask) {
-        return mask | (1 << bitOffset);
-    }
+
 
     /**
      * Toggle a bit in mask value. If the bit value is 1, the toggled result is 0,
      * if the bit value is 0, the tagged value is 1.
-     * @param  bitOffset position in mask to toggle
+     * @param  index position in mask to toggle
      * @param  mask      value to update
      * @return the updated value
      */
-    public static int toggle(int bitOffset, int mask) {
-        return mask ^ (1 << bitOffset);
+    public static int toggle(int index, int mask) {
+        return mask ^ (1 << index);
     }
 
     /**
      * Change the bit value to 0
      * Unset a bit in mask value.
-     * @param  bitOffset position in mask to set
+     * @param  index position in mask to set
      * @param  mask      value to update
      * @return the updated value
      */
-    public static int unset(int bitOffset, int mask) {
-        return (mask & ((1 << bitOffset) ^ MASK32));
+    public static int unset(int index, int mask) {
+        return (mask & ((1 << index) ^ MASK32));
     }
 
 

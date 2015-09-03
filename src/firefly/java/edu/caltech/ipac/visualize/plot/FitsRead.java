@@ -99,6 +99,7 @@ public class FitsRead implements Serializable {
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
 
+
     }
 
 
@@ -908,14 +909,14 @@ public class FitsRead implements Serializable {
 
                         for (int i = 0; i < lsstMasks.length; i++) {
                             if (bitOffsetOrderedMasks[i].isSet(masks[index])) {
-                                pixeldata[pixelCount] = (byte) bitOffsetOrderedMasks[i].getValue();
+                                pixeldata[pixelCount] = (byte) bitOffsetOrderedMasks[i].getIndex();
                                 break;
                             }
                         }
                     }
                     else {
 
-                        pixeldata[pixelCount]= (byte) 256; //transparent;
+                        pixeldata[pixelCount]= (byte) 255; //transparent;
 
 
                     }
