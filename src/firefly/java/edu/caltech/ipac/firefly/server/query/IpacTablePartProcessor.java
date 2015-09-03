@@ -57,6 +57,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +78,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static long logCounter = 0;
     public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
             TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
+    public static final List<String> PAGE_PARAMS = Arrays.asList(TableServerRequest.PAGE_SIZE, TableServerRequest.START_IDX);
+
+
+    private static final Map<StringKey, Object> _activeRequests =
+                Collections.synchronizedMap(new HashMap<StringKey, Object>());
 
     public boolean isSecurityAware() {
         return false;
@@ -140,8 +147,36 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File dgFile = null;
         try {
             TableServerRequest request = (TableServerRequest) sr;
+            Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+            // get unique key without page info
+            StringKey key = new StringKey(this.getClass().getName(), getDataKey(request));
 
-            dgFile = getDataFile(request);
+            try {
+                Object lockKey;
+                boolean lockKeyCreator = false;
+                synchronized (_activeRequests) {
+                    lockKey = _activeRequests.get(key);
+                    if (lockKey == null) {
+                        lockKey = new Object();
+                        _activeRequests.put(key, lockKey);
+                        lockKeyCreator = true;
+                    }
+                }
+                synchronized (lockKey) {
+                    if (!lockKeyCreator) {
+                        dgFile = validateFile((File) cache.get(key));
+                    }
+                    if (dgFile == null) {
+                        dgFile = getDataFile(request);
+
+                        cache.put(key, dgFile);
+                    }
+                }
+
+            } finally {
+                _activeRequests.remove(key);
+            }
+
 
             DataGroupPart page = null;
             // get the page requested
@@ -202,6 +237,32 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         for (Param p : request.getParams()) {
             if (!SYS_PARAMS.contains(p.getName())) {
+                uid += "|" + p.toString();
+            }
+        }
+        return uid;
+    }
+
+    // unique key withoup page info
+    public String getDataKey(ServerRequest request) {
+
+        String uid = request.getRequestId() + "-";
+        if ( useWorkspace || (isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser()) ) {
+            uid = uid + ServerContext.getRequestOwner().getUserKey();
+        }
+
+        /*
+        java.util.Collections.sort(request.getParams(), new Comparator<Param>(){
+            @Override
+            public int compare(Param o1, Param o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        */
+
+        for (Param p : request.getParams()) {
+            if (!PAGE_PARAMS.contains(p.getName())) {
                 uid += "|" + p.toString();
             }
         }
