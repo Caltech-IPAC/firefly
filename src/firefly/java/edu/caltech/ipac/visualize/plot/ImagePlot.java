@@ -90,7 +90,6 @@ public class ImagePlot extends Plot implements Serializable {
      * @param plotGroup
      * @param frGroup
      * @param initialZoomLevel
-     * @param band
      * @param colorModel
      * @param stretch
      * @throws FitsException
@@ -98,17 +97,16 @@ public class ImagePlot extends Plot implements Serializable {
     public ImagePlot(PlotGroup plotGroup,
                      ActiveFitsReadGroup frGroup,
                      float     initialZoomLevel,
-                     Band      band,
                      IndexColorModel colorModel,
                      RangeValues stretch)  throws FitsException{
         super(plotGroup);
-        refBand= band;
+        refBand= Band.NO_BAND;
         setInitialZoomLevel(initialZoomLevel);
-        imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
+        imageScaleFactor= frGroup.getFitsRead(Band.NO_BAND).getImageScaleFactor();
         _threeColor= false;
 
        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
-               colorModel,stretch,SQUARE, false);
+                                       colorModel,stretch,SQUARE, false);
 
         configureImage(frGroup);
     }
@@ -949,7 +947,7 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
     //************ Test color model
-    private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
+    public static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
 
         byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
         Arrays.fill( cMap, (byte) 0 ); //file all pixel with black color
@@ -998,7 +996,7 @@ public class ImagePlot extends Plot implements Serializable {
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
         IndexColorModel cm = getIndexColorModel(lsstMasks);
 
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F,  Band.NO_BAND, cm , FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, cm, FitsRead.getDefaultFutureStretch());
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         List<PlotOutput.TileFileInfo> results;

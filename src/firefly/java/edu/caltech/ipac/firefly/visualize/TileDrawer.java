@@ -55,6 +55,7 @@ public class TileDrawer {
     private final List<HandlerRegistration> _hregList = new ArrayList<HandlerRegistration>(80);
     private static final FourTileSort _ftSort = new FourTileSort();
     private List<PlotImages.ImageURL> _panelList = new ArrayList<PlotImages.ImageURL>(8);
+    private WebPlotView _pv;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -73,6 +74,9 @@ public class TileDrawer {
         _images = images;
     }
 
+    public void setPlotView(WebPlotView pv) {
+        this._pv= pv;
+    }
 
     AbsolutePanel getWidget() {
         if (_imageWidget == null) {
@@ -172,8 +176,7 @@ public class TileDrawer {
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 if (_plot.isAlive()) {
-                    WebPlotView pv = _plot.getPlotView();
-                    drawTilesForArea(pv.getScrollX() - 5, pv.getScrollY() - 5, pv.getOffsetWidth() + 5, pv.getOffsetHeight() + 5);
+                    drawTilesForArea(_pv.getScrollX() - 5, _pv.getScrollY() - 5, _pv.getOffsetWidth() + 5, _pv.getOffsetHeight() + 5);
                 }
             }
         });
@@ -186,7 +189,7 @@ public class TileDrawer {
             List<PlotImages.ImageURL> iList = new ArrayList<PlotImages.ImageURL>(8);
             boolean allCreated = true;
 
-            ScreenPt wcsMargin= _plot.getPlotView().getWcsMargins();
+            ScreenPt wcsMargin= _pv.getWcsMargins();
             int mx= wcsMargin.getIX();
             int my= wcsMargin.getIY();
             x-=mx;
@@ -368,20 +371,19 @@ public class TileDrawer {
         WebPlotGroup plotGroup = _plot.getPlotGroup();
         plotGroup.computeMinMax();
         WebPlotGroup.fireReplotEvent(ReplotDetails.Reason.IMAGE_RELOADED, _plot);
-        final WebPlotView pv = plotGroup.getPlotView();
-        if (pv != null) {
+        if (_pv != null && _pv.contains(_plot)) {
             if (_firstLoad) {
-                pv.reconfigure();
+                _pv.reconfigure();
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
-                        pv.smartCenter();
+                        _pv.smartCenter();
                     }
                 });
                 _firstLoad = false;
             } else {
-                ImageWorkSpacePt pt = pv.findCurrentCenterPoint();
-                pv.reconfigure();
-                if (!AllPlots.getInstance().isWCSMatch())pv.centerOnPoint(pt);
+                ImageWorkSpacePt pt = _pv.findCurrentCenterPoint();
+                _pv.reconfigure();
+                if (!AllPlots.getInstance().isWCSMatch())_pv.centerOnPoint(pt);
             }
         }
     }

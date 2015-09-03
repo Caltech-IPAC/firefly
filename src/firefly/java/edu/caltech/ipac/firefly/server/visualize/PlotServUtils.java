@@ -27,6 +27,7 @@ import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -41,16 +42,16 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 /**
@@ -115,13 +116,13 @@ public class PlotServUtils {
 
     static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
         ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
-        int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
+        int div= Math.max(plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight());
 
         tPlot.getPlotGroup().setZoomTo(thumbnailSize/(float)div);
 
         int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
 
-        new PlotOutput(tPlot,frGroup).writeThumbnail(f,ext);
+        new PlotOutput(tPlot,frGroup).writeThumbnail(f, ext);
         tPlot.freeResources();
     }
 
@@ -550,6 +551,15 @@ public class PlotServUtils {
         return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
     }
 
+    static ImagePlot makeMaskImagePlot(ActiveFitsReadGroup frGroup,
+                                       float               initialZoomLevel,
+                                       WebPlotRequest      request,
+                                       RangeValues         stretch) throws FitsException {
+
+        ImageMask maskDef[]= createMaskDefinition(request);
+        IndexColorModel cm = ImagePlot.getIndexColorModel(maskDef);
+        return new ImagePlot(null, frGroup,initialZoomLevel, cm, stretch);
+    }
 
     public static String convertZoomToString(float level) {
         String retval;
@@ -587,6 +597,27 @@ public class PlotServUtils {
         return retval;
     }
 
+    public static ImageMask[] createMaskDefinition(WebPlotRequest r) {
+        List<String> maskColors= r.getMaskColors();
+        Color cAry[]= new Color[maskColors.size()];
+        List<ImageMask> masksList=  new ArrayList<ImageMask>();
+        int bits= r.getMaskBits();
+        int colorIdx= 0;
+        for(String htmlColor : maskColors) {
+            cAry[colorIdx++]= convertColorHtmlToJava(htmlColor);
+        }
+        colorIdx= 0;
+
+        for(int j= 0; (j<31); j++) {
+            if (((bits>>j) & 1) != 0) {
+                Color c= (colorIdx<cAry.length) ? cAry[colorIdx] : Color.pink;
+                colorIdx++;
+                masksList.add(new ImageMask(j,c));
+            }
+        }
+        return masksList.toArray(new ImageMask[masksList.size()]);
+    }
+
     public static FitsRead[] createBlankFITS(WebPlotRequest r) throws FailedRequestException, IOException {
         FitsRead retval[];
         Circle c=PlotServUtils.getRequestArea(r);
@@ -618,6 +649,42 @@ public class PlotServUtils {
             throw new FailedRequestException("Blank image requires a center position");
         }
         return retval;
+    }
+
+    public static Color convertColorHtmlToJava(String color) {
+        Color c;
+        if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
+            int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);
+            c= new Color(rgb[0],rgb[1],rgb[2]);
+        }
+        else {
+            if      (color.equals("black"))   c= Color.black;
+            else if (color.equals("aqua"))    c= new Color(0,255,255);
+            else if (color.equals("blue"))    c= Color.blue;
+            else if (color.equals("cyan"))    c= Color.cyan;
+            else if (color.equals("fuchsia")) c= new Color(255,0,255);
+            else if (color.equals("gray"))    c= new Color(128,128,128);
+            else if (color.equals("green"))   c= new Color(0,128,0);
+            else if (color.equals("lime"))    c= Color.green;  // this is correct, lime is 0,255,0
+            else if (color.equals("magenta")) c= Color.magenta;
+            else if (color.equals("maroon"))  c= new Color(128,0,0);
+            else if (color.equals("navy"))    c= new Color(0,0,128);
+            else if (color.equals("olive"))   c= new Color(128,128,0);
+            else if (color.equals("orange"))  c= Color.orange;
+            else if (color.equals("pink"))    c= Color.pink;
+            else if (color.equals("purple"))  c= new Color(128,0,128);
+            else if (color.equals("red"))     c= Color.red;
+            else if (color.equals("silver"))  c= new Color(192,192,192);
+            else if (color.equals("teal"))    c= new Color(0,128,128);
+            else if (color.equals("white"))   c= Color.white;
+            else if (color.equals("yellow"))  c= Color.yellow;
+            else {
+                // lightGray or white is a better presentation for "unknown" color string. -TLau
+                c= Color.lightGray;
+                _log.debug("convertColorHtmlToJava(String color) does not understand " + color + ".  Color.lightGray is assigned.");
+            }
+        }
+        return c;
     }
 }
 

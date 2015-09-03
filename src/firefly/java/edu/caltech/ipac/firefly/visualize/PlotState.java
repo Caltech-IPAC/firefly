@@ -35,6 +35,7 @@ public class PlotState implements DataEntry, HandSerialize {
 
     public enum MultiImageAction { GUESS,      // Default, guess between load first, and use all, depending on three color params
                                    USE_FIRST,   // only valid option if loading a three color with multiple Request
+                                   USE_IDX,   // use a specific image from the fits read Array
                                    MAKE_THREE_COLOR, // make a three color out of the first three images, not yet implemented
                                    //ASK_USER, // ask use what to do, like spot, not yet implemented
                                    USE_ALL} // only valid in non three color, make a array of WebPlots
@@ -207,6 +208,15 @@ public class PlotState implements DataEntry, HandSerialize {
      * @return the WebPlotRequest
      */
     public WebPlotRequest getWebPlotRequest(Band band) { return get(band).getWebPlotRequest(); }
+
+    /**
+     * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
+     * after the set will not be reflected here.
+     * @return the WebPlotRequest
+     */
+    public WebPlotRequest getPrimaryRequest() { return get(firstBand()).getWebPlotRequest(); }
+
+
 
     /**
      * this method will make a copy of the primary WebPlotRequest. Any changes to the WebPlotRequest object

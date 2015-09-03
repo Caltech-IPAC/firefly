@@ -123,7 +123,10 @@ public class WebPlotGroup  {
      * set the WebPlotView obj
      * @param plotView the WebPlotView obj
      */
-    void setPlotView(WebPlotView plotView) { _plotView= plotView; }
+    void setPlotView(WebPlotView plotView) {
+        _plotView= plotView;
+        _basePlot.getTileDrawer().setPlotView(plotView);
+    }
 
     /**
      * should only be called from WebPlotView

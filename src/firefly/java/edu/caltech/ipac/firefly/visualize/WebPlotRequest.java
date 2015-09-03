@@ -98,7 +98,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
 
-    public static final String SELECTED_IMAGE_IDX= "SelectedImageIdx";
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
     public static final String MASK_COLORS= "MaskColors";
@@ -1143,10 +1142,6 @@ public class WebPlotRequest extends ServerRequest {
     public void setPlotId(String id) { setParam(PLOT_ID,id); }
 
     public String getPlotId() { return getParam(PLOT_ID); }
-
-
-    public void setSelectedImageIdx(int idx) { setParam(SELECTED_IMAGE_IDX,idx+""); }
-    public int getSelectedImageIdx() { return containsParam(SELECTED_IMAGE_IDX) ? getIntParam(SELECTED_IMAGE_IDX) : 0;}
 
     public void setMaskBits(int idx) { setParam(MASK_BITS,idx+""); }
     public int getMaskBits() { return containsParam(MASK_BITS) ? getIntParam(MASK_BITS) : 0;}

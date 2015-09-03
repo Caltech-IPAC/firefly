@@ -82,6 +82,7 @@ public class PlotMaskTask extends ServerTask<WebPlotResult> {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
                 mpv.setMaskPlot(new WebPlot(wpInit));
+                if (notify != null) notify.onSuccess(null);
             } else {
                 showFailure(result);
             }

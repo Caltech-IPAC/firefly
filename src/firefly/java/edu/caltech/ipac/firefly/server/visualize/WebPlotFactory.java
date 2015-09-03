@@ -109,7 +109,11 @@ public class WebPlotFactory {
     public static WebPlotInitializer[] createNew(String workingCtxStr, WebPlotRequest request) throws FailedRequestException, GeomException {
         Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<Band, WebPlotRequest>(2);
         requestMap.put(NO_BAND, request);
-        return create(workingCtxStr, requestMap, PlotState.MultiImageAction.USE_ALL, null, false);
+        PlotState.MultiImageAction multiAction= PlotState.MultiImageAction.USE_ALL;
+        if (request.containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
+            multiAction= PlotState.MultiImageAction.USE_IDX;
+        }
+        return create(workingCtxStr, requestMap, multiAction, null, false);
     }
 
     public static WebPlotInitializer[] recreate(PlotState state) throws FailedRequestException, GeomException {

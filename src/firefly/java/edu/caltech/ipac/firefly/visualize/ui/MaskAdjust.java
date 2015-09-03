@@ -31,7 +31,7 @@ public class MaskAdjust {
         if (primary==null) return;
 
         PlotState state= primary.getPlotState();
-        WebPlotRequest or= state.getWebPlotRequest(primary.getFirstBand());
+        WebPlotRequest or= state.getPrimaryRequest();
 
         WebPlotRequest r= or.makeCopy();
 

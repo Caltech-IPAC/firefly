@@ -280,6 +280,16 @@ public class ImagePlotBuilder {
                 }
                 plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(workingCtxStr, state, readInfoMap, zoomChoice);
                 break;
+            case USE_IDX:
+                WebPlotRequest r= requestMap.get(NO_BAND);
+                int idx= r.getMultiImageIdx();
+                state = makeState(requestMap.get(NO_BAND), readInfoMap.get(NO_BAND)[0], multiAction);
+                VisContext.purgeOtherPlots(state);
+                state.setOriginalImageIdx(idx, NO_BAND);
+                state.setImageIdx(idx, NO_BAND);
+                //todo: here
+                plotInfo[0] = ImagePlotCreator.makeOneImagePerBand(workingCtxStr, state, readInfoMap, zoomChoice);
+                break;
             case USE_ALL:
                 if (!readInfoMap.containsKey(NO_BAND) || threeColor) {
                     throw new FailedRequestException("Cannot create plot",

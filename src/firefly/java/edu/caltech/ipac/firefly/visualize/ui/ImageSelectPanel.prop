@@ -90,6 +90,24 @@ ImageSelectPanel.dss.types.phase2_gsc1.IntValue= 7
 ImageSelectPanel.dss.types.all.IntValue= 8
 
 
+ImageSelectPanel.multi.action.Title= If file contains multiple extensions
+ImageSelectPanel.multi.action.DataType= EnumString
+ImageSelectPanel.multi.action.Items= loadAll loadOne
+ImageSelectPanel.multi.action.loadAll.Name= Load all the extensions
+ImageSelectPanel.multi.action.loadOne.Name= Load only one
+ImageSelectPanel.multi.action.Default= loadAll
+
+
+ImageSelectPanel.multi.ext.ShortDescription= Which extension to load (0 is the first extension)
+ImageSelectPanel.multi.ext.Title= Extension
+ImageSelectPanel.multi.ext.DataType= Integer
+ImageSelectPanel.multi.ext.NullAllowed= false
+ImageSelectPanel.multi.ext.Min= 0
+ImageSelectPanel.multi.ext.Max= 5000
+ImageSelectPanel.multi.ext.Default= 0
+
+
+
 
 ImageSelectPanel.sdss.Title= SDSS
 ImageSelectPanel.sdss.types.Title= Sloan DSS Survey Types:

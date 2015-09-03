@@ -98,9 +98,7 @@ public class VisServerOps {
      * note - createPlot does a free resources
      * @return PlotCreationResult the results
      */
-    public static WebPlotResult create3ColorPlot(WebPlotRequest redR,
-                                                      WebPlotRequest greenR,
-                                                      WebPlotRequest blueR) {
+    public static WebPlotResult create3ColorPlot(WebPlotRequest redR, WebPlotRequest greenR, WebPlotRequest blueR) {
         WebPlotResult retval;
         try {
             WebPlotInitializer wpInit[]=  WebPlotFactory.createNew(null, redR,greenR,blueR);

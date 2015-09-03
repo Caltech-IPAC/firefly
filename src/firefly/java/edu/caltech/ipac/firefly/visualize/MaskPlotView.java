@@ -34,9 +34,15 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
     public MaskPlotView(WebPlotView pv) {
         this.pv= pv;
         initWidget(rootPanel);
+        rootPanel.setStyleName("MaskPlotView");
         initGraphics();
     }
 
+    @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (visible) maskPlot.refreshWidget();
+    }
 
     @Override
     public boolean hasData() { return true; }
@@ -65,7 +71,6 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
         rootPanel.setPixelSize(width,height);
         // todo- how to a respond now? do I need to do anything?
         super.setPixelSize(width, height);
-
     }
 
     private void initGraphics() {
@@ -80,9 +85,13 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
     }
 
     public void setMaskPlot(WebPlot maskPlot) {
-        if (maskPlot!=null) {
+        if (maskPlot==null) return;
+        if (this.maskPlot!=null) {
             this.maskPlot.freeResources();
         }
+        maskPlot.getPlotGroup().setPlotView(pv);
+        rootPanel.clear();
+        rootPanel.add(maskPlot.getWidget(),0,0);
         this.maskPlot= maskPlot;
     }
 

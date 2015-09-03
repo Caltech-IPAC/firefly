@@ -89,46 +89,47 @@ public class ImagePlotCreator {
                                                                             IOException {
 
 
-         ImagePlotInfo retval;
-         ImagePlot plot= null;
-         boolean first= true;
-         Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
-         Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(5);
+        ImagePlotInfo retval;
+        ImagePlot plot= null;
+        boolean first= true;
+        Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
+        Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(5);
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-         for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
-             Band band= entry.getKey();
-             FileReadInfo readInfoAry[]= entry.getValue();
-             FileReadInfo readInfo= readInfoAry[state.getImageIdx(band)];
-             frGroup.setFitsRead(band,readInfo.getFitsRead());
-             if (first) {
-                 plot= createImagePlot(state,frGroup,readInfo.getBand(), readInfo.getDataDesc(),zoomChoice,false);
-                 if (state.isThreeColor()) {
-                     plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
-                                            readInfo.getBand(),frGroup);
-                 }
-                 if (readInfo.getModFileWriter()!=null) {
-                     fileWriterMap.put(band,readInfo.getModFileWriter());
-                 }
-                 first= false;
-             }
-             else {
-                 ModFileWriter mfw= createBand(state,plot,readInfo,frGroup);
-                 if (mfw!=null) {
-                     fileWriterMap.put(band,mfw);
-                 }
-                 else if (readInfo.getModFileWriter()!=null) {
-                     fileWriterMap.put(band,readInfo.getModFileWriter());
-                 }
-             }
-             WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
-             wfDataMap.put(band, wfData);
-             VisContext.shouldContinue(workingCtxStr);
-         }
-         String desc= make3ColorDataDesc(readInfoMap);
-         retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
+        for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
+            Band band= entry.getKey();
+            FileReadInfo readInfoAry[]= entry.getValue();
+            int imageIdx= state.getImageIdx(band);
+            if (state.getPrimaryRequest().containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
+                if (imageIdx>=readInfoAry.length) {
+                    throw new FailedRequestException("Plot Failed", "Could not find extension number "+imageIdx+
+                            ". The file contains only "+readInfoAry.length + " image extension" );
+                }
+            }
+            FileReadInfo readInfo= readInfoAry[imageIdx];
+            frGroup.setFitsRead(band,readInfo.getFitsRead());
+            if (first) {
+                plot= createImagePlot(state,frGroup,band, readInfo.getDataDesc(),zoomChoice,false);
+                if (state.isThreeColor()) {
+                    plot.setThreeColorBand(state.isBandVisible(band) ? readInfo.getFitsRead() :null,
+                            band,frGroup);
+                }
+                if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
+                first= false;
+            }
+            else {
+                ModFileWriter mfw= createBand(state,plot,readInfo,frGroup);
+                if (mfw!=null)                              fileWriterMap.put(band,mfw);
+                else if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
+            }
+            WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
+            wfDataMap.put(band, wfData);
+            VisContext.shouldContinue(workingCtxStr);
+        }
+        String desc= make3ColorDataDesc(readInfoMap);
+        retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
 
-         if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
-         return retval;
+        if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
+        return retval;
      }
 
     /**
@@ -148,18 +149,24 @@ public class ImagePlotCreator {
                                      ZoomChoice zoomChoice,
                                      boolean    isMultiImage) throws FitsException {
 
+        ImagePlot plot;
         RangeValues rv= state.getPrimaryRangeValues();
+        float zoomLevel= zoomChoice.getZoomLevel();
+        WebPlotRequest request= state.getPrimaryRequest();
         if (rv==null) {
             rv= FitsRead.getDefaultRangeValues();
             state.setRangeValues(rv,state.firstBand());
         }
 
-        float zoomLevel= zoomChoice.getZoomLevel();
 
-        ImagePlot plot= PlotServUtils.makeImagePlot( frGroup, zoomLevel,
-                                                     state.isThreeColor(),
-                                                     band,
-                                                     state.getColorTableId(), rv);
+
+        if (request.containsParam(WebPlotRequest.PLOT_AS_MASK) && request.containsParam(WebPlotRequest.MASK_COLORS)) {
+            plot= PlotServUtils.makeMaskImagePlot( frGroup, zoomLevel, request, rv);
+        }
+        else { // standard
+            plot= PlotServUtils.makeImagePlot( frGroup, zoomLevel, state.isThreeColor(),
+                                               band, state.getColorTableId(), rv);
+        }
 
 
         if (state.isNewPlot()) { // new plot requires computing the zoom level
