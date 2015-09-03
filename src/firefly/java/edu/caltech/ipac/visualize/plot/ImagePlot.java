@@ -90,14 +90,14 @@ public class ImagePlot extends Plot implements Serializable {
      * @param plotGroup
      * @param frGroup
      * @param initialZoomLevel
-     * @param colorModel
+     * @param iMasks
      * @param stretch
      * @throws FitsException
      */
     public ImagePlot(PlotGroup plotGroup,
                      ActiveFitsReadGroup frGroup,
                      float     initialZoomLevel,
-                     IndexColorModel colorModel,
+                     ImageMask[] iMasks,
                      RangeValues stretch)  throws FitsException{
         super(plotGroup);
         refBand= Band.NO_BAND;
@@ -106,7 +106,7 @@ public class ImagePlot extends Plot implements Serializable {
         _threeColor= false;
 
        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
-                                       colorModel,stretch,SQUARE, false);
+                                       iMasks,stretch,SQUARE, false);
 
         configureImage(frGroup);
     }
@@ -957,7 +957,7 @@ public class ImagePlot extends Plot implements Serializable {
             int cMapIndex = ( int) (3* lsstMasks[i].getIndex());
             cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
             cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-             cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
+            cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
 
         }
 
@@ -996,7 +996,7 @@ public class ImagePlot extends Plot implements Serializable {
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
         IndexColorModel cm = getIndexColorModel(lsstMasks);
 
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, cm, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         List<PlotOutput.TileFileInfo> results;

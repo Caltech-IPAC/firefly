@@ -28,12 +28,14 @@ public class ImageData implements Serializable {
     private int             _colorTableID= 0;   // this is not as flexible as color model and will be set to -1 when color model is set
     private BufferedImage   _bufferedImage;
     private boolean         _imageOutOfDate= true;
+    private ImageMask[] imageMasks=null;
     private final int       _x;
     private final int       _y;
     private final int       _width;
     private final int       _height;
     private final int       _lastPixel;
     private final int       _lastLine;
+
     private AtomicInteger inUseCnt= new AtomicInteger(0);
 
     private WritableRaster  _raster; // currently only used with 24 bit images
@@ -71,7 +73,7 @@ public class ImageData implements Serializable {
     //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
     public ImageData(FitsRead fitsReadAry[],
                      ImageType imageType,
-                     IndexColorModel cm,
+                     ImageMask[] iMasks,
                      RangeValues rangeValues,
                      int x,
                      int y,
@@ -90,7 +92,9 @@ public class ImageData implements Serializable {
 
         this.rangeValues= rangeValues;
 
-       _cm=cm;
+        imageMasks=iMasks;
+       _cm=getIndexColorModel(iMasks);
+
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
@@ -259,25 +263,25 @@ public class ImageData implements Serializable {
     // Testing Mask
     private void constructImage(FitsRead fitsReadAry[]) {
 
-        inUseCnt.incrementAndGet();
+      /*  inUseCnt.incrementAndGet();
         ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
         ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
         ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
 
         ImageMask[] lmasks=  {lsstmaskRed, lsstmaskGreen,lsstmaskBlue};
-
+*/
 
         if (_imageType==ImageType.TYPE_8_BIT) {
             _raster = null;
-            if (lmasks.length!=0){
+            if (imageMasks!=null && imageMasks.length!=0){
             _bufferedImage = new BufferedImage(_width, _height,
                     BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lmasks);
+            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
         }
             else {
-                IndexColorModel cm = getIndexColorModel(lmasks);
+                 //IndexColorModel cm = getIndexColorModel(imageMasks);
                 _bufferedImage = new BufferedImage(_width, _height,
-                        BufferedImage.TYPE_BYTE_INDEXED, cm);
+                        BufferedImage.TYPE_BYTE_INDEXED, _cm);
                 fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
          }
         }
@@ -288,7 +292,7 @@ public class ImageData implements Serializable {
             for(int i=0; (i<fitsReadAry.length); i++) {
                 byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, lmasks);
+                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, imageMasks);
                 }
                 else {
                     for(int j=0; j<array.length; j++) array[j]= 0;

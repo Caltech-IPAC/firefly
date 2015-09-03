@@ -203,9 +203,9 @@ public class PlotServUtils {
 
         }
         String fname= originalFile.getName();
-        File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-north",
-                                    "."+FileUtil.FITS,
-                                    ServerContext.getVisSessionDir());
+        File f= File.createTempFile(FileUtil.getBase(fname) + "-rot-north",
+                "." + FileUtil.FITS,
+                ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
 //        ImagePlot.writeFile(stream, new FitsRead[]{northFR});
         if (northFR!=null) northFR.writeSimpleFitsFile(stream);
@@ -272,7 +272,7 @@ public class PlotServUtils {
     public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
 
         File f= getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
-        createFullTile(plot, frGroup,f);
+        createFullTile(plot, frGroup, f);
         FileUtil.writeFileToStream(f, oStream);
     }
 
@@ -556,9 +556,8 @@ public class PlotServUtils {
                                        WebPlotRequest      request,
                                        RangeValues         stretch) throws FitsException {
 
-        ImageMask maskDef[]= createMaskDefinition(request);
-        IndexColorModel cm = ImagePlot.getIndexColorModel(maskDef);
-        return new ImagePlot(null, frGroup,initialZoomLevel, cm, stretch);
+         ImageMask maskDef[]= createMaskDefinition(request);
+         return new ImagePlot(null, frGroup,initialZoomLevel, maskDef, stretch);
     }
 
     public static String convertZoomToString(float level) {

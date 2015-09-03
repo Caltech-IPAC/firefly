@@ -83,7 +83,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
      */
     public ImageDataGroup(FitsRead fitsReadAry[],
                           ImageData.ImageType imageType,
-                          IndexColorModel cm,
+                          ImageMask[] iMasks,
                           RangeValues rangeValues,
                           int tileSize,
                           boolean constructNow) throws FitsException {
@@ -109,6 +109,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
         if (totHeight % tileSize > 0) yPanels++;
 
 
+
         _imageDataAry= new ImageData[xPanels * yPanels];
 
         int width;
@@ -118,7 +119,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
                 width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
                 height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
                 _imageDataAry[(i*yPanels) +j]= new ImageData(fitsReadAry,imageType,
-                        cm,rangeValues,
+                        iMasks,rangeValues,
                         tileSize*i,tileSize*j,
                         width, height, constructNow);
             }
