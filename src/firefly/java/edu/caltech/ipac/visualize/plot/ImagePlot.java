@@ -994,7 +994,6 @@ public class ImagePlot extends Plot implements Serializable {
         ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
-        IndexColorModel cm = getIndexColorModel(lsstMasks);
 
         ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
 
