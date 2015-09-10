@@ -7,7 +7,7 @@
 
 "use strict";
 import React from 'react/addons';
-import {parseTarget} from "ipac-firefly/ui/model/TargetPanelWorker.js";
+import {parseTarget} from "ipac-firefly/ui/TargetPanelWorker.js";
 import TargetFeedback from "ipac-firefly/ui/TargetFeedback.jsx";
 import InputFieldView from "ipac-firefly/ui/InputFieldView.jsx";
 import FormStoreLinkMixin from "ipac-firefly/ui/model/FormStoreLinkMixin.js";

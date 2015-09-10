@@ -13,7 +13,7 @@ class FieldGroupActions {
 
     constructor() {
         this.generateActions(
-            'initFieldGroup', 'mountComponent', 'mountFieldGroup', 'validateFieldGroup', 'validateMultiFieldGroup'
+            'initFieldGroup', 'mountComponent', 'mountFieldGroup'
         );
         //'initState', 'valueChange', 'mountComponent'
     }

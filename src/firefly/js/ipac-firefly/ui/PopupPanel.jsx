@@ -15,9 +15,9 @@ import React from 'react/addons';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 
 
-export const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
+const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
 
-export var PopupPanel= React.createClass(
+var PopupPanel= React.createClass(
 {
 
 
@@ -30,14 +30,14 @@ export var PopupPanel= React.createClass(
     propTypes: {
         layoutPosition : React.PropTypes.object.isRequired,
         title : React.PropTypes.string,
-        closePromise : React.PropTypes.object
+        closePromise : React.PropTypes.object,
+        closeCallback : React.PropTypes.func,
+        visible : React.PropTypes.bool.isRequired
     },
 
-    onClick: function(ev) {
-        this.doClose();
-    },
-
-
+    //onClick: function(ev) {
+    //    this.doClose();
+    //},
 
     updateLayoutPosition() {
         var e= React.findDOMNode(this);
@@ -52,7 +52,13 @@ export var PopupPanel= React.createClass(
 
     },
 
-    getInitialState() { return { activeLayoutType : LayoutType.NONE, posX : 0, posY : 0 }; },
+    getInitialState() {
+        return {
+            activeLayoutType : LayoutType.NONE,
+            posX : 0,
+            posY : 0
+            };
+    },
 
 
 
@@ -64,11 +70,12 @@ export var PopupPanel= React.createClass(
 
 
     componentDidMount() {
+        var {visible}= this.props;
         this.moveCallback= (ev)=> this.dialogMove(ev);
         this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev);
         this.browserResizeCallback= _.debounce(() => { this.updateLayoutPosition(); },150);
         var e= React.findDOMNode(this);
-        this.updateLayoutPosition();
+        if (visible) this.updateLayoutPosition();
         //_.defer(function() {
         //    this.computeDir(e);
         //}.bind(this));
@@ -84,7 +91,7 @@ export var PopupPanel= React.createClass(
     },
 
     doClose() {
-        this.props.closeCallback();
+        if (this.props.closeCallback) this.props.closeCallback();
         console.log("close dialog");
     },
 
@@ -160,7 +167,6 @@ export var PopupPanel= React.createClass(
                         </div>
                         <div style={{display:"table"}}>
                             {this.props.children}
-                            <button type="button" onClick={this.onClick}>close</button>
                         </div>
                     </div>
                 </div>
@@ -172,11 +178,14 @@ export var PopupPanel= React.createClass(
 
 
     render() {
-
-        /*jshint ignore:start */
-        return  this.renderAsTopHeader();
-        /*jshint ignore:end */
+        if (this.props.visible) {
+            return  this.renderAsTopHeader();
+        }
+        else {
+            return false;
+        }
     }
 
 });
 
+export default PopupPanel;

@@ -97,17 +97,6 @@ var PointerPopup = React.createClass(
 
        },
 
-
-       //resizeListener : _.debounce(function() {
-       //    this.forceUpdate();
-       //}.bind(this),200),
-       //
-       //
-       //componentWillUnmount : function() {
-       //    window.removeEventListener('resize',this.resizeListener)
-       //
-       //},
-
        updatePosition() {
            var e= React.findDOMNode(this);
            this.updateOffsets(e);

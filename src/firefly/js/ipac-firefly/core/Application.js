@@ -22,15 +22,15 @@ import AppAlt from './AppAlt.js';
 require('babel/polyfill');
 import { appFlux } from './Globals.js';
 import Enum from 'enum';
-import {ExtensionJavaInterface } from 'ipac-firefly/gwtinterface/ExtensionJavaInterface.js';
-import {ExtensionResult } from 'ipac-firefly/gwtinterface/ExtensionResult.js';
-import {PlotCmdExtension } from 'ipac-firefly/visualize/PlotCmdExtension.js';
-import {ReactJavaInterface } from 'ipac-firefly/gwtinterface/ReactJavaInterface.jsx';
-import ColorDialog from "ipac-firefly/visualize/ui/ColorDialog.jsx";
+import {ExtensionJavaInterface } from '../gwtinterface/ExtensionJavaInterface.js';
+import {ExtensionResult } from '../gwtinterface/ExtensionResult.js';
+import {PlotCmdExtension } from '../visualize/PlotCmdExtension.js';
+import {ReactJavaInterface } from '../gwtinterface/ReactJavaInterface.jsx';
+import ColorDialog from "../visualize/ui/ColorDialog.jsx";
 import ExampleDialog  from "../ui/ExampleDialog.jsx";
 
-import {ServerRequest } from 'ipac-firefly/data/ServerRequest.js';
-import {getJsonData } from 'ipac-firefly/rpc/SearchServicesJson.js';
+import {ServerRequest } from '../data/ServerRequest.js';
+import {getJsonData } from '../rpc/SearchServicesJson.js';
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
 

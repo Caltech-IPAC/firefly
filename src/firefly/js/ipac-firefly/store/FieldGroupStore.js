@@ -59,11 +59,9 @@ class FieldGroupStore {
             updateData: FieldGroupActions.valueChange,
             updateMount: FieldGroupActions.mountComponent,
             updateFieldGroupMount: FieldGroupActions.mountFieldGroup,
-            validateFieldGroup : FieldGroupActions.validateFieldGroup,
             allPlotUpdate : ImagePlotActions.anyChange
         });
         this.exportPublicMethods({
-            getResults: this.getResults.bind(this),
             getGroupState: this.getGroupState.bind(this),
             getGroupFields : this.getGroupFields.bind(this)
         });
@@ -170,68 +168,6 @@ class FieldGroupStore {
     }
 
     /**
-     *
-     * @return Promise with the valid state true/false
-     */
-    validateFieldGroup(groupKey) {
-        var fg= this.fieldGroupMap[groupKey];
-        var fields= fg.fields;
-        var evEmmitter= this.getInstance().getEventEmitter();
-        return Promise.all( Object.keys(fields).map( (fieldKey => FieldGroupStore.makeValidationPromise(fields,fieldKey)),this ) )
-            .then( (allResults) =>
-                {
-                    var valid = allResults.every(
-                        (result) => {
-                            var fieldKey;
-                            if (typeof result==='string') {
-                                fieldKey= result;
-                            }
-                            else if (typeof result==='object' && result.fieldKey){
-                                fieldKey= result.fieldKey;
-                            }
-                            else {
-                                throw(new Error('could not find fieldKey from promise results'));
-                            }
-                            var f = fields[fieldKey];
-                            return (f.valid !== undefined && f.mounted) ? f.valid : true;
-                        });
-                    fg.fieldGroupValid= valid;
-                    evEmmitter.emit('fieldGroupValid');
-                }
-            ).catch(e => console.log(e));
-    }
-
-
-    /**
-     * make a promise for this field key to guarantee that all async validation has completed
-     * @param fieldKey the field key to convert to non async
-     * @return Promise
-     */
-    static makeValidationPromise(fields,fieldKey) {
-        if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
-            return fields[fieldKey].asyncUpdatePromise;
-        }
-        else {
-            return Promise.resolve(fieldKey);
-        }
-    }
-
-    /**
-     * Export this method.
-     *
-     * @return {{}}
-     */
-    getResults(groupKey) {
-        var fg= this.fieldGroupMap[groupKey];
-        var fields= fg.fields;
-        var request= {};
-        Object.keys(fields).forEach(function(fieldKey) {
-            request[fieldKey] = fields[fieldKey].value;
-        },this);
-        return request;
-    }
-
-    /**
      * Export this method.
      *
      * @return {{}}
@@ -239,6 +175,7 @@ class FieldGroupStore {
     getGroupState(groupKey) {
         return this.fieldGroupMap[groupKey] ? this.fieldGroupMap[groupKey] : null;
     }
+
     getGroupFields(groupKey) {
         var retval= null;
         if (this.fieldGroupMap[groupKey] && this.fieldGroupMap[groupKey].fields) {

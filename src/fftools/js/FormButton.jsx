@@ -44,7 +44,7 @@ var FormButton = module.exports= React.createClass(
            var closePromise= new Promise(function(resolve, reject) {
                resolver= resolve;
            });
-           PopupUtil.showDialog('Results',this.makeDialogContent(statStr,s,resolver),closePromise);
+           PopupUtil.showDialog('Results',this.makeResultInfoContent(statStr,s,resolver),closePromise);
 
        },
 
