@@ -6,13 +6,12 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.util.Assert;
 import nom.tam.fits.FitsException;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.IndexColorModel;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
+import java.awt.color.ColorSpace;
+import java.awt.image.*;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -94,30 +93,10 @@ public class ImageData implements Serializable {
         this.rangeValues= rangeValues;
 
         imageMasks=iMasks;
-       _cm=getColorModelTest(iMasks);//getIndexColorModelWithAlpha(iMasks); //getIndexColorModel(iMasks); //
+       _cm=  getColorModelTest1(iMasks);// getIndexColorModelWithAlpha(iMasks); // getIndexColorModel(iMasks); //getIndexColorModel(iMasks); //getColorModelTest(iMasks);//
 
 
-        int trans=_cm.getTransparency();
 
-        int a=_cm.getAlpha(255);
-
-        int a1 = _cm.getAlpha(10);
-        int r1=_cm.getRed(10);
-        int g1=_cm.getGreen(10);
-        int b1=_cm.getBlue(10);
-
-        switch (a){
-            case Color.BITMASK:
-              System.out.println("bitmask");
-               break;
-            case Color.OPAQUE:
-                System.out.println("opaque");
-                break;
-            case Color.TRANSLUCENT:
-                System.out.println("TRANSLUCENT");
-                break;
-
-        }
         if (imageType==ImageType.TYPE_24_BIT) {
             _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
         }
@@ -268,9 +247,9 @@ public class ImageData implements Serializable {
 
         int transparentPix = 255;
         byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill( cMap, (byte) 0); //file all pixel with black color
+        Arrays.fill( cMap, (byte) 255); //file all pixel with white color
 
-
+        Color w = new Color(255, 255, 0);
         for (int i=0; i<lsstMasks.length; i++){
             int cMapIndex = 3* lsstMasks[i].getIndex();
             cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
@@ -279,81 +258,259 @@ public class ImageData implements Serializable {
 
         }
 
-        Color transColor = new Color(255, 255, 255, 255);
+        //BigInteger validPixel=null;
+        //return new IndexColorModel(8, 256, cMap,0,  DataBuffer.TYPE_BYTE, validPixel) ;//, transparentPix);
+
+        IndexColorModel ic =  new IndexColorModel(8, 256, cMap, 0, false, transparentPix);
+
+        int pix= ic.getTransparentPixel();
+        int pv = ic.getRGB(pix);
+        Color c = new Color(ic.getRed(255), ic.getGreen(255), ic.getBlue(255), ic.getAlpha(255));
+        Color bk = new Color(ic.getRed(255), ic.getGreen(255), ic.getBlue(255));
+        byte cb = (byte) c.getRGB();
 
 
-        return new IndexColorModel(8, 256, cMap,0, false, transparentPix);
+        return ic; //new IndexColorModel(8, 256, cMap,0, false, transparentPix);
 
     }
 
-    private static IndexColorModel getColorModelTest(ImageMask[] lsstMasks){
-        int[] cmap=new int[256];
-       // cmap[255] =  0x00FFFFFF; // transparent and white
-        Arrays.fill( cmap, 0);//0x00FFFFFF);
+    /**
+     * Build a dynamic IndexColorModel which contains the colors defined in the imageMask array plus a white background color.
+     * The background color should be transparent.  The lsstMasks is sorted according to the index.  mask0=lsstMasks[0].getIndex()=1
+     * and mask1=lsstMasks[1].getIndex=5:
+     *
+     *       pixel index   color
+     *       0             mask0.color
+     *       1             mask1.color
+     *       3             white color
+     *
+     *
+     * @param lsstMasks
+     * @return
+     */
+
+    private static IndexColorModel getColorModelTest1(ImageMask[] lsstMasks){
+
+
+        byte[] cmap=new byte[4*(lsstMasks.length+1) ];
+
+        Arrays.fill( cmap, (byte)0);
         for (int i=0; i<lsstMasks.length; i++){
-            cmap[lsstMasks[i].getIndex()]=lsstMasks[i].getColor().getRGB();
+            cmap[4*i]=(byte) lsstMasks[i].getColor().getRed();
+            cmap[4*i+1]=(byte) lsstMasks[i].getColor().getGreen();
+            cmap[4*i+2]=(byte) lsstMasks[i].getColor().getBlue();
+            cmap[4*i+3]=(byte) 255;
         }
-        /*for (int i = 1; i != 256; i++) {
-            // 1 to 255 renders as (almost) white to black
-            cmap[i] = 0xFF000000 | ((0xFF - i) * 0x010101);
-        }*/
-        return new IndexColorModel(8,
-                cmap.length, cmap, 0, true, Transparency.BITMASK, DataBuffer.TYPE_BYTE);
+
+        Color white = new Color(255, 255, 255, 0); //Color.WHITE.getRGB(), true);//0, 0, 0, 0); //
+        cmap[4*lsstMasks.length]=(byte) white.getRed();
+        cmap[4*lsstMasks.length+1]= (byte) white.getGreen();
+        cmap[4*lsstMasks.length+2]= (byte) white.getBlue();
+        cmap[4*lsstMasks.length+3]= (byte) white.getAlpha();
+
+
+
+
+        return  new IndexColorModel(8, lsstMasks.length+1, cmap, 0, true, 255);
+
     }
+
 
 
     private static IndexColorModel getIndexColorModelWithAlpha(ImageMask[] lsstMasks){
 
         int transparentPix = 255;
-        byte[] cMap=new byte[1024]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-       // int[] cMap=new int[1024]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill( cMap, (byte) 0); //file all pixel with black color
+        byte[] cMap=new byte[1024]; //256 colors, each color has three values color={red, green, blue, alpha}, thus, it takes 3 bytes, 256 x 4 = 1024 bytes
 
+        Arrays.fill( cMap, (byte) 0);
 
         for (int i=0; i<lsstMasks.length; i++){
             int cMapIndex = 4* lsstMasks[i].getIndex();
-            cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
+            cMap[cMapIndex] = (byte) lsstMasks[i].getColor().getRed();
             cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
             cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
             cMap[cMapIndex+3]=(byte) 255;
 
         }
 
-      // Color transPixeColor = new Color(0, 0, 0, 0);
 
-       for (int i=0; i<4; i++){
-            cMap[1020+i] = 0;
+
+       for (int i=0; i<3; i++){
+           cMap[1020+i] = (byte) 100;
         }
+        cMap[1023] =0;
 
-        BigInteger validPixel=null;
+        //store the white color at the index 10
+        Color white = new Color(Color.WHITE.getRGB(), true);
+        cMap[40]= (byte) white.getRed();
+        cMap[41]= (byte) white.getGreen();
+        cMap[42]= (byte) white.getBlue();
+        // cMap[43]= (byte)white.getAlpha(); //show white color; 0 show black
+       cMap[43]= (byte)0;// 0 show black
+
+
+        //BigInteger validPixel=null;
         //return new IndexColorModel(8, 256, cMap,0,  DataBuffer.TYPE_BYTE, validPixel) ;//, transparentPix);
-       return new IndexColorModel(8, 256, cMap, 0, true, transparentPix);
+
+        IndexColorModel ic =  new IndexColorModel(8, 256, cMap, 0, true, transparentPix);
+
+        return new IndexColorModel(8, 256, cMap, 0, true, transparentPix);
 
     }
-    // Testing Mask
-    private void constructImage(FitsRead fitsReadAry[]) {
 
-      /*  inUseCnt.incrementAndGet();
-        ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
-        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
-        ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
+    final public static BufferedImage convertColorspace(
+            BufferedImage image,
+            int newType) {
 
-        ImageMask[] lmasks=  {lsstmaskRed, lsstmaskGreen,lsstmaskBlue};
-*/
+        try {
+            BufferedImage raw_image = image;
+            image =
+                    new BufferedImage(
+                            raw_image.getWidth(),
+                            raw_image.getHeight(),
+                            newType);
+            ColorConvertOp xformOp = new ColorConvertOp(null);
+            xformOp.filter(raw_image, image);
+        } catch (Exception e) {
+            System.out.println("Exception " + e + " converting image");
+
+        }
+
+        return image;
+    }
+
+
+
+    private RenderedImage getImage(int width, int height) {
+
+
+        // Create a buffered image in which to draw
+        BufferedImage bufferedImage = new BufferedImage(width, height,
+                BufferedImage.TYPE_INT_ARGB);
+
+        // Create a graphics contents on the buffered image
+        Graphics2D g2d = bufferedImage.createGraphics();
+
+        // Draw graphics
+        g2d.setComposite(AlphaComposite.Clear);
+        g2d.fillRect(0, 0, width, height);
+
+
+        // Graphics context no longer needed so dispose it
+        g2d.dispose();
+
+        return bufferedImage;
+    }
+    private static void makeTransparant(BufferedImage img)
+    {
+        Graphics2D g = img.createGraphics();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
+        g.fillRect(0, 0, img.getWidth(), img.getHeight());
+        g.dispose();
+    }
+
+    private static BufferedImage imageToBufferedImage(Image image) {
+
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = bufferedImage.createGraphics();
+        g2.drawImage(image, 0, 0, null);
+        g2.dispose();
+
+        return bufferedImage;
+
+    }
+
+    private static Image makeColorTransparent(BufferedImage im, final Color color) {
+        ImageFilter filter = new RGBImageFilter() {
+
+            // the color we are looking for... Alpha bits are set to opaque
+            public int markerRGB = color.getRGB() | 0xFF000000;
+
+            public final int filterRGB(int x, int y, int rgb) {
+                if ((rgb | 0xFF000000) == markerRGB) {
+                    // Mark the alpha bits as zero - transparent
+                    return 0x00FFFFFF & rgb;
+                } else {
+                    // nothing to do
+                    return rgb;
+                }
+            }
+        };
+
+        ImageProducer ip = new FilteredImageSource(im.getSource(), filter);
+        return Toolkit.getDefaultToolkit().createImage(ip);
+    }
+
+    private void constructImage(FitsRead fitsReadAry[])  {
+
 
         if (_imageType==ImageType.TYPE_8_BIT) {
             _raster = null;
             if (imageMasks!=null && imageMasks.length!=0){
-            _bufferedImage = new BufferedImage(_width, _height,
-              BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
-        }
+
+
+               _bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_BYTE_INDEXED, _cm);
+               fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
+/*
+                //test if the image has transparent pixels as intended
+                File out1 = new File("/Users/zhang/lsstDev/testingData/transLZ.PNG");
+                try {
+                    ImageIO.write(_bufferedImage, "PNG", out1);
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                */
+
+   //another way to make transparent (using none transparent white color to start with and then convert to transparent white color)  (for cross check only)
+
+   /*             int color = _bufferedImage.getRGB(0, 0);
+
+                Image image = makeColorTransparent(_bufferedImage, new Color(color));
+
+                BufferedImage transparent = imageToBufferedImage(image);
+                _bufferedImage=transparent;
+
+                File out = new File("/Users/zhang/lsstDev/testingData/trans.PNG");
+                try {
+                    ImageIO.write(transparent, "PNG", out);
+                }
+               catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                IndexColorModel cm = (IndexColorModel) _bufferedImage.getColorModel();
+
+                if ( _bufferedImage.getType()==BufferedImage.TYPE_4BYTE_ABGR){
+                    System.out.println("support alpha");
+                }
+
+                if ( _bufferedImage.getColorModel().hasAlpha()){
+                    System.out.println("support alpha");
+                    int trans=_bufferedImage.getColorModel().getTransparency();
+                    byte[] a = new byte[imageMasks.length+1];
+                    ((IndexColorModel) _bufferedImage.getColorModel()).getAlphas(a);
+                    for (int i=0; i<a.length; i++){
+                        System.out.println("a="+a);
+                    }
+                }
+               byte r = (byte) cm.getRed(1);
+                byte g = (byte) cm.getGreen(1);
+                byte b = (byte) cm.getBlue(1);
+                byte a = (byte) cm.getAlpha(1);
+*/               // Color plottedBGColor = new Color(r,g, b, a);
+              //  Color bk = new Color(-1,-1, -1);
+
+            }
             else {
-                 //IndexColorModel cm = getIndexColorModel(imageMasks);
-                _bufferedImage = new BufferedImage(_width, _height,
+
+
+            _bufferedImage = new BufferedImage(_width, _height,
                 BufferedImage.TYPE_BYTE_INDEXED, _cm);
                 fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
-         }
+
+
+            }
         }
 
         else if (_imageType==ImageType.TYPE_24_BIT) {
@@ -362,7 +519,7 @@ public class ImageData implements Serializable {
             for(int i=0; (i<fitsReadAry.length); i++) {
                 byte array[]= getDataArray(i);
                 if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, imageMasks);
+                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine);
                 }
                 else {
                     for(int j=0; j<array.length; j++) array[j]= 0;

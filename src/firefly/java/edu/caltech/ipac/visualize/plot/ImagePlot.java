@@ -990,8 +990,9 @@ public class ImagePlot extends Plot implements Serializable {
 
         //test only the red color
         ImageMask lsstmaskRed= new ImageMask(0, Color.RED);
-        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
         ImageMask lsstmaskGreen = new ImageMask(5, Color.GREEN);
+        ImageMask lsstmaskBlue = new ImageMask(8, Color.BLUE);
+
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
 
@@ -1003,7 +1004,7 @@ public class ImagePlot extends Plot implements Serializable {
         File imagefileDir = new File(path);
         String    root="testMask";
         int tileCnt=1;
-        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
+        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);//PlotOutput.PNG, tileCnt>0);
 
         PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
        /* PlotImages.ImageURL imageURL;

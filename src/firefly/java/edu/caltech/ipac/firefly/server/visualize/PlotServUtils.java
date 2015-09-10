@@ -45,14 +45,12 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 /**
  * User: roby
@@ -551,13 +549,32 @@ public class PlotServUtils {
         return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
     }
 
+    /**
+     * Sort the imageMask array in the acending order based on the mask's index (the bit offset)
+     * When such mask arary passed to create IndexColorModel, the number of the colors can be decided using the
+     * masks colors and store the color according to the order of the imageMask in the array.
+     *
+     * @param imageMasks
+     * @return
+     */
+    private static ImageMask[] sortImageMaskArrayInIndexOrder(ImageMask[] imageMasks){
+
+        Map<Integer, ImageMask> unsortedMap= new HashMap<Integer, ImageMask>();
+        for (int i=0;i<imageMasks.length; i++){
+            unsortedMap.put(new Integer(imageMasks[i].getIndex()), imageMasks[i]);
+        }
+
+        Map<Integer, ImageMask> treeMap = new TreeMap<Integer, ImageMask>(unsortedMap);
+        return treeMap.values().toArray(new ImageMask[0]);
+    }
+
     static ImagePlot makeMaskImagePlot(ActiveFitsReadGroup frGroup,
                                        float               initialZoomLevel,
                                        WebPlotRequest      request,
                                        RangeValues         stretch) throws FitsException {
 
          ImageMask maskDef[]= createMaskDefinition(request);
-         return new ImagePlot(null, frGroup,initialZoomLevel, maskDef, stretch);
+         return new ImagePlot(null, frGroup,initialZoomLevel, sortImageMaskArrayInIndexOrder(maskDef) , stretch);
     }
 
     public static String convertZoomToString(float level) {

@@ -19,6 +19,7 @@ import nom.tam.util.Cursor;
 
 import java.io.*;
 import java.util.*;
+import java.awt.Color;
 
 
 /**
@@ -888,7 +889,6 @@ public class FitsRead implements Serializable {
         int pixelCount = 0;
 
 
-        ImageMask[] bitOffsetOrderedMasks = sortLSSTMaskArrayInOrder(lsstMasks);
 
         ImageMask combinedMask = ImageMask.combine(lsstMasks);
 
@@ -908,17 +908,19 @@ public class FitsRead implements Serializable {
 
 
                         for (int i = 0; i < lsstMasks.length; i++) {
-                            if (bitOffsetOrderedMasks[i].isSet(masks[index])) {
-                                pixeldata[pixelCount] = (byte) bitOffsetOrderedMasks[i].getIndex();
+                            if (lsstMasks[i].isSet(masks[index])) {
+                               // pixeldata[pixelCount] = (byte) lsstMasks[i].getIndex();
+                                pixeldata[pixelCount] = (byte) i;
                                 break;
                             }
                         }
                     }
                     else {
 
-                        pixeldata[pixelCount]= (byte) 255; //transparent;
 
+                        //pixeldata[pixelCount]= (byte) 10; //transparent; //lsstMasks.length; //
 
+                        pixeldata[pixelCount]= (byte) lsstMasks.length; //
                     }
 
                     pixelhist[pixeldata[pixelCount] & 0xff]++;
@@ -929,16 +931,6 @@ public class FitsRead implements Serializable {
         }
 
 
-    }
-    private static ImageMask[] sortLSSTMaskArrayInOrder(ImageMask[] lsstMasks){
-
-        Map<Integer, ImageMask> unsortedMap= new HashMap<Integer, ImageMask>();
-        for (int i=0;i<lsstMasks.length; i++){
-            unsortedMap.put(new Integer((int) lsstMasks[i].getValue()), lsstMasks[i]);
-        }
-
-        Map<Integer, ImageMask> treeMap = new TreeMap<Integer, ImageMask>(unsortedMap);
-        return treeMap.values().toArray(new ImageMask[0]);
     }
 
 
@@ -1166,31 +1158,37 @@ public class FitsRead implements Serializable {
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;

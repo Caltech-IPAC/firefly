@@ -476,7 +476,7 @@ public class PlotOutput {
         else if (outType == PNG) {
 //            ImageIO.write(image, "png", out);
 
-            Iterator writers = ImageIO.getImageWritersByFormatName("png");
+            Iterator writers = ImageIO.getImageWritersByFormatName("PNG");
             ImageWriter writer = (ImageWriter)writers.next();
             ImageOutputStream ios = ImageIO.createImageOutputStream(out);
             writer.setOutput(ios);
@@ -491,6 +491,7 @@ public class PlotOutput {
 
 
             writer.write(image);
+
 
             FileUtil.silentClose(ios);
 
