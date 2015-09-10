@@ -887,12 +887,7 @@ public class FitsRead implements Serializable {
 
 
         int pixelCount = 0;
-
-
-
         ImageMask combinedMask = ImageMask.combine(lsstMasks);
-
-
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
             int last_index = line * naxis1 + lastPixel;
@@ -903,13 +898,9 @@ public class FitsRead implements Serializable {
                     pixeldata[pixelCount] = blank_pixel_value;
                 } else {   // stretch each pixel
 
-
                     if (combinedMask.isSet( masks[index])) {
-
-
                         for (int i = 0; i < lsstMasks.length; i++) {
                             if (lsstMasks[i].isSet(masks[index])) {
-                               // pixeldata[pixelCount] = (byte) lsstMasks[i].getIndex();
                                 pixeldata[pixelCount] = (byte) i;
                                 break;
                             }
@@ -917,8 +908,6 @@ public class FitsRead implements Serializable {
                     }
                     else {
 
-
-                        //pixeldata[pixelCount]= (byte) 10; //transparent; //lsstMasks.length; //
 
                         pixeldata[pixelCount]= (byte) lsstMasks.length; //
                     }

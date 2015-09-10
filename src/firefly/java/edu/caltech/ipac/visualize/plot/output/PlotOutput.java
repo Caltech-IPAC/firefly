@@ -476,7 +476,7 @@ public class PlotOutput {
         else if (outType == PNG) {
 //            ImageIO.write(image, "png", out);
 
-            Iterator writers = ImageIO.getImageWritersByFormatName("PNG");
+            Iterator writers = ImageIO.getImageWritersByFormatName("png");
             ImageWriter writer = (ImageWriter)writers.next();
             ImageOutputStream ios = ImageIO.createImageOutputStream(out);
             writer.setOutput(ios);
@@ -488,7 +488,6 @@ public class PlotOutput {
 //                    new DirectColorModel(24, 0x0000ff00, 0x0000ff00, 0x000000ff ),
 //                    new SinglePixelPackedSampleModel(DataBuffer.TYPE_INT,image.getWidth(), image.getHeight(),)
             param.setDestinationType(new ImageTypeSpecifier(image));
-
 
             writer.write(image);
 

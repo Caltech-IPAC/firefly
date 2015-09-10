@@ -8,13 +8,10 @@ import nom.tam.fits.FitsException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -93,8 +90,7 @@ public class ImageData implements Serializable {
         this.rangeValues= rangeValues;
 
         imageMasks=iMasks;
-       _cm=  getColorModelTest1(iMasks);// getIndexColorModelWithAlpha(iMasks); // getIndexColorModel(iMasks); //getIndexColorModel(iMasks); //getColorModelTest(iMasks);//
-
+       _cm=  getIndexColorModel(iMasks);// getIndexColorModelWithAlpha(iMasks); // getIndexColorModel(iMasks); //getIndexColorModel(iMasks); //getColorModelTest(iMasks);//
 
 
         if (imageType==ImageType.TYPE_24_BIT) {
@@ -233,46 +229,6 @@ public class ImageData implements Serializable {
     }
    // Testing Mask 07/16/16 LZ
 
-    /**
-     * This method will create a dynamic IndexColorModel based on the users' color choices.
-     * It has 256 colors.  The pixel value is the same as the mask value, where the same pixel stores the
-     * corresponding color as three byte array.
-     * The pixel=256 is a transparent pixel
-     * None specified pixel assigned to black color for default
-     *
-     * @param lsstMasks
-     * @return
-     */
-    private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
-
-        int transparentPix = 255;
-        byte[] cMap=new byte[768]; //256 colors, each color has three values color={red, green, blue}, thus, it takes 3 bytes, 256 x 3 = 768 bytes
-        Arrays.fill( cMap, (byte) 255); //file all pixel with white color
-
-        Color w = new Color(255, 255, 0);
-        for (int i=0; i<lsstMasks.length; i++){
-            int cMapIndex = 3* lsstMasks[i].getIndex();
-            cMap[cMapIndex]=(byte) lsstMasks[i].getColor().getRed();
-            cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-            cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
-
-        }
-
-        //BigInteger validPixel=null;
-        //return new IndexColorModel(8, 256, cMap,0,  DataBuffer.TYPE_BYTE, validPixel) ;//, transparentPix);
-
-        IndexColorModel ic =  new IndexColorModel(8, 256, cMap, 0, false, transparentPix);
-
-        int pix= ic.getTransparentPixel();
-        int pv = ic.getRGB(pix);
-        Color c = new Color(ic.getRed(255), ic.getGreen(255), ic.getBlue(255), ic.getAlpha(255));
-        Color bk = new Color(ic.getRed(255), ic.getGreen(255), ic.getBlue(255));
-        byte cb = (byte) c.getRGB();
-
-
-        return ic; //new IndexColorModel(8, 256, cMap,0, false, transparentPix);
-
-    }
 
     /**
      * Build a dynamic IndexColorModel which contains the colors defined in the imageMask array plus a white background color.
@@ -289,95 +245,30 @@ public class ImageData implements Serializable {
      * @return
      */
 
-    private static IndexColorModel getColorModelTest1(ImageMask[] lsstMasks){
+    private static IndexColorModel getIndexColorModel(ImageMask[] lsstMasks){
 
 
         byte[] cmap=new byte[4*(lsstMasks.length+1) ];
 
         Arrays.fill( cmap, (byte)0);
         for (int i=0; i<lsstMasks.length; i++){
-            cmap[4*i]=(byte) lsstMasks[i].getColor().getRed();
+            cmap[4*i]  =(byte) lsstMasks[i].getColor().getRed();
             cmap[4*i+1]=(byte) lsstMasks[i].getColor().getGreen();
             cmap[4*i+2]=(byte) lsstMasks[i].getColor().getBlue();
-            cmap[4*i+3]=(byte) 255;
+            cmap[4*i+3]=(byte) 255; //opaque
         }
 
-        Color white = new Color(255, 255, 255, 0); //Color.WHITE.getRGB(), true);//0, 0, 0, 0); //
-        cmap[4*lsstMasks.length]=(byte) white.getRed();
-        cmap[4*lsstMasks.length+1]= (byte) white.getGreen();
-        cmap[4*lsstMasks.length+2]= (byte) white.getBlue();
-        cmap[4*lsstMasks.length+3]= (byte) white.getAlpha();
+       // Color white = new Color(255, 255, 255, 0); //Color.WHITE.getRGB(), true);//0, 0, 0, 0); //
+        //store the transparent white color at pixel index = lsstMasks.length
+        cmap[4*lsstMasks.length]=(byte) 255;
+        cmap[4*lsstMasks.length+1]= (byte) 255;
+        cmap[4*lsstMasks.length+2]= (byte) 255;
+        cmap[4*lsstMasks.length+3]= (byte) 0; //alpha=0, transparent
 
-
-
-
-        return  new IndexColorModel(8, lsstMasks.length+1, cmap, 0, true, 255);
-
+        return  new IndexColorModel(8, lsstMasks.length+1, cmap, 0, true);
     }
 
 
-
-    private static IndexColorModel getIndexColorModelWithAlpha(ImageMask[] lsstMasks){
-
-        int transparentPix = 255;
-        byte[] cMap=new byte[1024]; //256 colors, each color has three values color={red, green, blue, alpha}, thus, it takes 3 bytes, 256 x 4 = 1024 bytes
-
-        Arrays.fill( cMap, (byte) 0);
-
-        for (int i=0; i<lsstMasks.length; i++){
-            int cMapIndex = 4* lsstMasks[i].getIndex();
-            cMap[cMapIndex] = (byte) lsstMasks[i].getColor().getRed();
-            cMap[cMapIndex+1]=(byte) lsstMasks[i].getColor().getGreen();
-            cMap[cMapIndex+2]=(byte) lsstMasks[i].getColor().getBlue();
-            cMap[cMapIndex+3]=(byte) 255;
-
-        }
-
-
-
-       for (int i=0; i<3; i++){
-           cMap[1020+i] = (byte) 100;
-        }
-        cMap[1023] =0;
-
-        //store the white color at the index 10
-        Color white = new Color(Color.WHITE.getRGB(), true);
-        cMap[40]= (byte) white.getRed();
-        cMap[41]= (byte) white.getGreen();
-        cMap[42]= (byte) white.getBlue();
-        // cMap[43]= (byte)white.getAlpha(); //show white color; 0 show black
-       cMap[43]= (byte)0;// 0 show black
-
-
-        //BigInteger validPixel=null;
-        //return new IndexColorModel(8, 256, cMap,0,  DataBuffer.TYPE_BYTE, validPixel) ;//, transparentPix);
-
-        IndexColorModel ic =  new IndexColorModel(8, 256, cMap, 0, true, transparentPix);
-
-        return new IndexColorModel(8, 256, cMap, 0, true, transparentPix);
-
-    }
-
-    final public static BufferedImage convertColorspace(
-            BufferedImage image,
-            int newType) {
-
-        try {
-            BufferedImage raw_image = image;
-            image =
-                    new BufferedImage(
-                            raw_image.getWidth(),
-                            raw_image.getHeight(),
-                            newType);
-            ColorConvertOp xformOp = new ColorConvertOp(null);
-            xformOp.filter(raw_image, image);
-        } catch (Exception e) {
-            System.out.println("Exception " + e + " converting image");
-
-        }
-
-        return image;
-    }
 
 
 
@@ -401,6 +292,8 @@ public class ImageData implements Serializable {
 
         return bufferedImage;
     }
+
+
     private static void makeTransparant(BufferedImage img)
     {
         Graphics2D g = img.createGraphics();
@@ -452,6 +345,7 @@ public class ImageData implements Serializable {
                _bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_BYTE_INDEXED, _cm);
                fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
 /*
+
                 //test if the image has transparent pixels as intended
                 File out1 = new File("/Users/zhang/lsstDev/testingData/transLZ.PNG");
                 try {
@@ -460,7 +354,8 @@ public class ImageData implements Serializable {
                 catch (IOException e) {
                     e.printStackTrace();
                 }
-                */
+*/
+
 
    //another way to make transparent (using none transparent white color to start with and then convert to transparent white color)  (for cross check only)
 
