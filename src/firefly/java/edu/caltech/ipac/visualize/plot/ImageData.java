@@ -15,6 +15,12 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * 9/11/15
+ *   Add a new constructor to handle mask plot
+ *   Modified the constructImage to handle both mask and image plots
+ *   Add a new method to create an IndexColorModel dynamically according to the input ImageMask array
+ */
 public class ImageData implements Serializable {
 
 
@@ -229,7 +235,6 @@ public class ImageData implements Serializable {
     }
    // Testing Mask 07/16/16 LZ
 
-
     /**
      * Build a dynamic IndexColorModel which contains the colors defined in the imageMask array plus a white background color.
      * The background color should be transparent.  The lsstMasks is sorted according to the index.  mask0=lsstMasks[0].getIndex()=1
@@ -258,8 +263,7 @@ public class ImageData implements Serializable {
             cmap[4*i+3]=(byte) 255; //opaque
         }
 
-       // Color white = new Color(255, 255, 255, 0); //Color.WHITE.getRGB(), true);//0, 0, 0, 0); //
-        //store the transparent white color at pixel index = lsstMasks.length
+         //store the transparent white color at pixel index = lsstMasks.length
         cmap[4*lsstMasks.length]=(byte) 255;
         cmap[4*lsstMasks.length+1]= (byte) 255;
         cmap[4*lsstMasks.length+2]= (byte) 255;
@@ -272,68 +276,6 @@ public class ImageData implements Serializable {
 
 
 
-    private RenderedImage getImage(int width, int height) {
-
-
-        // Create a buffered image in which to draw
-        BufferedImage bufferedImage = new BufferedImage(width, height,
-                BufferedImage.TYPE_INT_ARGB);
-
-        // Create a graphics contents on the buffered image
-        Graphics2D g2d = bufferedImage.createGraphics();
-
-        // Draw graphics
-        g2d.setComposite(AlphaComposite.Clear);
-        g2d.fillRect(0, 0, width, height);
-
-
-        // Graphics context no longer needed so dispose it
-        g2d.dispose();
-
-        return bufferedImage;
-    }
-
-
-    private static void makeTransparant(BufferedImage img)
-    {
-        Graphics2D g = img.createGraphics();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
-        g.fillRect(0, 0, img.getWidth(), img.getHeight());
-        g.dispose();
-    }
-
-    private static BufferedImage imageToBufferedImage(Image image) {
-
-        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = bufferedImage.createGraphics();
-        g2.drawImage(image, 0, 0, null);
-        g2.dispose();
-
-        return bufferedImage;
-
-    }
-
-    private static Image makeColorTransparent(BufferedImage im, final Color color) {
-        ImageFilter filter = new RGBImageFilter() {
-
-            // the color we are looking for... Alpha bits are set to opaque
-            public int markerRGB = color.getRGB() | 0xFF000000;
-
-            public final int filterRGB(int x, int y, int rgb) {
-                if ((rgb | 0xFF000000) == markerRGB) {
-                    // Mark the alpha bits as zero - transparent
-                    return 0x00FFFFFF & rgb;
-                } else {
-                    // nothing to do
-                    return rgb;
-                }
-            }
-        };
-
-        ImageProducer ip = new FilteredImageSource(im.getSource(), filter);
-        return Toolkit.getDefaultToolkit().createImage(ip);
-    }
-
     private void constructImage(FitsRead fitsReadAry[])  {
 
 
@@ -341,66 +283,14 @@ public class ImageData implements Serializable {
             _raster = null;
             if (imageMasks!=null && imageMasks.length!=0){
 
-
                _bufferedImage = new BufferedImage(_width, _height, BufferedImage.TYPE_BYTE_INDEXED, _cm);
                fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, imageMasks);
-/*
-
-                //test if the image has transparent pixels as intended
-                File out1 = new File("/Users/zhang/lsstDev/testingData/transLZ.PNG");
-                try {
-                    ImageIO.write(_bufferedImage, "PNG", out1);
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-*/
-
-
-   //another way to make transparent (using none transparent white color to start with and then convert to transparent white color)  (for cross check only)
-
-   /*             int color = _bufferedImage.getRGB(0, 0);
-
-                Image image = makeColorTransparent(_bufferedImage, new Color(color));
-
-                BufferedImage transparent = imageToBufferedImage(image);
-                _bufferedImage=transparent;
-
-                File out = new File("/Users/zhang/lsstDev/testingData/trans.PNG");
-                try {
-                    ImageIO.write(transparent, "PNG", out);
-                }
-               catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                IndexColorModel cm = (IndexColorModel) _bufferedImage.getColorModel();
-
-                if ( _bufferedImage.getType()==BufferedImage.TYPE_4BYTE_ABGR){
-                    System.out.println("support alpha");
-                }
-
-                if ( _bufferedImage.getColorModel().hasAlpha()){
-                    System.out.println("support alpha");
-                    int trans=_bufferedImage.getColorModel().getTransparency();
-                    byte[] a = new byte[imageMasks.length+1];
-                    ((IndexColorModel) _bufferedImage.getColorModel()).getAlphas(a);
-                    for (int i=0; i<a.length; i++){
-                        System.out.println("a="+a);
-                    }
-                }
-               byte r = (byte) cm.getRed(1);
-                byte g = (byte) cm.getGreen(1);
-                byte b = (byte) cm.getBlue(1);
-                byte a = (byte) cm.getAlpha(1);
-*/               // Color plottedBGColor = new Color(r,g, b, a);
-              //  Color bk = new Color(-1,-1, -1);
 
             }
             else {
 
 
-            _bufferedImage = new BufferedImage(_width, _height,
+                _bufferedImage = new BufferedImage(_width, _height,
                 BufferedImage.TYPE_BYTE_INDEXED, _cm);
                 fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
 

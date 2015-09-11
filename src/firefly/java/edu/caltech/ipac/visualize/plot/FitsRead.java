@@ -43,6 +43,10 @@ import java.awt.Color;
  *  The pixelHist is removed from the input argument list in stretchPixel method
  *
  * 8/25/15 Fixed the HDU bug at spliting HDU
+ * 9/11/15
+ *   Modified the stretchPixel for mask plot
+ *   Removed unused methods (commented out)
+ *
  *
  */
 public class FitsRead implements Serializable {
@@ -164,30 +168,7 @@ public class FitsRead implements Serializable {
 
 
      }
-/*
-    //The mask data is the phyiscal data, therefore, it needs to be converted.
-     private static short[] getMasksInFits(ArrayList<BasicHDU> HDUList) throws FitsException {
-         for (int i=0; i<HDUList.size(); i++){
-             Header header =  HDUList.get(i).getHeader();
-             if (header == null) {
-                 throw new FitsException("Missing header in FITS file");
-             }
-             if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ) {
-                 Object data = HDUList.get(i).getData().getData();
-                 short[] sData =  (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
-                 masks = new short[sData.length];
-                 for (int ii = 0; i < sData.length; i++) {
-                     masks[i] = (short) (sData[i] * (short) maskImageHeader.bscale + (short) maskImageHeader.bzero);
-                 }
 
-                 return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
-             }
-
-         }
-         return null;
-
-     }
-*/
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
      *
@@ -695,8 +676,6 @@ public class FitsRead implements Serializable {
         newHeader.deleteKey("NAXIS3");
         newHeader.deleteKey("NAXIS4");
         newHeader.deleteKey("BLANK");
-        //new_header.deleteKey("BSCALE");
-        //new_header.deleteKey("BZERO");
 
         ImageData new_image_data = new ImageData(pixels);
         hdu = new ImageHDU(newHeader, new_image_data);
@@ -797,8 +776,6 @@ public class FitsRead implements Serializable {
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        //byte pixelData[] = passedPixelData;
-
 
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
                 blank_pixel_value, float1d,  pixelData,  rangeValues,slow,shigh);
@@ -839,8 +816,6 @@ public class FitsRead implements Serializable {
         }
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
-
-        //byte pixelData[] = passedPixelData;
 
         int[] pixelhist = new int[256];
 
@@ -894,10 +869,16 @@ public class FitsRead implements Serializable {
 
             for (int index = start_index; index <= last_index; index++) {
 
-                if (Double.isNaN(float1dArray[index])) { //orignal pixel value is NaN, assign it to blank
+                if (Double.isNaN(float1dArray[index])) { //original pixel value is NaN, assign it to blank
                     pixeldata[pixelCount] = blank_pixel_value;
-                } else {   // stretch each pixel
-
+                } else {
+                    /*
+                     The IndexColorModel is designed in the way that each pixel[index] contains the color in
+                     lsstMasks[index].  In pixel index0, it stores the lsstMasks[0]'s color. Thus, assign
+                     pixelData[pixelCount]=index of the lsstMasks, this pixel is going to be plotted using the
+                     color stored there.  The color model is indexed.  For 8 bit image, it has 256 maxium colors.
+                     For detail, see the indexColorModel defined in ImageData.java.
+                     */
                     if (combinedMask.isSet( masks[index])) {
                         for (int i = 0; i < lsstMasks.length; i++) {
                             if (lsstMasks[i].isSet(masks[index])) {
@@ -908,8 +889,11 @@ public class FitsRead implements Serializable {
                     }
                     else {
 
-
-                        pixeldata[pixelCount]= (byte) lsstMasks.length; //
+                        /*
+                        The transparent color is stored at pixel[lsstMasks.length].  The pixelData[pixelCount]=(byte) lsstMasks.length,
+                        this pixel will be transparent.
+                         */
+                        pixeldata[pixelCount]= (byte) lsstMasks.length;
                     }
 
                     pixelhist[pixeldata[pixelCount] & 0xff]++;
