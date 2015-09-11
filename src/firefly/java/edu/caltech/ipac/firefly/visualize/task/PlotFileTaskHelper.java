@@ -150,7 +150,7 @@ public class PlotFileTaskHelper {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
 
                 for (WebPlotInitializer wpInit : cr) {
-                    plot = new WebPlot(wpInit);
+                    plot = new WebPlot(wpInit,false);
                     if (getRequest().isMinimalReadout()) plot.setAttribute(WebPlot.MINIMAL_READOUT,true);
                     if (firstPlot == null) firstPlot = plot;
                     if (_continueOnSuccess) {

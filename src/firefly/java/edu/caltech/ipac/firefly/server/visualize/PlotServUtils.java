@@ -133,12 +133,11 @@ public class PlotServUtils {
 
         PlotOutput po= new PlotOutput(plot,frGroup);
         List<PlotOutput.TileFileInfo> results;
-        int outType= (plot.getPlotGroup().getZoomFact()<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
         if (fullScreen) {
-            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
+            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, plot.isUseForMask(), tileCnt>0);
         }
         else {
-            results= po.writeTiles(imagefileDir, root,outType,tileCnt);
+            results= po.writeTiles(imagefileDir, root,PlotOutput.PNG,plot.isUseForMask(),tileCnt);
         }
         PlotImages images= new PlotImages(root,results.size(), plot.getScreenWidth(), plot.getScreenHeight(), plot.getZoomFactor());
         PlotImages.ImageURL imageURL;
@@ -158,15 +157,14 @@ public class PlotServUtils {
 
 
 
-    static PlotImages makeImageTilesNoCreation(File      imagefileDir,
-                                               String    root,
-                                               float     zfact,
-                                               int       screenWidth,
-                                               int       screenHeight) {
+    static PlotImages defineTiles(File imagefileDir,
+                                  String root,
+                                  float zfact,
+                                  int screenWidth,
+                                  int screenHeight) {
 
         List<PlotOutput.TileFileInfo> results;
-        int outType= (zfact<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
-        results= PlotOutput.makeTilesNoCreation(imagefileDir, zfact, root,outType, screenWidth, screenHeight);
+        results= PlotOutput.defineTiles(imagefileDir, zfact, root, PlotOutput.PNG, screenWidth, screenHeight);
         PlotImages images= new PlotImages(root,results.size(), screenWidth, screenHeight, zfact);
         PlotImages.ImageURL imageurl;
         String relFile;
@@ -339,7 +337,7 @@ public class PlotServUtils {
         if (width== PLOT_FULL_WIDTH) width= plot.getScreenWidth();
         if (height== PLOT_FULL_HEIGHT) height= plot.getScreenHeight();
 
-        po.writeTile(f, ext, x, y, width, height, null);
+        po.writeTile(f, ext, plot.isUseForMask(),x, y, width, height, null);
         return f;
 
     }

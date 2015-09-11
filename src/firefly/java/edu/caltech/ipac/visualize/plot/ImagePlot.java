@@ -17,8 +17,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.IndexColorModel;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,6 +50,7 @@ public class ImagePlot extends Plot implements Serializable {
 //    private ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
     private boolean  _threeColor;
     private boolean _isSharedDataPlot = false;
+    private final boolean useForMask;
 
     static {
         int cores= Runtime.getRuntime().availableProcessors();
@@ -59,7 +62,10 @@ public class ImagePlot extends Plot implements Serializable {
     }
 
 
-   public ImagePlot(PlotGroup plotGroup) { super(plotGroup); }
+   public ImagePlot(PlotGroup plotGroup, boolean useForMask) {
+       super(plotGroup);
+       this.useForMask = useForMask;
+   }
 
 
     public ImagePlot(PlotGroup plotGroup,
@@ -70,6 +76,7 @@ public class ImagePlot extends Plot implements Serializable {
                      int       initColorID,
                      RangeValues stretch)  throws FitsException{
         super(plotGroup);
+        useForMask = false;
         refBand= band;
         setInitialZoomLevel(initialZoomLevel);
         imageScaleFactor= frGroup.getFitsRead(band).getImageScaleFactor();
@@ -104,6 +111,7 @@ public class ImagePlot extends Plot implements Serializable {
         setInitialZoomLevel(initialZoomLevel);
         imageScaleFactor= frGroup.getFitsRead(Band.NO_BAND).getImageScaleFactor();
         _threeColor= false;
+        useForMask = true;
 
        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(),  ImageData.ImageType.TYPE_8_BIT,
                                        iMasks,stretch,SQUARE, false);
@@ -113,6 +121,7 @@ public class ImagePlot extends Plot implements Serializable {
 
 
     public boolean isThreeColor() { return _threeColor; }
+    public boolean isUseForMask() { return useForMask; }
 
 
     public void setThreeColorBand(FitsRead colorBandFitsRead, Band band, ActiveFitsReadGroup frGroup)
@@ -749,7 +758,7 @@ public class ImagePlot extends Plot implements Serializable {
      * @return Plot a new plot that shares image data.
      */
    public Plot makeSharedDataPlot(PlotGroup plotGroup, ActiveFitsReadGroup frGroup) {
-        ImagePlot p         = new ImagePlot(plotGroup);
+        ImagePlot p         = new ImagePlot(plotGroup, useForMask);
         p._projection       = _projection;
         p._imageData        = _imageData;
         p._isPlotted        = _isPlotted;
@@ -1004,7 +1013,7 @@ public class ImagePlot extends Plot implements Serializable {
         File imagefileDir = new File(path);
         String    root="testMask";
         int tileCnt=1;
-        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);//PlotOutput.PNG, tileCnt>0);
+        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG,true,tileCnt>0);
 
         PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
        /* PlotImages.ImageURL imageURL;

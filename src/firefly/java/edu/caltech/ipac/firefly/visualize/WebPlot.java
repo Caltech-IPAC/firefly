@@ -184,10 +184,10 @@ public class WebPlot {
 
     private final ImageBoundsData imageBoundsData;
 
-    public WebPlot(WebPlotInitializer wpInit) {
+    public WebPlot(WebPlotInitializer wpInit, boolean asOverlay) {
         _plotGroup= new WebPlotGroup(this,wpInit.getPlotState().getZoomLevel());
         _plotState       = wpInit.getPlotState();
-        _tileDrawer      = new TileDrawer(this,wpInit.getInitImages());
+        _tileDrawer      = new TileDrawer(this,wpInit.getInitImages(), asOverlay);
         _imageCoordSys   = wpInit.getCoordinatesOfPlot();
         _projection      = wpInit.getProjection();
         _dataWidth       = wpInit.getDataWidth();

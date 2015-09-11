@@ -93,7 +93,7 @@ public class CropTask extends ServerTask<WebPlotResult> {
                     pv.clearAllPlots();
                     List<WebPlot> cropPlotList= new ArrayList<WebPlot>(cr.size());
                     for(WebPlotInitializer wpInit : cr) {
-                        WebPlot cropPlot= new WebPlot(wpInit);
+                        WebPlot cropPlot= new WebPlot(wpInit,false);
                         cropPlotList.add(cropPlot);
                     }
                     if (cropPlotList.size()==_oldPlotList.size()) {
@@ -115,7 +115,7 @@ public class CropTask extends ServerTask<WebPlotResult> {
                 else {
                     WebPlotInitializer wpInit= cr.getInitializers()[0];
 
-                    WebPlot cropPlot= new WebPlot(wpInit);
+                    WebPlot cropPlot= new WebPlot(wpInit,false);
                     if (_oldPrimaryPlot.getPlotState().isMultiImageFile(cropPlot.getPlotState().firstBand())) {
                         if (!StringUtils.isEmpty(_oldPrimaryPlot.getPlotDesc())) {
                             cropPlot.setPlotDesc("Crop: "+_oldPrimaryPlot.getPlotDesc());

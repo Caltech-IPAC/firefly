@@ -56,6 +56,7 @@ public class TileDrawer {
     private static final FourTileSort _ftSort = new FourTileSort();
     private List<PlotImages.ImageURL> _panelList = new ArrayList<PlotImages.ImageURL>(8);
     private WebPlotView _pv;
+    private boolean asOverlay;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -69,9 +70,10 @@ public class TileDrawer {
 //-------------- Method from LabelSource Interface ----------------------
 //=======================================================================
 
-    public TileDrawer(WebPlot plot, PlotImages images) {
+    public TileDrawer(WebPlot plot, PlotImages images, boolean asOverlay) {
         _plot = plot;
         _images = images;
+        this.asOverlay= asOverlay;
     }
 
     public void setPlotView(WebPlotView pv) {
@@ -81,9 +83,10 @@ public class TileDrawer {
     AbsolutePanel getWidget() {
         if (_imageWidget == null) {
             _imageWidget = new AbsolutePanel();
-            GwtUtil.setStyle(_imageWidget, "background", BACKGROUND_STYLE);
-//            DOM.setStyleAttribute(_imageWidget.getElement(), "background","#e5e3df");
-            DOM.setStyleAttribute(_imageWidget.getElement(), "background", "black");
+            if (!asOverlay) {
+                GwtUtil.setStyle(_imageWidget, "background", BACKGROUND_STYLE);
+                DOM.setStyleAttribute(_imageWidget.getElement(), "background", "black");
+            }
             refreshWidget(_images, false);
         }
         return _imageWidget;
@@ -146,7 +149,7 @@ public class TileDrawer {
 
         for (PlotImages.ImageURL image : _images) {
             imw = new Image();
-            GwtUtil.setStyle(imw, "background", BACKGROUND_STYLE);
+            if (!asOverlay) GwtUtil.setStyle(imw, "background", BACKGROUND_STYLE);
 
             ImageWidgetData widgetData = new ImageWidgetData(imw,
                                                              image.getXoff(),

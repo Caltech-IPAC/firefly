@@ -1130,7 +1130,8 @@ public class VisServerOps {
         PlotServUtils.statsLog("zoom", details);
         PlotImages.ThumbURL thumb= ctx.getImages().getThumbnail();
         state.setZoomLevel(level);
-        PlotImages images= reviseImageFileNoCreation(state,ctx, level,targetWidth,targetHeight);
+        PlotImages images= redefineTiles(state, level, targetWidth, targetHeight);
+        ctx.setImages(images);
         images.setThumbnail(thumb);
         retval= new WebPlotResult(ctx.getKey());
         retval.putResult(WebPlotResult.PLOT_IMAGES,images);
@@ -1438,17 +1439,14 @@ public class VisServerOps {
     }
 
 
-    private static PlotImages reviseImageFileNoCreation(PlotState state,
-                                                        PlotClientCtx ctx,
-                                                        float zFactor,
-                                                        int screenWidth,
-                                                        int screenHeight) {
-//        String base= PlotServUtils.makeRevisedBase(ctx);
-        String base= PlotServUtils.makeTileBase(state);
-
-        File dir= ServerContext.getVisSessionDir();
-        PlotImages images= PlotServUtils.makeImageTilesNoCreation(dir, base, zFactor, screenWidth, screenHeight);
-        ctx.setImages(images);
+    private static PlotImages redefineTiles(PlotState state,
+                                            float zFactor,
+                                            int screenWidth,
+                                            int screenHeight) {
+        PlotImages images= PlotServUtils.defineTiles(
+                                      ServerContext.getVisSessionDir(),
+                                      PlotServUtils.makeTileBase(state),
+                                      zFactor, screenWidth, screenHeight);
         return images;
     }
 

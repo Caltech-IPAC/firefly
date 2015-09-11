@@ -59,7 +59,7 @@ public class FlipTask extends ServerTask<WebPlotResult> {
             if (result.isSuccess()) {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
                 WebPlotInitializer wpInit= cr.getInitializers()[0];
-                WebPlot rotPlot= new WebPlot(wpInit);
+                WebPlot rotPlot= new WebPlot(wpInit,false);
                 TaskUtils.copyImportantAttributes(oldPlot,rotPlot);
 
                 WebPlotView pv= mpw.getPlotView();
