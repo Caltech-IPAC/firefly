@@ -13,13 +13,11 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.StretchData;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebHistogramOps;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotGroup;
@@ -41,7 +39,6 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * @author Trey Roby
@@ -81,8 +78,8 @@ public class VisTask {
     }
 
 
-    public ZoomTask zoom(WebPlotGroup group, float zlevel, boolean isFullScreen) {
-        return ZoomTask.zoom(group, zlevel, isFullScreen);
+    public ZoomTask zoom(WebPlotGroup group, float zlevel, boolean isFullScreen, List<WebPlot> overlayPlots) {
+        return ZoomTask.zoom(group, zlevel, isFullScreen, overlayPlots);
     }
 
 

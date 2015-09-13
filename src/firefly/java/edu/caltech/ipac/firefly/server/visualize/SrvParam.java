@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,27 @@ public class SrvParam {
         }
         return state;
     }
+
+    public PlotState getState(int idx, boolean required) {
+        PlotState state= PlotState.parse(getRequired(ServerParams.STATE+idx));
+        if (state == null && required) {
+            throw new IllegalArgumentException("parameter in wrong format: state"+idx+", (see PlotState.serialize()");
+        }
+        return state;
+    }
+
+    public PlotState[] getStateAry() {
+        List<PlotState> stateList= new ArrayList<PlotState>();
+        PlotState state= getState(0,true);
+        stateList.add(state);
+        for(int i=1;(state!=null); i++) {
+            state= getState(i,false);
+            if (state!=null) stateList.add(state);
+        }
+        return stateList.toArray(new PlotState[stateList.size()]);
+    }
+
+
 
     /**
      * Look for the ServerParams.ID key and return the string value

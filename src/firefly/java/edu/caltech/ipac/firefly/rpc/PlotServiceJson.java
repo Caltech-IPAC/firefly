@@ -140,10 +140,14 @@ public class PlotServiceJson implements PlotServiceAsync {
         // todo
     }
 
-    public void setZoomLevel(PlotState state, float level, boolean isFullScreen, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.ZOOM, async, state,
-                      new Param(ServerParams.LEVEL, level + ""),
-                      new Param(ServerParams.FULL_SCREEN, isFullScreen + ""));
+    public void setZoomLevel(PlotState stateAry[], float level, boolean isFullScreen, AsyncCallback<WebPlotResult> async) {
+        List<Param> paramList = new ArrayList<Param>();
+        for (int i = 0; (i < stateAry.length); i++) {
+            paramList.add(new Param(ServerParams.STATE + i, stateAry[i].serialize()));
+        }
+        paramList.add(new Param(ServerParams.LEVEL, level + ""));
+        paramList.add(new Param(ServerParams.FULL_SCREEN, isFullScreen + ""));
+        doPlotService(ServerParams.ZOOM, async, paramList);
     }
 
     public void deletePlot(String ctxStr, AsyncCallback<Boolean> async) {

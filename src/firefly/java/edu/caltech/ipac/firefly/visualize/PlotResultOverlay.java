@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
@@ -29,6 +30,14 @@ public class PlotResultOverlay  extends JavaScriptObject {
         else {
             return false;
         }
+    }-*/;
+
+    public final native boolean isArrayResult() /*-{
+        return  ("resultAry" in this);
+    }-*/;
+
+    public final native JsArray<PlotResultOverlay> getResultAry() /*-{
+        return this.resultAry;
     }-*/;
 
     public final native String getData()  /*-{

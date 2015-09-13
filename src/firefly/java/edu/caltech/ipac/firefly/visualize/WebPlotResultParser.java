@@ -27,7 +27,29 @@ public class WebPlotResultParser {
 
     public static final String QUOTE= "\"";
 
+    public static WebPlotResult[] convertAry(PlotResultOverlay res) {
+        List<WebPlotResult> rList= new ArrayList<WebPlotResult>();
+        if (res.isSuccess()) {
+            if (res.isArrayResult()) {
+                JsArray<PlotResultOverlay> ary= res.getResultAry();
+                for(int i=0; (i<ary.length()); i++) {
+                    rList.add(convertItem(ary.get(i)));
+                }
+
+            }
+            else {
+               rList.add(convertItem(res));
+            }
+        }
+        return rList.toArray(new WebPlotResult[rList.size()]);
+    }
+
+
     public static WebPlotResult convert(PlotResultOverlay res) {
+       return convertItem(res);
+    }
+
+    public static WebPlotResult convertItem(PlotResultOverlay res) {
         WebPlotResult  retval;
         if (res.isSuccess()) {
             retval= new WebPlotResult();
@@ -128,11 +150,26 @@ public class WebPlotResultParser {
         return eval(arg);
     }-*/;
 
+    //--todo
+    public static String createWebPlotResultAry(WebPlotResult resAry[]) {
+        StringBuilder retval= new StringBuilder(5000);
+        retval.append( "\"resultAry\" : [" );
+        for(WebPlotResult res : resAry) {
+            retval.append(createJS(res,false));
+            retval.append(",");
+        }
+        retval.deleteCharAt(retval.length() - 1);
+        retval.append("],");
+        return retval.toString();
+    }
 
-    public static String createJS(WebPlotResult res) {
+    public static String createJS(WebPlotResult res) { return createJS(res,true); }
+
+    public static String createJS(WebPlotResult res, boolean inArray) {
         StringBuilder retval= new StringBuilder(5000);
         if (res.isSuccess()) {
-            retval.append("[{");
+            if (inArray) retval.append("[");
+            retval.append("{");
             retval.append( "\"success\" : true," );
             if (res.containsKey(WebPlotResult.PLOT_STATE)) {
                 PlotState state= (PlotState)res.getResult(WebPlotResult.PLOT_STATE);
@@ -184,7 +221,7 @@ public class WebPlotResultParser {
             }
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
-                addJSItem(retval,WebPlotResult.BAND_INFO, StringUtils.escapeQuotes(bi.serialize()));
+                addJSItem(retval, WebPlotResult.BAND_INFO, StringUtils.escapeQuotes(bi.serialize()));
             }
             if (res.containsKey(WebPlotResult.REGION_DATA)) {
                 String s= res.getStringResult(WebPlotResult.REGION_DATA);
@@ -198,9 +235,15 @@ public class WebPlotResultParser {
                 String s= res.getStringResult(WebPlotResult.TITLE);
                 addJSItem(retval, WebPlotResult.TITLE, StringUtils.escapeQuotes(s));
             }
+            if (res.containsKey(WebPlotResult.RESULT_ARY)) {
+                WebPlotResult ary[]= ((DataEntry.WebPlotResultAry)res.getResult(WebPlotResult.RESULT_ARY)).getArray();
+                String ra= createWebPlotResultAry(ary);
+                retval.append(ra);
+            }
             retval.deleteCharAt(retval.length()-1);
 
-            retval.append("}]");
+            retval.append("}");
+            if (inArray) retval.append("]");
         }
         else {
             String pKey= res.getProgressKey()==null?"":res.getProgressKey();

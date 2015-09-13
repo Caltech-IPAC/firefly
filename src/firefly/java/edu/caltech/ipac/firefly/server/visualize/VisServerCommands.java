@@ -99,11 +99,12 @@ public class VisServerCommands {
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
             SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
+
+            PlotState stateAry[]= sp.getStateAry();
             float level= sp.getRequiredFloat(ServerParams.LEVEL);
             boolean isFull = sp.getOptionalBoolean(ServerParams.FULL_SCREEN, false);
 
-            WebPlotResult result = VisServerOps.setZoomLevel(state, level, false, isFull);
+            WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, false, isFull);
             return WebPlotResultParser.createJS(result);
         }
     }

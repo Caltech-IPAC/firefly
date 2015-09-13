@@ -21,6 +21,7 @@ public interface LayerDrawer  {
     String getDefaultColor();
     void setDefaultColor(String c);
     boolean getSupportsRegions();
+    boolean isImageOverlay();
 
 
 }

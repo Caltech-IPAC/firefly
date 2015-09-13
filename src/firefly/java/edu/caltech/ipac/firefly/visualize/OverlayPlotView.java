@@ -19,7 +19,7 @@ import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
 /**
  * *
  */
-public class MaskPlotView extends Composite implements WebEventListener, LayerDrawer {
+public class OverlayPlotView extends Composite implements WebEventListener, LayerDrawer {
 
 
     private WebPlotView pv;
@@ -31,10 +31,10 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
     /**
      *
      */
-    public MaskPlotView(WebPlotView pv) {
+    public OverlayPlotView(WebPlotView pv) {
         this.pv= pv;
         initWidget(rootPanel);
-        rootPanel.setStyleName("MaskPlotView");
+        rootPanel.setStyleName("OverlayPlotView");
         initGraphics();
     }
 
@@ -55,9 +55,9 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
     }
 
     @Override
-    public boolean getSupportsRegions() {
-        return false;
-    }
+    public boolean getSupportsRegions() { return false; }
+
+    public boolean isImageOverlay() { return true; }
 
     public void freeResources() {
         rootPanel.clear();
@@ -78,21 +78,29 @@ public class MaskPlotView extends Composite implements WebEventListener, LayerDr
         pv.addListener(Name.VIEW_PORT_CHANGE, this);
         pv.addListener(Name.PRIMARY_PLOT_CHANGE, this);
         pv.addDrawingArea(this, false);
+
     }
 
     public void clear() {
         // todo
     }
 
+    public void dispose() {
+        pv.removeDrawingArea(this);
+        pv.removeOverlayPlot(maskPlot);
+    }
+
     public void setMaskPlot(WebPlot maskPlot) {
         if (maskPlot==null) return;
         if (this.maskPlot!=null) {
             this.maskPlot.freeResources();
+            pv.removeOverlayPlot(this.maskPlot);
         }
         maskPlot.getPlotGroup().setPlotView(pv);
         rootPanel.clear();
         rootPanel.add(maskPlot.getWidget(),0,0);
         this.maskPlot= maskPlot;
+        pv.addOverlayPlot(maskPlot);
     }
 
     public void replotMask() {

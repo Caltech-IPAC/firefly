@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.visualize.draw.Metric;
 import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -50,6 +51,17 @@ public interface DataEntry extends Serializable {
         public Number getNumber() { return _number; }
         public String toString() { return _number.toString(); }
     }
+
+    public static class WebPlotResultAry implements DataEntry {
+        private WebPlotResult _ary[];
+        public WebPlotResultAry()  {}
+        public WebPlotResultAry(WebPlotResult ary[])  { _ary= ary; }
+
+        public WebPlotResult[] getArray() { return _ary; }
+        public String toString() { return Arrays.toString(_ary); }
+    }
+
+
 
     public static class IntArray implements DataEntry {
         private int _ary[];

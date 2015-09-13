@@ -66,7 +66,7 @@ public interface PlotServiceAsync {
     public void getFlux(PlotState request,
                         ImagePt inIpt,
                         AsyncCallback<WebPlotResult> async);
-    public void setZoomLevel(PlotState request,
+    public void setZoomLevel(PlotState state[],
                              float level,
                              boolean isFullScreen,
                              AsyncCallback<WebPlotResult> async);

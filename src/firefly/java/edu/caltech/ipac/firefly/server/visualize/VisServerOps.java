@@ -1094,6 +1094,21 @@ public class VisServerOps {
 
     public static boolean ENABLE_FAST_ZOOM= true;
 
+
+    public static WebPlotResult setZoomLevel(PlotState stateAry[], float level, boolean temporary, boolean fullScreen) {
+        WebPlotResult resultAry[]= new WebPlotResult[stateAry.length];
+        boolean success= true;
+        for(int i= 0; (i<stateAry.length); i++)  {
+            resultAry[i]= setZoomLevel(stateAry[i],level,temporary,fullScreen);
+            if (success) success= resultAry[i].isSuccess();
+        }
+        WebPlotResult result= new WebPlotResult(stateAry[0].getContextString());
+        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        return result;
+    }
+
+
+
     public static WebPlotResult setZoomLevel(PlotState state, float level, boolean temporary, boolean fullScreen) {
         WebPlotResult retval;
 

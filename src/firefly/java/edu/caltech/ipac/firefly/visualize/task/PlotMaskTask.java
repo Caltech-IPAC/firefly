@@ -20,7 +20,7 @@ import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
 import edu.caltech.ipac.firefly.ui.ServerTask;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
-import edu.caltech.ipac.firefly.visualize.MaskPlotView;
+import edu.caltech.ipac.firefly.visualize.OverlayPlotView;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -36,12 +36,12 @@ public class PlotMaskTask extends ServerTask<WebPlotResult> {
     private static final String KEY_ROOT= "mask-progress-";
     private ProgressTimer _timer= new ProgressTimer();
     private final String _progressKey;
-    private MaskPlotView mpv;
+    private OverlayPlotView mpv;
     private WebPlotRequest request;
     private AsyncCallback<WebPlot> notify;
 
     public static PlotMaskTask plot(WebPlotRequest request,
-                                    MaskPlotView mpv,
+                                    OverlayPlotView mpv,
                                     AsyncCallback<WebPlot> notify) {
 
         PlotMaskTask task= new PlotMaskTask(request, notify, mpv);
@@ -51,7 +51,7 @@ public class PlotMaskTask extends ServerTask<WebPlotResult> {
 
     PlotMaskTask(WebPlotRequest request,
                  AsyncCallback<WebPlot> notify,
-                 MaskPlotView mpv) {
+                 OverlayPlotView mpv) {
         super(mpv, "Plotting Mask", true);
         super.setMaskingDelaySec(1);
         _keyCnt++;

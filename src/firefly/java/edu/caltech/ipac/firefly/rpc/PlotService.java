@@ -57,7 +57,7 @@ public interface PlotService extends RemoteService {
 
 
     public boolean deletePlot(String ctxStr);
-    public WebPlotResult setZoomLevel(PlotState state, float level, boolean isFullScreen);
+    public WebPlotResult setZoomLevel(PlotState state[], float level, boolean isFullScreen);
     public WebPlotResult getFitsHeaderInfo(PlotState state);
     public WebPlotResult recomputeStretch(PlotState state,
                                           StretchData[] stretchData);

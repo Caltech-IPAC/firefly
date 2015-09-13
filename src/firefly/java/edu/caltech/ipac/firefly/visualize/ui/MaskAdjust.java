@@ -11,7 +11,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import edu.caltech.ipac.firefly.visualize.MaskPlotView;
+import edu.caltech.ipac.firefly.visualize.OverlayPlotView;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -58,7 +58,7 @@ public class MaskAdjust {
                 r.setRotationAngle(primary.getRotationAngle());
             }
         }
-        final MaskPlotView mpv= new MaskPlotView(pv);
+        final OverlayPlotView mpv= new OverlayPlotView(pv);
 
         PlotMaskTask.plot(r, mpv, new AsyncCallback<WebPlot>() {
             @Override

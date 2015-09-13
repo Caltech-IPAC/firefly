@@ -60,7 +60,7 @@ public class PlotServiceImpl extends BaseRemoteService implements PlotService {
     }
 
 
-    public WebPlotResult setZoomLevel(PlotState state, float level, boolean isFullScreen) {
+    public WebPlotResult setZoomLevel(PlotState state[], float level, boolean isFullScreen) {
         return VisServerOps.setZoomLevel(state, level, false, isFullScreen);
     }
 

@@ -212,6 +212,8 @@ public class Drawer implements WebEventListener, LayerDrawer {
     @Override
     public boolean getSupportsRegions() { return true; }
 
+    public boolean isImageOverlay() { return false; }
+
     public void setEnableDecimationDrawing(boolean d) {
         decimate= d;
     }
