@@ -97,8 +97,7 @@ public class DataGroupQueryStatement {
      */
     public void executeInline() throws IpacTableException, IOException {
 
-        DataGroup.Attribute addedComments = new DataGroup.Attribute("comment",
-                "created from statement: " + toString());
+        DataGroup.Attribute addedComments = new DataGroup.Attribute("created from statement: " + toString());
 
         getQuery().doQuery(getFromFile(), getIntoFile(), addedComments);
     }
@@ -116,8 +115,7 @@ public class DataGroupQueryStatement {
                 throw new IOException("Unable to write into output file:" + getIntoFile());
             }
         }
-        DataGroup.Attribute addedComments = new DataGroup.Attribute("comment",
-                "created from statement: " + toString());
+        DataGroup.Attribute addedComments = new DataGroup.Attribute("created from statement: " + toString());
 
         getQuery().doQuery(getFromFile(), outStream, addedComments);
     }
@@ -130,8 +128,7 @@ public class DataGroupQueryStatement {
     public DataGroup execute() throws IpacTableException, IOException {
         DataGroup source = getFromData();
         DataGroup results = getQuery().doQuery(source);
-        results.addAttributes(new DataGroup.Attribute("comment",
-                            "created from statement: " + toString()));
+        results.addAttribute(null, "created from statement: " + toString());
         if (getIntoFile() != null) {
             IpacTableWriter.save(getIntoFile(), results);
         }

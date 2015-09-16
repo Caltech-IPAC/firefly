@@ -451,11 +451,8 @@ public class DataType implements Serializable, Cloneable {
          * @return a string
          */
         public String formatHeader(String value) {
-            String v = String.format(getHeaderFormatStr(), value);
+            String v = value == null ? "" : String.format(getHeaderFormatStr(), value);
             String fmtStr = (getHeaderAlign() == Align.LEFT ? "%-" : "%") + getWidth() + "s";
-            if (getWidth() == 0) {
-                System.out.print("blah blah");
-            }
             return String.format(fmtStr, v);
         }
 

@@ -56,7 +56,6 @@ public class DsvToDataGroup {
             }
 
             DataGroup dg = new DataGroup(null, columns);
-            dg.beginBulkUpdate();
 
             // parse the data
             for (int i = 1; i < records.size(); i++) {
@@ -65,7 +64,6 @@ public class DsvToDataGroup {
                     dg.add(row);
                 }
             }
-            dg.endBulkUpdate();
             dg.shrinkToFitData();
             return dg;
         }

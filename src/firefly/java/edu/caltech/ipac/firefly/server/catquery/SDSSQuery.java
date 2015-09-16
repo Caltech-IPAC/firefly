@@ -375,7 +375,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             if (!StringUtils.isEmpty(resDg.getAttribute("joined"))) {
                 return dgFile;
             } else {
-                resDg.addAttributes(new DataGroup.Attribute("joined", "true"));
+                resDg.addAttribute("joined", "true");
             }
 
             Comparator<DataObject> comparator = new Comparator<DataObject>() {
@@ -397,8 +397,8 @@ public class SDSSQuery extends IpacTablePartProcessor {
             boolean nearestOnly = request.getBooleanParam(SDSSRequest.NEAREST_ONLY);
 
             DataGroup results = DataGroupQuery.join(upDg, upDefsToSave.toArray(new DataType[upDefsToSave.size()]), resDg, null, comparator, !nearestOnly, true);
-            results.addAttributes(new DataGroup.Attribute(makeAttribKey(VISI_TAG, "up_id"), "hide"));
-            results.addAttributes(new DataGroup.Attribute(makeAttribKey(DESC_TAG, "distance"), "distance in arcmin"));
+            results.addAttribute(makeAttribKey(VISI_TAG, "up_id"), "hide");
+            results.addAttribute(makeAttribKey(DESC_TAG, "distance"), "distance in arcmin");
             DataGroupQuery.sort(results, DataGroupQuery.SortDir.ASC, true, CatalogRequest.UPDLOAD_ROW_ID);
             results.shrinkToFitData(true);
             IpacTableWriter.save(dgFile, results);

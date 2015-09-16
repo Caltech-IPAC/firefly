@@ -104,7 +104,6 @@ public class JsonToDataGroup {
                     }
                 }
                 DataGroup dg = new DataGroup(null, columns);
-                dg.beginBulkUpdate();
                 for (Object row : (List) rows) {
                     if (row instanceof List) {
                         DataObject dObj = new DataObject(dg);
@@ -124,7 +123,6 @@ public class JsonToDataGroup {
                         dg.add(dObj);
                     }
                 }
-                dg.endBulkUpdate();
                 dg.shrinkToFitData();
                 return dg;
             }

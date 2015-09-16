@@ -86,12 +86,8 @@ public class IpacTableParser {
 
         DataGroup dg = new DataGroup(null, meta.getCols());
         dg.setRowIdxOffset(start);
-        dg.beginBulkUpdate();
 
-        Map<String, DataGroup.Attribute> attribs = meta.getAttributes();
-        for(DataGroup.Attribute a : attribs.values()) {
-            dg.addAttributes(a);
-        }
+        dg.setAttributes(meta.getAttributes());
 
         RandomAccessFile reader = new RandomAccessFile(inf, "r");
         long skip = ((long)start * (long)meta.getLineWidth()) + (long)meta.getRowStartOffset();
@@ -112,7 +108,6 @@ public class IpacTableParser {
             reader.close();
         }
 
-        dg.endBulkUpdate();
         long totalRow = meta.getLineWidth() == 0 ? 0 :
                         (inf.length() - meta.getRowStartOffset())/meta.getLineWidth();
         return new DataGroupPart(meta, dg, start, (int) totalRow);

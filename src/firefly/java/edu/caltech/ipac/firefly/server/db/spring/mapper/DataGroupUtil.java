@@ -46,9 +46,6 @@ public class DataGroupUtil {
         int columnWidth [] = new int[numColumns];
         Arrays.fill(columnWidth, 0);
 
-        // avoid firing property change events for each DataObject add
-        dataGroup.beginBulkUpdate();
-
         Object obj;
 
 
@@ -78,9 +75,6 @@ public class DataGroupUtil {
             }
             dataGroup.add(dataObj);
         } while (rs.next());
-
-        // will fire property change event
-        dataGroup.endBulkUpdate();
 
         // update column width (for char columns only)
         DataType dt;

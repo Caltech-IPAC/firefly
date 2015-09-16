@@ -75,7 +75,7 @@ public class DataGroupWriter {
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
 
         writeStatus(writer, DataGroupPart.State.INPROGRESS);
-        IpacTableUtil.writeAttributes(writer, source.getAttributes().values(), DataGroupPart.LOADING_STATUS);
+        IpacTableUtil.writeAttributes(writer, source.getKeywords(), DataGroupPart.LOADING_STATUS);
         List<DataType> headers = Arrays.asList(source.getDataDefinitions());
         IpacTableUtil.writeHeader(writer, headers);
         int count = 0;

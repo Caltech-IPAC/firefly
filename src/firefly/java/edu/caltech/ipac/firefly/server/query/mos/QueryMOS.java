@@ -136,7 +136,7 @@ Thread.sleep(1000);
 
                         if (dg.getTitle().equalsIgnoreCase(RESULT_TABLE_NAME) && catOverlayFile.getSource() != null) {
                                 // save the generated file as ipac table headers
-                                dg.addAttributes(new DataGroup.Attribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath()));
+                                dg.addAttribute(MOSRequest.CAT_OVERLAY_FILE, catOverlayFile.getSource().getPath());
                         }
 
                         IpacTableWriter.save(tempFile, dg);
@@ -396,8 +396,8 @@ Thread.sleep(1000);
             for (String s : attrMap.keySet()) {
                 if (namesLst.contains(s)) {
                     DataGroup.Attribute attr = attrMap.get(s);
-                    DataType dt = new DataType(s, attr.getTypeClass());
-                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.formatValue().length()));
+                    DataType dt = new DataType(s, String.class);
+                    dt.getFormatInfo().setWidth(Math.max(s.length(), attr.getValue().length()));
                     newDT.add(dt);
                 }
             }
@@ -406,7 +406,7 @@ Thread.sleep(1000);
             for (DataType dt : newDT) {
                 String col = dt.getKeyName();
                 obj.setDataElement(dt, attrMap.get(col).getValue());
-                newDG.addAttributes(new DataGroup.Attribute(makeAttribKey(LABEL_TAG, col.toLowerCase()), getOrbitalElementLabel(col)));
+                newDG.addAttribute(makeAttribKey(LABEL_TAG, col.toLowerCase()), getOrbitalElementLabel(col));
             }
             newDG.add(obj);
             newFile = File.createTempFile("orbitalElements" + "-", ".tbl", ServerContext.getTempWorkDir());

@@ -189,7 +189,6 @@ public class FixedObjectGroupUtils {
         }
 
         DataGroup dataGroup= new DataGroup(tableDesc,dTypeList);
-        dataGroup.beginBulkUpdate();
         DataObject dataObject;
         String vStr;
         for(TRDocument.TR row: rowAry){
@@ -215,8 +214,6 @@ public class FixedObjectGroupUtils {
             dataGroup.add(dataObject);
             //System.out.println();
         }
-
-        dataGroup.endBulkUpdate();
 
         return dataGroup;
     }

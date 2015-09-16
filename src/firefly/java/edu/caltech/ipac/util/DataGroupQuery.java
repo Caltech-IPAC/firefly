@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -192,10 +193,7 @@ public class DataGroupQuery {
 
         for(Iterator itr = headerResults.iterator(); itr.hasNext(); ) {
             DataGroup.Attribute attrib = (DataGroup.Attribute) itr.next();
-            DataGroup.Attribute newAttrib = new DataGroup.Attribute(
-                                            attrib.getKey(), attrib.getValue(),
-                                            attrib.getType(), attrib.getFormatString() );
-            newDG.addAttributes(newAttrib);
+            newDG.addAttribute(attrib.getKey(), attrib.getValue());
         }
 
         // querying for data
@@ -425,14 +423,9 @@ public class DataGroupQuery {
 
         DataGroup results = new DataGroup(dgOne.getTitle(), defs);
 
-        // copying attributes
+        // merging keywords
         if (includeAttributes) {
-            for(String key : dgOne.getAttributeKeys()) {
-                results.addAttributes(dgOne.getAttribute(key));
-            }
-            for(String key : dgTwo.getAttributeKeys()) {
-                results.addAttributes(dgTwo.getAttribute(key));
-            }
+            dgOne.mergeAttributes(dgTwo.getKeywords());
         }
 
         // start joining

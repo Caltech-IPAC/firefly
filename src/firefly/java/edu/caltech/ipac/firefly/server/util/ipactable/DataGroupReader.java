@@ -76,7 +76,7 @@ public class DataGroupReader {
     public static DataGroup read(File inf, boolean isFixedLength, boolean readAsString, boolean saveFormattedData, String... onlyColumns) throws IOException {
 
         TableDef tableMeta = IpacTableUtil.getMetaInfo(inf);
-        Collection<DataGroup.Attribute> attributes = tableMeta.getAttributes().values();
+        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
         List<DataType> cols = tableMeta.getCols();
 
         if (readAsString) {
@@ -104,11 +104,7 @@ public class DataGroupReader {
             data = headers;
         }
 
-        data.beginBulkUpdate();
-
-        for(DataGroup.Attribute a : attributes) {
-            data.addAttributes(a);
-        }
+        data.setAttributes(attributes);
 
         String line = null;
         int lineNum = 0;
@@ -142,7 +138,6 @@ public class DataGroupReader {
             reader.close();
         }
 
-        data.endBulkUpdate();
         if (!saveFormattedData) {
             data.shrinkToFitData();
         }
@@ -208,8 +203,8 @@ public class DataGroupReader {
             for(DataType dt : enums.keySet()) {
                 List<String> values = enums.get(dt);
                 Collections.sort(values, DataGroupUtil.getComparator(dt));
-                dg.addAttributes(TemplateGenerator.createAttribute(TemplateGenerator.Tag.ITEMS_TAG,
-                                    dt.getKeyName(), StringUtils.toString(values, ",")));
+                dg.addAttribute(TemplateGenerator.createAttributeKey(
+                        TemplateGenerator.Tag.ITEMS_TAG, dt.getKeyName()), StringUtils.toString(values, ","));
             }
         }
 

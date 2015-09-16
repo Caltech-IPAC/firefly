@@ -118,11 +118,11 @@ public class QueryUtil {
 
     public static void doSort(DataGroup dg, SortInfo sortInfo) {
         if (sortInfo != null) {
-            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue().toString();
+            String infoStr = dg.getAttribute(SortInfo.SORT_INFO_TAG) == null ? "" : dg.getAttribute(SortInfo.SORT_INFO_TAG).getValue();
             if (!infoStr.equals(sortInfo.toString())) {
                 DataGroupQuery.SortDir sortDir = DataGroupQuery.SortDir.valueOf(sortInfo.getDirection().name());
                 DataGroupQuery.sort(dg, sortDir, true, sortInfo.getSortColumnAry());
-                dg.addAttributes(new DataGroup.Attribute(SortInfo.SORT_INFO_TAG, sortInfo.toString()));
+                dg.addAttribute(SortInfo.SORT_INFO_TAG, sortInfo.toString());
             }
         }
     }
@@ -133,7 +133,7 @@ public class QueryUtil {
             query.addDataFilters(f);
         }
         dg = query.doQuery(dg);
-        dg.addAttributes(new DataGroup.Attribute("filterBy", CollectionUtil.toString(Arrays.asList(filters))));
+        dg.addAttribute("filterBy", CollectionUtil.toString(Arrays.asList(filters)));
         return dg;
     }
 
@@ -174,10 +174,10 @@ public class QueryUtil {
             columns[i].setUnits(types[i].getDataUnit());
 
             DataGroup.Attribute vis = dg.getAttribute("col." + types[i].getKeyName() + ".Visibility");
-            if (vis == null || vis.formatValue().equals("show")) {
+            if (vis == null || vis.getValue().equals("show")) {
                 columns[i].setHidden(false);
                 columns[i].setVisible(true);
-            } else if (vis.formatValue().equals("hide")) {
+            } else if (vis.getValue().equals("hide")) {
                 columns[i].setHidden(false);
                 columns[i].setVisible(false);
             } else {
@@ -597,10 +597,10 @@ public class QueryUtil {
             }
         }
 
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax)));
-        retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin)));
+        retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-MAX", String.valueOf(xMax));
+        retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-MIN", String.valueOf(xMin));
+        retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-MAX", String.valueOf(yMax));
+        retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-MIN", String.valueOf(yMin));
 
         if (doDecimation) {
 
@@ -697,13 +697,13 @@ public class QueryUtil {
                     retval.add(row);
                 }
                 String decimateInfoStr = decimateInfo.toString();
-                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG,
-                        decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1)));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG,
+                        decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1));
                 decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
-                retval.addAttributes(new DataGroup.Attribute(DecimateKey.DECIMATE_KEY,
-                        decimateKey.toString()));
-                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit)));
-                retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit)));
+                retval.addAttribute(DecimateKey.DECIMATE_KEY,
+                        decimateKey.toString());
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit));
 
                 java.util.Date endTime = new java.util.Date();
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
@@ -715,16 +715,16 @@ public class QueryUtil {
             DataType.FormatInfo fi = columns[0].getFormatInfo();
             fi.setDataFormat("%.6f");
             columns[0].setFormatInfo(fi);
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName()));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x"));
+            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-EXPR", decimateInfo.getxColumnName());
+            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-COL", "x");
         }
 
         if (yValGetter.isExpression()) {
             DataType.FormatInfo fi = columns[1].getFormatInfo();
             fi.setDataFormat("%.6f");
             columns[1].setFormatInfo(fi);
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName()));
-            retval.addAttributes(new DataGroup.Attribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y"));
+            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-EXPR", decimateInfo.getyColumnName());
+            retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-COL", "y");
         }
 
         retval.shrinkToFitData();

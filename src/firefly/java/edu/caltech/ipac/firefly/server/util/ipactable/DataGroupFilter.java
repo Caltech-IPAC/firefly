@@ -86,7 +86,7 @@ public class DataGroupFilter {
         StopWatch.getInstance().start("DataGroupFilter");
 
         TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        List<DataGroup.Attribute> attributes = tableMeta.getAttributeList();
+        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
         List<DataType> headers = tableMeta.getCols();
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
@@ -103,7 +103,6 @@ public class DataGroupFilter {
         IpacTableUtil.writeHeader(writer, headers);
 
         DataGroup dg = new DataGroup(null, headers);
-        dg.beginBulkUpdate();
 
         int found = 0;
         cRowNum = -1;

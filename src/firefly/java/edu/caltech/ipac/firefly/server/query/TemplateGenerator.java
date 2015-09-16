@@ -81,9 +81,8 @@ public class TemplateGenerator {
         return null;
     }
 
-    public static DataGroup.Attribute createAttribute(Tag tag, String col, String value) {
-        return new DataGroup.Attribute(tag.getName().replaceFirst(
-                        "@", col), value);
+    public static String createAttributeKey(Tag tag, String col) {
+        return tag.getName().replaceFirst("@", col);
     }
 
 
@@ -190,25 +189,25 @@ public class TemplateGenerator {
                 visi = Tag.VISI_HIDE;
             }
 
-            template.addAttributes(createAttribute(Tag.VISI_TAG, dt.getKeyName(), visi));
+            template.addAttribute(createAttributeKey(Tag.VISI_TAG, dt.getKeyName()), visi);
 
             if (!StringUtils.isEmpty(dt.getShortDesc())) {
-                template.addAttributes(createAttribute(Tag.DESC_TAG, dt.getKeyName(), dt.getShortDesc()));
+                template.addAttribute(createAttributeKey(Tag.DESC_TAG, dt.getKeyName()), dt.getShortDesc());
             }
 
             dt.setImportance(DataType.Importance.HIGH);
-            template.addAttributes(createAttribute(Tag.LABEL_TAG, dt.getKeyName(), dt.getDefaultTitle()));
+            template.addAttribute(createAttributeKey(Tag.LABEL_TAG, dt.getKeyName()), dt.getDefaultTitle());
 
             if ( enumColValues.containsKey(dt.getKeyName()) ) {
-                template.addAttributes(createAttribute(Tag.ITEMS_TAG, dt.getKeyName(),
-                        StringUtils.toString(enumColValues.get(dt.getKeyName()), ",")));
+                template.addAttribute(createAttributeKey(Tag.ITEMS_TAG, dt.getKeyName()),
+                        StringUtils.toString(enumColValues.get(dt.getKeyName()), ","));
             }
 
             if (dt.hasFormatInfo()) {
                 String fi = dt.getFormatInfo().getDataFormatStr();
                 if (fi.equals("RA") || fi.equals("DEC")) {
                     dt.setFormatInfo(null);
-                    template.addAttributes(createAttribute(Tag.UNIT_TAG, dt.getKeyName(), fi));
+                    template.addAttribute(createAttributeKey(Tag.UNIT_TAG, dt.getKeyName()), fi);
                 }
             }
 

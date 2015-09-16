@@ -7,6 +7,7 @@ import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.action.ClassProperties;
 
 import java.io.BufferedWriter;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.Locale;
 
@@ -91,11 +93,15 @@ public class IpacTableWriter {
 
     private static void save(PrintWriter out, DataGroup dataGroup)
         throws IOException {
-        DataType dataType[] = dataGroup.getDataDefinitions();
+        List<DataType> headers = Arrays.asList(dataGroup.getDataDefinitions());
         int totalRow = dataGroup.size();
-        writeHeader(out, dataGroup);
-        for (int i = 0; i < totalRow; i++)
-            out.print(extractData(dataGroup.get(i), dataType) + LINE_SEP);
+
+        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords());
+        IpacTableUtil.writeHeader(out, headers);
+
+        for (int i = 0; i < totalRow; i++) {
+            IpacTableUtil.writeRow(out, headers, dataGroup.get(i));
+        }
         out.flush();
     }
 
@@ -135,41 +141,8 @@ public class IpacTableWriter {
     private static void writeHeader(PrintWriter out, DataGroup dataGroup) {
         DataType[] dataType = dataGroup.getDataDefinitions();
 
-        writeAttribute(out, dataGroup);
-        writeName(out, dataType);
-        writeDataType(out, dataType);
-
-        // do not write out the optional header line s
-        // if no unit or null info is available
-        // (no unit or null headers in the original)
-        boolean noMoreHeaders = true;
-        for (DataType dt : dataType) {
-            if (dt.getDataUnit() != null || dt.getMayBeNull()) {
-                noMoreHeaders = false;
-                break;
-            }
-        }
-        if (noMoreHeaders) return;
-
-        writeDataUnit(out, dataType);
-        writeIsNullAllowed(out, dataType);
-    }
-
-    private static void writeAttribute(PrintWriter out, DataGroup dataGroup) {
-        Set keys = dataGroup.getAttributeKeys();
-        for (Object key : keys) {
-            DataGroup.Attribute attrib = dataGroup.getAttribute(key.toString());
-            String type = "";
-            if (attrib.hasType()) {
-                if (IpacTableReader.isRecongnizedType(attrib.getType())) {
-                    type = attrib.getType() + " ";
-                } else {
-                    // handle invalid type, skip bad attributes for now;
-                    continue;
-                }
-            }
-            out.print(BACKSLASH + type + attrib.getKey() + " = " + attrib.formatValue(Locale.US) + LINE_SEP);
-        }
+        IpacTableUtil.writeAttributes(out, dataGroup.getKeywords());
+        IpacTableUtil.writeHeader(out, Arrays.asList(dataType));
     }
 
     /**
