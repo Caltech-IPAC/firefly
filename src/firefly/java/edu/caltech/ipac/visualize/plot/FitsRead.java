@@ -862,7 +862,9 @@ public class FitsRead implements Serializable {
 
 
         int pixelCount = 0;
-        ImageMask combinedMask = ImageMask.combine(lsstMasks);
+        ImageMask combinedMask = ImageMask.combineWithAnd(lsstMasks);  //mask=33, index=0 and 6 are set
+       // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
+
         for (int line = startLine; line <= lastLine; line++) {
             int start_index = line * naxis1 + startPixel;
             int last_index = line * naxis1 + lastPixel;

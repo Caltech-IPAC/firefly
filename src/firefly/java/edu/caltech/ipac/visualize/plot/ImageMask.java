@@ -226,7 +226,36 @@ public class ImageMask {
         return b;
     }
 
+       /**
+     * Return a combined (and) mask, the color is the lowest index's color
+     * @param  rhs mask to apply
+     * @return combined mask
+     */
+    public final ImageMask and(ImageMask rhs) {
+        Color usingColor = index<rhs.index? color: rhs.color;
+        return new ImageMask(usingColor , bit & rhs.bit);
+    }
 
+    /**
+     * Convenience method for creating a combination mask by <em>and</em>ing the input masks. This mask can
+     * then be used to test if all of the mask bits it contains are set.
+     * @param masks individual input masks
+     * @return a combined mask with all the input bits sets
+     * @throws NullPointerException if the input is <code>null</code>.
+     */
+    public static ImageMask combineWithAnd(ImageMask... masks) {
+        if (masks == null) {
+            throw new NullPointerException("Please input valid FixedMask, not null.");
+        } else if (masks.length == 0) {
+            return new ImageMask(0);
+        } else {
+            ImageMask mask = masks[0];
+            for (int i = 1; i < masks.length; i++) {
+                mask = mask.and(masks[i]);
+            }
+            return mask;
+        }
+    }
     /**
      * If both bit are set, using the lowest bit Color
      * Logic inclusive bitwise or
@@ -276,7 +305,7 @@ public class ImageMask {
      * @return a combined mask with all the input bits sets
      * @throws NullPointerException if the input is <code>null</code>.
      */
-    public static ImageMask combine(ImageMask... masks) {
+    public static ImageMask combineWithOr(ImageMask... masks) {
         if (masks == null) {
             throw new NullPointerException("Please input valid FixedMask, not null.");
         } else if (masks.length == 0) {
