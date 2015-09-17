@@ -40,7 +40,7 @@ public class DataGroup implements Serializable,
     private String _title;
     private final ArrayList<DataObject> _objects = new ArrayList<DataObject>(200);
     private final ArrayList<DataType> _dataDefinitions = new ArrayList<DataType>(30);
-    private ArrayList<Attribute> _attributes;  // lazy initialize.. use getAttributes() to access
+    private ArrayList<Attribute> _attributes = new ArrayList<Attribute>();
     private HashMap<String, Attribute> _cachedAttributesMap = null;
     private DataType _cachedDataDefinitionsAry[] = null;
 
@@ -182,9 +182,6 @@ public class DataGroup implements Serializable,
      * @param value
      */
     public void addAttribute(String key, String value) {
-        if (_attributes == null) {
-            _attributes = new ArrayList<Attribute>();
-        }
         _attributes.add(new Attribute(key, value));
     }
 
@@ -240,11 +237,9 @@ public class DataGroup implements Serializable,
     public Map<String, Attribute> getAttributes() {
         if (_cachedAttributesMap == null) {
             _cachedAttributesMap = new HashMap<String, Attribute>();
-            if (_attributes != null) {
-                for (Attribute a : _attributes) {
-                    if (!StringUtils.isEmpty(a.getKey())) {
-                        _cachedAttributesMap.put(a.getKey(), a);
-                    }
+            for (Attribute a : _attributes) {
+                if (!StringUtils.isEmpty(a.getKey())) {
+                    _cachedAttributesMap.put(a.getKey(), a);
                 }
             }
         }
@@ -314,8 +309,7 @@ public class DataGroup implements Serializable,
     public Object clone() throws CloneNotSupportedException {
         DataGroup copy = new DataGroup(_title, (ArrayList<DataType>) _dataDefinitions.clone());
         copy._objects.addAll((ArrayList<DataObject>) _objects.clone());
-        copy._attributes = _attributes == null ? null :
-                (ArrayList<Attribute>) _attributes.clone();
+        copy._attributes = (ArrayList<Attribute>) _attributes.clone();
 
         return copy;
     }

@@ -98,12 +98,9 @@ public class DataGroupFilter {
             attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
 
-        DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
-        IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
-        IpacTableUtil.writeHeader(writer, headers);
-
         DataGroup dg = new DataGroup(null, headers);
 
+        boolean needToWriteHeader = true;
         int found = 0;
         cRowNum = -1;
         String line = reader.readLine();
@@ -118,6 +115,13 @@ public class DataGroupFilter {
                     }
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
                         row.setRowIdx(rowIdx);
+
+                        if (needToWriteHeader) {
+                            needToWriteHeader = false;
+                            DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
+                            IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
+                            IpacTableUtil.writeHeader(writer, headers);
+                        }
                         IpacTableUtil.writeRow(writer, headers, row);
                         if (++found == prefetchSize) {
                             processInBackground(dg);
