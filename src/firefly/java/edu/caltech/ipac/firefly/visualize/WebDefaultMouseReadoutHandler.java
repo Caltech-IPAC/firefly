@@ -197,7 +197,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         checkPlotChange(plot);
 
 
-        HashMap<Integer, String> activeParams = WebMouseReadout.isMinimal(plot) ? MINIMAL_ROW_PARAMS : _rowParams;
+        HashMap<Integer, String> activeParams = _rowParams;
 
 
         useDefaultReadOutRowRParams();
@@ -206,6 +206,8 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
             Object o = plot.getPlotView().getAttribute(WebPlot.READOUT_ROW_PARAMS); 
             if (o!=null && o instanceof HashMap) 
                 setReadOutRowParams((HashMap<Integer, String>)o);
+        } else if (WebMouseReadout.isMinimal(plot)) {
+            setReadOutRowParams(MINIMAL_ROW_PARAMS);
         }
         if (activeParams.containsKey(row)) {
             if (activeParams.get(row).equals(TITLE)) {
@@ -283,7 +285,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     public void computeMouseExitValue(WebPlot plot, Readout readout, int row) {
 
-        HashMap<Integer, String> activeParams = WebMouseReadout.isMinimal(plot) ? MINIMAL_ROW_PARAMS : _rowParams;
+        HashMap<Integer, String> activeParams = _rowParams;
 
         if (activeParams.containsKey(row)) {
             if (activeParams.get(row).equals(EQ_J2000)) {
