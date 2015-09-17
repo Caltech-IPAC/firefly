@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.event.dom.client.HumanInputEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.ui.Image;
@@ -511,7 +512,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             if (_mouseDown) {
                 drag(pv, spt);
             }

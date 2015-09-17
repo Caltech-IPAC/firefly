@@ -10,26 +10,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 
 import com.google.gwt.dom.client.Touch;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseEvent;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseOutEvent;
-import com.google.gwt.event.dom.client.MouseOutHandler;
-import com.google.gwt.event.dom.client.MouseOverEvent;
-import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.dom.client.TouchEndEvent;
-import com.google.gwt.event.dom.client.TouchEndHandler;
-import com.google.gwt.event.dom.client.TouchEvent;
-import com.google.gwt.event.dom.client.TouchMoveEvent;
-import com.google.gwt.event.dom.client.TouchMoveHandler;
-import com.google.gwt.event.dom.client.TouchStartEvent;
-import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -55,7 +36,7 @@ class PVMouse implements MouseDownHandler,
 
     private static final boolean DEBUG = false;
     private boolean _mouseDown= false;
-    private WebPlotView _webPlotView;
+    private WebPlotView _pv;
     private HandlerRegistration _preventEventRemove= null;
     private Stack<WebPlotView.MouseInfo> _exclusiveMouse= new Stack<WebPlotView.MouseInfo>();
     private List<WebPlotView.MouseInfo> _persistentMouse= new ArrayList<WebPlotView.MouseInfo>(3);
@@ -63,7 +44,7 @@ class PVMouse implements MouseDownHandler,
 
     PVMouse(WebPlotView webPlotView,
             FocusPanel mouseMoveArea) {
-        _webPlotView = webPlotView;
+        _pv = webPlotView;
         _mouseMoveArea= mouseMoveArea;
 
         _mouseMoveArea.addMouseDownHandler(this);
@@ -93,14 +74,14 @@ class PVMouse implements MouseDownHandler,
             int len= _exclusiveMouse.size();
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onMouseOut(_webPlotView);
+                if (mi.isEnabled()) mi.getHandler().onMouseOut(_pv);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onMouseOut(_webPlotView);
+                if (info.isEnabled()) info.getHandler().onMouseOut(_pv);
             }
         }
     }
@@ -112,10 +93,10 @@ class PVMouse implements MouseDownHandler,
                                          " -  p: " +ev.getScreenX()+","+ev.getScreenY() +
                                          " -  r: " +ev.getRelativeX(_mouseMoveArea.getElement())+","+ev.getRelativeY(_mouseMoveArea.getElement()));
         }
-        onMouseMove(makeScreenPt(ev));
+        onMouseMove(makeScreenPt(ev),ev);
     }
 
-    public void onMouseMove(ScreenPt spt) {
+    public void onMouseMove(ScreenPt spt, MouseMoveEvent ev) {
         boolean enabledOthers= true;
 
         if (_exclusiveMouse.size()>0) {
@@ -126,7 +107,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onMouseMove(_webPlotView, spt);
+                if (mi.isEnabled()) mi.getHandler().onMouseMove(_pv, spt, ev);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -135,7 +116,7 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onMouseMove(_webPlotView, spt);
+                if (info.isEnabled()) info.getHandler().onMouseMove(_pv, spt, ev);
             }
         }
     }
@@ -154,7 +135,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onMouseUp(_webPlotView, spt);
+                if (mi.isEnabled()) mi.getHandler().onMouseUp(_pv, spt);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -164,17 +145,17 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onMouseUp(_webPlotView, spt);
+                if (info.isEnabled()) info.getHandler().onMouseUp(_pv, spt);
             }
         }
         _mouseDown= false;
-        _webPlotView.disableTextSelect(false);
+        _pv.disableTextSelect(false);
     }
 
     public void onClick(ClickEvent ev) {
         ScreenPt spt= makeScreenPt(ev);
         ev.preventDefault();
-        _webPlotView.enableFocus();
+        _pv.enableFocus();
         boolean enabledOthers= true;
 
         if (_exclusiveMouse.size()>0) {
@@ -184,7 +165,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onClick (_webPlotView, spt);
+                if (mi.isEnabled()) mi.getHandler().onClick (_pv, spt);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -194,17 +175,17 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onClick(_webPlotView, spt);
+                if (info.isEnabled()) info.getHandler().onClick(_pv, spt);
             }
         }
-//        _webPlotView.disableTextSelect(true);
-        _webPlotView.fixScrollPosition();
+//        _pv.disableTextSelect(true);
+        _pv.fixScrollPosition();
     }
 
     public void onMouseDown(MouseDownEvent ev) {
         ScreenPt spt= makeScreenPt(ev);
         addPreventEvent();
-        _webPlotView.enableFocus();
+        _pv.enableFocus();
         DOM.releaseCapture(_mouseMoveArea.getElement());
         DOM.setCapture(_mouseMoveArea.getElement());
         boolean enabledOthers= true;
@@ -215,7 +196,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onMouseDown(_webPlotView, spt, ev);
+                if (mi.isEnabled()) mi.getHandler().onMouseDown(_pv, spt, ev);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -225,12 +206,12 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onMouseDown(_webPlotView, spt, ev);
+                if (info.isEnabled()) info.getHandler().onMouseDown(_pv, spt, ev);
             }
         }
         _mouseDown= true;
-        _webPlotView.disableTextSelect(true);
-        _webPlotView.fixScrollPosition();
+        _pv.disableTextSelect(true);
+        _pv.fixScrollPosition();
     }
 
     public void onMouseOver(MouseOverEvent ev) {
@@ -243,7 +224,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onMouseOver(_webPlotView, spt);
+                if (mi.isEnabled()) mi.getHandler().onMouseOver(_pv, spt);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -252,10 +233,10 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onMouseOver(_webPlotView, spt);
+                if (info.isEnabled()) info.getHandler().onMouseOver(_pv, spt);
             }
         }
-        _webPlotView.fixScrollPosition();
+        _pv.fixScrollPosition();
     }
 
     public void onTouchStart(TouchStartEvent ev) {
@@ -276,7 +257,7 @@ class PVMouse implements MouseDownHandler,
         }
         ScreenPt spt= makeScreenPt(ev);
         if (!exclusive) addPreventEvent();
-        _webPlotView.enableFocus();
+        _pv.enableFocus();
         if (!exclusive) {
             DOM.releaseCapture(_mouseMoveArea.getElement());
             DOM.setCapture(_mouseMoveArea.getElement());
@@ -288,19 +269,19 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onTouchStart(_webPlotView, spt, ev);
+                if (mi.isEnabled()) mi.getHandler().onTouchStart(_pv, spt, ev);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onTouchStart(_webPlotView, spt, ev);
+                if (info.isEnabled()) info.getHandler().onTouchStart(_pv, spt, ev);
             }
         }
         _mouseDown= true;
-        _webPlotView.disableTextSelect(true);
-        _webPlotView.fixScrollPosition();
+        _pv.disableTextSelect(true);
+        _pv.fixScrollPosition();
         ev.preventDefault();
     }
 
@@ -329,7 +310,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onTouchMove(_webPlotView, spt, ev);
+                if (mi.isEnabled()) mi.getHandler().onTouchMove(_pv, spt, ev);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -338,7 +319,7 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onTouchMove(_webPlotView, spt, ev);
+                if (info.isEnabled()) info.getHandler().onTouchMove(_pv, spt, ev);
             }
         }
         ev.preventDefault();
@@ -358,7 +339,7 @@ class PVMouse implements MouseDownHandler,
             boolean enabledExclusive= true;
             for(int i= 1; ((len-i)>=0 && enabledExclusive); i++) {
                 mi= _exclusiveMouse.get(len-i);
-                if (mi.isEnabled()) mi.getHandler().onTouchEnd(_webPlotView);
+                if (mi.isEnabled()) mi.getHandler().onTouchEnd(_pv);
                 enabledExclusive= mi.getEnableAllExclusive();
                 enabledOthers= mi.getEnableAllPersistent();
             }
@@ -368,11 +349,11 @@ class PVMouse implements MouseDownHandler,
         }
         if (enabledOthers) {
             for(WebPlotView.MouseInfo info : _persistentMouse) {
-                if (info.isEnabled()) info.getHandler().onTouchEnd(_webPlotView);
+                if (info.isEnabled()) info.getHandler().onTouchEnd(_pv);
             }
         }
         _mouseDown= false;
-        _webPlotView.disableTextSelect(false);
+        _pv.disableTextSelect(false);
         ev.preventDefault();
     }
 
@@ -395,11 +376,16 @@ class PVMouse implements MouseDownHandler,
     }
 
     private ScreenPt makeScreenPt(MouseEvent ev) {
-        return new ScreenPt(ev.getX(),ev.getY());
+//        return new ScreenPt(_pv.getScrollX()+ev.getX(),_pv.getScrollY()+ev.getY());
+//        return new ScreenPt(_pv.getScrollX()+ev.getX(),_pv.getScrollY()+ev.getY());
+        int vpX= _pv.getPrimaryPlot().getViewPortX();
+        int vpY= _pv.getPrimaryPlot().getViewPortY();
+        return new ScreenPt(vpX+ev.getX(),vpY+ev.getY());
     }
     private ScreenPt makeScreenPt(TouchEvent ev) {
         Touch t= (Touch)ev.getTouches().get(0);
-        return new ScreenPt(t.getClientX() - _mouseMoveArea.getAbsoluteLeft(), t.getClientY()- _mouseMoveArea.getAbsoluteTop());
+        return new ScreenPt(_pv.getScrollX()+t.getClientX() - _mouseMoveArea.getAbsoluteLeft(),
+                            _pv.getScrollY()+t.getClientY()- _mouseMoveArea.getAbsoluteTop());
     }
 
 

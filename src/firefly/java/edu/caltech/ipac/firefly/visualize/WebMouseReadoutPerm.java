@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -591,7 +592,7 @@ public class WebMouseReadoutPerm implements Readout {
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             move(pv, spt, false, !_pixelClickLock);
         }
 

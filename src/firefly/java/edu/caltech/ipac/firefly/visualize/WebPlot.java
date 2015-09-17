@@ -227,21 +227,16 @@ public class WebPlot {
     }
 
     @JsNoExport
-    public void refreshWidget(PlotImages images, boolean overlay) {
-        _tileDrawer.refreshWidget(images, overlay);
-    }
-
-
-    @JsNoExport
     public void refreshWidget(PlotImages images) {
-        refreshWidget(images, false);
+        _tileDrawer.refreshWidget(images);
     }
+
 
     public PlotState getPlotState() { return _plotState; }
     public void setPlotState(PlotState state) { _plotState= state; }
 
-    public void drawTilesInArea(ScreenPt spt, int width, int height) {
-        _tileDrawer.drawTilesForArea(spt.getIX(), spt.getIY(),width,height);
+    public void drawTilesInArea(ScreenPt viewPortLocation, int width, int height) {
+        _tileDrawer.drawTilesForArea(viewPortLocation,width,height);
     }
 
 
@@ -297,6 +292,13 @@ public class WebPlot {
         return retval;
     }
 
+    /**
+     * set the viewport location in terms of screen coordinates
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     */
     public void setViewPort(int x, int y, int width, int height) {
         _viewPortX= x;
         _viewPortY= y;
@@ -1485,8 +1487,8 @@ public class WebPlot {
    // =======================================================================
 
 //   void setOffsetX(int x) {_offsetX= x;}
-   int  getOffsetX() {return _offsetX;}
-   int  getOffsetY() {return _offsetY;}
+//   int  getOffsetX() {return _offsetX;}
+//   int  getOffsetY() {return _offsetY;}
 
 
     private static class ImageBoundsData {

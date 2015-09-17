@@ -317,7 +317,7 @@ public class ThumbnailView extends Composite {
         ImageWorkSpacePt ipt= plot.getImageWorkSpaceCoords(new ScreenPt(thumbX,thumbY),fact);
         ScreenPt spt= plot.getScreenCoords(ipt);
         if (moveImage) plot.getPlotView().centerOnPoint(ipt);
-        _pv.fireMouseMove(spt);
+        _pv.fireMouseMove(spt,null);
     }
 
     private String createImageUrl(String imageURL) {

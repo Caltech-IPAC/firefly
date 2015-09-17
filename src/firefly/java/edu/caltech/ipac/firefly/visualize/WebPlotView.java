@@ -5,10 +5,10 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.PopupPane;
@@ -101,9 +101,9 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private FocusPanel _mouseMoveArea= new FocusPanel();
     private AbsolutePanel _masterPanel= new AbsolutePanel();
 
-    private ScrollPanel _scrollPanel= new ScrollPanel(_masterPanel);
+//    private ScrollPanel _scrollPanel= new ScrollPanel(_masterPanel);
     private DefaultDrawable _drawable= new DefaultDrawable();
-    private final PVMouse _pvMouse;
+    private PVMouse _pvMouse;
     private final WebEventManager _eventManager= new WebEventManager();
     private boolean _lockPlotHint= false;
     private Map<String,WebLayerItem> _userDrawLayerMap = new TreeMap<String, WebLayerItem>();
@@ -116,11 +116,23 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private boolean scrollBarEnabled= false;
     private String drawingSubGroup= null;
 
+    private List<WebPlot> overlayPlots= null;
+
     private boolean containsMultiImageFits = false;
     private boolean containsMultipleCubes= false;
 
     private int wcsMarginX= 0;
     private int wcsMarginY= 0;
+
+    private int scrollPositionX;
+    private int scrollPositionY;
+
+    private int scrollWidth= 0;
+    private int scrollHeight= 0;
+//    private AbsolutePanel _fakeScrollPanel= new AbsolutePanel();
+    private SimplePanel _fakeScrollPanel= new SimplePanel();
+    private SimplePanel _scrollViewWindow= new SimplePanel();
+    SimplePanel _pvRoot= new SimplePanel();
 
 
 
@@ -129,29 +141,36 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
    * PlotView <em>will</em> be placed insides a scrolled window.
    */
   public WebPlotView() {
-
-      initWidget(_scrollPanel);
-      _pvMouse= new PVMouse(this, _mouseMoveArea);
-
-      _scrollPanel.addStyleName("web-plot-view");
-      _mouseMoveArea.addStyleName("event-layer");
-      _masterPanel.addStyleName("plot-view-master-panel");
-
-      _scrollPanel.addScrollHandler(new PVScrollHandler());
-
-      _scrollPanel.addDomHandler(new MouseDownHandler() {
+      initWidgets();
+      _fakeScrollPanel.addDomHandler(new MouseDownHandler() {
           public void onMouseDown(MouseDownEvent ev) {
-              if (_mpw!=null) _mpw.selectSelf();
+              if (_mpw != null) _mpw.selectSelf();
           }
       }, MouseDownEvent.getType());
 
-      _scrollPanel.addDomHandler(new TouchStartHandler() {
+      _fakeScrollPanel.addDomHandler(new TouchStartHandler() {
           public void onTouchStart(TouchStartEvent event) {
               if (_mpw!=null) _mpw.selectSelf();
           }
       }, TouchStartEvent.getType());
 
   }
+
+    private void initWidgets() {
+//        _fakeScrollPanel.add(_scrollViewWindow, 0, 0);
+        _fakeScrollPanel.add(_scrollViewWindow);
+        _scrollViewWindow.setWidget(_masterPanel);
+        initWidget(_fakeScrollPanel);
+        _pvMouse= new PVMouse(this, _mouseMoveArea);
+
+        GwtUtil.setStyles(_scrollViewWindow, "margin", "0 auto" );
+
+        _fakeScrollPanel.addStyleName("web-plot-view-scr");
+        _mouseMoveArea.addStyleName("event-layer");
+        _masterPanel.addStyleName("plot-view-master-panel");
+        _scrollViewWindow.addStyleName("plot-view-scr-view-window");
+    }
+
 
 
     public void freeResources() {
@@ -168,11 +187,24 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     public void notifyWidgetShowing() {
         if (_primaryPlot!=null) {
-            recomputeViewPort();
+            updatePosition();
         }
     }
 
     public AbsolutePanel getDrawingPanelContainer() { return _drawable.getDrawingPanelContainer(); }
+
+
+
+    public List<WebPlot> getOverlayPlotList() { return overlayPlots!=null ? overlayPlots : new ArrayList<WebPlot>(0); }
+
+    public void addOverlayPlot(WebPlot p) {
+        if (overlayPlots==null) overlayPlots= new ArrayList<WebPlot>(5);
+        overlayPlots.add(p);
+    }
+
+    public void removeOverlayPlot(WebPlot p) {
+        if (overlayPlots!=null) overlayPlots.remove(p);
+    }
 
     //====================================================================
     //------------------- from HasWebEventManager interface
@@ -197,12 +229,13 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public void fireEvent(WebEvent ev) {
         if (_eventsEnabled) _eventManager.fireEvent(ev);
     }
+
     //===================================================================
     //===================================================================
 
     public Widget addDrawingArea(Widget w, boolean highPriority) { return _drawable.addDrawingArea(w, highPriority); }
     public void removeDrawingArea(Widget w) { _drawable.removeDrawingArea(w); }
-    public void replaceDrawingArea(Widget old, Widget w) { _drawable.replaceDrawingArea(old,w);}
+    public void replaceDrawingArea(Widget old, Widget w) { _drawable.replaceDrawingArea(old, w);}
     public void insertBeforeDrawingArea(Widget before, Widget w) { _drawable.insertBeforeDrawingArea(before, w); }
     public void insertAfterDrawingArea(Widget after, Widget w) { _drawable.insertAfterDrawingArea(after,w); }
     public int getDrawingWidth() { return _drawable.getDrawingWidth(); }
@@ -215,9 +248,39 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public String getDrawingSubGroup() { return drawingSubGroup; }
 
     public void onResize() {
-        _scrollPanel.onResize();
+        computeScrollSizes();
         recomputeWcsOffsets();
     }
+
+
+
+    public void computeScrollSizes() {
+        int spWidth= _fakeScrollPanel.getOffsetWidth();
+        int spHeight= _fakeScrollPanel.getOffsetHeight();
+
+        scrollWidth= _fakeScrollPanel.getOffsetWidth();
+        scrollHeight= _fakeScrollPanel.getOffsetHeight();
+        if (_primaryPlot!=null) {
+            if (_primaryPlot.getScreenWidth()<scrollWidth) {
+                scrollWidth= _primaryPlot.getScreenWidth();
+                GwtUtil.setStyle(_scrollViewWindow, "position", "relative");
+            }
+            else {
+                GwtUtil.setStyle(_scrollViewWindow, "position", "relative");
+                scrollWidth= spWidth;
+            }
+
+            if (_primaryPlot.getScreenHeight()<scrollHeight) {
+                scrollHeight= _primaryPlot.getScreenHeight();
+            }
+            else {
+                scrollHeight= spHeight;
+            }
+        }
+    }
+
+
+
 
     public void setMiniPlotWidget(MiniPlotWidget mpw) { _mpw= mpw; }
 
@@ -307,40 +370,44 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     public void setScrollBarsEnabled(boolean enabled) {
-        scrollBarEnabled= enabled;
-        setScrollBarsEnabledInternal(scrollBarEnabled);
+        // todo remove this method
+//        scrollBarEnabled= enabled;
+//        setScrollBarsEnabledInternal(scrollBarEnabled);
     }
 
-    private void setScrollBarsEnabledInternal(boolean enabled) {
-        GwtUtil.setStyle(_scrollPanel, "overflow", enabled ?"auto" : "hidden");
-    }
+//    private void setScrollBarsEnabledInternal(boolean enabled) {
+//        GwtUtil.setStyle(_scrollPanel, "overflow", enabled ?"auto" : "hidden");
+//    }
 
     public int getScrollX() {
-        int scrollX= 0;
-        if (_primaryPlot!=null) {
-            scrollX= getScrollScreenPos().getIX();
-        }
-        return scrollX;
+        return scrollPositionX;
+//        int scrollX= 0;
+//        if (_primaryPlot!=null) {
+//            scrollX= getScrollScreenPos().getIX();
+//        }
+//        return scrollX;
     }
 
     public int getScrollY() {
-        int scrollY= 0;
-        if (_primaryPlot!=null) {
-            scrollY= getScrollScreenPos().getIY();
-        }
-        return scrollY;
+        return scrollPositionY;
+//        int scrollY= 0;
+//        if (_primaryPlot!=null) {
+//            scrollY= getScrollScreenPos().getIY();
+//        }
+//        return scrollY;
     }
 
     public ScreenPt getScrollScreenPos() {
-        ScreenPt retval;
-        if (_primaryPlot!=null) {
-            Element body = _scrollPanel.getElement();
-            retval= new ScreenPt(body.getScrollLeft(), body.getScrollTop());
-        }
-        else {
-            retval= new ScreenPt(0,0);
-        }
-        return retval;
+        return new ScreenPt(scrollPositionX,scrollPositionY);
+//        ScreenPt retval;
+//        if (_primaryPlot!=null) {
+//            Element body = _scrollPanel.getElement();
+//            retval= new ScreenPt(body.getScrollLeft(), body.getScrollTop());
+//        }
+//        else {
+//            retval= new ScreenPt(0,0);
+//        }
+//        return retval;
 
     }
 
@@ -348,67 +415,138 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (_primaryPlot!=null) {
             int x= getScrollX();
             int y= getScrollY();
-            int w= _scrollPanel.getOffsetWidth();
-            int h= _scrollPanel.getOffsetHeight();
+            int w= getScrollWidth();
+            int h= getScrollHeight();
             if (w*h>0) {
-                _primaryPlot.drawTilesInArea(new ScreenPt(x,y),w,h);
+//                GwtUtil.getClientLogger().log(Level.INFO, "WebPlotView.refreshDisplay: newX="+ x+"  newY="+y);
+                Dimension d= _primaryPlot.getViewPortDimension();
+                drawTilesInArea(new ScreenPt(_primaryPlot.getViewPortX(),_primaryPlot.getViewPortY()),
+                        d.getWidth(), d.getHeight());
+            }
+        }
+    }
+
+    private void drawTilesInArea(ScreenPt viewPortLocation, int w, int h) {
+        _primaryPlot.drawTilesInArea(viewPortLocation,w,h);
+        if (overlayPlots!=null) {
+            for(WebPlot p : overlayPlots) {
+                p.drawTilesInArea(viewPortLocation,w,h);
+            }
+        }
+    }
+
+    private void setViewPort(int x, int y, int w, int h) {
+        _primaryPlot.setViewPort(x,y,w,h);
+        if (overlayPlots!=null) {
+            for(WebPlot p : overlayPlots) {
+                p.setViewPort(x,y,w,h);
             }
         }
     }
 
     public void setTouchScrollingEnabled(boolean enable) {
-        _scrollPanel.setTouchScrollingDisabled(!enable);
+        //todo - turn off scrolling I think
+//        _scrollPanel.setTouchScrollingDisabled(!enable);
     }
 
 
-    public int getScrollWidth() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientWidth"); }
-    public int getScrollHeight() { return DOM.getElementPropertyInt(_scrollPanel.getElement(), "clientHeight"); }
+    public int getScrollWidth() {
+        if (scrollWidth==0) computeScrollSizes();
+        return scrollWidth;
+    }
+    public int getScrollHeight() {
+        if (scrollHeight==0) computeScrollSizes();
+        return scrollHeight;
+    }
 
     public void scrollDragEnded() { setScrollXY(getScrollScreenPos()); }
     public void setScrollXY(int x, int y) { setScrollXY(new ScreenPt(x,y)); }
     public void setScrollXY(ScreenPt spt) { setScrollXY(spt,false); }
 
     public void setScrollXY(ScreenPt spt, boolean dragging) {
-        if (_primaryPlot!=null) {
-            int x= spt.getIX();
-            int y= spt.getIY();
-
-            if (x<0) x= 0;
-            else if (x>_primaryPlot.getScreenWidth()) x= _primaryPlot.getScreenWidth()-1;
-
-            if (y<0) y= 0;
-            else if (y>_primaryPlot.getScreenHeight()) y= _primaryPlot.getScreenHeight()-1;
-
-
-            spt= new ScreenPt( x,y);
+        if (_primaryPlot==null) return;
+        if (spt.getIX()==scrollPositionX && spt.getIY()==scrollPositionY) return;
+        if (getScrollWidth()*getScrollHeight()<=0) return;
 
 
 
-            ViewPortPt vpt= _primaryPlot.getViewPortCoords(spt);
-            if (!pointInViewPortBounds(vpt) && !dragging) {
-                recomputeViewPortOnScrollingIfNecessary();
-            }
-            _scrollPanel.setHorizontalScrollPosition(spt.getIX());
-            _scrollPanel.setVerticalScrollPosition(spt.getIY());
-            _fixScrollInProgress= false;
-        }
+        int x= spt.getIX();
+        int y= spt.getIY();
+
+//        GwtUtil.getClientLogger().log(Level.INFO, "setScrollXY: sx= "+x+", sy= "+y);
+
+        int maxX= _primaryPlot.getScreenWidth()-getScrollWidth();
+        int maxY= _primaryPlot.getScreenHeight()-getScrollHeight();
+
+        if (maxX<0) maxX=0;
+        if (maxY<0) maxY=0;
+
+        if (x<0) x= 0;
+        else if (x>maxX) x= maxX;
+
+        if (y<0) y= 0;
+        else if (y>maxY) y= maxY;
+
+
+        spt= new ScreenPt( x,y);
+
+
+
+        ViewPortPt vpt= _primaryPlot.getViewPortCoords(spt);
+
+        scrollPositionX= x;
+        scrollPositionY= y;
+
+//            GwtUtil.getClientLogger().log(Level.INFO, "WebPlotView: scrollX="+ x+"  scrollY="+y);
+
+//            scrollPositionX= spt.getIX();
+//            scrollPositionY= spt.getIY();
+
+
+//            if (!pointInViewPortBounds(vpt) && !dragging) {
+//                recomputeViewPortOnScrollingIfNecessary();
+//            }
+        updatePosition();
+//            _scrollPanel.setHorizontalScrollPosition(spt.getIX());
+//            _scrollPanel.setVerticalScrollPosition(spt.getIY());
+        _fixScrollInProgress= false;
+        onScroll();
     }
 
 
-    private void recomputeViewPortOnScrollingIfNecessary() {
-        if (_primaryPlot==null) return;
+//    private void recomputeViewPortOnScrollingIfNecessary() {
+//        if (_primaryPlot==null) return;
+//        int sw= getScrollWidth();
+//        int sh= getScrollHeight();
+//        int x= getScrollX();
+//        int y= getScrollY();
+//        Dimension dim= _primaryPlot.getViewPortDimension();
+//        boolean contains= VisUtil.containsRec(_primaryPlot.getViewPortX(),_primaryPlot.getViewPortY(),
+//                                              dim.getWidth(),dim.getHeight(),
+//                                              x,y,sw-1,sh-1);
+////        if (!contains) recomputeViewPort();
+//        recomputeViewPort();
+//
+//
+//    }
+
+
+    private boolean isRecomputeViewPortNecessary() {
+        if (_primaryPlot==null) return false;
         int sw= getScrollWidth();
         int sh= getScrollHeight();
         int x= getScrollX();
         int y= getScrollY();
         Dimension dim= _primaryPlot.getViewPortDimension();
         boolean contains= VisUtil.containsRec(_primaryPlot.getViewPortX(),_primaryPlot.getViewPortY(),
-                                              dim.getWidth(),dim.getHeight(),
-                                              x,y,sw-1,sh-1);
-        if (!contains) recomputeViewPort();
+                dim.getWidth(),dim.getHeight(),
+                x,y,sw-1,sh-1);
 
-
+        return !contains;
     }
+
+
+
 
     public boolean isContainsMultiImageFits() { return containsMultiImageFits; }
 
@@ -422,62 +560,104 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         this.containsMultipleCubes = containsMultipleCubes;
     }
 
-    private void recomputeViewPort() {
+
+    private void updatePosition() {
         if (_primaryPlot!=null) {
-            recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()),false);
+            updatePosition(_primaryPlot.getScreenCoords(findCurrentCenterPoint()), false);
         }
     }
 
-    private void recomputeViewPort(ScreenPt visibleCenterPt, boolean primaryPlotChanged) {
-        if (visibleCenterPt==null) return;
 
-        int screenW= _primaryPlot.getScreenWidth();
-        int screenH= _primaryPlot.getScreenHeight();
-        int vpw= getScrollWidth()*2;
-        int vph= getScrollHeight()*2;
 
-        if (vpw> 1500) vpw= (int)(getScrollWidth() * 1.5);
-        if (vpw>2700) vpw= 2700;
+    private void updatePosition(ScreenPt visibleCenterPt, boolean forceNewViewport) {
+        if (visibleCenterPt == null) return;
 
-        if (vph> 1400) vph= (int)(getScrollHeight() * 1.5);
-        if (vph>1800) vph= 1800;
+        if (isRecomputeViewPortNecessary() || forceNewViewport) {
+            int screenW = _primaryPlot.getScreenWidth();
+            int screenH = _primaryPlot.getScreenHeight();
 
-        int newX;
-        int newY;
+            int vpw = getScrollWidth() * 2;
+            int vph = getScrollHeight() * 2;
 
-        if (vpw>screenW) {
-            vpw= screenW;
-            newX= 0;
+            if (vpw > 1500) vpw = Math.max((int) (getScrollWidth() * 1.5),2700);
+
+            if (vph > 1400) vph = Math.max((int) (getScrollHeight() * 1.5),1800);
+
+            int newVpX;
+            int newVpY;
+
+            if (vpw > screenW) {
+                vpw = screenW;
+                newVpX = 0;
+            } else {
+                newVpX = visibleCenterPt.getIX() - vpw / 2;
+                if (newVpX < 0) newVpX = 0;
+                else if (newVpX + vpw > screenW) newVpX = screenW - vpw;
+            }
+
+            if (vph > screenH) {
+                vph = screenH;
+                newVpY = 0;
+            } else {
+                newVpY = visibleCenterPt.getIY() - vph / 2;
+                if (newVpY < 0) newVpY = 0;
+                else if (newVpY + vph > screenH) newVpY = screenH - vph;
+            }
+
+            if (vpw > 0 && vph > 0) {
+                // todo- only scroll  & VP position need to change
+//                GwtUtil.getClientLogger().log(Level.INFO, "VP & Scroll");
+                setViewPort(newVpX, newVpY, vpw, vph);
+                recomputeSize();
+
+                WebEvent ev = new WebEvent<WebPlot>(this, Name.VIEW_PORT_CHANGE, _primaryPlot);
+                Dimension dim= _primaryPlot.getViewPortDimension();
+                drawTilesInArea(new ScreenPt(newVpX, newVpY), dim.getWidth(), dim.getHeight());
+                fireEvent(ev);
+
+                int x = vpw <= scrollWidth ? 0 : -1 * ((vpw - scrollWidth) / 2);
+                int y = vph <= scrollHeight ? 0 : -1 * ((vph - scrollHeight) / 2);
+//                _fakeScrollPanel.setWidgetPosition(_scrollViewWindow, x, y);
+                GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
+
+//                int sx = getScrollX();
+//                int sy = getScrollY();
+//                ViewPortPt vpPt = _primaryPlot.getViewPortCoords(new ScreenPt(sx, sy));
+//                GwtUtil.getClientLogger().log(Level.INFO, "VP & Scr: screen: "+ _primaryPlot.getScreenWidth()+ ","+_primaryPlot.getScreenHeight()+
+//                        "   vpX,Y: "+ vpPt.getIX()+","+vpPt.getIY()+
+//                        "   vpDim: "+ dim.getWidth()+","+dim.getHeight()+
+//                        "   scrollX,Y: "+ sx+","+sy+
+//                        "   scrollViewWindowX,Y: "+ x+","+y+
+//                        "   scrollDim: "+ scrollWidth+","+scrollHeight);
+
+
+            }
+        } else {
+            // todo- only scroll position need to change
+//            GwtUtil.getClientLogger().log(Level.INFO, "Scroll");
+            int sx = getScrollX();
+            int sy = getScrollY();
+            int vpX = _primaryPlot.getViewPortX();
+            int vpY = _primaryPlot.getViewPortY();
+            int x = vpX-sx;
+            int y = vpY-sy;
+//            _fakeScrollPanel.setWidgetPosition(_scrollViewWindow, x, y);
+            GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
+//            Dimension dim= _primaryPlot.getViewPortDimension();
+//            drawTilesInArea(new ScreenPt(vpX,vpY), dim.getWidth(), dim.getHeight());
+
+
+//            GwtUtil.getClientLogger().log(Level.INFO, "     Scr: screen: "+ _primaryPlot.getScreenWidth()+ ","+_primaryPlot.getScreenHeight()+
+//                          "   vpX,Y: "+ vpX+","+vpY+
+//                          "   vpDim: "+ dim.getWidth()+","+dim.getHeight()+
+//                          "   scrollX,Y: "+ sx+","+sy+
+//                          "   scrollViewWindowX,Y: "+ x+","+y+
+//                          "   scrollDim: "+ scrollWidth+","+scrollHeight);
         }
-        else {
-            newX= visibleCenterPt.getIX()- vpw/2;
-            if (newX<0) newX= 0;
-            else if (newX+vpw>screenW) newX=  screenW-vpw;
-        }
-
-        if (vph>screenH) {
-            vph= screenH;
-            newY= 0;
-        }
-        else {
-            newY= visibleCenterPt.getIY()- vph/2;
-            if (newY<0) newY= 0;
-            else if (newY+vph>screenH) newY=  screenH-vph;
-        }
-
-        if (primaryPlotChanged || (vpw>0 && vph>0 && isViewPortDifferent(newX,newY,vpw,vph)) ) {
-            _primaryPlot.setViewPort(newX, newY, vpw, vph);
-            recomputeSize();
-
-            WebEvent ev= new WebEvent<WebPlot>(this, Name.VIEW_PORT_CHANGE, _primaryPlot);
-            fireEvent(ev);
-            int sx= _scrollPanel.getHorizontalScrollPosition();
-            int sy= _scrollPanel.getVerticalScrollPosition();
-            _primaryPlot.drawTilesInArea(new ScreenPt(sx,sy),getScrollWidth(),getScrollHeight());
-//            GwtUtil.showDebugMsg("viewport: <br>"+newX+","+newY + "<br>w:"+vpw+", h:"+vph,true);
-        }
-
     }
+
+
+
 
     private boolean isViewPortDifferent(int x, int y, int w, int h) {
         Dimension dim= _primaryPlot.getViewPortDimension();
@@ -492,18 +672,27 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private void recomputeSize() {
         if (_primaryPlot==null) return;
 
-        _masterPanel.setPixelSize(_primaryPlot.getScreenWidth(), _primaryPlot.getScreenHeight() );
+//        _masterPanel.setPixelSize(_primaryPlot.getScreenWidth(), _primaryPlot.getScreenHeight() );
+//
+//        _mouseMoveArea.setPixelSize(_primaryPlot.getScreenWidth(), _primaryPlot.getScreenHeight() );
 
-        _mouseMoveArea.setPixelSize(_primaryPlot.getScreenWidth(), _primaryPlot.getScreenHeight() );
 
-
-        int vpx= _primaryPlot.getViewPortX();
-        int vpy= _primaryPlot.getViewPortY();
+//        int vpx= _primaryPlot.getViewPortX();
+//        int vpy= _primaryPlot.getViewPortY();
         Dimension dim= _primaryPlot.getViewPortDimension();
 
-        _masterPanel.setWidgetPosition(_drawable.getDrawingPanelContainer(),vpx,vpy);
-        _drawable.setPixelSize(dim.getWidth(),dim.getHeight());
+        _masterPanel.setWidgetPosition(_drawable.getDrawingPanelContainer(),0,0);
 
+
+        int vpW= dim.getWidth();
+        int vpH= dim.getHeight();
+
+
+        _scrollViewWindow.setPixelSize(Math.min(vpW,_primaryPlot.getScreenWidth()),
+                                       Math.min(vpH,_primaryPlot.getScreenHeight()));
+        _masterPanel.setPixelSize(vpW, vpH );
+        _mouseMoveArea.setPixelSize(vpW, vpH);
+        _drawable.setPixelSize(vpW,vpH);
     }
 
     private void setMarginXY(int x, int y) {
@@ -537,24 +726,25 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     public void fixScrollPosition() {
-        if (BrowserUtil.isIE() && _fixScrollInProgress) return;
-        final Element body = _scrollPanel.getElement();
-        final int scrollX = body.getScrollLeft();
-        final int scrollY = body.getScrollTop();
-        DeferredCommand.addPause();
-        _fixScrollInProgress= true;
-        Command cmd=  new Command() {
-            public void execute() {
-                int sx = body.getScrollLeft();
-                int sy = body.getScrollTop();
-                if (_fixScrollInProgress && sx==0 && sy==0) { // fix is necessary
-                    _scrollPanel.setHorizontalScrollPosition(scrollX);
-                    _scrollPanel.setVerticalScrollPosition(scrollY);
-                }
-                _fixScrollInProgress= false;
-            }
-           };
-        DeferredCommand.addCommand(cmd);
+        //todo evaluate if this this needs to be here anymore
+//        if (BrowserUtil.isIE() && _fixScrollInProgress) return;
+//        final Element body = _scrollPanel.getElement();
+//        final int scrollX = body.getScrollLeft();
+//        final int scrollY = body.getScrollTop();
+//        DeferredCommand.addPause();
+//        _fixScrollInProgress= true;
+//        Command cmd=  new Command() {
+//            public void execute() {
+//                int sx = body.getScrollLeft();
+//                int sy = body.getScrollTop();
+//                if (_fixScrollInProgress && sx==0 && sy==0) { // fix is necessary
+//                    _scrollPanel.setHorizontalScrollPosition(scrollX);
+//                    _scrollPanel.setVerticalScrollPosition(scrollY);
+//                }
+//                _fixScrollInProgress= false;
+//            }
+//           };
+//        DeferredCommand.addCommand(cmd);
     }
 
 
@@ -693,15 +883,15 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
             ScrollInfo recallInfo= _scrollInfo.get(p).makeCopy();
             _masterPanel.clear();
-            _masterPanel.add(p.getWidget(),0,0);
+            _masterPanel.add(p.getWidget(), 0, 0);
             _masterPanel.add(_drawable.getDrawingPanelContainer(),0,0);
-            _masterPanel.add(_mouseMoveArea,0,0);
+            _masterPanel.add(_mouseMoveArea, 0, 0);
 
-            DOM.setStyleAttribute(_mouseMoveArea.getElement(),"backgroundColor", "transparent");
+            GwtUtil.setStyle(_mouseMoveArea, "backgroundColor", "transparent");
 
             _primaryPlot= p;
             _primaryScrollInfo= _scrollInfo.get(p);
-            recomputeViewPort(new ScreenPt(p.getScreenWidth()/2,p.getScreenHeight()/2),true);
+            updatePosition(new ScreenPt(p.getScreenWidth() / 2, p.getScreenHeight() / 2), true);
 
             fireEvent(ev);
             recallScrollPos(recallInfo);
@@ -712,9 +902,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             }
 
         }
-        else {
-            // this plot is not in the list - do nothing
-        }
+//        else {
+//        }
     }
 
 
@@ -725,11 +914,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             float currZoomFact= _primaryPlot.getZoomFact();
             final ImageWorkSpacePt pt= findCurrentCenterPoint();
             if (!ComparisonUtil.equals(zoomLevel,currZoomFact,4)) {
-                _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay);
+                _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,useDeferredDelay, overlayPlots);
                 DeferredCommand.addCommand(new Command() {
                     public void execute() {
-                        recomputeViewPort(_primaryPlot.getScreenCoords(pt),false);
-//                        centerOnPoint(pt);
+                        updatePosition(_primaryPlot.getScreenCoords(pt), true);
                         if (isWcsSync()) wcsSyncCenter(computeWcsSyncCenter());
                         else             centerOnPoint(pt);
                     }
@@ -826,7 +1014,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
   void reconfigure() {
-      recomputeViewPort(_primaryPlot.getScreenCoords(findCurrentCenterPoint()),false);
+      updatePosition(_primaryPlot.getScreenCoords(findCurrentCenterPoint()), false);
   }
   /**
    * fire the <code>PlotViewStatusListener</code>s. 
@@ -978,13 +1166,13 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                     wcsMarginY= extraOffsetY;
                     setMarginXY(extraOffsetX,extraOffsetY);
                     setScrollXY(0,0);
-                    setScrollBarsEnabledInternal(false);
+//                    setScrollBarsEnabledInternal(false);
                 }
                 else {
                     wcsMarginX= -sw;
                     wcsMarginY= -sh;
                     setMarginXY(-sw,-sh);
-                    setScrollBarsEnabledInternal(false);
+//                    setScrollBarsEnabledInternal(false);
                     clearMargin= false;
                 }
             }
@@ -1038,8 +1226,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (_primaryPlot!=null) {
             int sw = _primaryPlot.getScreenWidth();
             int sh = _primaryPlot.getScreenHeight();
-            int w= _scrollPanel.getOffsetWidth();
-            int h= _scrollPanel.getOffsetHeight();
+            int w= getScrollWidth();
+            int h= getScrollHeight();
             setScrollXY((sw - w) / 2, (sh - h) / 2);
         }
     }
@@ -1056,8 +1244,8 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     private void recallScrollPos(ScrollInfo sInfo) {
-        int w= _scrollPanel.getOffsetWidth();
-        int h= _scrollPanel.getOffsetHeight();
+        int w= getScrollWidth();
+        int h= getScrollHeight();
         if (sInfo._sWidth== w && sInfo._sHeight==h) {
             int newH= sInfo._scrollHPos;
             int newV= sInfo._scrollVPos;
@@ -1136,7 +1324,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     public void fireMouseLeave(MouseOutEvent ev) { _pvMouse.onMouseOut(ev); }
-    public void fireMouseMove(ScreenPt spt) { _pvMouse.onMouseMove(spt); }
+    public void fireMouseMove(ScreenPt spt, MouseMoveEvent ev) { _pvMouse.onMouseMove(spt,ev); }
     public void fireMouseUp(MouseUpEvent ev) { _pvMouse.onMouseUp(ev); }
     public void fireMouseDown(MouseDownEvent ev) { _pvMouse.onMouseDown(ev); }
     public void fireMouseEnter(MouseOverEvent ev) { _pvMouse.onMouseOver(ev); }
@@ -1248,7 +1436,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         void onMouseOut(WebPlotView pv);
         void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev);
         void onMouseOver(WebPlotView pv, ScreenPt spt);
-        void onMouseMove(WebPlotView pv, ScreenPt spt);
+        void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev);
         void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev);
         void onTouchMove(WebPlotView pv, ScreenPt spt, TouchMoveEvent ev);
         void onTouchEnd(WebPlotView pv);
@@ -1260,7 +1448,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         public void onMouseOut(WebPlotView pv) { }
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) { }
         public void onMouseOver(WebPlotView pv, ScreenPt spt) { }
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) { }
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) { }
         public void onTouchStart(WebPlotView pv, ScreenPt spt, TouchStartEvent ev) { }
         public void onTouchMove(WebPlotView pv, ScreenPt spt, TouchMoveEvent ev) { }
         public void onTouchEnd(WebPlotView pv) { }
@@ -1290,47 +1478,87 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     }
 
 
-    private class PVScrollHandler implements ScrollHandler {
+    private int _lastX= -1;
+    private int _lastY= -1;
+    private int _lastW= -1;
+    private int _lastH= -1;
 
-        private int _lastX= -1;
-        private int _lastY= -1;
-        private int _lastW= -1;
-        private int _lastH= -1;
+    public void onScroll() {
+        int x= getScrollX();
+        int y= getScrollY();
 
-        PVScrollHandler() {}
+        if (x==0 && y==0 && _fixScrollInProgress) return;
 
-        public void onScroll(ScrollEvent ev) {
-            int x= _scrollPanel.getHorizontalScrollPosition();
-            int y= _scrollPanel.getVerticalScrollPosition();
-
-            if (x==0 && y==0 && _fixScrollInProgress) return;
-
-            int w= _scrollPanel.getOffsetWidth();
-            int h= _scrollPanel.getOffsetHeight();
-            if (_lastX!=x || _lastY!=y || _lastW!=w || _lastH!=h) {
-                WebPlot plot= getPrimaryPlot();
-                if (plot!=null) {
-                    ScreenPt spt= new ScreenPt(x,y);
-                    plot.drawTilesInArea(spt,w,h);
-                }
-                _lastX= x;
-                _lastY= y;
-                _lastW= w;
-                _lastH= h;
+        int w= getScrollWidth();
+        int h= getScrollHeight();
+        if (_lastX!=x || _lastY!=y || _lastW!=w || _lastH!=h) {
+            //todo - no lose this optimization - i think it needs to be somewhere else now
+            WebPlot plot= getPrimaryPlot();
+            if (plot!=null) {
+//                plot.drawTilesInArea(new ViewPortPt(x,y),w,h);
             }
-
-            if (_primaryScrollInfo!=null) {
-                _primaryScrollInfo._sWidth= w;
-                _primaryScrollInfo._sHeight= h;
-                _primaryScrollInfo._scrollHPos= x;
-                _primaryScrollInfo._scrollVPos= y;
-            }
-            for(ScrollHandler handler : _scrollHandlerList) {
-                handler.onScroll(ev);
-            }
-            recomputeViewPortOnScrollingIfNecessary();
+            _lastX= x;
+            _lastY= y;
+            _lastW= w;
+            _lastH= h;
         }
+
+        if (_primaryScrollInfo!=null) {
+            _primaryScrollInfo._sWidth= w;
+            _primaryScrollInfo._sHeight= h;
+            _primaryScrollInfo._scrollHPos= x;
+            _primaryScrollInfo._scrollVPos= y;
+        }
+        for(ScrollHandler handler : _scrollHandlerList) {
+//            handler.onScroll(ev);
+            handler.onScroll(null);
+        }
+//        recomputeViewPortOnScrollingIfNecessary();
     }
+
+
+
+
+//    private class PVScrollHandler implements ScrollHandler {
+//
+//        private int _lastX= -1;
+//        private int _lastY= -1;
+//        private int _lastW= -1;
+//        private int _lastH= -1;
+//
+//        PVScrollHandler() {}
+//
+//        public void onScroll(ScrollEvent ev) {
+//            int x= _scrollPanel.getHorizontalScrollPosition();
+//            int y= _scrollPanel.getVerticalScrollPosition();
+//
+//            if (x==0 && y==0 && _fixScrollInProgress) return;
+//
+//            int w= _scrollPanel.getOffsetWidth();
+//            int h= _scrollPanel.getOffsetHeight();
+//            if (_lastX!=x || _lastY!=y || _lastW!=w || _lastH!=h) {
+//                WebPlot plot= getPrimaryPlot();
+//                if (plot!=null) {
+//                    plot.drawTilesInArea(new ViewPortPt(x,y),w,h);
+//                }
+//                _lastX= x;
+//                _lastY= y;
+//                _lastW= w;
+//                _lastH= h;
+//            }
+//
+//            if (_primaryScrollInfo!=null) {
+//                _primaryScrollInfo._sWidth= w;
+//                _primaryScrollInfo._sHeight= h;
+//                _primaryScrollInfo._scrollHPos= x;
+//                _primaryScrollInfo._scrollVPos= y;
+//            }
+//            for(ScrollHandler handler : _scrollHandlerList) {
+//                handler.onScroll(ev);
+//            }
+//            recomputeViewPortOnScrollingIfNecessary();
+//        }
+//    }
 
 
 

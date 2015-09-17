@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.user.client.Command;
@@ -144,11 +145,11 @@ public class MagnifiedView extends Composite {
 
         if (plot == null) return;
 
-        TileDrawer.ImageReturn images = plot.getTileDrawer().getImagesAt(new ScreenPt(x - plot.getOffsetX(), y - plot.getOffsetY()), _size);
+        TileDrawer.ImageReturn images = plot.getTileDrawer().getImagesAt(new ScreenPt(x, y), _size);
         if (images == null) return;
 
         List<PlotImages.ImageURL> serverTiles = images.getServerTiles();
-        List<TileDrawer.ImageWidgetData> imageTiles = images.getImageTiles();
+        List<TileDrawer.ImageTileData> imageTiles = images.getImageTiles();
         int tsize = imageTiles.size();
 
 
@@ -158,7 +159,7 @@ public class MagnifiedView extends Composite {
             _se.setVisible(false);
             _sw.setVisible(false);
             if (tilesChanged(images)) {
-                TileDrawer.ImageWidgetData iu = imageTiles.get(0);
+                TileDrawer.ImageTileData iu = imageTiles.get(0);
                 _ne.setUrl(TileDrawer.createImageUrl(plot, serverTiles.get(0)));
                 _ne.setPixelSize(iu.getWidth() * 2, iu.getHeight() * 2);
             }
@@ -169,8 +170,8 @@ public class MagnifiedView extends Composite {
 
 //            _magView.setWidgetPosition(_ne,0,0);
         } else if (tsize == 2) {
-            TileDrawer.ImageWidgetData t1UI = imageTiles.get(0);
-            TileDrawer.ImageWidgetData t2UI = imageTiles.get(1);
+            TileDrawer.ImageTileData t1UI = imageTiles.get(0);
+            TileDrawer.ImageTileData t2UI = imageTiles.get(1);
 
             if (t1UI.getX() < t2UI.getX()) {  // tiles are horizontal
 //                GwtUtil.showDebugMsg("tsize= 2H");
@@ -213,10 +214,10 @@ public class MagnifiedView extends Composite {
 
         } else if (tsize == 4) {
 //            GwtUtil.showDebugMsg("tsize= 4" );
-            TileDrawer.ImageWidgetData tNE = imageTiles.get(0);
-            TileDrawer.ImageWidgetData tSE = imageTiles.get(1);
-            TileDrawer.ImageWidgetData tNW = imageTiles.get(2);
-            TileDrawer.ImageWidgetData tSW = imageTiles.get(3);
+            TileDrawer.ImageTileData tNE = imageTiles.get(0);
+            TileDrawer.ImageTileData tSE = imageTiles.get(1);
+            TileDrawer.ImageTileData tNW = imageTiles.get(2);
+            TileDrawer.ImageTileData tSW = imageTiles.get(3);
 
 
             _ne.setVisible(true);
@@ -294,7 +295,7 @@ public class MagnifiedView extends Composite {
     private class MagMouse extends WebPlotView.DefMouseAll {
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             if (!_freeze) showMag(spt);
         }
 

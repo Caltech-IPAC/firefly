@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -530,7 +531,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             if (_mouseDown) drag(pv, spt);
         }
 

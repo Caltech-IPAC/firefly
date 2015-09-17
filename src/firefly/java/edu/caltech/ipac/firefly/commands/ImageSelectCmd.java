@@ -82,7 +82,10 @@ public class ImageSelectCmd extends BaseGroupVisCmd implements WebEventListener 
     public void eventNotify(WebEvent ev) {
         MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidget();
         if (mpw!=null && mpw.getCurrentPlot()!=null && mpw.isImageSelection()) {
-            setIconProperty(mpw.getCurrentPlot().isThreeColor() ? threeIcon : standardIcon);
+            String targetIcon= mpw.getCurrentPlot().isThreeColor() ? threeIcon : standardIcon;
+            if (!getIconProperty().equals(targetIcon)) {
+                setIconProperty(targetIcon);
+            }
         }
     }
 

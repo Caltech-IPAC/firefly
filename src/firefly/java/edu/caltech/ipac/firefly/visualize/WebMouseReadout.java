@@ -1202,7 +1202,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             move(pv, spt, false, !_pixelClickLock);
         }
 

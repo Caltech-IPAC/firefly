@@ -102,7 +102,7 @@ public class WebPlotGroup  {
 
 
     public void postZoom(PlotImages images) {
-        _basePlot.refreshWidget(images, true);
+        _basePlot.refreshWidget(images);
         _activeZoomTask= null;
         fireReplotEvent(ReplotDetails.Reason.ZOOM_COMPLETED);
     }
@@ -154,6 +154,15 @@ public class WebPlotGroup  {
         final float oldLevel= _zLevel;
         _zLevel= level;
         computeMinMax();
+
+        if (overlayPlots!=null) {
+            for (WebPlot p : overlayPlots) {
+                p.getPlotGroup()._zLevel= level;
+                p.getPlotGroup().computeMinMax();
+            }
+        }
+
+
         final PlotImages im= _basePlot.getTileDrawer().getImages();
         DeferredCommand.addCommand(new Command() {
             public void execute() {

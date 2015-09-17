@@ -75,7 +75,7 @@ public class OverlayPlotView extends Composite implements WebEventListener, Laye
 
     private void initGraphics() {
         pv.addListener(Name.REPLOT, this);
-        pv.addListener(Name.VIEW_PORT_CHANGE, this);
+//        pv.addListener(Name.VIEW_PORT_CHANGE, this);
         pv.addListener(Name.PRIMARY_PLOT_CHANGE, this);
         pv.addDrawingArea(this, false);
 
@@ -138,9 +138,9 @@ public class OverlayPlotView extends Composite implements WebEventListener, Laye
                 maskPlot.refreshWidget();
             }
         }
-        else if (name.equals(Name.VIEW_PORT_CHANGE)) {
-            if (pv.getPrimaryPlot()!=null) maskPlot.refreshWidget();
-        }
+//        else if (name.equals(Name.VIEW_PORT_CHANGE)) {
+//            if (pv.getPrimaryPlot()!=null) maskPlot.refreshWidget();
+//        }
         else if (name.equals(Name.REPLOT)) {
             ReplotDetails details= (ReplotDetails)ev.getData();
             ReplotDetails.Reason reason= details.getReplotReason();
