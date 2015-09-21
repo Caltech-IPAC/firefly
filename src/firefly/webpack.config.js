@@ -67,15 +67,19 @@ var retval= module.exports = {
 
   module: {
         loaders: [
-          { test: /\.(js|jsx)$/,
-            exclude: /node_modules/,
+            { test: /\.(js|jsx)$/,
+                exclude: /node_modules/,
             //loader: 'jsx-loader?harmony'
             //loader: 'babel-loader?stage=0'
             // loader: 'babel-loader',
             // query : {stage:0}
                loader: 'babel',
                query : {stage:0}
-          }
+            },
+            {
+                test: /\.css$/, // Only .css files
+                loader: 'style!css' // Run both loaders
+            }
         ]
   }
 };

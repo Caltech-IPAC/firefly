@@ -52,15 +52,20 @@ var retval= module.exports = {
       extensions: ['', '.js', '.jsx']
   },
 
-  module: {
+    module: {
         loaders: [
-          { test: /\.(js|jsx)$/,
-            exclude: /node_modules/,
-            //loader: 'jsx-loader?harmony'
-            loader: 'babel-loader'
-          }
+            { test: /\.(js|jsx)$/,
+                exclude: /node_modules/,
+                //loader: 'jsx-loader?harmony'
+                loader: 'babel-loader'
+            },
+            {
+                test: /\.css$/, // Only .css files
+                loader: 'style!css' // Run both loaders
+            }
+
         ]
-  }
+    }
 };
 
 //if (process.env.AA) {
