@@ -77,53 +77,7 @@ public class ImageDataGroup implements Iterable<ImageData> {
         }
     }
 
-    /**
-     * LZ 07/20/15
-     * @return
-     */
-    public ImageDataGroup(FitsRead fitsReadAry[],
-                          ImageData.ImageType imageType,
-                          IndexColorModel cm,
-                          RangeValues rangeValues,
-                          int tileSize,
-                          boolean constructNow) throws FitsException {
-        FitsRead fr= null;
-        for(FitsRead testFr : fitsReadAry) {
-            if (testFr!=null) {
-                fr= testFr;
-                break;
-            }
-        }
-        Assert.argTst(fr, "fitsReadAry must have one non-null element.");
-        ImageHeader hdr= fr.getImageHeader();
-        _imageType= imageType;
-        _width = hdr.naxis1;
-        _height = hdr.naxis2;
 
-        int totWidth= hdr.naxis1;
-        int totHeight= hdr.naxis2;
-
-        int xPanels= totWidth / tileSize;
-        int yPanels= totHeight / tileSize;
-        if (totWidth % tileSize > 0) xPanels++;
-        if (totHeight % tileSize > 0) yPanels++;
-
-
-        _imageDataAry= new ImageData[xPanels * yPanels];
-
-        int width;
-        int height;
-        for(int i= 0; i<xPanels; i++) {
-            for(int j= 0; j<yPanels; j++) {
-                width= (i<xPanels-1) ? tileSize : ((totWidth-1) % tileSize + 1);
-                height= (j<yPanels-1) ? tileSize : ((totHeight-1) % tileSize + 1);
-                _imageDataAry[(i*yPanels) +j]= new ImageData(fitsReadAry,imageType,
-                        cm,rangeValues,
-                        tileSize*i,tileSize*j,
-                        width, height, constructNow);
-            }
-        }
-    }
 
 //======================================================================
 //----------------------- Public Methods -------------------------------

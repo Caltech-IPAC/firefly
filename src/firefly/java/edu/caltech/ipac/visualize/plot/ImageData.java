@@ -66,37 +66,7 @@ public class ImageData implements Serializable {
         if (constructNow) constructImage(fitsReadAry);
     }
 
-    //LZ 7/20/15 add this to make an ImageData with given IndexColorModel
-    public ImageData(FitsRead fitsReadAry[],
-                     ImageType imageType,
-                     IndexColorModel cm,
-                     RangeValues rangeValues,
-                     int x,
-                     int y,
-                     int width,
-                     int height,
-                     boolean constructNow) throws FitsException {
 
-        _x= x;
-        _y= y;
-        _width= width;
-        _height= height;
-        _lastPixel= _x+_width-1;
-        _lastLine= _y+_height-1;
-
-        _imageType= imageType;
-
-        this.rangeValues= rangeValues;
-
-       _cm=cm;
-        if (imageType==ImageType.TYPE_24_BIT) {
-            _raster= Raster.createBandedRaster( DataBuffer.TYPE_BYTE, _width,_height,3, null);
-        }
-
-        if (constructNow) constructImage(fitsReadAry);
-
-
-    }
 
     public BufferedImage getImage(FitsRead fitsReadAry[])       {
         if (_imageOutOfDate) constructImage(fitsReadAry);
@@ -217,49 +187,4 @@ public class ImageData implements Serializable {
         inUseCnt.decrementAndGet();
 
     }
-   //07/16/16 LZ
-    //TODO remove this after testing mask
-    private void constructImage_new(FitsRead fitsReadAry[]) {
-
-        inUseCnt.incrementAndGet();
-        LSSTMask lsstmask = new LSSTMask(5, Color.RED);
-
-
-        if (_imageType==ImageType.TYPE_8_BIT) {
-            _raster = null;
-            if (lsstmask!=null){
-            _bufferedImage = new BufferedImage(_width, _height,
-                    BufferedImage.TYPE_BYTE_INDEXED, _cm);
-            fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine, lsstmask);
-        }
-            else {
-                _bufferedImage = new BufferedImage(_width, _height,
-                        BufferedImage.TYPE_BYTE_INDEXED, _cm);
-                fitsReadAry[0].doStretch(rangeValues, getDataArray(0), false, _x, _lastPixel, _y, _lastLine);
-         }
-        }
-
-        else if (_imageType==ImageType.TYPE_24_BIT) {
-            _bufferedImage= new BufferedImage(_width,_height,BufferedImage.TYPE_INT_RGB);
-
-            for(int i=0; (i<fitsReadAry.length); i++) {
-                byte array[]= getDataArray(i);
-                if(fitsReadAry[i]!=null) {
-                    fitsReadAry[i].doStretch(rangeValues, array,true, _x,_lastPixel, _y, _lastLine, lsstmask);
-                }
-                else {
-                    for(int j=0; j<array.length; j++) array[j]= 0;
-                }
-            }
-            _bufferedImage.setData(_raster);
-
-
-        }
-        else {
-            Assert.tst(false, "image type must be TYPE_8_BIT or TYPE_24_BIT");
-        }
-        _imageOutOfDate=false;
-        inUseCnt.decrementAndGet();
-
-    }
-}
+  }

@@ -88,35 +88,6 @@ public class ImagePlot extends Plot implements Serializable {
         configureImage(frGroup);
     }
 
-    /**
-     * 07/20/15 LZcm
-     * Create a ImagePlot with given IndexColorModel
-     *
-     * @param plotGroup
-     * @param frGroup
-     * @param initialZoomLevel
-     * @param band
-     * @param colorModel
-     * @param stretch
-     * @throws FitsException
-     */
-    public ImagePlot(PlotGroup plotGroup,
-                     ActiveFitsReadGroup frGroup,
-                     float initialZoomLevel,
-                     Band band,
-                     IndexColorModel colorModel,
-                     RangeValues stretch) throws FitsException {
-        super(plotGroup);
-        refBand = band;
-        setInitialZoomLevel(initialZoomLevel);
-        imageScaleFactor = frGroup.getFitsRead(band).getImageScaleFactor();
-        _threeColor = false;
-
-        _imageData = new ImageDataGroup(frGroup.getFitsReadAry(), ImageData.ImageType.TYPE_8_BIT,
-                colorModel, stretch, SQUARE, false);
-
-        configureImage(frGroup);
-    }
 
 
     public boolean isThreeColor() {
@@ -1065,62 +1036,7 @@ public class ImagePlot extends Plot implements Serializable {
 
         return new IndexColorModel(8, colors.length, reds, greens, blues, 10);
     }
-    /**
-     * 7/14/15 by LZ
-     * Add this main to test mask over lay plot
-     * @param args
-     * @throws FitsException
-     */
-    public static void main(String [] args) throws FitsException, IOException {
-
-        if (args.length<1){
-            usage();
-            System.exit(0);
-        }
-
-
-        String inFitsPathName = args[0];
-        Fits fits = new Fits(inFitsPathName );
-        String path = getPath(inFitsPathName);
-
-
-        FitsRead fitsRead =  FitsRead.createFitsReadArray(fits)[0];
-        ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.NO_BAND,fitsRead);
-
-
-        //test only the red color
-        Color[] colors= {Color.red, Color.gray, Color.WHITE};
-        IndexColorModel cm = getColorModel(); //CogetIndexColorModel( colors);
-        IndexColorModel cm1 = ColorTable.getColorModel(0);
-        updateOneColor(cm1, Color.RED);
-        ImagePlot imagePlot = new ImagePlot(null, frGroup, 1F,  Band.NO_BAND, cm , FitsRead.getDefaultFutureStretch());
-
-        PlotOutput po = new PlotOutput(imagePlot, frGroup);
-        List<PlotOutput.TileFileInfo> results;
-
-        File imagefileDir = new File(path);
-        String    root="testMask";
-        int tileCnt=1;
-        results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
-
-        PlotImages images= new PlotImages(root,results.size(), imagePlot.getScreenWidth(), imagePlot.getScreenHeight(), imagePlot.getZoomFactor());
-       /* PlotImages.ImageURL imageURL;
-        String relFile;
-        int idx= 0;
-        for(PlotOutput.TileFileInfo info : results) {
-            relFile= ServerContext.replaceWithUsersBaseDirPrefix(info.getFile());
-            imageURL= new PlotImages.ImageURL(relFile,
-                    info.getX(), info.getY(),
-                    info.getWidth(), info.getHeight(),
-                    idx++,
-                    info.isCreated());
-            images.add(imageURL);
-        }
-*/
-
-    }
-
+   
     private static void usage(){
         System.out.println("executableName  fitsFile");
     }
