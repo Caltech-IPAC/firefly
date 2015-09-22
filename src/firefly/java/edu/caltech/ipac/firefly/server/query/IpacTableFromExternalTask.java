@@ -8,11 +8,7 @@ import edu.caltech.ipac.firefly.server.ExternalTaskHandler;
 import edu.caltech.ipac.firefly.server.ExternalTaskHandlerImpl;
 import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
-import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataType;
-import edu.caltech.ipac.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,34 +33,11 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
         taskLauncher.execute();
         File outFile = handler.getOutfile();
 
-        boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
-
-
         if (!ServerContext.isFileInPath(outFile)) {
             throw new SecurityException("Access is not permitted.");
         }
 
-        DataGroupReader.Format format = DataGroupReader.guessFormat(outFile);
-
-        File inf = outFile;
-        if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
-            // file is already in ipac table format
-        } else {
-            if (format != DataGroupReader.Format.UNKNOWN) {
-                // convert it into ipac table format
-                DataGroup dg = DataGroupReader.readAnyFormat(outFile);
-                if (format == DataGroupReader.Format.IPACTABLE) {
-                    inf = FileUtil.createUniqueFileFromFile(outFile);
-                } else {
-                    inf = FileUtil.modifyFile(outFile, "tbl");
-                }
-                DataGroupWriter.write(inf, dg, 0);
-            } else {
-                // format is unknown
-                throw new DataAccessException("Source file has an unknown format: " + ServerContext.replaceWithPrefix(outFile));
-            }
-        }
-        return inf;
+        return convertToIpacTable(outFile, request);
     }
 
     @Override

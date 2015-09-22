@@ -108,14 +108,15 @@ public class IpacTableExtractor {
         if (template == null) {
             template = new DataGroup("", DataGroupUtil.getExtraData(resultset.getMetaData()));
         }
-        writeHeader(template);
-        ArrayList<DataType> cols = new ArrayList<DataType>(Arrays.asList(template.getDataDefinitions()));
+        List<DataType> headers = Arrays.asList(template.getDataDefinitions());
+        IpacTableUtil.writeAttributes(writer, template.getKeywords());
+        IpacTableUtil.writeHeader(writer,headers);
         int count = 0;
         while(resultset.next()) {
             count++;
-            writerRow(cols, resultset);
+            writerRow(headers, resultset);
             if (count == prefetchSize) {
-                processInBackground(cols, resultset);
+                processInBackground(headers, resultset);
                 insertCompleteStatus(DataGroupPart.State.INPROGRESS);
                 doclose = false;
                 break;
@@ -200,41 +201,6 @@ public class IpacTableExtractor {
                 }
             }
         }
-    }
-
-    public void writeAttributes(DataGroup.Attribute... attribs) {
-        for (int i = 0; i < attribs.length; i++) {
-            DataGroup.Attribute attrib = attribs[i];
-            String type = attrib.hasType() ? attrib.getType() + " " : "";
-            String line = "\\" + type + attrib.getKey() + " = " + attrib.formatValue(Locale.US);
-            writer.println(line);
-        }
-    }
-
-    public void writeHeader(DataGroup template) {
-
-        Set<String> keys = template.getAttributeKeys();
-        for (String key : keys) {
-            writer.println("\\" + key + " = " + template.getAttribute(key).getValue());
-        }
-
-        DataType[] headers = template.getDataDefinitions();
-        for (int i = 0; i < headers.length; i++) {
-            DataType dt = headers[i];
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getKeyName()));
-            if (i == headers.length-1) {
-                writer.print("|");
-            }
-        }
-        writer.println();
-        for (int i = 0; i < headers.length; i++) {
-            DataType dt = headers[i];
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getTypeDesc()));
-            if (i == headers.length-1) {
-                writer.print("|");
-            }
-        }
-        writer.println();
     }
 
     public void writerRow(List<DataType> headers, ResultSet rs) {

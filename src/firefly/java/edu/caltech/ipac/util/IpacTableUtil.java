@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -31,17 +30,17 @@ public class IpacTableUtil {
     public static final int FILE_IO_BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
     public static void writeAttributes(PrintWriter writer, Collection<DataGroup.Attribute> attribs, String... ignoreList) {
-        String type, line;
-        for (DataGroup.Attribute attrib : attribs) {
-            if (ignoreList == null || !CollectionUtil.exists(ignoreList, attrib.getKey())) {
-                type = attrib.hasType() ? attrib.getType() + " " : "";
-                line = "\\" + type + attrib.getKey() + " = " + attrib.formatValue(Locale.US);
-                writer.println(line);
+        if (attribs == null) return;
+
+        for (DataGroup.Attribute kw : attribs) {
+            if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
+                writer.println(kw.toString());
             }
         }
     }
 
     public static void writeHeader(PrintWriter writer, List<DataType> headers) {
+        writer.println("\\");
         for (int i = 0; i < headers.size(); i++) {
             DataType dt = headers.get(i);
             writer.print("|" + dt.getFormatInfo().formatHeader(dt.getKeyName()));
@@ -58,22 +57,33 @@ public class IpacTableUtil {
             }
         }
         writer.println();
-        for (int i = 0; i < headers.size(); i++) {
-            DataType dt = headers.get(i);
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getDataUnit()));
-            if (i == headers.size()-1) {
-                writer.print("|");
+        // check to see if we need to print the other headers.
+        boolean hasMoreHeaders = false;
+        for (DataType dt : headers) {
+            if (dt.getDataUnit() != null || dt.getNullString() != null) {
+                hasMoreHeaders = true;
+                break;
             }
         }
-        writer.println();
-        for (int i = 0; i < headers.size(); i++) {
-            DataType dt = headers.get(i);
-            writer.print("|" + dt.getFormatInfo().formatHeader(dt.getNullString()));
-            if (i == headers.size()-1) {
-                writer.print("|");
+
+        if (hasMoreHeaders) {
+            for (int i = 0; i < headers.size(); i++) {
+                DataType dt = headers.get(i);
+                writer.print("|" + dt.getFormatInfo().formatHeader(dt.getDataUnit()));
+                if (i == headers.size()-1) {
+                    writer.print("|");
+                }
             }
+            writer.println();
+            for (int i = 0; i < headers.size(); i++) {
+                DataType dt = headers.get(i);
+                writer.print("|" + dt.getFormatInfo().formatHeader(dt.getNullString()));
+                if (i == headers.size()-1) {
+                    writer.print("|");
+                }
+            }
+            writer.println();
         }
-        writer.println();
     }
 
     public static void writeRow(PrintWriter writer, List<DataType> headers, DataObject row) {
@@ -240,7 +250,7 @@ public class IpacTableUtil {
                         if (type.getDataType().isAssignableFrom(String.class)) {
                             if (String.valueOf(type.getDataUnit()).equalsIgnoreCase("html") ||
                                     rval.trim().matches("<[^>]+>.*")) {
-                                source.addAttributes(new DataGroup.Attribute(DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false"));
+                                source.addAttribute(DataSetParser.makeAttribKey(DataSetParser.SORTABLE_TAG, type.getKeyName()), "false");
                             }
                         }
                     }
@@ -257,17 +267,7 @@ public class IpacTableUtil {
     }
 
     public static DataGroup.Attribute parseAttribute(String line) {
-        DataGroup.Attribute retval = null;
-
-        String[] keyVal = line.replaceFirst("\\\\", "").split("=", 2);  // the first '=' is the key/val separator
-        if ( keyVal.length == 2 ) {                                      // the following '=' chars(if any) are part of val.
-            String[] typeKey = keyVal[0].trim().split("\\s+", 2);        // the first word is type.  if only 1 word, then type is empty-string
-            String type = typeKey != null && typeKey.length > 1 ? typeKey[0].trim() : "";
-            String key = typeKey != null && typeKey.length > 1 ? typeKey[1].trim() : typeKey[0].trim();
-            String val = keyVal[1].trim();
-            retval = new DataGroup.Attribute(key, val, type, null);
-        }
-        return retval;
+        return DataGroup.Attribute.parse(line);
     }
 
     public static Map<String, String> asMap(DataObject row) {
@@ -357,7 +357,7 @@ public class IpacTableUtil {
 
         meta.setRowStartOffset(dataStartOffset);
         if (attribs.size() > 0) {
-            meta.addAttribute(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
+            meta.addAttributes(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
         }
         if (cols != null) {
             for (DataType c : cols) {

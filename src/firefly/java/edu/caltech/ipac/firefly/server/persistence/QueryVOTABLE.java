@@ -91,7 +91,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
             DataGroup.Attribute decColAttr = dg.getAttribute("POS_EQ_DEC_MAIN");
             if (raColAttr != null && decColAttr != null) {
                 TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns((String)raColAttr.getValue(), (String)decColAttr.getValue(), CoordinateSys.EQ_J2000);
-                dg.addAttributes(new DataGroup.Attribute(MetaConst.CENTER_COLUMN, llc.toString()));
+                dg.addAttribute(MetaConst.CENTER_COLUMN, llc.toString());
             }
             if (dg.getDataDefinitions().length > 0) {
                 String name, desc;
@@ -99,7 +99,7 @@ public abstract class QueryVOTABLE extends IpacTablePartProcessor {
                     name = col.getKeyName();
                     desc = col.getShortDesc();
                     if (desc != null) {
-                        dg.addAttributes(new DataGroup.Attribute(makeAttribKey(DESC_TAG, name.toLowerCase()), desc));
+                        dg.addAttribute(makeAttribKey(DESC_TAG, name.toLowerCase()), desc);
                     }
                 }
             }

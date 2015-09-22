@@ -38,7 +38,7 @@ public class TableMeta implements Serializable, HandSerialize {
     private boolean isFullyLoaded;
     private List<String> relatedCols;
     private List<String> groupByCols;
-    private Map<String, String> attributes;
+    private Map<String, String> attributes = new HashMap<String, String>();
 
 
     public TableMeta() {
@@ -65,7 +65,7 @@ public class TableMeta implements Serializable, HandSerialize {
         newMeta.isFullyLoaded = isFullyLoaded;
         newMeta.relatedCols = relatedCols == null ? null : new ArrayList<String>(relatedCols);
         newMeta.groupByCols = groupByCols == null ? null : new ArrayList<String>(groupByCols);
-        newMeta.attributes = attributes == null ? null : new HashMap<String, String>(attributes);
+        newMeta.attributes.putAll(attributes);
         return newMeta;
     }
 
@@ -185,7 +185,7 @@ public class TableMeta implements Serializable, HandSerialize {
 
     public void setAttributes(Map<String, String> attribs) {
         if (attribs == null) {
-            attributes = attribs;
+            attributes.clear();
         } else {
             attributes.putAll(attribs);
         }
@@ -200,9 +200,6 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
     public void setAttribute(String key, String value) {
-        if (attributes == null) {
-            attributes = new HashMap<String, String>();
-        }
         attributes.put(key, value);
     }
 
@@ -242,12 +239,12 @@ public class TableMeta implements Serializable, HandSerialize {
     }
 
     public String getAttribute(String key) {
-        return attributes == null ? null : attributes.get(key);
+        return attributes.get(key);
     }
 
 
     public Map<String, String> getAttributes() {
-        return attributes == null ? new HashMap<String, String>() : Collections.unmodifiableMap(attributes);
+        return Collections.unmodifiableMap(attributes);
     }
 
     public boolean isLoaded() {

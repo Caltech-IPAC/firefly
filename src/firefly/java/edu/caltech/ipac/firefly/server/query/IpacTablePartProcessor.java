@@ -33,6 +33,7 @@ import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.DataType;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
@@ -56,6 +57,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +78,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public static long logCounter = 0;
     public static final List<String> SYS_PARAMS = Arrays.asList(TableServerRequest.INCL_COLUMNS, TableServerRequest.FILTERS, TableServerRequest.PAGE_SIZE,
             TableServerRequest.SORT_INFO, TableServerRequest.START_IDX, TableServerRequest.DECIMATE_INFO);
+    public static final List<String> PAGE_PARAMS = Arrays.asList(TableServerRequest.PAGE_SIZE, TableServerRequest.START_IDX);
+
+
+    private static final Map<StringKey, Object> _activeRequests =
+                Collections.synchronizedMap(new HashMap<StringKey, Object>());
 
     public boolean isSecurityAware() {
         return false;
@@ -139,8 +147,36 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File dgFile = null;
         try {
             TableServerRequest request = (TableServerRequest) sr;
+            Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+            // get unique key without page info
+            StringKey key = new StringKey(this.getClass().getName(), getDataKey(request));
 
-            dgFile = getDataFile(request);
+            try {
+                Object lockKey;
+                boolean lockKeyCreator = false;
+                synchronized (_activeRequests) {
+                    lockKey = _activeRequests.get(key);
+                    if (lockKey == null) {
+                        lockKey = new Object();
+                        _activeRequests.put(key, lockKey);
+                        lockKeyCreator = true;
+                    }
+                }
+                synchronized (lockKey) {
+                    if (!lockKeyCreator) {
+                        dgFile = validateFile((File) cache.get(key));
+                    }
+                    if (dgFile == null) {
+                        dgFile = getDataFile(request);
+
+                        cache.put(key, dgFile);
+                    }
+                }
+
+            } finally {
+                _activeRequests.remove(key);
+            }
+
 
             DataGroupPart page = null;
             // get the page requested
@@ -167,9 +203,10 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             throw new DataAccessException("Unexpected error", e);
         } finally {
             if (!doCache()) {
-                if (dgFile != null) {
-                    dgFile.delete();
-                }
+// do not delete file even if it's not to be cached.  download still relies on it.
+//                if (dgFile != null) {
+//                    dgFile.delete();
+//                }
             }
         }
 
@@ -200,6 +237,32 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         for (Param p : request.getParams()) {
             if (!SYS_PARAMS.contains(p.getName())) {
+                uid += "|" + p.toString();
+            }
+        }
+        return uid;
+    }
+
+    // unique key withoup page info
+    public String getDataKey(ServerRequest request) {
+
+        String uid = request.getRequestId() + "-";
+        if ( useWorkspace || (isSecurityAware() &&
+                ServerContext.getRequestOwner().isAuthUser()) ) {
+            uid = uid + ServerContext.getRequestOwner().getUserKey();
+        }
+
+        /*
+        java.util.Collections.sort(request.getParams(), new Comparator<Param>(){
+            @Override
+            public int compare(Param o1, Param o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        */
+
+        for (Param p : request.getParams()) {
+            if (!PAGE_PARAMS.contains(p.getName())) {
                 uid += "|" + p.toString();
             }
         }
@@ -366,7 +429,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         // if this file does not contain ROWID, add it.
         if (!dg.containsKey(DataGroup.ROWID_NAME)) {
             dg.addDataDefinition(DataGroup.ROWID);
-            dg.addAttributes(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
+            dg.addAttribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden");
         }
         timer.printLog("read");
         timer.start("sort");
@@ -425,23 +488,6 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         boolean isFromCache = true;
         if (cfile == null) {
             cfile = loadDataFile(request);
-
-            // if the file is not in IPAC table format - convert
-            DataGroupReader.Format format = DataGroupReader.guessFormat(cfile);
-            boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
-            if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
-                // file is already in ipac table format
-            } else {
-                if ( format != DataGroupReader.Format.UNKNOWN) {
-                    // format is unknown.. convert it into ipac table format
-                    DataGroup dg = DataGroupReader.readAnyFormat(cfile);
-                    cfile = createFile(request, ".tbl");
-                    DataGroupWriter.write(cfile, dg, 0);
-                } else {
-                    throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(cfile));
-                }
-            }
-
 
             if (doCache()) {
                 cache.put(key, cfile);
@@ -546,6 +592,34 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected static void writeLine(BufferedWriter writer, String text) throws IOException {
         writer.write(text);
         writer.newLine();
+    }
+
+    protected static File convertToIpacTable(File tblFile, TableServerRequest request) throws IOException, DataAccessException{
+        // if the file is not in IPAC table format - convert
+        DataGroupReader.Format format = DataGroupReader.guessFormat(tblFile);
+        boolean isFixedLength = request.getBooleanParam(TableServerRequest.FIXED_LENGTH, true);
+        if (format == DataGroupReader.Format.IPACTABLE && isFixedLength) {
+            // file is already in ipac table format
+            return tblFile;
+        } else {
+            if ( format != DataGroupReader.Format.UNKNOWN) {
+                // format is unknown.. convert it into ipac table format
+                DataGroup dg = DataGroupReader.readAnyFormat(tblFile);
+                File convertedFile; //= createFile(request, ".tbl");
+                if (format == DataGroupReader.Format.IPACTABLE) {
+                    convertedFile = FileUtil.createUniqueFileFromFile(tblFile);
+                } else {
+                    convertedFile = FileUtil.modifyFile(tblFile, "tbl");
+                    if (convertedFile.exists())
+                        convertedFile = FileUtil.createUniqueFileFromFile(convertedFile);
+                }
+
+                DataGroupWriter.write(convertedFile, dg, 0);
+                return convertedFile;
+            } else {
+                throw new DataAccessException("Source file has an unknown format:" + ServerContext.replaceWithPrefix(tblFile));
+            }
+        }
     }
 
 }

@@ -43,11 +43,8 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     private static final Logger.LoggerImpl _log= Logger.getLogger();
 
     private static String DATA_ACCESS_URI = AppProperties.getProperty("lsst.dataAccess.uri", "lsst.dataAccess.uri");
-    private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");  //"DC_W13_Stripe82"
+    private static String DATABASE = AppProperties.getProperty("lsst.dataAccess.db", "lsst.dataAccess.db");
 
-
-    private static final String RA_COL = "ra";
-    private static final String DEC_COL = "decl";
 
     @Override
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -63,7 +60,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
 
         DataGroup dg = JsonToDataGroup.parse(file);
         File inf = createFile(request, ".tbl");
-        DataGroupWriter.write(inf, dg, 0);
+        DataGroupWriter.write(inf, dg, 0);  // for big files write will happen in background
 
         return inf;
     }
@@ -92,7 +89,17 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             }
         }
 
-        String update = getSelectedColumnsUpdate(selectedColumns);
+        // workaround for not knowing which cols are ra and dec
+        String raCol, decCol;
+        if (catTable.startsWith(DATABASE)) {
+            raCol = "coord_ra";
+            decCol = "coord_dec";
+        } else {
+            raCol = "ra";
+            decCol = "decl";
+        }
+
+        String update = getSelectedColumnsUpdate(selectedColumns, raCol, decCol);
         if (update != null) selectedColumns = update;
 
         String pname;
@@ -108,7 +115,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             //qserv_areaspec_circle(ra, dec, radius)
             //sql="select * from "+catTable+" where qserv_areaspec_circle("+wpt.getLon()+", "+wpt.getLat()+", "+radius+")";
             //Per Serge, the above query only can not be applied to unpartitioned table
-            sql="select "+selectedColumns+" from "+DATABASE+"."+catTable+" where scisql_s2PtInCircle(ra, decl, "+wpt.getLon()+", "+wpt.getLat()+", "+radius+")=1";
+            sql="select "+selectedColumns+" from "+catTable+" where scisql_s2PtInCircle("+raCol+", "+decCol+", "+wpt.getLon()+", "+wpt.getLat()+", "+radius+")=1";
         } else if (searchMethod != null && searchMethod.equals(CatalogRequest.Method.BOX.getDesc())) {
             double size = 0.0;
             for (Param p : params) {
@@ -130,7 +137,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             //qserv_areaspec_box(raA, decA, raB, decB)
             //sql="select * from "+catTable+" where qserv_areaspec_box("+lon1+", "+lat1+", "+lon2+", "+lat2+")";
             //Per Serge, the above query only can not be applied to unpartitioned table
-            sql="select * from "+DATABASE+"."+catTable+" where scisql_s2PtInBox(ra, decl, "+lon1+", "+lat1+", "+lon2+", "+lat2+")=1";
+            sql="select * from "+catTable+" where scisql_s2PtInBox("+raCol+", "+decCol+", "+lon1+", "+lat1+", "+lon2+", "+lat2+")=1";
 
         } else {
             throw new RuntimeException(searchMethod+" search is not Implemented");
@@ -171,7 +178,22 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
     public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
         super.prepareTableMeta(meta, columns, request);
 
-        TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(RA_COL, DEC_COL);  //J2000 default
+        // TODO: how do I figure out which columns are ra and dec?
+        String raCol = null, decCol = null;
+        for (DataType dt : columns) {
+            if (dt.getKeyName().equals("coord_ra")) {
+                raCol = "coord_ra";
+                decCol = "coord_dec";
+                break;
+            }
+        }
+        if (raCol == null) {
+            raCol = "ra";
+            decCol = "decl";
+        }
+
+
+        TableMeta.LonLatColumns llc = new TableMeta.LonLatColumns(raCol, decCol);  //J2000 default
         meta.setLonLatColumnAttr(MetaConst.CATALOG_COORD_COLS, llc);
         meta.setCenterCoordColumns(llc);
 
@@ -183,7 +205,7 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
         setColumnTips(meta, request);
     }
 
-    private static String getSelectedColumnsUpdate(String selectedColumns) {
+    private String getSelectedColumnsUpdate(String selectedColumns, String raCol, String decCol) {
         String update=null;
         if (StringUtils.isEmpty(selectedColumns)) {
             return "*";
@@ -191,19 +213,19 @@ public class QueryLSSTCatalog  extends IpacTablePartProcessor {
             boolean hasRa = false, hasDec = false;
             String [] cols = selectedColumns.split(",");
             for (String col : cols) {
-                if (col.equalsIgnoreCase(RA_COL)) {
+                if (col.equalsIgnoreCase(raCol)) {
                     hasRa= true;
                     if (hasDec) break;
-                } else if (col.equalsIgnoreCase(DEC_COL)) {
+                } else if (col.equalsIgnoreCase(decCol)) {
                     hasDec= true;
                     if (hasRa) break;
                 }
             }
             if (!hasRa) {
-                update = selectedColumns+",ra";
+                update = selectedColumns+","+raCol;
             }
             if (!hasDec) {
-                update = (update==null?selectedColumns:update)+",decl";
+                update = (update==null?selectedColumns:update)+","+decCol;
             }
             return update;
         }

@@ -154,25 +154,6 @@ public class DataObject implements Serializable, Cloneable {
 //------------------ Private / Protected / Package Methods --------------
 //======================================================================
 
-    private DataType findDT(String key) {
-        DataType dataTypes[]= _group.getDataDefinitions();
-        DataType retval= null;
-        int idx= _group.getLastElementIdx();
-
-        if (dataTypes.length>0 && dataTypes[idx].getKeyName().equals(key))  retval= dataTypes[idx];
-
-
-        if (retval== null) {
-            for(idx= 0; (idx<dataTypes.length && retval == null);idx++) {
-                if (dataTypes[idx].getKeyName().equals(key)) {
-                    retval= dataTypes[idx];
-                    _group.setLastElementIdx(idx);
-                }
-            }
-        }
-        return retval;
-    }
-
     private void checkSize() {
         if (_data==null) {
             _data= new Object[_group.getDataDefinitions().length];

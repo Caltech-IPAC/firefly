@@ -105,9 +105,8 @@ public class DataGroupPart implements HasAccessInfos {
         if (col == null) {
             col = new DataType(getHasAccessCName(), String.class);
             data.addDataDefinition(col);
-            data.addAttributes(TemplateGenerator.createAttribute(
-                    TemplateGenerator.Tag.VISI_TAG, getHasAccessCName(),
-                    TemplateGenerator.Tag.VISI_HIDDEN));
+            data.addAttribute(TemplateGenerator.createAttributeKey(
+                    TemplateGenerator.Tag.VISI_TAG, getHasAccessCName()), TemplateGenerator.Tag.VISI_HIDDEN);
         }
         data.get(index).setDataElement(col, String.valueOf(hasAccess));
     }

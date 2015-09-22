@@ -17,9 +17,13 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
-import java.io.*;
-import java.util.*;
-import java.awt.Color;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 /**
@@ -70,6 +74,8 @@ public class FitsRead implements Serializable {
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
     private String srcDesc = null;
     private  short[] masks=null;
+    private double blankValue;
+
 
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
@@ -93,6 +99,7 @@ public class FitsRead implements Serializable {
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
+        blankValue = imageHeader.blank_value;
 
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
@@ -1510,6 +1517,7 @@ public class FitsRead implements Serializable {
 
         return new Histogram(float1d, (imageHeader.datamin - bzero) / bscale,
                 (imageHeader.datamax - bzero) / bscale);
+
 
 
     }

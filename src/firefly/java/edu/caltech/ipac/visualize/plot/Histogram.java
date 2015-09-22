@@ -5,6 +5,8 @@ package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.util.SUTDebug;
 
+import java.util.Arrays;
+
 /**
  * Creates a histogram of an image
  *
@@ -62,6 +64,9 @@ public class Histogram {
 
             boolean redo_flag = false;
             histBinsiz =getHistBinSize(histMax );
+            //for (int i=0; i<=HISTSIZ2; i++) hist[i]=0;
+            //reintialize the hist to 0
+            Arrays.fill(hist, 0);
             for (int k = 0; k < float1dArray.length; k++) {
                 if (!Double.isNaN(float1dArray[k])) {
 
@@ -218,6 +223,8 @@ public class Histogram {
 
         return count;
     }
+
+
 
 
     /**

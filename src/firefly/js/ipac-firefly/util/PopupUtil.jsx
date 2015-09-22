@@ -9,10 +9,9 @@
 "use strict";
 
 var React= require('react/addons');
-//var ModalDialog= require('ipac-firefly/ui/ModalDialog.jsx');
 var Modal = require('react-modal');
 
-import {PopupPanel, LayoutType} from '../ui/PopupPanel.jsx';
+import PopupPanel from '../ui/PopupPanel.jsx';
 //import Portal from "react-portal";
 
 var modalDiv= null;
@@ -211,7 +210,6 @@ const freeElementList= [];
 
 
 
-
 var IndependentWrapper = React.createClass(
 {
     propTypes: {
@@ -256,7 +254,7 @@ var showDialog= function(title,reactComponent, closePromise) {
     }
     var wrapper= (
             <IndependentWrapper divId={divElement.id}>
-                <PopupPanel title={title} closePromise={closePromise}>
+                <PopupPanel title={title} closePromise={closePromise} >
                     {reactComponent}
                 </PopupPanel>
             </IndependentWrapper>
@@ -264,6 +262,19 @@ var showDialog= function(title,reactComponent, closePromise) {
 
     React.render(wrapper, divElement);
 }
+
+
+
+//----------------------------------------------------
+//----------------------------------------------------
+//----------------------------------------------------
+
+
+
+
+//----------------------------------------------------
+//----------------------------------------------------
+//----------------------------------------------------
 
 
 

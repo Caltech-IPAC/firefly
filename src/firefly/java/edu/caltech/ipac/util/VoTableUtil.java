@@ -69,15 +69,14 @@ public class VoTableUtil {
             cols.add(dt);
         }
         DataGroup dg = new DataGroup(title, cols);
-        dg.beginBulkUpdate();
 
         for (Object p : table.getParameters()) {
             DescribedValue dv = (DescribedValue)p;
-            dg.addAttributes(new DataGroup.Attribute(dv.getInfo().getName(), dv.getValueAsString(50).replace("\n", " ")));
+            dg.addAttribute(dv.getInfo().getName(), dv.getValueAsString(50).replace("\n", " "));
         }
         if (raCol != null && decCol != null) {
-            dg.addAttributes(new DataGroup.Attribute("POS_EQ_RA_MAIN", raCol));
-            dg.addAttributes(new DataGroup.Attribute("POS_EQ_DEC_MAIN", decCol));
+            dg.addAttribute("POS_EQ_RA_MAIN", raCol);
+            dg.addAttribute("POS_EQ_DEC_MAIN", decCol);
         }
 
         try {
@@ -110,8 +109,6 @@ public class VoTableUtil {
             dg.shrinkToFitData();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            dg.endBulkUpdate();
         }
 
         return dg;

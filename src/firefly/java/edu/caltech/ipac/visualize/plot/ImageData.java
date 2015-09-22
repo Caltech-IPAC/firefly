@@ -6,11 +6,12 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.util.Assert;
 import nom.tam.fits.FitsException;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;

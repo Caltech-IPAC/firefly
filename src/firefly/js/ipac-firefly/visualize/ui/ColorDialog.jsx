@@ -7,7 +7,6 @@ var React= require('react/addons');
 var Promise= require("es6-promise").Promise;
 
 import {application} from 'ipac-firefly/core/Application.js';
-import PopupUtil from '../../util/PopupUtil.jsx';
 import InputGroup from '../../ui/InputGroup.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
@@ -20,6 +19,9 @@ import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../
 import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../../visualize/RangeValues.js'
 import FieldGroupStore from '../../store/FieldGroupStore.js';
 import FieldGroupActions from '../../actions/FieldGroupActions.js';
+import {defineDialog} from '../../ui/DialogRootContainer.jsx';
+import DialogActions from '../../actions/DialogActions.js';
+import PopupPanel from '../../ui/PopupPanel.jsx';
 
 import {RED_PANEL,
         GREEN_PANEL,
@@ -33,14 +35,6 @@ var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 class ColorDialog {
     constructor() {
-        this.init();
-    }
-
-    init() {
-
-    }
-    showDialog() {
-
         FieldGroupActions.initFieldGroup({
                 groupKey : NO_BAND_PANEL,
                 reducerFunc : colorPanelChange,
@@ -48,12 +42,18 @@ class ColorDialog {
                 keepState: true
             }
         );
-
-        var mpw= ffgwt.Visualize.AllPlots.getInstance().getMiniPlotWidget();
+        //var mpw= ffgwt.Visualize.AllPlots.getInstance().getMiniPlotWidget();
         var content= (
-            <ColorDialogPanel mpw={mpw} groupKey={NO_BAND_PANEL} band={Band.NO_BAND}/>
+            <PopupPanel title={'Modify Color Stretch'} >
+                <ColorDialogPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND}/>
+            </PopupPanel>
         );
-        PopupUtil.showDialog('Modify Color Stretch',content);
+        defineDialog('ColorStretchDialog', content);
+    }
+
+    showDialog() {
+        DialogActions.showDialog({dialogId: 'ColorStretchDialog'});
+
     }
 }
 
@@ -67,7 +67,6 @@ var ColorDialogPanel= React.createClass(
     formStoreListenerRemove : null,
 
     propTypes: {
-        mpw :      React.PropTypes.object.isRequired,
         groupKey : React.PropTypes.string.isRequired
     },
 

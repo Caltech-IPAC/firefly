@@ -5,9 +5,7 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
 * Date: 6/26/15
@@ -17,7 +15,7 @@ import java.util.Map;
 */
 public class TableDef {
     private List<DataType> cols = new ArrayList<DataType>();
-    private LinkedHashMap<String, DataGroup.Attribute> attributes = new LinkedHashMap<String, DataGroup.Attribute>();
+    private ArrayList<DataGroup.Attribute> attributes = new ArrayList<DataGroup.Attribute>();
     private int lineWidth;
     private int rowCount;
     private int colCount;
@@ -25,10 +23,10 @@ public class TableDef {
     private String sourceFile;
     private int lineSepLength;
 
-    public void addAttribute(DataGroup.Attribute... attributes) {
+    public void addAttributes(DataGroup.Attribute... attributes) {
         if (attributes != null) {
             for(DataGroup.Attribute a : attributes) {
-                this.attributes.put(a.getKey(), a);
+                this.attributes.add(a);
             }
         }
     }
@@ -41,20 +39,23 @@ public class TableDef {
         cols.add(col);
     }
 
-    public Map<String, DataGroup.Attribute> getAttributes() {
+    public List<DataGroup.Attribute> getAttributes() {
         return attributes;
     }
 
-    public List<DataGroup.Attribute> getAttributeList() {
-        return new ArrayList<DataGroup.Attribute>(attributes.values());
+    public void setStatus(DataGroupPart.State status) {
+        addAttributes(new DataGroup.Attribute(DataGroupPart.LOADING_STATUS, status.name()));
     }
 
-    public void setStatus(DataGroupPart.State status) {
-        addAttribute(new DataGroup.Attribute(DataGroupPart.LOADING_STATUS, status.name()));
+    DataGroup.Attribute getAttribute(String key) {
+        for (DataGroup.Attribute at : attributes) {
+            if (at.getKey().equals(key)) return at;
+        }
+        return null;
     }
 
     public DataGroupPart.State getStatus() {
-        DataGroup.Attribute a = attributes.get(DataGroupPart.LOADING_STATUS);
+        DataGroup.Attribute a = getAttribute(DataGroupPart.LOADING_STATUS);
         if (a != null && !StringUtils.isEmpty(a.getValue())) {
             return DataGroupPart.State.valueOf(String.valueOf(a.getValue()));
         } else {

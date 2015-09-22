@@ -307,8 +307,7 @@ public final class FITSTableReader
                         }
                     }
                     String attributeValue = getAttributeValue(data.toArray(), true, classType, originalType);
-                    DataGroup.Attribute attribute = new DataGroup.Attribute(colName[col], attributeValue);
-                    dataGroup.addAttributes(attribute);
+                    dataGroup.addAttribute(colName[col], attributeValue);
                 }
             }
 
@@ -362,8 +361,7 @@ public final class FITSTableReader
                         String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
                         Object cell = table.getCell(row, col);
                         String attributeValue = getAttributeValue(cell, isArray, classType, originalType);
-                        DataGroup.Attribute attribute = new DataGroup.Attribute(colName[col], attributeValue);
-                        dataGroup.addAttributes(attribute);
+                        dataGroup.addAttribute(colName[col], attributeValue);
                     }
                 }
 

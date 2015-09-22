@@ -86,7 +86,7 @@ public class DataGroupFilter {
         StopWatch.getInstance().start("DataGroupFilter");
 
         TableDef tableMeta = IpacTableUtil.getMetaInfo(source);
-        List<DataGroup.Attribute> attributes = tableMeta.getAttributeList();
+        List<DataGroup.Attribute> attributes = tableMeta.getAttributes();
         List<DataType> headers = tableMeta.getCols();
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
@@ -98,13 +98,9 @@ public class DataGroupFilter {
             attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
 
-        DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
-        IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
-        IpacTableUtil.writeHeader(writer, headers);
-
         DataGroup dg = new DataGroup(null, headers);
-        dg.beginBulkUpdate();
 
+        boolean needToWriteHeader = true;
         int found = 0;
         cRowNum = -1;
         String line = reader.readLine();
@@ -119,6 +115,13 @@ public class DataGroupFilter {
                     }
                     if (CollectionUtil.matches(rowIdx, row, filters)) {
                         row.setRowIdx(rowIdx);
+
+                        if (needToWriteHeader) {
+                            needToWriteHeader = false;
+                            DataGroupWriter.writeStatus(writer, DataGroupPart.State.INPROGRESS);
+                            IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
+                            IpacTableUtil.writeHeader(writer, headers);
+                        }
                         IpacTableUtil.writeRow(writer, headers, row);
                         if (++found == prefetchSize) {
                             processInBackground(dg);

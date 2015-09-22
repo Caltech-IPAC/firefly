@@ -143,7 +143,7 @@ public class ImageGridSupport {
      * @param value an attribute value
      */
     public static void addDataGroupAttribute(DataGroup dg, String key, String value) {
-        dg.addAttributes(new DataGroup.Attribute(key, value));
+        dg.addAttribute(key, value);
     }
 
     /**
@@ -153,7 +153,7 @@ public class ImageGridSupport {
      * @param value an attribute value
      */
     public static void addDataGroupAttribute(DataGroup dg, ATTRIBUTE attribute, String value) {
-        dg.addAttributes(new DataGroup.Attribute(attribute.toString(), value));
+        dg.addAttribute(attribute.toString(), value);
     }
 
     /**
@@ -162,7 +162,7 @@ public class ImageGridSupport {
      * @param attribute an attribute key
      */
     public static void addDataGroupAttribute(DataGroup dg, ATTRIBUTE attribute) {
-        dg.addAttributes(new DataGroup.Attribute(attribute.toString(), attribute.toString()));
+        dg.addAttribute(attribute.toString(), attribute.toString());
     }
 
 // --------------------------------- add JPEG image to IPAC table ---------------------------------

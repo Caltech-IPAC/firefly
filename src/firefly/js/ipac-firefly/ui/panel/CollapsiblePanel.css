@@ -1,0 +1,35 @@
+.CollapsiblePanel {
+  margin: 5px 0;
+}
+
+.CollapsiblePanel__Header {
+  cursor: hand;
+  border: none;
+  background: inherit;
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0;
+  padding: 10px;
+  box-sizing: border-box;
+  font: inherit;
+  border-bottom: solid 1px transparent;
+}
+
+.CollapsiblePanel__Header:before {
+  display: inline-block;
+  width: 1em;
+  content: '▸';
+}
+
+.CollapsiblePanel__Header--is-open:before {
+  content: '▾';
+}
+
+.CollapsiblePanel__Content {
+  border-left: 1px solid #ccc;
+  margin: 0 10px;
+  padding: 0 10px;
+  overflow: auto;
+}
+

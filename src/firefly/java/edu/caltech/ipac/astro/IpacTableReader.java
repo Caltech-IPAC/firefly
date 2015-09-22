@@ -81,9 +81,7 @@ public final class IpacTableReader {
           extraData= setupExtraData(columnsDesc);
           _dataGroup= new DataGroup(catName, extraData);
 
-          for(DataGroup.Attribute att: attributes) {
-              _dataGroup.addAttributes(att);
-          }
+          _dataGroup.setAttributes(attributes);
 
           if ( columnsDesc.size() > 0 && _line != null) {
               if (estFileSize>0 && estFileSize>(_line.length()+1) ) {
@@ -218,26 +216,10 @@ public final class IpacTableReader {
         reader.mark(1024);
         _line = reader.readLine();
         while (_line != null) {
-            if ( _line.matches("^\\s*\\\\.*") ) {  // line starting with '\', leading spaces is ok.
-                String[] keyVal = _line.replaceFirst("\\\\", "").split("=", 2);  // the first '=' is the key/val separator
-                if ( keyVal.length == 2 ) {                                      // the following '=' chars(if any) are part of val.
-                    keyVal[1] = keyVal[1].replaceFirst("\\s\\/\\s.*$", "");      // the value might be separated from comment by ' / '
-                    String[] typeKey = keyVal[0].trim().split("\\s+", 2);        // the first word is type.  if only 1 word, then type is empty-string
-                    String type = typeKey != null && typeKey.length > 1 ? typeKey[0].trim() : "";
-                    String key = typeKey != null && typeKey.length > 1 ? typeKey[1].trim() : typeKey[0].trim();
-                    Object val = parseString(type, keyVal[1].trim());
-                    if ( type.length() > 0 && !isRecongnizedType(type) ){
-                        // handle invalid type, skip for now.
-                    } else {
-                        String fmtStr = null;
-                        if (type.length() > 0) {
-                            Class clsType = resolveClass(type);
-                            if (clsType.isAssignableFrom(Double.class)) {
-                                fmtStr = guessFormatStr(keyVal[1].trim(), clsType);
-                            }
-                        }
-                        attributes.add(new DataGroup.Attribute(key, val, type, fmtStr));
-                    }
+            if ( _line.startsWith("\\") ) {  // line starting with '\' is a keyword line.
+                DataGroup.Attribute attrib = DataGroup.Attribute.parse(_line);
+                if (attrib != null) {
+                    attributes.add(attrib);
                 }
             } else if ( _line.indexOf("|") >= 0) {
                 reader.reset(); // return the reader to the previous line.. allow getHeaderInfo code to run without changes.

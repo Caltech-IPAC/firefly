@@ -22,20 +22,26 @@ import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
 import JunkFormButton from './JunkFormButton.jsx';
+import CompleteButton from './CompleteButton.jsx';
 import {WorldPt, ImagePt, Pt} from '../visualize/Point.js';
 import FieldGroupStore from '../store/FieldGroupStore.js';
 import FieldGroupActions from '../actions/FieldGroupActions.js';
-import PopupUtil from '../util/PopupUtil.jsx';
 import FieldGroup from '../ui/FieldGroup.jsx';
+import {defineDialog} from '../ui/DialogRootContainer.jsx';
+import PopupPanel from '../ui/PopupPanel.jsx';
+import DialogActions from '../actions/DialogActions.js';
 
-
+import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
 
 
 class ExampleDialog {
     constructor() {
-    }
-
-    showDialog() {
+        var popup= (
+            //<PopupPanel title={'Example Dialog'} closePromise={closePromise}>
+            <PopupPanel title={'Example Dialog'} >
+                <AllTest  groupKey={'DEMO_FORM'} />
+            </PopupPanel>
+        );
 
         FieldGroupActions.initFieldGroup({
 
@@ -45,15 +51,22 @@ class ExampleDialog {
                 keepState: true
             }
         );
+        defineDialog('ExampleDialog', popup);
+    }
 
-        var content= (
-            <AllTest  groupKey={'DEMO_FORM'} />
-        );
-        PopupUtil.showDialog('Modify Color Stretch',content);
+    showDialog() {
+
+        DialogActions.showDialog({dialogId: 'ExampleDialog'});
     }
 }
 
 
+/**
+ *
+ * @param inFields
+ * @param actionsConst
+ * @return {*}
+ */
 var testReducer= function(inFields, actionsConst) {
     if (!inFields)  {
         var fields= {
@@ -92,7 +105,57 @@ var AllTest = React.createClass({
 
     /*eslint-enable no-unused-vars */
 
+    showResults : function(success, request) {
+        var statStr= "validate state: "+ success;
+        //var request= FieldGroupUtils.getResults(this.props.groupKey);
+        console.log(statStr);
+        console.log(request);
+
+        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+            buildString+=k+"=" +request[k];
+            if (idx<array.length-1) buildString+=', ';
+            return buildString;
+        },'');
+
+
+        var resolver= null;
+        var closePromise= new Promise(function(resolve, reject) {
+            resolver= resolve;
+        });
+
+        var results= (
+            <PopupPanel title={'Example Dialog'} closePromise={closePromise} >
+                {this.makeResultInfoContent(statStr,s,resolver)}
+            </PopupPanel>
+        );
+
+        defineDialog('ResultsFromExampleDialog', results);
+        DialogActions.showDialog({dialogId: 'ResultsFromExampleDialog'});
+    },
+
+
+    makeResultInfoContent(statStr,s,closePromiseClick) {
+        return (
+            <div style={{padding:'5px'}}>
+                <br/>{statStr}<br/><br/>{s}
+                <button type="button" onClick={closePromiseClick}>Another Close</button>
+                <CompleteButton dialogId='ResultsFromExampleDialog' />
+            </div>
+        );
+    },
+
+
+
+    resultsFail(request) {
+        this.showResults(false,request);
+    },
+
+    resultsSuccess(request) {
+        this.showResults(true,request);
+    },
+
     render: function() {
+
         /* jshint ignore:start */
         return (
             <div style={{padding:'5px'}}>
@@ -156,7 +219,7 @@ var AllTest = React.createClass({
                             tooltip: 'Please select an option',
                             label : 'ListBox Field:'
                         }}
-                                            options={
+                          options={
                             [
                                 {label: 'Item 1', value: 'i1'},
                                 {label: 'Another Item 2', value: 'i2'},
@@ -169,9 +232,49 @@ var AllTest = React.createClass({
                                             groupKey='DEMO_FORM'/>
                         <br/><br/>
 
-                        <JunkFormButton groupKey='DEMO_FORM' label='submit'/>
+                        <CompleteButton groupKey='DEMO_FORM'
+                                        onSuccess={this.resultsSuccess.bind(this)}
+                                        onFail={this.resultsFail.bind(this)}
+                                        dialogId='ExampleDialog'
+                            />
                     </InputGroup>
                 </FieldGroup>
+
+                <div>
+                    <CollapsiblePanel header='Sample Histogram'>
+                        <Histogram data={[
+                           [1,-2.5138013781265,-2.0943590644815],
+                           [4,-2.0943590644815,-1.8749167508365],
+                           [11,-1.8749167508365,-1.6554744371915],
+                           [12,-1.6554744371915,-1.4360321235466],
+                           [18,-1.4360321235466,-1.2165898099016],
+                           [15,-1.2165898099016,-1.1571474962565],
+                           [20,-1.1571474962565,-0.85720518261159],
+                           [24,-0.85720518261159,-0.77770518261159],
+                           [21,-0.77770518261159,-0.55826286896661],
+                           [36,-0.55826286896661,-0.33882055532162],
+                           [40,-0.33882055532162,-0.11937824167663],
+                           [51,-0.11937824167663,0.10006407196835],
+                           [59,0.10006407196835,0.21850638561334],
+                           [40,0.21850638561334,0.31950638561334],
+                           [42,0.31950638561334,0.53894869925832],
+                           [36,0.53894869925832,0.75839101290331],
+                           [40,0.75839101290331,0.9778333265483],
+                           [36,0.9778333265483,1.1972756401933],
+                           [23,1.1972756401933,1.4167179538383],
+                           [18,1.4167179538383,1.6361602674833],
+                           [9,1.6361602674833,1.8556025811282],
+                           [12,1.8556025811282,2.0750448947732],
+                           [0,2.0750448947732,2.2944872084182],
+                           [4,2.2944872084182,2.312472786789]
+                    ]}
+                                   desc=''
+                                   binColor='#f8ac6c'
+                                   height='100'
+                            />
+                    </CollapsiblePanel>
+                </div>
+
             </div>
 
         );
@@ -180,6 +283,7 @@ var AllTest = React.createClass({
 });
 
 
+//<JunkFormButton groupKey='DEMO_FORM' label='submit'/>
 
 const LABEL_WIDTH= 105;
 
