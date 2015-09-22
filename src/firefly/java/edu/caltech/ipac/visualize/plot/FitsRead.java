@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 
 /**
@@ -62,19 +63,18 @@ public class FitsRead implements Serializable {
     }
 
     //private variables
-    private int planeNumber;
-    private int extension_number;
+    private final int planeNumber;
+    private final int extension_number;
+    private final BasicHDU hdu;
     private float[] float1d;
-   // static private float[] physicalData;
+    private final short[] masks;
     private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
-    private BasicHDU hdu;
-    private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
-    private String srcDesc = null;
-    private  short[] masks=null;
-    private double blankValue;
+    // static private float[] physicalData;
+//    private String srcDesc = null;
+//    private double blankValue;
 
 
 
@@ -99,7 +99,7 @@ public class FitsRead implements Serializable {
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
-        blankValue = imageHeader.blank_value;
+//        blankValue = imageHeader.blank_value;
 
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
@@ -375,7 +375,6 @@ public class FitsRead implements Serializable {
 
             FitsRead[] fitsReadArray = createFitsReadArray(modFits);
             aFitsRead = fitsReadArray[0];
-            aFitsRead.imageScaleFactor = imageScaleFactor;
 
         }
         return aFitsRead;
@@ -1471,11 +1470,16 @@ public class FitsRead implements Serializable {
     }
 
     public Header getHeader() {
-        return header;
+        Header retHeader= new Header();
+        for(Iterator i= header.iterator();i.hasNext(); ) {
+            HeaderCard card= (HeaderCard)i.next();
+            retHeader.addLine(card);
+        }
+        return retHeader;
     }
 
     public ImageHeader getImageHeader() {
-        return (imageHeader);
+        return imageHeader;
     }
 
 
@@ -1486,28 +1490,9 @@ public class FitsRead implements Serializable {
     }
 
     public int getImageScaleFactor() {
-        return (imageScaleFactor);
+        return 1;
     }
 
-    /**
-     * get a description of the fits file that created this fits read
-     * This can be any text.
-     *
-     * @return the description of the fits file
-     */
-    public String getSourceDec() {
-        return (srcDesc);
-    }
-
-    /**
-     * Set a description of the fits file that created this fits read.
-     * This can be any text.
-     *
-     * @param s the description
-     */
-    public void setSourceDesc(String s) {
-        srcDesc = s;
-    }
 
     Histogram getHistogram() {
 
