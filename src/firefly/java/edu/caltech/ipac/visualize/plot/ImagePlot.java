@@ -615,17 +615,7 @@ public class ImagePlot extends Plot implements Serializable {
         return  retval;
     }
 
-    /**
-     * get three color band source description
-     * @param band the three color band to get source description for
-     * @return String source description
-     */
-    public String getPlotDesc(Band band, ActiveFitsReadGroup frGroup) {
-        threeColorOK(band);
-        return frGroup.getFitsRead(band).getSourceDec();
-    }
 
-    
     private void acceptFitsRead(FitsRead fr, ActiveFitsReadGroup frGroup) {
         Assert.argTst(fr==null      ||
                       fr==frGroup.getFitsRead(Band.NO_BAND) ||
