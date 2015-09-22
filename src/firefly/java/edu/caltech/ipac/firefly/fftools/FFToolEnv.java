@@ -40,7 +40,7 @@ public class FFToolEnv {
 
     private static final HashMap<String,Widget> allPanelMap= new HashMap<String, Widget>(31);
 
-    private static final String HUB = "FFTOOLS_Hub";
+    //private static final String HUB = "FFTOOLS_Hub";
     private static final String ADVERTISE = "FireflyTools.Advertise";
     private static final FireflyCss _ffCss = CssData.Creator.getInstance().getFireflyCss();
     private static String _rootPath = null;
@@ -404,6 +404,12 @@ public class FFToolEnv {
                 $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::addDrawingLayer(Ledu/caltech/ipac/firefly/data/JscriptRequest;));
         $wnd.firefly.setLockExpandMenuBarVisible=
                 $entry(@edu.caltech.ipac.firefly.ui.PopoutWidget::setMenuBarPermLockVisible(Z));
+
+        $wnd.firefly.overlayRegionData=
+                        $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::overlayRegionData(Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;));
+        $wnd.firefly.removeRegionData=
+                        $entry(@edu.caltech.ipac.firefly.fftools.FitsViewerJSInterface::removeRegionData(Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;));
+
 
 
         // I am going towards the addPrivate approach, this works with the closure in the new firefly object

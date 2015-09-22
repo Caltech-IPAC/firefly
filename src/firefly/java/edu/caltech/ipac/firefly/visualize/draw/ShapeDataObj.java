@@ -207,7 +207,12 @@ public class ShapeDataObj extends DrawObj {
     public double getScreenDist(WebPlot plot, ScreenPt pt) {
         double dist = -1;
 
-        ScreenPt testPt= plot.getScreenCoords(_pts[0]);
+        ScreenPt testPt;
+        if (_sType==ShapeType.Rectangle) {
+            testPt = getRectangleCenterScreenPt(plot);
+        } else {
+            testPt = plot.getScreenCoords(_pts[0]);
+        }
         if (testPt != null) {
             double dx= pt.getIX() - testPt.getIX();
             double dy= pt.getIY() - testPt.getIY();
@@ -369,6 +374,44 @@ public class ShapeDataObj extends DrawObj {
         }
         if (_style==Style.HANDLED && inView) {
             // todo
+        }
+    }
+
+    private ScreenPt getRectangleCenterScreenPt(WebPlot plot) {
+        if (_pts.length==1 && _size1 <Integer.MAX_VALUE && _size2 <Integer.MAX_VALUE) {
+            ScreenPt pt0 = plot.getScreenCoords(_pts[0]);
+
+            int w;
+            int h;
+
+            switch (unitType) {
+                case PIXEL:
+                    w= _size1;
+                    h= _size2;
+                    break;
+                case ARCSEC:
+                    w= getValueInScreenPixel(plot,_size1);
+                    h= getValueInScreenPixel(plot,_size2);
+                    break;
+                case IMAGE_PIXEL:
+                    double scale= plot.getZoomFact();
+                    w= (int)(scale*_size1);
+                    h= (int)(scale*_size2);
+                    break;
+                default:
+                    w= _size1;
+                    h= _size2;
+                    break;
+            }
+
+            return new ScreenPt(pt0.getIX()+w/2, pt0.getIY()+h/2);
+
+        }
+        else {
+            ScreenPt pt0= plot.getScreenCoords(_pts[0]);
+            ScreenPt pt1= plot.getScreenCoords(_pts[1]);
+            return new ScreenPt((pt0.getIX()+pt1.getIX())/2, (pt0.getIY()+pt1.getIY())/2);
+
         }
     }
 

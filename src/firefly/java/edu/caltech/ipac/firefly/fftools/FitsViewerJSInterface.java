@@ -14,6 +14,7 @@ package edu.caltech.ipac.firefly.fftools;
 
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -33,18 +34,12 @@ import edu.caltech.ipac.firefly.ui.creator.eventworker.EventWorker;
 import edu.caltech.ipac.firefly.ui.table.NewTableEventHandler;
 import edu.caltech.ipac.firefly.ui.table.TabPane;
 import edu.caltech.ipac.firefly.ui.table.TablePreview;
-import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
-import edu.caltech.ipac.firefly.visualize.PlotWidgetOps;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.firefly.visualize.*;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Level;
 
 
 /**
@@ -55,6 +50,7 @@ public class FitsViewerJSInterface {
     private static final String EXPANDED_KEY= "ExpandedKey";
     private static MiniPlotWidget _mpw= null;
     private static final Map<String,MiniPlotWidget> mpwMap= new HashMap<String,MiniPlotWidget>(17);
+    private static final Map<MiniPlotWidget,ArrayList<AsyncCallback<MiniPlotWidget>>> mpwCallbacks = new HashMap<MiniPlotWidget,ArrayList<AsyncCallback<MiniPlotWidget>>>();
 //    private static final Map<String,TabPane> tpMap= new HashMap<String,TabPane>(17);
     private static boolean _closeButtonClosesWindow= false;
     private static boolean autoOverlayEnabled= false;
@@ -70,7 +66,7 @@ public class FitsViewerJSInterface {
     }
 
     public static void plotGroupedImageToDiv(String div, JscriptRequest jspr, String group) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr, FFToolEnv.isAdvertise());
         if (div!=null)  plotNowToTarget(div, wpr, group);
         else  PopupUtil.showError("Plot Error", "You must specify this \"PlotToDiv\" parameter");
     }
@@ -89,7 +85,7 @@ public class FitsViewerJSInterface {
 
 
     public static void plotAsExpanded(JscriptRequest jspr,boolean fullControl) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr, FFToolEnv.isAdvertise());
         plotNowAsExpanded(wpr,fullControl);
     }
 
@@ -109,7 +105,7 @@ public class FitsViewerJSInterface {
 
     @Deprecated
     public static void plotGroupedImage(JscriptRequest jspr, String group) {
-        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr,FFToolEnv.isAdvertise());
+        WebPlotRequest wpr= RequestConverter.convertToRequest(jspr, FFToolEnv.isAdvertise());
         if (wpr.getPlotToDiv()!=null) {
             plotNowToDiv(wpr, group);
         }
@@ -152,7 +148,7 @@ public class FitsViewerJSInterface {
 
 
 
-        TablePreview covPrev= factory.createObserverUI(WidgetFactory.COVERAGE_VIEW,paramMap);
+        TablePreview covPrev= factory.createObserverUI(WidgetFactory.COVERAGE_VIEW, paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
         SimplePanel panel= makeCenter();
@@ -164,16 +160,16 @@ public class FitsViewerJSInterface {
         Map<String,String> paramMap= jspr.asMap();
         WidgetFactory factory= Application.getInstance().getWidgetFactory();
         if (!paramMap.containsKey(CommonParams.ENABLE_DETAILS)) {
-            paramMap.put(CommonParams.ENABLE_DETAILS,"false");
+            paramMap.put(CommonParams.ENABLE_DETAILS, "false");
         }
 
-        TablePreview covPrev= factory.createObserverUI(WidgetFactory.DATA_SOURCE_COVERAGE_VIEW,paramMap);
+        TablePreview covPrev= factory.createObserverUI(WidgetFactory.DATA_SOURCE_COVERAGE_VIEW, paramMap);
         covPrev.bind(FFToolEnv.getHub());
 
 
         SimplePanel panel= makeCenter();
         panel.add(covPrev.getDisplay());
-        FFToolEnv.addToPanel(div,panel,"Coverage");
+        FFToolEnv.addToPanel(div, panel, "Coverage");
     }
 
 
@@ -208,7 +204,45 @@ public class FitsViewerJSInterface {
 
     }
 
+    public static void overlayRegionData(JsArrayString regionData, final String regionLayerId, final String title, final String plotId) {
+        final String regText = "["+regionData.join(StringUtils.STRING_SPLIT_TOKEN)+"]";
+        final String[] plotIdArr = (plotId == null) ? null : new String[]{plotId};
 
+        // load region data now if we have at least one loaded MiniPlotWidget with matching plot id
+        for(MiniPlotWidget mpw : AllPlots.getInstance().getAll()) {
+            if (plotId== null || plotId.equals(mpw.getPlotId())) {
+                RegionLoader.loadRegion(title, regText, null, regionLayerId, plotIdArr);
+                break;
+            }
+        }
+        // load region data later if we have loading MiniPlotWidgets
+        for (MiniPlotWidget mpw : mpwMap.values()) {
+            if (mpw.getPlotId() == null) {
+                ArrayList<AsyncCallback<MiniPlotWidget>> callbacks = mpwCallbacks.get(mpw);
+                if (callbacks==null) {
+                    callbacks = new ArrayList<AsyncCallback<MiniPlotWidget>>();
+                    mpwCallbacks.put(mpw, callbacks);
+                }
+                callbacks.add(new AsyncCallback<MiniPlotWidget>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                    }
+
+                    @Override
+                    public void onSuccess(MiniPlotWidget result) {
+                        if (plotId == null || plotId.equals(result.getPlotId())) {
+                            RegionLoader.loadRegion(title, regText, null, regionLayerId, plotIdArr);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    public static void removeRegionData(JsArrayString regionData, String regionLayerId) {
+        String regText = "["+regionData.join(StringUtils.STRING_SPLIT_TOKEN)+"]";
+        RegionLoader.removeFromRegion(regText, regionLayerId);
+    }
 
 
     public static void addDataViewer(JscriptRequest jspr, String div) {
@@ -359,8 +393,8 @@ public class FitsViewerJSInterface {
 
     private static MiniPlotWidget makeMPW(String groupName, boolean fullControl) {
         final MiniPlotWidget mpw= new MiniPlotWidget(groupName, new PopupContainerForStandAlone(fullControl));
-        GwtUtil.setStyles(mpw,"fontFamily", "tahoma,arial,helvetica,sans-serif",
-                              "fontSize",    "11px" );
+        GwtUtil.setStyles(mpw, "fontFamily", "tahoma,arial,helvetica,sans-serif",
+                "fontSize", "11px" );
         mpw.setRemoveOldPlot(true);
         mpw.setMinSize(50, 50);
         mpw.setAutoTearDown(false);
@@ -500,8 +534,23 @@ public class FitsViewerJSInterface {
         public void onSuccess(WebPlot plot) {
             if (lock) mpw.getGroup().setLockRelated(lock);
             FFToolEnv.getHub().getCatalogDisplay().addPlotView(plot.getPlotView());
+
+            // complete callbacks waiting on MiniPlotWidget to load
+            ArrayList<AsyncCallback<MiniPlotWidget>> callbacks = mpwCallbacks.get(mpw);
+            if (callbacks != null) {
+                mpwCallbacks.remove(mpw);
+                for (AsyncCallback<MiniPlotWidget> c : callbacks) {
+                    try {
+                        c.onSuccess(mpw);
+                    } catch (Exception e) {
+                        GwtUtil.getClientLogger().log(Level.INFO, "unable to complete a callback on plot id "+mpw.getPlotId()+" "+e.getMessage());
+                    }
+                }
+            }
         }
-        public void onFailure(Throwable caught) { }
+        public void onFailure(Throwable caught) {
+            mpwCallbacks.remove(mpw);
+        }
     }
 
 
