@@ -20,6 +20,7 @@ import nom.tam.util.Cursor;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 
 /**
@@ -1464,7 +1465,12 @@ public class FitsRead implements Serializable {
     }
 
     public Header getHeader() {
-        return header;
+        Header retHeader= new Header();
+        for(Iterator i= header.iterator();i.hasNext(); ) {
+            HeaderCard card= (HeaderCard)i.next();
+            retHeader.addLine(card);
+        }
+        return retHeader;
     }
 
     public ImageHeader getImageHeader() {
