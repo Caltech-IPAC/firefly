@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Lijun Zhang
@@ -1182,7 +1183,12 @@ public class FitsRead implements Serializable {
     }
 
     public Header getHeader() {
-        return header;
+        Header retHeader= new Header();
+        for(Iterator i= header.iterator();i.hasNext(); ) {
+            HeaderCard card= (HeaderCard)i.next();
+            retHeader.addLine(card);
+        }
+        return retHeader;
     }
 
     public ImageHeader getImageHeader() {
