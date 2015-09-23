@@ -184,12 +184,66 @@ Both viewers have the same methods as `ImageViewer`.
 
 See the **ImageViewer** for the details of each method.
 
+####Region Support
+
+#####**firefly.overlayRegionData()** method
+
+`firefly.overlayRegionData(regionData, regionLayerId, title, plotId)` - overlay region data on an image plot with the given id
+
+ | Parameter  | Type | Description |
+ | ---------- | ---- | ----------- |
+ | regionData | array | an array of strings, each describing a ds9 region |
+ | regionLayerId | string | region layer id |
+ | title  | string | title for the layer, displaying regions |
+ | plotId | string | a string uniquely describing the plot |
+
+
+#####**firefly.removeRegionData()** method
+
+`firefly.removeRegionData(regionData, regionLayerId)` - remove region data from the given region layer
+
+ | Parameter  | Type | Description |
+ | ---------- | ---- | ----------- |
+ | regionData | array | an array of strings, each describing a ds9 region |
+ | regionLayerId | string | region layer id |
+ 
+*Example*:                               
+```js
+function onFireflyLoaded() {
+    var iv2= firefly.makeImageViewer('plot');
+    iv2.plot({    
+        "Title"      :"Example FITS Image'",
+        "URL"        :"http://web.ipac.caltech.edu/staff/roby/demo/wise-m31-level1-3.fits"});
+    var x;
+	var y;
+    var regions	=[];
+    // fill regions array with 10x10 square regions (in image pixel coordinates)
+	for (x=0; x<10; x++) {
+	    for (y=0; y<10; y++) {
+            regions.push('box '+(100*x)+' '+(100+100*y)+' 100 100 0 # color=red');
+        }
+    }
+    firefly.overlayRegionData(regions,'region1', '10x10 square regions', 'plot');
+    // in 10 sec. (you would do it on some event) remove corner squares
+    setTimeout(function() {
+        var regionsToDelete = [
+            'box 0 100 100 100 0 # color=red',
+            'box 900 100 100 100 0 # color=red',
+            'box 900 1000 100 100 0 # color=red',
+            'box 0 1000 100 100 0 # color=red'
+        ];
+        firefly.removeRegionData(regionsToDelete, 'region1');
+    }, 10000);
+}
+```
+
+
+#### Utilities
+
 #####**firefly.serializeRangeValues()** method
 
 `firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
-| Parameter  | Type | Description |
-| ---------- | ---- | ----------- |
 | stretchType | string | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
 | lowerValue  |number | lower value of stretch, based on stretchType |
 | upperValue  |number | upper value of stretch, based on stretchType |
