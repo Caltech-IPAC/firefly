@@ -880,7 +880,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             performRotation= true;
         }
 
-        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, -1, this);
+        if (performRotation) VisTask.getInstance().rotateNorth(rotateNorth, -1, this);
     }
 
 

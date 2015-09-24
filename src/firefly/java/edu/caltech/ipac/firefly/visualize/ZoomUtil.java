@@ -262,7 +262,7 @@ public class ZoomUtil {
                 mpw.getPlotView().setZoomTo(newZoomLevel, true,true);
             }
             else {
-                VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);
+                VisTask.getInstance().rotateNorth(true,newZoomLevel,mpw);
             }
         }
         else {

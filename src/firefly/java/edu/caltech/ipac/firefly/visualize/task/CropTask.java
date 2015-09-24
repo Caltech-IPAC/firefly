@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize.task;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.data.DataEntry.WebPlotResultAry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
 import edu.caltech.ipac.firefly.rpc.PlotServiceAsync;
 import edu.caltech.ipac.firefly.ui.ServerTask;
@@ -13,6 +14,8 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.OverlayPlotView;
+import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
@@ -85,9 +88,27 @@ public class CropTask extends ServerTask<WebPlotResult> {
         _mpw.hideMouseReadout();
         try {
             if (result.isSuccess()) {
-                CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
+
+                WebPlotResultAry resultEntry= (WebPlotResultAry)result.getResult(WebPlotResult.RESULT_ARY);
+                WebPlotResult resultAry[]= resultEntry.getArray();
+                CreatorResults cr;
+                List<OverlayPlotView> overlayPlotViews= _mpw.getPlotView().getOverlayPlotViewList();
+                if (resultAry.length>1 && resultAry.length-1==overlayPlotViews.size()) {
+                    for(int i=1; (i<resultAry.length); i++) {
+                        if (resultAry[i].isSuccess()) {
+                            cr= (CreatorResults)resultAry[i].getResult(WebPlotResult.PLOT_CREATE);
+                            WebPlotInitializer wpInit= cr.getInitializers()[0];
+                            WebPlot overlayPlot= new WebPlot(wpInit,true);
+                            OverlayPlotView opv= overlayPlotViews.get(i-1);
+                            opv.setMaskPlot(overlayPlot);
+                        }
+                    }
+                }
+
+
                 WebPlotView pv= _mpw.getPlotView();
 
+                cr= (CreatorResults)resultAry[0].getResult(WebPlotResult.PLOT_CREATE);
                 if (pv.isContainsMultiImageFits() &&_cropMultiAll) {
 
                     pv.clearAllPlots();
@@ -146,7 +167,20 @@ public class CropTask extends ServerTask<WebPlotResult> {
     public void doTask(AsyncCallback<WebPlotResult> passAlong) {
         _mpw.prePlotTask();
         PlotServiceAsync pserv= PlotService.App.getInstance();
-        pserv.crop(_oldPrimaryPlot.getPlotState(),_pt1,_pt2,_cropMultiAll,passAlong);
+        pserv.crop(getPlotStateAry(_oldPrimaryPlot, _mpw), _pt1, _pt2, _cropMultiAll, passAlong);
+    }
+
+    public static PlotState[] getPlotStateAry(WebPlot plot,MiniPlotWidget mpw) {
+        List<PlotState> stateList= new ArrayList<PlotState>();
+        stateList.add(plot.getPlotState());
+
+        List<WebPlot> overlayPlots= mpw.getPlotView().getOverlayPlotList();
+        if (overlayPlots!=null && overlayPlots.size()>0) {
+            for (WebPlot p : overlayPlots) {
+                stateList.add(p.getPlotState());
+            }
+        }
+        return stateList.toArray(new PlotState[stateList.size()]);
     }
 }
 

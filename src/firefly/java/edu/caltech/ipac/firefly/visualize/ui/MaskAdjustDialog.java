@@ -29,6 +29,8 @@ public class MaskAdjustDialog extends BaseDialog {
     private final VerticalPanel topPanel = new VerticalPanel();
     private SimpleInputField maskData;
     private SimpleInputField image;
+    private String colorOps[]= { "#00FF00", "#FF0000", "#FFFF00", "#FF00FF", "#FF00FF"};
+    private static int colorChoice= 0;
 
 
 //======================================================================
@@ -74,9 +76,13 @@ public class MaskAdjustDialog extends BaseDialog {
     @Override
     protected void inputComplete() {
         WebPlotView pv= AllPlots.getInstance().getPlotView();
-        int maskValue= maskData.getField().getNumberValue().intValue();
+        int bitNumber= maskData.getField().getNumberValue().intValue();
         int imageIdx= image.getField().getNumberValue().intValue();
-        MaskAdjust.addOrUpdateMask(pv,maskValue,imageIdx);
+        int maskValue= (int)Math.pow(2,bitNumber);
+        String desc= "bit #"+bitNumber;
+
+        MaskAdjust.addMask(pv, maskValue, imageIdx, colorOps[colorChoice % colorOps.length],desc);
+        colorChoice++;
     }
 
     @Override

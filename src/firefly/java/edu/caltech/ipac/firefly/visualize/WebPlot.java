@@ -222,15 +222,10 @@ public class WebPlot {
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
-    public void refreshWidget() {
-        _tileDrawer.refreshWidget();
-    }
+    public void refreshWidget() { _tileDrawer.refreshWidget(); }
 
     @JsNoExport
-    public void refreshWidget(PlotImages images) {
-        _tileDrawer.refreshWidget(images);
-    }
-
+    public void refreshWidget(PlotImages images) { _tileDrawer.refreshWidget(images); }
 
     public PlotState getPlotState() { return _plotState; }
     public void setPlotState(PlotState state) { _plotState= state; }
@@ -239,6 +234,7 @@ public class WebPlot {
         _tileDrawer.drawTilesForArea(viewPortLocation,width,height);
     }
 
+    public void setOpacity(float opacity) { _tileDrawer.setOpacity(opacity); }
 
 
     public WebPlotGroup getPlotGroup() { return _plotGroup; }

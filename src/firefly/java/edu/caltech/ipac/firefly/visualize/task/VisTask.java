@@ -31,7 +31,7 @@ import edu.caltech.ipac.firefly.visualize.task.rpc.FitsHeaderTaskRPC;
 import edu.caltech.ipac.firefly.visualize.task.rpc.FlipTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.LoadDS9RegionTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.RegionData;
-import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTaskRPC;
+import edu.caltech.ipac.firefly.visualize.task.rpc.RotateTask;
 import edu.caltech.ipac.firefly.visualize.task.rpc.StretchTaskRPC;
 import edu.caltech.ipac.firefly.visualize.ui.FitsHeaderDialog;
 import edu.caltech.ipac.util.StringUtils;
@@ -111,12 +111,12 @@ public class VisTask {
         CropTask.crop(mpw, "Cropping...", newTitle, pt1, pt2, cropMultiAll);
     }
 
-    public void rotateNorth(WebPlot plot, boolean rotateNorth, float newZoomLevel, MiniPlotWidget mpw) {
-        RotateTaskRPC.rotateNorth(plot,rotateNorth,newZoomLevel, mpw);
+    public void rotateNorth(boolean rotateNorth, float newZoomLevel, MiniPlotWidget mpw) {
+        RotateTask.rotateNorth(rotateNorth, newZoomLevel, mpw);
     }
 
     public void rotate(WebPlot plot, boolean rotate, double angle, float newZoomLevel, MiniPlotWidget mpw) {
-        RotateTaskRPC.rotate(plot, rotate, angle, newZoomLevel, mpw);
+        RotateTask.rotate(plot, rotate, angle, newZoomLevel, mpw);
     }
 
     public void flipY(MiniPlotWidget mpw) {

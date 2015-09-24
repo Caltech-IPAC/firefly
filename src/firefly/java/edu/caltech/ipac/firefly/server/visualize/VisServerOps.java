@@ -494,6 +494,19 @@ public class VisServerOps {
 
 
 
+    public static WebPlotResult crop(PlotState stateAry[], ImagePt c1, ImagePt c2, boolean cropMultiAll) {
+        WebPlotResult resultAry[]= new WebPlotResult[stateAry.length];
+        boolean success= true;
+        for(int i= 0; (i<stateAry.length); i++)  {
+            resultAry[i]= crop(stateAry[i], c1,c2, cropMultiAll);
+            if (success) success= resultAry[i].isSuccess();
+        }
+        WebPlotResult result= new WebPlotResult(stateAry[0].getContextString());
+        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        return success ? result : resultAry[0];
+    }
+
+
     public static WebPlotResult crop(PlotState state, ImagePt c1, ImagePt c2, boolean cropMultiAll) {
         WebPlotResult cropResult;
         try {
@@ -676,6 +689,17 @@ public class VisServerOps {
 //
 //    }
 
+    public static WebPlotResult flipImageOnY(PlotState stateAry[]) {
+        WebPlotResult resultAry[]= new WebPlotResult[stateAry.length];
+        boolean success= true;
+        for(int i= 0; (i<stateAry.length); i++)  {
+            resultAry[i]= flipImageOnY(stateAry[i]);
+            if (success) success= resultAry[i].isSuccess();
+        }
+        WebPlotResult result= new WebPlotResult(stateAry[0].getContextString());
+        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        return success ? result : resultAry[0];
+    }
 
     public static WebPlotResult flipImageOnY(PlotState state) {
         WebPlotResult flipResult;
@@ -695,11 +719,10 @@ public class VisServerOps {
                 FitsRead currentFR= ctx.getPlot().getHistogramOps(band,ctx.getFitsReadGroup()).getFitsRead();
                 File currentFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(band));
                 File f= PlotServUtils.createFlipYFile(currentFile, currentFR);
-                String fReq= ServerContext.replaceWithPrefix(f);
-                flipReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,state.getZoomLevel());
+                String fileName= ServerContext.replaceWithPrefix(f);
+                flipReq[i]= WebPlotRequest.makeFilePlotRequest(fileName,state.getZoomLevel());
                 flipReq[i].setThumbnailSize(state.getThumbnailSize());
-
-
+                addMaskParams(flipReq[i],state.getWebPlotRequest(band));
             }
 
             PlotState flippedState= PlotStateUtil.create(flipReq, state);
@@ -726,6 +749,36 @@ public class VisServerOps {
 
         return flipResult;
     }
+
+
+    public static WebPlotResult rotateNorth(PlotState stateAry[], boolean north, float newZoomLevel) {
+        WebPlotResult resultAry[]= new WebPlotResult[stateAry.length];
+        boolean success= true;
+        for(int i= 0; (i<stateAry.length); i++)  {
+            resultAry[i]= rotateNorth(stateAry[i], north, newZoomLevel);
+            if (success) success= resultAry[i].isSuccess();
+        }
+        WebPlotResult result= new WebPlotResult(stateAry[0].getContextString());
+        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        return success ? result : resultAry[0];
+    }
+
+    public static WebPlotResult rotateToAngle(PlotState stateAry[],
+                                              boolean rotate,
+                                              double angle,
+                                              float newZoomLevel) {
+        WebPlotResult resultAry[]= new WebPlotResult[stateAry.length];
+        boolean success= true;
+        for(int i= 0; (i<stateAry.length); i++)  {
+            resultAry[i]= rotateToAngle(stateAry[i], rotate, angle, newZoomLevel);
+            if (success) success= resultAry[i].isSuccess();
+        }
+        WebPlotResult result= new WebPlotResult(stateAry[0].getContextString());
+        result.putResult(WebPlotResult.RESULT_ARY, new DataEntry.WebPlotResultAry(resultAry));
+        return success ? result : resultAry[0];
+    }
+
+
 
     public static WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel) {
         return north ? rotate(state, PlotState.RotateType.NORTH, Double.NaN, state.getRotateNorthType(),newZoomLevel) :
@@ -789,6 +842,7 @@ public class VisServerOps {
                     rotateReq[i]= WebPlotRequest.makeFilePlotRequest(fReq,newZoomLevel);
                     rotateReq[i].setThumbnailSize(state.getThumbnailSize());
                     state.setZoomLevel(newZoomLevel);
+                    addMaskParams(rotateReq[i],state.getWebPlotRequest(band));
                 }
 
                 PlotState rotateState= PlotStateUtil.create(rotateReq, state);
@@ -835,7 +889,7 @@ public class VisServerOps {
                     unrotateReq[i]= WebPlotRequest.makeFilePlotRequest(originalFile,newZoomLevel);
                     unrotateReq[i].setThumbnailSize(state.getThumbnailSize());
                     state.setZoomLevel(newZoomLevel);
-
+                    addMaskParams(unrotateReq[i],state.getWebPlotRequest(bands[i]));
 
                 }
                 PlotState unrotateState= PlotStateUtil.create(unrotateReq, state);
@@ -1459,9 +1513,9 @@ public class VisServerOps {
                                             int screenWidth,
                                             int screenHeight) {
         PlotImages images= PlotServUtils.defineTiles(
-                                      ServerContext.getVisSessionDir(),
-                                      PlotServUtils.makeTileBase(state),
-                                      zFactor, screenWidth, screenHeight);
+                ServerContext.getVisSessionDir(),
+                PlotServUtils.makeTileBase(state),
+                zFactor, screenWidth, screenHeight);
         return images;
     }
 
@@ -1584,5 +1638,16 @@ public class VisServerOps {
         return retval;
     }
 
+    private static void addMaskParams(WebPlotRequest newR, WebPlotRequest fromR) {
+        if (fromR.containsParam(WebPlotRequest.PLOT_AS_MASK)) {
+            newR.setPlotAsMask(fromR.isPlotAsMask());
+        }
+        if (fromR.containsParam(WebPlotRequest.MASK_BITS)) {
+            newR.setMaskBits(fromR.getMaskBits());
+        }
+        if (fromR.containsParam(WebPlotRequest.MASK_COLORS)) {
+            newR.setMaskColors(fromR.getMaskColors().toArray(new String[fromR.getMaskColors().size()]));
+        }
+    }
 }
 

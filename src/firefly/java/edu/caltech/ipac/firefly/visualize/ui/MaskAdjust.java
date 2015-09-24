@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.PlotMaskTask;
 
 /**
@@ -25,11 +24,59 @@ import edu.caltech.ipac.firefly.visualize.task.PlotMaskTask;
  */
 public class MaskAdjust {
 
-    public static void addOrUpdateMask(final WebPlotView pv, int maskValue, int imageNumber) {
+    public static void addMask(final WebPlotView pv,
+                               int maskValue,
+                               int imageNumber,
+                               String color,
+                               String bitDesc) {
+
+        WebPlot primary= pv.getPrimaryPlot();
+        if (primary==null) return;
+        WebPlotRequest r= makeRequest(pv,maskValue,imageNumber, color);
+        final OverlayPlotView opv= new OverlayPlotView(pv, maskValue,imageNumber, color,bitDesc);
+
+        PlotMaskTask.plot(r, opv, new AsyncCallback<WebPlot>() {
+            @Override
+            public void onFailure(Throwable caught) {
+
+            }
+
+            @Override
+            public void onSuccess(WebPlot result) {
+                pv.addWebLayerItem(opv.getWebLayerItem());
+                pv.addDrawingArea(opv,false);
+            }
+        });
+
+    }
+
+    public static void updateMask(final OverlayPlotView opv,
+                                  final WebPlotView pv,
+                                  int maskValue,
+                                  int imageNumber,
+                                  String color ) {
 
         WebPlot primary= pv.getPrimaryPlot();
         if (primary==null) return;
 
+        WebPlotRequest r= makeRequest(pv,maskValue,imageNumber, color);
+
+
+        PlotMaskTask.plot(r, opv, new AsyncCallback<WebPlot>() {
+            @Override
+            public void onFailure(Throwable caught) {
+
+            }
+
+            @Override
+            public void onSuccess(WebPlot result) {
+            }
+        });
+
+    }
+
+    private static WebPlotRequest makeRequest(WebPlotView pv, int maskValue, int imageNumber, String color) {
+        WebPlot primary= pv.getPrimaryPlot();
         PlotState state= primary.getPlotState();
         WebPlotRequest or= state.getPrimaryRequest();
 
@@ -37,7 +84,7 @@ public class MaskAdjust {
 
         r.setMaskBits(maskValue);
         r.setPlotAsMask(true);
-        r.setMaskColors(new String[]{ "#FF0000", "#00FF00", "#FFFF00", "#FF00FF"});
+        r.setMaskColors(new String[]{ color, "#FF0000", "#FFFF00", "#FF00FF"});
         r.setMultiImageIdx(imageNumber);
 
 
@@ -58,25 +105,7 @@ public class MaskAdjust {
                 r.setRotationAngle(primary.getRotationAngle());
             }
         }
-        final OverlayPlotView mpv= new OverlayPlotView(pv);
-
-        PlotMaskTask.plot(r, mpv, new AsyncCallback<WebPlot>() {
-            @Override
-            public void onFailure(Throwable caught) {
-
-            }
-
-            @Override
-            public void onSuccess(WebPlot result) {
-                WebPlotView.MouseAll ma= new WebPlotView.DefMouseAll();
-                WebPlotView.MouseInfo mi= new WebPlotView.MouseInfo(ma,"put more help here");
-                WebLayerItem item= new WebLayerItem("mask-overlay",null, "Mask", "Put Help with Mask Here",mpv,mi,null,null);
-                pv.addWebLayerItem(item);
-                pv.addDrawingArea(mpv,false);
-            }
-        });
-
+        return r;
     }
-
 
 }

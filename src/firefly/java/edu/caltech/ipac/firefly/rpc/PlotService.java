@@ -27,71 +27,70 @@ import java.util.List;
  */
 public interface PlotService extends RemoteService {
 
-    public enum FileType {FILE,URL}
-    public static final boolean OVERRIDE_NETWORK_MODE= false;
+    enum FileType {FILE,URL}
+    static final boolean OVERRIDE_NETWORK_MODE= false;
 
-//    public PlotCreationResult[] getWebPlotBatch(WebPlotRequest request[]);
+//    PlotCreationResult[] getWebPlotBatch(WebPlotRequest request[]);
 
-    public WebPlotResult getWebPlot(WebPlotRequest request);
+    WebPlotResult getWebPlot(WebPlotRequest request);
 
-    public WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList, String progressKey);
+    WebPlotResult[] getWebPlotGroup(List<WebPlotRequest> requestList, String progressKey);
 
-    public WebPlotResult[] getOneFileGroup(List<WebPlotRequest> requestList, String progressKey);
+    WebPlotResult[] getOneFileGroup(List<WebPlotRequest> requestList, String progressKey);
 
-    public WebPlotResult getWebPlot(WebPlotRequest redRequest,
+    WebPlotResult getWebPlot(WebPlotRequest redRequest,
                                     WebPlotRequest greenRequest,
                                     WebPlotRequest blueRequest);
 
 
-    public String[] getFileFlux(FileAndHeaderInfo fileAndHeader[],ImagePt inIpt) ;
-    public WebPlotResult getFlux(PlotState state, ImagePt inIpt);
+    String[] getFileFlux(FileAndHeaderInfo fileAndHeader[],ImagePt inIpt) ;
+    WebPlotResult getFlux(PlotState state, ImagePt inIpt);
 
 
-    public WebPlotResult getTableData(WebPlotRequest state);
+    WebPlotResult getTableData(WebPlotRequest state);
 
-    public WebPlotResult addColorBand(PlotState      state,
+    WebPlotResult addColorBand(PlotState      state,
                                       WebPlotRequest bandRequest,
                                       Band band);
 
-    public WebPlotResult deleteColorBand(PlotState state, Band band);
+    WebPlotResult deleteColorBand(PlotState state, Band band);
 
 
-    public boolean deletePlot(String ctxStr);
-    public WebPlotResult setZoomLevel(PlotState state[], float level, boolean isFullScreen);
-    public WebPlotResult getFitsHeaderInfo(PlotState state);
-    public WebPlotResult recomputeStretch(PlotState state,
-                                          StretchData[] stretchData);
+    boolean deletePlot(String ctxStr);
+    WebPlotResult setZoomLevel(PlotState state[], float level, boolean isFullScreen);
+    WebPlotResult getFitsHeaderInfo(PlotState state);
+    WebPlotResult recomputeStretch(PlotState state, StretchData[] stretchData);
 
-    public WebPlotResult crop(PlotState state,
-                              ImagePt corner1,
-                              ImagePt corner2,
-                              boolean cropMultiAll);
+    WebPlotResult crop(PlotState stateAry[],
+                       ImagePt corner1,
+                       ImagePt corner2,
+                       boolean cropMultiAll);
 
-    public WebPlotResult rotateNorth(PlotState state, boolean north, float newZoomLevel);
-    public WebPlotResult rotateToAngle(PlotState state, boolean rotate, double angle, float newZoomLevel);
+    WebPlotResult rotateNorth(PlotState state[], boolean north, float newZoomLevel);
+    WebPlotResult rotateToAngle(PlotState state[], boolean rotate, double angle, float newZoomLevel);
 
-    public WebPlotResult flipImageOnY(PlotState state);
+    WebPlotResult flipImageOnY(PlotState state[]);
 
-    public WebPlotResult changeColor(PlotState state, int colorTableId);
+    WebPlotResult changeColor(PlotState state, int colorTableId);
 
     //DB Code
-    public WebPlotResult getAreaStatistics(PlotState state,ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4);
+    WebPlotResult getAreaStatistics(PlotState state,ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4);
 
 
-    public WebPlotResult getColorHistogram(PlotState state,
+    WebPlotResult getColorHistogram(PlotState state,
                                            Band band,
                                            int  width,
                                            int  height);
 
-    public WebPlotResult getImagePng(PlotState state, ArrayList<StaticDrawInfo> drawInfoList);
+    WebPlotResult getImagePng(PlotState state, ArrayList<StaticDrawInfo> drawInfoList);
 
-    public WebPlotResult getDS9Region(String key);
-    public WebPlotResult saveDS9RegionFile(String regionData);
+    WebPlotResult getDS9Region(String key);
+    WebPlotResult saveDS9RegionFile(String regionData);
 
-    public WebPlotResult checkPlotProgress(String progressKey);
+    WebPlotResult checkPlotProgress(String progressKey);
 
-    public boolean addSavedRequest(String saveKey, WebPlotRequest request);
-    public WebPlotResult getAllSavedRequest(String saveKey);
+    boolean addSavedRequest(String saveKey, WebPlotRequest request);
+    WebPlotResult getAllSavedRequest(String saveKey);
 
 
 

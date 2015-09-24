@@ -4,11 +4,10 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.data.Param;
@@ -35,15 +34,12 @@ import java.util.Map;
  * @author Trey Roby
  */
 public class TileDrawer {
-    private static final long MAX_VALID_TIME = 1000 * 60 * 3; // three minutes
 
     private static final String TRANSPARENT = GWT.getModuleBaseURL()+"images/transparent-20x20.gif";
     private static final VisIconCreator _ic = VisIconCreator.Creator.getInstance();
     private static final String BACKGROUND_STYLE = "url(" + _ic.getImageWorkingBackground().getURL() + ") top left repeat";
     private AbsolutePanel _imageWidget;
-    private boolean _allTilesCreated = false;
     private Map<PlotImages.ImageURL, ImageTileData> _imageStateMap = null;
-    private Map<PlotImages.ImageURL, ImageTileData> _oldStateMap = null;
     private final WebPlot _plot;
     private boolean _firstReloadComplete = true;
     private boolean _firstLoad = true;
@@ -52,26 +48,27 @@ public class TileDrawer {
     private boolean _scaled= false;
     private final List<HandlerRegistration> _hregList = new ArrayList<HandlerRegistration>(80);
     private static final FourTileSort _ftSort = new FourTileSort();
-    private List<PlotImages.ImageURL> _panelList = new ArrayList<PlotImages.ImageURL>(8);
     private WebPlotView _pv;
     private boolean asOverlay;
+    private float opacity= 1.0F;
 
 //======================================================================
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-//======================================================================
-//----------------------- Public Methods -------------------------------
-//======================================================================
-
-//=======================================================================
-//-------------- Method from LabelSource Interface ----------------------
-//=======================================================================
-
     public TileDrawer(WebPlot plot, PlotImages images, boolean asOverlay) {
         _plot = plot;
         _serverTiles = images;
         this.asOverlay= asOverlay;
+    }
+
+
+//======================================================================
+//----------------------- Public Methods -------------------------------
+//======================================================================
+
+    public void setOpacity(float opacity) {
+        this.opacity= opacity;
     }
 
     public void setPlotView(WebPlotView pv) {
@@ -83,7 +80,6 @@ public class TileDrawer {
             _imageWidget = new AbsolutePanel();
             if (!asOverlay) {
                 GwtUtil.setStyle(_imageWidget, "background", BACKGROUND_STYLE);
-//                DOM.setStyleAttribute(_imageWidget.getElement(), "background", "black");
             }
             refreshWidget(_serverTiles);
         }
@@ -94,25 +90,6 @@ public class TileDrawer {
         return _serverTiles;
     }
 
-//    private void clearOldImages() {
-//        if (_oldStateMap != null) {
-//            Timer t= new Timer() {
-//                @Override
-//                public void run() {
-//                    if (_oldStateMap != null) {
-//                        for (ImageTileData imw : _oldStateMap.values()) {
-//                            _imageWidget.remove(imw.getImage());
-//                        }
-//                        _oldStateMap.clear();
-//                        _oldStateMap = null;
-//                    }
-//                }
-//            };
-//            t.schedule(4000);
-//        }
-//
-//    }
-
     void refreshWidget() {
         if (_scaled) return;
         refreshWidget(_serverTiles);
@@ -121,36 +98,21 @@ public class TileDrawer {
     void refreshWidget(PlotImages serverTiles) {
         if (_imageWidget==null) return;
 
-//         GwtUtil.getClientLogger().log(Level.INFO, "refreshWidget, asOverlay: "+asOverlay);
         _scaled= false;
         _serverTiles = serverTiles;
         _imageZoomLevel = _plot.getZoomFact();
-        _allTilesCreated = false;
         _plot.getPlotGroup().computeMinMax();
 
-        Image imw;
 
         for (HandlerRegistration r : _hregList) r.removeHandler();
         _hregList.clear();
-
-//        if (overlay) {
-//            _oldStateMap = _imageStateMap;
-//            _firstReloadComplete = true;
-//        } else {
-//            _firstReloadComplete = false;
-//            _imageWidget.clear();
-//        }
-
         _firstReloadComplete = false;
         _imageWidget.clear();
 
 
         _imageStateMap = new HashMap<PlotImages.ImageURL, ImageTileData>();
 
-
-//        _lastValidation= System.currentTimeMillis();
-
-
+        Image imw;
         for (PlotImages.ImageURL serverDefinedTile : _serverTiles) {
             imw = new Image();
             if (!asOverlay) GwtUtil.setStyle(imw, "background", BACKGROUND_STYLE);
@@ -178,87 +140,43 @@ public class TileDrawer {
 
 
     private void deferredDrawTiles() {
-        DeferredCommand.addCommand(new Command() {
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            @Override
             public void execute() {
                 if (_plot.isAlive()) {
-//                    drawTilesForArea(_pv.getScrollX() - 5, _pv.getScrollY() - 5, _pv.getOffsetWidth() + 5, _pv.getOffsetHeight() + 5);
-                    drawTilesForArea(new ScreenPt(_pv.getScrollX(), _pv.getScrollY()) , _pv.getScrollWidth(), _pv.getScrollHeight() );
+                    drawTilesForArea(new ScreenPt(_pv.getScrollX(), _pv.getScrollY()) ,
+                            _pv.getScrollWidth(), _pv.getScrollHeight() );
                 }
             }
         });
-
     }
 
-    /**
-     *
-     * @param viewPortLocation
-     * @param width
-     * @param height
-     */
     public void drawTilesForArea(ScreenPt viewPortLocation, int width, int height) {
         if (_plot.isAlive() && _serverTiles!=null) {
-
-//            GwtUtil.getClientLogger().log(Level.INFO, "drawTilesForArea, asOverlay: "+ asOverlay);
-//            GwtUtil.getClientLogger().log(Level.INFO, "TileDrawer.drawTilesForArea: vpPt.x="+ vpPt.getIX()+"  vpPt.y="+vpPt.getIY());
-            List<PlotImages.ImageURL> iList = new ArrayList<PlotImages.ImageURL>(8);
-            boolean allCreated = true;
-
-            ScreenPt wcsMargin= _pv.getWcsMargins();
-            int mx= wcsMargin.getIX();
-            int my= wcsMargin.getIY();
-            int x= viewPortLocation.getIX()-mx;
-            int y= viewPortLocation.getIY()-my;
-            ViewPortPt modVpPt= new ViewPortPt(x,y);
-
             for (PlotImages.ImageURL serverTile : _serverTiles) {
                 ImageTileData tile= _imageStateMap.get(serverTile);
                 if (isTileVisible(serverTile, viewPortLocation, width, height)) {
                     ViewPortPt addPt= _plot.getViewPortCoords(new ScreenPt(tile._x, tile._y));
-                    GwtUtil.setHidden(tile._image,false);
-                    _imageWidget.setWidgetPosition(tile._image, addPt.getIX(), addPt.getIY());
-//                    GwtUtil.getClientLogger().log(Level.INFO, "drawTilesForArea, asOverlay: "+ asOverlay+ " x:" +addPt.getIX() + ", y:"+addPt.getIY());
+                    GwtUtil.setStyle(tile.image, "opacity", opacity+"");
+                    tile.image.setVisible(true);
+                    _imageWidget.setWidgetPosition(tile.image, addPt.getIX(), addPt.getIY());
                     if (!serverTile.isCreated()) {
                         serverTile.setCreated(true);
                         getTileImage(serverTile);
                     }
                 } else {
-                    GwtUtil.setHidden(tile._image,true);
-
-//                        serverTile.setCreated(false);
-//                        ImageTileData widgetData = _imageStateMap.get(serverTile);
-//                        widgetData.getImage().setUrl(TRANSPARENT);
+                    tile.image.setVisible(false);
                 }
-//                }
             }
-//            if (iList.size() > 0) {
-//                _panelList.addAll(iList);
-//                retrieveValidatedTiles();
-//            }
-            _allTilesCreated = allCreated;
-//            if (_allTilesCreated) {
-//                clearOldImages();
-//            }
         }
     }
-
-
-    public void retrieveValidatedTiles() {
-//        _lastValidation= System.currentTimeMillis();
-        List<PlotImages.ImageURL> iList = new ArrayList<PlotImages.ImageURL>(_panelList);
-        _panelList.clear();
-        for (PlotImages.ImageURL serverTile : iList) {
-            getTileImage(serverTile);
-        }
-    }
-
-
 
     public void getTileImage(PlotImages.ImageURL image) {
 
         ImageTileData tile = _imageStateMap.get(image);
         if (tile != null) {
             String url = createImageUrl(_plot, image);
-            tile._image.setUrl(url);
+            tile.image.setUrl(url);
         }
     }
 
@@ -335,7 +253,6 @@ public class TileDrawer {
     public static String createImageUrl(WebPlot plot, PlotImages.ImageURL imageURL) {
         Param[] params = new Param[]{
                 new Param("file", imageURL.getURL()),
-//                new Param("ctx", plot.getPlotState().getContextString()),
                 new Param("state", plot.getPlotState().toString()),
                 new Param("type", "tile"),
                 new Param("x", imageURL.getXoff() + ""),
@@ -352,7 +269,7 @@ public class TileDrawer {
         }
     }
 
-    public void scaleImages(float oldLevel, float newLevel) {
+    private void scaleImages(float oldLevel, float newLevel) {
 
         if (_serverTiles!=null) {
             boolean optimizeZoomDown = ((newLevel / _imageZoomLevel) < .5 && _serverTiles.size() > 5);
@@ -373,7 +290,7 @@ public class TileDrawer {
 
 
                     if (image.isCreated()) {
-                        iw = tile._image;
+                        iw = tile.image;
                         iw.setPixelSize(tile._width, tile._height);
                         _imageWidget.setWidgetPosition(iw, tile._x, tile._y);
                     }
@@ -397,7 +314,7 @@ public class TileDrawer {
         if (_pv != null && _pv.contains(_plot)) {
             if (_firstLoad) {
                 _pv.reconfigure();
-                DeferredCommand.addCommand(new Command() {
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
                     public void execute() {
                         _pv.smartCenter();
                     }
@@ -426,19 +343,16 @@ public class TileDrawer {
 
         public void onLoad(LoadEvent ev) {
             final Image imw = (Image) ev.getSource();
-            DeferredCommand.addCommand(new Command() {
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
                 public void execute() {
                     if (_imageWidget.getWidgetIndex(imw) > -1) {
                         imw.setPixelSize(_tile._width, _tile._height);
-
-//                        GwtUtil.getClientLogger().log(Level.INFO, "TileDrawer.onLoad:" );
                         ViewPortPt addPt= _plot.getViewPortCoords(new ScreenPt(_tile._x, _tile._y));
                         _imageWidget.setWidgetPosition(imw, addPt.getIX(), addPt.getIY());
                         if (!_firstReloadComplete) {
                             onFirstLoadComplete();
                             _firstReloadComplete = true;
                         }
-//                        clearOldImages();
                     }
                 }
             });
@@ -447,14 +361,14 @@ public class TileDrawer {
 
 
     public static class ImageTileData {
-        private Image _image;
+        private Image image;
         private int _x;
         private int _y;
         private int _width;
         private int _height;
 
         ImageTileData(Image image, int x, int y, int width, int height) {
-            _image = image;
+            this.image = image;
             _x = x;
             _y = y;
             _width = width;

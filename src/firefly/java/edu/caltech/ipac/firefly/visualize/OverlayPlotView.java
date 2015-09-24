@@ -7,41 +7,83 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Composite;
-import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.firefly.util.event.WebEvent;
-import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.ui.input.InputField;
+import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
+import edu.caltech.ipac.firefly.ui.input.TextBoxInputField;
+import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
 import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
-
-import static edu.caltech.ipac.firefly.visualize.ReplotDetails.Reason;
+import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
+import edu.caltech.ipac.firefly.visualize.ui.MaskAdjust;
 
 /**
  * *
  */
-public class OverlayPlotView extends Composite implements WebEventListener, LayerDrawer {
+public class OverlayPlotView extends Composite implements LayerDrawer {
 
 
+    public static final String OVERLAY_ITEM_ID= "AnyMaskLayer";
     private WebPlotView pv;
     private AbsolutePanel rootPanel= new AbsolutePanel();
-    private WebPlot      maskPlot;
-    private WebPlotRequest maskRequest;
+    private WebPlot      maskPlot= null;
     private String defaultColor= "ff0000";
+    private final int maskValue;
+    private final int imageNumber;
+    private final WebLayerItem webLayerItem;
+    private float opacity=.58F;
+
+    private static int idCnt=0;
 
     /**
      *
      */
-    public OverlayPlotView(WebPlotView pv) {
+    public OverlayPlotView(WebPlotView pv, int maskValue, int imageNumber, String color,String bitDesc) {
         this.pv= pv;
         initWidget(rootPanel);
+        this.maskValue= maskValue;
+        this.imageNumber= imageNumber;
+        this.defaultColor= color;
         rootPanel.setStyleName("OverlayPlotView");
-        initGraphics();
+        pv.addDrawingArea(this, false);
+
+        String id= OverlayPlotView.OVERLAY_ITEM_ID+idCnt;
+        pv.addOverlayPlotView(this);
+
+        WebPlotView.MouseAll ma= new WebPlotView.DefMouseAll();
+        WebPlotView.MouseInfo mi= new WebPlotView.MouseInfo(ma,"put more help here");
+        webLayerItem= new WebLayerItem(id,null, "Mask: "+bitDesc,
+                "Adjust opacity with up/down arrow",this,mi,null,null);
+
+        if (!WebLayerItem.hasUICreator(id)) {
+            WebLayerItem.addUICreator(id, new MaskUICreator());
+        }
+
+        idCnt++;
+    }
+
+    public WebLayerItem getWebLayerItem() { return webLayerItem; }
+
+    public void setOpacity(float opacity) {
+        this.opacity= opacity;
+        if (pv!=null && maskPlot!=null) {
+            maskPlot.setOpacity(opacity);
+            pv.refreshDisplay();
+        }
     }
 
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
-        if (visible) maskPlot.refreshWidget();
+        if (visible && maskPlot!=null) maskPlot.refreshWidget();
     }
 
     @Override
@@ -51,7 +93,9 @@ public class OverlayPlotView extends Composite implements WebEventListener, Laye
     public String getDefaultColor() { return defaultColor; }
 
     @Override
-    public void setDefaultColor(String c) { defaultColor= c;
+    public void setDefaultColor(String c) {
+        defaultColor= c;
+        MaskAdjust.updateMask(this,pv,maskValue , imageNumber, c);
     }
 
     @Override
@@ -59,96 +103,91 @@ public class OverlayPlotView extends Composite implements WebEventListener, Laye
 
     public boolean isImageOverlay() { return true; }
 
-    public void freeResources() {
-        rootPanel.clear();
-        if (maskPlot!=null) {
-            maskPlot.freeResources();
-            maskPlot= null;
-        }
-    }
-
     public void setPixelSize(int width, int height) {
         rootPanel.setPixelSize(width,height);
-        // todo- how to a respond now? do I need to do anything?
         super.setPixelSize(width, height);
     }
 
-    private void initGraphics() {
-        pv.addListener(Name.REPLOT, this);
-//        pv.addListener(Name.VIEW_PORT_CHANGE, this);
-        pv.addListener(Name.PRIMARY_PLOT_CHANGE, this);
-        pv.addDrawingArea(this, false);
-
-    }
-
     public void clear() {
-        // todo
+        if (this.maskPlot!=null) {
+            this.maskPlot.freeResources();
+            this.maskPlot= null;
+            rootPanel.clear();
+        }
     }
 
     public void dispose() {
+        rootPanel.clear();
         pv.removeDrawingArea(this);
-        pv.removeOverlayPlot(maskPlot);
+        pv.removeOverlayPlotView(this);
+        maskPlot.freeResources();
+        maskPlot= null;
     }
 
     public void setMaskPlot(WebPlot maskPlot) {
         if (maskPlot==null) return;
         if (this.maskPlot!=null) {
             this.maskPlot.freeResources();
-            pv.removeOverlayPlot(this.maskPlot);
         }
         maskPlot.getPlotGroup().setPlotView(pv);
         rootPanel.clear();
         rootPanel.add(maskPlot.getWidget(),0,0);
+        maskPlot.setOpacity(opacity);
         this.maskPlot= maskPlot;
-        pv.addOverlayPlot(maskPlot);
     }
 
-    public void replotMask() {
-        WebPlot primary= pv.getPrimaryPlot();
-        if (primary==null) return;
-//        maskRequest.setZoomType(ZoomType.STANDARD);
-//        maskRequest.setInitialZoomLevel(primary.getPlotState().getZoomLevel());
-//        maskRequest.setRotate(false);
-//        maskRequest.setRotateNorth(false);
-//        maskRequest.setRotationAngle(0);
-//        maskRequest.setFlipX(false);
-//        maskRequest.setFlipY(false);
-//        if (primary.isRotated()) {
-//            PlotState.RotateType rt= primary.getRotationType();
-//            if (rt== PlotState.RotateType.NORTH) {
-//                maskRequest.setRotateNorth(true);
-//            }
-//            else if (rt== PlotState.RotateType.ANGLE) {
-//                maskRequest.setRotate(true);
-//                maskRequest.setRotationAngle(primary.getRotationAngle());
-//            }
-//        }
-//        //todo need to test for flipped
-//        PlotMaskTask.plot(maskRequest,null,this);
-    }
+    public WebPlot getMaskPlot() { return maskPlot; }
 
-    @Override
-    public void eventNotify(WebEvent ev) {
-        Name name= ev.getName();
-        if (name.equals(Name.PRIMARY_PLOT_CHANGE)) {
-            if (pv.getPrimaryPlot()==null) {
-                clear();
-            }
-            else {
-                maskPlot.refreshWidget();
+    private static class MaskUICreator extends WebLayerItem.UICreator {
+
+        private MaskUICreator() { super(true,true); }
+
+
+        public Widget makeExtraUI(final WebLayerItem item) {
+
+            FlowPanel fp = new FlowPanel();
+            final SimpleInputField field= SimpleInputField.createByProp("OverlayPlotView.opacity");
+            field.setInternalCellSpacing(1);
+            final InputField tIf= ((ValidationInputField)field.getField()).getIF();
+            TextBox tb= ((TextBoxInputField)tIf).getTextBox();
+            GwtUtil.setStyle(tb, "width", "2.5em");
+            OverlayPlotView opv = (OverlayPlotView) item.getDrawer();
+            field.setValue( ((int)(opv.opacity*100.0))+"");
+
+
+            fp.add(field);
+
+
+            tb.addKeyDownHandler(new KeyDownHandler() {
+                public void onKeyDown(KeyDownEvent ev) {
+                    final int keyCode= ev.getNativeKeyCode();
+                    Scheduler.get().scheduleDeferred( new Scheduler.ScheduledCommand() {
+                        public void execute() {
+                            if (tIf.validate() && tIf.isNumber()) {
+                                int v = tIf.getNumberValue().intValue();
+                                OverlayPlotView opv = (OverlayPlotView) item.getDrawer();
+                                opv.setOpacity((float) v / 100F);
+                                if (keyCode== KeyCodes.KEY_DOWN&& v>0 && v<=100) {
+                                    field.setValue((v-1)+"");
+                                }
+                                else if (keyCode== KeyCodes.KEY_UP && v>=0 && v<100) {
+                                    field.setValue((v+1)+"");
+                                }
+                            }
+                        }
+                    });
+                }
+        });
+
+            return fp;
+        }
+
+        public void delete(WebLayerItem item) {
+            if (item.getDrawer() instanceof OverlayPlotView) {
+                OverlayPlotView maskLayer= (OverlayPlotView)item.getDrawer();
+                maskLayer.dispose();
+                maskLayer.pv.removeWebLayerItem(item);
             }
         }
-//        else if (name.equals(Name.VIEW_PORT_CHANGE)) {
-//            if (pv.getPrimaryPlot()!=null) maskPlot.refreshWidget();
-//        }
-        else if (name.equals(Name.REPLOT)) {
-            ReplotDetails details= (ReplotDetails)ev.getData();
-            ReplotDetails.Reason reason= details.getReplotReason();
-            if (reason== Reason.IMAGE_RELOADED ||  reason== Reason.ZOOM ||
-                    reason== Reason.ZOOM_COMPLETED ||  reason== Reason.REPARENT) {
-                replotMask();
-            }
-        }
     }
-
 }
