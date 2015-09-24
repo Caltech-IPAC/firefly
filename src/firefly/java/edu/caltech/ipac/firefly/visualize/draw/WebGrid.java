@@ -279,15 +279,22 @@ public class WebGrid
 
        int lineCount = _xLines.length;
 
-        for (int i=0; i<lineCount; i += 1) {
-            drawLabeledPolyLine(drawData, bounds, _labels[i],
-               _xLines[i], _yLines[i], i);
+        for (int i=0; i<lineCount; i++) {
+
+           drawLabeledPolyLine(drawData, bounds, _labels[i],
+              _xLines[i], _yLines[i], i);
+
 
        }
 
 
    }
 
+    /**
+     * Calculate where to start writing the label information
+     * @param bounds
+     * @return
+     */
     ImageWorkSpacePt[] getLabelPoints(Rectangle bounds) {
 
 
@@ -353,6 +360,7 @@ public class WebGrid
         //2. draw the lines
 
 
+        int lineCount=0;
         //add the  draw line data to the drawData
         ImageWorkSpacePt ipt0, ipt1;
        for (int i=0; i<x.length-1; i++) {
@@ -363,7 +371,7 @@ public class WebGrid
                    ((x[i] - bounds.x) < bounds.width) &&
                    (y[i] >= bounds.y) &&
                     ((y[i]-bounds.y) < bounds.height) ||
-                            // bounds check on x[i+1], y[i+1]
+                      // bounds check on x[i+1], y[i+1]
                      (x[i+1] >= bounds.x) &&
                      ((x[i+1] - bounds.x) < bounds.width) &&
                       (y[i+1] >= bounds.y) &&
@@ -373,6 +381,7 @@ public class WebGrid
                 ipt1= new ImageWorkSpacePt(x[i+1], y[i+1]);
 
                 if (!_aitoff ||  ((Math.abs(ipt1.getX()-ipt0.getX()) < _screenWidth /8) &&   (_aitoff))) {
+                     lineCount++;
                      drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
                   }
             }  // if
@@ -398,11 +407,8 @@ public class WebGrid
 
 
 
-
-
      protected void computeLines() {
 	     /* This is where we do all the work. */
-
 	     /* range and levels have a first dimension indicating x or y
 	      * and a second dimension for the different values (2 for range)
 	      * and a possibly variable number for levels.
@@ -414,15 +420,15 @@ public class WebGrid
 
         _nLivel0 =levels[0].length;
         _nLivel1 = levels[1].length;
-	  _labels = getLabels(levels);
-	     
+	    _labels = getLabels(levels);
+        int size = _nLivel0 + _nLivel1;
 
-	  _xLines = new double[levels[0].length + levels[1].length][];
-	  _yLines = new double[levels[0].length + levels[1].length][];
+	  _xLines = new double[size][];
+	  _yLines = new double[size][];
 	  int offset = 0;
 	  double[][] points;
-	  for (int i=0; i<2; i += 1) {
-	     for (int j=0; j<levels[i].length; j += 1) {
+	  for (int i=0; i<2; i++) {
+	     for (int j=0; j<levels[i].length; j++) {
 	        points = findLine(i, levels[i][j], range);
 	        _xLines[offset] = points[0];
 	        _yLines[offset] = points[1];
@@ -741,8 +747,8 @@ public class WebGrid
 	  boolean wrap = false;	/* Does the image wrap from 360-0. */
 
 	  //System.out.println("coordSys: " + _sharedWp.getCoordSys());
-          double sharedLon= 0.0;
-          double sharedLat= 90.0;
+      double sharedLon= 0.0;
+      double sharedLat= 90.0;
 	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
 	  {
 		  range[0][0] = -179.999;
@@ -752,8 +758,8 @@ public class WebGrid
 		  wrap = true;
 	  }
 
-          sharedLon= 0.0;
-          sharedLat= -90.0;
+      sharedLon= 0.0;
+      sharedLat= -90.0;
 	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
 	  {
 		  range[0][0] = -179.999;
@@ -799,8 +805,8 @@ public class WebGrid
 	  }
 	  
 	  double[][] xrange = trange;
-          int xmin= _plot.getPlotGroup().getGroupImageXMin();
-          int adder=2;
+      int xmin= _plot.getPlotGroup().getGroupImageXMin();
+      int adder=2;
 	  for (int intervals = xmin+adder; 
                                   intervals < _dWidth; intervals+= adder)
 	  {
@@ -810,7 +816,7 @@ public class WebGrid
 			  break;
 		  }
 		  trange = xrange;
-                  adder*= 2;
+          adder*= 2;
 	  }
 
 	  if (poles == 0 && wrap)
@@ -995,7 +1001,6 @@ public class WebGrid
      /*
      x, y here are the values of lon, lat in degree
      */
-    // protected int[][] findLine(int coord, double value, double[][] range)
      protected double[][] findLine(int coord, double value, double[][] range)
      {  
 	  int intervals;
@@ -1145,6 +1150,7 @@ public class WebGrid
 		  //xy = _plot.getImageCoords(wp);
 		  //if (xy == null)
           xy= null;
+          //09/23/15 ?? don't understand this part, if the point is not in the plot,why bother to find it?
           if (!_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
               WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
               ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
@@ -1155,6 +1161,8 @@ public class WebGrid
               ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
               if (ip!=null) xy = new ImagePt(ip.getX(), ip.getY());
           }
+          //comment by LZ 9/23/15
+          //this line is wrong, if xy==null, xpoints and ypoints can not get value because it is null???
           if (xy==null)new ImagePt(1.e20,1.e20);// ?????? XW
 		  xpoints[0][i] = xy.getX();
 		  xpoints[1][i] = xy.getY();
