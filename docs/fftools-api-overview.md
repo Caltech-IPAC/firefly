@@ -190,22 +190,22 @@ See the **ImageViewer** for the details of each method.
 
 `firefly.overlayRegionData(regionData, regionLayerId, title, plotId)` - overlay region data on an image plot with the given id
 
- | Parameter  | Type | Description |
- | ---------- | ---- | ----------- |
- | regionData | array | an array of strings, each describing a ds9 region |
- | regionLayerId | string | region layer id |
- | title  | string | title for the layer, displaying regions |
- | plotId | string | a string uniquely describing the plot |
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
+| regionData | array | an array of strings, each describing a ds9 region |
+| regionLayerId | string | region layer id |
+| title  | string | title for the layer, displaying regions |
+| plotId | string | a string uniquely describing the plot |
 
 
 #####**firefly.removeRegionData()** method
 
 `firefly.removeRegionData(regionData, regionLayerId)` - remove region data from the given region layer
 
- | Parameter  | Type | Description |
- | ---------- | ---- | ----------- |
- | regionData | array | an array of strings, each describing a ds9 region |
- | regionLayerId | string | region layer id |
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
+| regionData | array | an array of strings, each describing a ds9 region |
+| regionLayerId | string | region layer id |
  
 *Example*:                               
 ```js
@@ -244,6 +244,8 @@ function onFireflyLoaded() {
 
 `firefly.serializeRangeValues(stretchType,lowerValue,upperValue,algorithm)` - serialize a stretch request into a string, for use with the "RangeValues" parameter
 
+| Parameter  | Type | Description |
+| ---------- | ---- | ----------- |
 | stretchType | string | the type of stretch may be 'Percent', 'Absolute', 'Sigma' |
 | lowerValue  |number | lower value of stretch, based on stretchType |
 | upperValue  |number | upper value of stretch, based on stretchType |
