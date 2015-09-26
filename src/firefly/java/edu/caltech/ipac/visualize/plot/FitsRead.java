@@ -176,7 +176,7 @@ public class FitsRead implements Serializable {
                 throw new FitsException("Missing header in FITS file");
             }
              else  if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
-                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE));
+                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE, true));
                 return getMasks(header, mArray);
            }
         }
@@ -628,7 +628,7 @@ public class FitsRead implements Serializable {
 
 
         int naxis3 = header.getIntValue("NAXIS3", 0);
-        float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
+        float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
 
         BasicHDU[] hduList = new BasicHDU[naxis3];
         for (int i = 0; i < naxis3; i++) {
@@ -755,10 +755,8 @@ public class FitsRead implements Serializable {
 
     private float[] getImageHDUDataInFloatArray(ImageHDU imageHDU) throws FitsException {
 
-
-        //convert data to float if the bitpix is not 32
-        float[] float1d =
-                (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE));
+        float[]  float1d =
+                        (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
 
         /* pixels are upside down - reverse them in y */
         if (imageHeader.cdelt2 < 0) float1d = reversePixData(float1d);
