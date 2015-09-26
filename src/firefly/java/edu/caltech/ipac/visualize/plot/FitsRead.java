@@ -47,12 +47,21 @@ import java.util.Iterator;
  *  A method " public int[] getScreenHistogram()" is never used.  It is removed and so the pixelhist variables.
  *  The pixelHist is removed from the input argument list in stretchPixel method
  *
+<<<<<<< HEAD
+=======
+ *  *
+>>>>>>> master
  * 8/25/15 Fixed the HDU bug at spliting HDU
  * 9/11/15
  *   Modified the stretchPixel for mask plot
  *   Removed unused methods (commented out)
  *
+<<<<<<< HEAD
  *
+=======
+ * 9/24/15
+ *  remove the mask testing codes since the mask is done in the mask branch.
+>>>>>>> master
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -1469,14 +1478,19 @@ public class FitsRead implements Serializable {
         return hdu;
     }
 
-    public Header getHeader() {
+  /*public Header getHeader() {
         Header retHeader= new Header();
         for(Iterator i= header.iterator();i.hasNext(); ) {
             HeaderCard card= (HeaderCard)i.next();
             retHeader.addLine(card);
         }
         return retHeader;
+    }*/
+
+    public Header getHeader() {
+        return cloneHeader(header);
     }
+
 
     public ImageHeader getImageHeader() {
         return imageHeader;
@@ -1648,7 +1662,6 @@ public class FitsRead implements Serializable {
         int i = 0;
         while (iter.hasNext()) {
             HeaderCard card = (HeaderCard) iter.next();
-            //System.out.println("RBH card.toString() = " + card.toString());
             cards[i] = card.toString();
             i++;
         }
