@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 
 /**
@@ -47,21 +46,14 @@ import java.util.Iterator;
  *  A method " public int[] getScreenHistogram()" is never used.  It is removed and so the pixelhist variables.
  *  The pixelHist is removed from the input argument list in stretchPixel method
  *
-<<<<<<< HEAD
-=======
  *  *
->>>>>>> master
  * 8/25/15 Fixed the HDU bug at spliting HDU
  * 9/11/15
  *   Modified the stretchPixel for mask plot
  *   Removed unused methods (commented out)
  *
-<<<<<<< HEAD
- *
-=======
  * 9/24/15
  *  remove the mask testing codes since the mask is done in the mask branch.
->>>>>>> master
  */
 public class FitsRead implements Serializable {
     //class variable
@@ -76,15 +68,12 @@ public class FitsRead implements Serializable {
     private final int extension_number;
     private final BasicHDU hdu;
     private float[] float1d;
-    private final short[] masks;
     private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
-    // static private float[] physicalData;
-//    private String srcDesc = null;
-//    private double blankValue;
-
+    private  short[] masks=null;
+    private Histogram hist;
 
 
     private static ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<Integer>(Arrays.asList(8, 16, 32, -32, -64));
@@ -119,6 +108,7 @@ public class FitsRead implements Serializable {
 
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
+        hist= computeHistogram();
 
 
     }
@@ -778,7 +768,7 @@ public class FitsRead implements Serializable {
 
 
 
-        Histogram hist= getHistogram();
+       // Histogram hist= getHistogram();
 
 
         double slow = getSlow(rangeValues, float1d, imageHeader, hist);
@@ -791,9 +781,8 @@ public class FitsRead implements Serializable {
 
 
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
-                blank_pixel_value, float1d,  pixelData,  rangeValues,slow,shigh);
+                blank_pixel_value, float1d, pixelData, rangeValues, slow, shigh);
 
-        System.out.println("debug:check pixelData here");
 
     }
 
@@ -1506,7 +1495,7 @@ public class FitsRead implements Serializable {
     }
 
 
-    Histogram getHistogram() {
+    private Histogram  computeHistogram() {
 
 
         double bscale = imageHeader.bscale;
@@ -1515,9 +1504,11 @@ public class FitsRead implements Serializable {
         return new Histogram(float1d, (imageHeader.datamin - bzero) / bscale,
                 (imageHeader.datamax - bzero) / bscale);
 
-
-
     }
+    Histogram getHistogram() {
+     return hist;
+    }
+
 
     /**
      * return the index of where this fits data was i a fits file.  If a -1

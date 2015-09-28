@@ -42,7 +42,6 @@ public class Histogram {
             for (int k = 0; k < float1dArray.length; k++) {
 
                 if (!Double.isNaN(float1dArray[k])) {
-
                     if (float1dArray[k] < datamin)
                         datamin = float1dArray[k];
                     if (float1dArray[k] > datamax)
@@ -64,8 +63,37 @@ public class Histogram {
 
             boolean redo_flag = false;
             histBinsiz =getHistBinSize(histMax );
-            Arrays.fill(hist, 0); //initialize the hist array to 0 for the next iteration
-            for (int k = 0; k < float1dArray.length; k++) {
+             //reintialize the hist to 0
+            Arrays.fill(hist, 0);
+            int underflowCount = 0;
+            int overflowCount = 0;
+            for (int k = 0; k < float1dArray.length; k++)
+            {
+                if (!Double.isNaN(float1dArray[k]))
+                {
+                   int i = (int) ((float1dArray[k] - histMin) / histBinsiz);
+                      if (i<0)
+                    {
+                        //redo_flag = true;   /* hist_min was bad */
+                        underflowCount++;
+                    }
+                    else if (i>HISTSIZ2)
+                    {
+                        //redo_flag = true;   /* hist_max was bad */
+                        overflowCount++;
+                    }
+                    else
+                    {
+                        hist[i] ++;
+                    }
+                    if (float1dArray[k] < histDatamin)
+                        histDatamin = float1dArray[k];
+                    if (float1dArray[k] > histDatamax)
+                        histDatamax = float1dArray[k];
+                }
+            }
+
+           /* for (int k = 0; k < float1dArray.length; k++) {
                 if (!Double.isNaN(float1dArray[k])) {
 
                     int i = (int) ((float1dArray[k] - histMin) / histBinsiz);
@@ -77,18 +105,18 @@ public class Histogram {
                     if (float1dArray[k] > histDatamax)
                         histDatamax = float1dArray[k];
                 }
-            } //end k loop
+            } //end k loop*/
 
-            int underFlowCount = getFlowCount(float1dArray, "under");
-            int overFlowCount = getFlowCount(float1dArray, "over");
-            printeDebugInfo(histMax, underFlowCount, overFlowCount);
+           // int underflowCount = getFlowCount(float1dArray, "under");
+          //  int overflowCount = getFlowCount(float1dArray, "over");
+            printeDebugInfo(histMax, underflowCount, overflowCount);
             datamin = histDatamin;
             datamax = histDatamax;
 
 	        /* redo if more than 1% of pixels fell off histogram */
-            if (underFlowCount > float1dArray.length / .01)
+            if (underflowCount > float1dArray.length / .01)
                 redo_flag = true;
-            if (overFlowCount > float1dArray.length / .01)
+            if (overflowCount > float1dArray.length / .01)
                 redo_flag = true;
 
             /* check if we got a good spread */

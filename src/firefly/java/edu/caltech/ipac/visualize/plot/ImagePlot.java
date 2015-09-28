@@ -261,14 +261,20 @@ public class ImagePlot extends Plot implements Serializable {
                             idSave.getImage(frGroup.getFitsReadAry());
                         }
                     };
+
                     executor.execute(worker);
                 }
+
                 executor.shutdown();
+
                 try {
+
                     executor.awaitTermination(5000, TimeUnit.SECONDS);
+
                 } catch (InterruptedException e) {
                     // just return
                 }
+
             }
         }
     }
