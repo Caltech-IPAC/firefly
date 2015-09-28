@@ -224,30 +224,29 @@ public class ImagePlot extends Plot implements Serializable {
             if (_imageData.size() < 4 || CORE_CNT == 1) {
                 for (ImageData id : _imageData) id.getImage(frGroup.getFitsReadAry());
             } else {
-                int ncore = Runtime.getRuntime().availableProcessors();
-                ExecutorService executor = Executors.newFixedThreadPool(ncore*2); //CORE_CNT);//
-                for (ImageData id : _imageData) {
+
+                  ExecutorService executor = Executors.newFixedThreadPool(CORE_CNT);
+                  for (ImageData id : _imageData) {
                     final ImageData idSave = id;
                     Runnable worker = new Runnable() {
                         public void run() {
                             idSave.getImage(frGroup.getFitsReadAry());
                         }
                     };
+
                     executor.execute(worker);
                 }
-                executor.shutdownNow();
-                while (!executor.isTerminated()) {
 
-                }
-                //release the memory
-                executor=null;
-               /* try {
+                executor.shutdown();
+
+                try {
 
                     executor.awaitTermination(5000, TimeUnit.SECONDS);
-                    executor=null;
+
                 } catch (InterruptedException e) {
                     // just return
-                }*/
+                }
+
             }
         }
     }

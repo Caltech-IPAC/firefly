@@ -42,7 +42,6 @@ public class Histogram {
             for (int k = 0; k < float1dArray.length; k++) {
 
                 if (!Double.isNaN(float1dArray[k])) {
-
                     if (float1dArray[k] < datamin)
                         datamin = float1dArray[k];
                     if (float1dArray[k] > datamax)
@@ -64,8 +63,7 @@ public class Histogram {
 
             boolean redo_flag = false;
             histBinsiz =getHistBinSize(histMax );
-            //for (int i=0; i<=HISTSIZ2; i++) hist[i]=0;
-            //reintialize the hist to 0
+             //reintialize the hist to 0
             Arrays.fill(hist, 0);
             int underflowCount = 0;
             int overflowCount = 0;
