@@ -248,6 +248,7 @@ public class ImagePlot extends Plot implements Serializable {
     public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
+            if (_imageData.isUpToDate()) return;
             if (_imageData.size()<4 || CORE_CNT==1) {
                 for(ImageData id : _imageData)  id.getImage(frGroup.getFitsReadAry());
             }

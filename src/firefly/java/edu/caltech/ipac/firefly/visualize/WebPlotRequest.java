@@ -101,6 +101,8 @@ public class WebPlotRequest extends ServerRequest {
     public static final String MASK_BITS= "MaskBits";
     public static final String PLOT_AS_MASK= "PlotAsMask";
     public static final String MASK_COLORS= "MaskColors";
+    public static final String MASK_REQUIRED_WIDTH= "MaskRequiredWidth";
+    public static final String MASK_REQUIRED_HEIGHT= "MaskRequiredHeight";
 
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
@@ -1164,6 +1166,13 @@ public class WebPlotRequest extends ServerRequest {
         }
     }
 
+    public void setMaskRequiredWidth(int width) { setParam(MASK_REQUIRED_WIDTH, width+""); }
+
+    public int getMaskRequiredWidth() { return getIntParam(MASK_REQUIRED_WIDTH,0); }
+
+    public void setMaskRequiredHeight(int height) { setParam(MASK_REQUIRED_HEIGHT, height+""); }
+
+    public int getMaskRequiredHeight() { return getIntParam(MASK_REQUIRED_HEIGHT,0); }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

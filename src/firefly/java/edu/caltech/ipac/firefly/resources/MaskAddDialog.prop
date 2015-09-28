@@ -1,0 +1,31 @@
+
+MaskAddDialog.Title= Select Mask
+
+MaskAddDialog.maskData.DataType= Integer
+MaskAddDialog.maskData.Title= Mask bit number
+MaskAddDialog.maskData.ShortDescription= Enter the mask bit number
+MaskAddDialog.maskData.Min= 0
+MaskAddDialog.maskData.Max= 32
+MaskAddDialog.maskData.Default= 0
+
+
+MaskAddDialog.image.DataType= Integer
+MaskAddDialog.image.Title= Image number
+MaskAddDialog.image.ShortDescription= Enter the image number
+MaskAddDialog.image.Min= 0
+MaskAddDialog.image.Max= 10000
+MaskAddDialog.image.Default= 1
+
+
+MaskAddDialog.whichFile.Title= Get Mask From:
+MaskAddDialog.whichFile.DataType= EnumString
+MaskAddDialog.whichFile.Mask= [RADIO]
+MaskAddDialog.whichFile.Items= current new
+MaskAddDialog.whichFile.Default= current
+MaskAddDialog.whichFile.current.Name= Current Image File
+MaskAddDialog.whichFile.new.Name= Another File
+MaskAddDialog.whichFile.Orient= Vertical
+
+
+MaskAddDialog.upload.DataType= File
+MaskAddDialog.upload.Title= Filename

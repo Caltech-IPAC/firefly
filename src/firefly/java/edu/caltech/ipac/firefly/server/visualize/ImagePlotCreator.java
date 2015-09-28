@@ -161,7 +161,15 @@ public class ImagePlotCreator {
 
 
         if (request.containsParam(WebPlotRequest.PLOT_AS_MASK) && request.containsParam(WebPlotRequest.MASK_COLORS)) {
-            plot= PlotServUtils.makeMaskImagePlot( frGroup, zoomLevel, request, rv);
+            plot= PlotServUtils.makeMaskImagePlot(frGroup, zoomLevel, request, rv);
+            int rWidth= request.getMaskRequiredWidth();
+            int rHeight= request.getMaskRequiredHeight();
+            if (plot.getImageDataWidth()!=rWidth || plot.getImageDataWidth()!=rHeight) {
+                String primDim= rWidth+"x"+rHeight;
+                String overDim= plot.getImageDataWidth()+"x"+plot.getImageDataHeight();
+                throw new FitsException("Mask Overlay does not match the primary plot dimensions ("+
+                                         overDim+" vs "+primDim+")");
+            }
         }
         else { // standard
             plot= PlotServUtils.makeImagePlot( frGroup, zoomLevel, state.isThreeColor(),

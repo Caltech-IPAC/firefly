@@ -85,6 +85,8 @@ public class MaskAdjust {
         r.setMaskBits(maskValue);
         r.setPlotAsMask(true);
         r.setMaskColors(new String[]{ color, "#FF0000", "#FFFF00", "#FF00FF"});
+        r.setMaskRequiredWidth(primary.getImageWidth());
+        r.setMaskRequiredHeight(primary.getImageHeight());
         r.setMultiImageIdx(imageNumber);
 
 

@@ -1648,6 +1648,12 @@ public class VisServerOps {
         if (fromR.containsParam(WebPlotRequest.MASK_COLORS)) {
             newR.setMaskColors(fromR.getMaskColors().toArray(new String[fromR.getMaskColors().size()]));
         }
+        if (fromR.containsParam(WebPlotRequest.MASK_REQUIRED_WIDTH)) {
+            newR.setMaskRequiredWidth(fromR.getMaskRequiredWidth());
+        }
+        if (fromR.containsParam(WebPlotRequest.MASK_REQUIRED_HEIGHT)) {
+            newR.setMaskRequiredHeight(fromR.getMaskRequiredHeight());
+        }
     }
 }
 

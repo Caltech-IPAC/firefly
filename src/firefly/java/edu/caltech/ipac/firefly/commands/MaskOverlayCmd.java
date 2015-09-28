@@ -9,12 +9,12 @@ package edu.caltech.ipac.firefly.commands;
 
 import com.google.gwt.user.client.ui.Image;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
-import edu.caltech.ipac.firefly.visualize.ui.MaskAdjustDialog;
+import edu.caltech.ipac.firefly.visualize.ui.MaskAddDialog;
 
 
 public class MaskOverlayCmd extends BaseGroupVisCmd {
     public static final String COMMAND_NAME= "maskOverlay";
-    private MaskAdjustDialog dialog= null;
+    private MaskAddDialog dialog= null;
 
 
 
@@ -24,7 +24,7 @@ public class MaskOverlayCmd extends BaseGroupVisCmd {
 
     @Override
     protected boolean init() {
-        dialog= new MaskAdjustDialog();
+        dialog= new MaskAddDialog();
         return true;
     }
 

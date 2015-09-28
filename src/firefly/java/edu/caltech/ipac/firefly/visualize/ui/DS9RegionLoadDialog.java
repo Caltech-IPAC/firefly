@@ -62,6 +62,7 @@ public class DS9RegionLoadDialog extends BaseDialog {
 
     private void createContents() {
         SimpleInputField field = SimpleInputField.createByProp(_prop.makeBase("upload"));
+
         _topPanel.add(field);
         _uploadField= (FileUploadField)field.getField();
         HTML help= new HTML("Supported regions: text, circle, box, polygon, line, annulus");

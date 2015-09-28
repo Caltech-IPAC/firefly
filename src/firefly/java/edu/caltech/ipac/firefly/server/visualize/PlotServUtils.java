@@ -548,7 +548,7 @@ public class PlotServUtils {
     }
 
     /**
-     * Sort the imageMask array in the acending order based on the mask's index (the bit offset)
+     * Sort the imageMask array in the ascending order based on the mask's index (the bit offset)
      * When such mask arary passed to create IndexColorModel, the number of the colors can be decided using the
      * masks colors and store the color according to the order of the imageMask in the array.
      *
