@@ -268,9 +268,10 @@ public class ImagePlot extends Plot implements Serializable {
                 executor.shutdown();
 
                 try {
-
-                    executor.awaitTermination(5000, TimeUnit.SECONDS);
-
+                    boolean normalTermination= executor.awaitTermination(3600, TimeUnit.SECONDS);
+                    if (!normalTermination) {
+                        executor.shutdownNow();
+                    }
                 } catch (InterruptedException e) {
                     // just return
                 }
