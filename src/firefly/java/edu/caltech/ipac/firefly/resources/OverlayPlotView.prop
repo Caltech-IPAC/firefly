@@ -1,0 +1,7 @@
+OverlayPlotView.opacity.DataType= Integer
+OverlayPlotView.opacity.Title= Opacity %
+OverlayPlotView.opacity.ShortDescription= Opacity of this layer
+OverlayPlotView.opacity.ErrorDescription= Must be a value between 1 and 100
+OverlayPlotView.opacity.Min= 0
+OverlayPlotView.opacity.Max= 100
+OverlayPlotView.opacity.Default= 60
