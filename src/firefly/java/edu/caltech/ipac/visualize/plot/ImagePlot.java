@@ -4,29 +4,22 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.visualize.plot.output.PlotOutput;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
-import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.awt.image.DataBuffer;
 /**
  * This is the major subclass implementation of Plot.  This class plots
  * fits data.
@@ -221,6 +214,7 @@ public class ImagePlot extends Plot implements Serializable {
     public void preProcessImageTiles(final ActiveFitsReadGroup frGroup) {
         if (_imageData.isUpToDate()) return;
         synchronized (this) {
+            if (_imageData.isUpToDate()) return;
             if (_imageData.size() < 4 || CORE_CNT == 1) {
                 for (ImageData id : _imageData) id.getImage(frGroup.getFitsReadAry());
             } else {
@@ -238,15 +232,12 @@ public class ImagePlot extends Plot implements Serializable {
                 }
 
                 executor.shutdown();
-
                 try {
-
-                    executor.awaitTermination(5000, TimeUnit.SECONDS);
-
-                } catch (InterruptedException e) {
-                    // just return
-                }
-
+                     boolean normalTermination= executor.awaitTermination(3600, TimeUnit.SECONDS);
+                     if (!normalTermination) executor.shutdownNow();
+                 } catch (InterruptedException e) {
+                     // just return
+                 }
             }
         }
     }
