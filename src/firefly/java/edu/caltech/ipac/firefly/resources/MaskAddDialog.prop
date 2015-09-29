@@ -9,6 +9,12 @@ MaskAddDialog.maskData.Max= 32
 MaskAddDialog.maskData.Default= 0
 
 
+MaskAddDialog.maskDataList.DataType= String
+MaskAddDialog.maskDataList.Title= Mask bits
+MaskAddDialog.maskDataList.ShortDescription= Enter the mask bit numbers separated by commas
+
+
+
 MaskAddDialog.image.DataType= Integer
 MaskAddDialog.image.Title= Image number
 MaskAddDialog.image.ShortDescription= Enter the image number
@@ -29,3 +35,6 @@ MaskAddDialog.whichFile.Orient= Vertical
 
 MaskAddDialog.upload.DataType= File
 MaskAddDialog.upload.Title= Filename
+
+
+#MaskAddDialog.colorChooser.Title= Bit #

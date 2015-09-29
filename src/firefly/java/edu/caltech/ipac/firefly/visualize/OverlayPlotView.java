@@ -40,18 +40,25 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
     private final int imageNumber;
     private final WebLayerItem webLayerItem;
     private float opacity=.58F;
+    private WebPlotRequest maskRequest;
 
     private static int idCnt=0;
 
     /**
      *
      */
-    public OverlayPlotView(WebPlotView pv, int maskValue, int imageNumber, String color,String bitDesc) {
+    public OverlayPlotView(WebPlotView pv,
+                           int maskValue,
+                           int imageNumber,
+                           String color,
+                           String bitDesc,
+                           WebPlotRequest maskRequest) {
         this.pv= pv;
         initWidget(rootPanel);
         this.maskValue= maskValue;
         this.imageNumber= imageNumber;
         this.defaultColor= color;
+        this.maskRequest= maskRequest;
         rootPanel.setStyleName("OverlayPlotView");
         pv.addDrawingArea(this, false);
 
@@ -95,7 +102,7 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
     @Override
     public void setDefaultColor(String c) {
         defaultColor= c;
-        MaskAdjust.updateMask(this,pv,maskValue , imageNumber, c);
+        MaskAdjust.updateMask(this,pv,maskValue , imageNumber, c, maskRequest);
     }
 
     @Override

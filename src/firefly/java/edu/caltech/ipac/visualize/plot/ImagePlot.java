@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * This is the major subclass implementation of Plot.  This class plots 
  * fits data.
@@ -94,12 +93,6 @@ public class ImagePlot extends Plot implements Serializable {
 
     /** 07/20/15 LZcm
      * Create a ImagePlot with given IndexColorModel
-     * @param plotGroup
-     * @param frGroup
-     * @param initialZoomLevel
-     * @param iMasks
-     * @param stretch
-     * @throws FitsException
      */
     public ImagePlot(PlotGroup plotGroup,
                      ActiveFitsReadGroup frGroup,
@@ -261,21 +254,15 @@ public class ImagePlot extends Plot implements Serializable {
                             idSave.getImage(frGroup.getFitsReadAry());
                         }
                     };
-
                     executor.execute(worker);
                 }
-
                 executor.shutdown();
-
                 try {
-                    boolean normalTermination= executor.awaitTermination(3600, TimeUnit.SECONDS);
-                    if (!normalTermination) {
-                        executor.shutdownNow();
-                    }
-                } catch (InterruptedException e) {
-                    // just return
-                }
-
+                     boolean normalTermination= executor.awaitTermination(3600, TimeUnit.SECONDS);
+                     if (!normalTermination) executor.shutdownNow();
+                 } catch (InterruptedException e) {
+                     // just return
+                 }
             }
         }
     }
@@ -285,7 +272,6 @@ public class ImagePlot extends Plot implements Serializable {
         SaveG2Stuff  saveStuff= prePaint(g2, imageScaleFactor, getPercentOpaque());
         AffineTransform trans= g2.getTransform();
         float zfact= _plotGroup.getZoomFact();
-        int cnt= 0;
         for(ImageData id : _imageData) {
             if (intersect(trans, x,y,width,height,id)) {
                 int drawX= (int)((float)getOffsetX()/(float)imageScaleFactor + id.getX() - x/zfact);
@@ -326,14 +312,6 @@ public class ImagePlot extends Plot implements Serializable {
 
 
         return contains || intersects || containsOpposite;
-    }
-
-
-
-
-
-    private boolean  shouldPaint() {
-        return isShowing() && _isPlotted;
     }
 
     /**
@@ -945,7 +923,7 @@ public class ImagePlot extends Plot implements Serializable {
 
     private static String getPath(String inputName) {
         String[] names = inputName.split("/");
-        String fileName = names[names.length - 1];
+//        String fileName = names[names.length - 1];
 
         //return fileName.split("\\.")[0];
         return (inputName.substring(0, inputName.length()-names[names.length-1].length()));
@@ -974,7 +952,6 @@ public class ImagePlot extends Plot implements Serializable {
     /**
      * 7/14/15 by LZ
      * Add this main to test mask over lay plot
-     * @param args
      * @throws FitsException
      */
     public static void main(String [] args) throws FitsException, IOException {

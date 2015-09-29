@@ -13,6 +13,7 @@ package edu.caltech.ipac.firefly.visualize.ui;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.visualize.OverlayPlotView;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -28,12 +29,15 @@ public class MaskAdjust {
                                int maskValue,
                                int imageNumber,
                                String color,
-                               String bitDesc) {
+                               String bitDesc,
+                               String fileKey) {
 
         WebPlot primary= pv.getPrimaryPlot();
         if (primary==null) return;
-        WebPlotRequest r= makeRequest(pv,maskValue,imageNumber, color);
-        final OverlayPlotView opv= new OverlayPlotView(pv, maskValue,imageNumber, color,bitDesc);
+        PlotState state= primary.getPlotState();
+        WebPlotRequest or= state.getPrimaryRequest();
+        WebPlotRequest r= makeRequest(fileKey, pv,maskValue,imageNumber, color,or);
+        final OverlayPlotView opv= new OverlayPlotView(pv, maskValue,imageNumber, color,bitDesc,r);
 
         PlotMaskTask.plot(r, opv, new AsyncCallback<WebPlot>() {
             @Override
@@ -54,12 +58,13 @@ public class MaskAdjust {
                                   final WebPlotView pv,
                                   int maskValue,
                                   int imageNumber,
-                                  String color ) {
+                                  String color,
+                                  WebPlotRequest originalRequest) {
 
         WebPlot primary= pv.getPrimaryPlot();
         if (primary==null) return;
 
-        WebPlotRequest r= makeRequest(pv,maskValue,imageNumber, color);
+        WebPlotRequest r= makeRequest(null, pv,maskValue,imageNumber, color, originalRequest);
 
 
         PlotMaskTask.plot(r, opv, new AsyncCallback<WebPlot>() {
@@ -75,16 +80,24 @@ public class MaskAdjust {
 
     }
 
-    private static WebPlotRequest makeRequest(WebPlotView pv, int maskValue, int imageNumber, String color) {
+    private static WebPlotRequest makeRequest(String fileKey,
+                                              WebPlotView pv,
+                                              int maskValue,
+                                              int imageNumber,
+                                              String color,
+                                              WebPlotRequest or) {
         WebPlot primary= pv.getPrimaryPlot();
         PlotState state= primary.getPlotState();
-        WebPlotRequest or= state.getPrimaryRequest();
 
         WebPlotRequest r= or.makeCopy();
+        if (fileKey!=null) {
+            r.setRequestType(RequestType.FILE);
+            r.setFileName(fileKey);
+        }
 
         r.setMaskBits(maskValue);
         r.setPlotAsMask(true);
-        r.setMaskColors(new String[]{ color, "#FF0000", "#FFFF00", "#FF00FF"});
+        r.setMaskColors(new String[]{color});
         r.setMaskRequiredWidth(primary.getImageWidth());
         r.setMaskRequiredHeight(primary.getImageHeight());
         r.setMultiImageIdx(imageNumber);
