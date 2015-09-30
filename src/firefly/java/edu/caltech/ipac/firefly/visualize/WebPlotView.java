@@ -15,7 +15,6 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.AbsolutePanel;
@@ -263,6 +262,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public String getDrawingSubGroup() { return drawingSubGroup; }
 
     public void onResize() {
+        recomputeSize();
         computeScrollSizes();
         recomputeWcsOffsets();
     }
@@ -625,8 +625,10 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
                 int x = vpw <= scrollWidth ? 0 : -1 * ((vpw - scrollWidth) / 2);
                 int y = vph <= scrollHeight ? 0 : -1 * ((vph - scrollHeight) / 2);
-//                _fakeScrollPanel.setWidgetPosition(_scrollViewWindow, x, y);
-                GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
+
+                //---------- HERE
+//                GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
+                GwtUtil.setStyles(_scrollViewWindow, "left", x+"px", "top", y+"px");
 
 
                 //---DEBUG Code
@@ -652,9 +654,11 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             int vpY = _primaryPlot.getViewPortY();
             int x = vpX-sx;
             int y = vpY-sy;
-//            _fakeScrollPanel.setWidgetPosition(_scrollViewWindow, x, y);
-            GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
-//            drawTilesInArea(new ScreenPt(vpX,vpY), dim.getWidth(), dim.getHeight());
+
+            //---------- HERE
+            GwtUtil.setStyles(_scrollViewWindow, "left", x+"px", "top", y+"px");
+//            GwtUtil.setStyles(_fakeScrollPanel, "left", x+"px", "top", y+"px");
+
 
 
             //---DEBUG Code
@@ -1069,22 +1073,22 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
       WebPlot      plot= getPrimaryPlot();
 
 
-       int masterW= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth");
-       int masterH= DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight");
+       int screenW= plot.getScreenWidth();
+       int screenH= plot.getScreenHeight();
        int sw= getScrollWidth();
        int sh= getScrollHeight();
        int cX;
        int cY;
-       if (masterW<sw) {
-           cX= masterW/2;
+       if (screenW<sw) {
+           cX= screenW/2;
        }
        else {
            int scrollX = getScrollX();
            cX= scrollX+sw/2- wcsMarginX;
        }
 
-       if (masterW<sw) {
-           cY= masterH/2;
+       if (screenH<sh) {
+           cY= screenH/2;
        }
        else {
            int scrollY = getScrollY();
@@ -1093,14 +1097,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
        ScreenPt pt= new ScreenPt(cX,cY);
 
-
-//      int viewWidth = getScrollWidth();
-//      int viewWidth = Math.min(getScrollWidth(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientWidth"));
-//      int viewHeight = Math.min(getScrollHeight(), DOM.getElementPropertyInt(_masterPanel.getElement(), "clientHeight"));
-//
-//      ScreenPt pt= new ScreenPt(
-//                 (int)(scrollX + viewWidth / 2.0),
-//                 (int)(scrollY + viewHeight/ 2.0) );
       return plot.getImageWorkSpaceCoords(pt);
   }
 

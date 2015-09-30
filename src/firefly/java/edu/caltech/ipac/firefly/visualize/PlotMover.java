@@ -70,6 +70,8 @@ public class PlotMover {
 
         _originalScrollX = pt.getIX();
         _originalScrollY = pt.getIY();
+        _lastX= _originalMouseX;
+        _lastY= _originalMouseY;
     }
 
     static int cnt= 0;
