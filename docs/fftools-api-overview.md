@@ -210,6 +210,19 @@ See the **ImageViewer** for the details of each method.
 *Example*:                               
 ```js
 function onFireflyLoaded() {
+    // add a callback function, which will be called on region selection
+    var extFunc= function(data) {
+        console.log("Region Select Callback "+JSON.stringify(data, null, 4));
+    }
+    var extension= {
+        id : "MyRegionExt",
+        plotId : "plot",
+        extType: "REGION_SELECT",
+        callback: extFunc
+    };
+    var actions= firefly.appFlux.getActions('ExternalAccessActions');
+    actions.extensionAdd(extension);
+    // create image viewer and add a FITS    
     var iv2= firefly.makeImageViewer('plot');
     iv2.plot({    
         "Title"      :"Example FITS Image'",
@@ -483,8 +496,9 @@ To add an extension to a fits viewer create a object literal with the following 
  extType details:
  
   - 'AREA_SELECT' - When the user draws a square this menu will be activate
-  -  'LINE_SELECT' -When the user draw a line this menu will be activated. 
+  - 'LINE_SELECT' - When the user draw a line this menu will be activated. 
   - 'POINT' - When any point on the plot is clicked
+  - 'REGION_SELECT' - When the user selects a region 
   - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
 
 callback function takes one parameter,  an object literal, the fields vary depend on the extension type-

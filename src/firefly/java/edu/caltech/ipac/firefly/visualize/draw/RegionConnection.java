@@ -112,12 +112,22 @@ public class RegionConnection implements DataConnection {
             Region highlightR= regionList.get(idx);
             highlightR.setHighlighted(true);
 
-
+            String plotId = AllPlots.getInstance().getMiniPlotWidget().getPlotId();
             Ext.ExtensionResult r= Ext.makeExtensionResult();
-            r.setExtValue("plotId", AllPlots.getInstance().getMiniPlotWidget().getPlotId());
+            r.setExtValue("plotId", plotId);
             r.setExtValue("title", getTitle(null));
             r.setExtValue("region",highlightR.serialize());
-            Ext.fireExtAction(null,r);
+            List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
+            boolean found = false;
+            for (Ext.Extension ext : extensionList) {
+                if (ext.extType() == Ext.REGION_SELECT) {
+                    Ext.fireExtAction(ext, r);
+                    found = true;
+                }
+            }
+            if (!found) {
+                Ext.fireExtAction(null, r);
+            }
         }
         _evManager.fireEvent(new WebEvent<Integer>(this, TablePanel.ON_ROWHIGHLIGHT_CHANGE, idx));
     }
