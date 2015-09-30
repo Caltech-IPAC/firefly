@@ -22,6 +22,7 @@ public class Ext {
 
     public static final String AREA_SELECT= "AREA_SELECT";
     public static final String LINE_SELECT= "LINE_SELECT";
+    public static final String REGION_SELECT= "REGION_SELECT";
     public static final String POINT= "POINT";
     public static final String NONE= "NONE";
 
