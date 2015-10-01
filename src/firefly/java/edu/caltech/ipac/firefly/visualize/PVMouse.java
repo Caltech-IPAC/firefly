@@ -179,7 +179,6 @@ class PVMouse implements MouseDownHandler,
             }
         }
 //        _pv.disableTextSelect(true);
-        _pv.fixScrollPosition();
     }
 
     public void onMouseDown(MouseDownEvent ev) {
@@ -211,7 +210,6 @@ class PVMouse implements MouseDownHandler,
         }
         _mouseDown= true;
         _pv.disableTextSelect(true);
-        _pv.fixScrollPosition();
     }
 
     public void onMouseOver(MouseOverEvent ev) {
@@ -236,7 +234,6 @@ class PVMouse implements MouseDownHandler,
                 if (info.isEnabled()) info.getHandler().onMouseOver(_pv, spt);
             }
         }
-        _pv.fixScrollPosition();
     }
 
     public void onTouchStart(TouchStartEvent ev) {
@@ -281,7 +278,6 @@ class PVMouse implements MouseDownHandler,
         }
         _mouseDown= true;
         _pv.disableTextSelect(true);
-        _pv.fixScrollPosition();
         ev.preventDefault();
     }
 

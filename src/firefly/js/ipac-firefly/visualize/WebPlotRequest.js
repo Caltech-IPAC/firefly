@@ -103,7 +103,6 @@ const C= {
     SHOW_TITLE_AREA : 'ShowTitleArea',
     ROTATE_NORTH_SUGGESTION : 'RotateNorthSuggestion',
     SAVE_CORNERS : 'SaveCornersAfterPlot',
-    SHOW_SCROLL_BARS : 'showScrollBars',
     EXPANDED_TITLE : 'ExpandedTitle',
     ALLOW_IMAGE_SELECTION : 'AllowImageSelection',
     HAS_NEW_PLOT_CONTAINER : 'HasNewPlotContainer',
@@ -142,7 +141,7 @@ const allKeys =
          C.UNIQUE_KEY,
          C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
          C.SHOW_TITLE_AREA, C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
-         C.SHOW_SCROLL_BARS, C.EXPANDED_TITLE, C.PLOT_DESC_APPEND, C.HIDE_TITLE_DETAIL,
+         C.EXPANDED_TITLE, C.PLOT_DESC_APPEND, C.HIDE_TITLE_DETAIL,
          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
@@ -154,7 +153,7 @@ const clientSideKeys =
         [C.UNIQUE_KEY,
          C.PLOT_TO_DIV, C.PREFERENCE_COLOR_KEY, C.PREFERENCE_ZOOM_KEY,
          C.SHOW_TITLE_AREA, C.ROTATE_NORTH_SUGGESTION, C.SAVE_CORNERS,
-         C.SHOW_SCROLL_BARS, C.EXPANDED_TITLE,
+         C.EXPANDED_TITLE,
          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
          C.ADVERTISE, C.HIDE_TITLE_DETAIL, C.GRID_ON,
          C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
@@ -1064,17 +1063,6 @@ class WebPlotRequest extends ServerRequest {
     setHeaderKeyForTitle(headerKey) { this.setParam(C.HEADER_KEY_FOR_TITLE, headerKey); }
 
     getHeaderKeyForTitle() { return this.getParam(C.HEADER_KEY_FOR_TITLE); }
-
-
-    /**
-     * @param {boolean} showBars boolean
-     */
-    setShowScrollBars(showBars) { this.setParam(C.SHOW_SCROLL_BARS, showBars + ''); }
-
-    /**
-     * @return boolean
-     */
-    getShowScrollBars() { return this.getBooleanParam(C.SHOW_SCROLL_BARS); }
 
     setProgressKey(key) { this.setParam(C.PROGRESS_KEY,key); }
 

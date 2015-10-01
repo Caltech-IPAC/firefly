@@ -135,7 +135,6 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                     plotView.smartCenter();
                 }
             });
-            plotView.setScrollBarsEnabled(mpw.getShowScrollBars() || expanded);
             mpw.getTitleLayoutPanel().setPlotIsExpanded(expanded);
 
         } else if (popout instanceof XYPlotBasicWidget) {
@@ -165,7 +164,6 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
             mpwNew = (MiniPlotWidget) newPopout;
             newPlot = mpwNew.getCurrentPlot();
             mpwNew.setShowInlineTitle(false);
-            mpwNew.getPlotView().setScrollBarsEnabled(!ap.isWCSMatch());
         }
 
 
@@ -232,10 +230,8 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
         if (popout instanceof MiniPlotWidget) {
             MiniPlotWidget mpw = (MiniPlotWidget) popout;
             if (oneDrawingDimChange(dim) && adjustZoom && mpw.getCurrentPlot()!=null) {
-                WebPlotView plotView = mpw.getPlotView();
                 setSingleModeZoom(mpw, dim);
                 mpw.getGroup().setLastPoppedOut(mpw);
-                plotView.setScrollBarsEnabled(!ap.isWCSMatch());
                 mpw.setShowInlineTitle(false);
             }
         } else {
@@ -271,7 +267,6 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
                             didZoom= true;
                         }
                     }
-                    plotView.setScrollBarsEnabled(false);
                     mpw.setShowInlineTitle(true);
 
                 }

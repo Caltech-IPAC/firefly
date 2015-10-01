@@ -112,7 +112,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String SHOW_TITLE_AREA = "ShowTitleArea";
     public static final String ROTATE_NORTH_SUGGESTION = "RotateNorthSuggestion";
     public static final String SAVE_CORNERS = "SaveCornersAfterPlot";
-    public static final String SHOW_SCROLL_BARS = "showScrollBars";
     public static final String EXPANDED_TITLE = "ExpandedTitle";
     public static final String ALLOW_IMAGE_SELECTION = "AllowImageSelection";
     public static final String HAS_NEW_PLOT_CONTAINER = "HasNewPlotContainer";
@@ -147,7 +146,7 @@ public class WebPlotRequest extends ServerRequest {
                                               UNIQUE_KEY,
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                              SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
+                                              EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                               GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
@@ -159,7 +158,7 @@ public class WebPlotRequest extends ServerRequest {
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
                                                      PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                                     SHOW_SCROLL_BARS, EXPANDED_TITLE,
+                                                     EXPANDED_TITLE,
                                                      ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
@@ -1103,15 +1102,6 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getHeaderKeyForTitle() {
         return getParam(HEADER_KEY_FOR_TITLE);
-    }
-
-
-    public void setShowScrollBars(boolean s) {
-        setParam(SHOW_SCROLL_BARS, s + "");
-    }
-
-    public boolean getShowScrollBars() {
-        return getBooleanParam(SHOW_SCROLL_BARS);
     }
 
     public void setProgressKey(String key) { setParam(PROGRESS_KEY,key); }

@@ -229,7 +229,6 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     private void begin(WebPlotView pv, ScreenPt spt, HumanInputEvent ev) {
         WebPlot plot= pv.getPrimaryPlot();
-        pv.fixScrollPosition();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
 
@@ -445,7 +444,6 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
     private void changePointer(WebPlotView pv, ScreenPt spt) {
         WebPlot plot= pv.getPrimaryPlot();
-        pv.fixScrollPosition();
         switch (_mode) {
             case EDIT:
                 RecSelection sel = (RecSelection) pv.getAttribute(WebPlot.SELECTION);

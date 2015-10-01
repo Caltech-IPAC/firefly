@@ -77,7 +77,6 @@ public class ThreeColorPreviewData extends AbstractPreviewData {
                     if (!Float.isNaN(zl)) request.setInitialZoomLevel(zl);
                     reqMap.put(band,request);
                     request.setTitle( getTitle());
-                    if (getUseScrollBars())  request.setShowScrollBars(true);
                     if (getImageSelection()) request.setAllowImageSelection(true);
                     request.setParams(getExtraPlotRequestParams());
                 }

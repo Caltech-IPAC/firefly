@@ -214,7 +214,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     private void begin(WebPlotView pv, ScreenPt spt) {
         WebPlot plot = pv.getPrimaryPlot();
-        pv.fixScrollPosition();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
 

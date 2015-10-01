@@ -145,7 +145,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
     private boolean groupingByColumns = false;
     private boolean groupingInRow = false;
     private Boolean lockrelated = null;
-    private Boolean useScrollBars = null;
     private Map<String, String> titleDescMap = null;
     private List<String> plotEWList = null;
     private String info = null;
@@ -417,17 +416,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
             }
         }
         return lockrelated;
-    }
-
-    private boolean getUseScrollBars() {
-        if (useScrollBars == null) {
-            if (hasValidImageGridPreviewData()) {
-                useScrollBars = _previewData.getUseScrollBars();
-            } else {
-                useScrollBars = false;
-            }
-        }
-        return useScrollBars;
     }
 
     private List<String> getPlotEventWorkerIDList() {
@@ -1004,7 +992,6 @@ public class BasicImageGrid extends ScrollPanel implements VisibleListener {
 
         mpw.setMinSize(minWidth, minHeight);
 
-        if (!req.containsParam(WebPlotRequest.SHOW_SCROLL_BARS)) req.setShowScrollBars(getUseScrollBars());
         mpw.getOps().plot(req, false, new WebPlotCallback(mpw, panel, title, req, eventWorkId, allEventWorkers));
         plottingCnt++;
 //        batch.add(req,mpw,new WebPlotCallback(mpw, panel, title));

@@ -89,7 +89,6 @@ public class SimplePreviewData extends AbstractPreviewData {
                         if (!Float.isNaN(zl)) request.setInitialZoomLevel(zl);
                         reqMap.put(Band.NO_BAND,request);
                         request.setTitle( getTitle());
-                        if (getUseScrollBars())  request.setShowScrollBars(true);
                         if (getImageSelection()) request.setAllowImageSelection(true);
                         if (isRotateNorthUp())   request.setRotateNorthSuggestion(true);
 

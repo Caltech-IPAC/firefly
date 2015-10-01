@@ -61,7 +61,6 @@ public class ThumbnailView extends Composite {
     private final DefaultDrawable _drawable= new DefaultDrawable();
     private final WebPlotView _pv;
     private Drawer _drawer= null;
-    private WebPlot _lastPlot= null;
     private VerticalPanel tnWrapper= new VerticalPanel();
     private boolean _parentShowing= true;
     private boolean _needsUpdate= false;
@@ -208,7 +207,6 @@ public class ThumbnailView extends Composite {
 
         WebPlot plot= _pv.getPrimaryPlot();
         int arrowLength= (width+height)/3;
-        _lastPlot= plot;
         float thumbZoomFact= getThumbZoomFact(plot,width,height);
         double iWidth= plot.getImageWidth();
         double iHeight= plot.getImageHeight();
@@ -289,7 +287,6 @@ public class ThumbnailView extends Composite {
 
         float fact= getThumbZoomFact(plot,thumbWidth,thumbHeight) / plot.getZoomFact();
 
-        float zfact= plot.getZoomFact();
 
         ScreenPt wcsMargin= _pv.getWcsMargins();
         int mx= wcsMargin.getIX();
