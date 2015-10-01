@@ -12,7 +12,7 @@
 'use strict';
 
 import { Store } from 'flummox';
-import { ImagePt, WorldPt } from 'ipac-firefly/visualize/Point.js';
+import { ImagePt, WorldPt, ScreenPt } from '../visualize/Point.js';
 import {reportUserAction} from 'ipac-firefly/rpc/SearchServicesJson.js';
 
 
@@ -39,7 +39,6 @@ export class ExternalAccessStore extends Store {
         //this.register(fitViewActions.fitsViewerRemove, this.removeFitsViewer);
     }
 
-
     addExtension(extension) {
         var extensionList= this.state.extensionList;
         extensionList.push(extension);
@@ -54,14 +53,16 @@ export class ExternalAccessStore extends Store {
             var cbObj= Object.keys(netObj).reduce((obj,key) => {
                 if (key.startsWith('wp'))      obj[key]= WorldPt.parse(netObj[key]);
                 else if (key.startsWith('ip')) obj[key]= ImagePt.parse(netObj[key]);
+                else if (key.startsWith('sp')) obj[key]= ScreenPt.parse(netObj[key]);
                 else                           obj[key]= netObj[key];
                 return obj;
             }, {});
+            if (!data.resultData.type && data.extension.extType) cbObj.type= data.extension.extType;
             data.extension.callback(cbObj);
         }
         /*eslint-enable no-multi-spaces */
 
-        if (this.state.remoteChannel) {
+        if (this.state.remoteChannel && data.extension.extType!='PLOT_MOUSE_READ_OUT') {
             reportUserAction(this.state.remoteChannel,'todo- add desc',JSON.stringify(netObj));
             // call remote here
         }

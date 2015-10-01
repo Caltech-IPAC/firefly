@@ -38,7 +38,9 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -260,6 +262,54 @@ public class WebMouseReadoutPerm implements Readout {
         ipt = _currentPlot.getImageCoords(pt);
         lastPt= pt;
         showReadout(pt, ipt, false);
+        notifyExternal(pt,ipt,Band.NO_BAND, 0, null, false);
+    }
+
+    public static void notifyExternal(ScreenPt pt,
+                                      ImagePt ipt,
+                                      Band band,
+                                      double flux,
+                                      String fluxUnits,
+                                      boolean withFlux) {
+
+        String plotId = AllPlots.getInstance().getMiniPlotWidget().getPlotId();
+        WebPlot plot= AllPlots.getInstance().getPlotView().getPrimaryPlot();
+        if (plotId==null) return;
+        List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
+
+
+        Ext.ExtensionResult r= Ext.makeExtensionResult();
+        r.setExtValue("plotId", plotId);
+        r.setExtValue("zoomLevel", plot.getZoomFact()+"");
+        r.setExtValue("spt", pt.serialize());
+        r.setExtValue("ipt", ipt.serialize());
+        if (withFlux) {
+            r.setExtValue("band", band.toString());
+            r.setExtValue("flux", flux+"");
+            r.setExtValue("fluxUnits", fluxUnits);
+        }
+
+        try {
+            WorldPt ptJ2= plot.getWorldCoords(ipt, CoordinateSys.EQ_J2000);
+            r.setExtValue("wptJ2000", ptJ2.serialize());
+        } catch (Exception e) {
+        }
+
+        try {
+            WorldPt ptGal= plot.getWorldCoords(ipt, CoordinateSys.EQ_J2000);
+            r.setExtValue("wptGal", ptGal.serialize());
+        } catch (Exception e) {
+        }
+
+
+        for (Ext.Extension ext : extensionList) {
+            if (ext.extType().equals(Ext.PLOT_MOUSE_READ_OUT)) {
+                Ext.fireExtAction(ext, r);
+            }
+        }
+
+
+
     }
 
     public void setValue(int row, String labelText, String valueText) {

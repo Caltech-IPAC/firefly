@@ -56,6 +56,17 @@ class ImagePt extends Pt {
     }
 }
 
+class ScreenPt extends Pt {
+    constructor(x,y) {
+        super(x,y);
+    }
+    static parse(inStr) {
+        var p= Pt.parse(inStr);
+        return p ? new ScreenPt(p.x,p.y) : null;
+    }
+}
+
+
 
 class ImageWorkSpacePt extends Pt {
     constructor(x,y) {
@@ -224,6 +235,7 @@ var makeWorldPt = function (params) {
 
 exports.WorldPt= WorldPt;
 exports.ImagePt= ImagePt;
+exports.ScreenPt= ScreenPt;
 exports.ImageWorkSpacePt= ImageWorkSpacePt;
 exports.Pt= Pt;
 exports.parseWorldPt= parseWorldPt;

@@ -423,6 +423,8 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
         Result result= makeFluxResult(zValue,plot,band);
         readout.setValue(getBandOffset(plot, band), result._label, result._value, getColorStyle(band), true, true);
+        String fluxUnits= plot.getFitsData(band).getFluxUnits();
+        WebMouseReadoutPerm.notifyExternal(plot.getScreenCoords(ipt),ipt,band, zValue, fluxUnits,true);
         addFlux(plot,ipt,band,zValue);
     }
 
