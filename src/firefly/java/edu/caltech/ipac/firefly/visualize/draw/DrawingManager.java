@@ -60,9 +60,9 @@ public class DrawingManager implements AsyncDataLoader {
     private static final DrawSymbol DEF_HIGHLIGHT_SYMBOL = DrawSymbol.EMP_SQUARE_X;
 
 
-    private String _highlightedColor = AutoColor.HIGHLIGHTED_PT;
-    private String _areaSelectedColor = AutoColor.SELECTED_PT;
-    private String _normalColor = AutoColor.PT_1;
+    private String _highlightedColor = DrawingDef.COLOR_HIGHLIGHTED_PT;
+    private String _areaSelectedColor = DrawingDef.COLOR_SELECTED_PT;
+    private String _normalColor = DrawingDef.COLOR_PT_1;
     private final WebEventListener _listener = new TableViewListener();
     private int _lastAreaSelected[] = new int[0];
     private Map<WebPlotView, PVData> _allPV = new HashMap<WebPlotView, PVData>(5);
@@ -1152,7 +1152,7 @@ public class DrawingManager implements AsyncDataLoader {
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
                 pointDataObj.setSize(4);
-                pointDataObj.draw(g,new AutoColor(p.getColorTableID(),drawer.getDefaultColor()),true, false);
+                pointDataObj.draw(g,new DrawingDef(drawer.getDefaultColor()),true, false);
             }
         }
     }

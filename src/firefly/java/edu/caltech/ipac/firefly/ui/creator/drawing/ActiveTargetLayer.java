@@ -25,10 +25,10 @@ import edu.caltech.ipac.firefly.visualize.ActiveTarget;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.conv.CoordUtil;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.util.StringUtils;
@@ -260,7 +260,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         ActiveTargetDisplay(String name, WorldPt wp) {
             super("Query Object: " + (StringUtils.isEmpty(name) ? PositionFieldDef.formatPosForTextField(wp) : name),
-                  "The center of your query", AutoColor.HIGHLIGHTED_PT);
+                  "The center of your query", DrawingDef.COLOR_HIGHLIGHTED_PT);
             PointDataObj obj= new PointDataObj(wp, DrawSymbol.CIRCLE);
             list.add(obj);
         }
@@ -284,7 +284,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         PerPlotTargetDisplay() {
             super("Query Object",
-                  "The center of your query", AutoColor.HIGHLIGHTED_PT);
+                  "The center of your query", DrawingDef.COLOR_HIGHLIGHTED_PT);
         }
 
 
@@ -347,7 +347,7 @@ public class ActiveTargetLayer extends BaseEventWorker<DataConnection> implement
 
         DynamicActiveTargetDisplay(TablePanel table,
                                    String  keyColumns[]) {
-            super("moving object", "moving object", AutoColor.HIGHLIGHTED_PT);
+            super("moving object", "moving object", DrawingDef.COLOR_HIGHLIGHTED_PT);
             this.table= table;
             this.keyColumns= keyColumns;
         }

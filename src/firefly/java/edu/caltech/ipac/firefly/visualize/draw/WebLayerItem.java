@@ -317,11 +317,10 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
         return _drawer!=null ? _drawer.getDefaultColor() : Drawer.DEFAULT_DEFAULT_COLOR;
     }
 
-    public String getAutoColorInterpreted() {
+    public String getColorInterpreted() {
         String c= "black";
         if (_pv!=null && _pv.getPrimaryPlot()!=null) {
-            AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_drawer.getDefaultColor());
-            c= ac.getColor(_drawer.getDefaultColor());
+            c= _drawer.getDefaultColor();
             if (!c.startsWith("#") && GwtUtil.isHexColor(c)) c= "#" + c;
         }
         return c;

@@ -73,16 +73,16 @@ public class MultiShapeObj extends DrawObj {
     }
 
     @Override
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+    public void draw(Graphics g, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,p,ac,useStateColor, false);
+            d.draw(g,p, def,useStateColor, false);
         }
     }
 
     @Override
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+    public void draw(Graphics g, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         for(DrawObj d : drawObjList) {
-            d.draw(g,ac,useStateColor, false);
+            d.draw(g, def,useStateColor, false);
         }
     }
 
@@ -123,10 +123,10 @@ public class MultiShapeObj extends DrawObj {
     }
 
     @Override
-    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot plot, DrawingDef def) {
         List<Region> retList= new ArrayList<Region>(100);
         for(DrawObj drawObj : drawObjList)  {
-            retList.addAll(drawObj.toRegion(plot,ac));
+            retList.addAll(drawObj.toRegion(plot, def));
         }
         return retList;
     }

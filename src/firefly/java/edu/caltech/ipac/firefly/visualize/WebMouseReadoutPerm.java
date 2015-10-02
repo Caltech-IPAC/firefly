@@ -702,7 +702,7 @@ public class WebMouseReadoutPerm implements Readout {
 //        private WebPlot markedPlot = null;
 //
 //        MarkedPointDisplay() {
-//            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
+//            super("Clicked Point", "Point lock to your click", AutoColor.COLOR_PT_3);
 //        }
 //
 //        public void setPoint(WorldPt wp, WebPlot plot) {

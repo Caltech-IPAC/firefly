@@ -18,7 +18,7 @@ import java.util.List;
  */
 public abstract class DrawObj {
 
-    private final String DEF_COLOR= "red";
+    private final String FALLBACK_COLOR = "red";
 
     private String color= null;
     private String selectColor= null;
@@ -79,37 +79,36 @@ public abstract class DrawObj {
      *
      * @param g
      * @param p
-     * @param ac the AutoColor obj, may be null
+     * @param def the AutoColor obj, may be null
      * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
      * @param onlyAddToPath
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
+    public abstract void draw(Graphics g, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
 
     /**
      *
      *
      * @param g
-     * @param ac the AutoColor obj, may be null
+     * @param def the AutoColor obj, may be null
      * @param useStateColor if true then draw with highlight or selected color, otherwise use normal color
      * @param onlyAddToPath
      * @throws UnsupportedOperationException
      */
-    public abstract void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
+    public abstract void draw(Graphics g, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException;
 
 
-    public String calculateColor(AutoColor ac, boolean useStateColor) {
+    public String calculateColor(DrawingDef def, boolean useStateColor) {
         String color= this.color;
+        String defColor= (def!=null && def.getDefColor()!=null) ? def.getDefColor() : FALLBACK_COLOR;
         if (useStateColor) {
             if (isSelected()) color= this.selectColor;
             if (isHighlighted()) color= this.highlightColor;
         }
-
-        return (ac==null) ? (color==null? DEF_COLOR : color)  :  ac.getColor(color);
+        return color==null? defColor : color;
     }
 
-    public List<Region> toRegion(WebPlot   plot,
-                                 AutoColor ac) { return Collections.emptyList(); }
+    public List<Region> toRegion(WebPlot   plot, DrawingDef def) { return Collections.emptyList(); }
 
 
     public int getRepresentCnt() {

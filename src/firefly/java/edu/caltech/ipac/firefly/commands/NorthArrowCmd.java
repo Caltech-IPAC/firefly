@@ -13,9 +13,9 @@ import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -42,7 +42,7 @@ public class NorthArrowCmd extends    BaseGroupVisCmd
 
     public boolean init() {
         drawingManager= new DrawingManager(CommandName,null);
-        drawingManager.setDefaultColor(AutoColor.DRAW_1);
+        drawingManager.setDefaultColor(DrawingDef.COLOR_DRAW_1);
         drawingManager.setDataConnection(new NorthArrowData());
         AllPlots.getInstance().addListener(this);
         return true;

@@ -94,12 +94,12 @@ public class ImageCoordsBoxObj extends DrawObj {
     }
 
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawImageCoordsBox(graphics,p,ac,useStateColor);
+    public void draw(Graphics graphics, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawImageCoordsBox(graphics,p, def,useStateColor);
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawScreenCoordsBox(graphics,ac,useStateColor);
+    public void draw(Graphics graphics, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawScreenCoordsBox(graphics, def,useStateColor);
     }
 
 
@@ -107,50 +107,50 @@ public class ImageCoordsBoxObj extends DrawObj {
 
     private void drawImageCoordsBox(Graphics graphics,
                                       WebPlot plot,
-                                      AutoColor ac,
+                                      DrawingDef def,
                                       boolean useStateColor) {
 
 
-        drawImageBox(graphics, plot, ac, useStateColor);
+        drawImageBox(graphics, plot, def, useStateColor);
     }
 
 
 
     private void drawScreenCoordsBox(Graphics graphics,
-                                       AutoColor ac,
+                                       DrawingDef def,
                                        boolean useStateColor) {
 
-        drawScreenBox(graphics, ac, useStateColor);
+        drawScreenBox(graphics, def, useStateColor);
     }
 
 
 
 
     private void drawImageBox(Graphics graphics,
-                                WebPlot plot,
-                                AutoColor ac,
-                                boolean useStateColor) {
+                              WebPlot plot,
+                              DrawingDef def,
+                              boolean useStateColor) {
         ImageWorkSpacePt hypPt= new ImageWorkSpacePt(_pt.getX()+_width, _pt.getY()+_height);
 
         ScreenPt pt0=plot.getScreenCoords((ImageWorkSpacePt)_pt);
         ScreenPt pt2=plot.getScreenCoords(hypPt);
-        drawBox(graphics,pt0,pt2,ac,useStateColor);
+        drawBox(graphics,pt0,pt2,def,useStateColor);
     }
 
 
     private void drawScreenBox(Graphics graphics,
-                                AutoColor ac,
-                                boolean useStateColor) {
+                               DrawingDef def,
+                               boolean useStateColor) {
         ScreenPt pt2= new ScreenPt(((ScreenPt)_pt).getIX()+_width,
                                      ((ScreenPt)_pt).getIY()+_height);
-        drawBox(graphics,(ScreenPt)_pt,pt2,ac,useStateColor);
+        drawBox(graphics,(ScreenPt)_pt,pt2,def,useStateColor);
     }
 
 
     private void drawBox(Graphics graphics,
                          ScreenPt pt0,
                          ScreenPt pt2,
-                         AutoColor ac,
+                         DrawingDef def,
                          boolean useStateColor) {
 
 
@@ -158,7 +158,7 @@ public class ImageCoordsBoxObj extends DrawObj {
 
         lineWidth= getLineWidth();
 
-        String color= calculateColor(ac,useStateColor);
+        String color= calculateColor(def,useStateColor);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
         ScreenPt pt1= new ScreenPt((pt0.getIX()+sWidth),pt0.getIY());
@@ -192,7 +192,7 @@ public class ImageCoordsBoxObj extends DrawObj {
     }
 
     @Override
-    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot plot, DrawingDef def) {
         WorldPt wp= WebPlot.getWorldPtRepresentation(_pt);
         RegionDimension dim;
         if (_pt instanceof ImageWorkSpacePt ) {
@@ -208,7 +208,7 @@ public class ImageCoordsBoxObj extends DrawObj {
             WebAssert.argTst(false, "unexpected point type");
         }
         Region r= new RegionBox(wp,dim);
-        r.getOptions().setColor(calculateColor(ac,false));
+        r.getOptions().setColor(calculateColor(def,false));
         return Arrays.asList(r);
     }
 }

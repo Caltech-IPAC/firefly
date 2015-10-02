@@ -32,10 +32,10 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.draw.AdvancedGraphics;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.ImageCoordsBoxObj;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -246,7 +246,7 @@ public class ThumbnailView extends Composite {
                 _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
                 _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
-                _drawer.setDefaultColor(AutoColor.DRAW_1);
+                _drawer.setDefaultColor(DrawingDef.COLOR_DRAW_1);
 
                 tnWrapper.setPixelSize(maxSize,maxSize);
 
@@ -302,7 +302,7 @@ public class ThumbnailView extends Composite {
                                                     tsWidth,tsHeight);
         _scrollBox.setShadow(new AdvancedGraphics.Shadow(2,1,1,"white"));
         _scrollBox.setStyle(ImageCoordsBoxObj.Style.LIGHT);
-        _scrollBox.setColor(AutoColor.DRAW_2);
+        _scrollBox.setColor(DrawingDef.COLOR_DRAW_2);
     }
 
 

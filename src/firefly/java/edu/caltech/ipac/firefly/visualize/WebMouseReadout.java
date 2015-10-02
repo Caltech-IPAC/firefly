@@ -47,9 +47,9 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
@@ -1309,7 +1309,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         private WebPlot markedPlot = null;
 
         MarkedPointDisplay() {
-            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
+            super("Clicked Point", "Point lock to your click", DrawingDef.COLOR_PT_3);
         }
 
         public void setPoint(WorldPt wp, WebPlot plot) {

@@ -12,9 +12,9 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
@@ -117,8 +117,7 @@ public class PrintableUtil {
 
     public static StaticDrawInfo makeDrawInfo(WebPlot plot, LayerDrawer drawer, WebLayerItem item) {
         StaticDrawInfo drawInfo= new StaticDrawInfo();
-        AutoColor autoColor= new AutoColor(plot.getColorTableID(),drawer.getDefaultColor());
-        drawInfo.setColor(autoColor.getColor(drawer.getDefaultColor()));
+        drawInfo.setColor(drawer.getDefaultColor());
         drawInfo.setLabel(item.getID());
         return drawInfo;
     }
@@ -129,9 +128,9 @@ public class PrintableUtil {
             retval= new ArrayList<Region>(drawer.getData().size()*2);
             WebPlot plot= drawer.getPlotView().getPrimaryPlot();
             if (plot!=null) {
-                AutoColor ac= new AutoColor(plot.getColorTableID(),drawer.getDefaultColor());
+                DrawingDef def= new DrawingDef(drawer.getDefaultColor());
                 for(DrawObj obj : drawer.getData()) {
-                    retval.addAll(obj.toRegion(plot,ac));
+                    retval.addAll(obj.toRegion(plot,def));
                 }
             }
         }

@@ -222,23 +222,23 @@ public class ShapeDataObj extends DrawObj {
     }
 
 
-    public void draw(Graphics jg, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawShape(jg,p,ac,useStateColor,onlyAddToPath);
+    public void draw(Graphics jg, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawShape(jg,p, def,useStateColor,onlyAddToPath);
     }
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+    public void draw(Graphics g, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
 
 
     private void drawShape(Graphics jg,
-                             WebPlot plot,
-                             AutoColor ac,
-                             boolean useStateColor,
-                             boolean onlyAddToPath) {
+                           WebPlot plot,
+                           DrawingDef def,
+                           boolean useStateColor,
+                           boolean onlyAddToPath) {
 
-        String color= calculateColor(ac,useStateColor);
+        String color= calculateColor(def,useStateColor);
         switch (_sType) {
 
             case Text:
@@ -492,9 +492,9 @@ public class ShapeDataObj extends DrawObj {
 
 
     @Override
-    public List<Region> toRegion(WebPlot   plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot   plot, DrawingDef def) {
         List<Region> retList= new ArrayList<Region>(10);
-        String color= calculateColor(ac,false);
+        String color= calculateColor(def,false);
         switch (_sType) {
             case Text:
                 makeTextRegion(retList, _pts[0], plot,color);

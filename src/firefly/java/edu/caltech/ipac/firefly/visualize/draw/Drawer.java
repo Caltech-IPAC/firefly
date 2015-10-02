@@ -226,7 +226,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
     public WebPlotView getPlotView() { return _pv; }
 
     private static void draw (Graphics g,
-                              AutoColor ac,
+                              DrawingDef def,
                               WebPlot plot,
                               DrawObj obj,
                               ViewPortPtMutable vpPtM,
@@ -234,26 +234,26 @@ public class Drawer implements WebEventListener, LayerDrawer {
                               boolean onlyAddToPath) {
         if (obj==null) return;
         if (obj.getSupportsWebPlot()) {
-            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, ac, useStateColor,vpPtM,onlyAddToPath);
-            else                               obj.draw(g, plot, ac, useStateColor, onlyAddToPath);
+            if (obj instanceof  PointDataObj) ((PointDataObj)obj).draw(g, plot, def, useStateColor,vpPtM,onlyAddToPath);
+            else                               obj.draw(g, plot, def, useStateColor, onlyAddToPath);
         }
         else {
-            obj.draw(g, ac, useStateColor, onlyAddToPath);
+            obj.draw(g, def, useStateColor, onlyAddToPath);
         }
     }
 
-    private static void drawConnector(Graphics g, AutoColor ac, WebPlot plot, DrawConnector dc, DrawObj obj, DrawObj lastObj) {
+    private static void drawConnector(Graphics g, DrawingDef def, WebPlot plot, DrawConnector dc, DrawObj obj, DrawObj lastObj) {
         if (lastObj==null) return;
         if (obj.getSupportsWebPlot()) {
             WorldPt wp1= plot.getWorldCoords(lastObj.getCenterPt());
             WorldPt wp2= plot.getWorldCoords(obj.getCenterPt());
             if (!plot.coordsWrap(wp1,wp2)) {
-                dc.draw(g,plot,ac, wp1,wp2);
+                dc.draw(g,plot,def, wp1,wp2);
             }
         }
         else {
             if (lastObj.getCenterPt() instanceof ScreenPt && obj.getCenterPt() instanceof ScreenPt) {
-                dc.draw(g,ac, (ScreenPt)lastObj.getCenterPt(), (ScreenPt)obj.getCenterPt());
+                dc.draw(g,def, (ScreenPt)lastObj.getCenterPt(), (ScreenPt)obj.getCenterPt());
             }
         }
     }
@@ -360,7 +360,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
 
     public void redrawDelta(Graphics g, List<Integer>changeIdx) {
         if (g==null) return;
-        AutoColor autoColor= makeAutoColor(_pv);
+        DrawingDef def= makeDrawDef();
         if (canDraw(g)) {
             _cleared= false;
             WebPlot plot= (_pv==null) ? null : _pv.getPrimaryPlot();
@@ -368,7 +368,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(int idx : changeIdx) {
                 obj= _data.get(idx);
-                draw(g, autoColor, plot, obj,vpPtM, true, false);
+                draw(g, def, plot, obj,vpPtM, true, false);
             }
         }
     }
@@ -378,7 +378,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
         if (!force && !selectedFound) return;
         List<DrawObj> selectedData= new ArrayList<DrawObj>(data.size()/2);
         graphics.clear();
-        AutoColor autoColor= makeAutoColor(pv);
+        DrawingDef def= makeDrawDef();
         if (canDraw(graphics)) {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
             for(DrawObj pt : data) {
@@ -387,7 +387,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
             selectedData= decimateData(selectedData,null,false);
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : selectedData) {
-                draw(graphics, autoColor, plot, pt, vpPtM, true, false);
+                draw(graphics, def, plot, pt, vpPtM, true, false);
             }
             selectedFound= selectedData.size()>0;
         }
@@ -397,19 +397,19 @@ public class Drawer implements WebEventListener, LayerDrawer {
         if (graphics==null || highlightData==null || highlightData.size()==0) return;
         if (pv!=null && pv.getPrimaryPlot()==null) return;
         _highlightData= highlightData;
-        AutoColor autoColor= makeAutoColor(pv);
+        DrawingDef def= makeDrawDef();
         if (canDraw(graphics)) {
             WebPlot plot= (pv==null) ? null : pv.getPrimaryPlot();
             ViewPortPtMutable vpPtM= new ViewPortPtMutable();
             for(DrawObj pt : highlightData) {
-                if (pt!=null) draw(graphics, autoColor, plot, pt, vpPtM, true, false);
+                if (pt!=null) draw(graphics, def, plot, pt, vpPtM, true, false);
             }
         }
     }
 
 
-    private AutoColor makeAutoColor(WebPlotView pv) {
-        return (pv==null) ? null : new AutoColor(pv.getPrimaryPlot().getColorTableID(),_defColor);
+    private DrawingDef makeDrawDef() {
+        return new DrawingDef(_defColor);
     }
 
 
@@ -425,13 +425,13 @@ public class Drawer implements WebEventListener, LayerDrawer {
         clearDrawingAreas();
         if (canDraw(primaryGraphics)) {
             _cleared= false;
-            AutoColor autoColor= makeAutoColor(_pv);
+            DrawingDef def= makeDrawDef();
             WebPlot plot= _pv.getPrimaryPlot();
             Dimension dim= plot.getViewPortDimension();
             primaryGraphics.setDrawingAreaSize(dim.getWidth(),dim.getHeight());
             List<DrawObj> drawData= decimateData(_data, true);
             if (_dataTypeHint ==DataType.VERY_LARGE && _data.size()>500) {
-                DrawingParams params= new DrawingParams(primaryGraphics,autoColor,plot,drawData, getMaxChunk(drawData));
+                DrawingParams params= new DrawingParams(primaryGraphics,def,plot,drawData, getMaxChunk(drawData));
                 if (_drawingCmd!=null) _drawingCmd.cancelDraw();
                 _drawingCmd= new DrawingDeferred(params);
                 _drawingCmd.activate();
@@ -439,7 +439,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
                 if (drawData.size()>15000) _plotTaskID= _pv.addTask();
             }
             else {
-                DrawingParams params= new DrawingParams(primaryGraphics, autoColor, plot,drawData,Integer.MAX_VALUE);
+                DrawingParams params= new DrawingParams(primaryGraphics, def, plot,drawData,Integer.MAX_VALUE);
                 doDrawing(params);
             }
         }
@@ -667,9 +667,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
 
 
     private String[] makeColorMap(int mapSize) {
-        AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_defColor);
-        String base= ac.getColor(_defColor);
-        return Color.makeSimpleColorMap(base,mapSize,true);
+        return Color.makeSimpleColorMap(_defColor,mapSize,true);
     }
 
     private static ViewPortPtMutable getMutableVP(ViewPortPt vpPt) {
@@ -754,14 +752,14 @@ public class Drawer implements WebEventListener, LayerDrawer {
                 if (doDraw(params._plot, obj)) {
                     retList.add(obj);
                     if (i==0) {
-                        color= obj.calculateColor(params._ac,false);
+                        color= obj.calculateColor(params._def,false);
                         lineWidth= obj.getLineWidth();
                     }
                     if (canOptimize) {
                         canOptimize= obj.getCanUsePathEnabledOptimization() &&
                                      lineWidth>0 &&
                                      lineWidth==obj.getLineWidth() &&
-                                     ComparisonUtil.equals(color,obj.calculateColor(params._ac,false));
+                                     ComparisonUtil.equals(color,obj.calculateColor(params._def,false));
                     }
                     i++;
                 }
@@ -780,9 +778,9 @@ public class Drawer implements WebEventListener, LayerDrawer {
 //        long startTime= System.currentTimeMillis(); //todo remove
         if (drawList.size()==0) return;
         DrawObj d= drawList.get(0);
-        graphics.beginPath(d.calculateColor(params._ac, false), d.getLineWidth());
+        graphics.beginPath(d.calculateColor(params._def, false), d.getLineWidth());
         for(DrawObj obj : drawList) {
-            draw(graphics, params._ac, params._plot, obj,params.vpPtM, false,true);
+            draw(graphics, params._def, params._plot, obj,params.vpPtM, false,true);
         }
         graphics.drawPath();
 //        long delta= System.currentTimeMillis()-startTime;//TODO remove
@@ -793,13 +791,13 @@ public class Drawer implements WebEventListener, LayerDrawer {
         DrawObj lastObj= null;
         for(DrawObj obj : drawList) {
             if (_drawConnect!=null) { // in this case doDraw was already called
-                draw(graphics, params._ac, params._plot, obj,params.vpPtM, false,false);
+                draw(graphics, params._def, params._plot, obj,params.vpPtM, false,false);
             }
             else  {
                 if (doDraw(params._plot,obj)) { // doDraw must be call when there is a connector
-                    draw(graphics, params._ac, params._plot, obj,params.vpPtM, false, false);
+                    draw(graphics, params._def, params._plot, obj,params.vpPtM, false, false);
                     if (_drawConnect!=null) {
-                        drawConnector(graphics,params._ac,params._plot,_drawConnect,obj,lastObj);
+                        drawConnector(graphics,params._def,params._plot,_drawConnect,obj,lastObj);
                     }
                 }
                 lastObj= obj;
@@ -906,14 +904,14 @@ public class Drawer implements WebEventListener, LayerDrawer {
         final int _maxChunk;
         boolean _done= false;
         boolean _begin= true;
-        final AutoColor _ac;
+        final DrawingDef _def;
         final Graphics _graphics;
         int _deferCnt= 0;
         final ViewPortPtMutable vpPtM= new ViewPortPtMutable();
 
-        DrawingParams(Graphics graphics, AutoColor ac, WebPlot plot, List<DrawObj> data, int maxChunk) {
+        DrawingParams(Graphics graphics, DrawingDef def, WebPlot plot, List<DrawObj> data, int maxChunk) {
             _graphics= graphics;
-            _ac= ac;
+            _def= def;
             _plot= plot;
             _data= data;
             _iterator= _data.iterator();

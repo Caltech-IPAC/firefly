@@ -9,8 +9,8 @@ import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -54,9 +54,9 @@ public abstract class AbstractCoverageData implements CoverageData {
     private CoverageType coverageType = CoverageType.GUESS;
 
     public AbstractCoverageData() {
-        _colorMap.put(DEFAULT_VALUE,AutoColor.PT_1);
+        _colorMap.put(DEFAULT_VALUE, DrawingDef.COLOR_PT_1);
         _shapeMap.put(DEFAULT_VALUE, DrawSymbol.X);
-        _highlightColorMap.put(DEFAULT_VALUE,AutoColor.HIGHLIGHTED_PT);
+        _highlightColorMap.put(DEFAULT_VALUE,DrawingDef.COLOR_HIGHLIGHTED_PT);
         _symbolSize.put(DEFAULT_VALUE, PointDataObj.DEFAULT_SIZE);
     }
 

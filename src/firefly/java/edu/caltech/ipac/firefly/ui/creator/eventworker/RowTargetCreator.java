@@ -5,15 +5,15 @@ package edu.caltech.ipac.firefly.ui.creator.eventworker;
 
 import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.ui.table.EventHub;
+import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.visualize.Vis;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.util.StringUtils;
@@ -82,7 +82,7 @@ public class RowTargetCreator implements EventWorkerCreator {
         private final List<DrawObj> list= new ArrayList<DrawObj>(1);
 
         RowTargetDisplay(TablePanel table) {
-            super("Selected Row Center", "The RA,DEC of the selected Row", AutoColor.PT_4);
+            super("Selected Row Center", "The RA,DEC of the selected Row", DrawingDef.COLOR_PT_4);
 
 
             TableData.Row row = table.getTable().getHighlightedRow();

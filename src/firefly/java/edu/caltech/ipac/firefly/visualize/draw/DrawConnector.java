@@ -13,7 +13,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
  */
 public abstract class DrawConnector {
 
-    private final String DEF_COLOR= "red";
+    private final String FALLBACK_COLOR= "red";
 
     private String _color= null;
 
@@ -41,28 +41,29 @@ public abstract class DrawConnector {
      *
      * @param g
      * @param p
-     * @param ac the AutoColor obj, may be null
+     * @param def the AutoColor obj, may be null
      * @throws UnsupportedOperationException
      */
     public abstract void draw(Graphics g,
                               WebPlot p,
-                              AutoColor ac,
+                              DrawingDef def,
                               WorldPt wp1,
                               WorldPt wp2) throws UnsupportedOperationException;
 
     /**
      *
      * @param g
-     * @param ac the AutoColor obj, may be null
+     * @param def the AutoColor obj, may be null
      * @throws UnsupportedOperationException
      */
     public abstract void draw(Graphics g,
-                              AutoColor ac,
+                              DrawingDef def,
                               ScreenPt pt1,
                               ScreenPt pt2) throws UnsupportedOperationException;
 
-    protected String calculateColor(AutoColor ac) {
-        return (ac==null) ? (_color==null? DEF_COLOR : _color)  :  ac.getColor(_color);
+    protected String calculateColor(DrawingDef def) {
+        String defColor= (def!=null && def.getDefColor()!=null) ? def.getDefColor() : FALLBACK_COLOR;
+        return _color==null? defColor : _color;
     }
 
 

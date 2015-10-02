@@ -17,9 +17,9 @@ import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.PointSelection;
@@ -191,7 +191,7 @@ public class ActivePointToolCmd extends BaseGroupVisCmd implements WebEventListe
         private WebPlot markedPlot = null;
 
         MarkedPointDisplay() {
-            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
+            super("Clicked Point", "Point lock to your click", DrawingDef.COLOR_PT_3);
         }
 
         public void setPoint(Pt pt, WebPlot plot) {

@@ -12,10 +12,10 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.util.ComparisonUtil;
 
@@ -73,7 +73,7 @@ public class MagnifiedView extends Composite {
         _drawable.setPixelSize(_size, _size);
 
         _drawer = new Drawer(_pv, _drawable, false);
-        _drawer.setDefaultColor(AutoColor.DRAW_1);
+        _drawer.setDefaultColor(DrawingDef.COLOR_DRAW_1);
 
 
         _ne.setVisible(false);
