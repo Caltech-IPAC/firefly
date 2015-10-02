@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -185,7 +184,7 @@ public class ImagePlotCreator {
         }
 
         state.setZoomLevel(zoomLevel);
-        initPlotTitle(state,plot,frGroup,plotDesc,isMultiImage);
+        initPlotTitle(state, plot, frGroup, plotDesc, isMultiImage);
         return plot;
     }
 
@@ -215,7 +214,7 @@ public class ImagePlotCreator {
             rv= FitsRead.getDefaultFutureStretch();
             state.setRangeValues(rv, readInfo.getBand());
         }
-        histOps.recomputeStretch(rv,true);
+        histOps.recomputeStretch(rv, true);
         return retval;
     }
 
@@ -225,49 +224,53 @@ public class ImagePlotCreator {
                               String dataDesc,
                               boolean isMultiImage) {
         WebPlotRequest req= state.getPrimaryWebPlotRequest();
-        WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
-        String headerKey= req.getHeaderKeyForTitle();
-        if ((isMultiImage && (titleOps== WebPlotRequest.TitleOptions.NONE ||titleOps== WebPlotRequest.TitleOptions.FILE_NAME)) ||
-                  (titleOps==WebPlotRequest.TitleOptions.HEADER_KEY && StringUtils.isEmpty(headerKey))) {
-            titleOps= WebPlotRequest.TitleOptions.HEADER_KEY;
-            headerKey= "EXTNAME";
-        }
-        String s= req.getPlotDescAppend();
+
         plot.setPlotDesc("");
         Header header= frGroup.getFitsRead(state.firstBand()).getHeader();
 
 
-        switch (titleOps) {
-            case NONE:
-                plot.setPlotDesc("");
-                break;
+        switch (req.getTitleOptions()) {
             case PLOT_DESC:
                 String base= req.getTitle()==null ? "" : req.getTitle();
                 plot.setPlotDesc(base+ dataDesc);
                 break;
-            case FILE_NAME:
+            case NONE: // none is overridden for multi images files
+            case FILE_NAME: // file name is further processed on client side
+                if (isMultiImage) plot.setPlotDesc(findTitleByHeader(header,state,req));
                 break;
             case HEADER_KEY:
-                HeaderCard card= header.findCard(headerKey);
-                if (card==null && state.getCubeCnt(state.firstBand())>0) {
-                    card= header.findCard("PLANE"+state.getImageIdx(state.firstBand()));
-                }
-                String hTitle= card!=null ? card.getValue() : "";
-                plot.setPlotDesc(hTitle);
+                plot.setPlotDesc(findTitleByHeader(header,state,req));
                 break;
             case PLOT_DESC_PLUS:
+                String s= req.getPlotDescAppend();
                 plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
                 break;
             case SERVICE_OBS_DATE:
                 if (req.getRequestType()== RequestType.SERVICE) {
-//                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
                     String title= req.getTitle() + ": " +
-//                                  desc + ": " +
                                   PlotServUtils.getDateValueFromServiceFits(req.getServiceType(), header);
                     plot.setPlotDesc(title);
                 }
                 break;
         }
+    }
+
+    private static String findTitleByHeader(Header header, PlotState state, WebPlotRequest req) {
+        String headerKey[]= new String[] {
+                req.getHeaderKeyForTitle(),
+                "EXTNAME", "EXTTYPE",
+                state.getPrimaryCubeCnt()>0 ? "PLANE"+state.getImageIdx(state.firstBand()) : null
+        };
+        return findCard(header, headerKey);
+    }
+
+    private static String findCard(Header header, String[] keys) {
+        HeaderCard card= null;
+        for(String k : keys) {
+            if (k!=null) card= header.findCard(k);
+            if (card!=null) break;
+        }
+        return card!=null ? card.getValue() : "";
     }
 
 //    private static String getServiceDateDesc(WebPlotRequest.ServiceType sType, FitsRead fr) {
