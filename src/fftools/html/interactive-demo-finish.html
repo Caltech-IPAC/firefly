@@ -184,6 +184,11 @@ Demo of Firefly Tools
                         firefly.showTable(tableData1, "tableHere");
                     }
                 }
+                else if (data.type==='PLOT_MOUSE_READ_OUT') {
+                    if (data.flux) {
+                        console.log(data);
+                    }
+                }
             };
 
             var extension= {
@@ -223,6 +228,13 @@ Demo of Firefly Tools
             };
             actions.extensionAdd(extension3);
 
+            var extension4= {
+                id : "readout",
+                plotId : "primaryID",
+                extType: "PLOT_MOUSE_READ_OUT",
+                callback: extFunc
+            };
+            actions.extensionAdd(extension4);
 
         }
     }

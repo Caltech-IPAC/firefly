@@ -215,7 +215,6 @@ function onFireflyLoaded() {
         console.log("Region Select Callback "+JSON.stringify(data, null, 4));
     }
     var extension= {
-        id : "MyRegionExt",
         plotId : "plot",
         extType: "REGION_SELECT",
         callback: extFunc
@@ -284,6 +283,34 @@ iv.plot( {  'Type'      : 'SERVICE',
 |firefly.setGlobalDefaultParams(params) | a object literal such as ImageViewer.plot() uses |set global fallback params for every image plotting call |
 |firefly.setRootPath(rootURLPath) |the root URL to be prepended to any relative URL. |sets the root path for any relative URL. If this method has not been called then relative URLs use the page's root.|
 
+#####**Tracking the mouse on the FITS Viewer** 
+
+The following example will plot a fits image then add a callback to get the mouse readout and log it to the console.
+
+```js
+var primaryViewer= firefly.makeImageViewer('primaryID');
+primaryViewer.plot({
+    "URL"       : "http://web.ipac.caltech.edu/staff/roby/demo/wise-m51-band2.fits",
+    "Title"     : "Some WISE image",
+    "ZoomType"  : "TO_WIDTH"
+});
+
+var showReadout= function(data) {
+     if (data.type==='PLOT_MOUSE_READ_OUT') {
+         // data contains gal,j2000,image & screen points plus flux when mouse pauses
+         console.log(data);
+     }
+};
+
+var mouseReadoutExt= {
+                plotId : 'primaryID',
+                extType: 'PLOT_MOUSE_READ_OUT',
+                callback: showReadout
+            };
+actions.extensionAdd(mouseReadoutExt);
+
+
+```
 
 
 
@@ -500,6 +527,7 @@ To add an extension to a fits viewer create a object literal with the following 
   - 'POINT' - When any point on the plot is clicked
   - 'REGION_SELECT' - When the user selects a region 
   - 'CIRCLE_SELECT' - When the user draws a circle (*not yet supported, coming soon*)
+  - 'PLOT_MOUSE_READ_OUT' - When the user moves or pauses his mouse over the fits viewer
 
 callback function takes one parameter,  an object literal, the fields vary depend on the extension type-
  *todo - need to document callback object literal parameters*

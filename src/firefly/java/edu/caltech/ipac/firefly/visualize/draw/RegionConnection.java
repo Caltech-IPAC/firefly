@@ -120,7 +120,7 @@ public class RegionConnection implements DataConnection {
             List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
             boolean found = false;
             for (Ext.Extension ext : extensionList) {
-                if (ext.extType() == Ext.REGION_SELECT) {
+                if (ext.extType().equals(Ext.REGION_SELECT)) {
                     Ext.fireExtAction(ext, r);
                     found = true;
                 }
