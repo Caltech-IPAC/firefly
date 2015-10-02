@@ -12,14 +12,10 @@
 
 'use strict';
 
+import 'babel/polyfill';
 
-if (!window._babelPolyfill) {
-    require("babel/polyfill");
-}
 import AppAlt from './AppAlt.js';
 //import Alt from 'alt';
-
-require('babel/polyfill');
 import { appFlux } from './Globals.js';
 import Enum from 'enum';
 import {ExtensionJavaInterface } from '../gwtinterface/ExtensionJavaInterface.js';
