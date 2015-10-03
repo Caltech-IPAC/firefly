@@ -731,8 +731,156 @@ public class WebGrid
 
      }
 
+    /**
+     * This method uses the four corners to calculate the initial ranges
+     * four corners are:
+     *   p1[xmin, ymin]
+     *   p2[xmin, ymax]
+     *   p3[xmax, ymin]
+     *   p4[xmax, ymax]
+     *
+     *   In order to make sure we cover enough space, we subtract 0.5 or add 0.5 on each side
+     *   That means we enlarge the image to 0.5 around permier
+     * @return
+     */
+    private double[][] getInitialRanges(){
+
+        int xmin= _plot.getPlotGroup().getGroupImageXMin();
+        int ymin= _plot.getPlotGroup().getGroupImageYMin();
+        int xmax= _plot.getPlotGroup().getGroupImageXMax();
+        int ymax= _plot.getPlotGroup().getGroupImageYMax();
+        double[][] range={{0.,0.},{0.,0.}};
+
+        double[][] corners=new double[4][2];
+        corners[0][0]=xmin-0.5;
+        corners[0][1]=ymax;
+
+        corners[1][0]=xmin-0.5;
+        corners[1][1]=ymax+0.5;
+
+        corners[2][0]=xmax+0.5;
+        corners[2][1]=ymin-0.5;
+
+        corners[3][0]=xmax+0.5;
+        corners[3][1]=ymax+0.5;
+
+        for (int i=0; i<4; i++){
+            double x = corners[i][0];
+            double y= corners[i][1];
+            WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x,y), _csys);
+            if (c != null) {
+                double lon = c.getLon();
+                double lat  = c.getLat();
 
 
+                if ( lon < range[0][0]) range[0][0] = lon;
+                if ( lon  > range[0][1]) range[0][1] = lon;
+                if ( lat < range[1][0]) range[1][0] = lat;
+                if ( lat  > range[1][1]) range[1][1] = lat;
+            }
+
+
+        }
+
+
+        return range;
+
+    }
+    private double[][] walkEdge() {
+         /* Walk around the image border, finding the exact range of lon/lat */
+   /* We also need to detect big jumps in the position and switch to   */
+   /* "all-sky" mode.                                                  */
+
+        double[][] ranges = getInitialRanges();
+   /* First point (for reference) */
+
+        double x = -0.5;
+        double y = -0.5;
+
+        int side = 0;
+        int i = 0;
+        while (true) {
+
+       /* Get pixel coordinates on the sky */
+            WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x, y), _csys);
+            if (c != null) {
+                double lon = c.getLon();
+                double lat = c.getLat();
+
+
+
+        /* Update min/max if appropriate */
+
+                if (lon < ranges[0][0]) ranges[0][0] = lon;
+                if (lon > ranges[0][1]) ranges[0][1] = lon;
+                if (lat < ranges[1][0]) ranges[1][0] = lat;
+                if (lat > ranges[1][1]) ranges[1][1] = lat;
+
+                ++i;
+
+
+      /* Switch sides as we go around */
+
+                if (side == 0)       /* Up */ {
+                    y += 1.0;
+
+                    if (y > _dWidth + 0.5) {
+                        y -= 1.0;
+                        side = 1;
+                        i = 0;
+                    }
+                } else if (side == 1)  /* Across */ {
+                    x += 1.0;
+
+                    if (x > _dHeight + 0.5) {
+                        x -= 1.0;
+                        side = 2;
+                        i = 0;
+                    }
+                } else if (side == 2)  /* Down */ {
+                    y -= 1.0;
+
+                    if (y < -0.5) {
+                        y += 1.0;
+                        side = 3;
+                        i = 0;
+                    }
+                } else if (side == 3)  /* Back */ {
+                    x -= 1.0;
+
+                    if (x < -0.5)
+                        break;
+                }
+            }
+
+            //north pole which has latitude=90 and longitude=0
+            double sharedLon = 0.0;
+            double sharedLat = 90.0;
+            int poles = 0;
+            boolean wrap = false;
+            if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+                //north pole is in the image
+                ranges[0][0] = 0; // -179.999;
+                ranges[0][1] = 360;// 179.999;
+                ranges[1][1] = 90;
+                poles += 1;
+                wrap = true;
+            }
+            //south pole which has longitude=0 and latitude=-90
+            sharedLon = 0.0;
+            sharedLat = -90.0;
+            if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+                //sourth pole is in the image
+                ranges[0][0] = 0;//-179.999;
+                ranges[0][1] = 360;// 179.999;
+                ranges[1][0] = -90;
+                poles += 2;
+                wrap = true;
+            }
+
+        }
+        return ranges;
+    }
     /**
      * 09/30/15 LZ read the codes and added the comments below
      * Get the range of values for the grid.
