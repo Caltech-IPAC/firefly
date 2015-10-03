@@ -670,6 +670,8 @@ public class WebPlot {
     public ImageWorkSpacePt getImageWorkSpaceCoords( WorldPt wpt) {
         if (wpt==null) return null;
         ImageWorkSpacePt retval;
+
+        //LZ check here TODO remove it after testing
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
             ImagePt ipt= getImageCoords(wpt);

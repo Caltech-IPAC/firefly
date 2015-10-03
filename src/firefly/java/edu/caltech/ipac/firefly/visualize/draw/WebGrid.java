@@ -15,6 +15,8 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -22,7 +24,13 @@ import java.util.List;
 
 /**
  * Draws a coordinate system grid
+ * 2014-12-04
+ *   Improve the grid plotting and labelling
  *
+ * 2015-09-28
+ *   Debug DM-3847, for some Fits files, the grids can not be drawn in galactic coordinates
+ *
+ *   LZ added more comments after reading and understanding the codes
  *
 **/
 public class WebGrid
@@ -355,33 +363,27 @@ public class WebGrid
                                                 double[] x, double[] y, int count){
 
 
-        //TODO
-        //1. check the x and y array to see if there are gaps between adjacent points, if so, add point
-        //2. draw the lines
-
-
-        int lineCount=0;
+       // int lineCount=0;
         //add the  draw line data to the drawData
         ImageWorkSpacePt ipt0, ipt1;
        for (int i=0; i<x.length-1; i++) {
 
            //check the x[i] and y[i] are inside the image screen
-            if (x[i] > -1000 && x[i+1] > -1000 &&
-                   ((x[i] >= bounds.x) &&
-                   ((x[i] - bounds.x) < bounds.width) &&
-                   (y[i] >= bounds.y) &&
-                    ((y[i]-bounds.y) < bounds.height) ||
+         if (  ( x[i] > -1000 && x[i+1] > -1000 &&
+            (   x[i] >= bounds.x  &&  (x[i] - bounds.x) <=bounds.width &&
+               y[i] >= bounds.y && (y[i]-bounds.y) <= bounds.height ) )
+                   &&
                       // bounds check on x[i+1], y[i+1]
-                     (x[i+1] >= bounds.x) &&
-                     ((x[i+1] - bounds.x) < bounds.width) &&
-                      (y[i+1] >= bounds.y) &&
-                       ((y[i+1]-bounds.y) < bounds.height))) {
+                       (    x[i+1] >= bounds.x &&
+                     (x[i+1] - bounds.x) <= bounds.width  &&
+                      y[i+1] >= bounds.y  &&
+                       (y[i+1]-bounds.y) <= bounds.height) ) {
 
                 ipt0= new ImageWorkSpacePt(x[i],y[i]);
                 ipt1= new ImageWorkSpacePt(x[i+1], y[i+1]);
 
                 if (!_aitoff ||  ((Math.abs(ipt1.getX()-ipt0.getX()) < _screenWidth /8) &&   (_aitoff))) {
-                     lineCount++;
+                     //lineCount++;
                      drawData.add(ShapeDataObj.makeLine(ipt0,ipt1));
                   }
             }  // if
@@ -414,6 +416,8 @@ public class WebGrid
 	      * and a possibly variable number for levels.
 	      */
 	 double[][] range = getRange();
+     
+
 	 double[][] levels = getLevels(range);
 	     
 
@@ -547,32 +551,27 @@ public class WebGrid
 	  for (int i = 0; i < range.length; i += 1)
 	  {
 	       /* Expect max and min for each dimension */
-	       if (range[i].length != 2)
-	       {
+	       if (range[i].length != 2) {
 		       levels[i] = new double[0];
+               continue;
 	       }
-	       else
-	       {
-		    min = range[i][0];
+	 	    min = range[i][0];
 		    max = range[i][1];
-
 		    /* Handle special cases. */
-		    if (min == max)
-		    {
-			    levels[i] = new double[0];
+		    if (min == max) {
+				    levels[i] = new double[0];
 		    }
-		    else if (Math.abs(min - -90.) < .1 &&
+		    else if (i==1 && Math.abs(min - -90.) < .1 && //latitude [-90, 90]
 				     Math.abs(max -  90.) < .1)
 		    {
 			    levels[i]= new double[] {-75.,-60., -45. -30., -15., 0.,
-			                             15., 30.,  45., 60.,  75.};
-
-			    continue;
+			                          15., 30.,  45., 60.,  75.};
+   			    continue;
 		    }
 		    else
 		    {
 			    delta = max-min;
-			    if (delta < 0)
+			    if (i==0 && delta < 0)
 			    {
 				    delta += 360;
 			    }
@@ -660,7 +659,7 @@ public class WebGrid
 			    }
 
 		    }
-	       }
+
 	  }
 	  return levels;
      }
@@ -670,7 +669,7 @@ public class WebGrid
     *  We also take into account that zooming up makes the
     *  grid too sparse, so the zoom factor is taken when we decide the 
     *  step size between grid.
-    *  after zooming, the step size is the original size devided by zoom
+    *  after zooming, the step size is the original size divided by zoom
     *  factor.
     * @param val the value to lookup
     * @return the lookup value
@@ -687,19 +686,19 @@ public class WebGrid
 	  }
 	  else if (val >= 270)
 	  {
-		  retval = 30;
+		  retval = 10;
 	  }
 	  else if (val > 180)
 	  {
-		  retval = 30;
+		  retval = 10;
 	  }
 	  else if (val > 90)
 	  {
-		  retval = 30;
+		  retval = 10;
 	  }
 	  else if (val > 60)
 	  {
-		  retval = 20;
+		  retval = 10;
 	  }
 	  else if (val > 30)
 	  {
@@ -711,7 +710,7 @@ public class WebGrid
 	  }
 	  else if (val > 18)
 	  {
-		  retval = 5;
+		  retval = 2;//
 	  }
 	  else if (val > 6)
 	  {
@@ -732,112 +731,128 @@ public class WebGrid
 
      }
 
-     protected double[][] getRange()
-     {
+
+
+    /**
+     * 09/30/15 LZ read the codes and added the comments below
+     * Get the range of values for the grid.
+     * The ranges is double[2][2] array.  The first dimension contains the minimum
+     * and maximum longitude of the image and the second dimension contains the minimum and
+     * maximum latitude of the image.
+     *
+     * The method first checks to see if it has north, south or both poles.  The poles can be
+     * outside the image??? (don't understand this, this is from the original comments). If there is
+     * pole or there are poles, the poles' longitude and latitude will be used.  There are four cases:
+     * 1. both north and south are in the image:  use the poles to decide the longitude and latitude range
+     * 2. if only one pole (either south or north) is in the image, use one pole to decide either lower or higher
+     *    end of the longitude and latitude range and compute the other end
+     * 3. If no pole, check the whole image to find the minimum and maximum longitude and latitude range
+     *
+     *
+     *
+     * @return
+     */
+    protected double[][] getRange() {
+
 	  double[][] range={{0.,0.},{0.,0.}};
 	  int poles=0;  // 0 = no poles, 1=north pole, 2=south pole, 3=both
 
-	  /* Get the range of values for the grid. */
-
-	  /* Check for the poles.  We allow the poles to
-	  * be a pixel outside of the image and still consider
-	  * them to be included.
-	  */
-
 	  boolean wrap = false;	/* Does the image wrap from 360-0. */
 
-	  //System.out.println("coordSys: " + _sharedWp.getCoordSys());
+	  //north pole which has latitude=90 and longitude=0
       double sharedLon= 0.0;
       double sharedLat= 90.0;
-	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
-	  {
+	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))){
+          //north pole is in the image
 		  range[0][0] = -179.999;
 		  range[0][1] =  179.999;
 		  range[1][1] = 90;
 		  poles += 1;
 		  wrap = true;
 	  }
-
+      //south pole which has longitude=0 and latitude=-90
       sharedLon= 0.0;
       sharedLat= -90.0;
-	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
-	  {
+	  if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+	      //sourth pole is in the image
 		  range[0][0] = -179.999;
 		  range[0][1] =  179.999;
 		  range[1][0] = -90;
 		  poles += 2;
 		  wrap = true;
 	  }
-
-	  /* If both poles are included we can just return */
-	  if (poles == 3)
-	  {
-		  return range;
-	  }
-
 	  /* Now we have to go around the edges to find the remaining
-	   * minima and maxima.
+	   * minima and maxima.  The following bock is trying to find the minima and maxima longitude and latitude.
 	   */
 
-	  double[][] trange = edgeVals(1, wrap);
-	  if (!wrap)
-	  {
+       /*find the minimum and maximum longitude and latitude in the whole map using 4 corners and the middle point.
+        Since the interval is 1, it actually only takes 5 points*/
+	  double[][] currentRange = edgeVals(1, wrap);
+	  if (!wrap) {
 
-	       /* If we don't have a pole inside the map, check
+	   /*If we don't have a pole inside the map, check
 		* to see if the image wraps around.  We do this
 		* by checking to see if the point at [0, averageDec]
 		* is in the map.
 		*/
 
-               sharedLon= 0.0;
-               sharedLat= (trange[1][0] + trange[1][1])/2;
-	       //_sharedWp.setValue(0.0, (trange[1][0] + trange[1][1])/2);
-	       //wp = new WorldPt(0.0, (trange[1][0] + trange[1][1])/2);
-	       //Pt xy = _plot.getImageCoords(wp);
-	       //if (xy != null)
+           sharedLon= 0.0;
+           sharedLat= (currentRange[1][0] + currentRange[1][1])/2;
 	       if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys)))
 	       {
 		       wrap = true;
 			       
 		       // Redo min/max
-		       trange = edgeVals(1, wrap);
+		       currentRange = edgeVals(1, wrap);
 	       }
 	  }
-	  
-	  double[][] xrange = trange;
+
+
+	  double[][] newRange = currentRange;
       int xmin= _plot.getPlotGroup().getGroupImageXMin();
       int adder=2;
 	  for (int intervals = xmin+adder; 
                                   intervals < _dWidth; intervals+= adder)
 	  {
-		  xrange = edgeVals(intervals, wrap);
-		  if (testEdge(xrange, trange))
+		  newRange = edgeVals(intervals, wrap);
+		  if (testEdge(newRange, currentRange))
 		  {
 			  break;
 		  }
-		  trange = xrange;
+		  currentRange = newRange;
+
           adder*= 2;
 	  }
 
-	  if (poles == 0 && wrap)
-	  {
-		  xrange[0][0] += 360;
-	  }
+        /*double[][] newRange = findRangesForNoPoleCase(10);
+        sharedLon= 0.0;
+        sharedLat= (newRange[1][0] + newRange[1][1])/2;
+        if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))){
+
+           if( newRange[0][0] > 180) newRange[0][0] = newRange[0][0]-360;
+        }
+*/
+	   if (poles == 0 && wrap)
+	   {
+		  newRange[0][0] += 360;
+	   }
 	  else if (poles == 1)
 	  {
-		  range[1][0] = xrange[1][0];
+		  range[1][0] = newRange[1][0];
 		  return range;
 	  }
 	  else if (poles == 2)
 	  {
-		  range[1][1] = xrange[1][1];
+		  range[1][1] = newRange[1][1];
 		  return range;
 	  }
 
-	  return xrange;
+	  return newRange;
+
      }
 
-     protected static boolean testEdge(double[][] xrange, double[][] trange) 
+
+    protected static boolean testEdge(double[][] newRange, double[][] oldRange)
      {
 	  /* This routine checks if the experimental minima and maxima
 	  * are significantly changed from the old test minima and
@@ -849,18 +864,19 @@ public class WebGrid
 	  * value of the test or old set of data.
 	  */
 
-	  double[] delta = new double[trange.length];
+	  double[] delta = new double[oldRange.length];
 
 	  /* Find the differences between the old data */
-	  for (int i=0; i<trange.length; i+=1)
+	  for (int i=0; i<oldRange.length; i++)
 	  {
-		  delta[i] = Math.abs(trange[i][1]-trange[i][0]);
+		  delta[i] = Math.abs(oldRange[i][1]-oldRange[i][0]);
+
 	  }
 
-	  for (int i=0; i<trange.length; i += 1)
-	  {
+	  for (int i=0; i<oldRange.length; i++){
 
-	     double ndelta = Math.abs(xrange[i][1]-xrange[i][0]);
+
+	     double ndelta = Math.abs(newRange[i][1]-newRange[i][0]);
 
 	     /* If both sets have nil ranges ignore this dimension */
 	     if (ndelta <= 0. && delta[i] <= 0.)
@@ -869,59 +885,55 @@ public class WebGrid
 	     }
 
 	     /* If the old set was more extreme, use that value. */
-	     if (xrange[i][0] > trange[i][0])
+	     if (newRange[i][0] > oldRange[i][0])
 	     {
-	       xrange[i][0] = trange[i][0];
+	       newRange[i][0] = oldRange[i][0];
 	     }
 
-	     if (xrange[i][1] < trange[i][1])
+	     if (newRange[i][1] < oldRange[i][1])
 	     {
-	       xrange[i][1] = trange[i][1];
+	       newRange[i][1] = oldRange[i][1];
 	     }
 
-	      /* If the previous range was 0 then we've got a
-	* substantial change [but see above if both have nil range]
-	*/
-	     if (delta[i] == 0)
-	     {
+	    /* If the previous range was 0 then we've got a
+	     * substantial change [but see above if both have nil range ] or If the range has increased by more than 2% than
+	    */
+	     if (delta[i] == 0  || Math.abs(newRange[i][1]-newRange[i][0])/delta[i] >
+                 RANGE_THRESHOLD) {
 	         return false;
 	     }
 
-	     /* If the range has increased by more than 2% than */
-	     if ( Math.abs(xrange[i][1]-xrange[i][0])/delta[i] > 
-	                                                    RANGE_THRESHOLD)
-	     {
-	         return false;
-	     }
 	  }
 
 	  return true;
      }
 
 
-     protected double[][] edgeVals(int intervals, boolean wrap) 
-     {
+     /**
+     *  find the coordinates in the four corners and the middle points.
+     *  a[xmin, ymax], b[xmax, ymax], c[xmin, ymin], d[xmax,ymin] and a middle point
+     *
+     * @return
+     */
+     protected double[][] edgeVals(int intervals, boolean wrap) {
+
 	  double[][] range = {{1.e20, -1.e20},{1.e20, -1.e20}};
 
-          int xmin= _plot.getPlotGroup().getGroupImageXMin();
-          int ymin= _plot.getPlotGroup().getGroupImageYMin();
-          int xmax= _plot.getPlotGroup().getGroupImageXMax();
-          int ymax= _plot.getPlotGroup().getGroupImageYMax();
-	  double xdelta, ydelta, x, y;
+       int xmin= _plot.getPlotGroup().getGroupImageXMin();
+       int ymin= _plot.getPlotGroup().getGroupImageYMin();
+       int xmax= _plot.getPlotGroup().getGroupImageXMax();
+       int ymax= _plot.getPlotGroup().getGroupImageYMax();
+	   double xdelta, ydelta, x, y;
 
-	  // We change directions on this sides to ensure we do all
-	  // four corners.
 
-	  // Top: left to right
-	  //System.out.println("edgeVals: intervals = " + intervals);
-	  xdelta = (_dWidth / intervals) - 1;
-	  ydelta = 0;
-	  //y = _dHeight-0.5;   
-	  //x = 0.5;
-	  // make sure that the corner is right 
-	  y = ymax;
-	  x = xmin;
-	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
+	   // four corners.
+	   // point a[xmin, ymax], the top left point, from here toward to right top point b[xmax, ymax], ie the line
+       //   a-b
+	   y = ymax;
+	   x = xmin;
+       xdelta = (_dWidth / intervals) - 1; //define an interval of the point in line a-b
+       ydelta = 0; //no change in the y direction, so ydelta is 0, thus the points should be alone line a-b
+       edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
 
 	  // Bottom: right to left
 	  //y = 0.5;
@@ -942,51 +954,51 @@ public class WebGrid
 
 	  // Right. Top to bottom.
 	  ydelta = -ydelta;
-	  //x = _dWidth-0.5;
-	  //y = _dHeight-0.5;
 	  y = ymax;
 	  x = xmax;
 	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
 
-          // grid in the middle
+      // grid in the middle
 	  xdelta = (_dWidth / intervals) - 1;
 	  ydelta = (_dHeight / intervals) - 1;
-//	  x = 0.5;
-	  //y = 0.5;
 	  x = xmin;
 	  y = ymin;
 	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
 
 
 	  return range;
-     }
+   }
 
-     /**
+   /**
      x0, y0,dx, dy all are the data values of the image, in image coordinate
      system. <br>
      range shoulde be in astro coordinate system. <br>
-     */
-     protected void edgeRun (int intervals, double x0, double y0,
+   */
+
+   protected void edgeRun (int intervals, double x0, double y0,
 			     double dx, double dy, double[][] range,
-						     boolean wrap) 
-     {
+						     boolean wrap) {
+
 	  double x = x0;
 	  double y = y0;
 	  
 	  int i = 0;
 	  double[] vals = new double[2];
-	  while (i <= intervals)
-	  {
+	  while (i <= intervals) {
+
 
           WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x,y), _csys);
+          //look for lower and upper longitude and latitude
           if (c != null) {
               vals[0] = c.getLon();
               vals[1] = c.getLat();
 
               if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
-
+              //assign the new lower and upper longitude if found
               if (vals[0] < range[0][0]) range[0][0] = vals[0];
               if (vals[0] > range[0][1]) range[0][1] = vals[0];
+
+              //assign the new lower and upper latitude if found
               if (vals[1] < range[1][0]) range[1][0] = vals[1];
               if (vals[1] > range[1][1]) range[1][1] = vals[1];
           }
@@ -996,7 +1008,8 @@ public class WebGrid
 
           ++i;
 	  }
-     }
+
+   }
 
      /*
      x, y here are the values of lon, lat in degree
@@ -1008,12 +1021,13 @@ public class WebGrid
 	  double[][] opoints, npoints;
 	  boolean straight, nstraight;
 
+      int interval = 4;
 	  if (coord == 0) // X
 	  {
 		  x  = value;
 		  dx = 0;
 		  y  = range[1][0];
-		  dy = (range[1][1]-range[1][0])/4;
+		  dy = (range[1][1]-range[1][0])/interval;
 	  }
 	  else // Y
 	  {
@@ -1022,10 +1036,10 @@ public class WebGrid
 		  x = range[0][0];
 		  dx = (range[0][1]-range[0][0]);
 		  if (dx < 0)	dx = dx+360;
-		  dx /= 4;
+		  dx /= interval;
 	  }
 
-	  opoints = findPoints(4, x, y, dx, dy, null);
+	  opoints = findPoints(interval, x, y, dx, dy, null);
 	  straight = isStraight(opoints);
 
 	  npoints = opoints;
@@ -1101,7 +1115,8 @@ public class WebGrid
 	  return true;
      }
 
-     protected double[][] findPoints(int intervals, double x0, double y0, 
+
+    protected double[][] findPoints(int intervals, double x0, double y0,
 				  double dx, double dy, double[][] opoints) 
      {
 	  // NOTE: there are intervals separate intervals so there are
@@ -1110,13 +1125,13 @@ public class WebGrid
 
 	  ImagePt xy;
 	  double[][] xpoints = new double[2][intervals+1];
-	  int i, i0, di;
+	  int i0, di;
 
 	  if (opoints != null)
 	  {
 	       i0 = 1;
 	       di = 2;
-	       for (i=0; i <= intervals; i += 2)
+	       for (int i=0; i <= intervals; i += 2)
 	       {
 		    xpoints[0][i] = opoints[0][i/2];
 		    xpoints[1][i] = opoints[1][i/2];
@@ -1128,9 +1143,9 @@ public class WebGrid
 	       di = 1;
 	  }
 
-         double sharedLon;
-         double sharedLat;
-	  for (i=i0; i <= intervals; i += di)
+      //double sharedLon;
+      //double sharedLat;
+	  for (int i=i0; i <= intervals; i += di)
 	  {
 
 		  double tx= x0+i*dx;
@@ -1143,15 +1158,22 @@ public class WebGrid
 			  tx += 360;
 		  }
 
-                  sharedLon= tx;
-                  sharedLat= y0+i*dy;
+          double sharedLon= tx;
+          double sharedLat= y0+i*dy;
 		  //_sharedWp.setValue(tx, y0+i*dy);
 		  //wp = new WorldPt(tx, y0+i*dy);
 		  //xy = _plot.getImageCoords(wp);
 		  //if (xy == null)
-          xy= null;
-          //09/23/15 ?? don't understand this part, if the point is not in the plot,why bother to find it?
-          if (!_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+          //xy= null;
+          WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
+          ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
+          if (ip!=null) {
+              xy = new ImagePt(ip.getX(), ip.getY());
+          }
+          else {
+              xy=new ImagePt(1.e20,1.e20);
+          }
+          /*if (!_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
               WorldPt wpt= new WorldPt(sharedLon, sharedLat, _csys);
               ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
               if (ip!=null) xy = new ImagePt(ip.getX(), ip.getY());
@@ -1161,9 +1183,9 @@ public class WebGrid
               ImageWorkSpacePt ip = _plot.getImageWorkSpaceCoords(wpt);
               if (ip!=null) xy = new ImagePt(ip.getX(), ip.getY());
           }
-          //comment by LZ 9/23/15
-          //this line is wrong, if xy==null, xpoints and ypoints can not get value because it is null???
-          if (xy==null)new ImagePt(1.e20,1.e20);// ?????? XW
+          */
+
+         // if (xy==null) xy=new ImagePt(1.e20,1.e20);
 		  xpoints[0][i] = xy.getX();
 		  xpoints[1][i] = xy.getY();
 	  }
