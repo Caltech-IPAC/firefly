@@ -58,11 +58,13 @@ export const fireflyInit= function() {
     if (!window.firefly.gwt) {
         window.firefly.gwt= {};
     }
- //   window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
     window.firefly.appFlux= appFlux;
     window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
     window.firefly.gwt.ExtensionResult= ExtensionResult;
     window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
+    // to call histogram and other react components from GWT
+    window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
+
     // a method to get JSON data from external task launcher
     window.firefly.getJsonFromTask= function(launcher, task, taskParams) {
             let req = new ServerRequest('JsonFromExternalTask');
