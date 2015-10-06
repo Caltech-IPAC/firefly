@@ -246,7 +246,8 @@ public class ThumbnailView extends Composite {
                 _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
                 _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
-                _drawer.setDefaultColor(DrawingDef.COLOR_DRAW_1);
+//                _drawer.setDefaultColor(DrawingDef.COLOR_DRAW_1);
+                _drawer.setDrawingDef(new DrawingDef(DrawingDef.COLOR_DRAW_1));
 
                 tnWrapper.setPixelSize(maxSize,maxSize);
 

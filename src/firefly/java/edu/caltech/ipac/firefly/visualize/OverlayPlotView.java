@@ -21,6 +21,7 @@ import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
 import edu.caltech.ipac.firefly.ui.input.TextBoxInputField;
 import edu.caltech.ipac.firefly.ui.input.ValidationInputField;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.MaskAdjust;
@@ -35,7 +36,7 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
     private WebPlotView pv;
     private AbsolutePanel rootPanel= new AbsolutePanel();
     private WebPlot      maskPlot= null;
-    private String defaultColor= "ff0000";
+    private DrawingDef drawingDef= new DrawingDef("ff0000");
     private final int maskValue;
     private final int imageNumber;
     private final WebLayerItem webLayerItem;
@@ -57,7 +58,7 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
         initWidget(rootPanel);
         this.maskValue= maskValue;
         this.imageNumber= imageNumber;
-        this.defaultColor= color;
+        drawingDef.setDefColor(color);
         this.maskRequest= maskRequest;
         rootPanel.setStyleName("OverlayPlotView");
         pv.addDrawingArea(this, false);
@@ -97,12 +98,13 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
     public boolean hasData() { return true; }
 
     @Override
-    public String getDefaultColor() { return defaultColor; }
+    public DrawingDef getDrawingDef() {
+        return drawingDef;
+    }
 
     @Override
-    public void setDefaultColor(String c) {
-        defaultColor= c;
-        MaskAdjust.updateMask(this,pv,maskValue , imageNumber, c, maskRequest);
+    public void setDrawingDef(DrawingDef def) {
+        MaskAdjust.updateMask(this,pv,maskValue , imageNumber, def.getDefColor(), maskRequest);
     }
 
     @Override

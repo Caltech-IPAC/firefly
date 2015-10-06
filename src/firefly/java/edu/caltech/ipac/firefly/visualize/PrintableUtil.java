@@ -117,7 +117,7 @@ public class PrintableUtil {
 
     public static StaticDrawInfo makeDrawInfo(WebPlot plot, LayerDrawer drawer, WebLayerItem item) {
         StaticDrawInfo drawInfo= new StaticDrawInfo();
-        drawInfo.setColor(drawer.getDefaultColor());
+        drawInfo.setColor(drawer.getDrawingDef().getDefColor());
         drawInfo.setLabel(item.getID());
         return drawInfo;
     }
@@ -128,7 +128,7 @@ public class PrintableUtil {
             retval= new ArrayList<Region>(drawer.getData().size()*2);
             WebPlot plot= drawer.getPlotView().getPrimaryPlot();
             if (plot!=null) {
-                DrawingDef def= new DrawingDef(drawer.getDefaultColor());
+                DrawingDef def= new DrawingDef(drawer.getDrawingDef().getDefColor());
                 for(DrawObj obj : drawer.getData()) {
                     retval.addAll(obj.toRegion(plot,def));
                 }

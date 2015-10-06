@@ -18,8 +18,8 @@ public interface LayerDrawer  {
     void setVisible(boolean v);
     boolean isVisible();
     boolean hasData();
-    String getDefaultColor();
-    void setDefaultColor(String c);
+    DrawingDef getDrawingDef();
+    void setDrawingDef(DrawingDef def);
     boolean getSupportsRegions();
     boolean isImageOverlay();
 

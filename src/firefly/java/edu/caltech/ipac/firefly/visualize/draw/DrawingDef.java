@@ -10,6 +10,8 @@ package edu.caltech.ipac.firefly.visualize.draw;
  */
 
 
+import edu.caltech.ipac.util.ComparisonUtil;
+
 /**
  * @author Trey Roby
  * Object to hold defaults for drawing a group of objects.
@@ -27,7 +29,7 @@ public class DrawingDef {
     public static final String COLOR_DRAW_1 = "ff0000";
     public static final String COLOR_DRAW_2 = "5500ff";
 
-    private final String defColor;
+    private String defColor;
 
     public static final String COLOR_SELECTED_PT = "ffff00";
 
@@ -35,5 +37,25 @@ public class DrawingDef {
         this.defColor= defColor;
     }
 
+    public void setDefColor(String color) { this.defColor= color; }
+
     public String getDefColor() { return defColor; }
+
+    public boolean equals(Object o) {
+        boolean retval= false;
+        if (o==this) {
+            retval= true;
+        }
+        else if (o!=null && o instanceof DrawingDef) {
+            DrawingDef d= (DrawingDef)o;
+            retval= ComparisonUtil.equals(d.getDefColor(),getDefColor());
+        }
+        return retval;
+    }
+
+    public DrawingDef makeCopy() {
+        DrawingDef def= new DrawingDef(this.defColor);
+        // in future, set other stuff here, line width, rotation, offset, etc
+        return def;
+    }
 }

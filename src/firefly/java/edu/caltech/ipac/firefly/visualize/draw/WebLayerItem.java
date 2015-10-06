@@ -314,13 +314,13 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public boolean isVisible() { return _drawer!=null ? _drawer.isVisible() : false ; }
 
     public String getColor() {
-        return _drawer!=null ? _drawer.getDefaultColor() : Drawer.DEFAULT_DEFAULT_COLOR;
+        return _drawer!=null ? _drawer.getDrawingDef().getDefColor() : Drawer.DEFAULT_DEFAULT_COLOR;
     }
 
     public String getColorInterpreted() {
         String c= "black";
         if (_pv!=null && _pv.getPrimaryPlot()!=null) {
-            c= _drawer.getDefaultColor();
+            c= _drawer.getDrawingDef().getDefColor();
             if (!c.startsWith("#") && GwtUtil.isHexColor(c)) c= "#" + c;
         }
         return c;
@@ -342,7 +342,9 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
             public void done() {
                 for(WebLayerItem wl : getAllWithMatchingID()) {
                     if (wl._drawer!=null) {
-                        wl._drawer.setDefaultColor(c);
+                        DrawingDef d= wl._drawer.getDrawingDef().makeCopy();
+                        d.setDefColor(c);
+                        wl._drawer.setDrawingDef(d);
                         ValueChangeEvent.fire(WebLayerItem.this, c);
                     }
                 }

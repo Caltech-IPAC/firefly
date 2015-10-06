@@ -177,7 +177,9 @@ public class DrawingManager implements AsyncDataLoader {
             public void done() {
                 _normalColor = color;
                 for (PVData data : _allPV.values()) {
-                    data.getDrawer().setDefaultColor(color);
+                    DrawingDef d= data.getDrawer().getDrawingDef().makeCopy();
+                    d.setDefColor(color);
+                    data.getDrawer().setDrawingDef(d);
                 }
             }
         });
@@ -336,7 +338,7 @@ public class DrawingManager implements AsyncDataLoader {
                                              _enablePrefKey,_printableOverlay);
         item.setCanDoRegion(canDoRegion);
         item.setGroupByTitleOrID(_groupByTitleOrID);
-        drawer.setDefaultColor(_normalColor);
+        drawer.setDrawingDef(new DrawingDef(_normalColor));
 
         if (_dataConnect != null) {
             drawer.setPointConnector(_dataConnect.getDrawConnector());
@@ -494,7 +496,7 @@ public class DrawingManager implements AsyncDataLoader {
             }
 
             for (PVData pvData : _allPV.values()) {
-                pvData.getDrawer().setDefaultColor(_normalColor);
+                pvData.getDrawer().setDrawingDef(new DrawingDef(_normalColor));
                 pvData.getDrawer().setPointConnector(_dataConnect.getDrawConnector());
             }
 
@@ -1152,7 +1154,7 @@ public class DrawingManager implements AsyncDataLoader {
                 drawable.setPixelSize(12,12);
                 PointDataObj pointDataObj= new PointDataObj(new ScreenPt(6,6), symbol);
                 pointDataObj.setSize(4);
-                pointDataObj.draw(g,new DrawingDef(drawer.getDefaultColor()),true, false);
+                pointDataObj.draw(g,drawer.getDrawingDef(),true, false);
             }
         }
     }

@@ -108,7 +108,8 @@ public class WebGrid
        _drawer= new Drawer(pv);
        _drawer.setDataTypeHint(Drawer.DataType.VERY_LARGE);
        _drawer.setHandleImageChanges(false);
-       _drawer.setDefaultColor(_gridColor);
+//       _drawer.setDefaultColor(_gridColor);
+       _drawer.setDrawingDef(new DrawingDef(_gridColor));
 
        //_drawerTxt=_drawer;
        //_drawerTxt.setDefaultColor(V_LABEL_COLOR);
