@@ -5,5 +5,5 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-import {fireflyInit} from 'ipac-firefly/core/Application.js';
+import {fireflyInit} from 'firefly/core/Application.js';
 fireflyInit();

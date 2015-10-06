@@ -12,7 +12,7 @@ var React= require('react/addons');
 var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
 var Modal = require('react-modal');
 var Promise= require("es6-promise").Promise;
-import formActions from 'ipac-firefly/actions/FormActions.js'
+import formActions from 'actions/FormActions.js'
 //import Portal from "react-portal";
 
 

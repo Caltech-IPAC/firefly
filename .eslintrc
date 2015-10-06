@@ -27,14 +27,13 @@
     "jsx": true
   },
   "rules": {
-    "semi": 2,
-    "curly": [2,"multi-line"],
+    "semi": 1,
+    "curly": [2,"multi"],
     "quotes" : [2, "single", "avoid-escape"],
-    "space-infix-ops" : false,
-    "comma-spacing" : false,
-    "key-spacing" : false,
-    "global-strict" : false,
-    "no-console" : false
+    "space-infix-ops" : 2,
+    "comma-spacing" : 2,
+    "key-spacing" : 2
+//    "global-strict" : 2 (deprecated)
 
 //    "react/display-name": 1,
 //    "react/jsx-boolean-value": 1,

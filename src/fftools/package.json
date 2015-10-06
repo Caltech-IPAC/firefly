@@ -1,0 +1,11 @@
+{
+  "scripts":
+    {
+      "build" : "webpack",
+      "lint"  : "DO_LINT=true webpack",
+      "dev"   : "DEBUG=true webpack -w -d --colors",
+      "test"  : "npm run test:unit && npm run test:server",
+      "test:unit": "node ../../node_modules/karma/bin/karma start",
+      "test:server": "mocha --harmony bin/test-server"
+    }
+}
