@@ -3,7 +3,6 @@
  */
 
 import React from 'react/addons';
-import { defineDialog } from './DialogRootContainer.jsx';
 import DialogActions from '../actions/DialogActions.js';
 import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
 
@@ -50,7 +49,7 @@ var CompleteButton = React.createClass(
            return { };
        },
 
-       onClick(ev) {
+       onClick() {
            var {onSuccess, groupKey, dialogId}= this.props;
            if (groupKey) {
                FieldGroupUtils.validate(this.props.groupKey, this.validUpdate);

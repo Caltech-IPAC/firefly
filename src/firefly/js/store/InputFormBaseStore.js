@@ -6,7 +6,6 @@ import FormActions from '../actions/FormActions.js';
 import icepick from 'icepick';
 
 
-
 //var Field= exports.Fields = AmpersandState.extend({
 //    props: {
 //        fieldKey : 'string',           // required, no default

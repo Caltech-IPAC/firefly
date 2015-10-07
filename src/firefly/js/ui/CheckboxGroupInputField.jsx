@@ -68,21 +68,22 @@ var CheckboxGroupInputField = React.createClass(
         },
 
         render() {
+            let { fieldKey, labelWidth, options }= this.props;
             return (
                 <div style={{whiteSpace: 'nowrap'}}>
                     <InputFieldLabel label={this.getLabel()}
                         tooltip={this.getTip()}
-                        labelWidth={this.props.labelWidth}
+                        labelWidth={labelWidth}
                     />
-                    {this.props.options.map(function(option) {
+                    {options.map( (option) => {
                         return <input type="checkbox"
                                 key={option.value}
-                                name={this.props.fieldKey}
+                                name={fieldKey}
                                 value={option.value}
                                 checked={this.isChecked(option.value)}
                                 onChange={this.onChange}
                             >&nbsp;{option.label}&nbsp;&nbsp;</input>;
-                        }).bind(this)}
+                        })}
                 </div>
             );
         }

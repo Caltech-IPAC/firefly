@@ -7,7 +7,6 @@
  */
 /*globals console*/
 /*globals ffgwt*/
-
 import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';

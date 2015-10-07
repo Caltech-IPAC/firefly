@@ -12,8 +12,6 @@ import {ServerParams} from '../data/ServerParams.js';
 import http from 'http';
 //var http= require('http');
 
-//var Promise= require('es6-promise').Promise;
-
 const TIMEOUT = 10 * 60 * 1000;  // 10 min
 const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
