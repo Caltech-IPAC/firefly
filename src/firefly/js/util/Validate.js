@@ -117,3 +117,7 @@ export const isInt = function(description, valStr) {
     return retval;
 };
 
+var Validate = {
+    validateEmail, intRange, floatRange, isFloat, isInt
+};
+export default Validate;

@@ -155,10 +155,6 @@ class FieldGroupStore {
         if (typeof fields[fieldKey].valid === 'undefined') {
             fields[fieldKey].valid= true;
         }
-<<<<<<< HEAD
-        //return false;
-=======
->>>>>>> fixed bug, removed es6-promise, we not get them from babel
     }
 
     /**
