@@ -2,9 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-
 import React from 'react/addons';
 import {parseTarget} from '../ui/TargetPanelWorker.js';
 import TargetFeedback from '../ui/TargetFeedback.jsx';
@@ -13,15 +10,15 @@ import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 
 
 
-var TargetPanel= module.exports= React.createClass(
+var TargetPanel= React.createClass(
    {
        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
        getDefaultProps() {
            return {
-               fieldKey : "UserTargetWorldPt",
+               fieldKey : 'UserTargetWorldPt',
                initialState  : {
-                   fieldKey : "UserTargetWorldPt",
+                   fieldKey : 'UserTargetWorldPt'
                }
 
            };
@@ -30,7 +27,7 @@ var TargetPanel= module.exports= React.createClass(
        onChange(ev) {
            var displayValue= ev.target.value;
 
-           var parseResults= parseTarget(displayValue, this.getExtraData())
+           var parseResults= parseTarget(displayValue, this.getExtraData());
            var component= this;
            var resolvePromise= parseResults.resolvePromise ? parseResults.resolvePromise.then(asyncParseResults => {
                      return asyncParseResults ? component.makePayload(displayValue, asyncParseResults) : null;
@@ -42,14 +39,14 @@ var TargetPanel= module.exports= React.createClass(
            return {
                groupKey : this.props.groupKey,
                fieldKey : this.props.fieldKey,
-               newValue : parseResults.wpt ? parseResults.wpt.toString() : "",
-               message : "Enter something valid",
+               newValue : parseResults.wpt ? parseResults.wpt.toString() : '',
+               message : 'Enter something valid',
                valid : parseResults.valid,
                asyncUpdatePromise : resolvePromise,
                displayValue,
                wpt : parseResults.wpt,
-               extraData: parseResults,
-           }
+               extraData: parseResults
+           };
        },
 
        render() {
@@ -69,13 +66,13 @@ var TargetPanel= module.exports= React.createClass(
                                tooltip={"Enter a target"}
                                labelWidth={this.props.labelWidth||this.getLabelWidth()}
                        />
-                       <TargetFeedback showHelp={showHelp} feedback={feedback||""}/>
+                       <TargetFeedback showHelp={showHelp} feedback={feedback||''}/>
                    </div>
            );
            /* jshint ignore:end */
        }
   });
 
-
+export default TargetPanel;
 
 

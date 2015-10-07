@@ -1,6 +1,6 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
-'use strict';
+
 import React from 'react/addons';
 import _ from 'underscore';
 

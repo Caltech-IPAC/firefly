@@ -7,10 +7,6 @@
  * @author loi
  */
 
-/*jshint esnext:true*/
-
-'use strict';
-
 
 import Enum from 'enum';
 import { getRootURL } from './BrowserUtil.js';

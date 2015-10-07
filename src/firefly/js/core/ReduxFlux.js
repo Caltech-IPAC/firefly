@@ -44,7 +44,7 @@ var flux = {
     },
 
     registerReducer(dataRoot, reducer) {
-        reducers.set(dataRoot, reducer)
+        reducers.set(dataRoot, reducer);
     },
 
     bootstrap() {
@@ -52,11 +52,11 @@ var flux = {
             function (resolve, reject) {
                 doBoostrap();
                 if (true) {
-                    resolve("success");
+                    resolve('success');
                 } else {
-                    reject("fail");
+                    reject('fail');
                 }
-            })
+            });
     },
 
     process(request, condition) {
@@ -66,9 +66,9 @@ var flux = {
 
                 } else {
                     // if no condition, go ahead and fulfill the promise
-                    resolve("success");
+                    resolve('success');
                 }
-            })
+            });
     }
 
 };

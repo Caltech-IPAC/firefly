@@ -7,15 +7,14 @@
     "browser": true
   },
   "ecmaFeatures": {
-    "blockBindings": true,
-    "forOf": true,
     "arrowFunctions" : true,
     "binaryLiterals" : true,
-    "blockBindings" : true,
+    "blockBindings": true,
     "classes" : true,
     "defaultParams" : true,
     "destructuring" : true,
-    "forOf" : true,
+    "forOf": true,
+    "jsx": true,
     "modules" : true,
     "objectLiteralComputedProperties" : true,
     "objectLiteralShorthandMethods" : true,
@@ -23,17 +22,21 @@
     "octalLiterals" : true,
     "spread" : true,
     "superInFunctions" : true,
-    "templateStrings" : true,
-    "jsx": true
+    "templateStrings" : true
   },
   "rules": {
-    "semi": 1,
-    "curly": [2,"multi-line"],
-    "quotes" : [2, "single", "avoid-escape"],
-    "space-infix-ops" : 0,
-    "comma-spacing" : 0,
-    "key-spacing" : 0,
-    "no-multi-spaces" : 0
+    "comma-spacing": 0,
+    "curly": [2, "multi-line"],
+    "key-spacing": 0,
+    "no-multi-spaces": 0,
+    "no-console": 1,
+    "no-empty": 1,
+    "no-undef": 2,
+    "no-use-before-define": [2, "nofunc"],
+    "no-unused-vars": 1,
+    "semi": [2, "always"],
+    "space-infix-ops": 0,
+    "quotes": [2, "single", "avoid-escape"]
 //    "global-strict" : 2 (deprecated)
 
 //    "react/display-name": 1,

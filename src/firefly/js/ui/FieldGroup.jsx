@@ -28,12 +28,12 @@ var FieldGroup= React.createClass(
 
         componentWillMount() {
             var {groupKey, reducerFunc, validatorFunc, keepState}= this.props;
-            FieldGroupActions.mountFieldGroup({groupKey, reducerFunc, validatorFunc, keepState, mounted:true})
+            FieldGroupActions.mountFieldGroup({groupKey, reducerFunc, validatorFunc, keepState, mounted:true});
         },
 
         componentWillUnmount() {
             var {groupKey}= this.props;
-            FieldGroupActions.mountFieldGroup({groupKey, mounted:false})
+            FieldGroupActions.mountFieldGroup({groupKey, mounted:false});
         },
 
         render() {

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/*globals ffgwt*/
 
 import alt from '../core/AppAlt.js';
 

@@ -5,11 +5,10 @@
 /**
  * Created by roby on 3/7/15.
  */
-/*jshint browserify:true*/
-"use strict";
 
-var React= require('react/addons');
-var Modal = require('react-modal');
+
+import React from 'react/addons';
+import Modal from 'react-modal';
 
 import PopupPanel from '../ui/PopupPanel.jsx';
 //import Portal from "react-portal";
@@ -28,7 +27,7 @@ var init= function() {
     }
 };
 
-var ModalInternal = React.createClass(
+export var ModalInternal = React.createClass(
         {
 
             getInitialState : function() {
@@ -67,7 +66,7 @@ var ModalInternal = React.createClass(
 
 
 
-var getModal = function(title,message,show,closing) {
+export var getModal = function(title,message,show,closing) {
     if (!modalDiv) {
         modalDiv = document.createElement('div');
         document.body.appendChild(modalDiv);
@@ -169,7 +168,7 @@ var ModalDialog = React.createClass(
 
 
 var idCnt= 0;
-const DIALOG_DIV= "dialogDiv";
+const DIALOG_DIV= 'dialogDiv';
 const freeElementList= [];
 
 
@@ -213,7 +212,7 @@ const freeElementList= [];
 var IndependentWrapper = React.createClass(
 {
     propTypes: {
-        divId   : React.PropTypes.string.isRequired,
+        divId   : React.PropTypes.string.isRequired
     },
 
     closeCallback: function(ev) {
@@ -225,7 +224,7 @@ var IndependentWrapper = React.createClass(
     render: function() {
         /*jshint ignore:start */
         var newChildren = React.Children.map(this.props.children, child => {
-          return React.cloneElement(child, { closeCallback: this.closeCallback })
+          return React.cloneElement(child, { closeCallback: this.closeCallback });
         });
 
         return  (
@@ -240,12 +239,12 @@ var IndependentWrapper = React.createClass(
 
 
 
-var showDialog= function(title,reactComponent, closePromise) {
+export var showDialog= function(title,reactComponent, closePromise) {
 
     var divElement;
     if (!freeElementList.length) {
         var divId= DIALOG_DIV + (idCnt++);
-        divElement= document.createElement("div");
+        divElement= document.createElement('div');
         document.body.appendChild(divElement);
         divElement.id= divId;
     }
@@ -261,15 +260,7 @@ var showDialog= function(title,reactComponent, closePromise) {
     );
 
     React.render(wrapper, divElement);
-}
-
-
-
-//----------------------------------------------------
-//----------------------------------------------------
-//----------------------------------------------------
-
-
+};
 
 
 //----------------------------------------------------
@@ -279,7 +270,7 @@ var showDialog= function(title,reactComponent, closePromise) {
 
 
 
+//----------------------------------------------------
+//----------------------------------------------------
+//----------------------------------------------------
 
-exports.getModal= getModal;
-exports.ModalDialog= ModalDialog;
-exports.showDialog= showDialog;

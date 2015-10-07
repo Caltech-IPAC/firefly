@@ -1,14 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*jshint browserify:true*/
-"use strict";
 
-
-
-import FormActions from '../actions/FormActions.js'
-
-var Promise= require("es6-promise").Promise;
+import FormActions from '../actions/FormActions.js';
+import icepick from 'icepick';
 
 
 
@@ -29,9 +24,9 @@ var Promise= require("es6-promise").Promise;
 class InputFormBaseStore {
 
     constructor() {
-        this.fields= {},
-        this.formValid= false,
-        this.formKey= 'UNKNOWN'
+        this.fields= {};
+        this.formValid= false;
+        this.formKey= 'UNKNOWN';
 
         this.bindListeners({
             updateData: FormActions.valueChange,
@@ -39,7 +34,7 @@ class InputFormBaseStore {
             validateForm : FormActions.validateForm
         });
         this.exportPublicMethods({
-             getResults: this.getResults.bind(this),
+             getResults: this.getResults.bind(this)
            });
     }
 
@@ -64,7 +59,7 @@ class InputFormBaseStore {
 
         fields[payload.fieldKey]=  Object.assign({},fields[payload.fieldKey], payload.fieldState,
             {
-                message :payload.message||"",
+                message :payload.message||'',
                 valid : (payload.hasOwnProperty('valid') ? payload.valid :true),
                 value : payload.newValue,
                 asyncUpdatePromise : payload.asyncUpdatePromise||false,
@@ -103,10 +98,10 @@ class InputFormBaseStore {
         }
         else {
             fields[fieldKey]= Object.assign({},fields[fieldKey], {
-                mounted, value, displayValue,
+                mounted, value, displayValue
             });
         }
-        return false;
+        //return false;
     }
 
 
@@ -132,7 +127,7 @@ class InputFormBaseStore {
                                 fieldKey= result.fieldKey;
                             }
                             else {
-                                throw(new Error('could not find fieldKey from promise results'));
+                                throw new Error('could not find fieldKey from promise results');
                             }
                             var f = fields[fieldKey];
                             return (f.valid !== undefined && f.mounted) ? f.valid : true;

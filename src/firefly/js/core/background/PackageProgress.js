@@ -2,19 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
 /**
  * User: roby
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-"use strict";
-import validator from "validator";
+
+import validator from 'validator';
 
 
-const SPLIT_TOKEN= "--BGProgress--";
+const SPLIT_TOKEN= '--BGProgress--';
 
 class PackageProgress {
     /**
@@ -54,12 +51,13 @@ class PackageProgress {
     isDone() { return this.url?true:false; }
 
     serialize() {
-        var retval= [_totalFiles,
-                     _processedFiles,
-                     _totalBytes,
-                     _processedBytes,
-                     _finalCompressedBytes,
-                     _url].join(SPLIT_TOKEN);
+        var retval= [
+            this.totalFiles,
+            this.processedFiles,
+            this.totalBytes,
+            this.processedBytes,
+            this.finalCompressedBytes,
+            this.url].join(SPLIT_TOKEN);
 
         return retval;
     }
@@ -73,15 +71,16 @@ class PackageProgress {
         if (!s) return null;
         var p= null;
         var sAry= s.split(SPLIT_TOKEN,6);
+        var i = 0;
         if (sAry.length===6) {
             p= new PackageProgress();
-            p._totalFiles= validator.toInt(sAry[i++],0);
-            p._processedFiles= validator.toInt(sAry[i++],0);
-            p._totalBytes= validator.toInt(sAry[i++],0);
-            p._processedBytes= validator.toInt(sAry[i++],0);
-            p._finalCompressedBytes= validator.toInt(sAry[i++],0);
-            if (p._totalFiles && p._processedFiles && p._totalBytes && p._processedBytes && p._finalCompressedBytes) {
-                p._url= sAry[i++];
+            p.totalFiles= validator.toInt(sAry[i++],0);
+            p.processedFiles= validator.toInt(sAry[i++],0);
+            p.totalBytes= validator.toInt(sAry[i++],0);
+            p.processedBytes= validator.toInt(sAry[i++],0);
+            p.finalCompressedBytes= validator.toInt(sAry[i++],0);
+            if (p.totalFiles && p.processedFiles && p.totalBytes && p.processedBytes && p.finalCompressedBytes) {
+                p.url= sAry[i++];
             }
             else {
                 p=null;

@@ -4,6 +4,20 @@
 
 import FieldGroupStore from '../FieldGroupStore.js';
 
+/**
+ * make a promise for this field key to guarantee that all async validation has completed
+ * @param fields the fields
+ * @param fieldKey the field key to convert to non async
+ * @return Promise
+ */
+var makeValidationPromise= function(fields,fieldKey) {
+    if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
+        return fields[fieldKey].asyncUpdatePromise;
+    }
+    else {
+        return Promise.resolve(fieldKey);
+    }
+};
 
 /**
  *
@@ -25,19 +39,19 @@ var validateSingle= function(groupKey, doneCallback) {
                         fieldKey= result.fieldKey;
                     }
                     else {
-                        throw(new Error('could not find fieldKey from promise results'));
+                        throw new Error('could not find fieldKey from promise results');
                     }
                     var f = fields[fieldKey];
                     return (f.valid !== undefined && f.mounted) ? f.valid : true;
                 });
-            doneCallback(valid)
+            doneCallback(valid);
         }
     ).catch(e => console.log(e));
-}
+};
 
 var validateGroup= function(groupKeyAry, doneCallback) {
    //todo
-}
+};
 
 var validate= function(groupKey, doneCallback) {
     if (Array.isArray(groupKey)) {
@@ -46,7 +60,7 @@ var validate= function(groupKey, doneCallback) {
     else {
         validateSingle(groupKey,doneCallback);
     }
-}
+};
 
 
 /**
@@ -61,23 +75,7 @@ var getResults= function(groupKey) {
         request[fieldKey] = fields[fieldKey].value;
     },this);
     return request;
-}
-
-
-
-/**
- * make a promise for this field key to guarantee that all async validation has completed
- * @param fieldKey the field key to convert to non async
- * @return Promise
- */
-var makeValidationPromise= function(fields,fieldKey) {
-    if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
-        return fields[fieldKey].asyncUpdatePromise;
-    }
-    else {
-        return Promise.resolve(fieldKey);
-    }
-}
+};
 
 var FieldGroupUtils= {validate, getResults};
 

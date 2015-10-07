@@ -1,10 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*globals console*/
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
 
 import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
 import _ from 'underscore';
@@ -125,7 +121,7 @@ var PopupPanel= React.createClass(
             //left : '40px',
             //right : '170px'
             left : this.state.posX + 'px',
-            top : this.state.posY + 'px',
+            top : this.state.posY + 'px'
         };
 
 

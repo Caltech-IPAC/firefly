@@ -1,10 +1,7 @@
-"use strict";
-
-
 import React from 'react/addons';
 import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 
-import InputFieldLabel from "./InputFieldLabel.jsx";
+import InputFieldLabel from './InputFieldLabel.jsx';
 
 var RadioGroupInputField= React.createClass(
     {
@@ -18,7 +15,7 @@ var RadioGroupInputField= React.createClass(
         componentWillMount() {
             // if no default value is specified, select the first option
             if (typeof this.state.fieldState.value === 'undefined' || this.state.fieldState.value==='') {
-                this.state.fieldState.value = this.props.options[0]["value"];
+                this.state.fieldState.value = this.props.options[0].value;
             }
         },
 
@@ -38,22 +35,22 @@ var RadioGroupInputField= React.createClass(
 
         render() {
             return (
-                <div style={{whiteSpace:"nowrap"}}>
+                <div style={{whiteSpace:'nowrap'}}>
                     <InputFieldLabel label={this.getLabel()}
                         tooltip={this.getTip()}
                         labelWidth={this.props.labelWidth}
                     />
-                    {this.props.options.map((function(option) {
+                    {this.props.options.map(option => {
                         return <input type="radio"
-                                key={option["value"]}
+                                key={option.value}
                                 name={this.props.fieldKey}
-                                value={option["value"]}
-                                defaultChecked={this.getValue()===option["value"]}
+                                value={option.value}
+                                defaultChecked={this.getValue()===option.value}
                                 onChange={this.onChange}
-                            >&nbsp;{option["label"]}&nbsp;&nbsp;</input>;
-                        }).bind(this))}
+                            >&nbsp;{option.label}&nbsp;&nbsp;</input>;
+                        }).bind(this)}
                 </div>
-            )
+            );
         }
 
 

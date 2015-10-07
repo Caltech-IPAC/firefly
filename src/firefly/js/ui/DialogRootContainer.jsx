@@ -23,7 +23,7 @@ var init= function() {
     document.body.appendChild(divElement);
     divElement.id= DIALOG_DIV;
     initComplete= true;
-}
+};
 
 var DialogRootComponent = React.createClass(
 {
@@ -44,7 +44,7 @@ var PopupStoreConnection = React.createClass(
 
     propTypes: {
         popupPanel   : React.PropTypes.object.isRequired,
-        dialogId   : React.PropTypes.string.isRequired,
+        dialogId   : React.PropTypes.string.isRequired
     },
 
     componentWillMount() { },
@@ -66,13 +66,13 @@ var PopupStoreConnection = React.createClass(
 
     updateVisiiblity() {
         var newVisible= DialogStore.getState().dialogVisibleStatus[this.props.dialogId]? true:false;
-        if (newVisible!=this.state.visible) {
+        if (newVisible !== this.state.visible) {
             this.setState( {visible : newVisible} );
         }
     },
 
     getInitialState() {
-        return { visible: false }
+        return { visible: false };
     },
 
     closeCallback() {
@@ -106,4 +106,4 @@ export var defineDialog= function(dialogId, dialog) {
     if (!initComplete) init();
     dialogs[dialogId]= <PopupStoreConnection popupPanel={dialog} dialogId={dialogId}/>;
     React.render(<DialogRootComponent dialogs={dialogs}/>, divElement);
-}
+};

@@ -1,10 +1,6 @@
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-"use strict";
+import React from 'react/addons';
 
-var React= require('react/addons');
-
-var TargetFeedback = module.exports= React.createClass(
+var TargetFeedback = React.createClass(
 {
 
   mixins : [React.addons.PureRenderMixin],
@@ -12,9 +8,9 @@ var TargetFeedback = module.exports= React.createClass(
 
   render: function() {
       var topDivStyle= {
-          paddingTop: "5px",
-          position: "relative",
-          height : "50px"
+          paddingTop: '5px',
+          position: 'relative',
+          height : '50px'
       };
       var exDivStyle= {
           display : 'inline-block'
@@ -24,7 +20,7 @@ var TargetFeedback = module.exports= React.createClass(
           verticalAlign: 'top'
       };
       var spanPad= {
-          paddingLeft : '15px',
+          paddingLeft : '15px'
       };
 
       var retval;
@@ -32,8 +28,8 @@ var TargetFeedback = module.exports= React.createClass(
           //var makeSpan= function(w) {
           //    return  <span style={{paddingLeft: w+"px"}}/>
           //}
-          var makeSpan= w => {return  <span style={{paddingLeft: w+"px"}}/>}
-          var spanObj= <span style={spanPad}/>
+          var makeSpan= w => {return  <span style={{paddingLeft: w+'px'}}/>; };
+          var spanObj= <span style={spanPad}/>;
           retval= (
              <div  style={topDivStyle}>
                  <div >
@@ -63,6 +59,7 @@ var TargetFeedback = module.exports= React.createClass(
   }
 });
 
+export default TargetFeedback;
 
 //{this.props.feedback}
 //</div>

@@ -1,9 +1,8 @@
 /**
-    * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
-    * @author tatianag
-    */
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ * @author tatianag
+ */
 
-'use strict';
 
 import Enum from 'enum';
 

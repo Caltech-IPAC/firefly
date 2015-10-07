@@ -5,7 +5,7 @@
 /*globals ffgwt */
 /*globals ffgwt.Visualize*/
 
-import ImagePlotsActions from '../actions/ImagePlotsActions.js'
+import ImagePlotsActions from '../actions/ImagePlotsActions.js';
 import alt from '../core/AppAlt.js';
 
 class ImagePlotsStore {
@@ -13,7 +13,7 @@ class ImagePlotsStore {
     constructor() {
         //this.allPlots= ffgwt.Visualize.AllPlots.getInstance();
         this.bindListeners({
-            handleAnyChange: ImagePlotsActions.anyChange,
+            handleAnyChange: ImagePlotsActions.anyChange
         });
     }
 

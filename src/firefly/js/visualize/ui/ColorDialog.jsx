@@ -1,8 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*globals console*/
-/*globals window.ffgwt*/
 
 import React from 'react/addons';
 
@@ -71,7 +69,7 @@ var ColorDialogPanel= React.createClass(
     },
 
     getInitialState() {
-        return {fields : FieldGroupStore.getGroupFields(this.props.groupKey)}
+        return {fields : FieldGroupStore.getGroupFields(this.props.groupKey)};
     },
 
     onClick: function() {

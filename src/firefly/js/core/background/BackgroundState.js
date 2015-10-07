@@ -7,10 +7,9 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-"use strict";
 
 
-import Enum from "enum";
+import Enum from 'enum';
 
 export const BackgroundState  = new Enum([
     /**

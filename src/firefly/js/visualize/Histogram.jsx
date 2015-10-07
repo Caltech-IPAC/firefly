@@ -5,7 +5,6 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-'use strict';
 import React from 'react/addons';
 import Highcharts from 'react-highcharts';
 import numeral from 'numeral';
@@ -15,7 +14,7 @@ import {ServerRequest} from '../data/ServerRequest.js';
 import {getRawDataSet} from '../rpc/SearchServicesJson.js';
 import {parseRawDataSet} from '../util/DataSetParser.js';
 
-module.exports= React.createClass(
+var Histogram = React.createClass(
     {
 
         propTypes: {
@@ -58,9 +57,10 @@ module.exports= React.createClass(
             this.getData(source).then(function (rawDataSet) {
                     let dataSet = parseRawDataSet(rawDataSet);
                     let model = dataSet.getModel();
-                    for (var i = 0; i < model.size(); i++) {
+                    var toNumber = val=>Number(val);
+                    for (let i = 0; i < model.size(); i++) {
                         let arow = model.getRow(i);
-                        extdata.push(arow.map(val=>Number(val)));
+                        extdata.push(arow.map(toNumber));
                     }
                     if (this.isMounted()) {
                         this.setState({
@@ -361,3 +361,5 @@ module.exports= React.createClass(
             /* jshint ignore:end */
         }
     });
+
+export default Histogram;

@@ -74,7 +74,7 @@ export const ServerParams = {
         DESC: 'Desc',
         SPACIAL_TYPE: 'SpacialType',
         URL: 'URL',
-        IP_ADDRESS: "ipAddress",
+        IP_ADDRESS: 'ipAddress',
         SCROLL_X: 'scrollX',
         SCROLL_Y: 'scrollY',
         ZOOM_FACTOR: 'zoomFactor',
@@ -83,7 +83,7 @@ export const ServerParams = {
         EXT_TYPE: 'extType',
         IMAGE: 'image',
         TOOL_TIP:  'toolTip',
-        DS9_REGION_DATA: "ds9RegionData",
+        DS9_REGION_DATA: 'ds9RegionData',
 
 
 

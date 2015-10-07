@@ -2,22 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
+
 
 import Enum from 'enum';
+import {getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
+
+export const PopupRegion = new Enum(['NW_CORNER', 'NE_CORNER', 'SE_CORNER', 'SW_CORNER', 'TITLE_BAR', 'NONE']);
 
 var canExpand= true;
 const MARGIN= 10;
 
 const MOUSE_EV= 'mouse';
 const TOUCH_EV= 'touch';
-
-import {getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
-
-export const PopupRegion = new Enum(['NW_CORNER', 'NE_CORNER', 'SE_CORNER', 'SW_CORNER', 'TITLE_BAR', 'NONE']);
-
 
 export const getPopupPosition= function(e,layoutType) {
 
@@ -39,7 +35,7 @@ export const getPopupPosition= function(e,layoutType) {
 
     return {left, top};
     //return {left : left +"px", top : top+"px"};
-}
+};
 
 
 
@@ -60,7 +56,7 @@ var setCursorShape= function(popup,titleBar,ev) {
     else {
         popup.style.cursor='auto';
     }
-}
+};
 
 export const humanStart= function(ev,popup,titleBar) {
     ev.preventDefault();
@@ -68,7 +64,7 @@ export const humanStart= function(ev,popup,titleBar) {
     var x= ev.clientX;
     var y= ev.clientY;
     var popupRegion= findRegion(popup,titleBar,x,y);
-    console.log('region: ' + popupRegion.key)
+    console.log('region: ' + popupRegion.key);
     var ctx= null;
 
     if (popupRegion===PopupRegion.TITLE_BAR) {
@@ -84,10 +80,10 @@ export const humanStart= function(ev,popup,titleBar) {
         }
     }
     return ctx;
-}
+};
 
 export const humanMove= function(ev,ctx,titleBar) {
-    if (!ctx) return;
+    if (!ctx) return null;
     setCursorShape(ctx.popup,titleBar,ev);
     var x= ev.clientX;
     var y= ev.clientY;
@@ -101,7 +97,7 @@ export const humanMove= function(ev,ctx,titleBar) {
         ev.stopPropagation();
         return moveResize(x,y);
     }
-}
+};
 
 export const humanStop= function(ev,ctx) {
     if (!ctx) return;
@@ -129,7 +125,7 @@ var getAbsoluteX= function(ev) {
         return  ev.targetTouches[0].clientX+document.scrollLeft;
     }
     return 0;
-}
+};
 
 
 var getAbsoluteY= function(ev) {
@@ -140,7 +136,7 @@ var getAbsoluteY= function(ev) {
         return  ev.targetTouches[0].clientY+window.scrollLeft;
     }
     return 0;
-}
+};
 
 /**
  * resize the popup when the browser area is smaller then the popup size
@@ -192,11 +188,11 @@ const beginMove= function(popup, x, y) {
         originalMouseX: x,
         originalMouseY: y
     };
-}
+};
 
 
 const doMove= function(ctx, x, y) {
-    if (!ctx || !ctx.moving) return;
+    if (!ctx || !ctx.moving) return null;
     if (x<0) x= 0;
     if (y<0) y= 0;
     if (ctx) {
@@ -275,14 +271,14 @@ const moveResize= function(ctx, x, y) {
 
         performResize(_expandW, newW,newH);
 
-        if (beginW!=popup.getOffsetWidth()) setPopupPosition(x, _originalY);
+        if (beginW !== popup.getOffsetWidth()) setPopupPosition(x, _originalY);
 
     }
-}
+};
 
 
 const performResize= function(w, width, height) {
-}
+};
 
 
 /**
@@ -324,7 +320,7 @@ var findRegion= function(popup,titleBar,mx, my) {
         }
     }
     return retval;
-}
+};
 
 
 

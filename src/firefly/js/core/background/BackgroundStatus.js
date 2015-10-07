@@ -7,7 +7,6 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-'use strict';
 
 import Enum from 'enum';
 import Point from '../../visualize/Point.js';
@@ -15,7 +14,6 @@ import WebPlotRequest from '../../visualize/WebPlotRequest.js';
 import BackgroundState from './BackgroundState.js';
 import PackageProgress from './PackageProgress.js';
 import ServerRequest from '../../data/ServerRequest.js';
-import ServerRequest from '../../visualize/WebPlotRequest.js';
 import replaceAll from 'underscore.string/replaceAll';
 import words from 'underscore.string/words';
 import validator from 'validator';
@@ -161,7 +159,7 @@ class BackgroundStatus {
     }
 
     /**
-     * @param {BgType} background Type
+     * @param {BgType} type background Type
      */
     setBackgroundType(type) {
         this.params[Keys.TYPE]= type.toString();

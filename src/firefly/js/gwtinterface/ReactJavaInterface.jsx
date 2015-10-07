@@ -2,8 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-'use strict';
-
 import React from 'react/addons';
 import Histogram from '../visualize/Histogram.jsx';
 
@@ -18,15 +16,15 @@ export class ReactJavaInterface {
         var height = (parsedParams.height) ? Number(parsedParams.height) : parsedParams.height;
         /* jshint ignore:start */
         var el;
-        {
-            el = <div><Histogram data={data}
-                                 source={parsedParams.source}
-                                 desc={parsedParams.descr}
-                                 binColor={parsedParams.binColor}
-                                 height={height}
-                                 logs={parsedParams.logs}
-                                 reversed={parsedParams.reversed}/></div>;
-        }
+        //{
+        el = <div><Histogram data={data}
+                             source={parsedParams.source}
+                             desc={parsedParams.descr}
+                             binColor={parsedParams.binColor}
+                             height={height}
+                             logs={parsedParams.logs}
+                             reversed={parsedParams.reversed}/></div>;
+        //}
         if (el) {
             React.render(el, document.getElementById(divName));
         }

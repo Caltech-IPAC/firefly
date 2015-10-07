@@ -6,12 +6,6 @@
  * Date: 3/5/12
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-'use strict';
-
 import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
@@ -56,7 +50,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
         };
         http.get(options, function (res) {
             res.on('data', function (buf) {
-                var result= JSON.parse(buf);
+                var result = JSON.parse(buf);
                 if (result[0].success) {
                     if (result[0].success === 'true') {
                         resolve(result[0].data);
@@ -69,7 +63,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
                     }
                 }
                 else {
-                    reject(new Error('Could not parse: '+ buf));
+                    reject(new Error('Could not parse: ' + buf));
                 }
             });
 
@@ -78,7 +72,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
             res.on('close', function (err) {
                 reject(new Error(err? 'Error Code:' +err.code : 'unknown'));
             });
-        }.bind(this));
+        });
 
     });
 };

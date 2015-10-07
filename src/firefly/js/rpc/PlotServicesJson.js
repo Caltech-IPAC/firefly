@@ -6,17 +6,12 @@
  * Date: 3/5/12
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-"use strict";
 import {ServerParams} from '../data/ServerParams.js';
 import {RawDataSet} from '../data/table/RawDataSet.js';
 import {doService} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
 
-import Enum from "enum";
+import Enum from 'enum';
 
 
 const doJsonP= function() {

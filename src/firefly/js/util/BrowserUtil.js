@@ -5,7 +5,7 @@
 /**
  * Created by roby on 4/3/15.
  */
-'use strict';
+
 /*global __SCRIPT_NAME__*/
 
 const SCRIPT_NAME = __SCRIPT_NAME__;

@@ -8,11 +8,11 @@ import {application} from '../../core/Application.js';
 import Validate from '../../util/Validate.js';
 import InputFormBaseStore from '../';
 import ImagePlotsStore from '../';
-import ImagePlotsActions from '../../actions/ImagePlotsActions.js'
-import RangeValues from '../../visualize/RangeValues.js'
-import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from '../../visualize/RangeValues.js'
-import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../visualize/RangeValues.js'
-import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../../visualize/RangeValues.js'
+import ImagePlotsActions from '../../actions/ImagePlotsActions.js';
+import RangeValues from '../../visualize/RangeValues.js';
+import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from '../../visualize/RangeValues.js';
+import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../visualize/RangeValues.js';
+import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../../visualize/RangeValues.js';
 import {getCurrentPlot} from '../../visualize/VisUtil.js';
 
 var {AllPlots, Band } = ffgwt.Visualize;
@@ -104,21 +104,20 @@ class ColorPanelStore extends InputFormBaseStore {
                 value: '',
                 tooltip: 'Use ZScale for bounds instead of entering them manually ',
                 label : ''
-            },
+            }
         };
         this.formKey = 'BandPanel-'+band.toString();
 
         this.bindListeners({
-            handleImageAnyChange: ImagePlotsActions.anyChange,
+            handleImageAnyChange: ImagePlotsActions.anyChange
         });
     }
 
     handleImageAnyChange(payload) {
-        "use strict";
         var plot= getCurrentPlot();
         if (!plot) return;
 
-        var fitsData= plot.getFitsDataByBand(this.band)
+        var fitsData= plot.getFitsDataByBand(this.band);
         var rvs= plot.getRangeValuesSerialized(this.band);
         var rv= RangeValues.parse(rvs);
 

@@ -2,12 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-"use strict";
-
 import { appFlux } from '../core/Globals.js';
 
 export class ExtensionJavaInterface {

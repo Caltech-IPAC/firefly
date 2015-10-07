@@ -1,10 +1,7 @@
-"use strict";
-
-
-var React= require('react/addons');
+import React from 'react/addons';
 import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 
-import InputFieldLabel from "./InputFieldLabel.jsx";
+import InputFieldLabel from './InputFieldLabel.jsx';
 
 var ListBoxInputField= React.createClass(
     {
@@ -18,8 +15,8 @@ var ListBoxInputField= React.createClass(
 
         componentWillMount() {
             // if no default value is specified, select the first option
-            if (typeof(this.state.fieldState.value) == 'undefined' || this.state.fieldState.value==="") {
-                this.state.fieldState.value = this.props.options[0]["value"];
+            if (typeof this.state.fieldState.value === 'undefined' || this.state.fieldState.value==='') {
+                this.state.fieldState.value = this.props.options[0].value;
             }
         },
 
@@ -53,7 +50,7 @@ var ListBoxInputField= React.createClass(
                 return (typeof curValue === 'string') ? curValue.split(',') : [curValue];
             }
             else {
-                return []
+                return [];
             }
         },
 
@@ -61,7 +58,7 @@ var ListBoxInputField= React.createClass(
         render() {
             var vAry= this.getCurrentValueArr();
             return (
-                <div style={{whiteSpace:"nowrap", display: this.props.inline?'inline-block':'block'}}>
+                <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}}>
                     <InputFieldLabel label={this.getLabel()}
                         tooltip={this.getTip()}
                         labelWidth={this.props.labelWidth}
@@ -77,7 +74,7 @@ var ListBoxInputField= React.createClass(
                         }))}
                     </select>
                 </div>
-            )
+            );
         }
 
 

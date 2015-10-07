@@ -3,31 +3,30 @@
  * @author tatianag
  */
 
-import {HAS_ACCESS_CNAME, TableMeta} from "../data/table/TableMeta.js";
-import {BaseTableColumn, Align} from "../data/table/BaseTableColumn.js";
-import {BaseTableData} from "../data/table/BaseTableData.js";
-import {DataSet} from "../data/table/DataSet.js";
-import {CoordUtil} from "../visualize/CoordUtil.js";
+import {HAS_ACCESS_CNAME, TableMeta} from '../data/table/TableMeta.js';
+import {BaseTableColumn, Align} from '../data/table/BaseTableColumn.js';
+import {BaseTableData} from '../data/table/BaseTableData.js';
+import {DataSet} from '../data/table/DataSet.js';
+import {CoordUtil} from '../visualize/CoordUtil.js';
 
-const LABEL_TAG = "col.@.Label";
-const VISI_TAG = "col.@.Visibility";
-const WIDTH_TAG = "col.@.Width";
-const PREF_WIDTH_TAG = "col.@.PrefWidth";
-const DESC_TAG = "col.@.ShortDescription";
-const UNIT_TAG = "col.@.Unit";
-const ITEMS_TAG = "col.@.Items";
-const SORT_BY_TAG = "col.@.SortByCols";
+const LABEL_TAG = 'col.@.Label';
+const VISI_TAG = 'col.@.Visibility';
+const WIDTH_TAG = 'col.@.Width';
+const PREF_WIDTH_TAG = 'col.@.PrefWidth';
+const DESC_TAG = 'col.@.ShortDescription';
+const UNIT_TAG = 'col.@.Unit';
+const ITEMS_TAG = 'col.@.Items';
+const SORT_BY_TAG = 'col.@.SortByCols';
 
-const RELATED_COLS_TAG = "col.related";
-const GROUPBY_COLS_TAG = "col.groupby";
+const RELATED_COLS_TAG = 'col.related';
+const GROUPBY_COLS_TAG = 'col.groupby';
 
-const VISI_SHOW = "show";
-const VISI_HIDE = "hide";
-const VISI_HIDDEN = "hidden";      // for application use only.
+const VISI_SHOW = 'show';
+const VISI_HIDE = 'hide';
+const VISI_HIDDEN = 'hidden';      // for application use only.
 
 
 export const makeAttribKey = function(tag, colName) {
-    'use strict';
     return tag.replace('@', colName);
 };
 
@@ -36,8 +35,7 @@ export const makeAttribKey = function(tag, colName) {
  * @return {DataSet}
  */
 export const parseRawDataSet = function(raw) {
-    'use strict';
-//        GwtUtil.showScrollingDebugMsg("start parsing raw .. ");
+//        GwtUtil.showScrollingDebugMsg('start parsing raw .. ');
     let dataset = new DataSet();
     dataset.setMeta(raw.meta);
     dataset.setStartingIdx(raw.startingIndex);
@@ -112,7 +110,7 @@ export const parseRawDataSet = function(raw) {
 
         let enumVals = attribs.get( makeAttribKey(ITEMS_TAG, c.getName()) );
         if (enumVals) {
-            c.setEnums(enumVals.split(","));
+            c.setEnums(enumVals.split(','));
         }
 
         let sortBy = attribs.get( makeAttribKey(SORT_BY_TAG, c.getName()) );
@@ -130,20 +128,19 @@ export const parseRawDataSet = function(raw) {
  * @return {BaseTableModel}
  */
 const parseTableModel = function(dataset, lines) {
-    'use strict';
     var data = [];
     var attribs = [];
 
     // TODO: might want to use indexOf for efficiency
     lines.split('\n').forEach(function(s){
         if (s) {
-            if (s.startsWith("\\")) {
-                let kv = s.substring(1).split("=", 2);
-                let ktp = kv[0].trim().split("\\s+", 2);
-                let val = kv.length === 1 ? "" : kv[1].trim();
+            if (s.startsWith('\\')) {
+                let kv = s.substring(1).split('=', 2);
+                let ktp = kv[0].trim().split('\\s+', 2);
+                let val = kv.length === 1 ? '' : kv[1].trim();
                 let key = ktp.length === 1 ? ktp[0] : ktp[1];
                 attribs.push([key, val]);
-            } else if (!s.startsWith("|")) {
+            } else if (!s.startsWith('|')) {
                 let row = getData(dataset.getColumns(), s, true);
                 data.push(row);
             }
@@ -170,16 +167,15 @@ const parseTableModel = function(dataset, lines) {
 };
 
 const parseColumns = function(lines) {
-    'use strict';
     var columns = [];
     var headerLineIdx = 0;
 
     // TODO: might want to use indexOf for efficiency
     lines.split('\n').some(function(line) {
         if (line) {
-            if (line.startsWith("|")) {
+            if (line.startsWith('|')) {
                 if (headerLineIdx === 0) {       // name
-                    let cols = line.split("|");
+                    let cols = line.split('|');
                     cols.forEach(function(col){
                         if (col) {
                             let c = new BaseTableColumn(col.trim());
@@ -187,16 +183,16 @@ const parseColumns = function(lines) {
                             columns.push(c);
 
                             //TODO: remove this code when DB is updated with proper 'format' info
-                            if (col.startsWith("raj2000")) {
-                                c.setUnits("RA");
-                            } else if (col.startsWith("decj2000")) {
-                                c.setUnits("DEC");
+                            if (col.startsWith('raj2000')) {
+                                c.setUnits('RA');
+                            } else if (col.startsWith('decj2000')) {
+                                c.setUnits('DEC');
                             }
                         }
                     });
                 } else if (headerLineIdx === 1) { // type
                     let c = -1;
-                    let cols = line.split("|");
+                    let cols = line.split('|');
                     cols.forEach(function(t) {
                         if (t) {
                             columns[c].setType(t.trim());
@@ -205,7 +201,7 @@ const parseColumns = function(lines) {
                     });
                 } else if (headerLineIdx === 2) { // units
                     let c = -1;
-                    let cols = line.split("|");
+                    let cols = line.split('|');
                     cols.forEach(function(u){
                         if (u) {
                             columns[c].setUnits(u.trim());
@@ -214,14 +210,14 @@ const parseColumns = function(lines) {
                     });
                 }
                 headerLineIdx++;
-            } else if (!line.startsWith("\\")) {
+            } else if (!line.startsWith('\\')) {
                 let data = getData(columns, line, false);
                 for(var i = 0; i < columns.length; i++) {
                     let c = columns[i];
                     let s = data[i];
-                    if(s.startsWith(" ") && s.endsWith(" ")) {
+                    if(s.startsWith(' ') && s.endsWith(' ')) {
                         c.setAlign(Align.CENTER);
-                    } else if (s.startsWith(" ")) {
+                    } else if (s.startsWith(' ')) {
                         c.setAlign(Align.RIGHT);
                     } else {
                         c.setAlign(Align.LEFT);
@@ -244,7 +240,6 @@ const parseColumns = function(lines) {
  * @return {Array}
  */
 const getData = function(columns, line, doTrim) {
-    'use strict';
     var data = new Array(columns.length);
     var beg, end = 0;
     for(var i = 0; i < columns.length; i++) {
@@ -270,7 +265,7 @@ const getData = function(columns, line, doTrim) {
                     }
                 }
             } catch (e) {
-                throw("error in parsing RA/DEC values:" + data[i] + " - " + e);
+                throw 'error in parsing RA/DEC values:' + data[i] + ' - ' + e;
             }
         }
 

@@ -5,11 +5,6 @@
 /**
  * Created by roby on 4/13/15.
  */
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-'use strict';
 
 import { Store } from 'flummox';
 import { ImagePt, WorldPt, ScreenPt } from '../visualize/Point.js';
@@ -62,7 +57,7 @@ export class ExternalAccessStore extends Store {
         }
         /*eslint-enable no-multi-spaces */
 
-        if (this.state.remoteChannel && data.extension.extType!='PLOT_MOUSE_READ_OUT') {
+        if (this.state.remoteChannel && data.extension.extType !== 'PLOT_MOUSE_READ_OUT') {
             reportUserAction(this.state.remoteChannel,'todo- add desc',JSON.stringify(netObj));
             // call remote here
         }

@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * @author tatianag
  */
-'use strict';
 
 import {TableMeta} from './TableMeta.js';
 import {parseHelper, checkNull} from '../../util/StringUtils.js';

@@ -3,8 +3,6 @@
  * @author tatianag
  */
 
-'use strict';
-
 import {parseStringList, parseStringMap} from '../../util/StringUtils.js';
 
 export const HAS_ACCESS_CNAME='hasAccessCName';

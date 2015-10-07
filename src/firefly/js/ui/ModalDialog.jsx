@@ -2,13 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-
-"use strict";
-var React= require("react/addons");
+import React from 'react/addons';
 
 
-var ModalDialog = module.exports= React.createClass({
+var ModalDialog = React.createClass({
     propTypes: {
         title: React.PropTypes.string,
         showOverlay: React.PropTypes.bool,
@@ -70,7 +67,9 @@ var ModalDialog = module.exports= React.createClass({
                     {this.props.children}
                 </div>
             </section>
-        )
+        );
     }
 });
+
+export default ModalDialog;
 

@@ -1,9 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-'use strict';
+
 //var validator= require('validator');
 //var sprintf= require('underscore.string/sprintf');
 import validator from 'validator';
@@ -76,7 +74,7 @@ var validateRange = function(min,max,precision,description,dType, valStr) {
     return retval;
 };
 
-exports.validateEmail = function(description,valStr) {
+export const validateEmail = function(description,valStr) {
     var retval = {
         valid: true,
         message: ''
@@ -88,15 +86,15 @@ exports.validateEmail = function(description,valStr) {
     return retval;
 };
 
-exports.intRange = function(min,max,description, valStr) {
+export const intRange = function(min,max,description, valStr) {
    return validateRange(min,max,null,description,typeInject.asInt,valStr);
 };
 
-exports.floatRange = function(min,max,precision, description, valStr) {
+export const floatRange = function(min,max,precision, description, valStr) {
     return validateRange(min,max,precision,description,typeInject.asFloat,valStr);
 };
 
-exports.isFloat = function(description, valStr) {
+export const isFloat = function(description, valStr) {
     var retval= { valid : true, message : '' };
     if (valStr) {
         if (!validator.isFloat(valStr)) {
@@ -108,7 +106,7 @@ exports.isFloat = function(description, valStr) {
 };
 
 
-exports.isInt = function(description, valStr) {
+export const isInt = function(description, valStr) {
     var retval= { valid : true, message : '' };
     if (valStr) {
         if (!validator.isInt(valStr)) {

@@ -6,17 +6,13 @@
  * Date: 3/5/12
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-"use strict";
 //import {application,NetworkMode} from "../core/Application.js";
 import {ServerParams} from '../data/ServerParams.js';
 import {RawDataSet} from '../data/table/RawDataSet.js';
 import {doService} from '../core/JsonUtils.js';
+import {BackgroundStatus} from '../core/background/BackgroundStatus.js';
 
-import Enum from "enum";
+import Enum from 'enum';
 
 export const DownloadProgress= new Enum(['STARTING', 'WORKING', 'DONE', 'UNKNOWN', 'FAIL']);
 export const ScriptAttributes= new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
@@ -82,7 +78,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
     if (clientRequest !== null) {
         paramList.push({name: ServerParams.CLIENT_REQUEST, value: clientRequest.toString()});
     }
-    paramList.push({name: ServerParams.WAIT_MILS, value: waitMillis + ""});
+    paramList.push({name: ServerParams.WAIT_MILS, value: waitMillis + ''});
 
     return doService(doJsonP(), ServerParams.SUB_BACKGROUND_SEARCH, paramList
     ).then(data => {
@@ -99,7 +95,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
 export const getStatus= function(id, polling) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
-    paramList.push({name: ServerParams.POLLING, value: polling+""});
+    paramList.push({name: ServerParams.POLLING, value: polling+''});
     return doService(doJsonP(), ServerParams.GET_STATUS, paramList
     ).then(data => {return BackgroundStatus.parse(data); });
 };
@@ -234,7 +230,7 @@ export const resendEmail= function(ids, email) {
 export const clearPushEntry= function(id, idx ) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
-    paramList.push({name: ServerParams.IDX, value: idx+""});
+    paramList.push({name: ServerParams.IDX, value: idx+''});
     return doService(doJsonP(), ServerParams.CLEAR_PUSH_ENTRY, paramList
     ).then(data => true);
 };
@@ -252,7 +248,7 @@ export const reportUserAction= function(channel, desc, data) {
     paramList.push({name: ServerParams.DATA, value: data});
     paramList.push({name: ServerParams.DESC, value: desc});
     return doService(doJsonP(), ServerParams.REPORT_USER_ACTION, paramList
-    ).then( data => true);
+    ).then( result => true);
 };
 
 

@@ -3,7 +3,6 @@
  */
 
 //-----------------
-var Promise= require('es6-promise').Promise;
 import PositionParser from '../util/PositionParser';
 import PositionFieldDef from '../data/form/PositionFieldDef';
 import Point from '../visualize/Point';

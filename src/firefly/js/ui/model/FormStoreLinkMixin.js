@@ -5,9 +5,6 @@
 /**
  * Created by roby on 3/5/15.
  */
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-"use strict";
 
 import React from 'react/addons';
 import _ from 'underscore';
@@ -41,17 +38,17 @@ var FormStoreLinkMixin=  {
 
 
     componentWillMount() {
-        this.getMessage= this.getFromStore.bind(this,"message","");
-        this.isValid= this.getFromStore.bind(this,"valid",true);
-        this.isVisible= this.getFromStore.bind(this,"visible",true);
-        this.getValue= this.getFromStore.bind(this,"value","");
+        this.getMessage= this.getFromStore.bind(this,'message','');
+        this.isValid= this.getFromStore.bind(this,'valid',true);
+        this.isVisible= this.getFromStore.bind(this,'visible',true);
+        this.getValue= this.getFromStore.bind(this,'value','');
         this.getDisplayValue= this.getFromStore.bind(this,'displayValue','');
-        this.getTip= this.getFromStore.bind(this,"tooltip","");
-        this.getLabel= this.getFromStore.bind(this,"label",null);
-        this.getLabelWidth= this.getFromStore.bind(this,"labelWidth",undefined);
-        this.getExtraData= this.getFromStore.bind(this,"extraData",{});
-        this.getValidator= this.getFromStore.bind(this,"validator",function() {
-            return {valid:true,message:""};
+        this.getTip= this.getFromStore.bind(this,'tooltip','');
+        this.getLabel= this.getFromStore.bind(this,'label',null);
+        this.getLabelWidth= this.getFromStore.bind(this,'labelWidth',undefined);
+        this.getExtraData= this.getFromStore.bind(this,'extraData',{});
+        this.getValidator= this.getFromStore.bind(this,'validator',function() {
+            return {valid:true,message:''};
         });
     },
 
@@ -83,7 +80,7 @@ var FormStoreLinkMixin=  {
                 fieldKey : this.props.fieldKey,
                 mounted : true,
                 value: this.getValue(),
-                fieldState: this.props.initialState,
+                fieldState: this.props.initialState
             } );
         });
     },
@@ -116,7 +113,7 @@ var FormStoreLinkMixin=  {
         }
     }
 
-}
+};
 
 
 

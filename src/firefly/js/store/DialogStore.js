@@ -3,7 +3,7 @@
  */
 
 import alt from '../core/AppAlt.js';
-import DialogActions from '../actions/DialogActions.js'
+import DialogActions from '../actions/DialogActions.js';
 
 
 
@@ -27,15 +27,15 @@ class DialogStore {
 
     updateStatus(dialogId, visible) {
         if (dialogId in this.dialogVisibleStatus) {
-            if (visible!=this.dialogVisibleStatus[dialogId]) {
+            if (visible !== this.dialogVisibleStatus[dialogId]) {
                 //this.dialogVisibleStatus= {  ...this.dialogVisibleStatus, {dialogId : visible}}
-                this.dialogVisibleStatus= Object.assign({},this.dialogVisibleStatus, {[dialogId] : visible})
+                this.dialogVisibleStatus= Object.assign({},this.dialogVisibleStatus, {[dialogId] : visible});
             }
         }
         else if (visible){
             this.dialogVisibleStatus[dialogId]= true;
             //this.dialogVisibleStatus= {  ...this.dialogVisibleStatus, {dialogId : true}}
-            this.dialogVisibleStatus= Object.assign({},this.dialogVisibleStatus, {[dialogId] : visible})
+            this.dialogVisibleStatus= Object.assign({},this.dialogVisibleStatus, {[dialogId] : visible});
         }
     }
 }

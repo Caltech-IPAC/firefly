@@ -1,6 +1,3 @@
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-
 import PointerPopup from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import React from 'react/addons';
@@ -40,7 +37,7 @@ var InputFieldView = React.createClass(
                infoPopup : false,
                onChange : null,
                warningOffsetX : 0,
-               warningOffsetY : 0,
+               warningOffsetY : 0
            };
        },
 
@@ -141,7 +138,7 @@ var InputFieldView = React.createClass(
             var elemRect = e.getBoundingClientRect();
             var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
             var warningOffsetY = elemRect.top - bodyRect.top;
-            this.setState({warningOffsetX, warningOffsetY} )
+            this.setState({warningOffsetX, warningOffsetY} );
         }
     },
 
