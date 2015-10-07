@@ -48,7 +48,7 @@ var RadioGroupInputField= React.createClass(
                                 defaultChecked={this.getValue()===option.value}
                                 onChange={this.onChange}
                             >&nbsp;{option.label}&nbsp;&nbsp;</input>;
-                        }).bind(this)}
+                        })}
                 </div>
             );
         }
