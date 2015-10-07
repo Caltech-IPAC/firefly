@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
 import FieldGroupActions from '../actions/FieldGroupActions.js';
 import ImagePlotActions from '../actions/ImagePlotsActions.js';
 import alt from '../core/AppAlt.js';
