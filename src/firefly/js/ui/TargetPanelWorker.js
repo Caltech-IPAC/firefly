@@ -160,8 +160,9 @@ var resolveObject = function(posFieldDef) {
                 };
             }
         }
-    ).catch(function() {
-            //console.log('aborted: '+objName);
+    ).catch(function(e) {
+            console.log('aborted: '+objName);
+            console.log(e);
         });
 
     return {p,aborter};
