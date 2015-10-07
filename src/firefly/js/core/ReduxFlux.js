@@ -44,7 +44,7 @@ var flux = {
     },
 
     registerReducer(dataRoot, reducer) {
-        reducers.set(dataRoot, reducer);
+        reducers.set(dataRoot, reducer)
     },
 
     bootstrap() {

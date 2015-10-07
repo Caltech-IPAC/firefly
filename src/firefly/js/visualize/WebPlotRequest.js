@@ -9,7 +9,6 @@
 'use strict';
 
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
-//var ServerRequest=  require('ipac-firefly/data/ServerRequest.js');
 import RequestType from './RequestType.js';
 import ZoomType from './ZoomType.js';
 import Enum from 'enum';

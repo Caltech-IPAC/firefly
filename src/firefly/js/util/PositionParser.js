@@ -1,12 +1,9 @@
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-'use strict';
 
 import {WorldPt} from '../visualize/Point.js';
 import * as StringUtils from './StringUtils.js';
-var CoordinateSys= require('ipac-firefly/visualize/CoordSys.js');
+import CoordinateSys from '../visualize/CoordSys.js';
 
-var PositionParsedInput={Name : 'Name', Position: 'Position'};
+var PositionParsedInput={Name: 'Name', Position:'Position'};
 
 var makePositionParser = function(helper) {
 
@@ -23,8 +20,6 @@ var makePositionParser = function(helper) {
     var _objName = null;
     var _inputType= PositionParsedInput.Position;
     var isValid= false;
-
-
 
     if (helper === null) {
         helper = {

@@ -6,19 +6,15 @@
 /*jshint esnext:true*/
 /*jshint curly:false*/
 
-//import {LayoutType} from 'ipac-firefly/ui/PopupPanel.jsx';
-
 import Enum from 'enum';
-
-"use strict";
 
 var canExpand= true;
 const MARGIN= 10;
 
-const MOUSE_EV= "mouse";
-const TOUCH_EV= "touch";
+const MOUSE_EV= 'mouse';
+const TOUCH_EV= 'touch';
 
-import {getAbsoluteLeft, getAbsoluteTop} from 'ipac-firefly/util/BrowserUtil.js';
+import {getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
 
 export const PopupRegion = new Enum(['NW_CORNER', 'NE_CORNER', 'SE_CORNER', 'SW_CORNER', 'TITLE_BAR', 'NONE']);
 
@@ -28,12 +24,12 @@ export const getPopupPosition= function(e,layoutType) {
     var left= 0;
     var top= 0;
     switch (layoutType.toString()) {
-        case "CENTER" :
+        case 'CENTER' :
             left= window.innerWidth/2 - e.offsetWidth/2;
             top= window.innerHeight/2 - e.offsetHeight/2;
 
             break;
-        case "TOP_CENTER" :
+        case 'TOP_CENTER' :
             left= window.innerWidth/2 - e.offsetWidth/2;
             top= 100;
 
@@ -56,13 +52,13 @@ var setCursorShape= function(popup,titleBar,ev) {
     var y= getAbsoluteY(ev);
     var r= findRegion(popup,titleBar,x,y);
     if (r===PopupRegion.SE_CORNER) {
-        popup.style.cursor="se-resize";
+        popup.style.cursor='se-resize';
     }
     else if (r===PopupRegion.SW_CORNER) {
-        popup.style.cursor="sw-resize";
+        popup.style.cursor='sw-resize';
     }
     else {
-        popup.style.cursor="auto";
+        popup.style.cursor='auto';
     }
 }
 

@@ -14,7 +14,7 @@
 'use strict';
 
 import CoordinateSys from './CoordSys.js';
-import Resolver from 'ipac-firefly/astro/net/Resolver.js';
+import Resolver from '../astro/net/Resolver.js';
 import validator from 'validator';
 
 

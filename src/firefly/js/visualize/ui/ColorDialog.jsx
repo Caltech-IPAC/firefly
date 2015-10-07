@@ -2,21 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 /*globals console*/
-/*globals ffgwt*/
-var React= require('react/addons');
-var Promise= require("es6-promise").Promise;
+/*globals window.ffgwt*/
 
-import {application} from 'ipac-firefly/core/Application.js';
-import InputGroup from '../../ui/InputGroup.jsx';
+import React from 'react/addons';
+
+//import {application} from '../../core/Application.js';
+//import InputGroup from '../../ui/InputGroup.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
 import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
-import Validate from '../../util/Validate.js';
-import ImagePlotsStore from '../../store/ImagePlotsStore.js';
-import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from '../RangeValues.js'
-import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../RangeValues.js'
-import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js'
+//import Validate from '../../util/Validate.js';
+//import ImagePlotsStore from '../../store/ImagePlotsStore.js';
+import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA} from '../RangeValues.js';
+import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../RangeValues.js';
+import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import FieldGroupStore from '../../store/FieldGroupStore.js';
 import FieldGroupActions from '../../actions/FieldGroupActions.js';
 import {defineDialog} from '../../ui/DialogRootContainer.jsx';
@@ -27,10 +27,10 @@ import {RED_PANEL,
         GREEN_PANEL,
         BLUE_PANEL,
         NO_BAND_PANEL,
-        colorPanelChange} from '../../store/visualize/ColorPanelReducer.js'
+        colorPanelChange} from '../../store/visualize/ColorPanelReducer.js';
 
 
-var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
+var {Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 
 class ColorDialog {
@@ -74,7 +74,7 @@ var ColorDialogPanel= React.createClass(
         return {fields : FieldGroupStore.getGroupFields(this.props.groupKey)}
     },
 
-    onClick: function(ev) {
+    onClick: function() {
         this.doClose();
     },
 
@@ -113,7 +113,7 @@ var ColorDialogPanel= React.createClass(
                                     {label: 'Squared',                value: STRETCH_SQUARED },
                                     {label: 'Sqrt',                   value: STRETCH_SQRT},
                                     {label: 'Asinh',                  value: STRETCH_ASINH},
-                                    {label: 'Power Law Gamma',        value: STRETCH_POWERLAW_GAMMA},
+                                    {label: 'Power Law Gamma',        value: STRETCH_POWERLAW_GAMMA}
                                  ]}
                                multiple={false}
                                groupKey={this.props.groupKey}
@@ -122,7 +122,6 @@ var ColorDialogPanel= React.createClass(
     },
 
     getUpperAndLowerFields() {
-        var groupKey= this.props.groupKey;
         return (
             <div>
                 <div style={{ whiteSpace:'no-wrap'}}>
@@ -185,7 +184,7 @@ var ColorDialogPanel= React.createClass(
 
     renderAsinH() {
         var {groupKey}=this.props;
-        var {lowerType,zscale}= FieldGroupStore.getGroupFields(groupKey);
+        var {zscale}= FieldGroupStore.getGroupFields(groupKey);
         var range= (zscale.value==='zscale') ? this.renderZscale() : this.getUpperAndLowerFields();
         return (
             <div>
@@ -200,7 +199,7 @@ var ColorDialogPanel= React.createClass(
 
     renderGamma() {
         var {groupKey}=this.props;
-        var {lowerType,zscale}= FieldGroupStore.getGroupFields(groupKey);
+        var {zscale}= FieldGroupStore.getGroupFields(groupKey);
         var range= (zscale.value==='zscale') ? this.renderZscale() : this.getUpperAndLowerFields();
         return (
             <div>
@@ -213,7 +212,6 @@ var ColorDialogPanel= React.createClass(
 
     renderZscale() {
         var {groupKey}=this.props;
-        var {lowerType}= FieldGroupStore.getGroupFields(groupKey);
         return (
             <div>
                 <ValidationField  labelWidth={LABEL_WIDTH} fieldKey='contrast' groupKey={groupKey} />
@@ -227,7 +225,6 @@ var ColorDialogPanel= React.createClass(
         var groupKey=this.props.groupKey;
         var {algorithm, lowerType, zscale}= FieldGroupStore.getGroupFields(groupKey);
         var a= Number.parseInt(algorithm.value);
-        var lt= Number.parseInt(lowerType.value);
         var panel;
         if (a===STRETCH_ASINH) {
             panel= this.renderAsinH();

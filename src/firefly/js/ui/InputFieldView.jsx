@@ -1,12 +1,11 @@
 /*jshint browserify:true*/
 /*jshint esnext:true*/
 
-'use strict';
-import PointerPopup from 'ipac-firefly/ui/PointerPopup.jsx';
+import PointerPopup from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import React from 'react/addons';
 
-const EXCLAMATION= 'tmp-stuff/exclamation16x16.gif';
+const EXCLAMATION = 'tmp-stuff/exclamation16x16.gif';
 
 var InputFieldView = React.createClass(
 {

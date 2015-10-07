@@ -1,21 +1,19 @@
 /*jshint browserify:true*/
 
 import * as StringUtils from '../../util/StringUtils.js';
+import PositionParser from '../../util/PositionParser.js';
+import CoordinateSys from '../../visualize/CoordSys.js';
+import CoordUtil from '../../visualize/CoordUtil.js';
 
-var uniq= require('uniq');
-var numeral= require('numeral');
+import uniq from 'uniq';
+import numeral from 'numeral';
 
 /**
  * Created by roby on 12/2/14.
  */
 var Vis= (function(retVis) {
-    'use strict';
 
-    //    var StringUtils= require("ipac-firefly/util/StringUtils.js");
     var hasModule = (typeof module !== 'undefined' && module.exports && exports);
-    var PositionParser= require('ipac-firefly/util/PositionParser.js');
-    var CoordinateSys= require('ipac-firefly/visualize/CoordSys.js');
-    var CoordUtil=  require('ipac-firefly/visualize/CoordUtil.js');
 
     var makePositionFieldDef= function(properties) {
         var _parser = PositionParser.makePositionParser(new ClientPositionResolverHelper());
@@ -31,7 +29,7 @@ var Vis= (function(retVis) {
         var validateSoft = function (aValue) {
             var s = (aValue ===null) ? null : aValue.toString();
             return validateInternal(s, false);
-        };
+        }
 
 
         var validate = function (aValue) {

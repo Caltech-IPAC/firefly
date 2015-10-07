@@ -6,9 +6,7 @@
 /*jshint esnext:true*/
 /*jshint curly:false*/
 
-"use strict";
-
-import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from 'ipac-firefly/util/BrowserUtil.js';
+import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
 import _ from 'underscore';
 import Enum from 'enum';
 import React from 'react/addons';
@@ -54,18 +52,18 @@ var PopupPanel= React.createClass(
 
     getInitialState() {
         return {
-            activeLayoutType : LayoutType.NONE,
-            posX : 0,
-            posY : 0
+            activeLayoutType: LayoutType.NONE,
+            posX: 0,
+            posY: 0
             };
     },
 
 
 
     componentWillUnmount() {
-        window.removeEventListener("resize", this.browserResizeCallback);
-        document.removeEventListener("mousemove", this.moveCallback);
-        document.removeEventListener("mouseup", this.buttonUpCallback);
+        window.removeEventListener('resize', this.browserResizeCallback);
+        document.removeEventListener('mousemove', this.moveCallback);
+        document.removeEventListener('mouseup', this.buttonUpCallback);
     },
 
 
@@ -79,9 +77,9 @@ var PopupPanel= React.createClass(
         //_.defer(function() {
         //    this.computeDir(e);
         //}.bind(this));
-        window.addEventListener("resize", this.browserResizeCallback);
-        document.addEventListener("mousemove", this.moveCallback);
-        document.addEventListener("mouseup", this.buttonUpCallback);
+        window.addEventListener('resize', this.browserResizeCallback);
+        document.addEventListener('mousemove', this.moveCallback);
+        document.addEventListener('mouseup', this.buttonUpCallback);
         if (this.props.closePromise) {
             this.props.closePromise.then(()=>  {
                 console.log('now closing dialog');
@@ -92,7 +90,7 @@ var PopupPanel= React.createClass(
 
     doClose() {
         if (this.props.closeCallback) this.props.closeCallback();
-        console.log("close dialog");
+        console.log('close dialog');
     },
 
     dialogMoveStart(ev)  {
@@ -119,7 +117,7 @@ var PopupPanel= React.createClass(
 
     renderAsTopHeader() {
 
-        var rootStyle= {position : 'absolute',
+        var rootStyle= {position: 'absolute',
             //width : "100px",
             //height : "100px",
             //background : 'white',
@@ -132,7 +130,7 @@ var PopupPanel= React.createClass(
 
 
 
-        var title= this.props.title||"";
+        var title= this.props.title||'';
         //var newChildren= React.Children.map(this.props.children, c => {
         //        return React.cloneElement(c, {closeDialog:this.doClose.bind(this)})
         //    })
@@ -165,7 +163,7 @@ var PopupPanel= React.createClass(
                                    onClick={this.doClose} />
 
                         </div>
-                        <div style={{display:"table"}}>
+                        <div style={{display:'table'}}>
                             {this.props.children}
                         </div>
                     </div>

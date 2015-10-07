@@ -10,12 +10,12 @@
 'use strict';
 
 import Enum from 'enum';
-import Point from 'ipac-firefly/visualize/Point.js';
-import WebPlotRequest from 'ipac-firefly/visualize/WebPlotRequest.js';
+import Point from '../../visualize/Point.js';
+import WebPlotRequest from '../../visualize/WebPlotRequest.js';
 import BackgroundState from './BackgroundState.js';
 import PackageProgress from './PackageProgress.js';
-import ServerRequest from 'ipac-firefly/data/ServerRequest.js';
-import ServerRequest from 'ipac-firefly/visualize/WebPlotRequest.js';
+import ServerRequest from '../../data/ServerRequest.js';
+import ServerRequest from '../../visualize/WebPlotRequest.js';
 import replaceAll from 'underscore.string/replaceAll';
 import words from 'underscore.string/words';
 import validator from 'validator';
@@ -29,27 +29,27 @@ const KW_VAL_SEP = '==>>';
 const NO_ID = 'WARNING:_UNKNOWN_PACKAGE_ID';
 
 const Keys= {
-    TYPE : 'TYPE',
-    ID : 'ID',
-    ATTRIBUTE : 'ATTRIBUTES',
-    STATE : 'STATE',
-    DATA_SOURCE : 'DATA_SOURCE',
-    MESSAGE_BASE : 'MESSAGE_',
-    MESSAGE_CNT : 'MESSAGE_CNT',
-    PACKAGE_PROGRESS_BASE : 'PACKAGE_PROGRESS_',
-    PACKAGE_CNT : 'PACKAGE_CNT',
-    CLIENT_REQ : 'CLIENT_REQ',
-    SERVER_REQ : 'SERVER_REQ',
-    WEB_PLOT_REQ : 'WEB_PLOT_REQ',
-    FILE_PATH : 'FILE_PATH',
-    TOTAL_BYTES : 'TOTAL_BYTES',
-    PUSH_DATA_BASE : 'PUSH_DATA_#',
-    PUSH_TYPE_BASE : 'PUSH_TYPE_#',
-    PUSH_CNT :       'PUSH_CNT',
-    USER_RESPONSE :  'USER_RESPONSE_#',
-    USER_DESC     :  'USER_DESC_#',
-    RESPONSE_CNT :   'RESPONSE_CNT',
-    ACTIVE_REQUEST_CNT :'ACTIVE_REQUEST_CNT'
+    TYPE: 'TYPE',
+    ID: 'ID',
+    ATTRIBUTE: 'ATTRIBUTES',
+    STATE: 'STATE',
+    DATA_SOURCE: 'DATA_SOURCE',
+    MESSAGE_BASE: 'MESSAGE_',
+    MESSAGE_CNT: 'MESSAGE_CNT',
+    PACKAGE_PROGRESS_BASE: 'PACKAGE_PROGRESS_',
+    PACKAGE_CNT: 'PACKAGE_CNT',
+    CLIENT_REQ: 'CLIENT_REQ',
+    SERVER_REQ: 'SERVER_REQ',
+    WEB_PLOT_REQ: 'WEB_PLOT_REQ',
+    FILE_PATH: 'FILE_PATH',
+    TOTAL_BYTES: 'TOTAL_BYTES',
+    PUSH_DATA_BASE: 'PUSH_DATA_#',
+    PUSH_TYPE_BASE: 'PUSH_TYPE_#',
+    PUSH_CNT:       'PUSH_CNT',
+    USER_RESPONSE:  'USER_RESPONSE_#',
+    USER_DESC:  'USER_DESC_#',
+    RESPONSE_CNT:   'RESPONSE_CNT',
+    ACTIVE_REQUEST_CNT:'ACTIVE_REQUEST_CNT'
 };
 
 

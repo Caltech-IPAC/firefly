@@ -1,14 +1,6 @@
-/*jshint browserify:true*/
-
-/*jshint curly:false*/
-
-var numeral= require("numeral");
 /**
  * Created by roby on 12/2/14.
  */
-"use strict";
-
-var hasModule = (typeof module !== 'undefined' && module.exports && exports);
 
 var CoordinateSys = function () {
 
@@ -25,35 +17,35 @@ var CoordinateSys = function () {
         };
     };
 
-    var EQ_J2000 = init("EQ_J2000", true);
-    var EQ_B2000 = init("EQ_B2000", true);
-    var EQ_B1950 = init("EQ_B1950", true);
-    var GALACTIC = init("GALACTIC", false);
-    var SUPERGALACTIC = init("SUPERGALACTIC", false);
-    var ECL_J2000 = init("EC_J2000", false);
-    var ECL_B1950 = init("EC_B1950", false);
-    var PIXEL = init("PIXEL", false);
-    var SCREEN_PIXEL = init("SCREEN_PIXEL", false);
-    var UNDEFINED = init("UNDEFINED", false);
+    var EQ_J2000 = init('EQ_J2000', true);
+    var EQ_B2000 = init('EQ_B2000', true);
+    var EQ_B1950 = init('EQ_B1950', true);
+    var GALACTIC = init('GALACTIC', false);
+    var SUPERGALACTIC = init('SUPERGALACTIC', false);
+    var ECL_J2000 = init('EC_J2000', false);
+    var ECL_B1950 = init('EC_B1950', false);
+    var PIXEL = init('PIXEL', false);
+    var SCREEN_PIXEL = init('SCREEN_PIXEL', false);
+    var UNDEFINED = init('UNDEFINED', false);
 
 
     var parse= function(desc) {
         var coordSys;
         if (!desc) return null;
         desc= desc.toUpperCase();
-        if        (desc===EQ_J2000.toString() || desc==="EQJ" || desc==="J2000" ) {
+        if        (desc===EQ_J2000.toString() || desc==='EQJ' || desc==='J2000' ) {
             coordSys = EQ_J2000;
         } else if (desc===EQ_B2000.toString())  {
             coordSys = EQ_B2000;
-        } else if (desc===EQ_B1950.toString() || desc==="EQB" || desc==="B1950" ) {
+        } else if (desc===EQ_B1950.toString() || desc==='EQB' || desc==='B1950' ) {
             coordSys = EQ_B1950;
-        } else if (desc===GALACTIC.toString() || desc==="GAL") {
+        } else if (desc===GALACTIC.toString() || desc==='GAL') {
             coordSys = GALACTIC;
         } else if (desc===SUPERGALACTIC.toString()) {
             coordSys = SUPERGALACTIC;
-        } else if (desc===ECL_J2000.toString() || desc==="ECJ") {
+        } else if (desc===ECL_J2000.toString() || desc==='ECJ') {
             coordSys = ECL_J2000;
-        } else if (desc===ECL_B1950.toString() || desc==="ECB") {
+        } else if (desc===ECL_B1950.toString() || desc==='ECB') {
             coordSys = ECL_B1950;
         } else {
             coordSys = null;

@@ -5,7 +5,7 @@
 'use strict';
 
 import React from 'react/addons';
-import Histogram from 'ipac-firefly/visualize/Histogram.jsx';
+import Histogram from '../visualize/Histogram.jsx';
 
 export class ReactJavaInterface {
     constructor() {}

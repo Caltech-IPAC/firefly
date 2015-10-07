@@ -2,7 +2,7 @@
 
 
 var React= require('react/addons');
-var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
+import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 
 import InputFieldLabel from "./InputFieldLabel.jsx";
 

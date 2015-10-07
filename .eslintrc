@@ -28,11 +28,12 @@
   },
   "rules": {
     "semi": 1,
-    "curly": [2,"multi"],
+    "curly": [2,"multi-line"],
     "quotes" : [2, "single", "avoid-escape"],
-    "space-infix-ops" : 2,
-    "comma-spacing" : 2,
-    "key-spacing" : 2
+    "space-infix-ops" : 0,
+    "comma-spacing" : 0,
+    "key-spacing" : 0,
+    "no-multi-spaces" : 0
 //    "global-strict" : 2 (deprecated)
 
 //    "react/display-name": 1,

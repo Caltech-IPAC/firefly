@@ -12,9 +12,9 @@
 
 'use strict';
 
-import { getRootURL, getRootPath, getHost, getPort } from 'ipac-firefly/util/BrowserUtil.js';
-import { encodeServerUrl } from 'ipac-firefly/util/WebUtil.js';
-import {ServerParams} from 'ipac-firefly/data/ServerParams.js';
+import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
+import { encodeServerUrl } from '../util/WebUtil.js';
+import {ServerParams} from '../data/ServerParams.js';
 import http from 'http';
 //var http= require('http');
 

@@ -6,7 +6,7 @@ import toBoolean from 'underscore.string/toBoolean';
 import replaceAll from 'underscore.string/replaceAll';
 import words from 'underscore.string/words';
 import validator from 'validator';
-import Point from 'ipac-firefly/visualize/Point.js';
+import Point from '../visualize/Point.js';
 
 
 const REQUEST_CLASS= 'RequestClass';

@@ -1,23 +1,23 @@
 "use strict";
 
 
-var React= require('react/addons');
-var FormStoreLinkMixin = require('ipac-firefly/ui/model/FormStoreLinkMixin.js');
+import React from 'react/addons';
+import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 
 import InputFieldLabel from "./InputFieldLabel.jsx";
 
 var RadioGroupInputField= React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+        mixins: [React.addons.PureRenderMixin, FormStoreLinkMixin],
 
         propTypes: {
-            options : React.PropTypes.array.isRequired
+            options: React.PropTypes.array.isRequired
         },
 
 
         componentWillMount() {
             // if no default value is specified, select the first option
-            if (typeof(this.state.fieldState.value) == 'undefined' || this.state.fieldState.value==="") {
+            if (typeof this.state.fieldState.value === 'undefined' || this.state.fieldState.value==='') {
                 this.state.fieldState.value = this.props.options[0]["value"];
             }
         },

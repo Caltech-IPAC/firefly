@@ -13,7 +13,7 @@
 
 import { Store } from 'flummox';
 import { ImagePt, WorldPt, ScreenPt } from '../visualize/Point.js';
-import {reportUserAction} from 'ipac-firefly/rpc/SearchServicesJson.js';
+import {reportUserAction} from '../rpc/SearchServicesJson.js';
 
 
 

@@ -4,44 +4,44 @@
 
 import React from 'react/addons';
 var Promise= require("es6-promise").Promise;
-import {defineDialog} from './DialogRootContainer.jsx';
+import { defineDialog } from './DialogRootContainer.jsx';
 import DialogActions from '../actions/DialogActions.js';
-import FieldGroupUtils from 'ipac-firefly/store/util/FieldGroupUtils.js';
+import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
 
 var CompleteButton = React.createClass(
    {
 
        propTypes: {
-           onFail       : React.PropTypes.func,
-           onSuccess    : React.PropTypes.func,
-           groupKey     : React.PropTypes.any,
-           text         : React.PropTypes.string,
-           closeOnValid : React.PropTypes.bool,
-           dialogId     : React.PropTypes.string
+           onFail: React.PropTypes.func,
+           onSuccess: React.PropTypes.func,
+           groupKey: React.PropTypes.any,
+           text: React.PropTypes.string,
+           closeOnValid: React.PropTypes.bool,
+           dialogId: React.PropTypes.string
        },
 
        getDefaultProps() {
            return {
-               text : 'OK',
-               closeOnValid : true,
-               dialogId    : null
+               text: 'OK',
+               closeOnValid: true,
+               dialogId: null
            };
 
        },
 
 
        validUpdate(valid) {
-           var {onSuccess, onFail, groupKey, dialogId}= this.props;
-           var funcToCall= valid? onSuccess : onFail;
+           var {onSuccess, onFail, groupKey, dialogId} = this.props;
+           var funcToCall = valid ? onSuccess : onFail;
 
            if (valid && dialogId) DialogActions.hideDialog({dialogId});
 
            if (Array.isArray(groupKey)) {
-               var requestAry= groupKey.map( (key) => FieldGroupUtils.getResults(key));
+               var requestAry = groupKey.map( (key) => FieldGroupUtils.getResults(key));
                funcToCall(requestAry)
            }
            else {
-               var request= FieldGroupUtils.getResults(groupKey);
+               var request = FieldGroupUtils.getResults(groupKey);
                funcToCall(request)
            }
        },

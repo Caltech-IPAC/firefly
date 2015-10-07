@@ -10,8 +10,8 @@
 /*jshint curly:false*/
 /*globals window*/
 
-'use strict';
 
+import React from 'react/addons';
 import 'babel/polyfill';
 
 import AppAlt from './AppAlt.js';
@@ -22,8 +22,8 @@ import {ExtensionJavaInterface } from '../gwtinterface/ExtensionJavaInterface.js
 import {ExtensionResult } from '../gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from '../visualize/PlotCmdExtension.js';
 import {ReactJavaInterface } from '../gwtinterface/ReactJavaInterface.jsx';
-import ColorDialog from "../visualize/ui/ColorDialog.jsx";
-import ExampleDialog  from "../ui/ExampleDialog.jsx";
+import ColorDialog from '../visualize/ui/ColorDialog.jsx';
+import ExampleDialog  from '../ui/ExampleDialog.jsx';
 
 import {ServerRequest } from '../data/ServerRequest.js';
 import {getJsonData } from '../rpc/SearchServicesJson.js';

@@ -4,7 +4,7 @@
 
 /*globals ffgwt*/
 
-import {application} from 'ipac-firefly/core/Application.js';
+import {application} from '../../core/Application.js';
 import Validate from '../../util/Validate.js';
 import InputFormBaseStore from '../';
 import ImagePlotsStore from '../';

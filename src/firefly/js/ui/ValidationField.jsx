@@ -5,7 +5,7 @@ import React from 'react/addons';
 
 /*eslint-disable no-unused-vars */
 import InputFieldView from './InputFieldView.jsx';
-import FormStoreLinkMixin from 'ipac-firefly/ui/model/FormStoreLinkMixin.js';
+import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
 /*eslint-enable no-unused-vars */
 
 

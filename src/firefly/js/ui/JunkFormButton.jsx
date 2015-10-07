@@ -2,21 +2,20 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-"use strict";
 var React= require('react/addons');
 var Promise= require("es6-promise").Promise;
 import FieldGroupActions from '../actions/FieldGroupActions.js';
 import {defineDialog} from './DialogRootContainer.jsx';
 import DialogActions from '../actions/DialogActions.js';
 import PopupPanel from './PopupPanel.jsx';
-import FieldGroupUtils from 'ipac-firefly/store/util/FieldGroupUtils.js';
+import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
 
 
 var JunkFormButton = module.exports= React.createClass(
    {
 
        validUpdate(valid) {
-           var statStr= "validate state: "+ valid;
+           var statStr= "validate state: " + valid;
            var request= FieldGroupUtils.getResults(this.props.groupKey);
            console.log(statStr);
            console.log(request);

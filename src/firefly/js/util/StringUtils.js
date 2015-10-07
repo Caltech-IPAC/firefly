@@ -5,8 +5,6 @@ import validator from 'validator';
  * Created by roby on 12/2/14.
  */
 
-'use strict';
-
 
 export function matches(s, regExp, ignoreCase) {
     if (s === null) {
