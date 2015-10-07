@@ -6,9 +6,9 @@
  */
 
 
-import flux from 'firefly/core/ReduxFlux.js';
-import tableApi from 'firefly/util/api.js';
+import Flux from './core/ReduxFlux.js';
 
+export var flux = Flux;
 
 var firefly = {
     registerAction(type, actionCreator) {
@@ -22,9 +22,7 @@ var firefly = {
     bootstrap() {
         return flux.bootstrap();
     },
-    showTable() {
-        tableApi.showTabl();
-    }
+
 }
 
 export default firefly;

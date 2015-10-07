@@ -5,8 +5,9 @@ import path from 'path';
 import fs from 'fs';
 
 
+/* global config:true */
 
-var exclude_dirs = [/node_modules/,/java/, /python/, /config/, /test/];
+var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
 config.firefly_dir = config.firefly_dir || config.src;
 config.project = config.project || path.resolve(config.src, '../../');
 
@@ -178,11 +179,6 @@ if (config.do_lint) {
             test : /\.(js|jsx)$/,
             exclude: exclude_dirs,
             loaders : ['eslint-loader']
-        },
-        {
-            test: /\.js$/, // include .js files
-            exclude: exclude_dirs,
-            loader: "jshint-loader"
         }
     ];
 }
