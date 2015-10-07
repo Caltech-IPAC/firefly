@@ -10,15 +10,11 @@
 /*jshint esnext:true*/
 /*jshint curly:false*/
 
-'use strict';
-
 import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import http from 'http';
 //var http= require('http');
-
-//var Promise= require('es6-promise').Promise;
 
 const TIMEOUT = 10 * 60 * 1000;  // 10 min
 const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';

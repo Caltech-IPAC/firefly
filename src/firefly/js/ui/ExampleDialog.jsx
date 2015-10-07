@@ -7,8 +7,6 @@
  */
 /*globals console*/
 /*globals ffgwt*/
-var Promise= require("es6-promise").Promise;
-
 import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';

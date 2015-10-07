@@ -2,15 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 /*jshint browserify:true*/
-"use strict";
-
-
-
 import FormActions from '../actions/FormActions.js'
-
-var Promise= require("es6-promise").Promise;
-
-
 
 //var Field= exports.Fields = AmpersandState.extend({
 //    props: {

@@ -3,8 +3,6 @@
  */
 
 import React from 'react/addons';
-var Promise= require("es6-promise").Promise;
-import { defineDialog } from './DialogRootContainer.jsx';
 import DialogActions from '../actions/DialogActions.js';
 import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
 
@@ -38,11 +36,11 @@ var CompleteButton = React.createClass(
 
            if (Array.isArray(groupKey)) {
                var requestAry = groupKey.map( (key) => FieldGroupUtils.getResults(key));
-               funcToCall(requestAry)
+               funcToCall(requestAry);
            }
            else {
                var request = FieldGroupUtils.getResults(groupKey);
-               funcToCall(request)
+               funcToCall(request);
            }
        },
 
@@ -51,10 +49,10 @@ var CompleteButton = React.createClass(
            return { };
        },
 
-       onClick(ev) {
+       onClick() {
            var {onSuccess, groupKey, dialogId}= this.props;
            if (groupKey) {
-               FieldGroupUtils.validate(this.props.groupKey, this.validUpdate)
+               FieldGroupUtils.validate(this.props.groupKey, this.validUpdate);
            }
            else {
                if (onSuccess) onSuccess();

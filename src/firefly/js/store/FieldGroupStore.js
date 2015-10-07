@@ -1,16 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*jshint browserify:true*/
-"use strict";
-
-
-
 import FieldGroupActions from '../actions/FieldGroupActions.js'
 import ImagePlotActions from '../actions/ImagePlotsActions.js'
 import alt from '../core/AppAlt.js';
-
-var Promise= require("es6-promise").Promise;
 
 
 
@@ -115,7 +108,7 @@ class FieldGroupStore {
 
         fields[payload.fieldKey]=  Object.assign({},fields[payload.fieldKey], payload.fieldState,
             {
-                message :payload.message||"",
+                message :payload.message||'',
                 valid : (payload.hasOwnProperty('valid') ? payload.valid :true),
                 value : payload.newValue,
                 asyncUpdatePromise : payload.asyncUpdatePromise||false,
@@ -158,13 +151,12 @@ class FieldGroupStore {
         }
         else {
             fields[fieldKey]= Object.assign({},fields[fieldKey], {
-                mounted, value, displayValue,
+                mounted, value, displayValue
             });
         }
         if (typeof fields[fieldKey].valid === 'undefined') {
             fields[fieldKey].valid= true;
         }
-        return false;
     }
 
     /**

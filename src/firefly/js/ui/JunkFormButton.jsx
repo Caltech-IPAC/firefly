@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-var React= require('react/addons');
-var Promise= require("es6-promise").Promise;
+import React from 'react/addons';
 import FieldGroupActions from '../actions/FieldGroupActions.js';
 import {defineDialog} from './DialogRootContainer.jsx';
 import DialogActions from '../actions/DialogActions.js';
