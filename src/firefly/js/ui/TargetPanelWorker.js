@@ -51,7 +51,7 @@ var makeResolverPromise= function(objName) {
 
 
 
-var makeSearchPromise= function(objName) {
+function makeSearchPromise(objName) {
     var rejectFunc= null;
     var url= '/fftools/sticky/CmdSrv?objName='+objName+'&resolver=nedthensimbad&cmd=CmdResolveName';
     var searchPromise= new Promise(
@@ -68,7 +68,7 @@ var makeSearchPromise= function(objName) {
         rejectFunc= reject;
     });
     return {p:Promise.race([searchPromise,abortPromise]), rejectFunc};
-};
+}
 
 
 

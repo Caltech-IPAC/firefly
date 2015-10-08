@@ -51,7 +51,7 @@ const Keys= {
 };
 
 
-class BackgroundStatus {
+export class BackgroundStatus {
 
     constructor(id, state, type, inParams) {
         this.params= {};

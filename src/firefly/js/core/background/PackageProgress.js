@@ -13,7 +13,7 @@ import validator from 'validator';
 
 const SPLIT_TOKEN= '--BGProgress--';
 
-class PackageProgress {
+export class PackageProgress {
     /**
      *
      * @param {number} totalFiles

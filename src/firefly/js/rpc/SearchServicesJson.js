@@ -23,7 +23,7 @@ const doJsonP= function() {
 };
 
 //TODO: convert FileStatus
-//TODO: convert BackgroundSTAtus
+//TODO: convert BackgroundStatus
 
 /**
  *
@@ -52,23 +52,28 @@ export const getJsonData = function(request) {
 };
 
 /**
- *
- * @param filePath
+ * TODO: this functions requires FileStatus to be ported first
+ * @param {string} filePath
  * @return {Promise}
  */
 export const getFileStatus= function(filePath) {
     var paramList = [];
     paramList.push({name:ServerParams.SOURCE, value:filePath});
 
+    //todo port FileStatus then uncoment
+    //return doService(doJsonP(), ServerParams.CHK_FILE_STATUS, paramList
+    //).then(data => {return FileStatus.parse(data); });
+
+    //todo port FileStatus then delete the following two lines
     return doService(doJsonP(), ServerParams.CHK_FILE_STATUS, paramList
-    ).then(data => {return FileStatus.parse(data); });
+    ).then( () => false );
 };
 
 /**
  *
- * @param request
- * @param clientRequest
- * @param waitMillis
+ * @param {ServerRequest} request
+ * @param {ServerRequest} clientRequest
+ * @param {number} waitMillis
  * @return {Promise}
  */
 export const submitBackgroundSearch= function(request, clientRequest, waitMillis) {
