@@ -3,7 +3,7 @@
  */
 
 import join from 'underscore.string/join';
-import {parseInt, parseBoolean, getStringWithNull} from '../util/StringUtils.js';
+import {parseInt, getStringWithNull} from '../util/StringUtils.js';
 
 const THUMB_URL_TOKEN= '--ThumbURL--';
 
@@ -22,8 +22,7 @@ class ThumbURL {
     }
 
     toString() {
-        return join(IMAGE_URL_TOKEN,
-            this.url, this.width, this.height);
+        return join(THUMB_URL_TOKEN, this.url, this.width, this.height);
     }
 
     static parse(s) {

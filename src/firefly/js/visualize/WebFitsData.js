@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-const SPLIT_TOKEN= "--WebFitsData--";
+const SPLIT_TOKEN= '--WebFitsData--';
 import join from 'underscore.string/join';
-import {parseInt, parseFloat, checkNull,getStringWithNull } from '../util/StringUtils.js';
+import {parseInt, parseFloat, getStringWithNull } from '../util/StringUtils.js';
 
 class WebFitsData {
 
@@ -29,13 +29,13 @@ class WebFitsData {
     static parse(s) {
         if (s==null) return null;
         var  sAry= s.split(SPLIT_TOKEN,5);
-        if (sAry.length!=4) return null;
+        if (sAry.length!==4) return null;
 
         var i= 0;
         const dataMin= parseFloat(sAry[i++], 0);
         const dataMax= parseFloat(sAry[i++], 0);
         const fitsFileSize= parseInt(sAry[i++], 0);
-        const fluxUnits= getStringWithNull(sAry[i], 0);;
+        const fluxUnits= getStringWithNull(sAry[i], 0);
         return new WebFitsData(dataMin,dataMax,fitsFileSize,fluxUnits);
     }
 }

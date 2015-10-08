@@ -162,7 +162,7 @@ var resolveObject = function(posFieldDef) {
         }
     ).catch(function(e) {
             console.log('aborted: '+objName);
-            console.log(e);
+            console.error(e);
         });
 
     return {p,aborter};

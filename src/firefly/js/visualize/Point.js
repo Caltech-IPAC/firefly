@@ -8,10 +8,6 @@
 /**
  * Created by roby on 12/2/14.
  */
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-'use strict';
 
 import CoordinateSys from './CoordSys.js';
 import Resolver from '../astro/net/Resolver.js';
@@ -29,7 +25,7 @@ import validator from 'validator';
 //    return retval;
 //};
 
-class Pt {
+export class Pt {
     constructor(x,y) {
         this.x= x;
         this.y= y;
@@ -46,7 +42,7 @@ class Pt {
     }
 }
 
-class ImagePt extends Pt {
+export class ImagePt extends Pt {
     constructor(x,y) {
         super(x,y);
     }
@@ -56,7 +52,7 @@ class ImagePt extends Pt {
     }
 }
 
-class ScreenPt extends Pt {
+export class ScreenPt extends Pt {
     constructor(x,y) {
         super(x,y);
     }
@@ -68,7 +64,7 @@ class ScreenPt extends Pt {
 
 
 
-class ImageWorkSpacePt extends Pt {
+export class ImageWorkSpacePt extends Pt {
     constructor(x,y) {
         super(x,y);
     }
@@ -104,9 +100,9 @@ class ImageWorkSpacePt extends Pt {
     //
     //};
 
-var makeWorldPt = function (params) {
-    return new WorldPt(params.params.lon,params.lat);
-};
+//var makeWorldPt = function (params) {
+//    return new WorldPt(params.params.lon,params.lat);
+//};
 
     /**
      * WorldPt constructor
@@ -119,7 +115,7 @@ var makeWorldPt = function (params) {
      * @param {string} [objName] - the object name the was used for name resolution
      * @param {Resolver} [resolver] - the resolver use to return this point
      */
-    class WorldPt extends Pt {
+    export class WorldPt extends Pt {
         constructor(lon,lat,coordSys,objName,resolver) {
             super(lon,lat);
 
@@ -187,7 +183,7 @@ var makeWorldPt = function (params) {
      * @param serializedWP
      * @return {WorldPt}
      */
-    var parseWorldPt = function (serializedWP) {
+    export var parseWorldPt = function (serializedWP) {
 
 
         function stringAryToWorldPt(wpParts) {
@@ -231,12 +227,5 @@ var makeWorldPt = function (params) {
         return stringAryToWorldPt(sAry);
     };
 
-
-
-exports.WorldPt= WorldPt;
-exports.ImagePt= ImagePt;
-exports.ScreenPt= ScreenPt;
-exports.ImageWorkSpacePt= ImageWorkSpacePt;
-exports.Pt= Pt;
-exports.parseWorldPt= parseWorldPt;
-
+var Point = { WorldPt, ImagePt, ScreenPt, ImageWorkSpacePt, Pt, parseWorldPt };
+export default Point;

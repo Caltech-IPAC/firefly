@@ -1,22 +1,17 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-/*globals ffgwt*/
 
 /**
  * Shared by client and server
  *
  * @author Trey Roby
  */
-"use strict";
 
 
-import Enum from "enum";
-import {WorldPt,Pt,ImageWorkSpacePt} from "./Point.js";
-import CoordinateSys from "./CoordSys.js";
+import Enum from 'enum';
+import {WorldPt,ImageWorkSpacePt} from './Point.js';
+import CoordinateSys from './CoordSys.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -25,7 +20,7 @@ export const DtoR = Math.PI / 180.0;
 export const RtoD = 180.0 / Math.PI;
 
 
-const FullType= new Enum(["ONLY_WIDTH", "WIDTH_HEIGHT", "ONLY_HEIGHT", "SMART"]);
+const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
 
 
 //======================================================================
@@ -79,9 +74,6 @@ export const computeSimpleDistance= function(p1, p2) {
 };
 
 
-export const convertToJ2000= function(wpt) {
-    return convert(wpt, CoordinateSys.EQ_J2000);
-};
 
     /**
      * Convert from one coordinate system to another.
@@ -106,6 +98,9 @@ export const convert= function(wpt, to) {
     return retval;
 };
 
+export const convertToJ2000= function(wpt) {
+    return convert(wpt, CoordinateSys.EQ_J2000);
+};
 
 /**
  * Find an approximate central point and search radius for a group of positions
@@ -116,37 +111,37 @@ export const convert= function(wpt, to) {
 export const computeCentralPointAndRadius= function(inPoints) {
     var lon, lat;
     var radius;
-    var max_radius = Number.NEGATIVE_INFINITY;
+    var maxRadius = Number.NEGATIVE_INFINITY;
 
     var points= inPoints.map(wp => convertToJ2000(wp));
 
 
     /* get max,min of lon and lat */
-    var max_lon = Number.NEGATIVE_INFINITY;
-    var min_lon = Number.POSITIVE_INFINITY;
-    var max_lat = Number.NEGATIVE_INFINITY;
-    var min_lat = Number.POSITIVE_INFINITY;
+    var maxLon = Number.NEGATIVE_INFINITY;
+    var minLon = Number.POSITIVE_INFINITY;
+    var maxLat = Number.NEGATIVE_INFINITY;
+    var minLat = Number.POSITIVE_INFINITY;
 
     points.forEach(pt => {
-        if (pt.getLon() > max_lon) {
-            max_lon = pt.getLon();
+        if (pt.getLon() > maxLon) {
+            maxLon = pt.getLon();
         }
-        if (pt.getLon() < min_lon) {
-            min_lon = pt.getLon();
+        if (pt.getLon() < minLon) {
+            minLon = pt.getLon();
         }
-        if (pt.getLat() > max_lat) {
-            max_lat = pt.getLat();
+        if (pt.getLat() > maxLat) {
+            maxLat = pt.getLat();
         }
-        if (pt.getLat() < min_lat) {
-            min_lat = pt.getLat();
+        if (pt.getLat() < minLat) {
+            minLat = pt.getLat();
         }
     });
-    if (max_lon - min_lon > 180) {
-        min_lon = 360 + min_lon;
+    if (maxLon - minLon > 180) {
+        minLon = 360 + minLon;
     }
-    lon = (max_lon + min_lon) / 2;
+    lon = (maxLon + minLon) / 2;
     if (lon > 360) lon -= 360;
-    lat = (max_lat + min_lat) / 2;
+    lat = (maxLat + minLat) / 2;
 
     var centralPoint = new WorldPt(lon, lat);
 
@@ -154,13 +149,13 @@ export const computeCentralPointAndRadius= function(inPoints) {
     points.forEach(pt => {
         radius = computeDistance(centralPoint,
                                  new WorldPt(pt.getLon(), pt.getLat()));
-        if (max_radius < radius) {
-            max_radius = radius;
+        if (maxRadius < radius) {
+            maxRadius = radius;
         }
 
     });
 
-    return {centralPoint, max_radius};
+    return {centralPoint, maxRadius};
 };
 
 
@@ -219,7 +214,7 @@ export const getPositionAngle= function(ra0, dec0, ra, dec) {
  * @return WorldPt of the new object
  */
 export const getNewPosition= function(ra, dec, dist, phi) {
-    var tmp, newdec, delta_ra;
+    var tmp, newdec, deltaRa;
     var ra1, dec1;
 
     ra *= DtoR;
@@ -233,11 +228,13 @@ export const getNewPosition= function(ra, dec, dist, phi) {
 
     tmp = Math.cos(dist) * Math.cos(dec) - Math.sin(dist) * Math.sin(dec) * Math.cos(phi);
     tmp /= Math.cos(newdec);
-    delta_ra = Math.acos(tmp);
-    if (Math.sin(phi) < 0.0)
-        ra1 = ra - delta_ra;
-    else
-        ra1 = ra + delta_ra;
+    deltaRa = Math.acos(tmp);
+    if (Math.sin(phi) < 0.0) {
+        ra1 = ra - deltaRa;
+    }
+    else {
+        ra1 = ra + deltaRa;
+    }
     ra1 *= RtoD;
     return new WorldPt(ra1, dec1);
 };
@@ -373,15 +370,15 @@ export const containsCircle= function(x, y, centerX, centerY, radius) {
 
 export const getArrowCoords= function(x1, y1, x2, y2) {
 
-    var barb_length = 10;
+    var barbLength = 10;
 
     /* compute shaft angle from arrowhead to tail */
-    var delta_y = y2 - y1;
-    var delta_x = x2 - x1;
-    var shaft_angle = Math.atan2(delta_y, delta_x);
-    var barb_angle = shaft_angle - 20 * Math.PI / 180; // 20 degrees from shaft
-    var barbX = x2 - barb_length * Math.cos(barb_angle);  // end of barb
-    var barbY = y2 - barb_length * Math.sin(barb_angle);
+    var deltaY = y2 - y1;
+    var deltaX = x2 - x1;
+    var shaftAngle = Math.atan2(deltaY, deltaX);
+    var barbAngle = shaftAngle - 20 * Math.PI / 180; // 20 degrees from shaft
+    var barbX = x2 - barbLength * Math.cos(barbAngle);  // end of barb
+    var barbY = y2 - barbLength * Math.sin(barbAngle);
 
     var extX = x2 + 6;
     var extY = y2 + 6;
@@ -425,10 +422,10 @@ export const getCurrentPlot= function() {
     var retval= null;
     var mpw= AllPlots.getInstance().getMiniPlotWidget();
     if (mpw) {
-        retval= mpw.getCurrentPlot()
+        retval= mpw.getCurrentPlot();
     }
     return retval;
-}
+};
 
 /**
  *
@@ -466,42 +463,44 @@ export const calculatePosition= function(pos1, offsetRa, offsetDec ) {
         var de = Math.toRadians(offsetRa/3600.0); // east
         var dn = Math.toRadians(offsetDec)/3600.0; // north
 
-        var cos_ra,sin_ra,cos_dec,sin_dec;
-        var cos_de,sin_de,cos_dn,sin_dn;
+        var cosRa,sinRa,cosDec,sinDec;
+        var cosDe,sinDe,cosDn,sinDn;
         var rhat= [];
         var shat= [];
         var uhat= [];
         var uxy;
         var ra2, dec2;
 
-        cos_ra  = Math.cos(ra);
-        sin_ra  = Math.sin(ra);
-        cos_dec = Math.cos(dec);
-        sin_dec = Math.sin(dec);
+        cosRa  = Math.cos(ra);
+        sinRa  = Math.sin(ra);
+        cosDec = Math.cos(dec);
+        sinDec = Math.sin(dec);
 
-        cos_de = Math.cos(de);
-        sin_de = Math.sin(de);
-        cos_dn = Math.cos(dn);
-        sin_dn = Math.sin(dn);
+        cosDe = Math.cos(de);
+        sinDe = Math.sin(de);
+        cosDn = Math.cos(dn);
+        sinDn = Math.sin(dn);
 
 
-        rhat[0] = cos_de * cos_dn;
-        rhat[1] = sin_de * cos_dn;
-        rhat[2] = sin_dn;
+        rhat[0] = cosDe * cosDn;
+        rhat[1] = sinDe * cosDn;
+        rhat[2] = sinDn;
 
-        shat[0] = cos_dec * rhat[0] - sin_dec * rhat[2];
+        shat[0] = cosDec * rhat[0] - sinDec * rhat[2];
         shat[1] = rhat[1];
-        shat[2] = sin_dec * rhat[0] + cos_dec * rhat[2];
+        shat[2] = sinDec * rhat[0] + cosDec * rhat[2];
 
-        uhat[0] = cos_ra * shat[0] - sin_ra * shat[1];
-        uhat[1] = sin_ra * shat[0] + cos_ra * shat[1];
+        uhat[0] = cosRa * shat[0] - sinRa * shat[1];
+        uhat[1] = sinRa * shat[0] + cosRa * shat[1];
         uhat[2] = shat[2];
 
         uxy = Math.sqrt(uhat[0] * uhat[0] + uhat[1] * uhat[1]);
-        if (uxy>0.0)
-            ra2 = Math.atan2(uhat[1],uhat[0]);
-        else
+        if (uxy>0.0) {
+            ra2 = Math.atan2(uhat[1], uhat[0]);
+        }
+        else {
             ra2 = 0.0;
+        }
         dec2 = Math.atan2(uhat[2],uxy);
 
         ra2  = Math.toDegrees(ra2);
@@ -521,14 +520,14 @@ export const calculatePosition= function(pos1, offsetRa, offsetDec ) {
  * @return object with corners
  */
 export const getCorners= function(center, radius) {
-        var pos_left = calculatePosition(center, +radius, 0.0);
-        var pos_right = calculatePosition(center, -radius, 0.0);
-        var pos_up = calculatePosition(center, 0.0, +radius);
-        var pos_down = calculatePosition(center, 0.0, -radius);
-        var upperLeft = new WorldPt(pos_left.getLon(), pos_up.getLat());
-        var upperRight = new WorldPt(pos_right.getLon(), pos_up.getLat());
-        var lowerLeft = new WorldPt(pos_left.getLon(), pos_down.getLat());
-        var lowerRight = new WorldPt(pos_right.getLon(), pos_down.getLat());
+        var posLeft = calculatePosition(center, +radius, 0.0);
+        var posRight = calculatePosition(center, -radius, 0.0);
+        var posUp = calculatePosition(center, 0.0, +radius);
+        var posDown = calculatePosition(center, 0.0, -radius);
+        var upperLeft = new WorldPt(posLeft.getLon(), posUp.getLat());
+        var upperRight = new WorldPt(posRight.getLon(), posUp.getLat());
+        var lowerLeft = new WorldPt(posLeft.getLon(), posDown.getLat());
+        var lowerRight = new WorldPt(posRight.getLon(), posDown.getLat());
 
         return {upperLeft, upperRight, lowerLeft, lowerRight};
 };

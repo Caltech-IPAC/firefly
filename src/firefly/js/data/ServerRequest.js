@@ -2,11 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import toBoolean from 'underscore.string/toBoolean';
 import replaceAll from 'underscore.string/replaceAll';
 import words from 'underscore.string/words';
 import validator from 'validator';
-import Point from '../visualize/Point.js';
+import {parseWorldPt} from '../visualize/Point.js';
 
 
 const REQUEST_CLASS= 'RequestClass';
@@ -37,7 +36,6 @@ export class ServerRequest {
 
     /**
      * return true if this parameter is a user input parameter.
-     * @param paramName
      * @return {boolean}
      */
     isInputParam() { return true; }
@@ -78,7 +76,7 @@ export class ServerRequest {
      * This method can take multiple types a parameter
      * If a single object literal is passed then it will look for a name & value field.
      * If two strings are passed the the first will me the name and the second will be the value.
-     * if more then two string are passed then the first is the name and the others are join tother as the value
+     * if more then two string are passed then the first is the name and the others are join together as the value
      * {object|string}
      * {string}
      */
@@ -135,7 +133,6 @@ export class ServerRequest {
 
     /**
      * Add a predefined attribute
-     * @param param the param to add
      * @return {boolean} true if this was a predefined attribute and was set, false it this is an unknow attribute
      */
     addPredefinedAttrib() { return false; }
@@ -255,7 +252,7 @@ export class ServerRequest {
      */
     getWorldPtParam(key) {
         var wpStr= this.getParam(key);
-        return wpStr ? Point.parseWorldPt(wpStr) : null;
+        return wpStr ? parseWorldPt(wpStr) : null;
     }
 
 //====================================================================
@@ -263,7 +260,7 @@ export class ServerRequest {
 //====================================================================
 
 
-    addParam(str, key, value) {
+    static addParam(str, key, value) {
         if (str && key && value) {
             str+= (PARAM_SEP+key+KW_VAL_SEP+value);
         }

@@ -3,7 +3,7 @@
  */
 
 
-const SPLIT_TOKEN= "--MiniFitHead--";
+const SPLIT_TOKEN= '--MiniFitHead--';
 
 import parseInt from '../util/StringUtils.js';
 import join from 'underscore.string/join';
@@ -21,7 +21,7 @@ export const C = {
     BZERO: 'bzero',
     BLANK_VALUE: 'blankValue',
     DATA_OFFSET: 'dataOffset'
-}
+};
 
 
 class MiniFitsHeader {

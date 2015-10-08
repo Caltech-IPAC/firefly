@@ -8,14 +8,14 @@
  */
 
 /*jshint esnext:true*/
-import Enum from "enum";
-const RequestType= new Enum([ "SERVICE",
-                              "FILE",
-                              "URL",
-                              "ALL_SKY",
-                              "BLANK",
-                              "PROCESSOR",
-                              "RAWDATASET_PROCESSOR",
-                              "TRY_FILE_THEN_URL"]);
+import Enum from 'enum';
+const RequestType= new Enum([ 'SERVICE',
+                              'FILE',
+                              'URL',
+                              'ALL_SKY',
+                              'BLANK',
+                              'PROCESSOR',
+                              'RAWDATASET_PROCESSOR',
+                              'TRY_FILE_THEN_URL']);
 
 export default RequestType;

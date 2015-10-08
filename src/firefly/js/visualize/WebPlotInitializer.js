@@ -4,17 +4,17 @@
 
 
 import PlotImages from './PlotImages.js';
-import CoorinateSys from './CoordSys.js';
+import CoordinateSys from './CoordSys.js';
 import PlotState from './PlotState.js';
 import WebFitsData from './WebFitsData.js';
 import join from 'underscore.string/join';
-import {parseInt, parseBoolean, parseFloat, checkNull,getStringWithNull } from '../util/StringUtils.js';
+import {parseInt, checkNull,getStringWithNull } from '../util/StringUtils.js';
 
 
 // todo: ProjectionSerializer
 // todo: Projection
 
-const SPLIT_TOKEN= "--WebPlotInitializer--";
+const SPLIT_TOKEN= '--WebPlotInitializer--';
 
 
 class WebPlotInitializer {

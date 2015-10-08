@@ -9,7 +9,7 @@
  */
 
 import Enum from 'enum';
-import Point from '../../visualize/Point.js';
+import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest from '../../visualize/WebPlotRequest.js';
 import BackgroundState from './BackgroundState.js';
 import PackageProgress from './PackageProgress.js';
@@ -603,7 +603,7 @@ class BackgroundStatus {
 
     getWorldPtParam(key) {
         var wpStr= this.getParam(key);
-        return wpStr ? Point.parseWorldPt(wpStr) : null;
+        return wpStr ? parseWorldPt(wpStr) : null;
     }
 
 

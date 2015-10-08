@@ -7,12 +7,12 @@
 
 //LZ 06/11/15 add arcsine and power law gamma parameters
 //LZ 06/26/15 add zp and wp parameters
-import validator from "validator";
+import validator from 'validator';
 
 
-export const PERCENTAGE_STR = "Percent";
-export const ABSOLUTE_STR   = "Absolute";
-export const SIGMA_STR      = "Sigma";
+export const PERCENTAGE_STR = 'Percent';
+export const ABSOLUTE_STR   = 'Absolute';
+export const SIGMA_STR      = 'Sigma';
 
 export const PERCENTAGE = 88;
 export const MAXMIN     = 89;
@@ -21,15 +21,15 @@ export const ZSCALE     = 91;
 export const SIGMA      = 92;
 
 
-export const LINEAR_STR= "Linear";
-export const LOG_STR= "Log";
-export const LOGLOG_STR= "LogLog";
-export const EQUAL_STR= "Equal";
-export const SQUARED_STR= "Squared";
-export const SQRT_STR= "Sqrt";
+export const LINEAR_STR= 'Linear';
+export const LOG_STR= 'Log';
+export const LOGLOG_STR= 'LogLog';
+export const EQUAL_STR= 'Equal';
+export const SQUARED_STR= 'Squared';
+export const SQRT_STR= 'Sqrt';
 
-export const ASINH_STR= "asinh";
-export const POWERLAW_GAMMA_STR= "powerlaw_gamma";
+export const ASINH_STR= 'asinh';
+export const POWERLAW_GAMMA_STR= 'powerlaw_gamma';
 
 
 export const STRETCH_LINEAR= 44;
@@ -61,20 +61,20 @@ class RangeValues {
                  zscaleSamplesPerLine= 120,
                  bias= 0.5,
                  contrast= 1.0 ) {
-        this.lowerWhich= Number.parseInt(lowerWhich);
-        this.lowerValue= Number.parseFloat(lowerValue);
-        this.upperWhich= Number.parseInt(upperWhich);
-        this.upperValue= Number.parseFloat(upperValue);
-        this.drValue = Number.parseFloat(drValue);
-        this.bpValue = Number.parseFloat(bpValue);
-        this.wpValue = Number.parseFloat(wpValue);
-        this.gammaValue=Number.parseFloat(gammaValue);
-        this.algorithm=  Number.parseInt(algorithm);
-        this.zscaleContrast= Number.parseInt(zscaleContrast);
-        this.zscaleSamples= Number.parseInt(zscaleSamples); /* desired number of pixels in sample */
-        this.zscaleSamplesPerLine= Number.parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
-        this.bias= Number.parseFloat(bias);
-        this.contrast= Number.parseFloat(contrast);
+        this.lowerWhich= Number.parseInt(lowerWhich+'');
+        this.lowerValue= Number.parseFloat(lowerValue+'');
+        this.upperWhich= Number.parseInt(upperWhich+'');
+        this.upperValue= Number.parseFloat(upperValue+'');
+        this.drValue = Number.parseFloat(drValue+'');
+        this.bpValue = Number.parseFloat(bpValue+'');
+        this.wpValue = Number.parseFloat(wpValue+'');
+        this.gammaValue=Number.parseFloat(gammaValue+'');
+        this.algorithm=  Number.parseInt(algorithm+'');
+        this.zscaleContrast= Number.parseInt(zscaleContrast+'');
+        this.zscaleSamples= Number.parseInt(zscaleSamples+''); /* desired number of pixels in sample */
+        this.zscaleSamplesPerLine= Number.parseInt(zscaleSamplesPerLine+''); /* optimal number of pixels per line */
+        this.bias= Number.parseFloat(bias+'');
+        this.contrast= Number.parseFloat(contrast+'');
     }
 
     /**
@@ -167,24 +167,24 @@ class RangeValues {
         if (!sIn) return null;
 
 
-        var params= sIn.split(",").map( (v) => validator.toFloat(v) );
+        var params= sIn.split(',').map( (v) => validator.toFloat(v) );
         var valid= params.every( (v)=> typeof v !== 'undefined' && !isNaN(v) );
 
         return valid ? new RangeValues(...params) : false;
     }
 
     serialize() {
-        return this.lowerWhich+","+
-               this.lowerValue+","+
-               this.upperWhich+","+
-               this.upperValue+","+
-               this.drValue+","+
-               this.bpValue+","+
-               this.wpValue+","+
-               this.gammaValue+","+
-               this.algorithm+","+
-               this.zscaleContrast+","+
-               this.zscaleSamples+","+
+        return this.lowerWhich+','+
+               this.lowerValue+','+
+               this.upperWhich+','+
+               this.upperValue+','+
+               this.drValue+','+
+               this.bpValue+','+
+               this.wpValue+','+
+               this.gammaValue+','+
+               this.algorithm+','+
+               this.zscaleContrast+','+
+               this.zscaleSamples+','+
                this.zscaleSamplesPerLine;
     }
 }

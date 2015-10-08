@@ -25,15 +25,15 @@ export const RConst = {
     REGION_ERRORS : 'RegionErrors',
     REGION_DATA : 'RegionData',
     REQUEST_LIST : 'RequestList',
-    TITLE : 'Title',
-}
+    TITLE : 'Title'
+};
 
 
 
 
 
 export const parse= function(inData) {
-    retval= {success:inData.success, progressKey:inData.progressKey };
+    var retval= {success:inData.success, progressKey:inData.progressKey };
     if (inData.success) {
         var stateStr= inData[RConst.PLOT_STATE];
         if (stateStr) retval[RConst.PLOT_STATE]= PlotState.parse(stateStr);
@@ -55,8 +55,7 @@ export const parse= function(inData) {
 
             var wpInitList= creatorAry.map( s => WebPlotInitializer.parse(s));
 
-            var cr= new CreatorResults(wpInitList);
-            retval[RConst.PLOT_CREATE]= cr;
+            retval[RConst.PLOT_CREATE]= new CreatorResults(wpInitList);
         }
 
 
@@ -75,7 +74,7 @@ export const parse= function(inData) {
         if (biStr) {
             //todo: parse BandInfo
             retval[RConst.BAND_INFO]= BandInfo.parse(biStr);
-            console.log("todo: parse BandInfo")
+            console.log('todo: parse BandInfo');
         }
 
 
@@ -87,9 +86,9 @@ export const parse= function(inData) {
     }
 
     return retval;
-}
+};
 
 const checkForStringResult= function(key, retval, inData) {
     var s= inData[key];
     retval[key]= s;
-}
+};

@@ -18,15 +18,15 @@ const NO_CONTEXT = 'NoContext';
 const MAX_BANDS= 3;
 
 
-export const RotateType= new Enum({'NORTH', 'ANGLE', 'UNROTATE'});
-export const Operation= new Enum({'ROTATE', 'CROP', 'FLIP_Y'});
+export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
+export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
 
 
-export const MultiImageAction = new Enum({ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
+export const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
                                            'USE_FIRST',   // only valid option if loading a three color with multiple Request
                                            'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
                                            'USE_ALL' // only valid in non three color, make a array of WebPlots
-                                         });
+                                         ]);
 
 
 
@@ -244,7 +244,7 @@ class PlotState {
 
     /**
      *
-     * @return {CoordinateSys }
+     * @return {CoordinateSys}
      */
     public getRotateNorthType() {
         return this.rotaNorthType;
@@ -259,7 +259,7 @@ class PlotState {
      */
     setWebPlotRequest(plotRequests, band, initStretch=true) {
         this.get(band).setWebPlotRequest(plotRequests);
-        _usedBands = null;
+        this._usedBands = null;
         if (initStretch) this.initColorStretch(plotRequests,band);
     }
 

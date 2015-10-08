@@ -220,7 +220,6 @@ class WebPlotRequest extends ServerRequest {
      */
     makeRequest(serverReq) {
         var retval;
-        var l= 'abc'.size();
         if (serverReq instanceof WebPlotRequest) {
             retval= serverReq;
         }
@@ -397,13 +396,13 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param option ExpandedTitleOptions
+     * @param {ExpandedTitleOptions} option
      */
     setExpandedTitleOptions(option) { this.setParam(C.EXPANDED_TITLE_OPTIONS,option.value); }
 
     /**
      *
-     * @return ExpandedTitleOptions
+     * @return {ExpandedTitleOptions}
      */
     getExpandedTitleOptions() {
         return ExpandedTitleOptions.get(this.getParam(C.ZOOM_TYPE)) || ExpandedTitleOptions.REPLACE;
@@ -429,7 +428,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param worldPt WorldPt
+     * @param {WorldPt} worldPt
      */
     setOverlayPosition(worldPt) {
         this.setParam(C.OVERLAY_POSITION, worldPt.toString());
@@ -437,7 +436,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return WorldPt
+     * @return {WorldPt}
      */
     getOverlayPosition() { return this.getWorldPtParam(C.OVERLAY_POSITION); }
 
@@ -447,13 +446,13 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param id integer, color table id number
+     * @param {int} id integer, color table id number
      */
     setInitialColorTable(id) { this.setParam(C.INIT_COLOR_TABLE, id + ''); }
 
     /**
      *
-     * @return integer, color table id number
+     * @return {int} color table id number
      */
     getInitialColorTable() {
         return this.getIntParam(C.INIT_COLOR_TABLE,0);
@@ -474,7 +473,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return RangeValues
+     * @return {RangeValues}
      */
     getInitialRangeValues() {
         return this.containsParam(C.INIT_RANGE_VALUES) ? RangeValues.parse(this.getParam(C.INIT_RANGE_VALUES)) : null;
@@ -488,8 +487,8 @@ class WebPlotRequest extends ServerRequest {
      * Certain zoom types require the width of the viewable area to determine the zoom level
      * used with ZoomType.FULL_SCREEN, ZoomType.TO_WIDTH
      *
-     * @param width the width in pixels
-     * @see ZoomType
+     * @param {number} width the width in pixels
+     * @see {ZoomType}
      */
     setZoomToWidth(width) { this.setParam(C.ZOOM_TO_WIDTH, width + ''); }
 
@@ -502,7 +501,7 @@ class WebPlotRequest extends ServerRequest {
      * used with ZoomType.FULL_SCREEN, ZoomType.TO_HEIGHT (to height, no yet implemented)
      *
      * @param height the height in pixels
-     * @see ZoomType
+     * @see {ZoomType}
      */
     setZoomToHeight(height) {
         this.setParam(C.ZOOM_TO_HEIGHT, height + '');
@@ -516,8 +515,8 @@ class WebPlotRequest extends ServerRequest {
     /**
      * set the initialize zoom level, this is used with ZoomType.STANDARD
      *
-     * @param zl the zoom level, float
-     * @see ZoomType
+     * @param {number} zl the zoom level, float
+     * @see {ZoomType}
      */
     setInitialZoomLevel(zl) {
         this.setParam(C.INIT_ZOOM_LEVEL, zl + '');
@@ -525,7 +524,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return number, the zoom level
+     * @return {number}, the zoom level
      */
     getInitialZoomLevel() {
         return this.getFloatParam(C.INIT_ZOOM_LEVEL,1);
@@ -547,10 +546,14 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @param hasMax boolean
+     * @param {boolean} hasMax
      */
     setHasMaxZoomLevel(hasMax) { this.setParam(C.HAS_MAX_ZOOM_LEVEL, hasMax +''); }
 
+    /**
+     *
+     * @return {boolean}
+     */
     hasMaxZoomLevel() { return this.getBooleanParam(C.HAS_MAX_ZOOM_LEVEL); }
 
     /**
@@ -565,7 +568,7 @@ class WebPlotRequest extends ServerRequest {
      * <li>if ZoomType.ARCSEC_PER_SCREEN_PIX then you must call setZoomArcsecPerScreenPix</li>
      * </ul>
      *
-     * @param zoomType affect how the zoom is computed
+     * @param {ZoomType} zoomType affect how the zoom is computed
      * @see ZoomType
      */
     setZoomType(zoomType) {
@@ -580,7 +583,7 @@ class WebPlotRequest extends ServerRequest {
      * set the arcseconds per screen pixel that will be used to determine the zoom level.
      * Used with ZoomType.ARCSEC_PER_SCREEN_PIX
      *
-     * @param arcsecSize, number
+     * @param {number} arcsecSize
      * @see ZoomType
      */
     setZoomArcsecPerScreenPix(arcsecSize) {
@@ -589,7 +592,7 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return number
+     * @return {number}
      */
     getZoomArcsecPerScreenPix() {
         return this.getFloatParam(C.ZOOM_ARCSEC_PER_SCREEN_PIX,0);
@@ -602,20 +605,20 @@ class WebPlotRequest extends ServerRequest {
     /**
      * Plot should come up rotated north
      *
-     * @param rotateNorth, boolean, true to rotate
+     * @param {boolean} rotateNorth, true to rotate
      */
     setRotateNorth(rotateNorth) { this.setParam(C.ROTATE_NORTH, rotateNorth + ''); }
 
     /**
      *
-     * @return boolean
+     * @return {boolean}
      */
     getRotateNorth() { return this.getBooleanParam(C.ROTATE_NORTH); }
 
     /**
      * Plot should come up rotated north, unless the user has already set the rotation using the button
      *
-     * @param rotateNorth true to rotate
+     * @param {boolean} rotateNorth true to rotate
      */
     setRotateNorthSuggestion(rotateNorth) {
         this.setParam(C.ROTATE_NORTH_SUGGESTION, rotateNorth + '');
@@ -623,14 +626,14 @@ class WebPlotRequest extends ServerRequest {
 
     /**
      *
-     * @return boolean
+     * @return {boolean}
      */
     getRotateNorthSuggestion() { return this.getBooleanParam(C.ROTATE_NORTH_SUGGESTION); }
 
     /**
      * Set to coordinate system for rotate north, eq j2000 is the default
      *
-     * @param rotateNorthType CoordinateSys, default CoordinateSys.EQ_J2000
+     * @param {boolean} rotateNorthType CoordinateSys, default CoordinateSys.EQ_J2000
      */
     setRotateNorthType(rotateNorthType) {
         this.setParam(C.ROTATE_NORTH_TYPE, rotateNorthType.toString());

@@ -9,7 +9,6 @@ import MiniFitsHeader from './MiniFitsHeader.js';
 import FileAndHeaderInfo from './FileAndHeaderInfo.js';
 import join from 'underscore.string/join';
 import toBoolean from 'underscore.string/toBoolean';
-import validator from 'validator';
 import {parseInt,checkNull} from '../util/StringUtils.js';
 
 const SPLIT_TOKEN= '--BandState--';
@@ -170,7 +169,7 @@ class BandState {
 
     /**
      *
-     * @param {string} filetr
+     * @param {string} fileStr
      */
     setOriginalFitsFileStr(fileStr) {this.originalFitsFileStr= fileStr; }
 
