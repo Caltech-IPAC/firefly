@@ -22,10 +22,10 @@ const makeURL= function(baseUrl, cmd, paramList, isJsonp) {
     return encodeServerUrl(baseUrl, paramList);
 };
 
-//export const jsonpRequest= function(baseUrl, cmd, paramList) {//TODO - convert
-//    var url = makeURL(baseUrl, cmd, paramList, true);
-//    // TODO: use the jsonp module here
-//};
+export const jsonpRequest= function(baseUrl, cmd, paramList) {//TODO - convert
+    var url = makeURL(baseUrl, cmd, paramList, true);
+    // TODO: use the jsonp module here by call the network
+};
 
 export const defaultJsonpRequest= function(cmd, paramList, cb) {
     jsonpRequest(DEF_BASE_URL, cmd, paramList, cb);

@@ -49,8 +49,11 @@ var validateSingle= function(groupKey, doneCallback) {
     ).catch(e => console.log(e));
 };
 
-var validateGroup= function(groupKeyAry, doneCallback) {
-   //todo
+//var validateGroup= function(groupKeyAry, doneCallback) {
+//   //todo
+//};
+var validateGroup= function() {
+    //todo
 };
 
 var validate= function(groupKey, doneCallback) {

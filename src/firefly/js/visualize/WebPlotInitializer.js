@@ -73,7 +73,7 @@ class WebPlotInitializer {
      * @return {Projection}
      */
     getProjection() {
-        return ProjectionSerializer.deserializeProjection(_projectionSerialized);
+        return ProjectionSerializer.deserializeProjection(this.projectionSerialized);
     }
 
     /**
@@ -95,7 +95,7 @@ class WebPlotInitializer {
 
     /**
      *
-     * @return {array WebFitsData}
+     * @return {WebFitsData[]}
      */
     getFitsData()  { return this.fitsData; }
 

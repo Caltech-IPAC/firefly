@@ -4,17 +4,19 @@
 
 
 import Band from './Band.js';
+import BandState from './BandState.js';
 import RangeValues from './RangeValues.js';
-import WebPlotRequest from './WebPlotRequest.js';
+//import WebPlotRequest from './WebPlotRequest.js';
 import {WPConst} from './WebPlotRequest.js';
 import CoordinateSys from './CoordSys.js';
-import MiniFitsHeader from './MiniFitsHeader.js';
+//import MiniFitsHeader from './MiniFitsHeader.js';
 import join from 'underscore.string/join';
-import {parseInt, parseBoolean, parseFloat, checkNull,getStringWithNull } from '../util/StringUtils.js';
+import {parseInt, parseBoolean, parseFloat, getStringWithNull } from '../util/StringUtils.js';
+import Enum from 'enum';
 
 
 const SPLIT_TOKEN= '--PlotState--';
-const NO_CONTEXT = 'NoContext';
+//const NO_CONTEXT = 'NoContext';
 const MAX_BANDS= 3;
 
 
@@ -34,7 +36,7 @@ export const MultiImageAction = new Enum([ 'GUESS',      // Default, guess betwe
 /**
  * @author Trey Roby
  */
-class PlotState {
+export class PlotState {
 
 
     /**
@@ -53,7 +55,7 @@ class PlotState {
         this.rotaNorthType= CoordinateSys.EQ_J2000;
         this.flippedY= false;
         this.rotationAngle= NaN;
-        _ops= [];
+        this.ops= [];
 
         this.newPlot= true;
         if (!params) return;
@@ -71,11 +73,12 @@ class PlotState {
         else if (params.redReq || params.greenReq || params.blueReq) {
             this.threeColor= true;
             this.multiImage= MultiImageAction.USE_FIRST;
-            if (params.redReq) setWebPlotRequest(params.redReq, Band.RED);
-            if (params.greenReq) setWebPlotRequest(params.greenReq, Band.GREEN);
-            if (params.blueReq) setWebPlotRequest(params.blueReq, Band.BLUE);
+            if (params.redReq) this.setWebPlotRequest(params.redReq, Band.RED);
+            if (params.greenReq) this.setWebPlotRequest(params.greenReq, Band.GREEN);
+            if (params.blueReq) this.setWebPlotRequest(params.blueReq, Band.BLUE);
         }
         else {
+            // todo put something here
 
         }
 
@@ -102,7 +105,7 @@ class PlotState {
      * @return {Band}
      */
     firstBand() {
-        var bandAry= getBands();
+        var bandAry= this.getBands();
         return (bandAry) ? bandAry[0] : null;
     }
 
@@ -114,9 +117,9 @@ class PlotState {
         if (!this.usedBands) {
             this.usedBands= [];
             if (this.threeColor) {
-                if (get(Band.RED).hasRequest())   this.usedBands.push(Band.RED);
-                if (get(Band.GREEN).hasRequest()) this.usedBands.push(Band.GREEN);
-                if (get(Band.BLUE).hasRequest())  this.usedBands.push(Band.BLUE);
+                if (this.get(Band.RED).hasRequest())   this.usedBands.push(Band.RED);
+                if (this.get(Band.GREEN).hasRequest()) this.usedBands.push(Band.GREEN);
+                if (this.get(Band.BLUE).hasRequest())  this.usedBands.push(Band.BLUE);
             }
             else {
                 this.usedBands.push(Band.NO_BAND);
@@ -140,7 +143,7 @@ class PlotState {
 
     /**
      *
-     * @param {strig} ctxStr
+     * @param {string} ctxStr
      */
     setContextString(ctxStr) { this.ctxStr= ctxStr; }
 
@@ -185,7 +188,7 @@ class PlotState {
      * @return {Number}
      */
     getThumbnailSize() {
-        return this.get(firstBand()).getWebPlotRequest().getThumbnailSize();
+        return this.get(this.firstBand()).getWebPlotRequest().getThumbnailSize();
     }
 
     /**
@@ -246,7 +249,7 @@ class PlotState {
      *
      * @return {CoordinateSys}
      */
-    public getRotateNorthType() {
+    getRotateNorthType() {
         return this.rotaNorthType;
     }
 
@@ -318,7 +321,7 @@ class PlotState {
      *
      * @return {RangeValues}
      */
-    getPrimaryRangeValues() { return this.get(firstBand()).getRangeValues(); }
+    getPrimaryRangeValues() { return this.get(this.firstBand()).getRangeValues(); }
 
 
     /**
@@ -333,7 +336,7 @@ class PlotState {
      * @param band
      * @return {FileAndHeaderInfo}
      */
-    public getFileAndHeaderInfo(band) {
+    getFileAndHeaderInfo(band) {
         return this.get(band).getFileAndHeaderInfo();
     }
 
@@ -381,7 +384,7 @@ class PlotState {
      * @param {Operation} op
      */
     removeOperation(op) {
-        idx= this.ops.indexOf(op);
+        var idx= this.ops.indexOf(op);
         if (idx>-1) this.ops.splice(idx,1);
     }
 
@@ -389,7 +392,7 @@ class PlotState {
      *
      * @param {Operation} op
      */
-    hasOperation(op) {return _ops.indexOf(op)>-1; }
+    hasOperation(op) {return this.ops.indexOf(op)>-1; }
 
     clearOperations() {this.ops=[]; }
 
@@ -397,7 +400,7 @@ class PlotState {
      *
      * @return {Array} array of Operation
      */
-    getOperations() { return _ops;}
+    getOperations() { return this.ops;}
 
 
     isFilesOriginal() {
@@ -521,7 +524,7 @@ class PlotState {
             this.colorTableId= request.getInitialColorTable();
             if (request.containsParam(WPConst.INIT_RANGE_VALUES)) {
                 var rvStr= request.getParam(WPConst.INIT_RANGE_VALUES);
-                rv= RangeValues.parse(rvStr);
+                var rv= RangeValues.parse(rvStr);
                 if (rv) this.get(band).setRangeValues(rv);
             }
         }

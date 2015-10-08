@@ -23,6 +23,6 @@ var firefly = {
         return flux.bootstrap();
     },
 
-}
+};
 
 export default firefly;
