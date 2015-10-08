@@ -8,7 +8,7 @@ import {parseInt, parseBoolean, getStringWithNull} from '../util/StringUtils.js'
 const IMAGE_URL_TOKEN= '--ImageURL--';
 
 class ImageURL {
-    constructor( xoff, yoff, width, height, index, created) {
+    constructor( url, xoff, yoff, width, height, index, created) {
         this.url= url;
         this.xoff= xoff;
         this.yoff= yoff;

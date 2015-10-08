@@ -22,7 +22,6 @@ const doJsonP= function() {
     //return application.networkMode===NetworkMode.JSON;
 };
 
-//TODO: convert RawDataSet
 //TODO: convert FileStatus
 //TODO: convert BackgroundSTAtus
 
@@ -109,7 +108,7 @@ export const cancel= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.CANCEL, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -121,7 +120,7 @@ export const addIDToPushCriteria= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.ADD_ID_TO_CRITERIA, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -133,7 +132,7 @@ export const cleanup= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.CLEAN_UP, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -174,7 +173,7 @@ export const setEmail= function(ids, email) {
     } );
     paramList.push({name:ServerParams.EMAIL, value:email});
     return doService(doJsonP(), ServerParams.SET_EMAIL, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -190,7 +189,7 @@ export const setAttribute= function(ids, attribute) {
     } );
     paramList.push({name:ServerParams.ATTRIBUTE, value:attribute.toString()});
     return doService(doJsonP(), ServerParams.SET_ATTR, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -202,7 +201,7 @@ export const getEmail= function(id) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
     return doService(doJsonP(), ServerParams.GET_EMAIL, paramList
-    ).then(data => {return data; });
+    ).then(data => data );
 };
 
 /**
@@ -218,7 +217,7 @@ export const resendEmail= function(ids, email) {
     } );
     paramList.push({name:ServerParams.EMAIL, value:email});
     return doService(doJsonP(), ServerParams.RESEND_EMAIL, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -232,7 +231,7 @@ export const clearPushEntry= function(id, idx ) {
     paramList.push({name: ServerParams.ID, value: id});
     paramList.push({name: ServerParams.IDX, value: idx+''});
     return doService(doJsonP(), ServerParams.CLEAR_PUSH_ENTRY, paramList
-    ).then(data => true);
+    ).then( () => true);
 };
 
 /**
@@ -248,7 +247,7 @@ export const reportUserAction= function(channel, desc, data) {
     paramList.push({name: ServerParams.DATA, value: data});
     paramList.push({name: ServerParams.DESC, value: desc});
     return doService(doJsonP(), ServerParams.REPORT_USER_ACTION, paramList
-    ).then( result => true);
+    ).then( () => true);
 };
 
 

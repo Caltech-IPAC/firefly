@@ -7,13 +7,14 @@
 
 
 import PlotState from './PlotState.js';
+import WebFitsData from './WebFitsData.js';
 import PlotImages from './PlotImages.js';
 import Band from './Band.js';
-import WebFitsData from './WebFitsData.js';
 import join from 'underscore.string/join';
-import {parseInt, parseBoolean, parseFloat, checkNull,getStringWithNull } from '../util/StringUtils.js';
+import {getStringWithNull } from '../util/StringUtils.js';
 
-const SPLIT_TOKEN= "--InsertBandInitializer--";
+const SPLIT_TOKEN= '--InsertBandInitializer--';
+
 
 class InsertBandInitializer {
 
@@ -49,7 +50,7 @@ class InsertBandInitializer {
         var i= 0;
         var initImages= PlotImages.parse(sAry[i++]);
         var plotState= PlotState.parse(sAry[i++]);
-        var fitsData= WebFitData.parse(sAry[i++]);
+        var fitsData= WebFitsData.parse(sAry[i++]);
         var band= Band.parse(sAry[i++]);
         var dataDesc= getStringWithNull(sAry[i]);
         return new InsertBandInitializer(plotState,initImages,band,fitsData,dataDesc);

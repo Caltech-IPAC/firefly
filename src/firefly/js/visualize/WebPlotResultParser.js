@@ -4,6 +4,7 @@
 
 import PlotState from './PlotState.js';
 import PlotImages from './PlotImages.js';
+import WebPlotInitializer from './WebPlotInitializer.js';
 import InsertBandInitializer from './InsertBandInitializer.js';
 
 export const RConst = {
@@ -88,7 +89,7 @@ export const parse= function(inData) {
     return retval;
 };
 
-const checkForStringResult= function(key, retval, inData) {
-    var s= inData[key];
-    retval[key]= s;
-};
+//const checkForStringResult= function(key, retval, inData) {
+//    var s= inData[key];
+//    retval[key]= s;
+//};

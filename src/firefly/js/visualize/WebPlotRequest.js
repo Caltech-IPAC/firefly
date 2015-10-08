@@ -10,7 +10,7 @@ import ZoomType from './ZoomType.js';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import {WorldPt, ImagePt} from './Point.js';
-import Resolver from '../astro/net/Resolver.js';
+import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import RangeValues from './RangeValues.js';
 
 
@@ -917,7 +917,7 @@ class WebPlotRequest extends ServerRequest {
     /**
      * @return Resolver, name resolver type
      */
-    getResolver() { return Resolver.parse(this.getParam(C.RESOLVER)); }
+    getResolver() { return parseResolver(this.getParam(C.RESOLVER)); }
 
     /**
      *

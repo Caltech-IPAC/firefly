@@ -8,7 +8,21 @@ function toString() {
 
 
 
-var parse= function(resolveStr) {
+
+var Resolver=  {
+    NED           : {key : 'ned', desc : 'NED'},
+    Simbad        : {key : 'simbad', desc : 'simbad'},
+    NedThenSimbad : {key : 'nedthensimbad', desc : 'try ned then simbad' },
+    SimbadThenNed : {key : 'simbadthenned', value : 'try simbad then ned'},
+    PTF           : {key : 'ptf', desc : 'ptf'},
+    smart         : {key : 'smart', desc  : 'try ned and simbad, then decide'},
+    UNKNOWN       : {key : 'unknown', desc : 'resolved with unknown resolver'},
+    NONE          : {key : 'none', desc : 'none'},
+};
+
+
+
+export var parseResolver= function(resolveStr) {
 
     if (!resolveStr) return null;
     var retval= null;
@@ -23,18 +37,6 @@ var parse= function(resolveStr) {
     return retval;
 };
 
-
-var Resolver=  {
-    NED           : {key : 'ned', desc : 'NED'},
-    Simbad        : {key : 'simbad', desc : 'simbad'},
-    NedThenSimbad : {key : 'nedthensimbad', desc : 'try ned then simbad' },
-    SimbadThenNed : {key : 'simbadthenned', value : 'try simbad then ned'},
-    PTF           : {key : 'ptf', desc : 'ptf'},
-    smart         : {key : 'smart', desc  : 'try ned and simbad, then decide'},
-    UNKNOWN       : {key : 'unknown', desc : 'resolved with unknown resolver'},
-    NONE          : {key : 'none', desc : 'none'},
-    parse
-};
 
 
 Resolver.NedThenSimbad.combination=  [Resolver.NED, Resolver.Simbad];
@@ -52,14 +54,3 @@ Resolver.NONE.toString= toString;
 
 export default Resolver;
 
-/*
-exports.NED= Resolver.NED;
-exports.simbad= Resolver.simbad;
-exports.nedthensimbad= Resolver.nedthensimbad;
-exports.simbadthenned= Resolver.simbadthenned;
-exports.ptf= Resolver.ptf;
-exports.smart= Resolver.smart;
-exports.unknown= Resolver.unknown;
-exports.none= Resolver.none;
-exports.parse= parse;
-*/

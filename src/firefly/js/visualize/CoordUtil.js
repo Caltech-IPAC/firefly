@@ -1,9 +1,5 @@
 /*eslint no-empty:0*/
 
-/**
- * Created by roby on 12/2/14.
- */
-
 
 import numeral from 'numeral';
 
@@ -640,7 +636,7 @@ var dd2sex = function (dangle, islat, isequ, precision) {
     return buf;
 };
 
-var cSeparator = function (str) {
+function cSeparator (str) {
     if (str.length===0) {
         return ' ';
     }
@@ -668,7 +664,7 @@ var cSeparator = function (str) {
         default:
             return '\0';
     }
-};
+}
 
 
 var validLon = function (hms, coordSystem) {

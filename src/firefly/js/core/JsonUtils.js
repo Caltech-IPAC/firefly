@@ -12,7 +12,7 @@ import {ServerParams} from '../data/ServerParams.js';
 import http from 'http';
 //var http= require('http');
 
-const TIMEOUT = 10 * 60 * 1000;  // 10 min
+//const TIMEOUT = 10 * 60 * 1000;  // 10 min
 const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
@@ -22,10 +22,10 @@ const makeURL= function(baseUrl, cmd, paramList, isJsonp) {
     return encodeServerUrl(baseUrl, paramList);
 };
 
-export const jsonpRequest= function(baseUrl, cmd, paramList, cb) {//TODO - convert
-    var url = makeURL(baseUrl, cmd, paramList, true);
-    // TODO: use the jsonp module here
-};
+//export const jsonpRequest= function(baseUrl, cmd, paramList) {//TODO - convert
+//    var url = makeURL(baseUrl, cmd, paramList, true);
+//    // TODO: use the jsonp module here
+//};
 
 export const defaultJsonpRequest= function(cmd, paramList, cb) {
     jsonpRequest(DEF_BASE_URL, cmd, paramList, cb);

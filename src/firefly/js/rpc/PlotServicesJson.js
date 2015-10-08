@@ -7,11 +7,8 @@
  */
 
 import {ServerParams} from '../data/ServerParams.js';
-import {RawDataSet} from '../data/table/RawDataSet.js';
 import {doService} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
-
-import Enum from 'enum';
 
 
 const doJsonP= function() {
@@ -22,7 +19,6 @@ const doJsonP= function() {
 
 /**
  *
- * @param {ServerRequest} request
  * @return {Promise}
  */
 export const getColorHistogram= function(state,band,width,height) {
