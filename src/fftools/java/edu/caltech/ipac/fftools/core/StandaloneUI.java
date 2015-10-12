@@ -81,11 +81,13 @@ class StandaloneUI {
     private TabPane.Tab<Widget> dsMultiViewerTab = null;
     private  TablePanel activeTable= null;
     private String defaultCmdName= AnyDataSetCmd.COMMAND_NAME;
+    private final FFToolsDisplayMode  displayMode;
 
-    public StandaloneUI() {
+    public StandaloneUI(FFToolsDisplayMode  displayMode) {
 //        this.factory= factory;
 //        xOrMsg= new CrossDocumentMessage(FFToolEnv.getHost(GWT.getModuleBaseURL()), new RequestListener());
 //        new NewTableEventHandler(FFToolEnv.getHub(), tableTabPane, false);
+        this.displayMode= displayMode;
 
         if (xyPlotAreaStandalone != null) {
             xyPlotAreaStandalone.addStyleName("standalone-xyplot");
@@ -550,8 +552,10 @@ class StandaloneUI {
     public class MyMpwFactory implements DataVisGrid.MpwFactory  {
         public MiniPlotWidget make(String groupName) {
             MiniPlotWidget mpw = new MiniPlotWidget(groupName, makePopoutContainerForApp());
-            mpw.setImageSelection(true);
-            mpw.setCatalogButtonEnable(true);
+            if (displayMode== FFToolsDisplayMode.minimal) {
+                mpw.setImageSelection(true);
+                mpw.setCatalogButtonEnable(true);
+            }
             return mpw;
         }
         public void addAttributes(MiniPlotWidget mpw) {/*do nothing*/ }
