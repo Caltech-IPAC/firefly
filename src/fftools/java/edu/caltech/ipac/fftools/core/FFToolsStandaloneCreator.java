@@ -51,19 +51,26 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
     private int bannerOffset;
     private String footerHtmlFile;
     private boolean isMinimal = false;
+    private final FFToolsDisplayMode  displayMode;
 
     /**
      * This is used to construct a minimal fftools display.  It will not display banner, searches, and other functionality
      * that's not needed.
      * @param factory
      */
-    public FFToolsStandaloneCreator(DataSetInfoFactory factory) {
+    public FFToolsStandaloneCreator(FFToolsDisplayMode displayMode, DataSetInfoFactory factory) {
+        this.displayMode= displayMode;
         if (factory!=null) Application.setDataSetFactory(factory);
         this.defaultCmdName= FFToolsPushReceiveCmd.COMMAND;
         isMinimal = true;
     }
 
-    public FFToolsStandaloneCreator(DataSetInfoFactory factory, int bannerOffset, String footerHtmlFile, String defaultCmdName) {
+    public FFToolsStandaloneCreator(FFToolsDisplayMode displayMode,
+                                    DataSetInfoFactory factory,
+                                    int bannerOffset,
+                                    String footerHtmlFile,
+                                    String defaultCmdName) {
+        this.displayMode= displayMode;
         if (factory!=null) Application.setDataSetFactory(factory);
         this.defaultCmdName= defaultCmdName;
         this.bannerOffset = bannerOffset;
@@ -112,7 +119,7 @@ public class FFToolsStandaloneCreator extends DefaultCreator {
 
         Application.getInstance().getProperties().setProperty("XYCharts.enableXYCharts", false+"");
 
-        aloneUI= new StandaloneUI();
+        aloneUI= new StandaloneUI(displayMode);
         if (defaultCmdName!=null) aloneUI.setDefaultCmdName(defaultCmdName);
 
 
