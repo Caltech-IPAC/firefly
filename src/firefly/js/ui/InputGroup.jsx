@@ -15,8 +15,7 @@ var InputGroup = React.createClass(
             labelWidth   : React.PropTypes.number.isRequired
         },
 
-        render: function() {
-            /*jshint ignore:start */
+        render() {
             var lWidth= this.props.labelWidth;
             return (
                 <div>
@@ -27,9 +26,7 @@ var InputGroup = React.createClass(
                 </div>
 
             );
-            /*jshint ignore:end */
         }
-
 
     });
 

@@ -5,8 +5,7 @@ var TargetFeedback = React.createClass(
 
   mixins : [React.addons.PureRenderMixin],
 
-
-  render: function() {
+  render() {
       var topDivStyle= {
           paddingTop: '5px',
           position: 'relative',
@@ -28,7 +27,7 @@ var TargetFeedback = React.createClass(
           //var makeSpan= function(w) {
           //    return  <span style={{paddingLeft: w+"px"}}/>
           //}
-          var makeSpan= w => {return  <span style={{paddingLeft: w+'px'}}/>; };
+          var makeSpan= w => {return  <span style={{paddingLeft: `${w}px`}}/>; };
           var spanObj= <span style={spanPad}/>;
           retval= (
              <div  style={topDivStyle}>

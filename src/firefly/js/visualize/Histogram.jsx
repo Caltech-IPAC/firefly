@@ -16,6 +16,7 @@ import {parseRawDataSet} from '../util/DataSetParser.js';
 
 var Histogram = React.createClass(
     {
+        displayName: 'Histogram',
 
         propTypes: {
             //data: React.PropTypes.array.isRequired
@@ -25,14 +26,14 @@ var Histogram = React.createClass(
             logs: React.PropTypes.oneOf(['x','y','xy']),
             reversed: React.PropTypes.oneOf(['x','y','xy']),
             desc: React.PropTypes.string,
-            binColor: function(props, propName, componentName) {
+            binColor(props, propName, componentName) {
                 if (props[propName] && !/^#[0-9a-f]{6}/.test(props[propName])) {
-                    return new Error('Invalid bin color in '+componentName+', should be hex with exactly 7 characters long.');
+                    return new Error(`Invalid bin color in ${componentName}, should be hex with exactly 7 characters long.`);
                 }
             }
         },
 
-        getDefaultProps : function() {
+        getDefaultProps() {
             return {
                 data: undefined,
                 source: undefined,
@@ -44,7 +45,7 @@ var Histogram = React.createClass(
             };
         },
 
-        getInitialState: function() {
+        getInitialState() {
             // if user passes the data as property, use it
             // otherwise, asynchronously get the data from the source
             return {
@@ -53,13 +54,13 @@ var Histogram = React.createClass(
         },
 
         fetchDataFromSource(source) {
-            let extdata = [];
+            const extdata = [];
             this.getData(source).then(function (rawDataSet) {
-                    let dataSet = parseRawDataSet(rawDataSet);
-                    let model = dataSet.getModel();
+                    const dataSet = parseRawDataSet(rawDataSet);
+                    const model = dataSet.getModel();
                     var toNumber = val=>Number(val);
                     for (let i = 0; i < model.size(); i++) {
-                        let arow = model.getRow(i);
+                        const arow = model.getRow(i);
                         extdata.push(arow.map(toNumber));
                     }
                     if (this.isMounted()) {
@@ -69,18 +70,18 @@ var Histogram = React.createClass(
                     }
                 }.bind(this)
             ).catch(function (reason) {
-                    console.error('Histogram failure: ' + reason);
+                    console.error(`Histogram failure: ${reason}`);
                 }
             );
         },
 
-        componentDidMount: function() {
+        componentDidMount() {
             if (!this.props.data && this.props.source) {
                 this.fetchDataFromSource(this.props.source);
             }
         },
 
-        componentWillReceiveProps: function(nextProps) {
+        componentWillReceiveProps(nextProps) {
             if (nextProps.data) {
                 this.setState({
                     userData: nextProps.data
@@ -97,7 +98,7 @@ var Histogram = React.createClass(
          * @return {Promise}
          */
         getData(source) {
-            let req = new ServerRequest('IpacTableFromSource');
+            const req = new ServerRequest('IpacTableFromSource');
             req.setParam({name : 'source', value : source});
             req.setParam({name : 'startIdx', value : '0'});
             req.setParam({name : 'pageSize', value : '10000'});
@@ -112,7 +113,7 @@ var Histogram = React.createClass(
          */
         shadeColor(color, percent) {
             var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
-            return '#'+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+            return `#${(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1)}`;
         },
 
         /*
@@ -133,14 +134,14 @@ var Histogram = React.createClass(
                 if (data) {
                     for (var i = 0; i < data.length; i++) {
                         if (data[i].length !== 3) {
-                            console.error('Invalid histogram data in row '+i+' ['+data[i]+']');
+                            console.error(`Invalid histogram data in row ${i} [${data[i]}]`);
                             valid = false;
                         } else if (data[i][1]>data[i][2]) {
-                            console.error('Histogram data row '+i+': minimum is more than maximum. ['+data[i]+']');
+                            console.error(`Histogram data row ${i}: minimum is more than maximum. [${data[i]}]`);
                             valid=false;
                         } else if (data[i+1] && Math.abs(data[i][2]-data[i+1][1])>Number.EPSILON &&
                                 data[i][2]>data[i+1][1]) {
-                            console.error('Histogram data row '+i+': bin range overlaps the following row. ['+data[i]+']');
+                            console.error(`Histogram data row ${i}: bin range overlaps the following row. [${data[i]}]`);
                             valid=false;
                         }
                     }
@@ -150,7 +151,7 @@ var Histogram = React.createClass(
                     }
                 }
             } catch (e) {
-                console.error('Invalid data passed to Histogram: '+e);
+                console.error(`Invalid data passed to Histogram: ${e}`);
                 valid = false;
             }
             return valid;
@@ -188,18 +189,18 @@ var Histogram = React.createClass(
                     y: 0
                 });
                 this.state.userData.forEach(function (value, index) {
-                        let xrange = this.state.userData[index][2] - this.state.userData[index][1];
-                        let formatStr = getFormatString(xrange,2);
-                        let centerStr = numeral(this.state.userData[index][1]+xrange/2.0).format(formatStr);
-                        let rangeStr = numeral(this.state.userData[index][1]).format(formatStr)+' to '+numeral(this.state.userData[index][2]).format(formatStr);
+                        const xrange = this.state.userData[index][2] - this.state.userData[index][1];
+                        const formatStr = getFormatString(xrange,2);
+                        const centerStr = numeral(this.state.userData[index][1]+xrange/2.0).format(formatStr);
+                        const rangeStr = `${numeral(this.state.userData[index][1]).format(formatStr)} to ${numeral(this.state.userData[index][2]).format(formatStr)}`;
 
                         // check for gaps and add points in necessary
                         if (Math.abs(this.state.userData[index][1])-lastBinMax > Number.EPSILON &&
                             this.state.userData[index][1]>lastBinMax) {
-                            console.warn('Gap in histogram data before row '+index+' ['+this.state.userData[index]+']');
-                            let gapRange = this.state.userData[index][1]-lastBinMax;
-                            let gapCenterStr = numeral(lastBinMax+gapRange/2.0).format(formatStr);
-                            let gapRangeStr = numeral(lastBinMax).format(formatStr)+' to '+numeral(this.state.userData[index][1]).format(formatStr);
+                            console.warn(`Gap in histogram data before row ${index} [${this.state.userData[index]}]`);
+                            const gapRange = this.state.userData[index][1]-lastBinMax;
+                            const gapCenterStr = numeral(lastBinMax+gapRange/2.0).format(formatStr);
+                            const gapRangeStr = `${numeral(lastBinMax).format(formatStr)} to ${numeral(this.state.userData[index][1]).format(formatStr)}`;
 
                             points.push({
                                 name: gapCenterStr,
@@ -269,7 +270,7 @@ var Histogram = React.createClass(
         },
 
         render() {
-            let yReversed = (this.props.reversed && this.props.reversed.indexOf('y')>-1 ? true : false);
+            const yReversed = (this.props.reversed && this.props.reversed.indexOf('y')>-1 ? true : false);
 
             var config = {
                 chart: {
@@ -290,10 +291,10 @@ var Histogram = React.createClass(
                 tooltip: {
                     followPointer: true,
                     borderWidth: 1,
-                    formatter: function () {
-                        return (this.point.name ? '<b>Bin center:</b> '+this.point.name+'<br>' : '')+
-                            (this.point.range ? '<b>Range:</b> '+this.point.range+'<br>' : '')+
-                            '<b>Count:</b> ' + this.y;
+                    formatter() {
+                        return (this.point.name ? `<b>Bin center:</b> ${this.point.name}<br>` : '')+
+                            (this.point.range ? `<b>Range:</b> ${this.point.range}<br>` : '')+
+                            `<b>Count:</b> ${this.y}`;
                     }
                 },
                 plotOptions: {
@@ -355,7 +356,7 @@ var Histogram = React.createClass(
             /* jshint ignore:start */
             return (
                 <div>
-                    <Highcharts config={config}></Highcharts>
+                    <Highcharts config={config}/>
                 </div>
             );
             /* jshint ignore:end */

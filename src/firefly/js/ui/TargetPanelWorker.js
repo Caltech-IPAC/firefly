@@ -53,7 +53,7 @@ var makeResolverPromise= function(objName) {
 
 function makeSearchPromise(objName) {
     var rejectFunc= null;
-    var url= '/fftools/sticky/CmdSrv?objName='+objName+'&resolver=nedthensimbad&cmd=CmdResolveName';
+    var url= `/fftools/sticky/CmdSrv?objName=${objName}&resolver=nedthensimbad&cmd=CmdResolveName`;
     var searchPromise= new Promise(
         function(resolve, reject) {
             http.get(
@@ -99,7 +99,7 @@ export var parseTarget= function(inStr, lastResults) {
             else {
                 if (posFieldDef.getObjectName()) {
                     showHelp= false;
-                    feedback= '<i>Resolving:</i> ' + posFieldDef.getObjectName();
+                    feedback= `<i>Resolving:</i>  ${posFieldDef.getObjectName()}`;
                     resolveData= resolveObject(posFieldDef);
                 }
                 else {
@@ -139,13 +139,13 @@ var resolveObject = function(posFieldDef) {
                         showHelp: false,
                         feedback: posFieldDef.formatTargetForHelp(wpt),
                         valid: true,
-                        wpt: wpt
+                        wpt
                     };
                 }
                 else {
                     return {
                         showHelp: false,
-                        feedback: 'Could not resolve: ' + objName,
+                        feedback: `Could not resolve: ${objName}`,
                         valid: false,
                         wpt: null
                     };
@@ -154,14 +154,14 @@ var resolveObject = function(posFieldDef) {
             else {
                 return {
                     showHelp: false,
-                    feedback: 'Could not resolve: ' + objName,
+                    feedback: `Could not resolve: ${objName}`,
                     valid: false,
                     wpt: null
                 };
             }
         }
     ).catch(function(e) {
-            console.log('aborted: '+objName);
+            console.log(`aborted: ${objName}`);
             console.error(e);
         });
 

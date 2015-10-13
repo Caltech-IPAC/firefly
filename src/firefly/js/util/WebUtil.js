@@ -74,8 +74,8 @@ export const encodeServerUrl= function(url, params) {
 
 /**
  *
- * @param {SeverRequest} request
- * @return {encoded}
+ * @param {ServerRequest} request
+ * @return {string} encoded
  */
 export const getTableSourceUrl= function(request) {
     request.setStartIndex(0);

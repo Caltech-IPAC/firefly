@@ -5,8 +5,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*globals console*/
-/*globals ffgwt*/
+
 import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';
@@ -72,6 +71,7 @@ var testReducer= function(inFields, actionsConst) {
 };
 
 class ExampleDialog {
+
     constructor() {
         var popup= (
             //<PopupPanel title={'Example Dialog'} closePromise={closePromise}>
@@ -100,16 +100,14 @@ class ExampleDialog {
 
 var AllTest = React.createClass({
 
-    /*eslint-enable no-unused-vars */
-
-    showResults : function(success, request) {
-        var statStr= 'validate state: '+ success;
+    showResults(success, request) {
+        var statStr= `validate state: ${success}`;
         //var request= FieldGroupUtils.getResults(this.props.groupKey);
         console.log(statStr);
         console.log(request);
 
         var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-            buildString+=k+'=' +request[k];
+            buildString+=`${k}=${request[k]}`;
             if (idx<array.length-1) buildString+=', ';
             return buildString;
         },'');
@@ -135,7 +133,7 @@ var AllTest = React.createClass({
         return (
             <div style={{padding:'5px'}}>
                 <br/>{statStr}<br/><br/>{s}
-                <button type="button" onClick={closePromiseClick}>Another Close</button>
+                <button type='button' onClick={closePromiseClick}>Another Close</button>
                 <CompleteButton dialogId='ResultsFromExampleDialog' />
             </div>
         );
@@ -151,7 +149,7 @@ var AllTest = React.createClass({
         this.showResults(true,request);
     },
 
-    render: function() {
+    render() {
 
         /* jshint ignore:start */
         return (
@@ -230,8 +228,8 @@ var AllTest = React.createClass({
                         <br/><br/>
 
                         <CompleteButton groupKey='DEMO_FORM'
-                                        onSuccess={this.resultsSuccess.bind(this)}
-                                        onFail={this.resultsFail.bind(this)}
+                                        onSuccess={this.resultsSuccess}
+                                        onFail={this.resultsFail}
                                         dialogId='ExampleDialog'
                             />
                     </InputGroup>

@@ -14,13 +14,13 @@ var JunkFormButton = React.createClass(
    {
 
        validUpdate(valid) {
-           var statStr= 'validate state: ' + valid;
+           var statStr= `validate state: ${valid}`;
            var request= FieldGroupUtils.getResults(this.props.groupKey);
            console.log(statStr);
            console.log(request);
 
            var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-               buildString+=k+'=' +request[k];
+               buildString+=`${k}=${request[k]}`;
                if (idx<array.length-1) buildString+=', ';
                return buildString;
            },'');
@@ -41,7 +41,7 @@ var JunkFormButton = React.createClass(
            DialogActions.showDialog({dialogId: 'ResultsFromExampleDialog'});
        },
 
-       getInitialState : function() {
+       getInitialState() {
            this.validUpdate= this.validUpdate.bind(this);
            return { };
        },
@@ -72,15 +72,15 @@ var JunkFormButton = React.createClass(
            return (
                    <div style={{padding:'5px'}}>
                        <br/>{statStr}<br/><br/>{s}
-                       <button type="button" onClick={closePromiseClick}>Another Close</button>
+                       <button type='button' onClick={closePromiseClick}>Another Close</button>
                    </div>
                    );
        },
 
-       render: function() {
+       render() {
            return (
                    <div>
-                       <button type="button" onClick={this.onClick}>submit now</button>
+                       <button type='button' onClick={this.onClick}>submit now</button>
                    </div>
            );
        }

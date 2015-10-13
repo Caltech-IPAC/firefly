@@ -67,7 +67,6 @@ var InputFieldView = React.createClass(
        },
 
        makeWarningArea(warn) {
-           /*jshint ignore:start */
            var warnIcon= '';
            if (warn) {
                //this.computeWarningXY(this.warnIcon);
@@ -84,7 +83,7 @@ var InputFieldView = React.createClass(
            }
 
            //<img ref={(c)=>this.computeWarningXY(c);} src={EXCLAMATION}/>
-           var retval= (
+           return (
                    <div style={
                       {
                        paddingLeft: '3px',
@@ -95,11 +94,9 @@ var InputFieldView = React.createClass(
                         {warnIcon}
                    </div>
                );
-           return retval;
-           /*jshint ignore:end */
        },
 
-       computeStyle : function() {
+       computeStyle() {
            if (!this.props.valid) {
                return 'firefly-inputfield-error';
            }
@@ -108,7 +105,7 @@ var InputFieldView = React.createClass(
            }
        },
 
-       makeMessage : function() {
+       makeMessage() {
            return (
                    <div>
                        <img src={EXCLAMATION}
@@ -144,11 +141,10 @@ var InputFieldView = React.createClass(
 
     makeInfoPopup() {
 
-        var retval= (
+        return (
                 <PointerPopup x={this.state.warningOffsetX} y={this.state.warningOffsetY}
                 message={this.makeMessage()}/>
         );
-        return retval;
     },
 
     render() {

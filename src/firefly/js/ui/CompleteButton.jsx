@@ -8,7 +8,6 @@ import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
 
 var CompleteButton = React.createClass(
    {
-
        propTypes: {
            onFail: React.PropTypes.func,
            onSuccess: React.PropTypes.func,
@@ -44,8 +43,8 @@ var CompleteButton = React.createClass(
            }
        },
 
-       getInitialState : function() {
-           this.validUpdate= this.validUpdate.bind(this);
+       getInitialState() {
+           this.validUpdate= this.validUpdate;
            return { };
        },
 
@@ -61,10 +60,10 @@ var CompleteButton = React.createClass(
        },
 
 
-       render: function() {
+       render() {
            return (
                    <div>
-                       <button type="button" onClick={this.onClick}>{this.props.text}</button>
+                       <button type='button' onClick={this.onClick}>{this.props.text}</button>
                    </div>
            );
        }

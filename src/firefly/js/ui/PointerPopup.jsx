@@ -1,5 +1,5 @@
 /*jshint browserify:true*/
-/*jshint esnext:true*/
+/*eslint "prefer-template": 0*/
 
 import React from 'react/addons';
 import _ from 'underscore';

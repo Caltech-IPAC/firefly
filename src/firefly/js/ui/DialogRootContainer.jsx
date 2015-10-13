@@ -8,7 +8,7 @@
 import React from 'react/addons';
 import DialogStore from '../store/DialogStore.js';
 import DialogActions from '../actions/DialogActions.js';
-import _ from 'underscore';
+//import _ from 'underscore';
 
 
 
@@ -27,7 +27,7 @@ var init= function() {
 
 var DialogRootComponent = React.createClass(
 {
-    render: function() {
+    render() {
         var {dialogs}= this.props;
         var dialogAry = Object.keys(dialogs).map(k => dialogs[k]);
         return  (
@@ -56,12 +56,11 @@ var PopupStoreConnection = React.createClass(
 
 
     componentDidMount() {
-        this.storeListenerRemove= DialogStore.listen( this.changeDialogState.bind(this));
+        this.storeListenerRemove= DialogStore.listen( this.changeDialogState);
     },
 
     changeDialogState() {
-
-        setTimeout(this.updateVisiiblity.bind(this) , 1);
+        setTimeout(this.updateVisiiblity, 1);
     },
 
     updateVisiiblity() {
@@ -83,7 +82,7 @@ var PopupStoreConnection = React.createClass(
     },
 
 
-    render: function() {
+    render() {
         if (this.state.visible) {
             return  React.cloneElement(this.props.popupPanel, { visible: this.state.visible,
                                                                 dialogId : this.props.dialogId,

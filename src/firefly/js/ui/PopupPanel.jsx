@@ -13,8 +13,6 @@ const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
 
 var PopupPanel= React.createClass(
 {
-
-
     browserResizeCallback : null,
     mouseCtx: null,
     titleBarRef: null,
@@ -120,8 +118,8 @@ var PopupPanel= React.createClass(
             visibility : this.state.activeLayoutType===LayoutType.NONE ? 'hidden' : 'visible',
             //left : '40px',
             //right : '170px'
-            left : this.state.posX + 'px',
-            top : this.state.posY + 'px'
+            left : `${this.state.posX}px`,
+            top : `${this.state.posY}px`
         };
 
 
@@ -154,7 +152,7 @@ var PopupPanel= React.createClass(
                                 {title}
                             </div>
                             <image className={'popup-header'}
-                                   src= {getRootURL()+'images/blue_delete_10x10.gif'}
+                                   src= {`${getRootURL()}images/blue_delete_10x10.gif`}
                                    style= {{position:'absolute', right:'0px', top:'0px'}}
                                    onClick={this.doClose} />
 
