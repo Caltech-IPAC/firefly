@@ -3,6 +3,7 @@
     {
       "build" : "../../node_modules/webpack/bin/webpack.js",
       "lint"  : "DO_LINT=true npm run build",
+      "lint:strict"  : "DO_LINT_STRICT=true npm run build",
       "dev"   : "DEBUG=true npm run build -- -w -d --colors",
       "test"  : "npm run test:unit && npm run test:server",
       "test:unit": "node ../../node_modules/karma/bin/karma start",

@@ -3,7 +3,8 @@ var path = require('path');
 
 var firefly_root = path.resolve(__dirname, '../..');
 
-/* global config:true */
+/*eslint-env node */
+/*global config:true */
 
 config = {
     name    : 'fftools',

@@ -5,26 +5,27 @@ import path from 'path';
 import fs from 'fs';
 
 
-/* global config:true */
+/*eslint-env node */
+/*global config:true */
 
 var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
 config.firefly_dir = config.firefly_dir || config.src;
 config.project = config.project || path.resolve(config.src, '../../');
 
 var def_config = {
-    env         : process.env.NODE_ENV || "development",
+    env         : process.env.NODE_ENV || 'development',
     dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, 'build/gwt', config.name),
-    do_lint     : process.env.DO_LINT || false,
+    do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
     index_html  : 'index.html',
     html_dir    : 'html',
     filename    : '[name].[hash].js',
-    deploy_dir  : (process.env.HYDRA_ROOT || "/hydra") + `/server/tomcat/webapps/${config.name}`,
+    deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
     alias       : {
             'ipac-firefly' : path.resolve(config.firefly_dir, 'js'),
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.src, 'styles')
         }
-}
+};
 
 config.alias = Object.assign(def_config.alias, config.alias);
 config = Object.assign(def_config, config);
@@ -70,7 +71,7 @@ var webpackConfig = {
         })),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.optimize.DedupePlugin(),
-        new ExtractTextPlugin(`${config.name}.css`),
+        new ExtractTextPlugin(`${config.name}.css`)
 
     ],
     resolve : {
@@ -174,13 +175,28 @@ if (fs.existsSync(path.resolve(config.src, config.html_dir, config.index_html)))
 }
 
 if (config.do_lint) {
-    webpackConfig.module.preLoaders = [
-        {
-            test : /\.(js|jsx)$/,
-            exclude: exclude_dirs,
-            loaders : ['eslint-loader']
+    let eslint_options = '';
+    if (process.env.DO_LINT_STRICT) {
+        // in addition to .eslintrc, extra rules are defined in .eslint-strict.json
+        const eslint_strict_path = path.resolve(config.project, '.eslint-strict.json');
+        if (fs.existsSync(eslint_strict_path)) {
+            eslint_options = '?' + JSON.stringify(JSON.parse(fs.readFileSync(eslint_strict_path)));
+            console.log('eslint-loader' + eslint_options);
+        } else {
+            console.log('ERROR: No .eslint-strict.json found - excluding lint');
+            console.log('----------------------------------------------------');
+            config.do_lint = false;
         }
-    ];
+    }
+    if (config.do_lint) {
+        webpackConfig.module.preLoaders = [
+            {
+                test: /\.(js|jsx)$/,
+                exclude: exclude_dirs,
+                loaders: ['eslint-loader' + eslint_options]
+            }
+        ];
+    }
 }
 
 export default webpackConfig;

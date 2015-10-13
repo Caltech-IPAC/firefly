@@ -21,7 +21,7 @@ const SORT_BY_TAG = 'col.@.SortByCols';
 const RELATED_COLS_TAG = 'col.related';
 const GROUPBY_COLS_TAG = 'col.groupby';
 
-const VISI_SHOW = 'show';
+//const VISI_SHOW = 'show';
 const VISI_HIDE = 'hide';
 const VISI_HIDDEN = 'hidden';      // for application use only.
 
@@ -89,7 +89,7 @@ export const parseRawDataSet = function(raw) {
 
         const width = attribs.get( makeAttribKey(WIDTH_TAG, c.getName()) );
         if (width) {
-            let w = parseInt(width, 10);
+            const w = parseInt(width, 10);
             if (Number(width) === w) {
                 c.setWidth(parseInt(width, 10));
             }
@@ -243,7 +243,7 @@ const getData = function(columns, line, doTrim) {
     var data = new Array(columns.length);
     var beg, end = 0;
     for(var i = 0; i < columns.length; i++) {
-        let c = columns[i];
+        const c = columns[i];
         beg = end + 1;
         end = beg + c.getWidth();
         if (end > line.length) {
@@ -254,12 +254,12 @@ const getData = function(columns, line, doTrim) {
         if (data[i] && c.getUnits()) {
             try {
                 if (c.getUnits() === 'RA') {
-                    let d = Number(data[i].trim());
+                    const d = Number(data[i].trim());
                     if (!isNaN(d)) {
                         data[i] = CoordUtil.convertLonToString(d, true);
                     }
                 } else if (c.getUnits()==='DEC') {
-                    let d = Number(data[i].trim());
+                    const d = Number(data[i].trim());
                     if (!isNaN(d)) {
                         data[i] = CoordUtil.convertLatToString(d, true);
                     }

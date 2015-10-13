@@ -27,7 +27,7 @@ var imagePlotsActions= alt.createActions(ImagePlotsActions);
 
 var allPlots= ffgwt.Visualize.AllPlots.getInstance();
 allPlots.addListener({
-    eventNotify  : function() {
+    eventNotify() {
         imagePlotsActions.anyChange();
     }
 });
