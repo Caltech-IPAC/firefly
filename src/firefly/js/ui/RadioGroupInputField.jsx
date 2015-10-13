@@ -41,13 +41,15 @@ var RadioGroupInputField= React.createClass(
                         labelWidth={this.props.labelWidth}
                     />
                     {this.props.options.map(option => {
-                        return <input type="radio"
+                        return (
+                            <input type='radio'
                                 key={option.value}
                                 name={this.props.fieldKey}
                                 value={option.value}
                                 defaultChecked={this.getValue()===option.value}
                                 onChange={this.onChange}
-                            >&nbsp;{option.label}&nbsp;&nbsp;</input>;
+                            >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                        );
                         })}
                 </div>
             );

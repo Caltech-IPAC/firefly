@@ -9,6 +9,7 @@ import numeral from 'numeral';
 /**
  * Created by roby on 12/2/14.
  */
+/* eslint prefer-template:0 */
 var makePositionFieldDef= function(properties) {
     var _parser = PositionParser.makePositionParser(new ClientPositionResolverHelper());
 

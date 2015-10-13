@@ -36,7 +36,7 @@ export const makeAttribKey = function(tag, colName) {
  */
 export const parseRawDataSet = function(raw) {
 //        GwtUtil.showScrollingDebugMsg('start parsing raw .. ');
-    let dataset = new DataSet();
+    const dataset = new DataSet();
     dataset.setMeta(raw.meta);
     dataset.setStartingIdx(raw.startingIndex);
     dataset.setTotalRows(raw.totalRows);
@@ -47,12 +47,12 @@ export const parseRawDataSet = function(raw) {
     dataset.getMeta().setAttributes(dataset.getModel().getAttributes());
 
 
-    let relCols = dataset.getMeta().getAttribute(RELATED_COLS_TAG);
+    const relCols = dataset.getMeta().getAttribute(RELATED_COLS_TAG);
     if (relCols) {
         dataset.getMeta().relatedCols(relCols.split(','));
     }
 
-    let grpByCols = dataset.getMeta().getAttribute(GROUPBY_COLS_TAG);
+    const grpByCols = dataset.getMeta().getAttribute(GROUPBY_COLS_TAG);
     if (grpByCols) {
         dataset.getMeta().groupByCols(grpByCols.split(','));
     }
@@ -60,23 +60,23 @@ export const parseRawDataSet = function(raw) {
     var columns = dataset.getColumns(); // array of BaseTableColumn objects
     var attribs = dataset.getMeta().attributes;
     for (var i=0; i<columns.length; i++) {
-        let c = columns[i];
+        const c = columns[i];
         if (c.getUnits() === 'RA' || c.getUnits() === 'DEC') {
             c.setWidth(13);
         }
 
         // modify column's attributes based on table's attributes
-        let label = attribs.get( makeAttribKey(LABEL_TAG, c.getName()) );
+        const label = attribs.get( makeAttribKey(LABEL_TAG, c.getName()) );
         if (label) {
             c.setTitle(label);
         }
 
-        let desc = attribs.get( makeAttribKey(DESC_TAG, c.getName()) );
+        const desc = attribs.get( makeAttribKey(DESC_TAG, c.getName()) );
         if (desc) {
             c.setShortDesc(desc);
         }
 
-        let vis = attribs.get( makeAttribKey(VISI_TAG, c.getName()) );
+        const vis = attribs.get( makeAttribKey(VISI_TAG, c.getName()) );
         if (vis) {
             if (vis === VISI_HIDDEN) {
                 c.setHidden(true);
@@ -87,7 +87,7 @@ export const parseRawDataSet = function(raw) {
             }
         }
 
-        let width = attribs.get( makeAttribKey(WIDTH_TAG, c.getName()) );
+        const width = attribs.get( makeAttribKey(WIDTH_TAG, c.getName()) );
         if (width) {
             let w = parseInt(width, 10);
             if (Number(width) === w) {
@@ -95,25 +95,25 @@ export const parseRawDataSet = function(raw) {
             }
         }
 
-        let prefWidth = attribs.get( makeAttribKey(PREF_WIDTH_TAG, c.getName()) );
+        const prefWidth = attribs.get( makeAttribKey(PREF_WIDTH_TAG, c.getName()) );
         if (prefWidth) {
-            let w = parseInt(prefWidth, 10);
+            const w = parseInt(prefWidth, 10);
             if (Number(prefWidth) === w) {
                 c.setPrefWidth(parseInt(prefWidth, 10));
             }
         }
 
-        let unit = attribs.get( makeAttribKey(UNIT_TAG, c.getName()) );
+        const unit = attribs.get( makeAttribKey(UNIT_TAG, c.getName()) );
         if (unit) {
             c.setUnits(unit);
         }
 
-        let enumVals = attribs.get( makeAttribKey(ITEMS_TAG, c.getName()) );
+        const enumVals = attribs.get( makeAttribKey(ITEMS_TAG, c.getName()) );
         if (enumVals) {
             c.setEnums(enumVals.split(','));
         }
 
-        let sortBy = attribs.get( makeAttribKey(SORT_BY_TAG, c.getName()) );
+        const sortBy = attribs.get( makeAttribKey(SORT_BY_TAG, c.getName()) );
         if (sortBy) {
             c.setSortByCols(sortBy.split(','));
         }
@@ -135,13 +135,13 @@ const parseTableModel = function(dataset, lines) {
     lines.split('\n').forEach(function(s){
         if (s) {
             if (s.startsWith('\\')) {
-                let kv = s.substring(1).split('=', 2);
-                let ktp = kv[0].trim().split('\\s+', 2);
-                let val = kv.length === 1 ? '' : kv[1].trim();
-                let key = ktp.length === 1 ? ktp[0] : ktp[1];
+                const kv = s.substring(1).split('=', 2);
+                const ktp = kv[0].trim().split('\\s+', 2);
+                const val = kv.length === 1 ? '' : kv[1].trim();
+                const key = ktp.length === 1 ? ktp[0] : ktp[1];
                 attribs.push([key, val]);
             } else if (!s.startsWith('|')) {
-                let row = getData(dataset.getColumns(), s, true);
+                const row = getData(dataset.getColumns(), s, true);
                 data.push(row);
             }
         }
@@ -175,10 +175,10 @@ const parseColumns = function(lines) {
         if (line) {
             if (line.startsWith('|')) {
                 if (headerLineIdx === 0) {       // name
-                    let cols = line.split('|');
+                    const cols = line.split('|');
                     cols.forEach(function(col){
                         if (col) {
-                            let c = new BaseTableColumn(col.trim());
+                            const c = new BaseTableColumn(col.trim());
                             c.setWidth(col.length);
                             columns.push(c);
 
@@ -192,7 +192,7 @@ const parseColumns = function(lines) {
                     });
                 } else if (headerLineIdx === 1) { // type
                     let c = -1;
-                    let cols = line.split('|');
+                    const cols = line.split('|');
                     cols.forEach(function(t) {
                         if (t) {
                             columns[c].setType(t.trim());
@@ -201,7 +201,7 @@ const parseColumns = function(lines) {
                     });
                 } else if (headerLineIdx === 2) { // units
                     let c = -1;
-                    let cols = line.split('|');
+                    const cols = line.split('|');
                     cols.forEach(function(u){
                         if (u) {
                             columns[c].setUnits(u.trim());
@@ -211,10 +211,10 @@ const parseColumns = function(lines) {
                 }
                 headerLineIdx++;
             } else if (!line.startsWith('\\')) {
-                let data = getData(columns, line, false);
+                const data = getData(columns, line, false);
                 for(var i = 0; i < columns.length; i++) {
-                    let c = columns[i];
-                    let s = data[i];
+                    const c = columns[i];
+                    const s = data[i];
                     if(s.startsWith(' ') && s.endsWith(' ')) {
                         c.setAlign(Align.CENTER);
                     } else if (s.startsWith(' ')) {

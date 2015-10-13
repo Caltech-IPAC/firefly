@@ -6,7 +6,7 @@
  * Date: Mar 13, 2009
  * @author loi
  */
-
+/* eslint prefer-template:0 */
 
 import Enum from 'enum';
 import { getRootURL } from './BrowserUtil.js';

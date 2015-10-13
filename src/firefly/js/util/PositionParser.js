@@ -1,4 +1,4 @@
-
+/* eslint prefer-template:0 */
 import {WorldPt} from '../visualize/Point.js';
 import * as StringUtils from './StringUtils.js';
 import CoordinateSys from '../visualize/CoordSys.js';

@@ -82,7 +82,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
     if (clientRequest !== null) {
         paramList.push({name: ServerParams.CLIENT_REQUEST, value: clientRequest.toString()});
     }
-    paramList.push({name: ServerParams.WAIT_MILS, value: waitMillis + ''});
+    paramList.push({name: ServerParams.WAIT_MILS, value: `${waitMillis}`});
 
     return doService(doJsonP(), ServerParams.SUB_BACKGROUND_SEARCH, paramList
     ).then(data => {
@@ -99,7 +99,7 @@ export const submitBackgroundSearch= function(request, clientRequest, waitMillis
 export const getStatus= function(id, polling) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
-    paramList.push({name: ServerParams.POLLING, value: polling+''});
+    paramList.push({name: ServerParams.POLLING, value: `${polling}`});
     return doService(doJsonP(), ServerParams.GET_STATUS, paramList
     ).then(data => {return BackgroundStatus.parse(data); });
 };
@@ -234,7 +234,7 @@ export const resendEmail= function(ids, email) {
 export const clearPushEntry= function(id, idx ) {
     var paramList = [];
     paramList.push({name: ServerParams.ID, value: id});
-    paramList.push({name: ServerParams.IDX, value: idx+''});
+    paramList.push({name: ServerParams.IDX, value: `${idx}`});
     return doService(doJsonP(), ServerParams.CLEAR_PUSH_ENTRY, paramList
     ).then( () => true);
 };

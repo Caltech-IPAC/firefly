@@ -42,7 +42,7 @@ export class TableMeta {
     }
 
     clone() {
-        let ret = new TableMeta();
+        const ret = new TableMeta();
         ret.attributes(this.attributesP);
     }
 

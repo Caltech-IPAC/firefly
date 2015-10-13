@@ -58,7 +58,7 @@ export const fireflyInit= function() {
 
     // a method to get JSON data from external task launcher
     window.firefly.getJsonFromTask= function(launcher, task, taskParams) {
-            let req = new ServerRequest('JsonFromExternalTask');
+            const req = new ServerRequest('JsonFromExternalTask');
             req.setParam({name : 'launcher', value : launcher});
             req.setParam({name : 'task', value : task});
             req.setParam({name : 'taskParams', value : JSON.stringify(taskParams)});

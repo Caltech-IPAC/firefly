@@ -7,7 +7,7 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-
+/* eslint prefer-template:0 */
 import Enum from 'enum';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest from '../../visualize/WebPlotRequest.js';

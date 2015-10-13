@@ -50,7 +50,7 @@ export class ServerRequest {
     }
 
     setIsBackgroundable(isBackgroundable) {
-        this.setParam(BACKGROUNDABLE, isBackgroundable+'');
+        this.setParam(BACKGROUNDABLE, `${isBackgroundable}`);
     }
 
     getRequestClass() {
@@ -86,7 +86,7 @@ export class ServerRequest {
             if (v.name && v.value) this.params[v.name]= v.value;
         }
         else if (arguments.length===2) {
-            this.params[arguments[0]]= arguments[1]+'';
+            this.params[arguments[0]]= `${arguments[1]}`;
         }
         else if (arguments.length>2) {
             var values= [];

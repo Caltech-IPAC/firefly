@@ -3,7 +3,7 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-
+/* eslint prefer-template:0 */
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import RequestType from './RequestType.js';
 import ZoomType from './ZoomType.js';

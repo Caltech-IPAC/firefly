@@ -72,7 +72,7 @@ var ColorDialogPanel= React.createClass(
         return {fields : FieldGroupStore.getGroupFields(this.props.groupKey)};
     },
 
-    onClick: function() {
+    onClick() {
         this.doClose();
     },
 

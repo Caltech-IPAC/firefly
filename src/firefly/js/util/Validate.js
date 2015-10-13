@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
+/* eslint prefer-template:0 */
 //var validator= require('validator');
 //var sprintf= require('underscore.string/sprintf');
 import validator from 'validator';
