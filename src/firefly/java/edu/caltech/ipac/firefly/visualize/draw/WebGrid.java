@@ -876,9 +876,7 @@ public class WebGrid
         edgeRun(intervals, x, y, xdelta, ydelta, range);
 
         // Bottom: right to left
-        //y = 0.5;
-        //x = _dWidth-0.5;
-        y = ymin;
+         y = ymin;
         x = xmax;
         xdelta = -xdelta;
         edgeRun(intervals, x, y, xdelta, ydelta, range);
@@ -886,8 +884,6 @@ public class WebGrid
         // Left.  Bottom to top.
         xdelta = 0;
         ydelta = (_dHeight / intervals) - 1;
-        //y = 0.5;
-        //x = 0.5;
         y = ymin;
         x = xmin;
         edgeRun(intervals, x, y, xdelta, ydelta, range);
@@ -1047,16 +1043,12 @@ public class WebGrid
 	  // Left.  Bottom to top.
 	  xdelta = 0;
 	  ydelta = (_dHeight / intervals) - 1;
-	  //y = 0.5;
-	  //x = 0.5;
 	  y = ymin;
 	  x = xmin;
 	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
 
 	  // Right. Top to bottom.
 	  ydelta = -ydelta;
-	  //x = _dWidth-0.5;
-	  //y = _dHeight-0.5;
 	  y = ymax;
 	  x = xmax;
 	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
@@ -1064,8 +1056,6 @@ public class WebGrid
           // grid in the middle
 	  xdelta = (_dWidth / intervals) - 1;
 	  ydelta = (_dHeight / intervals) - 1;
-//	  x = 0.5;
-	  //y = 0.5;
 	  x = xmin;
 	  y = ymin;
 	  edgeRun(intervals, x, y, xdelta, ydelta, range, wrap);
