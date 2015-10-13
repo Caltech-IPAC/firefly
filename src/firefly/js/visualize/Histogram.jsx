@@ -2,9 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*jshint esnext:true*/
-
 import React from 'react/addons';
 import Highcharts from 'react-highcharts';
 import numeral from 'numeral';
@@ -353,13 +350,11 @@ var Histogram = React.createClass(
 
             this.setChartConfig(config);
 
-            /* jshint ignore:start */
             return (
                 <div>
                     <Highcharts config={config}/>
                 </div>
             );
-            /* jshint ignore:end */
         }
     });
 

@@ -151,7 +151,6 @@ var AllTest = React.createClass({
 
     render() {
 
-        /* jshint ignore:start */
         return (
             <div style={{padding:'5px'}}>
                 <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={testReducer} validatorFunc={null} keepState={true}>
@@ -273,7 +272,6 @@ var AllTest = React.createClass({
             </div>
 
         );
-        /* jshint ignore:end */
     }
 });
 

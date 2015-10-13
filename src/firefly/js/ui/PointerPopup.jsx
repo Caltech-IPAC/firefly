@@ -1,4 +1,3 @@
-/*jshint browserify:true*/
 /*eslint "prefer-template": 0*/
 
 import React from 'react/addons';

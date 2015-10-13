@@ -41,7 +41,6 @@ export var ModalInternal = React.createClass(
             },
 
             render: function() {
-                /*jshint ignore:start */
                 var retval= null;
                 if (this.state.modalOpen) {
                     retval= (
@@ -57,7 +56,6 @@ export var ModalInternal = React.createClass(
 
                 }
                 return retval;
-                /*jshint ignore:end */
             }
 
 
@@ -75,14 +73,12 @@ export var getModal = function(title,message,show,closing) {
 
     var retval= null;
     if (show) {
-        /*jshint ignore:start */
         retval= (
                 <ModalInternal title={title}
                         message={message}
                         closing={closing}
                 />
         );
-        /*jshint ignore:end */
     }
     return retval;
 
@@ -105,7 +101,6 @@ var ModalDialog = React.createClass(
     },
 
     render: function() {
-        /*jshint ignore:start */
         var retval= null;
         if (this.props.modalOpen) {
             retval= (
@@ -121,7 +116,6 @@ var ModalDialog = React.createClass(
 
         }
         return retval;
-        /*jshint ignore:end */
     }
 
 });
@@ -143,7 +137,6 @@ var ModalDialog = React.createClass(
 //    },
 //
 //    render: function() {
-//        /*jshint ignore:start */
 //
 //        var s= {position : "absolute",
 //            width : "100px",
@@ -160,7 +153,6 @@ var ModalDialog = React.createClass(
 //                    </div>
 //                </Portal>
 //        );
-//        /*jshint ignore:end */
 //    }
 //
 //});
@@ -195,14 +187,12 @@ const freeElementList= [];
 //            background : "white",
 //            left : "40px",
 //            right : "170px"};
-//        /*jshint ignore:start */
 //        return  (
 //                <div style={s}>
 //                    {this.props.children}
 //                    <button type="button" onClick={this.onClick}>close here</button>
 //                </div>
 //        );
-//        /*jshint ignore:end */
 //    }
 //
 //});
@@ -222,7 +212,6 @@ var IndependentWrapper = React.createClass(
     },
 
     render: function() {
-        /*jshint ignore:start */
         var newChildren = React.Children.map(this.props.children, child => {
           return React.cloneElement(child, { closeCallback: this.closeCallback });
         });
@@ -232,7 +221,6 @@ var IndependentWrapper = React.createClass(
                 {newChildren}
                 </div>
         );
-        /*jshint ignore:end */
     }
 
 });

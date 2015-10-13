@@ -130,7 +130,6 @@ var PopupPanel= React.createClass(
         //    })
 
         return (
-            /*jshint ignore:start */
                 <div style={rootStyle} className={'popup-pane-shadow disable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
@@ -162,8 +161,6 @@ var PopupPanel= React.createClass(
                         </div>
                     </div>
                 </div>
-            /*jshint ignore:end */
-
         );
 
     },

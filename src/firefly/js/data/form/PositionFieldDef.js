@@ -1,5 +1,3 @@
-/*jshint browserify:true*/
-
 import * as StringUtils from '../../util/StringUtils.js';
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';

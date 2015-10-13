@@ -50,7 +50,6 @@ var TargetPanel= React.createClass(
        },
 
        render() {
-           /* jshint ignore:start */
            var { showHelp, feedback, valid} = this.getExtraData();
            if (typeof valid==='undefined') valid= true;
            if (typeof showHelp==='undefined') showHelp= true;
@@ -69,7 +68,6 @@ var TargetPanel= React.createClass(
                        <TargetFeedback showHelp={showHelp} feedback={feedback||''}/>
                    </div>
            );
-           /* jshint ignore:end */
        }
   });
 
