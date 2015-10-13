@@ -638,12 +638,16 @@ public class WebGrid
 			    val = min + qdelta - min%qdelta ;
 		    }
 
-		    int count = 0;
+		    int count = (int) ( (max - val) /qdelta);
+               if (count<=3){
+                   qdelta=qdelta/2.0;
+                   count=2*count;
+               }
 
-		    while (val + count*qdelta < max)
+		    /*while (val + count*qdelta < max)
 		    {
 			    count += 1;
-		    }
+		    }*/
 
 		    levels[i] = new double[count];
 		    for (int j=0; j<count; j += 1)
@@ -802,7 +806,20 @@ public class WebGrid
 		       // Redo min/max
 		       trange = edgeVals(1, wrap);
 	       }
-	  }
+           else {
+               trange=edgeVals(1);
+               sharedLon = 0.0;
+               sharedLat = (trange[1][0] + trange[1][1]) / 2;
+               if (_plot.pointInPlot(new WorldPt(sharedLon, sharedLat, _csys))) {
+                   wrap=true;
+                   // Redo min/max
+                   trange = edgeVals(1, wrap);
+               }
+           }
+
+
+
+     }
 	  
 	  double[][] xrange = trange;
       int xmin= _plot.getPlotGroup().getGroupImageXMin();
@@ -837,7 +854,103 @@ public class WebGrid
 	  return xrange;
      }
 
-     protected static boolean testEdge(double[][] xrange, double[][] trange) 
+    private double[][] edgeVals(int intervals) {
+
+        double[][] range = {{1.e20, -1.e20},{1.e20, -1.e20}};
+
+
+        int xmin= _plot.getPlotGroup().getGroupImageXMin();
+        int ymin= _plot.getPlotGroup().getGroupImageYMin();
+        int xmax= _plot.getPlotGroup().getGroupImageXMax();
+        int ymax= _plot.getPlotGroup().getGroupImageYMax();
+        double xdelta, ydelta, x, y;
+
+
+        // four corners.
+        // point a[xmin, ymax], the top left point, from here toward to right top point b[xmax, ymax], ie the line
+        //   a-b
+        y = ymax;
+        x = xmin;
+        xdelta = (_dWidth / intervals) - 1; //define an interval of the point in line a-b
+        ydelta = 0; //no change in the y direction, so ydelta is 0, thus the points should be alone line a-b
+        edgeRun(intervals, x, y, xdelta, ydelta, range);
+
+        // Bottom: right to left
+        //y = 0.5;
+        //x = _dWidth-0.5;
+        y = ymin;
+        x = xmax;
+        xdelta = -xdelta;
+        edgeRun(intervals, x, y, xdelta, ydelta, range);
+
+        // Left.  Bottom to top.
+        xdelta = 0;
+        ydelta = (_dHeight / intervals) - 1;
+        //y = 0.5;
+        //x = 0.5;
+        y = ymin;
+        x = xmin;
+        edgeRun(intervals, x, y, xdelta, ydelta, range);
+
+        // Right. Top to bottom.
+        ydelta = -ydelta;
+        y = ymax;
+        x = xmax;
+        edgeRun(intervals, x, y, xdelta, ydelta, range);
+
+        // grid in the middle
+        xdelta = (_dWidth / intervals) - 1;
+        ydelta = (_dHeight / intervals) - 1;
+        x = xmin;
+        y = ymin;
+        edgeRun(intervals, x, y, xdelta, ydelta, range);
+
+
+        return range;
+    }
+
+    private void edgeRun (int intervals, double x0, double y0,
+                            double dx, double dy, double[][] range
+    ) {
+
+        double x = x0;
+        double y = y0;
+
+        int i = 0;
+        double[] vals = new double[2];
+        while (i <= intervals) {
+
+
+            WorldPt c = _plot.getWorldCoords(new ImageWorkSpacePt(x,y), _csys);
+            //LZ TODO debug info the if below
+            //look for lower and upper longitude and latitude
+            if (c != null) {
+                vals[0] = c.getLon();
+                vals[1] = c.getLat();
+
+                if (_plot.pointInPlot(new WorldPt (vals[0], vals[1],  _csys))
+                            || _csys.equals(CoordinateSys.EQ_B2000)
+                            || _csys.equals(CoordinateSys.EQ_J2000) ) {
+                    //assign the new lower and upper longitude if found
+                    if (vals[0] < range[0][0]) range[0][0] = vals[0];
+                    if (vals[0] > range[0][1]) range[0][1] = vals[0];
+
+                    //assign the new lower and upper latitude if found
+                    if (vals[1] < range[1][0]) range[1][0] = vals[1];
+                    if (vals[1] > range[1][1]) range[1][1] = vals[1];
+                }
+                //TODO check if all the four range values are found, if not, redo the calculation again until all four are found
+            }
+
+            x += dx;
+            y += dy;
+
+            ++i;
+        }
+
+    }
+
+    protected static boolean testEdge(double[][] xrange, double[][] trange)
      {
 	  /* This routine checks if the experimental minima and maxima
 	  * are significantly changed from the old test minima and
