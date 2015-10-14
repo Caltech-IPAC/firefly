@@ -93,7 +93,7 @@ public class WebPlotInitializer implements Serializable, DataEntry {
         sb.append(_dataHeight).append(SPLIT_TOKEN);
         sb.append(_imageScaleFactor).append(SPLIT_TOKEN);
         sb.append(_initImages).append(SPLIT_TOKEN);
-        sb.append(_plotState).append(SPLIT_TOKEN);
+        sb.append(_plotState.serialize()).append(SPLIT_TOKEN);
         sb.append(_desc).append(SPLIT_TOKEN);
         sb.append(_dataDesc).append(SPLIT_TOKEN);
         for(int i=0; (i<_fitsData.length);i++) {
@@ -101,7 +101,6 @@ public class WebPlotInitializer implements Serializable, DataEntry {
             if (i<_fitsData.length-1) {
                 sb.append(SPLIT_TOKEN);
             }
-
         }
         return sb.toString();
     }

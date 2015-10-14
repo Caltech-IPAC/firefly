@@ -107,6 +107,7 @@ task buildClient (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
+    def wpBuildDir = "$rootDir/build/gwt/${project['app-name']}"
 
     try {
       def process = "node -v".execute()
@@ -120,13 +121,25 @@ task buildClient (dependsOn: loadConfig) {
       throw new StopExecutionException("webpack.config.js not found.  Skipping buildClient.")
     }
 
-    exec {
-      environment 'WP_BUILD_DIR': jar.destinationDir
+    if (file("${rootDir}/package.json").exists()) {
+      exec {
+        workingDir = rootDir
+        executable "npm"
+        args "install"
+      }
+    }
+
+    def res = exec {
+      environment 'WP_BUILD_DIR': wpBuildDir
+      environment 'NODE_ENV': project.env
       executable "$fireflyPath/node_modules/webpack/bin/webpack.js"
 
       if (project.hasProperty('webpackDebug') && project['webpackDebug'] == "true") {
         args "-d"
       }
+    }
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to build Client")
     }
   }
 }

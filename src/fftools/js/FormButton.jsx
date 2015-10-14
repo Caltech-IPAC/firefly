@@ -2,17 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint browserify:true*/
-/*globals console*/
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
-"use strict";
-var React= require('react/addons');
-var PopupUtil = require('ipac-firefly/util/PopupUtil.jsx');
-var Modal = require('react-modal');
-var Promise= require("es6-promise").Promise;
-import formActions from 'ipac-firefly/actions/FormActions.js'
+import React from 'react/addons';
+import PopupUtil from 'firefly/util/PopupUtil.jsx';
+import Modal from 'react-modal';
+import formActions from 'actions/FormActions.js';
 //import Portal from "react-portal";
 
 
@@ -21,19 +14,19 @@ Modal.setAppElement(appElement);
 //Modal.injectCSS();
 
 
-var FormButton = module.exports= React.createClass(
+var FormButton = React.createClass(
    {
 
        validUpdate(ev) {
            var formStore= this.props.formStore;
-           var statStr= "validate state: "+ formStore.getState().formValid;
+           var statStr= 'validate state: '+ formStore.getState().formValid;
            console.log(statStr);
            var request= formStore.getResults();
-           console.log("request:");
+           console.log('request:');
            console.log(request);
 
            var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-               buildString+=k+"=" +request[k];
+               buildString+=k+'=' +request[k];
                if (idx<array.length-1) buildString+=', ';
                return buildString;
            },'');
@@ -61,7 +54,7 @@ var FormButton = module.exports= React.createClass(
                fieldKey : this.props.fieldKey,
                mounted : true,
                value: this.getValue(),
-               fieldState: this.props.initialState,
+               fieldState: this.props.initialState
            } );
        },
 
@@ -133,4 +126,4 @@ var FormButton = module.exports= React.createClass(
 
    });
 
-
+export default FormButton;

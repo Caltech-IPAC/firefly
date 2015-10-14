@@ -137,7 +137,7 @@ public class CropTask extends ServerTask<WebPlotResult> {
                     WebPlotInitializer wpInit= cr.getInitializers()[0];
 
                     WebPlot cropPlot= new WebPlot(wpInit,false);
-                    if (_oldPrimaryPlot.getPlotState().isMultiImageFile(cropPlot.getPlotState().firstBand())) {
+                    if (_oldPrimaryPlot.getPlotState().isMultiImageFile()) {
                         if (!StringUtils.isEmpty(_oldPrimaryPlot.getPlotDesc())) {
                             cropPlot.setPlotDesc("Crop: "+_oldPrimaryPlot.getPlotDesc());
                         }

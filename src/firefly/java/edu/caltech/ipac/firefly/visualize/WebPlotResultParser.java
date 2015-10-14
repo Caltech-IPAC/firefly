@@ -15,7 +15,7 @@ import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
-import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,114 +155,11 @@ public class WebPlotResultParser {
         StringBuilder retval= new StringBuilder(5000);
         retval.append( "\"resultAry\" : [" );
         for(WebPlotResult res : resAry) {
-            retval.append(createJS(res,false));
+            retval.append(WebPlotResultSerializer.createJson(res, false));
             retval.append(",");
         }
         retval.deleteCharAt(retval.length() - 1);
         retval.append("],");
-        return retval.toString();
-    }
-
-    public static String createJS(WebPlotResult res) { return createJS(res,true); }
-
-    public static String createJS(WebPlotResult res, boolean inArray) {
-        StringBuilder retval= new StringBuilder(5000);
-        if (res.isSuccess()) {
-            if (inArray) retval.append("[");
-            retval.append("{");
-            retval.append( "\"success\" : true," );
-            if (res.containsKey(WebPlotResult.PLOT_STATE)) {
-                PlotState state= (PlotState)res.getResult(WebPlotResult.PLOT_STATE);
-                addJSItem(retval, WebPlotResult.PLOT_STATE, state.toString());
-            }
-            if (res.containsKey(WebPlotResult.PLOT_IMAGES)) {
-                PlotImages images= (PlotImages)res.getResult(WebPlotResult.PLOT_IMAGES);
-                addJSItem(retval, WebPlotResult.PLOT_IMAGES, images.toString());
-            }
-            if (res.containsKey(WebPlotResult.INSERT_BAND_INIT)) {
-                InsertBandInitializer init= (InsertBandInitializer)res.getResult(WebPlotResult.INSERT_BAND_INIT);
-                addJSItem(retval, WebPlotResult.INSERT_BAND_INIT, init.toString());
-            }
-            if (res.containsKey(WebPlotResult.PLOT_CREATE)) {
-                CreatorResults cr= (CreatorResults)res.getResult(WebPlotResult.PLOT_CREATE);
-//                addJSItem(retval, WebPlotResult.PLOT_CREATE, cr.toString());
-                //---
-                String sAry[]= makeCreatorResultStringArray(cr);
-                addJSArray(retval, WebPlotResult.PLOT_CREATE, sAry);
-                //---
-            }
-            if (res.containsKey(WebPlotResult.DATA_HIST_IMAGE_URL)) {
-                String s= res.getStringResult(WebPlotResult.DATA_HIST_IMAGE_URL);
-                addJSItem(retval, WebPlotResult.DATA_HIST_IMAGE_URL, s);
-            }
-            if (res.containsKey(WebPlotResult.CBAR_IMAGE_URL)) {
-                String s= res.getStringResult(WebPlotResult.CBAR_IMAGE_URL);
-                addJSItem(retval, WebPlotResult.CBAR_IMAGE_URL, s);
-            }
-            if (res.containsKey(WebPlotResult.STRING)) {
-                String s= res.getStringResult(WebPlotResult.STRING);
-                addJSItem(retval, WebPlotResult.STRING, s);
-            }
-            if (res.containsKey(WebPlotResult.IMAGE_FILE_NAME)) {
-                String s= res.getStringResult(WebPlotResult.IMAGE_FILE_NAME);
-                addJSItem(retval, WebPlotResult.IMAGE_FILE_NAME, s);
-            }
-            if (res.containsKey(WebPlotResult.REGION_FILE_NAME)) {
-                String s= res.getStringResult(WebPlotResult.REGION_FILE_NAME);
-                addJSItem(retval, WebPlotResult.REGION_FILE_NAME, s);
-            }
-            if (res.containsKey(WebPlotResult.DATA_HISTOGRAM)) {
-                int ary[]= ((DataEntry.IntArray)res.getResult(WebPlotResult.DATA_HISTOGRAM)).getArray();
-                addJSArray(retval, WebPlotResult.DATA_HISTOGRAM, ary);
-            }
-            if (res.containsKey(WebPlotResult.DATA_BIN_MEAN_ARRAY)) {
-                double ary[]= ((DataEntry.DoubleArray)res.getResult(WebPlotResult.DATA_BIN_MEAN_ARRAY)).getArray();
-                addJSArray(retval, WebPlotResult.DATA_BIN_MEAN_ARRAY, ary);
-            }
-            if (res.containsKey(WebPlotResult.BAND_INFO)) {
-                BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
-                addJSItem(retval, WebPlotResult.BAND_INFO, StringUtils.escapeQuotes(bi.serialize()));
-            }
-            if (res.containsKey(WebPlotResult.REGION_DATA)) {
-                String s= res.getStringResult(WebPlotResult.REGION_DATA);
-                addJSItem(retval, WebPlotResult.REGION_DATA, StringUtils.escapeQuotes(s));
-            }
-            if (res.containsKey(WebPlotResult.REGION_ERRORS)) {
-                String s= res.getStringResult(WebPlotResult.REGION_ERRORS);
-                addJSItem(retval, WebPlotResult.REGION_ERRORS, StringUtils.escapeQuotes(s));
-            }
-            if (res.containsKey(WebPlotResult.TITLE)) {
-                String s= res.getStringResult(WebPlotResult.TITLE);
-                addJSItem(retval, WebPlotResult.TITLE, StringUtils.escapeQuotes(s));
-            }
-            if (res.containsKey(WebPlotResult.RESULT_ARY)) {
-                WebPlotResult ary[]= ((DataEntry.WebPlotResultAry)res.getResult(WebPlotResult.RESULT_ARY)).getArray();
-                String ra= createWebPlotResultAry(ary);
-                retval.append(ra);
-            }
-            retval.deleteCharAt(retval.length()-1);
-
-            retval.append("}");
-            if (inArray) retval.append("]");
-        }
-        else {
-            String pKey= res.getProgressKey()==null?"":res.getProgressKey();
-            retval.append("[{");
-            retval.append( "\"success\" : false," );
-            retval.append( "\"briefFailReason\" : " );
-            retval.append( QUOTE).append(StringUtils.escapeQuotes(res.getBriefFailReason())).append( QUOTE);
-            retval.append(",");
-            retval.append( "\"userFailReason\" : " );
-            retval.append( QUOTE).append(StringUtils.escapeQuotes(res.getUserFailReason())).append( QUOTE);
-            retval.append(",");
-            retval.append( "\"detailFailReason\" : " );
-            retval.append( QUOTE).append(StringUtils.escapeQuotes(res.getDetailFailReason())).append( QUOTE);
-            retval.append(",");
-            retval.append( "\"progressKey\" : " );
-            retval.append( QUOTE).append(StringUtils.escapeQuotes(pKey)).append( QUOTE);
-            retval.append("}]");
-        }
-
         return retval.toString();
     }
 

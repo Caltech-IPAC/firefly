@@ -395,7 +395,7 @@ public class ExpandBehavior extends PopoutWidget.Behavior {
         boolean retval= false;
         if (p!=null && p.getPlotState()!=null) {
             PlotState state= p.getPlotState();
-            WebPlotRequest wpr= state.getPrimaryRequest();
+            WebPlotRequest wpr= state.getWebPlotRequest();
             retval= wpr.getZoomType()==ZoomType.FORCE_STANDARD;
         }
         return retval;

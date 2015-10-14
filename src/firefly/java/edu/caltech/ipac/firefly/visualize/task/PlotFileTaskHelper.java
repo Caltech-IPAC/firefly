@@ -187,19 +187,20 @@ public class PlotFileTaskHelper {
 
     }
 
+
     private boolean isMultiImageFits(CreatorResults cr) {
         boolean retval= true;
         for (WebPlotInitializer wpInit : cr) {
-            for(Band band : wpInit.getPlotState().getBands()) {
-                if (!wpInit.getPlotState().isMultiImageFile(band)) {
-                    retval= false;
-                    break;
-                }
-                if (!retval) break;
+            if (!wpInit.getPlotState().isMultiImageFile()) {
+                retval= false;
+                break;
             }
+            if (!retval) break;
         }
         return retval;
     }
+
+
 
     private boolean isMultiCube(CreatorResults cr) {
         boolean retval= false;

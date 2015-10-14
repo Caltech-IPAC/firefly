@@ -35,7 +35,7 @@ public class CropCmd extends BaseVisCmd {
         if (plot.isCube()) {
             PopupUtil.showInfo(null, "Can't crop cube", "We do not yet support cropping cubes");
         }
-        else if (plot.getPlotState().isMultiImageFile(plot.getFirstBand()) &&
+        else if (plot.getPlotState().isMultiImageFile() &&
                  plot.getPlotView().isMultiImageFitsWithSameArea()) {
             PopupUtil.showConfirmMsg(null, "Multi Image Crop",
                                      "Do you want to crop all the images in this FITS file together?",

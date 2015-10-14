@@ -4,6 +4,7 @@
 package edu.caltech.ipac.visualize.plot;
 
 import edu.caltech.ipac.astro.conv.CoordConv;
+import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
@@ -768,8 +769,8 @@ public class ImageHeader implements Serializable
 
     }
 
-    public MiniFitsHeader makeMiniHeader() {
-        MiniFitsHeader miniHeader= new MiniFitsHeader(plane_number,bitpix,
+    public ClientFitsHeader makeMiniHeader() {
+        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,
                                                         naxis,naxis1,naxis2,naxis3,
                                                         cdelt2,bscale,bzero,
                                                         blank_value,data_offset);

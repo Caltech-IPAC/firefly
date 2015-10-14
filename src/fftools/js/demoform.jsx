@@ -3,34 +3,34 @@
 /*jshint esnext:true*/
 
 /*eslint-disable no-unused-vars */
-import {fireflyInit, application} from 'ipac-firefly/core/Application.js';
+import {fireflyInit, application} from 'core/Application.js';
 fireflyInit();
 
 import React from 'react/addons';
 
-import TargetPanel from 'ipac-firefly/ui/TargetPanel.jsx';
-import InputGroup from 'ipac-firefly/ui/InputGroup.jsx';
-import Validate from 'ipac-firefly/util/Validate.js';
-import ValidationField from 'ipac-firefly/ui/ValidationField.jsx';
-import CheckboxGroupInputField from 'ipac-firefly/ui/CheckboxGroupInputField.jsx';
-import RadioGroupInputField from 'ipac-firefly/ui/RadioGroupInputField.jsx';
-import ListBoxInputField from 'ipac-firefly/ui/ListBoxInputField.jsx';
-import {ServerRequest, ID_NOT_DEFINED} from 'ipac-firefly/data/ServerRequest.js';
-import WebPlotRequest from 'ipac-firefly/visualize/WebPlotRequest.js';
+import TargetPanel from 'ui/TargetPanel.jsx';
+import InputGroup from 'ui/InputGroup.jsx';
+import Validate from 'util/Validate.js';
+import ValidationField from 'ui/ValidationField.jsx';
+import CheckboxGroupInputField from 'ui/CheckboxGroupInputField.jsx';
+import RadioGroupInputField from 'ui/RadioGroupInputField.jsx';
+import ListBoxInputField from 'ui/ListBoxInputField.jsx';
+import {ServerRequest, ID_NOT_DEFINED} from 'data/ServerRequest.js';
+import WebPlotRequest from 'visualize/WebPlotRequest.js';
 
 
-import Histogram from 'ipac-firefly/visualize/Histogram.jsx';
+import Histogram from 'visualize/Histogram.jsx';
 
 var myDispatcher= require('./Dispatcher.js');
 //var FormButton= require ('./FormButton.jsx');
 import FormButton from './FormButton.jsx';
 
-import {WorldPt, ImagePt, Pt} from 'ipac-firefly/visualize/Point.js';
+import {WorldPt, ImagePt, Pt} from 'visualize/Point.js';
 /*eslint-enable no-unused-vars */
 
-import InputFormBaseStore from 'ipac-firefly/store/InputFormBaseStore.js';
-import FieldGroupStore from 'ipac-firefly/store/FieldGroupStore.js';
-import FieldGroupActions from 'ipac-firefly/actions/FieldGroupActions.js';
+import InputFormBaseStore from 'store/InputFormBaseStore.js';
+import FieldGroupStore from 'store/FieldGroupStore.js';
+import FieldGroupActions from 'actions/FieldGroupActions.js';
 
 
 

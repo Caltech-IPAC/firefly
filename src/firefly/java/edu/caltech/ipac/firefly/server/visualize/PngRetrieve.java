@@ -58,7 +58,7 @@ public class PngRetrieve {
         if (state==null) return;
         request.setInitialColorTable(state.getColorTableId());
         request.setInitialZoomLevel(state.getZoomLevel());
-        ZoomType zt= state.getPrimaryRequest().getZoomType();
+        ZoomType zt= state.getWebPlotRequest().getZoomType();
         request.setZoomType(zt);
         request.setInitialRangeValues(state.getRangeValues(Band.NO_BAND));
     }

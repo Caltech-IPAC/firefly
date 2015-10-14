@@ -89,7 +89,7 @@ public class WebPlotFactory {
         for(int i= 0; (i<resultsList.size()); i++) {
             ImagePlotBuilder.Results r= resultsList.get(i);
             ImagePlotInfo pi = r.getPlotInfoAry()[0];
-            PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(), ProgressStat.PType.CREATING,
+            PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
                                          PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+resultsList.size());
 
             for (Map.Entry<Band, ModFileWriter> entry : pi.getFileWriterMap().entrySet()) {
@@ -211,13 +211,13 @@ public class WebPlotFactory {
             String saveProgressKey= null;
             for (int i = 0; (i < pInfo.length); i++) {
                 ImagePlotInfo pi = pInfo[i];
-                if (i==0) saveProgressKey= pi.getState().getPrimaryWebPlotRequest().getProgressKey();
+                if (i==0) saveProgressKey= pi.getState().getWebPlotRequest().getProgressKey();
                 if (pInfo.length>3) {
-                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(), ProgressStat.PType.CREATING,
+                    PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
                 }
                 else {
-                    PlotServUtils.updateProgress(pi.getState().getPrimaryWebPlotRequest(),ProgressStat.PType.CREATING,
+                    PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(),ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG);
                 }
 

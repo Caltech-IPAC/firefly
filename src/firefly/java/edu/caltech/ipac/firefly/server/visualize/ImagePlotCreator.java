@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -57,7 +58,7 @@ public class ImagePlotCreator {
          Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
-             WebPlotRequest req= stateAry[i].getPrimaryWebPlotRequest();
+             WebPlotRequest req= stateAry[i].getWebPlotRequest();
              if (readAry.length>3) {
                  PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING,
                                               PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
@@ -149,7 +150,7 @@ public class ImagePlotCreator {
                                      boolean    isMultiImage) throws FitsException {
 
         ImagePlot plot;
-        RangeValues rv= state.getPrimaryRangeValues();
+        RangeValues rv= state.getRangeValues();
         float zoomLevel= zoomChoice.getZoomLevel();
         WebPlotRequest request= state.getPrimaryRequest();
         if (rv==null) {
@@ -223,8 +224,8 @@ public class ImagePlotCreator {
                               ActiveFitsReadGroup frGroup,
                               String dataDesc,
                               boolean isMultiImage) {
-        WebPlotRequest req= state.getPrimaryWebPlotRequest();
 
+        WebPlotRequest req= state.getWebPlotRequest();
         plot.setPlotDesc("");
         Header header= frGroup.getFitsRead(state.firstBand()).getHeader();
 

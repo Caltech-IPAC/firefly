@@ -30,47 +30,13 @@ java/dist/
 java/tools/build_override.properties
 #
 #
-# ------- not sure why but these are made in the builds
-#
-firefly/java/src/edu/caltech/ipac/hydra/null*
-firefly/java/src/edu/caltech/ipac/fuse/null*
-firefly/java/src/edu/caltech/ipac/heritage/null*
-firefly/java/src/edu/caltech/ipac/fftools/null*
-firefly/java/src/edu/caltech/ipac/uman/null*
 #
 # ------- Ignore jar files that we build - these are artifacts 
 #
 jars/build/
-jars/fuse.jar
-jars/solrclient.jar
-jars/firefly.jar
-jars/heritage.jar
-jars/hydra.jar
-jars/frontpage.jar
-jars/xstream-gwt.jar
-jars/raphael-modified-r24.jar
-jars/fftools.jar
-jars/uman.jar
-jars/voservices.jar
-jars/SoftwareUpdate.jar
-jars/astro.jar
-jars/client.jar
-jars/data.jar
-jars/devext.jar
-jars/fits.jar
-jars/jniBinaries.jar
-jars/loader.jar
-jars/meta.jar
-jars/planner.jar
-jars/simbad_ws.jar
-jars/common-gwt.jar
-jars/uplink_util.jar
-java/wsdl/simbad/VizieRBeta_pkg/
-java/wsdl/simbad/VizieR_pkg/
-java/wsdl/simbad/cds/
-java/wsdl/simbad/net/
-java/wsdl/simbad/org/
 #
 # ------ ignore build number files
 java/tools/build.number
 #
+# ignore javascript dependencies
+node_modules/

@@ -262,18 +262,15 @@ public class WebPlot {
     }
 
     public boolean isCube() {
-        Band b= _plotState.firstBand();
-        return _plotState.isMultiImageFile(b) && _plotState.getCubeCnt(b)>0;
+        return _plotState.isMultiImageFile() && _plotState.getCubeCnt()>0;
     }
 
     public int getCubeCnt() {
-        Band b= _plotState.firstBand();
-        return _plotState.getCubeCnt(b);
+        return _plotState.getCubeCnt();
     }
 
     public int getCubePlaneNumber() {
-        Band b= _plotState.firstBand();
-        return _plotState.getCubePlaneNumber(b);
+        return _plotState.getCubePlaneNumber();
     }
 
     public WebHistogramOps getHistogramOps(Band band) {
@@ -327,8 +324,6 @@ public class WebPlot {
     public int getColorTableID() { return _plotState.getColorTableId(); }
 
     private void threeColorOK(Band band) {
-//        WebAssert.argTst(_plotState.getColorTableId(),
-//                   "Must be in three color mode to use this routine");
         WebAssert.argTst( (band== Band.RED || band== Band.GREEN || band== Band.BLUE),
                        "band must be RED, GREEN, or BLUE");
     }
@@ -378,12 +373,8 @@ public class WebPlot {
 
     @JsNoExport
     public boolean isBlankImage() {
-        return isBlankImage(_plotState.firstBand());
-    }
-
-    public boolean isBlankImage(Band band) {
         if (isThreeColor()) return false;
-        WebPlotRequest req=_plotState.getWebPlotRequest(band);
+        WebPlotRequest req=_plotState.getWebPlotRequest();
         return (req!=null && req.getRequestType()==RequestType.BLANK);
     }
 
@@ -1324,7 +1315,9 @@ public class WebPlot {
     }
 
     public boolean isRotated() { return _plotState.getRotateType()!= PlotState.RotateType.UNROTATE; }
-    public PlotState.RotateType getRotationType() { return _plotState.getRotateType(); }
+    public PlotState.RotateType getRotationType() {
+        return _plotState.getRotateType();
+    }
     public double getRotationAngle() { return _plotState.getRotationAngle(); }
 
     public boolean isRotatable() {

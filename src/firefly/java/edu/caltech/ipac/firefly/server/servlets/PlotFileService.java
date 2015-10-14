@@ -4,9 +4,9 @@
 package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.server.visualize.VisServerOps;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
-import edu.caltech.ipac.firefly.visualize.WebPlotResultParser;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -56,7 +56,7 @@ public class PlotFileService extends BaseHttpServlet {
             else {
                  result= VisServerOps.createPlot(nobandReq);
             }
-            String resultStr= WebPlotResultParser.createJS(result);
+            String resultStr= WebPlotResultSerializer.createJson(result);
 
             res.setContentType("text/plain");
             res.setContentLength(resultStr.length());

@@ -323,7 +323,7 @@ public class ThumbnailView extends Composite {
         Param[] params= new Param[] {
                 new Param("file", imageURL),
                 new Param("type", "thumbnail"),
-                new Param("state", plot.getPlotState().toString()),
+                new Param("state", plot.getPlotState().serialize()),
 //                new Param("ctx", plot.getPlotState().getContextString()),
         };
         return WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "sticky/FireFly_ImageDownload", params);
