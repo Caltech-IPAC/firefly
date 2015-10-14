@@ -1,16 +1,19 @@
+/* eslint-env node */
+/* global config:true */
+
 require('babel/register');
 var path = require('path');
 
 var firefly_root = path.resolve(__dirname, '../..');
 
-/*eslint-env node */
-/*global config:true */
-
 config = {
     name    : 'fftools',
-    filename: 'fflib.js',
+    index_html: 'fftools.html',
     src     : __dirname,
-    entry   : path.resolve(firefly_root, 'src/firefly/js/fireflyJSLib.js'),
+    entry   : {
+        fftools: path.resolve(__dirname, 'js/fftools.js'),
+        fflib: path.resolve(firefly_root, 'src/firefly/js/fireflyJSLib.js')
+    },
     firefly_dir : path.resolve(firefly_root, 'src/firefly')
 };
 

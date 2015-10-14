@@ -207,8 +207,8 @@ task buildAndPublish( dependsOn: war ) << {
 // define task order
 //-------------------------
 loadConfig.mustRunAfter gwt
-prepareWebapp.mustRunAfter buildClient
-buildClient.mustRunAfter gwtCompile
+buildClient.mustRunAfter prepareWebapp
+prepareWebapp.mustRunAfter gwtCompile
 deploy.mustRunAfter war
 deploy.mustRunAfter dirty
 
