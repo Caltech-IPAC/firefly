@@ -7,7 +7,7 @@
  */
 
 import React from 'react/addons';
-import _ from 'underscore';
+import _ from 'lodash';
 import FieldGroupStore from '../../store/FieldGroupStore.js';
 import FieldGroupActions from '../../actions/FieldGroupActions.js';
 

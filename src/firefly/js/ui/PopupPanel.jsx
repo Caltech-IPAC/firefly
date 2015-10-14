@@ -3,7 +3,7 @@
  */
 
 import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
-import _ from 'underscore';
+import _ from 'lodash';
 import Enum from 'enum';
 import React from 'react/addons';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
