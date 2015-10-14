@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -260,7 +259,7 @@ public class ImagePlotCreator {
         String headerKey[]= new String[] {
                 req.getHeaderKeyForTitle(),
                 "EXTNAME", "EXTTYPE",
-                state.getPrimaryCubeCnt()>0 ? "PLANE"+state.getImageIdx(state.firstBand()) : null
+                state.getCubeCnt()>0 ? "PLANE"+state.getImageIdx(state.firstBand()) : null
         };
         return findCard(header, headerKey);
     }

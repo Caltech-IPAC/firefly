@@ -15,7 +15,6 @@ import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
-import edu.caltech.ipac.firefly.server.visualize.WebPlotResultSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,17 +150,17 @@ public class WebPlotResultParser {
     }-*/;
 
     //--todo
-    public static String createWebPlotResultAry(WebPlotResult resAry[]) {
-        StringBuilder retval= new StringBuilder(5000);
-        retval.append( "\"resultAry\" : [" );
-        for(WebPlotResult res : resAry) {
-            retval.append(WebPlotResultSerializer.createJson(res, false));
-            retval.append(",");
-        }
-        retval.deleteCharAt(retval.length() - 1);
-        retval.append("],");
-        return retval.toString();
-    }
+//    public static String createWebPlotResultAry(WebPlotResult resAry[]) {
+//        StringBuilder retval= new StringBuilder(5000);
+//        retval.append( "\"resultAry\" : [" );
+//        for(WebPlotResult res : resAry) {
+//            retval.append(WebPlotResultSerializer.createJson(res, false));
+//            retval.append(",");
+//        }
+//        retval.deleteCharAt(retval.length() - 1);
+//        retval.append("],");
+//        return retval.toString();
+//    }
 
     public static String[] makeCreatorResultStringArray(CreatorResults cr) {
         WebPlotInitializer wpInit[]= cr.getInitializers();
