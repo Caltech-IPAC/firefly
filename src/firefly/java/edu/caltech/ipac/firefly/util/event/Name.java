@@ -302,6 +302,8 @@ public class Name implements Serializable {
     public static final Name PUSH_PAN               =  new Name("PUSH_PAN", "pan around");
     public static final Name PUSH_ZOOM              =  new Name("PUSH_ZOOM", "change zoom factor");
     public static final Name PUSH_RANGE_VALUES      =  new Name("PUSH_RANGE_VALUES", "change range values");
+    public static final Name PUSH_ADD_MASK          =  new Name("PUSH_ADD_MASK", "add a masking layer to plot");
+    public static final Name PUSH_REMOVE_MASK       =  new Name("PUSH_REMOVE_MASK", "remove a masking layer");
     public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
     public static final Name REPORT_ALIVE           =  new Name("REPORT_ALIVE", "report if url is alive");
     public static final Name RESPONDED_ALIVE        =  new Name("RESPONDED_ALIVE", "responded if url is alive");

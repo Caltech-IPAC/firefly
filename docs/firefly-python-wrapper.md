@@ -303,6 +303,29 @@ def myCallback(event):
 fc.addListener(myCallback)
 ```
 
+
+###FireflyClient's Mask Overlay Methods
+
+- `addMask(maskId,bitNumber,imageNumber,color,plotId,bitDesc=None,fileKey=None)`
+     
+    This method overlays a mask from a fits images. The method will overlay one bit of a mask image for a color.  If you want to overlay many mask bit then call the method multiple times.
+   
+       - maskId: id of mask
+       - bitNumber: bitNumber of the mask to overlay
+       - imageNumber: imageNumber of the mask layer
+       - color: color as an html color, eg. #FF0000 (red) or #00FF00 (green)
+       - plotId: plot id to overlay the mask on
+       - bitDesc: (*optional*) description of the mask layer
+       - fileOnServer: (*optional*) file to get the mask from, if None then get it from the original file. To upload a file *see* uploadFile *or* uploadFitsData
+       - *return* status of call
+
+
+- `removeMask(maskId)`
+
+   Remove a mask layer.
+   
+       - maskId: id of mask
+
 ###FireflyClient's Fits Stretch Help Methods
 
 When setting the stretch through `FireflyClient.showFits()` or `FireflyClient.stretch()` you must create a serialized range values string.

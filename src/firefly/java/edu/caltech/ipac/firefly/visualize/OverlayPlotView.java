@@ -26,13 +26,17 @@ import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.ui.MaskAdjust;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * *
  */
 public class OverlayPlotView extends Composite implements LayerDrawer {
 
 
-    public static final String OVERLAY_ITEM_ID= "AnyMaskLayer";
+    public static final String DEFAULT_OVERLAY_ITEM_ID = "AnyMaskLayer";
+    private static final List<OverlayPlotView> allOverlays= new ArrayList<OverlayPlotView>();
     private WebPlotView pv;
     private AbsolutePanel rootPanel= new AbsolutePanel();
     private WebPlot      maskPlot= null;
@@ -42,13 +46,15 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
     private final WebLayerItem webLayerItem;
     private float opacity=.58F;
     private WebPlotRequest maskRequest;
+    private final String overlayId;
 
     private static int idCnt=0;
 
     /**
      *
      */
-    public OverlayPlotView(WebPlotView pv,
+    public OverlayPlotView(String overlayId,
+                           WebPlotView pv,
                            int maskValue,
                            int imageNumber,
                            String color,
@@ -63,17 +69,18 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
         rootPanel.setStyleName("OverlayPlotView");
         pv.addDrawingArea(this, false);
 
-        String id= OverlayPlotView.OVERLAY_ITEM_ID+idCnt;
+        this.overlayId= overlayId!=null ? overlayId : DEFAULT_OVERLAY_ITEM_ID+idCnt;
         pv.addOverlayPlotView(this);
 
         WebPlotView.MouseAll ma= new WebPlotView.DefMouseAll();
         WebPlotView.MouseInfo mi= new WebPlotView.MouseInfo(ma,"put more help here");
-        webLayerItem= new WebLayerItem(id,null, "Mask: "+bitDesc,
+        webLayerItem= new WebLayerItem(this.overlayId,null, "Mask: "+bitDesc,
                 "Adjust opacity with up/down arrow",this,mi,null,null);
 
-        if (!WebLayerItem.hasUICreator(id)) {
-            WebLayerItem.addUICreator(id, new MaskUICreator());
+        if (!WebLayerItem.hasUICreator(this.overlayId)) {
+            WebLayerItem.addUICreator(this.overlayId, new MaskUICreator());
         }
+        allOverlays.add(this);
 
         idCnt++;
     }
@@ -86,6 +93,22 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
             maskPlot.setOpacity(opacity);
             pv.refreshDisplay();
         }
+    }
+
+    public void delete() {
+        dispose();
+        pv.removeWebLayerItem(webLayerItem);
+    }
+
+    public static void deleteById(String id) {
+        OverlayPlotView toDel= null;
+        for(OverlayPlotView oPv : allOverlays) {
+            if (oPv.overlayId.equals(id)) {
+                toDel= oPv;
+                break;
+            }
+        }
+        if (toDel!=null) toDel.delete();;
     }
 
     @Override
@@ -131,6 +154,7 @@ public class OverlayPlotView extends Composite implements LayerDrawer {
         pv.removeOverlayPlotView(this);
         maskPlot.freeResources();
         maskPlot= null;
+        allOverlays.remove(this);
     }
 
     public void setMaskPlot(WebPlot maskPlot) {

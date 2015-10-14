@@ -259,7 +259,7 @@ public class MaskAddDialog extends BaseDialog {
             for(int i=0; (i<bitNumberAry.length); i++) {
                 int maskValue= (int)Math.pow(2,bitNumberAry[i]);
                 String desc= "bit #"+bitNumberAry[i];
-                MaskAdjust.addMask(pv, maskValue, imageIdx, bitColorArray[i],desc,fileKey);
+                MaskAdjust.addMask(null,pv, maskValue, imageIdx, bitColorArray[i],desc,fileKey);
                 colorChoice++;
             }
         }

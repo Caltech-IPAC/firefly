@@ -1,12 +1,12 @@
 VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - zoomUp zoomDown zoomOriginal zoomFit zoomFill - colorTable stretchQuick - \
                        Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerTool \
-                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader maskOverlay
+                       NorthArrow grid ds9Region maskOverlay layer - IrsaCatalog restore LockRelated FitsHeader
 
 VisMenuBar.row1.Items = FitsDownload ImageSelect - zoomUp zoomDown zoomOriginal zoomFit zoomFill - \
                        Rotate RotateNorth FlipImage centerPlotonQuery
 
 VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea DistanceTool MarkerTool \
-                       NorthArrow grid ds9Region layer - IrsaCatalog restore LockRelated FitsHeader maskOverlay
+                       NorthArrow grid ds9Region maskOverlay layer - IrsaCatalog restore LockRelated FitsHeader
 
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30

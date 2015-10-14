@@ -11,6 +11,8 @@ package edu.caltech.ipac.firefly.visualize.ui;
 
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayPlotView;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
@@ -19,13 +21,37 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
 import edu.caltech.ipac.firefly.visualize.task.PlotMaskTask;
+import edu.caltech.ipac.util.StringUtils;
 
 /**
  * @author Trey Roby
  */
 public class MaskAdjust {
 
-    public static void addMask(final WebPlotView pv,
+
+
+    public static void addMask(String maskId,
+                               String plotId,
+                               int bitNumber,
+                               int imageNumber,
+                               String color,
+                               String bitDesc,
+                               String fileKey) {
+        if (plotId==null) return;
+        MiniPlotWidget mpw= AllPlots.getInstance().getMiniPlotWidgetById(plotId);
+        if (mpw==null || mpw.getPlotView()==null | mpw.getCurrentPlot()==null) return;
+
+        if (bitDesc==null) bitDesc= "bit #"+bitNumber;
+        if (color==null) color= "#FF0000";
+        int maskValue= (int)Math.pow(2,bitNumber);
+        addMask(maskId,mpw.getPlotView(),maskValue,imageNumber,color,bitDesc,fileKey);
+
+    }
+
+
+
+    public static void addMask(String maskId,
+                               final WebPlotView pv,
                                int maskValue,
                                int imageNumber,
                                String color,
@@ -37,7 +63,7 @@ public class MaskAdjust {
         PlotState state= primary.getPlotState();
         WebPlotRequest or= state.getPrimaryRequest();
         WebPlotRequest r= makeRequest(fileKey, pv,maskValue,imageNumber, color,or);
-        final OverlayPlotView opv= new OverlayPlotView(pv, maskValue,imageNumber, color,bitDesc,r);
+        final OverlayPlotView opv= new OverlayPlotView(maskId, pv, maskValue,imageNumber, color,bitDesc,r);
 
         PlotMaskTask.plot(r, opv, new AsyncCallback<WebPlot>() {
             @Override
@@ -53,6 +79,12 @@ public class MaskAdjust {
         });
 
     }
+
+    public static void removeMask(String maskId) {
+       OverlayPlotView.deleteById(maskId);
+    }
+
+
 
     public static void updateMask(final OverlayPlotView opv,
                                   final WebPlotView pv,
@@ -90,7 +122,7 @@ public class MaskAdjust {
         PlotState state= primary.getPlotState();
 
         WebPlotRequest r= or.makeCopy();
-        if (fileKey!=null) {
+        if (!StringUtils.isEmpty(fileKey)) {
             r.setRequestType(RequestType.FILE);
             r.setFileName(fileKey);
         }

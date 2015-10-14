@@ -41,6 +41,7 @@ public class ServerParams {
     public static final String BAND = "band";
     public static final String IDX = "idx";
     public static final String COLOR_IDX = "idx";
+    public static final String COLOR= "color";
     public static final String COL_NAME= "colName";
     public static final String NORTH = "north";
     public static final String ANGLE = "angle";
@@ -83,6 +84,9 @@ public class ServerParams {
     public static final String IMAGE= "image";
     public static final String TOOL_TIP=  "toolTip";
     public static final String DS9_REGION_DATA= "ds9RegionData";
+    public static final String BIT_NUMBER= "bitNumber";
+    public static final String IMAGE_NUMBER= "imageNumber";
+    public static final String BIT_DESC= "bitDesc";
 
 
 
@@ -148,6 +152,8 @@ public class ServerParams {
     public static final String VIS_PUSH_PAN= "pushPan";
     public static final String VIS_PUSH_ZOOM= "pushZoom";
     public static final String VIS_PUSH_RANGE_VALUES= "pushRangeValues";
+    public static final String VIS_PUSH_ADD_MASK= "pushAddMask";
+    public static final String VIS_PUSH_REMOVE_MASK= "pushRemoveMask";
 
 
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
