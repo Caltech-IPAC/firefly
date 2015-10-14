@@ -1,12 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-package edu.caltech.ipac.visualize.plot;
+package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 /**
  * User: roby
@@ -18,9 +19,9 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public class MiniFitsHeader implements Serializable {
+public class ClientFitsHeader implements Serializable, Iterable<String> {
 
-    private final static String SPLIT_TOKEN= "--MiniFitHead--";
+    private final static String SPLIT_TOKEN= "--ClientFitHead--";
 
     private static final String PLANE_NUMBER= "planeNumber";
     private static final String BITPIX= "bitpix";
@@ -55,21 +56,21 @@ public class MiniFitsHeader implements Serializable {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
-    public MiniFitsHeader() {}
+    public ClientFitsHeader() {}
 
-    private MiniFitsHeader(Map<String, String> headers) { _headers= headers;}
+    public ClientFitsHeader(Map<String, String> headers) { _headers= headers;}
 
-    public MiniFitsHeader(int planeNumber,
-                          int bitpix,
-                          int naxis,
-                          int naxis1,
-                          int naxis2,
-                          int naxis3,
-                          double cdelt2,
-                          double bscale,
-                          double bzero,
-                          double blankValue,
-                          long dataOffset) {
+    public ClientFitsHeader(int planeNumber,
+                            int bitpix,
+                            int naxis,
+                            int naxis1,
+                            int naxis2,
+                            int naxis3,
+                            double cdelt2,
+                            double bscale,
+                            double bzero,
+                            double blankValue,
+                            long dataOffset) {
         _headers.put(PLANE_NUMBER,planeNumber+"");
         _headers.put(BITPIX,      bitpix+"");
         _headers.put(NAXIS,       naxis+"");
@@ -86,6 +87,12 @@ public class MiniFitsHeader implements Serializable {
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
+
+
+    @Override
+    public Iterator<String> iterator() {
+        return _headers.keySet().iterator();
+    }
 
     public int getPlaneNumber() { return getIntHeader(PLANE_NUMBER); }
     public int getBixpix() { return getIntHeader(BITPIX); }
@@ -169,13 +176,13 @@ public class MiniFitsHeader implements Serializable {
     }
 
 
-    public static MiniFitsHeader parse(String s) {
+    public static ClientFitsHeader parse(String s) {
 
         if (s==null) return null;
         Map<String,String> map= new HashMap<String,String>(50);
 //        MapPropertyLoader.load(map,projStr);
         String sAry[]= s.split(SPLIT_TOKEN,60);
-        MiniFitsHeader miniFitsHeader= null;
+        ClientFitsHeader clientFitsHeader = null;
         if (sAry.length<60) {
             String pairAry[];
             for(String pair : sAry) {
@@ -184,10 +191,10 @@ public class MiniFitsHeader implements Serializable {
                     map.put(pairAry[0],pairAry[1]);
                 }
             }
-            miniFitsHeader= new MiniFitsHeader(map);
+            clientFitsHeader = new ClientFitsHeader(map);
         }
 
-        return miniFitsHeader;
+        return clientFitsHeader;
     }
 
 

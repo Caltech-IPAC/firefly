@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
@@ -1456,7 +1457,7 @@ public class VisServerOps {
 
 
     private static double getFluxFromFitsFile(File f,
-                                              MiniFitsHeader miniFitsHeader,
+                                              ClientFitsHeader clientFitsHeader,
                                               ImagePt ipt) throws IOException {
         RandomAccessFile fitsFile= null;
         double val= 0.0;
@@ -1464,10 +1465,10 @@ public class VisServerOps {
         try {
             if (f.canRead()) {
                 fitsFile= new RandomAccessFile(f, "r");
-                if (miniFitsHeader==null) {
-                    throw new IOException("Can't read file, MiniFitsHeader is null");
+                if (clientFitsHeader ==null) {
+                    throw new IOException("Can't read file, ClientFitsHeader is null");
                 }
-                val= PixelValue.pixelVal(fitsFile,(int)ipt.getX(),(int)ipt.getY(), miniFitsHeader);
+                val= PixelValue.pixelVal(fitsFile,(int)ipt.getX(),(int)ipt.getY(), clientFitsHeader);
             }
             else {
                 throw new IOException("Can't read file or it does not exist");

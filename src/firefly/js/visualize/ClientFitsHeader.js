@@ -3,7 +3,7 @@
  */
 
 
-const SPLIT_TOKEN= '--MiniFitHead--';
+const SPLIT_TOKEN= '--ClientFitHead--';
 
 import parseInt from '../util/StringUtils.js';
 import join from 'underscore.string/join';
@@ -24,7 +24,7 @@ export const C = {
 };
 
 
-class MiniFitsHeader {
+class ClientFitsHeader {
     construtor(headers) {
         this.headers= headers;
     }
@@ -46,20 +46,24 @@ class MiniFitsHeader {
 
     setHeader(key, value) { this.header[key]= value; }
 
-    toString() {
-        return join(SPLIT_TOKEN, Object.keys(this.headers).map( key => key+'='+this.headers[key]));
-    }
-
-    static parse(s) {
-        if (!s) return null;
-        var headers= words(s,SPLIT_TOKEN).reduce( (obj,str) =>  {
-                               var vStr= words(str,'=');
-                               if (vStr.length===2) obj[vStr[0]]=vStr[1];
-                               return obj;
-                           },{});
-        return Object.keys(headers).length ? new MiniFitsHeader(headers) : null;
-    }
+    //toString() {
+    //    return join(SPLIT_TOKEN, Object.keys(this.headers).map( key => key+'='+this.headers[key]));
+    //}
+    //
+    //static parse(s) {
+    //    if (!s) return null;
+    //    var headers= words(s,SPLIT_TOKEN).reduce( (obj,str) =>  {
+    //                           var vStr= words(str,'=');
+    //                           if (vStr.length===2) obj[vStr[0]]=vStr[1];
+    //                           return obj;
+    //                       },{});
+    //    return Object.keys(headers).length ? new ClientFitsHeader(headers) : null;
+    //}
 }
 
-export default MiniFitsHeader;
+export default ClientFitsHeader;
+
+export const makeClientFitsHeader= function(headers) {
+    return new ClientFitsHeader(headers);
+};
 

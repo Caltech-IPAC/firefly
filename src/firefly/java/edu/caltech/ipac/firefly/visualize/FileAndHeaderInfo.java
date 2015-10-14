@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.MiniFitsHeader;
 
 import java.io.Serializable;
 /**
@@ -26,10 +25,10 @@ public class FileAndHeaderInfo implements Serializable {
     private FileAndHeaderInfo() {}
 
     /**
-     * contains the file and the MiniFitsHeader
+     * contains the file and the ClientFitsHeader
      * @param file the file to look at on the server
-     * @param headerSerialized a string the contains the results of passing MiniFitsHeader
-     * to MiniFitsHeader.toString()
+     * @param headerSerialized a string the contains the results of passing ClientFitsHeader
+     * to ClientFitsHeader.toString()
      */
     FileAndHeaderInfo(String file, String headerSerialized) {
         _file= file;
@@ -37,7 +36,7 @@ public class FileAndHeaderInfo implements Serializable {
     }
 
     public String getfileName() { return _file; }
-    public MiniFitsHeader getHeader() { return MiniFitsHeader.parse(_headerSerialized); }
+    public ClientFitsHeader getHeader() { return ClientFitsHeader.parse(_headerSerialized); }
 
     public String toString() {
         return _file+SPLIT_TOKEN+_headerSerialized;

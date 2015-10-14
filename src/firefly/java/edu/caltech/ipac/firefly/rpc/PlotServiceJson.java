@@ -160,7 +160,7 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     public void recomputeStretch(PlotState state, StretchData[] stretchData, AsyncCallback<WebPlotResult> async) {
         List<Param> paramList = new ArrayList<Param>(4);
-        paramList.add(new Param(ServerParams.STATE, state.toString()));
+        paramList.add(new Param(ServerParams.STATE, state.serialize()));
         for (int i = 0; (i < stretchData.length && i < 3); i++) {
             paramList.add(new Param(ServerParams.STRETCH_DATA + i, stretchData[i].toString()));
         }
@@ -278,7 +278,7 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     private void doPlotService(String cmd, AsyncCallback<WebPlotResult> async, PlotState state, Param... paramAry) {
         List<Param> paramList = new ArrayList<Param>(8);
-        paramList.add(new Param(ServerParams.STATE, state.toString()));
+        paramList.add(new Param(ServerParams.STATE, state.serialize()));
         paramList.addAll(Arrays.asList(paramAry));
         doPlotService(cmd, async, paramList);
     }

@@ -335,7 +335,7 @@ public class ImagePlotBuilder {
             FileReadInfo fi = entry.getValue()[0];
             initState(state, fi, band, requestMap.get(band));
         }
-        RangeValues rv = state.getPrimaryRangeValues();
+        RangeValues rv = state.getRangeValues();
         if (rv != null) {
             for (Band band : state.getBands()) {
                 state.setRangeValues(rv, band);

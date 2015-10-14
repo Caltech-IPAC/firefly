@@ -312,7 +312,7 @@ public class TileDrawer {
         Param[] params = new Param[]{
                 new Param("file", imageURL.getURL()),
 //                new Param("ctx", plot.getPlotState().getContextString()),
-                new Param("state", plot.getPlotState().toString()),
+                new Param("state", plot.getPlotState().serialize()),
                 new Param("type", "tile"),
                 new Param("x", imageURL.getXoff() + ""),
                 new Param("y", imageURL.getYoff() + ""),

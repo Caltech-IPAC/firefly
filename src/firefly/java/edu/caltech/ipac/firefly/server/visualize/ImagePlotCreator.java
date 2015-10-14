@@ -58,7 +58,7 @@ public class ImagePlotCreator {
          Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
-             WebPlotRequest req= stateAry[i].getPrimaryWebPlotRequest();
+             WebPlotRequest req= stateAry[i].getWebPlotRequest();
              if (readAry.length>3) {
                  PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING,
                                               PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
@@ -148,7 +148,7 @@ public class ImagePlotCreator {
                                      ZoomChoice zoomChoice,
                                      boolean    isMultiImage) throws FitsException {
 
-        RangeValues rv= state.getPrimaryRangeValues();
+        RangeValues rv= state.getRangeValues();
         if (rv==null) {
             rv= FitsRead.getDefaultRangeValues();
             state.setRangeValues(rv,state.firstBand());
@@ -209,7 +209,7 @@ public class ImagePlotCreator {
                               ActiveFitsReadGroup frGroup,
                               String dataDesc,
                               boolean isMultiImage) {
-        WebPlotRequest req= state.getPrimaryWebPlotRequest();
+        WebPlotRequest req= state.getWebPlotRequest();
         WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
         String headerKey= req.getHeaderKeyForTitle();
         if ((isMultiImage && (titleOps== WebPlotRequest.TitleOptions.NONE ||titleOps== WebPlotRequest.TitleOptions.FILE_NAME)) ||

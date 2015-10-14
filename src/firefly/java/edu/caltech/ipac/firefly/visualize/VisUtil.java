@@ -587,6 +587,21 @@ public class VisUtil {
     }
 
 
+    public static Band[] getBands(PlotStateCI sCI) {
+        BandCI bciAry[]= sCI.getBandsCI();
+        Band bAry[]= new Band[bciAry.length];
+        for(int i=0; (i<bAry.length); i++) {
+            bAry[i]= Band.parse(bciAry[i].key());
+        }
+        return bAry;
+    }
+
+
+    public static Band[] getBands(PlotState state) {
+        return state.getBands();
+    }
+
+
 
     public static class NorthEastCoords {
         public final int x1, y1, x2, y2;

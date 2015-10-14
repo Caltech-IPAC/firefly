@@ -167,7 +167,7 @@ class RangeValues {
         var params= sIn.split(',').map( (v) => validator.toFloat(v) );
         var valid= params.every( (v)=> typeof v !== 'undefined' && !isNaN(v) );
 
-        return valid ? new RangeValues(...params) : false;
+        return valid ? new RangeValues(...params) : null;
     }
 
     serialize() {

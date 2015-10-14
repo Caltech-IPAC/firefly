@@ -83,7 +83,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
     private RangeValues getCurrentRV() {
         WebPlot plot= getPlotView().getPrimaryPlot();
         PlotState state= plot.getPlotState();
-        return state.getRangeValues(state.firstBand());
+        return state.getRangeValues();
     }
 
     public QuickStretchCmd(String commandName, int stretchAlgorythm) {

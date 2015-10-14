@@ -30,15 +30,36 @@ public class PlotStateUtil {
 
 
     public static PlotState create(WebPlotRequest req) {
-        return new PlotState(req);
+        PlotState state= new PlotState();
+        state.setWebPlotRequest(req, Band.NO_BAND);
+        state.setMultiImageAction(PlotState.MultiImageAction.USE_ALL);
+        return state;
     }
 
     public static PlotState create(Map<Band,WebPlotRequest> reqMap) {
-        return new PlotState(reqMap.get(Band.RED), reqMap.get(Band.GREEN), reqMap.get(Band.BLUE));
+
+        PlotState state= new PlotState();
+        state.setThreeColor(true);
+        state.setMultiImageAction(PlotState.MultiImageAction.USE_FIRST);
+
+        WebPlotRequest redReq= reqMap.get(Band.RED);
+        WebPlotRequest blueReq= reqMap.get(Band.GREEN);
+        WebPlotRequest greenReq= reqMap.get(Band.BLUE);
+        if (redReq!=null) state.setWebPlotRequest(redReq, Band.RED);
+        if (greenReq!=null) state.setWebPlotRequest(greenReq, Band.GREEN);
+        if (blueReq!=null) state.setWebPlotRequest(blueReq, Band.BLUE);
+
+        return state;
     }
 
     public static PlotState create(WebPlotRequest req[], PlotState initializerState) {
-        PlotState state= new PlotState(initializerState.isThreeColor());
+//        PlotState state= new PlotState(initializerState.isThreeColor());
+
+        PlotState state= new PlotState();
+        boolean threeC= initializerState.isThreeColor();
+        state.setThreeColor(threeC);
+        state.setMultiImageAction(threeC ? PlotState.MultiImageAction.USE_FIRST : PlotState.MultiImageAction.USE_ALL);
+
         state.setContextString(CtxControl.makeAndCachePlotCtx().getKey());
         initState(state, req, initializerState);
         CtxControl.getPlotCtx(state.getContextString()).setPlotState(state);

@@ -221,7 +221,7 @@ var ColorDialogPanel= React.createClass(
 
     render() {
         var groupKey=this.props.groupKey;
-        var {algorithm, lowerType, zscale}= FieldGroupStore.getGroupFields(groupKey);
+        const {algorithm, lowerType, zscale}= FieldGroupStore.getGroupFields(groupKey);
         var a= Number.parseInt(algorithm.value);
         var panel;
         if (a===STRETCH_ASINH) {
