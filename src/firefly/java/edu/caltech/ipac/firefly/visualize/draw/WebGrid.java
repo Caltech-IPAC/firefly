@@ -638,18 +638,19 @@ public class WebGrid
 			    val = min + qdelta - min%qdelta ;
 		    }
 
-		    int count = (int) ( (max - val) /qdelta);
-               if (count<=3){
-                   qdelta=qdelta/2.0;
-                   count=2*count;
-               }
 
-		    /*while (val + count*qdelta < max)
+            int count=0;
+		    while (val + count*qdelta < max)
 		    {
 			    count += 1;
-		    }*/
+		    }
 
-		    levels[i] = new double[count];
+            if (count<=2){
+                  qdelta=qdelta/2.0;
+                  count=2*count;
+            }
+
+            levels[i] = new double[count];
 		    for (int j=0; j<count; j += 1)
 		    {
 			    levels[i][j] = j*qdelta + val;
@@ -806,7 +807,7 @@ public class WebGrid
 		       // Redo min/max
 		       trange = edgeVals(1, wrap);
 	       }
-           else {
+           else if (_csys.equals(CoordinateSys.GALACTIC)){
                trange=edgeVals(1);
                sharedLon = 0.0;
                sharedLat = (trange[1][0] + trange[1][1]) / 2;
