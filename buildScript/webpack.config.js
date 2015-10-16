@@ -4,6 +4,7 @@
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import RewireWebpackPlugin from 'rewire-webpack';
 import path from 'path';
 import fs from 'fs';
 
@@ -67,7 +68,8 @@ var webpackConfig = {
         })),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.optimize.DedupePlugin(),
-        new ExtractTextPlugin(`${config.name}.css`)
+        new ExtractTextPlugin(`${config.name}.css`),
+        new RewireWebpackPlugin()
 
     ],
     resolve : {
@@ -185,14 +187,14 @@ if (config.do_lint) {
         }
     }
     if (config.do_lint) {
-        webpackConfig.module.preLoaders = [
-            {
-                test: /\.(js|jsx)$/,
-                exclude: exclude_dirs,
+    	webpackConfig.module.preLoaders = [
+        	{
+            	test : /\.(js|jsx)$/,
+            	exclude: exclude_dirs,
                 loaders: ['eslint-loader' + eslint_options]
-            }
-        ];
-    }
+        	}
+    	];
+	}
 }
 
 export default webpackConfig;
