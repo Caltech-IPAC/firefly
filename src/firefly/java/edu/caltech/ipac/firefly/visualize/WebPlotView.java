@@ -34,7 +34,6 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.firefly.visualize.task.VisTask;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Pt;
@@ -782,6 +781,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
     public void setPrimaryPlot(WebPlot p) {
         WebPlot old= _primaryPlot;
+        if (old!=null && old.isAlive()) old.getPlotGroup().cancelPendingZooms();
 
         PropertyChangeData data= new PropertyChangeData( PRIMARY_PLOT, old,p);
         WebEvent ev= new WebEvent<PropertyChangeData>(this, Name.PRIMARY_PLOT_CHANGE, data);
@@ -828,7 +828,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         if (_primaryPlot!=null) {
             float currZoomFact= _primaryPlot.getZoomFact();
             final ImageWorkSpacePt pt= findCurrentCenterPoint();
-            if (!ComparisonUtil.equals(zoomLevel,currZoomFact,4)) {
+            if (!ZoomUtil.isZoomLevelsMatching(this,currZoomFact, zoomLevel, .0001F)) {
                 _primaryPlot.getPlotGroup().activateDeferredZoom(zoomLevel, isFullScreen,
                                                                  useDeferredDelay, getOverlayPlotList());
                 Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {

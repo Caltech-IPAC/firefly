@@ -178,6 +178,10 @@ public class WebPlotGroup  {
         fireReplotEvent(ReplotDetails.Reason.ZOOM);
     }
 
+    void cancelPendingZooms() {
+        _zoomTimer.cancel();
+    }
+
 
 
     /**

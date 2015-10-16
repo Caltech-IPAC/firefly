@@ -103,7 +103,7 @@ public abstract class FlipCmd extends BaseVisCmd {
             Dimension dim= new Dimension(mpw.getMovablePanel().getOffsetWidth(), mpw.getMovablePanel().getOffsetHeight());
             float newLevel= ZoomUtil.getEstimatedFullZoomFactor(newPlot,dim);
             float currentNewLevel= newPlot.getZoomFact();
-            if ( Math.abs(currentNewLevel-newLevel)>.01F) {
+            if ( !ZoomUtil.isZoomLevelsMatching(pv,currentNewLevel,newLevel,.01F)) {
                 enableZoomCallback(mpw,oldPlot,newPlot);
                 pv.setZoomTo(newLevel,false,false);
             }
@@ -131,6 +131,7 @@ public abstract class FlipCmd extends BaseVisCmd {
             doRotation(mpw,oldPlot,newPlot);
         }
     }
+
 
     private void enableZoomCallback(final MiniPlotWidget mpw,final WebPlot oldPlot, final WebPlot newPlot) {
         AllPlots.getInstance().addListener(Name.REPLOT,  new WebEventListener() {

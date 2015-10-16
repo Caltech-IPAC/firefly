@@ -309,7 +309,7 @@ class FireflyClient(WebSocketClient):
 
     def addExtension(self, extType, title, plotId, extensionId, image=None):
         """
-        Add an extension to the plot.  Extensions are context menus that allows you extend
+        Add an extension to the plot.  Extensions are context menus that allows you to extend
         what firefly can so when certain actions happen
         :param extType: May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
         :param title: The title that the user sees
