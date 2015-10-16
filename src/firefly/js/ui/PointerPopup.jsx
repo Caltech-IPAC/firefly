@@ -1,7 +1,7 @@
 /*eslint "prefer-template": 0*/
 
 import React from 'react/addons';
-import _ from 'underscore';
+import _ from 'lodash';
 
 
 const UP_POPUP_POINTER = 'images/up-pointer.gif';

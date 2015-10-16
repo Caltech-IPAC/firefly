@@ -114,7 +114,7 @@ public class FFToolEnv {
 //        EventHub hub = (EventHub) Application.getInstance().getAppData(HUB);
 //        if (hub == null) {
 //            hub = new EventHub();
-//            Application.getInstance().setAppData(HUB, hub);
+//            Application.getInstance().updateAppData(HUB, hub);
 //        }
 //        return hub;
     }

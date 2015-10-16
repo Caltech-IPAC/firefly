@@ -1,12 +1,13 @@
+/* eslint-env node */
+/* global config:true */
+
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import RewireWebpackPlugin from 'rewire-webpack';
 import path from 'path';
 import fs from 'fs';
 
-
-/*eslint-env node */
-/*global config:true */
 
 var exclude_dirs = [/node_modules/, /java/, /python/, /config/, /test/];
 config.firefly_dir = config.firefly_dir || config.src;
@@ -18,7 +19,7 @@ var def_config = {
     do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
     index_html  : 'index.html',
     html_dir    : 'html',
-    filename    : '[name].[hash].js',
+    filename    : '[name].js',
     deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
     alias       : {
             'ipac-firefly' : path.resolve(config.firefly_dir, 'js'),
@@ -55,11 +56,7 @@ var webpackConfig = {
     name    : config.name,
     target  : 'web',
     devtool : 'source-map',
-    entry   : {
-        app : [
-            config.entry
-        ]
-    },
+    entry   : config.entry,
     output : {
         filename   : config.filename,
         path       : output_path
@@ -67,11 +64,12 @@ var webpackConfig = {
     plugins : [
         new webpack.DefinePlugin(Object.assign(globals, {
             __CLIENT__ : true,
-            __SCRIPT_NAME__ : "'"+ config.filename + "'"
+            __SCRIPT_NAME__ : `'fflib.js'`        // hard-coded for now.  could not figure out how to pick up the current output file of multiple entry points build.
         })),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.optimize.DedupePlugin(),
-        new ExtractTextPlugin(`${config.name}.css`)
+        new ExtractTextPlugin(`${config.name}.css`),
+        new RewireWebpackPlugin()
 
     ],
     resolve : {
@@ -162,7 +160,7 @@ if (globals.__PROD__) {
 // ------------------------------------
 
 // if index_html exists, insert script tag to load built javascript bundles(s).
-if (fs.existsSync(path.resolve(config.src, config.html_dir, config.index_html))) {
+if (fs.existsSync(path.resolve(config.dist, config.index_html))) {
     webpackConfig.plugins.push(
         new HtmlWebpackPlugin({
             template : path.resolve(config.src, config.html_dir, config.index_html),
@@ -189,20 +187,20 @@ if (config.do_lint) {
         }
     }
     if (config.do_lint) {
-        webpackConfig.module.preLoaders = [
-            {
-                test: /\.(js|jsx)$/,
-                exclude: exclude_dirs,
+    	webpackConfig.module.preLoaders = [
+        	{
+            	test : /\.(js|jsx)$/,
+            	exclude: exclude_dirs,
                 loaders: ['eslint-loader' + eslint_options]
-            }
-        ];
-    }
+        	}
+    	];
+	}
 }
 
 export default webpackConfig;
 
 
-//console.log ("--------------- CONFIG --------------");
+//console.log ('--------------- CONFIG --------------');
 //console.log (JSON.stringify(config, null,2));
-//console.log ("--------------- WEBPACK_CONFIG --------------");
+//console.log ('--------------- WEBPACK_CONFIG --------------');
 //console.log (JSON.stringify(webpackConfig, null,2));
