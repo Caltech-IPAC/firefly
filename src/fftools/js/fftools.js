@@ -6,12 +6,12 @@ import _ from 'lodash';
 
 import React from 'react';
 import {flux, firefly} from 'firefly/Firefly.js';
-import * as appData from 'firefly/core/AppData.js';
+import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
 
 const App = React.createClass({
 
     render() {
-        let v = _.get(this.props, 'appData.props.version') || 'unknown';
+        const v = _.get(this.props, 'appData.props.version') || 'unknown';
         if (!this.props.appData.isReady) {
             return (
                 <div>
@@ -37,7 +37,7 @@ function connector(state) {
 }
 
 firefly.bootstrap();
-firefly.process( {type : appData.APP_LOAD} );
+firefly.process( {type : appDataCntlr.APP_LOAD} );
 
 const container = flux.createSmartComponent(connector, App);
 

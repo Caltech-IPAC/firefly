@@ -9,7 +9,7 @@ import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from 'firefly/side-effects';
-import * as appData  from '../core/AppData.js';
+import * as appData  from './AppDataCntlr.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
