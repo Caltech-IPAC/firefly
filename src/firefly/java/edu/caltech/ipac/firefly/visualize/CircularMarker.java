@@ -12,24 +12,24 @@ package edu.caltech.ipac.firefly.visualize;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
+ * Refactored from original Marker class.
 * @author Trey Roby
 */
-public abstract class Marker implements OverlayMarker {
+public class CircularMarker extends Marker {
+   
     public static final String FONT= "SansSerif";
 
     private WorldPt startPt;
     private WorldPt endPt;
     private float workingScreenRadius;
     private String title=null;
-    private Corner textCorner= OverlayMarker.Corner.SE;
+    private Corner textCorner= Corner.SE;
 
-//    public Marker(int screenRadius) {
-//        startCorner= Corner.NW;
-//        endCorner= Corner.SE;
-//        workingScreenRadius = screenRadius;
-//        startPt= null;
-//        endPt= null;
-//    }
+    public CircularMarker(int screenRadius) {
+        workingScreenRadius = screenRadius;
+        startPt= null;
+        endPt= null;
+    }
 
 //    public Marker(WorldPt center, int screenRadius, WebPlot plot) throws ProjectionException {
 //        ScreenPt cpt= plot.getScreenCoords(center);

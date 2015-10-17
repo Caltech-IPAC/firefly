@@ -18,7 +18,6 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
@@ -40,9 +39,9 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.CircularMarker;
-import edu.caltech.ipac.firefly.visualize.Marker;
+import edu.caltech.ipac.firefly.visualize.Footprint;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -55,22 +54,27 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 
-public class MarkerToolCmd extends    BaseGroupVisCmd
+/**
+ * The command handles the adding of a circular marker - another command should be implemented for the footprint
+ * @author ejoliet
+ *
+ */
+public class FootrpintToolCmd extends    BaseGroupVisCmd
                            implements WebEventListener/*, PrintableOverlay*/ {
 
-    public enum Mode {ADD_MARKER, MOVE, RESIZE, OFF}
+    public enum Mode {ADD_FOOTPRINT, MOVE, OFF}
 
-    public static final String BASE_DRAWER_ID = "MarkerToolID#";
+    public static final String BASE_DRAWER_ID = "FootPrintToolID#";
     public static final int EDIT_DISTANCE = BrowserUtil.isTouchInput() ? 20 : 12;
     public static final String _selHelpText = "Tap to create marker";
     public static final String _editHelpText = "Click center and drag to move, click corner and drag to resize";
-    public static final String BASE_TITLE = "Marker #";
+    public static final String BASE_TITLE = "Footprint #";
 
     public static int mCnt = 0;
 
-    public static final String CommandName = "MarkerTool";
-    private HashMap<Marker, MarkerDrawing> _markerMap = new HashMap<Marker, MarkerDrawing>(10);
-    private Marker _activeMarker = null;
+    public static final String CommandName = "MarkerTool"; // FIXME: should be defined elsewhere - needed for rpc, right?
+    private HashMap<OverlayMarker, MarkerDrawing> _markerMap = new HashMap<OverlayMarker, MarkerDrawing>(10);
+    private OverlayMarker _activeMarker = null;
 
     private Mode _mode;
     private boolean _mouseDown = false;
@@ -81,7 +85,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private final static String _offIcon = "MarkerTool.off.Icon";
 
 
-    public MarkerToolCmd() {
+    public FootrpintToolCmd() {
         super(CommandName);
         AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
@@ -109,13 +113,13 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 //======================================================================
 
     private void addViewer(MiniPlotWidget mpw) {
-        for (Map.Entry<Marker, MarkerDrawing> entry : _markerMap.entrySet()) {
+        for (Map.Entry<OverlayMarker, MarkerDrawing> entry : _markerMap.entrySet()) {
             entry.getValue().getDrawMan().addPlotView(mpw.getPlotView());
         }
     }
 
     private void clearAllViewers() {
-        for (Map.Entry<Marker, MarkerDrawing> entry : _markerMap.entrySet()) {
+        for (Map.Entry<OverlayMarker, MarkerDrawing> entry : _markerMap.entrySet()) {
             entry.getValue().getDrawMan().clear();
         }
         _markerMap.clear();
@@ -124,15 +128,15 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     protected void doExecute() {
         switch (_mode) {
-            case ADD_MARKER:
-            case RESIZE:
+            case ADD_FOOTPRINT:
+//            case RESIZE:
             case MOVE:
                 disableSelection();
                 changeMode(Mode.OFF);
 //                AlertLayerPopup.setAlert(false);
                 break;
             case OFF:
-                if (_markerMap.size() == 0) changeMode(Mode.ADD_MARKER);
+                if (_markerMap.size() == 0) changeMode(Mode.ADD_FOOTPRINT);
                 else changeMode(Mode.MOVE);
                 setupMouse();
 //                AlertLayerPopup.setAlert(true);
@@ -170,7 +174,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private void changeMode(Mode newMode) {
         _mode = newMode;
         switch (_mode) {
-            case ADD_MARKER:
+            case ADD_FOOTPRINT:
                 createDrawMan();
                 setIconProperty(_onIcon);
                 break;
@@ -179,11 +183,11 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 changeToEditHelp();
                 addDrawMan();
                 break;
-            case RESIZE:
-                setIconProperty(_onIcon);
-                changeToEditHelp();
-                addDrawMan();
-                break;
+//            case RESIZE:
+//                setIconProperty(_onIcon);
+//                changeToEditHelp();
+//                addDrawMan();
+//                break;
             case OFF:
                 removeDrawMan();
                 setIconProperty(_offIcon);
@@ -196,8 +200,8 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
     private void disableSelection() {
         switch (_mode) {
-            case ADD_MARKER:
-            case RESIZE:
+            case ADD_FOOTPRINT:
+//            case RESIZE:
             case MOVE:
                 releaseMouse();
                 break;
@@ -209,7 +213,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
     }
 
-    private void setActiveMarker(Marker m) {
+    private void setActiveMarker(OverlayMarker m) {
         _activeMarker= m;
     }
 
@@ -219,21 +223,22 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
 
-        if (_mode == Mode.ADD_MARKER) {
+        if (_mode == Mode.ADD_FOOTPRINT) {
             _doMove = true;
             changeMode(Mode.MOVE);
             drag(pv, spt);
         } else {
-            Marker m = findEditableMarker(plot, spt);
+            OverlayMarker m = findEditableMarker(plot, spt);
             if (m != null) {
                 setActiveMarker(m); // ONLY set _activeMarker if m!=null
                 _markerMap.get(m).cancelDeferred();
                 _doMove = true;
                 if (m.contains(spt, plot)) {
                     changeMode(Mode.MOVE);
-                } else {
-                    changeMode(Mode.RESIZE);
-                }
+                } 
+//                else {
+//                    changeMode(Mode.RESIZE);
+//                }
                 drag(pv, spt);
             } else {
                 _mouseInfo.setEnableAllExclusive(true);
@@ -252,16 +257,16 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         _mouseInfo.setEnableAllExclusive(false);
 
             switch (_mode) {
-                case ADD_MARKER:
+                case ADD_FOOTPRINT:
                     break;
                 case MOVE:
                     WorldPt center = plot.getWorldCoords(spt);
                     if (center==null) return;
                     _activeMarker.move(center, plot);
                     break;
-                case RESIZE:
-                    _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
-                    break;
+//                case RESIZE:
+//                    _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
+//                    break;
                 default:
                     WebAssert.argTst(false, "only support for SelectType of ADD_MARKER or MOVE");
                     break;
@@ -278,17 +283,17 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
             switch (_mode) {
-                case ADD_MARKER:
+                case ADD_FOOTPRINT:
                     releaseMouse();
                     break;
                 case MOVE:
-                case RESIZE:
-                    _activeMarker.adjustStartEnd(pv.getPrimaryPlot());
-                    _markerMap.get(_activeMarker).deferDraw(pv.getPrimaryPlot(),_activeMarker);
-
-//                    updateData(_activeMarker, null);
-//                    _markerMap.get(_activeMarker).getDrawMan().redraw();
-                    break;
+//                case RESIZE:
+//                    _activeMarker.adjustStartEnd(pv.getPrimaryPlot());
+//                    _markerMap.get(_activeMarker).deferDraw(pv.getPrimaryPlot(),_activeMarker);
+//
+////                    updateData(_activeMarker, null);
+////                    _markerMap.get(_activeMarker).getDrawMan().redraw();
+//                    break;
                 default:
                     WebAssert.argTst(false, "only support for SelectType of ADD_MARKER or MOVE");
                     break;
@@ -298,18 +303,18 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
 
-    private Marker findEditableMarker(WebPlot plot, ScreenPt pt) {
+    private OverlayMarker findEditableMarker(WebPlot plot, ScreenPt pt) {
         if (plot == null || pt == null) return null;
 
-        Marker retval = null;
-        List<Marker> centerList = new ArrayList<Marker>(10);
-        for (Marker m : _markerMap.keySet()) {
+        OverlayMarker retval = null;
+        List<OverlayMarker> centerList = new ArrayList<OverlayMarker>(10);
+        for (OverlayMarker m : _markerMap.keySet()) {
             if (m.contains(pt, plot)) centerList.add(m);
         }
         int minDist = Integer.MAX_VALUE;
         int dist;
         if (centerList.size() > 0) {
-            for (Marker m : centerList) {
+            for (OverlayMarker m : centerList) {
                 dist = m.getCenterDistance(pt, plot);
                 if (dist < minDist && dist > -1) {
                     retval = m;
@@ -317,10 +322,10 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 }
             }
         } else {
-            Marker candidate = null;
-            Marker.MinCorner editCorner = null;
-            for (Marker m : _markerMap.keySet()) {
-                Marker.MinCorner minC = m.getMinCornerDistance(pt, plot);
+            OverlayMarker candidate = null;
+            OverlayMarker.MinCorner editCorner = null;
+            for (OverlayMarker m : _markerMap.keySet()) {
+                OverlayMarker.MinCorner minC = m.getMinCornerDistance(pt, plot);
                 if (minC != null && minC.getDistance() < minDist) {
                     candidate = m;
                     minDist = minC.getDistance();
@@ -338,34 +343,35 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
     private void updateAllData() {
-        for (Marker m : _markerMap.keySet()) {
+        for (OverlayMarker m : _markerMap.keySet()) {
             WebPlot p= getPlotView()!=null ? getPlotView().getPrimaryPlot() : null;
             updateData(m, getPlotView().getPrimaryPlot(), false);
         }
     }
 
 
-    private void updateData(Marker m, WebPlot plot, boolean drawHandles) {
+    private void updateData(OverlayMarker m, WebPlot plot, boolean drawHandles) {
         if (m.isReady()) {
-            List<DrawObj> data = new ArrayList<DrawObj>(1);
-            List<DrawObj> editData = new ArrayList<DrawObj>(1);
-            ShapeDataObj markerShape= ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt());
-            data.add(markerShape);
+            List<DrawObj> data = new ArrayList<DrawObj>();
+            List<DrawObj> editData = new ArrayList<DrawObj>();
+            
+            List<ShapeDataObj> markerShape= ((Footprint)_activeMarker).getShapes(m.getStartPt());
+            data.addAll(markerShape);
 
 
 
-            if (drawHandles) {
-                int size = 5;
-                editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.NW, plot), size, size));
-                editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.NE, plot), -size, size));
-                editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.SW, plot), size, -size));
-                editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.SE, plot), -size, -size));
-            }
-            if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
-                markerShape.setFontName(m.getFont());
-                markerShape.setText(SafeHtmlUtils.fromString(m.getTitle()).asString());
-                markerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
-            }
+//            if (drawHandles) {
+//                int size = 5;
+//                editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NW, plot), size, size));
+//                editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NE, plot), -size, size));
+//                editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SW, plot), size, -size));
+//                editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SE, plot), -size, -size));
+//            }
+//            if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
+//                markerShape.setFontName(m.getFont());
+//                markerShape.setText(SafeHtmlUtils.fromString(m.getTitle()).asString());
+//                markerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
+//            }
 
 
             _markerMap.get(m).getConnect().setData(data, editData, plot);
@@ -373,7 +379,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
 
-    private static ShapeDataObj.TextLocation convertTextLoc(Marker.Corner corner) {
+    private static ShapeDataObj.TextLocation convertTextLoc(OverlayMarker.Corner corner) {
         switch (corner) {
             case NE: return ShapeDataObj.TextLocation.CIRCLE_NE;
             case NW: return ShapeDataObj.TextLocation.CIRCLE_NW;
@@ -416,7 +422,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-        _activeMarker = new CircularMarker(20);
+        _activeMarker = new Footprint();
         _markerMap.put(_activeMarker, new MarkerDrawing());
 
         WebPlotView pv= getPlotView();
@@ -458,9 +464,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void removeMarker(String id) {
-        Marker marker = null;
+        OverlayMarker marker = null;
         MarkerDrawing drawing = null;
-        for (Map.Entry<Marker, MarkerDrawing> entry : _markerMap.entrySet()) {
+        for (Map.Entry<OverlayMarker, MarkerDrawing> entry : _markerMap.entrySet()) {
             if (entry.getValue().getID().equals(id)) {
                 marker = entry.getKey();
                 drawing = entry.getValue();
@@ -473,9 +479,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
     }
 
-    private Marker findMarker(String id) {
-        Marker retval= null;
-        for (Map.Entry<Marker, MarkerDrawing> entry : _markerMap.entrySet()) {
+    private OverlayMarker findMarker(String id) {
+        OverlayMarker retval= null;
+        for (Map.Entry<OverlayMarker, MarkerDrawing> entry : _markerMap.entrySet()) {
             if (entry.getValue().getID().equals(id)) {
                 retval = entry.getKey();
                 break;
@@ -578,7 +584,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         public String getID() {
             return _id;
         }
-        public void deferDraw(WebPlot plot, Marker marker) {
+        public void deferDraw(WebPlot plot, OverlayMarker marker) {
             _dd.cancel();
             _dd.draw(plot,marker,drawMan);
         }
@@ -642,7 +648,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         public Widget makeExtraUI(final WebLayerItem item) {
             Label add = GwtUtil.makeLinkButton("Add marker", "Add a marker", new ClickHandler() {
                 public void onClick(ClickEvent event) {
-                    changeMode(Mode.ADD_MARKER);
+                    changeMode(Mode.ADD_FOOTPRINT);
                 }
             });
 //            Label remove = GwtUtil.makeLinkButton("remove", "remove marker", new ClickHandler() {
@@ -660,7 +666,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             final String originalTitle= item.getTitle();
             TextBox tb= ((TextBoxInputField)tIf).getTextBox();
 
-            Marker marker= findMarker(item.getID());
+            OverlayMarker marker= findMarker(item.getID());
             if (marker!=null) {
                 String t= marker.getTitle();
                 field.setValue(t);
@@ -707,15 +713,15 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                                  String id,
                                  String originalTitle) {
 
-            Marker.Corner corner;
+            OverlayMarker.Corner corner;
             try {
-                corner = Enum.valueOf(Marker.Corner.class, cStr);
+                corner = Enum.valueOf(OverlayMarker.Corner.class, cStr);
             } catch (Exception e) {
-                corner= Marker.Corner.SE;
+                corner= OverlayMarker.Corner.SE;
             }
 
             item.setTitle(StringUtils.isEmpty(title) ? originalTitle : title);
-            Marker marker= findMarker(id);
+            OverlayMarker marker= findMarker(id);
             setActiveMarker(marker);
             marker.setTitle(title);
             marker.setTitleCorner(corner);
@@ -734,7 +740,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         private DrawingManager drawer;
         private WebPlot plot;
 
-        private void draw(WebPlot plot, Marker marker, DrawingManager drawer) {
+        private void draw(WebPlot plot, OverlayMarker marker, DrawingManager drawer) {
             this.drawer= drawer;
             this.plot= plot;
             updateData(_activeMarker, plot, true);
