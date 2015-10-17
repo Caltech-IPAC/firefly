@@ -26,8 +26,7 @@ import java.util.List;
 @SearchProcessorImpl(id = "StatisticsProcessor")
 
 public class StatisticsProcessor extends IpacTablePartProcessor {
-    public static final String  SEARCH_PARAMETER = "searchRequest";
-    public static final String TBL_TYPE = "tblType";
+    private static final String  SEARCH_PARAMETER = "searchRequest";
     private static DataType[] columns = new DataType[]{
                                                               new DataType("columnName", String.class),
                                                               new DataType("description", String.class),
@@ -81,7 +80,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
 
     }
 
-      /**
+    /**
      * resolve the file given a 'source' string.  it could be a local path, or a url.
      * if it's a url, download it into the application's workarea
      * @param source
