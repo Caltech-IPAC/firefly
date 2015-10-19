@@ -141,6 +141,7 @@ public class PlotState implements DataEntry, HandSerialize {
 
     public void setRotateType(RotateType rotationType) { this.rotationType = rotationType; }
     public RotateType getRotateType() {return rotationType;}
+    public boolean isRotated() {return rotationType!=PlotState.RotateType.UNROTATE;}
 
     public void setFlippedY(boolean flippedY) { this.flippedY = flippedY; }
     public boolean isFlippedY() { return flippedY; }

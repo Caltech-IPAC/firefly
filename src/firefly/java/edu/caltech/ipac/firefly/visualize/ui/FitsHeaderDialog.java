@@ -100,7 +100,7 @@ public class FitsHeaderDialog extends BaseDialog implements WebEventListener{
 
         if(plot.getPlotState().isThreeColor()){
             TabPane<VerticalPanel> tab = new TabPane<VerticalPanel>();
-            for(Band band : plot.getPlotState().getBands()){
+            for(Band band : plot.getBands()){
                 DataSet data = DataSetParser.parse(rawDataMap.get(band));
 
                 VerticalPanel vp= loadTable(data, plot.getImagePixelScaleInArcSec(),

@@ -6,27 +6,22 @@
 import Band from './Band.js';
 import {makeBandState, makeBandStateFromJson} from './BandState.js';
 import RangeValues from './RangeValues.js';
-//import WebPlotRequest from './WebPlotRequest.js';
-import {WPConst} from './WebPlotRequest.js';
 import CoordinateSys from './CoordSys.js';
-//import ClientFitsHeader from './ClientFitsHeader.js';
 import Enum from 'enum';
-
-
-//const SPLIT_TOKEN= '--PlotState--';
-//const NO_CONTEXT = 'NoContext';
-//const MAX_BANDS= 3;
 
 
 export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 export const Operation= new Enum(['ROTATE', 'CROP', 'FLIP_Y']);
 
 
-export const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
-                                           'USE_FIRST',   // only valid option if loading a three color with multiple Request
-                                           'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
-                                           'USE_ALL' // only valid in non three color, make a array of WebPlots
-                                         ]);
+/**
+ * private enum, just for consistency with server
+ */
+const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load first, and use all, depending on three color params
+                                    'USE_FIRST',   // only valid option if loading a three color with multiple Request
+                                    'MAKE_THREE_COLOR', // make a three color out of the first three images, not yet implemented
+                                    'USE_ALL' // only valid in non three color, make a array of WebPlots
+                                    ]);
 
 
 
@@ -59,17 +54,6 @@ export class PlotState {
 //======================================================================
 //----------------------- Public Methods -------------------------------
 //======================================================================
-
-    /**
-     * @return {MultiImageAction}
-     */
-    getMultiImageAction() { return this.multiImage; }
-
-    /**
-     *
-     * @param {MultiImageAction} multiImage
-     */
-    setMultiImageAction(multiImage) { this.multiImage= multiImage; }
 
     /**
      *
@@ -227,19 +211,6 @@ export class PlotState {
     /**
      * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
      * after the set will not be reflected here.
-     * @param {WebPlotRequest}  plotRequests copy this request
-     * @param {Band} band the band to set the request for
-     * @param {boolean} initStretch - initialize the stretch, default to true
-     */
-    setWebPlotRequest(plotRequests, band, initStretch=true) {
-        this.get(band).setWebPlotRequest(plotRequests);
-        this.usedBands = null;
-        if (initStretch) this.initColorStretch(plotRequests,band);
-    }
-
-    /**
-     * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
-     * after the set will not be reflected here.
      * @param band the band to get the request for
      * @return {WebPlotRequest} the WebPlotRequest
      */
@@ -347,36 +318,23 @@ export class PlotState {
     setOriginalImageIdx(idx, band) { this.get(band).setOriginalImageIdx(idx); }
     getOriginalImageIdx(band) { return this.get(band).getOriginalImageIdx(); }
 
-
     /**
      *
      * @param {Operation} op
      */
-    addOperation(op) {if (!this.ops.indexOf(op)>-1) this.ops.push(op); }
-
-    /**
-     *
-     * @param {Operation} op
-     */
-    removeOperation(op) {
-        var idx= this.ops.indexOf(op);
-        if (idx>-1) this.ops.splice(idx,1);
+    hasOperation(op) {
+        var newOp;
+        if (op.key) {
+            newOp= op;
+        }
+        else if (op.toString === 'function') {
+            newOp= Operation.get(op.toString());
+        }
+        else if (typeof op === 'string') {
+            newOp= Operation.get(op);
+        }
+        return newOp ? this.ops.indexOf(newOp)>-1  : false;
     }
-
-    /**
-     *
-     * @param {Operation} op
-     */
-    hasOperation(op) {return this.ops.indexOf(op)>-1; }
-
-    clearOperations() {this.ops=[]; }
-
-    /**
-     *
-     * @return {Array} array of Operation
-     */
-    getOperations() { return this.ops; }
-
 
     isFilesOriginal() {
         return this.getBands().every( band => this.get(band).isFileOriginal());
@@ -485,23 +443,6 @@ export class PlotState {
 
         if (!this.bandStateAry[idx]) this.bandStateAry[idx]= makeBandState();
         return this.bandStateAry[idx];
-    }
-
-
-    /**
-     * @param {WebPlotRequest} request
-     * @param {Band} band
-     */
-    initColorStretch(request, band) {
-        if (request) {
-            this.colorTableId= request.getInitialColorTable();
-            if (request.containsParam(WPConst.INIT_RANGE_VALUES)) {
-                var rvStr= request.getParam(WPConst.INIT_RANGE_VALUES);
-                var rv= RangeValues.parse(rvStr);
-                if (rv) this.get(band).setRangeValues(rv);
-            }
-        }
-
     }
 
 

@@ -568,7 +568,7 @@ public class WebPlot {
     public void getFluxLight(ImagePt pt, AsyncCallback <String[]> callback) {
 
         if (pointInData(pt)) {
-            Band bands[]= _plotState.getBands();
+            Band bands[]= getBands();
             FileAndHeaderInfo pahi[]= new FileAndHeaderInfo[bands.length];
             for(int i= 0; (i<bands.length); i++) {
                 pahi[i]= _plotState.getFileAndHeaderInfo(bands[i]);
@@ -1314,11 +1314,12 @@ public class WebPlot {
         return getPlotDesc();
     }
 
-    public boolean isRotated() { return _plotState.getRotateType()!= PlotState.RotateType.UNROTATE; }
+    public boolean isRotated() { return _plotState.isRotated(); }
     public PlotState.RotateType getRotationType() {
         return _plotState.getRotateType();
     }
     public double getRotationAngle() { return _plotState.getRotationAngle(); }
+
 
     public boolean isRotatable() {
         boolean retval= false;

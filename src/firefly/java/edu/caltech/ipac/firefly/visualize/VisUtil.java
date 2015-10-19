@@ -597,12 +597,6 @@ public class VisUtil {
     }
 
 
-    public static Band[] getBands(PlotState state) {
-        return state.getBands();
-    }
-
-
-
     public static class NorthEastCoords {
         public final int x1, y1, x2, y2;
         public final int barbX1, barbY1;

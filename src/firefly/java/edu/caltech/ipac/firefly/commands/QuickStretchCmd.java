@@ -102,7 +102,7 @@ public class QuickStretchCmd extends BaseGroupVisCmd {
             WebPlotView pv= mpwItem.getPlotView();
             WebPlot plot= pv.getPrimaryPlot();
             if (plot==null) continue; //don't do anything if plot is null.
-            Band bands[]=  plot.getPlotState().getBands();
+            Band bands[]=  plot.getBands();
             StretchData stretchData[]= new StretchData[bands.length];
             int i=0;
             for(Band band : bands) {
