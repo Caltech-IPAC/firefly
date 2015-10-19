@@ -209,6 +209,7 @@ task buildAndPublish( dependsOn: war ) << {
 loadConfig.mustRunAfter gwt
 buildClient.mustRunAfter prepareWebapp
 prepareWebapp.mustRunAfter gwtCompile
+gwtCompile.mustRunAfter jar
 deploy.mustRunAfter war
 deploy.mustRunAfter dirty
 
