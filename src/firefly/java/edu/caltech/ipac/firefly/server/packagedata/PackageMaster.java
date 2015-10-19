@@ -226,15 +226,14 @@ public class PackageMaster  {
 
          public BackgroundStatus work(BackgroundEnv.BackgroundProcessor p)  throws Exception {
              BackgroundStatus retval;
+             long cnt= _fileCounterTask.getAndIncrement();
+             if (cnt >= HEAVY_LOAD_CNT) {
+                 _log.warn("Heavy load warning: There are currently " +cnt+ " threads running to compute package file list.",
+                         "File list are computed before the package request is queued");
+             }
              try {
-                 long cnt= _fileCounterTask.getAndIncrement();
-                 if (cnt >= HEAVY_LOAD_CNT) {
-                     _log.warn("Heavy load warning: There are currently " +cnt+ " threads running to compute package file list.",
-                               "File list are computed before the package request is queued");
-                 }
                  List<FileGroup> result= _processor.getData(_request);
 
-                 _fileCounterTask.getAndDecrement();
                  String baseFileName = p.getBaseFileName();
                  if (!_request.getBaseFileName().equals(baseFileName)) {
                      baseFileName = _request.getBaseFileName(); // change baseFileName if a FileGroupsProcessor updated it.
@@ -245,7 +244,11 @@ public class PackageMaster  {
                  retval= new BackgroundStatus(p.getBID(), BackgroundState.FAIL);
                  retval.addMessage("Invalid processor mapping.  Return value is not of type List<FileGroup>.");
                  _log.error(e, "Invalid processor mapping.  Return value is not of type List<FileGroup>.");
-
+             } catch (Exception e) {
+                 throw new Exception("_processor.getData() failed. Cannot package",e);
+             }
+             finally {
+                 _fileCounterTask.getAndDecrement();
              }
              return retval;
          }
