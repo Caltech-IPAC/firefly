@@ -55,7 +55,7 @@ var Histogram = React.createClass(
             this.getData(source).then(function (rawDataSet) {
                     const dataSet = parseRawDataSet(rawDataSet);
                     const model = dataSet.getModel();
-                    var toNumber = val=>Number(val);
+                    var toNumber = (val)=>Number(val);
                     for (let i = 0; i < model.size(); i++) {
                         const arow = model.getRow(i);
                         extdata.push(arow.map(toNumber));

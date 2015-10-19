@@ -29,7 +29,7 @@ var TargetPanel= React.createClass(
 
            var parseResults= parseTarget(displayValue, this.getExtraData());
            var component= this;
-           var resolvePromise= parseResults.resolvePromise ? parseResults.resolvePromise.then(asyncParseResults => {
+           var resolvePromise= parseResults.resolvePromise ? parseResults.resolvePromise.then((asyncParseResults) => {
                      return asyncParseResults ? component.makePayload(displayValue, asyncParseResults) : null;
                }) : null;
            this.fireValueChange(this.makePayload(displayValue,parseResults, resolvePromise));

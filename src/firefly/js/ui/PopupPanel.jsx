@@ -125,7 +125,7 @@ var PopupPanel= React.createClass(
 
 
         var title= this.props.title||'';
-        //var newChildren= React.Children.map(this.props.children, c => {
+        //var newChildren= React.Children.map(this.props.children, (c) => {
         //        return React.cloneElement(c, {closeDialog:this.doClose.bind(this)})
         //    })
 

@@ -29,7 +29,7 @@ var DialogRootComponent = React.createClass(
 {
     render() {
         var {dialogs}= this.props;
-        var dialogAry = Object.keys(dialogs).map(k => dialogs[k]);
+        var dialogAry = Object.keys(dialogs).map( (k) => dialogs[k]);
         return  (
             <div>
                 {dialogAry}

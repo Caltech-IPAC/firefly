@@ -153,7 +153,7 @@ export class ServerRequest {
      */
     static parse(str,req) {
         if (!str) return null;
-        words(str,PARAM_SEP).forEach(p => {
+        words(str,PARAM_SEP).forEach((p) => {
             var outParam= words(p,PARAM_SEP);
             if (outParam.length===2) {
                 var newParam= {name : outParam[0], value:outParam[1]};

@@ -74,7 +74,7 @@ class PlotImages {
             this.screenWidth, this.screenHeight,
             this.zfact);
 
-        var part2= this.images.map( image => image ? image.toString() : 'null').join(PLOT_IMAGES_TOKEN);
+        var part2= this.images.map( (image) => image ? image.toString() : 'null').join(PLOT_IMAGES_TOKEN);
         return join(PLOT_IMAGES_TOKEN,part1,part2);
     }
 

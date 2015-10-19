@@ -40,7 +40,7 @@ var RadioGroupInputField= React.createClass(
                         tooltip={this.getTip()}
                         labelWidth={this.props.labelWidth}
                     />
-                    {this.props.options.map(option => {
+                    {this.props.options.map((option) => {
                         return (
                             <input type='radio'
                                 key={option.value}

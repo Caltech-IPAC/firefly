@@ -81,7 +81,7 @@ export class ExternalAccessStore extends Store {
 
 
     getExtensionList(testPlotId) {
-        var retList= this.state.extensionList.filter(ext => {
+        var retList= this.state.extensionList.filter((ext) => {
             if (!testPlotId || !ext.plotId || testPlotId === ALL_MPW || ext.plotId === testPlotId) {
                 return ext;
             }

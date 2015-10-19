@@ -139,7 +139,7 @@ export const computeColorPanelState= function(fields, plottedRV, fitsData, group
     var rv;
 
     if (actionsConst===FieldGroupActions.VALUE_CHANGE) {
-        var valid= Object.keys(fields).every( key => {
+        var valid= Object.keys(fields).every( (key) => {
             return !fields[key].mounted ? true :  fields[key].valid;
         } );
         if (!valid) return fields;

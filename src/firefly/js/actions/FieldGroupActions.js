@@ -24,7 +24,7 @@ class FieldGroupActions {
             var action= this;
             data.asyncUpdatePromise.then((payload) => {
                 action.dispatch(payload);
-            }).catch(e => console.log(e));
+            }).catch((e) => console.log(e));
         }
     }
 
