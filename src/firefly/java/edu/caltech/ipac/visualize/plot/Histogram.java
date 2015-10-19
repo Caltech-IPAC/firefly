@@ -93,22 +93,7 @@ public class Histogram {
                 }
             }
 
-           /* for (int k = 0; k < float1dArray.length; k++) {
-                if (!Double.isNaN(float1dArray[k])) {
 
-                    int i = (int) ((float1dArray[k] - histMin) / histBinsiz);
-                    if (i > 0 && i <= HISTSIZ2) {
-                        hist[i]++;
-                    }
-                    if (float1dArray[k] < histDatamin)
-                        histDatamin = float1dArray[k];
-                    if (float1dArray[k] > histDatamax)
-                        histDatamax = float1dArray[k];
-                }
-            } //end k loop*/
-
-           // int underflowCount = getFlowCount(float1dArray, "under");
-          //  int overflowCount = getFlowCount(float1dArray, "over");
             printeDebugInfo(histMax, underflowCount, overflowCount);
             datamin = histDatamin;
             datamax = histDatamax;
@@ -192,6 +177,7 @@ public class Histogram {
 
     }
 
+
     private int getHighSumIndex(int lowLimit) {
         int highSum = 0;
 
@@ -226,30 +212,6 @@ public class Histogram {
 
         }
     }
-
-    private int getFlowCount(float[] pixelsm32, String which) {
-        int count = 0;
-        for (int k = 0; k < pixelsm32.length; k++) {
-
-            if (!Double.isNaN(pixelsm32[k])) {
-                int i = (int) ((pixelsm32[k] - histMin) / histBinsiz);
-
-                if (which.equalsIgnoreCase("under") && i < 0) {
-
-                    count++;
-                }
-                if (which.equalsIgnoreCase("over") && i > HISTSIZ2) {
-
-                    //redo_flag = true;   /* hist_max was bad */
-                    count++;
-                }
-
-            }
-        }
-
-        return count;
-    }
-
 
 
 
