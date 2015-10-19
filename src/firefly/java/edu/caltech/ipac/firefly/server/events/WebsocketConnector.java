@@ -33,8 +33,8 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
         this.session = session;
         try {
             Map<String, List<String>> params = session.getRequestParameterMap();
-            channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID).get(0)) :
-                                        ServerContext.getRequestOwner().getUserKey();
+            channelID = params.containsKey(CHANNEL_ID) ? String.valueOf(params.get(CHANNEL_ID).get(0)) : null;
+            channelID = StringUtils.isEmpty(channelID) ? ServerContext.getRequestOwner().getUserKey() : channelID;
             ServerEventQueue eventQueue = new ServerEventQueue(session.getId(), channelID, this);
             ServerEvent connected = new ServerEvent(Name.EVT_CONN_EST, ServerEvent.Scope.SELF, "{\"connID\": \"" + session.getId() + "\", \"channel\": \"" + channelID + "\"}");
             send(ServerEventQueue.convertToJson(connected));
