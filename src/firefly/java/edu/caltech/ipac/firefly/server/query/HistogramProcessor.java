@@ -21,6 +21,8 @@ import java.util.List;
 
 /**
  * Created by zhang on 10/16/15.
+ * This class is a Histogram processor.  Its input is TableServerRequest where it contains the needed parameters to calculate
+ * the histogram.
  */
 public class HistogramProcessor  extends IpacTablePartProcessor {
     private static final String  SEARCH_PARAMETER = "searchRequest";
@@ -29,14 +31,15 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
                                                               new DataType("binMin", Double.class),
                                                               new DataType("binMax",  Double.class)
     };
-    private final String  ALGORITHM = "fixedSizeBins";
+    private final String  FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String  LINEAR_SCALE = "linear";
     private final String  BINSIZE = "binSize";
     private final String  COLUMN = "column";
     private final String  MIN = "min";
     private final String  MAX = "max";
+    private final String ALGORITHM = "algorithm";
 
-    private String algorithm = ALGORITHM;
+    private String algorithm = FIXED_SIZE_ALGORITHM;
     private String scale = LINEAR_SCALE;
     private double binSize = 20;
     private double min=Double.NaN;
@@ -133,10 +136,21 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
     }
 
+    /**
+     * This public method creates the required Histogram data, numPoints, binMin and binMax arrays.
+     * @param request
+     * @return
+     * @throws IpacTableException
+     * @throws IOException
+     * @throws DataAccessException
+     */
     public DataGroup getHistogramTable(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
+
+        //load the file passed through the TableServerRequest
         File file = loadDataFile(request);
         JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_PARAMETER));
 
+        //get all the required parameters
         if (searchRequestJSON != null) {
             for (Object param : searchRequestJSON.keySet()) {
                 String name = (String) param;
@@ -164,10 +178,22 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
        return  createHistogramTable(file);
 
     }
+
+    /**
+     * This method processes the input Table and makes an array data from the given column.  Then Calculate the
+     * hisogram arrays based on the parameters and the column data.
+     * @param file
+     * @return
+     * @throws IpacTableException
+     * @throws IOException
+     * @throws DataAccessException
+     */
     private  DataGroup  createHistogramTable(File file) throws IpacTableException, IOException, DataAccessException  {
 
+        //read the IpacTable to DataGroup
         DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable");
 
+        //get the column datatype
         DataType  column = getColumn(dg);
         if (column==null){
             throw new DataAccessException(columnName + " is not found in the input table" );
@@ -175,6 +201,12 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         double[] columnData = getColumnData(dg, column);
         return createHistogramTable(columnData);
     }
+
+    /**
+     * This method scales the data based on the parameter.  The possible scale is log, log10 etc.
+     * @param columnData
+     * @return
+     */
     private double[] scaleData(double[] columnData){
         double[] rData = new double[columnData.length];
 
@@ -191,32 +223,50 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         }
         return rData;
     }
+
+    /**
+     * This method calculates the binSize based on the algorithm, bin and max parameter values.
+     * @param columnData
+     * @return
+     */
     private int getBinSize(double[] columnData){
 
-        int nBin = (int) ((columnData[columnData.length-1] -columnData[0])/binSize);
-        if (min!=Double.NaN && max!=Double.NaN ){
-            nBin = (int) ((max - min) / binSize);
+        if (algorithm.equalsIgnoreCase(FIXED_SIZE_ALGORITHM)) {
+            int nBin = (int) ((columnData[columnData.length - 1] - columnData[0]) / binSize);
+            if ( Double.isFinite(min) && Double.isFinite(max)) {
+                nBin = (int) ((max - min) / binSize);
+            } else if (Double.isNaN(min) && Double.isFinite(max) ) {
+                nBin = (int) ((columnData[columnData.length - 1] - min) / binSize);
+            } else if (Double.isFinite(min) && Double.isNaN(max)) {
+                nBin = (int) ((max - columnData[0]) / binSize);
+            }
+            return nBin + 1;
         }
-        else if (min==Double.NaN && max!=Double.NaN){
-            nBin = (int) ((columnData[columnData.length-1] - min) / binSize);
+        else {
+            //TODO variable size bin
+            return 1;
         }
-        else if (min!=Double.NaN && max==Double.NaN){
-            nBin = (int) ((max - columnData[0]) / binSize);
-        }
-        return nBin;
     }
+
+    /**
+     * This method adds the three data arrays and the DataTypes into a DataGroup (IpacTable).
+     * @param columnData
+     * @return
+     */
     private DataGroup createHistogramTable( double[] columnData){
         DataGroup HistogramTable = new DataGroup("histogramTable", columns);
         if (!scale.equalsIgnoreCase(LINEAR_SCALE)){
             columnData = scaleData(columnData);
         }
+        //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
         Arrays.sort(columnData);
         int nBin=getBinSize(columnData);
-
+        //calculate three arrays, numPoints, binMix and binMax
         Object[] obj = getBinInfo(columnData, nBin);
         int[] numInBins = (int[]) obj[0];
         double[] binMin = (double[]) obj[1];
         double[] binMax = (double[]) obj[2];
+        //add each row to the DataGroup
         for (int i=0; i<nBin; i++){
             DataObject row = new DataObject(HistogramTable);
             row.setDataElement(columns[0], numInBins[i]);
@@ -226,18 +276,27 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         }
         return HistogramTable;
     }
+
+    /**
+     * Calcualte the numPoints, binMin and binMax arrays
+     * @param columnData
+     * @param nBin
+     * @return
+     */
     private Object[] getBinInfo(double[] columnData, int nBin){
-        int[] numInBins = new int[nBin];
+        int[] numInBins = new int[nBin ];
         double[] binMin = new double[nBin];
-        if (min==Double.NaN){
+        if (Double.isNaN(min)){
             min= (int) columnData[0];
         }
-        if (max==Double.NaN){
+        if (Double.isNaN(max)){
             max =columnData[columnData.length-1];
         }
-        Arrays.fill(binMin, min);
+        //fill all entries to the maximum, thus, all data values will be smaller than it
+        Arrays.fill(binMin, Double.MAX_VALUE);
         double[] binMax = new double[nBin];
-        Arrays.fill(binMax, max);
+        //fill all entries to the minimum thus, all data values will be larger than it
+        Arrays.fill(binMax, Double.MIN_VALUE);
 
         for (int i=0; i<columnData.length; i++){
            if (columnData[i]>=min && columnData[i]<=max){
@@ -251,6 +310,15 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         Object[] obj={numInBins, binMin, binMax};
         return obj;
     }
+
+    /**
+     * This method checks all the DataType contained in the input DataGroup to see if the required ColumnName is
+     * in it.  If a DataType's columnName is the same as the input columnName, the correspoing DataType is found and
+     * is returned.
+     *
+     * @param dg
+     * @return
+     */
     private DataType getColumn( DataGroup dg){
         DataType[] inColumns = dg.getDataDefinitions();
         for (int i=0; i<inColumns.length; i++){
