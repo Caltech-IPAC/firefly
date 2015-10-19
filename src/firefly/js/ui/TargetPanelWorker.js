@@ -63,7 +63,7 @@ function makeSearchPromise(objName) {
                     res.on('error', (e) =>  reject(e) );
                     res.on('end', () => { });
                 });
-        }).then( buf => JSON.parse(buf) );
+        }).then( (buf) => JSON.parse(buf) );
     var abortPromise= new Promise(function(resolve,reject) {
         rejectFunc= reject;
     });

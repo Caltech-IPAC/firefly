@@ -337,7 +337,7 @@ export class PlotState {
     }
 
     isFilesOriginal() {
-        return this.getBands().every( band => this.get(band).isFileOriginal());
+        return this.getBands().every( (band) => this.get(band).isFileOriginal());
     }
 
     //toPrettyString() {
@@ -371,7 +371,7 @@ export class PlotState {
     //            this.flippedY,
     //            this.rotaNorthType.toString());
     //
-    //    var part2= this.bandStateAry.map( bandState => bandState ? bandState.serialize() : 'null').join(SPLIT_TOKEN);
+    //    var part2= this.bandStateAry.map( (bandState) => bandState ? bandState.serialize() : 'null').join(SPLIT_TOKEN);
     //
     //    return join(SPLIT_TOKEN,part1,part2);
     //

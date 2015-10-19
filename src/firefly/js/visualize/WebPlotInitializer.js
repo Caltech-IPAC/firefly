@@ -126,7 +126,7 @@ class WebPlotInitializer {
             this.dataDesc);
 
         this.fitsData.length= 3;
-        var part2= this.fitsData.map( fd => fd ? fd.toString() : 'null');
+        var part2= this.fitsData.map( (fd) => fd ? fd.toString() : 'null');
 
         return join(SPLIT_TOKEN, part1, part2);
     }

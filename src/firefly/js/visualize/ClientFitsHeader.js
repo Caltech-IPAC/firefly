@@ -47,7 +47,7 @@ class ClientFitsHeader {
     setHeader(key, value) { this.header[key]= value; }
 
     //toString() {
-    //    return join(SPLIT_TOKEN, Object.keys(this.headers).map( key => key+'='+this.headers[key]));
+    //    return join(SPLIT_TOKEN, Object.keys(this.headers).map( (key) => key+'='+this.headers[key]));
     //}
     //
     //static parse(s) {

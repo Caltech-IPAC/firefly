@@ -26,7 +26,7 @@ var makeValidationPromise= function(fields,fieldKey) {
 var validateSingle= function(groupKey, doneCallback) {
     var fields= FieldGroupStore.getGroupFields(groupKey);
     if (!fields) return true;
-    return Promise.all( Object.keys(fields).map( (fieldKey => makeValidationPromise(fields,fieldKey)),this ) )
+    return Promise.all( Object.keys(fields).map( ((fieldKey) => makeValidationPromise(fields,fieldKey)),this ) )
         .then( (allResults) =>
         {
             var valid = allResults.every(
@@ -46,7 +46,7 @@ var validateSingle= function(groupKey, doneCallback) {
                 });
             doneCallback(valid);
         }
-    ).catch(e => console.log(e));
+    ).catch( (e) => console.log(e));
 };
 
 //var validateGroup= function(groupKeyAry, doneCallback) {

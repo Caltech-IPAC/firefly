@@ -526,7 +526,7 @@ export class BackgroundStatus {
         const bgStat= new BackgroundStatus();
         const params = str.split(PARAM_SEP);
         if (params.length>0) {
-            words(str, PARAM_SEP).forEach(p => {
+            words(str, PARAM_SEP).forEach((p) => {
                 var outParam= words(p,KW_VAL_SEP);
                 if (outParam.length===2) bgStat.setParam(outParam[0], outParam[1]);
             });

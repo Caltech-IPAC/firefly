@@ -31,7 +31,7 @@ export class FieldGroup {
         this.mounted = false;
         this.fieldGroupValid= false;
 
-        Object.keys(fields).forEach( key => {
+        Object.keys(fields).forEach( (key) => {
             if (typeof fields[key].valid === 'undefined') {
                 fields[key].valid= true;
             }

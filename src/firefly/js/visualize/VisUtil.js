@@ -113,7 +113,7 @@ export const computeCentralPointAndRadius= function(inPoints) {
     var radius;
     var maxRadius = Number.NEGATIVE_INFINITY;
 
-    var points= inPoints.map(wp => convertToJ2000(wp));
+    var points= inPoints.map((wp) => convertToJ2000(wp));
 
 
     /* get max,min of lon and lat */
@@ -122,7 +122,7 @@ export const computeCentralPointAndRadius= function(inPoints) {
     var maxLat = Number.NEGATIVE_INFINITY;
     var minLat = Number.POSITIVE_INFINITY;
 
-    points.forEach(pt => {
+    points.forEach((pt) => {
         if (pt.getLon() > maxLon) {
             maxLon = pt.getLon();
         }
@@ -146,7 +146,7 @@ export const computeCentralPointAndRadius= function(inPoints) {
     var centralPoint = new WorldPt(lon, lat);
 
 
-    points.forEach(pt => {
+    points.forEach((pt) => {
         radius = computeDistance(centralPoint,
                                  new WorldPt(pt.getLon(), pt.getLat()));
         if (maxRadius < radius) {
