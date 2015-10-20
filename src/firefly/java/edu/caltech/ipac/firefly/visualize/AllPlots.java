@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.commands.ActivePointToolCmd;
 import edu.caltech.ipac.firefly.commands.AreaStatCmd;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
+import edu.caltech.ipac.firefly.commands.JwstFootprintCmd;
 import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
 import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
 import edu.caltech.ipac.firefly.commands.CropCmd;
@@ -33,7 +34,6 @@ import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
 import edu.caltech.ipac.firefly.commands.FlipImageCmd;
 import edu.caltech.ipac.firefly.commands.FlipLeftCmd;
 import edu.caltech.ipac.firefly.commands.FlipRightCmd;
-import edu.caltech.ipac.firefly.commands.FootrpintToolCmd;
 import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
@@ -841,6 +841,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
         commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
         commandMap.put(ColorTable.CommandName,        new ColorTable());
+        commandMap.put(MarkerTool.CommandName,        new MarkerTool());
         commandMap.put(Stretch.CommandName,           new Stretch());
         commandMap.put(LayerCmd.CommandName,          new LayerCmd());
         commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
@@ -849,8 +850,8 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
         commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
-        commandMap.put(MarkerToolCmd.CommandName,     new FootrpintToolCmd());
-//        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        commandMap.put(JwstFootprintCmd.CommandName,  new JwstFootprintCmd());
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
@@ -1107,6 +1108,21 @@ public class AllPlots implements HasWebEventManager {
             String iStr= this.getIconProperty();
             if (iStr!=null && iStr.equals("colorTable.Icon"))  {
                 return new Image(ic.getColorTable());
+            }
+            return null;
+        }
+    }
+
+    static class MarkerTool extends MenuGeneratorV2.MenuBarCmd {
+        public static final String CommandName= "MarkerToolDD";
+        public MarkerTool() { super(CommandName); }
+
+        @Override
+        protected Image createCmdImage() {
+            VisIconCreator ic= VisIconCreator.Creator.getInstance();
+            String iStr= this.getIconProperty();
+            if (iStr!=null && iStr.equals("MarkerToolDD.Icon"))  {
+                return new Image(ic.getMarkerOff());
             }
             return null;
         }

@@ -3,12 +3,6 @@
  */
 package edu.caltech.ipac.firefly.commands;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -22,12 +16,12 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -53,21 +47,27 @@ import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class MarkerToolCmd extends    BaseGroupVisCmd
+
+public class JwstFootprintCmd extends    BaseGroupVisCmd
                            implements WebEventListener/*, PrintableOverlay*/ {
 
     public enum Mode {ADD_MARKER, MOVE, RESIZE, OFF}
 
-    public static final String BASE_DRAWER_ID = "MarkerToolID#";
+    public static final String BASE_DRAWER_ID = "FootPrintID#";
     public static final int EDIT_DISTANCE = BrowserUtil.isTouchInput() ? 20 : 12;
     public static final String _selHelpText = "Tap to create marker";
     public static final String _editHelpText = "Click center and drag to move, click corner and drag to resize";
-    public static final String BASE_TITLE = "Marker #";
+    public static final String BASE_TITLE = "FootPrint #";
 
     public static int mCnt = 0;
 
-    public static final String CommandName = "MarkerTool";
+    public static final String CommandName = "JwstFootprint";
     private HashMap<Marker, MarkerDrawing> _markerMap = new HashMap<Marker, MarkerDrawing>(10);
     private Marker _activeMarker = null;
 
@@ -76,12 +76,14 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private boolean _doMove = false;
     private final WebPlotView.MouseInfo _mouseInfo =
             new WebPlotView.MouseInfo(new Mouse(), "Create a marker");
-    private final static String _onLabel = "Hide Marker";
-    private final static String _offLabel = "Show Marker";
-    private final static String _addLabel = "Add Marker";
+    private final static String _onLabel = "Hide JWST footprint";
+    private final static String _offLabel = "Show JWST footprint";
+    private final static String _addLabel = "Add JWST footprint";
 
+    private Label disToCenter = new Label("");
+    private Label centerPos = new Label("");
 
-    public MarkerToolCmd() {
+    public JwstFootprintCmd() {
         super(CommandName);
         AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
@@ -147,25 +149,6 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     public boolean hasIcon() {
         return false;
     }
-
-    //    @Override
-//    public Image createCmdImage() {
-//
-//        VisIconCreator ic = VisIconCreator.Creator.getInstance();
-//        String iStr = this.getIconProperty();
-//        if (iStr != null) {
-//
-//            if (iStr.equals(_onIcon)) {
-//                return new Image(ic.getMarkerOn());
-//            } else if (iStr.equals(_offIcon)) {
-//                return new Image(ic.getMarkerOff());
-//            } else if (iStr.equals(CommandName + ".Icon")) {
-//                return new Image(ic.getMarkerOff());
-//            }
-//        }
-//        return null;
-//    }
-//
 
     private void setupMouse() {
         grabMouse();
@@ -263,6 +246,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                     WorldPt center = plot.getWorldCoords(spt);
                     if (center==null) return;
                     _activeMarker.move(center, plot);
+                    handleCenterChanged(center);
                     break;
                 case RESIZE:
                     _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
@@ -506,6 +490,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         @Override
         public void onMouseMove(WebPlotView pv, ScreenPt spt) {
             if (_mouseDown) drag(pv, spt);
+            handleMouseMove(pv, spt);
         }
 
         @Override
@@ -534,6 +519,14 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 end(pv);
             }
         }
+    }
+
+    private void handleMouseMove(WebPlotView pv, ScreenPt spt) {
+        disToCenter.setText((spt.getIX() - spt.getIY()) + " arsecs");
+    }
+
+    private void handleCenterChanged(WorldPt center) {
+        centerPos.setText(center.toString());
     }
 
     private class MarkerDrawing {
@@ -645,7 +638,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
 
         public Widget makeExtraUI(final WebLayerItem item) {
-            Label add = GwtUtil.makeLinkButton("Add marker", "Add a marker", new ClickHandler() {
+            Label add = GwtUtil.makeLinkButton("Add Footprint", "Add a Footprint", new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     changeMode(Mode.ADD_MARKER);
                 }
@@ -656,10 +649,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 //                    if (_markerMap.size()==0) changeMode(Mode.OFF);
 //                }
 //            });
-//            StringFieldDef fd= new StringFieldDef("MarkerToolCmd.title");
+//            StringFieldDef fd= new StringFieldDef("JwstFootprintCmd.title");
 
-            HorizontalPanel hp = new HorizontalPanel();
-            final SimpleInputField field= SimpleInputField.createByProp("MarkerTool.title");
+            final SimpleInputField field= SimpleInputField.createByProp("JwstFootprint.title");
             field.setInternalCellSpacing(1);
             final InputField tIf= ((ValidationInputField)field.getField()).getIF();
             final String originalTitle= item.getTitle();
@@ -672,17 +664,37 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
                 if (!StringUtils.isEmpty(t)) item.setTitle(t);
             }
 
-            final SimpleInputField corner= SimpleInputField.createByProp("MarkerTool.corner");
+            final SimpleInputField corner= SimpleInputField.createByProp("JwstFootprint.corner");
             corner.setInternalCellSpacing(1);
 
-            GwtUtil.setStyle(add,"padding", "5px 0 0 11px");
+            final SimpleInputField angle= SimpleInputField.createByProp("JwstFootprint.angle");
+            angle.setInternalCellSpacing(1);
 
-//            hp.add(remove);
-            hp.add(field);
-            hp.add(corner);
-            hp.add(add);
-//            hp.setSpacing(4);
 
+            GwtUtil.setStyle(add, "padding", "5px 0 0 0");
+
+            HorizontalPanel xui = new HorizontalPanel();
+            FlowPanel p1 = new FlowPanel();
+            p1.add(field);
+            p1.add(corner);
+
+            FlowPanel p2 = new FlowPanel();
+            p2.add(angle);
+            p2.add(add);
+
+            FlowPanel p3 = new FlowPanel();
+            HorizontalPanel center = new HorizontalPanel();
+            center.add(new Label("center:"));
+            center.add(centerPos);
+            HorizontalPanel dtc = new HorizontalPanel();
+            dtc.add(new Label("DTC   :"));
+            dtc.add(disToCenter);
+            p3.add(center);
+            p3.add(dtc);
+
+            xui.add(p1);
+            xui.add(p2);
+            xui.add(p3);
 
 
             tb.addKeyPressHandler(new KeyPressHandler() {
@@ -703,7 +715,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
 
-            return hp;
+            return xui;
         }
 
         private void updateTitle(WebLayerItem item,

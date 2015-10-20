@@ -181,7 +181,7 @@ public class MenuGeneratorV2 {
                 if (gc!=null && gc instanceof MenuBarCmd)  cmd= (MenuBarCmd)gc;
                 else                                       cmd= new MenuBarCmd(itemData.getName());
 
-                BadgeButton barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
+                BadgeButton barItem= makeMenuItem(itemData.getName(), cmd, true, ignoreStrays);
                 new MenuItemConnect(barItem,cmd);
                 Widget content= makeDropDownContent(itemData, ignoreStrays);
                 GwtUtil.setStyle(barItem.getWidget(), "display", "inline-block");
@@ -346,7 +346,7 @@ public class MenuGeneratorV2 {
             else if (ev.getPropertyName().equals(GeneralCommand.PROP_HIDDEN)) {
                 button.getWidget().setVisible(!cmd.isHidden());
                 if (!cmd.isHidden() && horizontal) {
-                    GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
+                    GwtUtil.setStyle(button.getWidget(), "disy", "inline-block");
                 }
             }
             else if (ev.getPropertyName().equals(GeneralCommand.PROP_TITLE)) {
