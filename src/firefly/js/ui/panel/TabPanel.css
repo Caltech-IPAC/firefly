@@ -1,0 +1,48 @@
+.TabPanel__Tabs {
+  list-style: none;
+  padding:0;
+  margin:0;
+}
+
+
+.TabPanel__Tab {
+    float: left;
+    border: 1px solid gray;
+    border-bottom-width: 0;
+    background: #e3e3e3; /*CVAL-GRAY*/
+    outline: none;
+    color:black; /*CVAL-BLACK*/
+    cursor:pointer;
+    margin-left:6px;
+    padding:2px 6px;
+    font-weight: normal;
+    text-align:center;
+    \-moz-border-radius-topleft: 5px;
+    \-webkit-border-top-left-radius: 5px;
+    border-top-left-radius: 5px;
+}
+
+.TabPanel__Tab--selected {
+    width: auto;
+    height: auto;
+    cursor:default;
+    font-weight:bold;
+    background: #c8c8c8;
+}
+
+.TabPanel__Content {
+    border: 4px solid #c8c8c8;
+    border-top-width: 6px;
+    background: white;
+    \-moz-border-radius-topleft: 4px;
+    \-moz-border-radius-topright: 4px;
+    \-webkit-border-top-left-radius: 4px;
+    \-webkit-border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+
+    overflow: hidden;
+    padding: 2px 6px;
+    clear: both;
+}
+
