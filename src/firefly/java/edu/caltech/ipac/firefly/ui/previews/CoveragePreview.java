@@ -842,7 +842,10 @@ public class CoveragePreview extends AbstractTablePreview {
             if (covType == CoverageData.CoverageType.X) {
                 TableMeta.LonLatColumns cols= _covData.getCenterColumns(tableCtx);
                 DrawObj d= makePointObj(table, r, cols.getLonCol(),cols.getLatCol(),cols.getCoordinateSys());
-                if (d!=null) d.setHighlighted(true);
+                if (d!=null) {
+                    d.setHighlighted(true);
+                    retval.add(d);
+                }
 
             } else if (covType == CoverageData.CoverageType.BOX || covType == CoverageData.CoverageType.BOTH) {
                 retval= makeFootprintObj(tableCtx,r, true);

@@ -208,7 +208,7 @@ const updateMount= function(state, action) {
 //============ private utilities =================================
 //============ private utilities =================================
 
-const createState= function(oldState,groupKey,fieldGroup,fields,fieldKey,field) {
+const createState= function(oldState,groupKey,fieldGroup) {
 
     var retState= {fieldGroupMap : Object.assign({},oldState.fieldGroupMap)};
     retState.fieldGroupMap[groupKey]= fieldGroup;
@@ -216,7 +216,7 @@ const createState= function(oldState,groupKey,fieldGroup,fields,fieldKey,field) 
 };
 
 
-function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); };
+function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
 
 /**
  *

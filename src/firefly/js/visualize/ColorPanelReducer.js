@@ -1,20 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/*globals ffgwt*/
 
-import {application} from '../core/Application.js';
 import Validate from '../util/Validate.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
-
 import RangeValues from './RangeValues.js';
 import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from './RangeValues.js';
-import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from './RangeValues.js';
-import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from './RangeValues.js';
+import {STRETCH_LINEAR} from './RangeValues.js';
 import {getCurrentPlot} from './VisUtil.js';
 
-var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
+//import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from './RangeValues.js';
+//import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from './RangeValues.js';
+//var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 
 export const RED_PANEL= 'redPanel';
@@ -189,16 +187,14 @@ export const colorPanelChange= function(band) {
 
 
 
-/**
- * @param rv RangeValues
- */
-const updateZscale= function(rv) {
-
-};
+//const updateZscale= function(rv) {
+//
+//};
 
 /**
- * @param rv {RangeValues}
- * @param fitsData WebFitsData
+ * @param {object} fields - map of fields
+ * @param {RangeValues} rv
+ * @param {WebFitsData} fitsData
 */
 const updateLower= function (fields,rv,fitsData) {
     var resetDefault= (fields.lowerType.value!==rv.lowerWhich);
@@ -261,7 +257,7 @@ const updateUpper= function(fields,rv,fitsData) {
 const makeRangeValuesFromFields= function(fields) {
     var lowerType= (fields.zscale.value==='zscale') ? ZSCALE : fields.lowerType.value;
     var upperType= (fields.zscale.value==='zscale') ? ZSCALE : fields.upperType.value;
-    var rv= new RangeValues(
+    return new RangeValues(
             lowerType,
             fields.lowerRange.value,
             upperType,
@@ -274,7 +270,6 @@ const makeRangeValuesFromFields= function(fields) {
             fields.contrast.value,
             fields.numSamp.value,
             fields.sampPerLine.value);
-    return rv;
 };
 
 /**
