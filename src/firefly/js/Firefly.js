@@ -6,6 +6,7 @@
 import {reduxFlux} from './core/ReduxFlux.js';
 
 export const flux = reduxFlux;
+
 export var firefly = {
 
     bootstrap() {
@@ -18,6 +19,11 @@ export var firefly = {
 
     bootstrap() {
         return flux.bootstrap();
+    },
+
+    addListener(listener, ...types) {
+
     }
+
 };
 

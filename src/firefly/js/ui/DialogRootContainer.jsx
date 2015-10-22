@@ -6,8 +6,8 @@
  * Created by roby on 9/3/15.
  */
 import React from 'react/addons';
-import DialogStore from '../store/DialogStore.js';
-import DialogActions from '../actions/DialogActions.js';
+import AppDataCntlr from '../core/AppDataCntlr.js';
+import {flux} from '../Firefly.js';
 //import _ from 'underscore';
 
 
@@ -56,15 +56,15 @@ var PopupStoreConnection = React.createClass(
 
 
     componentDidMount() {
-        this.storeListenerRemove= DialogStore.listen( this.changeDialogState);
+        this.storeListenerRemove= flux.addListener( this.changeDialogState);
     },
 
     changeDialogState() {
-        setTimeout(this.updateVisiiblity, 1);
+        this.updateVisibility();
     },
 
-    updateVisiiblity() {
-        var newVisible= DialogStore.getState().dialogVisibleStatus[this.props.dialogId]? true:false;
+    updateVisibility() {
+        var newVisible= AppDataCntlr.isDialogVisible(this.props.dialogId);
         if (newVisible !== this.state.visible) {
             this.setState( {visible : newVisible} );
         }
@@ -75,10 +75,7 @@ var PopupStoreConnection = React.createClass(
     },
 
     closeCallback() {
-        DialogActions.hideDialog({'dialogId' : this.props.dialogId});
-        //todo- not figure out how to close the dialog
-        //todo- call the store, don't close directly
-
+        AppDataCntlr.hideDialog(this.props.dialogId);
     },
 
 
@@ -101,8 +98,12 @@ var PopupStoreConnection = React.createClass(
  * @param dialogId {string}
  * @param dialog {object}
  */
-export var defineDialog= function(dialogId, dialog) {
+var defineDialog= function(dialogId, dialog) {
     if (!initComplete) init();
     dialogs[dialogId]= <PopupStoreConnection popupPanel={dialog} dialogId={dialogId}/>;
     React.render(<DialogRootComponent dialogs={dialogs}/>, divElement);
 };
+
+
+var DialogRootContainer= {defineDialog};
+export default DialogRootContainer;

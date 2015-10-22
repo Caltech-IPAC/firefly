@@ -4,28 +4,24 @@
 
 import React from 'react/addons';
 
-//import {application} from '../../core/Application.js';
-//import InputGroup from '../../ui/InputGroup.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
 import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
-//import Validate from '../../util/Validate.js';
-//import ImagePlotsStore from '../../store/ImagePlotsStore.js';
 import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA} from '../RangeValues.js';
 import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../RangeValues.js';
 import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
-import FieldGroupStore from '../../store/FieldGroupStore.js';
-import FieldGroupActions from '../../actions/FieldGroupActions.js';
-import {defineDialog} from '../../ui/DialogRootContainer.jsx';
-import DialogActions from '../../actions/DialogActions.js';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
+import AppDataCntlr from '../../core/AppDataCntlr.js';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {flux} from '../../Firefly.js';
 
 import {RED_PANEL,
         GREEN_PANEL,
         BLUE_PANEL,
         NO_BAND_PANEL,
-        colorPanelChange} from '../../store/visualize/ColorPanelReducer.js';
+        colorPanelChange} from '../ColorPanelReducer.js';
 
 
 var {Band } = window.ffgwt ? window.ffgwt.Visualize : {};
@@ -33,25 +29,18 @@ var {Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 class ColorDialog {
     constructor() {
-        FieldGroupActions.initFieldGroup({
-                groupKey : NO_BAND_PANEL,
-                reducerFunc : colorPanelChange,
-                validatorFunc: null,
-                keepState: true
-            }
-        );
+        FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
         //var mpw= ffgwt.Visualize.AllPlots.getInstance().getMiniPlotWidget();
         var content= (
             <PopupPanel title={'Modify Color Stretch'} >
                 <ColorDialogPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND}/>
             </PopupPanel>
         );
-        defineDialog('ColorStretchDialog', content);
+        DialogRootContainer.defineDialog('ColorStretchDialog', content);
     }
 
     showDialog() {
-        DialogActions.showDialog({dialogId: 'ColorStretchDialog'});
-
+        AppDataCntlr.showDialog('ColorStretchDialog');
     }
 }
 
@@ -69,7 +58,7 @@ var ColorDialogPanel= React.createClass(
     },
 
     getInitialState() {
-        return {fields : FieldGroupStore.getGroupFields(this.props.groupKey)};
+        return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
     },
 
     onClick() {
@@ -87,14 +76,14 @@ var ColorDialogPanel= React.createClass(
 
 
     componentDidMount() {
-        this.formStoreListenerRemove= FieldGroupStore.listen(this.formStoreUpdate.bind(this));
+        this.formStoreListenerRemove= flux.addListener(this.formStoreUpdate.bind(this));
     },
 
     update() {
     },
 
     formStoreUpdate() {
-        this.setState( {fields : FieldGroupStore.getGroupFields(this.props.groupKey)});
+        this.setState( {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)});
         this.update();
     },
 
@@ -182,7 +171,7 @@ var ColorDialogPanel= React.createClass(
 
     renderAsinH() {
         var {groupKey}=this.props;
-        var {zscale}= FieldGroupStore.getGroupFields(groupKey);
+        var {zscale}= FieldGroupUtils.getGroupFields(groupKey);
         var range= (zscale.value==='zscale') ? this.renderZscale() : this.getUpperAndLowerFields();
         return (
             <div>
@@ -197,7 +186,7 @@ var ColorDialogPanel= React.createClass(
 
     renderGamma() {
         var {groupKey}=this.props;
-        var {zscale}= FieldGroupStore.getGroupFields(groupKey);
+        var {zscale}= FieldGroupUtils.getGroupFields(groupKey);
         var range= (zscale.value==='zscale') ? this.renderZscale() : this.getUpperAndLowerFields();
         return (
             <div>
@@ -221,7 +210,7 @@ var ColorDialogPanel= React.createClass(
 
     render() {
         var groupKey=this.props.groupKey;
-        const {algorithm, lowerType, zscale}= FieldGroupStore.getGroupFields(groupKey);
+        const {algorithm, lowerType, zscale}= FieldGroupUtils.getGroupFields(groupKey);
         var a= Number.parseInt(algorithm.value);
         var panel;
         if (a===STRETCH_ASINH) {

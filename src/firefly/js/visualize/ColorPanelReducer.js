@@ -1,39 +1,27 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 /*globals ffgwt*/
 
-import {application} from '../../core/Application.js';
-import Validate from '../../util/Validate.js';
-import FieldGroupStore from '../FieldGroupStore.js';
-import FieldGroupActions from '../../actions/FieldGroupActions.js';
-import {FieldGroup} from '../FieldGroupStore.js';
-import RangeValues from '../../visualize/RangeValues.js';
-import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from '../../visualize/RangeValues.js';
-import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../../visualize/RangeValues.js';
-import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../../visualize/RangeValues.js';
-import {getCurrentPlot} from '../../visualize/VisUtil.js';
+import {application} from '../core/Application.js';
+import Validate from '../util/Validate.js';
+import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import ImagePlotCntlr from './ImagePlotCntlr.js';
+
+import RangeValues from './RangeValues.js';
+import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA,ZSCALE} from './RangeValues.js';
+import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from './RangeValues.js';
+import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from './RangeValues.js';
+import {getCurrentPlot} from './VisUtil.js';
 
 var {AllPlots, Band } = window.ffgwt ? window.ffgwt.Visualize : {};
+
 
 export const RED_PANEL= 'redPanel';
 export const GREEN_PANEL= 'greenPanel';
 export const BLUE_PANEL= 'bluePanel';
 export const NO_BAND_PANEL= 'nobandPanel';
 
-const bandMap= {};
-
-if (Band) {
-    bandMap[RED_PANEL]= Band.RED;
-    bandMap[GREEN_PANEL]= Band.GREEN;
-    bandMap[BLUE_PANEL]= Band.BLUE;
-    bandMap[NO_BAND_PANEL]= Band.NO_BAND;
-}
 
 var getFieldInit= function() {
     return {
@@ -125,30 +113,33 @@ var getFieldInit= function() {
 };
 
 /**
+ *
  * Recompute the state.
- * The is the testable entry point.
- * @param fg FieldGroup
- * @param actionsConst number
- * @return the new objet with the new fields
+ * @param fields
+ * @param plottedRV
+ * @param fitsData
+ * @param band
+ * @param actionsConst
+ * @return {*}
  */
-export const computeColorPanelState= function(fields, plottedRV, fitsData, groupKey, actionsConst) {
+export const computeColorPanelState= function(fields, plottedRV, fitsData, band, actionsConst) {
     if (!fields || !Object.keys(fields).length) fields= getFieldInit();
-
-    var band= bandMap[groupKey];
-
     var rv;
 
-    if (actionsConst===FieldGroupActions.VALUE_CHANGE) {
+    if (actionsConst===FieldGroupCntlr.VALUE_CHANGE) {
         var valid= Object.keys(fields).every( (key) => {
             return !fields[key].mounted ? true :  fields[key].valid;
         } );
         if (!valid) return fields;
         rv= makeRangeValuesFromFields(fields);
     }
-    else {
+    else if (actionsConst===ImagePlotCntlr.ANY_CHANGE) {
         if (!plottedRV && !fitsData) return fields;
         rv= plottedRV;
         updateFieldsFromRangeValues(fields,rv);
+    }
+    else {
+        return fields;
     }
 
 
@@ -178,21 +169,20 @@ export const computeColorPanelState= function(fields, plottedRV, fitsData, group
 
 /**
  * Collect any necessary data from store and the recompute the state
- * @param fg FieldGroup
- * @param actionsConst number
  * @return
  */
-export const colorPanelChange= function(fields, groupKey, actionsConst) {
-    var plottedRV= null;
-    var fitsData= null;
-    var band= bandMap[groupKey];
-    var plot= getCurrentPlot();
-    if (plot) {
-        fitsData= plot.getFitsDataByBand(band);
-        var rvs= plot.getRangeValuesSerialized(band);
-        plottedRV= RangeValues.parse(rvs);
-    }
-    return computeColorPanelState(fields, plottedRV, fitsData, groupKey, actionsConst);
+export const colorPanelChange= function(band) {
+    return (fields,action) => {
+        var plottedRV= null;
+        var fitsData= null;
+        var plot= getCurrentPlot();
+        if (plot) {
+            fitsData= plot.getFitsDataByBand(band);
+            var rvs= plot.getRangeValuesSerialized(band);
+            plottedRV= RangeValues.parse(rvs);
+        }
+        return computeColorPanelState(fields, plottedRV, fitsData, band, action.type);
+    };
 };
 
 
@@ -293,21 +283,24 @@ const makeRangeValuesFromFields= function(fields) {
  * @param rv RangeValues
  */
 const updateFieldsFromRangeValues= function(fields,rv) {
-    fields.lowerType.value= rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich;
-    fields.lowerRange.value= rv.lowerValue;
-    fields.upperType.value= rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich;
-    fields.upperRange.value= rv.upperValue;
-    fields.DR.value= rv.drValue;
-    fields.BP.value= rv.bpValue;
-    fields.WP.value= rv.wpValue;
-    fields.gamma.value= rv.gammaValue;
-    fields.algorithm.value= rv.algorithm;
-    fields.contrast.value= rv.zscaleContrast;
-    fields.numSamp.value= rv.zscaleSamples;
-    fields.sampPerLine.value= rv.zscaleSamplesPerLine;
-    fields.zscale.value=  rv.lowerWhich===ZSCALE ? 'zscale' : '';
+    fields.lowerType= cloneWithValue(fields.lowerType, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich);
+    fields.lowerRange= cloneWithValue(fields.lowerRange, rv.lowerValue);
+    fields.upperType= cloneWithValue(fields.upperType, rv.lowerWhich===ZSCALE ? PERCENTAGE : rv.lowerWhich);
+    fields.upperRange= cloneWithValue(fields.upperRange, rv.upperValue);
+    fields.DR= cloneWithValue(fields.DR, rv.drValue);
+    fields.BP= cloneWithValue(fields.BP, rv.bpValue);
+    fields.WP= cloneWithValue(fields.WP, rv.wpValue);
+    fields.gamma= cloneWithValue(fields.gamma, rv.gammaValue);
+    fields.algorithm= cloneWithValue(fields.algorithm, rv.algorithm);
+    fields.contrast= cloneWithValue(fields.contrast, rv.zscaleContrast);
+    fields.numSamp= cloneWithValue(fields.numSamp, rv.zscaleSamples);
+    fields.sampPerLine= cloneWithValue(fields.sampPerLine, rv.zscaleSamplesPerLine);
+    fields.zscale= cloneWithValue(fields.zscale,  rv.lowerWhich===ZSCALE ? 'zscale' : '');
 };
 
+const cloneWithValue= function(field,v) {
+    return Object.assign({}, field, {value:v});
+};
 
 
 

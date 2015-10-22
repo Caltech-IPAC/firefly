@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import FieldGroupStore from '../FieldGroupStore.js';
+import {flux} from '../Firefly.js';
+import FieldGroupCntlr from './FieldGroupCntlr.js';
 
 /**
  * make a promise for this field key to guarantee that all async validation has completed
@@ -24,9 +25,9 @@ var makeValidationPromise= function(fields,fieldKey) {
  * @return Promise with the valid state true/false
  */
 var validateSingle= function(groupKey, doneCallback) {
-    var fields= FieldGroupStore.getGroupFields(groupKey);
-    if (!fields) return true;
-    return Promise.all( Object.keys(fields).map( ((fieldKey) => makeValidationPromise(fields,fieldKey)),this ) )
+    var fields= getGroupFields(groupKey);
+    if (!fields) return Promise.all(true);
+    return Promise.all( Object.keys(fields).map( (fieldKey => makeValidationPromise(fields,fieldKey)),this ) )
         .then( (allResults) =>
         {
             var valid = allResults.every(
@@ -68,11 +69,11 @@ var validate= function(groupKey, doneCallback) {
 
 /**
  *
- * @param groupkey  the group key for the fieldgroup
+ * @param {string} groupKey the group key for the fieldgroup
  * @return {{}}
  */
 var getResults= function(groupKey) {
-    var fields= FieldGroupStore.getGroupFields(groupKey);
+    var fields= getGroupFields(groupKey);
     var request= {};
     Object.keys(fields).forEach(function(fieldKey) {
         request[fieldKey] = fields[fieldKey].value;
@@ -80,10 +81,67 @@ var getResults= function(groupKey) {
     return request;
 };
 
-var FieldGroupUtils= {validate, getResults};
+
+/**
+ * Get the group state for a key
+ *
+ * @param {string} groupKey
+ * @return {object}
+ */
+const getGroupState= function(groupKey) {
+    var fieldGroupMap= flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY].fieldGroupMap;
+    return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
+};
+
+/**
+ * Get the group fields for a key
+ *
+ * @param {string} groupKey
+ * @return {object}
+ */
+const getGroupFields= function(groupKey) {
+    var groupState= getGroupState(groupKey);
+    return groupState?groupState.fields:null;
+};
+
+const defaultReducer= (state) => state;
+
+/**
+ *
+ * @param {string} groupKey
+ * @param {function} reducerFunc
+ * @param {boolean} keepState
+ */
+const initFieldGroup= function(groupKey,reducerFunc= defaultReducer,keepState=false) {
+    flux.process({type: FieldGroupCntlr.INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,keepState}});
+};
+
+/**
+ *
+ * @param {string} groupKey
+ * @param {function} reducerFunc
+ * @param {boolean} keepState
+ */
+const mountFieldGroup= function(groupKey, reducerFunc= defaultReducer, keepState= false) {
+    flux.process({type: FieldGroupCntlr.MOUNT_FIELD_GROUP,
+                  payload: {groupKey, reducerFunc, keepState, mounted:true}
+    });
+};
+/**
+ *
+ * @param groupKey
+ */
+const unmountFieldGroup= function(groupKey) {
+    flux.process({type: FieldGroupCntlr.MOUNT_FIELD_GROUP,
+        payload: {groupKey, mounted:false}
+    });
+};
+
+
+
+
+var FieldGroupUtils= {validate, getResults, getGroupState, getGroupFields,
+                      initFieldGroup,mountFieldGroup,unmountFieldGroup };
 
 export default FieldGroupUtils;
-
-
-
 

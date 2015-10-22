@@ -1,11 +1,11 @@
 import React from 'react/addons';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var CheckboxGroupInputField = React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+        mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             options : React.PropTypes.array.isRequired

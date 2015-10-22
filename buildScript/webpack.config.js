@@ -4,6 +4,7 @@
 import webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import ProgressBarPlugin from 'progress-bar-webpack-plugin';
 import RewireWebpackPlugin from 'rewire-webpack';
 import path from 'path';
 import fs from 'fs';
@@ -70,7 +71,6 @@ var webpackConfig = {
         new webpack.optimize.DedupePlugin(),
         new ExtractTextPlugin(`${config.name}.css`),
         new RewireWebpackPlugin()
-
     ],
     resolve : {
         extensions : ['', '.js', '.jsx'],
@@ -151,6 +151,24 @@ if (globals.__PROD__) {
                 unused    : true,
                 dead_code : true
             }
+        })
+    );
+}
+
+var buildCnt=0;
+
+if (globals.__DEBUG__) {
+    const progressDone= function() {
+        buildCnt++;
+        process.stdout.write('\n');
+        var time = new Date();
+        var tStr= time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
+        process.stdout.write('Build ' +buildCnt+ ' results: '+ tStr);
+    };
+
+    webpackConfig.plugins.splice(3,0,
+        new ProgressBarPlugin({
+            callback : progressDone
         })
     );
 }

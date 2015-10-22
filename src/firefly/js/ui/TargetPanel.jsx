@@ -6,13 +6,13 @@ import React from 'react/addons';
 import {parseTarget} from '../ui/TargetPanelWorker.js';
 import TargetFeedback from '../ui/TargetFeedback.jsx';
 import InputFieldView from '../ui/InputFieldView.jsx';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 
 
 var TargetPanel= React.createClass(
    {
-       mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+       mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
        getDefaultProps() {
            return {

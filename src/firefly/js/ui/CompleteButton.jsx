@@ -3,8 +3,8 @@
  */
 
 import React from 'react/addons';
-import DialogActions from '../actions/DialogActions.js';
-import FieldGroupUtils from '../store/util/FieldGroupUtils.js';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import AppDataCntlr from '../core/AppDataCntlr.js';
 
 var CompleteButton = React.createClass(
    {
@@ -12,7 +12,7 @@ var CompleteButton = React.createClass(
            onFail: React.PropTypes.func,
            onSuccess: React.PropTypes.func,
            groupKey: React.PropTypes.any,
-           text: React.PropTypes.string,
+           text: React.PropTypes.strng,
            closeOnValid: React.PropTypes.bool,
            dialogId: React.PropTypes.string
        },
@@ -31,7 +31,7 @@ var CompleteButton = React.createClass(
            var {onSuccess, onFail, groupKey, dialogId} = this.props;
            var funcToCall = valid ? onSuccess : onFail;
 
-           if (valid && dialogId) DialogActions.hideDialog({dialogId});
+           if (valid && dialogId) AppDataCntlr.hideDialog(dialogId);
 
            if (Array.isArray(groupKey)) {
                var requestAry = groupKey.map( (key) => FieldGroupUtils.getResults(key));
@@ -55,7 +55,7 @@ var CompleteButton = React.createClass(
            }
            else {
                if (onSuccess) onSuccess();
-               if (dialogId) DialogActions.hideDialog({dialogId});
+               if (dialogId) AppDataCntlr.hideDialog(dialogId);
            }
        },
 

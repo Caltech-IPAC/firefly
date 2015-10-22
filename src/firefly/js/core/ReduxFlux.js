@@ -9,24 +9,32 @@ import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from 'firefly/side-effects';
-import * as appData  from './AppDataCntlr.js';
+import AppDataCntlr  from './AppDataCntlr.js';
+import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
  * @type {Map<string, function>}
  */
-let actionCreators = new Map();
+const actionCreators = new Map();
 
 /**
- * A colection of reducers keyed by the node's name under the root.
+ * A collection of reducers keyed by the node's name under the root.
  * @type {Object<string, function>}
  */
-let reducers = { appData : appData.reducer };
-let redux = {};
+const reducers = {
+    [AppDataCntlr.APP_DATA_KEY]: AppDataCntlr.reducer,
+    [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
+    [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer
+};
+
+let redux;
 
 
 // pre-map a set of action => creator prior to boostrapping.
-actionCreators.set(appData.APP_LOAD, appData.loadAppData);
+actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
+actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 
 
 function createRedux() {
@@ -57,12 +65,13 @@ function bootstrap() {
  * @returns {Promise}
  */
 function process(rawAction, condition) {
+    if (!redux) throw Error('firefly has not been bootstrapped');
 
     var ac = actionCreators.get(rawAction.type);
     if (ac) {
         redux.dispatch(ac(rawAction));
     } else {
-        redux.dispatch( () => rawAction );
+        redux.dispatch( rawAction );
     }
 
     return new Promise(
@@ -80,9 +89,10 @@ function process(rawAction, condition) {
 }
 
 function addListener(listener, ...types) {
-    if (types) {
+    if (!redux) return;
+    if (types.length) {
         return () => {
-            var appState = redux.getState();
+            var appState = redux.getState()
         };
     } else {
         return redux.subscribe(listener);
@@ -98,7 +108,7 @@ function registerReducer(dataRoot, reducer) {
 }
 
 function getState() {
-    return redux.getState();
+    return redux ? redux.getState() : null;
 }
 
 

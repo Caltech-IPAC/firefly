@@ -2,21 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/**
- * Created by roby on 3/5/15.
- */
-
 import React from 'react/addons';
 import _ from 'lodash';
-import FieldGroupStore from '../../store/FieldGroupStore.js';
-import FieldGroupActions from '../../actions/FieldGroupActions.js';
+import FieldGroupCntlr from './FieldGroupCntlr.js';
+import FieldGroupUtils from './FieldGroupUtils.js';
+import {flux} from '../Firefly.js';
 
 
 
-
-
-
-var FormStoreLinkMixin=  {
+var FieldGroupToStoreMixin=  {
 
     storeListenerRemove : null,
 
@@ -29,10 +23,8 @@ var FormStoreLinkMixin=  {
 
     getInitialState() {
         var {groupKey,fieldKey} = this.props;
-        var fieldState = this.props.initialState || FieldGroupStore.getGroupFields(groupKey)[fieldKey];
-        return {
-            fieldState : fieldState
-        };
+        var fieldState = this.props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
+        return { fieldState };
     },
 
 
@@ -55,7 +47,7 @@ var FormStoreLinkMixin=  {
 
     fireValueChange(payload) {
         if (!payload.groupKey) payload.groupKey= this.props.groupKey;
-        FieldGroupActions.valueChange(payload);
+        flux.process({type: FieldGroupCntlr.VALUE_CHANGE, payload});
     },
 
 
@@ -73,28 +65,38 @@ var FormStoreLinkMixin=  {
 
 
     componentDidMount() {
-        this.storeListenerRemove= FieldGroupStore.listen( ()=> this.updateFieldStateWithProps(this.props));
-        _.defer(()=> {
-            FieldGroupActions.mountComponent( {
+        this.storeListenerRemove= flux.addListener( ()=> this.updateFieldStateWithProps(this.props));
+        flux.process({
+            type: FieldGroupCntlr.MOUNT_COMPONENT,
+            payload: {
                 groupKey: this.props.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : true,
                 value: this.getValue(),
                 fieldState: this.props.initialState
-            } );
-        });
+            }} );
+        //this.storeListenerRemove= FieldGroupStore.listen( ()=> this.updateFieldStateWithProps(this.props));
+        //_.defer(()=> {
+        //    FieldGroupActions.mountComponent( {
+        //        groupKey: this.props.groupKey,
+        //        fieldKey : this.props.fieldKey,
+        //        mounted : true,
+        //        value: this.getValue(),
+        //        fieldState: this.props.initialState
+        //    } );
+        //});
     },
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
-        _.defer(()=> {
-            FieldGroupActions.mountComponent( {
+        flux.process({
+            type: FieldGroupCntlr.MOUNT_COMPONENT,
+            payload: {
                 groupKey: this.props.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : false,
                 value: this.getValue()
-            } );
-        });
+            }} );
 
         //formActions.mountComponent(this.getFormKey(),this.props.fieldKey,false,this.getValue(),this.props.initialState)
     },
@@ -105,7 +107,7 @@ var FormStoreLinkMixin=  {
 
     updateFieldStateWithProps(props) {
         var {groupKey, fieldKey}= props;
-        var groupState= FieldGroupStore.getGroupState(groupKey);
+        var groupState= FieldGroupUtils.getGroupState(groupKey);
         if (groupState && groupState.mounted && groupState.fields[fieldKey]) {
             if (this.state.fieldState!==groupState.fields[fieldKey]) {
                 this.setState( {fieldState : groupState.fields[fieldKey]});
@@ -117,4 +119,4 @@ var FormStoreLinkMixin=  {
 
 
 
-export default FormStoreLinkMixin;
+export default FieldGroupToStoreMixin;

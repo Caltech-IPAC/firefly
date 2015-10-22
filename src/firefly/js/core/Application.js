@@ -5,7 +5,6 @@
 import React from 'react/addons';
 import 'babel/polyfill';
 
-import AppAlt from './AppAlt.js';
 //import Alt from 'alt';
 import { appFlux } from './Globals.js';
 import Enum from 'enum';
@@ -19,13 +18,13 @@ import ExampleDialog  from '../ui/ExampleDialog.jsx';
 import {ServerRequest } from '../data/ServerRequest.js';
 import {makePlotState} from '../visualize/PlotState.js';
 import {getJsonData } from '../rpc/SearchServicesJson.js';
+import {flux} from '../Firefly.js';
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
 
 class Application {
     constructor() {
         this.networkMode= NetworkMode.JSON;
-        this.alt= AppAlt;
     }
 
 
@@ -41,6 +40,7 @@ export const application= new Application();
 export const fireflyInit= function() {
 
 
+    flux.bootstrap();
     var touch= false; // ToDo: determine if we are on a touch device
     if (touch) {
         React.initializeTouchEvents(true);

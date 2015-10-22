@@ -18,29 +18,27 @@ import ListBoxInputField from './ListBoxInputField.jsx';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
-import JunkFormButton from './JunkFormButton.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {WorldPt, ImagePt, Pt} from '../visualize/Point.js';
-import FieldGroupStore from '../store/FieldGroupStore.js';
-import FieldGroupActions from '../actions/FieldGroupActions.js';
 import FieldGroup from './FieldGroup.jsx';
-import {defineDialog} from './DialogRootContainer.jsx';
+import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
-import DialogActions from '../actions/DialogActions.js';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab} from './panel/TabPanel.jsx';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import AppDataCntlr from '../core/AppDataCntlr.js';
 
 
 /**
  *
- * @param inFields
- * @param actionsConst
- * @return {*}
+ * @param {object} inFields
+ * @param {object} action
+ * @return {object}
  */
-var testReducer= function(inFields, actionsConst) {
+var testReducer= function(inFields, action) {
     if (!inFields)  {
-        var fields= {
+        return {
             field1: {
                 fieldKey: 'field1',
                 value: '3',
@@ -64,7 +62,6 @@ var testReducer= function(inFields, actionsConst) {
                 label: 'Email:'
             }
         };
-        return fields;
     }
     else {
         return inFields;
@@ -75,26 +72,16 @@ class ExampleDialog {
 
     constructor() {
         var popup= (
-            //<PopupPanel title={'Example Dialog'} closePromise={closePromise}>
             <PopupPanel title={'Example Dialog'} >
                 <AllTest  groupKey={'DEMO_FORM'} />
             </PopupPanel>
         );
-
-        FieldGroupActions.initFieldGroup({
-
-                groupKey : 'DEMO_FORM',
-                reducerFunc : testReducer,
-                validatorFunc: null,
-                keepState: true
-            }
-        );
-        defineDialog('ExampleDialog', popup);
+        FieldGroupUtils.initFieldGroup('DEMO_FORM',testReducer,true);
+        DialogRootContainer.defineDialog('ExampleDialog', popup);
     }
 
     showDialog() {
-
-        DialogActions.showDialog({dialogId: 'ExampleDialog'});
+        AppDataCntlr.showDialog('ExampleDialog');
     }
 }
 
@@ -120,13 +107,13 @@ var AllTest = React.createClass({
         });
 
         var results= (
-            <PopupPanel title={'Example Dialog'} closePromise={closePromise} >
+            <PopupPanel title={'Example Dialog Results'} closePromise={closePromise} >
                 {this.makeResultInfoContent(statStr,s,resolver)}
             </PopupPanel>
         );
 
-        defineDialog('ResultsFromExampleDialog', results);
-        DialogActions.showDialog({dialogId: 'ResultsFromExampleDialog'});
+        DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
+        AppDataCntlr.showDialog('ResultsFromExampleDialog');
     },
 
 
