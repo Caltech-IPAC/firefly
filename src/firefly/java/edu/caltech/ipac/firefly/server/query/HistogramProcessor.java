@@ -252,7 +252,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
      * @param columnData
      * @return
      */
-    private DataGroup createHistogramTable( double[] columnData){
+    private DataGroup createHistogramTable( double[] columnData) throws DataAccessException {
         DataGroup HistogramTable = new DataGroup("histogramTable", columns);
         /*if (!scale.equalsIgnoreCase(LINEAR_SCALE)){
             columnData = scaleData(columnData);
@@ -411,7 +411,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
      * @return
      */
 
-    private Object[] calculateVariableBinSizeDataArray(double[] columnData) {
+    private Object[] calculateVariableBinSizeDataArray(double[] columnData) throws DataAccessException {
 
         //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
         Arrays.sort(columnData);
@@ -458,7 +458,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
 
     }
-    private double[] getBins( double[] columnData){
+    private double[] getBins( double[] columnData) throws DataAccessException {
 
        int n= columnData.length;
        //create a length=n+1 array of edges
@@ -488,6 +488,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
            double[] countVec = getCumulativeSum(nnVec, i+1);
            //evaluate fitness function for these possibilities
            double[] fitnessVec = calculateFitnessFunction(countVec, width, best, i);
+           if (fitnessVec==null) continue;
            //find the max of the fitness: this is the K^th changepoint
            int  iMax = getIndexForMaxValue(fitnessVec);
            last[i]=iMax;
@@ -531,10 +532,12 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     private int getIndexForMaxValue(double[] inArray){
         double max = inArray[0];
         int maxIdx=0;
-        for (int i=1; i<inArray.length; i++){
-            if (inArray[i]>max){
-                max=inArray[i];
-                maxIdx=i;
+        if (inArray.length>1) {
+            for (int i = 1; i < inArray.length; i++) {
+                if (inArray[i] > max) {
+                    max = inArray[i];
+                    maxIdx = i;
+                }
             }
         }
         return maxIdx;
@@ -547,27 +550,38 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
      * @param best
      * @return
      */
-    private double[] calculateFitnessFunction(double[] countVec, double[] width, double[] best, int index){
-        double[] fitnessVec= new double[countVec.length];
+    private double[] calculateFitnessFunction(double[] countVec, double[] width, double[] best, int index) throws DataAccessException {
+
+        ArrayList<Double> fList = new ArrayList<Double>();
         for (int i=0; i<countVec.length; i++){
-            fitnessVec[i]=countVec[i]*(Math.log(countVec[i]) - Math.log(width[i]));
-        }
-        //subtract 4
-        for (int i=0; i<countVec.length; i++){
-            fitnessVec[i] -=4;
+            if ( Double.isFinite(countVec[i]) && countVec[i]>0 && Double.isFinite(width[i])  && width[i]>0 ) {
+                //fitnessVec[i] = countVec[i] * (Math.log(countVec[i]) - Math.log(width[i]));
+                fList.add(countVec[i] * (Math.log(countVec[i]) - Math.log(width[i])) );
+            }
         }
 
-        double[] f1 = Arrays.copyOfRange(fitnessVec, 1, fitnessVec.length);
-        double[] f2 = Arrays.copyOfRange(best,0, index );
+        if (fList.size()>1) {
+            //subtract 4
+            double[] fitnessVec = new double[fList.size()];
+            for (int i = 0; i < fList.size(); i++) {
+                fitnessVec[i] = fList.get(i).doubleValue() - 4;
+            }
 
-        return concatenate(f1, f2);
+            double[] f1 = Arrays.copyOfRange(fitnessVec, 1, fitnessVec.length);
+            double[] f2 = Arrays.copyOfRange(best, 0, index);
+
+            return concatenate(f1, f2);
+        }
+        else {
+            return null;
+        }
     }
     /**
      * variable bin methods
      * @param data
      * @return
      */
-    private double[] getEdges(double[] data){
+    private double[] getEdges(double[] data) throws DataAccessException {
 
         //sort the data
         Arrays.sort(data);
@@ -575,8 +589,8 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         // create length=(N + 1) array of cell edges, in python: np.concatenate([t[:1],
         //0.5 * (t[1:] + t[:-1]), t[-1:]], where t is the data (columnData)
         double[] a1 = Arrays.copyOfRange(data, 0, 1);
-        double[] a2 = Arrays.copyOfRange(data, 1, n);
-        double[] a3 = Arrays.copyOfRange(data, 0, n-1);
+        double[] a2 = Arrays.copyOfRange(data, 2, n);
+        double[] a3 = Arrays.copyOfRange(data, 1, n-1);
         double[] a4 = Arrays.copyOfRange(data,n-1, n);
 
         double[] concatenate = concatenate(a2, a3);
@@ -596,7 +610,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     private double[] reverseArray(double[] inArray){
         double[] outArray = new double[inArray.length];
         for (int i=0; i<inArray.length; i++){
-            outArray[i]= inArray[inArray.length-i];
+            outArray[i]= inArray[inArray.length-1-i];
         }
         return outArray;
     }
@@ -615,9 +629,12 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         return reverseArray(outArray);
 
     }
-    private double[] concatenate  (double[]a,double[]b){
-        if (a == null) return b;
-        if (b == null) return a;
+    private double[] concatenate  (double[]a,double[]b) throws DataAccessException {
+        if (a == null && b!=null) return b;
+        if (b == null  && a!=null ) return a;
+        if (a==null && b==null) {
+            throw new DataAccessException( "can not concatenate two null data arrays " );
+        }
         double[] r = new double[a.length+b.length];
         System.arraycopy(a, 0, r, 0, a.length);
         System.arraycopy(b, 0, r, a.length, b.length);
@@ -642,8 +659,8 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
                     DataGroup dg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable");
 
                     HistogramProcessor hp = new HistogramProcessor();
-                    hp.columnExpression  =  "f_x*f_x+f_y";
-                    hp.algorithm="noneLinear";
+                    hp.columnExpression  =  "f_x";//*f_x+f_y";
+                    //hp.algorithm="noneLinear";
                     DataType[]  columns = hp.getColumn(dg);
 
                     if (columns==null){
