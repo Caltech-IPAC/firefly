@@ -482,13 +482,13 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
        int[] last = new int[n];
        Arrays.fill(last, 0);
        for (int i=0; i<n; i++){
-           //Compute the width and count of the final bin for all possible
+           //Compute the argLog and count of the final bin for all possible
            // locations of the K^th changepoint
-           double[] width = getWidth(blockLength, i+1);
-           double[] countVec = getCumulativeSum(nnVec, i+1);
+           double[] argLog = getArgLog(blockLength, i );
+           double[] comsumCountVec = getCumulativeSum(nnVec, i);
            //evaluate fitness function for these possibilities
-           double[] fitnessVec = calculateFitnessFunction(countVec, width, best, i);
-           if (fitnessVec==null) continue;
+           double[] fitnessVec = calculateFitnessFunction(comsumCountVec, argLog, best, i);
+           if (fitnessVec.length==0) continue;
            //find the max of the fitness: this is the K^th changepoint
            int  iMax = getIndexForMaxValue(fitnessVec);
            last[i]=iMax;
@@ -543,24 +543,31 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         return maxIdx;
     }
 
+
     /**
      * This method evaluate the fitness function for these possibilities
      * @param countVec
-     * @param width
+     * @param argLog
      * @param best
      * @return
      */
-    private double[] calculateFitnessFunction(double[] countVec, double[] width, double[] best, int index) throws DataAccessException {
+    private double[] calculateFitnessFunction(double[] countVec, double[] argLog, double[] best, int index) throws DataAccessException {
 
         ArrayList<Double> fList = new ArrayList<Double>();
         for (int i=0; i<countVec.length; i++){
-            if ( Double.isFinite(countVec[i]) && countVec[i]>0 && Double.isFinite(width[i])  && width[i]>0 ) {
-                //fitnessVec[i] = countVec[i] * (Math.log(countVec[i]) - Math.log(width[i]));
-                fList.add(countVec[i] * (Math.log(countVec[i]) - Math.log(width[i])) );
+            if ( Double.isFinite(countVec[i]) && countVec[i]>0 && Double.isFinite(argLog[i])) {
+                //fitnessVec[i] = countVec[i] * (Math.log(countVec[i]) - Math.log(argLog[i]));
+                fList.add(countVec[i] * (Math.log(countVec[i]) - Math.log(argLog[i])) );
             }
         }
 
-        if (fList.size()>1) {
+        double[] fitnessVec = new double[fList.size()];
+        for (int i = 0; i < fList.size(); i++) {
+            fitnessVec[i] = fList.get(i).doubleValue();
+        }
+        return fitnessVec;
+
+       /* if (fList.size()>1) {
             //subtract 4
             double[] fitnessVec = new double[fList.size()];
             for (int i = 0; i < fList.size(); i++) {
@@ -574,7 +581,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         }
         else {
             return null;
-        }
+        }*/
     }
     /**
      * variable bin methods
@@ -589,8 +596,8 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         // create length=(N + 1) array of cell edges, in python: np.concatenate([t[:1],
         //0.5 * (t[1:] + t[:-1]), t[-1:]], where t is the data (columnData)
         double[] a1 = Arrays.copyOfRange(data, 0, 1);
-        double[] a2 = Arrays.copyOfRange(data, 2, n);
-        double[] a3 = Arrays.copyOfRange(data, 1, n-1);
+        double[] a2 = Arrays.copyOfRange(data, 1, n);
+        double[] a3 = Arrays.copyOfRange(data, 0, n-1);
         double[] a4 = Arrays.copyOfRange(data,n-1, n);
 
         double[] concatenate = concatenate(a2, a3);
@@ -600,12 +607,15 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         return edges;
 
     }
-    private double[] getWidth(double[] inArray, int index){
-        double[] outArray = new double[index];
+    private double[] getArgLog(double[] inArray, int index){
+        double[] argLog = new double[index];
         for (int i=0; i<index; i++){
-            outArray[i]= inArray[i]-inArray[index];
+            argLog[i]= inArray[i]-inArray[index+1];
+            if (argLog[i]<=0){
+                argLog[i]=Double.NaN;
+            }
         }
-        return outArray;
+        return argLog;
     }
     private double[] reverseArray(double[] inArray){
         double[] outArray = new double[inArray.length];
@@ -616,17 +626,18 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     }
 
 
-    private double[] getCumulativeSum(double[] inArray, int index){
-        double[] outArray = new double[index];
-        double[] pArray = Arrays.copyOfRange(inArray, 0, index);
+    private double[] getCumulativeSum(double[] nnVec, int index){
+        double[] nnCumVec = new double[index];
+        double[] pArray = Arrays.copyOfRange(nnVec, 0, index);
         double[] rArray = reverseArray(pArray);
         double sum=0.0;
         for (int i=0; i<index; i++){
             sum +=rArray[i];
-            outArray[i]=sum;
+            nnCumVec[i]=sum;
         }
 
-        return reverseArray(outArray);
+        return reverseArray(nnCumVec);
+
 
     }
     private double[] concatenate  (double[]a,double[]b) throws DataAccessException {
