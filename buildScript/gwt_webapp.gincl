@@ -231,7 +231,7 @@ task publishToGithub (dependsOn: loadConfig) {
 
     def relConfig = '{ "tag": "' + tag_label + '"' +
             ', "name": "' + rel_title + '"' +
-            ', "assets": ["' + "${war.destinationDir}/${webapp.baseWarName}.war" + '"]' +
+            ', "assets": ["' + "${buildDir}/exec/${webapp.baseWarName}-exec.war" + '"]' +
             "}"
 
     def res = exec {

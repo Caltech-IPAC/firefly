@@ -8,7 +8,6 @@ var firefly_root = path.resolve(__dirname, '../..');
 
 config = {
     name    : 'fftools',
-    index_html: 'fftools.html',
     src     : __dirname,
     entry   : {
         fftools: path.resolve(__dirname, 'js/fftools.js'),
