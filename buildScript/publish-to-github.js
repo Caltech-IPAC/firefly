@@ -79,7 +79,7 @@ function doPublish(rel_config) {
 
     exec('git checkout master');
     exec('git remote add lsst https://a91d89f1d9abdb2c0b3ea0bd15747474eec93efc@github.com/lsst/firefly.git');
-    exec('git push --tags lsst master:test');
+    exec('git push --tags lsst master');
 
 
     publishRelease(rel_config,
