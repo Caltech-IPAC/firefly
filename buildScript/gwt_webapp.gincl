@@ -2,6 +2,7 @@ def WEBAPP_GROUP = "Webapp"
 
 apply plugin: 'war'
 apply from: "$fireflyPath/buildScript/gwt.gincl"
+apply from: "$fireflyPath/buildScript/utils.gincl"
 
 jar {
   baseName = "${project['app-name']}"
@@ -203,23 +204,6 @@ task buildAndPublish( dependsOn: war ) << {
 }
 
 
-//same as utils.gincl#getTag..  need to merge them at a later time.
-def getTag() {
-  if (!project.hasProperty("tag_name")) {
-    if (!project.hasProperty("tag_file")) {
-      project.ext.tag_file = "${project.buildDir}/version.tag"
-    }
-    Properties props = new Properties()
-    props.load(new File(tag_file).newDataInputStream())
-    project.ext.tag_name = props.getProperty('tag')
-  }
-
-  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
-  def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
-  def tag_label = prefix + tag_name + suffix
-  return tag_label;
-}
-
 def getVersionLabel() {
   def major = appConfigProps.get('BuildMajor')
   def minor = appConfigProps.get('BuildMinor')
@@ -235,7 +219,7 @@ task publishToGithub (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def tag_label = getTag();
+    def tag_label = project.ext.createTagLabel();
     def rel_title = getVersionLabel();
 
     try {

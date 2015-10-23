@@ -45,7 +45,7 @@ if (args.tag && args.assets) {
 }
 
 function getChangeLog(rel_config, lastdate) {
-    var cmd = 'git log --pretty=format:"- %s%n%b" --since="' + lastdate +'"';
+    var cmd = 'git log --pretty=format:"%h - %s" --since="' + lastdate +'"';
 
     // push changes to github..
     exec(cmd, function (error, stdout, stderr) {
@@ -67,7 +67,7 @@ function checkGitHub(rel_config, callback) {
             'User-Agent': 'firely Jenkins'
         }
     }, function (err, res, body) {
-        if (err) return callback(err)
+        if (err) return callback(err);
         var result = JSON.parse(body);
         console.log( 'github lastest commit: ' + result.sha );
         callback(rel_config, result.commit.author.date);

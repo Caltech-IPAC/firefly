@@ -14,28 +14,10 @@ def startTomcat(remoteHost) {
   println ">> Starting Tomcat:.. $cmd ==> $desc"
 }
 
-//same as gwt_webapp.gincl#getTag..  need to merge them at a later time.
-def getTag(mySuffix) {
-  if (!project.hasProperty("tag_name")) {
-    if (!project.hasProperty("tag_file")) {
-      project.ext.tag_file = "${project.buildDir}/version.tag"
-    }
-    Properties props = new Properties()
-    props.load(new File(tag_file).newDataInputStream())
-    project.ext.tag_name = props.getProperty('tag')
-  }
-
-  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
-  def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
-  suffix = mySuffix ?: suffix;
-  def tag_label = prefix + tag_name + suffix
-  return tag_label;
-}
-
 task createTag(dependsOn: loadConfig) << {
   description = 'Create and push a tag to remote repo. Optional properties: ${tag_name}, ${tag_file} if ${tag_name} is missing. defaults to build/version.tag, ${tag_remote} defaults to origin, ${tag_message}.'
 
-  def tag_label = getTag();
+  def tag_label = project.ext.createTagLabel();
   println "tag: $tag_label"
 
   exec {
@@ -132,4 +114,5 @@ def execCmd(remoteHost, ignoreFailure, cmdLine) {
     logger.info( ">> execCmd: $commandLine" )
   }
 }
+
 
