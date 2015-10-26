@@ -36,7 +36,7 @@ const activate= function(remoteChannel, extension, resultData) {
 };
 
 const getRemoteChannel= function() {
-    return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY];
+    return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY].remoteChannel ;
 };
 
 const getExtensionList= function(testPlotId) {

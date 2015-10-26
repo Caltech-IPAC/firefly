@@ -20,7 +20,7 @@ if (ffgwt) {
     var allPlots= ffgwt.Visualize.AllPlots.getInstance();
     allPlots.addListener({
         eventNotify(ev) {
-            console.log('ANY_CHANGE:' + ev.getName().getName());
+            //console.log('ANY_CHANGE:' + ev.getName().getName());
             if (ev.getName().getName()==='Replot') {
                 flux.process({type: ANY_CHANGE, payload: {} });
             }
