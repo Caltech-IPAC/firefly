@@ -45,7 +45,7 @@ if (args.tag && args.assets) {
 }
 
 function getChangeLog(rel_config, lastdate) {
-    var cmd = 'git log --pretty=format:"%h - %s [%cd] --date=short" --after="' + lastdate +'"';
+    var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short --after="' + lastdate +'"';
 
     // push changes to github..
     exec(cmd, function (error, stdout, stderr) {
