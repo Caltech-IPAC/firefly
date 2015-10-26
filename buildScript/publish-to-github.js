@@ -76,7 +76,6 @@ function checkGitHub(rel_config, callback) {
 
 function doPublish(rel_config) {
 
-    exec('git checkout master');
     exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
     exec('git push --tags lsst master');
     exec('git remote rm lsst');
