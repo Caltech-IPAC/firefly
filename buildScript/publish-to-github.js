@@ -77,18 +77,26 @@ function checkGitHub(rel_config, callback) {
 function doPublish(rel_config) {
 
     exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
-    exec('git push --tags lsst HEAD:master');
-    exec('git remote rm lsst');
+    var proc = exec('git push --follow-tags lsst HEAD:master');
 
-    publishRelease(rel_config,
-        function (err, release) {
-            if (err) {
-                console.log('Failed: ' + JSON.stringify(err, null, 2));
-            } else {
-                if (release.html_url) {
-                    console.log('Publish Done: ' + release.html_url);
-                }
-            }
-        });
+    proc.on('exit', function (code) {
+        if (code == 0){
+            exec('git remote rm lsst');
+
+            publishRelease(rel_config,
+                function (err, release) {
+                    if (err) {
+                        console.log('Failed: ' + JSON.stringify(err, null, 2));
+                    } else {
+                        if (release.html_url) {
+                            console.log('Publish Done: ' + release.html_url);
+                        }
+                    }
+                });
+        } else {
+            console.log('Publish Release aborted!  Errors while pushing to lsst/firefly.');
+            process.exit(1);
+        }
+    });
 }
 
