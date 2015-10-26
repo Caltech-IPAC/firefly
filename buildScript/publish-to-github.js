@@ -7,7 +7,6 @@ var request = require('request')
 
 
 var args = JSON.parse( process.argv[2] || '{}' );
-console.log(args);
 
 if (args.tag && args.assets) {
 
@@ -19,7 +18,7 @@ if (args.tag && args.assets) {
     });
 
     var rel_config = {
-        token: 'a91d89f1d9abdb2c0b3ea0bd15747474eec93efc',
+        token: '',
         owner: 'lsst',
         repo: 'firefly',
         tag: '',
@@ -31,7 +30,8 @@ if (args.tag && args.assets) {
     };
 
     rel_config = Object.assign(rel_config, args);
-    console.log( 'rel_config: ' + JSON.stringify(rel_config, null, 2) );
+
+    console.log('Publishing release (' + rel_config.tag + ') to github.');
 
     if (rel_config.notes) {
         doPublish(rel_config);
@@ -45,7 +45,7 @@ if (args.tag && args.assets) {
 }
 
 function getChangeLog(rel_config, lastdate) {
-    var cmd = 'git log --pretty=format:"%h - %s" --since="' + lastdate +'"';
+    var cmd = 'git log --pretty=format:"%h - %s" --after="' + lastdate +'"';
 
     // push changes to github..
     exec(cmd, function (error, stdout, stderr) {
@@ -75,12 +75,11 @@ function checkGitHub(rel_config, callback) {
 }
 
 function doPublish(rel_config) {
-    console.log( 'rel_config: ' + JSON.stringify(rel_config, null, 2) );
 
     exec('git checkout master');
-    exec('git remote add lsst https://a91d89f1d9abdb2c0b3ea0bd15747474eec93efc@github.com/lsst/firefly.git');
+    exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
     exec('git push --tags lsst master');
-
+    exec('git remote rm lsst');
 
     publishRelease(rel_config,
         function (err, release) {

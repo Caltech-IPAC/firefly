@@ -208,9 +208,10 @@ def getVersionLabel() {
   def major = appConfigProps.get('BuildMajor')
   def minor = appConfigProps.get('BuildMinor')
   def rev = appConfigProps.get('BuildRev')
+  def type = appConfigProps.get('BuildType')
 
   def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix} " : ""
-  def label = prefix + "v${major}.${minor}.${rev}"
+  def label = prefix + "v${major}.${minor}.${rev} ${type}"
   return label;
 }
 
@@ -230,6 +231,7 @@ task publishToGithub (dependsOn: loadConfig) {
     }
 
     def relConfig = '{ "tag": "' + tag_label + '"' +
+            ', "token": "' + project.property("github.auth.token") + '"' +
             ', "name": "' + rel_title + '"' +
             ', "assets": ["' + "${buildDir}/exec/${webapp.baseWarName}-exec.war" + '"]' +
             "}"
