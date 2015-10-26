@@ -17,10 +17,6 @@ export var firefly = {
         return flux.process(rawAction, condition);
     },
 
-    bootstrap() {
-        return flux.bootstrap();
-    },
-
     addListener(listener, ...types) {
 
     }
