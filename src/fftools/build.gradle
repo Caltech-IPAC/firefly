@@ -18,7 +18,7 @@ gwt {
 ext.appConfig = {
   BuildMajor  = "2"
   BuildMinor  = "4"
-  BuildRev    = "0"
+  BuildRev    = "1"
   ehcache.replicate = false
 
   FireflyTools.Advertise = ""
