@@ -2,52 +2,46 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import { appFlux } from '../core/Globals.js';
+//import { appFlux } from '../core/Globals.js';
+import ExternalAccessUtils from '../core/ExternalAccessUtils.js';
+import {flux} from '../Firefly.js';
 
 export class ExtensionJavaInterface {
 
     constructor(javaObject,cb) {
-        this.actions= appFlux.getActions('ExternalAccessActions');
-        this.store= appFlux.getStore('ExternalAccessStore');
         if (cb && javaObject) {
-            this.cb= cb.bind(this, javaObject);
-            this.store.addListener('change', this.cb);
+            //this.cb= cb.bind(this, javaObject);
+            this.storeListenerRemove= flux.addListener(cb.bind(this, javaObject));
         }
+        this.getExtensionList= ExternalAccessUtils.getExtensionList;
+        this.getRemoteChannel= ExternalAccessUtils.getRemoteChannel;
+        this.fireExtAction= ExternalAccessUtils.extensionActivate;
+        this.fireExtAdd= ExternalAccessUtils.extensionAdd;
+        this.fireChannelActivate= ExternalAccessUtils.channelActivate;
     }
 
     clearListener() {
-        if (this.cb) this.store.removeListener('change', this.cb);
+         if (this.storeListenerRemove) this.storeListenerRemove();
     }
 
-    getExtensionList(testPlotId) {
-        return this.store.getExtensionList(testPlotId);
-    }
-
-    getRemoteChannel() {
-        return this.store.state.remoteChannel;
-    }
-
-
-    fireExtAction(extension, extData) {
-        this.actions.extensionActivate(extension,extData);
-    }
-
-    fireExtAdd(extension) {
-        this.actions.extensionAdd(extension);
-    }
-
-    fireChannelActivate(channelId) {
-        this.actions.channelActivate(channelId);
-    }
-
-    //getExtLength() {
-    //    return this.store.state.extensionList.length;
+    //getExtensionList(testPlotId) {
+    //    ExternalAccessUtils.getExtensionList(testPlotId);
     //}
-    //getExtension(idx) {
-    //    return this.store.state.extensionList[idx];
+    //
+    //getRemoteChannel() {
+    //    ExternalAccessUtils.getRemoteChannel();
     //}
-
-    //getExtensionListTEST() {
-    //    return this.store.state.extensionList;
+    //
+    //
+    //fireExtAction(extension, extData) {
+    //    ExternalAccessUtils.extensionActivate(extension,extData);
+    //}
+    //
+    //fireExtAdd(extension) {
+    //    ExternalAccessUtils.extensionAdd(extension);
+    //}
+    //
+    //fireChannelActivate(channelId) {
+    //    ExternalAccessUtils.channelActivate(channelId);
     //}
 }

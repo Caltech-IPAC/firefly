@@ -276,7 +276,7 @@ public class WebMouseReadoutPerm implements Readout {
         String plotId = AllPlots.getInstance().getMiniPlotWidget().getPlotId();
         WebPlot plot= AllPlots.getInstance().getPlotView().getPrimaryPlot();
         if (plotId==null) return;
-        List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
+        Ext.Extension extensionList[] = AllPlots.getInstance().getExtensionList(plotId);
 
 
         Ext.ExtensionResult r= Ext.makeExtensionResult();

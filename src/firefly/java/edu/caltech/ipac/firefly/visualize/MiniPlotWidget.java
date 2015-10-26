@@ -996,7 +996,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                       if (_plotView.getPrimaryPlot() != null) {
                                           PointSelection sel = (PointSelection) _plotView.getAttribute(WebPlot.ACTIVE_POINT);
                                           if (sel!=null) showSelectionBar(SelType.POINT);
-                                          else           hideSelectionBar();
+//                                          else           hideSelectionBar();
                                       }
                                   }
                               });
@@ -1163,14 +1163,17 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //        }
 //    }
 
+    Ext.Extension[] lastExtList= null;
+
     public void recomputeUserExtensionOptions()  {
         if (!_initialized) return;
-        areaSelectAdditionActionBar.clear();
-        lineSelectAdditionActionBar.clear();
-        pointSelectAdditionActionBar.clear();
         List<Ext.Extension> addedList= new ArrayList<Ext.Extension>(5);
-        List<Ext.Extension> list= AllPlots.getInstance().getExtensionList(plotId);
-        if (list!=null) {
+        Ext.Extension[] list= AllPlots.getInstance().getExtensionList(plotId);
+        if (!ComparisonUtil.equalsByRef(list,lastExtList)) {
+            areaSelectAdditionActionBar.clear();
+            lineSelectAdditionActionBar.clear();
+            pointSelectAdditionActionBar.clear();
+            lastExtList= list;
             for(Ext.Extension ext : list) {
                 boolean found= false;
                 for(Ext.Extension testE : addedList) {

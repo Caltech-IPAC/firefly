@@ -313,10 +313,9 @@ public class FFToolEnv {
     public static void initExternalPush() {
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
         String channel= exI.getRemoteChannel();
-        GwtUtil.getClientLogger().log(Level.INFO, "channel:" + channel);
         if (channel!=null && !ComparisonUtil.equals(channel,pushChannel)) {
+            GwtUtil.getClientLogger().log(Level.INFO, "channel:" + channel);
             pushChannel= channel;
-            GwtUtil.getClientLogger().log(Level.INFO, "here:" + channel);
             PushReceiver.ExternalPlotController plotController= new ApiPlotController();
             new PushReceiver(plotController);
         }

@@ -79,7 +79,7 @@ const fireOnAllMountedGroups= function(state,action) {
         var fg= state.fieldGroupMap[groupKey];
         if (fg.mounted) {
             if (!changes) changes= {};
-            var fields= fireReducer(fg,action);
+            var fields= fireFieldsReducer(fg,action);
             changes[groupKey]= Object.assign({},fg,{fields});
         }
     });
@@ -93,12 +93,34 @@ const fireOnAllMountedGroups= function(state,action) {
 };
 
 
+//const fireOnAllMountedGroupsEXPERIMENTAL= function(state,action) {
+//    //var changes;
+//    var retState= state;
+//    var {fieldGroupMap}= state;
+//
+//
+//    var changes= Object.keys(fieldGroupMap)
+//        .filter( (groupKey)=> fieldGroupMap[groupKey].mounted)
+//        .map((groupKey) =>{
+//            var fg= fieldGroupMap[groupKey];
+//            var fields= fireFieldsReducer(fg,action);
+//            return Object.assign({},fg,{fields});
+//        });
+//
+//    if (changes.length) {
+//        retState= {fieldGroupMap: Object.assign({},fieldGroupMap) };
+//        changes.forEach( (fg)=> retState.fieldGroupMap[fg.groupKey]= fg);
+//    }
+//    return retState;
+//};
+
+
 const initFieldGroup= function(state,action) {
     var {groupKey, reducerFunc, keepState}= action.payload;
 
     var fields= reducerFunc ? reducerFunc(null, action) : {};
 
-    var fg= constructFieldGroup(fields,reducerFunc,keepState);
+    var fg= constructFieldGroup(groupKey,fields,reducerFunc,keepState);
     return createState(state.fieldGroupMap,groupKey,fg);
 };
 
@@ -131,9 +153,10 @@ const updateFieldGroupMount= function(state,action) {
 /**
  * @param {object} fg the field group
  * @param {object} action - the action to fire
+ * @return {object} the maps of fields
  * fire the reducer for field group if it has been defined
  */
-const fireReducer= function(fg, action) {
+const fireFieldsReducer= function(fg, action) {
     return  fg.reducerFunc ? fg.reducerFunc(fg.fields, action) : Object.assign({},fg.fields);
 };
 
@@ -155,7 +178,7 @@ const valueChange= function(state,action) {
         });
 
 
-    fg.fields= fireReducer(fg, action);
+    fg.fields= fireFieldsReducer(fg, action);
 
     return createState(state.fieldGroupMap,groupKey,fg);
 
@@ -249,7 +272,7 @@ function getFieldGroup(state,groupKey) {
     return state.fieldGroupMap[groupKey];
 }
 
-const constructFieldGroup= function(fields, reducerFunc, keepState) {
+const constructFieldGroup= function(groupKey,fields, reducerFunc, keepState) {
     fields= fields || {};
 
     Object.keys(fields).forEach( (key) => {
@@ -258,7 +281,8 @@ const constructFieldGroup= function(fields, reducerFunc, keepState) {
         }
     });
 
-    return { fields,
+    return { groupKey,
+             fields,
              reducerFunc,
              keepState,
              mounted : false,

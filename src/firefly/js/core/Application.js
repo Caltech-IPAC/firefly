@@ -6,7 +6,6 @@ import React from 'react/addons';
 import 'babel/polyfill';
 
 //import Alt from 'alt';
-import { appFlux } from './Globals.js';
 import Enum from 'enum';
 import {ExtensionJavaInterface } from '../gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from '../gwtinterface/ExtensionResult.js';
@@ -19,6 +18,7 @@ import {ServerRequest } from '../data/ServerRequest.js';
 import {makePlotState} from '../visualize/PlotState.js';
 import {getJsonData } from '../rpc/SearchServicesJson.js';
 import {flux} from '../Firefly.js';
+import ExternalAccessUtils from './ExternalAccessUtils.js';
 
 export const NetworkMode = new Enum(['RPC', 'JSON', 'JSONP']);
 
@@ -33,6 +33,22 @@ class Application {
 export const application= new Application();
 
 
+/**
+ * work around for transition from flummox to redux
+ */
+const appFlux= {
+    getActions : function(type) {
+        if (type==='ExternalAccessActions') {
+            return {
+                extensionAdd : ExternalAccessUtils.extensionAdd,
+                extensionActivate : ExternalAccessUtils.extensionActivate,
+                channelActivate : ExternalAccessUtils.channelActivate
+            };
+        }
+        return undefined;
+    }
+
+};
 
 
 
@@ -50,6 +66,7 @@ export const fireflyInit= function() {
     if (!window.firefly.gwt) {
         window.firefly.gwt= {};
     }
+
     window.firefly.appFlux= appFlux;
     window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
     window.firefly.gwt.ExtensionResult= ExtensionResult;

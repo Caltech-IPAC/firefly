@@ -10,7 +10,6 @@
   "dependencies": {
     "babel"     : "^5.8.23",
     "enum"      : "^2.2.0",
-    "flummox"   : "^3.5.2",
     "history"   : "^1.9.0",
     "icepick"   : "^0.2.0",
     "lodash"    : "^3.10.1",

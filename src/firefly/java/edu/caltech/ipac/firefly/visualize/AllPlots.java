@@ -713,12 +713,10 @@ public class AllPlots implements HasWebEventManager {
 
 
 
-    public List<Ext.Extension> getExtensionList(String id) {
+    public Ext.Extension[] getExtensionList(String id) {
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
         if (exI == null) return null;
-
-        Ext.Extension allExtensions[]= exI.getExtensionList(id);
-        return Arrays.asList(allExtensions);
+        return exI.getExtensionList(id);
     }
 
 
