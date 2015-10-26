@@ -398,7 +398,7 @@ public class WebMouseReadout implements PropertyChangeListener, Readout {
         lastPt= pt;
         ipt = _currentPlot.getImageCoords(pt);
         showReadout(pt, ipt, false);
-        WebMouseReadoutPerm.notifyExternal(pt,ipt,Band.NO_BAND, 0,null,false);
+        WebMouseReadoutPerm.notifyExternal(pt,ipt,Band.NO_BAND, 0,null,false,false);
     }
 
 

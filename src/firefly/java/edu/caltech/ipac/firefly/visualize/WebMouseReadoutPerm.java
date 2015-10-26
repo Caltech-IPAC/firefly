@@ -263,7 +263,7 @@ public class WebMouseReadoutPerm implements Readout {
         ipt = _currentPlot.getImageCoords(pt);
         lastPt= pt;
         showReadout(pt, ipt, false);
-        notifyExternal(pt,ipt,Band.NO_BAND, 0, null, false);
+        notifyExternal(pt,ipt,Band.NO_BAND, 0, null, false,false);
     }
 
     public static void notifyExternal(ScreenPt pt,
@@ -271,7 +271,8 @@ public class WebMouseReadoutPerm implements Readout {
                                       Band band,
                                       double flux,
                                       String fluxUnits,
-                                      boolean withFlux) {
+                                      boolean hasFlux,
+                                      boolean paused) {
 
         String plotId = AllPlots.getInstance().getMiniPlotWidget().getPlotId();
         WebPlot plot= AllPlots.getInstance().getPlotView().getPrimaryPlot();
@@ -284,7 +285,8 @@ public class WebMouseReadoutPerm implements Readout {
         r.setExtValue("zoomLevel", plot.getZoomFact()+"");
         r.setExtValue("spt", pt.serialize());
         r.setExtValue("ipt", ipt.serialize());
-        if (withFlux) {
+        r.setExtValue("pause", paused+"");
+        if (hasFlux) {
             r.setExtValue("band", band.toString());
             r.setExtValue("flux", flux+"");
             r.setExtValue("fluxUnits", fluxUnits);

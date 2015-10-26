@@ -185,7 +185,7 @@ Demo of Firefly Tools
                     }
                 }
                 else if (data.type==='PLOT_MOUSE_READ_OUT') {
-                    if (data.flux) {
+                    if (data.flux || data.pause) {
                         console.log(data);
                     }
                 }
@@ -234,7 +234,7 @@ Demo of Firefly Tools
                 extType: "PLOT_MOUSE_READ_OUT",
                 callback: extFunc
             };
-//            actions.extensionAdd(extension4);
+            actions.extensionAdd(extension4);
 
         }
     }
