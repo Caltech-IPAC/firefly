@@ -78,9 +78,11 @@ function doPublish(rel_config) {
 
     exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
     var proc = exec('git push --tags lsst HEAD:master', function(error, stdout, stderr) {
-            console.log('INFO: ' + stdout);
+            if (stdout) {
+                console.log('stdout: ' + stdout);
+            }
             if (stderr) {
-                console.log('ERROR: ' + stderr);
+                console.log('stderr: ' + stderr);
             }
             if (error !== null) {
                 console.log('ERROR: Fail to push changes to github. ' + error);
