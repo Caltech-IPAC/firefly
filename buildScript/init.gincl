@@ -115,3 +115,34 @@ class ConfigRepo {
   }
 
 }
+
+ext.createTagLabel = {  ->
+  if (!project.hasProperty("tag_name")) {
+    if (!project.hasProperty("tag_file")) {
+      project.ext.tag_file = "${project.buildDir}/version.tag"
+    }
+    Properties props = new Properties()
+    props.load(new File(tag_file).newDataInputStream())
+    project.ext.tag_name = props.getProperty('tag')
+  }
+
+  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix}_" : ""
+  def suffix = project.hasProperty("tag_suffix") ? "_${tag_suffix}" : ""
+  def tag_label = prefix + tag_name + suffix
+  return tag_label;
+}
+
+ext.mergeDevIntoMaster = {  ->
+
+  try {
+    "git checkout dev".execute()
+    "git pull".execute()
+    "git checkout master".execute()
+    "git pull master".execute()
+    "git merge dev".execute()
+  } catch (Exception e) {
+    println ">> Unable to merge dev into master"
+    throw new GradleException("Unable to merge dev into master", e)
+  }
+}
+

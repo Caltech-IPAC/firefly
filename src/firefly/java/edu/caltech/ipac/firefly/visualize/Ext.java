@@ -41,16 +41,14 @@ public class Ext {
     @JsType
     public interface ExtensionResult {
         void setExtValue(String key, String value);
+        void setNumberExtValue(String key, double value);
     }
 
 
 
     @JsType public interface ExtensionInterface {
-//        Extension[] getExtensionListTEST();
         Extension[] getExtensionList(String id);
-//        int getExtLength();
         String getRemoteChannel();
-//        Extension getExtension(int idx);
         void clearListener();
         void fireExtAdd(Extension ext);
         void fireExtAction(Extension ext, ExtensionResult result);
@@ -87,27 +85,6 @@ public class Ext {
         }
     }-*/;
 
-
-
-//    public static native int getLength(JavaScriptObject o) /*-{
-//        if (o && $wnd.firefly && $wnd.firefly.gwt) {
-//            return o.length;
-//        }
-//        else {
-//            return 0;
-//        }
-//    }-*/;
-//
-//
-//    public static native Extension getExtension(JavaScriptObject o, int i) /*-{
-//        if ($wnd.firefly && $wnd.firefly.gwt) {
-//            return o[i];
-//        }
-//        else {
-//            return null;
-//        }
-//    }-*/;
-//
 
     public static native Ext.ExtensionInterface makeExtensionInterface() /*-{
         if ($wnd.firefly && $wnd.firefly.gwt) {

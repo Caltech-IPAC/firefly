@@ -88,11 +88,11 @@ public class FootprintTest {
 			System.out.println(pt1.getX() + ", " + pt1.getY());
 		}
 		wc = new WorldPt(41, 41);
-		WebPlot plot = new WebPlot(new WebPlotInitializer(null, null, null, null, 400, 600, 1, null, "",""));
-		makeWpRectangle.rotateAround(plot, Math.toRadians(180), wc);
-		 wpts = makeWpRectangle.getPts();
-			for (Pt pt1 : wpts) {
-				System.out.println(pt1.getX() + ", " + pt1.getY());
-			}
+//		WebPlot plot = new WebPlot(new WebPlotInitializer(null, null, null, null, 400, 600, 1, null, "",""));
+//		makeWpRectangle.rotateAround(plot, Math.toRadians(180), wc);
+//		 wpts = makeWpRectangle.getPts();
+//			for (Pt pt1 : wpts) {
+//				System.out.println(pt1.getX() + ", " + pt1.getY());
+//			}
 	}
 }

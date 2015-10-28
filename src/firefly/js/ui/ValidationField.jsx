@@ -1,16 +1,14 @@
 import React from 'react/addons';
 
 
-/*eslint-disable no-unused-vars */
 import InputFieldView from './InputFieldView.jsx';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
-/*eslint-enable no-unused-vars */
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 
 var ValidationField= React.createClass(
    {
 
-       mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+       mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
 
        propTypes: {

@@ -110,20 +110,45 @@ public class PushJob {
         return true;
     }
 
+    public static boolean pushRemoveRegionData(String id, String data) {
+        ServerRequest r = new ServerRequest(id);
+        r.setParam(ServerParams.DS9_REGION_DATA, data);
+        fireEvent(r.toString(), Name.REMOVE_REGION_DATA);
+        return true;
+    }
+
 
     public static boolean pushRegionData(String title, String id, String data, String plotIdAry) {
         ServerRequest r = new ServerRequest(id);
         r.setParam(ServerParams.TITLE, title);
         r.setParam(ServerParams.DS9_REGION_DATA, data);
         if (plotIdAry!=null) r.setParam(ServerParams.PLOT_ID, plotIdAry);
-        fireEvent(r.toString(), Name.PUSH_REGION_DATA);
+        fireEvent(r.toString(), Name.PUSH_REMOVE_MASK);
         return true;
     }
 
-    public static boolean pushRemoveRegionData(String id, String data) {
-        ServerRequest r = new ServerRequest(id);
-        r.setParam(ServerParams.DS9_REGION_DATA, data);
-        fireEvent(r.toString(), Name.REMOVE_REGION_DATA);
+    public static boolean pushAddMask(String maskId,
+                                      int bitNumber,
+                                      int imageNumber,
+                                      String color,
+                                      String bitDesc,
+                                      String fileKey,
+                                      String plotIdStr) {
+        ServerRequest r = new ServerRequest(maskId);
+        r.setParam(ServerParams.BIT_NUMBER,bitNumber+"");
+        r.setParam(ServerParams.IMAGE_NUMBER,imageNumber+"");
+        r.setParam(ServerParams.COLOR,color);
+        r.setParam(ServerParams.BIT_DESC,bitDesc);
+        r.setParam(ServerParams.FILE,fileKey);
+        r.setParam(ServerParams.PLOT_ID,plotIdStr);
+        fireEvent(r.toString(), Name.PUSH_ADD_MASK);
+        return true;
+    }
+
+
+    public static boolean pushRemoveMask(String maskId) {
+        ServerRequest r = new ServerRequest(maskId);
+        fireEvent(r.toString(), Name.PUSH_REMOVE_MASK);
         return true;
     }
 

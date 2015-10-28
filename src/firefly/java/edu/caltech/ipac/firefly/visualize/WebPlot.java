@@ -156,7 +156,6 @@ public class WebPlot {
     private final Projection    _projection;
     private final int           _dataWidth;
     private final int           _dataHeight;
-    private final int           _imageScaleFactor;
     private final WebPlotGroup  _plotGroup;
     private       PlotState     _plotState;
     private final WebFitsData   _webFitsData[];
@@ -176,7 +175,6 @@ public class WebPlot {
     private float     _initialZoomLevel= 1.0F;
     private float     _percentOpaque   = 1.0F;
 
-    private Dimension _padDim= new Dimension(0,0);
 
     private int _viewPortX= 0;
     private int _viewPortY= 0;
@@ -184,15 +182,14 @@ public class WebPlot {
 
     private final ImageBoundsData imageBoundsData;
 
-    public WebPlot(WebPlotInitializer wpInit) {
+    public WebPlot(WebPlotInitializer wpInit, boolean asOverlay) {
         _plotGroup= new WebPlotGroup(this,wpInit.getPlotState().getZoomLevel());
         _plotState       = wpInit.getPlotState();
-        _tileDrawer      = new TileDrawer(this,wpInit.getInitImages());
+        _tileDrawer      = new TileDrawer(this,wpInit.getInitImages(), asOverlay);
         _imageCoordSys   = wpInit.getCoordinatesOfPlot();
         _projection      = wpInit.getProjection();
         _dataWidth       = wpInit.getDataWidth();
         _dataHeight      = wpInit.getDataHeight();
-        _imageScaleFactor= wpInit.getImageScaleFactor();
         _plotDesc        = wpInit.getPlotDesc();
         _dataDesc        = wpInit.getDataDesc();
 
@@ -222,28 +219,19 @@ public class WebPlot {
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
-    public void refreshWidget() {
-        _tileDrawer.refreshWidget();
-    }
+    public void refreshWidget() { _tileDrawer.refreshWidget(); }
 
     @JsNoExport
-    public void refreshWidget(PlotImages images, boolean overlay) {
-        _tileDrawer.refreshWidget(images, overlay);
-    }
-
-
-    @JsNoExport
-    public void refreshWidget(PlotImages images) {
-        refreshWidget(images, false);
-    }
+    public void refreshWidget(PlotImages images) { _tileDrawer.refreshWidget(images); }
 
     public PlotState getPlotState() { return _plotState; }
     public void setPlotState(PlotState state) { _plotState= state; }
 
-    public void drawTilesInArea(ScreenPt spt, int width, int height) {
-        _tileDrawer.drawTilesForArea(spt.getIX(), spt.getIY(),width,height);
+    public void drawTilesInArea(ScreenPt viewPortLocation, int width, int height) {
+        _tileDrawer.drawTilesForArea(viewPortLocation,width,height);
     }
 
+    public void setOpacity(float opacity) { _tileDrawer.setOpacity(opacity); }
 
 
     public WebPlotGroup getPlotGroup() { return _plotGroup; }
@@ -271,18 +259,15 @@ public class WebPlot {
     }
 
     public boolean isCube() {
-        Band b= _plotState.firstBand();
-        return _plotState.isMultiImageFile(b) && _plotState.getCubeCnt(b)>0;
+        return _plotState.isMultiImageFile() && _plotState.getCubeCnt()>0;
     }
 
     public int getCubeCnt() {
-        Band b= _plotState.firstBand();
-        return _plotState.getCubeCnt(b);
+        return _plotState.getCubeCnt();
     }
 
     public int getCubePlaneNumber() {
-        Band b= _plotState.firstBand();
-        return _plotState.getCubePlaneNumber(b);
+        return _plotState.getCubePlaneNumber();
     }
 
     public WebHistogramOps getHistogramOps(Band band) {
@@ -297,6 +282,13 @@ public class WebPlot {
         return retval;
     }
 
+    /**
+     * set the viewport location in terms of screen coordinates
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     */
     public void setViewPort(int x, int y, int width, int height) {
         _viewPortX= x;
         _viewPortY= y;
@@ -329,8 +321,6 @@ public class WebPlot {
     public int getColorTableID() { return _plotState.getColorTableId(); }
 
     private void threeColorOK(Band band) {
-//        WebAssert.argTst(_plotState.getColorTableId(),
-//                   "Must be in three color mode to use this routine");
         WebAssert.argTst( (band== Band.RED || band== Band.GREEN || band== Band.BLUE),
                        "band must be RED, GREEN, or BLUE");
     }
@@ -354,38 +344,19 @@ public class WebPlot {
      * This number will not change as the plot is zoomed up and down.
      * @return the width of the image data
      */
-    public int     getImageDataWidth() { return _dataWidth*_imageScaleFactor; }
+    public int     getImageDataWidth() { return _dataWidth; }
 
     /**
      * This method will return the height of the image data.
      * This number will not change as the plot is zoomed up and down.
      * @return the height of the image data
      */
-    public int     getImageDataHeight() { return _dataHeight*_imageScaleFactor; }
-
-    /**
-     * This method will return the width of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return the width of the image data
-     */
-    public int     getImageWorkSpaceWidth() { return (_dataWidth*_imageScaleFactor)+_padDim.getWidth()*2; }
-
-    /**
-     * This method will return the height of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return the height of the image data
-     */
-    public int     getImageWorkSpaceHeight() { return (_dataHeight*_imageScaleFactor)+_padDim.getHeight()*2; }
-
+    public int     getImageDataHeight() { return _dataHeight; }
 
     @JsNoExport
     public boolean isBlankImage() {
-        return isBlankImage(_plotState.firstBand());
-    }
-
-    public boolean isBlankImage(Band band) {
         if (isThreeColor()) return false;
-        WebPlotRequest req=_plotState.getWebPlotRequest(band);
+        WebPlotRequest req=_plotState.getWebPlotRequest();
         return (req!=null && req.getRequestType()==RequestType.BLANK);
     }
 
@@ -579,7 +550,7 @@ public class WebPlot {
     public void getFluxLight(ImagePt pt, AsyncCallback <String[]> callback) {
 
         if (pointInData(pt)) {
-            Band bands[]= _plotState.getBands();
+            Band bands[]= getBands();
             FileAndHeaderInfo pahi[]= new FileAndHeaderInfo[bands.length];
             for(int i= 0; (i<bands.length); i++) {
                 pahi[i]= _plotState.getFileAndHeaderInfo(bands[i]);
@@ -670,6 +641,8 @@ public class WebPlot {
     public ImageWorkSpacePt getImageWorkSpaceCoords( WorldPt wpt) {
         if (wpt==null) return null;
         ImageWorkSpacePt retval;
+
+        //LZ check here TODO remove it after testing
         Pt checkedPt= convertToCorrect(wpt);
         if (checkedPt instanceof  WorldPt) {
             ImagePt ipt= getImageCoords(wpt);
@@ -1325,9 +1298,12 @@ public class WebPlot {
         return getPlotDesc();
     }
 
-    public boolean isRotated() { return _plotState.getRotateType()!= PlotState.RotateType.UNROTATE; }
-    public PlotState.RotateType getRotationType() { return _plotState.getRotateType(); }
+    public boolean isRotated() { return _plotState.isRotated(); }
+    public PlotState.RotateType getRotationType() {
+        return _plotState.getRotateType();
+    }
     public double getRotationAngle() { return _plotState.getRotationAngle(); }
+
 
     public boolean isRotatable() {
         boolean retval= false;
@@ -1471,13 +1447,6 @@ public class WebPlot {
 //    }
 
 
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-
-    public Dimension getPaddingDimension() { return _padDim; }
-
 
 
     // =======================================================================
@@ -1485,8 +1454,8 @@ public class WebPlot {
    // =======================================================================
 
 //   void setOffsetX(int x) {_offsetX= x;}
-   int  getOffsetX() {return _offsetX;}
-   int  getOffsetY() {return _offsetY;}
+//   int  getOffsetX() {return _offsetX;}
+//   int  getOffsetY() {return _offsetY;}
 
 
     private static class ImageBoundsData {

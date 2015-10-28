@@ -12,9 +12,10 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.data.DataEntry;
 import edu.caltech.ipac.firefly.rpc.PlotService;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
+import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
@@ -24,6 +25,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -82,23 +84,23 @@ public class PrintableUtil {
         if (plot.getPlotView()!=null) {
             Collection<WebLayerItem> itemList= plot.getPlotView().getUserDrawerLayerSet();
             drawInfoList= new ArrayList<StaticDrawInfo>(itemList.size());
-            Drawer drawer;
+            LayerDrawer drawer;
             for(WebLayerItem item : itemList) {
                 drawer= item.getDrawer();
                 if (drawer.isVisible()) {
                     if (item.getPrintableOverlay()!=null) { // the item knows how to make a hardcopy overlay
                         item.getPrintableOverlay().addPrintableLayer(drawInfoList,plot,drawer,item);
                     }
-                    else if (item.isCanDoRegion()) {
-                        StaticDrawInfo drawInfo= makeDrawInfo(plot,drawer,item);
+                    else if (item.isCanDoRegion() && drawer instanceof Drawer) {
+                        StaticDrawInfo drawInfo= makeDrawInfo(plot, drawer, item);
                         drawInfo.setDrawType(StaticDrawInfo.DrawType.REGION);
-                        List<Region> regList= item.asRegionList();
+                        List<Region> regList= asRegionList((Drawer)drawer);
                         drawInfo.addAllRegions(regList);
                         if (regList.size()>0) drawInfoList.add(drawInfo);
                     }
-                    else { // fallback method: will work for catalog, artifact, & similar type overlays
+                    else if (drawer instanceof Drawer){ // fallback method: will work for catalog, artifact, & similar type overlays
                         StaticDrawInfo drawInfo= makeDrawInfo(plot,drawer,item);
-                        for(DrawObj obj : drawer.getData()) { // any drawing layer that uses symbols, like catalogs or artifacts
+                        for(DrawObj obj : ((Drawer)drawer).getData()) { // any drawing layer that uses symbols, like catalogs or artifacts
                             drawInfo.setDrawType(StaticDrawInfo.DrawType.SYMBOL);
                             if (obj instanceof PointDataObj && obj.getCenterPt() instanceof WorldPt) {
                                 drawInfo.setSymbol(((PointDataObj) obj).getSymbol());
@@ -113,12 +115,30 @@ public class PrintableUtil {
         return  drawInfoList;
     }
 
-    public static StaticDrawInfo makeDrawInfo(WebPlot plot, Drawer drawer, WebLayerItem item) {
+    public static StaticDrawInfo makeDrawInfo(WebPlot plot, LayerDrawer drawer, WebLayerItem item) {
         StaticDrawInfo drawInfo= new StaticDrawInfo();
-        AutoColor autoColor= new AutoColor(plot.getColorTableID(),drawer.getDefaultColor());
-        drawInfo.setColor(autoColor.getColor(drawer.getDefaultColor()));
+        drawInfo.setColor(drawer.getDrawingDef().getDefColor());
         drawInfo.setLabel(item.getID());
         return drawInfo;
+    }
+
+    private static List<Region>  asRegionList(Drawer drawer) {
+        List<Region> retval;
+        if (drawer.hasData()) {
+            retval= new ArrayList<Region>(drawer.getData().size()*2);
+            WebPlot plot= drawer.getPlotView().getPrimaryPlot();
+            if (plot!=null) {
+                DrawingDef def= new DrawingDef(drawer.getDrawingDef().getDefColor());
+                for(DrawObj obj : drawer.getData()) {
+                    retval.addAll(obj.toRegion(plot,def));
+                }
+            }
+        }
+        else {
+            retval= Collections.emptyList();
+        }
+        return retval;
+
     }
 }
 

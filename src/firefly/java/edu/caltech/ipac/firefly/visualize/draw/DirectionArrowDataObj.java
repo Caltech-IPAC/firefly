@@ -81,19 +81,19 @@ public class DirectionArrowDataObj extends DrawObj {
 
     protected boolean getSupportsWebPlot() { return false; }
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawDirectionArrow(graphics,ac,useStateColor);
+    public void draw(Graphics graphics, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawDirectionArrow(graphics, def,useStateColor);
     }
 
 
 
 
 
-    private void drawDirectionArrow(Graphics graphics, AutoColor ac, boolean useStateColor) {
+    private void drawDirectionArrow(Graphics graphics, DrawingDef def, boolean useStateColor) {
         if (getShadow()!=null  && graphics instanceof AdvancedGraphics) {
             ((AdvancedGraphics)graphics).setShadowForNextDraw(getShadow());
         }
@@ -105,7 +105,7 @@ public class DirectionArrowDataObj extends DrawObj {
 
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
-        String color=  calculateColor(ac,useStateColor);
+        String color=  calculateColor(def,useStateColor);
 
         VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
 
@@ -130,10 +130,10 @@ public class DirectionArrowDataObj extends DrawObj {
     }
 
     @Override
-    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot plot, DrawingDef def) {
         ScreenPt pt1= (ScreenPt)_startPt;
         ScreenPt pt2= (ScreenPt)_endPt;
-        String color=  calculateColor(ac,false);
+        String color=  calculateColor(def,false);
         VisUtil.NorthEastCoords ret= VisUtil.getArrowCoords(pt1.getIX(), pt1.getIY(), pt2.getIX(), pt2.getIY());
         RegionLines line1= new RegionLines(new WorldPt(ret.x1,ret.y1, CoordinateSys.SCREEN_PIXEL),
                                            new WorldPt(ret.x2,ret.y2, CoordinateSys.SCREEN_PIXEL) );

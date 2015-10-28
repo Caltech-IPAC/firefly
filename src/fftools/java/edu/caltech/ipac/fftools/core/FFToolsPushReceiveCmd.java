@@ -59,10 +59,9 @@ public class FFToolsPushReceiveCmd extends RequestCmd {
 
     private void setupBackgroundChannel() {
         Ext.ExtensionInterface exI= Ext.makeExtensionInterface();
-        String channel= exI.getRemoteChannel();
+       String channel= exI.getRemoteChannel();
 //        if (channel!=null && !receivers.containsKey(channel)) {  //TODO: LLY - need to figure this out.
         if (!receivers.containsKey(channel)) {
-
             PushReceiver.ExternalPlotController plotController= new AppPlotController(aloneUI);
             PushReceiver dpR= new PushReceiver(plotController);
             receivers.put(channel,dpR);

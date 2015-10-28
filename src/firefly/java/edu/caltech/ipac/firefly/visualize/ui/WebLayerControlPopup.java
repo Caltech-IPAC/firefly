@@ -399,7 +399,7 @@ public class WebLayerControlPopup extends PopupPane {
             _colorFeedback= colorFeedback;
             _item= item;
             DOM.setStyleAttribute(_colorFeedback.getElement(),
-                                  "backgroundColor", item.getAutoColorInterpreted());
+                                  "backgroundColor", item.getColorInterpreted());
         }
 
 

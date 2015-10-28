@@ -139,20 +139,20 @@ public class CatalogDisplay {
                 String defColor;
                 switch (idCnt%5) {
                     case 0:
-                        defColor= AutoColor.PT_1;
+                        defColor= DrawingDef.COLOR_PT_1;
                         break;
                     case 1:
-                        defColor= AutoColor.PT_2;
+                        defColor= DrawingDef.COLOR_PT_2;
                         break;
                     case 2:
-                        defColor= AutoColor.PT_3;
+                        defColor= DrawingDef.COLOR_PT_3;
                         break;
                     case 3:
-                        defColor= AutoColor.PT_5;
+                        defColor= DrawingDef.COLOR_PT_5;
                         break;
                     default:
                     case 4:
-                        defColor= AutoColor.PT_6;
+                        defColor= DrawingDef.COLOR_PT_6;
                         break;
                 }
                 drawManager.setDefaultColor(defColor);

@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author Trey Roby
  */
-public class WebPlotResult implements Serializable, Iterable<Map.Entry<String,DataEntry>> {
+public class WebPlotResult implements Serializable, DataEntry, Iterable<Map.Entry<String,DataEntry>> {
 
 
     public static final String PLOT_CREATE = "PlotCreate";
@@ -41,6 +41,7 @@ public class WebPlotResult implements Serializable, Iterable<Map.Entry<String,Da
     public static final String REGION_DATA= "RegionData";
     public static final String REQUEST_LIST= "RequestList";
     public static final String TITLE= "Title";
+    public static final String RESULT_ARY= "resultAry";
 
     private String _ctxStr;
     private boolean _success;

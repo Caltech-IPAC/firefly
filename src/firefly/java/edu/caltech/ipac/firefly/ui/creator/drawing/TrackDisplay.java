@@ -17,10 +17,10 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.MovingTargetContext;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawConnector;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.LineDrawConnector;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -64,7 +64,7 @@ class TrackDisplay extends ProviderDataConnection {
                  boolean supportsHighlight,
                  int decimationFactor,
                  boolean markPlotWithMovingTarget) {
-        super(provider,title, null, color == null ? AutoColor.PT_1 : color);
+        super(provider,title, null, color == null ? DrawingDef.COLOR_PT_1 : color);
         this.dataset = dataset;
         this.symbol = symbol;
         this.keyList = keyList;

@@ -136,7 +136,7 @@ export class DataSet {
     }
 
     findColumnIdx(colName) {
-        let c = this.findColumn(colName);
+        const c = this.findColumn(colName);
         if (c) {
             return this.columns.indexOf(c);
         } else {
@@ -162,14 +162,14 @@ export class DataSet {
      */
     subset(fromIdx, toIdx) {
 
-        let newval = this.emptyCopy();
+        const newval = this.emptyCopy();
         newval.firstRowIdx = fromIdx;
 
         var beginIdx = fromIdx - this.firstRowIdx;
         var endIdx = Math.min(beginIdx + toIdx - fromIdx, this.getModel().size());
 
         if (beginIdx < endIdx) {
-            let result = [];
+            const result = [];
             for (let i = beginIdx; i < endIdx; i++) {
                 result.push(this.model.getRow(i));
             }
@@ -183,7 +183,7 @@ export class DataSet {
      * @return {DataSet}
      */
     clone() {
-        let newval = new DataSet();
+        const newval = new DataSet();
         newval.columns = this.getColumns();
         newval.model = this.model.clone();
         newval.meta = this.meta.clone();
@@ -194,7 +194,7 @@ export class DataSet {
      * @return {DataSet}
      */
     emptyCopy() {
-        let newval = new DataSet();
+        const newval = new DataSet();
         newval.columns = this.getColumns();
         newval.model = this.model.clone();
         newval.model.getRows().clear();

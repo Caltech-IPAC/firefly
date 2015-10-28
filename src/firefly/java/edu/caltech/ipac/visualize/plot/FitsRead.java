@@ -17,10 +17,13 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 
 /**
@@ -61,19 +64,15 @@ public class FitsRead implements Serializable {
     }
 
     //private variables
-    private int planeNumber;
-    private int extension_number;
+    private final int planeNumber;
+    private final int extension_number;
+    private final BasicHDU hdu;
     private float[] float1d;
-   // static private float[] physicalData;
     private Fits fits;
     private ImageHeader imageHeader;
     private Header header;
-    private BasicHDU hdu;
-    private int imageScaleFactor = 1;
     private int indexInFile = -1;  // -1 unknown, >=0 index in file
-    private String srcDesc = null;
     private  short[] masks=null;
-    private double blankValue;
     private Histogram hist;
 
 
@@ -98,7 +97,7 @@ public class FitsRead implements Serializable {
         checkHeader();
         long HDUOffset = getHDUOffset(imageHdu);
         imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
-        blankValue = imageHeader.blank_value;
+//        blankValue = imageHeader.blank_value;
 
         if (!SUPPORTED_BIT_PIXS.contains(new Integer(imageHeader.bitpix))) {
             System.out.println("Unimplemented bitpix = " + imageHeader.bitpix);
@@ -110,6 +109,7 @@ public class FitsRead implements Serializable {
         //mask in the Fits file, each FitsRead in the Fits file has the same mask data
         masks =getMasksInFits(fits);
         hist= computeHistogram();
+
 
     }
 
@@ -166,7 +166,7 @@ public class FitsRead implements Serializable {
                 throw new FitsException("Missing header in FITS file");
             }
              else  if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ){
-                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE));
+                short[] mArray=(short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUs[j].getData().getData(), Short.TYPE, true));
                 return getMasks(header, mArray);
            }
         }
@@ -174,30 +174,7 @@ public class FitsRead implements Serializable {
 
 
      }
-/*
-    //The mask data is the phyiscal data, therefore, it needs to be converted.
-     private static short[] getMasksInFits(ArrayList<BasicHDU> HDUList) throws FitsException {
-         for (int i=0; i<HDUList.size(); i++){
-             Header header =  HDUList.get(i).getHeader();
-             if (header == null) {
-                 throw new FitsException("Missing header in FITS file");
-             }
-             if ( header.containsKey("EXTTYPE")  &&  header.getStringValue("EXTTYPE").equalsIgnoreCase("mask") ) {
-                 Object data = HDUList.get(i).getData().getData();
-                 short[] sData =  (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
-                 masks = new short[sData.length];
-                 for (int ii = 0; i < sData.length; i++) {
-                     masks[i] = (short) (sData[i] * (short) maskImageHeader.bscale + (short) maskImageHeader.bzero);
-                 }
 
-                 return   (short[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(HDUList.get(i).getData().getData(), Short.TYPE));
-             }
-
-         }
-         return null;
-
-     }
-*/
     /**
      * read a fits with extensions or cube data to create a list of the FistRead object
      *
@@ -397,7 +374,6 @@ public class FitsRead implements Serializable {
 
             FitsRead[] fitsReadArray = createFitsReadArray(modFits);
             aFitsRead = fitsReadArray[0];
-            aFitsRead.imageScaleFactor = imageScaleFactor;
 
         }
         return aFitsRead;
@@ -642,7 +618,7 @@ public class FitsRead implements Serializable {
 
 
         int naxis3 = header.getIntValue("NAXIS3", 0);
-        float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE);
+        float[][][] data32 = (float[][][]) ArrayFuncs.convertArray(hdu.getData().getData(), Float.TYPE, true);
 
         BasicHDU[] hduList = new BasicHDU[naxis3];
         for (int i = 0; i < naxis3; i++) {
@@ -705,8 +681,6 @@ public class FitsRead implements Serializable {
         newHeader.deleteKey("NAXIS3");
         newHeader.deleteKey("NAXIS4");
         newHeader.deleteKey("BLANK");
-        //new_header.deleteKey("BSCALE");
-        //new_header.deleteKey("BZERO");
 
         ImageData new_image_data = new ImageData(pixels);
         hdu = new ImageHDU(newHeader, new_image_data);
@@ -771,10 +745,8 @@ public class FitsRead implements Serializable {
 
     private float[] getImageHDUDataInFloatArray(ImageHDU imageHDU) throws FitsException {
 
-
-        //convert data to float if the bitpix is not 32
-        float[] float1d =
-                (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE));
+        float[]  float1d =
+                        (float[]) ArrayFuncs.flatten(ArrayFuncs.convertArray(imageHDU.getData().getData(), Float.TYPE, true));
 
         /* pixels are upside down - reverse them in y */
         if (imageHeader.cdelt2 < 0) float1d = reversePixData(float1d);
@@ -807,14 +779,137 @@ public class FitsRead implements Serializable {
 
         byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
 
-        //byte pixelData[] = passedPixelData;
-
 
         stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1, hist,
                 blank_pixel_value, float1d, pixelData, rangeValues, slow, shigh);
 
 
     }
+
+    /**
+     * Add the mask layer to the existing image
+     * @param rangeValues
+     * @param
+     * @param mapBlankToZero
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+     * @param lsstMasks
+     */
+    public synchronized void doStretch(RangeValues rangeValues,
+                                       byte[] pixelData,
+                                       boolean mapBlankToZero,
+                                       int startPixel,
+                                       int lastPixel,
+                                       int startLine,
+                                       int lastLine, ImageMask[] lsstMasks){
+
+
+
+
+        Histogram hist= getHistogram();
+
+
+        double slow = getSlow(rangeValues, float1d, imageHeader, hist);
+        double shigh = getShigh(rangeValues, float1d, imageHeader, hist);
+        if (SUTDebug.isDebug()) {
+            printInfo(slow, shigh, imageHeader.bitpix, rangeValues);
+        }
+
+        byte blank_pixel_value = mapBlankToZero ? 0 : (byte) 255;
+
+        int[] pixelhist = new int[256];
+
+
+
+
+        stretchPixels(startPixel, lastPixel, startLine, lastLine, imageHeader.naxis1,
+                blank_pixel_value, float1d, masks, pixelData, pixelhist,  lsstMasks);
+
+
+
+
+
+
+    }
+
+    /**
+     * add a new stretch method to do the mask plot
+     * @param startPixel
+     * @param lastPixel
+     * @param startLine
+     * @param lastLine
+     * @param naxis1
+
+     * @param blank_pixel_value
+     * @param float1dArray
+     * @param masks
+     * @param pixeldata
+     * @param pixelhist
+     */
+    private static void stretchPixels(int startPixel,
+                                      int lastPixel,
+                                      int startLine,
+                                      int lastLine,
+                                      int naxis1,
+                                      byte blank_pixel_value,
+                                      float[] float1dArray,
+                                      short[] masks,
+                                      byte[] pixeldata,
+                                      int[] pixelhist,
+                                      ImageMask[] lsstMasks) {
+
+
+
+
+        int pixelCount = 0;
+        ImageMask combinedMask = ImageMask.combineWithAnd(lsstMasks);  //mask=33, index=0 and 6 are set
+       // ImageMask combinedMask = ImageMask.combineWithOr(lsstMasks);
+
+        for (int line = startLine; line <= lastLine; line++) {
+            int start_index = line * naxis1 + startPixel;
+            int last_index = line * naxis1 + lastPixel;
+
+            for (int index = start_index; index <= last_index; index++) {
+
+                if (Double.isNaN(float1dArray[index])) { //original pixel value is NaN, assign it to blank
+                    pixeldata[pixelCount] = blank_pixel_value;
+                } else {
+                    /*
+                     The IndexColorModel is designed in the way that each pixel[index] contains the color in
+                     lsstMasks[index].  In pixel index0, it stores the lsstMasks[0]'s color. Thus, assign
+                     pixelData[pixelCount]=index of the lsstMasks, this pixel is going to be plotted using the
+                     color stored there.  The color model is indexed.  For 8 bit image, it has 256 maxium colors.
+                     For detail, see the indexColorModel defined in ImageData.java.
+                     */
+                    if (combinedMask.isSet( masks[index])) {
+                        for (int i = 0; i < lsstMasks.length; i++) {
+                            if (lsstMasks[i].isSet(masks[index])) {
+                                pixeldata[pixelCount] = (byte) i;
+                                break;
+                            }
+                        }
+                    }
+                    else {
+
+                        /*
+                        The transparent color is stored at pixel[lsstMasks.length].  The pixelData[pixelCount]=(byte) lsstMasks.length,
+                        this pixel will be transparent.
+                         */
+                        pixeldata[pixelCount]= (byte) lsstMasks.length;
+                    }
+
+                    pixelhist[pixeldata[pixelCount] & 0xff]++;
+                }
+                pixelCount++;
+
+            }
+        }
+
+
+    }
+
 
 
     private static Zscale.ZscaleRetval getZscaleValue(float[] float1d, ImageHeader imageHeader, RangeValues rangeValues) {
@@ -1040,31 +1135,37 @@ public class FitsRead implements Serializable {
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
         else
             pixval -= delta;
+
         delta >>= 1;
         if (dtbl[pixval] < dRunVal)
             pixval += delta;
@@ -1379,7 +1480,7 @@ public class FitsRead implements Serializable {
 
 
     public ImageHeader getImageHeader() {
-        return (imageHeader);
+        return imageHeader;
     }
 
 
@@ -1390,28 +1491,9 @@ public class FitsRead implements Serializable {
     }
 
     public int getImageScaleFactor() {
-        return (imageScaleFactor);
+        return 1;
     }
 
-    /**
-     * get a description of the fits file that created this fits read
-     * This can be any text.
-     *
-     * @return the description of the fits file
-     */
-    public String getSourceDec() {
-        return (srcDesc);
-    }
-
-    /**
-     * Set a description of the fits file that created this fits read.
-     * This can be any text.
-     *
-     * @param s the description
-     */
-    public void setSourceDesc(String s) {
-        srcDesc = s;
-    }
 
     private Histogram  computeHistogram() {
 

@@ -3,8 +3,7 @@
  */
 
 import React from 'react/addons';
-import FieldGroupStore from '../store/FieldGroupStore.js';
-import FieldGroupActions from '../actions/FieldGroupActions.js';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 
 var FieldGroup= React.createClass(
     {
@@ -14,7 +13,6 @@ var FieldGroup= React.createClass(
         propTypes: {
             groupKey : React.PropTypes.string.isRequired,
             reducerFunc: React.PropTypes.func,
-            validatorFunc: React.PropTypes.func,
             keepState : React.PropTypes.bool
         },
 
@@ -27,13 +25,13 @@ var FieldGroup= React.createClass(
         },
 
         componentWillMount() {
-            var {groupKey, reducerFunc, validatorFunc, keepState}= this.props;
-            FieldGroupActions.mountFieldGroup({groupKey, reducerFunc, validatorFunc, keepState, mounted:true});
+            var {groupKey, reducerFunc, keepState}= this.props;
+            FieldGroupUtils.mountFieldGroup(groupKey, reducerFunc, keepState);
         },
 
         componentWillUnmount() {
             var {groupKey}= this.props;
-            FieldGroupActions.mountFieldGroup({groupKey, mounted:false});
+            FieldGroupUtils.unmountFieldGroup(groupKey);
         },
 
         render() {

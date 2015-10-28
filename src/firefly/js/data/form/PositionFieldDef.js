@@ -1,5 +1,3 @@
-/*jshint browserify:true*/
-
 import * as StringUtils from '../../util/StringUtils.js';
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
@@ -11,6 +9,7 @@ import numeral from 'numeral';
 /**
  * Created by roby on 12/2/14.
  */
+/* eslint prefer-template:0 */
 var makePositionFieldDef= function(properties) {
     var _parser = PositionParser.makePositionParser(new ClientPositionResolverHelper());
 

@@ -1,5 +1,3 @@
-
-
 ### Modules in use for the firefly js environment
 
 **React.js**, see:  http://facebook.github.io/react/docs/getting-started.html
@@ -10,9 +8,9 @@
 
 * complete string manipulation operations
 
-**underscore**, see: http://underscorejs.org/
+**lodash**, see https://lodash.com
 
-* whole mess of useful functional programming helpers
+* useful utility functions, superset of underscore
 
 **validator**, see: https://www.npmjs.com/package/validator
 
@@ -22,16 +20,9 @@
 
 * format and manipulate numbers
 
-**es6-promise**, see: https://github.com/jakearchibald/es6-promise
-
-* promise library
-* Article about: http://www.html5rocks.com/en/tutorials/es6/promises/
-* might replace this with the built in one from Babel
-
 **icepick**, see: https://www.npmjs.com/package/icepick
 
 * make object immutable
-
 
 **react-grid-layout**, see: https://github.com/STRML/react-grid-layout
 
@@ -60,10 +51,6 @@
 
 * model object, has change events
 
-**react-modal**, see: https://github.com/rackt/react-modal
-
-* simple modal dialog
-* still under evaluation
 
 
 

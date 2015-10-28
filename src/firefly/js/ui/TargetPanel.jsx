@@ -6,13 +6,13 @@ import React from 'react/addons';
 import {parseTarget} from '../ui/TargetPanelWorker.js';
 import TargetFeedback from '../ui/TargetFeedback.jsx';
 import InputFieldView from '../ui/InputFieldView.jsx';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 
 
 var TargetPanel= React.createClass(
    {
-       mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+       mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
        getDefaultProps() {
            return {
@@ -29,7 +29,7 @@ var TargetPanel= React.createClass(
 
            var parseResults= parseTarget(displayValue, this.getExtraData());
            var component= this;
-           var resolvePromise= parseResults.resolvePromise ? parseResults.resolvePromise.then(asyncParseResults => {
+           var resolvePromise= parseResults.resolvePromise ? parseResults.resolvePromise.then((asyncParseResults) => {
                      return asyncParseResults ? component.makePayload(displayValue, asyncParseResults) : null;
                }) : null;
            this.fireValueChange(this.makePayload(displayValue,parseResults, resolvePromise));
@@ -50,7 +50,6 @@ var TargetPanel= React.createClass(
        },
 
        render() {
-           /* jshint ignore:start */
            var { showHelp, feedback, valid} = this.getExtraData();
            if (typeof valid==='undefined') valid= true;
            if (typeof showHelp==='undefined') showHelp= true;
@@ -69,7 +68,6 @@ var TargetPanel= React.createClass(
                        <TargetFeedback showHelp={showHelp} feedback={feedback||''}/>
                    </div>
            );
-           /* jshint ignore:end */
        }
   });
 

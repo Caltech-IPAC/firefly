@@ -11,7 +11,7 @@ var InputFieldLabel= React.createClass(
             labelStyle : React.PropTypes.object,
             labelWidth : React.PropTypes.number
         },
-        getDefaultProps: function () {
+        getDefaultProps() {
             return {
                 labelStyle : {
                     display:'inline-block',

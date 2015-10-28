@@ -5,8 +5,7 @@
 
 import WebPlotRequest from './WebPlotRequest.js';
 import RangeValues from './RangeValues.js';
-import MiniFitsHeader from './MiniFitsHeader.js';
-import FileAndHeaderInfo from './FileAndHeaderInfo.js';
+import {makeClientFitsHeader} from './ClientFitsHeader.js';
 import join from 'underscore.string/join';
 import toBoolean from 'underscore.string/toBoolean';
 import {parseInt,checkNull} from '../util/StringUtils.js';
@@ -23,7 +22,7 @@ class BandState {
 
         this.plotRequestSerialize = null; // Serialized WebPlotRequest
         this.rangeValuesSerialize = null; // Serialized RangeValues
-        this.fitsHeaderSerialize = null; // Serialized MiniFitsHeader
+        this.fitsHeader= null;
         this.bandVisible= true;
         this.multiImageFile = false;
         this.cubeCnt = 0;
@@ -129,25 +128,25 @@ class BandState {
     }
 
     /**
-     * this method will make a copy of MiniFitsHeader. Any changes to the MiniFitsHeader object
+     * this method will make a copy of ClientFitsHeader. Any changes to the ClientFitsHeader object
      * after the set will not be reflected here.
-     * @param {MiniFitsHeader} header
+     * @param {ClientFitsHeader} header
      */
     setFitsHeader(header) {
-        this.fitsHeaderSerialize = header ? null : header.toString();
+        this.fitsHeader= header;
     }
 
    /**
      *
-     * @return {MiniFitsHeader}
+     * @return {ClientFitsHeader}
      */
-    getHeader() { return MiniFitsHeader.parse(this.fitsHeaderSerialize); }
+    getHeader() { return this.fitsHeader; }
 
     /**
      *
-     * @return {FileAndHeaderInfo}
+     * @return {object}
      */
-    getFileAndHeaderInfo() { return new FileAndHeaderInfo(this.workingFitsFileStr, this.fitsHeaderSerialize); }
+    getFileAndHeaderInfo() { return {file:this.workingFitsFileStr, header:this.fitsHeader }; }
 
     /**
      *
@@ -224,7 +223,7 @@ class BandState {
         var originalImageIdx=parseInt(sAry[i++],0);
         var req=             WebPlotRequest.parse(sAry[i++]);
         var rv=              RangeValues.parse(sAry[i++]);
-        var header=          MiniFitsHeader.parse(sAry[i++]);
+        var header=          ClientFitsHeader.parse(sAry[i++]);
         var bandVisible=     toBoolean(sAry[i++]);
         var multiImageFile=  toBoolean(sAry[i++]);
         var cubeCnt=         parseInt(sAry[i++],0);
@@ -253,3 +252,22 @@ class BandState {
     }
 }
 
+export const makeBandState= function() { return new BandState(); }
+
+export const makeBandStateFromJson= function(bsJson) {
+    if (!bsJson) return null;
+    var bState= makeBandState();
+    bState.workingFitsFileStr= bsJson.workingFitsFileStr;
+    bState.originalFitsFileStr= bsJson.originalFitsFileStr;
+    bState.uploadFileNameStr= bsJson.uploadFileNameStr;
+    bState.imageIdx= bsJson.imageIdx;
+    bState.originalImageIdx= bsJson.originalImageIdx;
+    bState.plotRequestSerialize= bsJson.plotRequestSerialize;
+    bState.rangeValuesSerialize= bsJson.rangeValuesSerialize;
+    bState.fitsHeader= makeClientFitsHeader(bsJson.fitsHeader);
+    bState.bandVisible= bsJson.bandVisible;
+    bState.multiImageFile= bsJson.multiImageFile;
+    bState.cubeCnt= bsJson.cubeCnt;
+    bState.cubePlaneNumber= bsJson.cubePlaneNumber;
+    return bState;
+};

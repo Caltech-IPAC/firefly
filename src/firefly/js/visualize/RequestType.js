@@ -7,7 +7,6 @@
  * Time: 11:16:27 AM
  */
 
-/*jshint esnext:true*/
 import Enum from 'enum';
 const RequestType= new Enum([ 'SERVICE',
                               'FILE',

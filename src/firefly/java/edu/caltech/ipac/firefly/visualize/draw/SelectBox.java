@@ -82,24 +82,24 @@ public class SelectBox extends DrawObj {
         return WebPlot.makePt(_pt1.getClass(), x,y);
     }
 
-    public void draw(Graphics graphics, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawImageBox(graphics,p,ac);
+    public void draw(Graphics graphics, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawImageBox(graphics,p, def);
     }
 
-    public void draw(Graphics graphics, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+    public void draw(Graphics graphics, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
         if (_pt1 instanceof ScreenPt && _pt2 instanceof ScreenPt) {
             ViewPortPt vp1= new ViewPortPt(((ScreenPt) _pt1).getIX(),((ScreenPt) _pt1).getIY());
             ViewPortPt vp2= new ViewPortPt(((ScreenPt) _pt2).getIX(),((ScreenPt) _pt2).getIY());
-            drawBox(graphics,vp1, vp2,ac);
+            drawBox(graphics,vp1, vp2, def);
         }
     }
 
 
-    private void drawImageBox(Graphics graphics, WebPlot plot, AutoColor ac) {
+    private void drawImageBox(Graphics graphics, WebPlot plot, DrawingDef def) {
         ViewPortPt pt0=plot.getViewPortCoords(_pt1);
         ViewPortPt pt2=plot.getViewPortCoords(_pt2);
         if (pt0!=null && pt2!=null && crossesViewPort(plot, _pt1,_pt2)) {
-            drawBox(graphics,pt0,pt2,ac);
+            drawBox(graphics,pt0,pt2,def);
         }
     }
 
@@ -145,7 +145,7 @@ public class SelectBox extends DrawObj {
 
 
 
-    private void drawBox(Graphics graphics, ViewPortPt pt0, ViewPortPt pt2, AutoColor ac) {
+    private void drawBox(Graphics graphics, ViewPortPt pt0, ViewPortPt pt2, DrawingDef def) {
 
 
         int lineWidth;
@@ -155,7 +155,7 @@ public class SelectBox extends DrawObj {
             default : lineWidth= 1; break;
         }
 
-        String color= calculateColor(ac,false);
+        String color= calculateColor(def,false);
         int sWidth= (pt2.getIX()-pt0.getIX());
         int sHeight= (pt2.getIY()-pt0.getIY());
         graphics.drawRec(color, lineWidth,
@@ -167,7 +167,7 @@ public class SelectBox extends DrawObj {
         }
 
         if (_style== Style.HANDLED) {
-            DrawUtil.drawInnerRecWithHandles(graphics, ac.getColor(innerBoxColor),
+            DrawUtil.drawInnerRecWithHandles(graphics, innerBoxColor,
                                                        2, pt0.getIX(), pt0.getIY(),
                                                        pt2.getIX(), pt2.getIY());
 
@@ -194,7 +194,7 @@ public class SelectBox extends DrawObj {
     }
 
     @Override
-    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot plot, DrawingDef def) {
         WorldPt wp= WebPlot.getWorldPtRepresentation(_pt1);
         RegionDimension dim;
 
@@ -214,7 +214,7 @@ public class SelectBox extends DrawObj {
                                      new RegionValue(height, RegionValue.Unit.DEGREE));
         }
         Region r= new RegionBox(wp,dim);
-        r.getOptions().setColor(calculateColor(ac,false));
+        r.getOptions().setColor(calculateColor(def,false));
         return Arrays.asList(r);
     }
 

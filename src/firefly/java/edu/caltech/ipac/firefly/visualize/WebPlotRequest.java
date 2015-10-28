@@ -7,6 +7,7 @@ import edu.caltech.ipac.astro.net.Resolver;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -15,6 +16,7 @@ import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 /**
  * User: roby
@@ -96,6 +98,12 @@ public class WebPlotRequest extends ServerRequest {
     public static final String THUMBNAIL_SIZE = "thumbnailSize";
     public static final String PIPELINE_ORDER = "pipelineOrder"; // todo: convert, doc, add to allKeys
 
+    public static final String MASK_BITS= "MaskBits";
+    public static final String PLOT_AS_MASK= "PlotAsMask";
+    public static final String MASK_COLORS= "MaskColors";
+    public static final String MASK_REQUIRED_WIDTH= "MaskRequiredWidth";
+    public static final String MASK_REQUIRED_HEIGHT= "MaskRequiredHeight";
+
     // keys - client side operations
     // note- if you add a new key make sure you put it in the _allKeys array
     public static final String PLOT_TO_DIV = "PlotToDiv";
@@ -104,7 +112,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String SHOW_TITLE_AREA = "ShowTitleArea";
     public static final String ROTATE_NORTH_SUGGESTION = "RotateNorthSuggestion";
     public static final String SAVE_CORNERS = "SaveCornersAfterPlot";
-    public static final String SHOW_SCROLL_BARS = "showScrollBars";
     public static final String EXPANDED_TITLE = "ExpandedTitle";
     public static final String ALLOW_IMAGE_SELECTION = "AllowImageSelection";
     public static final String HAS_NEW_PLOT_CONTAINER = "HasNewPlotContainer";
@@ -139,7 +146,7 @@ public class WebPlotRequest extends ServerRequest {
                                               UNIQUE_KEY,
                                               PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                               SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                              SHOW_SCROLL_BARS, EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
+                                              EXPANDED_TITLE, PLOT_DESC_APPEND, HIDE_TITLE_DETAIL,
                                               ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                               GRID_ON, TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
                                               POST_TITLE, PRE_TITLE, OVERLAY_POSITION,
@@ -151,7 +158,7 @@ public class WebPlotRequest extends ServerRequest {
     private static final String _clientSideKeys[] = {UNIQUE_KEY,
                                                      PLOT_TO_DIV, PREFERENCE_COLOR_KEY, PREFERENCE_ZOOM_KEY,
                                                      SHOW_TITLE_AREA, ROTATE_NORTH_SUGGESTION, SAVE_CORNERS,
-                                                     SHOW_SCROLL_BARS, EXPANDED_TITLE,
+                                                     EXPANDED_TITLE,
                                                      ALLOW_IMAGE_SELECTION, HAS_NEW_PLOT_CONTAINER,
                                                      ADVERTISE, HIDE_TITLE_DETAIL, GRID_ON,
                                                      TITLE_OPTIONS, EXPANDED_TITLE_OPTIONS,
@@ -1097,15 +1104,6 @@ public class WebPlotRequest extends ServerRequest {
         return getParam(HEADER_KEY_FOR_TITLE);
     }
 
-
-    public void setShowScrollBars(boolean s) {
-        setParam(SHOW_SCROLL_BARS, s + "");
-    }
-
-    public boolean getShowScrollBars() {
-        return getBooleanParam(SHOW_SCROLL_BARS);
-    }
-
     public void setProgressKey(String key) { setParam(PROGRESS_KEY,key); }
 
     public String getProgressKey() { return getParam(PROGRESS_KEY); }
@@ -1137,7 +1135,34 @@ public class WebPlotRequest extends ServerRequest {
 
     public String getPlotId() { return getParam(PLOT_ID); }
 
+    public void setMaskBits(int idx) { setParam(MASK_BITS,idx+""); }
+    public int getMaskBits() { return containsParam(MASK_BITS) ? getIntParam(MASK_BITS) : 0;}
 
+    public void setPlotAsMask(boolean plotAsMask) { setParam(PLOT_AS_MASK, plotAsMask+"");}
+    public boolean isPlotAsMask() { return getBooleanParam(PLOT_AS_MASK);}
+
+
+    public void setMaskColors(String colors[]) {
+        setParam(MASK_COLORS, StringUtils.combineAry(";", colors));
+    }
+
+    public List<String> getMaskColors() {
+        if (containsParam(MASK_COLORS)) {
+            String data= getParam(MASK_COLORS);
+            return StringUtils.parseStringList(data,";");
+        }
+        else {
+            return Collections.emptyList();
+        }
+    }
+
+    public void setMaskRequiredWidth(int width) { setParam(MASK_REQUIRED_WIDTH, width+""); }
+
+    public int getMaskRequiredWidth() { return getIntParam(MASK_REQUIRED_WIDTH,0); }
+
+    public void setMaskRequiredHeight(int height) { setParam(MASK_REQUIRED_HEIGHT, height+""); }
+
+    public int getMaskRequiredHeight() { return getIntParam(MASK_REQUIRED_HEIGHT,0); }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

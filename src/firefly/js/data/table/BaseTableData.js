@@ -49,7 +49,7 @@ export class BaseTableData {
     }
 
     getAttributes() {
-        let acopy = new Map();
+        const acopy = new Map();
         this.attributes.forEach(function(value,key){
             acopy.set(key,value);
         });
@@ -108,9 +108,9 @@ export class BaseTableData {
     }
 
     getColumnIndex(colName) {
-        var idx = this.columns.indexOf(colName);
+        const idx = this.columns.indexOf(colName);
         if (idx < 0) {
-            throw 'This column does not exists: ' + colName;
+            throw `This column does not exists: ${colName}`;
         }
         return idx;
     }
@@ -120,7 +120,7 @@ export class BaseTableData {
      * @return {BaseTableData}
      */
     clone() {
-        let newval = new BaseTableData(this.columns.slice(0));
+        const newval = new BaseTableData(this.columns.slice(0));
         newval.attributes = this.getAttributes();
         return newval;
     }

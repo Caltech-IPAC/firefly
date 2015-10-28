@@ -3,7 +3,7 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-
+/* eslint prefer-template:0 */
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
 import RequestType from './RequestType.js';
 import ZoomType from './ZoomType.js';
@@ -172,7 +172,7 @@ function makeOrderList(orderStr) {
     var retList= [];
     if (!orderStr) return retList;
     var sAry= orderStr.split(';');
-    sAry.forEach(v => {
+    sAry.forEach((v) => {
         if (Order.get(v)) retList.push(Order.get(v));
     });
     return retList;
@@ -1259,7 +1259,7 @@ class WebPlotRequest extends ServerRequest {
         if (obj instanceof WebPlotRequest) {
             var wpr1= this.makeCopy();
             var wpr2= obj.makeCopy();
-            ignoreForEquals.forEach(key=> {
+            ignoreForEquals.forEach((key)=> {
                 wpr1.removeParam(key);
                 wpr2.removeParam(key);
             });

@@ -90,6 +90,8 @@ public class Zscale
 	 */
 	Arrays.sort(sample);
     npix = Arrays.binarySearch(sample, Float.NaN);
+	//no NaN found, it returns a negative number thus, the npix should be the sample's length
+	npix= npix>0? npix: sample.length  ;
 	float zmin = sample[0];
 	float zmax = sample[npix-1];
 

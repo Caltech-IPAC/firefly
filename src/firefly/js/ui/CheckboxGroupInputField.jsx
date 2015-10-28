@@ -1,11 +1,11 @@
 import React from 'react/addons';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var CheckboxGroupInputField = React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+        mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             options : React.PropTypes.array.isRequired
@@ -68,7 +68,7 @@ var CheckboxGroupInputField = React.createClass(
         },
 
         render() {
-            let { fieldKey, labelWidth, options }= this.props;
+            const { fieldKey, labelWidth, options }= this.props;
             return (
                 <div style={{whiteSpace: 'nowrap'}}>
                     <InputFieldLabel label={this.getLabel()}
@@ -76,13 +76,15 @@ var CheckboxGroupInputField = React.createClass(
                         labelWidth={labelWidth}
                     />
                     {options.map( (option) => {
-                        return <input type="checkbox"
+                        return (
+                            <input type='checkbox'
                                 key={option.value}
                                 name={fieldKey}
                                 value={option.value}
                                 checked={this.isChecked(option.value)}
                                 onChange={this.onChange}
-                            >&nbsp;{option.label}&nbsp;&nbsp;</input>;
+                            >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                        );
                         })}
                 </div>
             );

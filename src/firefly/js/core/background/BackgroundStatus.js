@@ -7,7 +7,7 @@
  * Date: Apr 2, 2009
  * Time: 9:18:47 AM
  */
-
+/* eslint prefer-template:0 */
 import Enum from 'enum';
 import {parseWorldPt} from '../../visualize/Point.js';
 import WebPlotRequest from '../../visualize/WebPlotRequest.js';
@@ -526,7 +526,7 @@ export class BackgroundStatus {
         const bgStat= new BackgroundStatus();
         const params = str.split(PARAM_SEP);
         if (params.length>0) {
-            words(str, PARAM_SEP).forEach(p => {
+            words(str, PARAM_SEP).forEach((p) => {
                 var outParam= words(p,KW_VAL_SEP);
                 if (outParam.length===2) bgStat.setParam(outParam[0], outParam[1]);
             });

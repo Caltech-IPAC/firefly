@@ -15,6 +15,8 @@ import edu.caltech.ipac.firefly.visualize.task.VisTask;
 import edu.caltech.ipac.firefly.visualize.task.ZoomTask;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 
+import java.util.List;
+
 /**
  * This class manages groups of plots.  This is primarily necessary for overlays.
  * There is a base plot that the overlays are projected onto.  A PlotGroup is a
@@ -100,7 +102,7 @@ public class WebPlotGroup  {
 
 
     public void postZoom(PlotImages images) {
-        _basePlot.refreshWidget(images, true);
+        _basePlot.refreshWidget(images);
         _activeZoomTask= null;
         fireReplotEvent(ReplotDetails.Reason.ZOOM_COMPLETED);
     }
@@ -123,7 +125,10 @@ public class WebPlotGroup  {
      * set the WebPlotView obj
      * @param plotView the WebPlotView obj
      */
-    void setPlotView(WebPlotView plotView) { _plotView= plotView; }
+    void setPlotView(WebPlotView plotView) {
+        _plotView= plotView;
+        _basePlot.getTileDrawer().setPlotView(plotView);
+    }
 
     /**
      * should only be called from WebPlotView
@@ -133,26 +138,48 @@ public class WebPlotGroup  {
      * @param  isFullScreen a hint to the server about how to generate the image.  when true the server will not tile
      * but will generate one image
      */
-    void activateDeferredZoom(final float level, boolean isFullScreen, boolean useDeferredDelay) {
+    void activateDeferredZoom(final float level,
+                              boolean isFullScreen,
+                              boolean useDeferredDelay,
+                              final List<WebPlot> overlayPlots) {
         if (_activeZoomTask!=null)  {
             _activeZoomTask.cancel();
             _activeZoomTask= null;
         }
 
         _zoomTimer.cancel();
-        _zoomTimer.setupCall(level, isFullScreen);
+        _zoomTimer.setupCall(level, isFullScreen, overlayPlots);
         _zoomTimer.schedule(useDeferredDelay ? ZOOM_WAIT_MS : 5);
 
         final float oldLevel= _zLevel;
         _zLevel= level;
         computeMinMax();
+
+        if (overlayPlots!=null) {
+            for (WebPlot p : overlayPlots) {
+                p.getPlotGroup()._zLevel= level;
+                p.getPlotGroup().computeMinMax();
+            }
+        }
+
+
         final PlotImages im= _basePlot.getTileDrawer().getImages();
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 _basePlot.getTileDrawer().scaleImagesIfMatch(oldLevel, level,im);
+                if (overlayPlots!=null) {
+                    for(WebPlot p : overlayPlots) {
+                        PlotImages overIm= p.getTileDrawer().getImages();
+                        p.getTileDrawer().scaleImagesIfMatch(oldLevel, level,overIm);
+                    }
+                }
             }
         });
         fireReplotEvent(ReplotDetails.Reason.ZOOM);
+    }
+
+    void cancelPendingZooms() {
+        _zoomTimer.cancel();
     }
 
 
@@ -163,11 +190,10 @@ public class WebPlotGroup  {
      * should this be merge with addPlot() ????
      */
      void computeMinMax() {
-         _minX= _basePlot.getOffsetX();
-         Dimension padding= _basePlot.getPaddingDimension();
-         _maxX= _basePlot.getImageDataWidth() + _basePlot.getOffsetX() + padding.getWidth();
-         _minY= _basePlot.getOffsetY();
-         _maxY= _basePlot.getImageDataHeight() + _basePlot.getOffsetY() + padding.getHeight();
+         _minX= 0;
+         _maxX= _basePlot.getImageDataWidth();
+         _minY= 0;
+         _maxY= _basePlot.getImageDataHeight();
 
          int iw= Math.abs(_minX) + Math.abs(_maxX);
          int ih= Math.abs(_minY) + Math.abs(_maxY);
@@ -200,14 +226,17 @@ public class WebPlotGroup  {
 
     private class ZoomTimer extends Timer {
 
-        private float _level;
-        private boolean _isFullScreen;
+        private float level;
+        private boolean isFullScreen;
+        private List<WebPlot> overlayPlots;
 
-        public void run() { _activeZoomTask= VisTask.getInstance().zoom(WebPlotGroup.this, _level, _isFullScreen); }
+        public void run() { _activeZoomTask= VisTask.getInstance().zoom(WebPlotGroup.this, level,
+                isFullScreen, overlayPlots); }
 
-        public void setupCall(float level, boolean isFullScreen) {
-            _level= level;
-            _isFullScreen= isFullScreen;
+        public void setupCall(float level, boolean isFullScreen, List<WebPlot> overlayPlots) {
+            this.level = level;
+            this.isFullScreen = isFullScreen;
+            this.overlayPlots= overlayPlots;
         }
     }
 

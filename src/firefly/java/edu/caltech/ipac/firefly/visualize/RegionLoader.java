@@ -12,8 +12,8 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.ui.PopupUtil;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
+import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
@@ -250,7 +250,7 @@ public class RegionLoader {
             this.regList = regList;
         }
 
-        public void addPrintableLayer(List<StaticDrawInfo> drawInfoList, WebPlot plot, Drawer drawer, WebLayerItem item) {
+        public void addPrintableLayer(List<StaticDrawInfo> drawInfoList, WebPlot plot, LayerDrawer drawer, WebLayerItem item) {
             StaticDrawInfo info= new StaticDrawInfo();
             info.setDrawType(StaticDrawInfo.DrawType.REGION);
             for(Region r : regList) {

@@ -4,8 +4,14 @@
 package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
+import edu.caltech.ipac.firefly.ui.GwtUtil;
+
+import java.util.logging.Level;
+
 
 /**
  * User: roby
@@ -26,6 +32,10 @@ public class PlotMover {
     private int _originalMouseY;
     private int _originalScrollX;
     private int _originalScrollY;
+    private int _lastX;
+    private int _lastY;
+    private DragTimer dragTimer= new DragTimer();
+
     WebPlotView.MouseInfo _mouseInfo= new WebPlotView.MouseInfo(
                                   new Mouse(), MOUSE_HELP);
     private final Enabler _enabler= new Enabler();
@@ -49,54 +59,68 @@ public class PlotMover {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private void begin(ScreenPt spt) {
-        _originalMouseX = convertToAbsoluteX(spt.getIX());
-        _originalMouseY = convertToAbsoluteY(spt.getIY());
+    private void begin(ScreenPt spt, MouseDownEvent ev) {
+//        _originalMouseX = convertToAbsoluteX(spt.getIX());
+//        _originalMouseY = convertToAbsoluteY(spt.getIY());
 
+        _originalMouseX = ev.getScreenX();
+        _originalMouseY = ev.getScreenY();
 
         ScreenPt pt= _pv.getScrollScreenPos();
 
         _originalScrollX = pt.getIX();
         _originalScrollY = pt.getIY();
+        _lastX= _originalMouseX;
+        _lastY= _originalMouseY;
     }
 
-//    static int cnt= 0;
+    static int cnt= 0;
 
-    private void drag(ScreenPt spt, boolean endDrag) {
-        int x = convertToAbsoluteX(spt.getIX());
-        int y = convertToAbsoluteY(spt.getIY());
+    private void drag(ScreenPt spt, int x, int y, boolean endDrag) {
+//        int x = convertToAbsoluteX(spt.getIX());
+//        int y = convertToAbsoluteY(spt.getIY());
+//        int x = _lastX;
+//        int y = _lastY;
+//        if (ev!=null) {
+//            x = ev.getScreenX();
+//            y = ev.getScreenY();
+//        }
+
         int xdiff= x- _originalMouseX;
         int ydiff= y- _originalMouseY;
         int newX= _originalScrollX -xdiff;
         int newY= _originalScrollY -ydiff;
 
-//        GwtUtil.showDebugMsg(
-//                "  cnt= "+ (cnt++)+
-//                ", x= "+ x+
-//                ", y= "+ y+
-//                ", _originalMouseX= "+ _originalMouseX +
-//                ", _originalMouseY= "+ _originalMouseY +
-//                ", xdiff= "+ xdiff+
-//                ", ydiff= "+ ydiff+
-//                ", newX= "+ newX+
-//                ", newY= "+ newY
+//        GwtUtil.getClientLogger().log(Level.INFO,
+//                "  cnt= " + (cnt++) +
+//                        ", x= " + x +
+//                        ", y= " + y +
+//                        ", _originalMouseX= " + _originalMouseX +
+//                        ", _originalMouseY= " + _originalMouseY +
+//                        ", xdiff= " + xdiff +
+//                        ", ydiff= " + ydiff +
+//                        ", newX= " + newX +
+//                        ", newY= " + newY
 //        );
 
         if (newX<0) newX= 0;
         if (newY<0) newY= 0;
 
         _pv.getMiniPlotWidget().getGroup().setDragging(!endDrag);
-        _pv.setScrollXY(new ScreenPt(newX,newY), !endDrag);
-
+        _pv.setScrollXY(new ScreenPt(newX, newY), !endDrag);
+        _lastX= x;
+        _lastY= y;
+//        GwtUtil.getClientLogger().log(Level.INFO, "PlotMover: newX="+ newX+"  newY="+newY);
     }
 
 
     private int convertToAbsoluteY(int y) {
-        return _pv.getMouseMove().getAbsoluteTop()+y;
+        return _pv.getAbsoluteTop()+y;
     }
 
     private int convertToAbsoluteX(int x) {
-        return _pv.getMouseMove().getAbsoluteLeft()+x;
+        GwtUtil.getClientLogger().log(Level.INFO, "x= "+x+", AbLeft="+_pv.getAbsoluteLeft()+ ", return="+ (_pv.getAbsoluteLeft()+x));
+        return _pv.getAbsoluteLeft()+x;
     }
 
 
@@ -110,22 +134,28 @@ public class PlotMover {
         public void onMouseDown(WebPlotView pv, ScreenPt spt, MouseDownEvent ev) {
             _mouseDown= true;
             _mouseInfo.setEnableAllPersistent(true);
-            begin(spt);
+            begin(spt,ev);
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             if (_mouseDown) {
-                drag(spt,false);
-                _mouseInfo.setEnableAllPersistent(true);
+                dragTimer.cancel();
+                dragTimer.setupCall(spt,ev.getScreenX(), ev.getScreenY());
+                _lastX= ev.getScreenX();
+                _lastY= ev.getScreenY();
+                dragTimer.schedule(10);
+//                drag(spt,false);
+//                _mouseInfo.setEnableAllPersistent(true);
             }
         }
 
         @Override
         public void onMouseUp(WebPlotView pv, ScreenPt spt) {
             if (_mouseDown) {
+                dragTimer.cancel();
                 _mouseDown= false;
-                drag(spt,true);
+                drag(spt,_lastX,_lastY, true);
             }
             DeferredCommand.addCommand(_enabler);
         }
@@ -138,5 +168,22 @@ public class PlotMover {
         }
     }
 
+
+    private class DragTimer extends Timer {
+        private ScreenPt spt;
+        private int x;
+        private int y;
+        @Override
+        public void run() {
+            drag(spt,x,y,false);
+            _mouseInfo.setEnableAllPersistent(true);
+        }
+
+        private void setupCall(ScreenPt spt, int x, int y) {
+            this.spt= spt;
+            this.x= x;
+            this.y= y;
+        }
+    }
 }
 

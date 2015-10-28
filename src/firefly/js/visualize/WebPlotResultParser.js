@@ -54,7 +54,7 @@ export const parse= function(inData) {
             //TODO: convert: CreateResults
             //TODO: go look up in the java class
 
-            var wpInitList= creatorAry.map( s => WebPlotInitializer.parse(s));
+            var wpInitList= creatorAry.map( (s) => WebPlotInitializer.parse(s));
 
             retval[RConst.PLOT_CREATE]= new CreatorResults(wpInitList);
         }

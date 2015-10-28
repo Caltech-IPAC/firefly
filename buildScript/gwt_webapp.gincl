@@ -2,6 +2,7 @@ def WEBAPP_GROUP = "Webapp"
 
 apply plugin: 'war'
 apply from: "$fireflyPath/buildScript/gwt.gincl"
+apply from: "$fireflyPath/buildScript/utils.gincl"
 
 jar {
   baseName = "${project['app-name']}"
@@ -203,12 +204,56 @@ task buildAndPublish( dependsOn: war ) << {
 }
 
 
+def getVersionLabel() {
+  def major = appConfigProps.get('BuildMajor')
+  def minor = appConfigProps.get('BuildMinor')
+  def rev = appConfigProps.get('BuildRev')
+  def type = appConfigProps.get('BuildType')
+
+  def prefix = project.hasProperty("tag_prefix") ? "${tag_prefix} " : ""
+  def label = prefix + "v${major}.${minor}.${rev} ${type}"
+  return label;
+}
+
+task publishToGithub (dependsOn: loadConfig) {
+
+  outputs.upToDateWhen { false }
+
+  doLast {
+    def tag_label = project.ext.createTagLabel();
+    def rel_title = getVersionLabel();
+
+    try {
+      def process = "node -v".execute()
+    } catch (Exception e) {
+      println ">> Task failed due to missing node.js"
+      throw new GradleException(">> Task failed due to missing node.js", e)
+    }
+
+    def relConfig = '{ "tag": "' + tag_label + '"' +
+            ', "token": "' + project.property("github.auth.token") + '"' +
+            ', "name": "' + rel_title + '"' +
+            ', "assets": ["' + "${buildDir}/exec/${webapp.baseWarName}-exec.war" + '"]' +
+            "}"
+
+    def res = exec {
+      environment 'NODE_PATH': "${fireflyPath}/node_modules"
+      executable "node"
+      args "${fireflyPath}/buildScript/publish-to-github.js", relConfig
+    }
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to build publish to Github.")
+    }
+  }
+}
+
 // ------------------------
 // define task order
 //-------------------------
 loadConfig.mustRunAfter gwt
-prepareWebapp.mustRunAfter buildClient
-buildClient.mustRunAfter gwtCompile
+buildClient.mustRunAfter prepareWebapp
+prepareWebapp.mustRunAfter gwtCompile
+gwtCompile.mustRunAfter jar
 deploy.mustRunAfter war
 deploy.mustRunAfter dirty
 

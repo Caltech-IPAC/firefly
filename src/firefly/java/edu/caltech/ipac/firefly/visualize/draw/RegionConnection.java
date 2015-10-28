@@ -117,7 +117,7 @@ public class RegionConnection implements DataConnection {
             r.setExtValue("plotId", plotId);
             r.setExtValue("title", getTitle(null));
             r.setExtValue("region",highlightR.serialize());
-            List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
+            Ext.Extension extensionList[] = AllPlots.getInstance().getExtensionList(plotId);
             boolean found = false;
             for (Ext.Extension ext : extensionList) {
                 if (ext.extType().equals(Ext.REGION_SELECT)) {

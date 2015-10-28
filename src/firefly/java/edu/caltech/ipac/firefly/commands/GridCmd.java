@@ -13,7 +13,7 @@ import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.PrintableUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.LayerDrawer;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.firefly.visualize.draw.WebGridLayer;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
@@ -140,7 +140,7 @@ public class GridCmd extends BaseGroupVisCmd implements PrintableOverlay {
 
     public void addPrintableLayer(List<StaticDrawInfo> drawInfoList,
                                   WebPlot plot,
-                                  Drawer drawer,
+                                  LayerDrawer drawer,
                                   WebLayerItem item) {
         StaticDrawInfo drawInfo= PrintableUtil.makeDrawInfo(plot, drawer, item);
         drawInfo.setDrawType(StaticDrawInfo.DrawType.GRID);

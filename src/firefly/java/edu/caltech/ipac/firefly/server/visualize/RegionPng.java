@@ -146,7 +146,7 @@ public class RegionPng {
         WorldPt wp= confirmJ2000(ra.getPt());
         double radius= convertToDegree(ra.getRadii()[0]);
         Shape shape= new Ellipse2D.Double(-radius,-radius, radius*2, radius*2); //radius set on the circle creation
-        Color c= PlotPngCreator.convertColor(ra.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(ra.getColor());
         ShapeInfo si[]= new ShapeInfo[] { new ShapeInfo(shape,c)};
         ScalableObject scaleObj= new ScalableObject(si);
         addScalableObject(scaleObj,wp);
@@ -156,7 +156,7 @@ public class RegionPng {
         WorldPt wp= confirmJ2000(ra.getPt());
         RegionValue radiusAry[]= ra.getRadii();
         ShapeInfo si[]= new ShapeInfo[radiusAry.length];
-        Color c= PlotPngCreator.convertColor(ra.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(ra.getColor());
         for(int i=0; (i<radiusAry.length); i++) {
             double radius= convertToDegree(radiusAry[i]);
             Shape shape= new Ellipse2D.Double(-radius,-radius, radius*2, radius*2); //radius set on the circle creation
@@ -169,7 +169,7 @@ public class RegionPng {
     private void makeBox(RegionBox rb) throws NoninvertibleTransformException, ProjectionException {
         RegionDimension dim= rb.getDim();
         WorldPt wp= confirmJ2000(rb.getPt());
-        Color c= PlotPngCreator.convertColor(rb.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(rb.getColor());
         double w= convertToDegree(dim.getWidth());
         double h= convertToDegree(dim.getHeight());
         Shape shape= new Rectangle2D.Double( 0,0, w,h);
@@ -182,7 +182,7 @@ public class RegionPng {
     private void makeBoxAnnulus (RegionBoxAnnulus rba) throws NoninvertibleTransformException, ProjectionException {
         RegionDimension dim[]= rba.getDim();
         WorldPt wp= confirmJ2000(rba.getPt());
-        Color c= PlotPngCreator.convertColor(rba.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(rba.getColor());
         ShapeInfo siAry[]= new ShapeInfo[dim.length];
         for(int i=0; (i<dim.length); i++) {
             double w= convertToDegree(dim[i].getWidth());
@@ -204,7 +204,7 @@ public class RegionPng {
         wptAry[wptAry.length-1]= wptAry[0];
         if (wptAry.length>2) {
             VectorObject vo= new VectorObject(wptAry);
-            Color c= PlotPngCreator.convertColor(rl.getColor());
+            Color c= PlotServUtils.convertColorHtmlToJava(rl.getColor());
             if (c!=null) vo.getLineShape().setColor(c);
             vectorList.add(vo);
         }
@@ -214,7 +214,7 @@ public class RegionPng {
         WorldPt wptAry[]= rl.getPtAry();
         if (wptAry.length==2) {
             VectorObject vo= new VectorObject(wptAry);
-            Color c= PlotPngCreator.convertColor(rl.getColor());
+            Color c= PlotServUtils.convertColorHtmlToJava(rl.getColor());
             if (c!=null) vo.getLineShape().setColor(c);
             vectorList.add(vo);
         }
@@ -252,7 +252,7 @@ public class RegionPng {
                 break;
         }
         fo.getDrawer().setSkyShape(shape);
-        Color c= PlotPngCreator.convertColor(rp.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(rp.getColor());
         fo.getDrawer().setStandardColor(c);
         fgList.add(pointFG);
     }
@@ -296,7 +296,7 @@ public class RegionPng {
         int offY= rt.getOptions().getOffsetY();
         WorldPt wp= new WorldPt(p.getX()+offX, p.getY()+offY, CoordinateSys.SCREEN_PIXEL);
         FixedObject fo= textFg.makeFixedObject(wp);
-        Color c= PlotPngCreator.convertColor(rt.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(rt.getColor());
         fo.getDrawer().setStandardColor(c);
         fo.setShowName(true);
         fo.setShowPoint(false);

@@ -6,7 +6,7 @@
  * Date: Mar 13, 2009
  * @author loi
  */
-
+/* eslint prefer-template:0 */
 
 import Enum from 'enum';
 import { getRootURL } from './BrowserUtil.js';
@@ -74,8 +74,8 @@ export const encodeServerUrl= function(url, params) {
 
 /**
  *
- * @param {SeverRequest} request
- * @return {encoded}
+ * @param {ServerRequest} request
+ * @return {string} encoded
  */
 export const getTableSourceUrl= function(request) {
     request.setStartIndex(0);

@@ -1,11 +1,11 @@
 import React from 'react/addons';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
-var ListBoxInputField= React.createClass(
+var ListBoxInputField = React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FormStoreLinkMixin],
+        mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             inline : React.PropTypes.bool,
@@ -68,9 +68,13 @@ var ListBoxInputField= React.createClass(
                             multiple={this.props.multiple}
                             onChange={this.onChange}>
                         {this.props.options.map(( (option) => {
-                            return <option value={option.value} selected={vAry.indexOf(option.value)>-1}>
-                                &nbsp;{option.label}&nbsp;
-                            </option>;
+                            return (
+                                <option value={option.value}
+                                        key={option.value}
+                                        selected={vAry.indexOf(option.value)>-1}>
+                                    &nbsp;{option.label}&nbsp;
+                                </option>
+                            );
                         }))}
                     </select>
                 </div>

@@ -102,7 +102,7 @@ public class ColorStretchDialog extends BaseDialog {
         WebPlotView pv= AllPlots.getInstance().getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
-            Band bands[]= plot.getPlotState().getBands();
+            Band bands[]= plot.getBands();
 
             if (_lastPlot!= plot) {
                 createContents(plot);
@@ -136,7 +136,7 @@ public class ColorStretchDialog extends BaseDialog {
 
     private void createContents(WebPlot plot) {
 
-        Band bands[]= plot.getPlotState().getBands();
+        Band bands[]= plot.getBands();
         for(int i= 0; (i<_bandPanel.length); i++) _bandPanel[i]= null;
 
         _topPanel.clear();
@@ -181,7 +181,7 @@ public class ColorStretchDialog extends BaseDialog {
         WebPlotView pv= AllPlots.getInstance().getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
-            Band bands[]=  plot.getPlotState().getBands();
+            Band bands[]=  plot.getBands();
             StretchData sd []= new StretchData[bands.length];
 
             RangeValues rv;
@@ -232,7 +232,7 @@ public class ColorStretchDialog extends BaseDialog {
         WebPlotView pv= AllPlots.getInstance().getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
-            for(Band band : plot.getPlotState().getBands()) {
+            for(Band band : plot.getBands()) {
                 int idx= band.getIdx();
                 if (_bandPanel[idx]!=null) valid= _bandPanel[idx].validateInput();
                 if (!valid) break;

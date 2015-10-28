@@ -8,7 +8,7 @@
  */
 
 /*eslint no-use-before-define: [1, "nofunc"]*/
-
+/*eslint prefer-template:0 */
 
 
 import CoordinateSys from './CoordSys.js';

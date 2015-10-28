@@ -14,7 +14,7 @@ package edu.caltech.ipac.firefly.visualize;
 */
 public enum ZoomType {
                       STANDARD,       // use normal zoom, zoom to given zoom level or 1x if not specified
-    FORCE_STANDARD, // Like standard, however even expanded mode does not override
+                      FORCE_STANDARD, // Like standard, however even expanded mode does not override
                       SMART,         // use smart zoom - this is deprecated, don't use anymore
                       FULL_SCREEN,       // requires width & height specified
                       TO_WIDTH,          // requires width

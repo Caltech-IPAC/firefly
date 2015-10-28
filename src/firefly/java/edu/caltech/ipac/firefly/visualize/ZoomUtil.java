@@ -36,7 +36,7 @@ public class ZoomUtil {
 
     private static final NumberFormat _nf= NumberFormat.getFormat(".###");
     private static final NumberFormat _nfLarge= NumberFormat.getFormat(".#");
-    private static final int DEFAULT_MARGIN = 30;
+    private static final int DEFAULT_MARGIN = 10;
 
     public static void zoomGroup(final WebPlot.ZDir dir) {
         AllPlots ap= AllPlots.getInstance();
@@ -262,7 +262,7 @@ public class ZoomUtil {
                 mpw.getPlotView().setZoomTo(newZoomLevel, true,true);
             }
             else {
-                VisTask.getInstance().rotateNorth(mpw.getCurrentPlot(),true,newZoomLevel,mpw);
+                VisTask.getInstance().rotateNorth(true,newZoomLevel,mpw);
             }
         }
         else {
@@ -401,7 +401,7 @@ public class ZoomUtil {
     }
 
     public static float getEstimatedFullZoomFactor(WebPlot plot, Dimension screenDim) {
-        return getEstimatedFullZoomFactor(plot,screenDim,plot.getZoomFact());
+        return getEstimatedFullZoomFactor(plot,screenDim,VisUtil.FullType.SMART, -1, DEFAULT_MARGIN);
     }
 
     public static float getEstimatedFullZoomFactor(WebPlot plot, Dimension screenDim, VisUtil.FullType fullType) {
@@ -409,10 +409,10 @@ public class ZoomUtil {
 
     }
 
-    public static float getEstimatedFullZoomFactor(WebPlot plot, Dimension screenDim, float tryMinFactor) {
-        return getEstimatedFullZoomFactor(plot,screenDim,VisUtil.FullType.SMART,tryMinFactor, DEFAULT_MARGIN);
-
-    }
+//    public static float getEstimatedFullZoomFactor(WebPlot plot, Dimension screenDim, float tryMinFactor) {
+//        return getEstimatedFullZoomFactor(plot,screenDim,VisUtil.FullType.SMART,tryMinFactor, DEFAULT_MARGIN);
+//
+//    }
 
     public static float getEstimatedFullZoomFactor(WebPlot plot,
                                                    Dimension screenDim,
@@ -438,6 +438,28 @@ public class ZoomUtil {
                                                   plot.getImageDataHeight(),
                                                   workWidth, workHeight, tryMinFactor);
 
+    }
+
+
+    public static boolean isZoomLevelsMatching(WebPlotView pv,
+                                               float currentLevel,
+                                               float targetLevel,
+                                               float tolerance) {
+        boolean retval= false;
+        if (Math.abs(currentLevel-targetLevel)<=tolerance) {
+            retval= true;
+            List<WebPlot> opvList= pv.getOverlayPlotList();
+            if (opvList.size()>0)  {
+                for(WebPlot p: opvList) {
+                    float oFact= p.getZoomFact();
+                    if (Math.abs(oFact-targetLevel)>.0001) {
+                        retval= false;
+                        break;
+                    }
+                }
+            }
+        }
+        return retval;
     }
 }
 

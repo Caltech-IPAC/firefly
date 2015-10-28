@@ -91,26 +91,26 @@ public class PointDataObj extends DrawObj {
     public Pt getCenterPt() { return _pt; }
 
 
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,null,onlyAddToPath);
+    public void draw(Graphics g, WebPlot p, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawPt(g,p, def,useStateColor,null,onlyAddToPath);
     }
 
 
 
-    public void draw(Graphics g, WebPlot p, AutoColor ac, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
+    public void draw(Graphics g, WebPlot p, DrawingDef def, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
             throws UnsupportedOperationException {
-        drawPt(g,p,ac,useStateColor,vpPtM,onlyAddToPath);
+        drawPt(g,p,def,useStateColor,vpPtM,onlyAddToPath);
     }
 
 
 
-    public void draw(Graphics g, AutoColor ac, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
-        drawPt(g,null,ac,useStateColor,null,onlyAddToPath);
+    public void draw(Graphics g, DrawingDef def, boolean useStateColor, boolean onlyAddToPath) throws UnsupportedOperationException {
+        drawPt(g,null, def,useStateColor,null,onlyAddToPath);
     }
 
 
 
-    public void drawPt(Graphics jg, WebPlot plot, AutoColor auto, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
+    public void drawPt(Graphics jg, WebPlot plot, DrawingDef def, boolean useStateColor, ViewPortPtMutable vpPtM, boolean onlyAddToPath)
                                                        throws UnsupportedOperationException {
         if (plot!=null && _pt!=null) {
                 int x= 0;
@@ -137,11 +137,11 @@ public class PointDataObj extends DrawObj {
                     }
                 }
 
-                if (draw)  drawXY(jg,x,y,calculateColor(auto,useStateColor),useStateColor, onlyAddToPath);
+                if (draw)  drawXY(jg,x,y,calculateColor(def,useStateColor),useStateColor, onlyAddToPath);
 
         }
         else {
-            drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(auto,useStateColor), useStateColor,false);
+            drawXY(jg,(int)_pt.getX(),(int)_pt.getY(),calculateColor(def,useStateColor), useStateColor,false);
         }
     }
 
@@ -331,24 +331,24 @@ public class PointDataObj extends DrawObj {
      * @param drawList
      * @param g
      * @param p
-     * @param ac
+     * @param def
      * @param useStateColor
      * @param vpPtM
      */
     public static void drawAllOptimized(List<PointDataObj> drawList,
                                         Graphics g,
                                         WebPlot p,
-                                        AutoColor ac,
+                                        DrawingDef def,
                                         boolean useStateColor,
                                         ViewPortPtMutable vpPtM) {
         if (drawList==null ||drawList.size()==0) return;
 
         boolean canOptimize= true;
-        String color= drawList.get(0).calculateColor(ac,useStateColor);
+        String color= drawList.get(0).calculateColor(def,useStateColor);
 
         long start= System.currentTimeMillis();
         for(PointDataObj d : drawList)  {
-            canOptimize= ComparisonUtil.equals(color, d.calculateColor(ac, useStateColor));
+            canOptimize= ComparisonUtil.equals(color, d.calculateColor(def, useStateColor));
             if (d._symbol==DrawSymbol.EMP_CROSS || d._text!=null) {
                 canOptimize= false;
             }
@@ -358,11 +358,11 @@ public class PointDataObj extends DrawObj {
 
         if (canOptimize) {
             g.beginPath(color,1);
-            for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,true);
+            for(PointDataObj d : drawList) d.draw(g,p,def,useStateColor,vpPtM,true);
             g.drawPath();
         }
         else {
-            for(PointDataObj d : drawList) d.draw(g,p,ac,useStateColor,vpPtM,false);
+            for(PointDataObj d : drawList) d.draw(g,p,def,useStateColor,vpPtM,false);
         }
         long delta= System.currentTimeMillis()-start;
         GwtUtil.getClientLogger().log(Level.INFO, "Draw Time for " + drawList.get(0)._symbol + ", " + drawList.size() + ": " + delta + "ms");
@@ -373,7 +373,7 @@ public class PointDataObj extends DrawObj {
 
 
     @Override
-    public List<Region> toRegion(WebPlot plot, AutoColor ac) {
+    public List<Region> toRegion(WebPlot plot, DrawingDef def) {
         Region r;
         WorldPt wp= WebPlot.getWorldPtRepresentation(_pt);
         switch (_symbol) {
@@ -401,7 +401,7 @@ public class PointDataObj extends DrawObj {
                 assert false; // if more shapes are added they must be added here
                 break;
         }
-        r.getOptions().setColor(calculateColor(ac,false));
+        r.getOptions().setColor(calculateColor(def,false));
         return Arrays.asList(r);
     }
 

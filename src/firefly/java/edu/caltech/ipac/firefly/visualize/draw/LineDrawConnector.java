@@ -21,12 +21,12 @@ public class LineDrawConnector extends DrawConnector {
 
 
     @Override
-    public void draw(Graphics g, WebPlot p, AutoColor ac, WorldPt wp1, WorldPt wp2) throws UnsupportedOperationException {
+    public void draw(Graphics g, WebPlot p, DrawingDef def, WorldPt wp1, WorldPt wp2) throws UnsupportedOperationException {
 
 
         if (wp1==null || wp2==null) return;
 
-        String color= calculateColor(ac);
+        String color= calculateColor(def);
         ViewPortPt pt0= p.getViewPortCoords(wp1);
         ViewPortPt pt1= p.getViewPortCoords(wp2);
         if (pt0==null || pt1==null) return;
@@ -37,7 +37,7 @@ public class LineDrawConnector extends DrawConnector {
     }
 
     @Override
-    public void draw(Graphics g, AutoColor ac, ScreenPt pt1, ScreenPt pt2) throws UnsupportedOperationException {
+    public void draw(Graphics g, DrawingDef def, ScreenPt pt1, ScreenPt pt2) throws UnsupportedOperationException {
         throw new UnsupportedOperationException ("this type only supports drawing with WebPlot");
     }
 }

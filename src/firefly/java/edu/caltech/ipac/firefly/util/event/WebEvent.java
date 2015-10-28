@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.util.event;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.firefly.util.WebAssert;
 
 import java.util.EventObject;
@@ -11,6 +13,8 @@ import java.util.EventObject;
  * The event that is passed when ...
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class WebEvent <DataType> extends EventObject {
 
 

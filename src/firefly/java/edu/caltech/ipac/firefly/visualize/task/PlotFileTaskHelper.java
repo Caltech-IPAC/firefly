@@ -134,7 +134,6 @@ public class PlotFileTaskHelper {
 
 
     public void handleSuccess(WebPlotResult result) {
-        long start = System.currentTimeMillis();
         List<WebPlot> successList= new ArrayList<WebPlot>(10);
         WebPlotView pv= _mpw.getPlotView();
         try {
@@ -151,7 +150,7 @@ public class PlotFileTaskHelper {
                 CreatorResults cr= (CreatorResults)result.getResult(WebPlotResult.PLOT_CREATE);
 
                 for (WebPlotInitializer wpInit : cr) {
-                    plot = new WebPlot(wpInit);
+                    plot = new WebPlot(wpInit,false);
                     if (getRequest().isMinimalReadout()) plot.setAttribute(WebPlot.MINIMAL_READOUT,true);
                     if (firstPlot == null) firstPlot = plot;
                     if (_continueOnSuccess) {
@@ -188,19 +187,20 @@ public class PlotFileTaskHelper {
 
     }
 
+
     private boolean isMultiImageFits(CreatorResults cr) {
         boolean retval= true;
         for (WebPlotInitializer wpInit : cr) {
-            for(Band band : wpInit.getPlotState().getBands()) {
-                if (!wpInit.getPlotState().isMultiImageFile(band)) {
-                    retval= false;
-                    break;
-                }
-                if (!retval) break;
+            if (!wpInit.getPlotState().isMultiImageFile()) {
+                retval= false;
+                break;
             }
+            if (!retval) break;
         }
         return retval;
     }
+
+
 
     private boolean isMultiCube(CreatorResults cr) {
         boolean retval= false;

@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.ui.PopupPane;
 import edu.caltech.ipac.firefly.ui.PopupType;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebClassProperties;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PlotRequestHistory;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
@@ -133,7 +132,7 @@ public class LockOptionsPopup {
                     _mpw.getPlotView().setLockedHint(true);
                     WebPlot p= _mpw.getPlotView().getPrimaryPlot();
                     if (p!=null) {
-                        WebPlotRequest request= p.getPlotState().getWebPlotRequest(Band.NO_BAND);
+                        WebPlotRequest request= p.getPlotState().getPrimaryRequest();
                         PlotRequestHistory.instance().add(request);
                     }
                 }

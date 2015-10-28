@@ -18,12 +18,9 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.PrintableOverlay;
 import edu.caltech.ipac.firefly.visualize.Vis;
-import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
-import edu.caltech.ipac.util.dd.Region;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +46,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     private String _subID = null;
     private String _title;
     private String _help;
-    private Drawer _drawer;
+    private LayerDrawer _drawer;
     private WebPlotView.MouseInfo _mouseInfo;
     private boolean _active = true;
     private Object _workerObj;
@@ -65,7 +62,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
                         DrawingManager drawingManager,
                         String title,
                         String help,
-                        Drawer drawer,
+                        LayerDrawer drawer,
                         WebPlotView.MouseInfo mouseInfo,
                         String enablePrefKey,
                         PrintableOverlay printMaker) {
@@ -95,24 +92,6 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     public void setCanDoRegion(boolean canDoRegion) {
         this.canDoRegion = canDoRegion;
-    }
-
-    public List<Region> asRegionList() {
-        List<Region> retval;
-        if (_drawer.getData()!=null) {
-            retval= new ArrayList<Region>(_drawer.getData().size()*2);
-            WebPlot plot= _pv.getPrimaryPlot();
-            if (canDoRegion && plot!=null) {
-                AutoColor ac= new AutoColor(plot.getColorTableID(),_drawer.getDefaultColor());
-                for(DrawObj obj : _drawer.getData()) {
-                    retval.addAll(obj.toRegion(plot,ac));
-                }
-            }
-        }
-        else {
-            retval= Collections.emptyList();
-        }
-        return retval;
     }
 
     public PrintableOverlay getPrintableOverlay() { return _printMaker; }
@@ -173,7 +152,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public void setActive(boolean active) { _active = active; }
     public boolean isActive() { return _active; }
 
-    public Drawer getDrawer() { return _drawer; }
+    public LayerDrawer getDrawer() { return _drawer; }
 
 
     public void fireEvent(GwtEvent<?> event) {
@@ -270,7 +249,7 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
 
     private void setOneVisible(boolean v) {
         if (_drawer==null) return;
-        if (_drawer.isVisible()==v && (!(useAsyncLoading() && _drawer.getData()==null)) ) return;
+        if (_drawer.isVisible()==v && (!(useAsyncLoading() && !_drawer.hasData() )) ) return;
 
         if (useAsyncLoading()) {
             if (v) {
@@ -335,14 +314,13 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
     public boolean isVisible() { return _drawer!=null ? _drawer.isVisible() : false ; }
 
     public String getColor() {
-        return _drawer!=null ? _drawer.getDefaultColor() : Drawer.DEFAULT_DEFAULT_COLOR;
+        return _drawer!=null ? _drawer.getDrawingDef().getDefColor() : Drawer.DEFAULT_DEFAULT_COLOR;
     }
 
-    public String getAutoColorInterpreted() {
+    public String getColorInterpreted() {
         String c= "black";
         if (_pv!=null && _pv.getPrimaryPlot()!=null) {
-            AutoColor ac= new AutoColor(_pv.getPrimaryPlot().getColorTableID(),_drawer.getDefaultColor());
-            c= ac.getColor(_drawer.getDefaultColor());
+            c= _drawer.getDrawingDef().getDefColor();
             if (!c.startsWith("#") && GwtUtil.isHexColor(c)) c= "#" + c;
         }
         return c;
@@ -364,7 +342,9 @@ public class WebLayerItem implements HasValueChangeHandlers<String> {
             public void done() {
                 for(WebLayerItem wl : getAllWithMatchingID()) {
                     if (wl._drawer!=null) {
-                        wl._drawer.setDefaultColor(c);
+                        DrawingDef d= wl._drawer.getDrawingDef().makeCopy();
+                        d.setDefColor(c);
+                        wl._drawer.setDrawingDef(d);
                         ValueChangeEvent.fire(WebLayerItem.this, c);
                     }
                 }

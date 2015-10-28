@@ -14,24 +14,24 @@ var ModalDialog = React.createClass({
         beforeClose: React.PropTypes.func,
         afterClose: React.PropTypes.func
     },
-    getDefaultProps: function () {
+    getDefaultProps() {
         return {
             title: '',
             showOverlay: true
         };
     },
-    getInitialState: function () {
+    getInitialState() {
         return {
             isVisible: true
         };
     },
-    show: function () {
+    show() {
         this.setState({isVisible: true});
     },
-    hide: function () {
+    hide() {
         this.setState({isVisible: false});
     },
-    componentWillUpdate: function (nextProps, nextState) {
+    componentWillUpdate(nextProps, nextState) {
         if (nextState.isVisible && this.props.beforeOpen) {
             this.props.beforeOpen();
         }
@@ -40,7 +40,7 @@ var ModalDialog = React.createClass({
             this.props.beforeClose();
         }
     },
-    componentDidUpdate: function (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         if (!prevState.isVisible && this.props.afterOpen) {
             this.props.afterOpen();
         }
@@ -49,20 +49,20 @@ var ModalDialog = React.createClass({
             this.props.afterClose();
         }
     },
-    render: function () {
+    render() {
 
         var overlay;
         var displayStyle = this.state.isVisible ? {display: 'block'} : {display: 'none'};
 
         if (this.props.showOverlay) {
-            overlay = (<div className="modal-dialog__overlay" style={displayStyle}></div>);
+            overlay = (<div className='modal-dialog__overlay' style={displayStyle}></div>);
         }
 
         return (
-            <section className="modal-wrapper">
+            <section className='modal-wrapper'>
                 {overlay}
-                <div className="modal-dialog" style={displayStyle}>
-                    <a role="button" className="modal-dialog--close" onClick={this.hide}>&times;</a>
+                <div className='modal-dialog' style={displayStyle}>
+                    <a role='button' className='modal-dialog--close' onClick={this.hide}>&times;</a>
                     <h2>{this.props.title}</h2>
                     {this.props.children}
                 </div>

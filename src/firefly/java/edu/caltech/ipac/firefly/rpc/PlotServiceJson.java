@@ -140,8 +140,8 @@ public class PlotServiceJson implements PlotServiceAsync {
         // todo
     }
 
-    public void setZoomLevel(PlotState state, float level, boolean isFullScreen, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.ZOOM, async, state,
+    public void setZoomLevel(PlotState stateAry[], float level, boolean isFullScreen, AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.ZOOM, async, stateAry,
                       new Param(ServerParams.LEVEL, level + ""),
                       new Param(ServerParams.FULL_SCREEN, isFullScreen + ""));
     }
@@ -160,32 +160,34 @@ public class PlotServiceJson implements PlotServiceAsync {
 
     public void recomputeStretch(PlotState state, StretchData[] stretchData, AsyncCallback<WebPlotResult> async) {
         List<Param> paramList = new ArrayList<Param>(4);
-        paramList.add(new Param(ServerParams.STATE, state.toString()));
+        paramList.add(new Param(ServerParams.STATE, state.serialize()));
         for (int i = 0; (i < stretchData.length && i < 3); i++) {
             paramList.add(new Param(ServerParams.STRETCH_DATA + i, stretchData[i].toString()));
         }
         doPlotService(ServerParams.STRETCH, async, paramList);
     }
 
-    public void crop(PlotState state,
+    public void crop(PlotState stateAry[],
                      ImagePt corner1,
                      ImagePt corner2,
                      boolean cropMultiAll,
                      final AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.CROP, async, state,
+        doPlotService(ServerParams.CROP, async, stateAry,
                       new Param(ServerParams.PT1, corner1.toString()),
                       new Param(ServerParams.PT2, corner2.toString()),
                       new Param(ServerParams.CRO_MULTI_ALL, cropMultiAll+"") );
     }
 
-    public void rotateNorth(PlotState state, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.ROTATE_NORTH, async, state,
+    public void rotateNorth(PlotState stateAry[],
+                            boolean north,
+                            float newZoomLevel,
+                            AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.ROTATE_NORTH, async, stateAry,
                       new Param(ServerParams.NORTH, north + ""),
                       new Param(ServerParams.ZOOM, newZoomLevel + "") );
-
     }
 
-    public void rotateToAngle(PlotState state,
+    public void rotateToAngle(PlotState state[],
                               boolean rotate,
                               double angle,
                               float newZoomLevel,
@@ -196,8 +198,8 @@ public class PlotServiceJson implements PlotServiceAsync {
                       new Param(ServerParams.ZOOM, newZoomLevel + "") );
     }
 
-    public void flipImageOnY(PlotState state, AsyncCallback<WebPlotResult> async) {
-        doPlotService(ServerParams.FLIP_Y, async, state);
+    public void flipImageOnY(PlotState stateAry[], AsyncCallback<WebPlotResult> async) {
+        doPlotService(ServerParams.FLIP_Y, async, stateAry);
     }
 
     public void changeColor(PlotState state, int colorTableId, AsyncCallback<WebPlotResult> async) {
@@ -276,9 +278,21 @@ public class PlotServiceJson implements PlotServiceAsync {
     //---------------------- Utility Routines -------------------------------------------
     //===================================================================================
 
+
+
+    private void doPlotService(String cmd, AsyncCallback<WebPlotResult> async, PlotState stateAry[], Param... paramAry) {
+        List<Param> paramList = new ArrayList<Param>(8);
+        for (int i = 0; (i < stateAry.length); i++) {
+            paramList.add(new Param(ServerParams.STATE + i, stateAry[i].serialize()));
+        }
+        paramList.addAll(Arrays.asList(paramAry));
+        doPlotService(cmd, async, paramList);
+    }
+
+
     private void doPlotService(String cmd, AsyncCallback<WebPlotResult> async, PlotState state, Param... paramAry) {
         List<Param> paramList = new ArrayList<Param>(8);
-        paramList.add(new Param(ServerParams.STATE, state.toString()));
+        paramList.add(new Param(ServerParams.STATE, state.serialize()));
         paramList.addAll(Arrays.asList(paramAry));
         doPlotService(cmd, async, paramList);
     }

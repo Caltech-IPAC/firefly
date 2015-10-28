@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
@@ -256,7 +257,7 @@ public class PlotLayoutPanel extends LayoutPanel {
             }
 
             @Override
-            public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+            public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
                 if (spt.getIY() - pv.getScrollY() < INLINE_TITLE_HEIGHT+1) {
                     hideInlineTitleTemporarily(Delay.USE_DELAY);
                     _mouseOverInlineTitle= true;

@@ -95,8 +95,6 @@ public abstract class AbstractPreviewData implements PreviewData {
 
     public void setUseScrollBars(boolean value) { _useSB = value; }
 
-    public boolean getUseScrollBars() { return _useSB; }
-
     public void setRotateNorthUp(boolean up) { _rotateNorthUp = up; }
     public boolean isRotateNorthUp() { return _rotateNorthUp; }
 

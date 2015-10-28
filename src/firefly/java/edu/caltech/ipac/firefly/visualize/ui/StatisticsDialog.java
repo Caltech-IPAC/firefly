@@ -121,7 +121,7 @@ public class StatisticsDialog extends BaseDialog implements WebEventListener {
         if(_wpv.getPrimaryPlot().getPlotState().isThreeColor()){
             TabPane<VerticalPanel> tab = new TabPane<VerticalPanel>();
 
-            for(Band band :_wpv.getPrimaryPlot().getPlotState().getBands()){
+            for(Band band :_wpv.getPrimaryPlot().getBands()){
                 VerticalPanel vp = new VerticalPanel();
 
                 HashMap<Metrics,Metric> metric = metricMap.get(band);

@@ -32,10 +32,10 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.draw.AdvancedGraphics;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DirectionArrowDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.Drawer;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.ImageCoordsBoxObj;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -61,7 +61,6 @@ public class ThumbnailView extends Composite {
     private final DefaultDrawable _drawable= new DefaultDrawable();
     private final WebPlotView _pv;
     private Drawer _drawer= null;
-    private WebPlot _lastPlot= null;
     private VerticalPanel tnWrapper= new VerticalPanel();
     private boolean _parentShowing= true;
     private boolean _needsUpdate= false;
@@ -208,7 +207,6 @@ public class ThumbnailView extends Composite {
 
         WebPlot plot= _pv.getPrimaryPlot();
         int arrowLength= (width+height)/3;
-        _lastPlot= plot;
         float thumbZoomFact= getThumbZoomFact(plot,width,height);
         double iWidth= plot.getImageWidth();
         double iHeight= plot.getImageHeight();
@@ -248,7 +246,8 @@ public class ThumbnailView extends Composite {
                 _dataN= new DirectionArrowDataObj(spt1, spt2,"N");
                 _dataE= new DirectionArrowDataObj(sptE1, sptE2,"E");
 
-                _drawer.setDefaultColor(AutoColor.DRAW_1);
+//                _drawer.setDefaultColor(DrawingDef.COLOR_DRAW_1);
+                _drawer.setDrawingDef(new DrawingDef(DrawingDef.COLOR_DRAW_1));
 
                 tnWrapper.setPixelSize(maxSize,maxSize);
 
@@ -289,16 +288,13 @@ public class ThumbnailView extends Composite {
 
         float fact= getThumbZoomFact(plot,thumbWidth,thumbHeight) / plot.getZoomFact();
 
-        float zfact= plot.getZoomFact();
-        int offX= (int)(plot.getOffsetX()*zfact);
-        int offY= (int)(plot.getOffsetY()*zfact);
 
         ScreenPt wcsMargin= _pv.getWcsMargins();
         int mx= wcsMargin.getIX();
         int my= wcsMargin.getIY();
 
-        int tsX= (int)((_pv.getScrollX()-(offX+mx))*fact);
-        int tsY= (int)((_pv.getScrollY()-(offY+my))*fact);
+        int tsX= (int)((_pv.getScrollX()-mx)*fact);
+        int tsY= (int)((_pv.getScrollY()-my)*fact);
         int tsWidth= (int)(_pv.getScrollWidth()*fact);
         int tsHeight= (int)(_pv.getScrollHeight()*fact);
 
@@ -307,7 +303,7 @@ public class ThumbnailView extends Composite {
                                                     tsWidth,tsHeight);
         _scrollBox.setShadow(new AdvancedGraphics.Shadow(2,1,1,"white"));
         _scrollBox.setStyle(ImageCoordsBoxObj.Style.LIGHT);
-        _scrollBox.setColor(AutoColor.DRAW_2);
+        _scrollBox.setColor(DrawingDef.COLOR_DRAW_2);
     }
 
 
@@ -319,7 +315,7 @@ public class ThumbnailView extends Composite {
         ImageWorkSpacePt ipt= plot.getImageWorkSpaceCoords(new ScreenPt(thumbX,thumbY),fact);
         ScreenPt spt= plot.getScreenCoords(ipt);
         if (moveImage) plot.getPlotView().centerOnPoint(ipt);
-        _pv.fireMouseMove(spt);
+        _pv.fireMouseMove(spt,null);
     }
 
     private String createImageUrl(String imageURL) {
@@ -327,7 +323,7 @@ public class ThumbnailView extends Composite {
         Param[] params= new Param[] {
                 new Param("file", imageURL),
                 new Param("type", "thumbnail"),
-                new Param("state", plot.getPlotState().toString()),
+                new Param("state", plot.getPlotState().serialize()),
 //                new Param("ctx", plot.getPlotState().getContextString()),
         };
         return WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "sticky/FireFly_ImageDownload", params);

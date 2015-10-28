@@ -122,7 +122,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _allowImageLock  = false; // show the image lock button in the toolbar
     private boolean      _rotateNorth     = false; // rotate this plot north when plotting
     private boolean      _userModifiedRotate= false; // the user modified the rotate status
-    private boolean      _showScrollBars  = false;  // if true show the scroll bar otherwise just use google maps type scrolling
     private boolean      _rememberZoom    = false; // remember the last zoom level and display the next plot at that level
     private boolean      _autoTearDown    = true;  // tear down when there is a new search
     private boolean      _saveCorners     = false; // save the four corners of the plot to the ActiveTarget singleton
@@ -402,15 +401,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public void setLockImage(boolean lock) { _allowImageLock= lock; }
 
-    public void setShowScrollBars(boolean show) {
-        Vis.assertInitialized();
-        if (isInit()) {
-            _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpanded());
-        }
-        _showScrollBars= show;
-    }
-
-    boolean getShowScrollBars() { return _showScrollBars; }
     public void setWorkingMsg(String workingMsg)  {_workingMsg= workingMsg;}
 
     public void setErrorDisplayHandler(PlotError plotError) { _plotError= plotError; }
@@ -592,7 +582,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             WebPlot p= getCurrentPlot();
             if (p!=null) {
                 PlotState state= p.getPlotState();
-                WebPlotRequest r= state.getWebPlotRequest(state.firstBand());
+                WebPlotRequest r= state.getWebPlotRequest();
                 if (r.getTitleOptions()==WebPlotRequest.TitleOptions.FILE_NAME) {
                     String pfx= r.getTitleFilenameModePfx()==null ? "from " : r.getTitleFilenameModePfx() + " ";
                     if (t.startsWith(pfx)) {
@@ -700,9 +690,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 }
                 if (r.getRotateNorthSuggestion() && !_userModifiedRotate) {
                     r.setRotateNorth(true);
-                }
-                if (r.containsParam(WebPlotRequest.SHOW_SCROLL_BARS)) {
-                    setShowScrollBars(r.getShowScrollBars());
                 }
                 if (r.containsParam(WebPlotRequest.ALLOW_IMAGE_SELECTION)) {
                     setImageSelection(r.isAllowImageSelection());
@@ -880,7 +867,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             performRotation= true;
         }
 
-        if (performRotation) VisTask.getInstance().rotateNorth(plot, rotateNorth, -1, this);
+        if (performRotation) VisTask.getInstance().rotateNorth(rotateNorth, -1, this);
     }
 
 
@@ -1009,7 +996,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                                       if (_plotView.getPrimaryPlot() != null) {
                                           PointSelection sel = (PointSelection) _plotView.getAttribute(WebPlot.ACTIVE_POINT);
                                           if (sel!=null) showSelectionBar(SelType.POINT);
-                                          else           hideSelectionBar();
+//                                          else           hideSelectionBar();
                                       }
                                   }
                               });
@@ -1176,14 +1163,17 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 //        }
 //    }
 
+    Ext.Extension[] lastExtList= null;
+
     public void recomputeUserExtensionOptions()  {
         if (!_initialized) return;
-        areaSelectAdditionActionBar.clear();
-        lineSelectAdditionActionBar.clear();
-        pointSelectAdditionActionBar.clear();
         List<Ext.Extension> addedList= new ArrayList<Ext.Extension>(5);
-        List<Ext.Extension> list= AllPlots.getInstance().getExtensionList(plotId);
-        if (list!=null) {
+        Ext.Extension[] list= AllPlots.getInstance().getExtensionList(plotId);
+        if (!ComparisonUtil.equalsByRef(list,lastExtList)) {
+            areaSelectAdditionActionBar.clear();
+            lineSelectAdditionActionBar.clear();
+            pointSelectAdditionActionBar.clear();
+            lastExtList= list;
             for(Ext.Extension ext : list) {
                 boolean found= false;
                 for(Ext.Extension testE : addedList) {
@@ -1285,7 +1275,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
             }
         }
         AllPlots.getInstance().getMouseReadout().setEnabled(true);
-        _plotView.setScrollBarsEnabled(_showScrollBars || super.isExpandedSingleView());
         _rotateNorth= (plot.getRotationType()== PlotState.RotateType.NORTH);
         if (_turnOnGridAfterPlot!= WebPlotRequest.GridOnStatus.FALSE) {
             GridCmd cmd= (GridCmd)AllPlots.getInstance().getCommand(GridCmd.CommandName);

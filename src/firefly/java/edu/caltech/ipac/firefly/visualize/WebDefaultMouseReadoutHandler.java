@@ -424,7 +424,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
         Result result= makeFluxResult(zValue,plot,band);
         readout.setValue(getBandOffset(plot, band), result._label, result._value, getColorStyle(band), true, true);
         String fluxUnits= plot.getFitsData(band).getFluxUnits();
-        WebMouseReadoutPerm.notifyExternal(plot.getScreenCoords(ipt),ipt,band, zValue, fluxUnits,true);
+        WebMouseReadoutPerm.notifyExternal(plot.getScreenCoords(ipt),ipt,band, zValue, fluxUnits,true,false);
         addFlux(plot,ipt,band,zValue);
     }
 
@@ -876,11 +876,12 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
 
     private void findFlux(final WebPlot plot,
                           final Readout readout,
-                          final ImagePt pt)  {
-        plot.getFluxLight( pt,new AsyncCallback<String[]>() {
+                          final ImagePt ipt)  {
+        WebMouseReadoutPerm.notifyExternal(plot.getScreenCoords(ipt),ipt,Band.NO_BAND, Double.NaN, null,false, true);
+        plot.getFluxLight( ipt,new AsyncCallback<String[]>() {
             public void onFailure(Throwable throwable) {
                 for (Band band : plot.getBands()) {
-                    setFluxLater(Double.NaN,pt,
+                    setFluxLater(Double.NaN,ipt,
                                  readout,plot,band);
                 }
             }
@@ -890,7 +891,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                     Band bands[]= plot.getBands();
                     for(int i= 0; (i<bands.length); i++) {
                         double val= Double.parseDouble(strFlux[i]);
-                        setFluxLater(val,pt,
+                        setFluxLater(val,ipt,
                                      readout,plot,bands[i]);
                     }
                 }
@@ -900,7 +901,7 @@ public class WebDefaultMouseReadoutHandler implements WebMouseReadoutHandler {
                         readout.setValue(NEW_FIRST_FLUX_ROW+i,getFluxLabel(plot,bands[i]),"Reloading...",
                                          getColorStyle(bands[i]));
                     }
-                    findFluxTry2(plot,readout,pt);
+                    findFluxTry2(plot,readout,ipt);
                 }
             }
         });

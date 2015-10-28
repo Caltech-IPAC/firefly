@@ -2,9 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*jshint esnext:true*/
-/*jshint curly:false*/
-
 //LZ 06/11/15 add arcsine and power law gamma parameters
 //LZ 06/26/15 add zp and wp parameters
 import validator from 'validator';
@@ -61,20 +58,20 @@ class RangeValues {
                  zscaleSamplesPerLine= 120,
                  bias= 0.5,
                  contrast= 1.0 ) {
-        this.lowerWhich= Number.parseInt(lowerWhich+'');
-        this.lowerValue= Number.parseFloat(lowerValue+'');
-        this.upperWhich= Number.parseInt(upperWhich+'');
-        this.upperValue= Number.parseFloat(upperValue+'');
-        this.drValue = Number.parseFloat(drValue+'');
-        this.bpValue = Number.parseFloat(bpValue+'');
-        this.wpValue = Number.parseFloat(wpValue+'');
-        this.gammaValue=Number.parseFloat(gammaValue+'');
-        this.algorithm=  Number.parseInt(algorithm+'');
-        this.zscaleContrast= Number.parseInt(zscaleContrast+'');
-        this.zscaleSamples= Number.parseInt(zscaleSamples+''); /* desired number of pixels in sample */
-        this.zscaleSamplesPerLine= Number.parseInt(zscaleSamplesPerLine+''); /* optimal number of pixels per line */
-        this.bias= Number.parseFloat(bias+'');
-        this.contrast= Number.parseFloat(contrast+'');
+        this.lowerWhich= Number.parseInt(`${lowerWhich}`);
+        this.lowerValue= Number.parseFloat(`${lowerValue}`);
+        this.upperWhich= Number.parseInt(`${upperWhich}`);
+        this.upperValue= Number.parseFloat(`${upperValue}`);
+        this.drValue = Number.parseFloat(`${drValue}`);
+        this.bpValue = Number.parseFloat(`${bpValue}`);
+        this.wpValue = Number.parseFloat(`${wpValue}`);
+        this.gammaValue=Number.parseFloat(`${gammaValue}`);
+        this.algorithm=  Number.parseInt(`${algorithm}`);
+        this.zscaleContrast= Number.parseInt(`${zscaleContrast}`);
+        this.zscaleSamples= Number.parseInt(`${zscaleSamples}`); /* desired number of pixels in sample */
+        this.zscaleSamplesPerLine= Number.parseInt(`${zscaleSamplesPerLine}`); /* optimal number of pixels per line */
+        this.bias= Number.parseFloat(`${bias}`);
+        this.contrast= Number.parseFloat(`${contrast}`);
     }
 
     /**
@@ -86,7 +83,7 @@ class RangeValues {
      *
      * @return
      */
-    static create(stretchType, lowerValue, upperValue, drValue,bpValue, wpValue, gammaValue, algorithm) {
+    static create(stretchType, lowerValue, upperValue, drValue, bpValue, wpValue, gammaValue, algorithm) {
         var s= PERCENTAGE;
         if (stretchType) {
             stretchType= stretchType.toLowerCase();
@@ -170,7 +167,7 @@ class RangeValues {
         var params= sIn.split(',').map( (v) => validator.toFloat(v) );
         var valid= params.every( (v)=> typeof v !== 'undefined' && !isNaN(v) );
 
-        return valid ? new RangeValues(...params) : false;
+        return valid ? new RangeValues(...params) : null;
     }
 
     serialize() {

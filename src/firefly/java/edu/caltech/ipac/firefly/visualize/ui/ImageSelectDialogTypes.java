@@ -4,10 +4,14 @@
 package edu.caltech.ipac.firefly.visualize.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.fftools.FFToolEnv;
@@ -73,7 +77,7 @@ public class ImageSelectDialogTypes {
         request.setZoomToWidth(imageSelectAccess.getPlotWidgetWidth());
     }
 
-    //======================================================================
+//======================================================================
 //------------------ ISSA ----------------------------------------------
 //======================================================================
     public class IssaType extends PlotTypeUI {
@@ -367,7 +371,7 @@ public class ImageSelectDialogTypes {
 
 
 
-    //======================================================================
+//======================================================================
 //------------------ Fits Files ----------------------------------------
 //======================================================================
     public class FileType extends PlotTypeUI {
@@ -377,6 +381,9 @@ public class ImageSelectDialogTypes {
         private MaskPane _maskPane;
         private PlotWidgetOps _ops= null;
         private String cacheKey= "FitsUpload-"+System.currentTimeMillis();
+        private FlowPanel root= new FlowPanel();
+        private final SimpleInputField multiAction = SimpleInputField.createByProp(_prop.makeBase("multi.action"));
+        private final SimpleInputField ext = SimpleInputField.createByProp(_prop.makeBase("multi.ext"));
 
 
         FileType() {
@@ -392,13 +399,12 @@ public class ImageSelectDialogTypes {
             _form.setEncoding(FormPanel.ENCODING_MULTIPART);
             _form.setMethod(FormPanel.METHOD_POST);
             _form.addStyleName("image-select-file-submit");
-            VerticalPanel panel = new VerticalPanel();
-            panel.setSpacing(10);
+            SimplePanel panel = new SimplePanel();
             _form.setWidget(panel);
             _upload.setName("uploadFormElement");
 //            panel.add(new Hidden("ext", "fits"));
-            panel.add(_upload);
-            panel.setSpacing(5);
+            panel.setWidget(_upload);
+            GwtUtil.setStyle(panel, "padding", "20px 0 25px 30px");
 
             _form.addSubmitHandler(new FormPanel.SubmitHandler() {
                 public void onSubmit(FormPanel.SubmitEvent ev) {
@@ -412,15 +418,14 @@ public class ImageSelectDialogTypes {
                 public void onSubmitComplete(FormPanel.SubmitCompleteEvent ev) {
 //                    Window.alert("I got the results");
                     String results = ev.getResults();
-                    if (results!=null) {
+                    if (results != null) {
                         if (results.startsWith("<")) {
                             results = results.substring(results.indexOf('>') + 1);
                             _file = results.substring(0, results.indexOf('<'));
                         } else {
                             _file = results;
                         }
-                    }
-                    else {
+                    } else {
                         _file = cacheKey;
                     }
                     _maskPane.hide();
@@ -429,7 +434,21 @@ public class ImageSelectDialogTypes {
 
                 }
             });
-            tabs.addTab(_form, _prop.getTitle("file"));
+
+            GwtUtil.setHidden(ext,multiAction.getField().getValue().equals("loadAll"));
+
+            multiAction.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                @Override
+                public void onValueChange(ValueChangeEvent<String> event) {
+                    GwtUtil.setHidden(ext,multiAction.getField().getValue().equals("loadAll"));
+                }
+            });
+
+
+            root.add(_form);
+            root.add(multiAction);
+            root.add(ext);
+            tabs.addTab(root, _prop.getTitle("file"));
         }
 
         public WebPlotRequest createRequest() {
@@ -437,9 +456,15 @@ public class ImageSelectDialogTypes {
             WebPlotRequest request = WebPlotRequest.makeFilePlotRequest(_file);
             request.setTitleOptions(WebPlotRequest.TitleOptions.FILE_NAME);
             insertZoomType(request);
+            if (multiAction.getField().getValue().equals("loadOne")) {
+                request.setMultiImageIdx(ext.getField().getNumberValue().intValue());
+            }
+
             _file = null;
             return request;
         }
+
+        public int getHeight() { return 160; }
 
         protected boolean validateInput() throws ValidationException {
             if (StringUtils.isEmpty(_upload.getFilename())) {
@@ -532,35 +557,54 @@ public class ImageSelectDialogTypes {
 //------------------ URL -----------------------------------------------
 //======================================================================
     public class URLType extends PlotTypeUI {
-        private final SimpleInputField _urlField = SimpleInputField.createByProp(_prop.makeBase("url.input"));
+        private final SimpleInputField urlField = SimpleInputField.createByProp(_prop.makeBase("url.input"));
+        private final SimpleInputField multiAction = SimpleInputField.createByProp(_prop.makeBase("multi.action"));
+        private final SimpleInputField ext = SimpleInputField.createByProp(_prop.makeBase("multi.ext"));
 
         URLType() {
             super(false, false, false, false);
         }
 
         public void addTab(TabPane<Panel> tabs) {
-            VerticalPanel vp = new VerticalPanel();
-            vp.add(_urlField);
-            tabs.addTab(vp, _prop.getTitle("url"));
+            FlowPanel fp= new FlowPanel();
+            fp.add(urlField);
+            fp.add(multiAction);
+            fp.add(ext);
+
+            GwtUtil.setStyle(urlField, "padding", "20px 0 25px 30px");
+            tabs.addTab(fp, _prop.getTitle("url"));
+
+
+            GwtUtil.setHidden(ext,multiAction.getField().getValue().equals("loadAll"));
+
+            multiAction.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+                @Override
+                public void onValueChange(ValueChangeEvent<String> event) {
+                    GwtUtil.setHidden(ext, multiAction.getField().getValue().equals("loadAll"));
+                }
+            });
 
         }
 
         public WebPlotRequest createRequest() {
-            WebPlotRequest req = WebPlotRequest.makeURLPlotRequest(_urlField.getValue());
+            WebPlotRequest req = WebPlotRequest.makeURLPlotRequest(urlField.getValue());
             req.setTitleOptions(WebPlotRequest.TitleOptions.FILE_NAME);
             insertZoomType(req);
+            if (multiAction.getField().getValue().equals("loadOne")) {
+                req.setMultiImageIdx(ext.getField().getNumberValue().intValue());
+            }
             return req;
         }
 
-        public void updateSizeArea() {
-        }
+        public void updateSizeArea() { }
+        public int getHeight() { return 160; }
 
         public String getDesc() {
             return _prop.getTitle("url");
         }
 
         protected boolean validateInput() throws ValidationException {
-            if (StringUtils.isEmpty(_urlField.getValue())) {
+            if (StringUtils.isEmpty(urlField.getValue())) {
                 throw new ValidationException(_prop.getError("url.noinput"));
             }
             return true;

@@ -12,8 +12,6 @@ import React from 'react/addons';
 
 var AllDialogsContainer = React.createClass(
 {
-
-
     propTypes: {
 
     },

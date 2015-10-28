@@ -27,6 +27,7 @@ import edu.caltech.ipac.visualize.plot.Circle;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.GeomException;
+import edu.caltech.ipac.visualize.plot.ImageMask;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotGroup;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -41,17 +42,15 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 /**
  * User: roby
@@ -115,13 +114,13 @@ public class PlotServUtils {
 
     static void writeThumbnail(ImagePlot plot, ActiveFitsReadGroup frGroup, File f, int thumbnailSize) throws IOException, FitsException {
         ImagePlot tPlot= (ImagePlot)plot.makeSharedDataPlot(frGroup);
-        int div= Math.max( plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight() );
+        int div= Math.max(plot.getPlotGroup().getGroupImageWidth(), plot.getPlotGroup().getGroupImageHeight());
 
         tPlot.getPlotGroup().setZoomTo(thumbnailSize/(float)div);
 
         int ext= f.getName().endsWith(JPG_NAME_EXT) ? PlotOutput.JPEG : PlotOutput.PNG;
 
-        new PlotOutput(tPlot,frGroup).writeThumbnail(f,ext);
+        new PlotOutput(tPlot,frGroup).writeThumbnail(f, ext);
         tPlot.freeResources();
     }
 
@@ -134,12 +133,11 @@ public class PlotServUtils {
 
         PlotOutput po= new PlotOutput(plot,frGroup);
         List<PlotOutput.TileFileInfo> results;
-        int outType= (plot.getPlotGroup().getZoomFact()<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
         if (fullScreen) {
-            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, tileCnt>0);
+            results= po.writeTilesFullScreen(imagefileDir, root,PlotOutput.PNG, plot.isUseForMask(), tileCnt>0);
         }
         else {
-            results= po.writeTiles(imagefileDir, root,outType,tileCnt);
+            results= po.writeTiles(imagefileDir, root,PlotOutput.PNG,plot.isUseForMask(),tileCnt);
         }
         PlotImages images= new PlotImages(root,results.size(), plot.getScreenWidth(), plot.getScreenHeight(), plot.getZoomFactor());
         PlotImages.ImageURL imageURL;
@@ -159,15 +157,14 @@ public class PlotServUtils {
 
 
 
-    static PlotImages makeImageTilesNoCreation(File      imagefileDir,
-                                               String    root,
-                                               float     zfact,
-                                               int       screenWidth,
-                                               int       screenHeight) {
+    static PlotImages defineTiles(File imagefileDir,
+                                  String root,
+                                  float zfact,
+                                  int screenWidth,
+                                  int screenHeight) {
 
         List<PlotOutput.TileFileInfo> results;
-        int outType= (zfact<.55) ? PlotOutput.JPEG : PlotOutput.PNG;
-        results= PlotOutput.makeTilesNoCreation(imagefileDir, zfact, root,outType, screenWidth, screenHeight);
+        results= PlotOutput.defineTiles(imagefileDir, zfact, root, PlotOutput.PNG, screenWidth, screenHeight);
         PlotImages images= new PlotImages(root,results.size(), screenWidth, screenHeight, zfact);
         PlotImages.ImageURL imageurl;
         String relFile;
@@ -202,9 +199,9 @@ public class PlotServUtils {
 
         }
         String fname= originalFile.getName();
-        File f= File.createTempFile(FileUtil.getBase(fname)+"-rot-north",
-                                    "."+FileUtil.FITS,
-                                    ServerContext.getVisSessionDir());
+        File f= File.createTempFile(FileUtil.getBase(fname) + "-rot-north",
+                "." + FileUtil.FITS,
+                ServerContext.getVisSessionDir());
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(f), (int) FileUtil.MEG);
 //        ImagePlot.writeFile(stream, new FitsRead[]{northFR});
         if (northFR!=null) northFR.writeSimpleFitsFile(stream);
@@ -271,7 +268,7 @@ public class PlotServUtils {
     public static void writeFullImageFileToStream(OutputStream oStream, ImagePlot plot, ActiveFitsReadGroup frGroup) throws IOException {
 
         File f= getUniquePngFileName("imageDownload", ServerContext.getVisSessionDir());
-        createFullTile(plot, frGroup,f);
+        createFullTile(plot, frGroup, f);
         FileUtil.writeFileToStream(f, oStream);
     }
 
@@ -340,7 +337,7 @@ public class PlotServUtils {
         if (width== PLOT_FULL_WIDTH) width= plot.getScreenWidth();
         if (height== PLOT_FULL_HEIGHT) height= plot.getScreenHeight();
 
-        po.writeTile(f, ext, x, y, width, height, null);
+        po.writeTile(f, ext, plot.isUseForMask(),x, y, width, height, null);
         return f;
 
     }
@@ -550,6 +547,33 @@ public class PlotServUtils {
         return new ImagePlot(null, frGroup,initialZoomLevel, threeColor, band, initColorID, stretch);
     }
 
+    /**
+     * Sort the imageMask array in the ascending order based on the mask's index (the bit offset)
+     * When such mask arary passed to create IndexColorModel, the number of the colors can be decided using the
+     * masks colors and store the color according to the order of the imageMask in the array.
+     *
+     * @param imageMasks
+     * @return
+     */
+    private static ImageMask[] sortImageMaskArrayInIndexOrder(ImageMask[] imageMasks){
+
+        Map<Integer, ImageMask> unsortedMap= new HashMap<Integer, ImageMask>();
+        for (int i=0;i<imageMasks.length; i++){
+            unsortedMap.put(new Integer(imageMasks[i].getIndex()), imageMasks[i]);
+        }
+
+        Map<Integer, ImageMask> treeMap = new TreeMap<Integer, ImageMask>(unsortedMap);
+        return treeMap.values().toArray(new ImageMask[0]);
+    }
+
+    static ImagePlot makeMaskImagePlot(ActiveFitsReadGroup frGroup,
+                                       float               initialZoomLevel,
+                                       WebPlotRequest      request,
+                                       RangeValues         stretch) throws FitsException {
+
+         ImageMask maskDef[]= createMaskDefinition(request);
+         return new ImagePlot(null, frGroup,initialZoomLevel, sortImageMaskArrayInIndexOrder(maskDef) , stretch);
+    }
 
     public static String convertZoomToString(float level) {
         String retval;
@@ -587,6 +611,27 @@ public class PlotServUtils {
         return retval;
     }
 
+    public static ImageMask[] createMaskDefinition(WebPlotRequest r) {
+        List<String> maskColors= r.getMaskColors();
+        Color cAry[]= new Color[maskColors.size()];
+        List<ImageMask> masksList=  new ArrayList<ImageMask>();
+        int bits= r.getMaskBits();
+        int colorIdx= 0;
+        for(String htmlColor : maskColors) {
+            cAry[colorIdx++]= convertColorHtmlToJava(htmlColor);
+        }
+        colorIdx= 0;
+
+        for(int j= 0; (j<31); j++) {
+            if (((bits>>j) & 1) != 0) {
+                Color c= (colorIdx<cAry.length) ? cAry[colorIdx] : Color.pink;
+                colorIdx++;
+                masksList.add(new ImageMask(j,c));
+            }
+        }
+        return masksList.toArray(new ImageMask[masksList.size()]);
+    }
+
     public static FitsRead[] createBlankFITS(WebPlotRequest r) throws FailedRequestException, IOException {
         FitsRead retval[];
         Circle c=PlotServUtils.getRequestArea(r);
@@ -618,6 +663,42 @@ public class PlotServUtils {
             throw new FailedRequestException("Blank image requires a center position");
         }
         return retval;
+    }
+
+    public static Color convertColorHtmlToJava(String color) {
+        Color c;
+        if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
+            int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);
+            c= new Color(rgb[0],rgb[1],rgb[2]);
+        }
+        else {
+            if      (color.equals("black"))   c= Color.black;
+            else if (color.equals("aqua"))    c= new Color(0,255,255);
+            else if (color.equals("blue"))    c= Color.blue;
+            else if (color.equals("cyan"))    c= Color.cyan;
+            else if (color.equals("fuchsia")) c= new Color(255,0,255);
+            else if (color.equals("gray"))    c= new Color(128,128,128);
+            else if (color.equals("green"))   c= new Color(0,128,0);
+            else if (color.equals("lime"))    c= Color.green;  // this is correct, lime is 0,255,0
+            else if (color.equals("magenta")) c= Color.magenta;
+            else if (color.equals("maroon"))  c= new Color(128,0,0);
+            else if (color.equals("navy"))    c= new Color(0,0,128);
+            else if (color.equals("olive"))   c= new Color(128,128,0);
+            else if (color.equals("orange"))  c= Color.orange;
+            else if (color.equals("pink"))    c= Color.pink;
+            else if (color.equals("purple"))  c= new Color(128,0,128);
+            else if (color.equals("red"))     c= Color.red;
+            else if (color.equals("silver"))  c= new Color(192,192,192);
+            else if (color.equals("teal"))    c= new Color(0,128,128);
+            else if (color.equals("white"))   c= Color.white;
+            else if (color.equals("yellow"))  c= Color.yellow;
+            else {
+                // lightGray or white is a better presentation for "unknown" color string. -TLau
+                c= Color.lightGray;
+                _log.debug("convertColorHtmlToJava(String color) does not understand " + color + ".  Color.lightGray is assigned.");
+            }
+        }
+        return c;
     }
 }
 

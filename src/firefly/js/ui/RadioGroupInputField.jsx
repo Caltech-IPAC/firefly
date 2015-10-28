@@ -1,11 +1,11 @@
 import React from 'react/addons';
-import FormStoreLinkMixin from '../ui/model/FormStoreLinkMixin.js';
+import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var RadioGroupInputField= React.createClass(
     {
-        mixins: [React.addons.PureRenderMixin, FormStoreLinkMixin],
+        mixins: [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             options: React.PropTypes.array.isRequired
@@ -40,14 +40,16 @@ var RadioGroupInputField= React.createClass(
                         tooltip={this.getTip()}
                         labelWidth={this.props.labelWidth}
                     />
-                    {this.props.options.map(option => {
-                        return <input type="radio"
+                    {this.props.options.map((option) => {
+                        return (
+                            <input type='radio'
                                 key={option.value}
                                 name={this.props.fieldKey}
                                 value={option.value}
                                 defaultChecked={this.getValue()===option.value}
                                 onChange={this.onChange}
-                            >&nbsp;{option.label}&nbsp;&nbsp;</input>;
+                            >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                        );
                         })}
                 </div>
             );

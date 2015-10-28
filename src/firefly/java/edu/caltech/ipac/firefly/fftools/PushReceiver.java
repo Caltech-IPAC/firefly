@@ -31,6 +31,7 @@ import edu.caltech.ipac.firefly.visualize.WebHistogramOps;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomUtil;
+import edu.caltech.ipac.firefly.visualize.ui.MaskAdjust;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
@@ -77,6 +78,10 @@ public class PushReceiver implements WebEventListener {
             externalPan(data);
         } else if (name.equals(Name.PUSH_ZOOM)) {
             externalZoom(data);
+        } else if (name.equals(Name.PUSH_ADD_MASK)) {
+            externalAddMask(data);
+        } else if (name.equals(Name.PUSH_REMOVE_MASK)) {
+            externalRemoveMask(data);
         } else if (name.equals(Name.PUSH_RANGE_VALUES)) {
             externalRangeValues(data);
         } else if (name.equals(Name.PUSH_XYPLOT_FILE)) {
@@ -173,6 +178,37 @@ public class PushReceiver implements WebEventListener {
             if (mpw!=null)  mpw.getPlotView().centerOnPoint(new ImagePt(x,y));
         }
     }
+
+
+    private void externalAddMask(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+
+
+        String maskId= req.getRequestId();
+        int bitNumber= req.getIntParam(ServerParams.BIT_NUMBER);
+        int imageNumber= req.getIntParam(ServerParams.IMAGE_NUMBER);
+        String color= req.getParam(ServerParams.COLOR);
+        String bitDesc= req.getParam(ServerParams.BIT_DESC);
+        String fileKey= req.getParam(ServerParams.FILE);
+        String plotIdStr= req.getParam(ServerParams.PLOT_ID);
+        String pIDAry[]= !StringUtils.isEmpty(plotIdStr) ? plotIdStr.split(",") : null;
+
+        if (pIDAry!=null) {
+            for(String plotId : pIDAry) {
+                MaskAdjust.addMask(maskId,plotId,bitNumber,imageNumber,color,bitDesc,fileKey);
+            }
+        }
+    }
+
+
+    private void externalRemoveMask(final String in) {
+        ServerRequest req= ServerRequest.parse(in, new ServerRequest());
+        String maskId= req.getRequestId();
+        MaskAdjust.removeMask(maskId);
+    }
+
+
+
 
     private void externalZoom(final String in) {
         ServerRequest req= ServerRequest.parse(in, new ServerRequest());

@@ -6,6 +6,7 @@
  * Date: 3/5/12
  */
 
+/*eslint prefer-template:0 */
 import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
@@ -56,19 +57,19 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
                         if (result[0].error) {
                             reject(new Error(result[0].error));
                         } else {
-                            reject(new Error('Unknown failure: ' + buf));
+                            reject(new Error(`Unknown failure: ${buf}`));
                         }
                     }
                 }
                 else {
-                    reject(new Error('Could not parse: ' + buf));
+                    reject(new Error(`Could not parse: ${buf}`));
                 }
             });
 
             res.on('end', function () {
             });
             res.on('close', function (err) {
-                reject(new Error(err? 'Error Code:' +err.code : 'unknown'));
+                reject(new Error(err? `Error Code: ${err.code}` : 'unknown'));
             });
         });
 

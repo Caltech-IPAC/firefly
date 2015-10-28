@@ -29,6 +29,6 @@ export const getColorHistogram= function(state,band,width,height) {
     paramList.push({name:ServerParams.BAND, value: band.toString()});
 
     return doService(doJsonP(), ServerParams.HISTOGRAM, paramList
-    ).then(data => {return parse(data); });
+    ).then((data) => {return parse(data); });
 };
 

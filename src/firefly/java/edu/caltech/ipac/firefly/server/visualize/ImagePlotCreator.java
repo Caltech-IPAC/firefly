@@ -17,7 +17,6 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.ZoomType;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.FitsRead;
@@ -58,7 +57,7 @@ public class ImagePlotCreator {
          Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
          for(int i= 0; (i<readAry.length); i++)  {
              readInfo= readAry[i];
-             WebPlotRequest req= stateAry[i].getPrimaryWebPlotRequest();
+             WebPlotRequest req= stateAry[i].getWebPlotRequest();
              if (readAry.length>3) {
                  PlotServUtils.updateProgress(req, ProgressStat.PType.CREATING,
                                               PlotServUtils.CREATING_MSG+": "+ (i+1)+" of "+readAry.length);
@@ -89,46 +88,47 @@ public class ImagePlotCreator {
                                                                             IOException {
 
 
-         ImagePlotInfo retval;
-         ImagePlot plot= null;
-         boolean first= true;
-         Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
-         Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(5);
+        ImagePlotInfo retval;
+        ImagePlot plot= null;
+        boolean first= true;
+        Map<Band,WebFitsData> wfDataMap= new LinkedHashMap<Band,WebFitsData>(5);
+        Map<Band,ModFileWriter> fileWriterMap= new LinkedHashMap<Band,ModFileWriter>(5);
         ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
-         for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
-             Band band= entry.getKey();
-             FileReadInfo readInfoAry[]= entry.getValue();
-             FileReadInfo readInfo= readInfoAry[state.getImageIdx(band)];
-             frGroup.setFitsRead(band,readInfo.getFitsRead());
-             if (first) {
-                 plot= createImagePlot(state,frGroup,readInfo.getBand(), readInfo.getDataDesc(),zoomChoice,false);
-                 if (state.isThreeColor()) {
-                     plot.setThreeColorBand(state.isBandVisible(readInfo.getBand()) ? readInfo.getFitsRead() :null,
-                                            readInfo.getBand(),frGroup);
-                 }
-                 if (readInfo.getModFileWriter()!=null) {
-                     fileWriterMap.put(band,readInfo.getModFileWriter());
-                 }
-                 first= false;
-             }
-             else {
-                 ModFileWriter mfw= createBand(state,plot,readInfo,frGroup);
-                 if (mfw!=null) {
-                     fileWriterMap.put(band,mfw);
-                 }
-                 else if (readInfo.getModFileWriter()!=null) {
-                     fileWriterMap.put(band,readInfo.getModFileWriter());
-                 }
-             }
-             WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
-             wfDataMap.put(band, wfData);
-             VisContext.shouldContinue(workingCtxStr);
-         }
-         String desc= make3ColorDataDesc(readInfoMap);
-         retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
+        for(Map.Entry<Band,FileReadInfo[]> entry :  readInfoMap.entrySet()) {
+            Band band= entry.getKey();
+            FileReadInfo readInfoAry[]= entry.getValue();
+            int imageIdx= state.getImageIdx(band);
+            if (state.getPrimaryRequest().containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
+                if (imageIdx>=readInfoAry.length) {
+                    throw new FailedRequestException("Plot Failed", "Could not find extension number "+imageIdx+
+                            ". The file contains only "+readInfoAry.length + " image extension" );
+                }
+            }
+            FileReadInfo readInfo= readInfoAry[imageIdx];
+            frGroup.setFitsRead(band,readInfo.getFitsRead());
+            if (first) {
+                plot= createImagePlot(state,frGroup,band, readInfo.getDataDesc(),zoomChoice,false);
+                if (state.isThreeColor()) {
+                    plot.setThreeColorBand(state.isBandVisible(band) ? readInfo.getFitsRead() :null,
+                            band,frGroup);
+                }
+                if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
+                first= false;
+            }
+            else {
+                ModFileWriter mfw= createBand(state,plot,readInfo,frGroup);
+                if (mfw!=null)                              fileWriterMap.put(band,mfw);
+                else if (readInfo.getModFileWriter()!=null) fileWriterMap.put(band,readInfo.getModFileWriter());
+            }
+            WebFitsData wfData= makeWebFitsData(plot, frGroup, readInfo.getBand(), readInfo.getOriginalFile());
+            wfDataMap.put(band, wfData);
+            VisContext.shouldContinue(workingCtxStr);
+        }
+        String desc= make3ColorDataDesc(readInfoMap);
+        retval= new ImagePlotInfo(state,plot,frGroup, desc, wfDataMap,fileWriterMap);
 
-         if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
-         return retval;
+        if (first) _log.error("something is wrong, plot not setup correctly - no color bands specified");
+        return retval;
      }
 
     /**
@@ -148,18 +148,32 @@ public class ImagePlotCreator {
                                      ZoomChoice zoomChoice,
                                      boolean    isMultiImage) throws FitsException {
 
-        RangeValues rv= state.getPrimaryRangeValues();
+        ImagePlot plot;
+        RangeValues rv= state.getRangeValues();
+        float zoomLevel= zoomChoice.getZoomLevel();
+        WebPlotRequest request= state.getPrimaryRequest();
         if (rv==null) {
             rv= FitsRead.getDefaultRangeValues();
             state.setRangeValues(rv,state.firstBand());
         }
 
-        float zoomLevel= zoomChoice.getZoomLevel();
 
-        ImagePlot plot= PlotServUtils.makeImagePlot( frGroup, zoomLevel,
-                                                     state.isThreeColor(),
-                                                     band,
-                                                     state.getColorTableId(), rv);
+
+        if (request.containsParam(WebPlotRequest.PLOT_AS_MASK) && request.containsParam(WebPlotRequest.MASK_COLORS)) {
+            plot= PlotServUtils.makeMaskImagePlot(frGroup, zoomLevel, request, rv);
+            int rWidth= request.getMaskRequiredWidth();
+            int rHeight= request.getMaskRequiredHeight();
+            if (plot.getImageDataWidth()!=rWidth || plot.getImageDataWidth()!=rHeight) {
+                String primDim= rWidth+"x"+rHeight;
+                String overDim= plot.getImageDataWidth()+"x"+plot.getImageDataHeight();
+                throw new FitsException("Mask Overlay does not match the primary plot dimensions ("+
+                                         overDim+" vs "+primDim+")");
+            }
+        }
+        else { // standard
+            plot= PlotServUtils.makeImagePlot( frGroup, zoomLevel, state.isThreeColor(),
+                                               band, state.getColorTableId(), rv);
+        }
 
 
         if (state.isNewPlot()) { // new plot requires computing the zoom level
@@ -170,7 +184,7 @@ public class ImagePlotCreator {
         }
 
         state.setZoomLevel(zoomLevel);
-        initPlotTitle(state,plot,frGroup,plotDesc,isMultiImage);
+        initPlotTitle(state, plot, frGroup, plotDesc, isMultiImage);
         return plot;
     }
 
@@ -200,7 +214,7 @@ public class ImagePlotCreator {
             rv= FitsRead.getDefaultFutureStretch();
             state.setRangeValues(rv, readInfo.getBand());
         }
-        histOps.recomputeStretch(rv,true);
+        histOps.recomputeStretch(rv, true);
         return retval;
     }
 
@@ -209,50 +223,54 @@ public class ImagePlotCreator {
                               ActiveFitsReadGroup frGroup,
                               String dataDesc,
                               boolean isMultiImage) {
-        WebPlotRequest req= state.getPrimaryWebPlotRequest();
-        WebPlotRequest.TitleOptions titleOps= req.getTitleOptions();
-        String headerKey= req.getHeaderKeyForTitle();
-        if ((isMultiImage && (titleOps== WebPlotRequest.TitleOptions.NONE ||titleOps== WebPlotRequest.TitleOptions.FILE_NAME)) ||
-                  (titleOps==WebPlotRequest.TitleOptions.HEADER_KEY && StringUtils.isEmpty(headerKey))) {
-            titleOps= WebPlotRequest.TitleOptions.HEADER_KEY;
-            headerKey= "EXTNAME";
-        }
-        String s= req.getPlotDescAppend();
+
+        WebPlotRequest req= state.getWebPlotRequest();
         plot.setPlotDesc("");
         Header header= frGroup.getFitsRead(state.firstBand()).getHeader();
 
 
-        switch (titleOps) {
-            case NONE:
-                plot.setPlotDesc("");
-                break;
+        switch (req.getTitleOptions()) {
             case PLOT_DESC:
                 String base= req.getTitle()==null ? "" : req.getTitle();
                 plot.setPlotDesc(base+ dataDesc);
                 break;
-            case FILE_NAME:
+            case NONE: // none is overridden for multi images files
+            case FILE_NAME: // file name is further processed on client side
+                if (isMultiImage) plot.setPlotDesc(findTitleByHeader(header,state,req));
                 break;
             case HEADER_KEY:
-                HeaderCard card= header.findCard(headerKey);
-                if (card==null && state.getCubeCnt(state.firstBand())>0) {
-                    card= header.findCard("PLANE"+state.getImageIdx(state.firstBand()));
-                }
-                String hTitle= card!=null ? card.getValue() : "";
-                plot.setPlotDesc(hTitle);
+                plot.setPlotDesc(findTitleByHeader(header,state,req));
                 break;
             case PLOT_DESC_PLUS:
+                String s= req.getPlotDescAppend();
                 plot.setPlotDesc(req.getTitle()+ (s!=null ? " "+s : ""));
                 break;
             case SERVICE_OBS_DATE:
                 if (req.getRequestType()== RequestType.SERVICE) {
-//                    String desc= req.getServiceType()== WebPlotRequest.ServiceType.WISE ? MID_OBS : OBS_DATE;
                     String title= req.getTitle() + ": " +
-//                                  desc + ": " +
                                   PlotServUtils.getDateValueFromServiceFits(req.getServiceType(), header);
                     plot.setPlotDesc(title);
                 }
                 break;
         }
+    }
+
+    private static String findTitleByHeader(Header header, PlotState state, WebPlotRequest req) {
+        String headerKey[]= new String[] {
+                req.getHeaderKeyForTitle(),
+                "EXTNAME", "EXTTYPE",
+                state.getCubeCnt()>0 ? "PLANE"+state.getImageIdx(state.firstBand()) : null
+        };
+        return findCard(header, headerKey);
+    }
+
+    private static String findCard(Header header, String[] keys) {
+        HeaderCard card= null;
+        for(String k : keys) {
+            if (k!=null) card= header.findCard(k);
+            if (card!=null) break;
+        }
+        return card!=null ? card.getValue() : "";
     }
 
 //    private static String getServiceDateDesc(WebPlotRequest.ServiceType sType, FitsRead fr) {

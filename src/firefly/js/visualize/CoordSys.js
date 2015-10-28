@@ -8,10 +8,10 @@ var CoordinateSys = function () {
     var init = function (value, equatorial) {
         var desc= value;
         return {
-            toString: function () {
+            toString() {
                 return desc;
             },
-            isEquatorial: function () {
+            isEquatorial() {
                 return equatorial ? equatorial : false;
             }
         };

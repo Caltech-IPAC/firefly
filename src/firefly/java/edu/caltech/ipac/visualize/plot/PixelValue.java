@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.visualize.plot;
+import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
@@ -131,7 +132,7 @@ public class PixelValue {
 	    System.out.println("Fetching value for x = " + x + "  y = " + y);
 	    try
 	    {
-        MiniFitsHeader miniHeader= new MiniFitsHeader(plane_number,bitpix,naxis,naxis1,naxis2,naxis3,
+        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,naxis,naxis1,naxis2,naxis3,
                                                  cdelt2,bscale,bzero,blank_value,data_offset);
 		pixel_data = PixelValue.pixelVal(fits_file, x, y, miniHeader);
 		fits_file.close();
@@ -160,7 +161,7 @@ public class PixelValue {
     }
 
     static public double pixelVal(RandomAccessFile fits_file, int x, int y,
-                                  MiniFitsHeader header)
+                                  ClientFitsHeader header)
             throws IOException, PixelValueException
     {
 	int plane_offset;

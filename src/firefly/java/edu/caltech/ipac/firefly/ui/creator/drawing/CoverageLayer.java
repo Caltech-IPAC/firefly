@@ -14,9 +14,9 @@ import edu.caltech.ipac.firefly.data.table.TableData;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.ui.creator.CommonParams;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
-import edu.caltech.ipac.firefly.visualize.draw.AutoColor;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.util.StringUtils;
@@ -43,7 +43,7 @@ class CoverageLayer extends ProviderDataConnection {
                   DrawSymbol symbol,
                   String color,
                   boolean box) {
-        super(provider, title, null, color == null ? AutoColor.PT_1 : color);
+        super(provider, title, null, color == null ? DrawingDef.COLOR_PT_1 : color);
         _symbol= symbol;
         _box= box;
         updateData(dataset);

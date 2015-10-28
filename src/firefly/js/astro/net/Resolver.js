@@ -1,6 +1,3 @@
-/*jshint browserify:true*/
-
-
 function toString() {
     return this.key;
 }
@@ -17,14 +14,14 @@ var Resolver=  {
     PTF           : {key : 'ptf', desc : 'ptf'},
     smart         : {key : 'smart', desc  : 'try ned and simbad, then decide'},
     UNKNOWN       : {key : 'unknown', desc : 'resolved with unknown resolver'},
-    NONE          : {key : 'none', desc : 'none'},
+    NONE          : {key : 'none', desc : 'none'}
 };
 
 
 
 export var parseResolver= function(resolveStr) {
 
-    if (!resolveStr) return null;
+    if (!resolveStr) return undefined;
     var retval= null;
     for( var resolveType in Resolver) {
         if( Resolver.hasOwnProperty( resolveType ) ) {

@@ -66,7 +66,7 @@ public interface PlotServiceAsync {
     public void getFlux(PlotState request,
                         ImagePt inIpt,
                         AsyncCallback<WebPlotResult> async);
-    public void setZoomLevel(PlotState request,
+    public void setZoomLevel(PlotState state[],
                              float level,
                              boolean isFullScreen,
                              AsyncCallback<WebPlotResult> async);
@@ -76,20 +76,20 @@ public interface PlotServiceAsync {
     public void recomputeStretch(PlotState request,
                                  StretchData[] stretchData,
                                  AsyncCallback<WebPlotResult> async);
-    public void crop(PlotState request,
+    public void crop(PlotState stateAry[],
                      ImagePt corner1,
                      ImagePt corner2,
                      boolean cropMultiAll,
                      AsyncCallback<WebPlotResult> async);
 
-    public void rotateNorth(PlotState request, boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async);
-    public void rotateToAngle(PlotState state,
+    public void rotateNorth(PlotState state[], boolean north, float newZoomLevel, AsyncCallback<WebPlotResult> async);
+    public void rotateToAngle(PlotState state[],
                               boolean rotate,
                               double angle,
                               float newZoomLevel,
                               AsyncCallback<WebPlotResult> async);
 
-    public void flipImageOnY(PlotState state, AsyncCallback<WebPlotResult> async);
+    public void flipImageOnY(PlotState state[], AsyncCallback<WebPlotResult> async);
 
     public void changeColor(PlotState request,
                             int colorTableId,

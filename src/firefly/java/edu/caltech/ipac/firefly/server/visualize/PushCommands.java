@@ -268,6 +268,45 @@ public class PushCommands {
         }
     }
 
+
+    public static class PushAddMask extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+
+            String maskId= sp.getRequired(ServerParams.ID);
+            int bitNumber= sp.getRequiredInt(ServerParams.BIT_NUMBER);
+            int imageNumber= sp.getRequiredInt(ServerParams.IMAGE_NUMBER);
+            String color= sp.getRequired(ServerParams.COLOR);
+            String bitDesc= sp.getOptional(ServerParams.BIT_DESC);
+            String fileKey= sp.getOptional(ServerParams.FILE);
+            String plotIdStr= sp.getRequired(ServerParams.PLOT_ID);
+            boolean success= PushJob.pushAddMask(maskId,bitNumber,imageNumber,color,bitDesc,fileKey,plotIdStr);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            return outJson.toJSONString();
+        }
+    }
+
+    public static class PushRemoveMask extends BaseVisPushCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws Exception {
+            SrvParam sp= new SrvParam(paramMap);
+            String maskId= sp.getRequired(ServerParams.ID);
+            boolean success= PushJob.pushRemoveMask(maskId);
+            JSONObject map = new JSONObject();
+            JSONArray outJson = new JSONArray();
+            outJson.add(map);
+            map.put("success", success);
+            return outJson.toJSONString();
+
+
+        }
+    }
+
+
     public static class PushAliveCheck extends BaseVisPushCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws Exception {

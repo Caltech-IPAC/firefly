@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -262,7 +263,7 @@ public class WebMouseReadoutPerm implements Readout {
         ipt = _currentPlot.getImageCoords(pt);
         lastPt= pt;
         showReadout(pt, ipt, false);
-        notifyExternal(pt,ipt,Band.NO_BAND, 0, null, false);
+        notifyExternal(pt,ipt,Band.NO_BAND, 0, null, false,false);
     }
 
     public static void notifyExternal(ScreenPt pt,
@@ -270,22 +271,24 @@ public class WebMouseReadoutPerm implements Readout {
                                       Band band,
                                       double flux,
                                       String fluxUnits,
-                                      boolean withFlux) {
+                                      boolean hasFlux,
+                                      boolean paused) {
 
         String plotId = AllPlots.getInstance().getMiniPlotWidget().getPlotId();
         WebPlot plot= AllPlots.getInstance().getPlotView().getPrimaryPlot();
         if (plotId==null) return;
-        List<Ext.Extension> extensionList = AllPlots.getInstance().getExtensionList(plotId);
+        Ext.Extension extensionList[] = AllPlots.getInstance().getExtensionList(plotId);
 
 
         Ext.ExtensionResult r= Ext.makeExtensionResult();
         r.setExtValue("plotId", plotId);
-        r.setExtValue("zoomLevel", plot.getZoomFact()+"");
+        r.setNumberExtValue("zoomLevel", plot.getZoomFact());
         r.setExtValue("spt", pt.serialize());
         r.setExtValue("ipt", ipt.serialize());
-        if (withFlux) {
+        r.setExtValue("pause", paused+"");
+        if (hasFlux) {
             r.setExtValue("band", band.toString());
-            r.setExtValue("flux", flux+"");
+            r.setNumberExtValue("flux", flux);
             r.setExtValue("fluxUnits", fluxUnits);
         }
 
@@ -641,7 +644,7 @@ public class WebMouseReadoutPerm implements Readout {
         }
 
         @Override
-        public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+        public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
             move(pv, spt, false, !_pixelClickLock);
         }
 
@@ -701,7 +704,7 @@ public class WebMouseReadoutPerm implements Readout {
 //        private WebPlot markedPlot = null;
 //
 //        MarkedPointDisplay() {
-//            super("Clicked Point", "Point lock to your click", AutoColor.PT_3);
+//            super("Clicked Point", "Point lock to your click", AutoColor.COLOR_PT_3);
 //        }
 //
 //        public void setPoint(WorldPt wp, WebPlot plot) {

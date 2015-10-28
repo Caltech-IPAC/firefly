@@ -21,8 +21,7 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.io.BufferedOutputStream;
@@ -235,6 +234,7 @@ public class PlotOutput {
     public List<TileFileInfo> writeTilesFullScreen(File dir,
                                                   String baseName,
                                                   int outType,
+                                                  boolean requiresTransparency,
                                                   boolean createTile) throws IOException {
 
 
@@ -243,16 +243,16 @@ public class PlotOutput {
         List<TileFileInfo> retval;
         if (_plot.getZoomFactor()<1) {
             int tileSize= findTileSize();
-            retval= writeTiles(dir,baseName,outType,tileSize,10);
+            retval= writeTiles(dir,baseName,outType,requiresTransparency, tileSize,10);
         }
         else {
             retval= new ArrayList<TileFileInfo>(1);
             int width= _plot.getScreenWidth();
             int height= _plot.getScreenHeight();
-            BufferedImage image= createImage(width,height, Quality.MEDIUM);
+            BufferedImage image= createImage(width,height, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
             File f= getTileFile(dir,baseName,0,0,getExt(outType));
             if (createTile) {
-                writeTile(f,outType,0,0,width,height,image);
+                writeTile(f,outType,requiresTransparency,0,0,width,height,image);
             }
             retval.add(new TileFileInfo(0,0,width, height,f,createTile));
         }
@@ -265,6 +265,7 @@ public class PlotOutput {
     public List<TileFileInfo> writeTiles(File dir,
                                          String baseName,
                                          int outType,
+                                         boolean requiresTransparaency,
                                          int createOnly ) throws IOException {
 
 
@@ -272,13 +273,14 @@ public class PlotOutput {
         // divid evenly into the zoom level
         int tileSize= findTileSize();
 
-        return writeTiles(dir,baseName,outType,tileSize,createOnly);
+        return writeTiles(dir,baseName,outType,requiresTransparaency, tileSize,createOnly);
     }
 
 
     public List<TileFileInfo> writeTiles(File dir,
                                          String baseName,
                                          int outType,
+                                         boolean requiresTransparency,
                                          int defTileSize,
                                          int createOnly) throws IOException {
         Assert.argTst( (createOnly>=-1 || createOnly==CREATE_ALL),
@@ -300,7 +302,7 @@ public class PlotOutput {
         int width= defTileSize;
         int height;
         File file;
-        BufferedImage defImage= createImage(defTileSize,defTileSize, Quality.MEDIUM);
+        BufferedImage defImage= createImage(defTileSize,defTileSize, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
 
         ImageDataGroup imageDataGrp= plot.getImageData();
         List<TileFileInfo> retList= new ArrayList<TileFileInfo>(imageDataGrp.size());
@@ -319,11 +321,11 @@ public class PlotOutput {
                     image= defImage;
                 }
                 else {
-                    image= createImage(width,height, Quality.MEDIUM);
+                    image= createImage(width,height, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
                 }
                 file= getTileFile(dir,baseName,x,y,ext);
                 if (createTile) {
-                    writeTile(file,outType,x,y,width,height,image);
+                    writeTile(file,outType,requiresTransparency,x,y,width,height,image);
                     totalCreated++;
                     createTile= (totalCreated<createOnly || createOnly==CREATE_ALL);
                 }
@@ -335,12 +337,12 @@ public class PlotOutput {
     }
 
 
-    public static List<TileFileInfo> makeTilesNoCreation(File dir,
-                                                         float zfact,
-                                                         String baseName,
-                                                         int outType,
-                                                         int screenWidth,
-                                                         int screenHeight) {
+    public static List<TileFileInfo> defineTiles(File dir,
+                                                 float zfact,
+                                                 String baseName,
+                                                 int outType,
+                                                 int screenWidth,
+                                                 int screenHeight) {
 
         String ext= getExt(outType);
         Assert.argTst(outType == JPEG ||
@@ -377,11 +379,11 @@ public class PlotOutput {
         int screenWidth= _plot.getScreenWidth();
         int screenHeight= _plot.getScreenHeight();
         BufferedImage image= createImage(screenWidth,screenHeight, Quality.MEDIUM);
-        writeTile(f,outType,0,0,screenWidth,screenHeight,image);
+        writeTile(f,outType,false, 0,0,screenWidth,screenHeight,image);
     }
 
 
-    public BufferedImage createImage(int width, int height, Quality quality) {
+    private BufferedImage createImage(int width, int height, Quality quality) {
         BufferedImage retval;
 
         switch (quality) {
@@ -408,19 +410,24 @@ public class PlotOutput {
 
     public void writeTile( File file,
                            int outType,
+                           boolean requiresTransparency,
                            int x,
                            int y,
                            int width,
                            int height,
                            BufferedImage image ) throws IOException {
-        if (image==null)  image= createImage(width,height, Quality.MEDIUM);
+        if (image==null)  image= createImage(width,height, requiresTransparency?Quality.HIGH:Quality.MEDIUM);
         Graphics2D g2= image.createGraphics();
+        g2.setComposite(AlphaComposite.Clear);
+        g2.fillRect(0, 0, width, height);
+
+
         g2.setClip(0, 0, width, height);
         _plot.getPlotGroup().beginPainting(g2);
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
         g2.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
-//        g2.setComposite(AlphaComposite.Src);
+        g2.setComposite(AlphaComposite.Src);
         _plot.preProcessImageTiles(_frGroup);
         _plot.paintTile(g2,_frGroup,x,y,width,height);
 
@@ -489,8 +496,8 @@ public class PlotOutput {
 //                    new SinglePixelPackedSampleModel(DataBuffer.TYPE_INT,image.getWidth(), image.getHeight(),)
             param.setDestinationType(new ImageTypeSpecifier(image));
 
-
             writer.write(image);
+
 
             FileUtil.silentClose(ios);
 

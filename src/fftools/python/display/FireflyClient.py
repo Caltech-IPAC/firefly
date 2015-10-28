@@ -39,8 +39,8 @@ class FireflyClient(WebSocketClient):
         self.listeners = {}
         self.channel = channel
         self.session = requests.Session()
+        print 'websocket url:%s' % url
         self.connect()
-        # print 'websocket url:%s' % url
 
 
     # def opened(self):
@@ -309,7 +309,7 @@ class FireflyClient(WebSocketClient):
 
     def addExtension(self, extType, title, plotId, extensionId, image=None):
         """
-        Add an extension to the plot.  Extensions are context menus that allows you extend
+        Add an extension to the plot.  Extensions are context menus that allows you to extend
         what firefly can so when certain actions happen
         :param extType: May be 'AREA_SELECT', 'LINE_SELECT', or 'POINT'. todo: 'CIRCLE_SELECT'
         :param title: The title that the user sees
@@ -430,6 +430,48 @@ class FireflyClient(WebSocketClient):
                                      data={'ds9RegionData' : '['+"--STR--".join(regionData)+']'})
         status = json.loads(response.text)
         return status[0]
+
+
+    def addMask(self, maskId,bitNumber,imageNumber,color,plotId,bitDesc=None,fileOnServer=None):
+        """
+        Add a mask layer
+        :param maskId: id of mask
+        :param bitNumber: bitNumber of the mask to overlay
+        :param imageNumber: imageNumber of the mask layer
+        :param color: color as an html color (eg. #FF0000 (red) #00FF00 (green)
+        :param plotId: plot id to overlay the mask on
+        :param bitDesc: (optional) description of the mask layer
+        :param fileOnServer: (optional) file to get the mask from, if None then get it from the original file
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushAddMask"
+
+        params= {
+           'id'        : maskId,
+           'bitNumber' : bitNumber,
+           'color'     : color,
+           'plotId'    : plotId,
+           'imageNumber' : imageNumber,
+        }
+        if bitDesc:
+            params['bitDesc']= bitDesc
+        if fileOnServer:
+            params['fileKey']= fileOnServer
+        response = self.session.post(url, data=params)
+        status = json.loads(response.text)
+        return status[0]
+        # return self.sendURLAsGet(url)
+
+
+    def removeMask(self, maskId):
+        """
+        Remove a mask layer
+        :param maskId: id of mask
+        :return: status of call
+        """
+        url = self.urlRoot + "?cmd=pushRemoveMask&id=%s" % maskId
+        return self.sendURLAsGet(url)
+
 
     #-----------------------------------------------------------------
     # Range Values

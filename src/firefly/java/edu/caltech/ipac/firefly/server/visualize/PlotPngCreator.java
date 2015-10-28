@@ -85,7 +85,7 @@ public class PlotPngCreator {
     private void addGridDrawer(StaticDrawInfo drawInfo) {
         GridLayer gridLayer= new GridLayer();
         gridLayer.setCoordSystem(drawInfo.getGridType());
-        Color c= convertColor(drawInfo.getColor());
+        Color c= PlotServUtils.convertColorHtmlToJava(drawInfo.getColor());
         if (c!=null) gridLayer.getGrid().setGridColor(c);
         this.gridLayer= gridLayer;
     }
@@ -133,45 +133,9 @@ public class PlotPngCreator {
         }
         fg.setAllShapes(shape);
         String color= drawInfo.getColor();
-        Color c= convertColor(color);
+        Color c= PlotServUtils.convertColorHtmlToJava(color);
         if (c!=null) fg.setAllColor(FixedObjectGroup.COLOR_TYPE_STANDARD, c);
         return fg;
-    }
-
-    public static Color convertColor(String color) {
-        Color c;
-        if (edu.caltech.ipac.firefly.visualize.ui.color.Color.isHexColor(color)) {
-            int rgb[]=  edu.caltech.ipac.firefly.visualize.ui.color.Color.toRGB(color);
-            c= new Color(rgb[0],rgb[1],rgb[2]);
-        }
-        else {
-            if      (color.equals("black"))   c= Color.black;
-            else if (color.equals("aqua"))    c= new Color(0,255,255);
-            else if (color.equals("blue"))    c= Color.blue;
-            else if (color.equals("cyan"))    c= Color.cyan;
-            else if (color.equals("fuchsia")) c= new Color(255,0,255);
-            else if (color.equals("gray"))    c= new Color(128,128,128);
-            else if (color.equals("green"))   c= new Color(0,128,0);
-            else if (color.equals("lime"))    c= Color.green;  // this is correct, lime is 0,255,0
-            else if (color.equals("magenta")) c= Color.magenta;
-            else if (color.equals("maroon"))  c= new Color(128,0,0);
-            else if (color.equals("navy"))    c= new Color(0,0,128);
-            else if (color.equals("olive"))   c= new Color(128,128,0);
-            else if (color.equals("orange"))  c= Color.orange;
-            else if (color.equals("pink"))    c= Color.pink;
-            else if (color.equals("purple"))  c= new Color(128,0,128);
-            else if (color.equals("red"))     c= Color.red;
-            else if (color.equals("silver"))  c= new Color(192,192,192);
-            else if (color.equals("teal"))    c= new Color(0,128,128);
-            else if (color.equals("white"))   c= Color.white;
-            else if (color.equals("yellow"))  c= Color.yellow;
-            else {
-                // lightGray or white is a better presentation for "unknown" color string. -TLau
-                c= Color.lightGray;
-                logger.debug("convertColor(String color) does not understand "+color+".  Color.lightGray is assigned.");
-            }
-        }
-        return c;
     }
 
 }

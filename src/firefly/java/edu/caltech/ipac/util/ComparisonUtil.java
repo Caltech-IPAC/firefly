@@ -55,6 +55,31 @@ public class ComparisonUtil {
     }
 
     /**
+     * Compare two Object arrays. The object may be null.
+     *
+     * @param o1 the first Object
+     * @param o2 the second Object
+     * @return boolean
+     */
+    public static boolean equalsByRef(Object o1[], Object o2[]) {
+        if((o1==null) && (o2==null)) {
+            return true;
+        }
+        else if((o1!=null) && (o2!=null)) {
+            boolean retval=(o1.length==o2.length);
+            for(int i=0; (retval && i<o1.length); i++) {
+                retval= (o1[i]==o2[i]);
+            }
+            return retval;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+
+    /**
      * Compare two String objects. The object may be null.
      *
      * @param s1 the first String object
