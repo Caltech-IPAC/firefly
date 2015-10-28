@@ -282,13 +282,13 @@ public class WebMouseReadoutPerm implements Readout {
 
         Ext.ExtensionResult r= Ext.makeExtensionResult();
         r.setExtValue("plotId", plotId);
-        r.setExtValue("zoomLevel", plot.getZoomFact()+"");
+        r.setNumberExtValue("zoomLevel", plot.getZoomFact());
         r.setExtValue("spt", pt.serialize());
         r.setExtValue("ipt", ipt.serialize());
         r.setExtValue("pause", paused+"");
         if (hasFlux) {
             r.setExtValue("band", band.toString());
-            r.setExtValue("flux", flux+"");
+            r.setNumberExtValue("flux", flux);
             r.setExtValue("fluxUnits", fluxUnits);
         }
 

@@ -191,10 +191,9 @@ public class WebPlotGroup  {
      */
      void computeMinMax() {
          _minX= 0;
-         Dimension padding= _basePlot.getPaddingDimension();
-         _maxX= _basePlot.getImageDataWidth() + padding.getWidth();
+         _maxX= _basePlot.getImageDataWidth();
          _minY= 0;
-         _maxY= _basePlot.getImageDataHeight()+ padding.getHeight();
+         _maxY= _basePlot.getImageDataHeight();
 
          int iw= Math.abs(_minX) + Math.abs(_maxX);
          int ih= Math.abs(_minY) + Math.abs(_maxY);

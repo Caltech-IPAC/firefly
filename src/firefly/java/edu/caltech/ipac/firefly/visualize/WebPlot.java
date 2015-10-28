@@ -156,7 +156,6 @@ public class WebPlot {
     private final Projection    _projection;
     private final int           _dataWidth;
     private final int           _dataHeight;
-    private final int           _imageScaleFactor;
     private final WebPlotGroup  _plotGroup;
     private       PlotState     _plotState;
     private final WebFitsData   _webFitsData[];
@@ -176,7 +175,6 @@ public class WebPlot {
     private float     _initialZoomLevel= 1.0F;
     private float     _percentOpaque   = 1.0F;
 
-    private Dimension _padDim= new Dimension(0,0);
 
     private int _viewPortX= 0;
     private int _viewPortY= 0;
@@ -192,7 +190,6 @@ public class WebPlot {
         _projection      = wpInit.getProjection();
         _dataWidth       = wpInit.getDataWidth();
         _dataHeight      = wpInit.getDataHeight();
-        _imageScaleFactor= wpInit.getImageScaleFactor();
         _plotDesc        = wpInit.getPlotDesc();
         _dataDesc        = wpInit.getDataDesc();
 
@@ -347,29 +344,14 @@ public class WebPlot {
      * This number will not change as the plot is zoomed up and down.
      * @return the width of the image data
      */
-    public int     getImageDataWidth() { return _dataWidth*_imageScaleFactor; }
+    public int     getImageDataWidth() { return _dataWidth; }
 
     /**
      * This method will return the height of the image data.
      * This number will not change as the plot is zoomed up and down.
      * @return the height of the image data
      */
-    public int     getImageDataHeight() { return _dataHeight*_imageScaleFactor; }
-
-    /**
-     * This method will return the width of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return the width of the image data
-     */
-    public int     getImageWorkSpaceWidth() { return (_dataWidth*_imageScaleFactor)+_padDim.getWidth()*2; }
-
-    /**
-     * This method will return the height of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return the height of the image data
-     */
-    public int     getImageWorkSpaceHeight() { return (_dataHeight*_imageScaleFactor)+_padDim.getHeight()*2; }
-
+    public int     getImageDataHeight() { return _dataHeight; }
 
     @JsNoExport
     public boolean isBlankImage() {
@@ -1464,13 +1446,6 @@ public class WebPlot {
 //
 //    }
 
-
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-    //-----------------------------------------------------------------
-
-    public Dimension getPaddingDimension() { return _padDim; }
 
 
 

@@ -41,6 +41,7 @@ public class Ext {
     @JsType
     public interface ExtensionResult {
         void setExtValue(String key, String value);
+        void setNumberExtValue(String key, double value);
     }
 
 

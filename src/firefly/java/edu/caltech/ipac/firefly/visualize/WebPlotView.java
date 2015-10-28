@@ -103,7 +103,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     private boolean _eventsEnabled= true;
     private List<String> _workingTaskList= new ArrayList<String>(50);
     private List<ScrollHandler> _scrollHandlerList= new ArrayList<ScrollHandler>(3);
-    private boolean _fixScrollInProgress= false;
     private boolean _alive= true;
     private String drawingSubGroup= null;
 
@@ -463,7 +462,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
         computePosition();
 //            _scrollPanel.setHorizontalScrollPosition(spt.getIX());
 //            _scrollPanel.setVerticalScrollPosition(spt.getIY());
-        _fixScrollInProgress= false;
         onScroll();
     }
 
@@ -1377,8 +1375,6 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
     public void onScroll() {
         int x= getScrollX();
         int y= getScrollY();
-
-        if (x==0 && y==0 && _fixScrollInProgress) return;
 
         int w= getScrollWidth();
         int h= getScrollHeight();
