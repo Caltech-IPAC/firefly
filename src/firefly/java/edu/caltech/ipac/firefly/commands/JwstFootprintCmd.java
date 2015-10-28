@@ -40,6 +40,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.CircularMarker;
+import edu.caltech.ipac.firefly.visualize.Footprint;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -411,7 +412,10 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-        _activeMarker = new CircularMarker(20);
+      //  _activeMarker = new CircularMarker(20);
+        Footprint fp = new Footprint();
+//		FootprintAsMarkers fp = new FootprintAsMarkers();
+		_activeMarker = fp;
         _markerMap.put(_activeMarker, new MarkerDrawing());
 
         WebPlotView pv= getPlotView();

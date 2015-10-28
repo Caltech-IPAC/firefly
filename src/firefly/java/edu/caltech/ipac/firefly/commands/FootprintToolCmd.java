@@ -246,12 +246,6 @@ public class FootprintToolCmd extends BaseGroupVisCmd implements WebEventListene
 				}else{
 					_mode = Mode.ROTATE;
 				}
-//				// This is needed anyway because we don't have another mode as
-//				// before 'resize'
-//				setIconProperty(_onIcon);
-//				changeToEditHelp();
-//				addDrawMan();
-
 				drag(pv, spt);
 			} else {
 				_mouseInfo.setEnableAllExclusive(true);
