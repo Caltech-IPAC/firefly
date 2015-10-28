@@ -14,6 +14,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -226,7 +227,6 @@ public class FootprintToolCmd extends BaseGroupVisCmd implements WebEventListene
 
 	private void begin(WebPlotView pv, ScreenPt spt) {
 		WebPlot plot = pv.getPrimaryPlot();
-		pv.fixScrollPosition();
 		_mouseInfo.setEnableAllPersistent(true);
 		_mouseInfo.setEnableAllExclusive(false);
 
@@ -511,7 +511,7 @@ public class FootprintToolCmd extends BaseGroupVisCmd implements WebEventListene
 		}
 
 		@Override
-		public void onMouseMove(WebPlotView pv, ScreenPt spt) {
+		public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
 			if (_mouseDown)
 				drag(pv, spt);
 		}
