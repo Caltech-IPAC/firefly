@@ -42,6 +42,7 @@ import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.CircularMarker;
 import edu.caltech.ipac.firefly.visualize.Marker;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
+import edu.caltech.ipac.firefly.visualize.RectangleMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
@@ -354,11 +355,12 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         if (m.isReady()) {
             List<DrawObj> data = new ArrayList<DrawObj>(1);
             List<DrawObj> editData = new ArrayList<DrawObj>(1);
-            ShapeDataObj markerShape= ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt());
-            data.add(markerShape);
+//            ShapeDataObj markerShape= m.getShape().get(0); // main shape
+//            data.add(markerShape);
+//            data.add(ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt()));
 
-
-
+            ShapeDataObj markerShape = ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt());
+			data.add(markerShape);
             if (drawHandles) {
                 int size = 5;
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.NW, plot), size, size));
@@ -421,6 +423,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
+//        _activeMarker = new RectangleMarker(80, 50);//new CircularMarker(20);
         _activeMarker = new CircularMarker(20);
         _markerMap.put(_activeMarker, new MarkerDrawing());
 

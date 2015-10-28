@@ -9,6 +9,10 @@ package edu.caltech.ipac.firefly.visualize;
  */
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -20,10 +24,12 @@ public class CircularMarker extends Marker {
     public static final String FONT= "SansSerif";
 
     private WorldPt startPt;
-    private WorldPt endPt;
+    protected WorldPt endPt;
     private float workingScreenRadius;
     private String title=null;
     private Corner textCorner= Corner.SE;
+
+	private boolean hasCrosshair = false;
 
     public CircularMarker(int screenRadius) {
         workingScreenRadius = screenRadius;
@@ -49,7 +55,12 @@ public class CircularMarker extends Marker {
 //        this.startPt = startPt;
 //    }
 
-    public String getTitle() { return title; }
+    public CircularMarker(int i, boolean hasCross) {
+		this(i);
+		hasCrosshair = hasCross;
+	}
+
+	public String getTitle() { return title; }
     public void setTitle(String title) { this.title= title; }
     public String getFont() { return FONT; }
 
@@ -60,7 +71,7 @@ public class CircularMarker extends Marker {
         return (startPt!=null && endPt!=null);
     }
 
-    public void updateRadius(WebPlot plot, boolean largeChangeOnly) {
+    private void updateRadius(WebPlot plot, boolean largeChangeOnly) {
         if (plot!=null && startPt!=null && endPt!=null) {
             ScreenPt spt= plot.getScreenCoords(startPt);
             ScreenPt ept= plot.getScreenCoords(endPt);
@@ -110,22 +121,6 @@ public class CircularMarker extends Marker {
                                            (int)workingScreenRadius);
         }
         return retval;
-
-    }
-
-    public boolean containsSquare(ScreenPt pt, WebPlot plot) {
-        ScreenPt spt= plot.getScreenCoords(startPt);
-        ScreenPt ept= plot.getScreenCoords(endPt);
-        if (spt==null || ept==null) return false;
-
-        int x1= spt.getIX();
-        int y1= spt.getIY();
-        int x2= ept.getIX();
-        int y2= ept.getIY();
-        int w= Math.abs(x1 - x2);
-        int h= Math.abs(y1-y2);
-
-        return VisUtil.contains( Math.min(x1,x2), Math.min(y1,y2), w,h, pt.getIX(), pt.getIY());
 
     }
 
@@ -277,5 +272,12 @@ public class CircularMarker extends Marker {
         }
         return retval;
     }
+
+	public List<ShapeDataObj> getShape() {
+		ArrayList<ShapeDataObj> lst = new ArrayList<ShapeDataObj>();
+		lst.add(ShapeDataObj.makeCircle(getStartPt(), getEndPt()));
+		lst.trimToSize();
+		return lst;
+	}
 }
 

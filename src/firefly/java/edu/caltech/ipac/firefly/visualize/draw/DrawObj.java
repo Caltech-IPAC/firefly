@@ -29,6 +29,8 @@ public abstract class DrawObj {
     private AdvancedGraphics.Shadow shadow= null;
     private ScreenPt translation= null;
 
+	private double rotAngle;
+
     public DrawObj() { }
 
     public boolean hasDetails() { return false; }
@@ -123,6 +125,10 @@ public abstract class DrawObj {
 
     public void setTranslation(ScreenPt translation) { this.translation = translation; }
 
+    public void setRotation(double angInRad) { this.rotAngle = angInRad; }
+    
+    public double getRotation() { return this.rotAngle; }
+    
     public void setRepresentCnt(int representCnt) {
         this.representCnt = representCnt;
     }

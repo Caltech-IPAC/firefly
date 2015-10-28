@@ -655,8 +655,8 @@ public class WebPlot {
     @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt, float altZLevel) {
         if (pt==null) return null;
-        return new ImageWorkSpacePt(pt.getIX() / altZLevel,
-                                    getImageHeight()-pt.getIY()/altZLevel);
+        return new ImageWorkSpacePt(pt.getX() / altZLevel,
+                                    getImageHeight()-pt.getY()/altZLevel);
     }
 
 
