@@ -1,0 +1,22 @@
+FootprintTool.Title= Footprint Tool
+FootprintTool.ShortDescription= Put a footprint on the image
+FootprintTool.Icon= true
+FootprintTool.on.Icon= true
+FootprintTool.off.Icon= true
+
+FootprintTool.title.Title= Label
+FootprintTool.title.ShortDescription= Add a label to this footprint
+FootprintTool.title.PreferWidth= 8
+FootprintTool.title.NullAllowed= true
+
+
+FootprintTool.corner.Title= Corner
+FootprintTool.corner.DataType= EnumString
+FootprintTool.corner.Default= SE
+FootprintTool.corner.ShortDescription= Choose a corner
+FootprintTool.corner.Items= NE NW SE SW
+FootprintTool.corner.NE.Name= NE
+FootprintTool.corner.NW.Name= NW
+FootprintTool.corner.SE.Name= SE
+FootprintTool.corner.SW.Name= SW
+

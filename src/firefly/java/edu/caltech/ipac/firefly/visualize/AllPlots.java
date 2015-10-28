@@ -849,8 +849,8 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(DistanceToolCmd.CommandName,   new DistanceToolCmd());
         commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
-        commandMap.put(MarkerToolCmd.CommandName,     new FootrpintToolCmd());
-//        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        commandMap.put(FootrpintToolCmd.CommandName,     new FootrpintToolCmd());
+        commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());

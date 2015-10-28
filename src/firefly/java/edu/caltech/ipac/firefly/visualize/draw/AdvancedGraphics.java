@@ -23,6 +23,12 @@ public interface AdvancedGraphics extends Graphics {
 
     public void setTranslationPerm(ScreenPt pt);
     public void setTranslationForNextDraw(ScreenPt pt);
+    
+    /**
+     * Rotate next draw by an angle
+     * @param radAngle angle to rotate in radians
+     */
+    public void setRotationForNextDraw(double ang0);
     public void clearTranslation();
 
 

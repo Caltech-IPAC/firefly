@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import java.util.List;
+
+import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -19,8 +22,15 @@ public interface OverlayMarker {
 
 	public void move(WorldPt center, WebPlot plot);
 
-	public void updateRadius(WebPlot plot, boolean largeChangeOnly);
-
+	/**
+	 * Test if the screen point on the plot contains the marker
+	 * 
+	 * @param pt
+	 *            x,y point to test
+	 * @param plot
+	 *            plot to test
+	 * @return true if the screen x,y coordinate is in the marker at the plot
+	 */
 	public boolean contains(ScreenPt pt, WebPlot plot);
 
 	public ScreenPt getCenter(WebPlot plot);
@@ -29,7 +39,7 @@ public interface OverlayMarker {
 
 	public void adjustStartEnd(WebPlot plot);
 
-	public boolean containsSquare(ScreenPt pt, WebPlot plot);
+//	public boolean containsSquare(ScreenPt pt, WebPlot plot);
 
 	public String getTitle();
 
@@ -49,7 +59,7 @@ public interface OverlayMarker {
 
 	public void setEndPt(WorldPt endPt, WebPlot plot);
 
-	public OffsetScreenPt getTitlePtOffset();
+	// public OffsetScreenPt getTitlePtOffset();
 
 	public void setEditCorner(Corner corner, WebPlot plot);
 
@@ -74,4 +84,9 @@ public interface OverlayMarker {
 			return corner;
 		}
 	}
+
+	/**
+	 * @return the shape to be draw (affine transform should be done before calling this!)
+	 */
+	public List<ShapeDataObj> getShape();
 }

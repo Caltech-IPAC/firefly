@@ -3,6 +3,11 @@
  */
 package edu.caltech.ipac.firefly.visualize.draw;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -20,9 +25,6 @@ import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -416,7 +418,13 @@ public class ShapeDataObj extends DrawObj {
     }
 
     private void drawRectangle(Graphics g, WebPlot plot, String  color, boolean onlyAddToPath ) {
+        if (getRotation()!=0  && g instanceof AdvancedGraphics) {
+    		GwtUtil.logToServer(Level.INFO, ""
+    				+ "drawRectangle with rotation "+getRotation() );
 
+            ((AdvancedGraphics)g).setRotationForNextDraw(getRotation());
+        }
+        
         boolean inView= false;
         ViewPortPt textPt;
         if (_pts.length==1 && _size1 <Integer.MAX_VALUE && _size2 <Integer.MAX_VALUE) {
@@ -458,9 +466,14 @@ public class ShapeDataObj extends DrawObj {
                     w*=-1;
                     x-=w;
                 }
-                if (!onlyAddToPath || _style==Style.HANDLED) g.beginPath(color,lineWidth);
-                g.rect(x,y,w,h);
-                if (!onlyAddToPath || _style==Style.HANDLED) g.drawPath();
+                
+				if (!onlyAddToPath || _style == Style.HANDLED){
+					g.beginPath(color, lineWidth);
+				}
+				g.rect(x, y, w, h);
+				if (!onlyAddToPath || _style == Style.HANDLED){
+					g.drawPath();
+				}
             }
 
         }
@@ -490,8 +503,7 @@ public class ShapeDataObj extends DrawObj {
         }
     }
 
-
-    @Override
+	@Override
     public List<Region> toRegion(WebPlot   plot, AutoColor ac) {
         List<Region> retList= new ArrayList<Region>(10);
         String color= calculateColor(ac,false);
@@ -544,7 +556,7 @@ public class ShapeDataObj extends DrawObj {
             textPtScreen= makeTextLocationCircle(plot,wp, _size1);
         }
         else {
-            wp= getCenter(plot);
+            wp= getCircleCenter(plot);
             radius= findRadius(plot);
             textPtScreen= makeTextLocationCircle(plot,wp,radius);
         }
@@ -715,7 +727,12 @@ public class ShapeDataObj extends DrawObj {
         return retval;
     }
 
-    private WorldPt getCenter(WebPlot plot) {
+    /**
+     * ONLY VALID FOR CIRCLE!
+     * @param plot
+     * @return
+     */
+    private WorldPt getCircleCenter(WebPlot plot) {
         ScreenPt pt0= plot.getScreenCoords(_pts[0]);
         ScreenPt pt1= plot.getScreenCoords(_pts[1]);
         if (pt0==null || pt1==null) return null;
@@ -730,5 +747,61 @@ public class ShapeDataObj extends DrawObj {
             retval= s.substring(0,s.indexOf(HTML_DEG)) + " deg";
         }
         return retval;
-    }
+    }	
+	
+	/**
+	 * Build world points translated to apt
+	 * @param plot
+	 * @param apt world point to translate to
+	 */
+	public void translateTo(WebPlot plot, WorldPt apt) {
+		ScreenPt pt= plot.getScreenCoords(apt);
+		for (int i = 0; i < _pts.length; i++) {
+			 ScreenPt pti= plot.getScreenCoords(_pts[i]);
+			 
+			int x2 =  pti.getIX();
+			int y2 =  pti.getIY();
+			x2 += pt.getIX();
+			y2 += pt.getIY();
+			_pts[i] = plot.getWorldCoords(new ScreenPt(x2,y2));
+		}
+	}
+	
+//	/**
+//	 * Expecting that the points were {@link WorldPt}
+//	 * @param angle in radian
+//	 * @param center wp point
+//	 */
+//	public void rotateAround(double angle, WorldPt center) {
+//		double[] pts = new double[_pts.length*2];
+//		for (int i = 0; i < _pts.length; i++) {
+//			pts[i] = _pts[i].getX();
+//			pts[i + 1] = _pts[i].getY();	
+//		}
+//		AffineTransform.getRotateInstance(Math.toRadians(angle), center.getX(), center.getY())
+//		  .transform(pts, 0, pts, 0, _pts.length); 
+//		for (int i = 0; i < _pts.length; i++) {
+//			_pts[i] = new WorldPt(pts[i], pts[i+1]);
+//		}
+//	}
+	
+	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
+		for (int i = 0; i < _pts.length; i++) {
+			// TRANSLATE TO ORIGIN
+			Pt p1 = _pts[i];
+			ScreenPt pti= plot.getScreenCoords(p1);
+			ScreenPt center= plot.getScreenCoords(wc);
+			double xc = center.getX();
+			double x1 = pti.getX() - xc;
+			double yc = center.getY();
+			double y1 = pti.getY() - yc;
+
+			// APPLY ROTATION
+			double temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+			double temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+
+			// TRANSLATE BACK
+			_pts[i] = plot.getWorldCoords(new ScreenPt(temp_x1 + xc, temp_y1 + yc));
+		}
+	}
 }
