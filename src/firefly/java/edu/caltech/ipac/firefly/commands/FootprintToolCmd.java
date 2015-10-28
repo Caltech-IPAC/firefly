@@ -62,7 +62,7 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
  * @author ejoliet
  *
  */
-public class FootrpintToolCmd extends BaseGroupVisCmd implements WebEventListener/* , PrintableOverlay */ {
+public class FootprintToolCmd extends BaseGroupVisCmd implements WebEventListener/* , PrintableOverlay */ {
 
 	public enum Mode {
 		ADD_FOOTPRINT, MOVE, OFF, ROTATE
@@ -92,7 +92,7 @@ public class FootrpintToolCmd extends BaseGroupVisCmd implements WebEventListene
 	private final static String _onIcon = "MarkerTool.on.Icon";
 	private final static String _offIcon = "MarkerTool.off.Icon";
 
-	public FootrpintToolCmd() {
+	public FootprintToolCmd() {
 		super(CommandName);
 		AllPlots.getInstance().addListener(this);
 		changeMode(Mode.OFF);

@@ -34,6 +34,7 @@ import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
 import edu.caltech.ipac.firefly.commands.FlipImageCmd;
 import edu.caltech.ipac.firefly.commands.FlipLeftCmd;
 import edu.caltech.ipac.firefly.commands.FlipRightCmd;
+import edu.caltech.ipac.firefly.commands.FootprintToolCmd;
 import edu.caltech.ipac.firefly.commands.GridCmd;
 import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
@@ -851,7 +852,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
         commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
-        commandMap.put(JwstFootprintCmd.CommandName,  new JwstFootprintCmd());
+        commandMap.put(JwstFootprintCmd.CommandName,  new JwstFootprintCmd() /*new FootprintToolCmd()*/);
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
