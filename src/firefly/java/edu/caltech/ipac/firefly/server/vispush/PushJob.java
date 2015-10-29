@@ -123,7 +123,7 @@ public class PushJob {
         r.setParam(ServerParams.TITLE, title);
         r.setParam(ServerParams.DS9_REGION_DATA, data);
         if (plotIdAry!=null) r.setParam(ServerParams.PLOT_ID, plotIdAry);
-        fireEvent(r.toString(), Name.PUSH_REMOVE_MASK);
+        fireEvent(r.toString(), Name.PUSH_REGION_DATA);
         return true;
     }
 
