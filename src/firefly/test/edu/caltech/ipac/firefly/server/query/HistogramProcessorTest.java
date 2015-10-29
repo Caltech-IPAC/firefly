@@ -1,5 +1,5 @@
 package edu.caltech.ipac.firefly.server.query;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+//import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import org.junit.After;
 import org.junit.Test;
 import junit.framework.Test;
@@ -111,6 +111,28 @@ public class HistogramProcessorTest {
                           12.4956765666,  5.40461549911,  3.95502472437,   2.27046621065, 2.54050701184,
                           -4.1366608831,  3.68649685616};
 
+        int[] expectedNumPointInBin = {12, 59, 68, 36, 15);
+        double[] expectedBinMin = {
+                -6.01466587129,
+                1.18259274515,
+                2.73830522649,
+                5.47340127261,
+                12.938348639
+        };
+        double[] expectedBinMax = {
+                -6.17891461465,
+                1.17147755347,
+                2.72883586101,
+                5.40461549911,
+                12.7976938682,
+        };
+        Object[] obj=hp.calculateVariableBinSizeDataArray(histData);
+        int[] numPointInBin = (int[]) obj[0];
+        double[] binMin = (double[]) obj[1];
+        double[] binMax = (double[]) obj[2];
+        Assert.assertEquals(numPointsInBin, expectedNumPointsInBin);
+        Assert.assertEquals(binMin,expectedBinMin );
+        Assert.assertEquals(binMax,expectedBinMax );
 
     }
     @After

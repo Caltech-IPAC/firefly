@@ -177,8 +177,8 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         double[] maxArray=new double[numericColumns.length];
         int[] numPointsArray=new int[numericColumns.length];
         for (int icol=0; icol<numericColumns.length; icol++) {
-            double min=Double.MAX_VALUE;
-            double max=Double.MIN_VALUE;
+            double min=Double.MAX_VALUE; //using the maximum double value as a minimal
+            double max=-Double.MAX_VALUE; //using the minimum double value as the maximun
             int numPoints=0;
             for (int i = 0; i < dgjList.size(); i++) {
                 double val = convertToADoubleValue(dgjList.get(i).getDataElement(numericColumns[icol].getKeyName()), numericColumns[icol]);

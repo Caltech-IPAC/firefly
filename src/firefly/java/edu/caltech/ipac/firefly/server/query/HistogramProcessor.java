@@ -409,7 +409,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     private static String[] getInputFilePath(String inputFileName){
         String[] dirs= inputFileName.split("/");
         String name = dirs[dirs.length-1];
-        String path = inputFileName.substring(0, inputFileName.length()-name.length());
+        String path = inputFileName.substring(0, inputFileName.length() - name.length());
         String[] ret={path, name};
         return ret;
     }
@@ -446,7 +446,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         Arrays.fill(binMin, Double.MAX_VALUE);
         double[] binMax = new double[nBin];
         //fill all entries to the minimum thus, all data values will be larger than it
-        Arrays.fill(binMax, Double.MIN_VALUE);
+        Arrays.fill(binMax, -Double.MAX_VALUE);
 
         for (int ibin = 0; ibin < nBin; ibin++) {
             for (int i = 0; i < columnData.length; i++) {
@@ -594,7 +594,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
      * @return
      */
     private int getIndexOfTheMaxValue(double[] inArray){
-        double max = -Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE; //using the minimum double value
         int maxIdx=-1;  //no valid data
         if (inArray.length>=1) {
             for (int i = 0; i < inArray.length; i++) {
