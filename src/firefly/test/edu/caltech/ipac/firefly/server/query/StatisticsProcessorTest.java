@@ -1,4 +1,4 @@
-package firefly.test.edu.caltech.ipac.firefly.server.query;
+package edu.caltech.ipac.firefly.server.query;
 
 /**
  * Created by zhang on 10/29/15.

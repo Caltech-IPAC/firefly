@@ -21,6 +21,7 @@ import java.util.List;
 
 /**
  * Created by zhang on 10/14/15.
+ * This class calculates the statistics of a IpacTable Data.
  */
 
 @SearchProcessorImpl(id = "StatisticsProcessor")
@@ -232,7 +233,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     }
 
     /**
-     * This method willl read in the DataDef columns and find and return all the numerical columns because none numerical
+     * This method will read in the DataDef columns and find and return all the numerical columns because none numerical
      * columns have to minimum and maximum values
      * @param columns
      * @return
@@ -273,8 +274,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     }
 
     /**
-     * This method is used for testing the class.  It split the input file to path and file name.
-     *
+     * This method splits the input file to path and file name.
      * @param inputFileName
      * @return  the path (or directory)  of the inputFileName is from.
      */
@@ -285,6 +285,16 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         String[] ret={path, name};
         return ret;
     }
+
+    /**
+     * This is the only public class which can be used by other object.  The input is TableServerRequest, the
+     * output is the statistics DataGroup.
+     * @param request the TableSeverRequest where stores the input information
+     * @return DataGroup which contains the statistics data columns
+     * @throws IpacTableException
+     * @throws IOException
+     * @throws DataAccessException
+     */
     public  DataGroup  getStatisticsTable(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
         File file = loadDataFile(request);
         return createTableStatistic(file);
