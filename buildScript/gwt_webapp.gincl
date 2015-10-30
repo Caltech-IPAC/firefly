@@ -24,6 +24,34 @@ sourceSets {
     include "edu/caltech/ipac/${project.projectDir.name}/*.xml"
     exclude "**/*.gradle"
   }
+  test.java.srcDir  "test/"
+}
+
+test {
+
+  // set a system property for the test JVM(s)
+  systemProperty 'some.prop', 'value'
+
+  // explicitly include or exclude tests
+  include 'edu/**'
+
+  // show standard out and standard error of the test JVM(s) on the console
+  testLogging.showStandardStreams = true
+
+  // set heap size for the test JVM(s)
+  minHeapSize = "128m"
+  maxHeapSize = "512m"
+
+  // listen to events in the test execution lifecycle
+  beforeTest { descriptor ->
+    logger.lifecycle("Running test: " + descriptor)
+  }
+
+  // listen to standard out and standard error of the test JVM(s)
+  onOutput { descriptor, event ->
+    logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+  }
+
 }
 
 configurations {

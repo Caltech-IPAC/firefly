@@ -5,6 +5,7 @@ sourceSets {
     srcDirs "java"
     exclude "**/*.gradle"
   }
+  test.java.srcDir  "test/"
 }
 
 dependencies {
