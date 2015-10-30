@@ -1,10 +1,12 @@
 package edu.caltech.ipac.firefly.server.query;
 //import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import edu.caltech.ipac.firefly.server.query.HistogramProcessor;
+import edu.caltech.ipac.util.*;
+
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 /**
  * Created by zhang on 10/29/15.
  */
@@ -17,7 +19,7 @@ public class HistogramProcessorTest {
     public void setUp(){
     }
     @Test
-    public testFixedBinSize(){
+    public void testFixedBinSize(){
         double binSize=20;
         //create five bin histData
         double[] histData = new double[100];
@@ -111,13 +113,13 @@ public class HistogramProcessorTest {
                           12.4956765666,  5.40461549911,  3.95502472437,   2.27046621065, 2.54050701184,
                           -4.1366608831,  3.68649685616};
 
-        int[] expectedNumPointInBin = {12, 59, 68, 36, 15);
+        int[] expectedNumPointInBin = {12, 59, 68, 36, 15};
         double[] expectedBinMin = {
-                -6.01466587129,
-                1.18259274515,
-                2.73830522649,
-                5.47340127261,
-                12.938348639
+                                          -14.3997518146,
+                                          -5.85041712794,
+                                          1.19370793683,
+                                          2.74777459197,
+                                          5.54218704611
         };
         double[] expectedBinMax = {
                 -6.17891461465,
@@ -126,13 +128,19 @@ public class HistogramProcessorTest {
                 5.40461549911,
                 12.7976938682,
         };
-        Object[] obj=hp.calculateVariableBinSizeDataArray(histData);
-        int[] numPointInBin = (int[]) obj[0];
-        double[] binMin = (double[]) obj[1];
-        double[] binMax = (double[]) obj[2];
-        Assert.assertEquals(numPointsInBin, expectedNumPointsInBin);
-        Assert.assertEquals(binMin,expectedBinMin );
-        Assert.assertEquals(binMax,expectedBinMax );
+        try {
+            Object[] obj = hp.calculateVariableBinSizeDataArray(histData);
+            int[] numPointInBin = (int[]) obj[0];
+            double[] binMin = (double[]) obj[1];
+            double[] binMax = (double[]) obj[2];
+            Assert.assertEquals(expectedNumPointInBin, numPointInBin);
+            Assert.assertArrayEquals(binMin, expectedBinMin, 10e-10 );
+            Assert.assertArrayEquals(binMax, expectedBinMax, 10e-10);
+        }
+        catch (Exception ex){
+            ex.printStackTrace();
+        };
+
 
     }
     @After
