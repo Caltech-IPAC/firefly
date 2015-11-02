@@ -1,15 +1,17 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+
 import {flux} from '../Firefly.js';
+import history from './History.js';
 
 const APP_LOAD = 'app-data/APP_LOAD';
 const APP_UPDATE = 'app-data/APP_UPDATE';
 const SHOW_DIALOG = 'app-data/SHOW_DIALOG';
 const HIDE_DIALOG = 'app-data/HIDE_DIALOG';
 const HIDE_ALL_DIALOGS = 'app-data/HIDE_ALL_DIALOGS';
+const APP_DATA_PATH = 'app-data';
 
-const APP_DATA_KEY= 'appData';
 
 
 function getInitState() {
@@ -19,6 +21,8 @@ function getInitState() {
 }
 
 function reducer(state=getInitState(), action={}) {
+
+    history.add(state, action);
 
     switch (action.type) {
         case (APP_LOAD)  :
@@ -115,22 +119,10 @@ function fetchAppData(dispatch, version, waitSec) {
         };
         dispatch( updateAppData(mockData) );
     }, waitSec * 1000);
-
-    //ServerApi.loadAppData()
-    //    .then((data) => {
-    //        dispatch(updateAppData(data));
-    //    })
-    //    .catch((errorMessage) => {
-    //        var data = {
-    //            isReady: false,
-    //            errorMessage: errorMessage
-    //        };
-    //        dispatch(updateAppData(data));
-    //    });
 }
 
 const isDialogVisible= function(dialogKey) {
-    var dialogs= flux.getState()[APP_DATA_KEY].dialogs;
+    var dialogs= flux.getState()[APP_DATA_PATH].dialogs;
     return (dialogs && dialogs[dialogKey] && dialogs[dialogKey].visible) ? true : false;
 };
 
@@ -153,7 +145,7 @@ var AppDataCntlr= {
     APP_UPDATE,
     SHOW_DIALOG,
     HIDE_DIALOG,
-    APP_DATA_KEY,
+    APP_DATA_PATH,
     reducer,
     loadAppData,
     updateAppData,
