@@ -21,6 +21,7 @@ import java.util.List;
 
 /**
  * Created by zhang on 10/14/15.
+ * This class calculates the statistics of a IpacTable Data.
  */
 
 @SearchProcessorImpl(id = "StatisticsProcessor")
@@ -126,7 +127,41 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
 
     }
 
-      /**
+    /**
+     * Add this method to run unit test
+     *
+     * @param inDataGroup
+     * @return
+     */
+    public  DataGroup createTableStatistic(DataGroup inDataGroup){
+        List<DataObject> dgjList= inDataGroup.values();
+        DataType[] inColumns =inDataGroup.getDataDefinitions();
+        DataType[] numericColumns = getNumericColumns(inColumns);
+
+        String[] columnNames = getDataTypeField(numericColumns, "name");
+        String[] columnDescription = getDataTypeField(numericColumns, "description");
+        String[] unit = getDataTypeField(numericColumns, "unit");
+
+        Object[] retArrays = getDataArrays (dgjList,numericColumns );
+        double[] minArray = (double[]) retArrays[0];
+        double[] maxArray = (double[]) retArrays[1];
+        int[] numPointsArray =(int[]) retArrays[2];
+        DataGroup statisticsTable = new DataGroup("statisticsTable", columns);
+        for (int i=0; i<minArray.length; i++){
+            DataObject row = new DataObject(statisticsTable);
+            row.setDataElement(columns[0], columnNames[i]);
+            row.setDataElement(columns[1], columnDescription[i]);
+            row.setDataElement(columns[2], unit[i]);
+            row.setDataElement(columns[3], minArray[i]);
+            row.setDataElement(columns[4], maxArray[i]);
+            row.setDataElement(columns[5], numPointsArray [i]);
+            statisticsTable.add(row);
+        }
+
+        return statisticsTable;
+    }
+     /**
+     *
      * This method process the input IpacTable and find the coumnNames, min, max etc and store in a new IpacTable, ie, a DataGroup.
      * @return
      * @throws IpacTableException
@@ -136,7 +171,8 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     private  DataGroup  createTableStatistic(File file) throws IpacTableException, IOException, DataAccessException  {
 
         DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
-        List<DataObject> dgjList= dg.values();
+        return createTableStatistic(dg);
+       /* List<DataObject> dgjList= dg.values();
         DataType[] inColumns = dg.getDataDefinitions();
         DataType[] numericColumns = getNumericColumns(inColumns);
 
@@ -157,14 +193,14 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
            row.setDataElement(columns[3], minArray[i]);
            row.setDataElement(columns[4], maxArray[i]);
            row.setDataElement(columns[5], numPointsArray [i]);
-            row.setDataElement(columns[2], numPointsArray[i]);
-            statisticsTable.add(row);
+           statisticsTable.add(row);
         }
 
-        return statisticsTable;
+        return statisticsTable;*/
     }
 
     /**
+     *
      * Calculate three numerical arrays in the same loop to improve the performance.  Each array could be calculated individually
      * in each corresponding method.  But It takes three loops to get the results
      * @param dgjList
@@ -176,8 +212,8 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         double[] maxArray=new double[numericColumns.length];
         int[] numPointsArray=new int[numericColumns.length];
         for (int icol=0; icol<numericColumns.length; icol++) {
-            double min=Double.MAX_VALUE;
-            double max=Double.MIN_VALUE;
+            double min=Double.MAX_VALUE; //using the maximum double value as a minimal
+            double max=-Double.MAX_VALUE; //using the minimum double value as the maximun
             int numPoints=0;
             for (int i = 0; i < dgjList.size(); i++) {
                 double val = convertToADoubleValue(dgjList.get(i).getDataElement(numericColumns[icol].getKeyName()), numericColumns[icol]);
@@ -232,7 +268,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     }
 
     /**
-     * This method willl read in the DataDef columns and find and return all the numerical columns because none numerical
+     * This method will read in the DataDef columns and find and return all the numerical columns because none numerical
      * columns have to minimum and maximum values
      * @param columns
      * @return
@@ -273,8 +309,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
     }
 
     /**
-     * This method is used for testing the class.  It split the input file to path and file name.
-     *
+     * This method splits the input file to path and file name.
      * @param inputFileName
      * @return  the path (or directory)  of the inputFileName is from.
      */
@@ -285,6 +320,16 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         String[] ret={path, name};
         return ret;
     }
+
+    /**
+     * This is the method which can be used by other object.  The input is TableServerRequest, the
+     * output is the statistics DataGroup.
+     * @param request the TableSeverRequest where stores the input information
+     * @return DataGroup which contains the statistics data columns
+     * @throws IpacTableException
+     * @throws IOException
+     * @throws DataAccessException
+     */
     public  DataGroup  getStatisticsTable(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
         File file = loadDataFile(request);
         return createTableStatistic(file);
@@ -300,7 +345,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
                     File inFile = new File(args[0]);
                     StatisticsProcessor sp = new StatisticsProcessor();
                     DataGroup outDg = sp.createTableStatistic(inFile);
-                    String outFileName = path+"output_"+inFileName;
+                    String outFileName = path+"statistics_output_"+inFileName;
                     File outFile = new File(outFileName);
                     IpacTableWriter.save(outFile, outDg);
 
