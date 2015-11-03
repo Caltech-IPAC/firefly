@@ -1,13 +1,8 @@
 package edu.caltech.ipac.visualize.draw;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -19,7 +14,6 @@ import edu.caltech.ipac.visualize.plot.FitsRead;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import junit.framework.Assert;
 import nom.tam.fits.Fits;
 
 public class GridTest {
@@ -32,7 +26,7 @@ public class GridTest {
 	@BeforeClass
 	public static void buildPlot() throws Exception {
 
-		grid = new GridLayer(csys).getGrid();
+//		grid = new GridLayer(csys).getGrid();
 		Fits fits = new Fits(filename);
 		// fits = new Fits("./good.fits");
 
@@ -41,7 +35,7 @@ public class GridTest {
 		fg.setFitsRead(Band.RED, frAry[0]);
 		plot = new ImagePlot(null, fg, 0, false, Band.RED, 0, new RangeValues());
 		// plot.preProcessImageTiles(fg);
-		((Grid) grid).setPlot(plot);
+//		((Grid) grid).setPlot(plot);
 
 	}
 
@@ -69,6 +63,7 @@ public class GridTest {
 	// public String getModuleName() {
 	// return "edu.caltech.ipac.firefly.FireFly";
 	// }
+	/*
 	public static void main(String[] a) {
 		JFrame window = new JFrame();
 		try {
@@ -102,7 +97,7 @@ public class GridTest {
 		window.getContentPane().add(eqButton, BorderLayout.EAST);
 		window.setVisible(true);
 	}
-
+*/
 	@Test
 	public void testSimple() { // <span style="color:black;">**(3)**</span>
 		org.junit.Assert.assertTrue(true);
