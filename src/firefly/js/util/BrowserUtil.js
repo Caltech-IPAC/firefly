@@ -14,9 +14,11 @@ var getScriptURL = (function() {
     var scripts = document.getElementsByTagName('script');
     var myScript;
     for(var i=0; (i<scripts.length); i++) {
-        if (scripts[i].src.indexOf(SCRIPT_NAME)>-1) {
-            myScript= scripts[i].src;
-            break;
+        for (var j = 0; (j < SCRIPT_NAME.length); j++) {
+            if (scripts[i].src.indexOf(SCRIPT_NAME[j]) > -1) {
+                myScript = scripts[i].src;
+                break;
+            }
         }
     }
     return function() { return myScript; };
@@ -25,7 +27,7 @@ var getScriptURL = (function() {
 
 export var getRootURL = (function() {
 
-    var workingURL= getScriptURL();
+    var workingURL= getScriptURL() || window.location.href;
     const rootURL= workingURL.substring(0,workingURL.lastIndexOf('/')) + '/';
     return () => rootURL;
 })();

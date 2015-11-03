@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import _ from 'lodash';
+import get from 'lodash/object/get';
 
 import React from 'react';
 import {flux, firefly} from 'firefly/Firefly.js';
@@ -11,7 +11,7 @@ import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
 const App = React.createClass({
 
     render() {
-        const v = _.get(this.props, 'appData.props.version') || 'unknown';
+        const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!this.props.appData.isReady) {
             return (
                 <div>
@@ -31,11 +31,10 @@ const App = React.createClass({
 
 function connector(state) {
     return {
-        appData: state.appData,
+        appData: state[appDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point'
     };
 }
-
 firefly.bootstrap();
 firefly.process( {type : appDataCntlr.APP_LOAD} );
 

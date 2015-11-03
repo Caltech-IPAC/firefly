@@ -25,13 +25,13 @@ const actionCreators = new Map();
  * @type {Object<string, function>}
  */
 const reducers = {
-    [AppDataCntlr.APP_DATA_KEY]: AppDataCntlr.reducer,
+    [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer
 };
 
-let redux;
+let redux = null;
 
 
 // pre-map a set of action => creator prior to boostrapping.
@@ -93,7 +93,9 @@ function createRedux() {
 }
 
 function bootstrap() {
-    redux = createRedux();
+    if (redux === null) {
+        redux = createRedux();
+    }
     return new Promise(
         function (resolve, reject) {
             // there may be async logic here..

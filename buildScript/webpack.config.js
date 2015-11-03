@@ -23,7 +23,6 @@ var def_config = {
     filename    : '[name].js',
     deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
     alias       : {
-            'ipac-firefly' : path.resolve(config.firefly_dir, 'js'),
             firefly : path.resolve(config.firefly_dir, 'js'),
             styles : path.resolve(config.src, 'styles')
         }
@@ -48,6 +47,10 @@ if (globals.__DEBUG__) {
     output_path = config.deploy_dir;
 }
 
+var script_names = [];
+Object.keys(config.entry).forEach( (v) => {
+    script_names.push(v + '.js');
+});
 
 /*
 * creating the webpackConfig based on the project's config for webpack to work on.
@@ -64,8 +67,7 @@ var webpackConfig = {
     },
     plugins : [
         new webpack.DefinePlugin(Object.assign(globals, {
-            __CLIENT__ : true,
-            __SCRIPT_NAME__ : `'fflib.js'`        // hard-coded for now.  could not figure out how to pick up the current output file of multiple entry points build.
+            __SCRIPT_NAME__ : JSON.stringify(script_names)
         })),
         new webpack.optimize.OccurrenceOrderPlugin(),
         new webpack.optimize.DedupePlugin(),

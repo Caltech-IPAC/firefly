@@ -2,8 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/**
+ * @deprecated  this is no longer used.. look at Firefly.js instead.
+ */
+
 import React from 'react/addons';
-import 'babel/polyfill';
 
 //import Alt from 'alt';
 import Enum from 'enum';

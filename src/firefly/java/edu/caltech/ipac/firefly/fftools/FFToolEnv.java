@@ -16,6 +16,7 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
+import edu.caltech.ipac.firefly.core.task.CoreTask;
 import edu.caltech.ipac.firefly.resbundle.css.CssData;
 import edu.caltech.ipac.firefly.resbundle.css.FireflyCss;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
@@ -27,6 +28,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -51,12 +53,26 @@ public class FFToolEnv {
 
 
 
-
-    public static void loadJS() {
+    public static final void loadFireflyJS(final JSLoad.Loaded loaded) {
         String js= GWT.getModuleBaseURL() + "js/fftools/fireflyJSTools.js";
         String fireflyJS= GWT.getModuleBaseURL() + "fflib.js";
 
-        new JSLoad(new JSLoad.Loaded(){
+        ArrayList<String> scriptsToLoad = new ArrayList<String>();
+        if (!isFireflyInitialized()) {
+            scriptsToLoad.add(fireflyJS);
+        }
+        scriptsToLoad.add(js);
+
+        new JSLoad(loaded, scriptsToLoad.toArray(new String[scriptsToLoad.size()]) );
+
+    }
+
+    private static native boolean isFireflyInitialized() /*-{
+        return $wnd.firefly && $wnd.firefly.initialized;
+    }-*/;
+
+    public static void loadJS() {
+        loadFireflyJS(new JSLoad.Loaded(){
             public void allLoaded() {
                 _scriptLoaded = true;
                 monitorForExternalPushChannel();
@@ -65,7 +81,7 @@ public class FFToolEnv {
                 initPlot();
                 notifyLoaded();
             }
-        },js,fireflyJS);
+        });
     }
 
     public static void postInitialization() {

@@ -16,13 +16,13 @@ function reducer(state={}, action={}) {
 
 /*globals ffgwt*/
 
-if (ffgwt) {
+if (window.ffgwt) {
     var allPlots= ffgwt.Visualize.AllPlots.getInstance();
     allPlots.addListener({
         eventNotify(ev) {
             //console.log('ANY_CHANGE:' + ev.getName().getName());
             if (ev.getName().getName()==='Replot') {
-                flux.process({type: ANY_CHANGE, payload: {} });
+                flux.process({type: ANY_CHANGE, payload: { } });
             }
         }
     });
