@@ -1,8 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.query.StatisticsProcessor;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.*;
@@ -25,15 +23,15 @@ public class StatisticsProcessorTest {
     private static StatisticsProcessor sp;
     private static DataGroup inDg;
     private DataGroup outDg;
-    static File inFile;
+
 
      @BeforeClass
     public static void setup() throws IpacTableException, IOException, DataAccessException{
 
         sp = new StatisticsProcessor();
 
-        String fname="/Users/zhang/Work/LSST/TestingData/ipacTableTestFile.tbl";
-        inFile = new File(fname); //filename);
+
+        File inFile =  new File(TEST_ROOT+filename);
         inDg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable" );
 
 
@@ -54,6 +52,8 @@ public class StatisticsProcessorTest {
 
     @Test
     public void testStatisticDataArray(){
+
+        outDg = sp.createTableStatistic(inDg);
         List<DataObject> objList= outDg.values();
         DataType[] inColumns = outDg.getDataDefinitions();
 
@@ -96,5 +96,10 @@ public class StatisticsProcessorTest {
 
 
     }
-
+    public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
+        StatisticsProcessorTest myTest = new StatisticsProcessorTest();
+        setup();
+        myTest.testCreateStatisticTable();
+        myTest.testStatisticDataArray();
+    }
 }
