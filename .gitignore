@@ -40,3 +40,8 @@ java/tools/build.number
 #
 # ignore javascript dependencies
 node_modules/
+
+# eclipse environment
+.classpath
+.project
+.settings/
