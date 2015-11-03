@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.caltech.ipac.firefly.server.query.StatisticsProcessorTest;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -21,7 +22,9 @@ import nom.tam.fits.Fits;
 public class GridTest {
 
 //	private static Component grid = null;
-	private static String filename = "test/data/bad-grid.fits";
+	private static final String TEST_ROOT = "test"+File.separatorChar;
+	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
+			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
 	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
 
