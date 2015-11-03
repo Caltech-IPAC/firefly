@@ -1,6 +1,8 @@
 package edu.caltech.ipac.visualize.draw;
 
-import java.awt.Component;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -18,8 +20,8 @@ import nom.tam.fits.Fits;
 
 public class GridTest {
 
-	private static Component grid = null;
-	private static String filename = "./bad.fits";
+//	private static Component grid = null;
+	private static String filename = "test/data/bad-grid.fits";
 	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
 
@@ -27,7 +29,8 @@ public class GridTest {
 	public static void buildPlot() throws Exception {
 
 //		grid = new GridLayer(csys).getGrid();
-		Fits fits = new Fits(filename);
+		File file = Paths.get(filename).toFile();
+		Fits fits = new Fits(file);
 		// fits = new Fits("./good.fits");
 
 		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);

@@ -16,7 +16,7 @@ public class HistogramProcessorTest {
     HistogramProcessor hp = new HistogramProcessor();
 
     @BeforeClass
-    public void setUp(){
+    public static void setUp(){
     }
     @Test
     public void testFixedBinSize(){
@@ -133,7 +133,7 @@ public class HistogramProcessorTest {
             int[] numPointInBin = (int[]) obj[0];
             double[] binMin = (double[]) obj[1];
             double[] binMax = (double[]) obj[2];
-            Assert.assertEquals(expectedNumPointInBin, numPointInBin);
+            Assert.assertArrayEquals(expectedNumPointInBin, numPointInBin);
             Assert.assertArrayEquals(binMin, expectedBinMin, 10e-10 );
             Assert.assertArrayEquals(binMax, expectedBinMax, 10e-10);
         }
