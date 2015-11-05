@@ -76,6 +76,8 @@ public class WebPlotInitializer implements Serializable, DataEntry {
         return ProjectionSerializer.deserializeProjection(_projectionSerialized);
     }
 
+    public String getProjectionSerialized() { return _projectionSerialized; }
+
     public int getDataWidth() { return _dataWidth; }
     public int getDataHeight() { return _dataHeight; }
     public int getImageScaleFactor() { return _imageScaleFactor; }

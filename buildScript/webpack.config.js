@@ -164,7 +164,9 @@ if (globals.__DEBUG__) {
         process.stdout.write('\n');
         var time = new Date();
         var tStr= time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
-        process.stdout.write('Build ' +buildCnt+ ' results: '+ tStr);
+        process.stdout.write('-------------------- Begin build #'+ buildCnt +
+                             ' at '+ tStr +'--------------------------\n');
+        //process.stdout.write('Build ' +buildCnt+ ' results: '+ tStr);
     };
 
     webpackConfig.plugins.splice(3,0,

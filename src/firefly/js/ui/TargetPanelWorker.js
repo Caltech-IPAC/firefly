@@ -7,6 +7,7 @@ import PositionParser from '../util/PositionParser';
 import PositionFieldDef from '../data/form/PositionFieldDef';
 import Point from '../visualize/Point';
 import {fetchUrl} from '../util/WebUtil.js';
+import {parseWorldPt} from '../visualize/Point';
 
 
 
@@ -135,7 +136,7 @@ var resolveObject = function(posFieldDef) {
         {
             if (results) {
                 if (results[0].success === 'true') {
-                    var wpt = Point.parseWorldPt(results[0].data);
+                    var wpt = parseWorldPt(results[0].data);
                     return {
                         showHelp: false,
                         feedback: posFieldDef.formatTargetForHelp(wpt),

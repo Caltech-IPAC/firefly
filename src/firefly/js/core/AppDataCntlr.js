@@ -7,6 +7,7 @@ import history from './History.js';
 import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
 import {fetchUrl} from '../util/WebUtil.js';
+import Point, {isValidPoint} from '../visualize/Point.js';
 
 const APP_LOAD = 'app-data/APP_LOAD';
 const APP_UPDATE = 'app-data/APP_UPDATE';
@@ -14,12 +15,14 @@ const SHOW_DIALOG = 'app-data/SHOW_DIALOG';
 const HIDE_DIALOG = 'app-data/HIDE_DIALOG';
 const HIDE_ALL_DIALOGS = 'app-data/HIDE_ALL_DIALOGS';
 const APP_DATA_PATH = 'app-data';
+const ACTIVE_TARGET = 'app-data/ACTIVE_TARGET';
 
 
 
 function getInitState() {
     return {
-        isReady : false
+        isReady : false,
+        activeTarget: null
     };
 }
 
@@ -43,12 +46,22 @@ function reducer(state=getInitState(), action={}) {
         case (HIDE_ALL_DIALOGS)  :
             return hideAllDialogsChange(state,action);
 
+        case (ACTIVE_TARGET)  :
+            return updateActiveTarget(state,action);
+
 
         default:
             return state;
     }
 
 }
+
+const updateActiveTarget= function(state,action) {
+    var {worldPt,corners}= action;
+    if (!worldPt || !corners) return state;
+    return Object.assign({}, state, {activeTarget:{worldPt,corners}});
+};
+
 
 
 const showDialogChange= function(state,action) {
@@ -189,6 +202,27 @@ function loadProperties() {
     return new Promise(task);
 
 }
+const getActiveTarget= function() {
+    return flux.getState()[APP_DATA_PATH].activeTarget;
+};
+
+/**
+ * @param wp center WorldPt
+ * @param corners array of 4 WorldPts that represent the corners of a image
+ */
+const setActiveTarget= function(wp,corners) {
+    var payload={};
+    if (isValidPoint(wp) && wp.type==Point.W_PT) {
+        payload.worldPt= wp;
+    }
+    if (corners) {
+        payload.corners= corners;
+    }
+    if (Object.keys(payload).length) {
+        flux.process({type: ACTIVE_TARGET, payload});
+    }
+};
+
 
 var AppDataCntlr= {
     APP_LOAD,
@@ -202,7 +236,9 @@ var AppDataCntlr= {
     isDialogVisible,
     showDialog,
     hideDialog,
-    hideAllDialogs
+    hideAllDialogs,
+    getActiveTarget,
+    setActiveTarget
 };
 
 export default AppDataCntlr;

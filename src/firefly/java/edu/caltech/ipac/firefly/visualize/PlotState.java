@@ -14,12 +14,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-/**
- * User: roby
- * Date: Aug 7, 2008
- * Time: 4:17:43 PM
- */
-
 
 /**
  * @author Trey Roby
@@ -36,7 +30,6 @@ public class PlotState implements DataEntry, HandSerialize {
                                    USE_FIRST,   // only valid option if loading a three color with multiple Request
                                    USE_IDX,   // use a specific image from the fits read Array
                                    MAKE_THREE_COLOR, // make a three color out of the first three images, not yet implemented
-                                   //ASK_USER, // ask use what to do, like spot, not yet implemented
                                    USE_ALL} // only valid in non three color, make a array of WebPlots
 
 
@@ -85,6 +78,14 @@ public class PlotState implements DataEntry, HandSerialize {
 
     public MultiImageAction getMultiImageAction() { return multiImage; }
     public void setMultiImageAction(MultiImageAction multiImage) { this.multiImage = multiImage; }
+
+    public void setBandStateAry(BandState bsAry[]) {
+        for(int i=0; (i<MAX_BANDS); i++) {
+            if (i<bsAry.length) {
+                bandStateAry[i]= bsAry[i];
+            }
+        }
+    }
 
     public Band firstBand() {
         Band bandAry[]= getBands();

@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.visualize.plot.projection;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
@@ -14,6 +17,8 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 import java.io.Serializable;
 
 
+@JsExport
+@JsType
 public class Projection implements Serializable {
 
 
@@ -70,6 +75,7 @@ public class Projection implements Serializable {
           return outpt;
     }
 
+    @JsNoExport
     public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
           ImageWorkSpacePt outpt= new ImageWorkSpacePt (
                pt.getX()+(x * _scale1), pt.getY()+(y * _scale2) );
@@ -77,12 +83,12 @@ public class Projection implements Serializable {
     }
 
     public ProjectionPt getImageCoords( double ra, double dec) throws ProjectionException {
-        return getImageCoords(ra,dec,true);
+        return getImageCoordsInternal(ra, dec, true);
     }
 
     public ProjectionPt getImageCoordsSilent( double ra, double dec) {
         try {
-            return getImageCoords(ra,dec,false);
+            return getImageCoordsInternal(ra, dec, false);
         } catch (ProjectionException e) { // exception will not happen since parameter turns if off
             return null;
         }
@@ -97,7 +103,7 @@ public class Projection implements Serializable {
     * @return ImagePt with X,Y in "Skyview Screen" coordinates
     */
 
-    private ProjectionPt getImageCoords( double ra, double dec, boolean useProjException) throws ProjectionException
+    private ProjectionPt getImageCoordsInternal(double ra, double dec, boolean useProjException) throws ProjectionException
     {
 	ProjectionPt image_pt = null;
 
@@ -142,27 +148,21 @@ public class Projection implements Serializable {
 	return (image_pt);
     }
 
-    /** Convert World coordinates to "Skyview Screen" coordinates
-    *    "Skyview Screen" coordinates have 0,0 in center of lower left pixel
-    * @param worldPt double precision 
-    * @return ImagePt with X,Y in "Skyview Screen" coordinates
-    */
-    public ProjectionPt getImageCoords(WorldPt worldPt)
-	throws ProjectionException
-    {
-	ProjectionPt image_pt = getImageCoords( worldPt.getX(), worldPt.getY());
-	return (image_pt);
-    }
+//    public ProjectionPt getImageCoords(WorldPt worldPt)
+//	throws ProjectionException
+//    {
+//	ProjectionPt image_pt = getImageCoords( worldPt.getX(), worldPt.getY());
+//	return (image_pt);
+//    }
 
     public WorldPt getWorldCoords( double x, double y) throws ProjectionException {
-        return getWorldCoords(x,y,true);
-
+        return getWorldCoordsInternal(x, y, true);
     }
 
 
     public WorldPt getWorldCoordsSilent( double x, double y) {
         try {
-            return getWorldCoords(x,y,false);
+            return getWorldCoordsInternal(x, y, false);
         } catch (ProjectionException e) { // exception will not happen since parameter turns if off
             return null;
         }
@@ -177,7 +177,7 @@ public class Projection implements Serializable {
     * @param y double precision in "ProjectionPt" coordinates
     */
 
-    public WorldPt getWorldCoords( double x, double y, boolean useProjException)  throws ProjectionException {
+    private WorldPt getWorldCoordsInternal(double x, double y, boolean useProjException)  throws ProjectionException {
 	Pt pt = null;
 
 	switch (_params.maptype)
@@ -222,18 +222,13 @@ public class Projection implements Serializable {
 	return (world_pt);
     }
 
-    /** Convert "ProjectionPt" coordinates to World coordinates
-    *    "ProjectionPt" coordinates have 0,0 in center of lower left pixel
-    *    (same as "Skyview Screen" coordinates)
-    * @param imagePt ProjectionPt with X,Y in "ProjectionPt" coordinates
-    */
 
-    public WorldPt getWorldCoords( ProjectionPt imagePt)
-	throws ProjectionException
-    {
-	WorldPt world_pt = getWorldCoords(imagePt.getX(), imagePt.getY());
-	return (world_pt);
-    }
+//    public WorldPt getWorldCoords( ProjectionPt imagePt)
+//	throws ProjectionException
+//    {
+//	WorldPt world_pt = getWorldCoords(imagePt.getX(), imagePt.getY());
+//	return (world_pt);
+//    }
 
     public boolean isImplemented()
     {

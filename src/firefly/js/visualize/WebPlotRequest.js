@@ -9,26 +9,26 @@ import RequestType from './RequestType.js';
 import ZoomType from './ZoomType.js';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
-import {WorldPt, ImagePt} from './Point.js';
+import Point, {parseImagePt} from './Point.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import RangeValues from './RangeValues.js';
 
 
-const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);
-const TitleOptions= new Enum(['NONE',  // use what it in the title
+export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);
+export const TitleOptions= new Enum(['NONE',  // use what it in the title
                             'PLOT_DESC', // use the plot description key
                             'FILE_NAME', // use the file name or analyze the URL and make a title from that
                             'HEADER_KEY', // use the header value
                             'PLOT_DESC_PLUS', // ??
                             'SERVICE_OBS_DATE'
                            ]);
-const ExpandedTitleOptions= new Enum([ 'REPLACE',// use expanded title when expanded
+export const ExpandedTitleOptions= new Enum([ 'REPLACE',// use expanded title when expanded
                                      'PREFIX',// use expanded title as prefix to title
                                      'SUFFIX'// use expanded title as sufix to title
                                    ]);
-const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE']);
+export const GridOnStatus= new Enum(['FALSE','TRUE','TRUE_LABELS_FALSE']);
 
-const DEFAULT_THUMBNAIL_SIZE= 70;
+export const DEFAULT_THUMBNAIL_SIZE= 70;
 const WEB_PLOT_REQUEST_CLASS= 'WebPlotRequest';
 const Order= new Enum(['FLIP_Y', 'FLIP_X', 'ROTATE', 'POST_CROP', 'POST_CROP_AND_CENTER']);
 
@@ -112,6 +112,7 @@ const C= {
     TITLE_FILENAME_MODE_PFX : 'TitleFilenameModePfx',
     OVERLAY_POSITION : 'OverlayPosition',
     MINIMAL_READOUT: 'MinimalReadout',
+    PLOT_GROUP: 'plotGroup',
     DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
     GRID_ID : 'GRID_ID',
     DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
@@ -141,7 +142,7 @@ const allKeys =
          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
-         C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT, C.PLOT_GROUP, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
@@ -155,18 +156,18 @@ const clientSideKeys =
          C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
          C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT,
-         C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.PLOT_GROUP, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
 const ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
                           C.ZOOM_TYPE, C.HAS_NEW_PLOT_CONTAINER];
 
-const DEFAULT_PIPELINE_ORDER= Order.ROTATE.value+';'+
-                              Order.FLIP_Y.value+';'+
-                              Order.FLIP_X.value+';'+
-                              Order.POST_CROP.value+';'+
-                              Order.POST_CROP_AND_CENTER.value;
+const DEFAULT_PIPELINE_ORDER= Order.ROTATE.key+';'+
+                              Order.FLIP_Y.key+';'+
+                              Order.FLIP_X.key+';'+
+                              Order.POST_CROP.key+';'+
+                              Order.POST_CROP_AND_CENTER.key;
 
 function makeOrderList(orderStr) {
     var retList= [];
@@ -384,7 +385,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param option TitleOptions
      */
-    setTitleOptions(option) { this.setParam(C.TITLE_OPTIONS,option.value); }
+    setTitleOptions(option) { this.setParam(C.TITLE_OPTIONS,option.key); }
 
     /**
      *
@@ -398,14 +399,14 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param {ExpandedTitleOptions} option
      */
-    setExpandedTitleOptions(option) { this.setParam(C.EXPANDED_TITLE_OPTIONS,option.value); }
+    setExpandedTitleOptions(option) { this.setParam(C.EXPANDED_TITLE_OPTIONS,option.key); }
 
     /**
      *
      * @return {ExpandedTitleOptions}
      */
     getExpandedTitleOptions() {
-        return ExpandedTitleOptions.get(this.getParam(C.ZOOM_TYPE)) || ExpandedTitleOptions.REPLACE;
+        return ExpandedTitleOptions.get(this.getParam(C.EXPANDED_TITLE_OPTIONS)) || ExpandedTitleOptions.REPLACE;
     }
 
 
@@ -572,7 +573,7 @@ class WebPlotRequest extends ServerRequest {
      * @see ZoomType
      */
     setZoomType(zoomType) {
-        if (zoomType) this.setParam(C.ZOOM_TYPE, zoomType.value);
+        if (zoomType) this.setParam(C.ZOOM_TYPE, zoomType.key);
     }
 
     getZoomType() {
@@ -747,22 +748,22 @@ class WebPlotRequest extends ServerRequest {
     }
 
     setCropPt1(pt1) {
-        if (pt1) this.setParam((pt1 instanceof WorldPt) ? C.CROP_WORLD_PT1 : C.CROP_PT1, pt1.toString());
+        if (pt1) this.setParam((pt1.type===Point.W_PT) ? C.CROP_WORLD_PT1 : C.CROP_PT1, pt1.toString());
     }
 
     /**
      *  @return imagePt
      */
-    getCropImagePt1() { return ImagePt.parse(this.getParam(C.CROP_PT1)); }
+    getCropImagePt1() { return parseImagePt(this.getParam(C.CROP_PT1)); }
 
     setCropPt2(pt2) {
-        if (pt2) this.setParam((pt2 instanceof WorldPt) ? C.CROP_WORLD_PT2 : C.CROP_PT2, pt2.toString());
+        if (pt2) this.setParam((pt2.type===Point.W_PT) ? C.CROP_WORLD_PT2 : C.CROP_PT2, pt2.toString());
     }
 
     /**
      *  @return imagePt
      */
-    getCropImagePt2() { return ImagePt.parse(this.getParam(C.CROP_PT2)); }
+    getCropImagePt2() { return parseImagePt(this.getParam(C.CROP_PT2)); }
 
 
     /**
@@ -841,7 +842,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param service ServiceType
      */
-    setServiceType(service) { this.setParam(C.SERVICE, service.value); }
+    setServiceType(service) { this.setParam(C.SERVICE, service.key); }
 
     /**
      * @return RequestType
@@ -858,7 +859,7 @@ class WebPlotRequest extends ServerRequest {
      * @param type the RequestType
      * @see RequestType
      */
-    setRequestType(type) { this.setParam(C.TYPE, type.value); }
+    setRequestType(type) { this.setParam(C.TYPE, type.key); }
 
     /**
      *
@@ -1009,7 +1010,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param gridOnStatus GridOnStatus
      */
-    setGridOn(gridOnStatus) { this.setParam(C.GRID_ON, gridOnStatus.value); }
+    setGridOn(gridOnStatus) { this.setParam(C.GRID_ON, gridOnStatus.key); }
 
     /**
      *
@@ -1115,7 +1116,7 @@ class WebPlotRequest extends ServerRequest {
      */
     setPipelineOrder(orderList) {
         var out= orderList.reduce((str,v,idx,ary)=> {
-            return str+ v.value + (idx===ary.length-1 ? '': ';');
+            return str+ v.key + (idx===ary.length-1 ? '': ';');
         },'');
         this.setParam(C.PIPELINE_ORDER, out);
     }
@@ -1160,10 +1161,10 @@ class WebPlotRequest extends ServerRequest {
                     case ServiceType.DSS:
                     case ServiceType.TWOMASS:
                         if (this.containsParam(C.WORLD_PT)) {
-                            s += this.getServiceType().value + '- ' + this.getRequestArea();
+                            s += this.getServiceType().key + '- ' + this.getRequestArea();
                         }
                         else {
-                            s += this.getServiceType().value + '- Obj name: ' + this.getObjectName() +
+                            s += this.getServiceType().key + '- Obj name: ' + this.getObjectName() +
                             ', radius: ' +this.getParam(C.SIZE_IN_DEG);
                         }
                         break;
@@ -1210,9 +1211,9 @@ class WebPlotRequest extends ServerRequest {
     *
     * @return {WebPlotRequest} the PlotRequest object that was constructed
     */
-    makePlotServiceReq(serviceType, wp, survey, sizeInDeg) {
+    static makePlotServiceReq(serviceType, wp, survey, sizeInDeg) {
         var desc = this.makeServiceReqDesc(serviceType, survey, sizeInDeg);
-        var req = new WebPlotRequest(RequestType.SERVICE, serviceType, desc);
+        var req = new WebPlotRequest(RequestType.SERVICE, desc, serviceType);
         req.setSurveyKey(survey);
         req.setWorldPt(wp);
         req.setSizeInDeg(sizeInDeg);
@@ -1220,7 +1221,7 @@ class WebPlotRequest extends ServerRequest {
     }
 
     static makeServiceReqDesc(serviceType, survey, sizeInDeg) {
-        return serviceType.value + ': ' + survey + ', ' + sizeInDeg + ' Deg';
+        return serviceType.key + ': ' + survey + ', ' + sizeInDeg + ' Deg';
     }
 
 

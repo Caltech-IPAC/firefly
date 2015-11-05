@@ -19,7 +19,6 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
-import edu.caltech.ipac.firefly.visualize.WebPlotResultParser;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 
@@ -90,7 +89,7 @@ public class VisServerCommands {
             WebPlotResult result = threeColor ? VisServerOps.create3ColorPlot(red, green, blue) :
                                                 VisServerOps.createPlot(nobandReq);
 
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -105,7 +104,7 @@ public class VisServerCommands {
             boolean isFull = sp.getOptionalBoolean(ServerParams.FULL_SCREEN, false);
 
             WebPlotResult result = VisServerOps.setZoomLevel(stateAry, level, false, isFull);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -133,7 +132,7 @@ public class VisServerCommands {
             }
 
             WebPlotResult result = VisServerOps.recomputeStretch(state, sdAry);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -146,7 +145,7 @@ public class VisServerCommands {
             Band band = Band.parse(sp.getRequired(ServerParams.BAND));
             WebPlotRequest req= WebPlotRequest.parse(sp.getRequired(ServerParams.REQUEST));
             WebPlotResult result = VisServerOps.addColorBand(state, req, band);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -157,7 +156,7 @@ public class VisServerCommands {
             PlotState state= sp.getState();
             Band band = Band.parse(sp.getRequired(ServerParams.BAND));
             WebPlotResult result = VisServerOps.deleteColorBand(state, band);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -169,7 +168,7 @@ public class VisServerCommands {
             PlotState state= sp.getState();
             int idx= sp.getRequiredInt(ServerParams.COLOR_IDX);
             WebPlotResult result = VisServerOps.changeColor(state, idx);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -182,7 +181,7 @@ public class VisServerCommands {
             ImagePt pt2= sp.getRequiredImagePt(ServerParams.PT2);
             boolean cropMultiAll= sp.getOptionalBoolean(ServerParams.CRO_MULTI_ALL, false);
             WebPlotResult result = VisServerOps.crop(state, pt1, pt2, cropMultiAll);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -196,15 +195,16 @@ public class VisServerCommands {
             ImagePt pt3= sp.getRequiredImagePt(ServerParams.PT3);
             ImagePt pt4= sp.getRequiredImagePt(ServerParams.PT4);
             WebPlotResult result = VisServerOps.getAreaStatistics(state, pt1, pt2, pt3, pt4);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
     public static class Header extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            PlotState state= new SrvParam(paramMap).getState();
-            return WebPlotResultSerializer.createJson(VisServerOps.getFitsHeaderInfo(state));
+            SrvParam sp= new SrvParam(paramMap);
+            PlotState state= sp.getState();
+            return WebPlotResultSerializer.createJson(VisServerOps.getFitsHeaderInfo(state), sp.isJsonDeep());
         }
     }
 
@@ -236,7 +236,7 @@ public class VisServerCommands {
             }
 
             WebPlotResult result = VisServerOps.getImagePng(state, drawInfoList);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -250,7 +250,7 @@ public class VisServerCommands {
             boolean north= sp.getRequiredBoolean(ServerParams.NORTH);
             float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
             WebPlotResult result = VisServerOps.rotateNorth(state, north,zoomLevel);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -263,7 +263,7 @@ public class VisServerCommands {
             double angle= rotate ? sp.getRequiredDouble(ServerParams.ANGLE) : 0.0;
             float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
             WebPlotResult result = VisServerOps.rotateToAngle(state, rotate, angle,zoomLevel);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -271,8 +271,10 @@ public class VisServerCommands {
     public static class FlipImageOnY extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            WebPlotResult result = VisServerOps.flipImageOnY(new SrvParam(paramMap).getState());
-            return WebPlotResultSerializer.createJson(result);
+            SrvParam sp= new SrvParam(paramMap);
+            PlotState state= sp.getState();
+            WebPlotResult result = VisServerOps.flipImageOnY(state);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -288,7 +290,7 @@ public class VisServerCommands {
             int height= sp.getRequiredInt(ServerParams.HEIGHT);
             WebPlotResult result = VisServerOps.getColorHistogram(state, band, width, height);
 
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -306,19 +308,20 @@ public class VisServerCommands {
     public static class GetProgress extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-
-            String key = new SrvParam(paramMap).getRequired(ServerParams.PROGRESS_KEY);
+            SrvParam sp= new SrvParam(paramMap);
+            String key = sp.getRequired(ServerParams.PROGRESS_KEY);
             WebPlotResult result= VisServerOps.checkPlotProgress(key);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
     public static class DS9Region extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            String fileKey = new SrvParam(paramMap).getRequired(ServerParams.FILE_KEY);
+            SrvParam sp= new SrvParam(paramMap);
+            String fileKey = sp.getRequired(ServerParams.FILE_KEY);
             WebPlotResult result= VisServerOps.getDS9Region(fileKey);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -326,9 +329,10 @@ public class VisServerCommands {
     public static class SaveDS9Region extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
-            String data = new SrvParam(paramMap).getRequired(ServerParams.REGION_DATA);
+            SrvParam sp= new SrvParam(paramMap);
+            String data = sp.getRequired(ServerParams.REGION_DATA);
             WebPlotResult result= VisServerOps.saveDS9RegionFile(data);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 
@@ -349,7 +353,7 @@ public class VisServerCommands {
             SrvParam sp= new SrvParam(paramMap);
             String saveKey = sp.getRequired(ServerParams.SAVE_KEY);
             WebPlotResult result= VisServerOps.getAllSavedRequest(saveKey);
-            return WebPlotResultSerializer.createJson(result);
+            return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
 

@@ -250,24 +250,57 @@ class BandState {
     equals(obj) {
         return (obj instanceof BandState) ? this.toString()===obj.toString() : false;
     }
+
+
+    static makeBandState() { return new BandState(); }
+
+    /**
+     * make a BandState from a pure json representation
+     * @param {object} bsJson, parsed json object
+     * @return {BandState}
+     */
+    static makeBandStateWithJson(bsJson) {
+        if (!bsJson) return null;
+        var bState= BandState.makeBandState();
+        bState.workingFitsFileStr= bsJson.workingFitsFileStr;
+        bState.originalFitsFileStr= bsJson.originalFitsFileStr;
+        bState.uploadFileNameStr= bsJson.uploadFileNameStr;
+        bState.imageIdx= bsJson.imageIdx;
+        bState.originalImageIdx= bsJson.originalImageIdx;
+        bState.plotRequestSerialize= bsJson.plotRequestSerialize;
+        bState.rangeValuesSerialize= bsJson.rangeValuesSerialize;
+        bState.fitsHeader= makeClientFitsHeader(bsJson.fitsHeader);
+        bState.bandVisible= bsJson.bandVisible;
+        bState.multiImageFile= bsJson.multiImageFile;
+        bState.cubeCnt= bsJson.cubeCnt;
+        bState.cubePlaneNumber= bsJson.cubePlaneNumber;
+        return bState;
+    }
+
+    /**
+     * @param {BandState} bs
+     */
+    static convertToJSON(bs) {
+        if (!bs) return null;
+        var json= {};
+        json.workingFitsFileStr= bs.workingFitsFileStr;
+        json.originalFitsFileStr= bs.originalFitsFileStr;
+        json.uploadFileNameStr= bs.uploadFileNameStr;
+        json.imageIdx= bs.imageIdx;
+        json.originalImageIdx= bs.originalImageIdx;
+        json.plotRequestSerialize= bs.plotRequestSerialize;
+        json.rangeValuesSerialize= bs.rangeValuesSerialize;
+        json.fitsHeader= bs.fitsHeader.headers;
+        json.bandVisible= bs.bandVisible;
+        json.multiImageFile= bs.multiImageFile;
+        json.cubeCnt= bs.cubeCnt;
+        json.cubePlaneNumber= bs.cubePlaneNumber;
+        return json;
+
+    }
 }
 
-export const makeBandState= function() { return new BandState(); }
 
-export const makeBandStateFromJson= function(bsJson) {
-    if (!bsJson) return null;
-    var bState= makeBandState();
-    bState.workingFitsFileStr= bsJson.workingFitsFileStr;
-    bState.originalFitsFileStr= bsJson.originalFitsFileStr;
-    bState.uploadFileNameStr= bsJson.uploadFileNameStr;
-    bState.imageIdx= bsJson.imageIdx;
-    bState.originalImageIdx= bsJson.originalImageIdx;
-    bState.plotRequestSerialize= bsJson.plotRequestSerialize;
-    bState.rangeValuesSerialize= bsJson.rangeValuesSerialize;
-    bState.fitsHeader= makeClientFitsHeader(bsJson.fitsHeader);
-    bState.bandVisible= bsJson.bandVisible;
-    bState.multiImageFile= bsJson.multiImageFile;
-    bState.cubeCnt= bsJson.cubeCnt;
-    bState.cubePlaneNumber= bsJson.cubePlaneNumber;
-    return bState;
-};
+
+
+export default BandState;

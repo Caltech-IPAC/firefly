@@ -136,6 +136,7 @@ public class ServerParams {
     public static final String ADD_SAVED_REQUEST= "addSavedRequest";
     public static final String GET_ALL_SAVED_REQUEST= "getAllSavedRequest";
     public static final String TITLE= "Title";
+    public static final String JSON_DEEP= "jsonDeep";
 
     public static final String VIS_PUSH_CREATE_ID= "createID";
     public static final String VIS_PUSH_FITS= "pushFits";

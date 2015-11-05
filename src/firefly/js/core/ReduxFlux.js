@@ -13,6 +13,7 @@ import AppDataCntlr  from './AppDataCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
+import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -26,6 +27,7 @@ const actionCreators = new Map();
  */
 const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
+    [VisMouseCntlr.VIS_MOUSE_KEY]: VisMouseCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer
@@ -34,17 +36,19 @@ const reducers = {
 let redux = null;
 
 
-// pre-map a set of action => creator prior to boostrapping.
+// pre-map a set of action => creator prior to boostraping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
+actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
 
 
 /**
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean
  */
 var filterOutOfLogging= {
-    [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT'
+    [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT',
+    [FieldGroupCntlr.MOUNT_COMPONENT]: false
 };
 
 /**
@@ -60,9 +64,13 @@ window.enableFireflyReduxLogging= true;
 function logFilter(getState,action) {
     if (!window.enableFireflyReduxLogging) return false;
 
-    if (filterOutOfLogging[action.type]) {
-        if (typeof filterOutOfLogging[action.type]==='function') {
+    var fType= typeof filterOutOfLogging[action.type];
+    if (filterOutOfLogging[action.type] != 'undefined') {
+        if (fType==='function') {
             return (filterOutOfLogging[action.type](action));
+        }
+        else if (fType==='boolean') {
+            return filterOutOfLogging[action.type];
         }
         else {
             return false;
@@ -108,6 +116,21 @@ function bootstrap() {
  * Process the rawAction.  This uses the actionCreators map to resolve
  * the ActionCreator given the action.type.  If one is not mapped, then it'll
  * create a simple 'pass through' ActionCreator that returns the rawAction as an action.
+ *
+ * <i>Note: </i> Often it makes sense to have a utility function call <code>process</code>. In that case
+ * the utility function should meet the follow criteria.  This is a good way to document and default the
+ * payload parameters.  The utility function should implment the following standard:
+ * <ul>
+ *     <li>The function name should start with "dispatch"</li>
+ *     <li>The action type as the second part of the name</li>
+ *     <li>The function should be exported from the controller</li>
+ *     <li>The function parameters should the documented with jsdocs</li>
+ *     <li>Optional parameters should be clear</li>
+ * </ul>
+ * Utility function Example - if action type is <code>PLOT_IMAGE</code> and the <code>PLOT_IMAGE</code> action
+ * is exported from the ImagePlotCntlr module.  The the name should be <code>processPlotImage</code>.
+ *
+ *
  * @param rawAction
  * @param condition
  * @returns {Promise}

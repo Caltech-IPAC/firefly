@@ -41,12 +41,13 @@ public class FitsCacher {
         CacheKey key= new StringKey(fitsFile.getPath());
         FitsRead frAry[];
 
-        if (memCache!=null && memCache.isCached(key)) {  // check first with out any locking
-            frAry= (FitsRead[])memCache.get(key);
+        frAry= getFromCache(key);
+        if (frAry!=null) {  // check first with out any locking
             return frAry;
         }
-        else {  // if we are going to read the file then we have multiple readers,
+        else {  // if we are going to read the file then we might have multiple readers,
                 // we want to lock here to give the second one a change to get it from cache
+                // if the first reader reads and caches it.
             try {
                 Object lockKey= activeRequest.get(key);
                 if (lockKey==null) {
@@ -57,8 +58,8 @@ public class FitsCacher {
                     _log.briefInfo("Found lock key for:"+ key);
                 }
                 synchronized (lockKey) {
-                    if (memCache!=null && memCache.isCached(key)) {
-                        frAry= (FitsRead[])memCache.get(key);
+                    frAry= getFromCache(key);
+                    if (frAry!=null) {
                         return frAry;
                     }
                     else {
@@ -96,6 +97,20 @@ public class FitsCacher {
                 activeRequest.remove(key);
             }
         }
+    }
+
+    private static FitsRead[] getFromCache(CacheKey key) {
+        FitsRead[] frAry= null;
+        if (memCache!=null && memCache.isCached(key)) {  // check first with out any locking
+            Object o= memCache.get(key);
+            if (o instanceof FitsRead[]) {
+                frAry= (FitsRead[])o;
+            }
+            else {
+                memCache.put(key,null);
+            }
+        }
+        return frAry;
     }
 
     static FitsRead[] loadFits(Fits fits, File cachePath) throws FitsException, FailedRequestException, IOException {
