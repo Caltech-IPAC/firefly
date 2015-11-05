@@ -42,7 +42,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     private final String  MAX = "max";
    // private final String ALGORITHM = "algorithm";
     private final String FALSEPOSTIVERATE = "falsePostiveRage";
-    private String algorithm;// FIXED_SIZE_ALGORITHM;
+    private String algorithm=null;// FIXED_SIZE_ALGORITHM;
     private double binSize;
     private double min=Double.NaN;
     private double max=Double.NaN;
@@ -169,10 +169,10 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
                     columnExpression=(String) value;
                 }
                 else if (name.equalsIgnoreCase(MIN)){
-                    min= (( Integer) value).intValue();
+                    min= (( Double) value).doubleValue();
                 }
                 else if (name.equalsIgnoreCase(MAX)){
-                    max= (( Integer) value).intValue();
+                    max= (( Double) value).doubleValue();
                 }
                 else if (name.equalsIgnoreCase(BINSIZE)){
                     binSize = ( (Double) value).doubleValue();
@@ -253,11 +253,12 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     }
 
     /**
+     * This method is changed to public to be able to run the test case in the test tree
      * This method adds the three data arrays and the DataTypes into a DataGroup (IpacTable).
      * @param columnData
      * @return
      */
-    private DataGroup createHistogramTable( double[] columnData) throws DataAccessException {
+    public DataGroup createHistogramTable( double[] columnData) throws DataAccessException {
         DataGroup HistogramTable = new DataGroup("histogramTable", columns);
         /*if (!scale.equalsIgnoreCase(LINEAR_SCALE)){
             columnData = scaleData(columnData);
@@ -265,7 +266,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
         //calculate three arrays, numInBin, binMix and binMax
         Object[] obj;
-        if (algorithm.equalsIgnoreCase(FIXED_SIZE_ALGORITHM)) {
+        if (algorithm!=null && algorithm.equalsIgnoreCase(FIXED_SIZE_ALGORITHM)) {
            obj = calculateFixedBinSizeDataArray(columnData);
         }
         else {
@@ -289,19 +290,19 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     }
 
     /**
-     * This method is changed to public to be able to run the test case in the test tree
+     *
      * Calculate the numInBin, binMin and binMax arrays
      * @param columnData
      * @return
      */
-    public Object[] calculateFixedBinSizeDataArray(double[] columnData){
+    private Object[] calculateFixedBinSizeDataArray(double[] columnData){
         //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
         Arrays.sort(columnData);
         int nBin= getNumberOfBins(columnData);
         int[] numPointsInBin = new int[nBin ];
         double[] binMin = new double[nBin];
         if (Double.isNaN(min)){
-            min= (int) columnData[0];
+            min=  columnData[0];
         }
         if (Double.isNaN(max)){
             max =columnData[columnData.length-1];
@@ -327,10 +328,13 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
 
         //fill entries in the empty bins to NaN
-        for (int i=0; i<numPointsInBin.length; i++){
+        for (int i=0; i<nBin; i++){
+            //If there is no point falling on this bin, assign the binMin and binMax to the corresponding bin border values
             if (numPointsInBin[i]==0){
                 binMin[i]=Double.NaN;
                 binMax[i]=Double.NaN;
+                //binMin[i]=binSize*i;
+                //binMax[i]=binSize*(i+1);
             }
         }
         Object[] obj={numPointsInBin, binMin, binMax};
@@ -415,7 +419,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     }
 
     /**
-     *  This method is changed to public to be able to run the test case in the test tree
+     *
      *
      *  This method calculate the variable bins based on the paper: http://arxiv.org/pdf/1304.2818.pdf
      *  and the python implementation: https://github.com/fedhere/fedsastroutils/blob/master/bayesianblocks_fbb.py
@@ -425,7 +429,7 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
      * @return
      */
 
-    public Object[] calculateVariableBinSizeDataArray(double[] columnData) throws DataAccessException {
+    private Object[] calculateVariableBinSizeDataArray(double[] columnData) throws DataAccessException {
 
        //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
         Arrays.sort(columnData);
@@ -433,11 +437,11 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
         //get the variable bins
         double[] bins = getBins(columnData);
-        int nBin = bins.length;
+        int nBin = bins.length +1;  //the bin interval +1 is the total bin number
         int[] numPointsInBin = new int[nBin ];
         double[] binMin = new double[nBin];
         if (Double.isNaN(min)){
-            min= (int) columnData[0];
+            min=  columnData[0];
         }
         if (Double.isNaN(max)){
             max =columnData[columnData.length-1];
@@ -452,27 +456,45 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
             for (int i = 0; i < columnData.length; i++) {
                  if (columnData[i] >= min && columnData[i] <= max) {
                      if (ibin == 0 && columnData[i] < bins[ibin] ||
-                        ibin>=1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin]) {
+                        ibin>=1 && ibin<nBin-1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] ||
+                                 ibin==nBin-1 && columnData[i] >= bins[ibin - 1]  ) {
                         numPointsInBin[ibin]++;
                         if (columnData[i] < binMin[ibin]) binMin[ibin] = columnData[i];
                         if (columnData[i] > binMax[ibin]) binMax[ibin] = columnData[i];
-
-
                     }
+
                 }
             }
         }
 
 
+        //fill entries in the empty bins to NaN
+        for (int i=0; i<nBin; i++){
+            //If there is no point falling on this bin, assign the binMin and binMax to the corresponding bin border values
+            if (numPointsInBin[i]==0 ){
+                binMin[i] = Double.NaN;
+                binMax[i] =Double.NaN;
+                /*if (i==0) {
+                    binMin[i] = columnData[0];
+                    binMax[i] = bins[i];
+                }
+                else  {
+                    binMin[i] = bins[i-1];
+                    binMax[i] = bins[i];
+                }*/
+            }
 
-        //fill entries which has the empty bins
+        }
+        Object[] obj={numPointsInBin, binMin, binMax};
+
+      /*  //fill entries which has the empty bins
         ArrayList<Integer> idx = new  ArrayList<Integer>();
         for (int i=0; i<numPointsInBin.length; i++){
             if (numPointsInBin[i]==0) continue;
             idx.add(i);
         }
-
-        Object[] obj={getSelection(numPointsInBin, idx), getSelection(binMin, idx), getSelection(binMax, idx)};
+*/
+        //Object[] obj={getSelection(numPointsInBin, idx), getSelection(binMin, idx), getSelection(binMax, idx)};
 
         return obj;
 
@@ -510,12 +532,13 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
         return outArray;
     }
     /**
+     * Change to public in order to run unit test
      * This method calculates the variable bins
      * @param columnData
      * @return
      * @throws DataAccessException
      */
-    private double[] getBins( double[] columnData) throws DataAccessException {
+    public double[] getBins( double[] columnData) throws DataAccessException {
 
        int n= columnData.length;
        //create a length=n+1 array of edges
@@ -743,6 +766,14 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
 
     }
 
+    /**
+     * This is needed for unit test
+     * @param bSize
+     */
+    public void setBinSize(double bSize){
+        binSize=bSize;
+        algorithm=FIXED_SIZE_ALGORITHM;
+    }
     /**
      * This method multiplies an array by a number
      * @param array

@@ -1,6 +1,8 @@
 package edu.caltech.ipac.visualize.draw;
 
-import java.awt.Component;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -18,16 +20,20 @@ import nom.tam.fits.Fits;
 
 public class GridTest {
 
-	private static Component grid = null;
-	private static String filename = "./bad.fits";
+//	private static Component grid = null;
+//	private static final String TEST_ROOT = "test"+File.separatorChar;
+//	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
+//			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
 	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
 
 	@BeforeClass
 	public static void buildPlot() throws Exception {
-
+		InputStream resourceAsStream = GridTest.class.getResourceAsStream("bad.fits");
+		
 //		grid = new GridLayer(csys).getGrid();
-		Fits fits = new Fits(filename);
+//		File file = Paths.get(filename).toFile();
+		Fits fits = new Fits(resourceAsStream);
 		// fits = new Fits("./good.fits");
 
 		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);

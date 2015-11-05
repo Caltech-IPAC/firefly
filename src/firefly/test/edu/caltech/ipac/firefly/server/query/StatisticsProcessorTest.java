@@ -1,8 +1,6 @@
 package edu.caltech.ipac.firefly.server.query;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
-import edu.caltech.ipac.firefly.server.query.StatisticsProcessor;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.DataObject;
 import edu.caltech.ipac.util.*;
@@ -18,17 +16,22 @@ import java.util.List;
  * Created by zhang on 10/29/15.
  */
 public class StatisticsProcessorTest {
-    private static String filename = "./ipacTableTestFile.tbl";
-    private StatisticsProcessor sp;
-    private DataGroup inDg;
+
+     private static final String TEST_ROOT = "test"+File.separatorChar;
+     private static String filename = StatisticsProcessorTest.class.getCanonicalName().replaceAll("\\.", "/")
+                                                 .replace(StatisticsProcessorTest.class.getSimpleName(), "") + File.separatorChar + "ipacTableTestFile.tbl";
+    private static StatisticsProcessor sp;
+    private static DataGroup inDg;
     private DataGroup outDg;
-    File inFile;
-    @BeforeClass
-    public void setup() throws IpacTableException, IOException, DataAccessException{
+
+
+     @BeforeClass
+    public static void setup() throws IpacTableException, IOException, DataAccessException{
 
         sp = new StatisticsProcessor();
 
-        inFile = new File(filename);
+
+        File inFile =  new File(TEST_ROOT+filename);
         inDg = IpacTableReader.readIpacTable(inFile, null, false, "inputTable" );
 
 
@@ -49,6 +52,8 @@ public class StatisticsProcessorTest {
 
     @Test
     public void testStatisticDataArray(){
+
+        outDg = sp.createTableStatistic(inDg);
         List<DataObject> objList= outDg.values();
         DataType[] inColumns = outDg.getDataDefinitions();
 
@@ -67,9 +72,9 @@ public class StatisticsProcessorTest {
             unitNames[i]=(String) obj;
             obj = objList.get(i).getDataElement(inColumns[3]);
             min[i]=((Double) obj).doubleValue();
-            obj = objList.get(i).getDataElement(inColumns[2]);
+            obj = objList.get(i).getDataElement(inColumns[4]);
             max[i]= ((Double) obj).doubleValue();
-            obj = objList.get(i).getDataElement(inColumns[2]);
+            obj = objList.get(i).getDataElement(inColumns[5]);
             numPoints[i]=((Integer) obj).intValue();
 
         }
@@ -93,11 +98,8 @@ public class StatisticsProcessorTest {
     }
     public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
         StatisticsProcessorTest myTest = new StatisticsProcessorTest();
-        myTest.setup();
+        setup();
         myTest.testCreateStatisticTable();
         myTest.testStatisticDataArray();
-
-
-
     }
 }
