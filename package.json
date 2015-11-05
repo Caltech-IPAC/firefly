@@ -23,7 +23,8 @@
     "redux-logger": "^1.0.6",
     "underscore.string": "^3.2.2",
     "uniq"      : "^1.0.1",
-    "validator" : "^4.0.6"
+    "validator" : "^4.0.6",
+    "whatwg-fetch": "^0.10.1"
   },
   "devDependencies": {
     "chai": "^2.2.0",
