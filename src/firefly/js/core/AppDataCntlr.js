@@ -170,7 +170,7 @@ const hideAllDialogs= function() {
 function loadProperties() {
 
     const task = (resolve, reject) => {
-        fetchUrl('servlet/FireFly_PropertyDownload', {method: 'post', params : {test: 'blah', test2: 'blah'}}).then( (response) => {
+        fetchUrl('servlet/FireFly_PropertyDownload').then( (response) => {
             response.text().then( (text) => {
                 const lines = text.split( '\n' ).filter( (val) => !val.trim().startsWith('#') );
                 const props = {};

@@ -91,8 +91,7 @@ var webpackConfig = {
                 loaders : [
                     'style-loader',
                     'css-loader',
-                    'autoprefixer?browsers=last 2 version',
-                    'sass-loader?includePaths[]=' + config.alias.styles
+                    'autoprefixer?browsers=last 2 version'
                 ]
             }
         ]
