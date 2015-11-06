@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
 import 'babel/polyfill';
+import 'whatwg-fetch/fetch.js';
+import React from 'react/addons';
 
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';

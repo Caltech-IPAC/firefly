@@ -10,7 +10,8 @@
 import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
-import http from 'http';
+import {fetchUrl} from '../util/WebUtil.js';
+
 //var http= require('http');
 
 //const TIMEOUT = 10 * 60 * 1000;  // 10 min
@@ -42,14 +43,9 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
     var url = makeURL(baseUrl, cmd, paramList, false);
 
     return new Promise(function(resolve, reject) {
-        var options= {
-            path : url,
-            host : getHost(),
-            port : getPort()
-        };
-        http.get(options, function (res) {
-            res.on('data', function (buf) {
-                var result = JSON.parse(buf);
+
+        fetchUrl(url).then( (response) => {
+            response.json().then( (result) => {
                 if (result[0].success) {
                     if (result[0].success === 'true') {
                         resolve(result[0].data);
@@ -57,22 +53,16 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
                         if (result[0].error) {
                             reject(new Error(result[0].error));
                         } else {
-                            reject(new Error(`Unknown failure: ${buf}`));
+                            reject(new Error(`Unknown failure: ${result}`));
                         }
                     }
+                } else {
+                    reject(new Error(`Unreconized result: ${result}`));
                 }
-                else {
-                    reject(new Error(`Could not parse: ${buf}`));
-                }
             });
-
-            res.on('end', function () {
-            });
-            res.on('close', function (err) {
-                reject(new Error(err? `Error Code: ${err.code}` : 'unknown'));
-            });
+        }).catch(function(err) {
+            reject(err);
         });
-
     });
 };
 

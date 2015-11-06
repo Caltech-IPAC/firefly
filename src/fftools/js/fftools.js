@@ -7,8 +7,22 @@ import get from 'lodash/object/get';
 import React from 'react';
 import {flux, firefly} from 'firefly/Firefly.js';
 import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
+import Menu from 'firefly/ui/Menu.jsx';
+import Banner from 'firefly/ui/Banner.jsx';
+
+firefly.bootstrap();
+firefly.process( {type : appDataCntlr.APP_LOAD} );
+
+const menu = flux.createSmartComponent((state) => {
+                return {menu: (get(state, `${appDataCntlr.APP_DATA_PATH}.menu`) || [])};
+            }, Menu);
 
 const App = React.createClass({
+
+    propTypes: {
+        appData : React.PropTypes.object.isRequired,
+        title   : React.PropTypes.string
+    },
 
     render() {
         const v = get(this.props, 'appData.props.version') || 'unknown';
@@ -21,8 +35,11 @@ const App = React.createClass({
         } else {
             return (
                 <div>
+                    <Banner
+                        menu={menu}
+                        appTitle='Firefly'
+                    />
                     <h2>{this.props.title}</h2>
-                    <i>Version: {v}</i>
                 </div>
             );
         }
@@ -35,9 +52,6 @@ function connector(state) {
         title: 'FFTools entry point'
     };
 }
-firefly.bootstrap();
-firefly.process( {type : appDataCntlr.APP_LOAD} );
-
 const container = flux.createSmartComponent(connector, App);
 
 React.render(container,

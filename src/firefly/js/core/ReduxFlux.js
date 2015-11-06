@@ -44,7 +44,7 @@ actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.e
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean
  */
 var filterOutOfLogging= {
-    [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT'
+    [ExternalAccessCntlr.EXTENSION_ACTIVATE]: (action) => !action.payload.extension || action.payload.extension.extType!=='PLOT_MOUSE_READ_OUT'
 };
 
 /**
