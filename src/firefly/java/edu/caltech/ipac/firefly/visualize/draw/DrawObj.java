@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.Pt;
 
@@ -70,6 +71,8 @@ public abstract class DrawObj {
 
 
     protected boolean getSupportsWebPlot() { return true; }
+
+   // public abstract ShapeType getShape();
 
     public abstract Pt getCenterPt();
 

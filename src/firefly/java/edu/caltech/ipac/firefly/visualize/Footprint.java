@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.logging.Level;
 
 import edu.caltech.ipac.firefly.ui.GwtUtil;
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
+import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -23,11 +25,12 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
  */
 public class Footprint extends CircularMarker {
 
-	public static ShapeType borderFootprint, shapeCam;
+	public static ShapeType borderFootprint, shapeCam, shapeSpec;
 
 	static {
 		borderFootprint = ShapeType.Rectangle;
 		shapeCam = ShapeType.Rectangle;
+		shapeSpec = ShapeType.Line;
 	}
 
 	/**
@@ -38,23 +41,26 @@ public class Footprint extends CircularMarker {
 	 */
 	public enum INSTRUMENTS {
 
-		CAM1(shapeCam, new int[] { 0, 0 }, new int[] { 50, 30 }), CAM2(shapeCam, new int[] { 150, 0 },
-				new int[] { 80, 40 });// w,h
-
-		int[] center;
+		CAM1(shapeCam, new int[] { 0, 0 }, new int[] { 50, 30 }), 
+		CAM2(shapeCam, new int[] { 150, 0 }, //x,y center of rect
+				new int[] { 80, 40 });//w,h
+//		SPEC1(shapeSpec, new int[] { -30,0 }, //line centered on -30,0 relative to center of circle identifying FoV
+//				new int[] { 0, 0, 20, 20 });//xi,yi line tuple if centered on FoV
+		
+		int[] offset;
 		private ShapeType shape;
 		private int[] geom;// either radius if 1 element, 2 element would be a
 							// rectangle: w,h, more than 2, a polygon:
 							// x1,y1,x2,y2,x3,y3,etc...
 
-		INSTRUMENTS(ShapeType shape, int[] center, int[] geom) {
-			this.center = center;
+		INSTRUMENTS(ShapeType shape, int[] offset, int[] geom) {
+			this.offset = offset;
 			this.shape = shape;
 			this.geom = geom;
 		}
 
-		int[] getCenterPositionRelativeToFoV() {
-			return center;
+		int[] getOffsetRelativeToFoVCenter() {
+			return offset; // center of the shape offset from center of FoV
 		}
 
 		ShapeType getShape() {
@@ -67,12 +73,12 @@ public class Footprint extends CircularMarker {
 
 	};
 
-	private ArrayList<ShapeDataObj> lst;
+	private ArrayList<DrawObj> lst;
 
 	public Footprint() {
 		super(20);// circle center represents the main reference shape as main
 					// 'marker' around multi-shape footprint
-		lst = new ArrayList<ShapeDataObj>();
+		lst = new ArrayList<>();
 	}
 
 	@Override
@@ -89,25 +95,39 @@ public class Footprint extends CircularMarker {
 
 		// 2. Define screen footprint with origin 0,0:
 		defineFootprint(plot);
-		for (ShapeDataObj shapeDataObj : lst) {
-			if (shapeDataObj.getShape().equals(ShapeType.Circle)) {
-				continue;// don't move again circle, only crosshair and
-							// rectangles
+		for (DrawObj drawObj : lst) {
+			if (drawObj instanceof ShapeDataObj) {
+				ShapeDataObj shapeDataObj = (ShapeDataObj) drawObj;
+				if (shapeDataObj.getShape().equals(ShapeType.Circle)) {
+					continue;// don't move again circle, only crosshair and
+								// rectangles
+				}
+				// 3. Translate others shapes but circle
+				shapeDataObj.translateTo(plot, userXy);
 			}
-			// 3. Translate others shapes but circle
-			shapeDataObj.translateTo(plot, userXy);
 		}
 
 		// moveFootprintDataTo(cpt, plot);
 	}
 
 	/**
+	 * Define footprint relative to start & end world point (circle center by definition)
 	 * Need the webplot to convert shapes if zoom or image size changes
 	 * 
 	 * @param plot
 	 */
 	private void defineFootprint(WebPlot plot) {
-		lst.clear();
+		
+		ScreenPt spt= plot.getScreenCoords(getStartPt());
+        ScreenPt ept= plot.getScreenCoords(getEndPt());
+        if (spt==null || ept==null) return;
+
+        int x1= spt.getIX();
+        int y1= spt.getIY();
+        int x2= ept.getIX();
+        int y2= ept.getIY();
+        
+        lst.clear();
 
 		// Circle main reference around footprint - limit the footprint and
 		// serves as corner limit too (+title label)
@@ -117,26 +137,37 @@ public class Footprint extends CircularMarker {
 		// Actual footprint is here:
 		// Instruments should be of rectangle shapes for now
 		for (INSTRUMENTS inst : INSTRUMENTS.values()) {
-			int[] centerFov = inst.getCenterPositionRelativeToFoV();
+			int[] centerFov = inst.getOffsetRelativeToFoVCenter();
 			int[] wh = inst.getGeometry();
 
 			switch (inst.getShape()) {
 			case Rectangle:
 
 				// Define rectangle on origin
-				ScreenPt sp = new ScreenPt(centerFov[0] - wh[0] / 2, centerFov[1] - wh[1] / 2);
-				ScreenPt ep = new ScreenPt(centerFov[0] + wh[0] / 2, centerFov[1] + wh[1] / 2);
-				WorldPt pt0 = plot.getWorldCoords(sp);
-				WorldPt pt1 = plot.getWorldCoords(ep);// FIXME gives the wcs
+				ScreenPt p0_zero = new ScreenPt(centerFov[0] - wh[0] / 2, centerFov[1] - wh[1] / 2);
+				ScreenPt p1_zero = new ScreenPt(centerFov[0] + wh[0] / 2, centerFov[1] + wh[1] / 2);
+				
+				ScreenPt p0 = plot.getScreenCoords(p0_zero);
+				ScreenPt p1 = plot.getScreenCoords(p1_zero);
+		            
+				int w = (int) (p1.getX()-p0.getX());
+				int h = (int) (p1.getY()-p0.getY());
+//				ImagePt sp = plot.getImageCoords(p0);
+//				ImagePt ep = plot.getImageCoords(p1);
+				WorldPt sp = plot.getWorldCoords(p0);
+				//WorldPt ep = plot.getWorldCoords(p1);// FIXME gives the wcs
 				// based
 				// on the image projection?
 
-				lst.add(ShapeDataObj.makeRectangle(pt0, pt1));
+				lst.add(ShapeDataObj.makeRectangle(sp, w,h));
 				break;
 			case Circle:
 
 				break;
 			case Line:
+//				ScreenPt pl0 = new ScreenPt(centerFov[0] - wh[0] / 2, centerFov[1] - wh[1] / 2);
+//				ScreenPt pl1 = new ScreenPt(centerFov[0] + wh[0] / 2, centerFov[1] + wh[1] / 2);
+//				lst.add(ShapeDataObj.makeLine(pl0, pl1));
 				break;
 			case Text:
 				break;
@@ -148,12 +179,22 @@ public class Footprint extends CircularMarker {
 		// Add cross hair independent of the image zoom.
 		// addCrossHair(lst, plot, cpt);
 		// Add x/y lines crosshair
-		WorldPt ptx0 = plot.getWorldCoords(new ScreenPt(-10, 0));
-		WorldPt ptx1 = plot.getWorldCoords(new ScreenPt(10, 0));
+		
+		ScreenPt chx0 = new ScreenPt(-10, 0);
+		ScreenPt chx1 = new ScreenPt(10, 0);
+		ImageWorkSpacePt chx00 = plot.getImageWorkSpaceCoords(chx0);
+		ImageWorkSpacePt chx01 = plot.getImageWorkSpaceCoords(chx1);
+		WorldPt ptx0 = plot.getWorldCoords(chx00);
+		WorldPt ptx1 = plot.getWorldCoords(chx01);
 		ShapeDataObj xline = ShapeDataObj.makeLine(ptx0, ptx1);
 		lst.add(xline);
-		WorldPt pty0 = plot.getWorldCoords(new ScreenPt(0, -10));
-		WorldPt pty1 = plot.getWorldCoords(new ScreenPt(0, 10));
+
+		ScreenPt chy0 = new ScreenPt(0, -10);
+		ScreenPt chy1 = new ScreenPt(0, 10);
+		ImageWorkSpacePt chy00 = plot.getImageWorkSpaceCoords(chy0);
+		ImageWorkSpacePt chy01 = plot.getImageWorkSpaceCoords(chy1);
+		WorldPt pty0 = plot.getWorldCoords(chy00);
+		WorldPt pty1 = plot.getWorldCoords(chy01);
 		ShapeDataObj yline = ShapeDataObj.makeLine(pty0, pty1);
 		yline.setColor("blue");
 		xline.setColor("blue");
@@ -162,11 +203,11 @@ public class Footprint extends CircularMarker {
 
 		lst.add(yline);
 
-		beautifyMe(lst);
+		//beautifyMe(lst);
 
 		lst.trimToSize();
 	}
-
+/*
 	private void moveFootprintDataTo(ScreenPt cpt, WebPlot plot) {
 		lst.clear();
 
@@ -203,6 +244,7 @@ public class Footprint extends CircularMarker {
 		beautifyMe(lst);
 		lst.trimToSize();
 	}
+
 
 	private void addRectangle(ArrayList<ShapeDataObj> lst2, int[] centerFov, int[] wh, WebPlot plot, ScreenPt cpt) {
 		ScreenPt sp = new ScreenPt(cpt.getIX() + centerFov[0] - wh[0] / 2, cpt.getIY() + centerFov[1] - wh[1] / 2);
@@ -245,6 +287,12 @@ public class Footprint extends CircularMarker {
 
 		// add vertical cross hair part
 		lst2.add(yline);
+	}
+*/
+
+	private ScreenPt getScreenPointAtZoomLevel(ScreenPt initPt, WebPlot plot) {
+		return new ScreenPt((int) ((initPt.getX()) * plot.getZoomFact()),
+				(int) ((plot.getImageHeight() - initPt.getY()) * plot.getZoomFact()));
 	}
 
 	private void beautifyMe(ArrayList<ShapeDataObj> lst2) {
@@ -297,6 +345,7 @@ public class Footprint extends CircularMarker {
 	// return retval;
 	// }
 	//
+	
 	@Override
 	public void setEndPt(WorldPt endPt, WebPlot plot) {
 		// Called from rotate mode - should be anything that user rotate any 4
@@ -320,11 +369,15 @@ public class Footprint extends CircularMarker {
 		ScreenPt center = getCenter(plot);
 		WorldPt wc = plot.getWorldCoords(center);
 		// should we rotate rectangle
-		for (ShapeDataObj shapeDataObj : lst) {
-			if (!shapeDataObj.getShape().equals(ShapeType.Rectangle)) {
-				continue;// don't rotate circle or crosshair, only rectangle
+		for (DrawObj drawObj : lst) {
+			if (drawObj instanceof ShapeDataObj) {
+				ShapeDataObj shapeDataObj = (ShapeDataObj) drawObj;
+
+				if (!shapeDataObj.getShape().equals(ShapeType.Rectangle)) {
+					continue;// don't rotate circle or crosshair, only rectangle
+				}
+				shapeDataObj.rotateAround(plot, rad, wc);
 			}
-			shapeDataObj.rotateAround(plot, rad, wc);
 		}
 	}
 
@@ -366,12 +419,9 @@ public class Footprint extends CircularMarker {
 	// }
 	//
 	@Override
-	public List<ShapeDataObj> getShape() {
+	public List<DrawObj> getShape() {
 
 		return lst;
 	}
-	//
-	// public boolean isReady() {
-	// return (startPt!=null && endPt!=null);
-	// }
+
 }

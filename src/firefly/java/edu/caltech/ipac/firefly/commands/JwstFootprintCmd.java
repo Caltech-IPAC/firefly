@@ -40,8 +40,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
-import edu.caltech.ipac.firefly.visualize.CircularMarker;
-import edu.caltech.ipac.firefly.visualize.Footprint;
+import edu.caltech.ipac.firefly.visualize.FootprintDs9;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -84,6 +83,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
     private Label disToCenter = new Label("");
     private Label centerPos = new Label("");
+	public SimpleInputField angle;
 
     public JwstFootprintCmd() {
         super(CommandName);
@@ -254,6 +254,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                     break;
                 case ROTATE:
                     _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
+                    handleRotationChanged(((FootprintDs9)_activeMarker).getRotAngle());
                     break;
                 default:
                     WebAssert.argTst(false, "only support for SelectType of ADD_MARKER or MOVE");
@@ -343,8 +344,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 			List<DrawObj> data = new ArrayList<DrawObj>();
 			List<DrawObj> editData = new ArrayList<DrawObj>();
 
-			List<ShapeDataObj> fp = m.getShape();
-			ShapeDataObj centerShape = fp.get(0);
+			List<DrawObj> fp = m.getShape();
+			ShapeDataObj centerShape = (ShapeDataObj) fp.get(0);//circle 
 
 			data.addAll(fp);
 
@@ -412,10 +413,11 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-      //  _activeMarker = new CircularMarker(20);
-        Footprint fp = new Footprint();
+        _activeMarker = new FootprintDs9();
+//        Footprint fp = new Footprint();
+//		_activeMarker = fp;
 //		FootprintAsMarkers fp = new FootprintAsMarkers();
-		_activeMarker = fp;
+
         _markerMap.put(_activeMarker, new MarkerDrawing());
 
         WebPlotView pv= getPlotView();
@@ -537,8 +539,14 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
     private void handleCenterChanged(WorldPt center) {
         centerPos.setText(center.toString());
+        
     }
-
+    private void handleRotationChanged(double rot) {
+        if(angle!=null){
+        	angle.setValue(""+Math.toDegrees(rot));
+        }
+        
+    }
     private class MarkerDrawing {
         private MarkerConnect connect;
         private DrawingManager drawMan;
@@ -677,7 +685,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             final SimpleInputField corner= SimpleInputField.createByProp("JwstFootprint.corner");
             corner.setInternalCellSpacing(1);
 
-            final SimpleInputField angle= SimpleInputField.createByProp("JwstFootprint.angle");
+            angle= SimpleInputField.createByProp("JwstFootprint.angle");
             angle.setInternalCellSpacing(1);
 
 
@@ -775,5 +783,4 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             drawer.redraw();
         }
     }
-
 }

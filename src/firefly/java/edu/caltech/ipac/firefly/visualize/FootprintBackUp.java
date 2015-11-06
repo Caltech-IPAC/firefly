@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.visualize;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -22,7 +23,7 @@ public class FootprintBackUp extends CircularMarker {
 
 //	private ArrayList<Marker> shapes;
 	int r;
-	private ArrayList<ShapeDataObj> lst;
+	private ArrayList<DrawObj> lst;
 	private int rectW=50;
 	private int rectH=30;
 	public FootprintBackUp() {
@@ -55,7 +56,7 @@ public class FootprintBackUp extends CircularMarker {
         
 		lst.add(ShapeDataObj.makeRectangle(pt0, pt1));
 		
-		beautifyMe(lst);
+		//beautifyMe(lst);
 		lst.trimToSize();
 	}
 
@@ -105,7 +106,7 @@ public class FootprintBackUp extends CircularMarker {
 //	}
 //
 	@Override
-	public List<ShapeDataObj> getShape() {
+	public List<DrawObj> getShape() {
 		
 		return lst;
 	}

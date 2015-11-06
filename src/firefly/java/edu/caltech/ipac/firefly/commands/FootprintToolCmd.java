@@ -365,8 +365,8 @@ public class FootprintToolCmd extends BaseGroupVisCmd implements WebEventListene
 			List<DrawObj> data = new ArrayList<DrawObj>();
 			List<DrawObj> editData = new ArrayList<DrawObj>();
 
-			List<ShapeDataObj> fp = m.getShape();
-			ShapeDataObj centerShape = fp.get(0);
+			List<DrawObj> fp = m.getShape();
+			ShapeDataObj centerShape = (ShapeDataObj) fp.get(0);//circle main
 
 			data.addAll(fp);
 

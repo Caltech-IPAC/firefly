@@ -41,6 +41,8 @@ public class CatalogDataConnection extends TableDataConnection {
     private final String decColName;
     private final CoordinateSys csys;
     private DrawSymbol symbol = DEF_SYMBOL;
+	private String color;
+	private int sizeSymbol;
 
 
     CatalogDataConnection(TablePanel table, boolean supportsMouse, boolean onlyVisibleIfTabActive) {
@@ -76,6 +78,13 @@ public class CatalogDataConnection extends TableDataConnection {
     }
 
 
+    public void steColor(String c){
+    	color = c;
+    }
+    
+    public void setSymbolSize(int size){
+    	this.sizeSymbol = size;
+    }
     public List<DrawObj> getDataImpl() {
         if (raColName==null || decColName==null || csys==null) return null;
 
@@ -91,6 +100,7 @@ public class CatalogDataConnection extends TableDataConnection {
             if (graphPt != null) {
 //                    name= (isSelected(i) && nameCol!=null) ? getName(i,NAME_IDX) : null;
                 obj= new PointDataObj(graphPt, symbol);
+                obj.setSize(sizeSymbol);
                 obj.setRepresentCnt(getWeight(i));
                 _graphObj.add(obj);
             }

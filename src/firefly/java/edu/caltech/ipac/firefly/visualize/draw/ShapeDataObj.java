@@ -22,6 +22,7 @@ import edu.caltech.ipac.util.dd.RegionLines;
 import edu.caltech.ipac.util.dd.RegionOptions;
 import edu.caltech.ipac.util.dd.RegionText;
 import edu.caltech.ipac.util.dd.RegionValue;
+import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -767,28 +768,10 @@ public class ShapeDataObj extends DrawObj {
 		}
 	}
 	
-//	/**
-//	 * Expecting that the points were {@link WorldPt}
-//	 * @param angle in radian
-//	 * @param center wp point
-//	 */
-//	public void rotateAround(double angle, WorldPt center) {
-//		double[] pts = new double[_pts.length*2];
-//		for (int i = 0; i < _pts.length; i++) {
-//			pts[i] = _pts[i].getX();
-//			pts[i + 1] = _pts[i].getY();	
-//		}
-//		AffineTransform.getRotateInstance(Math.toRadians(angle), center.getX(), center.getY())
-//		  .transform(pts, 0, pts, 0, _pts.length); 
-//		for (int i = 0; i < _pts.length; i++) {
-//			_pts[i] = new WorldPt(pts[i], pts[i+1]);
-//		}
-//	}
-	
 	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
 		for (int i = 0; i < _pts.length; i++) {
 			// TRANSLATE TO ORIGIN
-			Pt p1 = _pts[i];
+			WorldPt p1 = (WorldPt) _pts[i];
 			ScreenPt pti= plot.getScreenCoords(p1);
 			ScreenPt center= plot.getScreenCoords(wc);
 			double xc = center.getX();

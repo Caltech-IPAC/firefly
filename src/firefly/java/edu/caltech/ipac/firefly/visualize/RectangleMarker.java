@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.visualize;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -144,8 +145,8 @@ public class RectangleMarker extends Marker {
 //        updateGeom(plot,false);
     }
     
-	public List<ShapeDataObj> getShape() {
-		ArrayList<ShapeDataObj> lst = new ArrayList<ShapeDataObj>();
+	public List<DrawObj> getShape() {
+		ArrayList<DrawObj> lst = new ArrayList<>();
 		lst.add(ShapeDataObj.makeRectangle(getStartPt(), getEndPt()));
 		lst.trimToSize();
 		return lst;

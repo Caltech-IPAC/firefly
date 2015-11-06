@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.visualize;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -77,8 +78,8 @@ public class FootprintAsMarkers implements OverlayMarker {
 	}
 
 	@Override
-	public List<ShapeDataObj> getShape() {
-		ArrayList<ShapeDataObj> lst = new ArrayList<ShapeDataObj>();
+	public List<DrawObj> getShape() {
+		ArrayList<DrawObj> lst = new ArrayList<DrawObj>();
 		for (Marker marker : shapes) {
 
 			lst.addAll(marker.getShape());

@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.visualize;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -28,8 +29,6 @@ public class CircularMarker extends Marker {
     private float workingScreenRadius;
     private String title=null;
     private Corner textCorner= Corner.SE;
-
-	private boolean hasCrosshair = false;
 
     public CircularMarker(int screenRadius) {
         workingScreenRadius = screenRadius;
@@ -57,7 +56,6 @@ public class CircularMarker extends Marker {
 
     public CircularMarker(int i, boolean hasCross) {
 		this(i);
-		hasCrosshair = hasCross;
 	}
 
 	public String getTitle() { return title; }
@@ -273,8 +271,8 @@ public class CircularMarker extends Marker {
         return retval;
     }
 
-	public List<ShapeDataObj> getShape() {
-		ArrayList<ShapeDataObj> lst = new ArrayList<ShapeDataObj>();
+	public List<DrawObj> getShape() {
+		ArrayList<DrawObj> lst = new ArrayList<>();
 		lst.add(ShapeDataObj.makeCircle(getStartPt(), getEndPt()));
 		lst.trimToSize();
 		return lst;

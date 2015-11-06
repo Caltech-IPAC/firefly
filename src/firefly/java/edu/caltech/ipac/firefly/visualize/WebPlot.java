@@ -216,6 +216,19 @@ public class WebPlot {
         }
     }
 
+    public WebPlot(){
+    	imageBoundsData = null;
+    	_plotGroup= null;
+        _plotState       = null;
+        _tileDrawer      = null;
+        _imageCoordSys   = null;
+        _projection      = null;
+        _dataWidth       = 0;
+        _dataHeight      = 0;
+        _plotDesc        = null;
+        _dataDesc        = null;
+    	_webFitsData=null;
+    };
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 

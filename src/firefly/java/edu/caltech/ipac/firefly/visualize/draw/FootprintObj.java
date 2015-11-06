@@ -331,6 +331,69 @@ public class FootprintObj extends DrawObj {
        return lenSq;
    }
 
+	/**
+	 * Build world points translated to apt
+	 * 
+	 * @param plot
+	 * @param apt
+	 *            world point to translate to
+	 */
+	public void translateTo(WebPlot plot, WorldPt apt) {
+		// Need to clear fist the original array of point...
+		
+		ScreenPt pt = plot.getScreenCoords(apt);
+		WorldPt[] arr = _fpList.get(0);
+		WorldPt[] arr2 = new WorldPt[arr.length];
 
+		_fpList.clear();
+		int i = 0;
+		for (WorldPt wpt : arr) {
+			ScreenPt pti = plot.getScreenCoords(wpt);
 
+			int x2 = pti.getIX();
+			int y2 = pti.getIY();
+			x2 += pt.getIX();
+			y2 += pt.getIY();
+			arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
+		}
+		// ... and recreate the ones translated
+		
+		_fpList.add(arr2);
+	}
+
+	/**
+	 * Rotate all points around a center wc
+	 * 
+	 * @param plot
+	 *            plot object
+	 * @param angle
+	 *            angle to rotate in radians
+	 * @param wc
+	 *            center world point to rotate around
+	 */
+	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
+		ScreenPt center = plot.getScreenCoords(wc);
+		WorldPt[] arr = _fpList.get(0);
+		WorldPt[] arr2 = new WorldPt[arr.length];
+
+		_fpList.clear();
+		int i = 0;
+		for (WorldPt p1 : arr) {
+			// TRANSLATE TO ORIGIN
+			ScreenPt pti = plot.getScreenCoords(p1);
+			double xc = 0;//center.getX();
+			double x1 = pti.getX() - xc;
+			double yc = 0;//center.getY();
+			double y1 = pti.getY() - yc;
+
+			// APPLY ROTATION
+			double temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+			double temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+
+			// TRANSLATE BACK
+			arr2[i++] = plot.getWorldCoords(new ScreenPt(temp_x1 + xc, temp_y1 + yc));
+		}
+		_fpList.add(arr2);
+	}
+	
 }

@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize;
 
 import java.util.List;
 
+import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -51,6 +52,10 @@ public interface OverlayMarker {
 
 	public Corner getTextCorner();
 
+//	public void setIsShown(boolean isDisp);
+//	
+//	public boolean isShown();
+	
 	public boolean isReady();
 
 	public WorldPt getStartPt();
@@ -88,5 +93,5 @@ public interface OverlayMarker {
 	/**
 	 * @return the shape to be draw (affine transform should be done before calling this!)
 	 */
-	public List<ShapeDataObj> getShape();
+	public List<DrawObj> getShape();
 }

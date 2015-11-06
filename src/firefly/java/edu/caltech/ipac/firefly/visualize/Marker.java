@@ -22,6 +22,8 @@ public abstract class Marker implements OverlayMarker {
     private String title=null;
     private Corner textCorner= OverlayMarker.Corner.SE;
 
+	private boolean isDisplayed = true;
+
 //    public Marker(int screenRadius) {
 //        startCorner= Corner.NW;
 //        endCorner= Corner.SE;
@@ -192,5 +194,13 @@ public abstract class Marker implements OverlayMarker {
     
     public abstract void setEndPt(WorldPt endPt,WebPlot plot);
     
+//    public void setIsShown(boolean isDisp){
+//    	isDisplayed = isDisp;
+//    }
+//    
+//	@Override
+//	public boolean isShown() {
+//		return isDisplayed;
+//	}
 }
 
