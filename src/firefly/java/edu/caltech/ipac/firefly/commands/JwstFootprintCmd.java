@@ -413,13 +413,22 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-        _activeMarker = new FootprintDs9();
+//    	WebPlotView pv= getPlotView();
+//        if (pv!=null && pv.getPrimaryPlot()!=null) {
+//        	WebPlot plot= pv.getPrimaryPlot();
+//            WorldPt center = pv.findCurrentCenterWorldPoint();
+//            _activeMarker = new FootprintDs9(center,plot);
+//            
+//        }
+//        else{
+        	_activeMarker = new FootprintDs9();
+//        }
+        
 //        Footprint fp = new Footprint();
 //		_activeMarker = fp;
 //		FootprintAsMarkers fp = new FootprintAsMarkers();
 
         _markerMap.put(_activeMarker, new MarkerDrawing());
-
         WebPlotView pv= getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();

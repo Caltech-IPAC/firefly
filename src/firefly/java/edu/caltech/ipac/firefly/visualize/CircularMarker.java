@@ -36,18 +36,16 @@ public class CircularMarker extends Marker {
         endPt= null;
     }
 
-//    public Marker(WorldPt center, int screenRadius, WebPlot plot) throws ProjectionException {
-//        ScreenPt cpt= plot.getScreenCoords(center);
-//        if (cpt==null) throw new ProjectionException("Could not convert points");
-//        ScreenPt pt1= new ScreenPt(cpt.getIX()-screenRadius, cpt.getIY()-screenRadius);
-//        ScreenPt pt2= new ScreenPt(cpt.getIX()+screenRadius, cpt.getIY()+screenRadius);
-//        startCorner= Corner.NW;
-//        endCorner= Corner.SE;
-//        workingScreenRadius = screenRadius;
-//        startPt= plot.getWorldCoords(pt1);
-//        endPt= plot.getWorldCoords(pt2);
-//        if (startPt==null || endPt==null) throw new ProjectionException("Could not convert points");
-//    }
+    public CircularMarker(WorldPt center, WebPlot plot, int screenRadius) {
+        ScreenPt cpt= plot.getScreenCoords(center);
+        workingScreenRadius = screenRadius;
+       
+        ScreenPt pt1= new ScreenPt(cpt.getIX()-screenRadius, cpt.getIY()-screenRadius);
+        ScreenPt pt2= new ScreenPt(cpt.getIX()+screenRadius, cpt.getIY()+screenRadius);
+        updateRadius(plot, false);
+        startPt= plot.getWorldCoords(pt1);
+        endPt= plot.getWorldCoords(pt2);
+    }
 //
 //    public Marker(WorldPt endPt, WorldPt startPt) {
 //        this.endPt = endPt;

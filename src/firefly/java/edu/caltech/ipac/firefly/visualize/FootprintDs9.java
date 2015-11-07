@@ -31,7 +31,6 @@ public class FootprintDs9 extends CircularMarker {
 	private List<Region> footprintRegions;
 	private RegionConnection regConnection;
 	private boolean isDefined = false;
-	private List<DrawObj> initFootprint;
 	private double rotationAngle;
 	private WorldPt center;
 
@@ -39,6 +38,14 @@ public class FootprintDs9 extends CircularMarker {
 		super(20);// circle center represents the main reference shape as main
 					// 'marker' around multi-shape footprint
 		lst = new ArrayList<DrawObj>();
+	}
+
+	public FootprintDs9(WorldPt center2,WebPlot plot) {
+		super(center2, plot, 20);
+		lst = new ArrayList<DrawObj>();
+		this.center = center2;
+		buildInitialFootprint(plot);
+		isDefined=true;
 	}
 
 	@Override
@@ -66,8 +73,8 @@ public class FootprintDs9 extends CircularMarker {
 	public void setEndPt(WorldPt endPt, WebPlot plot) {
 		// Called from rotate mode - should be anything that user rotate any 4
 		// corners
-		//super.endPt = endPt; // don't change radius!
-//		ScreenPt screenCenter = super.getCenter(plot);
+
+		// Calculate the rotation angle....
 		ScreenPt screenCenter = plot.getScreenCoords(center);
 		
 		GwtUtil.logToServer(Level.INFO, "setEndPt - center (x,y)=" + center.getX() + ", " + center.getY());
@@ -96,43 +103,31 @@ public class FootprintDs9 extends CircularMarker {
 		//ScreenPt center = getCenter(plot);// this takes the center from last move
 		//WorldPt wc = plot.getWorldCoords(center);
 		
-		if (!isDefined) { // don't build me again please!
-			buildInitialFootprint(plot);
-			isDefined = true;
-		}
+		//.... and move the marker/footprint
+		moveFootprint(plot, center);
 		
-		//We want to keep circle size and not changing the circle size
-		for (DrawObj drawObj : lst) {
-			if(drawObj instanceof FootprintObj){
-				lst.remove(drawObj);
-			}
-		}
-
-		for (Region r : footprintRegions) {
-			DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-			drawObj.setColor("blue");
-			if(rotationAngle!=0){
-				((FootprintObj) drawObj).rotateAround(plot, rotationAngle, center); //startPt() is actually the center of the circle defining the footprint limit
-			}
-
-			if (drawObj != null)
-				lst.add(drawObj);
-		}
-//		// ROTATE
 //		if (!isDefined) { // don't build me again please!
 //			buildInitialFootprint(plot);
 //			isDefined = true;
 //		}
-		
-
-//		for (Region r : footprintRegions) {
-//			DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-//			drawObj.setColor("blue");
-//			// Translate footprint
-//			((FootprintObj) drawObj).rotateAround(plot, rotationAngle, wc);
+//		synchronized (lst) {
+//			
+//		
+//		//We want to keep circle size and not changing the circle size
+//			for (DrawObj drawObj : lst) {
+//				if (drawObj instanceof FootprintObj) {
+//					lst.remove(drawObj);
+//				}
+//			}
 //
-//			if (drawObj != null)
-//				lst.add(drawObj);
+//			for (Region r : footprintRegions) {
+//				DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
+//				drawObj.setColor("blue");
+//				((FootprintObj) drawObj).translateTo(plot, center);
+//				((FootprintObj) drawObj).rotateAround(plot, rotationAngle, center);
+//				if (drawObj != null)
+//					lst.add(drawObj);
+//			}
 //		}
 	}
 
@@ -140,37 +135,7 @@ public class FootprintDs9 extends CircularMarker {
 	@Override
 	public void adjustStartEnd(WebPlot plot) {
 
-		// Not needed? FIXME
-		//super.adjustStartEnd(plot);
-		ScreenPt screenCenter = super.getCenter(plot);
-		center = plot.getWorldCoords(screenCenter);
-		
-		// // Called from moving it - start - this should be same center as the
-		// // circular marker that is extending it.
-		// // Sets the center x,y point after drag it.
-		GwtUtil.logToServer(Level.INFO, "adjustStartEnd - start=" + getStartPt().getX() + ", " + getStartPt().getY());
-		GwtUtil.logToServer(Level.INFO, "adjustStartEnd - end=" + getEndPt().getX() + ", " + getEndPt().getY());
-		
-		
-		GwtUtil.logToServer(Level.INFO, "adjustStartEnd - center (lon,lat)=" + center.getX() + ", " + center.getY());
-		GwtUtil.logToServer(Level.INFO, "adjustStartEnd - center (x,y)=" +screenCenter.getX() + ", " + screenCenter.getY());
-		
-		// ScreenPt pt0 = plot.getScreenCoords(getStartPt());
-		// ScreenPt pt1 = plot.getScreenCoords(getEndPt());
-		// GwtUtil.logToServer(Level.INFO, "adjustStartEnd - pt0=" + pt0.getX()
-		// + ", " + pt0.getY());
-		// GwtUtil.logToServer(Level.INFO, "adjustStartEnd - pt1=" + pt1.getX()
-		// + ", " + pt1.getY());
-		// // WorldPt center = plot.getWorldCoords(getCenter(plot));
-		// // for (ShapeDataObj shapeDataObj : lst) {
-		// // if (shapeDataObj.getShape().equals(ShapeType.Circle)) {
-		// // continue;// don't move again circle, only crosshair and
-		// // // rectangles
-		// // }
-		// // // 3. Translate others shapes but circle
-		// //
-		// // shapeDataObj.translateTo(plot, center);
-		// // }
+		move(center, plot);
 	}
 
 	@Override
@@ -190,7 +155,8 @@ public class FootprintDs9 extends CircularMarker {
 	public void buildInitialFootprint(WebPlot plot) {
 		footprintRegions = new ArrayList<>(2);
 		
-		
+//		ScreenPt scrFpCenter = super.getCenter(plot);// screen center x,y of of circle-footprint
+//		center = plot.getWorldCoords(scrFpCenter);
 		// Build polygon to build a footprint drawObj
 		RegionLines lines1 = new RegionLines(plot.getWorldCoords(new ScreenPt(50, -40)),
 				plot.getWorldCoords(new ScreenPt(150, -40)), plot.getWorldCoords(new ScreenPt(150, 40)),
@@ -199,6 +165,7 @@ public class FootprintDs9 extends CircularMarker {
 				plot.getWorldCoords(new ScreenPt(-50, -90)), plot.getWorldCoords(new ScreenPt(50, -90)),
 				plot.getWorldCoords(new ScreenPt(50, -30)));
 		
+		// Arbitrary shape based on screen pixels.
 		RegionLines lines3 = new RegionLines(
 
 		plot.getWorldCoords(new ScreenPt(30, -20)), plot.getWorldCoords(new ScreenPt(100, -20)),
@@ -206,9 +173,35 @@ public class FootprintDs9 extends CircularMarker {
 				plot.getWorldCoords(new ScreenPt(80,20)), plot.getWorldCoords(new ScreenPt(30,20))
 
 		);
+		//Box around target m34 - wcs j2000
+		double[] pol = new double[] { 40.50, 42.74, 40.55, 42.74,
+				40.55, 42.94, 40.50, 42.94
+
+		};
+		WorldPt[] pts = new WorldPt[pol.length/2];
+		for (int i = 0; i < pol.length/2; i++) {
+			pts[i]=new WorldPt(pol[2*i], pol[2*i+1]);
+			ScreenPt screenCoords = plot.getScreenCoords(pts[i]);
+			GwtUtil.logToServer(Level.INFO, "buildFootprint wpt =" +i+" "+ pts[i].getX() + ", " + pts[i].getY());
+			GwtUtil.logToServer(Level.INFO, "buildFootprint wpt (x,y)=" +i+" "+ screenCoords.getX() + ", " + screenCoords.getY());
+		}
+		 RegionLines polygon1 = new RegionLines(pts);
+		 
+		 RegionLines boxCentered = new RegionLines(plot.getWorldCoords(new ScreenPt(-50, -50)),
+					plot.getWorldCoords(new ScreenPt(-50, 50)), plot.getWorldCoords(new ScreenPt(50, 50)),
+					plot.getWorldCoords(new ScreenPt(50, -50)));
+		 
+		RegionLines xcross = new RegionLines(plot.getWorldCoords(new ScreenPt(-10, 0)), plot.getWorldCoords(new ScreenPt(0, 0)),
+				plot.getWorldCoords(new ScreenPt(10, 0)));
 		
+		RegionLines ycross = new RegionLines(plot.getWorldCoords(new ScreenPt(0, -10)), plot.getWorldCoords(new ScreenPt(0, 0)),
+				plot.getWorldCoords(new ScreenPt(0, 10)));
+		footprintRegions.add(lines2);
+		footprintRegions.add(polygon1);//not seen
+		
+		footprintRegions.add(xcross);
+		footprintRegions.add(ycross);
 		footprintRegions.add(lines3);
-//		footprintRegions.add(lines2);
 		regConnection = new RegionConnection(footprintRegions); // FIXME: just a
 																// connection to
 																// make regions
@@ -219,7 +212,6 @@ public class FootprintDs9 extends CircularMarker {
 	}
 
 	private void refreshShapes(WebPlot plot) {
-		center = plot.getWorldCoords(super.getCenter(plot));
 		lst.clear();
 		lst.addAll(super.getShape());
 		for (Region r : footprintRegions) {
@@ -236,22 +228,20 @@ public class FootprintDs9 extends CircularMarker {
 			buildInitialFootprint(plot);
 			isDefined = true;
 		}
+		synchronized (lst) {
+			lst.clear();
+			lst.addAll(super.getShape());
 
-		lst.clear();
-		lst.addAll(super.getShape());
+			for (Region r : footprintRegions) {
+				DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
+				drawObj.setColor("blue");
+				// Translate footprint
+				((FootprintObj) drawObj).translateTo(plot, wpt);
+				((FootprintObj) drawObj).rotateAround(plot, rotationAngle, wpt);
 
-		
-		for (Region r : footprintRegions) {
-			DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-			drawObj.setColor("blue");
-//			if(rotationAngle!=0){
-//				((FootprintObj) drawObj).rotateAround(plot, rotationAngle, wpt);
-//			}
-			// Translate footprint
-			((FootprintObj) drawObj).translateTo(plot, wpt);
-
-			if (drawObj != null)
-				lst.add(drawObj);
+				if (drawObj != null)
+					lst.add(drawObj);
+			}
 		}
 	}
 }
