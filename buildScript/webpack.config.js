@@ -16,7 +16,7 @@ config.project = config.project || path.resolve(config.src, '../../');
 
 var def_config = {
     env         : process.env.NODE_ENV || 'development',
-    dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, 'build/gwt', config.name),
+    dist        : process.env.WP_BUILD_DIR || path.resolve(config.project, `build/${config.name}/gwt/${config.name}`),
     do_lint     : process.env.DO_LINT || process.env.DO_LINT_STRICT || false,
     index_html  : 'index.html',
     html_dir    : 'html',
