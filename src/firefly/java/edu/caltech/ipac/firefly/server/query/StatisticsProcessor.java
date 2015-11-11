@@ -181,7 +181,11 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
             double max=-Double.MAX_VALUE; //using the minimum double value as the maximun
             int numPoints=0;
             for (int i = 0; i < dgjList.size(); i++) {
-                double val = convertToADoubleValue(dgjList.get(i).getDataElement(numericColumns[icol].getKeyName()), numericColumns[icol]);
+                Object data=dgjList.get(i).getDataElement(numericColumns[icol].getKeyName());
+                if (data==null){
+                    continue;
+                }
+                double val = convertToADoubleValue(data, numericColumns[icol]);
                 if (Double.isFinite(val)) {
                     numPoints++;
                     if (val < min) min = val;
@@ -207,17 +211,16 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         Class type = numericColumn.getDataType();
 
           if (type == Double.class) {
-
             Double doubleData = (Double) data;
-
             return doubleData.doubleValue();
         } else if (type == Float.class) {
             Float  floatData = (Float) data;
-            return floatData.doubleValue();
+
+                  return floatData.doubleValue();
+
         } else if (type == Integer.class) {
             Integer integerData = (Integer) data;
             return integerData.doubleValue();
-
         } else if (type == Short.class) {
             Short shortData = (Short) data;
             return shortData.doubleValue();
