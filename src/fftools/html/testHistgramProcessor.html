@@ -1,0 +1,45 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Firefly Tools: Histogram Processor</title>
+</head>
+
+<body>
+
+<div style="white-space: nowrap;">
+
+    <div id="tableHere" style="display:inline-block; width: 800px; height: 400px;
+                               margin : 5px 8px 0px 10px; border: solid 1px;"></div>
+</div>
+
+
+<script type="text/javascript">
+{
+ function onFireflyLoaded() {
+   var searchRequest = {
+     "id" : "IpacTableFromSource",
+     "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"
+     //"source" : "http://localhost/demo/IrsEnhancedQuery.tbl"
+     "columnExpression" : "ra2"
+   }
+   var tableData= { 
+     "processor" : "HistogramProcessor",
+     "searchRequest" : searchRequest
+   }; 
+ 
+   firefly.showTable(tableData, "tableHere");
+ }
+}
+</script>
+
+<script type="text/javascript" language="javascript" src="http://localhost:8080/fftools/fftools.nocache.js">
+</script>
+
+</body>
+</html>

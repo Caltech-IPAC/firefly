@@ -51,13 +51,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private double max = Double.NaN;
     private String columnExpression;
     private double falsePostiveRate = 0.05;
-    ;
 
-    /**
-     * empty constructor
-     */
-    public HistogramProcessor() {
-    }
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
@@ -73,6 +67,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         TableServerRequest sReq = new TableServerRequest(searchId);
 
         String value;
+        //Assign all the rest parameters (except ID) from the request to the TableServerRequest object
         for (Object param : searchRequestJSON.keySet()) {
             String name = (String) param;
             if (!name.equalsIgnoreCase(ServerParams.ID)) {
@@ -296,6 +291,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         List<DataObject> objList = dg.values();
         int nRow = objList.size();
         DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(columns, columnExpression);
+
         double[] data = new double[nRow];
         for (int i = 0; i < nRow; i++) {
             DataObject row = objList.get(i);
