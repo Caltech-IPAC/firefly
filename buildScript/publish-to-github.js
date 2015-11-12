@@ -4,7 +4,20 @@ var publishRelease = require('publish-release');
 var fs = require('fs');
 var exec = require('child_process').exec;
 var request = require('request')
-
+var ffdesc = 'This standalone release enable Firefly to run without additional dependencies beside Java 1.8. \
+It comes with an embedded Tomcat 7. \
+\
+To start Firefly: \
+    java -jar fftools-exec.war \
+\
+By default, it will start up on port 8080. Goto to http://localhost:8080/fftools/ after it has started. \
+    To start it on a different port, add -httpPort to the java command. \
+\
+    This will extract the content of the war file into a directory called ".extract" in your current directory. \
+    To change this, add -extractDirectory to the java command. \
+\
+\
+    ';
 
 var args = JSON.parse( process.argv[2] || '{}' );
 
@@ -76,18 +89,23 @@ function checkGitHub(rel_config, callback) {
 
 function doPublish(rel_config) {
 
+    rel_config.notes = ffdesc + rel_config.notes;
     exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
+    window.setTimeout(doReleasePush(rel_config), 2000);
+}
+
+function doReleasePush(rel_config) {
     var proc = exec('git push --tags lsst HEAD:master', function(error, stdout, stderr) {
-            if (stdout) {
-                console.log('stdout: ' + stdout);
-            }
-            if (stderr) {
-                console.log('stderr: ' + stderr);
-            }
-            if (error !== null) {
-                console.log('ERROR: Fail to push changes to github. ' + error);
-            }
-        });
+        if (stdout) {
+            console.log('stdout: ' + stdout);
+        }
+        if (stderr) {
+            console.log('stderr: ' + stderr);
+        }
+        if (error !== null) {
+            console.log('ERROR: Fail to push changes to github. ' + error);
+        }
+    });
 
     proc.on('exit', function (code) {
         if (code == 0) {
