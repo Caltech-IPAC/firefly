@@ -137,31 +137,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
 
         DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
         return createTableStatistic(dg);
-       /* List<DataObject> dgjList= dg.values();
-        DataType[] inColumns = dg.getDataDefinitions();
-        DataType[] numericColumns = getNumericColumns(inColumns);
 
-        String[] columnNames = getDataTypeField(numericColumns, "name");
-        String[] columnDescription = getDataTypeField(numericColumns, "description");
-        String[] unit = getDataTypeField(numericColumns, "unit");
-
-        Object[] retArrays = getDataArrays (dgjList,numericColumns );
-        double[] minArray = (double[]) retArrays[0];
-        double[] maxArray = (double[]) retArrays[1];
-        int[] numPointsArray =(int[]) retArrays[2];
-        DataGroup statisticsTable = new DataGroup("statisticsTable", columns);
-        for (int i=0; i<minArray.length; i++){
-           DataObject row = new DataObject(statisticsTable);
-           row.setDataElement(columns[0], columnNames[i]);
-           row.setDataElement(columns[1], columnDescription[i]);
-           row.setDataElement(columns[2], unit[i]);
-           row.setDataElement(columns[3], minArray[i]);
-           row.setDataElement(columns[4], maxArray[i]);
-           row.setDataElement(columns[5], numPointsArray [i]);
-           statisticsTable.add(row);
-        }
-
-        return statisticsTable;*/
     }
 
     /**
