@@ -91,7 +91,7 @@ function doPublish(rel_config) {
 
     rel_config.notes = ffdesc + rel_config.notes;
     exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
-    window.setTimeout(doReleasePush(rel_config), 2000);
+    setTimeout(doReleasePush(rel_config), 2000);
 }
 
 function doReleasePush(rel_config) {
