@@ -1,6 +1,7 @@
 def INIT_GROUP = "Common initial setup for all gradle build."
 
 project.ext["app-name"] = name
+buildDir = "$rootDir/build/${project.ext["app-name"]}"
 
 
 task loadConfig {

@@ -419,15 +419,16 @@ public class HistogramProcessor  extends IpacTablePartProcessor {
     }
 
     /**
-     *
-     *
-     *  This method calculate the variable bins based on the paper: http://arxiv.org/pdf/1304.2818.pdf
+     *  This method calculate the variable bins based on the paper:
+     *  http://iopscience.iop.org/article/10.1088/0004-637X/764/2/167/pdf;jsessionid=22827FAAA086B2A127E88C517E0E8DD3.c1.iopscience.cld.iop.org
+     *  http://arxiv.org/pdf/1304.2818.pdf
      *  and the python implementation: https://github.com/fedhere/fedsastroutils/blob/master/bayesianblocks_fbb.py
      *  There are a few implementations. Each of them is a little different.  I based the two above and
      *  modified it to take the special cases where there is no fitness value found.
      *
      * @return
      */
+
 
     private Object[] calculateVariableBinSizeDataArray(double[] columnData) throws DataAccessException {
 

@@ -100,9 +100,7 @@ repositories {
   }
 }
 
-
 jar.destinationDir = file ("$rootDir/jars/build")
-buildDir = "$rootDir/build"
 
 
 task buildClient (dependsOn: loadConfig) {
@@ -110,7 +108,7 @@ task buildClient (dependsOn: loadConfig) {
   outputs.upToDateWhen { false }
 
   doLast {
-    def wpBuildDir = "$rootDir/build/gwt/${project['app-name']}"
+    def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
 
     try {
       def process = "npm version".execute()
