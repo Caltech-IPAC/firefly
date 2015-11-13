@@ -709,7 +709,7 @@ public class StringUtils {
     public static String escapeQuotes(String s) {
         StringBuilder sb= new StringBuilder(s.length()+30);
         for(char c : s.toCharArray()) {
-            if (c=='"' || c=='\'') {
+            if (c=='"' || c=='\'' || c=='\\') {
                 sb.append('\\');
             }
             sb.append(c);

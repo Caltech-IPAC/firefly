@@ -64,11 +64,15 @@
         onFireflyLoaded= function() {
             firefly.debug= true;
 
-            var table1Data= { "source" : "http://shadev1.ipac.caltech.edu/demo/WiseDemoTable.tbl"};
+            var table1Data= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"};
             firefly.showTable(table1Data, "tableHere");
-            firefly.addCoveragePlot({"QUERY_ID" : "tableHere"  }, "coverageHere" );
+            firefly.addCoveragePlot({"QUERY_ID" : "tableHere",
+                                     "CornerColumns" : "ra1,dec1,ra2,dec2,ra3,dec3,ra4,dec4",
+                                     "CenterColumns" : "in_ra,in_dec",
+                                     "MinSize"    : "100x100" },
+                                     "coverageHere" );
 
-            var table2Data= { "source" : "http://shadev1.ipac.caltech.edu/demo/test-table3.tbl"};
+            var table2Data= { "source" : "http://web.ipac.caltech.edu/staff/roby/demo/test-table4.tbl"};
             firefly.showTable(table2Data, "table2Here");
             firefly.addDataViewer( {"DataSource" : "URL",
                                        "DataColumn" : "FITS",
@@ -81,11 +85,8 @@
    
 </script>
 
-
-
-
 <script type="text/javascript" language='javascript'
-        src='http://gabriel.ipac.caltech.edu:8080/fftools/fftools.nocache.js'>
+        src='http://localhost:8080/fftools/fftools.nocache.js'>
 </script>
 
 

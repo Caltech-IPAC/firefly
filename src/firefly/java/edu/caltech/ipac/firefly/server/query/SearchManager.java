@@ -49,7 +49,6 @@ public class SearchManager {
     public RawDataSet getRawDataSet(TableServerRequest request) throws DataAccessException {
         SearchProcessor processor = getProcessor(request.getRequestId());
         ServerRequest req = processor.inspectRequest(request);
-        String errMsg;
         if (req != null) {
             DataGroupPart dgp = null;
             try {
@@ -65,17 +64,13 @@ public class SearchManager {
                 return ds;
             } catch (Exception ex) {
                 String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
-                errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source ;
+                String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source ;
                 LOGGER.error(ex, errMsg);
+                throw new DataAccessException(errMsg, ex);
             }
         } else {
-            errMsg ="Request fail inspection.  Operation aborted.";
+            throw new DataAccessException("Request fail inspection.  Operation aborted.");
         }
-
-        if (errMsg != null) {
-            throw new DataAccessException(errMsg);
-        }
-        return null;
     }
 
     public String getJSONData(ServerRequest request) throws DataAccessException {
