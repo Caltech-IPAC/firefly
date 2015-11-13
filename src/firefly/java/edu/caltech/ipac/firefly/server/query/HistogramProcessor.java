@@ -3,6 +3,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.astro.IpacTableException;
 import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
+import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -86,34 +87,34 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (!fi.hasAccess()) {
             throw new SecurityException("Access is not permitted.");
         }
-        getParameters(searchRequestJSON);
+        getParameters(request);
         DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
-        double[] columnData = getColumnData(sourceDataGroup, columns);
+        double[] columnData = getColumnData(sourceDataGroup);
         DataGroup HistogramDataGroup = createHistogramTable(columnData);
         File histogramFile = createFile(request);
         DataGroupWriter.write(histogramFile, HistogramDataGroup, 0);
         return histogramFile;
     }
 
-    private void getParameters(JSONObject searchRequestJSON) {
+    private void getParameters(TableServerRequest tableServerRequest) {
         //get all the required parameters
-
-        for (Object param : searchRequestJSON.keySet()) {
-            String name = (String) param;
-            Object value = searchRequestJSON.get(param);
-
+        List<Param> params = tableServerRequest.getParams();
+        for (Param p: params.toArray(new Param[0])){
+            String name = p.getName();
+            String value = p.getValue();
             if (name.equalsIgnoreCase(COLUMN)) {
                 //columnName = (String) value;
                 columnExpression = (String) value;
             } else if (name.equalsIgnoreCase(MIN)) {
-                min = ((Double) value).doubleValue();
+                min =  Double.parseDouble(value);
+
             } else if (name.equalsIgnoreCase(MAX)) {
-                max = ((Double) value).doubleValue();
+                max =  Double.parseDouble(value);
             } else if (name.equalsIgnoreCase(BINSIZE)) {
-                binSize = ((Double) value).doubleValue();
+                binSize =  Double.parseDouble(value);
                 algorithm = FIXED_SIZE_ALGORITHM;
             } else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
-                falsePostiveRate = ((Double) value).doubleValue();
+                falsePostiveRate =  Double.parseDouble(value);
             }
         }
 
@@ -287,10 +288,11 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         return Double.NaN;
     }
 
-    private double[] getColumnData(DataGroup dg, DataType[] columns) {
+    private double[] getColumnData(DataGroup dg) {
         List<DataObject> objList = dg.values();
         int nRow = objList.size();
-        DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(columns, columnExpression);
+        DataType[] dataTypes=dg.getDataDefinitions();
+        DataObjectUtil.DoubleValueGetter dGetter = new DataObjectUtil.DoubleValueGetter(dataTypes, columnExpression);
 
         double[] data = new double[nRow];
         for (int i = 0; i < nRow; i++) {
@@ -694,7 +696,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                     if (columns == null) {
                         throw new DataAccessException(hp.columnExpression + " is not found in the input table");
                     }
-                    double[] columnData = hp.getColumnData(dg, columns);
+                    double[] columnData = hp.getColumnData(dg);
 
                     DataGroup outDg = hp.createHistogramTable(columnData);
                     String outFileName = path + "output_" + inFileName;

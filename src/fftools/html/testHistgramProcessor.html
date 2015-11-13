@@ -24,8 +24,8 @@
  function onFireflyLoaded() {
    var searchRequest = {
      "id" : "IpacTableFromSource",
-     "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"
-      //"source" : "http://localhost/demo/IrsEnhancedQuery.tbl"
+      "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"
+      //"source" : "http://localhost/IrsEnhancedQuery.tbl"
 
 
 
@@ -33,7 +33,8 @@
    var tableData= { 
      "processor" : "HistogramProcessor",
      "searchRequest" : searchRequest,
-      "columnExpression" : "ra2"
+      "columnExpression" : "ra2+log(ra1)",
+      "binSize" : "10"
    }; 
  
    firefly.showTable(tableData, "tableHere");
