@@ -2,8 +2,8 @@
 
 var publishRelease = require('publish-release');
 var fs = require('fs');
-var exec = require('child_process').exec;
-var request = require('request')
+var execSync = require('child_process').execSync;
+var request = require('request');
 var ffdesc = 'This standalone release enable Firefly to run without additional dependencies beside Java 1.8. \
 It comes with an embedded Tomcat 7. \
 \
@@ -61,7 +61,7 @@ function getChangeLog(rel_config, lastdate) {
     var cmd = 'git log --pretty=format:"%h - %s [%cd]" --date=short --after="' + lastdate +'"';
 
     // push changes to github..
-    exec(cmd, function (error, stdout, stderr) {
+    execSync(cmd, function (error, stdout, stderr) {
         rel_config.notes = 'Changelog: \n\n' + stdout;
         doPublish(rel_config);
     });
@@ -90,12 +90,12 @@ function checkGitHub(rel_config, callback) {
 function doPublish(rel_config) {
 
     rel_config.notes = ffdesc + rel_config.notes;
-    exec('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
+    execSync('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
     setTimeout(doReleasePush(rel_config), 2000);
 }
 
 function doReleasePush(rel_config) {
-    var proc = exec('git push --tags lsst HEAD:master', function(error, stdout, stderr) {
+    var proc = execSync('git push --tags lsst HEAD:master', function(error, stdout, stderr) {
         if (stdout) {
             console.log('stdout: ' + stdout);
         }
@@ -109,7 +109,7 @@ function doReleasePush(rel_config) {
 
     proc.on('exit', function (code) {
         if (code == 0) {
-            exec('git remote rm lsst');
+            execSync('git remote rm lsst');
 
             publishRelease(rel_config,
                 function (err, release) {
