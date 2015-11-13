@@ -40,18 +40,20 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         new DataType("binMax", Double.class)
     };
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
-    private final String BINSIZE = "binSize";
+    private final String NUMBER_BINS = "numBins";
     private final String COLUMN = "columnExpression";
     private final String MIN = "min";
     private final String MAX = "max";
     // private final String ALGORITHM = "algorithm";
     private final String FALSEPOSTIVERATE = "falsePostiveRage";
+    private final String PRESERVE_EMPTY_BIN="preserveEmptyBins";
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
-    private double binSize;
+    private int numBins;
     private double min = Double.NaN;
     private double max = Double.NaN;
     private String columnExpression;
     private double falsePostiveRate = 0.05;
+    private boolean showEmptyBin=false;
 
 
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
@@ -110,37 +112,19 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
             } else if (name.equalsIgnoreCase(MAX)) {
                 max =  Double.parseDouble(value);
-            } else if (name.equalsIgnoreCase(BINSIZE)) {
-                binSize =  Double.parseDouble(value);
+            } else if (name.equalsIgnoreCase(NUMBER_BINS)) {
+                numBins =  Integer.parseInt(value);
                 algorithm = FIXED_SIZE_ALGORITHM;
             } else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
                 falsePostiveRate =  Double.parseDouble(value);
+            }
+            else if (name.equalsIgnoreCase(PRESERVE_EMPTY_BIN) ){
+                showEmptyBin= Boolean.parseBoolean(value);
             }
         }
 
     }
 
-
-    /**
-     * This method calculates the number of bins for a given fixed size binSize
-     *
-     * @param columnData
-     * @return
-     */
-    private int getNumberOfBins(double[] columnData) {
-
-        int nBin = (int) ((columnData[columnData.length - 1] - columnData[0]) / binSize);
-        if (Double.isFinite(min) && Double.isFinite(max)) {
-            nBin = (int) ((max - min) / binSize);
-        } else if (Double.isNaN(min) && Double.isFinite(max)) {
-            nBin = (int) ((columnData[columnData.length - 1] - min) / binSize);
-        } else if (Double.isFinite(min) && Double.isNaN(max)) {
-            nBin = (int) ((max - columnData[0]) / binSize);
-        }
-        return nBin + 1;
-
-
-    }
 
     /**
      * This method is changed to public to be able to run the test case in the test tree
@@ -188,48 +172,114 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private Object[] calculateFixedBinSizeDataArray(double[] columnData) {
         //sort the data in ascending order, thus, index 0 has the minimum and the last index has the maximum
         Arrays.sort(columnData);
-        int nBin = getNumberOfBins(columnData);
-        int[] numPointsInBin = new int[nBin];
-        double[] binMin = new double[nBin];
-        if (Double.isNaN(min)) {
+        //int nBin = getNumberOfBins(columnData);
+         if (Double.isNaN(min)) {
             min = columnData[0];
         }
         if (Double.isNaN(max)) {
             max = columnData[columnData.length - 1];
         }
+
+
+        double binSize = (max-min)/(numBins-1);
+
+        int[] numPointsInBin = new int[numBins];
+        double[] binMin = new double[numBins];
+
         //fill all entries to the maximum, thus, all data values will be smaller than it
         //Double.MAX_VALUE is the lagerest of the double value
-        Arrays.fill(binMin, Double.MAX_VALUE);
-        double[] binMax = new double[nBin];
+       // Arrays.fill(binMin, Double.MAX_VALUE);
+        double[] binMax = new double[numBins];
         //fill all entries to the minimum thus, all data values will be larger than it
         //-Double.MAX_VALUE is the smallest double value
-        Arrays.fill(binMax, -Double.MAX_VALUE);
+       // Arrays.fill(binMax, -Double.MAX_VALUE);
 
         for (int i = 0; i < columnData.length; i++) {
             if (columnData[i] >= min && columnData[i] <= max) {
                 int iBin = (int) ((columnData[i] - min) / binSize);
-                if (columnData[i] < binMin[iBin]) binMin[iBin] = columnData[i];
-                if (columnData[i] > binMax[iBin]) binMax[iBin] = columnData[i];
+                //if (columnData[i] < binMin[iBin]) binMin[iBin] = columnData[i];
+                //if (columnData[i] > binMax[iBin]) binMax[iBin] = columnData[i];
+
                 numPointsInBin[iBin]++;
 
             }
-
-        }
-
-
-        //fill entries in the empty bins to NaN
-        for (int i = 0; i < nBin; i++) {
-            //If there is no point falling on this bin, assign the binMin and binMax to the corresponding bin border values
-            if (numPointsInBin[i] == 0) {
-                binMin[i] = Double.NaN;
-                binMax[i] = Double.NaN;
+          }
+        for (int ibin=0; ibin<numBins; ibin++){
+            binMin[ibin]=min+ibin*binSize;
+            if (ibin==numBins-1){
+                binMax[ibin]=max;
+            }
+            else {
+                binMax[ibin]=binMin[ibin]+binSize;
+            }
+           /* if (ibin==0){
+                binMin[ibin]=min;
+                binMax[ibin]= binMin[ibin]+binSize;
+            }
+            else if (ibin==numBins-1){
+                binMin[ibin]=binMax[ibin-1];
+                binMax[ibin]=max;
 
             }
-        }
-        Object[] obj = {numPointsInBin, binMin, binMax};
+            else {
+                binMin[ibin]= binMax[ibin-1];
+                binMax[ibin]=binMin[ibin]+binSize;
 
-        return obj;
+            }*/
+        }
+
+       if (showEmptyBin){
+
+           Object[] obj = {numPointsInBin, binMin, binMax};
+           return obj;
+
+       }
+       else {
+           //filter out the  entries which has the empty bins
+           ArrayList<Integer> idx = new ArrayList<Integer>();
+           for (int i = 0; i < numPointsInBin.length; i++) {
+               if (numPointsInBin[i] == 0) continue;
+               idx.add(i);
+           }
+
+           Object[] obj = {getSelection(numPointsInBin, idx), getSelection(binMin, idx), getSelection(binMax, idx)};
+
+           return obj;
+
+       }
     }
+    private int[]  getSelection(int[] inArray, ArrayList<Integer> selection ){
+
+        int[] outArray=new int[selection.size()];
+        int count=0;
+        for (int i=0; i<inArray.length; i++){
+            for (int j=0; j<selection.size(); j++){
+                if (i==selection.get(j).intValue()){
+                    outArray[count]=inArray[i];
+                    count++;
+                    break;
+                }
+            }
+        }
+        return outArray;
+    }
+
+    private double[]  getSelection(double[] inArray, ArrayList<Integer> selection ){
+
+        double[] outArray=new double[selection.size()];
+        int count=0;
+        for (int i=0; i<inArray.length; i++){
+            for (int j=0; j<selection.size(); j++){
+                if (i==selection.get(j).intValue()){
+                    outArray[count]=inArray[i];
+                    count++;
+                    break;
+                }
+            }
+        }
+        return outArray;
+    }
+
 
 
     /**
@@ -656,10 +706,10 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     /**
      * This is needed for unit test
      *
-     * @param bSize
+     * @param nBin: integer
      */
-    public void setBinSize(double bSize) {
-        binSize = bSize;
+    public void setBinNumber(int nBin) {
+        numBins=nBin;
         algorithm = FIXED_SIZE_ALGORITHM;
     }
 
@@ -690,8 +740,6 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
                     HistogramProcessor hp = new HistogramProcessor();
                     hp.columnExpression = "f_y";
-                    // hp.binSize=20; //test fixed bin size when it is defined, otherwise, test variable bin size
-                    DataType[] columns = hp.getColumn(dg);
 
                     if (columns == null) {
                         throw new DataAccessException(hp.columnExpression + " is not found in the input table");

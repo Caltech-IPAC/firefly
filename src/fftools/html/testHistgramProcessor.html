@@ -33,8 +33,9 @@
    var tableData= { 
      "processor" : "HistogramProcessor",
      "searchRequest" : searchRequest,
-      "columnExpression" : "ra2+log(ra1)",
-      "binSize" : "10"
+      "columnExpression" : "ra2",
+      "numBins" : "10",
+      "preserveEmptyBins": "true"
    }; 
  
    firefly.showTable(tableData, "tableHere");
