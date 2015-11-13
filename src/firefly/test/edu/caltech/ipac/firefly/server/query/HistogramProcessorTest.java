@@ -30,6 +30,7 @@ public class HistogramProcessorTest {
                 6.00000,
                 6.20000,
                 7.00000,
+                4.05000,
                 7.10000,
                 7.30000,
                 7.40000,
@@ -37,15 +38,15 @@ public class HistogramProcessorTest {
                 12.0000,
                 9.20000,
                 8.50000,
-                11.6000,
+                12.000,
         };
-        int[] expectedNumPointsInBin={ 1, 2, 0, 6,2, 2, 1};
-        double[] expectedBinMin={0.0, 2.5, Double.NaN,  6.0, 8.5, 10.0, 12.0};
-        double[] expectedBinMax={0.0, 2.7, Double.NaN,  7.4, 9.2, 11.6, 12.0};
+        int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  1,2};
+        double[] expectedBinMin={0.0, 2, 4,  6.0, 8.0, 10.0, 12.0};
+        double[] expectedBinMax={2, 4, 6,  8, 10, 12, 12.0};
         DataGroup expectedDG = createDataGroup(expectedNumPointsInBin, expectedBinMin, expectedBinMax);
 
         HistogramProcessor hp = new HistogramProcessor();
-        hp.setBinSize(2.0);
+        hp.setBinNumber(7);
         DataGroup outDG = hp.createHistogramTable(histData);
 
         validateResult(expectedDG, outDG);

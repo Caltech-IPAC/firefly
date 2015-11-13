@@ -45,7 +45,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private final String MIN = "min";
     private final String MAX = "max";
     // private final String ALGORITHM = "algorithm";
-    private final String FALSEPOSTIVERATE = "falsePostiveRage";
+    private final String FALSEPOSTIVERATE = "falsePostiveRate";
     private final String PRESERVE_EMPTY_BIN="preserveEmptyBins";
     private String algorithm = null;// FIXED_SIZE_ALGORITHM;
     private int numBins;
@@ -114,7 +114,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                 max =  Double.parseDouble(value);
             } else if (name.equalsIgnoreCase(NUMBER_BINS)) {
                 numBins =  Integer.parseInt(value);
-                algorithm = FIXED_SIZE_ALGORITHM;
+                if (numBins>0) algorithm = FIXED_SIZE_ALGORITHM;
             } else if (name.equalsIgnoreCase(FALSEPOSTIVERATE)) {
                 falsePostiveRate =  Double.parseDouble(value);
             }
