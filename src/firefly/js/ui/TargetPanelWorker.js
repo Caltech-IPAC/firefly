@@ -6,7 +6,7 @@
 import PositionParser from '../util/PositionParser';
 import PositionFieldDef from '../data/form/PositionFieldDef';
 import Point from '../visualize/Point';
-import http from 'http';
+import {fetchUrl} from '../util/WebUtil.js';
 
 
 
@@ -53,17 +53,18 @@ var makeResolverPromise= function(objName) {
 
 function makeSearchPromise(objName) {
     var rejectFunc= null;
-    var url= `/fftools/sticky/CmdSrv?objName=${objName}&resolver=nedthensimbad&cmd=CmdResolveName`;
+    var url= `sticky/CmdSrv?objName=${objName}&resolver=nedthensimbad&cmd=CmdResolveName`;
     var searchPromise= new Promise(
         function(resolve, reject) {
-            http.get(
-                { path : url },
-                (res) => {
-                    res.on('data', (buf) =>  resolve(buf) );
-                    res.on('error', (e) =>  reject(e) );
-                    res.on('end', () => { });
+            fetchUrl(url).then( (response) => {
+                response.json().then( (value) => {
+                    resolve(value);
                 });
-        }).then( (buf) => JSON.parse(buf) );
+            }).catch( (error) => {
+                return reject(error);
+            });
+        });
+
     var abortPromise= new Promise(function(resolve,reject) {
         rejectFunc= reject;
     });

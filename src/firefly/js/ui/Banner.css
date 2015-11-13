@@ -1,0 +1,11 @@
+.banner__Title {
+    float: left;
+    letter-spacing: 1px;
+    margin-left: 10px;
+    color: white;
+    font-size: 25pt;
+    font-family: sans-serif;
+    z-index: 1;
+    text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);
+}
+

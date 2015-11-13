@@ -5,17 +5,17 @@ import edu.caltech.ipac.astro.IpacTableReader;
 import edu.caltech.ipac.astro.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.util.*;
-import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupWriter;
+import edu.caltech.ipac.util.DataGroup;
+import edu.caltech.ipac.util.DataObject;
+import edu.caltech.ipac.util.DataType;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,113 +27,77 @@ import java.util.List;
 @SearchProcessorImpl(id = "StatisticsProcessor")
 
 public class StatisticsProcessor extends IpacTablePartProcessor {
-    private static final String  SEARCH_PARAMETER = "searchRequest";
+    private static final String SEARCH_REQUEST = "searchRequest";
     private static DataType[] columns = new DataType[]{
-                                                              new DataType("columnName", String.class),
-                                                              new DataType("description", String.class),
-                                                              new DataType("unit", String.class),
-                                                              new DataType("min", Double.class),
-                                                              new DataType("max", Double.class),
-                                                              new DataType("numPoints", Integer.class),
+            new DataType("columnName", String.class),
+            new DataType("description", String.class),
+            new DataType("unit", String.class),
+            new DataType("min", Double.class),
+            new DataType("max", Double.class),
+            new DataType("numPoints", Integer.class),
     };
 
     /**
      * empty constructor
      */
-    public StatisticsProcessor(){};
+    public StatisticsProcessor(){}
 
     /**
      * This method is defined as an abstract in the IpacTablePartProcessor and it is implemented here.
      * The TableServerRequest is passed here and processed.  Only when the "searchRequest" is set, the request
      * is processed.
      *
-     * @param request
-     * @return
+     * @param request table server request
+     * @return File with statistics on a table
      * @throws IOException
      * @throws DataAccessException
      */
     protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
 
+        String searchRequestJson = request.getParam(SEARCH_REQUEST);
+        if (searchRequestJson == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " is missing");
+        }
+        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_REQUEST));
+        String searchId = (String) searchRequestJSON.get(ServerParams.ID);
+        if (searchId == null) {
+            throw new DataAccessException("Unable to get statistics: " + SEARCH_REQUEST + " must contain " + ServerParams.ID);
+        }
+        TableServerRequest sReq = new TableServerRequest(searchId);
 
-        JSONObject searchRequestJSON = (JSONObject) JSONValue.parse(request.getParam(SEARCH_PARAMETER));
-        File inf=null;
-        String source=null;
-        if (searchRequestJSON != null) {
-            for (Object param : searchRequestJSON.keySet()) {
-                String name = (String) param;
-
-                if (name.equalsIgnoreCase(ServerParams.ID)) {
-                    source = (String) searchRequestJSON.get(param);
-                    inf = getSourceFile(source, request);
-
-                }
+        String value;
+        for (Object param : searchRequestJSON.keySet()) {
+            String name = (String) param;
+            if (!name.equalsIgnoreCase(ServerParams.ID)) {
+                value = searchRequestJSON.get(param).toString();
+                sReq.setParam(name, value);
             }
         }
 
-        if (inf == null) {
-            throw new DataAccessException("Unable to read the source[alt_source] file:" + source );
+        FileInfo fi = new SearchManager().getFileInfo(sReq);
+        if (fi == null) {
+            throw new DataAccessException("Unable to get file location info");
         }
-
-        if (!ServerContext.isFileInPath(inf)) {
+        if (fi.getInternalFilename() == null) {
+            throw new DataAccessException("File not available");
+        }
+        if (!fi.hasAccess()) {
             throw new SecurityException("Access is not permitted.");
         }
-        return convertToIpacTable(inf, request);
-
-    }
-
-    /**
-     * resolve the file given a 'source' string.  it could be a local path, or a url.
-     * if it's a url, download it into the application's workarea
-     * @param source
-     * @param request
-     * @return
-     */
-    private File getSourceFile(String source, TableServerRequest request) {
-        File inf = null;
-        try {
-            URL url = makeUrl(source);
-            if (url == null) {
-                inf = ServerContext.convertToFile(source);
-            } else {
-                HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                int rcode = conn.getResponseCode();
-                if (rcode >= 200 && rcode < 400) {
-                    String sfname = URLDownload.getSugestedFileName(conn);
-                    if (sfname == null) {
-                        sfname = url.getPath();
-                    }
-                    String ext = sfname == null ? null : FileUtil.getExtension(sfname);
-                    ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                    inf = createFile(request, ext);
-                    URLDownload.getDataToFile(conn, inf, null, false, true, true, Long.MAX_VALUE);
-                }
-            }
-        } catch (Exception ex) {
-            inf = null;
-        }
-        if (inf != null && inf.canRead()) {
-            return inf;
-        }
-
-        return null;
-    }
-    private URL makeUrl(String source) {
-        try {
-            return new URL(source);
-        } catch (MalformedURLException e) {
-            return null;
-        }
-
-
+        DataGroup sourceDataGroup = DataGroupReader.readAnyFormat(new File(fi.getInternalFilename()));
+        DataGroup statisticsDataGroup = createTableStatistic(sourceDataGroup);
+        File statisticsFile = createFile(request);
+        DataGroupWriter.write(statisticsFile, statisticsDataGroup, 0);
+        return statisticsFile;
     }
 
     /**
      * Add this method to run unit test
      *
-     * @param inDataGroup
-     * @return
+     * @param inDataGroup source data group
+     * @return DataGroup containing table statistics
      */
-    public  DataGroup createTableStatistic(DataGroup inDataGroup){
+    public  static DataGroup createTableStatistic(DataGroup inDataGroup){
         List<DataObject> dgjList= inDataGroup.values();
         DataType[] inColumns =inDataGroup.getDataDefinitions();
         DataType[] numericColumns = getNumericColumns(inColumns);
@@ -160,10 +124,11 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
 
         return statisticsTable;
     }
-     /**
+    /**
      *
      * This method process the input IpacTable and find the coumnNames, min, max etc and store in a new IpacTable, ie, a DataGroup.
-     * @return
+     * @param file file with the source table
+     * @return DataGroup which contains table statistics
      * @throws IpacTableException
      * @throws IOException
      * @throws DataAccessException
@@ -172,31 +137,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
 
         DataGroup dg = IpacTableReader.readIpacTable(file, null, false, "inputTable" );
         return createTableStatistic(dg);
-       /* List<DataObject> dgjList= dg.values();
-        DataType[] inColumns = dg.getDataDefinitions();
-        DataType[] numericColumns = getNumericColumns(inColumns);
 
-        String[] columnNames = getDataTypeField(numericColumns, "name");
-        String[] columnDescription = getDataTypeField(numericColumns, "description");
-        String[] unit = getDataTypeField(numericColumns, "unit");
-
-        Object[] retArrays = getDataArrays (dgjList,numericColumns );
-        double[] minArray = (double[]) retArrays[0];
-        double[] maxArray = (double[]) retArrays[1];
-        int[] numPointsArray =(int[]) retArrays[2];
-        DataGroup statisticsTable = new DataGroup("statisticsTable", columns);
-        for (int i=0; i<minArray.length; i++){
-           DataObject row = new DataObject(statisticsTable);
-           row.setDataElement(columns[0], columnNames[i]);
-           row.setDataElement(columns[1], columnDescription[i]);
-           row.setDataElement(columns[2], unit[i]);
-           row.setDataElement(columns[3], minArray[i]);
-           row.setDataElement(columns[4], maxArray[i]);
-           row.setDataElement(columns[5], numPointsArray [i]);
-           statisticsTable.add(row);
-        }
-
-        return statisticsTable;*/
     }
 
     /**
@@ -207,7 +148,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
      * @param numericColumns
      * @return
      */
-    private Object[] getDataArrays(List<DataObject> dgjList,  DataType[] numericColumns){
+    private static Object[] getDataArrays(List<DataObject> dgjList,  DataType[] numericColumns){
         double[] minArray=new double[numericColumns.length];
         double[] maxArray=new double[numericColumns.length];
         int[] numPointsArray=new int[numericColumns.length];
@@ -216,7 +157,11 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
             double max=-Double.MAX_VALUE; //using the minimum double value as the maximun
             int numPoints=0;
             for (int i = 0; i < dgjList.size(); i++) {
-                double val = convertToADoubleValue(dgjList.get(i).getDataElement(numericColumns[icol].getKeyName()), numericColumns[icol]);
+                Object data=dgjList.get(i).getDataElement(numericColumns[icol].getKeyName());
+                if (data==null){
+                    continue;
+                }
+                double val = convertToADoubleValue(data, numericColumns[icol]);
                 if (Double.isFinite(val)) {
                     numPoints++;
                     if (val < min) min = val;
@@ -238,21 +183,20 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
      * @param numericColumn
      * @return
      */
-    private double convertToADoubleValue(Object data, DataType numericColumn) {
+    private static double convertToADoubleValue(Object data, DataType numericColumn) {
         Class type = numericColumn.getDataType();
 
           if (type == Double.class) {
-
             Double doubleData = (Double) data;
-
             return doubleData.doubleValue();
         } else if (type == Float.class) {
             Float  floatData = (Float) data;
-            return floatData.doubleValue();
+
+                  return floatData.doubleValue();
+
         } else if (type == Integer.class) {
             Integer integerData = (Integer) data;
             return integerData.doubleValue();
-
         } else if (type == Short.class) {
             Short shortData = (Short) data;
             return shortData.doubleValue();
@@ -273,7 +217,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
      * @param columns
      * @return
      */
-    private DataType[] getNumericColumns(DataType[] columns ){
+    private static DataType[] getNumericColumns(DataType[] columns ){
         ArrayList<DataType> numericDataTypeArray = new ArrayList<DataType>();
         for (int i=0; i<columns.length; i++){
             if (columns[i].getDataType().equals(String.class) || columns[i].getDataType().equals(Boolean.class) ){
@@ -292,7 +236,7 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
      *              and "description".
      * @return - return the corresponding array of the field
      */
-    private String[] getDataTypeField (DataType[] columns, String field){
+    private static String[] getDataTypeField (DataType[] columns, String field){
         String[] results = new String[columns.length];
         for (int i=0; i<columns.length; i++){
             if (field.equalsIgnoreCase("name")){
@@ -321,19 +265,6 @@ public class StatisticsProcessor extends IpacTablePartProcessor {
         return ret;
     }
 
-    /**
-     * This is the method which can be used by other object.  The input is TableServerRequest, the
-     * output is the statistics DataGroup.
-     * @param request the TableSeverRequest where stores the input information
-     * @return DataGroup which contains the statistics data columns
-     * @throws IpacTableException
-     * @throws IOException
-     * @throws DataAccessException
-     */
-    public  DataGroup  getStatisticsTable(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
-        File file = loadDataFile(request);
-        return createTableStatistic(file);
-    }
 
     public static void main(String args[]) throws IOException, DataAccessException {
 
