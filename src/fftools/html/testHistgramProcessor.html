@@ -25,12 +25,15 @@
    var searchRequest = {
      "id" : "IpacTableFromSource",
      "source" : "http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl"
-     //"source" : "http://localhost/demo/IrsEnhancedQuery.tbl"
-     "columnExpression" : "ra2"
+      //"source" : "http://localhost/demo/IrsEnhancedQuery.tbl"
+
+
+
    }
    var tableData= { 
      "processor" : "HistogramProcessor",
-     "searchRequest" : searchRequest
+     "searchRequest" : searchRequest,
+      "columnExpression" : "ra2"
    }; 
  
    firefly.showTable(tableData, "tableHere");

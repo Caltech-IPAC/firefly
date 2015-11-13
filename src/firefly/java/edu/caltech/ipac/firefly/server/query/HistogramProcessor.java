@@ -22,7 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+@SearchProcessorImpl(id = "HistogramProcessor")
 /**
  * Created by zhang on 10/16/15.
  * This class is a Histogram processor.  Its input is TableServerRequest where it contains the needed parameters to calculate
