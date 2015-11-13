@@ -86,7 +86,7 @@ function doPublish(rel_config) {
 
     rel_config.notes = ffdesc + rel_config.notes;
     execSync('git remote add lsst https://' + rel_config.token +'@github.com/lsst/firefly.git');
-    execSync('git push --tags lsst HEAD:test');
+    execSync('git push --tags lsst HEAD:master');
     execSync('git remote rm lsst');
 
     console.log( JSON.stringify(rel_config, null, 2));
