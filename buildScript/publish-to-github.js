@@ -89,11 +89,11 @@ function doPublish(rel_config) {
     execSync('git push --tags lsst HEAD:master');
     execSync('git remote rm lsst');
 
-    console.log( JSON.stringify(rel_config, null, 2));
     publishRelease(rel_config,
         function (err, release) {
             if (err) {
                 console.log('Failed: ' + JSON.stringify(err, null, 2));
+                process.exit(1);
             } else {
                 if (release.html_url) {
                     console.log('Publish Done: ' + release.html_url);
