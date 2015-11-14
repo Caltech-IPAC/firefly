@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by zhang on 10/29/15.
@@ -40,9 +41,13 @@ public class HistogramProcessorTest {
                 8.50000,
                 12.000,
         };
+        double max=12.0;
+        double min=0.0;
+        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+
         int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  1,2};
         double[] expectedBinMin={0.0, 2, 4,  6.0, 8.0, 10.0, 12.0};
-        double[] expectedBinMax={2, 4, 6,  8, 10, 12, 12.0};
+        double[] expectedBinMax={2, 4, 6,  8, 10, 12, 12.0+delta};
         DataGroup expectedDG = createDataGroup(expectedNumPointsInBin, expectedBinMin, expectedBinMax);
 
         HistogramProcessor hp = new HistogramProcessor();
@@ -294,24 +299,33 @@ public class HistogramProcessorTest {
                                     3.68649685616
         };
 
+        Arrays.sort(histData);
+        double max=histData[histData.length-1];
+        double min=histData[0];
+        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+
         //double[] expectedBins={ -14.3997518146, -6.0146658712, 1.1825927451, 2.7383052264, 5.4734012726, 12.938348639};
         int[] expectedNumPointInBin = {0, 12, 59, 68, 36, 15, 1};
-        double[] expectedBinMin = {       Double.NaN,
-                                          -14.3997518146,
-                                          -5.85041712794,
-                                          1.19370793683,
-                                          2.74777459197,
-                                          5.54218704611,
-                                          12.938348639
+
+
+        double[] expectedBinMin = {       -14.3997518146-delta ,
+                -14.3997518146 ,
+                -6.01466587129 ,
+                1.18259274515  ,
+                2.73830522649  ,
+                5.47340127261  ,
+                12.938348639    };
+
+        double[] expectedBinMax = {
+          -14.3997518146 ,
+          -6.01466587129 ,
+          1.18259274515  ,
+          2.73830522649  ,
+          5.47340127261  ,
+          12.938348639 +delta
         };
-        double[] expectedBinMax = { Double.NaN,
-                -6.17891461465,
-                1.17147755347,
-                2.72883586101,
-                5.40461549911,
-                12.7976938682,
-                12.938348639
-        };
+
+
         try {
 
             HistogramProcessor hp = new HistogramProcessor();
