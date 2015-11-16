@@ -43,7 +43,8 @@ public class HistogramProcessorTest {
         };
         double max=12.0;
         double min=0.0;
-        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+        int nBin=7;
+        double delta =( max -min)/100*nBin;
 
         int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  1,2};
         double[] expectedBinMin={0.0, 2, 4,  6.0, 8.0, 10.0, 12.0};
@@ -302,7 +303,7 @@ public class HistogramProcessorTest {
         Arrays.sort(histData);
         double max=histData[histData.length-1];
         double min=histData[0];
-        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+        double delta =( max -min)/100*7;
 
         //double[] expectedBins={ -14.3997518146, -6.0146658712, 1.1825927451, 2.7383052264, 5.4734012726, 12.938348639};
         int[] expectedNumPointInBin = {0, 12, 59, 68, 36, 15, 1};

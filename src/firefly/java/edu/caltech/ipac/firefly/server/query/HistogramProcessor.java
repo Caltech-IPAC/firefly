@@ -183,7 +183,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         double binSize = (max-min)/(numBins-1);
 
-        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+        double delta =( max -min)/100*numBins;
         int[] numPointsInBin = new int[numBins];
         double[] binMin = new double[numBins];
 
@@ -364,7 +364,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
             max = columnData[columnData.length - 1];
         }
 
-        double delta =(int) max -max ==0? max +  (max-min)/10000.0: (max - (int) max) /100;
+        double delta =( max -min)/100*nBin;
         //fill all entries to the maximum, thus, all data values will be smaller than it
        // Arrays.fill(binMin, Double.MAX_VALUE);
         double[] binMax = new double[nBin];
