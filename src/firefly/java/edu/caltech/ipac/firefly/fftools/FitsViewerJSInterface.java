@@ -341,7 +341,6 @@ public class FitsViewerJSInterface {
                 panel.setSize("1px", "1px");
                 final MiniPlotWidget mpw= makeMPW(null,fullControl);
                 mpw.supportTabs();
-                mpw.setCatalogButtonEnable(true);
                 panel.setWidget(mpw);
                 if (_floatingBM==null && !fullControl) {
                     _floatingBM= new FloatingBackgroundManager(FloatingBackgroundManager.Position.UNDER_TOOLBAR);
