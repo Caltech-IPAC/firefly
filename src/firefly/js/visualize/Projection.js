@@ -24,9 +24,6 @@ export const makeProjection= function(gwtProjStr) {
       getPixelScaleArcSec() {
          gwtProj.getPixelScaleArcSec();
       },
-      isWrappingProjection() {
-         gwtProj.isWrappingProjection();
-      },
       getImageCoords(x,y) {
          var pt= gwtProj.getImageCoordsSilent(x,y);
          return pt ? makeProjectionPt(pt.getX(), pt.getY()) : null;
