@@ -35,7 +35,6 @@ import java.util.Map;
 public class VisJsonSerializer {
 
 
-    private static final JSONParser parser= new JSONParser();
 
 
     public static String serializeWebPlotInitializerShallow(WebPlotInitializer wpInit) {
@@ -169,6 +168,7 @@ public class VisJsonSerializer {
         if (!s.contains("JSON")) return PlotState.parse(s);
         PlotState state= null;
         try {
+            JSONParser parser= new JSONParser();
             Object obj= parser.parse(s);
             if (obj!=null && obj instanceof JSONObject) {
                 state= deserializePlotState((JSONObject)obj);

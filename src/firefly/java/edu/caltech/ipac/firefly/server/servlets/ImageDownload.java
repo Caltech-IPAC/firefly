@@ -107,6 +107,8 @@ public class ImageDownload extends BaseHttpServlet {
             throw new ServletException(e.toString(),e);
         } catch (FitsException e) {
             throw new ServletException(e.toString(),e);
+        } catch (Exception e) {
+            throw new ServletException(e.toString(),e);
         }
     }
 
