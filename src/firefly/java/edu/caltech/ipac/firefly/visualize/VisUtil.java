@@ -56,7 +56,7 @@ public class VisUtil {
      * compute the angular distance on the sky between two world points
      * @param p1
      * @param p2
-     * @return angle (in arcsec) representing the angular separation between
+     * @return angle (in degree!) representing the angular separation between
      * the two coordinates
      */
     public static double computeDistance(WorldPt p1, WorldPt p2) {
@@ -481,8 +481,8 @@ public class VisUtil {
 	 * to me!
 	 * 
 	 * @param pos1
-	 * @param offsetRa
-	 * @param offsetDec
+	 * @param offsetRa in arcsecs
+	 * @param offsetDec in arcsecs
 	 * @return
 	 */
     public static WorldPt calculatePosition(WorldPt pos1, double offsetRa, double offsetDec ) {

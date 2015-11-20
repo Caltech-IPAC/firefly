@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -41,6 +42,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.FootprintDs9;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -48,6 +50,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
+import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
@@ -60,15 +63,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
     public enum Mode {ADD_FOOTPRINT, MOVE, ROTATE, OFF}
 
-    public static final String BASE_DRAWER_ID = "FootPrintID#";
+    public static final String BASE_DRAWER_ID = "FootPrintID";
     public static final int EDIT_DISTANCE = BrowserUtil.isTouchInput() ? 20 : 12;
     public static final String _selHelpText = "Tap to create footprint";
     public static final String _editHelpText = "Click center and drag to move, click corner and drag to rotate";
-    public static final String BASE_TITLE = "FootPrint #";
+    public static final String BASE_TITLE = "FootPrint ";
 
     public static int mCnt = 0;
 
-    public static final String CommandName = "JwstFootprint";
+    public static final String CommandName = "Footprint";
     private HashMap<OverlayMarker, MarkerDrawing> _markerMap = new HashMap<OverlayMarker, MarkerDrawing>(10);
     private OverlayMarker _activeMarker = null;
 
@@ -76,22 +79,35 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     private boolean _mouseDown = false;
     private boolean _doMove = false;
     private final WebPlotView.MouseInfo _mouseInfo =
-            new WebPlotView.MouseInfo(new Mouse(), "Create a marker");
-    private final static String _onLabel = "Hide JWST footprint";
-    private final static String _offLabel = "Show JWST footprint";
-    private final static String _addLabel = "Add JWST footprint";
+            new WebPlotView.MouseInfo(new Mouse(), "Create a footprint overlay");
+    private String _onLabel = "Hide @ footprint";
+    private String _offLabel = "Show @ footprint";
+    private String _addLabel = "Add @ footprint";
 
     private Label disToCenter = new Label("");
     private Label centerPos = new Label("");
 	public SimpleInputField angle;
+	protected FOOTPRINT footprintDef;
 
     public JwstFootprintCmd() {
-        super(CommandName);
+        super(CommandName+FOOTPRINT.JWST.name());
+        this.footprintDef = FOOTPRINT.JWST;//Defautl
+        _onLabel = _onLabel.replace("@", footprintDef.name());
+        _offLabel = _offLabel.replace("@", footprintDef.name());
+        _addLabel = _addLabel.replace("@", footprintDef.name());
         AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
     }
 
-
+    public JwstFootprintCmd(FOOTPRINT fp) {
+        super(CommandName+fp.name());
+        AllPlots.getInstance().addListener(this);
+        changeMode(Mode.OFF);
+        this.footprintDef = fp;
+        _onLabel = _onLabel.replace("@", footprintDef.name());
+        _offLabel = _offLabel.replace("@", footprintDef.name());
+        _addLabel = _addLabel.replace("@", footprintDef.name());
+    }
 //======================================================================
 //------------------ Methods from WebEventListener ------------------
 //======================================================================
@@ -221,10 +237,10 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 				_markerMap.get(m).cancelDeferred();
 				_doMove = true;
                 if (m.contains(spt, plot)) {
-                	_mode = Mode.MOVE;
+                	changeMode(Mode.MOVE);
                  // need to call add_draw anyway even if no resize! always can ad rotation afterward on corners enabled
 				}else{
-					_mode = Mode.ROTATE;
+					changeMode(Mode.ROTATE);
 				}
 				drag(pv, spt);
 			} else {
@@ -245,7 +261,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
             switch (_mode) {
                 case ADD_FOOTPRINT:
-                    break;
+//                    break;
                 case MOVE:
                     WorldPt center = plot.getWorldCoords(spt);
                     if (center==null) return;
@@ -346,7 +362,11 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 			List<DrawObj> fp = m.getShape();
 			ShapeDataObj centerShape = (ShapeDataObj) fp.get(0);//circle 
-
+			GwtUtil.logToServer(Level.INFO,
+					"updateData(WebPlot) - circle center =" + centerShape.getCenterPt() );
+			GwtUtil.logToServer(Level.INFO,
+					"updateData(WebPlot) - marker center =" + m.getCenter(plot) );
+			
 			data.addAll(fp);
 
 
@@ -357,6 +377,16 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NE, plot), -size, size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SW, plot), size, -size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SE, plot), -size, -size));
+				for (DrawObj drawObj : fp) {
+					if(drawObj instanceof FootprintObj){
+						for(WorldPt[] pt:((FootprintObj)drawObj).getPos()){
+							for (int i = 0; i < pt.length; i++) {
+								ScreenPt spt= plot.getScreenCoords(pt[i]);
+								editData.add(ShapeDataObj.makeRectangle(spt, -size, -size));//FIXME make those point as point object and movable from the marker 
+							}
+						}						
+					}
+				}
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
             	centerShape.setFontName(m.getFont());
@@ -413,27 +443,35 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-//    	WebPlotView pv= getPlotView();
-//        if (pv!=null && pv.getPrimaryPlot()!=null) {
-//        	WebPlot plot= pv.getPrimaryPlot();
-//            WorldPt center = pv.findCurrentCenterWorldPoint();
-//            _activeMarker = new FootprintDs9(center,plot);
-//            
-//        }
-//        else{
-        	_activeMarker = new FootprintDs9();
-//        }
+    	WebPlotView pv= getPlotView();
+    	 WorldPt center = null;
+    	 if (pv!=null && pv.getPrimaryPlot()!=null) {
+        	WebPlot plot= pv.getPrimaryPlot();
+            center = pv.findCurrentCenterWorldPoint();
+            _activeMarker = new FootprintDs9(center,plot,this.footprintDef);
+//            _activeMarker = new FootprintDs9(center,plot,FOOTPRINT.HST);
+        	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with constructor center, plot "+center.toString());
+            
+        }
+        else{
+        	_activeMarker = new FootprintDs9(this.footprintDef);
+
+        	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with default empty constructor");
+        }
         
 //        Footprint fp = new Footprint();
 //		_activeMarker = fp;
 //		FootprintAsMarkers fp = new FootprintAsMarkers();
-
+        
+//
         _markerMap.put(_activeMarker, new MarkerDrawing());
-        WebPlotView pv= getPlotView();
+//        WebPlotView pv= getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
-            WorldPt center = pv.findCurrentCenterWorldPoint();
-            _activeMarker.move(center, plot);
+            center = pv.findCurrentCenterWorldPoint();
+            GwtUtil.logToServer(Level.INFO, " center plot "+center.toString());
+           
+			_activeMarker.move(center, plot);
             updateData(_activeMarker, plot, true);
             _markerMap.get(_activeMarker).getDrawMan().redraw();
         }
@@ -565,8 +603,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
         private MarkerDrawing() {
             mCnt++;
-            _id = BASE_DRAWER_ID + mCnt;
-            connect = new MarkerConnect(BASE_TITLE + mCnt);
+            _id = BASE_DRAWER_ID +footprintDef.name()+"#"+ mCnt;
+            connect = new MarkerConnect(BASE_TITLE + footprintDef.name()+" #"+mCnt);
             if (!WebLayerItem.hasUICreator(_id)) {
                 WebLayerItem.addUICreator(_id, new MarkerUICreator());
             }

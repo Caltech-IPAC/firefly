@@ -419,12 +419,12 @@ public class ShapeDataObj extends DrawObj {
     }
 
     private void drawRectangle(Graphics g, WebPlot plot, String  color, boolean onlyAddToPath ) {
-        if (getRotation()!=0  && g instanceof AdvancedGraphics) {
-    		GwtUtil.logToServer(Level.INFO, ""
-    				+ "drawRectangle with rotation "+getRotation() );
-
-            ((AdvancedGraphics)g).setRotationForNextDraw(getRotation());
-        }
+//        if (getRotation()!=0  && g instanceof AdvancedGraphics) {
+//    		GwtUtil.logToServer(Level.INFO, ""
+//    				+ "drawRectangle with rotation "+getRotation() );
+//
+//            ((AdvancedGraphics)g).setRotationForNextDraw(getRotation());
+//        }
         
         boolean inView= false;
         ViewPortPt textPt;
@@ -750,11 +750,6 @@ public class ShapeDataObj extends DrawObj {
         return retval;
     }	
 	
-	/**
-	 * Build world points translated to apt
-	 * @param plot
-	 * @param apt world point to translate to
-	 */
 	public void translateTo(WebPlot plot, WorldPt apt) {
 		ScreenPt pt= plot.getScreenCoords(apt);
 		for (int i = 0; i < _pts.length; i++) {

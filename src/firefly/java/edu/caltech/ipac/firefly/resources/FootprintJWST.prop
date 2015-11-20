@@ -1,0 +1,30 @@
+FootprintJWST.Title= Add JWST footprint
+FootprintJWST.ShortDescription= Add a JWST footprint
+
+FootprintJWST.title.Title= Label
+FootprintJWST.title.ShortDescription= Add a label to this footprint
+FootprintJWST.title.PreferWidth= 8
+FootprintJWST.title.NullAllowed= true
+
+FootprintJWST.corner.Title= Corner
+FootprintJWST.corner.DataType= EnumString
+FootprintJWST.corner.Default= SE
+FootprintJWST.corner.ShortDescription= Choose a corner
+FootprintJWST.corner.Items= NE NW SE SW
+FootprintJWST.corner.NE.Name= NE
+FootprintJWST.corner.NW.Name= NW
+FootprintJWST.corner.SE.Name= SE
+FootprintJWST.corner.SW.Name= SW
+
+
+FootprintJWST.angle.Title= Angle
+FootprintJWST.angle.DataType= Float
+FootprintJWST.angle.ShortDescription= Enter the angle you want the footprint rotated
+FootprintJWST.angle.Min= 0
+FootprintJWST.angle.Max= 360
+FootprintJWST.angle.Default= 0
+FootprintJWST.angle.PreferWidth= 3
+FootprintJWST.angle.Validation= range
+FootprintJWST.angle.ErrorDescription= The angle should be between 0 and 360 degree
+
+

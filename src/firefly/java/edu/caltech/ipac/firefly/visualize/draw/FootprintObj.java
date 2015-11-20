@@ -343,12 +343,9 @@ public class FootprintObj extends DrawObj {
 		return lenSq;
 	}
 
-	/**
-	 * Build world points translated to apt
-	 * 
-	 * @param plot
-	 * @param apt
-	 *            world point to translate to
+
+	/* (non-Javadoc)
+	 * @see edu.caltech.ipac.firefly.visualize.draw.DrawObj#translateTo(edu.caltech.ipac.firefly.visualize.WebPlot, edu.caltech.ipac.visualize.plot.WorldPt)
 	 */
 	public void translateTo(WebPlot plot, WorldPt apt) {
 		// Need to clear fist the original array of point...
@@ -361,12 +358,16 @@ public class FootprintObj extends DrawObj {
 			int i = 0;
 			for (WorldPt wpt : arr) {
 				ScreenPt pti = plot.getScreenCoords(wpt);
-
-				int x2 = pti.getIX();
-				int y2 = pti.getIY();
-				x2 += pt.getIX();
-				y2 += pt.getIY();
-				arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
+				if (pti != null) {
+					int x2 = pti.getIX();
+					int y2 = pti.getIY();
+					x2 += pt.getIX();
+					y2 += pt.getIY();
+					arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
+				}else{
+					//No translation
+					arr2[i++] = wpt;
+				}
 			}
 			// ... and recreate the ones translated
 
@@ -374,15 +375,8 @@ public class FootprintObj extends DrawObj {
 		}
 	}
 
-	/**
-	 * Rotate all points around a center wc
-	 * 
-	 * @param plot
-	 *            plot object
-	 * @param angle
-	 *            angle to rotate in radians
-	 * @param wc
-	 *            center world point to rotate around
+	/* (non-Javadoc)
+	 * @see edu.caltech.ipac.firefly.visualize.draw.DrawObj#rotateAround(edu.caltech.ipac.firefly.visualize.WebPlot, double, edu.caltech.ipac.visualize.plot.WorldPt)
 	 */
 	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
 		ScreenPt center = plot.getScreenCoords(wc);

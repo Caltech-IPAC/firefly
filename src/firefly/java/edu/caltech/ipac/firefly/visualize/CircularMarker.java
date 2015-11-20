@@ -87,7 +87,13 @@ public class CircularMarker extends Marker {
     }
 
     public void move(WorldPt center, WebPlot plot) {
-        ScreenPt cpt= plot.getScreenCoords(center);
+    	ScreenPt cpt;
+		if(center==null){
+    		cpt = getCenter(plot);
+    	}
+        else{
+        	cpt= plot.getScreenCoords(center);
+        }
         if (cpt==null) return;
         updateRadius(plot,true);
         int radius= Math.round(workingScreenRadius);
@@ -271,7 +277,7 @@ public class CircularMarker extends Marker {
 
 	public List<DrawObj> getShape() {
 		ArrayList<DrawObj> lst = new ArrayList<>();
-		lst.add(ShapeDataObj.makeCircle(getStartPt(), getEndPt()));
+		lst.add(0, ShapeDataObj.makeCircle(getStartPt(), getEndPt()));
 		lst.trimToSize();
 		return lst;
 	}

@@ -9,6 +9,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Collections;
 import java.util.List;
@@ -148,5 +149,32 @@ public abstract class DrawObj {
         setSelectColor(d.getSelectColor());
         setHighlightColor(d.getHighlightColor());
     }
+    
+    
+	/**
+	 * (re)Build world points translated to apt
+	 * 
+	 * @param plot
+	 * @param apt
+	 *            world point to translate to
+	 */
+	public void translateTo(WebPlot plot, WorldPt apt) {
+		throw new RuntimeException("translateTo() should be implemented in the child class");
+	}
+    
+	/**
+	 * Apply a rotation of an angle [rad] all points around a center wc [world
+	 * point]
+	 * 
+	 * @param plot
+	 *            plot object
+	 * @param angle
+	 *            angle to rotate in radians
+	 * @param wc
+	 *            center world point to rotate around
+	 */
+	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
+		throw new RuntimeException("rotateAround() should be implemented in the child class");
+	}
 }
 

@@ -39,7 +39,7 @@ public class Footprint extends CircularMarker {
 	 * @author ejoliet
 	 *
 	 */
-	public enum INSTRUMENTS {
+	public enum INSTRUMENT {
 
 		CAM1(shapeCam, new int[] { 0, 0 }, new int[] { 50, 30 }), 
 		CAM2(shapeCam, new int[] { 150, 0 }, //x,y center of rect
@@ -53,7 +53,7 @@ public class Footprint extends CircularMarker {
 							// rectangle: w,h, more than 2, a polygon:
 							// x1,y1,x2,y2,x3,y3,etc...
 
-		INSTRUMENTS(ShapeType shape, int[] offset, int[] geom) {
+		INSTRUMENT(ShapeType shape, int[] offset, int[] geom) {
 			this.offset = offset;
 			this.shape = shape;
 			this.geom = geom;
@@ -136,7 +136,7 @@ public class Footprint extends CircularMarker {
 										// or saved!
 		// Actual footprint is here:
 		// Instruments should be of rectangle shapes for now
-		for (INSTRUMENTS inst : INSTRUMENTS.values()) {
+		for (INSTRUMENT inst : INSTRUMENT.values()) {
 			int[] centerFov = inst.getOffsetRelativeToFoVCenter();
 			int[] wh = inst.getGeometry();
 

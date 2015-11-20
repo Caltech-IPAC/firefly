@@ -11,7 +11,7 @@ VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea Dista
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
 
-MarkerToolDD.Items = MarkerTool JwstFootprint
+MarkerToolDD.Items = MarkerTool FootprintJWST FootprintHST FootprintWFIRST
 MarkerToolDD.ShortDescription = Marker Tools
 MarkerToolDD.UseIconOnly= true
 
