@@ -15,7 +15,7 @@
 /**
  * List of constants that are used as the names of parameters passed to the server.
  */
-export const ServerParams = {
+const ServerParams = {
         COMMAND : 'cmd',
         DO_JSONP : 'doJsonp',
         RED_REQUEST : 'red',
@@ -133,6 +133,7 @@ export const ServerParams = {
         ADD_SAVED_REQUEST: 'addSavedRequest',
         GET_ALL_SAVED_REQUEST: 'getAllSavedRequest',
         TITLE: 'Title',
+        JSON_DEEP: 'jsonDeep',
 
         VIS_PUSH_CREATE_ID: 'createID',
         VIS_PUSH_FITS: 'pushFits',
@@ -152,3 +153,5 @@ export const ServerParams = {
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt'
 };
+
+export default ServerParams;

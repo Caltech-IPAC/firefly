@@ -8,9 +8,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
-
-import java.util.logging.Level;
 
 
 /**
@@ -114,14 +111,14 @@ public class PlotMover {
     }
 
 
-    private int convertToAbsoluteY(int y) {
-        return _pv.getAbsoluteTop()+y;
-    }
-
-    private int convertToAbsoluteX(int x) {
-        GwtUtil.getClientLogger().log(Level.INFO, "x= "+x+", AbLeft="+_pv.getAbsoluteLeft()+ ", return="+ (_pv.getAbsoluteLeft()+x));
-        return _pv.getAbsoluteLeft()+x;
-    }
+//    private int convertToAbsoluteY(int y) {
+//        return _pv.getAbsoluteTop()+y;
+//    }
+//
+//    private int convertToAbsoluteX(int x) {
+//        GwtUtil.getClientLogger().log(Level.INFO, "x= "+x+", AbLeft="+_pv.getAbsoluteLeft()+ ", return="+ (_pv.getAbsoluteLeft()+x));
+//        return _pv.getAbsoluteLeft()+x;
+//    }
 
 
 // =====================================================================

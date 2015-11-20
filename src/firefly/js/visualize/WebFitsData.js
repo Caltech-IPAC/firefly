@@ -6,7 +6,7 @@ const SPLIT_TOKEN= '--WebFitsData--';
 import join from 'underscore.string/join';
 import {parseInt, parseFloat, getStringWithNull } from '../util/StringUtils.js';
 
-export class WebFitsData {
+class WebFitsData {
 
     /**
      *
@@ -40,3 +40,4 @@ export class WebFitsData {
     }
 }
 
+export default WebFitsData;

@@ -47,7 +47,6 @@ public class PlotFileTaskHelper {
     private final boolean _addToHistory;
     private final boolean _removeOldPlot;
     private final AsyncCallback<WebPlot> _notify;
-    private boolean _continueOnSuccess = true;
     private final Object _task;
 
 
@@ -153,27 +152,21 @@ public class PlotFileTaskHelper {
                     plot = new WebPlot(wpInit,false);
                     if (getRequest().isMinimalReadout()) plot.setAttribute(WebPlot.MINIMAL_READOUT,true);
                     if (firstPlot == null) firstPlot = plot;
-                    if (_continueOnSuccess) {
-                        successList.add(plot);
-                        if (_addToHistory) PlotRequestHistory.instance().add(getRequest());
-                        addAttributes(plot);
-                        pv.addPlot(plot, false);
-                    } else {
-                        killAfterSuccess(plot);
-                    }
+                    successList.add(plot);
+                    if (_addToHistory) PlotRequestHistory.instance().add(getRequest());
+                    addAttributes(plot);
+                    pv.addPlot(plot, false);
                 }
-                if (_continueOnSuccess) {
-                    pv.setPrimaryPlot(firstPlot);
-                    pv.setContainsMultiImageFits(_removeOldPlot && isMultiImageFits(cr));
-                    pv.setContainsMultipleCubes(_removeOldPlot && isMultiCube(cr));
-                    _mpw.postPlotTask(getPostPlotTitle(firstPlot), firstPlot, _notify);
+                pv.setPrimaryPlot(firstPlot);
+                pv.setContainsMultiImageFits(_removeOldPlot && isMultiImageFits(cr));
+                pv.setContainsMultipleCubes(_removeOldPlot && isMultiCube(cr));
+                _mpw.postPlotTask(getPostPlotTitle(firstPlot), firstPlot, _notify);
 
-                    if (maySetFrame) {
-                        _mpw.setFlipBarVisible(cr.size() > 1);
-                        pv.setPrimaryPlot(firstPlot);
-                    }
-                    _mpw.forcePlotPrefUpdate();
+                if (maySetFrame) {
+                    _mpw.setFlipBarVisible(cr.size() > 1);
+                    pv.setPrimaryPlot(firstPlot);
                 }
+                _mpw.forcePlotPrefUpdate();
             } else {
                 showFailure(result);
             }
@@ -326,13 +319,6 @@ public class PlotFileTaskHelper {
         if (_notify != null) _notify.onFailure(null);
     }
 
-
-    /**
-     * change the default cancel behavior so server can clean up
-     */
-    public void cancel() {
-        _continueOnSuccess = false;
-    }
 
 
     private void addAttributes(WebPlot plot) {

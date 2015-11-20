@@ -3,12 +3,16 @@
  */
 package edu.caltech.ipac.visualize.plot;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.StringUtils;
 
 /**
  * This class contains a world point plus the coordinate system 
  * that the point is in.
  */
+@JsExport
+@JsType
 public class WorldPt extends Pt {
    private CoordinateSys _coordSys;
     

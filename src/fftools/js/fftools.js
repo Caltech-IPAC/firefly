@@ -9,6 +9,7 @@ import {flux, firefly} from 'firefly/Firefly.js';
 import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
+import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 
 firefly.bootstrap();
 firefly.process( {type : appDataCntlr.APP_LOAD} );
@@ -40,6 +41,9 @@ const App = React.createClass({
                         appTitle='Firefly'
                     />
                     <h2>{this.props.title}</h2>
+                    <div style={{paddingLeft:10}}>
+                        <TestImagePanel/>
+                    </div>
                 </div>
             );
         }

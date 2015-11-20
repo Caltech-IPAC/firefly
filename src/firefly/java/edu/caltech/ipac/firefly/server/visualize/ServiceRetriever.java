@@ -313,14 +313,14 @@ public class ServiceRetriever implements FileRetriever {
 
         String retval = "DSS ";
 
-        if (survey.equals("poss2ukstu_red")) retval += "POSS2/UKSTU Red";
-        else if (survey.equals("poss2ukstu_ir")) retval += "POSS2/UKSTU Infrared";
-        else if (survey.equals("poss2ukstu_blue")) retval += "POSS2/UKSTU Blue";
-        else if (survey.equals("poss1_red")) retval += "POSS1 Red";
-        else if (survey.equals("poss1_blue")) retval += "POSS1 Blue";
-        else if (survey.equals("quickv")) retval += "Quick-V Survey";
-        else if (survey.equals("phase2_gsc2")) retval += "HST Phase 2 Target Positioning(GSC 2)";
-        else if (survey.equals("phase2_gsc1")) retval += "HST Phase 1 Target Positioning(GSC 1)";
+        if (survey.equalsIgnoreCase("poss2ukstu_red")) retval += "POSS2/UKSTU Red";
+        else if (survey.equalsIgnoreCase("poss2ukstu_ir")) retval += "POSS2/UKSTU Infrared";
+        else if (survey.equalsIgnoreCase("poss2ukstu_blue")) retval += "POSS2/UKSTU Blue";
+        else if (survey.equalsIgnoreCase("poss1_red")) retval += "POSS1 Red";
+        else if (survey.equalsIgnoreCase("poss1_blue")) retval += "POSS1 Blue";
+        else if (survey.equalsIgnoreCase("quickv")) retval += "Quick-V Survey";
+        else if (survey.equalsIgnoreCase("phase2_gsc2")) retval += "HST Phase 2 Target Positioning(GSC 2)";
+        else if (survey.equalsIgnoreCase("phase2_gsc1")) retval += "HST Phase 1 Target Positioning(GSC 1)";
 
         return retval;
     }
@@ -340,9 +340,9 @@ public class ServiceRetriever implements FileRetriever {
     private static String get2MassDesc(String survey) {
 
         String retval = "2MASS ";
-        if (survey.equals("j")) retval += "J";
-        else if (survey.equals("h")) retval += "H";
-        else if (survey.equals("k")) retval += "K";
+        if (survey.equalsIgnoreCase("j")) retval += "J";
+        else if (survey.equalsIgnoreCase("h")) retval += "H";
+        else if (survey.equalsIgnoreCase("k")) retval += "K";
 
         return retval;
     }

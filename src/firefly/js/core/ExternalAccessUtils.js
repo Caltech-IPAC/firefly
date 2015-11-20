@@ -5,7 +5,7 @@
 import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
-import { ImagePt, WorldPt, ScreenPt } from '../visualize/Point.js';
+import { parseImagePt, parseWorldPt, parseScreenPt } from '../visualize/Point.js';
 
 
 
@@ -20,9 +20,9 @@ const activate= function(remoteChannel, extension, resultData) {
 
     if (extension.callback) {
         var cbObj= Object.keys(resultData).reduce((obj,key) => {
-            if (key.startsWith('wp'))      obj[key]= WorldPt.parse(resultData[key]);
-            else if (key.startsWith('ip')) obj[key]= ImagePt.parse(resultData[key]);
-            else if (key.startsWith('sp')) obj[key]= ScreenPt.parse(resultData[key]);
+            if (key.startsWith('wp'))      obj[key]= parseWorldPt(resultData[key]);
+            else if (key.startsWith('ip')) obj[key]= parseImagePt(resultData[key]);
+            else if (key.startsWith('sp')) obj[key]= parseScreenPt(resultData[key]);
             else                           obj[key]= resultData[key];
             return obj;
         }, {});

@@ -252,26 +252,16 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
 
 
     public void computeScrollSizes() {
-        int spWidth= _scrollingRootPanel.getOffsetWidth();
-        int spHeight= _scrollingRootPanel.getOffsetHeight();
-
         scrollWidth= _scrollingRootPanel.getOffsetWidth();
         scrollHeight= _scrollingRootPanel.getOffsetHeight();
         if (_primaryPlot!=null) {
+            GwtUtil.setStyle(_scrollViewWindow, "position", "relative");
             if (_primaryPlot.getScreenWidth()<scrollWidth) {
                 scrollWidth= _primaryPlot.getScreenWidth();
-                GwtUtil.setStyle(_scrollViewWindow, "position", "relative");
-            }
-            else {
-                GwtUtil.setStyle(_scrollViewWindow, "position", "relative");
-                scrollWidth= spWidth;
             }
 
             if (_primaryPlot.getScreenHeight()<scrollHeight) {
                 scrollHeight= _primaryPlot.getScreenHeight();
-            }
-            else {
-                scrollHeight= spHeight;
             }
         }
     }
@@ -555,28 +545,11 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
                 int x = vpw <= scrollWidth ? 0 : -1 * ((vpw - scrollWidth) / 2);
                 int y = vph <= scrollHeight ? 0 : -1 * ((vph - scrollHeight) / 2);
 
-                //---------- HERE
-//                GwtUtil.setStyles(_scrollingRootPanel, "left", x+"px", "top", y+"px");
                 GwtUtil.setStyles(_scrollViewWindow, "left", x+"px", "top", y+"px");
-
-
-                //---DEBUG Code
-//                int sx = getScrollX();
-//                int sy = getScrollY();
-//                ViewPortPt vpPt = _primaryPlot.getViewPortCoords(new ScreenPt(sx, sy));
-//                GwtUtil.getClientLogger().log(Level.INFO, "VP & Scr: screen: "+ _primaryPlot.getScreenWidth()+ ","+_primaryPlot.getScreenHeight()+
-//                        "   vpX,Y: "+ vpPt.getIX()+","+vpPt.getIY()+
-//                        "   vpDim: "+ dim.getWidth()+","+dim.getHeight()+
-//                        "   scrollX,Y: "+ sx+","+sy+
-//                        "   scrollViewWindowX,Y: "+ x+","+y+
-//                        "   scrollDim: "+ scrollWidth+","+scrollHeight);
-                //---DEBUG Code
-
 
             }
         } else {
             // todo- only scroll position need to change
-//            GwtUtil.getClientLogger().log(Level.INFO, "Scroll");
             int sx = getScrollX();
             int sy = getScrollY();
             int vpX = _primaryPlot.getViewPortX();
@@ -584,23 +557,7 @@ public class WebPlotView extends Composite implements Iterable<WebPlot>, Drawabl
             int x = vpX-sx;
             int y = vpY-sy;
 
-            //---------- HERE
             GwtUtil.setStyles(_scrollViewWindow, "left", x+"px", "top", y+"px");
-//            GwtUtil.setStyles(_scrollingRootPanel, "left", x+"px", "top", y+"px");
-
-
-
-            //---DEBUG Code
-//            Dimension dim= _primaryPlot.getViewPortDimension();
-//            int scrollWidth= getScrollWidth();
-//            int scrollHeight= getScrollHeight();
-//            GwtUtil.getClientLogger().log(Level.INFO, "     Scr: screen: "+ _primaryPlot.getScreenWidth()+ ","+_primaryPlot.getScreenHeight()+
-//                          "   vpX,Y: "+ vpX+","+vpY+
-//                          "   vpDim: "+ dim.getWidth()+","+dim.getHeight()+
-//                          "   scrollX,Y: "+ sx+","+sy+
-//                          "   scrollViewWindowX,Y: "+ x+","+y+
-//                          "   scrollDim: "+ scrollWidth+","+scrollHeight);
-            //---DEBUG Code
         }
     }
 

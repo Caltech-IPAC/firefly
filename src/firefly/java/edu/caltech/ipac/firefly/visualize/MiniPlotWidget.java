@@ -276,11 +276,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public DefaultRequestInfo getDefaultsPlotRequest() { return defaultsPlotReq; }
 
-    /**
-     * New plots pick up the zoom factor of the last plot.  This will override any zoom settings in the WebPlotRequest.
-     * @param remember true to remember the last zoom level, otherwise false
-     */
-    public void setRememberZoom(boolean remember) { _rememberZoom= remember; }
 
     public void forcePlotPrefUpdate() {
         _colorPrefs.setKey(_preferenceColorKey);
@@ -775,11 +770,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
         if (_rotateNorth) retval.setRotateNorth(true);
 
-        if (_rememberZoom && _plotView.getPrimaryPlot()!=null) {
-            float zFact= _plotView.getPrimaryPlot().getZoomFact();
-            retval.setZoomType(ZoomType.STANDARD);
-            retval.setInitialZoomLevel(zFact);
-        }
+//        if (_rememberZoom && _plotView.getPrimaryPlot()!=null) {
+//            float zFact= _plotView.getPrimaryPlot().getZoomFact();
+//            retval.setZoomType(ZoomType.STANDARD);
+//            retval.setInitialZoomLevel(zFact);
+//        }
 
         if (defThumbnailSize!=WebPlotRequest.DEFAULT_THUMBNAIL_SIZE &&
                 !r.containsParam(WebPlotRequest.THUMBNAIL_SIZE)) {
