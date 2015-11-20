@@ -4,7 +4,7 @@
 
 
 import Band from './Band.js';
-import {makeBandState, makeBandStateFromJson} from './BandState.js';
+import BandState from './BandState.js';
 import RangeValues from './RangeValues.js';
 import CoordinateSys from './CoordSys.js';
 import Enum from 'enum';
@@ -23,16 +23,10 @@ const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load
                                     'USE_ALL' // only valid in non three color, make a array of WebPlots
                                     ]);
 
-
-
-
-/**
- * @author Trey Roby
- */
-export class PlotState {
+class PlotState {
 
     /**
-     *
+     * new plot state
      */
     constructor() {
         this.bandStateAry= [null,null,null];
@@ -56,8 +50,8 @@ export class PlotState {
 //======================================================================
 
     /**
-     *
-     * @return {Band}
+     * get the first used band
+     * @return {Band} the first band
      */
     firstBand() {
         var bandAry= this.getBands();
@@ -65,7 +59,7 @@ export class PlotState {
     }
 
     /**
-     *
+     * get All the used bands
      * @return {Array} an array of Band
      */
     getBands() {
@@ -441,38 +435,67 @@ export class PlotState {
             idx= b ? b.value : Band.NO_BAND.value;
         }
 
-        if (!this.bandStateAry[idx]) this.bandStateAry[idx]= makeBandState();
+        if (!this.bandStateAry[idx]) this.bandStateAry[idx]= BandState.makeBandState();
         return this.bandStateAry[idx];
     }
 
+    toJson() {
+        return JSON.stringify(PlotState.convertToJSON(this));
+    }
 
+    static makePlotState() {
+        return new PlotState();
+    }
+
+
+    static makePlotStateWithJson(psJson) {
+        if (!psJson) return null;
+        var state= PlotState.makePlotState();
+
+        state.bandStateAry= psJson.bandStateAry.map( (bJ) => BandState.makeBandStateWithJson(bJ));
+
+        state.multiImage= MultiImageAction.get(psJson.multiImage);
+        state.rotationType= RotateType.get(psJson.rotationType);
+        state.rotaNorthType= CoordinateSys.parse(psJson.rotaNorthType);
+        state.ops= psJson.ops.map( (op) => Operation.get(op) );
+        state.ctxStr=psJson.ctxStr;
+        state.zoomLevel= psJson.zoomLevel;
+        state.threeColor= psJson.threeColor;
+        state.colorTableId= psJson.colorTableId;
+        state.flippedY= psJson.flippedY;
+        state.rotationAngle= psJson.rotationAngle;
+        state.newPlot= psJson.newPlot;
+
+        return state;
+    }
+
+
+    /**
+     * convert his PlotState to something can be used with JSON.stringify
+     * @param {PlotState} s
+     */
+    static convertToJSON(s) {
+        if (!s) return null;
+        var json= {};
+        json.JSON=true;
+        json.bandStateAry= s.bandStateAry.map( (bJ) => BandState.convertToJSON(bJ));
+        json.multiImage= s.multiImage.key;
+        json.rotationType= s.rotationType.key;
+        json.rotaNorthType= s.rotaNorthType.toString();
+        json.ops= s.ops.map( (op) => op.key );
+        json.ctxStr=s.ctxStr;
+        json.newPlot= s.newPlot;
+        json.zoomLevel= s.zoomLevel;
+        json.threeColor= s.threeColor;
+        json.colorTableId= s.colorTableId;
+        json.flippedY= s.flippedY;
+        json.rotationAngle= s.rotationAngle;
+        return json;
+    }
 
 }
 
-export const makePlotState= function() {
-    return new PlotState();
-};
 
+export default PlotState;
 
-export const makePlotStateFromJson= function(psJson) {
-    if (!psJson) return null;
-    var state= makePlotState();
-
-    state.bandStateAry= psJson.bandStateAry.map( (bJ) => makeBandStateFromJson(bJ));
-
-    state.multiImage= MultiImageAction.get(psJson.multiImage);
-    state.rotationType= RotateType.get(psJson.rotationType);
-    state.rotaNorthType= CoordinateSys.parse(psJson.rotaNorthType);
-    state.ops= psJson.ops.map( (op) => Operation.get(op) );
-    state.ctxStr=psJson.ctxStr;
-    state.newPlot= psJson.newplot;
-    state.zoomLevel= psJson.zoomLevel;
-    state.threeColor= psJson.threeColor;
-    state.colorTableId= psJson.colorTableId;
-    state.flippedY= psJson.flippedY;
-    state.rotationAngle= psJson.rotationAngle;
-    state.newPlot= psJson.newPlot;
-
-    return state;
-};
 

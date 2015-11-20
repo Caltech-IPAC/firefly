@@ -12,7 +12,7 @@ var CompleteButton = React.createClass(
            onFail: React.PropTypes.func,
            onSuccess: React.PropTypes.func,
            groupKey: React.PropTypes.any,
-           text: React.PropTypes.strng,
+           text: React.PropTypes.string,
            closeOnValid: React.PropTypes.bool,
            dialogId: React.PropTypes.string
        },

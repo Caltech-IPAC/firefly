@@ -28,18 +28,6 @@ class PlotImages {
         this.zfact= zfact;
     }
 
-    /**
-     *
-     * @param {ImageURL} image
-     */
-    add(image) { this.images.push(image); }
-
-    /**
-     *
-     * @param {ThumbURL} ThumbURL - a url of the thumbnail image
-     */
-    setThumbnail(image) { this.thumbnailImage= image; }
-
 
     /** * @return {number} */
     getScreenWidth() { return this.screenWidth; }
@@ -68,15 +56,15 @@ class PlotImages {
 
     getTemplateName() { return this.templateName; }
 
-    toString() {
-        var part1= join(PLOT_IMAGES_TOKEN,
-            this.thumbnailImage, this.templateName,
-            this.screenWidth, this.screenHeight,
-            this.zfact);
-
-        var part2= this.images.map( (image) => image ? image.toString() : 'null').join(PLOT_IMAGES_TOKEN);
-        return join(PLOT_IMAGES_TOKEN,part1,part2);
-    }
+    //toString() {
+    //    var part1= join(PLOT_IMAGES_TOKEN,
+    //        this.thumbnailImage, this.templateName,
+    //        this.screenWidth, this.screenHeight,
+    //        this.zfact);
+    //
+    //    var part2= this.images.map( (image) => image ? image.toString() : 'null').join(PLOT_IMAGES_TOKEN);
+    //    return join(PLOT_IMAGES_TOKEN,part1,part2);
+    //}
 
     static parse(s) {
         if (!s) return null;
@@ -90,9 +78,9 @@ class PlotImages {
         var screenHeight= parseInt(sAry[i++],0);
         var zfact= parseFloat(sAry[i++],1);
         var retval= new PlotImages(templateName, screenWidth, screenHeight,zfact);
-        retval.setThumbnail(thumbnailImage);
+        retval.thumbnailImage=thumbnailImage;
         while(i<sAry.length) {
-            retval.add(ImageURL.parse(sAry[i++]));
+            this.images.push(ImageURL.parse(sAry[i++]));
         }
         return retval;
     }

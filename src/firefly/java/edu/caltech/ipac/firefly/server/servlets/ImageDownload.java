@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.visualize.ActiveCallCtx;
 import edu.caltech.ipac.firefly.server.visualize.CtxControl;
 import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
+import edu.caltech.ipac.firefly.server.visualize.VisJsonSerializer;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -49,7 +50,8 @@ public class ImageDownload extends BaseHttpServlet {
         String widthStr= req.getParameter("width");
         String heightStr= req.getParameter("height");
         String stateStr= req.getParameter("state");
-        PlotState state= PlotState.parse(stateStr);
+//        PlotState state= PlotState.parse(stateStr);
+        PlotState state= VisJsonSerializer.deserializePlotStateFromString(stateStr);
 
         if (type==null) type= TYPE_ANY;
         ActiveCallCtx ctx= null;
@@ -104,6 +106,8 @@ public class ImageDownload extends BaseHttpServlet {
         } catch (IOException e) {
             throw new ServletException(e.toString(),e);
         } catch (FitsException e) {
+            throw new ServletException(e.toString(),e);
+        } catch (Exception e) {
             throw new ServletException(e.toString(),e);
         }
     }

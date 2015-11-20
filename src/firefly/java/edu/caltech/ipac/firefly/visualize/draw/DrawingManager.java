@@ -681,10 +681,10 @@ public class DrawingManager implements AsyncDataLoader {
 
         List<DrawObj> data = _dataConnect.getData(forceRebuild, pv.getPrimaryPlot());
 
-        if (data == null || data.size() == 0) {
-            drawer.setData((DrawObj)null);
-        }
-        else {
+//        if (data == null || data.size() == 0) {
+//            drawer.setData((DrawObj)null);
+//        }
+//        else {
             final int scrollX = pv.getScrollX();
             final int scrollY = pv.getScrollY();
             drawer.setData(data);
@@ -695,7 +695,7 @@ public class DrawingManager implements AsyncDataLoader {
                     pv.setScrollXY(scrollX, scrollY);
                 }
             });
-        }
+//        }
     }
 
 //======================================================================

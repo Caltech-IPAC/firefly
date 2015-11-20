@@ -54,6 +54,8 @@ public class SrvParam {
         return state;
     }
 
+    public boolean isJsonDeep() { return getOptionalBoolean(ServerParams.JSON_DEEP,false); }
+
     public PlotState[] getStateAry() {
         List<PlotState> stateList= new ArrayList<PlotState>();
         PlotState state= getState(0,true);

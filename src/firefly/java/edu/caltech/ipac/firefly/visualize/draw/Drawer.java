@@ -297,9 +297,12 @@ public class Drawer implements WebEventListener, LayerDrawer {
         decimatedData= null;
         cancelRedraw();
         _data = data;
-        if (data!=null) {
+        if (data!=null && data.size()>0) {
             if (primaryGraphics ==null) initGraphics();
             redraw();
+        }
+        else {
+            clear();
         }
     }
 

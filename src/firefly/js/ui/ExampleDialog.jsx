@@ -16,10 +16,9 @@ import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import ListBoxInputField from './ListBoxInputField.jsx';
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
-import WebPlotRequest from '../visualize/WebPlotRequest.js';
+import WebPlotRequest, {ServiceType} from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import {WorldPt, ImagePt, Pt} from '../visualize/Point.js';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
@@ -85,6 +84,7 @@ class ExampleDialog {
     }
 }
 
+/// test
 
 var AllTest = React.createClass({
 
@@ -114,6 +114,7 @@ var AllTest = React.createClass({
 
         DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
         AppDataCntlr.showDialog('ResultsFromExampleDialog');
+
     },
 
 

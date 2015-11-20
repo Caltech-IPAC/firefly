@@ -7,15 +7,21 @@
  * Created by roby on 12/2/14.
  */
 
-/*eslint no-use-before-define: [1, "nofunc"]*/
-/*eslint prefer-template:0 */
-
 
 import CoordinateSys from './CoordSys.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
 import validator from 'validator';
 
+const SPT= 'ScreenPt';
+const IM_PT= 'ImagePt';
+const IM_WS_PT= 'ImageWorkSpacePt';
+const W_PT= 'WorldPt';
+const VP_PT= 'ViewPortPt';
+const PROJ_PT= 'ProjectionPt';
 
+var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT};
+
+var ptTypes= Object.values(Point);
 
 //var makePt = function (x, y) {
 //    var retval= {};
@@ -33,48 +39,8 @@ export class Pt {
         this.y= y;
     }
     toString() { return this.x+';'+this.y; }
-
-    static parse(inStr) {
-        if (!inStr) return null;
-        var parts= inStr.split(';');
-        if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
-            return new Pt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
-        }
-        return null;
-    }
 }
 
-export class ImagePt extends Pt {
-    constructor(x,y) {
-        super(x,y);
-    }
-    static parse(inStr) {
-        var p= Pt.parse(inStr);
-        return p ? new ImagePt(p.x,p.y) : null;
-    }
-}
-
-export class ScreenPt extends Pt {
-    constructor(x,y) {
-        super(x,y);
-    }
-    static parse(inStr) {
-        var p= Pt.parse(inStr);
-        return p ? new ScreenPt(p.x,p.y) : null;
-    }
-}
-
-
-
-export class ImageWorkSpacePt extends Pt {
-    constructor(x,y) {
-        super(x,y);
-    }
-    static parse(inStr) {
-        var p= Pt.parse(inStr);
-        return p ? new ImageWorkSpacePt(p.x,p.y) : null;
-    }
-}
 
 /**
  * WorldPt constructor
@@ -87,10 +53,10 @@ export class ImageWorkSpacePt extends Pt {
  * @param {string} [objName] - the object name the was used for name resolution
  * @param {Resolver} [resolver] - the resolver use to return this point
  */
-export class WorldPt extends Pt {
+export class WorldPt {
     constructor(lon,lat,coordSys,objName,resolver) {
-        super(lon,lat);
-
+        this.x= lon;
+        this.y= lat;
         this.cSys = coordSys || CoordinateSys.EQ_J2000;
         if (objName) {
             this.objName = objName;
@@ -98,6 +64,7 @@ export class WorldPt extends Pt {
         if (resolver) {
             this.resolver = resolver;
         }
+        this.type= W_PT;
 
     }
     /**
@@ -130,7 +97,6 @@ export class WorldPt extends Pt {
     /**
      * return the string representation of the WorldPt. This output can be used
      * to recreate a WorldPt using parseWorldPt
-     * @see {exports.parseWorldPt}
      * @type {function(this:exports.WorldPt)}
      * @return {string}
      */
@@ -181,12 +147,52 @@ function stringAryToWorldPt(wpParts) {
     return retval;
 }
 
+export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
+   return new WorldPt(lon,lat,coordSys,objName,resolver) ;
+};
+
+
+export const makeImagePt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:IM_PT});
+};
+
+export const makeImageWorkSpacePt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:IM_WS_PT});
+};
+export const makeScreenPt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:SPT});
+};
+export const makeViewPortPt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:VP_PT});
+};
+export const makeProjectionPt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:PROJ_PT});
+};
+
+
+export const parsePt= function(type, inStr) {
+    if (!inStr) return null;
+    var parts= inStr.split(';');
+    if (parts.length===2 && validator.isFloat(parts[0]) && validator.isFloat(parts[1])) {
+        var pt= new Pt(validator.toFloat(parts[0]), validator.toFloat(parts[1]));
+        pt.type= type;
+        return pt;
+    }
+    return null;
+};
+
+export const parseImagePt = (inStr) => parsePt(IM_PT,inStr);
+export const parseImageWorkSpacePt = (inStr) => parsePt(IM_WS_PT,inStr);
+export const parseScreenPt= (inStr) => parsePt(SPT,inStr);
+
+
+
 /**
  *
  * @param serializedWP
  * @return {WorldPt}
  */
-export var parseWorldPt = function (serializedWP) {
+export const parseWorldPt = function (serializedWP) {
     if (!serializedWP) return null;
 
     var sAry= serializedWP.split(';');
@@ -196,5 +202,6 @@ export var parseWorldPt = function (serializedWP) {
     return stringAryToWorldPt(sAry);
 };
 
-var Point = { WorldPt, ImagePt, ScreenPt, ImageWorkSpacePt, Pt, parseWorldPt };
+export const isValidPoint= (testPt) =>  (testPt && testPt.type && ptTypes.includes(testPt.type));
+
 export default Point;

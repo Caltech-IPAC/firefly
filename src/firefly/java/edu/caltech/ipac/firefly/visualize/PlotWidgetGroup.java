@@ -6,11 +6,8 @@ package edu.caltech.ipac.firefly.visualize;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.imageGrid.BasicImageGrid;
 import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
@@ -312,32 +309,32 @@ public class PlotWidgetGroup implements Iterable<MiniPlotWidget> {
 
 
 
-    private MenuItem makeZoomLevel(BarPopup popType) {
-        String padLeft;
-        String padBottom;
-//        if (_shared) {
-            if (popType==BarPopup.Inline) {
-                padLeft= "6px";
-                padBottom= "5px";
-            }
-            else {
-                padLeft= "5px";
-                padBottom= "3px";
-            }
-
-//        }
-//        else {
-//            padLeft= "25px";
-//            padBottom= "7px";
-//        }
-        MenuItem zoomLevel= new MenuItem("2x",new Command() { public void execute() { } });
-        GwtUtil.setStyles(zoomLevel.getElement(), "borderColor", "transparent",
-                                                   "background", "transparent",
-                                                   "paddingLeft", padLeft,
-                                                   "color",      "#49a344",
-                                                   "paddingBottom", padBottom);
-        return zoomLevel;
-    }
+//    private MenuItem makeZoomLevel(BarPopup popType) {
+//        String padLeft;
+//        String padBottom;
+////        if (_shared) {
+//            if (popType==BarPopup.Inline) {
+//                padLeft= "6px";
+//                padBottom= "5px";
+//            }
+//            else {
+//                padLeft= "5px";
+//                padBottom= "3px";
+//            }
+//
+////        }
+////        else {
+////            padLeft= "25px";
+////            padBottom= "7px";
+////        }
+//        MenuItem zoomLevel= new MenuItem("2x",new Command() { public void execute() { } });
+//        GwtUtil.setStyles(zoomLevel.getElement(), "borderColor", "transparent",
+//                                                   "background", "transparent",
+//                                                   "paddingLeft", padLeft,
+//                                                   "color",      "#49a344",
+//                                                   "paddingBottom", padBottom);
+//        return zoomLevel;
+//    }
 
     void updateScrollPositions(MiniPlotWidget originMpw) {
         WebPlotView pv= originMpw.getPlotView();
