@@ -5,6 +5,7 @@ import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import PlotView from './PlotView.js';
+import PlotGroup from './PlotGroup.js';
 
 
 const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -67,7 +68,7 @@ const initState= function() {
 
 export default {
     reducer, plotImageActionCreator,
-    dispatchUpdateViewSize, dispatchProcessScroll, dispatchPlotImage,
+    dispatchUpdateViewSize, dispatchProcessScroll, dispatchPlotImage, dispatch3ColorPlotImage,
     ANY_CHANGE, IMAGE_PLOT_KEY, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL
 };
@@ -125,21 +126,61 @@ function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,centerImag
  */
 function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
 
-    if (!plotId) plotId= wpRequest.getPlotId();
-    else wpRequest.setPlotId(plotId);
+    if (plotId) wpRequest.setPlotId(plotId);
+
+    var payload= initPlotImagePayload(plotId,wpRequest,false, removeOldPlot,addToHistory,useContextModifications);
+    payload.wpRequest= wpRequest;
 
 
-    if (plotId) {
-        flux.process({
-            type: PLOT_IMAGE,
-            payload: {plotId, wpRequest, removeOldPlot, addToHistory, useContextModifications, threeColor: false}
-        });
+
+    if (payload.plotId) {
+        flux.process({ type: PLOT_IMAGE, payload});
     }
     else {
         var error= Error('plotId is required');
         flux.process({ type: PLOT_IMAGE_FAIL, payload: {plotId, error} });
     }
 }
+
+
+/**
+ *
+ * @param {string} plotId is required unless defined in the WebPlotRequest
+ * @param {WebPlotRequest} redReq, red plotting parameters, 1 of red or green or blue is required
+ * @param {WebPlotRequest} greenReq, blue plotting parameters, 1 of red or green or blue is required
+ * @param {WebPlotRequest} blueReq, green plotting parameters, 1 of red or green or blue is required
+ * @param {boolean} removeOldPlot Remove the old plot from the plotview and tell the server to delete the context.
+ *                                This parameter is almost always true
+ * @param {boolean} addToHistory add this request to global history of plots
+ * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
+ *                                 should only be false when it is doing a 'restore to defaults' type plot
+ */
+function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
+                                 removeOldPlot= true, addToHistory= false,
+                                 useContextModifications= true) {
+
+    if (plotId) {
+        [redReq,blueReq,greenReq].forEach( (r) => {if (r) r.setPlotId(plotId);});
+    }
+
+    var req= redReq ||  blueReq ||  greenReq;
+    var payload= initPlotImagePayload(plotId,req,false, removeOldPlot,addToHistory,useContextModifications);
+    payload.redReq= redReq;
+    payload.greenReq= greenReq;
+    payload.blueReq= blueReq;
+
+    if (payload.plotId) {
+        flux.process({ type: PLOT_IMAGE, payload});
+    }
+    else {
+        var error= Error('plotId is required');
+        flux.process({ type: PLOT_IMAGE_FAIL, payload: {plotId, error} });
+    }
+}
+
+
+
+
 
 //======================================== End Dispatch Functions =============================
 
@@ -196,11 +237,13 @@ function processPlotView(state, action) {
 
     var retState= state;
     var plotViewAry;
+    var plotGroupAry;
     var plotRequestDefaults;
     switch (action.type) {
         case PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
-            plotViewAry= makePlotView(state.plotViewAry,action);
+            plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
+            plotViewAry= confirmPlotView(state.plotViewAry,action);
             break;
         case PLOT_IMAGE_FAIL  :
             break;
@@ -213,9 +256,10 @@ function processPlotView(state, action) {
         default:
             break;
     }
-    if (plotViewAry || plotRequestDefaults) {
+    if (plotGroupAry || plotViewAry || plotRequestDefaults) {
         retState= Object.assign({},state);
         if (plotViewAry) retState.plotViewAry= plotViewAry;
+        if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
         if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
     }
     return retState;
@@ -268,21 +312,33 @@ function updateHistory(plotHistoryRequest, action) {
 //============ private functions =================================
 
 /**
+/**
  *
  * @param plotViewAry
  * @param action
- * @return null if the plotview already exist, other return the a new plotViewAry with the new PlotView
+ * @return {[]|null} new PlotViewAry or null it nothing is created.
  */
-function makePlotView(plotViewAry,action) {
+function confirmPlotView(plotViewAry,action) {
     const {plotId}= action.payload;
     if (pvExist(plotId,plotViewAry)) return null;
 
     const payload= action.payload;
     var rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => payload[key] ? true : false);
     var pv= PlotView.makePlotView(plotId, payload[rKey] );
-    var newPlotViewAry= plotViewAry.slice();
-    newPlotViewAry.push(pv);
-    return newPlotViewAry;
+    return [...plotViewAry,pv];
+}
+
+/**
+ *
+ * @param plotGroupAry
+ * @param action
+ * @return {[]|null} new PlotGroupAry or null if nothing is created.
+ */
+function confirmPlotGroup(plotGroupAry,action) {
+    const {plotGroupId,groupLocked}= action.payload;
+    if (plotGroupExist(plotGroupId,plotGroupAry)) return null;
+    var plotGroup= PlotGroup.makePlotGroup(plotGroupId, groupLocked);
+    return [...plotGroupAry,plotGroup];
 }
 
 
@@ -290,12 +346,14 @@ function pvExist(plotId, plotViewAry) {
     return (plotViewAry.some( (pv) => pv.plotId===plotId ));
 }
 
+function plotGroupExist(plotGroupId, plotGroupAry) {
+    return (plotGroupAry.some( (pg) => pg.plotGroupId===plotGroupId ));
+}
+
 
 function processScroll(state,action) {
     const {plotId,scrollScreenPt}= action.payload;
-    var plotViewAry= state.plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.updateScrollXY(pv,scrollScreenPt) : pv;
-    });
+    var plotViewAry= PlotView.updatePlotGroupScrollXY(plotId,state.plotViewAry,state.plotGroupAry,scrollScreenPt);
     return Object.assign({},state,{plotViewAry});
 }
 
@@ -310,18 +368,27 @@ function updateViewSize(state,action) {
 }
 
 
+/*
+
 /**
  *
- * @param plotGroupId
- * @return {{plotGroupId: *, lockRelated: boolean, enableSelecting: boolean, allSelected: boolean}}
+ * @param plotId
+ * @param req
+ * @param threeColor
+ * @param removeOldPlot
+ * @param addToHistory
+ * @param useContextModifications
+ * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean, useContextModifications: boolean, groupLocked: *, threeColor: *}}
  */
-function makePlotGroup(plotGroupId) {
-    return {
-        plotGroupId,
-        lockRelated  : false,
-        enableSelecting :false,    //todo
-        allSelected :false    //todo
-    };
+function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true, addToHistory=false, useContextModifications= true) {
+    if (!plotId) plotId= req.getPlotId();
+
+    var plotGroupId= req.getPlotGroupId();
+    var groupLocked= req.isGroupLocked();
+
+    return {plotId, plotGroupId, removeOldPlot,
+        addToHistory, useContextModifications,
+        groupLocked, threeColor};
 }
 
 //============ end private functions =================================

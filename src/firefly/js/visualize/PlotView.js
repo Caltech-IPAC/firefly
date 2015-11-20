@@ -2,6 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+
+/**
+ * REDUCER USE ONLY
+ * REDUCER USE ONLY
+ * REDUCER USE ONLY
+ */
+
 //import ImagePlotCntlr from './ImagePlotCntlr.js';
 import {flux} from '../Firefly.js';
 import WebPlot from './WebPlot.js';
@@ -11,6 +18,7 @@ import {makeImagePt,makeScreenPt} from './Point.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
 import VisUtil from './VisUtil.js';
+import PlotViewUtil from './PlotViewUtil.js';
 import PlotPref from './PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import SimpleMemCache from '../util/SimpleMemCache.js';
@@ -21,11 +29,13 @@ export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 const DEF_WORKING_MSG= 'Plotting ';
 
 
+
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {makePlotView, getPlotViewById, replacePlots,
-                getPrimaryPlot, updateViewDim, updateScrollXY};
+export default {makePlotView, replacePlots,
+                updateViewDim, updatePlotViewScrollXY,
+                matchPlotView, replacePlotView, updatePlotGroupScrollXY};
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
@@ -46,7 +56,7 @@ export default {makePlotView, getPlotViewById, replacePlots,
 function makePlotView(plotId, req) {
     var pv= {
         plotId,
-        groupId: '', //todo, string, this is an id
+        plotGroupId: req.getPlotGroupId(),
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
         plots:[],
         primaryPlot: null,
@@ -103,7 +113,7 @@ function makePlotView(plotId, req) {
 }
 
 
-const initScrollCenterPoint= (pv) => updateScrollXY(pv,findScrollPtforCenter(pv));
+const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtforCenter(pv));
 
 /**
  *
@@ -157,33 +167,11 @@ function replacePlots(pv, plotAry) {
     return pv;
 }
 
-
-/**
- * get the plot view with the id
- * @param {string} plotId
- * @return {object} the plot view object
- */
-function getPlotViewById(plotId) {
-    if (!plotId) return null;
-    var pv= flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY].plotViewAry.find( (pv) => pv.plotId===plotId);
-    return pv;
-}
-
-/**
- *
- * @param {string } plotId
- * @return {object} the primary plot for this plot id
- */
-function getPrimaryPlot(plotId) {
-    var pv= getPlotViewById(plotId);
-    return pv && pv.primaryPlot ? pv.primaryPlot : null;
-}
-
 /**
  * update the offset with and height of the primary div
  * @param {object} pv
  * @param {{width : number, height : number}} viewDim
- * @return {*}
+ * @return {object} the PlotView with the new viewDim
  */
 function updateViewDim(pv,viewDim) {
     return Object.assign({}, pv, {viewDim});
@@ -196,7 +184,7 @@ function updateViewDim(pv,viewDim) {
  * @param {object} newScrollPt  the screen point of the scroll position
  * @return {object} new copy of plotView
  */
-function updateScrollXY(plotView,newScrollPt) {
+function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plotView || !newScrollPt) return plotView;
 
     var {primaryPlot:plot,scrollX:oldSx,scrollY:oldSy,scrollWidth,scrollHeight}= plotView;
@@ -221,6 +209,58 @@ function updateScrollXY(plotView,newScrollPt) {
     return newPlotView;
 }
 
+/**
+ * replace a plotview in the plotViewAry with the passed plotview whose plotId's match
+ * @param {[]} plotViewAry
+ * @param {object} newPlotView
+ * @return {[]} new plotView array after return a plotview
+ */
+function replacePlotView(plotViewAry,newPlotView) {
+    return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
+}
+
+/**
+ * Perform an operation on all the PlotViews in a group
+ * @param sourcePv
+ * @param plotViewAry
+ * @param plotGroup
+ * @param operationFunc
+ * @return {[]} new plotView array after the operation
+ */
+function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
+    if (plotGroup && plotGroup.plotGroupId && plotGroup.lockRelated && sourcePv.plotGroupId===plotGroup.plotGroupId) {
+        plotViewAry= plotViewAry.map( (pv) => {
+            return (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId) ?
+                        operationFunc(pv) : pv;
+        });
+    }
+    return plotViewAry;
+}
+
+/**
+ * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plotviews in the group
+ * will be scrolled to match
+ * @param plotId plot id to set the scrolling on
+ * @param {[]} plotViewAry an array of plotView
+ * @param {[]} plotGroupAry the plotGroup array
+ * @param newScrollPt a screen point in the plot to scroll to
+ * @return {[]}
+ */
+function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) {
+    var plotView= updatePlotViewScrollXY(PlotViewUtil.findPlotView(plotId,plotViewAry),newScrollPt);
+    plotViewAry= replacePlotView(plotViewAry, plotView);
+    var plotGroup= PlotViewUtil.findPlotGroup(plotView.plotGroupId,plotGroupAry);
+    if (plotGroup && plotGroup.lockRelated) {
+        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
+    }
+    return plotViewAry;
+}
+
+
+
+
+
+
 
 
 //======================================== Private ======================================
@@ -229,6 +269,29 @@ function updateScrollXY(plotView,newScrollPt) {
 //======================================== Private ======================================
 //======================================== Private ======================================
 
+/**
+ * make a function that will match the scroll position of a plotview to the source plotview
+ * @param sourcePV the plotview that others will match to
+ * @return {Function} a function the takes the plotview to match scrolling as a parameter and
+ *                      returns the scrolled matched version
+ */
+function makeScrollPosMatcher(sourcePV) {
+    var {primaryPlot:{screenSize:{width:srcScreenWidth,height:srcScreenHeight}},
+        scrollX:srcSx,scrollY:srcSy,scrollWidth:srcSW,scrollHeight:srcSH}= sourcePV;
+    var percentX= (srcSx+srcSW/2) / srcScreenWidth;
+    var percentY= (srcSy+srcSH/2) / srcScreenHeight;
+
+    return (pv) => {
+        var retPV= pv;
+        if (pv && pv.primaryPlot) {
+            var {primaryPlot:{screenSize:{width,height}},scrollWidth:sw,scrollHeight:sh}= pv;
+            var newSx= width*percentX - sw/2;
+            var newSy= height*percentY - sh/2;
+            retPV= updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy));
+        }
+        return retPV;
+    };
+}
 
 
 

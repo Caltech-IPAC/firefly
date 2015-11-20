@@ -3,7 +3,7 @@
  */
 
 import React from 'react/addons';
-import PlotView from '../PlotView.js';
+import PlotViewUtil from '../PlotViewUtil.js';
 import ImageViewerView from './ImageViewerView.jsx';
 import {flux} from '../../Firefly.js';
 
@@ -26,7 +26,7 @@ var ImageViewer= React.createClass(
     },
 
     getInitialState() {
-        return {plotView:PlotView.getPlotViewById(this.props.plotId)};
+        return {plotView:PlotViewUtil.getPlotViewById(this.props.plotId)};
     },
 
 
@@ -40,7 +40,7 @@ var ImageViewer= React.createClass(
     },
 
     storeUpdate() {
-        var plotView= PlotView.getPlotViewById(this.props.plotId);
+        var plotView= PlotViewUtil.getPlotViewById(this.props.plotId);
         if (plotView!==this.state.plotView) {
             this.setState({plotView});
         }

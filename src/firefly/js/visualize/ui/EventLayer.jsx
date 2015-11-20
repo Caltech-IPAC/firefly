@@ -11,7 +11,7 @@
  */
 
 import React from 'react/addons';
-import PlotView from '../PlotView.js';
+import PlotViewUtil from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
 import VisMouseCntlr  from '../VisMouseCntlr.js';
 import {getAbsoluteLeft, getAbsoluteTop} from '../../util/BrowserUtil.js';
@@ -40,14 +40,14 @@ var EventLayer= React.createClass(
         var spt;
         ev.preventDefault();
         ev.stopPropagation();
-        var plot= PlotView.getPrimaryPlot(plotId);
+        var plot= PlotViewUtil.getPrimaryPlot(plotId);
         var {x:viewPortX,y:viewPortY} = plot.viewPort;
         var {screenX, screenY, offsetX, offsetY}= ev.nativeEvent;
         if (ev.clientX && ev.clientY && offsetX && offsetY) {
             //spt= makeScreenPt( viewPortX+ev.clientX, viewPortY+ev.clientY);
             spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
         }
-        var e= React.findDOMNode(this);
+        //var e= React.findDOMNode(this);
         //var pc= CysConverter.make(plot);
         //VisMouseCntlr.fireMouseEvent(plotId,mouseState, spt); // TODO -uncomment
         //var ip= pc.getImageCoords(spt);
@@ -65,7 +65,7 @@ var EventLayer= React.createClass(
         var spt;
         nativeEv.preventDefault();
         nativeEv.stopPropagation();
-        var plot= PlotView.getPrimaryPlot(plotId);
+        var plot= PlotViewUtil.getPrimaryPlot(plotId);
         var {x:viewPortX,y:viewPortY} = plot.viewPort;
         //var {screenX, screenY, offsetX, offsetY}= nativeEv;
         var {screenX, screenY, x, y}= nativeEv;
@@ -119,7 +119,7 @@ var EventLayer= React.createClass(
         this.fireEvent(ev,this.props.plotId,VisMouseCntlr.MouseState.DOUBLE_CLICK);
     },
 
-    onMouseUp(ev) {
+    onMouseUp() {
         //this.mouseDown= false;
         //this.fireEvent(ev,this.props.plotId,VisMouseCntlr.MouseState.UP);
         //
@@ -146,6 +146,8 @@ var EventLayer= React.createClass(
     },
 
     onDocumentMouseUp(nativeEv) {
+        this.mouseDown= false;
+        this.fireDocEvent(nativeEv,this.props.plotId,VisMouseCntlr.MouseState.UP);
         document.removeEventListener('mousemove', this.docMouseMoveCallback);
         document.removeEventListener('mouseup', this.docMouseUpCallback);
     },

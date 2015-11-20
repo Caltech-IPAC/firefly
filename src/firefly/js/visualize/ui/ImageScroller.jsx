@@ -8,7 +8,7 @@
 
 import React from 'react/addons';
 import TileDrawer from './TileDrawer.jsx';
-import PlotView from '../PlotView.js';
+import PlotViewUtil from '../PlotViewUtil.js';
 import WebPlot from '../WebPlot.js';
 import {flux} from '../../Firefly.js';
 
@@ -41,7 +41,7 @@ var ImageScroller= React.createClass(
 
     getInitialState() {
         var {plotId}= this.props;
-        var pv= PlotView.getPlotViewById(plotId);
+        var pv= PlotViewUtil.getPlotViewById(plotId);
         var plotData= pv.primaryPlot;
 
         return {pv, plotData};

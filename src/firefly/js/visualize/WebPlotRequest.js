@@ -112,7 +112,8 @@ const C= {
     TITLE_FILENAME_MODE_PFX : 'TitleFilenameModePfx',
     OVERLAY_POSITION : 'OverlayPosition',
     MINIMAL_READOUT: 'MinimalReadout',
-    PLOT_GROUP: 'plotGroup',
+    PLOT_GROUP_ID: 'plotGroupId',
+    GROUP_LOCKED: 'GroupLocked',
     DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
     GRID_ID : 'GRID_ID',
     DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
@@ -127,7 +128,7 @@ const allKeys =
          C.SERVICE, C.USER_DESC, C.INIT_ZOOM_LEVEL,
          C.TITLE, C.ROTATE_NORTH, C.ROTATE_NORTH_TYPE, C.ROTATE, C.ROTATION_ANGLE,
          C.HEADER_KEY_FOR_TITLE,
-         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_XMAGE_FITS, C.MULTI_IMAGE_IDX,
+         C.INIT_RANGE_VALUES, C.INIT_COLOR_TABLE, C.MULTI_IMAGE_FITS, C.MULTI_IMAGE_IDX,
          C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
          C.POST_CROP, C.POST_CROP_AND_CENTER, C.FLIP_X, C.FLIP_Y,
          C.HAS_MAX_ZOOM_LEVEL,
@@ -142,7 +143,7 @@ const allKeys =
          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
-         C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT, C.PLOT_GROUP, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
@@ -156,8 +157,8 @@ const clientSideKeys =
          C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
          C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT,
-         C.PLOT_GROUP, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
-         C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
+         C.PLOT_GROUP_ID, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID, C.GROUP_LOCKED,
         ];
 
 const ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
@@ -319,6 +320,13 @@ class WebPlotRequest extends ServerRequest {
     //======================== DSS =====================================
 
 
+    /**
+     *
+     * @param wp
+     * @param {string} survey must be one of : poss2ukstu_red poss2ukstu_ir poss2ukstu_blue poss1_red poss1_blue quickv phase2_gsc2 phase2_gsc1
+     * @param sizeInDeg
+     * @return {WebPlotRequest}
+     */
     static makeDSSRequest(wp, survey, sizeInDeg) {
         return this.makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
     }
@@ -1105,7 +1113,13 @@ class WebPlotRequest extends ServerRequest {
 
     getPlotId() { return this.getParam(C.PLOT_ID); }
 
+    setPlotGroupId(id) { this.setParam(C.PLOT_GROUP_ID,id); }
 
+    getPlotGroupId() { return this.getParam(C.PLOT_GROUP_ID); }
+
+    setGroupLocked(locked) { this.setParam(C.GROUP_LOCKED,locked); }
+
+    isGroupLocked() { return this.getBooleanParam(C.GROUP_LOCKED,true); }
 
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.

@@ -3,7 +3,7 @@
 
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
-import PlotView from './PlotView.js';
+import PlotViewUtil from './PlotViewUtil.js';
 import CsysConverter from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
 
@@ -128,7 +128,7 @@ function processAddRemove(state,action) {
 
 function fireMouseEvent(plotId, mouseState, currScreenPt) {
 
-    var plot=PlotView.getPrimaryPlot(plotId);
+    var plot=PlotViewUtil.getPrimaryPlot(plotId);
     var currViewPortPt;
     var currImagePt;
     var currWorldPt;

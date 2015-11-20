@@ -17,17 +17,16 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
-import PlotView from './PlotView.js';
+import PlotViewUtil from './PlotViewUtil.js';
 import Band from './Band.js';
 import PlotPref from './PlotPref.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
-export default {plot3Color, makePlotImageAction};
+export default {makePlotImageAction};
 
 
 
-//======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
 
@@ -44,23 +43,6 @@ function dispatchUpdateStatus() {
 
 }
 
-
-/**
- *
- * @param {string} plotId
- * @param {WebPlotRequest} redReq
- * @param {WebPlotRequest} blueReq
- * @param {WebPlotRequest} greenReq
- * @param {boolean} removeOldPlot
- * @param {boolean} addToHistory
- */
-function plot3Color(plotId,redReq,blueReq,greenReq,
-                           removeOldPlot= true, addToHistory= false) {
-    flux.process({type: ImagePlotCntlr.PLOT_IMAGE,
-                  payload: {plotId, redReq,blueReq,greenReq, removeOldPlot, addToHistory, threeColor:true}
-    });
-
-}
 
 
 
@@ -115,7 +97,7 @@ function modifyRequest(plotId, r, band) {
 
     if (!r) return r;
 
-    var pv= PlotView.getPlotViewById(plotId);
+    var pv= PlotViewUtil.getPlotViewById(plotId);
     if (!pv) return r;
 
     var retval= r.makeCopy();

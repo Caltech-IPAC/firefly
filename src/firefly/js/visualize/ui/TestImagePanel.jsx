@@ -53,9 +53,16 @@ var TestImagePanel = React.createClass({
         //====temp
         //var wp= makeWorldPt(1,1);
         var wp= parseWorldPt(request.UserTargetWorldPt);
-        var wpr= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
-        wpr.setInitialZoomLevel(parseFloat(request.zoom));
-        ImagePlotCntlr.dispatchPlotImage('TestImage1', wpr);
+        var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
+        var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
+        //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
+        wpr1.setPlotGroupId('2massGroup');
+        wpr2.setPlotGroupId('2massGroup');
+        wpr1.setInitialZoomLevel(parseFloat(request.zoom));
+        wpr2.setInitialZoomLevel(parseFloat(request.zoom));
+        wpr2.setInitialColorTable(4);
+        ImagePlotCntlr.dispatchPlotImage('TestImage1', wpr1);
+        ImagePlotCntlr.dispatchPlotImage('TestImage2', wpr2);
         //====temp
     },
 
@@ -84,6 +91,9 @@ var TestImagePanel = React.createClass({
                 </div>
                 <div style={{display:'inline-block', width:400,height:400,border:'1px solid black', marginLeft:10}}>
                     <ImageViewer plotId='TestImage1'/>
+                </div>
+                <div style={{display:'inline-block', width:400,height:400,border:'1px solid black', marginLeft:10}}>
+                    <ImageViewer plotId='TestImage2'/>
                 </div>
             </div>
         );
