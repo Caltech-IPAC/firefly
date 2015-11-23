@@ -21,15 +21,23 @@ public class ExampleJsDialogCmd extends GeneralCommand {
         super(COMMAND_NAME);
     }
 
-    @Override
-    protected boolean init() {
-        exampleDialog= JsExampleDialog.Builder.makeDialog();
-        return true;
-    }
+//    @Override
+//    protected boolean init() {
+//        exampleDialog= JsExampleDialog.Builder.makeDialog();
+//        return true;
+//    }
 
     protected void doExecute() {
-        exampleDialog.showDialog();
+        showExampleDialog();
     }
+
+
+    public static native JsExampleDialog showExampleDialog() /*-{
+        if ($wnd.firefly && $wnd.firefly.gwt) {
+            $wnd.firefly.gwt.showExampleDialog();
+        }
+    }-*/;
+
 
     @Override
     public boolean hasIcon() { return false; }

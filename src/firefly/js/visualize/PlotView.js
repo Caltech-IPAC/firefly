@@ -34,7 +34,8 @@ const DEF_WORKING_MSG= 'Plotting ';
 //============ EXPORTS ===========
 
 export default {makePlotView, replacePlots,
-                updateViewDim, updatePlotViewScrollXY,
+                updateViewDim, updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
+                findCurrentCenterPoint, findScrollPtForImagePt,
                 matchPlotView, replacePlotView, updatePlotGroupScrollXY};
 
 //============ EXPORTS ===========
@@ -113,7 +114,7 @@ function makePlotView(plotId, req) {
 }
 
 
-const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtforCenter(pv));
+const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
 
 /**
  *
@@ -218,6 +219,30 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
 function replacePlotView(plotViewAry,newPlotView) {
     return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
 }
+
+/**
+ *
+ * @param plotView
+ * @param primaryPlot
+ * @return {*} return the new PlotView object
+ */
+function replacePrimary(plotView,primaryPlot) {
+    var newPlotView= Object.assign({},plotView, {primaryPlot});
+    newPlotView.plots= plotView.plots.map( (p) => p===plotView.primaryPlot? primaryPlot : p);
+    return newPlotView;
+}
+
+
+function replacePrimaryInAry(plotViewAry, pv, plot) {
+    //var pv= PlotViewUtil.findPlotView(plot.plotId, plotViewAry);
+    if (!pv) return plotViewAry;
+    pv= replacePrimary(pv,plot);
+    return replacePlotView(plotViewAry,pv);
+}
+
+
+
+
 
 /**
  * Perform an operation on all the PlotViews in a group
@@ -469,11 +494,29 @@ function checkBounds(pos,screenSize,scrollSize) {
 
 
 
-function findScrollPtforCenter(plotView) {
+function findScrollPtForCenter(plotView) {
     var {width,height}= plotView.viewDim;
     var {width:scrW,height:scrH}= plotView.primaryPlot.screenSize;
     var x= (scrW>width) ? scrW/2- width/2 : 0;
     var y= (scrH>height) ? scrH/2- height/2 : 0;
     return makeScreenPt(x,y);
 }
+
+/**
+ *
+ * @param plotView
+ * @param ipt
+ */
+function findScrollPtForImagePt(plotView, ipt) {
+    var {width,height}= plotView.viewDim;
+    var {width:scrW,height:scrH}= plotView.primaryPlot.screenSize;
+    var center= CCUtil.getScreenCoords(plotView.primaryPlot, ipt);
+    var x= center.x- width/2;
+    var y= center.y- height/2;
+    x= checkBounds(x,scrW,width);
+    y= checkBounds(y,scrH,height);
+    return makeScreenPt(x,y);
+}
+
+
 

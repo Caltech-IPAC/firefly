@@ -10,11 +10,13 @@ import ValidationField from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
+import ZoomUtil from '../ZoomUtil.js';
 
 
 
@@ -74,6 +76,33 @@ var TestImagePanel = React.createClass({
         this.showResults(true,request);
     },
 
+
+    showExDialog() {
+        console.log('showing example dialog');
+        showExampleDialog();
+    },
+
+    zoom(zType) {
+        console.log(zType);
+        switch (zType) {
+            case 'up':
+                ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.UP);
+                break;
+            case 'down':
+                ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.DOWN);
+                console.log('going down');
+                break;
+            case 'fit':
+                break;
+            case 'fill':
+                break;
+            case '1x':
+                ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.ONE);
+                break;
+
+        }
+    },
+
     render() {
         return (
             <div>
@@ -86,7 +115,15 @@ var TestImagePanel = React.createClass({
                         <CompleteButton groupKey='TEST_IMAGE_PANEL'
                                         onSuccess={this.resultsSuccess}
                                         onFail={this.resultsFail}
-                        />
+                                        />
+                        <div style={{height:50}}/>
+                        <button type='button' onClick={this.zoom.bind(this,'down')}>Zoom Down</button>
+                        <button type='button' onClick={this.zoom.bind(this,'up')}>Zoom Up</button>
+                        <button type='button' onClick={this.zoom.bind(this,'fit')}>Zoom Fit</button>
+                        <button type='button' onClick={this.zoom.bind(this,'fill')}>Zoom Fill</button>
+                        <button type='button' onClick={this.zoom.bind(this,'1x')}>Zoom 1x</button>
+                        <br/>
+                        <button type='button' onClick={this.showExDialog.bind(this)}>Example Dialog</button>
                     </FieldGroup>
                 </div>
                 <div style={{display:'inline-block', width:400,height:400,border:'1px solid black', marginLeft:10}}>

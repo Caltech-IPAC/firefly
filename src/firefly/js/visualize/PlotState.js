@@ -223,7 +223,7 @@ class PlotState {
 
 
     isMultiImageFile(band) { return this.get(band || this.firstBand()).isMultiImageFile(); }
-    isPrimaryMultiImageFile() { return get(this.firstBand()).isMultiImageFile(); }
+    isPrimaryMultiImageFile() { return this.get(this.firstBand()).isMultiImageFile(); }
 
     /**
      *
@@ -234,14 +234,14 @@ class PlotState {
 
 
     getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
-    getPrimaryCubeCnt() { return get(this.firstBand()).getCubeCnt(); }
+    getPrimaryCubeCnt() { return this.get(this.firstBand()).getCubeCnt(); }
     setCubeCnt(cubeCnt, band) { this.get(band).setCubeCnt(cubeCnt); }
 
 
     getCubePlaneNumber(band) {
         return this.get(band || this.firstBand()).getCubePlaneNumber();
     }
-    getPrimaryCubePlaneNumber() { return this.get(firstBand()).getCubePlaneNumber(); }
+    getPrimaryCubePlaneNumber() { return this.get(this.firstBand()).getCubePlaneNumber(); }
     setCubePlaneNumber(cubeIdx, band) { this.get(band).setCubePlaneNumber(cubeIdx); }
 
 
@@ -419,7 +419,7 @@ class PlotState {
 // =====================================================================
 
     /**
-     * @param {Band} band
+     * @param {object} band
      * @return {BandState}
      */
     get(band) {

@@ -5,7 +5,10 @@ import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import PlotView from './PlotView.js';
+import PlotViewUtil from './PlotViewUtil.js';
 import PlotGroup from './PlotGroup.js';
+import WebPlot from './WebPlot.js';
+import ZoomUtil from './ZoomUtil.js';
 
 
 const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -26,6 +29,21 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
 const PLOT_IMAGE_START= 'ImagePlotCntlr/PlotImageStart';
 const PLOT_IMAGE_FAIL= 'ImagePlotCntlr/PlotImageFail';
 const PLOT_IMAGE= 'ImagePlotCntlr/PlotImage';
+
+const ZOOM_IMAGE_START= 'ImagePlotCntlr/ZoomImageStart';
+const ZOOM_IMAGE= 'ImagePlotCntlr/ZoomImage';
+const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr/ZoomImageFail';
+
+
+const FLIP_IMAGE_START= 'ImagePlotCntlr/FlipImageStart';
+const FLIP_IMAGE= 'ImagePlotCntlr/FlipImage';
+const FLIP_IMAGE_FAIL= 'ImagePlotCntlr/FlipImageFail';
+
+
+const CROP_IMAGE_START= 'ImagePlotCntlr/CropImageStart';
+const CROP_IMAGE= 'ImagePlotCntlr/CropImage';
+const CROP_IMAGE_FAIL= 'ImagePlotCntlr/CropImageFail';
+
 const UPDATE_VIEW_SIZE= 'ImagePlotCntlr/UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr/ProcessScroll';
 
@@ -67,9 +85,13 @@ const initState= function() {
 //============ EXPORTS ===========
 
 export default {
-    reducer, plotImageActionCreator,
-    dispatchUpdateViewSize, dispatchProcessScroll, dispatchPlotImage, dispatch3ColorPlotImage,
-    ANY_CHANGE, IMAGE_PLOT_KEY, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    reducer,
+    dispatchUpdateViewSize, dispatchProcessScroll,
+    dispatchPlotImage, dispatch3ColorPlotImage, dispatchZoom,
+    zoomActionCreator, plotImageActionCreator,
+    ANY_CHANGE, IMAGE_PLOT_KEY,
+    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL
 };
 
@@ -179,6 +201,12 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 }
 
 
+/**
+ *
+ * @param plotId
+ * @param {UserZoomTypes} zoomType
+ */
+function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
 
 
 
@@ -190,6 +218,10 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 
 function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
+}
+
+function zoomActionCreator(rawAction) {
+    return ZoomUtil.makeZoomAction(rawAction);
 }
 
 
@@ -210,7 +242,12 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
-            retState= processPlotView(state,action);
+            retState= processPlotCreation(state,action);
+            break;
+        case ZOOM_IMAGE_START  :
+        case ZOOM_IMAGE_FAIL  :
+        case ZOOM_IMAGE  :
+            retState= processPlotChange(state,action);
             break;
         case PLOT_PROGRESS_UPDATE  :
             break;
@@ -233,7 +270,7 @@ function reducer(state=initState(), action={}) {
 
 
 
-function processPlotView(state, action) {
+function processPlotCreation(state, action) {
 
     var retState= state;
     var plotViewAry;
@@ -251,8 +288,6 @@ function processPlotView(state, action) {
             plotViewAry= addPlot(state.plotViewAry,action);
             // todo: also process adding to history
             break;
-        case PLOT_PROGRESS_UPDATE  :
-            break;
         default:
             break;
     }
@@ -266,6 +301,65 @@ function processPlotView(state, action) {
 }
 
 
+function processPlotChange(state, action) {
+
+    var retState= state;
+    var plotViewAry;
+    var plotGroupAry;
+    var plotRequestDefaults;
+    switch (action.type) {
+        case ZOOM_IMAGE_START  :
+            plotViewAry= scaleImage(state.plotViewAry, action);
+            break;
+        case ZOOM_IMAGE_FAIL  :
+            break;
+        case ZOOM_IMAGE  :
+            plotViewAry= installZoomTiles(state.plotViewAry,action);
+            // todo: also process adding to history
+            break;
+        default:
+            break;
+    }
+    if (plotViewAry) {
+        retState= Object.assign({},state, {plotViewAry});
+    }
+    return retState;
+}
+
+
+
+
+function scaleImage(plotViewAry, action) {
+    const {plotId, zoomLevel}= action.payload;
+    var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
+    var plot= pv ? pv.primaryPlot : null;
+    if (!plot) return plotViewAry;
+
+    var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
+    pv= PlotView.replacePrimary(pv,WebPlot.setZoomFactor(plot,zoomLevel));
+    pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+    pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) => {
+        var p= WebPlot.setZoomFactor(oPv.plot,zoomLevel);
+        return Object.assign({},oPv, {plot:p});
+    });
+    return PlotView.replacePlotView(plotViewAry,pv);
+}
+
+function installZoomTiles(plotViewAry, action) {
+    const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
+    var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
+    var plot= pv ? pv.primaryPlot : null;
+    if (!plot) return plotViewAry;
+
+    var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
+    pv= PlotView.replacePrimary(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
+    pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
+        var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
+        return Object.assign({},oPv, {plot:p})
+    });
+    pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+    return PlotView.replacePlotView(plotViewAry,pv);
+}
 
 
 const updateDefaults= function(plotRequestDefaults, action) {

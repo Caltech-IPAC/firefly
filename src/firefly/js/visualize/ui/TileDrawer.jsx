@@ -25,15 +25,71 @@ const containerStyle={position:'absolute',
 };
 
 
-function isTileVisible(tile, x, y, w, h) {
 
-    var tileX= tile.xoff;
-    var tileY= tile.yoff;
+var TileDrawer= React.createClass(
+{
+
+    mixins : [React.addons.PureRenderMixin],
+
+    propTypes: {
+        x : React.PropTypes.number.isRequired,
+        y : React.PropTypes.number.isRequired,
+        width : React.PropTypes.number.isRequired,
+        height : React.PropTypes.number.isRequired,
+        tileData : React.PropTypes.object.isRequired,
+        tileZoomFactor : React.PropTypes.number.isRequired,
+        zoomFactor : React.PropTypes.number.isRequired,
+        plot : React.PropTypes.object.isRequired,
+        opacity : React.PropTypes.number
+    },
+
+
+    getDefaultProps()  {
+        return { opacity : 1};
+    },
+
+    render() {
+        const {x,y,width,height,tileData,plot,opacity, zoomFactor, tileZoomFactor}=  this.props;
+        const scale= zoomFactor / tileZoomFactor;
+        const style=Object.assign({},containerStyle, {width,height});
+
+        if (scale < .5 && tileData.images.length>5) {
+            return false;
+        }
+        else {
+            return (
+                <div className='tile-drawer'  style={style}>
+                    {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
+                </div>
+            );
+        }
+
+    }
+});
+
+
+
+/**
+ *
+ * @param {object} tile - object returned from server the describes the file
+ * @param {number} x
+ * @param {number} y
+ * @param {number} w
+ * @param {number} h
+ * @param {number} scale
+ * @return {boolean}
+ */
+function isTileVisible(tile, x, y, w, h, scale) {
+
+    var tileX= tile.xoff*scale;
+    var tileY= tile.yoff*scale;
+    var tileWidth= tile.width*scale;
+    var tileHeight= tile.height*scale;
 
     return (x + w > tileX &&
             y + h > tileY &&
-            x < tileX  + tile.width &&
-            y < tileY + tile.height);
+            x < tileX  + tileWidth &&
+            y < tileY + tileHeight);
 }
 
 
@@ -51,16 +107,17 @@ function makeScreenToVPConverter(plot) {
  * @param {object} vpPt viewPortPt, where to put the tile
  * @param {number} width
  * @param {number} height
+ * @param {number} scale
  * @param {number} opacity
  * @return {object}
  */
-const makeImageFromTile= function(src, vpPt, width, height, opacity) {
+function makeImageFromTile(src, vpPt, width, height, scale,opacity) {
     var s= {
         position : 'absolute',
         left : vpPt.x,
         top : vpPt.y,
-        width,
-        height,
+        width: width*scale,
+        height: height*scale,
         background: BACKGROUND_STYLE,
         opacity
     };
@@ -68,11 +125,11 @@ const makeImageFromTile= function(src, vpPt, width, height, opacity) {
         <img src={src} style={s}/>
     );
 
-};
+}
 
 
 
-const createImageUrl= function(plot, tile) {
+function createImageUrl(plot, tile) {
     var params = {
         file: tile.url,
         state: plot.plotState.toJson(),
@@ -83,75 +140,20 @@ const createImageUrl= function(plot, tile) {
         height: tile.height
     };
     return encodeUrl(getRootURL() + 'sticky/FireFly_ImageDownload', ParamType.QUESTION_MARK, params);
-};
+}
 
 
+function getTilesForArea(x,y,width,height,tileData,plot,scale,opacity) {
+    const screenToVP= makeScreenToVPConverter(plot);
+
+    return tileData.images
+        .filter( (tile) => isTileVisible(tile,x,y,width,height,scale))
+        .map( (tile) => {
+            var vpPt= screenToVP(tile.xoff*scale, tile.yoff*scale);
+            return makeImageFromTile(createImageUrl(plot,tile), vpPt, tile.width, tile.height, scale, opacity);
+        });
+}
 
 
-
-var TileDrawer= React.createClass(
-{
-
-
-    mixins : [React.addons.PureRenderMixin],
-
-    propTypes: {
-        x : React.PropTypes.number.isRequired,
-        y : React.PropTypes.number.isRequired,
-        width : React.PropTypes.number.isRequired,
-        height : React.PropTypes.number.isRequired,
-        tileData : React.PropTypes.object.isRequired,
-        zoomFactor : React.PropTypes.number.isRequired,
-        plot : React.PropTypes.object.isRequired,
-        opacity : React.PropTypes.number
-    },
-
-
-
-    getDefaultProps()  {
-        return { opacity : 1};
-    },
-
-
-    getInitialState() {
-        return { };
-    },
-
-
-    componentWillUnmount() {
-    },
-
-    componentDidMount() {
-    },
-
-
-
-
-    getTilesForArea() {
-        var {x,y,width,height,tileData,plot,opacity}=  this.props;
-        const screenToVP= makeScreenToVPConverter(plot);
-
-        return tileData.images
-            .filter( (tile) => isTileVisible(tile,x,y,width,height))
-            .map( (tile) => {
-                var vpPt= screenToVP(tile.xoff, tile.yoff);
-                return makeImageFromTile(createImageUrl(plot,tile), vpPt, tile.width, tile.height, opacity);
-            });
-    },
-
-    render() {
-        var {width,height}= this.props;
-        var style=Object.assign({},containerStyle, {width,height});
-
-        return (
-            <div className='tile-drawer'  style={style}>
-                {this.getTilesForArea()}
-            </div>
-        );
-    }
-
-
-
-});
 
 export default TileDrawer;

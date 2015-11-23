@@ -7,7 +7,7 @@ import {flux} from '../Firefly.js';
 
 
 
-export default {getPlotViewById, getPrimaryPlot, findPlotView, findPlotGroup};
+export default {getPlotViewById, getPrimaryPlot, findPlotView, findPlotGroup, findPrimaryPlot, getPlotStateAry};
 
 /**
  * get the plot view with the id
@@ -37,7 +37,25 @@ function findPlotView(plotId, plotViewAry) {
     return plotViewAry.find( (pv) => pv.plotId===plotId);
 }
 
+function findPrimaryPlot(plotId, plotViewAry) {
+    if (!plotId || !plotViewAry) return null;
+    var pv= findPlotView(plotId,plotViewAry);
+    return pv && pv.primaryPlot ? pv.primaryPlot : null;
+}
+
+
+
 function findPlotGroup(plotGroupId, plotGroupAry) {
     if (!plotGroupId || !plotGroupAry) return null;
     return plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
+}
+
+/**
+ *
+ * @param pv
+ * @return {*[]}
+ */
+function getPlotStateAry(pv) {
+    var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
+    return [pv.primaryPlot.plotState, ...overlayStates];
 }

@@ -1,11 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';
@@ -15,8 +10,6 @@ import ValidationField from './ValidationField.jsx';
 import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import ListBoxInputField from './ListBoxInputField.jsx';
-import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
-import WebPlotRequest, {ServiceType} from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
@@ -25,8 +18,33 @@ import PopupPanel from './PopupPanel.jsx';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab} from './panel/TabPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
+
+
+
+
+function getDialogBuilder() {
+    var popup= null;
+    return () => {
+        if (!popup) {
+            const popup= (
+                <PopupPanel title={'Example Dialog'} >
+                    <AllTest  groupKey={'DEMO_FORM'} />
+                </PopupPanel>
+            );
+            DialogRootContainer.defineDialog('ExampleDialog', popup);
+        }
+        return popup;
+    };
+}
+
+const dialogBuilder= getDialogBuilder();
+
+export function showExampleDialog() {
+    dialogBuilder();
+    AppDataCntlr.showDialog('ExampleDialog');
+}
+
 
 
 /**
@@ -35,7 +53,7 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
  * @param {object} action
  * @return {object}
  */
-var testReducer= function(inFields, action) {
+var exDialogReducer= function(inFields, action) {
     if (!inFields)  {
         return {
             field1: {
@@ -67,22 +85,9 @@ var testReducer= function(inFields, action) {
     }
 };
 
-class ExampleDialog {
 
-    constructor() {
-        var popup= (
-            <PopupPanel title={'Example Dialog'} >
-                <AllTest  groupKey={'DEMO_FORM'} />
-            </PopupPanel>
-        );
-        FieldGroupUtils.initFieldGroup('DEMO_FORM',testReducer,true);
-        DialogRootContainer.defineDialog('ExampleDialog', popup);
-    }
 
-    showDialog() {
-        AppDataCntlr.showDialog('ExampleDialog');
-    }
-}
+
 
 /// test
 
@@ -146,7 +151,7 @@ var AllTest = React.createClass({
                     <Tabs defaultSelected={0}>
                         <Tab name='First'>
                             <div style={{'minWidth': '300', 'minHeight': '100'}}>
-                                <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={testReducer} validatorFunc={null} keepState={true}>
+                                <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} validatorFunc={null} keepState={true}>
                                     <InputGroup labelWidth={130}>
                                         <TargetPanel groupKey='DEMO_FORM' />
                                         <ValidationField fieldKey={'field1'}
@@ -274,8 +279,4 @@ var AllTest = React.createClass({
 });
 
 
-//<JunkFormButton groupKey='DEMO_FORM' label='submit'/>
-
-const LABEL_WIDTH= 105;
-
-export default ExampleDialog;
+//export default ExampleDialog;

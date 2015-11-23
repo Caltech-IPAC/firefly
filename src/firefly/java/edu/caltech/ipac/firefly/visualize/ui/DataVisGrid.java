@@ -176,7 +176,9 @@ public class DataVisGrid {
             @Override
             public void execute() {
                 for(MiniPlotWidget mpw : mpwMap.values()) {
-                    mpw.getPlotView().smartCenter();
+                    if (mpw.getPlotView()!=null) {
+                        mpw.getPlotView().smartCenter();
+                    }
                 }
             }
         });
