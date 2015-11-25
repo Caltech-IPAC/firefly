@@ -19,8 +19,16 @@ const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
 const makeURL= function(baseUrl, cmd, paramList, isJsonp) {
-    if (cmd) paramList.push({name: ServerParams.COMMAND, value: cmd});
-    if (isJsonp) paramList.push({name: ServerParams.DO_JSONP, value: 'true'});
+    if (Array.isArray(paramList)) {
+        if (cmd) paramList.push({name: ServerParams.COMMAND, value: cmd});
+        if (isJsonp) paramList.push({name: ServerParams.DO_JSONP, value: 'true'});
+    }
+    else {
+        var add= {};
+        if (cmd) add[ServerParams.COMMAND]= cmd;
+        if (isJsonp) add[ServerParams.DO_JSONP]= 'true';
+        paramList= Object.assign({},paramList,add);
+    }
     return encodeServerUrl(baseUrl, paramList);
 };
 

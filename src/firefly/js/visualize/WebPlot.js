@@ -442,7 +442,7 @@ export class WebPlot {
 
         var projection= makeProjection(wpInit.projection);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
-        var zl= plotState.getZoomLevel();
+        var zf= plotState.getZoomLevel();
         var webPlot= {
             plotId,
             plotImageId     : plotId+'---NEEDS___INIT',
@@ -456,8 +456,9 @@ export class WebPlot {
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
             webFitsData     : wpInit.fitsData,
-            screenSize: {width:wpInit.dataWidth*zl, height:wpInit.dataHeight*zl},
             //=== Mutable =====================
+            screenSize: {width:wpInit.dataWidth*zf, height:wpInit.dataHeight*zf},
+            zoomFactor: zf,
             percentOpaque   : 1.0,
             alive    : true,
             attributes: {},
@@ -478,6 +479,34 @@ export class WebPlot {
     static setWPViewPort(wpData,viewPort) {
         return Object.assign({},wpData,{viewPort});
     }
+
+    /**
+     *
+     * @param wpData
+     * @param {number} zoomFactor
+     * @return {*}
+     */
+    static setZoomFactor(wpData,zoomFactor) {
+        var screenSize= {width:wpData.dataWidth*zoomFactor, height:wpData.dataHeight*zoomFactor};
+        return Object.assign({},wpData,{zoomFactor,screenSize});
+    }
+
+    /**
+     *
+     * @param wpData
+     * @param {object} stateJson
+     * @param {object} serverImages
+     * @return {*}
+     */
+    static setPlotState(wpData,stateJson,serverImages) {
+        var plotState= PlotState.makePlotStateWithJson(stateJson);
+        var zf= plotState.getZoomLevel();
+        var screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
+        var plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
+        if (serverImages) plot.serverImages= serverImages;
+        return plot;
+    }
+
 
     /**
      * add an attribute to the webplot data a return a new version

@@ -17,7 +17,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.core.Application;
@@ -37,9 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.CATALOGS;
-import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.IMAGES;
-import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.SPECTRUM;
+import static edu.caltech.ipac.firefly.data.DataSetInfo.DataTypes.*;
 
 /**
  * @author Trey Roby
@@ -101,7 +98,7 @@ public class AnyDataSetSearchUI implements SearchUI {
 //        mission.addStyleName("left-floating");
         typeSelectPanel.add(mission);
         typeSelectPanel.add(dataTypeWrapper);
-        typeSelectPanel.add(new HTML("Currently only 2MASS, WISE and<br> Spitzer Enhanced Product<br> images available"));
+//        typeSelectPanel.add(new HTML("Currently only 2MASS, WISE and<br> Spitzer Enhanced Product<br> images available"));
 
 
         changeView();
