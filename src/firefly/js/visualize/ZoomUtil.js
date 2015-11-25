@@ -4,6 +4,7 @@
 
 
 import Enum from 'enum';
+import numeral from 'numeral';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
@@ -183,3 +184,30 @@ function getNextZoomLevel(currLevel, zoomType) {
 }
 
 
+function getOnePlusLevelDesc(level) {
+    var retval;
+    var remainder= level % 1;
+    if (remainder < .1 || remainder>.9) {
+        retval= Math.round(level)+'x';
+    }
+    else {
+        retval= numeral(level).format('0.000')+'x';
+    }
+    return retval;
+}
+
+
+function convertZoomToString(level) {
+    var retval;
+    var zfInt= Math.floor(level*10000);
+
+    if (zfInt>=10000)      retval= getOnePlusLevelDesc(level); // if level > then 1.0
+    else if (zfInt===312)  retval= '1/32x';     // 1/32
+    else if (zfInt===625)  retval= '1/16x';     // 1/16
+    else if (zfInt===1250) retval= '1/8x';      // 1/8
+    else if (zfInt===2500) retval= '&#188;x';   // 1/4
+    else if (zfInt===7500) retval= '&#190;x';   // 3/4
+    else if (zfInt===5000) retval= '&#189;x';   // 1/2
+    else                   retval= numeral(level).format('0.0')+'x';
+    return retval;
+}

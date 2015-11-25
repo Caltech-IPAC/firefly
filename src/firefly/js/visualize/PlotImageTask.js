@@ -39,7 +39,7 @@ function dispatchUpdateStatus() {
     // todo:             fire  ImagePlotCntlr.PLOT_PROGRESS_UPDATE for plot Id
     // todo:             reset time for 2 seconds
     // todo:
-    // todo: Also, move to ImagePlotCntrl
+    // todo: Also, move to ImagePlotCntlr
 
 }
 
@@ -54,6 +54,15 @@ function dispatchUpdateStatus() {
 function makePlotImageAction(rawAction) {
     return (dispatcher) => {
         var {plotId,wpRequest}= rawAction.payload;
+
+        if (!plotId) {
+            flux.process({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                           payload: {plotId, error:Error('plotId is required')} });
+            return;
+        }
+
+
+
         setTimeout(dispatchUpdateStatus, INIT_STATUS_UPDATE_DELAY);
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
             payload: rawAction.payload

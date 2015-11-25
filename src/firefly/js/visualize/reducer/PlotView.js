@@ -2,6 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
 
 /**
  * REDUCER USE ONLY
@@ -10,19 +14,19 @@
  */
 
 //import ImagePlotCntlr from './ImagePlotCntlr.js';
-import {flux} from '../Firefly.js';
-import WebPlot from './WebPlot.js';
-import {GridOnStatus, ExpandedTitleOptions, WPConst} from './WebPlotRequest.js';
-import {RotateType} from './PlotState.js';
-import {makeImagePt,makeScreenPt} from './Point.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
-import ImagePlotCntlr from './ImagePlotCntlr.js';
-import VisUtil from './VisUtil.js';
-import PlotViewUtil from './PlotViewUtil.js';
-import PlotPref from './PlotPref.js';
-import {DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
-import SimpleMemCache from '../util/SimpleMemCache.js';
-import {CCUtil} from './CsysConverter.js';
+import {flux} from '../../Firefly.js';
+import WebPlot from './../WebPlot.js';
+import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
+import {RotateType} from './../PlotState.js';
+import {makeImagePt,makeScreenPt} from './../Point.js';
+import AppDataCntlr from '../../core/AppDataCntlr.js';
+import ImagePlotCntlr from './../ImagePlotCntlr.js';
+import VisUtil from './../VisUtil.js';
+import PlotViewUtil from './../PlotViewUtil.js';
+import PlotPref from './../PlotPref.js';
+import {DEFAULT_THUMBNAIL_SIZE} from './../WebPlotRequest.js';
+import SimpleMemCache from '../../util/SimpleMemCache.js';
+import {CCUtil} from './../CsysConverter.js';
 
 export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
