@@ -1,11 +1,9 @@
-
-
-
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
-import PlotView from './PlotView.js';
-import PlotGroup from './PlotGroup.js';
+import ZoomUtil from './ZoomUtil.js';
+import HandlePlotChange from './reducer/HandlePlotChange.js';
+import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 
 
 const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -26,6 +24,21 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
 const PLOT_IMAGE_START= 'ImagePlotCntlr/PlotImageStart';
 const PLOT_IMAGE_FAIL= 'ImagePlotCntlr/PlotImageFail';
 const PLOT_IMAGE= 'ImagePlotCntlr/PlotImage';
+
+const ZOOM_IMAGE_START= 'ImagePlotCntlr/ZoomImageStart';
+const ZOOM_IMAGE= 'ImagePlotCntlr/ZoomImage';
+const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr/ZoomImageFail';
+
+
+const FLIP_IMAGE_START= 'ImagePlotCntlr/FlipImageStart';
+const FLIP_IMAGE= 'ImagePlotCntlr/FlipImage';
+const FLIP_IMAGE_FAIL= 'ImagePlotCntlr/FlipImageFail';
+
+
+const CROP_IMAGE_START= 'ImagePlotCntlr/CropImageStart';
+const CROP_IMAGE= 'ImagePlotCntlr/CropImage';
+const CROP_IMAGE_FAIL= 'ImagePlotCntlr/CropImageFail';
+
 const UPDATE_VIEW_SIZE= 'ImagePlotCntlr/UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr/ProcessScroll';
 
@@ -67,9 +80,13 @@ const initState= function() {
 //============ EXPORTS ===========
 
 export default {
-    reducer, plotImageActionCreator,
-    dispatchUpdateViewSize, dispatchProcessScroll, dispatchPlotImage, dispatch3ColorPlotImage,
-    ANY_CHANGE, IMAGE_PLOT_KEY, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    reducer,
+    dispatchUpdateViewSize, dispatchProcessScroll,
+    dispatchPlotImage, dispatch3ColorPlotImage, dispatchZoom,
+    zoomActionCreator, plotImageActionCreator,
+    ANY_CHANGE, IMAGE_PLOT_KEY,
+    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL
 };
 
@@ -125,21 +142,10 @@ function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,centerImag
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  */
 function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
-
     if (plotId) wpRequest.setPlotId(plotId);
-
     var payload= initPlotImagePayload(plotId,wpRequest,false, removeOldPlot,addToHistory,useContextModifications);
     payload.wpRequest= wpRequest;
-
-
-
-    if (payload.plotId) {
-        flux.process({ type: PLOT_IMAGE, payload});
-    }
-    else {
-        var error= Error('plotId is required');
-        flux.process({ type: PLOT_IMAGE_FAIL, payload: {plotId, error} });
-    }
+    flux.process({ type: PLOT_IMAGE, payload});
 }
 
 
@@ -179,10 +185,15 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 }
 
 
+/**
+ *
+ * @param plotId
+ * @param {UserZoomTypes} zoomType
+ */
+function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
 
 
 
-//======================================== End Dispatch Functions =============================
 
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -192,9 +203,9 @@ function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
-
-//======================================== End Action Creators =============================
-
+function zoomActionCreator(rawAction) {
+    return ZoomUtil.makeZoomAction(rawAction);
+}
 
 
 //======================================== Reducer =============================
@@ -210,15 +221,15 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
-            retState= processPlotView(state,action);
+            retState= HandlePlotCreation.reducer(state,action);
             break;
+        case ZOOM_IMAGE_START  :
+        case ZOOM_IMAGE_FAIL  :
+        case ZOOM_IMAGE  :
         case PLOT_PROGRESS_UPDATE  :
-            break;
         case UPDATE_VIEW_SIZE :
-            retState= updateViewSize(state,action);
-            break;
         case PROCESS_SCROLL  :
-            retState= processScroll(state,action);
+            retState= HandlePlotChange.reducer(state,action);
             break;
         default:
             break;
@@ -227,145 +238,25 @@ function reducer(state=initState(), action={}) {
 }
 
 
-//======================================== Private ======================================
-//======================================== Private ======================================
-//======================================== Private ======================================
-
-
-
-function processPlotView(state, action) {
-
-    var retState= state;
-    var plotViewAry;
-    var plotGroupAry;
-    var plotRequestDefaults;
-    switch (action.type) {
-        case PLOT_IMAGE_START  :
-            plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
-            plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
-            plotViewAry= confirmPlotView(state.plotViewAry,action);
-            break;
-        case PLOT_IMAGE_FAIL  :
-            break;
-        case PLOT_IMAGE  :
-            plotViewAry= addPlot(state.plotViewAry,action);
-            // todo: also process adding to history
-            break;
-        case PLOT_PROGRESS_UPDATE  :
-            break;
-        default:
-            break;
-    }
-    if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-        retState= Object.assign({},state);
-        if (plotViewAry) retState.plotViewAry= plotViewAry;
-        if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
-        if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
-    }
-    return retState;
-}
-
-
-
-
-const updateDefaults= function(plotRequestDefaults, action) {
-    var retDef;
-    var {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
-    if (threeColor) {
-        retDef= Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}});
-    }
-    else {
-        retDef= Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
-    }
-    return retDef;
-};
-
-const addPlot= function(plotViewAry,action) {
-
-    const {plotId, plotAry}= action.payload;
-    var newPlotViewAry= plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry) : pv;
-    });
-    return newPlotViewAry;
-
-};
+//============ private functions =================================
+//============ private functions =================================
+//============ private functions =================================
 
 
 //todo
 //todo
 //todo
-function updateHistory(plotHistoryRequest, action) {
-
-    var {addToHistory}= action;
-    if (addToHistory) {
-        var request= pv.primaryPlot.plotState.getPrimaryWebPlotRequest();
-        //todo: add to history here -- need to figure out how
-    }
-}
-
-
+//function updateHistory(plotHistoryRequest, action) {
+//
+//    var {addToHistory}= action;
+//    if (addToHistory) {
+//        var request= pv.primaryPlot.plotState.getPrimaryWebPlotRequest();
+//        //todo: add to history here -- need to figure out how
+//    }
+//}
 
 
 
-//============ private functions =================================
-//============ private functions =================================
-//============ private functions =================================
-
-/**
-/**
- *
- * @param plotViewAry
- * @param action
- * @return {[]|null} new PlotViewAry or null it nothing is created.
- */
-function confirmPlotView(plotViewAry,action) {
-    const {plotId}= action.payload;
-    if (pvExist(plotId,plotViewAry)) return null;
-
-    const payload= action.payload;
-    var rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => payload[key] ? true : false);
-    var pv= PlotView.makePlotView(plotId, payload[rKey] );
-    return [...plotViewAry,pv];
-}
-
-/**
- *
- * @param plotGroupAry
- * @param action
- * @return {[]|null} new PlotGroupAry or null if nothing is created.
- */
-function confirmPlotGroup(plotGroupAry,action) {
-    const {plotGroupId,groupLocked}= action.payload;
-    if (plotGroupExist(plotGroupId,plotGroupAry)) return null;
-    var plotGroup= PlotGroup.makePlotGroup(plotGroupId, groupLocked);
-    return [...plotGroupAry,plotGroup];
-}
-
-
-function pvExist(plotId, plotViewAry) {
-    return (plotViewAry.some( (pv) => pv.plotId===plotId ));
-}
-
-function plotGroupExist(plotGroupId, plotGroupAry) {
-    return (plotGroupAry.some( (pg) => pg.plotGroupId===plotGroupId ));
-}
-
-
-function processScroll(state,action) {
-    const {plotId,scrollScreenPt}= action.payload;
-    var plotViewAry= PlotView.updatePlotGroupScrollXY(plotId,state.plotViewAry,state.plotGroupAry,scrollScreenPt);
-    return Object.assign({},state,{plotViewAry});
-}
-
-function updateViewSize(state,action) {
-    const {plotId,width,height,updateScroll,centerImagePt}= action.payload;
-    var plotViewAry= state.plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.updateViewDim(pv,{width, height}) : pv;
-    });
-
-
-    return Object.assign({},state,{plotViewAry});
-}
 
 
 /*

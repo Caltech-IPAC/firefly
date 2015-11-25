@@ -51,6 +51,7 @@ export class CysConverter {
         this.dataHeight= plot.dataHeight;
         this.projection= plot.projection;
         this.viewPort= plot.viewPort;
+        this.zoomFactor= plot.zoomFactor;
         this.imageCoordSys= plot.imageCoordSys;
         this.inPlotRoughGuess= null;
     }
@@ -225,7 +226,7 @@ export class CysConverter {
      * @param {number} [altZoomLevel]
      */
     makeIWPtFromSPt(screenPt, altZoomLevel) {
-        const zoom= altZoomLevel || this.plotState.getZoomLevel();
+        const zoom= altZoomLevel || this.zoomFactor;
         return makeImageWorkSpacePt(screenPt.x / zoom, this.dataHeight-screenPt.y/zoom);
     }
 
@@ -407,7 +408,7 @@ export class CysConverter {
         var imageWorkspaceY= imagePt.y;
 
         // convert image workspace to screen
-        const zFact= this.plotState.getZoomLevel();
+        const zFact= this.zoomFactor;
         var sx= Math.floor(imageWorkspaceX*zFact);
         var sy= Math.floor((this.dataHeight - imageWorkspaceY) *zFact);
 
@@ -468,7 +469,7 @@ export class CysConverter {
      * @param {number} [altZoomLevel]
      */
     makeSPtFromIWPt(iwpt, altZoomLevel) {
-        const zoom= altZoomLevel || this.plotState.getZoomLevel();
+        const zoom= altZoomLevel || this.zoomFactor;
         return makeScreenPt(Math.floor(iwpt.x*zoom),
                             Math.floor((this.dataHeight - iwpt.y) *zoom) );
     }

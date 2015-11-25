@@ -9,6 +9,7 @@
 import ServerParams from '../data/ServerParams.js';
 import {doService} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
+import PlotState from '../visualize/PlotState.js';
 
 
 const doJsonP= function() {
@@ -49,7 +50,6 @@ const getWebPlot3Color= function(redRequest, greenRequest, blueRequest) {
         .then((data) => parse(data) );
 };
 
-
 /**
  * @param {WebPlotRequest} request
  * @return {Promise}
@@ -61,6 +61,49 @@ const getWebPlot= function(request) {
 };
 
 
+
+function rotateNorth(stateAry, north, newZoomLevel) {
+    var params =  makeParamsWithStartAry(stateAry,[
+                   {name: ServerParams.NORTH, value: north + ''},
+                   {name: ServerParams.ZOOM, value: newZoomLevel + ''},
+                 ]);
+    return doService(doJsonP(), ServerParams.ROTATE_NORTH, params);
+}
+
+function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
+    var params = makeParamsWithStartAry(stateAry,[
+                       {name: ServerParams.ROTATE, value: rotate + ''},
+                       {name: ServerParams.ANGLE, value: angle + ''},
+                       {name: ServerParams.ZOOM, value: newZoomLevel + ''},
+                   ]);
+    return doService(doJsonP(), ServerParams.ROTATE_ANGLE, params);
+}
+
+
+
+
+/**
+ *
+ * @param {[]} stateAry
+ * @param {number} level
+ * @param {boolean} isFullScreen
+ */
+function setZoomLevel(stateAry, level, isFullScreen) {
+    var params= makeParamsWithStartAry(stateAry,[
+        {name:ServerParams.LEVEL, value:level},
+        {name:ServerParams.FULL_SCREEN, value : isFullScreen},
+    ]);
+    return doService(doJsonP(), ServerParams.ZOOM, params);
+}
+
+
+function flipImageOnY(stateAry) {
+    return doService(doJsonP(), ServerParams.FLIP_Y, makeParamsWithStartAry(stateAry));
+}
+
+
+
+
 const getWebPlotGroup= function(requestList, progressKey) {
     //todo
 };
@@ -69,5 +112,37 @@ const getOneFileGroup= function(requestList, progressKey) {
     //todo
 };
 
-var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, getWebPlotGroup, getOneFileGroup};
+/**
+ * not used
+ * @param startAry
+ */
+function makeJsonStateAryString(startAry) {
+    return JSON.stringify(startAry.map( (s) => PlotState.convertToJSON(s)));
+}
+
+function makeParamsWithStartAry(stateAry, otherParams=[]) {
+    return [
+        ...makeStateParamAry(stateAry),
+        ...otherParams,
+        {name:ServerParams.JSON_DEEP,value:'true'}
+    ];
+
+}
+
+
+/**
+ *
+ * @param {[]} startAry
+ * @return {[]}
+ */
+function makeStateParamAry(startAry) {
+    return startAry.map( (s,idx) => {
+        return {name:'state'+idx, value: JSON.stringify(PlotState.convertToJSON(s)) };
+    } );
+}
+
+
+
+
+var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel, getWebPlotGroup, getOneFileGroup};
 export default PlotServicesJson;

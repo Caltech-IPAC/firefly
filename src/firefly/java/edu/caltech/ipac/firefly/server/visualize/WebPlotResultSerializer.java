@@ -36,10 +36,16 @@ public class WebPlotResultSerializer {
 
     }
     public static String createJson(WebPlotResult res, boolean useDeepJson) {
-        return useDeepJson ? createJsonDeep(res) : createJsonShallow(res);
+        return useDeepJson ? createJsonDeepString(res) : createJsonShallow(res);
+    }
+    public static String createJsonDeepString(WebPlotResult res) {
+        JSONObject obj= createJsonDeep(res);
+        JSONArray wrapperAry= new JSONArray();
+        wrapperAry.add(obj);
+        return wrapperAry.toString();
     }
 
-    public static String createJsonDeep(WebPlotResult res) {
+    public static JSONObject createJsonDeep(WebPlotResult res) {
 
         JSONObject map = new JSONObject();
         map.put("JSON", true);
@@ -112,6 +118,16 @@ public class WebPlotResultSerializer {
             if (res.containsKey(WebPlotResult.TITLE)) {
                 map.put(WebPlotResult.TITLE, res.getStringResult(WebPlotResult.TITLE));
             }
+            if (res.containsKey(WebPlotResult.RESULT_ARY)) {
+                DataEntry.WebPlotResultAry resultEntry= (DataEntry.WebPlotResultAry)res.getResult(WebPlotResult.RESULT_ARY);
+                WebPlotResult resultAry[]= resultEntry.getArray();
+                JSONArray jResAry= new JSONArray();
+                for(WebPlotResult r : resultAry) {
+                    jResAry.add(createJsonDeep(r));
+                }
+                map.put(WebPlotResult.RESULT_ARY, jResAry);
+
+            }
 
         }
         else {
@@ -122,14 +138,12 @@ public class WebPlotResultSerializer {
             map.put( "progressKey", pKey);
         }
 
-        JSONArray wrapperAry= new JSONArray();
         JSONObject wraperObj= new JSONObject();
-        wrapperAry.add(wraperObj);
         wraperObj.put("success", true);
         wraperObj.put("data", map);
 
 
-        return wrapperAry.toString();
+        return wraperObj;
 
     }
 

@@ -41,6 +41,7 @@ actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
+actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
 
 
 /**

@@ -90,7 +90,8 @@ var ImageViewerView= React.createClass(
                          style={{width:viewPortWidth,height:viewPortHeight, left:0,right:0,position:'absolute', cursor:'crosshair'}}>
                         <TileDrawer x={scrollX} y={scrollY} width={viewPortWidth} height={viewPortHeight}
                                     tileData={plot.serverImages}
-                                    zoomFactor={plot.plotState.getZoomLevel()}
+                                    tileZoomFactor={plot.plotState.getZoomLevel()}
+                                    zoomFactor={plot.zoomFactor}
                                     plot={plot}
                                     opacity={plot.percentOpaque}
                         />
