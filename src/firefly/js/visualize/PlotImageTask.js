@@ -56,8 +56,8 @@ function makePlotImageAction(rawAction) {
         var {plotId,wpRequest}= rawAction.payload;
 
         if (!plotId) {
-            flux.process({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                           payload: {plotId, error:Error('plotId is required')} });
+            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                         payload: {plotId, error:Error('plotId is required')} });
             return;
         }
 
@@ -65,7 +65,7 @@ function makePlotImageAction(rawAction) {
 
         setTimeout(dispatchUpdateStatus, INIT_STATUS_UPDATE_DELAY);
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
-            payload: rawAction.payload
+                      payload: rawAction.payload
         } );
 
         if (rawAction.useContextModifications) {
