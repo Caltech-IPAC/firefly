@@ -479,11 +479,11 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             center = pv.findCurrentCenterWorldPoint();
             _activeMarker = new FootprintDs9(center,plot,this.mission,this.instrument);
 //            _activeMarker = new FootprintDs9(center,plot,FOOTPRINT.HST);
-        	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with constructor center, plot "+center.toString());
+        	//GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with constructor center, plot "+center.toString());
         }
         else{
         	_activeMarker = new FootprintDs9(this.mission);
-        	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with default empty constructor");
+        	//GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with default empty constructor");
         }
         
 //        Footprint fp = new Footprint();
@@ -497,7 +497,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
             center = pv.findCurrentCenterWorldPoint();
-            GwtUtil.logToServer(Level.INFO, " center plot "+center.toString());
+            //GwtUtil.logToServer(Level.INFO, " center plot "+center.toString());
            
 			_activeMarker.move(center, plot);
             updateData(_activeMarker, plot, true);
