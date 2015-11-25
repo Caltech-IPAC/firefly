@@ -43,8 +43,8 @@ public class PlotStateUtil {
         state.setMultiImageAction(PlotState.MultiImageAction.USE_FIRST);
 
         WebPlotRequest redReq= reqMap.get(Band.RED);
-        WebPlotRequest blueReq= reqMap.get(Band.GREEN);
-        WebPlotRequest greenReq= reqMap.get(Band.BLUE);
+        WebPlotRequest greenReq= reqMap.get(Band.GREEN);
+        WebPlotRequest blueReq= reqMap.get(Band.BLUE);
         if (redReq!=null) state.setWebPlotRequest(redReq, Band.RED);
         if (greenReq!=null) state.setWebPlotRequest(greenReq, Band.GREEN);
         if (blueReq!=null) state.setWebPlotRequest(blueReq, Band.BLUE);
