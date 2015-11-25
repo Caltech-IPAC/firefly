@@ -85,6 +85,7 @@ import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
@@ -852,10 +853,17 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
         commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
-        FOOTPRINT[] values = FOOTPRINT.values();
-        for (int i = 0; i < values.length; i++) {
-        	commandMap.put(JwstFootprintCmd.CommandName+values[i].name(),  new JwstFootprintCmd(values[i]));
-        }        
+        
+        FOOTPRINT[] fp = FOOTPRINT.values();
+		for (int f = 0; f < fp.length; f++) {
+			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);//.values();
+			commandMap.put(JwstFootprintCmd.CommandName + fp[f].name(), new JwstFootprintCmd(fp[f]));
+			if (fp[f].equals(FOOTPRINT.JWST)) {
+				for (int i = 0; i < values.length; i++) {
+					commandMap.put(JwstFootprintCmd.CommandName + values[i].name(), new JwstFootprintCmd(values[i]));
+				}
+			}
+		}
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());

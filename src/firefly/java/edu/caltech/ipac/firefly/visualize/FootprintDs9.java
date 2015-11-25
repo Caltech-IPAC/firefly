@@ -8,12 +8,13 @@ package edu.caltech.ipac.firefly.visualize;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawSymbol;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
+import edu.caltech.ipac.firefly.visualize.draw.PointDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.util.dd.Region;
@@ -29,13 +30,14 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 public class FootprintDs9 extends CircularMarker {
 
 	private List<DrawObj> lst;
-	private List<Region> footprintRegions;
+	private ArrayList<Region> footprintRegions;
 	private RegionConnection regConnection;
 	private boolean isDefined = false;
 	private double rotationAngle;
 	private WorldPt center;
 	private FOOTPRINT fp;
 	private FootprintFactory footprintFactory;
+	private INSTRUMENTS inst;
 
 	/**
 	 * Define footprint JWST by default with no particular center
@@ -53,8 +55,8 @@ public class FootprintDs9 extends CircularMarker {
 					// 'marker' around multi-shape footprint
 		lst = new ArrayList<DrawObj>();
 		this.fp = fp;
+		this.inst = null;//all footprint.
 		isDefined = false;
-		GwtUtil.logToServer(Level.INFO, "FootprintDs9(Footprint) - with FP: " + fp.name());
 	}
 
 	/**
@@ -65,14 +67,14 @@ public class FootprintDs9 extends CircularMarker {
 	 * @param fp
 	 *            the footprint
 	 */
-	public FootprintDs9(WorldPt center2, WebPlot plot, FOOTPRINT fp) {
-		super(center2, plot, 20);
+	public FootprintDs9(WorldPt center2, WebPlot plot, FOOTPRINT fp, INSTRUMENTS inst) {
+		super(center2, plot, (int) (20*plot.getZoomFact()));
+		this.inst = inst;
 		lst = new ArrayList<DrawObj>();
 		this.center = center2;
 		this.fp = fp;
-		isDefined = false;
-		GwtUtil.logToServer(Level.INFO,
-				"FootprintDs9(WorldPt, WebPlot, Footprint) - center =" + center.toString() + " with FP: " + fp.name());
+		isDefined = true;
+		buildInitialFootprint(plot);
 	}
 
 	@Override
@@ -94,12 +96,19 @@ public class FootprintDs9 extends CircularMarker {
 	}
 
 	/**
-	 * @return rotated value in degree of the footprint
+	 * @return rotated value in radians of the footprint
 	 */
 	public double getRotAngle() {
 		return this.rotationAngle;
 	}
-
+	
+	/**
+	 * @param rotationAngle in radians
+	 */
+	public void setRotationAngle(double rotationAngle) {
+		this.rotationAngle = rotationAngle;
+	}
+	
 	@Override
 	public void setEndPt(WorldPt endPt, WebPlot plot) {
 		// Called from rotate mode - should be anything that user rotate any 4
@@ -108,30 +117,18 @@ public class FootprintDs9 extends CircularMarker {
 		// Calculate the rotation angle....
 		ScreenPt screenCenter = plot.getScreenCoords(center);
 
-		GwtUtil.logToServer(Level.INFO, "setEndPt - center (x,y)=" + center.getX() + ", " + center.getY());
-		GwtUtil.logToServer(Level.INFO, "setEndPt - center (x,y)=" + screenCenter.getX() + ", " + screenCenter.getY());
-
 		if (super.endPt == null)
 			return;
-
-		GwtUtil.logToServer(Level.INFO,
-				"setEndPt - startPt (lon,lat)=" + getStartPt().getX() + ", " + getStartPt().getY());
-		GwtUtil.logToServer(Level.INFO, "setEndPt - endPt (lon,lat)=" + endPt.getLon() + ", " + endPt.getLat());
 
 		ScreenPt ep = plot.getScreenCoords(endPt);
 		ScreenPt sp = screenCenter;// plot.getScreenCoords(getStartPt());
 
-		GwtUtil.logToServer(Level.INFO, "setEndPt - center (x,y)=" + sp.getX() + ", " + sp.getY());
-		GwtUtil.logToServer(Level.INFO, "setEndPt - endPt (x,y)=" + ep.getX() + ", " + ep.getY());
 		int xdiff = ep.getIX() - sp.getIX();
 		int ydiff = ep.getIY() - sp.getIY();
 		
 		//Keep the rotation angle to class scope so it can be used when moving 
 		rotationAngle = Math.atan2(ydiff, xdiff); // radians!
 		
-		GwtUtil.logToServer(Level.INFO,
-				"setEndPt - angle rotated rad=" + rotationAngle + ", deg: " + Math.toDegrees(rotationAngle));
-
 		// ScreenPt center = getCenter(plot);// this takes the center from last
 		// move
 		// WorldPt wc = plot.getWorldCoords(center);
@@ -169,8 +166,6 @@ public class FootprintDs9 extends CircularMarker {
 	public void adjustStartEnd(WebPlot plot) {
 		//super.adjustStartEnd(plot);
 		//move(center, plot);
-		GwtUtil.logToServer(Level.INFO,
-				"adjustStartEnd(WebPlot) - center =" + center.toString() );
 	}
 
 	@Override
@@ -190,10 +185,10 @@ public class FootprintDs9 extends CircularMarker {
 	 */
 	public void buildInitialFootprint(WebPlot plot) {
 		footprintFactory = new FootprintFactory();
+		footprintFactory.setWebPlot(plot);
 		lst.clear();
 		DrawObj circleObj = super.getShape().get(0);
 		
-//		lst.add(0, ShapeDataObj.makeCircle(pt.(), getEndPt()));
 		lst.add(0, circleObj);// add circle central marker
 
 		/*
@@ -236,18 +231,19 @@ public class FootprintDs9 extends CircularMarker {
 		 * ScreenPt(50, -50)));
 		 * 
 		 */
-		GwtUtil.logToServer(Level.INFO,
-				"buildFootprint(WebPlot) - center =" + center.toString() );
-		// Build jwst from 0,0 resulting polygons (FIXME: does it make sense?)
+		// Build jwst from 0,0 resulting polygons
 		WorldPt centerOffset = plot.getWorldCoords(new ScreenPt(0,0));
-//		WorldPt newCenter = VisUtil.calculatePosition(centerOffset, center.getLon()*3600, center.getLat()*3600);
-//		
-		GwtUtil.logToServer(Level.INFO,
-				"buildFootprint(WebPlot) - center offset screen(0,0) =" + centerOffset.toString() );
-		footprintRegions = footprintFactory.getFootprintAsRegions(fp, centerOffset);// getFootprintRegions
+		
+		if(inst==null){
+			footprintRegions = (ArrayList<Region>) footprintFactory.getFootprintAsRegions(fp, centerOffset, false);// getFootprintRegions
+		}else{
+			footprintRegions = (ArrayList<Region>) footprintFactory.getFootprintAsRegions(fp, inst, centerOffset, true);// getFootprintRegions
+		}
 
-		addCrossHair(footprintRegions, plot);
-
+		//addCrossHair(footprintRegions, plot);
+		
+		footprintRegions.trimToSize();
+		
 		regConnection = new RegionConnection(footprintRegions);
 	}
 
@@ -259,29 +255,25 @@ public class FootprintDs9 extends CircularMarker {
 	 * @param plot
 	 */
 	private void addCrossHair(List<Region> footprintRegions2, WebPlot plot) {
-		RegionLines xcross = new RegionLines(plot.getWorldCoords(new ScreenPt(-10, 0)),
-				plot.getWorldCoords(new ScreenPt(10, 0)));
-
-		RegionLines ycross = new RegionLines(plot.getWorldCoords(new ScreenPt(0, -10)),
-				plot.getWorldCoords(new ScreenPt(0, 10)));
+		int hair = (int) (5 * plot.getZoomFact());
+		RegionLines xcross = new RegionLines(plot.getWorldCoords(new ScreenPt(-hair, 0)),
+				plot.getWorldCoords(new ScreenPt(hair, 0)));
+		
+		RegionLines ycross = new RegionLines(plot.getWorldCoords(new ScreenPt(0, -hair)),
+				plot.getWorldCoords(new ScreenPt(0, hair)));
 		footprintRegions2.add(xcross);
 		footprintRegions2.add(ycross);
+		
 	}
 
-	private WorldPt getPolygonWroldPtCenter(WorldPt... ptAry) {
-		double xSum = 0;
-		double ySum = 0;
-		double xTot = 0;
-		double yTot = 0;
-		for (WorldPt wpt : ptAry) {
-			xSum += wpt.getX();
-			ySum += wpt.getY();
-			xTot++;
-			yTot++;
-		}
-		return new WorldPt(xSum / xTot, ySum / yTot);
+	public WorldPt getRelativeInstrumentCenter(){
+		return footprintFactory.getWorldCoordCenter();
 	}
-
+	
+	public double[] getOffsetCenter(){
+		return footprintFactory.getOffsetCenter();
+	}
+	
 	/**
 	 * Move/rotate shapes polygons, circles, rectangles sucha as {@link FootprintObj}
 	 * and {@link ShapeDataObj} (not working for box defined with wp,h,w)
@@ -300,23 +292,43 @@ public class FootprintDs9 extends CircularMarker {
 		synchronized (lst) {
 			// Need to recreate draw objects from previous state/position
 			lst.clear();
-			lst.addAll(super.getShape()); // main circle marker with updated
+			List<DrawObj> shape = super.getShape();
+			
+			ShapeDataObj maincircleObj = (ShapeDataObj) shape.get(0);
+			maincircleObj.setLineWidth(-1);
+			String color = maincircleObj.getColor(); //Take color from the drawer and from the main circle ('Circular marker')
+			lst.add(maincircleObj); // main circle marker with updated
 											// position and radius.
-
 			// Footprint region are not modified - need to call every time to
 			// translate and rotate the underline shapes DrawObj objects.
 			for (Region r : footprintRegions) {
 				DrawObj drawObj = regConnection.makeRegionDrawObject(r, plot, false);
-				drawObj.setColor("blue");
+				drawObj.setColor(color);
 				// Translate footprint - SHOULD be footprintobj or shapedataObj
 				// with at least 2 points to call translateTo method correctly -
 				// boxes or other shapes are not ok.
 				drawObj.translateTo(plot, wpt);
 				drawObj.rotateAround(plot, rotationAngle, wpt);
-
-				if (drawObj != null)
+				
+				if (drawObj != null){
 					lst.add(drawObj);
+				}
 			}
+			
+			PointDataObj xhair = new PointDataObj(wpt, DrawSymbol.CROSS);
+			xhair.setColor("blue");
+			xhair.setSize(10);
+			lst.add(xhair);
 		}		
+	}
+	
+	/**
+	 * Rotate around current center
+	 * 
+	 * @param plot
+	 *            {@link WebPlot} to get image zoom and height
+	 */
+	public void rotFootprint(WebPlot plot) {
+		moveFootprint(plot, center);
 	}
 }

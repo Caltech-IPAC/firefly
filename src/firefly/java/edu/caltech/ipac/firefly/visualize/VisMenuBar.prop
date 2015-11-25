@@ -11,7 +11,17 @@ VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea Dista
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
 
-MarkerToolDD.Items = MarkerTool FootprintJWST FootprintHST FootprintWFIRST
+MarkerToolDD.Items = MarkerTool FootprintJWST - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIS FootprintNIRSPEC - FootprintHST - FootprintWFIRST 
+
+FootprintMIRI.Title= Add MIRI footprint
+FootprintMIRI.ShortDescription= Add a MIRI footprint
+FootprintNIRCAM.Title= Add NIRCAM footprint
+FootprintNIRCAM.ShortDescription= Add a NIRCAM footprint
+FootprintNIS.Title= Add NIS footprint
+FootprintNIS.ShortDescription= Add a NIS footprint
+FootprintNIRSPEC.Title= Add NIRSPEC footprint
+FootprintNIRSPEC.ShortDescription= Add a NIRSPEC footprint
+
 MarkerToolDD.ShortDescription = Marker Tools
 MarkerToolDD.UseIconOnly= true
 

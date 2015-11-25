@@ -36,6 +36,7 @@ class CoverageLayer extends ProviderDataConnection {
     private final boolean _box;
     private TableMeta.LonLatColumns[] _fallbackCornerCols = null;
     private TableMeta.LonLatColumns _fallbackCenterCol= null;
+	private int symbSize = PointDataObj.DEFAULT_SIZE;
 
     CoverageLayer(DatasetDrawingLayerProvider provider,
                   DataSet dataset,
@@ -45,6 +46,7 @@ class CoverageLayer extends ProviderDataConnection {
                   boolean box) {
         super(provider, title, null, color == null ? DrawingDef.COLOR_PT_1 : color);
         _symbol= symbol;
+		symbSize = _symbol.equals(DrawSymbol.DOT) ? PointDataObj.DOT_DEFAULT_SIZE : PointDataObj.DEFAULT_SIZE;
         _box= box;
         updateData(dataset);
 
@@ -105,6 +107,7 @@ class CoverageLayer extends ProviderDataConnection {
                                                     row.getValue(decIdx),
                                                     llc.getCoordinateSys());
                             PointDataObj obj = new PointDataObj(wp, _symbol);
+                            obj.setSize(this.symbSize);
                             list.add(obj);
                         }
                     } catch (NumberFormatException e) {
@@ -157,7 +160,14 @@ class CoverageLayer extends ProviderDataConnection {
         return retval;
     }
 
-
+	public void setSize(int size){
+		this.symbSize = size;
+	}
+	
+	public void setSymbol(DrawSymbol symbol){
+		this._symbol = symbol;
+	}
+	
     public boolean canDoCorners(DataSet dataSet) {
         TableMeta meta= dataSet.getMeta();
         TableMeta.LonLatColumns col[]= meta.getCorners();

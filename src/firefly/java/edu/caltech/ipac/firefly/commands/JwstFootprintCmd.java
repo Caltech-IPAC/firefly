@@ -20,6 +20,7 @@ import com.google.gwt.event.dom.client.TouchMoveEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -43,15 +45,15 @@ import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
 import edu.caltech.ipac.firefly.visualize.FootprintDs9;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
-import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
+import edu.caltech.ipac.firefly.visualize.draw.DrawingDef;
 import edu.caltech.ipac.firefly.visualize.draw.DrawingManager;
-import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
@@ -86,26 +88,44 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     private String _addLabel = "Add @ footprint";
 
 	public SimpleInputField angle;
-	protected FOOTPRINT footprintDef;
+	protected FOOTPRINT mission;
+	private INSTRUMENTS instrument = null;
+	private String name;
 
     public JwstFootprintCmd() {
         super(CommandName+FOOTPRINT.JWST.name());
-        this.footprintDef = FOOTPRINT.JWST;//Defautl
-        _onLabel = _onLabel.replace("@", footprintDef.name());
-        _offLabel = _offLabel.replace("@", footprintDef.name());
-        _addLabel = _addLabel.replace("@", footprintDef.name());
+        this.mission = FOOTPRINT.JWST;//Defautl
+        this.name = CommandName+mission.name();
+        _onLabel = _onLabel.replace("@", mission.name());
+        _offLabel = _offLabel.replace("@", mission.name());
+        _addLabel = _addLabel.replace("@", mission.name());
         AllPlots.getInstance().addListener(this);
         changeMode(Mode.OFF);
     }
 
-    public JwstFootprintCmd(FOOTPRINT fp) {
-        super(CommandName+fp.name());
+    public JwstFootprintCmd(FOOTPRINT mission) {
+        super(CommandName+mission.name());
+        this.name = mission.name();
+        this.mission = mission;
         AllPlots.getInstance().addListener(this);
-        changeMode(Mode.OFF);
-        this.footprintDef = fp;
-        _onLabel = _onLabel.replace("@", footprintDef.name());
-        _offLabel = _offLabel.replace("@", footprintDef.name());
-        _addLabel = _addLabel.replace("@", footprintDef.name());
+        _onLabel = _onLabel.replace("@", name);
+        _offLabel = _offLabel.replace("@", name);
+        _addLabel = _addLabel.replace("@", name);
+        changeMode(Mode.OFF);//Sets labels above       
+
+    }
+    
+    public JwstFootprintCmd(INSTRUMENTS inst) {
+        super(CommandName+inst.name());//string constructor should have correspondant STRING.prop
+        this.name = inst.name();
+        this.mission = inst.getMission();
+        this.instrument = inst;
+        AllPlots.getInstance().addListener(this);
+        _onLabel = _onLabel.replace("@", name);
+        _offLabel = _offLabel.replace("@", name);
+        _addLabel = _addLabel.replace("@", name);
+        changeMode(Mode.OFF);//Sets labels above       
+
     }
 //======================================================================
 //------------------ Methods from WebEventListener ------------------
@@ -258,14 +278,17 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
 
-            switch (_mode) {
+            WorldPt relativeCenterInstrument;
+			switch (_mode) {
                 case ADD_FOOTPRINT:
 //                    break;
                 case MOVE:
                     WorldPt center = plot.getWorldCoords(spt);
                     if (center==null) return;
                     _activeMarker.move(center, plot);
-                    _markerMap.get(_activeMarker).setCenter(center);
+                    relativeCenterInstrument = getFootprintCenter(plot, center);//((FootprintDs9)_activeMarker).getRelativeInstrumentCenter();
+                    WorldPt centerOffset = relativeCenterInstrument;//getCenterOffset(plot, this.footprintCenter, center);
+                    _markerMap.get(_activeMarker).setCenter(center, centerOffset);
                     break;
                 case ROTATE:
                     _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
@@ -281,7 +304,14 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             _markerMap.get(_activeMarker).getDrawMan().redraw();
     }
 
-    private void end(WebPlotView pv) {
+    private WorldPt getFootprintCenter(WebPlot plot, WorldPt ptRef) {
+    	double[] cRel = ((FootprintDs9)_activeMarker).getOffsetCenter();
+    	double screenXPt = plot.getScreenCoords(ptRef).getX() - cRel[0];
+		double screenYPt = plot.getScreenCoords(ptRef).getY() - cRel[1];
+		return plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+	}
+
+	private void end(WebPlotView pv) {
         if (!_doMove) return;
 
         _mouseInfo.setEnableAllPersistent(true);
@@ -361,31 +391,29 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 			List<DrawObj> fp = m.getShape();
 			ShapeDataObj centerShape = (ShapeDataObj) fp.get(0);//circle 
-			GwtUtil.logToServer(Level.INFO,
-					"updateData(WebPlot) - circle center =" + centerShape.getCenterPt() );
-			GwtUtil.logToServer(Level.INFO,
-					"updateData(WebPlot) - marker center =" + m.getCenter(plot) );
 			
-			data.addAll(fp);
-
-
-
             if (drawHandles) {
-                int size = 5;
+                int size = 5;  
+                centerShape.setLineWidth(2);
+                //fp.set(0, centerShape);
+//                editData.add(centerShape);
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NW, plot), size, size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NE, plot), -size, size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SW, plot), size, -size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SE, plot), -size, -size));
-				for (DrawObj drawObj : fp) {
-					if(drawObj instanceof FootprintObj){
-						for(WorldPt[] pt:((FootprintObj)drawObj).getPos()){
-							for (int i = 0; i < pt.length; i++) {
-								ScreenPt spt= plot.getScreenCoords(pt[i]);
-								editData.add(ShapeDataObj.makeRectangle(spt, -size, -size));//FIXME make those point as point object and movable from the marker 
-							}
-						}						
-					}
-				}
+//				for (DrawObj drawObj : fp) {
+//					if(drawObj instanceof FootprintObj){
+//						for(WorldPt[] pt:((FootprintObj)drawObj).getPos()){
+//							for (int i = 0; i < pt.length; i++) {
+//								ScreenPt spt= plot.getScreenCoords(pt[i]);
+//								editData.add(ShapeDataObj.makeRectangle(spt, -size, -size));//FIXME make those point as point object and movable from the marker 
+//							}
+//						}						
+//					}
+//				}
+            }else{
+//            	fp.remove(0);
+            	centerShape.setLineWidth(0);
             }
             if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
             	centerShape.setFontName(m.getFont());
@@ -393,7 +421,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             	centerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
             }
 
-
+            data.addAll(fp);
+            
             _markerMap.get(m).getConnect().setData(data, editData, plot);
         }
     }
@@ -447,14 +476,12 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     	 if (pv!=null && pv.getPrimaryPlot()!=null) {
         	WebPlot plot= pv.getPrimaryPlot();
             center = pv.findCurrentCenterWorldPoint();
-            _activeMarker = new FootprintDs9(center,plot,this.footprintDef);
+            _activeMarker = new FootprintDs9(center,plot,this.mission,this.instrument);
 //            _activeMarker = new FootprintDs9(center,plot,FOOTPRINT.HST);
         	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with constructor center, plot "+center.toString());
-            
         }
         else{
-        	_activeMarker = new FootprintDs9(this.footprintDef);
-
+        	_activeMarker = new FootprintDs9(this.mission);
         	GwtUtil.logToServer(Level.INFO, "createDrawMan() - FP created with default empty constructor");
         }
         
@@ -462,8 +489,9 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 //		_activeMarker = fp;
 //		FootprintAsMarkers fp = new FootprintAsMarkers();
         
+    	 
 //
-        _markerMap.put(_activeMarker, new MarkerDrawing());
+        _markerMap.put(_activeMarker, new MarkerDrawing(this.name));
 //        WebPlotView pv= getPlotView();
         if (pv!=null && pv.getPrimaryPlot()!=null) {
             WebPlot plot= pv.getPrimaryPlot();
@@ -595,19 +623,39 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                 new WebPlotView.MouseInfo(new WebPlotView.DefMouseAll(){
                     @Override
                     public void onMouseMove(WebPlotView pv, ScreenPt spt, MouseMoveEvent ev) {
-                        _creator.calculateDTC(pv, spt);
+                        _creator.setOffsetCenter(pv, spt);
                     }
                 }, "Distance To Center");
 
-        private MarkerDrawing() {
+        private MarkerDrawing(String name) {
             mCnt++;
-            _id = BASE_DRAWER_ID +footprintDef.name()+"#"+ mCnt;
-            connect = new MarkerConnect(BASE_TITLE + footprintDef.name()+" #"+mCnt);
+            _id = BASE_DRAWER_ID +CommandName+name+"#"+ mCnt;
+            connect = new MarkerConnect(BASE_TITLE + name+" #"+mCnt);
             if (!WebLayerItem.hasUICreator(_id)) {
-                WebLayerItem.addUICreator(_id, new FootprintUICreator());
+                WebLayerItem.addUICreator(_id, new FootprintUICreator(name));
             }
             _creator = (FootprintUICreator) WebLayerItem.getUICreator(_id);
             drawMan = new DrawingManager(_id, connect);
+            String defColor = DrawingDef.COLOR_PT_4; //blue
+            switch (mCnt%5) {
+                case 0:
+                    defColor= DrawingDef.COLOR_PT_1;//red
+                    break;
+                case 1:
+                    defColor= DrawingDef.COLOR_PT_2;//green
+                    break;
+                case 2:
+                    defColor= "yellow";
+                    break;
+                case 3:
+                    defColor= "cyan";
+                    break;
+                default:
+                case 4:
+                    defColor= "magenta";
+                    break;
+            }
+            drawMan.setDefaultColor(defColor);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
             List<MiniPlotWidget> mpwList = getAllActivePlots();
@@ -618,7 +666,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             }
         }
 
-        public void setCenter(WorldPt center) {_creator.setCenter(center);}
+        public void setCenter(WorldPt center, WorldPt offCenter) {_creator.setCenter(center, offCenter);}
 
 
         public void freeResources() {
@@ -708,14 +756,18 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
 
     private class FootprintUICreator extends WebLayerItem.UICreator {
-        private Label disToCenter = new Label("");
+        private Label centerOffsetLabel = new Label("");
         private Label centerPosLbl = new Label("");
-        private WorldPt centerPos = null;
+		private String descProp;
 
-        private FootprintUICreator() { super(true,true); }
+        private FootprintUICreator(String name) 
+        { 
+        	super(true,true); 
+        	this.descProp = name;
+        }
 
         public Widget makeExtraUI(final WebLayerItem item) {
-            Label add = GwtUtil.makeLinkButton("Add Footprint", "Add a Footprint", new ClickHandler() {
+            Label add = GwtUtil.makeLinkButton("Add "+this.descProp+" Footprint", "Add "+this.descProp+" Footprint", new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     changeMode(Mode.ADD_FOOTPRINT);
                 }
@@ -728,7 +780,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 //            });
 //            StringFieldDef fd= new StringFieldDef("JwstFootprintCmd.title");
 
-            final SimpleInputField field= SimpleInputField.createByProp("JwstFootprint.title");
+            final SimpleInputField field= SimpleInputField.createByProp(CommandName+"JWST.title");
             field.setInternalCellSpacing(1);
             final InputField tIf= ((ValidationInputField)field.getField()).getIF();
             final String originalTitle= item.getTitle();
@@ -741,41 +793,76 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                 if (!StringUtils.isEmpty(t)) item.setTitle(t);
             }
 
-            final SimpleInputField corner= SimpleInputField.createByProp("JwstFootprint.corner");
+            final SimpleInputField corner= SimpleInputField.createByProp(CommandName+"JWST.corner");
             corner.setInternalCellSpacing(1);
-
-            angle= SimpleInputField.createByProp("JwstFootprint.angle");
+            
+//            final SimpleInputField inst = SimpleInputField.createByProp("JwstFootprint.inst");
+//            inst.setInternalCellSpacing(1);
+            angle= SimpleInputField.createByProp(CommandName+"JWST.angle");
             angle.setInternalCellSpacing(1);
-
-
+            final InputField angIf= ((ValidationInputField)angle.getField()).getIF();
+            TextBox angTb= ((TextBoxInputField)angIf).getTextBox();
+            
             GwtUtil.setStyle(add, "padding", "5px 0 0 0");
 
             HorizontalPanel xui = new HorizontalPanel();
             FlowPanel p1 = new FlowPanel();
+//            p1.add(inst);
             p1.add(field);
             p1.add(corner);
-
+            
             FlowPanel p2 = new FlowPanel();
             p2.add(angle);
             p2.add(add);
 
             FlowPanel p3 = new FlowPanel();
             HorizontalPanel center = new HorizontalPanel();
-            center.add(new Label("center:"));
+            center.add(new Label("Center:"));
             center.add(centerPosLbl);
             HorizontalPanel dtc = new HorizontalPanel();
-            dtc.add(new Label("DTC   :"));
-            dtc.add(disToCenter);
+            dtc.add(new Label("Offset:"));
+            dtc.add(centerOffsetLabel);
             p3.add(center);
             p3.add(dtc);
-
+            
+            SimpleInputField posWrap = SimpleInputField.createByProp(CommandName+"JWST.field.position");
+            final InputField posIf= ((ValidationInputField)posWrap.getField()).getIF();
+            TextBox posTb = ((TextBoxInputField)angIf).getTextBox();
+            posWrap.setInternalCellSpacing(1);
+            
+            GwtUtil.setStyle(add, "padding", "5px 0 0 0");
+           
+           // p3.add(posWrap);
+            
             xui.add(p1);
             xui.add(p2);
+           // No needed
             xui.add(p3);
 
-
+            posTb.addKeyPressHandler(new KeyPressHandler() {
+				@SuppressWarnings("deprecation")
+				public void onKeyPress(KeyPressEvent event) {
+					DeferredCommand.addCommand(new Command() {
+						public void execute() {
+									updateCenter(posIf.getValue(), item.getID());
+						}
+					});
+				}
+			});
+            
+			angTb.addKeyPressHandler(new KeyPressHandler() {
+				@SuppressWarnings("deprecation")
+				public void onKeyPress(KeyPressEvent event) {
+					DeferredCommand.addCommand(new Command() {
+						public void execute() {
+							updateRotation(item, angIf.getValue(), item.getID());
+						}
+					});
+				}
+			});
             tb.addKeyPressHandler(new KeyPressHandler() {
-                public void onKeyPress(KeyPressEvent event) {
+                @SuppressWarnings("deprecation")
+				public void onKeyPress(KeyPressEvent event) {
                     DeferredCommand.addCommand(new Command() {
                         public void execute() { updateTitle(item,  tIf.getValue(),
                                                             corner.getValue(),
@@ -789,12 +876,62 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                     updateTitle(item, tIf.getValue(), corner.getValue(), item.getID(), originalTitle);
                 }
             });
+//            inst.getField().addValueChangeHandler(new ValueChangeHandler<String>() {
+//                public void onValueChange(ValueChangeEvent<String> ev) {
+//                    updateTitle(item, tIf.getValue(), corner.getValue(), item.getID(), originalTitle);
+//                }
+//            });
 
 
 
             return xui;
         }
 
+        private void updateCenter(String posString, String id){
+        	if(StringUtils.isEmpty(posString)){       		
+        		return;
+        	}
+        	String[] split = posString.split("\\s");
+        	double lon, lat;
+        	try{
+        		lon = Double.parseDouble(split[0]);
+        		lat = Double.parseDouble(split[1]);
+        	}catch (Exception e){
+        		//FIXME: do a proper validation
+        		return;
+        	}
+        	OverlayMarker marker= findMarker(id);
+            setActiveMarker(marker);
+            WebPlotView pv= getPlotView();
+            WebPlot plot = pv.getPrimaryPlot();
+            
+			((FootprintDs9)_activeMarker).move(new WorldPt(lon,lat),plot);
+            updateData(_activeMarker,plot,false);
+            _markerMap.get(_activeMarker).getDrawMan().redraw();
+        } 
+        
+        private void updateRotation(WebLayerItem item, String angleVal, String id){
+        	if(StringUtils.isEmpty(angleVal)){
+        		return;
+        	}
+        	double rotAng = 0;
+        	try{
+        		rotAng = Double.parseDouble(angleVal);
+        	}catch (Exception e){
+        		//not a number
+        		return;
+        	}
+        	OverlayMarker marker= findMarker(id);
+            setActiveMarker(marker);
+            WebPlotView pv= getPlotView();
+            WebPlot plot = pv.getPrimaryPlot();
+            
+			((FootprintDs9)_activeMarker).setRotationAngle(Math.toRadians(rotAng));
+			((FootprintDs9)_activeMarker).rotFootprint(plot);
+            updateData(_activeMarker,plot,false);
+            _markerMap.get(_activeMarker).getDrawMan().redraw();
+        }
+        
         private void updateTitle(WebLayerItem item,
                                  String title,
                                  String cStr,
@@ -817,28 +954,50 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             updateData(_activeMarker,pv.getPrimaryPlot(),false);
             _markerMap.get(_activeMarker).getDrawMan().redraw();
         }
+        
         public void delete(WebLayerItem item) {
             removeMarker(item.getID());
             if (_markerMap.size()==0) changeMode(Mode.OFF);
         }
 
 
-        private void calculateDTC(WebPlotView pv, ScreenPt spt) {
-            WebPlot plot = pv.getPrimaryPlot();
+        private void setOffsetCenter(WebPlotView pv, ScreenPt spt) {
+            //TODO not doing anything but leave it here just in case
+        	WebPlot plot = pv.getPrimaryPlot();
             WorldPt cwp = plot.getWorldCoords(spt);
-            if (centerPos != null) {
-                double dist = VisUtil.computeDistance(cwp, centerPos);
-                disToCenter.setText(dist + " arsecs");
-            }
         }
 
-        private void setCenter(WorldPt center) {
-            centerPos = center;
-            centerPosLbl.setText(center.toString());
-        }
+		private void setCenter(WorldPt center, WorldPt centerOffset) {
+			if (centerOffset != null) {
+				String lon = _nf4digits.format(center.getLon());
+				String lat = _nf4digits.format(center.getLat());
+				centerPosLbl.setText(PositionFieldDef.formatPosForTextField(center) + " (" + lon + "," + lat + ")");
+			}
+			if (centerOffset != null) {
+				String lon = _nf4digits.format(centerOffset.getLon());
+				String lat = _nf4digits.format(centerOffset.getLat());
+				centerOffsetLabel
+						.setText(PositionFieldDef.formatPosForTextField(centerOffset) + " (" + lon + "," + lat + ")");
+			}
+		}
     }
 
-
+    private static final NumberFormat _nf4digits = NumberFormat.getFormat("#.####");
+    
+//	private WorldPt getCenterOffset(WebPlot plot, WorldPt polyCenter, WorldPt refTarget) {
+//		double xp = plot.getScreenCoords(polyCenter).getX();
+//		double xc = plot.getScreenCoords(refTarget).getX();
+//		double xrel = xp - xc;
+//		double yp = plot.getScreenCoords(polyCenter).getY();
+//		double yc = plot.getScreenCoords(refTarget).getY();
+//		double yrel = yp - yc;
+//
+//		double screenXPt = xc - xrel;
+//		double screenYPt = yc - yrel;
+//		
+//		return plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+//	}
+	
     private class DeferredDrawer extends Timer {
         private DrawingManager drawer;
         private WebPlot plot;

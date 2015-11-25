@@ -16,7 +16,6 @@ JwstFootprint.corner.NW.Name= NW
 JwstFootprint.corner.SE.Name= SE
 JwstFootprint.corner.SW.Name= SW
 
-
 JwstFootprint.angle.Title= Angle
 JwstFootprint.angle.DataType= Float
 JwstFootprint.angle.ShortDescription= Enter the angle you want the footprint rotated
