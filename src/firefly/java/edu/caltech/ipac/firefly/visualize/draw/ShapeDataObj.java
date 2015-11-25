@@ -294,8 +294,10 @@ public class ShapeDataObj extends DrawObj {
             if (x > east) x = east;
             if (y > south)  y = south;
             else if (y<height)  y= height;
-
-            jg.drawText(color, fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle, x, y,text);
+            
+            //FIXME:color text black on white background - yellow on white background is not readable
+            //TODO: better solution would be to adapt text color with background
+            jg.drawText("black", fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle, x, y,text);
         }
     }
 
