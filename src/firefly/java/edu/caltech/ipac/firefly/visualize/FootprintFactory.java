@@ -351,7 +351,8 @@ public class FootprintFactory  {
 		WorldPt[] ptArray = lstWpt.toArray(new WorldPt[]{});	
 		
 		centerPoly = getCenter(ptArray); // center is relative to the footprint center (0,0) in our input case
-		
+
+		offset = new double[] { 0, 0 };
 		if (moveToRelativeCenter) {
 			// Should be x,y=0,0 if full footprint: polygon center = refCenter
 			offset = getCenterOffset(centerPoly, refCenter); // offset of the

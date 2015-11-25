@@ -297,7 +297,7 @@ public class FootprintDs9 extends CircularMarker {
 			ShapeDataObj maincircleObj = (ShapeDataObj) shape.get(0);
 			maincircleObj.setLineWidth(-1);
 			String color = maincircleObj.getColor(); //Take color from the drawer and from the main circle ('Circular marker')
-			lst.add(maincircleObj); // main circle marker with updated
+			lst.add(0,maincircleObj); // main circle marker with updated
 											// position and radius.
 			// Footprint region are not modified - need to call every time to
 			// translate and rotate the underline shapes DrawObj objects.

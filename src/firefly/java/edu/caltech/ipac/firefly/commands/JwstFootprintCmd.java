@@ -72,8 +72,6 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public static final String _editHelpText = "Click center and drag to move, click corner and drag to rotate";
     public static final String BASE_TITLE = "FootPrint ";
 
-    public static int mCnt = 0;
-
     public static final String CommandName = "Footprint";
     private HashMap<OverlayMarker, MarkerDrawing> _markerMap = new HashMap<OverlayMarker, MarkerDrawing>(10);
     private OverlayMarker _activeMarker = null;
@@ -116,14 +114,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     }
     
     public JwstFootprintCmd(INSTRUMENTS inst) {
-        super(CommandName+inst.name());//string constructor should have correspondant STRING.prop
-        this.name = inst.name();
+        super(CommandName+inst.name());//string constructor should have correspondent STRING.prop
         this.mission = inst.getMission();
+        this.name = inst.name();
+        String label = name+" ("+mission+")";
         this.instrument = inst;
         AllPlots.getInstance().addListener(this);
-        _onLabel = _onLabel.replace("@", name);
-        _offLabel = _offLabel.replace("@", name);
-        _addLabel = _addLabel.replace("@", name);
+        _onLabel = _onLabel.replace("@", label);
+        _offLabel = _offLabel.replace("@", label);
+        _addLabel = _addLabel.replace("@", label);
         changeMode(Mode.OFF);//Sets labels above       
 
     }
@@ -388,15 +387,24 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         if (m.isReady()) {
 			List<DrawObj> data = new ArrayList<DrawObj>();
 			List<DrawObj> editData = new ArrayList<DrawObj>();
-
-			List<DrawObj> fp = m.getShape();
-			ShapeDataObj centerShape = (ShapeDataObj) fp.get(0);//circle 
+			
+			ShapeDataObj centerShape = (ShapeDataObj) m.getShape().get(0);//circle 
+			
+			data.addAll(m.getShape());
+			GwtUtil.logToServer(Level.INFO, "updateData shape cast ="+m.getShape().get(0).toString() );
+			GwtUtil.logToServer(Level.INFO, "updateData size list ="+data.size() );
+			
+			if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
+            	centerShape.setFontName(m.getFont());
+            	centerShape.setText(SafeHtmlUtils.fromString(m.getTitle()).asString());
+            	centerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
+            }
 			
             if (drawHandles) {
-                int size = 5;  
+                int size = 5;
                 centerShape.setLineWidth(2);
                 //fp.set(0, centerShape);
-//                editData.add(centerShape);
+                editData.add(centerShape);
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NW, plot), size, size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.NE, plot), -size, size));
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(OverlayMarker.Corner.SW, plot), size, -size));
@@ -412,16 +420,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 //					}
 //				}
             }else{
-//            	fp.remove(0);
-            	centerShape.setLineWidth(0);
+            	if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
+            		centerShape.setLineWidth(0);
+            	}else{
+            		data.remove(0);
+            	}
             }
-            if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
-            	centerShape.setFontName(m.getFont());
-            	centerShape.setText(SafeHtmlUtils.fromString(m.getTitle()).asString());
-            	centerShape.setTextLocation(convertTextLoc(m.getTextCorner()));
-            }
-
-            data.addAll(fp);
+            
+            GwtUtil.logToServer(Level.INFO, "updateData size list ="+data.size() );
+            
             
             _markerMap.get(m).getConnect().setData(data, editData, plot);
         }
@@ -612,6 +619,9 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         }
         
     }
+    
+    public static int mCnt = 0, ccount = 0;
+    
     private class MarkerDrawing {
         private MarkerConnect connect;
         private DrawingManager drawMan;
@@ -637,24 +647,28 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             _creator = (FootprintUICreator) WebLayerItem.getUICreator(_id);
             drawMan = new DrawingManager(_id, connect);
             String defColor = DrawingDef.COLOR_PT_4; //blue
-            switch (mCnt%5) {
+            switch (ccount%6) {
                 case 0:
-                    defColor= DrawingDef.COLOR_PT_1;//red
+                    defColor= DrawingDef.COLOR_PT_4;//red
                     break;
                 case 1:
                     defColor= DrawingDef.COLOR_PT_2;//green
                     break;
                 case 2:
-                    defColor= "yellow";
+                    defColor= DrawingDef.COLOR_PT_1;
                     break;
                 case 3:
                     defColor= "cyan";
                     break;
+                case 5:
+                	defColor = "magenta";
+                	break;
                 default:
                 case 4:
-                    defColor= "magenta";
+                    defColor= "yellow";
                     break;
             }
+            ccount++;
             drawMan.setDefaultColor(defColor);
             drawMan.setHelp(_selHelpText);
             drawMan.showMouseHelp(getPlotView());
