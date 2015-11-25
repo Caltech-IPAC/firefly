@@ -15,10 +15,12 @@ import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab} from './panel/TabPanel.jsx';
 import AppDataCntlr from '../core/AppDataCntlr.js';
+import {flux} from '../Firefly.js';
 
 
 
@@ -77,11 +79,35 @@ var exDialogReducer= function(inFields, action) {
                 validator: Validate.validateEmail.bind(null, 'an email field'),
                 tooltip: 'Please enter an email',
                 label: 'Email:'
+            },
+            low: {
+                fieldKey: 'low',
+                value: '1',
+                validator: Validate.intRange.bind(null, 1, 100, 'low field'),
+                tooltip: 'this is a tip for low field',
+                label: 'Low Field:'
+            },
+            high: {
+                fieldKey: 'high',
+                value: '3',
+                validator: Validate.intRange.bind(null, 1, 100, 'high field'),
+                tooltip: 'this is a tip for high field',
+                label: 'High Field:'
             }
         };
     }
     else {
-        return inFields;
+        var {low,high}= inFields;
+        if (parseFloat(low.value)> parseFloat(high.value)) {
+            low= Object.assign({},low, {valid:false, message:'must be lower than high'});
+            high= Object.assign({},high, {valid:false, message:'must be higher than low'});
+            return Object.assign({},inFields,{low,high});
+        }
+        else {
+            low= Object.assign({},low, {valid:true});
+            high= Object.assign({},high, {valid:true});
+            return Object.assign({},inFields,{low,high});
+        }
     }
 };
 
@@ -92,6 +118,88 @@ var exDialogReducer= function(inFields, action) {
 /// test
 
 var AllTest = React.createClass({
+
+
+
+    render() {
+        return (
+            <div style={{padding:'5px'}}>
+                <div>
+                    <Tabs defaultSelected={0}>
+                        <Tab name='First'>
+                            <FieldGroupTest />
+                        </Tab>
+                        <Tab name='Second'>
+                            <div style={{'minWidth': '300', 'minHeight': '150'}}>
+                                <CollapsiblePanel header='Sample Histogram'>
+                                    <Histogram data={[
+                                     [1,-2.5138013781265,-2.0943590644815],
+                                     [4,-2.0943590644815,-1.8749167508365],
+                                     [11,-1.8749167508365,-1.6554744371915],
+                                     [12,-1.6554744371915,-1.4360321235466],
+                                     [18,-1.4360321235466,-1.2165898099016],
+                                     [15,-1.2165898099016,-1.1571474962565],
+                                     [20,-1.1571474962565,-0.85720518261159],
+                                     [24,-0.85720518261159,-0.77770518261159],
+                                     [21,-0.77770518261159,-0.55826286896661],
+                                     [36,-0.55826286896661,-0.33882055532162],
+                                     [40,-0.33882055532162,-0.11937824167663],
+                                     [51,-0.11937824167663,0.10006407196835],
+                                     [59,0.10006407196835,0.21850638561334],
+                                     [40,0.21850638561334,0.31950638561334],
+                                     [42,0.31950638561334,0.53894869925832],
+                                     [36,0.53894869925832,0.75839101290331],
+                                     [40,0.75839101290331,0.9778333265483],
+                                     [36,0.9778333265483,1.1972756401933],
+                                     [23,1.1972756401933,1.4167179538383],
+                                     [18,1.4167179538383,1.6361602674833],
+                                     [9,1.6361602674833,1.8556025811282],
+                                     [12,1.8556025811282,2.0750448947732],
+                                     [0,2.0750448947732,2.2944872084182],
+                                     [4,2.2944872084182,2.312472786789]
+                              ]}
+                                               desc=''
+                                               binColor='#c8c8c8'
+                                               height={100}
+                                        />
+                                </CollapsiblePanel>
+                            </div>
+                        </Tab>
+                    </Tabs>
+                </div>
+
+            </div>
+
+        );
+    }
+});
+
+
+var FieldGroupTest = React.createClass({
+
+
+
+    // code that connects to store
+    // code that connects to store
+    // code that connects to store
+
+    formStoreListenerRemove : null,
+
+    formStoreUpdate() {
+        this.setState( {fields : FieldGroupUtils.getGroupFields('DEMO_FORM')});
+    },
+
+    componentWillUnmount() {
+        if (this.formStoreListenerRemove) this.formStoreListenerRemove();
+        this.formStoreListenerRemove= null;
+    },
+
+
+    componentDidMount() {
+        this.formStoreListenerRemove= flux.addListener(this.formStoreUpdate.bind(this));
+    },
+    // end code that connects to store
+
 
     showResults(success, request) {
         var statStr= `validate state: ${success}`;
@@ -143,23 +251,35 @@ var AllTest = React.createClass({
         this.showResults(true,request);
     },
 
+    makeField1(hide) {
+        var f1= (
+            <ValidationField fieldKey={'field1'}
+                             groupKey='DEMO_FORM'/>
+        );
+        var hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
+        console.log('hide='+hide);
+        return hide ? hidden : f1;
+    },
+
     render() {
 
+
+        var fields= FieldGroupUtils.getGroupFields('DEMO_FORM');
+        if (fields) {
+            const {radioGrpFld}= fields;
+            var hide= (radioGrpFld && radioGrpFld.value==='opt2');
+        }
+        var field1= this.makeField1(hide);
+
         return (
-            <div style={{padding:'5px'}}>
-                <div>
-                    <Tabs defaultSelected={0}>
-                        <Tab name='First'>
-                            <div style={{'minWidth': '300', 'minHeight': '100'}}>
-                                <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} validatorFunc={null} keepState={true}>
-                                    <InputGroup labelWidth={130}>
-                                        <TargetPanel groupKey='DEMO_FORM' />
-                                        <ValidationField fieldKey={'field1'}
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey='field2'
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey='field3'
-                                                         initialState= {{
+            <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} validatorFunc={null} keepState={true}>
+                <InputGroup labelWidth={130}>
+                    <TargetPanel groupKey='DEMO_FORM' />
+                    {field1}
+                    <ValidationField fieldKey='field2'
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='field3'
+                                     initialState= {{
                                           fieldKey: 'field3',
                                           value: '12',
                                           validator: Validate.floatRange.bind(null, 1.23, 1000, 3,'field 3'),
@@ -167,18 +287,20 @@ var AllTest = React.createClass({
                                           label : 'Another Float:',
                                           labelWidth : 100
                                       }}
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey={'field4'}
-                                                         groupKey='DEMO_FORM'/>
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey={'field4'}
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='low' groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='high' groupKey='DEMO_FORM'/>
 
-                                        <br/><br/>
-                                        <CheckboxGroupInputField
-                                            initialState= {{
+                    <br/><br/>
+                    <CheckboxGroupInputField
+                        initialState= {{
                                           value: '_all_',
                                           tooltip: 'Please select some boxes',
                                           label : 'Checkbox Group:'
                                       }}
-                                            options={
+                        options={
                                           [
                                               {label: 'Apple', value: 'A'},
                                               {label: 'Banana', value: 'B'},
@@ -187,31 +309,31 @@ var AllTest = React.createClass({
                                               {label: 'Grapes', value: 'G'}
                                           ]
                                           }
-                                            fieldKey='checkBoxGrpFld'
-                                            groupKey='DEMO_FORM'/>
+                        fieldKey='checkBoxGrpFld'
+                        groupKey='DEMO_FORM'/>
 
-                                        <br/><br/>
-                                        <RadioGroupInputField  initialState= {{
+                    <br/><br/>
+                    <RadioGroupInputField  initialState= {{
                                           tooltip: 'Please select an option',
                                           label : 'Radio Group:'
                                       }}
-                                                               options={
+                                           options={
                                                               [
                                                                   {label: 'Option 1', value: 'opt1'},
-                                                                  {label: 'Option 2', value: 'opt2'},
+                                                                  {label: 'Hide A Field', value: 'opt2'},
                                                                   {label: 'Option 3', value: 'opt3'},
                                                                   {label: 'Option 4', value: 'opt4'}
                                                               ]
                                                               }
-                                                               fieldKey='radioGrpFld'
-                                                               groupKey='DEMO_FORM'/>
-                                        <br/><br/>
+                                           fieldKey='radioGrpFld'
+                                           groupKey='DEMO_FORM'/>
+                    <br/><br/>
 
-                                        <ListBoxInputField  initialState= {{
+                    <ListBoxInputField  initialState= {{
                                           tooltip: 'Please select an option',
                                           label : 'ListBox Field:'
                                       }}
-                                                            options={
+                                        options={
                                           [
                                               {label: 'Item 1', value: 'i1'},
                                               {label: 'Another Item 2', value: 'i2'},
@@ -219,64 +341,24 @@ var AllTest = React.createClass({
                                               {label: 'And one more 4', value: 'i4'}
                                           ]
                                           }
-                                                            multiple={false}
-                                                            fieldKey='listBoxFld'
-                                                            groupKey='DEMO_FORM'/>
-                                        <br/><br/>
+                                        multiple={false}
+                                        fieldKey='listBoxFld'
+                                        groupKey='DEMO_FORM'/>
+                    <br/><br/>
 
-                                        <CompleteButton groupKey='DEMO_FORM'
-                                                        onSuccess={this.resultsSuccess}
-                                                        onFail={this.resultsFail}
-                                                        dialogId='ExampleDialog'
-                                            />
-                                    </InputGroup>
-                                </FieldGroup>
-                            </div>
-                        </Tab>
-                        <Tab name='Second'>
-                            <div style={{'minWidth': '300', 'minHeight': '150'}}>
-                                <CollapsiblePanel header='Sample Histogram'>
-                                    <Histogram data={[
-                                     [1,-2.5138013781265,-2.0943590644815],
-                                     [4,-2.0943590644815,-1.8749167508365],
-                                     [11,-1.8749167508365,-1.6554744371915],
-                                     [12,-1.6554744371915,-1.4360321235466],
-                                     [18,-1.4360321235466,-1.2165898099016],
-                                     [15,-1.2165898099016,-1.1571474962565],
-                                     [20,-1.1571474962565,-0.85720518261159],
-                                     [24,-0.85720518261159,-0.77770518261159],
-                                     [21,-0.77770518261159,-0.55826286896661],
-                                     [36,-0.55826286896661,-0.33882055532162],
-                                     [40,-0.33882055532162,-0.11937824167663],
-                                     [51,-0.11937824167663,0.10006407196835],
-                                     [59,0.10006407196835,0.21850638561334],
-                                     [40,0.21850638561334,0.31950638561334],
-                                     [42,0.31950638561334,0.53894869925832],
-                                     [36,0.53894869925832,0.75839101290331],
-                                     [40,0.75839101290331,0.9778333265483],
-                                     [36,0.9778333265483,1.1972756401933],
-                                     [23,1.1972756401933,1.4167179538383],
-                                     [18,1.4167179538383,1.6361602674833],
-                                     [9,1.6361602674833,1.8556025811282],
-                                     [12,1.8556025811282,2.0750448947732],
-                                     [0,2.0750448947732,2.2944872084182],
-                                     [4,2.2944872084182,2.312472786789]
-                              ]}
-                                               desc=''
-                                               binColor='#c8c8c8'
-                                               height={100}
-                                        />
-                                </CollapsiblePanel>
-                            </div>
-                        </Tab>
-                    </Tabs>
-                </div>
-
-            </div>
+                    <CompleteButton groupKey='DEMO_FORM'
+                                    onSuccess={this.resultsSuccess}
+                                    onFail={this.resultsFail}
+                                    dialogId='ExampleDialog'
+                    />
+                </InputGroup>
+            </FieldGroup>
 
         );
     }
 });
+
+
 
 
 //export default ExampleDialog;
