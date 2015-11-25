@@ -391,8 +391,6 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 			ShapeDataObj centerShape = (ShapeDataObj) m.getShape().get(0);//circle 
 			
 			data.addAll(m.getShape());
-			GwtUtil.logToServer(Level.INFO, "updateData shape cast ="+m.getShape().get(0).toString() );
-			GwtUtil.logToServer(Level.INFO, "updateData size list ="+data.size() );
 			
 			if (!StringUtils.isEmpty(m.getTitle()) && plot!=null) {
             	centerShape.setFontName(m.getFont());
@@ -426,10 +424,6 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             		data.remove(0);
             	}
             }
-            
-            GwtUtil.logToServer(Level.INFO, "updateData size list ="+data.size() );
-            
-            
             _markerMap.get(m).getConnect().setData(data, editData, plot);
         }
     }
