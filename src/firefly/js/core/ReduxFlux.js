@@ -14,6 +14,7 @@ import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
+import HistogramCntlr from '../visualize/HistogramCntlr.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -30,7 +31,8 @@ const reducers = {
     [VisMouseCntlr.VIS_MOUSE_KEY]: VisMouseCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
-    [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer
+    [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
+    [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer
 };
 
 let redux = null;
@@ -43,6 +45,8 @@ actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.e
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
 
+actionCreators.set(HistogramCntlr.LOAD_TBL_STATS, HistogramCntlr.loadTblStats);
+actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
 
 /**
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean

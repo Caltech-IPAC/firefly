@@ -174,7 +174,7 @@ var Histogram = React.createClass(
             var error;
 
             // zones mess up log scale - do not do them
-            var doZones = (!this.props.logs || this.props.logs.indexOf('x')===-1);
+            var doZones = (this.state.userData.length>1 && (!this.props.logs || this.props.logs.indexOf('x')===-1));
 
             try {
                 let lastBinMax = this.state.userData[0][1];
