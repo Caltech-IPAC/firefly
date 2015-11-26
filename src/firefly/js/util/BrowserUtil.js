@@ -105,4 +105,34 @@ export const getAbsoluteTop= function(elem) {
 };
 
 
+export const modifyURLToFull= function(url, rootPath) {
+    var retURL = url;
+    if (url) {
+        if (!isFull(url)) {
+            if (!rootPath) {
+                var docUrl = window.documents.URL;
+                var lastSlash = docUrl.lastIndexOf('/');
+                if (lastSlash > -1) {
+                    var rootURL = docUrl.substring(0, lastSlash + 1);
+                    retURL = rootURL + url;
+                } else {
+                    retURL = docUrl + '/' + url;
+                }
+            } else {
+                retURL = rootPath.endsWith('/') ? rootPath + url : rootPath + '/' + url;
+            }
+        }
+    }
+    else {
+        retURL= rootPath;
+    }
+    return retURL;
+};
+
+
+const isFull= function (url) {
+    url = url.toLowerCase();
+    return ['http', 'https', '/', 'file'].some( (s) => url.startsWith(s));
+}
+
 

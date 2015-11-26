@@ -216,6 +216,19 @@ public class WebPlot {
         }
     }
 
+    public WebPlot(){
+    	imageBoundsData = null;
+    	_plotGroup= null;
+        _plotState       = null;
+        _tileDrawer      = null;
+        _imageCoordSys   = null;
+        _projection      = null;
+        _dataWidth       = 0;
+        _dataHeight      = 0;
+        _plotDesc        = null;
+        _dataDesc        = null;
+    	_webFitsData=null;
+    };
 
     public AbsolutePanel getWidget() { return _tileDrawer.getWidget(); }
 
@@ -626,8 +639,8 @@ public class WebPlot {
     @JsNoExport
     public ImageWorkSpacePt getImageWorkSpaceCoords(ScreenPt pt, float altZLevel) {
         if (pt==null) return null;
-        return new ImageWorkSpacePt(pt.getIX() / altZLevel,
-                                    getImageHeight()-pt.getIY()/altZLevel);
+        return new ImageWorkSpacePt(pt.getX() / altZLevel,
+                                    getImageHeight()-pt.getY()/altZLevel);
     }
 
 
@@ -1182,39 +1195,6 @@ public class WebPlot {
     }
 
     /**
-     * Return a point the represents the passed point with a distance in
-     * World coordinates added to it.
-     * @param wp the world point WorldPt
-     * @param x the x of the world coordinates distance away from the point.
-     * @param y the y of the world coordinates distance away from the point.
-     * @return ImagePt the new point
-     */
-    @JsNoExport
-    public ImagePt getDistanceCoords(WorldPt wp, double x, double y) {
-       if (wp==null) return null;
-
-       ImageWorkSpacePt iwpt= getImageWorkSpaceCoords(wp);
-        if (iwpt==null) return null;
-       ImagePt pt= new ImagePt(iwpt.getX(), iwpt.getY());
-        return _projection.getDistanceCoords(pt,x,y);
-    }
-
-
-    /**
-     * Return a point the represents the passed point with a distance in
-     * Image coordinates added to it.
-     * @param pt the initial image point
-     * @param x the x of the world coordinates distance away from the point.
-     * @param y the y of the world coordinates distance away from the point.
-     * @return ImagePt the new point
-     */
-    @JsNoExport
-    public ImageWorkSpacePt getDistanceCoords(ImageWorkSpacePt pt, double x, double y) {
-        if (pt==null) return null;
-        return _projection.getDistanceCoords(pt,x,y);
-    }
-
-    /**
      * specifically release any resources held by this object
      * any subclasses who override this method should do a
      * super.freeResoureces()
@@ -1239,25 +1219,6 @@ public class WebPlot {
     public boolean containsAttributeKey(String key) {
         return _attributes.containsKey(key);
     }
-
-
-    /**
-     * Set the level a image will be zoom when it is plotted
-     * @param  initialZoomLevel the initial zoom level
-     */
-    public void setInitialZoomLevel(float initialZoomLevel) {
-       _initialZoomLevel= initialZoomLevel;
-    }
-
-    /**
-     * Get the level a image will be zoom when it is plotted
-     * @return float the initial zoom level
-     */
-    public float getInitialZoomLevel() {
-       return _initialZoomLevel;
-    }
-
-
 
     /**
      * Get the PlotView.
@@ -1371,7 +1332,7 @@ public class WebPlot {
 
         boolean retval= false;
         if (_projection.isWrappingProjection()) {
-            double worldDist= computeWorldCoordDistance(wp1, wp2);
+            double worldDist= VisUtil.computeDistance(wp1, wp2);
             double pix= _projection.getPixelWidthDegree();
             double value1= worldDist/pix;
 
@@ -1389,24 +1350,6 @@ public class WebPlot {
         }
         return retval;
     }
-
-
-
-    private static double computeWorldCoordDistance(WorldPt p1, WorldPt p2) {
-        if (p1==null || p2==null) return -1;
-        double lon1Radius  = p1.getLon() * DtoR;
-        double lon2Radius  = p2.getLon() * DtoR;
-        double lat1Radius  = p1.getLat() * DtoR;
-        double lat2Radius  = p2.getLat() * DtoR;
-        double cosine = Math.cos(lat1Radius)*Math.cos(lat2Radius)* Math.cos(lon1Radius-lon2Radius)
-                         + Math.sin(lat1Radius)*Math.sin(lat2Radius);
-
-        if (Math.abs(cosine) > 1.0)
-            cosine = cosine/Math.abs(cosine);
-        return RtoD*Math.acos(cosine);
-    }
-
-
 
     //=================================================================
     //-----------------------------------------------------------------

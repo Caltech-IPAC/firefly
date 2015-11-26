@@ -1,11 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';
@@ -15,19 +10,43 @@ import ValidationField from './ValidationField.jsx';
 import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import ListBoxInputField from './ListBoxInputField.jsx';
-import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
-import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import {WorldPt, ImagePt, Pt} from '../visualize/Point.js';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab} from './panel/TabPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
+import {flux} from '../Firefly.js';
+
+
+
+
+function getDialogBuilder() {
+    var popup= null;
+    return () => {
+        if (!popup) {
+            const popup= (
+                <PopupPanel title={'Example Dialog'} >
+                    <AllTest  groupKey={'DEMO_FORM'} />
+                </PopupPanel>
+            );
+            DialogRootContainer.defineDialog('ExampleDialog', popup);
+        }
+        return popup;
+    };
+}
+
+const dialogBuilder= getDialogBuilder();
+
+export function showExampleDialog() {
+    dialogBuilder();
+    AppDataCntlr.showDialog('ExampleDialog');
+}
+
 
 
 /**
@@ -36,7 +55,7 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
  * @param {object} action
  * @return {object}
  */
-var testReducer= function(inFields, action) {
+var exDialogReducer= function(inFields, action) {
     if (!inFields)  {
         return {
             field1: {
@@ -60,172 +79,55 @@ var testReducer= function(inFields, action) {
                 validator: Validate.validateEmail.bind(null, 'an email field'),
                 tooltip: 'Please enter an email',
                 label: 'Email:'
+            },
+            low: {
+                fieldKey: 'low',
+                value: '1',
+                validator: Validate.intRange.bind(null, 1, 100, 'low field'),
+                tooltip: 'this is a tip for low field',
+                label: 'Low Field:'
+            },
+            high: {
+                fieldKey: 'high',
+                value: '3',
+                validator: Validate.intRange.bind(null, 1, 100, 'high field'),
+                tooltip: 'this is a tip for high field',
+                label: 'High Field:'
             }
         };
     }
     else {
-        return inFields;
+        var {low,high}= inFields;
+        if (parseFloat(low.value)> parseFloat(high.value)) {
+            low= Object.assign({},low, {valid:false, message:'must be lower than high'});
+            high= Object.assign({},high, {valid:false, message:'must be higher than low'});
+            return Object.assign({},inFields,{low,high});
+        }
+        else {
+            low= Object.assign({},low, {valid:true});
+            high= Object.assign({},high, {valid:true});
+            return Object.assign({},inFields,{low,high});
+        }
     }
 };
 
-class ExampleDialog {
 
-    constructor() {
-        var popup= (
-            <PopupPanel title={'Example Dialog'} >
-                <AllTest  groupKey={'DEMO_FORM'} />
-            </PopupPanel>
-        );
-        FieldGroupUtils.initFieldGroup('DEMO_FORM',testReducer,true);
-        DialogRootContainer.defineDialog('ExampleDialog', popup);
-    }
 
-    showDialog() {
-        AppDataCntlr.showDialog('ExampleDialog');
-    }
-}
 
+
+/// test
 
 var AllTest = React.createClass({
 
-    showResults(success, request) {
-        var statStr= `validate state: ${success}`;
-        //var request= FieldGroupUtils.getResults(this.props.groupKey);
-        console.log(statStr);
-        console.log(request);
 
-        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-            buildString+=`${k}=${request[k]}`;
-            if (idx<array.length-1) buildString+=', ';
-            return buildString;
-        },'');
-
-
-        var resolver= null;
-        var closePromise= new Promise(function(resolve, reject) {
-            resolver= resolve;
-        });
-
-        var results= (
-            <PopupPanel title={'Example Dialog Results'} closePromise={closePromise} >
-                {this.makeResultInfoContent(statStr,s,resolver)}
-            </PopupPanel>
-        );
-
-        DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
-        AppDataCntlr.showDialog('ResultsFromExampleDialog');
-    },
-
-
-    makeResultInfoContent(statStr,s,closePromiseClick) {
-        return (
-            <div style={{padding:'5px'}}>
-                <br/>{statStr}<br/><br/>{s}
-                <button type='button' onClick={closePromiseClick}>Another Close</button>
-                <CompleteButton dialogId='ResultsFromExampleDialog' />
-            </div>
-        );
-    },
-
-
-
-    resultsFail(request) {
-        this.showResults(false,request);
-    },
-
-    resultsSuccess(request) {
-        this.showResults(true,request);
-    },
 
     render() {
-
         return (
             <div style={{padding:'5px'}}>
                 <div>
                     <Tabs defaultSelected={0}>
                         <Tab name='First'>
-                            <div style={{'minWidth': '300', 'minHeight': '100'}}>
-                                <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={testReducer} validatorFunc={null} keepState={true}>
-                                    <InputGroup labelWidth={130}>
-                                        <TargetPanel groupKey='DEMO_FORM' />
-                                        <ValidationField fieldKey={'field1'}
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey='field2'
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey='field3'
-                                                         initialState= {{
-                                          fieldKey: 'field3',
-                                          value: '12',
-                                          validator: Validate.floatRange.bind(null, 1.23, 1000, 3,'field 3'),
-                                          tooltip: 'more tipping',
-                                          label : 'Another Float:',
-                                          labelWidth : 100
-                                      }}
-                                                         groupKey='DEMO_FORM'/>
-                                        <ValidationField fieldKey={'field4'}
-                                                         groupKey='DEMO_FORM'/>
-
-                                        <br/><br/>
-                                        <CheckboxGroupInputField
-                                            initialState= {{
-                                          value: '_all_',
-                                          tooltip: 'Please select some boxes',
-                                          label : 'Checkbox Group:'
-                                      }}
-                                            options={
-                                          [
-                                              {label: 'Apple', value: 'A'},
-                                              {label: 'Banana', value: 'B'},
-                                              {label: 'Cranberry', value: 'C'},
-                                              {label: 'Dates', value: 'D'},
-                                              {label: 'Grapes', value: 'G'}
-                                          ]
-                                          }
-                                            fieldKey='checkBoxGrpFld'
-                                            groupKey='DEMO_FORM'/>
-
-                                        <br/><br/>
-                                        <RadioGroupInputField  initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'Radio Group:'
-                                      }}
-                                                               options={
-                                                              [
-                                                                  {label: 'Option 1', value: 'opt1'},
-                                                                  {label: 'Option 2', value: 'opt2'},
-                                                                  {label: 'Option 3', value: 'opt3'},
-                                                                  {label: 'Option 4', value: 'opt4'}
-                                                              ]
-                                                              }
-                                                               fieldKey='radioGrpFld'
-                                                               groupKey='DEMO_FORM'/>
-                                        <br/><br/>
-
-                                        <ListBoxInputField  initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'ListBox Field:'
-                                      }}
-                                                            options={
-                                          [
-                                              {label: 'Item 1', value: 'i1'},
-                                              {label: 'Another Item 2', value: 'i2'},
-                                              {label: 'Yet Another 3', value: 'i3'},
-                                              {label: 'And one more 4', value: 'i4'}
-                                          ]
-                                          }
-                                                            multiple={false}
-                                                            fieldKey='listBoxFld'
-                                                            groupKey='DEMO_FORM'/>
-                                        <br/><br/>
-
-                                        <CompleteButton groupKey='DEMO_FORM'
-                                                        onSuccess={this.resultsSuccess}
-                                                        onFail={this.resultsFail}
-                                                        dialogId='ExampleDialog'
-                                            />
-                                    </InputGroup>
-                                </FieldGroup>
-                            </div>
+                            <FieldGroupTest />
                         </Tab>
                         <Tab name='Second'>
                             <div style={{'minWidth': '300', 'minHeight': '150'}}>
@@ -273,8 +175,190 @@ var AllTest = React.createClass({
 });
 
 
-//<JunkFormButton groupKey='DEMO_FORM' label='submit'/>
+var FieldGroupTest = React.createClass({
 
-const LABEL_WIDTH= 105;
 
-export default ExampleDialog;
+
+    // code that connects to store
+    // code that connects to store
+    // code that connects to store
+
+    formStoreListenerRemove : null,
+
+    formStoreUpdate() {
+        this.setState( {fields : FieldGroupUtils.getGroupFields('DEMO_FORM')});
+    },
+
+    componentWillUnmount() {
+        if (this.formStoreListenerRemove) this.formStoreListenerRemove();
+        this.formStoreListenerRemove= null;
+    },
+
+
+    componentDidMount() {
+        this.formStoreListenerRemove= flux.addListener(this.formStoreUpdate.bind(this));
+    },
+    // end code that connects to store
+
+
+    showResults(success, request) {
+        var statStr= `validate state: ${success}`;
+        //var request= FieldGroupUtils.getResults(this.props.groupKey);
+        console.log(statStr);
+        console.log(request);
+
+        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+            buildString+=`${k}=${request[k]}`;
+            if (idx<array.length-1) buildString+=', ';
+            return buildString;
+        },'');
+
+
+        var resolver= null;
+        var closePromise= new Promise(function(resolve, reject) {
+            resolver= resolve;
+        });
+
+        var results= (
+            <PopupPanel title={'Example Dialog Results'} closePromise={closePromise} >
+                {this.makeResultInfoContent(statStr,s,resolver)}
+            </PopupPanel>
+        );
+
+        DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
+        AppDataCntlr.showDialog('ResultsFromExampleDialog');
+
+    },
+
+
+    makeResultInfoContent(statStr,s,closePromiseClick) {
+        return (
+            <div style={{padding:'5px'}}>
+                <br/>{statStr}<br/><br/>{s}
+                <button type='button' onClick={closePromiseClick}>Another Close</button>
+                <CompleteButton dialogId='ResultsFromExampleDialog' />
+            </div>
+        );
+    },
+
+
+
+    resultsFail(request) {
+        this.showResults(false,request);
+    },
+
+    resultsSuccess(request) {
+        this.showResults(true,request);
+    },
+
+    makeField1(hide) {
+        var f1= (
+            <ValidationField fieldKey={'field1'}
+                             groupKey='DEMO_FORM'/>
+        );
+        var hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
+        console.log('hide='+hide);
+        return hide ? hidden : f1;
+    },
+
+    render() {
+
+
+        var fields= FieldGroupUtils.getGroupFields('DEMO_FORM');
+        if (fields) {
+            const {radioGrpFld}= fields;
+            var hide= (radioGrpFld && radioGrpFld.value==='opt2');
+        }
+        var field1= this.makeField1(hide);
+
+        return (
+            <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} validatorFunc={null} keepState={true}>
+                <InputGroup labelWidth={130}>
+                    <TargetPanel groupKey='DEMO_FORM' />
+                    {field1}
+                    <ValidationField fieldKey='field2'
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='field3'
+                                     initialState= {{
+                                          fieldKey: 'field3',
+                                          value: '12',
+                                          validator: Validate.floatRange.bind(null, 1.23, 1000, 3,'field 3'),
+                                          tooltip: 'more tipping',
+                                          label : 'Another Float:',
+                                          labelWidth : 100
+                                      }}
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey={'field4'}
+                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='low' groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='high' groupKey='DEMO_FORM'/>
+
+                    <br/><br/>
+                    <CheckboxGroupInputField
+                        initialState= {{
+                                          value: '_all_',
+                                          tooltip: 'Please select some boxes',
+                                          label : 'Checkbox Group:'
+                                      }}
+                        options={
+                                          [
+                                              {label: 'Apple', value: 'A'},
+                                              {label: 'Banana', value: 'B'},
+                                              {label: 'Cranberry', value: 'C'},
+                                              {label: 'Dates', value: 'D'},
+                                              {label: 'Grapes', value: 'G'}
+                                          ]
+                                          }
+                        fieldKey='checkBoxGrpFld'
+                        groupKey='DEMO_FORM'/>
+
+                    <br/><br/>
+                    <RadioGroupInputField  initialState= {{
+                                          tooltip: 'Please select an option',
+                                          label : 'Radio Group:'
+                                      }}
+                                           options={
+                                                              [
+                                                                  {label: 'Option 1', value: 'opt1'},
+                                                                  {label: 'Hide A Field', value: 'opt2'},
+                                                                  {label: 'Option 3', value: 'opt3'},
+                                                                  {label: 'Option 4', value: 'opt4'}
+                                                              ]
+                                                              }
+                                           fieldKey='radioGrpFld'
+                                           groupKey='DEMO_FORM'/>
+                    <br/><br/>
+
+                    <ListBoxInputField  initialState= {{
+                                          tooltip: 'Please select an option',
+                                          label : 'ListBox Field:'
+                                      }}
+                                        options={
+                                          [
+                                              {label: 'Item 1', value: 'i1'},
+                                              {label: 'Another Item 2', value: 'i2'},
+                                              {label: 'Yet Another 3', value: 'i3'},
+                                              {label: 'And one more 4', value: 'i4'}
+                                          ]
+                                          }
+                                        multiple={false}
+                                        fieldKey='listBoxFld'
+                                        groupKey='DEMO_FORM'/>
+                    <br/><br/>
+
+                    <CompleteButton groupKey='DEMO_FORM'
+                                    onSuccess={this.resultsSuccess}
+                                    onFail={this.resultsFail}
+                                    dialogId='ExampleDialog'
+                    />
+                </InputGroup>
+            </FieldGroup>
+
+        );
+    }
+});
+
+
+
+
+//export default ExampleDialog;

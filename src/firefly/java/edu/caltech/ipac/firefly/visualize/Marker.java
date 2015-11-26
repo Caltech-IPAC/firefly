@@ -14,25 +14,23 @@ import edu.caltech.ipac.visualize.plot.WorldPt;
 /**
 * @author Trey Roby
 */
-public class Marker {
-    public enum Corner {NE,NW,SE,SW}
+public abstract class Marker implements OverlayMarker {
     public static final String FONT= "SansSerif";
 
     private WorldPt startPt;
     private WorldPt endPt;
-    private Corner startCorner;
-    private Corner endCorner;
-    private float workingScreenRadius;
     private String title=null;
-    private Corner textCorner= Corner.SE;
+    private Corner textCorner= OverlayMarker.Corner.SE;
 
-    public Marker(int screenRadius) {
-        startCorner= Corner.NW;
-        endCorner= Corner.SE;
-        workingScreenRadius = screenRadius;
-        startPt= null;
-        endPt= null;
-    }
+	private boolean isDisplayed = true;
+
+//    public Marker(int screenRadius) {
+//        startCorner= Corner.NW;
+//        endCorner= Corner.SE;
+//        workingScreenRadius = screenRadius;
+//        startPt= null;
+//        endPt= null;
+//    }
 
 //    public Marker(WorldPt center, int screenRadius, WebPlot plot) throws ProjectionException {
 //        ScreenPt cpt= plot.getScreenCoords(center);
@@ -63,74 +61,11 @@ public class Marker {
         return (startPt!=null && endPt!=null);
     }
 
-    public void updateRadius(WebPlot plot, boolean largeChangeOnly) {
-        if (plot!=null && startPt!=null && endPt!=null) {
-            ScreenPt spt= plot.getScreenCoords(startPt);
-            ScreenPt ept= plot.getScreenCoords(endPt);
-            if (spt==null || ept==null) return;
-            int xDist= Math.abs(spt.getIX() - ept.getIX());
-            int yDist= Math.abs(spt.getIY()-ept.getIY());
-            int newRadius= Math.min(xDist,yDist)/2;
-            if (largeChangeOnly) {
-                if (Math.abs(newRadius-workingScreenRadius)>2) {
-                    workingScreenRadius= newRadius;
-                }
-            }
-            else {
-                workingScreenRadius= newRadius;
-            }
-        }
-    }
+    public abstract void move(WorldPt center, WebPlot plot);
 
-    public void move(WorldPt center, WebPlot plot) {
-        ScreenPt cpt= plot.getScreenCoords(center);
-        if (cpt==null) return;
-        updateRadius(plot,true);
-        int radius= Math.round(workingScreenRadius);
-        ScreenPt spt= new ScreenPt(cpt.getIX()-radius, cpt.getIY()-radius);
-        ScreenPt ept= new ScreenPt(cpt.getIX()+radius, cpt.getIY()+radius);
-        startPt= plot.getWorldCoords(spt);
-        endPt= plot.getWorldCoords(ept);
-    }
+    public abstract void adjustStartEnd(WebPlot plot);
 
-    public void adjustStartEnd(WebPlot plot) {
-        ScreenPt center= getCenter(plot);
-        if (center!=null) {
-            int r= (int)workingScreenRadius;
-            ScreenPt sp= new ScreenPt(center.getIX()-r, center.getIY()-r);
-            ScreenPt ep= new ScreenPt(center.getIX()+r, center.getIY()+r);
-            startPt= plot.getWorldCoords(sp);
-            endPt= plot.getWorldCoords(ep);
-        }
-    }
-
-    public boolean contains(ScreenPt pt, WebPlot plot) {
-        boolean retval= false;
-        ScreenPt center= getCenter(plot);
-        if (center!=null) {
-            retval= VisUtil.containsCircle(pt.getIX(),pt.getIY(),
-                                           center.getIX(),center.getIY(),
-                                           (int)workingScreenRadius);
-        }
-        return retval;
-
-    }
-
-    public boolean containsSquare(ScreenPt pt, WebPlot plot) {
-        ScreenPt spt= plot.getScreenCoords(startPt);
-        ScreenPt ept= plot.getScreenCoords(endPt);
-        if (spt==null || ept==null) return false;
-
-        int x1= spt.getIX();
-        int y1= spt.getIY();
-        int x2= ept.getIX();
-        int y2= ept.getIY();
-        int w= Math.abs(x1 - x2);
-        int h= Math.abs(y1-y2);
-
-        return VisUtil.contains( Math.min(x1,x2), Math.min(y1,y2), w,h, pt.getIX(), pt.getIY());
-
-    }
+    public abstract boolean contains(ScreenPt pt, WebPlot plot);
 
     public void setEditCorner(Corner corner, WebPlot plot) {
         ScreenPt spt= plot.getScreenCoords(startPt);
@@ -183,10 +118,10 @@ public class Marker {
         int seD= (int)VisUtil.computeScreenDistance(x,y,x2,y2);
         int swD= (int)VisUtil.computeScreenDistance(x,y,x1,y2);
         MinCorner mdAry[]= new MinCorner[] {
-                new MinCorner(Corner.NW,nwD),
-                new MinCorner(Corner.NE,neD),
-                new MinCorner(Corner.SE,seD),
-                new MinCorner(Corner.SW,swD)
+                new MinCorner(OverlayMarker.Corner.NW,nwD),
+                new MinCorner(OverlayMarker.Corner.NE,neD),
+                new MinCorner(OverlayMarker.Corner.SE,seD),
+                new MinCorner(OverlayMarker.Corner.SW,swD)
         };
 
         int minDist= Integer.MAX_VALUE;
@@ -256,47 +191,16 @@ public class Marker {
 
     public WorldPt getStartPt() { return startPt; }
     public WorldPt getEndPt() { return endPt; }
-    public void setEndPt(WorldPt endPt,WebPlot plot) {
-        if (endPt==null) return;
-        this.endPt = endPt;
-        updateRadius(plot,false);
-    }
-    public OffsetScreenPt getTitlePtOffset() {
-        OffsetScreenPt retval= null;
-        int radius= (int)workingScreenRadius;
-        switch (textCorner) {
-            case NE:
-                retval= new OffsetScreenPt(-1*radius, -1*(radius+10));
-                break;
-            case NW:
-                retval= new OffsetScreenPt(radius, -1*(radius));
-                break;
-            case SE:
-                retval= new OffsetScreenPt(-1*radius, radius+5);
-                break;
-            case SW:
-                retval= new OffsetScreenPt(radius, radius);
-                break;
-        }
-        return retval;
-    }
-
-    public static class MinCorner {
-        private final Corner corner;
-        private final int distance;
-
-        public MinCorner(Corner corner, int distance) {
-            this.corner = corner;
-            this.distance = distance;
-        }
-
-        public int getDistance() {
-            return distance;
-        }
-
-        public Corner getCorner() {
-            return corner;
-        }
-    }
+    
+    public abstract void setEndPt(WorldPt endPt,WebPlot plot);
+    
+//    public void setIsShown(boolean isDisp){
+//    	isDisplayed = isDisp;
+//    }
+//    
+//	@Override
+//	public boolean isShown() {
+//		return isDisplayed;
+//	}
 }
 

@@ -2,16 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/**
- * Date: Mar 13, 2009
- * @author loi
- */
-/* eslint prefer-template:0 */
-
 import Enum from 'enum';
 import { getRootURL } from './BrowserUtil.js';
 
-const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
+export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 const saveAsIpacUrl = getRootURL() + 'servlet/SaveAsIpacTable';
 
@@ -22,31 +16,40 @@ const saveAsIpacUrl = getRootURL() + 'servlet/SaveAsIpacTable';
  * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
  *
  * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
- * @param paramType  if the the parameters are for the server use QUESTION_MARK if the client use POUND
+ * @param paramType  if the the parameters are for the server use QUESTION_MARK, if the client use POUND - TODO: make this optional
  * @param {array|Object} params parameters to be appended to the url.  These parameters may contain
  *               delimiter characters.  Unlike url, delimiter characters will be encoded as well.
+ *               if the parameters are a array then it should be objects {name:string,value:string} otherwise
+ *               it can be an object literal
  * @return {string} encoded url
  */
 export const encodeUrl= function(url, paramType, params) {
     var paramChar= paramType===ParamType.QUESTION_MARK ? '?': '#';
     var parts = url.split('\\'+paramChar, 2);
     var baseUrl = parts[0];
-    var queryStr = encodeURI(parts.length===2 ? parts[1] : '');
+    //var queryStr = encodeURI(parts.length===2 ? parts[1] : '');
 
-    var paramAry= params || [];
+    var paramAry;
 
-    if (params.length===1 && Object.keys(params[0]).length>0) {
-        paramAry= Object.keys(params[0]).reduce( (ary,key) => {
-            ary.push({name:key, value : params[0][key]});
+    if (Array.isArray(params)) {
+        paramAry= params;
+    }
+    else {
+        paramAry= Object.keys(params).reduce( (ary,key) => {
+            ary.push({name:key, value : params[key]});
             return ary;
         },[]);
     }
 
-    queryStr= paramAry.reduce((str,param,idx) => {
+    var queryStr= paramAry.reduce((str,param,idx) => {
         if (param && param.name) {
             var key = encodeURI(param.name.trim());
-            var val = param.value ? encodeURIComponent(param.value.trim()) : '';
-            str += val.length ? key + '=' + val + (idx < paramAry.length ? '&' : '') : key;
+            var valStr='';
+            if (typeof(param.value) != 'undefined' && param.value != null) {
+                valStr= String(param.value);
+            }
+            var val = valStr.length ? encodeURIComponent(valStr.trim()) : '';
+            str += val.length ? key + '=' + val + (idx < paramAry.length-1 ? '&' : '') : key;
             return str;
         }
     },'');
@@ -155,3 +158,9 @@ export function fetchUrl(url, options) {
         });
 }
 
+
+export function logError(...message) {
+    if (message) {
+        message.forEach( (m) => console.log(m.stack ? m.stack : m) );
+    }
+}

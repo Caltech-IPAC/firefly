@@ -2,7 +2,7 @@ import * as StringUtils from '../../util/StringUtils.js';
 import PositionParser from '../../util/PositionParser.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import CoordUtil from '../../visualize/CoordUtil.js';
-import {WorldPt} from '../../visualize/Point.js';
+import Point, {makeWorldPt} from '../../visualize/Point.js';
 
 import numeral from 'numeral';
 
@@ -185,14 +185,14 @@ var makePositionFieldDef= function(properties) {
         }
 
         if (name && resolver) {
-            if (retval === null && wp instanceof WorldPt) {
+            if (retval === null && wp.type=== Point.W_PT) {
                 var rWp = wp;
                 if (rWp.getResolver() !==null && rWp.getObjName() !==null) {
                     retval = formatTargetForHelp(rWp);
                 }
             }
             if (retval ===null) {
-                retval = formatTargetForHelp(new WorldPt(wp.getLon, wp.getLat(), wp.getCoordSys(), name, resolver));
+                retval = formatTargetForHelp(makeWorldPt(wp.getLon, wp.getLat(), wp.getCoordSys(), name, resolver));
             }
         }
         else {

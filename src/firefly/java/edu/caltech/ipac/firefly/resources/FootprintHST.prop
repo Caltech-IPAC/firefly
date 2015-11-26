@@ -1,0 +1,30 @@
+FootprintHST.Title= Add HST footprint
+FootprintHST.ShortDescription= Add a HST footprint
+
+FootprintHST.title.Title= Label
+FootprintHST.title.ShortDescription= Add a label to this footprint
+FootprintHST.title.PreferWidth= 8
+FootprintHST.title.NullAllowed= true
+
+FootprintHST.corner.Title= Corner
+FootprintHST.corner.DataType= EnumString
+FootprintHST.corner.Default= SE
+FootprintHST.corner.ShortDescription= Choose a corner
+FootprintHST.corner.Items= NE NW SE SW
+FootprintHST.corner.NE.Name= NE
+FootprintHST.corner.NW.Name= NW
+FootprintHST.corner.SE.Name= SE
+FootprintHST.corner.SW.Name= SW
+
+
+FootprintHST.angle.Title= Angle
+FootprintHST.angle.DataType= Float
+FootprintHST.angle.ShortDescription= Enter the angle you want the footprint rotated
+FootprintHST.angle.Min= 0
+FootprintHST.angle.Max= 360
+FootprintHST.angle.Default= 0
+FootprintHST.angle.PreferWidth= 3
+FootprintHST.angle.Validation= range
+FootprintHST.angle.ErrorDescription= The angle should be between 0 and 360 degree
+
+

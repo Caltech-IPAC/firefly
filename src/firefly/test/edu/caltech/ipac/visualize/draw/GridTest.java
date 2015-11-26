@@ -1,14 +1,13 @@
 package edu.caltech.ipac.visualize.draw;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.caltech.ipac.firefly.server.query.StatisticsProcessorTest;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -22,18 +21,19 @@ import nom.tam.fits.Fits;
 public class GridTest {
 
 //	private static Component grid = null;
-	private static final String TEST_ROOT = "test"+File.separatorChar;
-	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
-			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
+//	private static final String TEST_ROOT = "test"+File.separatorChar;
+//	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
+//			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
 	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
 
 	@BeforeClass
 	public static void buildPlot() throws Exception {
-
+		InputStream resourceAsStream = GridTest.class.getResourceAsStream("bad.fits");
+		
 //		grid = new GridLayer(csys).getGrid();
-		File file = Paths.get(filename).toFile();
-		Fits fits = new Fits(file);
+//		File file = Paths.get(filename).toFile();
+		Fits fits = new Fits(resourceAsStream);
 		// fits = new Fits("./good.fits");
 
 		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);

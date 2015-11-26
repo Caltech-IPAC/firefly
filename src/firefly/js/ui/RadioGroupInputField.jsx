@@ -8,6 +8,7 @@ var RadioGroupInputField= React.createClass(
         mixins: [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
+            inline : React.PropTypes.bool,
             options: React.PropTypes.array.isRequired
         },
 
@@ -35,22 +36,22 @@ var RadioGroupInputField= React.createClass(
 
         render() {
             return (
-                <div style={{whiteSpace:'nowrap'}}>
+                <div style={{whiteSpace:'nowrap',display: this.props.inline?'inline-block':'block'}}>
                     <InputFieldLabel label={this.getLabel()}
-                        tooltip={this.getTip()}
-                        labelWidth={this.props.labelWidth}
-                    />
+                                     tooltip={this.getTip()}
+                                     labelWidth={this.props.labelWidth}
+                        />
                     {this.props.options.map((option) => {
                         return (
                             <input type='radio'
-                                key={option.value}
-                                name={this.props.fieldKey}
-                                value={option.value}
-                                defaultChecked={this.getValue()===option.value}
-                                onChange={this.onChange}
-                            >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                                   key={option.value}
+                                   name={this.props.fieldKey}
+                                   value={option.value}
+                                   defaultChecked={this.getValue()===option.value}
+                                   onChange={this.onChange}
+                                >&nbsp;{option.label}&nbsp;&nbsp;</input>
                         );
-                        })}
+                    })}
                 </div>
             );
         }

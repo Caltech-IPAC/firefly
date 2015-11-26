@@ -15,18 +15,18 @@ const URL_SUB = 'URL_PARAM_SEP';
 //const KW_DESC_SEP = '/';
 const KW_VAL_SEP = '=';
 const BACKGROUNDABLE = 'bgable';
+const ID_KEY = 'id';
 
 export const ID_NOT_DEFINED = 'ID_NOT_DEFINED';
 
 export class ServerRequest {
     constructor(id, copyFromReq) {
         this.params= {};
-        this.ID_KEY = 'id';
         if (copyFromReq) {
             Object.assign(this.params, copyFromReq.params ? copyFromReq.params : copyFromReq);
         }
         if (id) this.setRequestId(id);
-        if (!this.params[this.ID_KEY]) this.params[this.ID_KEY]= ID_NOT_DEFINED;
+        if (!this.params[ID_KEY]) this.params[ID_KEY]= ID_NOT_DEFINED;
         this.setRequestClass(SERVER_REQUEST_CLASS);
     }
 
@@ -41,9 +41,9 @@ export class ServerRequest {
     isInputParam() { return true; }
 
 
-    getRequestId() { return this.getParam(this.ID_KEY); }
+    getRequestId() { return this.getParam(ID_KEY); }
 
-    setRequestId(id) { this.params[this.ID_KEY]= id; }
+    setRequestId(id) { this.params[ID_KEY]= id; }
 
     isBackgroundable() {
         return this.getBooleanParam(BACKGROUNDABLE, false);
@@ -86,7 +86,7 @@ export class ServerRequest {
             if (v.name && v.value) this.params[v.name]= v.value;
         }
         else if (arguments.length===2) {
-            this.params[arguments[0]]= `${arguments[1]}`;
+            this.params[arguments[0]]= arguments[1];
         }
         else if (arguments.length>2) {
             var values= [];
@@ -127,7 +127,7 @@ export class ServerRequest {
         return val ? replaceAll(val,URL_SUB,PARAM_SEP) : null;
     }
 
-    isValid() { return this.params[this.ID_KEY] ? true : false; }
+    isValid() { return this.params[ID_KEY] ? true : false; }
 
     removeParam(name) { delete this.params[name]; }
 
@@ -154,11 +154,11 @@ export class ServerRequest {
     static parse(str,req) {
         if (!str) return null;
         words(str,PARAM_SEP).forEach((p) => {
-            var outParam= words(p,PARAM_SEP);
+            var outParam= words(p,KW_VAL_SEP);
             if (outParam.length===2) {
                 var newParam= {name : outParam[0], value:outParam[1]};
                 if (!req.addPredefinedAttrib(newParam)) {
-                   req.setParam(outParam);
+                   req.setParam(newParam);
                 }
             }
         });
@@ -176,9 +176,9 @@ export class ServerRequest {
      * @return
      */
     toString() {
-        var idStr= (this.ID_KEY+KW_VAL_SEP+this.params[this.ID_KEY]);
+        var idStr= (ID_KEY+KW_VAL_SEP+this.params[ID_KEY]);
         var retStr= Object.keys(this.params).reduce((str,key) => {
-            if (key!==this.ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
+            if (key!==ID_KEY) str+= PARAM_SEP+key+KW_VAL_SEP+this.params[key];
             return str;
         },idStr);
         return retStr;

@@ -18,6 +18,7 @@ import edu.caltech.ipac.util.ComparisonUtil;
  */
 public class DrawingDef {
 
+	// FIXME: those are not DS9 colors, hence problem when saved in DS9 regions format file
     public static final String COLOR_HIGHLIGHTED_PT = "00aaff";
     public static final String COLOR_PT_1 = "ff0000"; // red
     public static final String COLOR_PT_2 = "00ff00"; //green

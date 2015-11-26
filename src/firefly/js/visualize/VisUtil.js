@@ -10,14 +10,19 @@
 
 
 import Enum from 'enum';
-import {WorldPt,ImageWorkSpacePt} from './Point.js';
 import CoordinateSys from './CoordSys.js';
+import {CCUtil} from './CsysConverter.js';
+import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
+    makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
 
 export const DtoR = Math.PI / 180.0;
 export const RtoD = 180.0 / Math.PI;
+
+function toDegrees (angle) { return angle * (180 / Math.PI); }
+function toRadians(angle) { return angle * Math.PI / 180; }
 
 
 const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART']);
@@ -36,7 +41,7 @@ const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART'])
  * @param y2
  * @return {number}
  */
-export const computeScreenDistance= function (x1, y1, x2, y2) {
+const computeScreenDistance= function (x1, y1, x2, y2) {
     const deltaXSq = (x1 - x2) * (x1 - x2);
     const  deltaYSq = (y1 - y2) * (y1 - y2);
     return Math.sqrt(deltaXSq + deltaYSq);
@@ -48,7 +53,7 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @param p2 WorldPt
  * @return
  */
-export const computeDistance= function(p1, p2) {
+const computeDistance= function(p1, p2) {
     var lon1Radius = p1.getLon() * DtoR;
     var lon2Radius = p2.getLon() * DtoR;
     var lat1Radius = p1.getLat() * DtoR;
@@ -67,7 +72,7 @@ export const computeDistance= function(p1, p2) {
  * @param p2 {Pt}
  * @return {number}
  */
-export const computeSimpleDistance= function(p1, p2) {
+const computeSimpleDistance= function(p1, p2) {
         var dx = p1.x - p2.x;
         var dy = p1.y - p2.y;
         return Math.sqrt(dx * dx + dy * dy);
@@ -82,10 +87,10 @@ export const computeSimpleDistance= function(p1, p2) {
      * @param to  CoordSys, the coordinate system to convert to
      * @return WorldPt the world point in the new coordinate system
      */
-export const convert= function(wpt, to) {
+const convert= function(wpt, to) {
     var retval;
     var from = wpt.getCoordSys();
-    if (from.equals(to) || !to) {
+    if (!to || from==to) {
         retval = wpt;
     } else {
         var tobs = 0.0;
@@ -93,12 +98,12 @@ export const convert= function(wpt, to) {
         var ll = CoordConv.doConv(from.getJsys(), from.getEquinox(),
                                   wpt.getLon(), wpt.getLat(),
                                   to.getJsys(), to.getEquinox(), tobs);
-        retval = new WorldPt(ll.getLon(), ll.getLat(), to);
+        retval = makeWorldPt(ll.getLon(), ll.getLat(), to);
     }
     return retval;
 };
 
-export const convertToJ2000= function(wpt) {
+const convertToJ2000= function(wpt) {
     return convert(wpt, CoordinateSys.EQ_J2000);
 };
 
@@ -108,7 +113,7 @@ export const convertToJ2000= function(wpt) {
  * @param inPoints array of points for which the central point is desired
  * @return CentralPointRetval WorldPt and search radius
  */
-export const computeCentralPointAndRadius= function(inPoints) {
+const computeCentralPointAndRadius= function(inPoints) {
     var lon, lat;
     var radius;
     var maxRadius = Number.NEGATIVE_INFINITY;
@@ -143,12 +148,12 @@ export const computeCentralPointAndRadius= function(inPoints) {
     if (lon > 360) lon -= 360;
     lat = (maxLat + minLat) / 2;
 
-    var centralPoint = new WorldPt(lon, lat);
+    var centralPoint = makeWorldPt(lon, lat);
 
 
     points.forEach((pt) => {
         radius = computeDistance(centralPoint,
-                                 new WorldPt(pt.getLon(), pt.getLat()));
+                                 makeWorldPt(pt.getLon(), pt.getLat()));
         if (maxRadius < radius) {
             maxRadius = radius;
         }
@@ -168,7 +173,7 @@ export const computeCentralPointAndRadius= function(inPoints) {
  * @param dec  the equatorial DEC in degrees of the second object
  * @return position angle in degrees between the two objects
  */
-export const getPositionAngle= function(ra0, dec0, ra, dec) {
+const getPositionAngle= function(ra0, dec0, ra, dec) {
     var alf, alf0, del, del0;
     var sd, sd0, cd, cd0, cosda, cosd, sind, sinpa, cospa;
     var dist;
@@ -213,7 +218,7 @@ export const getPositionAngle= function(ra0, dec0, ra, dec) {
  * @param phi  the position angle in degrees to the second object
  * @return WorldPt of the new object
  */
-export const getNewPosition= function(ra, dec, dist, phi) {
+const getNewPosition= function(ra, dec, dist, phi) {
     var tmp, newdec, deltaRa;
     var ra1, dec1;
 
@@ -236,10 +241,10 @@ export const getNewPosition= function(ra, dec, dist, phi) {
         ra1 = ra + deltaRa;
     }
     ra1 *= RtoD;
-    return new WorldPt(ra1, dec1);
+    return makeWorldPt(ra1, dec1);
 };
 
-export const getBestTitle= function(plot) {
+const getBestTitle= function(plot) {
     var t = plot.getPlotDesc();
     if (!t) {
         var mpw = plot.getPlotView().getMiniPlotWidget();
@@ -249,32 +254,32 @@ export const getBestTitle= function(plot) {
 };
 
 
-export const getRotationAngle= function(plot) {
+const getRotationAngle= function(plot) {
     var retval = 0;
     var iWidth = plot.getImageWidth();
     var iHeight = plot.getImageHeight();
     var ix = iWidth / 2;
     var iy = iHeight / 2;
-    var wptC = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
-    var wpt2 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iHeight/4));
+    var wptC = plot.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    var wpt2 = plot.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
     if (wptC && wpt2) {
         retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
     }
     return retval;
 };
 
-export const isPlotNorth= function(plot) {
+const isPlotNorth= function(plot) {
 
     var retval= false;
     var iWidth = plot.getImageWidth();
     var iHeight = plot.getImageHeight();
     var ix = iWidth / 2;
     var iy = iHeight / 2;
-    var wpt1 = plot.getWorldCoords(new ImageWorkSpacePt(ix, iy));
+    var wpt1 = plot.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     if (wpt1) {
         var cdelt1 = plot.getImagePixelScaleInDeg();
         var zfact = plot.getZoomFact();
-        var wpt2 = new WorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / zfact) * (5));
+        var wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / zfact) * (5));
 
         var spt1 = plot.getScreenCoords(wpt1);
         var spt2 = plot.getScreenCoords(wpt2);
@@ -285,12 +290,12 @@ export const isPlotNorth= function(plot) {
     return retval;
 };
 
-export const getPossibleZoomLevels= function() {
+const getPossibleZoomLevels= function() {
         return ZoomUtil._levels;
 };
 
 
-export const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
+const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeight,
                                                   screenWidth, screenHeight, tryMinFactor=-1) {
     var zFact;
     if (fullType===FullType.ONLY_WIDTH || screenHeight <= 0 || dataHeight <= 0) {
@@ -326,7 +331,7 @@ export const getEstimatedFullZoomFactor= function(fullType, dataWidth, dataHeigh
  * @param h the second rec height
  * @return true if rectangles intersect
  */
-export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
+const intersects= function(x0, y0, w0, h0, x, y, w, h) {
     if (w0 <= 0 || h0 <= 0 || w <= 0 || h <= 0) {
         return false;
     }
@@ -342,9 +347,9 @@ export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
  * @param h0 the rec height
  * @param x the second point x, top left
  * @param y the second point y, top left
- * @return true if rectangles intersect
+ * @return {boolean} true if rectangles intersect
  */
-export const contains= function(x0, y0, w0, h0, x, y) {
+const contains= function(x0, y0, w0, h0, x, y) {
     return (x >= x0 && y >= y0 && x < x0 + w0 && y < y0 + h0);
 };
 
@@ -358,17 +363,17 @@ export const contains= function(x0, y0, w0, h0, x, y) {
  * @param y the second point y, top left
  * @param w h the second rec width
  * @param h the second rec height
- * @return true if rectangles intersect
+ * @return {boolean} true if rectangles intersect
  */
-export const containsRec= function(x0, y0, w0, h0, x, y, w, h) {
+const containsRec= function(x0, y0, w0, h0, x, y, w, h) {
      return contains(x0,y0,w0,h0,x,y) && contains(x0,y0,w0,h0,x+w,y+h);
 };
 
-export const containsCircle= function(x, y, centerX, centerY, radius) {
+const containsCircle= function(x, y, centerX, centerY, radius) {
     return Math.pow((x - centerX), 2) + Math.pow((y - centerY), 2) < radius * radius;
 };
 
-export const getArrowCoords= function(x1, y1, x2, y2) {
+const getArrowCoords= function(x1, y1, x2, y2) {
 
     var barbLength = 10;
 
@@ -405,10 +410,7 @@ export const getArrowCoords= function(x1, y1, x2, y2) {
     }
 
     return {
-        x1 : x1,
-        y1 : y1,
-        x2 : x2,
-        y2 : y2,
+        x1, y1, x2, y2,
         barbX1 : x2,
         barbY1 : y2,
         barbX2 : barbX,
@@ -429,12 +431,12 @@ export const getCurrentPlot= function() {
 
 /**
  *
- * @param selection obj with two properties pt0 & pt1
+ * @param {object} selection obj with two properties pt0 & pt1
  * @param plot web plot
  * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
  * @return {Array} indexes from the objList array that are selected
  */
-export const getSelectedPts= function(selection, plot, objList) {
+const getSelectedPts= function(selection, plot, objList) {
     var selectedList= [];
     if (selection && plot && objList && objList.length) {
         var pt0= plot.getScreenCoords(selection.pt0);
@@ -456,12 +458,19 @@ export const getSelectedPts= function(selection, plot, objList) {
     return selectedList;
 };
 
+const getCenterPtOfPlot= function(plot) {
+    var dw = plot.dataWidth;
+    var dh = plot.dataHeight;
+    var ip= makeImagePt(dw/2,dh/2);
+    return CCUtil.getWorldCoords(plot,ip);
+};
 
-export const calculatePosition= function(pos1, offsetRa, offsetDec ) {
-        var ra = Math.toRadians(pos1.getLon());
-        var dec = Math.toRadians(pos1.getLat());
-        var de = Math.toRadians(offsetRa/3600.0); // east
-        var dn = Math.toRadians(offsetDec)/3600.0; // north
+
+const calculatePosition= function(pos1, offsetRa, offsetDec ) {
+        var ra = toRadians(pos1.getLon());
+        var dec = toRadians(pos1.getLat());
+        var de = toRadians(offsetRa/3600.0); // east
+        var dn = toRadians(offsetDec)/3600.0; // north
 
         var cosRa,sinRa,cosDec,sinDec;
         var cosDe,sinDe,cosDn,sinDn;
@@ -503,12 +512,12 @@ export const calculatePosition= function(pos1, offsetRa, offsetDec ) {
         }
         dec2 = Math.atan2(uhat[2],uxy);
 
-        ra2  = Math.toDegrees(ra2);
-        dec2 = Math.toDegrees(dec2);
+        ra2  = toDegrees(ra2);
+        dec2 = toDegrees(dec2);
 
         if (ra2 < 0.0) ra2 +=360.0;
 
-        return new WorldPt(ra2, dec2);
+        return makeWorldPt(ra2, dec2);
 };
 
 /**
@@ -519,16 +528,85 @@ export const calculatePosition= function(pos1, offsetRa, offsetDec ) {
  * @param radius  in arcsec
  * @return object with corners
  */
-export const getCorners= function(center, radius) {
+const getCorners= function(center, radius) {
         var posLeft = calculatePosition(center, +radius, 0.0);
         var posRight = calculatePosition(center, -radius, 0.0);
         var posUp = calculatePosition(center, 0.0, +radius);
         var posDown = calculatePosition(center, 0.0, -radius);
-        var upperLeft = new WorldPt(posLeft.getLon(), posUp.getLat());
-        var upperRight = new WorldPt(posRight.getLon(), posUp.getLat());
-        var lowerLeft = new WorldPt(posLeft.getLon(), posDown.getLat());
-        var lowerRight = new WorldPt(posRight.getLon(), posDown.getLat());
+        var upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
+        var upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
+        var lowerLeft = makeWorldPt(posLeft.getLon(), posDown.getLat());
+        var lowerRight = makeWorldPt(posRight.getLon(), posDown.getLat());
 
         return {upperLeft, upperRight, lowerLeft, lowerRight};
 };
+
+
+/**
+ * Return the same point using the WorldPt object.  the x,y value is the same but a world point is return with the
+ * proper coordinate system.  If a WorldPt is passed the same point is returned.
+ * <i>Important</i>: This method should not be used to convert between coordinate systems.
+ * Example- a ScreenPt with (1,2) will return as a WorldPt with (1,2)
+ * @param pt the point to translate
+ * @return WorldPt the World point with the coordinate system set
+ */
+const getWorldPtRepresentation= function(pt) {
+    if (!isValidPoint(pt)) return null;
+
+    var retval= null;
+    switch (pt.type) {
+        case Point.IM_WS_PT:
+            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
+            break;
+        case Point.SPT:
+            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
+            break;
+        case Point.IM_PT:
+            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
+            break;
+        case Point.VP_PT:
+            retval= makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
+            break;
+        case Point.W_PT:
+            retval=  pt;
+            break;
+    }
+    return retval;
+};
+
+const makePt= function(type,  x, y) {
+    var retval= null;
+    switch (type) {
+        case Point.IM_WS_PT:
+            retval= makeImageWorkSpacePt(x,y);
+            break;
+        case Point.SPT:
+            retval= makeScreenPt(x,y);
+            break;
+        case Point.IM_PT:
+            retval= makeImagePt(x,y);
+            break;
+        case Point.VP_PT:
+            retval= makeViewPortPt(x,y);
+            break;
+        case Point.W_PT:
+            retval= makeWorldPt(x,y);
+            break;
+    }
+    return retval;
+};
+
+
+export default {
+    DtoR,RtoD,computeScreenDistance, computeDistance,
+    computeSimpleDistance,convert,convertToJ2000,
+    computeCentralPointAndRadius, getPositionAngle, getNewPosition,
+    getBestTitle, getRotationAngle,
+    isPlotNorth, getEstimatedFullZoomFactor,
+    intersects, contains, containsRec,containsCircle,
+    getArrowCoords, getSelectedPts, calculatePosition, getCorners,
+    makePt, getWorldPtRepresentation, getCenterPtOfPlot
+};
+
+
 

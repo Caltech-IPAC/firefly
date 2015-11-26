@@ -7,6 +7,8 @@
  */
 export const getFormatString = function(range, numSigDigits) {
 
+    if (range==0) { return '0'; }
+
     var format; // string format
 
     // before ES6, use Math.log(val)/Math.LN10 for Math.log10;

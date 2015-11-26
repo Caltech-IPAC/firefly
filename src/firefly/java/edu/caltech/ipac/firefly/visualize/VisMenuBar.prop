@@ -1,15 +1,33 @@
 VisMenuBar.all.Items = FitsDownload ImageSelect LockImageCmd - zoomUp zoomDown zoomOriginal zoomFit zoomFill - colorTable stretchQuick - \
-                       Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerTool \
+                       Rotate RotateNorth FlipImage centerPlotonQuery - SelectArea DistanceTool MarkerToolDD \
                        NorthArrow grid ds9Region maskOverlay layer - IrsaCatalog restore LockRelated FitsHeader
 
 VisMenuBar.row1.Items = FitsDownload ImageSelect - zoomUp zoomDown zoomOriginal zoomFit zoomFill - \
                        Rotate RotateNorth FlipImage centerPlotonQuery
 
-VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea DistanceTool MarkerTool \
+VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea DistanceTool MarkerToolDD \
                        NorthArrow grid ds9Region maskOverlay layer - IrsaCatalog restore LockRelated FitsHeader
 
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
+
+MarkerToolDD.Items = MarkerTool FootprintJWST - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIS FootprintNIRSPEC - FootprintHST - FootprintWFIRST 
+
+FootprintMIRI.Title= Add MIRI (JWST) footprint
+FootprintMIRI.ShortDescription= Add a MIRI (JWST) footprint
+FootprintFGS.Title= Add FGS (JWST) footprint
+FootprintFGS.ShortDescription= Add a FGS (JWST) footprint
+FootprintNIRCAM.Title= Add NIRCAM (JWST) footprint
+FootprintNIRCAM.ShortDescription= Add a NIRCAM (JWST) footprint
+FootprintNIS.Title= Add NIS (JWST) footprint
+FootprintNIS.ShortDescription= Add a NIS (JWST) footprint
+FootprintNIRSPEC.Title= Add NIRSPEC (JWST) footprint
+FootprintNIRSPEC.ShortDescription= Add a NIRSPEC (JWST) footprint
+
+MarkerToolDD.ShortDescription = Marker Tools
+MarkerToolDD.UseIconOnly= true
+
+
 stretchQuick.Title = Stretch
 stretchQuick.ShortDescription= Quickly change the background image stretch
 stretchQuick.UseIconOnly= true

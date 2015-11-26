@@ -18,7 +18,7 @@ import ColorDialog from '../visualize/ui/ColorDialog.jsx';
 import ExampleDialog  from '../ui/ExampleDialog.jsx';
 
 import {ServerRequest } from '../data/ServerRequest.js';
-import {makePlotState} from '../visualize/PlotState.js';
+import PlotState from '../visualize/PlotState.js';
 import {getJsonData } from '../rpc/SearchServicesJson.js';
 import {flux} from '../Firefly.js';
 import ExternalAccessUtils from './ExternalAccessUtils.js';
@@ -74,7 +74,7 @@ export const fireflyInit= function() {
     window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
     window.firefly.gwt.ExtensionResult= ExtensionResult;
     window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
-    window.firefly.gwt.makePlotState= makePlotState;
+    window.firefly.gwt.makePlotState= PlotState.makePlotState;
     // to call histogram and other react components from GWT
     window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
 

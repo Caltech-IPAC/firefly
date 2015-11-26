@@ -35,6 +35,7 @@ var ValidationField= React.createClass(
        render() {
            return (
                        <InputFieldView
+                               style={this.props.style}
                                valid={this.isValid()}
                                visible= {this.isVisible()}
                                message={this.getMessage()}

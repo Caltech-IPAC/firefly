@@ -11,10 +11,10 @@ import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
 import {ReactJavaInterface } from './gwtinterface/ReactJavaInterface.jsx';
 import ColorDialog from './visualize/ui/ColorDialog.jsx';
-import ExampleDialog  from './ui/ExampleDialog.jsx';
+import {showExampleDialog}  from './ui/ExampleDialog.jsx';
 
 import {ServerRequest } from './data/ServerRequest.js';
-import {makePlotState} from './visualize/PlotState.js';
+import PlotState from './visualize/PlotState.js';
 import {getJsonData } from './rpc/SearchServicesJson.js';
 import ExternalAccessUtils from './core/ExternalAccessUtils.js';
 
@@ -59,7 +59,7 @@ function fireflyInit() {
         window.firefly.gwt.ExtensionJavaInterface= ExtensionJavaInterface;
         window.firefly.gwt.ExtensionResult= ExtensionResult;
         window.firefly.gwt.PlotCmdExtension= PlotCmdExtension;
-        window.firefly.gwt.makePlotState= makePlotState;
+        window.firefly.gwt.makePlotState= PlotState.makePlotState;
         // to call histogram and other react components from GWT
         window.firefly.gwt.ReactJavaInterface= ReactJavaInterface;
 
@@ -72,7 +72,7 @@ function fireflyInit() {
             return getJsonData(req);
         };
         window.firefly.gwt.ColorDialog= ColorDialog;
-        window.firefly.gwt.ExampleDialog= ExampleDialog;
+        window.firefly.gwt.showExampleDialog= showExampleDialog;
         window.firefly.initialized = true;
     }
 }

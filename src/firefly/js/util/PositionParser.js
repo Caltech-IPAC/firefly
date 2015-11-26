@@ -1,5 +1,5 @@
 /* eslint prefer-template:0 */
-import {WorldPt} from '../visualize/Point.js';
+import {makeWorldPt} from '../visualize/Point.js';
 import * as StringUtils from './StringUtils.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 
@@ -121,7 +121,7 @@ var makePositionParser = function(helper) {
         if (retPP.getInputType()===PositionParsedInput.Name) {
             wp = helper.resolveName(retPP.getObjName());
         } else {
-            wp = new WorldPt( retPP.getRa(), retPP.getDec(), retPP.getCoordSys());
+            wp = makeWorldPt( retPP.getRa(), retPP.getDec(), retPP.getCoordSys());
         }
         return wp;
     };
