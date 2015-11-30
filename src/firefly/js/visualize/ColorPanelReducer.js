@@ -131,7 +131,7 @@ export const computeColorPanelState= function(fields, plottedRV, fitsData, band,
         if (!valid) return fields;
         rv= makeRangeValuesFromFields(fields);
     }
-    else if (actionsConst===ImagePlotCntlr.ANY_CHANGE) {
+    else if (actionsConst===ImagePlotCntlr.ANY_CHANGE || actionsConst===FieldGroupCntlr.INIT_FIELD_GROUP) {
         if (!plottedRV && !fitsData) return fields;
         rv= plottedRV;
         updateFieldsFromRangeValues(fields,rv);

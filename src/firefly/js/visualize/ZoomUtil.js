@@ -26,7 +26,7 @@ const ZOOM_WAIT_MS= 2000; // 2 seconds
 
 export default {dispatchZoom, makeZoomAction, UserZoomTypes};
 
-const zoomTimers= [];
+var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
@@ -94,11 +94,22 @@ function doZoom(dispatcher,rawAction,plotId,zoomLevel,isFullScreen, useDelay) {
     var payload= Object.assign({zoomLevel},rawAction.payload);
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START, payload } );
 
-    var idx= zoomTimers.findIndex( (t) => t.plotId===plotId);
-    if (idx>-1) {
-        clearTimeout(zoomTimers[idx].timerId);
-        zoomTimers.splice(idx,1);
-    }
+
+
+     // note - this filter has a side effect of canceling the timer. There might be a better way to do this.
+    zoomTimers= zoomTimers.filter((t) => {
+        if (t.plotId===plotId) {
+            clearTimeout(t.timerId);
+            return false;
+        }
+        return true;
+    });
+
+    //var idx= zoomTimers.findIndex( (t) => t.plotId===plotId);
+    //if (idx>-1) {
+    //    clearTimeout(zoomTimers[idx].timerId);
+    //    zoomTimers.splice(idx,1);
+    //}
 
     if (useDelay) {
         var timerId= setTimeout(doZoomNow, ZOOM_WAIT_MS, dispatcher,rawAction,plotId,zoomLevel,isFullScreen);
@@ -112,8 +123,7 @@ function doZoom(dispatcher,rawAction,plotId,zoomLevel,isFullScreen, useDelay) {
 
 
 function doZoomNow(dispatcher,rawAction,plotId,zoomLevel,isFullScreen) {
-    var idx= zoomTimers.findIndex( (t) => t.plotId===plotId);
-    if (idx>-1) zoomTimers.splice(idx,1);
+    zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     var pv= PlotViewUtil.getPlotViewById(plotId);
     PlotServicesJson.setZoomLevel(PlotViewUtil.getPlotStateAry(pv),zoomLevel,isFullScreen)
@@ -123,6 +133,7 @@ function doZoomNow(dispatcher,rawAction,plotId,zoomLevel,isFullScreen) {
             logError(`plot error, plotId: ${pv.plotId}`, e);
         });
 }
+
 
 
 /**

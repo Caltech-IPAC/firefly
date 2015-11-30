@@ -183,21 +183,16 @@ var FieldGroupTest = React.createClass({
     // code that connects to store
     // code that connects to store
 
-    formStoreListenerRemove : null,
-
-    formStoreUpdate() {
-        this.setState( {fields : FieldGroupUtils.getGroupFields('DEMO_FORM')});
-    },
-
     componentWillUnmount() {
-        if (this.formStoreListenerRemove) this.formStoreListenerRemove();
-        this.formStoreListenerRemove= null;
+        if (this.unbinder) this.unbinder();
     },
 
 
     componentDidMount() {
-        this.formStoreListenerRemove= flux.addListener(this.formStoreUpdate.bind(this));
+        this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => this.setState({fields}));
     },
+
+    // end code that connects to store
     // end code that connects to store
 
 
@@ -272,7 +267,7 @@ var FieldGroupTest = React.createClass({
         var field1= this.makeField1(hide);
 
         return (
-            <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} validatorFunc={null} keepState={true}>
+            <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} keepState={true}>
                 <InputGroup labelWidth={130}>
                     <TargetPanel groupKey='DEMO_FORM' />
                     {field1}

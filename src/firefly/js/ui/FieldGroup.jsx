@@ -24,6 +24,12 @@ var FieldGroup= React.createClass(
             };
         },
 
+        getInitialState() {
+            var {groupKey, reducerFunc, keepState}= this.props;
+            FieldGroupUtils.initFieldGroup(groupKey, reducerFunc, keepState);
+            return null;
+        },
+
         componentWillMount() {
             var {groupKey, reducerFunc, keepState}= this.props;
             FieldGroupUtils.mountFieldGroup(groupKey, reducerFunc, keepState);
