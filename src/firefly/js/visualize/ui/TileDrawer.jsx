@@ -1,13 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-import React from 'react/addons';
-//import PlotView from '../PlotView.js';
+import React from 'react';
 import CsysConverter from '../CsysConverter.js';
 import {makeScreenPt} from '../Point.js';
 import {encodeUrl, ParamType} from '../../util/WebUtil.js';
@@ -24,48 +18,38 @@ const containerStyle={position:'absolute',
                       background: BACKGROUND_STYLE
 };
 
+var TileDrawer= function({ x, y, width, height, tileData,
+                           tileZoomFactor, zoomFactor,
+                          plot, opacity=1 }) {
 
-
-var TileDrawer= React.createClass(
-{
-
-    mixins : [React.addons.PureRenderMixin],
-
-    propTypes: {
-        x : React.PropTypes.number.isRequired,
-        y : React.PropTypes.number.isRequired,
-        width : React.PropTypes.number.isRequired,
-        height : React.PropTypes.number.isRequired,
-        tileData : React.PropTypes.object.isRequired,
-        tileZoomFactor : React.PropTypes.number.isRequired,
-        zoomFactor : React.PropTypes.number.isRequired,
-        plot : React.PropTypes.object.isRequired,
-        opacity : React.PropTypes.number
-    },
-
-
-    getDefaultProps()  {
-        return { opacity : 1};
-    },
-
-    render() {
-        const {x,y,width,height,tileData,plot,opacity, zoomFactor, tileZoomFactor}=  this.props;
-        const scale= zoomFactor / tileZoomFactor;
-        const style=Object.assign({},containerStyle, {width,height});
-
-        if (scale < .5 && tileData.images.length>5) {
-            return false;
-        }
-        else {
-            return (
-                <div className='tile-drawer'  style={style}>
-                    {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
-                </div>
-            );
-        }
-
+    const scale= zoomFactor / tileZoomFactor;
+    const style=Object.assign({},containerStyle, {width,height});
+    if (scale < .5 && tileData.images.length>5) {
+        return false;
     }
-});
+    else {
+        return (
+            <div className='tile-drawer'  style={style}>
+                {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
+            </div>
+        );
+    }
+};
+
+
+
+TileDrawer.propTypes= {
+    x : React.PropTypes.number.isRequired,
+    y : React.PropTypes.number.isRequired,
+    width : React.PropTypes.number.isRequired,
+    height : React.PropTypes.number.isRequired,
+    tileData : React.PropTypes.object.isRequired,
+    tileZoomFactor : React.PropTypes.number.isRequired,
+    zoomFactor : React.PropTypes.number.isRequired,
+    plot : React.PropTypes.object.isRequired,
+    opacity : React.PropTypes.number
+};
+
 
 
 
@@ -122,7 +106,7 @@ function makeImageFromTile(src, vpPt, width, height, scale,opacity) {
         opacity
     };
     return (
-        <img src={src} style={s}/>
+        <img src={src} key={src} style={s}/>
     );
 
 }

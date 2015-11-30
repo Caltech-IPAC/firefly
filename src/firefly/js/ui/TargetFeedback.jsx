@@ -1,9 +1,10 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 var TargetFeedback = React.createClass(
 {
 
-  mixins : [React.addons.PureRenderMixin],
+  mixins : [PureRenderMixin],
 
   render() {
       var topDivStyle= {

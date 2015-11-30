@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import PlotViewUtil from '../PlotViewUtil.js';
 import ImageViewerView from './ImageViewerView.jsx';
 import {flux} from '../../Firefly.js';
@@ -16,7 +17,7 @@ var ImageViewer= React.createClass(
 {
 
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
     storeListenerRemove : null,
 
@@ -36,7 +37,7 @@ var ImageViewer= React.createClass(
 
 
     componentDidMount() {
-        this.formStoreListenerRemove= flux.addListener(this.storeUpdate.bind(this));
+        this.formStoreListenerRemove= flux.addListener(this.storeUpdate);
     },
 
     storeUpdate() {

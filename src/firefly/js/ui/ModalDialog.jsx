@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 
 
 var ModalDialog = React.createClass({

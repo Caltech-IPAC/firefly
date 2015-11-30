@@ -5,7 +5,8 @@
 /**
  * Created by roby on 9/3/15.
  */
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import {flux} from '../Firefly.js';
 //import _ from 'underscore';
@@ -29,7 +30,8 @@ var DialogRootComponent = React.createClass(
 {
     render() {
         var {dialogs}= this.props;
-        var dialogAry = Object.keys(dialogs).map( (k) => dialogs[k]);
+        var dialogAry = Object.keys(dialogs).map( (k) =>
+                                React.cloneElement(dialogs[k],{key:k}));
         return  (
             <div>
                 {dialogAry}
@@ -101,7 +103,7 @@ var PopupStoreConnection = React.createClass(
 var defineDialog= function(dialogId, dialog) {
     if (!initComplete) init();
     dialogs[dialogId]= <PopupStoreConnection popupPanel={dialog} dialogId={dialogId}/>;
-    React.render(<DialogRootComponent dialogs={dialogs}/>, divElement);
+    ReactDOM.render(<DialogRootComponent dialogs={dialogs}/>, divElement);
 };
 
 

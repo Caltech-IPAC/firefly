@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 
 import ValidationField from '../../ui/ValidationField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
@@ -39,6 +39,7 @@ class ColorDialog {
     }
 
     showDialog() {
+        FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
         AppDataCntlr.showDialog('ColorStretchDialog');
     }
 }

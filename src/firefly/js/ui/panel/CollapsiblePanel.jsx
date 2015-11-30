@@ -3,7 +3,7 @@
  */
 
 import './CollapsiblePanel.css';
-import React from 'react/addons';
+import React from 'react';
 
 
 

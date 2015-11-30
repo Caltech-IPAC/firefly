@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 import Highcharts from 'react-highcharts';
 import numeral from 'numeral';
 import {getFormatString} from '../util/MathUtil.js';

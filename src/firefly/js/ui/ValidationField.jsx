@@ -1,4 +1,5 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 
 import InputFieldView from './InputFieldView.jsx';
@@ -8,7 +9,7 @@ import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 var ValidationField= React.createClass(
 {
 
-    mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
+    mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
 
     propTypes: {
@@ -39,7 +40,7 @@ var ValidationField= React.createClass(
                 visible= {this.isVisible()}
                 message={this.getMessage()}
                 onChange={this.onChange}
-                value={this.getValue()}
+                value={String(this.getValue())}
                 tooltip={this.getTip()}
                 label={this.getLabel()}
                 inline={this.props.inline||false}

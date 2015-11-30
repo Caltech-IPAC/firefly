@@ -4,7 +4,7 @@
 
 import 'babel/polyfill';
 import 'whatwg-fetch/fetch.js';
-import React from 'react/addons';
+import React from 'react';
 
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';

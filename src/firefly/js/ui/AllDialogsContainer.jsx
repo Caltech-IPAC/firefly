@@ -5,7 +5,7 @@
 /**
  * Created by roby on 9/1/15.
  */
-import React from 'react/addons';
+import React from 'react';
 
 
 

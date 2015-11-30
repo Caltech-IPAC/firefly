@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react/addons';
+import React from 'react';
 
 import TargetPanel from './TargetPanel.jsx';
 import InputGroup from './InputGroup.jsx';
@@ -326,7 +326,8 @@ var FieldGroupTest = React.createClass({
 
                     <ListBoxInputField  initialState= {{
                                           tooltip: 'Please select an option',
-                                          label : 'ListBox Field:'
+                                          label : 'ListBox Field:',
+                                          value: 'i3'
                                       }}
                                         options={
                                           [

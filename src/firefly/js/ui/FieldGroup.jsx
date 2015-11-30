@@ -2,13 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 
 var FieldGroup= React.createClass(
     {
 
-        mixins : [React.addons.PureRenderMixin],
+        mixins : [PureRenderMixin],
 
         propTypes: {
             groupKey : React.PropTypes.string.isRequired,
@@ -24,15 +25,12 @@ var FieldGroup= React.createClass(
             };
         },
 
-        getInitialState() {
-            var {groupKey, reducerFunc, keepState}= this.props;
-            FieldGroupUtils.initFieldGroup(groupKey, reducerFunc, keepState);
-            return null;
-        },
-
         componentWillMount() {
             var {groupKey, reducerFunc, keepState}= this.props;
             FieldGroupUtils.mountFieldGroup(groupKey, reducerFunc, keepState);
+        },
+
+        componentDidMouse() {
         },
 
         componentWillUnmount() {

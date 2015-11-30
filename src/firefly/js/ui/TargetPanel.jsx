@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {parseTarget} from '../ui/TargetPanelWorker.js';
 import TargetFeedback from '../ui/TargetFeedback.jsx';
 import InputFieldView from '../ui/InputFieldView.jsx';
@@ -12,7 +13,7 @@ import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 var TargetPanel= React.createClass(
    {
-       mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
+       mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
        getDefaultProps() {
            return {

@@ -2,7 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
@@ -17,7 +19,7 @@ var ImageViewerView= React.createClass(
 {
 
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
     storeListenerRemove : null,
 
@@ -44,7 +46,7 @@ var ImageViewerView= React.createClass(
 
 
     componentDidMount() {
-        var e= React.findDOMNode(this);
+        var e= ReactDOM.findDOMNode(this);
         //this.setState({width:e.offsetWidth, height:e.offsetHeight});
         var {plotId}= this.props.plotView;
         ImagePlotCntlr.dispatchUpdateViewSize(plotId,e.offsetWidth,e.offsetHeight);
@@ -85,9 +87,11 @@ var ImageViewerView= React.createClass(
 
         return (
                 <div className='plot-view-scr-view-window'
-                     style={{left, top, width:scrollViewWidth+'px',height:scrollViewHeight+'px',position:'relative'}}>
+                     style={{left, top, width:scrollViewWidth+'px',height:scrollViewHeight+'px',
+                             position:'relative'}}>
                     <div className='plot-view-master-panel'
-                         style={{width:viewPortWidth,height:viewPortHeight, left:0,right:0,position:'absolute', cursor:'crosshair'}}>
+                         style={{width:viewPortWidth,height:viewPortHeight,
+                                 left:0,right:0,position:'absolute', cursor:'crosshair'}}>
                         <TileDrawer x={scrollX} y={scrollY} width={viewPortWidth} height={viewPortHeight}
                                     tileData={plot.serverImages}
                                     tileZoomFactor={plot.plotState.getZoomLevel()}
@@ -96,14 +100,15 @@ var ImageViewerView= React.createClass(
                                     opacity={plot.percentOpaque}
                         />
                         <div className='drawingArea'
-                             style={{width:viewPortWidth, height:viewPortHeight, left:0, right:0, position:'absolute'}} >
+                             style={{width:viewPortWidth, height:viewPortHeight,
+                                     left:0, right:0, position:'absolute'}} >
                             <div className='drawingLayer'></div>
                             <div className='drawingLayer'></div>
                             <div className='drawingLayer'></div>
                             <div className='drawingLayer'></div>
                         </div>
                         <EventLayer plotId={plotId} width={viewPortWidth} height={viewPortHeight}
-                                    eventCallback={this.eventCB.bind(this)}/>
+                                    eventCallback={this.eventCB}/>
                     </div>
                 </div>
         );

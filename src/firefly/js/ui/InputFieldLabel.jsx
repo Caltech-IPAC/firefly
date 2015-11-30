@@ -1,36 +1,32 @@
-import React from 'react/addons';
+import React from 'react';
 
-var InputFieldLabel= React.createClass(
-    {
+/**
+ *
+ * @param label
+ * @param tooltip
+ * @param labelStyle
+ * @param labelWidth
+ * @return {XML}
+ * @constructor
+ */
+var InputFieldLabel= function( { label, tooltip, labelStyle, labelWidth=200, } ) {
 
-        mixins : [React.addons.PureRenderMixin],
+    var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
+    currStyle.width = labelWidth;
+    return (
+        <div style={currStyle} title={tooltip} className={'disable-select'} >
+            {label}
+        </div>
+    );
+};
 
-        propTypes: {
-            label : React.PropTypes.string.isRequired,
-            tooltip : React.PropTypes.string.isRequired,
-            labelStyle : React.PropTypes.object,
-            labelWidth : React.PropTypes.number
-        },
-        getDefaultProps() {
-            return {
-                labelStyle : {
-                    display:'inline-block',
-                    paddingRight:'4px'
-                },
-                labelWidth : 200
-            };
-        },
 
-        render() {
-            var currStyle = this.props.labelStyle;
-            currStyle.width = this.props.labelWidth;
-            return (
-                <div style={currStyle} title={this.props.tooltip} className={'disable-select'} >
-                        {this.props.label}
-                </div>
-            );
-        }
-    });
+InputFieldLabel.propTypes= {
+    label : React.PropTypes.string.isRequired,
+    labelStyle : React.PropTypes.object,
+    labelWidth : React.PropTypes.number,
+    tooltip : React.PropTypes.string.isRequired,
+};
 
 export default InputFieldLabel;
 

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 import _ from 'lodash';
 import FieldGroupCntlr from './FieldGroupCntlr.js';
 import FieldGroupUtils from './FieldGroupUtils.js';

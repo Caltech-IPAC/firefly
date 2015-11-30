@@ -2,15 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import PlotViewUtil from '../PlotViewUtil.js';
 import {makeScreenPt} from '../Point.js';
 import VisMouseCntlr  from '../VisMouseCntlr.js';
@@ -27,7 +21,7 @@ var EventLayer= React.createClass(
     docMouseMoveCallback: null,
     docMouseUpCallback: null,
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
     propTypes: {
         plotId : React.PropTypes.string.isRequired,
@@ -47,7 +41,7 @@ var EventLayer= React.createClass(
             //spt= makeScreenPt( viewPortX+ev.clientX, viewPortY+ev.clientY);
             spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
         }
-        //var e= React.findDOMNode(this);
+        //var e= ReactDOM.findDOMNode(this);
         //var pc= CysConverter.make(plot);
         //VisMouseCntlr.fireMouseEvent(plotId,mouseState, spt); // TODO -uncomment
         //var ip= pc.getImageCoords(spt);
@@ -72,7 +66,7 @@ var EventLayer= React.createClass(
         if (screenX && screenY) {
             //spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
         }
-        var e= React.findDOMNode(this);
+        var e= ReactDOM.findDOMNode(this);
         var compOffX= x-getAbsoluteLeft(e);
         var compOffY= y-getAbsoluteTop(e);
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
@@ -83,23 +77,6 @@ var EventLayer= React.createClass(
 
 
 
-
-
-    getDefaultProps()  {
-        return { };
-    },
-
-
-    getInitialState() {
-        return { };
-    },
-
-
-    componentWillUnmount() {
-    },
-
-    componentDidMount() {
-    },
 
 
     componentWillMount() {
@@ -199,13 +176,19 @@ var EventLayer= React.createClass(
         return (
             <div className='event-layer'
                  style={style}
-                 onClick={this.onClick} onDoubleClick={this.onDoubleClick}
-                 onMouseDownCapture={this.onMouseDown} onMouseEnter={this.onMouseEnter}
-                 onMouseLeave={this.onMouseLeave} onMouseMoveCapture={this.onMouseMove}
-                 onMouseOut={this.onMouseOut} onMouseOver={this.onMouseOver}
+                 onClick={this.onClick}
+                 onDoubleClick={this.onDoubleClick}
+                 onMouseDownCapture={this.onMouseDown}
+                 onMouseEnter={this.onMouseEnter}
+                 onMouseLeave={this.onMouseLeave}
+                 onMouseMoveCapture={this.onMouseMove}
+                 onMouseOut={this.onMouseOut}
+                 onMouseOver={this.onMouseOver}
                  onMouseUpCapture={this.onMouseUp}
-                 onTouchCancel={this.onTouchCancel} onTouchEnd={this.onTouchEnd}
-                 onTouchMove={this.onTouchMove} onTouchStart={this.onTouchStart}
+                 onTouchCancel={this.onTouchCancel}
+                 onTouchEnd={this.onTouchEnd}
+                 onTouchMove={this.onTouchMove}
+                 onTouchStart={this.onTouchStart}
                  >
             </div>
         );

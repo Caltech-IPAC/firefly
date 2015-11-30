@@ -6,7 +6,7 @@
  * @deprecated  this is no longer used.. look at Firefly.js instead.
  */
 
-import React from 'react/addons';
+import React from 'react';
 
 //import Alt from 'alt';
 import Enum from 'enum';

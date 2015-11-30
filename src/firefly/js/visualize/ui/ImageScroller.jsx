@@ -1,12 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import TileDrawer from './TileDrawer.jsx';
 import PlotViewUtil from '../PlotViewUtil.js';
 import WebPlot from '../WebPlot.js';
@@ -19,7 +15,7 @@ var ImageScroller= React.createClass(
 {
 
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
 
     propTypes: {

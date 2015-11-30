@@ -1,11 +1,12 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var RadioGroupInputField= React.createClass(
     {
-        mixins: [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
+        mixins: [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             inline : React.PropTypes.bool,
@@ -43,13 +44,14 @@ var RadioGroupInputField= React.createClass(
                         />
                     {this.props.options.map((option) => {
                         return (
+                        <div key={option.value} style={{display:'inline-block'}}>
                             <input type='radio'
-                                   key={option.value}
-                                   name={this.props.fieldKey}
-                                   value={option.value}
-                                   defaultChecked={this.getValue()===option.value}
-                                   onChange={this.onChange}
-                                >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                                name={this.props.fieldKey}
+                                value={option.value}
+                                defaultChecked={this.getValue()===option.value}
+                                onChange={this.onChange}
+                            />&nbsp;{option.label}&nbsp;&nbsp;
+                        </div>
                         );
                     })}
                 </div>
