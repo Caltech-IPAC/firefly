@@ -12,6 +12,9 @@ var CheckboxGroupInputField = React.createClass(
             options : React.PropTypes.array.isRequired
         },
 
+        contextTypes: {
+            groupKey: React.PropTypes.string
+        },
 
         onChange(ev) {
             // when a checkbox is checked or unchecked

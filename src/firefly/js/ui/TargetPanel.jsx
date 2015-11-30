@@ -15,6 +15,11 @@ var TargetPanel= React.createClass(
    {
        mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
+
+       contextTypes: {
+           groupKey: React.PropTypes.string
+       },
+
        getDefaultProps() {
            return {
                fieldKey : 'UserTargetWorldPt',
@@ -38,7 +43,7 @@ var TargetPanel= React.createClass(
 
        makePayload(displayValue, parseResults, resolvePromise) {
            return {
-               groupKey : this.props.groupKey,
+               groupKey : this.props.groupKey || this.context.groupKey,
                fieldKey : this.props.fieldKey,
                newValue : parseResults.wpt ? parseResults.wpt.toString() : '',
                message : 'Enter something valid',

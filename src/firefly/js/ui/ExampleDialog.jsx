@@ -269,10 +269,9 @@ var FieldGroupTest = React.createClass({
         return (
             <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} keepState={true}>
                 <InputGroup labelWidth={130}>
-                    <TargetPanel groupKey='DEMO_FORM' />
+                    <TargetPanel/>
                     {field1}
-                    <ValidationField fieldKey='field2'
-                                     groupKey='DEMO_FORM'/>
+                    <ValidationField fieldKey='field2' />
                     <ValidationField fieldKey='field3'
                                      initialState= {{
                                           fieldKey: 'field3',
@@ -281,12 +280,10 @@ var FieldGroupTest = React.createClass({
                                           tooltip: 'more tipping',
                                           label : 'Another Float:',
                                           labelWidth : 100
-                                      }}
-                                     groupKey='DEMO_FORM'/>
-                    <ValidationField fieldKey={'field4'}
-                                     groupKey='DEMO_FORM'/>
-                    <ValidationField fieldKey='low' groupKey='DEMO_FORM'/>
-                    <ValidationField fieldKey='high' groupKey='DEMO_FORM'/>
+                                      }} />
+                    <ValidationField fieldKey='field4'/>
+                    <ValidationField fieldKey='low'/>
+                    <ValidationField fieldKey='high'/>
 
                     <br/><br/>
                     <CheckboxGroupInputField
@@ -305,7 +302,7 @@ var FieldGroupTest = React.createClass({
                                           ]
                                           }
                         fieldKey='checkBoxGrpFld'
-                        groupKey='DEMO_FORM'/>
+                        />
 
                     <br/><br/>
                     <RadioGroupInputField  initialState= {{
@@ -321,7 +318,7 @@ var FieldGroupTest = React.createClass({
                                                               ]
                                                               }
                                            fieldKey='radioGrpFld'
-                                           groupKey='DEMO_FORM'/>
+                                           />
                     <br/><br/>
 
                     <ListBoxInputField  initialState= {{
@@ -339,7 +336,7 @@ var FieldGroupTest = React.createClass({
                                           }
                                         multiple={false}
                                         fieldKey='listBoxFld'
-                                        groupKey='DEMO_FORM'/>
+                                        />
                     <br/><br/>
 
                     <CompleteButton groupKey='DEMO_FORM'

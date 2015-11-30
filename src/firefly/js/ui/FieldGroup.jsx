@@ -17,6 +17,14 @@ var FieldGroup= React.createClass(
             keepState : React.PropTypes.bool
         },
 
+        childContextTypes: {
+            groupKey: React.PropTypes.string
+        },
+
+        getChildContext: function() {
+            return {groupKey: this.props.groupKey};
+        },
+
         getDefaultProps() {
             return {
                 reducerFunc: null,
@@ -25,12 +33,10 @@ var FieldGroup= React.createClass(
             };
         },
 
+
         componentWillMount() {
             var {groupKey, reducerFunc, keepState}= this.props;
             FieldGroupUtils.mountFieldGroup(groupKey, reducerFunc, keepState);
-        },
-
-        componentDidMouse() {
         },
 
         componentWillUnmount() {

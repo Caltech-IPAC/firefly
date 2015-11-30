@@ -55,7 +55,9 @@ CompleteButton.propTypes= {
     dialogId: React.PropTypes.string
 };
 
-
+CompleteButton.contextTypes= {
+    groupKey: React.PropTypes.string
+};
 
 
 export default CompleteButton;

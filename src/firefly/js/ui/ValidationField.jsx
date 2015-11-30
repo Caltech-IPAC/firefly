@@ -17,6 +17,9 @@ var ValidationField= React.createClass(
         inline : React.PropTypes.bool
     },
 
+    contextTypes: {
+        groupKey: React.PropTypes.string
+    },
 
     onChange(ev) {
 
@@ -30,6 +33,7 @@ var ValidationField= React.createClass(
             fieldState : this.state.fieldState
         });
     },
+
 
 
     render() {

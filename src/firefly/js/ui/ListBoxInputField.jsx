@@ -15,6 +15,10 @@ var ListBoxInputField = React.createClass(
             labelWidth : React.PropTypes.number
         },
 
+        contextTypes: {
+            groupKey: React.PropTypes.string
+        },
+
         componentWillMount() {
             // if no default value is specified, select the first option
             if (typeof this.state.fieldState.value === 'undefined' || this.state.fieldState.value==='') {
