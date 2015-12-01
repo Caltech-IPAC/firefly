@@ -2,7 +2,6 @@ def WEBAPP_GROUP = "Webapp"
 
 apply plugin: 'war'
 apply from: "$fireflyPath/buildScript/gwt.gincl"
-apply from: "$fireflyPath/buildScript/utils.gincl"
 
 jar {
   baseName = "${project['app-name']}"
