@@ -1,5 +1,5 @@
-MarkerTool.Title= Marker Tool
-MarkerTool.ShortDescription= Put a marker on the image
+MarkerTool.Title= Overlay marker and instruments footprint
+MarkerTool.ShortDescription= Overlay marker/footprint on the image
 
 MarkerTool.title.Title= Label
 MarkerTool.title.ShortDescription= Add a label to this marker

@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -104,11 +103,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public JwstFootprintCmd(FOOTPRINT mission) {
         super(CommandName+mission.name());
         this.name = mission.name();
+        String label = name;
+        if(!mission.equals(FOOTPRINT.HST)){
+        	label = name+" prelim.";
+        }
         this.mission = mission;
         AllPlots.getInstance().addListener(this);
-        _onLabel = _onLabel.replace("@", name);
-        _offLabel = _offLabel.replace("@", name);
-        _addLabel = _addLabel.replace("@", name);
+        _onLabel = _onLabel.replace("@", label);
+        _offLabel = _offLabel.replace("@", label);
+        _addLabel = _addLabel.replace("@", label);
         changeMode(Mode.OFF);//Sets labels above       
 
     }
@@ -117,7 +120,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         super(CommandName+inst.name());//string constructor should have correspondent STRING.prop
         this.mission = inst.getMission();
         this.name = inst.name();
-        String label = name+" ("+mission+")";
+        String label = mission+"/"+name+ " prelim.";
         this.instrument = inst;
         AllPlots.getInstance().addListener(this);
         _onLabel = _onLabel.replace("@", label);
@@ -825,10 +828,10 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
             FlowPanel p3 = new FlowPanel();
             HorizontalPanel center = new HorizontalPanel();
-            center.add(new Label("Center:"));
+            center.add(new Label("Aperture position:"));
             center.add(centerPosLbl);
             HorizontalPanel dtc = new HorizontalPanel();
-            dtc.add(new Label("Offset:"));
+            dtc.add(new Label("Boresight position:"));
             dtc.add(centerOffsetLabel);
             p3.add(center);
             p3.add(dtc);
