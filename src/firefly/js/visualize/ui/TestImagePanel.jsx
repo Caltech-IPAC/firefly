@@ -82,8 +82,10 @@ function zoom(zType) {
             console.log('going down');
             break;
         case 'fit':
+            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FIT);
             break;
         case 'fill':
+            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FILL);
             break;
         case '1x':
             ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.ONE);
@@ -121,10 +123,10 @@ function TestImagePanel() {
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                 </FieldGroup>
             </div>
-            <div style={{display:'inline-block', width:400,height:400,border:'1px solid black', marginLeft:10}}>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage1'/>
             </div>
-            <div style={{display:'inline-block', width:400,height:400,border:'1px solid black', marginLeft:10}}>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage2'/>
             </div>
         </div>

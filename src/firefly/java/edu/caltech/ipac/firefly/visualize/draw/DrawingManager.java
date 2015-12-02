@@ -3,19 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize.draw;
 
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-/**
- * User: roby
- * Date: Jun 19, 2008
- * Time: 3:53:56 PM
- */
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.TouchStartEvent;
@@ -25,7 +12,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.Widget;
-
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.table.TablePanel;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -42,6 +28,20 @@ import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * User: roby
+ * Date: Jun 19, 2008
+ * Time: 3:53:56 PM
+ */
 
 
 /**
@@ -74,6 +74,8 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+//    private WebPlotView.MouseInfo _overrideMouseInfo = null;
+
     private final SubgroupVisController subVisControl= new SubgroupVisController();
 //    private static DrawingManager selectOwner= null;
 //    private AreaSelectListener _areaSelectListener= new AreaSelectListener();
@@ -187,7 +189,8 @@ public class DrawingManager implements AsyncDataLoader {
             }
         });
     }
-    
+
+
     public void setPointDataSymbol(DrawSymbol symbol){
     	this.symbol = symbol;
     }
@@ -337,6 +340,14 @@ public class DrawingManager implements AsyncDataLoader {
         return _dataConnect!=null ? _dataConnect.getSelectedCount() : 0;
     }
 
+    public boolean isVisibleGuess() {
+        boolean retval=false;
+        PVData pvData=_allPV.values().iterator().next();
+        if (pvData!=null && pvData.drawer!=null) {
+            retval= pvData.drawer.isVisible();
+        }
+        return retval;
+    }
 
     private Drawer connectDrawer(WebPlotView pv) {
 
@@ -455,8 +466,10 @@ public class DrawingManager implements AsyncDataLoader {
         if (_allPV.containsKey(pv)) {
             if (pv.isAlive()) {
                 PVData pvData = _allPV.get(pv);
+
                 WebPlotView.MouseInfo mi = pvData.getMouseInfo();
                 if (mi != null) pv.removePersistentMouseInfo(mi);
+
 
 
                 for (WebLayerItem item : pv.getUserDrawerLayerSet()) {

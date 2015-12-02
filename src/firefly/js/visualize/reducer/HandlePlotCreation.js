@@ -25,6 +25,7 @@ function reducer(state, action) {
     var plotViewAry;
     var plotGroupAry;
     var plotRequestDefaults;
+    var activePlotId= state.activePlotId;
     switch (action.type) {
         case Cntlr.PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
@@ -35,13 +36,14 @@ function reducer(state, action) {
             break;
         case Cntlr.PLOT_IMAGE  :
             plotViewAry= addPlot(state.plotViewAry,action);
+            activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
         default:
             break;
     }
     if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-        retState= Object.assign({},state);
+        retState= Object.assign({},state, {activePlotId});
         if (plotViewAry) retState.plotViewAry= plotViewAry;
         if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
         if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;

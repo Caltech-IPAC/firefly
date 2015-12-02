@@ -3,12 +3,6 @@
  */
 package edu.caltech.ipac.firefly.commands;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -29,7 +23,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -58,6 +51,12 @@ import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class JwstFootprintCmd extends    BaseGroupVisCmd
@@ -357,25 +356,29 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         int dist;
         if (centerList.size() > 0) {
             for (OverlayMarker m : centerList) {
-                dist = m.getCenterDistance(pt, plot);
-                if (dist < minDist && dist > -1) {
-                    retval = m;
-                    minDist = dist;
+                if (_markerMap.get(m).isVisible())  {
+                    dist = m.getCenterDistance(pt, plot);
+                    if (dist < minDist && dist > -1) {
+                        retval = m;
+                        minDist = dist;
+                    }
                 }
             }
         } else {
             OverlayMarker candidate = null;
             OverlayMarker.MinCorner editCorner = null;
             for (OverlayMarker m : _markerMap.keySet()) {
-                OverlayMarker.MinCorner minC = m.getMinCornerDistance(pt, plot);
-                if (minC != null && minC.getDistance() < minDist) {
-                    candidate = m;
-                    minDist = minC.getDistance();
-                    editCorner = minC;
-                }
-                if (minDist < EDIT_DISTANCE) {
-                    retval = candidate;
-                    retval.setEditCorner(editCorner.getCorner(), plot);
+                if (_markerMap.get(m).isVisible())  {
+                    OverlayMarker.MinCorner minC = m.getMinCornerDistance(pt, plot);
+                    if (minC != null && minC.getDistance() < minDist) {
+                        candidate = m;
+                        minDist = minC.getDistance();
+                        editCorner = minC;
+                    }
+                    if (minDist < EDIT_DISTANCE) {
+                        retval = candidate;
+                        retval.setEditCorner(editCorner.getCorner(), plot);
+                    }
                 }
             }
 
@@ -719,6 +722,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             _dd.draw(plot,marker,drawMan);
         }
         public void cancelDeferred() { _dd.cancel(); }
+
+        public boolean isVisible() {return drawMan!=null ? drawMan.isVisibleGuess() : false; }
     }
 
 

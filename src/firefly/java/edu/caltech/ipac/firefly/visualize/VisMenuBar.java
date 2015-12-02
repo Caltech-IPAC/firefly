@@ -31,6 +31,7 @@ import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
 import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
 import edu.caltech.ipac.firefly.commands.LockImageCmd;
 import edu.caltech.ipac.firefly.commands.LockRelatedImagesCmd;
+import edu.caltech.ipac.firefly.commands.MaskOverlayCmd;
 import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
 import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
 import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
@@ -252,6 +253,7 @@ public class VisMenuBar {
             setCommandHidden(!mpw.isImageSelection(),       ImageSelectCmd.CommandName);
             setCommandHidden(!mpw.isLockImage(),            LockImageCmd.CommandName);
             setCommandHidden(!mpw.isCatalogButtonEnabled(), IrsaCatalogCmd.CommandName);
+            setCommandHidden(!mpw.isMaskButtonEnabled(),    MaskOverlayCmd.COMMAND_NAME);
 
             if (!_usingBlankPlots) _usingBlankPlots= mpw.getCurrentPlot().isBlankImage();
             if (_usingBlankPlots) {

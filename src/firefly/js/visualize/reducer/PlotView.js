@@ -18,7 +18,7 @@ import {flux} from '../../Firefly.js';
 import WebPlot from './../WebPlot.js';
 import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
-import {makeImagePt,makeScreenPt} from './../Point.js';
+import {makeScreenPt} from './../Point.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from './../ImagePlotCntlr.js';
 import VisUtil from './../VisUtil.js';
@@ -40,7 +40,7 @@ const DEF_WORKING_MSG= 'Plotting ';
 export default {makePlotView, replacePlots,
                 updateViewDim, updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
                 findCurrentCenterPoint, findScrollPtForImagePt,
-                matchPlotView, replacePlotView, updatePlotGroupScrollXY};
+                replacePlotView, updatePlotGroupScrollXY};
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
@@ -56,7 +56,7 @@ export default {makePlotView, replacePlots,
 /**
  * @param {string} plotId
  * @param {WebPlotRequest} req
- * @return {{plotId: string, groupId: string, drawingSubGroupId: string, plots: Array, primaryPlot: object, plotCounter: number, wcsMarginX: number, wcsMarginY: number, scrollX: number, scrollY: number, scrollWidth: number, scrollHeight: number, viewDim: {width: number, height: number}, overlayPlotViews: Array, containsMultiImageFits: boolean, containsMultipleCubes: boolean, lockPlotHint: boolean, attributes: {}, taskCnt: number, preferenceColorKey: *, preferenceZoomKey: *, defThumbnailSize, options: {showInlineTitle: boolean, inlineTitleAlwaysOnIfCollapsed: boolean, workingMsg: string, removeOldPlot: boolean, allowImageSelect: boolean, hasNewPlotContainer: *, allowImageLock: boolean, rotateNorth: boolean, userModifiedRotate: boolean, autoTearDown: boolean, saveCorners: boolean, active: boolean, boxSelection: boolean, catalogButton: boolean, hideTitleDetail: boolean, useInlineToolbar: boolean, showUnexpandedHighlight: boolean, useLayerOnPlotToolbar: boolean, turnOnGridAfterPlot: GridOnStatus, expandedTitleOptions: ExpandedTitleOptions}}}
+ * @return {{plotId: *, plotGroupId: *, drawingSubGroupId: *, plots: Array, primaryPlot: null, plotCounter: number, wcsMarginX: number, wcsMarginY: number, scrollX: number, scrollY: number, scrollWidth: number, scrollHeight: number, viewDim: {width: number, height: number}, overlayPlotViews: Array, containsMultiImageFits: boolean, containsMultipleCubes: boolean, lockPlotHint: boolean, attributes: {}, taskCnt: number, preferenceColorKey: *, preferenceZoomKey: *, defThumbnailSize, options: {showInlineTitle: boolean, inlineTitleAlwaysOnIfCollapsed: boolean, workingMsg: string, removeOldPlot: boolean, allowImageSelect: boolean, hasNewPlotContainer: *, allowImageLock: boolean, rotateNorth: boolean, userModifiedRotate: boolean, autoTearDown: boolean, saveCorners: boolean, active: boolean, boxSelection: boolean, catalogButton: boolean, hideTitleDetail: boolean, useInlineToolbar: boolean, showUnexpandedHighlight: boolean, useLayerOnPlotToolbar: boolean, turnOnGridAfterPlot: GridOnStatus, expandedTitleOptions: ExpandedTitleOptions}}}
  */
 function makePlotView(plotId, req) {
     var pv= {
@@ -70,8 +70,6 @@ function makePlotView(plotId, req) {
         wcsMarginY: 0, // todo
         scrollX : 0,
         scrollY : 0,
-        scrollWidth: 0,
-        scrollHeight: 0,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [], //todo
         containsMultiImageFits : false,
@@ -164,9 +162,9 @@ function replacePlots(pv, plotAry) {
     pv.options.rotateNorth= pv.primaryPlot.plotState.getRotateType()===RotateType.NORTH;
 
     //--------- set initialized viewport here
-    var {scrollWidth,scrollHeight} = computeScrollSizes(pv.primaryPlot,pv.viewDim);
-    pv.scrollWidth= scrollWidth;
-    pv.scrollHeight= scrollHeight;
+    //var {scrollWidth,scrollHeight} = computeScrollSizes(pv.primaryPlot,pv.viewDim);
+    //pv.scrollWidth= scrollWidth;
+    //pv.scrollHeight= scrollHeight;
     pv= initScrollCenterPoint(pv);
 
     return pv;
@@ -192,7 +190,8 @@ function updateViewDim(pv,viewDim) {
 function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plotView || !newScrollPt) return plotView;
 
-    var {primaryPlot:plot,scrollX:oldSx,scrollY:oldSy,scrollWidth,scrollHeight}= plotView;
+    var {primaryPlot:plot,scrollX:oldSx,scrollY:oldSy}= plotView;
+    var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     if (!plot || !scrollWidth || !scrollHeight) return plotView;
 
     var {x:newSx,y:newSy}= newScrollPt;
@@ -248,23 +247,6 @@ function replacePrimaryInAry(plotViewAry, pv, plot) {
 
 
 
-/**
- * Perform an operation on all the PlotViews in a group
- * @param sourcePv
- * @param plotViewAry
- * @param plotGroup
- * @param operationFunc
- * @return {[]} new plotView array after the operation
- */
-function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
-    if (plotGroup && plotGroup.plotGroupId && plotGroup.lockRelated && sourcePv.plotGroupId===plotGroup.plotGroupId) {
-        plotViewAry= plotViewAry.map( (pv) => {
-            return (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId) ?
-                        operationFunc(pv) : pv;
-        });
-    }
-    return plotViewAry;
-}
 
 /**
  * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plotviews in the group
@@ -280,7 +262,7 @@ function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) 
     plotViewAry= replacePlotView(plotViewAry, plotView);
     var plotGroup= PlotViewUtil.findPlotGroup(plotView.plotGroupId,plotGroupAry);
     if (plotGroup && plotGroup.lockRelated) {
-        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
+        plotViewAry= PlotViewUtil.matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
     }
     return plotViewAry;
 }
@@ -306,14 +288,16 @@ function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) 
  */
 function makeScrollPosMatcher(sourcePV) {
     var {primaryPlot:{screenSize:{width:srcScreenWidth,height:srcScreenHeight}},
-        scrollX:srcSx,scrollY:srcSy,scrollWidth:srcSW,scrollHeight:srcSH}= sourcePV;
+        scrollX:srcSx,scrollY:srcSy}= sourcePV;
+    var {scrollWidth:srcSW,scrollHeight:srcSH}= getScrollSize(sourcePV);
     var percentX= (srcSx+srcSW/2) / srcScreenWidth;
     var percentY= (srcSy+srcSH/2) / srcScreenHeight;
 
     return (pv) => {
         var retPV= pv;
         if (pv && pv.primaryPlot) {
-            var {primaryPlot:{screenSize:{width,height}},scrollWidth:sw,scrollHeight:sh}= pv;
+            var {primaryPlot:{screenSize:{width,height}}}= pv;
+            var {scrollWidth:sw,scrollHeight:sh}= getScrollSize(pv);
             var newSx= width*percentX - sw/2;
             var newSy= height*percentY - sh/2;
             retPV= updatePlotViewScrollXY(pv,makeScreenPt(newSx,newSy));
@@ -393,7 +377,8 @@ function getNewAttributes(plot) {
  * @param [scrollY] optional scrollY if not defined us plotView.scrollY
  */
 function findCurrentCenterPoint(plotView,scrollX,scrollY) {
-    var {scrollWidth,scrollHeight,wcsMarginX,wcsMarginY, primaryPlot}= plotView;
+    var {wcsMarginX,wcsMarginY, primaryPlot}= plotView;
+    var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     var sx= (typeof scrollX !== 'undefined') ? scrollX : plotView.scrollX;
     var sy= (typeof scrollY !== 'undefined') ? scrollY : plotView.scrollY;
     if (!primaryPlot) return null;
@@ -434,8 +419,19 @@ function computeScrollSizes(primaryPlot,viewDim) {
     var scrollWidth= Math.min(screenSize.width,viewDim.width);
     var scrollHeight= Math.min(screenSize.height,viewDim.height);
 
+    if (isNaN(scrollWidth)) scrollWidth= 0;
+    if (isNaN(scrollHeight)) scrollHeight= 0;
+
     return {scrollWidth,scrollHeight};
 }
+
+/**
+ * @param {object} plotView
+ * @return {{scrollWidth: number, scrollHeight: number}}
+ */
+const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPlot,plotView.viewDim);
+
+
 
 
 /**

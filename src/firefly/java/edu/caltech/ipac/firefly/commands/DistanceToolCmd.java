@@ -236,6 +236,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
 
 
     private void begin(WebPlotView pv, ScreenPt spt) {
+            if (!_drawMan.isVisibleGuess()) return;
             WebPlot plot= pv.getPrimaryPlot();
             _mouseInfo.setEnableAllPersistent(true);
             _mouseInfo.setEnableAllExclusive(false);
@@ -281,6 +282,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void drag(WebPlotView pv, ScreenPt spt) {
+        if (!_drawMan.isVisibleGuess()) return;
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
@@ -290,6 +292,7 @@ public class DistanceToolCmd extends BaseGroupVisCmd
     }
 
     private void end(WebPlotView pv) {
+        if (!_drawMan.isVisibleGuess()) return;
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
         setAttribute(makeSelection());
