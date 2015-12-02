@@ -2,14 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 
 
 var InputGroup = React.createClass(
     {
 
-        mixins : [React.addons.PureRenderMixin],
+        mixins : [PureRenderMixin],
 
         propTypes: {
             labelWidth   : React.PropTypes.number.isRequired

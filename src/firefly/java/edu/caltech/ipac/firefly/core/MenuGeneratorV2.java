@@ -181,7 +181,7 @@ public class MenuGeneratorV2 {
                 if (gc!=null && gc instanceof MenuBarCmd)  cmd= (MenuBarCmd)gc;
                 else                                       cmd= new MenuBarCmd(itemData.getName());
 
-                BadgeButton barItem= makeMenuItem(itemData.getName(), gc, true, ignoreStrays);
+                BadgeButton barItem= makeMenuItem(itemData.getName(), cmd, true, ignoreStrays);
                 new MenuItemConnect(barItem,cmd);
                 Widget content= makeDropDownContent(itemData, ignoreStrays);
                 GwtUtil.setStyle(barItem.getWidget(), "display", "inline-block");

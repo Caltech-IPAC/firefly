@@ -1,16 +1,20 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var CheckboxGroupInputField = React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
+        mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             options : React.PropTypes.array.isRequired
         },
 
+        contextTypes: {
+            groupKey: React.PropTypes.string
+        },
 
         onChange(ev) {
             // when a checkbox is checked or unchecked
@@ -77,13 +81,14 @@ var CheckboxGroupInputField = React.createClass(
                     />
                     {options.map( (option) => {
                         return (
-                            <input type='checkbox'
-                                key={option.value}
-                                name={fieldKey}
-                                value={option.value}
-                                checked={this.isChecked(option.value)}
-                                onChange={this.onChange}
-                            >&nbsp;{option.label}&nbsp;&nbsp;</input>
+                            <div key={option.value} style={{display:'inline-block'}}>
+                                <input type='checkbox'
+                                       name={fieldKey}
+                                       value={option.value}
+                                       checked={this.isChecked(option.value)}
+                                       onChange={this.onChange}
+                                />&nbsp;{option.label}&nbsp;&nbsp;
+                            </div>
                         );
                         })}
                 </div>

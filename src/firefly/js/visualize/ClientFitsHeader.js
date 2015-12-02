@@ -5,7 +5,7 @@
 
 const SPLIT_TOKEN= '--ClientFitHead--';
 
-import parseInt from '../util/StringUtils.js';
+import {parseInt} from '../util/StringUtils.js';
 import join from 'underscore.string/join';
 import words from 'underscore.string/words';
 
@@ -25,7 +25,7 @@ export const C = {
 
 
 class ClientFitsHeader {
-    construtor(headers) {
+    constructor(headers) {
         this.headers= headers;
     }
 

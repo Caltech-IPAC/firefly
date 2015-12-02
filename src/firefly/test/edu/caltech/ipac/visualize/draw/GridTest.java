@@ -1,14 +1,11 @@
 package edu.caltech.ipac.visualize.draw;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.caltech.ipac.firefly.server.query.StatisticsProcessorTest;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
@@ -23,18 +20,21 @@ public class GridTest {
 
 //	private static Component grid = null;
 	private static final String TEST_ROOT = "test"+File.separatorChar;
-	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
-			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
+//	private static String filename = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
+//			.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
 	static CoordinateSys csys = CoordinateSys.SUPERGALACTIC;
 	private static ImagePlot plot;
+	private static Fits fits;
 
 	@BeforeClass
 	public static void buildPlot() throws Exception {
-
-//		grid = new GridLayer(csys).getGrid();
-		File file = Paths.get(filename).toFile();
-		Fits fits = new Fits(file);
-		// fits = new Fits("./good.fits");
+		String name = TEST_ROOT+GridTest.class.getCanonicalName().replaceAll("\\.", "/")
+				.replace(GridTest.class.getSimpleName(), "") + File.separatorChar +  "bad.fits";
+		//		grid = new GridLayer(csys).getGrid();
+		File file = new File(name);
+		Assert.assertTrue(file.exists()&&file.canRead());
+		fits = new Fits(file);//(resourceAsStream);
+//		fits = new Fits("/Users/ejoliet/devspace/branch/dev/firefly/src/firefly/bin/edu/caltech/ipac/visualize/draw/bad.fits");
 
 		FitsRead[] frAry = FitsRead.createFitsReadArray(fits);
 		ActiveFitsReadGroup fg = new ActiveFitsReadGroup();
@@ -106,6 +106,6 @@ public class GridTest {
 */
 	@Test
 	public void testSimple() { // <span style="color:black;">**(3)**</span>
-		org.junit.Assert.assertTrue(true);
+		org.junit.Assert.assertTrue(plot!=null);
 	}
 }

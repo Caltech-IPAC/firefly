@@ -1,0 +1,30 @@
+FootprintWFIRST.Title= Add WFIRST footprint
+FootprintWFIRST.ShortDescription= Add a WFIRST footprint
+
+FootprintWFIRST.title.Title= Label
+FootprintWFIRST.title.ShortDescription= Add a label to this footprint
+FootprintWFIRST.title.PreferWidth= 8
+FootprintWFIRST.title.NullAllowed= true
+
+FootprintWFIRST.corner.Title= Corner
+FootprintWFIRST.corner.DataType= EnumString
+FootprintWFIRST.corner.Default= SE
+FootprintWFIRST.corner.ShortDescription= Choose a corner
+FootprintWFIRST.corner.Items= NE NW SE SW
+FootprintWFIRST.corner.NE.Name= NE
+FootprintWFIRST.corner.NW.Name= NW
+FootprintWFIRST.corner.SE.Name= SE
+FootprintWFIRST.corner.SW.Name= SW
+
+
+FootprintWFIRST.angle.Title= Angle
+FootprintWFIRST.angle.DataType= Float
+FootprintWFIRST.angle.ShortDescription= Enter the angle you want the footprint rotated
+FootprintWFIRST.angle.Min= 0
+FootprintWFIRST.angle.Max= 360
+FootprintWFIRST.angle.Default= 0
+FootprintWFIRST.angle.PreferWidth= 3
+FootprintWFIRST.angle.Validation= range
+FootprintWFIRST.angle.ErrorDescription= The angle should be between 0 and 360 degree
+
+

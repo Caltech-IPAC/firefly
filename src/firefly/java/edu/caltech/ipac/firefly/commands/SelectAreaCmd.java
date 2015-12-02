@@ -228,6 +228,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
 
 
     private void begin(WebPlotView pv, ScreenPt spt, HumanInputEvent ev) {
+        if (!_drawMan.isVisibleGuess()) return;
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
@@ -288,6 +289,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
     private void drag(WebPlotView pv, ScreenPt spt) {
+        if (!_drawMan.isVisibleGuess()) return;
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);
@@ -297,6 +299,7 @@ public class SelectAreaCmd extends BaseGroupVisCmd
     }
 
     private void end(WebPlotView pv) {
+        if (!_drawMan.isVisibleGuess()) return;
         WebPlot plot= pv.getPrimaryPlot();
         _mouseInfo.setEnableAllPersistent(true);
         _mouseInfo.setEnableAllExclusive(false);

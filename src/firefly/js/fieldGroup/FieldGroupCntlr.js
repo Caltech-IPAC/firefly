@@ -63,7 +63,7 @@ function reducer(state={fieldGroupMap: {}}, action={}) {
             retState= valueChange(state, action);
             break;
         default:
-            fireOnAllMountedGroups(state,action);
+            retState= fireOnAllMountedGroups(state,action);
             break;
     }
     return retState;
@@ -72,6 +72,10 @@ function reducer(state={fieldGroupMap: {}}, action={}) {
 
 
 const fireOnAllMountedGroups= function(state,action) {
+    var {type}= action;
+                                                          //todo: I really need to think about this next line
+    if (!type.startsWith('ImagePlotCntlr')) return state; //todo: determine what category of actions is allowed through
+
     var changes;
     var retState= state;
 
@@ -136,7 +140,7 @@ const updateFieldGroupMount= function(state,action) {
             retState= createState(state.fieldGroupMap,groupKey,fg);
         }
         else {
-            retState= this.initFieldGroup(state,action);
+            retState= initFieldGroup(state,action);
             retState.fieldGroupMap[groupKey].mounted= true;
         }
     }

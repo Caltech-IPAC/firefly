@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 /**
  * User: roby
  * Date: Jun 19, 2008
@@ -73,9 +74,13 @@ public class DrawingManager implements AsyncDataLoader {
     private String _enablePrefKey= null;
     private final PrintableOverlay _printableOverlay;
     private boolean canDoRegion= true;
+//    private WebPlotView.MouseInfo _overrideMouseInfo = null;
+
     private final SubgroupVisController subVisControl= new SubgroupVisController();
 //    private static DrawingManager selectOwner= null;
 //    private AreaSelectListener _areaSelectListener= new AreaSelectListener();
+	private DrawSymbol symbol;
+	private int sizeSymbol;
 
 
 
@@ -185,6 +190,15 @@ public class DrawingManager implements AsyncDataLoader {
         });
     }
 
+
+    public void setPointDataSymbol(DrawSymbol symbol){
+    	this.symbol = symbol;
+    }
+    
+    public void setPointDataSymbolSize(int size){
+    	this.sizeSymbol = size;
+    }
+    
     public void setHighlightedColor(String color) {
         if (color == null) return;
         _highlightedColor= color;
@@ -326,6 +340,14 @@ public class DrawingManager implements AsyncDataLoader {
         return _dataConnect!=null ? _dataConnect.getSelectedCount() : 0;
     }
 
+    public boolean isVisibleGuess() {
+        boolean retval=false;
+        PVData pvData=_allPV.values().iterator().next();
+        if (pvData!=null && pvData.drawer!=null) {
+            retval= pvData.drawer.isVisible();
+        }
+        return retval;
+    }
 
     private Drawer connectDrawer(WebPlotView pv) {
 
@@ -444,8 +466,10 @@ public class DrawingManager implements AsyncDataLoader {
         if (_allPV.containsKey(pv)) {
             if (pv.isAlive()) {
                 PVData pvData = _allPV.get(pv);
+
                 WebPlotView.MouseInfo mi = pvData.getMouseInfo();
                 if (mi != null) pv.removePersistentMouseInfo(mi);
+
 
 
                 for (WebLayerItem item : pv.getUserDrawerLayerSet()) {

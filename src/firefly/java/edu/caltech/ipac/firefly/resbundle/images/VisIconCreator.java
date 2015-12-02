@@ -172,11 +172,12 @@ public interface VisIconCreator extends ClientBundle {
 
 
 //    @Source("marker-off-20x20.png")
-    @Source("icons-2014/Circles.png")
+    @Source("icons-2014/MarkerCirclesIcon_28x28.png")//Circles.png
     public ImageResource getMarkerOff();
 
 //    Source("marker-on-20x20.png")
-    @Source("icons-2014/Circles-ON.png")
+//    @Source("icons-2014/Circles-ON.png")
+    @Source("icons-2014/MarkerCirclesIcon_28x28.png")
     public ImageResource getMarkerOn();
 
 

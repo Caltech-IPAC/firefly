@@ -7,7 +7,7 @@
  */
 
 //import {application,NetworkMode} from "../core/Application.js";
-import {ServerParams} from '../data/ServerParams.js';
+import ServerParams from '../data/ServerParams.js';
 import {RawDataSet} from '../data/table/RawDataSet.js';
 import {doService} from '../core/JsonUtils.js';
 import {BackgroundStatus} from '../core/background/BackgroundStatus.js';

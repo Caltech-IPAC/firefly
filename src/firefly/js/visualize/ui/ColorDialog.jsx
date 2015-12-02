@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 
 import ValidationField from '../../ui/ValidationField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
@@ -15,7 +15,6 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import {flux} from '../../Firefly.js';
 
 import {RED_PANEL,
         GREEN_PANEL,
@@ -29,7 +28,7 @@ var {Band } = window.ffgwt ? window.ffgwt.Visualize : {};
 
 class ColorDialog {
     constructor() {
-        FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
+        //FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
         //var mpw= ffgwt.Visualize.AllPlots.getInstance().getMiniPlotWidget();
         var content= (
             <PopupPanel title={'Modify Color Stretch'} >
@@ -40,6 +39,7 @@ class ColorDialog {
     }
 
     showDialog() {
+        FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
         AppDataCntlr.showDialog('ColorStretchDialog');
     }
 }
@@ -51,10 +51,10 @@ const LABEL_WIDTH= 105;
 var ColorDialogPanel= React.createClass(
 {
 
-    formStoreListenerRemove : null,
 
     propTypes: {
-        groupKey : React.PropTypes.string.isRequired
+        groupKey : React.PropTypes.string.isRequired,
+        band : React.PropTypes.object.isRequired
     },
 
     getInitialState() {
@@ -70,21 +70,15 @@ var ColorDialogPanel= React.createClass(
     },
 
 
+    unbinder : null,
+
     componentWillUnmount() {
-        if (this.formStoreListenerRemove) this.formStoreListenerRemove();
+        this.unbinder();
     },
 
 
     componentDidMount() {
-        this.formStoreListenerRemove= flux.addListener(this.formStoreUpdate.bind(this));
-    },
-
-    update() {
-    },
-
-    formStoreUpdate() {
-        this.setState( {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)});
-        this.update();
+        this.unbinder= FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => this.setState({fields}));
     },
 
     getStretchTypeField() {
@@ -210,23 +204,30 @@ var ColorDialogPanel= React.createClass(
 
     render() {
         var groupKey=this.props.groupKey;
-        const {algorithm, lowerType, zscale}= FieldGroupUtils.getGroupFields(groupKey);
-        var a= Number.parseInt(algorithm.value);
+        var fields= FieldGroupUtils.getGroupFields(groupKey);
         var panel;
-        if (a===STRETCH_ASINH) {
-            panel= this.renderAsinH();
-        }
-        else if (a===STRETCH_POWERLAW_GAMMA) {
-            panel= this.renderGamma();
-        }
-        else if (zscale.value==='zscale') {
-            panel= this.renderZscale();
+        if (fields) {
+            const {algorithm, lowerType, zscale}=fields;
+            var a= Number.parseInt(algorithm.value);
+            if (a===STRETCH_ASINH) {
+                panel= this.renderAsinH();
+            }
+            else if (a===STRETCH_POWERLAW_GAMMA) {
+                panel= this.renderGamma();
+            }
+            else if (zscale.value==='zscale') {
+                panel= this.renderZscale();
+            }
+            else {
+                panel= this.renderStandard();
+            }
         }
         else {
             panel= this.renderStandard();
         }
         return (
-            <FieldGroup groupKey={groupKey} reducerFunc={colorPanelChange} validatorFunc={null} keepState={true}>
+            <FieldGroup groupKey={groupKey} reducerFunc={colorPanelChange(this.props.band)}
+                        validatorFunc={null} keepState={true}>
                 <div style={{padding:'5px'}}>
                     <div style={{display:'table', margin:'auto auto'}}>
                         {this.getStretchTypeField()}

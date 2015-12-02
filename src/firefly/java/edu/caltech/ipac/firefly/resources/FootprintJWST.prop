@@ -1,0 +1,34 @@
+FootprintJWST.Title=Add JWST prelim. footprint
+FootprintJWST.ShortDescription= Add a JWST preliminary footprint (see help)
+
+FootprintJWST.title.Title= Label
+FootprintJWST.title.ShortDescription= Add a label to this footprint
+FootprintJWST.title.PreferWidth= 8
+FootprintJWST.title.NullAllowed= true
+
+FootprintJWST.corner.Title= Corner
+FootprintJWST.corner.DataType= EnumString
+FootprintJWST.corner.Default= SE
+FootprintJWST.corner.ShortDescription= Choose a corner
+FootprintJWST.corner.Items= NE NW SE SW
+FootprintJWST.corner.NE.Name= NE
+FootprintJWST.corner.NW.Name= NW
+FootprintJWST.corner.SE.Name= SE
+FootprintJWST.corner.SW.Name= SW
+
+FootprintJWST.angle.Title= Angle
+FootprintJWST.angle.DataType= Float
+FootprintJWST.angle.ShortDescription= Enter the angle you want the footprint rotated
+FootprintJWST.angle.Min= -180
+FootprintJWST.angle.Max= 180
+FootprintJWST.angle.Default= 0
+FootprintJWST.angle.PreferWidth= 3
+FootprintJWST.angle.Validation= range
+FootprintJWST.angle.ErrorDescription= The angle should be between -180 and 180 degree
+
+FootprintJWST.field.position.Title= Name or Position
+FootprintJWST.field.position.ErrorDescription= Unable to parse position query - example: 40 36 J200
+FootprintJWST.field.position.ShortDescription= Enter a position coordinates in decimal degree
+FootprintJWST.field.position.PreferWidth= 40
+FootprintJWST.field.position.DataType=PositionString
+FootprintJWST.field.position.NullAllowed= true

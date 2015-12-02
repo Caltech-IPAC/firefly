@@ -129,6 +129,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _boxSelection    = false; // type of highlighting used when user selects this widget
     private boolean      _showAd          = false; // show home add
     private boolean      _catalogButton   = false; // show the catalog select button
+    private boolean      _maskButton      = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= true; // show the Tool bar inline instead of on the title bar
     private boolean      _showUnexpandedHighlight= true; // show the selected image highlight when not expanded
@@ -276,11 +277,6 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
     public DefaultRequestInfo getDefaultsPlotRequest() { return defaultsPlotReq; }
 
-    /**
-     * New plots pick up the zoom factor of the last plot.  This will override any zoom settings in the WebPlotRequest.
-     * @param remember true to remember the last zoom level, otherwise false
-     */
-    public void setRememberZoom(boolean remember) { _rememberZoom= remember; }
 
     public void forcePlotPrefUpdate() {
         _colorPrefs.setKey(_preferenceColorKey);
@@ -393,11 +389,13 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setSaveImageCornersAfterPlot(boolean save) {_saveCorners= save;}
     public void setImageSelection(boolean sel) { _allowImageSelect= sel; }
     public void setCatalogButtonEnable(boolean catalogButtonEnable) { _catalogButton= catalogButtonEnable; }
+    public void setMaskButtonEnable(boolean maskButtonEnable) { _maskButton= maskButtonEnable; }
 
     public boolean isImageSelection() { return _allowImageSelect; }
     public boolean hasNewPlotContainer() { return _hasNewPlotContainer; }
     public boolean isLockImage() { return _allowImageSelect && _allowImageLock; }
     public boolean isCatalogButtonEnabled() { return _catalogButton; }
+    public boolean isMaskButtonEnabled() { return _maskButton; }
 
     public void setLockImage(boolean lock) { _allowImageLock= lock; }
 
@@ -775,11 +773,11 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
 
         if (_rotateNorth) retval.setRotateNorth(true);
 
-        if (_rememberZoom && _plotView.getPrimaryPlot()!=null) {
-            float zFact= _plotView.getPrimaryPlot().getZoomFact();
-            retval.setZoomType(ZoomType.STANDARD);
-            retval.setInitialZoomLevel(zFact);
-        }
+//        if (_rememberZoom && _plotView.getPrimaryPlot()!=null) {
+//            float zFact= _plotView.getPrimaryPlot().getZoomFact();
+//            retval.setZoomType(ZoomType.STANDARD);
+//            retval.setInitialZoomLevel(zFact);
+//        }
 
         if (defThumbnailSize!=WebPlotRequest.DEFAULT_THUMBNAIL_SIZE &&
                 !r.containsParam(WebPlotRequest.THUMBNAIL_SIZE)) {

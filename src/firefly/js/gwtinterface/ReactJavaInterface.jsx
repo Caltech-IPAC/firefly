@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import Histogram from '../visualize/Histogram.jsx';
 
 export class ReactJavaInterface {
@@ -25,7 +26,7 @@ export class ReactJavaInterface {
                              reversed={parsedParams.reversed}/></div>);
 
         if (el) {
-            React.render(el, document.getElementById(divName));
+            ReactDOM.render(el, document.getElementById(divName));
         }
     }
 

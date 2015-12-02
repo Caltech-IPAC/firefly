@@ -3,6 +3,12 @@
  */
 package edu.caltech.ipac.firefly.commands;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -18,11 +24,10 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
+
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -34,6 +39,7 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.visualize.AllPlots;
+import edu.caltech.ipac.firefly.visualize.CircularMarker;
 import edu.caltech.ipac.firefly.visualize.Marker;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -46,12 +52,6 @@ import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 public class MarkerToolCmd extends    BaseGroupVisCmd
@@ -76,8 +76,9 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private boolean _doMove = false;
     private final WebPlotView.MouseInfo _mouseInfo =
             new WebPlotView.MouseInfo(new Mouse(), "Create a marker");
-    private final static String _onIcon = "MarkerTool.on.Icon";
-    private final static String _offIcon = "MarkerTool.off.Icon";
+    private final static String _onLabel = "Hide Marker";
+    private final static String _offLabel = "Show Marker";
+    private final static String _addLabel = "Add Marker";
 
 
     public MarkerToolCmd() {
@@ -99,6 +100,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             }
         } else if (name.equals(Name.ALL_FITS_VIEWERS_TEARDOWN)) {
             clearAllViewers();
+            changeMode(Mode.OFF);
         }
     }
 
@@ -143,23 +145,28 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     }
 
     @Override
-    public Image createCmdImage() {
-
-        VisIconCreator ic = VisIconCreator.Creator.getInstance();
-        String iStr = this.getIconProperty();
-        if (iStr != null) {
-
-            if (iStr.equals(_onIcon)) {
-                return new Image(ic.getMarkerOn());
-            } else if (iStr.equals(_offIcon)) {
-                return new Image(ic.getMarkerOff());
-            } else if (iStr.equals(CommandName + ".Icon")) {
-                return new Image(ic.getMarkerOff());
-            }
-        }
-        return null;
+    public boolean hasIcon() {
+        return false;
     }
 
+    //    @Override
+//    public Image createCmdImage() {
+//
+//        VisIconCreator ic = VisIconCreator.Creator.getInstance();
+//        String iStr = this.getIconProperty();
+//        if (iStr != null) {
+//
+//            if (iStr.equals(_onIcon)) {
+//                return new Image(ic.getMarkerOn());
+//            } else if (iStr.equals(_offIcon)) {
+//                return new Image(ic.getMarkerOff());
+//            } else if (iStr.equals(CommandName + ".Icon")) {
+//                return new Image(ic.getMarkerOff());
+//            }
+//        }
+//        return null;
+//    }
+//
 
     private void setupMouse() {
         grabMouse();
@@ -171,21 +178,21 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         switch (_mode) {
             case ADD_MARKER:
                 createDrawMan();
-                setIconProperty(_onIcon);
+                setLabel(_onLabel);
                 break;
             case MOVE:
-                setIconProperty(_onIcon);
+                setLabel(_onLabel);
                 changeToEditHelp();
                 addDrawMan();
                 break;
             case RESIZE:
-                setIconProperty(_onIcon);
+                setLabel(_onLabel);
                 changeToEditHelp();
                 addDrawMan();
                 break;
             case OFF:
                 removeDrawMan();
-                setIconProperty(_offIcon);
+                setLabel(_markerMap.size() > 0 ? _offLabel : _addLabel);
                 break;
             default:
                 WebAssert.argTst(false, "only support for SelectType of ADD_MARKER, RESIZE or MOVE");
@@ -308,25 +315,29 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         int dist;
         if (centerList.size() > 0) {
             for (Marker m : centerList) {
-                dist = m.getCenterDistance(pt, plot);
-                if (dist < minDist && dist > -1) {
-                    retval = m;
-                    minDist = dist;
+                if (_markerMap.get(m).isVisible())  {
+                    dist = m.getCenterDistance(pt, plot);
+                    if (dist < minDist && dist > -1) {
+                        retval = m;
+                        minDist = dist;
+                    }
                 }
             }
         } else {
             Marker candidate = null;
             Marker.MinCorner editCorner = null;
             for (Marker m : _markerMap.keySet()) {
-                Marker.MinCorner minC = m.getMinCornerDistance(pt, plot);
-                if (minC != null && minC.getDistance() < minDist) {
-                    candidate = m;
-                    minDist = minC.getDistance();
-                    editCorner = minC;
-                }
-                if (minDist < EDIT_DISTANCE) {
-                    retval = candidate;
-                    retval.setEditCorner(editCorner.getCorner(), plot);
+                if (_markerMap.get(m).isVisible())  {
+                    Marker.MinCorner minC = m.getMinCornerDistance(pt, plot);
+                    if (minC != null && minC.getDistance() < minDist) {
+                        candidate = m;
+                        minDist = minC.getDistance();
+                        editCorner = minC;
+                    }
+                    if (minDist < EDIT_DISTANCE) {
+                        retval = candidate;
+                        retval.setEditCorner(editCorner.getCorner(), plot);
+                    }
                 }
             }
 
@@ -347,11 +358,12 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         if (m.isReady()) {
             List<DrawObj> data = new ArrayList<DrawObj>(1);
             List<DrawObj> editData = new ArrayList<DrawObj>(1);
-            ShapeDataObj markerShape= ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt());
-            data.add(markerShape);
+//            ShapeDataObj markerShape= m.getShape().get(0); // main shape
+//            data.add(markerShape);
+//            data.add(ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt()));
 
-
-
+            ShapeDataObj markerShape = ShapeDataObj.makeCircle(m.getStartPt(), m.getEndPt());
+			data.add(markerShape);
             if (drawHandles) {
                 int size = 5;
                 editData.add(ShapeDataObj.makeRectangle(m.getCorner(Marker.Corner.NW, plot), size, size));
@@ -414,7 +426,8 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
 
 
     private void createDrawMan() {
-        _activeMarker = new Marker(20);
+//        _activeMarker = new RectangleMarker(80, 50);//new CircularMarker(20);
+        _activeMarker = new CircularMarker(20);
         _markerMap.put(_activeMarker, new MarkerDrawing());
 
         WebPlotView pv= getPlotView();
@@ -581,6 +594,8 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             _dd.draw(plot,marker,drawMan);
         }
         public void cancelDeferred() { _dd.cancel(); }
+
+        public boolean isVisible() {return drawMan!=null ? drawMan.isVisibleGuess() : false; }
     }
 
 

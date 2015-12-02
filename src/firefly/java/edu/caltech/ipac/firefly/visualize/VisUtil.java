@@ -53,10 +53,11 @@ public class VisUtil {
     }
 
     /**
-     * compute the distance on the sky between two world points
+     * compute the angular distance on the sky between two world points
      * @param p1
      * @param p2
-     * @return
+     * @return angle (in degree!) representing the angular separation between
+     * the two coordinates
      */
     public static double computeDistance(WorldPt p1, WorldPt p2) {
         double lon1Radius = p1.getLon() * DtoR;
@@ -158,15 +159,18 @@ public class VisUtil {
         return new CentralPointRetval(central_point, max_radius);
     }
 
-
+    static public double getPositionAngle(WorldPt pt0, WorldPt pt1) {
+    	return getPositionAngle(pt0.getLon(), pt0.getLat(), pt1.getLon(), pt1.getLat());
+    }
+    
     /**
-     * Compute position angle
+     * Compute position angle in degrees east of north
      *
      * @param ra0  the equatorial RA in degrees of the first object
      * @param dec0 the equatorial DEC in degrees of the first object
      * @param ra   the equatorial RA in degrees of the second object
      * @param dec  the equatorial DEC in degrees of the second object
-     * @return position angle in degrees between the two objects
+     * @return position angle in degrees east of north between the two objects
      */
     static public double getPositionAngle(double ra0, double dec0,
                                           double ra, double dec) {
@@ -191,8 +195,10 @@ public class VisUtil {
         if (dist > 0.0000004) {
             sind = Math.sin(dist);
             cospa = (sd * cd0 - cd * sd0 * cosda) / sind;
-            if (cospa > 1.0) cospa = 1.0;
-            if (cospa < -1.0) cospa = -1.0;
+            if (Math.abs(cospa) > 1.0){
+            	cospa=cospa/Math.abs(cospa);
+            }
+//            if (cospa < -1.0) cospa = -1.0;
             sinpa = cd * Math.sin(alf - alf0) / sind;
             pa = Math.acos(cospa) * RtoD;
             if (sinpa < 0.0) pa = 360.0 - (pa);
@@ -470,6 +476,15 @@ public class VisUtil {
     }
 
 
+    /**
+	 * FIXME: EJ: Expecting WorldPt coord sys in J200 otherwise that method doesn't make any sense
+	 * to me!
+	 * 
+	 * @param pos1
+	 * @param offsetRa in arcsecs
+	 * @param offsetDec in arcsecs
+	 * @return
+	 */
     public static WorldPt calculatePosition(WorldPt pos1, double offsetRa, double offsetDec ) {
         double ra = Math.toRadians(pos1.getLon());
         double dec = Math.toRadians(pos1.getLat());
@@ -582,6 +597,12 @@ public class VisUtil {
             double ra = 10.0;  // degrees
             double dec = 60.0;  // degrees
             double radius = 3600.0;  // arcsec
+            
+            
+            WorldPt imageCenterPt = new WorldPt(10, 10,CoordinateSys.SCREEN_PIXEL);
+			WorldPt convertToJ2000 = convertToJ2000(imageCenterPt);
+            System.out.println(imageCenterPt+", " +convertToJ2000);
+            
             System.out.println(getCorners(new WorldPt(ra, dec), radius));
         }
     }

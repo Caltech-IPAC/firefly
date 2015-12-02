@@ -1,13 +1,15 @@
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import ReactDOM from 'react-dom';
 import PointerPopup from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
-import React from 'react/addons';
 
 const EXCLAMATION = 'tmp-stuff/exclamation16x16.gif';
 
 var InputFieldView = React.createClass(
 {
 
-       mixins : [React.addons.PureRenderMixin],
+       mixins : [PureRenderMixin],
 
        propTypes: {
            valid   : React.PropTypes.bool,
@@ -69,7 +71,6 @@ var InputFieldView = React.createClass(
        makeWarningArea(warn) {
            var warnIcon= '';
            if (warn) {
-               //this.computeWarningXY(this.warnIcon);
                warnIcon= (
                        <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
                            <img ref={(c) => {
@@ -82,7 +83,6 @@ var InputFieldView = React.createClass(
                );
            }
 
-           //<img ref={(c)=>this.computeWarningXY(c);} src={EXCLAMATION}/>
            return (
                    <div style={
                       {
@@ -130,7 +130,7 @@ var InputFieldView = React.createClass(
 
     computeWarningXY(warnIcon) {
         if (warnIcon) {
-            var e= React.findDOMNode(warnIcon);
+            var e= ReactDOM.findDOMNode(warnIcon);
             var bodyRect = document.body.getBoundingClientRect();
             var elemRect = e.getBoundingClientRect();
             var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
@@ -156,7 +156,7 @@ var InputFieldView = React.createClass(
                         tooltip={this.props.tooltip}
                         labelWidth={this.props.labelWidth}
                     />
-                    <input style={{display:'inline-block'}}
+                    <input style={Object.assign({display:'inline-block'}, this.props.style)}
                         className={this.computeStyle()}
                         onChange={this.onChange}
                         onFocus={this.onFocus}

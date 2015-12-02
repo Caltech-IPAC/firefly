@@ -24,8 +24,6 @@ import java.util.List;
  */
 public class WebPlotResultParser {
 
-    public static final String QUOTE= "\"";
-
     public static WebPlotResult[] convertAry(PlotResultOverlay res) {
         List<WebPlotResult> rList= new ArrayList<WebPlotResult>();
         if (res.isSuccess()) {
@@ -162,54 +160,5 @@ public class WebPlotResultParser {
 //        return retval.toString();
 //    }
 
-    public static String[] makeCreatorResultStringArray(CreatorResults cr) {
-        WebPlotInitializer wpInit[]= cr.getInitializers();
-        String retval[]= new String[wpInit.length];
-        for(int i=0; i<wpInit.length; i++) {
-            retval[i]= wpInit[i].toString();
-        }
-        return retval;
-//        StringBuilder sb= new StringBuilder(wpInit.length*200);
-//        sb.append("[");
-//        for(int i=0; i<wpInit.length; i++) {
-//            sb.append( "\"" );
-//            sb.append(wpInit[i]);
-//            sb.append( "\"" );
-//            if (i<wpInit.length-1) sb.append(",");
-//        }
-//        sb.append("]");
-//        return sb.toString();
-    }
-
-    public static void addJSItem(StringBuilder sb, String key, String value) {
-        sb.append( QUOTE).append(key).append( QUOTE);
-        sb.append(" : ");
-        sb.append( QUOTE).append(value).append(QUOTE);
-        sb.append(",");
-    }
-
-    public static void addJSArray(StringBuilder sb, String key, String ary[]) {
-        sb.append( QUOTE).append(key).append( QUOTE);
-        sb.append(" : [");
-        for(String s : ary) sb.append("\"").append(s).append("\"").append(",");
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append("],");
-    }
-
-    public static void addJSArray(StringBuilder sb, String key, int ary[]) {
-        sb.append( QUOTE).append(key).append( QUOTE);
-        sb.append(" : [");
-        for(int i : ary) sb.append(i).append(",");
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append("],");
-    }
-
-    public static  void addJSArray(StringBuilder sb, String key, double ary[]) {
-        sb.append( QUOTE).append(key).append( QUOTE);
-        sb.append(" : [");
-        for(double v : ary) sb.append(v).append(",");
-        sb.deleteCharAt(sb.length()-1);
-        sb.append("],");
-    }
 }
 

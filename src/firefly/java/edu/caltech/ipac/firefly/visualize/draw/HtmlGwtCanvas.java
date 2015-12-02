@@ -19,6 +19,7 @@ import java.util.List;
  * Date: Oct 1, 2008
  * Time: 11:21:49 AM
  */
+import java.util.logging.Level;
 
 
 /**
@@ -33,6 +34,8 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     private final Context2d ctx;
     private Shadow nextDrawShadow= null;
     private ScreenPt nextDrawTranslation= null;
+    //Rotation angle - see context2d setRotate
+	private double nextDrawRotation= 0;
 
  //======================================================================
 //----------------------- Constructors ---------------------------------
@@ -63,6 +66,14 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         nextDrawTranslation= pt;
     }
 
+    /* (non-Javadoc)
+     * @see edu.caltech.ipac.firefly.visualize.draw.AdvancedGraphics#setRotationForNextDraw(double)
+     */
+    public void setRotationForNextDraw(double radAngle) {
+		this.nextDrawRotation = radAngle;
+		
+	}
+    
     public void clearTranslation() {
         setTranslation(new ScreenPt(0,0));
     }
@@ -200,7 +211,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     }
 
     public void rect(int x, int y, int width, int height) {
-        ctx.rect(x,y,width,height);
+    	ctx.rect(x,y,width,height);
     }
 
     public void arc(int x,int y, double radius, double startAngle, double endAngle) {
@@ -208,7 +219,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     }
 
     public void drawPath() {
-        ctx.stroke();
+    	ctx.stroke();
         ctx.restore();
     }
 
@@ -251,7 +262,7 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     }
 
     private void checkMods() {
-        if (nextDrawShadow!=null) {
+    	if (nextDrawShadow!=null) {
             setShadow(nextDrawShadow);
             nextDrawShadow= null;
         }
@@ -260,10 +271,17 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
             setTranslation(nextDrawTranslation);
             nextDrawTranslation= null;
         }
+        if (nextDrawRotation!=0) {
+        	GwtUtil.logToServer(Level.INFO, ""
+    				+ "checkMods() with rotation "+nextDrawRotation);
+        	setRotation(nextDrawRotation);
+            nextDrawRotation= 0;
+        }
     }
 
 
-    public void drawText(String color,
+
+	public void drawText(String color,
                          String fontFamily,
                          String size,
                          String fontWeight,
@@ -345,7 +363,13 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
     private void setTranslation(ScreenPt pt) {
         ctx.translate(pt.getIX(), pt.getIY());
     }
-
+    /**
+     * Set rotation to rotation angle
+     * @param ang angle to rotate in radians
+     */
+    private void setRotation(double ang) {
+        ctx.rotate(ang);
+    }
 
 
 //======================================================================

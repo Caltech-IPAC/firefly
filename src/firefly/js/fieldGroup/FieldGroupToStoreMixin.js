@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react/addons';
+import React from 'react';
 import _ from 'lodash';
 import FieldGroupCntlr from './FieldGroupCntlr.js';
 import FieldGroupUtils from './FieldGroupUtils.js';
@@ -16,13 +16,14 @@ var FieldGroupToStoreMixin=  {
 
     propTypes: {
         fieldKey : React.PropTypes.string.isRequired,
-        groupKey : React.PropTypes.string.isRequired,
+        groupKey : React.PropTypes.string,
         initialState : React.PropTypes.object,
         labelWidth : React.PropTypes.number
     },
 
     getInitialState() {
         var {groupKey,fieldKey} = this.props;
+        if (!groupKey) groupKey= this.context.groupKey;
         var fieldState = this.props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
         return { fieldState };
     },
@@ -46,7 +47,7 @@ var FieldGroupToStoreMixin=  {
 
 
     fireValueChange(payload) {
-        if (!payload.groupKey) payload.groupKey= this.props.groupKey;
+        if (!payload.groupKey) payload.groupKey= this.props.groupKey || this.context.groupKey;
         flux.process({type: FieldGroupCntlr.VALUE_CHANGE, payload});
     },
 
@@ -69,7 +70,7 @@ var FieldGroupToStoreMixin=  {
         flux.process({
             type: FieldGroupCntlr.MOUNT_COMPONENT,
             payload: {
-                groupKey: this.props.groupKey,
+                groupKey: this.props.groupKey || this.context.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : true,
                 value: this.getValue(),
@@ -92,7 +93,7 @@ var FieldGroupToStoreMixin=  {
         flux.process({
             type: FieldGroupCntlr.MOUNT_COMPONENT,
             payload: {
-                groupKey: this.props.groupKey,
+                groupKey: this.props.groupKey || this.context.groupKey,
                 fieldKey : this.props.fieldKey,
                 mounted : false,
                 value: this.getValue()
@@ -107,6 +108,7 @@ var FieldGroupToStoreMixin=  {
 
     updateFieldStateWithProps(props) {
         var {groupKey, fieldKey}= props;
+        if (!groupKey) groupKey= this.context.groupKey;
         var groupState= FieldGroupUtils.getGroupState(groupKey);
         if (groupState && groupState.mounted && groupState.fields[fieldKey]) {
             if (this.state.fieldState!==groupState.fields[fieldKey]) {

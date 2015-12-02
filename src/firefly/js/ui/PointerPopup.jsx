@@ -1,6 +1,8 @@
 /*eslint "prefer-template": 0*/
 
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import _ from 'lodash';
 
 
@@ -14,7 +16,7 @@ const SOUTH_WEST = 'sWest';
 
 var PointerPopup = React.createClass(
    {
-       //mixins : [React.addons.PureRenderMixin],
+       //mixins : [PureRenderMixin],
 
        statics : {
            NONE,
@@ -78,7 +80,7 @@ var PointerPopup = React.createClass(
                }
                e.style.left= left +'px';
                e.style.top= pos.y+'px';
-               var upPointer= React.findDOMNode(this.refs.upPointer);
+               var upPointer= ReactDOM.findDOMNode(this.refs.upPointer);
                upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+'px';
                e.style.visibility='visible';
            }
@@ -87,7 +89,7 @@ var PointerPopup = React.createClass(
                var top= pos.y - (e.offsetHeight/2+15);
                top= top<5 ? 5 : top;
                e.style.top= top+'px';
-               var leftDownPointer= React.findDOMNode(this.refs.leftDownPointer);
+               var leftDownPointer= ReactDOM.findDOMNode(this.refs.leftDownPointer);
                leftDownPointer.style.left= -20+'px';
                leftDownPointer.style.top= 8+'px';
                leftDownPointer.style.paddingLeft= 0;
@@ -97,7 +99,7 @@ var PointerPopup = React.createClass(
        },
 
        updatePosition() {
-           var e= React.findDOMNode(this);
+           var e= ReactDOM.findDOMNode(this);
            this.updateOffsets(e);
            _.defer(function() {
                this.computeDir(e);
@@ -111,7 +113,7 @@ var PointerPopup = React.createClass(
 
 
        componentDidUpdate() {
-           var e= React.findDOMNode(this);
+           var e= ReactDOM.findDOMNode(this);
            this.updateOffsets(e);
        },
 

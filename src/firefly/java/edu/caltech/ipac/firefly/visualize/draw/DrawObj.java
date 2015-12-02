@@ -6,8 +6,10 @@ package edu.caltech.ipac.firefly.visualize.draw;
 import com.google.gwt.user.client.ui.Widget;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
+import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.visualize.plot.Pt;
+import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,8 @@ public abstract class DrawObj {
     private int representCnt= 1;
     private AdvancedGraphics.Shadow shadow= null;
     private ScreenPt translation= null;
+
+	private double rotAngle;
 
     public DrawObj() { }
 
@@ -68,6 +72,8 @@ public abstract class DrawObj {
 
 
     protected boolean getSupportsWebPlot() { return true; }
+
+   // public abstract ShapeType getShape();
 
     public abstract Pt getCenterPt();
 
@@ -122,6 +128,10 @@ public abstract class DrawObj {
 
     public void setTranslation(ScreenPt translation) { this.translation = translation; }
 
+    public void setRotation(double angInRad) { this.rotAngle = angInRad; }
+    
+    public double getRotation() { return this.rotAngle; }
+    
     public void setRepresentCnt(int representCnt) {
         this.representCnt = representCnt;
     }
@@ -139,5 +149,32 @@ public abstract class DrawObj {
         setSelectColor(d.getSelectColor());
         setHighlightColor(d.getHighlightColor());
     }
+    
+    
+	/**
+	 * (re)Build world points translated to apt
+	 * 
+	 * @param plot
+	 * @param apt
+	 *            world point to translate to
+	 */
+	public void translateTo(WebPlot plot, WorldPt apt) {
+		throw new RuntimeException("translateTo() should be implemented in the child class");
+	}
+    
+	/**
+	 * Apply a rotation of an angle [rad] all points around a center wc [world
+	 * point]
+	 * 
+	 * @param plot
+	 *            plot object
+	 * @param angle
+	 *            angle to rotate in radians
+	 * @param wc
+	 *            center world point to rotate around
+	 */
+	public void rotateAround(WebPlot plot, double angle, WorldPt wc) {
+		throw new RuntimeException("rotateAround() should be implemented in the child class");
+	}
 }
 

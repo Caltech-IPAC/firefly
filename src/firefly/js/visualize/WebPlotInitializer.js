@@ -37,7 +37,8 @@ class WebPlotInitializer {
         this.plotState= plotState;
         this.initImages= images;
         this.imageCoordSys= imageCoordSys;
-        this.projectionSerialized= ProjectionSerializer.serializeProjection(projection);
+        //this.projectionSerialized= ProjectionSerializer.serializeProjection(projection);
+        this.projection= projection;
         this.dataWidth= dataWidth;
         this.dataHeight= dataHeight;
         this.imageScaleFactor= imageScaleFactor;
@@ -52,84 +53,26 @@ class WebPlotInitializer {
 
     /**
      *
-     * @return {PlotState}
-     */
-    getPlotState() { return this.plotState; }
-
-
-    /**
-     * @return {CoordinateSys}
-     */
-    getCoordinatesOfPlot() { return this.imageCoordSys; }
-
-
-    /**
-     * @return {*}
-     */
-    getInitImages() { return this.initImages; }
-
-    /**
-     *
      * @return {Projection}
      */
     getProjection() {
-        return ProjectionSerializer.deserializeProjection(this.projectionSerialized);
+        return window.ffgwt.Visualize.ProjectionSerializer.deserializeProjection(this.projectionSerialized);
     }
 
-    /**
-     *
-     * @return {number|*}
-     */
-    getDataWidth() { return this.dataWidth; }
-    /**
-     *
-     * @return {number|*}
-     */
-    getDataHeight() { return this.dataHeight; }
-    /**
-     *
-     * @return {number|*}
-     */
-    getImageScaleFactor() { return this.imageScaleFactor; }
 
-
-    /**
-     *
-     * @return {WebFitsData[]}
-     */
-    getFitsData()  { return this.fitsData; }
-
-    /**
-     * @return {string}
-     */
-    getPlotDesc() { return this.desc; }
-
-
-    /**
-     *
-     * @param {string} d the description
-     */
-    setPlotDesc(d) { this.desc= d; }
-
-    /**
-     *
-     * @return {string}
-     */
-    getDataDesc() { return this.dataDesc; }
-
-    toString() {
-        var part1= join(SPLIT_TOKEN,
-            this.imageCoordSys, this.projectionSerialized,
-            this.dataWidth, this.dataHeight,
-            this.imageScaleFactor, this.initImages,
-            this.plotState, this.desc,
-            this.dataDesc);
-
-        this.fitsData.length= 3;
-        var part2= this.fitsData.map( (fd) => fd ? fd.toString() : 'null');
-
-        return join(SPLIT_TOKEN, part1, part2);
-    }
+    //toString() {
+    //    var part1= join(SPLIT_TOKEN,
+    //        this.imageCoordSys, this.projectionSerialized,
+    //        this.dataWidth, this.dataHeight,
+    //        this.imageScaleFactor, this.initImages,
+    //        this.plotState, this.desc,
+    //        this.dataDesc);
+    //
+    //    this.fitsData.length= 3;
+    //    var part2= this.fitsData.map( (fd) => fd ? fd.toString() : 'null');
+    //
+    //    return join(SPLIT_TOKEN, part1, part2);
+    //}
 
     static parse(s) {
         if (!s) return null;
@@ -138,7 +81,7 @@ class WebPlotInitializer {
 
         var i= 0;
         var imageCoordSys= CoordinateSys.parse(sAry[i++]);
-        var projection= ProjectionSerializer.deserializeProjection(sAry[i++]);
+        var projection= window.ffgwt.Visualize.ProjectionSerializer.deserializeProjection(sAry[i++]);
         var dataWidth= parseInt(sAry[i++]);
         var dataHeight= parseInt(sAry[i++]);
         var imageScaleFactor= parseInt(sAry[i++]);
@@ -148,7 +91,7 @@ class WebPlotInitializer {
         var dataDesc= getStringWithNull(sAry[i++]);
         var fitsData= [undefined,undefined,undefined];
         while (i<sAry.length) {
-            fitsData.push(WebFitsData.parse(sAry[i++]));
+            fitsData[i]= WebFitsData.parse(sAry[i++]);
         }
         return new WebPlotInitializer(
             plotState,initImages,imageCoordSys,projection,

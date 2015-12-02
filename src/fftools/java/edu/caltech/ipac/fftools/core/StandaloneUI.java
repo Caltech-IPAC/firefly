@@ -552,6 +552,7 @@ class StandaloneUI {
     public class MyMpwFactory implements DataVisGrid.MpwFactory  {
         public MiniPlotWidget make(String groupName) {
             MiniPlotWidget mpw = new MiniPlotWidget(groupName, makePopoutContainerForApp());
+            mpw.setMaskButtonEnable(true);
             if (displayMode== FFToolsDisplayMode.minimal) {
                 mpw.setImageSelection(true);
                 mpw.setCatalogButtonEnable(true);

@@ -1,16 +1,22 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
 
 var ListBoxInputField = React.createClass(
     {
-        mixins : [React.addons.PureRenderMixin, FieldGroupToStoreMixin],
+        mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
             inline : React.PropTypes.bool,
             options : React.PropTypes.array.isRequired,
-            multiple : React.PropTypes.bool
+            multiple : React.PropTypes.bool,
+            labelWidth : React.PropTypes.number
+        },
+
+        contextTypes: {
+            groupKey: React.PropTypes.string
         },
 
         componentWillMount() {

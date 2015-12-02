@@ -3,6 +3,18 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+/**
+ * User: roby
+ * Date: May 19, 2008
+ * Time: 2:35:43 PM
+ */
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsNoExport;
@@ -17,7 +29,44 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.*;
+
+import edu.caltech.ipac.firefly.commands.ActivePointToolCmd;
+import edu.caltech.ipac.firefly.commands.AreaStatCmd;
+import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
+import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
+import edu.caltech.ipac.firefly.commands.CropCmd;
+import edu.caltech.ipac.firefly.commands.DataFilterInCmd;
+import edu.caltech.ipac.firefly.commands.DataSelectCmd;
+import edu.caltech.ipac.firefly.commands.DataUnSelectCmd;
+import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
+import edu.caltech.ipac.firefly.commands.ExpandCmd;
+import edu.caltech.ipac.firefly.commands.FitsDownloadCmd;
+import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
+import edu.caltech.ipac.firefly.commands.FlipImageCmd;
+import edu.caltech.ipac.firefly.commands.FlipLeftCmd;
+import edu.caltech.ipac.firefly.commands.FlipRightCmd;
+import edu.caltech.ipac.firefly.commands.GridCmd;
+import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
+import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
+import edu.caltech.ipac.firefly.commands.JwstFootprintCmd;
+import edu.caltech.ipac.firefly.commands.LayerCmd;
+import edu.caltech.ipac.firefly.commands.LoadDS9RegionCmd;
+import edu.caltech.ipac.firefly.commands.LockImageCmd;
+import edu.caltech.ipac.firefly.commands.LockRelatedImagesCmd;
+import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
+import edu.caltech.ipac.firefly.commands.MaskOverlayCmd;
+import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
+import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
+import edu.caltech.ipac.firefly.commands.RestoreCmd;
+import edu.caltech.ipac.firefly.commands.RotateCmd;
+import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
+import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
+import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
+import edu.caltech.ipac.firefly.commands.ZoomDownCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFillCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFitCmd;
+import edu.caltech.ipac.firefly.commands.ZoomOriginalCmd;
+import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
@@ -35,23 +84,13 @@ import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.firefly.util.event.WebEvent;
 import edu.caltech.ipac.firefly.util.event.WebEventListener;
 import edu.caltech.ipac.firefly.util.event.WebEventManager;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
+import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-/**
- * User: roby
- * Date: May 19, 2008
- * Time: 2:35:43 PM
- */
 
 
 /**
@@ -804,6 +843,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
         commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
         commandMap.put(ColorTable.CommandName,        new ColorTable());
+        commandMap.put(MarkerTool.CommandName,        new MarkerTool());
         commandMap.put(Stretch.CommandName,           new Stretch());
         commandMap.put(LayerCmd.CommandName,          new LayerCmd());
         commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
@@ -813,6 +853,17 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(ActivePointToolCmd.CommandName,   new ActivePointToolCmd());
         commandMap.put(CenterPlotOnQueryCmd.CommandName, new CenterPlotOnQueryCmd());
         commandMap.put(MarkerToolCmd.CommandName,     new MarkerToolCmd());
+        
+        FOOTPRINT[] fp = FOOTPRINT.values();
+		for (int f = 0; f < fp.length; f++) {
+			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);//.values();
+			commandMap.put(JwstFootprintCmd.CommandName + fp[f].name(), new JwstFootprintCmd(fp[f]));
+			if (fp[f].equals(FOOTPRINT.JWST)) {
+				for (int i = 0; i < values.length; i++) {
+					commandMap.put(JwstFootprintCmd.CommandName + values[i].name(), new JwstFootprintCmd(values[i]));
+				}
+			}
+		}
         commandMap.put(NorthArrowCmd.CommandName,     new NorthArrowCmd());
         commandMap.put(IrsaCatalogCmd.CommandName,    new IrsaCatalogCmd());
         commandMap.put(LoadDS9RegionCmd.COMMAND_NAME, new LoadDS9RegionCmd());
@@ -1070,6 +1121,21 @@ public class AllPlots implements HasWebEventManager {
             String iStr= this.getIconProperty();
             if (iStr!=null && iStr.equals("colorTable.Icon"))  {
                 return new Image(ic.getColorTable());
+            }
+            return null;
+        }
+    }
+
+    static class MarkerTool extends MenuGeneratorV2.MenuBarCmd {
+        public static final String CommandName= "MarkerToolDD";
+        public MarkerTool() { super(CommandName); }
+
+        @Override
+        protected Image createCmdImage() {
+            VisIconCreator ic= VisIconCreator.Creator.getInstance();
+            String iStr= this.getIconProperty();
+            if (iStr!=null && iStr.equals("MarkerToolDD.Icon"))  {
+                return new Image(ic.getMarkerOff());
             }
             return null;
         }

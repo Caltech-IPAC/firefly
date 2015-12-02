@@ -3,6 +3,7 @@
  */
 
 import {flux} from '../Firefly.js';
+import {logError} from '../util/WebUtil.js';
 import FieldGroupCntlr from './FieldGroupCntlr.js';
 
 /**
@@ -26,7 +27,7 @@ var makeValidationPromise= function(fields,fieldKey) {
  */
 var validateSingle= function(groupKey, doneCallback) {
     var fields= getGroupFields(groupKey);
-    if (!fields) return Promise.all(true);
+    if (!fields) return Promise.resolve(true);
     return Promise.all( Object.keys(fields).map( (fieldKey => makeValidationPromise(fields,fieldKey)),this ) )
         .then( (allResults) =>
         {
@@ -47,7 +48,7 @@ var validateSingle= function(groupKey, doneCallback) {
                 });
             doneCallback(valid);
         }
-    ).catch( (e) => console.log(e));
+    ).catch( (e) => logError(e));
 };
 
 //var validateGroup= function(groupKeyAry, doneCallback) {
@@ -138,10 +139,24 @@ const unmountFieldGroup= function(groupKey) {
 };
 
 
+/**
+ *
+ * @param {string} groupKey
+ * @param {function} stateUpdaterFunc this is a functions takes a field object as a parameter and should update the
+ *                   react components state
+ * @return {function} a function that will unbind the store, should be called on componentWillUnmount
+ */
+const bindToStore= function(groupKey, stateUpdaterFunc) {
+    var storeListenerRemove= flux.addListener( () => {
+        stateUpdaterFunc(getGroupFields(groupKey));
+    });
+    return storeListenerRemove;
+};
+
 
 
 var FieldGroupUtils= {validate, getResults, getGroupState, getGroupFields,
-                      initFieldGroup,mountFieldGroup,unmountFieldGroup };
+                      initFieldGroup,mountFieldGroup,unmountFieldGroup, bindToStore };
 
 export default FieldGroupUtils;
 

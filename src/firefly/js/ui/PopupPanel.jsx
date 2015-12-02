@@ -5,7 +5,8 @@
 import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
 import _ from 'lodash';
 import Enum from 'enum';
-import React from 'react/addons';
+import React from 'react';
+import ReactDOM from 'react-dom';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 
 
@@ -20,11 +21,11 @@ var PopupPanel= React.createClass(
     buttonUpCallback : null,
 
     propTypes: {
-        layoutPosition : React.PropTypes.object.isRequired,
+        layoutPosition : React.PropTypes.object,
         title : React.PropTypes.string,
         closePromise : React.PropTypes.object,
         closeCallback : React.PropTypes.func,
-        visible : React.PropTypes.bool.isRequired
+        visible : React.PropTypes.bool
     },
 
     //onClick: function(ev) {
@@ -32,7 +33,7 @@ var PopupPanel= React.createClass(
     //},
 
     updateLayoutPosition() {
-        var e= React.findDOMNode(this);
+        var e= ReactDOM.findDOMNode(this);
 
         var activeLayoutType = LayoutType.TOP_CENTER;
         //var {posX,posY}= getPopupPosition(e,lt);
@@ -66,7 +67,7 @@ var PopupPanel= React.createClass(
         this.moveCallback= (ev)=> this.dialogMove(ev);
         this.buttonUpCallback= (ev)=> this.dialogMoveEnd(ev);
         this.browserResizeCallback= _.debounce(() => { this.updateLayoutPosition(); },150);
-        var e= React.findDOMNode(this);
+        var e= ReactDOM.findDOMNode(this);
         if (visible) this.updateLayoutPosition();
         //_.defer(function() {
         //    this.computeDir(e);
@@ -88,14 +89,14 @@ var PopupPanel= React.createClass(
     },
 
     dialogMoveStart(ev)  {
-        var e= React.findDOMNode(this);
-        var titleBar= React.findDOMNode(this.titleBarRef);
+        var e= ReactDOM.findDOMNode(this);
+        var titleBar= ReactDOM.findDOMNode(this.titleBarRef);
         this.mouseCtx= humanStart(ev,e,titleBar);
     },
 
     dialogMove(ev)  {
         if (this.mouseCtx) {
-            var titleBar= React.findDOMNode(this.titleBarRef);
+            var titleBar= ReactDOM.findDOMNode(this.titleBarRef);
             var r = humanMove(ev,this.mouseCtx,titleBar);
             if (r) {
                 this.setState({posX:r.newX, posY:r.newY});

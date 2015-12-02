@@ -414,9 +414,11 @@ public class WebPlotFactory {
                 String bStr = state.isThreeColor() ? StringUtils.pad(5, band.toString()) + " - " : "";
                 File f = PlotStateUtil.getWorkingFitsFile(state, band);
                 if (!PlotServUtils.isBlank(state, band)) {
-                    String sizeStr= FileUtil.getSizeAsString(f.length());
-                    out.add(bStr + "filename "+"("+sizeStr+ ")" +": " + f.getPath());
-                    totSize += f.length();
+                    if (f!=null) {
+                        String sizeStr= FileUtil.getSizeAsString(f.length());
+                        out.add(bStr + "filename "+"("+sizeStr+ ")" +": " + f.getPath());
+                        totSize += f.length();
+                    }
                 } else {
                     out.add(bStr + "Blank Image");
                 }

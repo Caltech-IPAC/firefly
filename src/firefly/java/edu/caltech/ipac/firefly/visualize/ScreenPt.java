@@ -11,7 +11,13 @@ public final class ScreenPt extends Pt {
 
     public ScreenPt() { this(0,0); }
 
+    /**
+     * Need double constructor for paaing rotated value
+     * @param x
+     * @param y
+     */
     public ScreenPt(int x, int y) { super(x,y); }
+    public ScreenPt(double x, double y) { super(x,y); }
     private ScreenPt(Pt p) { this((int)p.getX(),(int)p.getY()); }
 
     public int getIX() { return (int)getX(); }

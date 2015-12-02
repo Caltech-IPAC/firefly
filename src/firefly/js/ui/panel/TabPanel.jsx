@@ -3,11 +3,12 @@
  */
 
 import './TabPanel.css';
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 export var Tabs = React.createClass({
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
     propTypes: {
         defaultSelected:  React.PropTypes.number
@@ -37,7 +38,7 @@ export var Tabs = React.createClass({
         const { selectedIdx, content }= this.state;
         var index = 0,
             children = React.Children.map(this.props.children, (child) => {
-                return React.addons.cloneWithProps(child, {
+                return React.cloneElement(child, {
                     selected: (index == selectedIdx),
                     onSelect: this.onSelect.bind(this, index),
                     ref: 'tab-' + (index++)
