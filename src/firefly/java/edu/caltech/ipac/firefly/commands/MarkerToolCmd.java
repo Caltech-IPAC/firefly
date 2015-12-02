@@ -28,6 +28,8 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+
+import edu.caltech.ipac.firefly.commands.JwstFootprintCmd.Mode;
 import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -102,6 +104,7 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
             }
         } else if (name.equals(Name.ALL_FITS_VIEWERS_TEARDOWN)) {
             clearAllViewers();
+            changeMode(Mode.OFF);
         }
     }
 

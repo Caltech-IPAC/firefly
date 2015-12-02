@@ -80,11 +80,10 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     private boolean _doMove = false;
     private final WebPlotView.MouseInfo _mouseInfo =
             new WebPlotView.MouseInfo(new Mouse(), "Create a footprint overlay");
-    private String _onLabel = "Hide @ footprint";
-    private String _offLabel = "Show @ footprint";
+    private String _onLabel = "Hide All @ footprint";
+    private String _offLabel = "Show All @ footprint";
     private String _addLabel = "Add @ footprint";
 
-	public SimpleInputField angle;
 	protected FOOTPRINT mission;
 	private INSTRUMENTS instrument = null;
 	private String name;
@@ -141,6 +140,12 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             }
         } else if (name.equals(Name.ALL_FITS_VIEWERS_TEARDOWN)) {
             clearAllViewers();
+            changeMode(Mode.OFF);
+        } else if(name.equals(Name.SEARCH_RESULT_END)){
+        	disableSelection();
+        	 clearAllViewers();
+        	 changeMode(Mode.OFF);
+        	 
         }
     }
 
@@ -294,7 +299,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                     break;
                 case ROTATE:
                     _activeMarker.setEndPt(plot.getWorldCoords(spt), plot);
-                    handleRotationChanged(((FootprintDs9)_activeMarker).getRotAngle());
+                    
+                    _markerMap.get(_activeMarker).setRotationAngle(((FootprintDs9)_activeMarker).getRotAngle());
                     break;
                 default:
                     WebAssert.argTst(false, "only support for SelectType of ADD_MARKER or MOVE");
@@ -609,13 +615,6 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             }
         }
     }
-
-    private void handleRotationChanged(double rot) {
-        if(angle!=null){
-        	angle.setValue(""+Math.toDegrees(rot));
-        }
-        
-    }
     
     public static int mCnt = 0, ccount = 0;
     
@@ -677,7 +676,12 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             }
         }
 
-        public void setCenter(WorldPt center, WorldPt offCenter) {_creator.setCenter(center, offCenter);}
+        public void setRotationAngle(double d) {
+        	_creator.setRotationAngle(d);
+			
+		}
+
+		public void setCenter(WorldPt center, WorldPt offCenter) {_creator.setCenter(center, offCenter);}
 
 
         public void freeResources() {
@@ -769,6 +773,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     private class FootprintUICreator extends WebLayerItem.UICreator {
         private Label centerOffsetLabel = new Label("");
         private Label centerPosLbl = new Label("");
+        private SimpleInputField angle;
 		private String descProp;
 
         private FootprintUICreator(String name) 
@@ -802,6 +807,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                 String t= marker.getTitle();
                 field.setValue(t);
                 if (!StringUtils.isEmpty(t)) item.setTitle(t);
+                
+                
             }
 
             final SimpleInputField corner= SimpleInputField.createByProp(CommandName+"JWST.corner");
@@ -809,11 +816,14 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             
 //            final SimpleInputField inst = SimpleInputField.createByProp("JwstFootprint.inst");
 //            inst.setInternalCellSpacing(1);
-            angle= SimpleInputField.createByProp(CommandName+"JWST.angle");
+            angle = SimpleInputField.createByProp(CommandName+"JWST.angle");
             angle.setInternalCellSpacing(1);
             final InputField angIf= ((ValidationInputField)angle.getField()).getIF();
             TextBox angTb= ((TextBoxInputField)angIf).getTextBox();
-            
+            if (marker!=null) {
+                double t= ((FootprintDs9)marker).getRotAngle();
+                angle.setValue(Math.toDegrees(t)+"");
+            }
             GwtUtil.setStyle(add, "padding", "5px 0 0 0");
 
             HorizontalPanel xui = new HorizontalPanel();
@@ -921,6 +931,12 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             _markerMap.get(_activeMarker).getDrawMan().redraw();
         } 
         
+        public void setRotationAngle(double rot) {
+            if(angle!=null){
+            	angle.setValue(""+Math.toDegrees(rot));
+            }
+            
+        }
         private void updateRotation(WebLayerItem item, String angleVal, String id){
         	if(StringUtils.isEmpty(angleVal)){
         		return;
