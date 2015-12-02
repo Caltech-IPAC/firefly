@@ -9,6 +9,8 @@ import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import VisMouseCntlr  from '../VisMouseCntlr.js';
+import PlotViewUtil  from '../PlotViewUtil.js';
+import PlotGroup  from '../PlotGroup.js';
 import {makeScreenPt} from '../Point.js';
 
 
@@ -57,6 +59,7 @@ var ImageViewerView= React.createClass(
         if (screenX && screenY) {
             switch (mouseState) {
                 case VisMouseCntlr.MouseState.DOWN :
+                    ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
                     var {scrollX, scrollY}= this.props.plotView;
                     this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
                     //console.log(`begin drag ${screenX},${screenY}`);
@@ -71,6 +74,9 @@ var ImageViewerView= React.createClass(
                     this.plotDrag= null;
                     //console.log(`end drag ${screenX},${screenY}`);
                     break;
+                case VisMouseCntlr.MouseState.CLICK:
+                    ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
+                    break;
             }
         }
     },
@@ -84,11 +90,15 @@ var ImageViewerView= React.createClass(
         var scrollViewHeight= Math.min(viewPortHeight,sh);
         var left= vpX-scrollX;
         var top= vpY-scrollY;
+        var rootStyle= {left, top,
+                        position:'relative',
+                        width:scrollViewWidth,
+                        height:scrollViewHeight
+        };
 
         return (
                 <div className='plot-view-scr-view-window'
-                     style={{left, top, width:scrollViewWidth+'px',height:scrollViewHeight+'px',
-                             position:'relative'}}>
+                     style={rootStyle}>
                     <div className='plot-view-master-panel'
                          style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor:'crosshair'}}>
@@ -118,16 +128,33 @@ var ImageViewerView= React.createClass(
 
 
     render() {
-        var {primaryPlot,viewDim:{width,height}}= this.props.plotView;
+        var {primaryPlot,viewDim:{width,height},plotId}= this.props.plotView;
         //var {width,height}= this.state;
         var insideStuff;
 
         if (width && height && primaryPlot) {
             insideStuff= this.renderInside();
         }
+        //var style= {width:'calc(100% - 4px)',
+        //            height:'calc(100% - 5px)',
+        //            left: 2,
+        //            top: 3,
+        //            position: 'relative',
+        //            overflow:'hidden'};
+        var style= {width:'100%',
+            height:'100%',
+            position: 'relative',
+            overflow:'hidden'};
+
+        //var border= {
+        //    borderStyle: 'ridge',
+        //    borderWidth: '3px 2px 2px 2px',
+        //    borderColor: getBorderColor(plotId)
+        //};
+        //Object.assign(style,border);
 
         return (
-            <div className='web-plot-view-scr' style={{width:'100%',height:'100%', overflow:'hidden'}}>
+            <div className='web-plot-view-scr' style={style}>
                 {insideStuff}
             </div>
         );
@@ -155,6 +182,18 @@ function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
     };
 }
 
+function getBorderColor(plotId) {
+    if (!plotId) return 'rgba(0,0,0,.4)';
+    if (PlotViewUtil.isActivePlotView(plotId)) return 'orange';
+
+    var group= PlotGroup.getPlotGroupById(plotId);
+
+    if (group && group.lockRelated) return '#005da4';
+    else return 'rgba(0,0,0,.4)';
+
+
+
+}
 
 
 

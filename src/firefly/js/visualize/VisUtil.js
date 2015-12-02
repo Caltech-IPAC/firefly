@@ -598,7 +598,7 @@ const makePt= function(type,  x, y) {
 
 
 export default {
-    DtoR,RtoD,computeScreenDistance, computeDistance,
+    DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
     computeSimpleDistance,convert,convertToJ2000,
     computeCentralPointAndRadius, getPositionAngle, getNewPosition,
     getBestTitle, getRotationAngle,

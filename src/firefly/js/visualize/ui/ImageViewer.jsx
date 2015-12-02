@@ -5,7 +5,7 @@
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import PlotViewUtil from '../PlotViewUtil.js';
-import ImageViewerView from './ImageViewerView.jsx';
+import ImageViewerDecorate from './ImageViewerDecorate.jsx';
 import {flux} from '../../Firefly.js';
 
 
@@ -41,18 +41,20 @@ var ImageViewer= React.createClass(
     },
 
     storeUpdate() {
-        var plotView= PlotViewUtil.getPlotViewById(this.props.plotId);
-        if (plotView!==this.state.plotView) {
-            this.setState({plotView});
+        var allPlots= PlotViewUtil.getAllPlots();
+        if (allPlots!==this.state.allPlots) {
+            var plotView= PlotViewUtil.getPlotViewById(this.props.plotId);
+            this.setState({plotView,allPlots:PlotViewUtil.getAllPlots()});
         }
     },
 
 
 
     render() {
-        if (this.state.plotView) {
+        var {plotView,allPlots}= this.state;
+        if (plotView) {
             return (
-                <ImageViewerView plotView={this.state.plotView}/>
+                <ImageViewerDecorate plotView={plotView} allPlots={allPlots}/>
             );
         }
         else {

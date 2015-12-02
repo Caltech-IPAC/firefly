@@ -4,6 +4,7 @@ import PlotImageTask from './PlotImageTask.js';
 import ZoomUtil from './ZoomUtil.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
+import PlotViewUtil from './PlotViewUtil.js';
 
 
 const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -43,6 +44,7 @@ const UPDATE_VIEW_SIZE= 'ImagePlotCntlr/UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr/ProcessScroll';
 
 
+const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr/ChangeActivePlotView';
 
 /**
  * action should contain:
@@ -61,6 +63,7 @@ const initState= function() {
         plottingProgressInfo : [], //todo
         plotHistoryRequest: [], //todo
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
+        activePlotId: null,
 
         expanded: ExpandType.COLLAPSE, //todo
         toolBarIsPopup: true,    //todo
@@ -84,6 +87,7 @@ export default {
     dispatchUpdateViewSize, dispatchProcessScroll,
     dispatchPlotImage, dispatch3ColorPlotImage, dispatchZoom,
     zoomActionCreator, plotImageActionCreator,
+    dispatchChangeActivePlotView,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
@@ -192,6 +196,11 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  */
 function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
 
+function dispatchChangeActivePlotView(plotId) {
+    if (!PlotViewUtil.isActivePlotView(plotId)) {
+        flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });
+    }
+}
 
 
 
@@ -231,6 +240,9 @@ function reducer(state=initState(), action={}) {
         case PROCESS_SCROLL  :
             retState= HandlePlotChange.reducer(state,action);
             break;
+        case CHANGE_ACTIVE_PLOT_VIEW:
+            retState= changeActivePlotView(state,action);
+            break;
         default:
             break;
     }
@@ -241,6 +253,12 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 //============ private functions =================================
+
+function changeActivePlotView(state,action) {
+    if (action.payload.plotId===state.activePlotId) return state;
+
+    return Object.assign({}, state, {activePlotId:action.payload.plotId});
+}
 
 
 //todo
