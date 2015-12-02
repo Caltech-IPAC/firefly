@@ -129,6 +129,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     private boolean      _boxSelection    = false; // type of highlighting used when user selects this widget
     private boolean      _showAd          = false; // show home add
     private boolean      _catalogButton   = false; // show the catalog select button
+    private boolean      _maskButton      = false; // show the catalog select button
     private boolean      _hideTitleDetail = false; // hide the zoom level and rotation shown in the title
     private boolean      _useInlineToolbar= true; // show the Tool bar inline instead of on the title bar
     private boolean      _showUnexpandedHighlight= true; // show the selected image highlight when not expanded
@@ -388,11 +389,13 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
     public void setSaveImageCornersAfterPlot(boolean save) {_saveCorners= save;}
     public void setImageSelection(boolean sel) { _allowImageSelect= sel; }
     public void setCatalogButtonEnable(boolean catalogButtonEnable) { _catalogButton= catalogButtonEnable; }
+    public void setMaskButtonEnable(boolean maskButtonEnable) { _maskButton= maskButtonEnable; }
 
     public boolean isImageSelection() { return _allowImageSelect; }
     public boolean hasNewPlotContainer() { return _hasNewPlotContainer; }
     public boolean isLockImage() { return _allowImageSelect && _allowImageLock; }
     public boolean isCatalogButtonEnabled() { return _catalogButton; }
+    public boolean isMaskButtonEnabled() { return _maskButton; }
 
     public void setLockImage(boolean lock) { _allowImageLock= lock; }
 
