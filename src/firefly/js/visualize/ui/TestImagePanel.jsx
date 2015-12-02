@@ -17,7 +17,7 @@ import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
 import ZoomUtil from '../ZoomUtil.js';
-
+import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 
 
 
@@ -71,6 +71,8 @@ function resultsSuccess(request) {
     showResults(true,request);
 }
 
+
+
 function zoom(zType) {
     console.log(zType);
     switch (zType) {
@@ -100,6 +102,11 @@ function showExDialog() {
 }
 
 
+function showFitsDialog() {
+     console.log('showing Fits Download  dialog');
+     showFitsDownloadDialog();
+ }
+
 function TestImagePanel() {
     return (
         <div>
@@ -121,6 +128,8 @@ function TestImagePanel() {
                     <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
                     <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
+                    <br/>
+                    <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
