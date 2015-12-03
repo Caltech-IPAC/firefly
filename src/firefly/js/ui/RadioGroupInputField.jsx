@@ -42,7 +42,7 @@ var RadioGroupInputField= React.createClass(
                         labelWidth={this.props.labelWidth}
                     />
                     {this.props.options.map((option) => {
-                        var alignment = typeof option.align=='undefined'? 'horizontal':option.align;//this is added by LZ
+                        var alignment = typeof option.align=='undefined'? 'top':option.align;//this is added by LZ
                         return (
 
                         <div key={option.value} style={{display:'inline-block'}}>

@@ -5,12 +5,7 @@ import React from 'react/addons';
 
 import TargetPanel from './TargetPanel.jsx';
 import InputGroup from './InputGroup.jsx';
-import Validate from '../util/Validate.js';
-import ValidationField from './ValidationField.jsx';
-import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
-import ListBoxInputField from './ListBoxInputField.jsx';
-import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -18,7 +13,7 @@ import PopupPanel from './PopupPanel.jsx';
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab} from './panel/TabPanel.jsx';
 import AppDataCntlr from '../core/AppDataCntlr.js';
-
+import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 
 
 
@@ -28,7 +23,7 @@ function getDialogBuilder() {
         if (!popup) {
             const popup= (
                 <PopupPanel title={'Fits Download Dialog'} >
-                    <AllTest  groupKey={'FITS_DOWNLOAD_FORM'} />
+                    <FitsDialogTest  groupKey={'FITS_DOWNLOAD_FORM'} />
                 </PopupPanel>
             );
             DialogRootContainer.defineDialog('fitsDownloadDialog', popup);
@@ -45,9 +40,9 @@ export function showFitsDownloadDialog() {
 }
 
 
-/// test
+/// Fits dialog test
 
-var AllTest = React.createClass({
+var FitsDialogTest= React.createClass({
 
     componentWillUnmount() {
         if (this.unbinder) this.unbinder();
@@ -55,8 +50,9 @@ var AllTest = React.createClass({
 
 
     componentDidMount() {
-        this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => this.setState({fields}));
+        this.unbinder= FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => this.setState({fields}));
     },
+
     showResults(success, request) {
         var statStr= `validate state: ${success}`;
         //var request= FieldGroupUtils.getResults(this.props.groupKey);
