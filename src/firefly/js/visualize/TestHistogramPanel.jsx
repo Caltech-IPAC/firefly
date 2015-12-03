@@ -13,8 +13,6 @@ import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 
 
-import {ColValuesStatistics} from './ColValuesStatistics.js';
-
 
 var TestHistogramPanel = React.createClass({
 
@@ -40,7 +38,7 @@ var TestHistogramPanel = React.createClass({
 
 
         componentDidMount() {
-            this.storeListenerRemove= flux.addListener(this.storeUpdate.bind(this));
+            this.storeListenerRemove= flux.addListener(this.storeUpdate);
         },
 
         storeUpdate() {

@@ -202,7 +202,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     // histogarm parameters
     req.setParam({name : 'columnExpression', value : histogramParams.columnOrExpr});
     if (histogramParams.numBins) { // fixed size bins
-        req.setParam({name: 'numBins', value: histogramParams.numbins});
+        req.setParam({name: 'numBins', value: histogramParams.numBins});
     }
     if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
         req.setParam({name: 'falsePositiveRate', value: histogramParams.falsePositiveRate});
@@ -240,6 +240,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
             console.error(`Failed to fetch histogram data: ${reason}`);
         }
     );
+
 }
 
 
