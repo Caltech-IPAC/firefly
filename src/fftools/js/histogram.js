@@ -5,6 +5,7 @@
 import get from 'lodash/object/get';
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {flux, firefly} from 'firefly/Firefly.js';
 import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
@@ -27,7 +28,6 @@ const App = React.createClass({
 
     render() {
 
-        const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!this.props.appData.isReady) {
             return (
                 <div>
@@ -60,6 +60,6 @@ function connector(state) {
 }
 const container = flux.createSmartComponent(connector, App);
 
-React.render(container,
+ReactDOM.render(container,
     document.getElementById('app')
 );

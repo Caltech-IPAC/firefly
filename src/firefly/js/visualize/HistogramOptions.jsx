@@ -1,4 +1,6 @@
-import React from 'react/addons';
+import React from 'react';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
+import ReactDOM from 'react-dom';
 
 import {ColValuesStatistics} from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';

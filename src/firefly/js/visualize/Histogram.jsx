@@ -296,7 +296,8 @@ var Histogram = React.createClass(
                 },
                 plotOptions: {
                     series: {
-                        threshold: 0
+                        threshold: 0,
+                        animation: false
                     },
                     area: {
                         marker: {
