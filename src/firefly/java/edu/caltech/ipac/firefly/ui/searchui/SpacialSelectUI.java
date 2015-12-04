@@ -126,7 +126,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private TabPane.Tab<Widget> ibeMultiTab= null;
     private TabPane.Tab<Widget> allSkyTab= null;
 
-    private int searchMaxArcSec= 10;
+    private int searchMaxArcSec= 1000;
     private boolean tabUpdateOn= true;
     private TabChange tabChangeListener;
     private TabMode selectedMode= TabMode.SINGLE;
@@ -134,6 +134,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     private SimplePanel targetPanelIbeWrapper = new SimplePanel();
     private SimplePanel targetPanelWrapper = new SimplePanel();
     private CheckBox oneToOneCB= GwtUtil.makeCheckBox("Use 1-to-1 Matching","Use 1-to-1 Matching", false);
+    private boolean visible= true;
 
 
     SpacialSelectUI(TabChange tabChangeListener) {
@@ -148,6 +149,16 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
         if (this.stGroup==null || this.stGroup!=stGroup || currDataType!=dataType) {
             currDataType= dataType;
             this.stGroup= stGroup;
+            if (this.stGroup.size()==0) {
+                visible= false;
+                mainPanel.setVisible(false);
+                if (tabChangeListener!=null) tabChangeListener.onTabChange();
+                return;
+            }
+            else {
+                visible= true;
+                mainPanel.setVisible(false);
+            }
             boolean singleOp= stGroup.contains(Cone) || stGroup.contains(Box) || stGroup.contains(Elliptical);
             boolean ibeSingleOp= stGroup.contains(IbeSingleImage);
             boolean multiOp= stGroup.contains(MultiPoints) ||
@@ -205,6 +216,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
 
     private int getTabPaneSize() {
         int height;
+        if (!visible) return 10;
         switch (selectedMode) {
             case POLYGON:
                 height= POLYGON_HEIGHT_REQUIRED;
@@ -705,6 +717,7 @@ public class SpacialSelectUI extends Composite implements AsyncInputFieldGroup {
     }
 
     public boolean validate() {
+        if (!visible) return true;
         try {
             boolean tValid= true;
             if (selectedMode==TabMode.SINGLE || selectedMode==TabMode.IBE_SINGLE) {

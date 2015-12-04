@@ -43,6 +43,7 @@ public class ConverterStore {
             put("DYNAMIC", new DynamicOnlyDataSetInfoConverter());
             put("FINDER_CHART", new FinderChartDataSetInfoConverter());
             put("2MASS",   new TwoMassSIADataSetInfoConverter()); // for old SIA search processor
+            put("SIMPLE",  new SimpleDataSetInfoConverter()); // for old SIA search processor
             init= true;
         }
     }

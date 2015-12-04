@@ -28,7 +28,7 @@ var makeValidationPromise= function(fields,fieldKey) {
 var validateSingle= function(groupKey, doneCallback) {
     var fields= getGroupFields(groupKey);
     if (!fields) return Promise.resolve(true);
-    return Promise.all( Object.keys(fields).map( (fieldKey => makeValidationPromise(fields,fieldKey)),this ) )
+    return Promise.all( Object.keys(fields).map( (fieldKey) => makeValidationPromise(fields,fieldKey),this ) )
         .then( (allResults) =>
         {
             var valid = allResults.every(
@@ -75,11 +75,12 @@ var validate= function(groupKey, doneCallback) {
  */
 var getResults= function(groupKey) {
     var fields= getGroupFields(groupKey);
-    var request= {};
-    Object.keys(fields).forEach(function(fieldKey) {
-        request[fieldKey] = fields[fieldKey].value;
-    },this);
-    return request;
+    return Object.keys(fields).
+        filter((fieldKey) => fields[fieldKey].mounted).
+        reduce((request, key) => {
+            request[key] = fields[key].value;
+            return request;
+        }, {});
 };
 
 
