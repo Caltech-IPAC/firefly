@@ -198,6 +198,15 @@ class StandaloneUI {
         return retval;
     }
 
+    public boolean hasImageMultiViewerResults() {
+        boolean retval= false;
+        if (activeTable!=null && activeTable.getDataset()!=null) {
+            TableMeta meta= activeTable.getDataset().getMeta();
+            retval= meta.contains(MetaConst.DATASET_CONVERTER);
+        }
+        return retval;
+    }
+
 
 
 
@@ -316,6 +325,10 @@ class StandaloneUI {
         else if (!hasPlotResults() && dynMultiViewerTab !=null) {
             imageTabPane.removeTab(dynMultiViewerTab);
             dynMultiViewerTab = null;
+        }
+
+        if (hasImageMultiViewerResults()) {
+            hasImage = true;
         }
 
         if (coverageTab!=null || hasPlotResults()) {
