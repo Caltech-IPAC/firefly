@@ -4,6 +4,9 @@
 package edu.caltech.ipac.util.dd;
 
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.HandSerialize;
 import edu.caltech.ipac.util.RegionFactory;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -15,6 +18,8 @@ import java.util.List;
  * This class contains the specifications of the DS9 region
  * @author Booth Hartley
  */
+@JsExport
+@JsType
 public abstract class Region implements Serializable, HandSerialize, RegionFileElement, ContainsOptions {
 
 
@@ -32,6 +37,7 @@ public abstract class Region implements Serializable, HandSerialize, RegionFileE
 
 
 
+    @JsNoExport
     private Region() { this(null); }
 
     public Region(WorldPt pt) { this.pt= pt; }

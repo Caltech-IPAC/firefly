@@ -15,7 +15,7 @@
 
 //import ImagePlotCntlr from './ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
-import WebPlot from './../WebPlot.js';
+import WebPlot, {PlotAttribute} from './../WebPlot.js';
 import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
@@ -143,7 +143,7 @@ function replacePlots(pv, plotAry) {
     pv.plots= plotAry;
 
     pv.plots.forEach( (plot) => {
-        Object.assign(plot.attributes, getNewAttributes(plot));
+        plot.attributes= Object.assign({},plot.attributes, getNewAttributes(plot));
         plot.plotImageId= `${pv.plotId}--${pv.plotCounter}`;
         pv.plotCounter++;
     });
@@ -353,10 +353,10 @@ function getNewAttributes(plot) {
         worldPt= VisUtil.getCenterPtOfPlot(plot);
     }
 
-    if (worldPt) attributes[WPConst.FIXED_TARGET]= worldPt;
-    if (circle) attributes[WPConst.REQUESTED_SIZE]= circle.radius;  // says radius but really size
-    if (req.getUniqueKey())     attributes[WPConst.UNIQUE_KEY]= req.getUniqueKey();
-    if (req.isMinimalReadout()) attributes[WPConst.MINIMAL_READOUT]=true;
+    if (worldPt) attributes[PlotAttribute.FIXED_TARGET]= worldPt;
+    if (circle) attributes[PlotAttribute.REQUESTED_SIZE]= circle.radius;  // says radius but really size
+    if (req.getUniqueKey())     attributes[PlotAttribute.UNIQUE_KEY]= req.getUniqueKey();
+    if (req.isMinimalReadout()) attributes[PlotAttribute.MINIMAL_READOUT]=true;
 
     return attributes;
 }

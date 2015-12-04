@@ -9,6 +9,8 @@ package edu.caltech.ipac.util.dd;
  */
 
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 import edu.caltech.ipac.util.HandSerialize;
 
 import java.io.Serializable;
@@ -16,6 +18,8 @@ import java.io.Serializable;
 /**
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class RegionOptions implements Serializable, HandSerialize {
 
     private String color= "green";

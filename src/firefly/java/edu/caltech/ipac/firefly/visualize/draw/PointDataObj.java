@@ -14,7 +14,6 @@ import edu.caltech.ipac.util.dd.RegionPoint;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -256,13 +255,13 @@ public class PointDataObj extends DrawObj {
 
     public void drawEmpCross(Graphics jg, int x, int y, String color1, String color2) {
 
-        List<Graphics.PathType> ptList= new ArrayList<Graphics.PathType>(4);
-
-
-
-        jg.drawPath(color1,1,ptList);
-
-        ptList.clear();
+//        List<Graphics.PathType> ptList= new ArrayList<Graphics.PathType>(4);
+//
+//
+//
+//        jg.drawPath(color1,1,ptList);
+//
+//        ptList.clear();
 
 
         jg.drawLine( color1, 1, x-size,y, x+size, y);

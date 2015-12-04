@@ -106,8 +106,8 @@ function makeZoomAction(rawAction) {
 
 
 function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,useDelay) {
-    var selectedPlot= sourcePv.primaryPlot;
-    var targetArcSecPix= getArcSecPerPix(selectedPlot, level);
+    const selectedPlot= sourcePv.primaryPlot;
+    const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
 
     return (pv) => {
         var  plot= pv.primaryPlot;
@@ -198,6 +198,7 @@ function processZoomSuccess(dispatcher, plotId, zoomLevel, result) {
                     primaryTiles : resultAry[0].data[WebPlotResult.PLOT_IMAGES],
                     overlayStateJsonAry, overlayTilesAry
                 }});
+            dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
             successSent= true;
         }
     }

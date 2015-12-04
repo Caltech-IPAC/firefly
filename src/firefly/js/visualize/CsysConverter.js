@@ -6,7 +6,7 @@ import VisUtil from './VisUtil.js';
 import SimpleMemCache from '../util/SimpleMemCache.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
-               makeScreenPt, isValidPoint} from './Point.js';
+               makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 
 
 function convertToCorrect(wp) {
@@ -226,6 +226,7 @@ export class CysConverter {
      * @param {number} [altZoomLevel]
      */
     makeIWPtFromSPt(screenPt, altZoomLevel) {
+        if (!screenPt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
         return makeImageWorkSpacePt(screenPt.x / zoom, this.dataHeight-screenPt.y/zoom);
     }
@@ -271,6 +272,7 @@ export class CysConverter {
      * @param iwPt
      */
     static makeIPtFromIWPt(iwPt) {
+        if (!iwPt) return null;
         return makeImagePt(iwPt.x, iwPt.y);
     }
 
@@ -281,7 +283,7 @@ export class CysConverter {
      * @return ImagePt the translated coordinates
      */
     getImageCoordsFromWorldPt(wpt) {
-        if (wpt==null) return null;
+        if (!wpt) return null;
 
         var retval;
         var checkedPt= convertToCorrect(wpt);
@@ -346,6 +348,7 @@ export class CysConverter {
      * @param pt
      */
     makeVPtFromSPt(pt) {
+        if (!pt) return null;
         var {x:vpX,y:vpY}= this.viewPort;
         return makeViewPortPt( pt.x-vpX, pt.y-vpY);
     }
@@ -403,6 +406,7 @@ export class CysConverter {
     }
 
     makeVPtFromImPtOptimized(imagePt,retPt) {
+        if (!imagePt) return null;
         // convert image to image workspace
         var imageWorkspaceX= imagePt.x;
         var imageWorkspaceY= imagePt.y;
@@ -469,6 +473,7 @@ export class CysConverter {
      * @param {number} [altZoomLevel]
      */
     makeSPtFromIWPt(iwpt, altZoomLevel) {
+        if (!iwpt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
         return makeScreenPt(Math.floor(iwpt.x*zoom),
                             Math.floor((this.dataHeight - iwpt.y) *zoom) );
@@ -566,12 +571,25 @@ export class CysConverter {
     }
 }
 
+function getWorldPtRepresentation(pt) {
+    if (!isValidPoint(pt)) return null;
+
+    if (pt.type===Point.W_PT)           return pt;
+    else if (pt.type=== Point.IM_WS_PT) return makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
+    else if (pt.type=== Point.IM_PT)    return makeWorldPt(pt.x,pt.y, CoordinateSys.PIXEL);
+    else if (pt.type=== Point.SPT)      return makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
+    else if (pt.type=== Point.VP_PT)    return makeWorldPt(pt.x,pt.y, CoordinateSys.SCREEN_PIXEL);
+}
+
+
+
 export const CCUtil = {
     getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
     getImageCoords: (plot,pt) => CysConverter.make(plot).getImageCoords(pt),
     getViewPortCoords: (plot,pt) => CysConverter.make(plot).getViewPortCoords(pt),
     getScreenCoords: (plot,pt) => CysConverter.make(plot).getScreenCoords(pt),
-    getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt)
+    getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt),
+    getWorldPtRepresentation
 };
 
 

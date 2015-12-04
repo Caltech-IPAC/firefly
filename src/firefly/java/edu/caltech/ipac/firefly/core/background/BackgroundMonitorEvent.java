@@ -4,8 +4,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import com.google.gwt.storage.client.StorageEvent;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import edu.caltech.ipac.firefly.rpc.SearchServices;
 import edu.caltech.ipac.firefly.rpc.SearchServicesAsync;
@@ -54,18 +52,6 @@ public class BackgroundMonitorEvent implements BackgroundMonitor {
                 else GwtUtil.getClientLogger().log(Level.INFO, "failed to parse BackgroundStatus:" + ev.getData());
             }
         });
-        DeferredCommand.addCommand(new Command() {
-            public void execute() {
-                if (BrowserCache.isPerm()) {
-                    BrowserCache.addHandlerForKey(STATE_KEY, new StorageEvent.Handler() {
-                        public void onStorageChange(StorageEvent ev) {
-//                            syncWithCache(ev);
-                        }
-                    });
-                }
-            }
-        });
-
     }
 
     public void addItem(MonitorItem item) {

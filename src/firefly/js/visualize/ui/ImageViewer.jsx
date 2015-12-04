@@ -23,7 +23,7 @@ var ImageViewer= React.createClass(
 
 
     propTypes: {
-        plotId : React.PropTypes.string.isRequired
+        plotId : React.PropTypes.string.isRequired,
     },
 
     getInitialState() {
@@ -42,19 +42,31 @@ var ImageViewer= React.createClass(
 
     storeUpdate() {
         var allPlots= PlotViewUtil.getAllPlots();
-        if (allPlots!==this.state.allPlots) {
+        var allDraw= PlotViewUtil.getAllDrawingLayersStore();
+        var drawLayersAry= PlotViewUtil.getAllDrawingLayers(this.props.plotId);
+        if (allPlots!==this.state.allPlots  ||
+            (allDraw!==this.state.allDraw &&
+            drawLayersDiffer(drawLayersAry,this.state.drawLayersAry))) {
             var plotView= PlotViewUtil.getPlotViewById(this.props.plotId);
-            this.setState({plotView,allPlots:PlotViewUtil.getAllPlots()});
+            this.setState({plotView,
+                           allDraw,
+                           drawLayersAry,
+                           allPlots:PlotViewUtil.getAllPlots()});
         }
     },
 
 
 
     render() {
-        var {plotView,allPlots}= this.state;
+
+
+
+        var {plotView,allPlots,drawLayersAry}= this.state;
         if (plotView) {
             return (
-                <ImageViewerDecorate plotView={plotView} allPlots={allPlots}/>
+                <ImageViewerDecorate plotView={plotView}
+                                     drawLayersAry={drawLayersAry}
+                                     allPlots={allPlots}/>
             );
         }
         else {
@@ -65,5 +77,11 @@ var ImageViewer= React.createClass(
 
 
 });
+
+function drawLayersDiffer(dlAry1, dlAry2) {
+    return true;
+}
+
+
 
 export default ImageViewer;

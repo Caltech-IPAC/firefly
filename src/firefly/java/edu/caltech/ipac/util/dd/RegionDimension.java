@@ -9,9 +9,14 @@ package edu.caltech.ipac.util.dd;
  */
 
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
+
 /**
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class RegionDimension {
 
 
@@ -25,5 +30,9 @@ public class RegionDimension {
 
     public RegionValue getWidth() { return width; }
     public RegionValue getHeight() { return height; }
+
+    public static RegionDimension makeRegionDimention(RegionValue width, RegionValue height) {
+        return new RegionDimension(width,height);
+    }
 }
 

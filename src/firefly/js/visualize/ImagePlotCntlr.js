@@ -1,3 +1,7 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
@@ -25,6 +29,7 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
 const PLOT_IMAGE_START= 'ImagePlotCntlr/PlotImageStart';
 const PLOT_IMAGE_FAIL= 'ImagePlotCntlr/PlotImageFail';
 const PLOT_IMAGE= 'ImagePlotCntlr/PlotImage';
+const ANY_REPLOT= 'ImagePlotCntlr/Replot';
 
 const ZOOM_IMAGE_START= 'ImagePlotCntlr/ZoomImageStart';
 const ZOOM_IMAGE= 'ImagePlotCntlr/ZoomImage';
@@ -91,7 +96,8 @@ export default {
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
-    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL
+    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
+    ANY_REPLOT
 };
 
 

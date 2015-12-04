@@ -20,6 +20,8 @@ import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import PlotViewUtil from './PlotViewUtil.js';
 import Band from './Band.js';
 import PlotPref from './PlotPref.js';
+import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
+import DrawingLayerCntlr from './DrawingLayerCntlr.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -44,6 +46,7 @@ function dispatchUpdateStatus() {
 }
 
 
+var firstTime= true;
 
 
 /**
@@ -53,6 +56,12 @@ function dispatchUpdateStatus() {
  */
 function makePlotImageAction(rawAction) {
     return (dispatcher) => {
+
+        if (firstTime) {
+            initBuildInDrawingLayers();
+            firstTime= false;
+        }
+
         var {plotId,wpRequest}= rawAction.payload;
 
         if (!plotId) {
@@ -169,6 +178,12 @@ const processSuccessResponse= function(dispatcher, payload, result) {
     if (result.success) {
         resultPayload= handleSuccess(result,payload);
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE, payload:resultPayload} );
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[resultPayload.plotId]}} );
+        resultPayload.plotAry
+            .map( (p) => ({r:p.plotState.getWebPlotRequest(),plotId:p.plotId}))
+            .forEach( (obj) => obj.r.getOverlayIds()
+                .forEach( (drawLayerId)=>  DrawingLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
+
     }
     else {
         var req= getRequest(payload);
@@ -189,7 +204,7 @@ function getRequest(payload) {
 
 
 const handleSuccess= function(result, payload) {
-    console.log(`result from plot call:`, result);
+    //console.log(`result from plot call:`, result);
     var crAry= result[WebPlotResult.PLOT_CREATE];
 
     var plotAry= crAry.map( (wpInit) => WebPlot.makeWebPlotData(payload.plotId, wpInit));
@@ -250,5 +265,9 @@ function updateActiveTarget(req,plot) {
     if (activeTarget || corners) AppDataCntlr.setActiveTarget(activeTarget,corners);
 }
 
+function initBuildInDrawingLayers() {
+    var layer= ActiveTarget.makeLayer();
+    DrawingLayerCntlr.dispatchCreateDrawLayer('ACTIVE_TARGET',layer);
+}
 
 

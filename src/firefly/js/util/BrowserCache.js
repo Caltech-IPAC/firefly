@@ -15,8 +15,6 @@ const  NO_EXPIRATION= 0;
 /**
  * @author Trey Roby
  */
-
-
 class BrowserCache {
     static isCached(key) { return BrowserCache.get(key) ? true : false; }
 
