@@ -3,7 +3,7 @@
  */
 
 import 'babel/polyfill';
-import 'whatwg-fetch/fetch.js';
+import 'isomorphic-fetch';
 import React from 'react';
 
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';

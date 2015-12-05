@@ -182,26 +182,22 @@ const hideAllDialogs= function() {
  */
 function loadProperties() {
 
-    const task = (resolve, reject) => {
-        fetchUrl('servlet/FireFly_PropertyDownload').then( (response) => {
-            response.text().then( (text) => {
-                const lines = text.split( '\n' ).filter( (val) => !val.trim().startsWith('#') );
-                const props = {};
-                lines.forEach( (line) => {
-                    if (line.indexOf('=')) {
-                        props[strLeft(line, '=').trim()] = strRight(line, '=').trim().replace(/\\(?=[\=!:#])/g, '');
-                    }
-                } );
-                resolve(props);
-            });
-        }).catch(function(err) {
-            reject(new Error(`Unable to load properties: ${err}`));
+    return fetchUrl('servlet/FireFly_PropertyDownload').then( (response) => {
+        return response.text().then( (text) => {
+            const lines = text.split( '\n' ).filter( (val) => !val.trim().startsWith('#') );
+            const props = {};
+            lines.forEach( (line) => {
+                if (line.indexOf('=')) {
+                    props[strLeft(line, '=').trim()] = strRight(line, '=').trim().replace(/\\(?=[\=!:#])/g, '');
+                }
+            } );
+            return props;
         });
-    };
-
-    return new Promise(task);
-
+    }).catch(function(err) {
+        return new Error(`Unable to load properties: ${err}`);
+    });
 }
+
 const getActiveTarget= function() {
     return flux.getState()[APP_DATA_PATH].activeTarget;
 };
@@ -224,7 +220,7 @@ const setActiveTarget= function(wp,corners) {
 };
 
 
-var AppDataCntlr= {
+export default {
     APP_LOAD,
     APP_UPDATE,
     SHOW_DIALOG,
@@ -240,7 +236,5 @@ var AppDataCntlr= {
     getActiveTarget,
     setActiveTarget
 };
-
-export default AppDataCntlr;
 
 

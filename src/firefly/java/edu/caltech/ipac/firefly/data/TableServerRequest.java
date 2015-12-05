@@ -15,6 +15,7 @@ import java.util.Map;
 public class TableServerRequest extends ServerRequest implements Serializable, DataEntry, Cloneable {
 
     public static final String DECIMATE_INFO = "decimate";
+    public static final String TBL_ID = "tbl_id";
     public static final String FILTERS = "filters";
     public static final String SORT_INFO = "sortInfo";
     public static final String PAGE_SIZE = "pageSize";
@@ -87,6 +88,17 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
         } else {
             setParam(SORT_INFO, sortInfo.toString());
         }
+    }
+
+    /**
+     * This populate the predefined fields as well as the parameter map.
+     * @param name
+     * @param val
+     */
+    public void setTrueParam(String name, String val) {
+        Param p = new Param(name, val);
+        boolean wasSet= addPredefinedAttrib(p);
+        if (!wasSet) setParam(p);
     }
 
     public DecimateInfo getDecimateInfo() {

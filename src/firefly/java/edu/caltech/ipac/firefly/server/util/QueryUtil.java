@@ -16,11 +16,7 @@ import edu.caltech.ipac.astro.target.Target;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.astro.target.TargetList;
 import edu.caltech.ipac.firefly.core.EndUserException;
-import edu.caltech.ipac.firefly.data.CatalogRequest;
-import edu.caltech.ipac.firefly.data.DecimateInfo;
-import edu.caltech.ipac.firefly.data.Param;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.BaseTableColumn;
 import edu.caltech.ipac.firefly.data.table.BaseTableData;
 import edu.caltech.ipac.firefly.data.table.DataSet;
@@ -38,17 +34,14 @@ import edu.caltech.ipac.util.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Date: Jul 14, 2008
@@ -78,6 +71,17 @@ public class QueryUtil {
         else {
             return "http://" + url.trim();
         }
+    }
+
+    public static TableServerRequest convertToServerRequest(HttpServletRequest req) {
+        TableServerRequest retval = new TableServerRequest();
+        for (Enumeration<String> names = req.getParameterNames(); names.hasMoreElements(); ) {
+            String key = names.nextElement();
+            if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
+                retval.setTrueParam(key, StringUtils.toString(req.getParameterValues(key), ","));
+            }
+        }
+        return retval;
     }
 
     public static String encodeUrl(ServerRequest req) {

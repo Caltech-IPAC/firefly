@@ -3,6 +3,7 @@
  */
 
 import Enum from 'enum';
+import isBlank from 'underscore.string/isBlank';
 import { getRootURL } from './BrowserUtil.js';
 
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
@@ -109,14 +110,9 @@ export const getTableSourceUrl= function(request) {
 export function fetchUrl(url, options) {
 
     if (!url) return;
-    url = url.trim();
-    options = options || {};
-
-    if ( !(url.startsWith('http') || url.startsWith('/')) ) {
-        url = getRootURL() + url;
-    }
 
     // define defaults request options
+    options = options || {};
     const req = { method: 'GET',
             mode: 'cors',
             credentials: 'include',
@@ -133,14 +129,17 @@ export function fetchUrl(url, options) {
 
     if (options.params) {
         if (options.method.toUpperCase() === 'GET') {
-            url = encodeUrl(url, ParamType.QUESTION_MARK, [options.params]);
+            url = makeUrl(url, options.params);
         } else {
+            url = makeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
-                options.body = new FormData();
+                var data = new FormData();
                 Object.keys(options.params).forEach( (key) => {
-                    options.body.append(key, options.params[key]);
+                    data.append(key, options.params[key]);
                 });
+                options.body = data;
+                Reflect.deleteProperty(options, 'params');
             }
         }
     }
@@ -149,13 +148,36 @@ export function fetchUrl(url, options) {
     return fetch(url, options)
         .then( (response) => {
             if (response.ok) {
-                return Promise.resolve(response);
+                return response;
             } else {
-                return Promise.reject(new Error(response.statusText));
+                return new Error(`${url} failed with status: ${response}.statusText`);
             }
         }).catch( (error) => {
-            return Promise.reject(new Error(`Request failed: ${url}`, error));
+            return new Error(`Request failed: ${url}`, error);
         });
+}
+
+function makeUrl(url, params) {
+    var rval = url.trim();
+    if ( !(rval.toLowerCase().startsWith('http') || rval.startsWith('/')) ) {
+        rval = getRootURL() + rval;
+    }
+    if (!params) return rval;
+
+    if (rval.indexOf('?') < 0) {
+        rval += '?';
+    }
+    for(var key in params) {
+        if(!rval.match('[?&]$')) {
+            rval += '&';
+        }
+        rval += encodeURI(key);
+        let val = params[key];
+        if (!isBlank(val)) {
+            rval += '=' + encodeURIComponent(val.toString().trim());
+        }
+    }
+    return rval;
 }
 
 

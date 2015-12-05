@@ -14,17 +14,16 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
 import edu.caltech.ipac.firefly.server.packagedata.PackageMaster;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
-import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
-import edu.caltech.ipac.firefly.server.util.ipactable.IpacTableParser;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.firefly.server.util.ipactable.*;
 import edu.caltech.ipac.util.Assert;
+import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -34,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
-import java.util.IllegalFormatConversionException;
 import java.util.List;
 
 
@@ -62,6 +60,34 @@ public class SearchManager {
                         req);
 
                 return ds;
+            } catch (Exception ex) {
+                String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
+                String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source ;
+                LOGGER.error(ex, errMsg);
+                throw new DataAccessException(errMsg, ex);
+            }
+        } else {
+            throw new DataAccessException("Request fail inspection.  Operation aborted.");
+        }
+    }
+
+    public String getJsonString(TableServerRequest request) throws DataAccessException {
+        SearchProcessor processor = getProcessor(request.getRequestId());
+        ServerRequest req = processor.inspectRequest(request);
+        if (req != null) {
+            DataGroupPart dgp = null;
+            try {
+                dgp = (DataGroupPart) processor.getData(req);
+                TableMeta meta = new TableMeta();
+                DataGroupPart.State status = dgp.getTableDef().getStatus();
+                meta.setIsLoaded(!status.equals(DataGroupPart.State.INPROGRESS));
+
+                processor.prepareTableMeta(meta,
+                        Collections.unmodifiableList(dgp.getTableDef().getCols()),
+                        req);
+                JSONObject json = JsonTableUtil.toJsonTableModel(dgp, meta, request);
+                return json.toJSONString();
+
             } catch (Exception ex) {
                 String source = dgp != null && dgp.getTableDef() != null ? dgp.getTableDef().getSource() : "unknown";
                 String errMsg = ex.getClass().getSimpleName() + ":" + ex.getMessage() + " from:" + source ;

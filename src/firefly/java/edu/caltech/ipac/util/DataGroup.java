@@ -458,6 +458,10 @@ public class DataGroup implements Serializable,
             }
         }
 
+        public boolean isComment() {
+            return _key != null && _key.startsWith(" ");
+        }
+
         @Override
         public String toString() {
             if (StringUtils.isEmpty(_key)) {

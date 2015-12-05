@@ -10,13 +10,17 @@
   "dependencies": {
     "babel"     : "^5.8.23",
     "enum"      : "^2.2.0",
+    "fixed-data-table" : "^0.6.0",
     "history"   : "^1.9.0",
     "icepick"   : "^0.2.0",
+    "isomorphic-fetch": "^2.2.0",
+    "local-storage" : "^1.4.2",
     "lodash"    : "^3.10.1",
     "numeral"   : "^1.5.3",
     "react"     : "^0.14.3",
     "react-dom" : "^0.14.3",
     "react-addons-pure-render-mixin" : "^0.14.3",
+    "react-component-resizable": "0.3.0",
     "react-grid-layout": "^0.8.0",
     "react-highcharts": "^0.0.4",
     "react-redux": "^3.0.0-alpha",
@@ -26,8 +30,7 @@
     "underscore.string": "^3.2.2",
     "uniq"      : "^1.0.1",
     "validator" : "^4.0.6",
-    "whatwg-fetch": "^0.10.1",
-    "local-storage" : "^1.4.2"
+    "whatwg-fetch": "^0.10.1"
   },
   "devDependencies": {
     "chai": "^2.2.0",
@@ -65,9 +68,6 @@
     "less-loader": "^2.2.0",
     "mocha": "^2.2.4",
     "publish-release": "^1.1.0",
-    "react" : "^0.14.3",
-    "react-dom" : "^0.14.3",
-    "react-addons-pure-render-mixin" : "^0.14.3",
     "react-tools": "^0.13.1",
     "request": "^2.65.0",
     "redux-devtools"    : "^2.1.2",

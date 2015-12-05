@@ -35,6 +35,7 @@ public class DataSetParser {
     public static final String SORTABLE_TAG = "col.@.Sortable";
     public static final String ITEMS_TAG = "col.@.Items";
     public static final String SORT_BY_TAG = "col.@.SortByCols";
+    public static final String ENUM_VALS_TAG = "col.@.EnumVals";
 
     public static final String RELATED_COLS_TAG = "col.related";
     public static final String GROUPBY_COLS_TAG = "col.groupby";

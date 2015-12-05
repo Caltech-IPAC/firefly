@@ -15,6 +15,8 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import HistogramCntlr from '../visualize/HistogramCntlr.js';
+import TablesCntlr from '../tables/TablesCntlr';
+
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -32,7 +34,8 @@ const reducers = {
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
-    [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer
+    [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
+    [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer
 };
 
 let redux = null;
@@ -44,6 +47,9 @@ actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActi
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
+actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
+
 
 actionCreators.set(HistogramCntlr.LOAD_TBL_STATS, HistogramCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);

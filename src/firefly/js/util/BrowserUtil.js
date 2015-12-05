@@ -8,7 +8,8 @@
 
 /*global __SCRIPT_NAME__*/
 
-const SCRIPT_NAME = __SCRIPT_NAME__;
+
+const SCRIPT_NAME = (typeof __SCRIPT_NAME__ === 'undefined') ? undefined : __SCRIPT_NAME__;
 
 var getScriptURL = (function() {
     var scripts = document.getElementsByTagName('script');
@@ -26,9 +27,11 @@ var getScriptURL = (function() {
 
 
 export var getRootURL = (function() {
-
-    var workingURL= getScriptURL() || window.location.href;
-    const rootURL= workingURL.substring(0,workingURL.lastIndexOf('/')) + '/';
+    var rootURL = 'http://localhost:8080/';
+    if (SCRIPT_NAME !== undefined) {
+        var workingURL= getScriptURL() || window.location.href;
+        rootURL= workingURL.substring(0,workingURL.lastIndexOf('/')) + '/';
+    }
     return () => rootURL;
 })();
 

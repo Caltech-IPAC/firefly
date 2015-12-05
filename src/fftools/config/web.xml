@@ -13,6 +13,7 @@
         <filter-name>CommonFilter</filter-name>
         <url-pattern>/admin/*</url-pattern>
         <url-pattern>/rpc/*</url-pattern>
+        <url-pattern>/search/*</url-pattern>
         <url-pattern>/servlet/*</url-pattern>
         <url-pattern>/sticky/*</url-pattern>
     </filter-mapping>
@@ -186,6 +187,15 @@
     <servlet-mapping>
         <servlet-name>FireFly CommandService</servlet-name>
         <url-pattern>/sticky/CmdSrv</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-class>edu.caltech.ipac.firefly.server.servlets.SearchServices</servlet-class>
+        <servlet-name>FireFly SearchService</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FireFly SearchService</servlet-name>
+        <url-pattern>/search/json</url-pattern>
     </servlet-mapping>
 
 
