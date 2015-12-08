@@ -10,6 +10,7 @@ var RadioGroupInputField= React.createClass(
 
         propTypes: {
             options: React.PropTypes.array.isRequired,
+            alignment:  React.PropTypes.string.isRequired,
         },
 
 
@@ -34,32 +35,68 @@ var RadioGroupInputField= React.createClass(
             }
         },
 
+        makeLineBreak(){
+            return(<br/>);
+        },
         render() {
-            return (
-                <div style={{whiteSpace:'nowrap'}}>
-                    <InputFieldLabel label={this.getLabel()}
-                        tooltip={this.getTip()}
-                        labelWidth={this.props.labelWidth}
-                    />
-                    {this.props.options.map((option) => {
-                        var alignment = typeof option.align=='undefined'? 'top':option.align;//this is added by LZ
-                        return (
 
-                        <div key={option.value} style={{display:'inline-block'}}>
-                            <input type='radio'
-                                align={alignment }//this is added by LZ
-                                name={this.props.fieldKey}
-                                value={option.value}
-                                defaultChecked={this.getValue()===option.value}
-                                onChange={this.onChange}
-                            />&nbsp;{option.label}&nbsp;&nbsp;
-                        </div>
+			   var optionalElement;
 
-                        );
-                        })}
-                  </div>
-            );
-        }
+
+				switch ( this.props.alignment ) {
+					case 'vertical':
+						optionalElement  =  <br/>;
+						break;
+					default:
+						optionalElement=null;
+						break;
+				}
+
+                return (
+
+
+                    <div style={{whiteSpace:'nowrap'}}>
+                        <InputFieldLabel label={this.getLabel()}
+                                         tooltip={this.getTip()}
+                                         labelWidth={this.props.labelWidth}
+                        />
+
+                       <br/>
+                        {this.props.options.map((option) => {
+
+                            return (
+
+                                <span>
+                                    <div key={option.value} style={{display:'inline-block'}}>
+
+                                      <input type='radio'
+
+                                     name={this.props.fieldKey}
+                                     value={option.value}
+                                     defaultChecked={this.getValue()===option.value}
+                                     onChange={this.onChange}
+                                     /> &nbsp;{option.label}&nbsp;&nbsp;
+
+
+									 </div>
+									{optionalElement}
+
+                          </span>
+
+                            );
+
+
+                        })
+
+
+                        }
+
+
+                    </div>
+
+                );
+            }
+
 
 
     });

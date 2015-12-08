@@ -44,6 +44,15 @@ export function showFitsDownloadDialog() {
 
 var FitsDialogTest= React.createClass({
 
+    propTypes: {
+        colorBand:  React.PropTypes.string.required,
+        operation : React.PropTypes.string.required,
+    },
+
+    getDefaultProps: function() {
+        return { colorBand: 'grey',operation: 'original'};
+     },
+
     componentWillUnmount() {
         if (this.unbinder) this.unbinder();
     },
@@ -104,39 +113,80 @@ var FitsDialogTest= React.createClass({
     },
 
     render() {
-
+        var colorBand = this.props.colorBand;
         return (
-            <div style={{padding:'5px'}}>
-                 <div style={{'minWidth': '300', 'minHeight': '100'}}>
-                          <InputGroup labelWidth={130}>
-                                        <TargetPanel groupKey='FITS_DOWNLOAD_FORM' />
-                                        <RadioGroupInputField  initialState= {{
+            <FieldGroup groupKey={'FITS_DOWNLOAD_FORM'}  keepState={true}>
+              <div style={{padding:'5px'}}>
+                 <div style={{'minWidth': '300', 'minHeight': '100'} }>
+                     <InputGroup labelWidth={130} >
+                         <PopupPanel groupKey='FITS_DOWNLOAD_FORM' />
+
+                              <RadioGroupInputField  initialState= {{
                                           tooltip: 'Please select an option',
-                                          label : 'Radio Group:'
+                                          label : 'Type of files:'
                                           }}
                                                      options={
                                                               [
-                                                                  {label: 'FITS File', value: 'opt1',align: 'right'},
-                                                                  {label: 'PNG File', value: 'opt2', align: 'right'},
-                                                                  {label: 'Region File', value: 'opt3', align: 'right'},
+                                                                  {label: 'FITS File', value: 'opt1'},
+                                                                  {label: 'PNG File', value: 'opt2' },
+                                                                  {label: 'Region File', value: 'opt3'},
 
                                                               ]
 
                                                               }
-                                                     fieldKey='radioGrpFld'
+                                                      alignment={'vertical'}
+
+                                                     fieldKey='radioGrpFld1'
                                                      groupKey='FITS_DOWNLOAD_FORM'/>
 
-                                        <CompleteButton groupKey='FITS_DOWNLOAD_FORM'
-                                                        onSuccess={this.resultsSuccess}
-                                                        onFail={this.resultsFail}
-                                                        dialogId='fitsDownloadDialog'
-                                        />
+                              <br/><br/>
+                              <RadioGroupInputField initialState= {{
+                                          tooltip: 'Please select an option',
+                                          label : 'FITS file:'
+
+                                          }}
+                                              options={
+                                                     [
+                                                       { label:'original', value:'fileTypeOpt1'},
+                                                       { label:'crop', value:'fileTypeOpt2'},
+
+                                                     ]}
+                                              alignment={'vertical'}
+                                              fieldKey='radioGrpFld2'
+
+                                              groupKey='FITS_DOWNLOAD_FORM'/>
+
+                              <br/><br/>
+
+
+                              <RadioGroupInputField initialState= {{
+                                          tooltip: 'Please select an option',
+                                          label : 'Color band:'
+
+                                          }}
+                                                    options={
+                                                     [
+                                                       { label: 'red', value:'colorOpt1'},
+
+                                                     ]}
+                                                    fieldKey='radioGrpFld3'
+
+                                                    groupKey='FITS_DOWNLOAD_FORM'/>
+
+                              <div style={{'text-align':'center'}}>
+                              <button type='button' >Download</button>
+                                  </div>
+
+
+
+
                           </InputGroup>
+
 
                  </div>
 
-            </div>
-
+              </div>
+            </FieldGroup>
         );
     }
 });
