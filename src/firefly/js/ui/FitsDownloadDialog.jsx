@@ -45,13 +45,17 @@ export function showFitsDownloadDialog() {
 var FitsDialogTest= React.createClass({
 
     propTypes: {
-        colorBand:  React.PropTypes.string.required,
-        operation : React.PropTypes.string.required,
+        isThreeColorBand:  React.PropTypes.bool.required,
+        colorName: React.PropTypes.string.required,
+        isCropNotRotate : React.PropTypes.bool.required,
+
     },
 
+
+
     getDefaultProps: function() {
-        return { colorBand: 'grey',operation: 'original'};
-     },
+        return { isThreeColorBand: true, colorName:'red', isCropNotRotate: true};
+    },
 
     componentWillUnmount() {
         if (this.unbinder) this.unbinder();
@@ -62,58 +66,55 @@ var FitsDialogTest= React.createClass({
         this.unbinder= FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => this.setState({fields}));
     },
 
-    showResults(success, request) {
-        var statStr= `validate state: ${success}`;
-        //var request= FieldGroupUtils.getResults(this.props.groupKey);
-        console.log(statStr);
-        console.log(request);
-
-        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-            buildString+=`${k}=${request[k]}`;
-            if (idx<array.length-1) buildString+=', ';
-            return buildString;
-        },'');
-
-
-        var resolver= null;
-        var closePromise= new Promise(function(resolve, reject) {
-            resolver= resolve;
-        });
-
-        var results= (
-            <PopupPanel title={'Fits Download Dialog Results'} closePromise={closePromise} >
-                {this.makeResultInfoContent(statStr,s,resolver)}
-            </PopupPanel>
-        );
-
-        DialogRootContainer.defineDialog('ResultsFromFitsDownloadDialog', results);
-        AppDataCntlr.showDialog('ResultsFromFitsDownloadDialog');
-
-    },
-
-
-    makeResultInfoContent(statStr,s,closePromiseClick) {
-        return (
-            <div style={{padding:'5px'}}>
-                <br/>{statStr}<br/><br/>{s}
-                <button type='button' onClick={closePromiseClick}>Another Close</button>
-                <CompleteButton dialogId='ResultsFromFitsDownloadDialog' />
-            </div>
-        );
-    },
-
-
-
-    resultsFail(request) {
-        this.showResults(false,request);
-    },
-
-    resultsSuccess(request) {
-        this.showResults(true,request);
-    },
 
     render() {
-        var colorBand = this.props.colorBand;
+
+        var fitsFileRadioGroup;
+        if (this.props.isCropNotRotate) {
+            fitsFileRadioGroup = (
+                <div>
+                    <br/>
+                    <RadioGroupInputField initialState={{
+                           tooltip: 'Please select an option',
+                           label : 'FITS file:'
+
+                           }}
+                                          options={
+                                   [
+                                      { label:'original', value:'fileTypeOpt1'},
+                                      { label:'crop', value:'fileTypeOpt2'},
+
+                                   ]}
+                                          alignment={'vertical'}
+                                          fieldKey='radioGrpFld2'
+                                          groupKey='FITS_DOWNLOAD_FORM'/>
+                </div>
+            );
+
+        }
+        var colorRadioGroup;
+        if (this.props.isThreeColorBand) {
+            colorRadioGroup = (
+                <div>
+                    <br/>
+                    <RadioGroupInputField initialState={{
+                                          tooltip: 'Please select an option',
+                                          label : 'Color band:'
+
+                                          }}
+                                      options={
+                                                     [
+                                                       { label: this.props.colorName, value:'colorOpt1'},
+
+                                                     ]}
+                                      fieldKey='radioGrpFld3'
+
+                                      groupKey='FITS_DOWNLOAD_FORM'/>
+                </div>
+            );
+         }
+
+
         return (
             <FieldGroup groupKey={'FITS_DOWNLOAD_FORM'}  keepState={true}>
               <div style={{padding:'5px'}}>
@@ -134,44 +135,15 @@ var FitsDialogTest= React.createClass({
                                                               ]
 
                                                               }
-                                                      alignment={'vertical'}
+                                                    alignment={'vertical'}
 
                                                      fieldKey='radioGrpFld1'
                                                      groupKey='FITS_DOWNLOAD_FORM'/>
 
-                              <br/><br/>
-                              <RadioGroupInputField initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'FITS file:'
 
-                                          }}
-                                              options={
-                                                     [
-                                                       { label:'original', value:'fileTypeOpt1'},
-                                                       { label:'crop', value:'fileTypeOpt2'},
+                              { fitsFileRadioGroup}
 
-                                                     ]}
-                                              alignment={'vertical'}
-                                              fieldKey='radioGrpFld2'
-
-                                              groupKey='FITS_DOWNLOAD_FORM'/>
-
-                              <br/><br/>
-
-
-                              <RadioGroupInputField initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'Color band:'
-
-                                          }}
-                                                    options={
-                                                     [
-                                                       { label: 'red', value:'colorOpt1'},
-
-                                                     ]}
-                                                    fieldKey='radioGrpFld3'
-
-                                                    groupKey='FITS_DOWNLOAD_FORM'/>
+                              {colorRadioGroup}
 
                               <div style={{'text-align':'center'}}>
                               <button type='button' >Download</button>
