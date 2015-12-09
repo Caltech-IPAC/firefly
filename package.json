@@ -22,7 +22,7 @@
     "react-addons-pure-render-mixin" : "^0.14.3",
     "react-component-resizable": "0.3.0",
     "react-grid-layout": "^0.8.0",
-    "react-highcharts": "^0.0.4",
+    "react-highcharts": "^5.0.6",
     "react-redux": "^3.0.0-alpha",
     "redux"     : "^3.0.0",
     "redux-thunk": "^0.1.0",

@@ -59,7 +59,7 @@ export var Tabs = React.createClass({
 
 export var Tab = React.createClass({
 
-    mixins : [React.addons.PureRenderMixin],
+    mixins : [PureRenderMixin],
 
     propTypes: {
         name: React.PropTypes.string.isRequired, //public
@@ -69,7 +69,7 @@ export var Tab = React.createClass({
 
     getDefaultProps() {
         return {
-            selected: false,
+            selected: false
         };
     },
 

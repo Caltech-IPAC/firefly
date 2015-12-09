@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import Highcharts from 'react-highcharts';
+import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 import numeral from 'numeral';
 import {getFormatString} from '../util/MathUtil.js';
 
@@ -353,7 +353,7 @@ var Histogram = React.createClass(
 
             return (
                 <div>
-                    <Highcharts config={config}/>
+                    <ReactHighcharts config={config}/>
                 </div>
             );
         }
