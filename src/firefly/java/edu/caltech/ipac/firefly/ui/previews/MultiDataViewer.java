@@ -85,6 +85,7 @@ public class MultiDataViewer {
     private BadgeButton grid;
     private BadgeButton left;
     private BadgeButton right;
+	private boolean showTilesButton = true;
 
     public MultiDataViewer() {
         plotDeck.add(noDataAvailable);
@@ -95,7 +96,13 @@ public class MultiDataViewer {
         reinitConverterListeners();
         toolbar.addStyleName("firefly-toolbar");
     }
-
+    
+    public void setTiles(boolean shown){
+    	 GwtUtil.setHidden(one.getWidget(), !shown);
+         GwtUtil.setHidden(grid.getWidget(), !shown);
+         one.getWidget().setVisible(shown);
+         grid.getWidget().setVisible(shown);
+    }
     public void setRefreshListener(RefreshListener l) { this.refreshListener= l; }
     public void setMpwFactory(DataVisGrid.MpwFactory mpwFactory) { this.mpwFactory = mpwFactory; }
     public Widget getWidget() { return mainPanel; }
