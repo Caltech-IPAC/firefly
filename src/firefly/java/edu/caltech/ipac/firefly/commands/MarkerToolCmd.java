@@ -24,10 +24,12 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import edu.caltech.ipac.firefly.resbundle.images.VisIconCreator;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
 import edu.caltech.ipac.firefly.ui.input.SimpleInputField;
@@ -76,9 +78,11 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
     private boolean _doMove = false;
     private final WebPlotView.MouseInfo _mouseInfo =
             new WebPlotView.MouseInfo(new Mouse(), "Create a marker");
-    private final static String _onLabel = "Hide Marker";
-    private final static String _offLabel = "Show Marker";
-    private final static String _addLabel = "Add Marker";
+//    private final static String _onLabel = "Hide Marker";
+//    private final static String _offLabel = "Show Marker";
+//    private final static String _addLabel = "Add Marker";
+    private final static String _onIcon = "MarkerTool.on.Icon";
+    private final static String _offIcon = "MarkerTool.off.Icon";
 
 
     public MarkerToolCmd() {
@@ -144,29 +148,29 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         }
     }
 
+//    @Override
+//    public boolean hasIcon() {
+//        return false;
+//    }
+
     @Override
-    public boolean hasIcon() {
-        return false;
+    public Image createCmdImage() {
+
+        VisIconCreator ic = VisIconCreator.Creator.getInstance();
+        String iStr = this.getIconProperty();
+        if (iStr != null) {
+
+            if (iStr.equals(_onIcon)) {
+                return new Image(ic.getMarkerOn());
+            } else if (iStr.equals(_offIcon)) {
+                return new Image(ic.getMarkerOff());
+            } else if (iStr.equals(CommandName + ".Icon")) {
+                return new Image(ic.getMarkerOff());
+            }
+        }
+        return null;
     }
 
-    //    @Override
-//    public Image createCmdImage() {
-//
-//        VisIconCreator ic = VisIconCreator.Creator.getInstance();
-//        String iStr = this.getIconProperty();
-//        if (iStr != null) {
-//
-//            if (iStr.equals(_onIcon)) {
-//                return new Image(ic.getMarkerOn());
-//            } else if (iStr.equals(_offIcon)) {
-//                return new Image(ic.getMarkerOff());
-//            } else if (iStr.equals(CommandName + ".Icon")) {
-//                return new Image(ic.getMarkerOff());
-//            }
-//        }
-//        return null;
-//    }
-//
 
     private void setupMouse() {
         grabMouse();
@@ -178,21 +182,21 @@ public class MarkerToolCmd extends    BaseGroupVisCmd
         switch (_mode) {
             case ADD_MARKER:
                 createDrawMan();
-                setLabel(_onLabel);
+                setIconProperty(_onIcon);
                 break;
             case MOVE:
-                setLabel(_onLabel);
+                setIconProperty(_onIcon);
                 changeToEditHelp();
                 addDrawMan();
                 break;
             case RESIZE:
-                setLabel(_onLabel);
+                setIconProperty(_onIcon);
                 changeToEditHelp();
                 addDrawMan();
                 break;
             case OFF:
                 removeDrawMan();
-                setLabel(_markerMap.size() > 0 ? _offLabel : _addLabel);
+                setIconProperty(_offIcon);
                 break;
             default:
                 WebAssert.argTst(false, "only support for SelectType of ADD_MARKER, RESIZE or MOVE");

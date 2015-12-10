@@ -1,5 +1,5 @@
 FootprintHST.Title= Add HST footprint
-FootprintHST.ShortDescription= Add a HST footprint
+FootprintHST.ShortDescription= Add a HST footprint (best for 45 arcmin images)
 
 FootprintHST.title.Title= Label
 FootprintHST.title.ShortDescription= Add a label to this footprint

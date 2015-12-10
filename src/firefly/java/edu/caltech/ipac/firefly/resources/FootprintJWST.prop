@@ -1,5 +1,5 @@
 FootprintJWST.Title=Add JWST prelim. footprint
-FootprintJWST.ShortDescription= Add a JWST preliminary footprint (see help)
+FootprintJWST.ShortDescription= Add a JWST/All preliminary footprint (best for 30 arcmin images)
 
 FootprintJWST.title.Title= Label
 FootprintJWST.title.ShortDescription= Add a label to this footprint

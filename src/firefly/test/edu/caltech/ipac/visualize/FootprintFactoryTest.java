@@ -360,9 +360,13 @@ public class FootprintFactoryTest {
 			for (int i = 0; i < array.length / 2; i++) {
 				WorldPt pt0 = new WorldPt(array[2 * i].doubleValue(), array[2 * i + 1].doubleValue());
 				pts[i] = VisUtil.calculatePosition(refCenter, pt0.getLon() * 3600, pt0.getLat() * 3600);
-				System.out.println(pts[i].toString());
+				WorldPt pt = VisUtil.calculatePosition(pts[i], pt0.getLon()*3600, pt0.getLat()*3600);
+				System.out.println(pts[i].toString()+", " + pt.toString());
 			}
+			Assert.assertEquals(12.29839928, pts[0].getLon(), 1E-05);
+			Assert.assertEquals(89.82183415, pts[0].getLat(), 1E-05);
 		}
+		
 		
 		
 

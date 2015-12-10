@@ -539,7 +539,7 @@ public class VisUtil {
         System.out.println("ra: " + ra2);
         System.out.println("dec: " + dec2);
         */
-        return new WorldPt((float)ra2, (float)dec2);
+        return new WorldPt(ra2, dec2);
     }
 
     /**

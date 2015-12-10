@@ -3,6 +3,13 @@
  */
 package edu.caltech.ipac.firefly.commands;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -23,6 +30,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -41,6 +49,8 @@ import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
+import edu.caltech.ipac.firefly.visualize.WebDefaultMouseReadoutHandler;
+import edu.caltech.ipac.firefly.visualize.WebMouseReadoutHandler;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
@@ -52,12 +62,6 @@ import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 
 public class JwstFootprintCmd extends    BaseGroupVisCmd
                            implements WebEventListener/*, PrintableOverlay*/ {
@@ -68,7 +72,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public static final int EDIT_DISTANCE = BrowserUtil.isTouchInput() ? 20 : 12;
     public static final String _selHelpText = "Tap to create footprint";
     public static final String _editHelpText = "Click center and drag to move, click corner and drag to rotate";
-    public static final String BASE_TITLE = "FootPrint ";
+    public static final String BASE_TITLE = "Footprint ";
 
     public static final String CommandName = "Footprint";
     private HashMap<OverlayMarker, MarkerDrawing> _markerMap = new HashMap<OverlayMarker, MarkerDrawing>(10);
@@ -117,8 +121,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public JwstFootprintCmd(INSTRUMENTS inst) {
         super(CommandName+inst.name());//string constructor should have correspondent STRING.prop
         this.mission = inst.getMission();
-        this.name = inst.name();
-        String label = mission+"/"+name+ " prelim.";
+        this.name = mission+"/"+inst.name();
+        String label = name+ " prelim.";
         this.instrument = inst;
         AllPlots.getInstance().addListener(this);
         _onLabel = _onLabel.replace("@", label);
@@ -328,6 +332,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                     releaseMouse();
                     break;
                 case MOVE:
+//                	_markerMap.get(_activeMarker).getDrawMan().redraw();
+//                	break;
                 case ROTATE:
                     _activeMarker.adjustStartEnd(pv.getPrimaryPlot());
                     _markerMap.get(_activeMarker).deferDraw(pv.getPrimaryPlot(),_activeMarker);
@@ -639,7 +645,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         private MarkerDrawing(String name) {
             mCnt++;
             _id = BASE_DRAWER_ID +CommandName+name+"#"+ mCnt;
-            connect = new MarkerConnect(BASE_TITLE + name+" #"+mCnt);
+            connect = new MarkerConnect(BASE_TITLE + "#"+mCnt+": "+name);
             if (!WebLayerItem.hasUICreator(_id)) {
                 WebLayerItem.addUICreator(_id, new FootprintUICreator(name));
             }
@@ -778,6 +784,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     private class FootprintUICreator extends WebLayerItem.UICreator {
         private Label centerOffsetLabel = new Label("");
         private Label centerPosLbl = new Label("");
+        private Label centerPosLbl2 = new Label("");
         private SimpleInputField angle;
 		private String descProp;
 
@@ -811,7 +818,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             if (marker!=null) {
                 String t= marker.getTitle();
                 field.setValue(t);
-                if (!StringUtils.isEmpty(t)) item.setTitle(t);
+                //if (!StringUtils.isEmpty(t)) item.setTitle(t);
                 
                 
             }
@@ -843,13 +850,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
 
             FlowPanel p3 = new FlowPanel();
             HorizontalPanel center = new HorizontalPanel();
-            center.add(new Label("Aperture position:"));
+            center.add(new Label("Center:"));
             center.add(centerPosLbl);
+            center.add(centerPosLbl2);
             HorizontalPanel dtc = new HorizontalPanel();
             dtc.add(new Label("Boresight position:"));
             dtc.add(centerOffsetLabel);
             p3.add(center);
-            p3.add(dtc);
+            //TODO if boresight position need to be in the readout, uncomment the following line:
+            //p3.add(dtc);
             
             SimpleInputField posWrap = SimpleInputField.createByProp(CommandName+"JWST.field.position");
             final InputField posIf= ((ValidationInputField)posWrap.getField()).getIF();
@@ -862,7 +871,6 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             
             xui.add(p1);
             xui.add(p2);
-           // No needed
             xui.add(p3);
 
             posTb.addKeyPressHandler(new KeyPressHandler() {
@@ -977,7 +985,11 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
                 corner= OverlayMarker.Corner.SE;
             }
 
-            item.setTitle(StringUtils.isEmpty(title) ? originalTitle : title);
+            /*
+             * Vandana/Justin ask to not update the title when a label is input:
+             */            
+//            item.setTitle(StringUtils.isEmpty(title) ? originalTitle : title);
+            item.setTitle(originalTitle);
             OverlayMarker marker= findMarker(id);
             setActiveMarker(marker);
             marker.setTitle(title);
@@ -1000,10 +1012,36 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
         }
 
 		private void setCenter(WorldPt center, WorldPt centerOffset) {
+			/* FIXME
+			 * An attempt to get option of readout and control the readout the same way here
+			 */
+//			WebPlot plot = getPlotView().getPrimaryPlot();
+//			boolean isHMS = false;
+//			Object o = plot.getAttribute(WebPlot.READOUT_ATTR);
+//            WebMouseReadoutHandler _currentHandler = null;
+//			if (o instanceof WebMouseReadoutHandler) {
+//                _currentHandler = (WebMouseReadoutHandler) o;
+//                int rows = _currentHandler.getRows(plot);
+//                
+//                int col =  1;
+//                Object map = plot.getPlotView().getAttribute(WebPlot.READOUT_ROW_PARAMS);
+//				if (map != null && map instanceof HashMap) {
+//					HashMap<Integer, String> params = (HashMap<Integer, String>) map;
+//					for (int i = 0; i < rows; i++) {
+//
+//						String rowOption = _currentHandler.getRowOption(i);
+//						GwtUtil.logToServer(Level.INFO, " option :" +i+", "+ rowOption);
+//					}
+//					if (_currentHandler.getRowOption(1).equals(WebDefaultMouseReadoutHandler.EQ_J2000_DESC) ) {
+//						isHMS = true;
+//					}
+//				}
+//            }	
 			if (centerOffset != null) {
 				String lon = _nf4digits.format(center.getLon());
 				String lat = _nf4digits.format(center.getLat());
-				centerPosLbl.setText(PositionFieldDef.formatPosForTextField(center) + " (" + lon + "," + lat + ")");
+					centerPosLbl.setText(PositionFieldDef.formatPosForTextField(center));
+					centerPosLbl2.setText(lon + ", " + lat);
 			}
 			if (centerOffset != null) {
 				String lon = _nf4digits.format(centerOffset.getLon());

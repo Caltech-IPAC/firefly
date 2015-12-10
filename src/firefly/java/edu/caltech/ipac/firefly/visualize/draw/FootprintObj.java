@@ -344,8 +344,12 @@ public class FootprintObj extends DrawObj {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see edu.caltech.ipac.firefly.visualize.draw.DrawObj#translateTo(edu.caltech.ipac.firefly.visualize.WebPlot, edu.caltech.ipac.visualize.plot.WorldPt)
+	/**
+	 * Should translate the list of point of the footprint to a different reference point which is taking as east north offset
+	 * WARN:
+	 * DISCLAIMER: Use with warning - not accurate method specially for big offset, distance from reference point and the point to be recalculate
+	 * 
+	 * FIXME: THis is wrong - should apply proper 3D rotation around x and y from east/nroth of WorldPt apt
 	 */
 	public void translateTo(WebPlot plot, WorldPt apt) {
 		// Need to clear fist the original array of point...

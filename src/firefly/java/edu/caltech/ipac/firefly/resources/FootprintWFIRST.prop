@@ -1,5 +1,5 @@
 FootprintWFIRST.Title= Add WFIRST footprint
-FootprintWFIRST.ShortDescription= Add a WFIRST footprint
+FootprintWFIRST.ShortDescription= Add a WFIRST/All preliminary footprint (best for 60 arcmin images)
 
 FootprintWFIRST.title.Title= Label
 FootprintWFIRST.title.ShortDescription= Add a label to this footprint
