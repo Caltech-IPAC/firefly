@@ -59,9 +59,13 @@ public class IpacTableTest {
         TableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
         DataGroup data = DataGroupReader.read(ipacTable);
         DataGroupPart page = new DataGroupPart(tableDef, data, 0, tableDef.getRowCount());
+
+        // set fields that changes based on env to static values
+        page.getTableDef().setSource("test data");
+        // -- end
+
         JSONObject json = JsonTableUtil.toJsonTableModel(page, new TableMeta(tableDef.getSource()), request);
         Assert.assertNotNull(json);
-
         String jsonStr = json.toJSONString();
         String expected = FileUtil.readFile(jsonResults);
         Assert.assertEquals(expected, jsonStr);
