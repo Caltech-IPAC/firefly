@@ -186,3 +186,17 @@ export function logError(...message) {
         message.forEach( (m) => console.log(m.stack ? m.stack : m) );
     }
 }
+
+
+export function download(url) {
+    var nullFrame = document.getElementById('null_frame');
+    if (!nullFrame) {
+        nullFrame = document.createElement('iframe');
+        nullFrame.id = 'null_frame';
+        nullFrame.style.display = 'none';
+        nullFrame.style.width = '0px';
+        nullFrame.style.height = '0px';
+        document.body.appendChild(nullFrame);
+    }
+    nullFrame.src = url;
+}

@@ -18,6 +18,7 @@ import TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import TableRequest from 'firefly/tables/TableRequest.js';
 import {REQ_PRM} from 'firefly/tables/TableRequest.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
+import {download} from 'firefly/util/WebUtil.js';
 
 
 firefly.bootstrap();
@@ -32,6 +33,10 @@ function loadTestTable() {
     request.setParam('source', getRootURL() + 'WiseQuery.tbl');
     request.setParam(REQ_PRM.TBL_ID, 'id-101');
     TablesCntlr.dispatchFetchTable(request);
+}
+
+function doFileDownload() {
+    download(getRootURL() + 'samplehistdata.csv');
 }
 
 const App = React.createClass({
@@ -62,6 +67,7 @@ const App = React.createClass({
                         <TestImagePanel/>
                     </div>
                     <div style={{padding:'10', height: '500px'}}>
+                        <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
                         <input type="button" name="test" value="Load Table Below" onClick={loadTestTable} />
                         <TablePanel
                             tableModel={this.props.table}
