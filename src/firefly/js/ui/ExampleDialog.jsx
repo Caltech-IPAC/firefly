@@ -189,7 +189,9 @@ var FieldGroupTest = React.createClass({
 
 
     componentDidMount() {
-        this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => this.setState({fields}));
+        this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => {
+            if (this.isMounted) this.setState({fields})
+        });
     },
 
     // end code that connects to store
