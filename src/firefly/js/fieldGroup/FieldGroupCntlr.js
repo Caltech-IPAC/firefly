@@ -125,7 +125,7 @@ const initFieldGroup= function(state,action) {
     var fields= reducerFunc ? reducerFunc(null, action) : {};
 
     var fg= constructFieldGroup(groupKey,fields,reducerFunc,keepState);
-    return createState(state.fieldGroupMap,groupKey,fg);
+    return createState(state,groupKey,fg);
 };
 
 const updateFieldGroupMount= function(state,action) {
@@ -137,7 +137,7 @@ const updateFieldGroupMount= function(state,action) {
     if (mounted) {
         if (isFieldGroupDefined(state,groupKey)) {
             fg= findAndCloneFieldGroup(state, groupKey, {mounted:true});
-            retState= createState(state.fieldGroupMap,groupKey,fg);
+            retState= createState(state,groupKey,fg);
         }
         else {
             retState= initFieldGroup(state,action);
@@ -148,7 +148,7 @@ const updateFieldGroupMount= function(state,action) {
         if (isFieldGroupDefined(state,groupKey)) {
             var fg= findAndCloneFieldGroup(state, groupKey, {mounted:false});
             if (!fg.keepState) fg.fields= null;
-            retState= createState(state.fieldGroupMap,groupKey,fg);
+            retState= createState(state,groupKey,fg);
         }
     }
     return retState;
@@ -184,7 +184,7 @@ const valueChange= function(state,action) {
 
     fg.fields= fireFieldsReducer(fg, action);
 
-    return createState(state.fieldGroupMap,groupKey,fg);
+    return createState(state,groupKey,fg);
 
 
 
@@ -227,7 +227,7 @@ const updateMount= function(state, action) {
     if (typeof fields[fieldKey].valid === 'undefined') {
         newField.valid= true;
     }
-    return createState(state.fieldGroupMap,groupKey,fg);
+    return createState(state,groupKey,fg);
 };
 
 
