@@ -1,4 +1,4 @@
-import React from 'react/addons';
+import React from 'react';
 import {flux} from '../Firefly.js';
 
 import {dispatchLoadTblStats, dispatchLoadColData, HISTOGRAM_DATA_KEY} from './HistogramCntlr.js';

@@ -60,25 +60,23 @@ var RadioGroupInputField= React.createClass(
                                          tooltip={this.getTip()}
                                          labelWidth={this.props.labelWidth}
                         />
-
-                       <br/>
+                        {optionalElement}
                         {this.props.options.map((option) => {
 
                             return (
 
-                                <span>
-                                    <div key={option.value} style={{display:'inline-block'}}>
+                                <span key={option.value}>
+                                    <div style={{display:'inline-block'}}>
 
-                                      <input type='radio'
+                                        <input type='radio'
+                                               name={this.props.fieldKey}
+                                               value={option.value}
+                                               defaultChecked={this.getValue()===option.value}
+                                               onChange={this.onChange}
+                                            /> &nbsp;{option.label}&nbsp;&nbsp;
 
-                                     name={this.props.fieldKey}
-                                     value={option.value}
-                                     defaultChecked={this.getValue()===option.value}
-                                     onChange={this.onChange}
-                                     /> &nbsp;{option.label}&nbsp;&nbsp;
 
-
-									 </div>
+                                    </div>
 									{optionalElement}
 
                           </span>

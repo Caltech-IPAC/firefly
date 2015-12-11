@@ -72,12 +72,12 @@ var ListBoxInputField = React.createClass(
                     <select name={this.props.fieldKey}
                             title={this.getTip()}
                             multiple={this.props.multiple}
-                            onChange={this.onChange}>
+                            onChange={this.onChange}
+                            value={this.props.multiple ? vAry : this.getValue()}>
                         {this.props.options.map(( (option) => {
                             return (
                                 <option value={option.value}
-                                        key={option.value}
-                                        selected={vAry.indexOf(option.value)>-1}>
+                                        key={option.value}>
                                     &nbsp;{option.label}&nbsp;
                                 </option>
                             );

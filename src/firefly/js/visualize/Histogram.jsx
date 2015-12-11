@@ -89,7 +89,7 @@ var Histogram = React.createClass(
                 });
                 this.fetchDataFromSource(nextProps.source);
             }
-         },
+        },
 
         /*
          * @return {Promise}
@@ -136,8 +136,8 @@ var Histogram = React.createClass(
                         } else if (data[i][1]>data[i][2]) {
                             console.error(`Histogram data row ${i}: minimum is more than maximum. [${data[i]}]`);
                             valid=false;
-                        } else if (data[i+1] && Math.abs(data[i][2]-data[i+1][1])>Number.EPSILON &&
-                                data[i][2]>data[i+1][1]) {
+                        } else if (data[i+1] && Math.abs(data[i][2]-data[i+1][1])>1000*Number.EPSILON &&
+                            data[i][2]>data[i+1][1]) {
                             console.error(`Histogram data row ${i}: bin range overlaps the following row. [${data[i]}]`);
                             valid=false;
                         }
@@ -160,6 +160,8 @@ var Histogram = React.createClass(
          * @return {Boolean} f data points are set, false if no points are present
          */
         setChartConfig(config) {
+            const TINY_OFFSET = 1000*Number.EPSILON;
+
             if (!this.state.userData || this.state.userData.length < 1) {
                 return false;
             }
@@ -178,62 +180,78 @@ var Histogram = React.createClass(
 
             try {
                 let lastBinMax = this.state.userData[0][1];
-                // point before the first one
-                points.push({
-                    name: '',
-                    range: '',
-                    x: lastBinMax-Number.EPSILON,
-                    y: 0
-                });
+                if (this.state.userData.length>1) {
+                    // point before the first one
+                    points.push({
+                        name: '',
+                        range: '',
+                        x: lastBinMax - TINY_OFFSET,
+                        y: 0
+                    });
+                }
                 this.state.userData.forEach(function (value, index) {
                         const xrange = this.state.userData[index][2] - this.state.userData[index][1];
-                        const formatStr = getFormatString(xrange,2);
-                        const centerStr = numeral(this.state.userData[index][1]+xrange/2.0).format(formatStr);
+                        const formatStr = getFormatString(xrange, 2);
+                        const centerStr = numeral(this.state.userData[index][1] + xrange / 2.0).format(formatStr);
                         const rangeStr = `${numeral(this.state.userData[index][1]).format(formatStr)} to ${numeral(this.state.userData[index][2]).format(formatStr)}`;
 
                         // check for gaps and add points in necessary
-                        if (Math.abs(this.state.userData[index][1])-lastBinMax > Number.EPSILON &&
-                            this.state.userData[index][1]>lastBinMax) {
-                            console.warn(`Gap in histogram data before row ${index} [${this.state.userData[index]}]`);
-                            const gapRange = this.state.userData[index][1]-lastBinMax;
-                            const gapCenterStr = numeral(lastBinMax+gapRange/2.0).format(formatStr);
+                        if (Math.abs(this.state.userData[index][1]) - lastBinMax > TINY_OFFSET &&
+                            this.state.userData[index][1] > lastBinMax) {
+                            //console.warn(`Gap in histogram data before row ${index} [${this.state.userData[index]}]`);
+                            const gapRange = this.state.userData[index][1] - lastBinMax;
+                            const gapCenterStr = numeral(lastBinMax + gapRange / 2.0).format(formatStr);
                             const gapRangeStr = `${numeral(lastBinMax).format(formatStr)} to ${numeral(this.state.userData[index][1]).format(formatStr)}`;
 
                             points.push({
                                 name: gapCenterStr,
                                 range: gapRangeStr,
-                                x: lastBinMax+Number.EPSILON,
+                                x: lastBinMax + TINY_OFFSET,
                                 y: 0
                             });
                             points.push({
                                 name: gapCenterStr,
                                 range: gapRangeStr,
-                                x: this.state.userData[index][1]-Number.EPSILON,
+                                x: this.state.userData[index][1] - TINY_OFFSET,
                                 y: 0
                             });
                         }
                         lastBinMax = this.state.userData[index][2];
 
-                        // a point for the bin's left edge (minimum)
-                        points.push({
-                            // name - formatted bin center
-                            name: centerStr,
-                            range: rangeStr,
-                            // x - bin min
-                            x: this.state.userData[index][1],
-                            // y - number of points in the bin
-                            y: this.state.userData[index][0]
-                        });
-                        // a point for the bin's max edge (maximum)
-                        points.push({
-                            // name - formatted bin center
-                            name: centerStr,
-                            range: rangeStr,
-                            // x - binmax
-                            x: this.state.userData[index][2]-Number.EPSILON,
-                            // y - number of points in the bin
-                            y: this.state.userData[index][0]
-                        });
+                        if (xrange > 0) {
+                            // a point for the bin's left edge (minimum)
+                            points.push({
+                                // name - formatted bin center
+                                name: centerStr,
+                                range: rangeStr,
+                                // x - bin min
+                                x: this.state.userData[index][1],
+                                // y - number of points in the bin
+                                y: this.state.userData[index][0]
+                            });
+
+
+                            // a point for the bin's right edge (maximum)
+                            points.push({
+                                // name - formatted bin center
+                                name: centerStr,
+                                range: rangeStr,
+                                // x - binmax
+                                x: this.state.userData[index][2] - TINY_OFFSET,
+                                // y - number of points in the bin
+                                y: this.state.userData[index][0]
+                            });
+                        } else {
+                            points.push({
+                                // name - formatted bin center
+                                name: centerStr,
+                                range: rangeStr,
+                                // x - bin min
+                                x: this.state.userData[index][1],
+                                // y - number of points in the bin
+                                y: this.state.userData[index][0]
+                            });
+                        }
 
                         // zones allow to separate visually one bin from another
                         if (doZones) {
@@ -242,16 +260,18 @@ var Histogram = React.createClass(
                                 color: (index % 2 === 0) ? this.props.binColor : lighterColor
                             });
                         }
+
                     }.bind(this)
                 );
-                // point after the last one
-                points.push({
-                    name: '',
-                    range: '',
-                    x: lastBinMax+Number.EPSILON,
-                    y: 0
-                });
-
+                if (this.state.userData.length>1) {
+                    // point after the last one
+                    points.push({
+                        name: '',
+                        range: '',
+                        x: lastBinMax + TINY_OFFSET,
+                        y: 0
+                    });
+                }
             }
             catch(e) {
                 error = e;
@@ -269,10 +289,17 @@ var Histogram = React.createClass(
         render() {
             const yReversed = (this.props.reversed && this.props.reversed.indexOf('y')>-1 ? true : false);
 
+            var chartType;
+            if (!this.state.userData || this.state.userData.length < 2) {
+                chartType = 'column';
+            } else {
+                chartType = 'area';
+            }
+
             var config = {
                 chart: {
                     renderTo: 'container',
-                    type: 'area',
+                    type: chartType,
                     alignTicks: false,
                     height: Number(this.props.height)
                 },
@@ -289,8 +316,8 @@ var Histogram = React.createClass(
                     followPointer: true,
                     borderWidth: 1,
                     formatter() {
-                        return (this.point.name ? `<b>Bin center:</b> ${this.point.name}<br>` : '')+
-                            (this.point.range ? `<b>Range:</b> ${this.point.range}<br>` : '')+
+                        return (this.point.name ? `<b>Bin center:</b> ${this.point.name}<br/>` : '')+
+                            (this.point.range ? `<b>Range:</b> ${this.point.range}<br/>` : '')+
                             `<b>Count:</b> ${this.y}`;
                     }
                 },
@@ -313,6 +340,9 @@ var Histogram = React.createClass(
                         },
                         zoneAxis: 'x',
                         zones: [] // color ajacent bins slightly different by defining zones
+                    },
+                    column: {
+                        pointPadding: 0.2
                     }
                 },
                 xAxis: {

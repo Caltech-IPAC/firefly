@@ -112,7 +112,8 @@ var HistogramOptions = React.createClass({
                             initialState= {{
                                 value : algorithm,
                                 tooltip: 'Please select an algorithm',
-                                label : 'Algorithm:'
+                                label: 'Algorithm:',
+
                             }}
                             options={
                             [
@@ -120,6 +121,7 @@ var HistogramOptions = React.createClass({
                                 {label: 'Fixed size', value: 'fixedSizeBins'}
                             ]
                         }
+                            alignment='horizontal'
                             fieldKey='algorithm'
                             groupKey={groupKey}/>
                     </InputGroup>
