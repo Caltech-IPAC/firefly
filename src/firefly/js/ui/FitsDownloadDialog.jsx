@@ -54,7 +54,7 @@ var FitsDialogTest= React.createClass({
 
 
     getDefaultProps: function() {
-        return { isThreeColorBand: true, colorName:'red', isCropNotRotate: true};
+        return { isThreeColorBand: false, colorName:'red', isCropNotRotate: true};
     },
 
     componentWillUnmount() {
@@ -69,7 +69,7 @@ var FitsDialogTest= React.createClass({
 
     render() {
 
-        var fitsFileRadioGroup;
+        var fitsFileRadioGroup=<br/>;
         if (this.props.isCropNotRotate) {
             fitsFileRadioGroup = (
                 <div>
@@ -92,7 +92,7 @@ var FitsDialogTest= React.createClass({
             );
 
         }
-        var colorRadioGroup;
+        var colorRadioGroup=<br/>;
         if (this.props.isThreeColorBand) {
             colorRadioGroup = (
                 <div>
@@ -113,6 +113,7 @@ var FitsDialogTest= React.createClass({
                 </div>
             );
          }
+
 
 
         return (
