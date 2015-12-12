@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.visualize.draw;
 
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
 import edu.caltech.ipac.firefly.visualize.ViewPortPt;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionLines;
@@ -344,8 +345,12 @@ public class FootprintObj extends DrawObj {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see edu.caltech.ipac.firefly.visualize.draw.DrawObj#translateTo(edu.caltech.ipac.firefly.visualize.WebPlot, edu.caltech.ipac.visualize.plot.WorldPt)
+	/**
+	 * Should translate the list of point of the footprint to a different reference point which is taking as east north offset
+	 * WARN:
+	 * DISCLAIMER: Use with warning - not accurate method specially for big offset, distance from reference point and the point to be recalculate
+	 * 
+	 * FIXME: THis is wrong - should apply proper 3D rotation around x and y from east/nroth of WorldPt apt
 	 */
 	public void translateTo(WebPlot plot, WorldPt apt) {
 		// Need to clear fist the original array of point...
@@ -359,11 +364,12 @@ public class FootprintObj extends DrawObj {
 			for (WorldPt wpt : arr) {
 				ScreenPt pti = plot.getScreenCoords(wpt);
 				if (pti != null) {
-					int x2 = pti.getIX();
-					int y2 = pti.getIY();
-					x2 += pt.getIX();
-					y2 += pt.getIY();
-					arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
+//					int x2 = pti.getIX();
+//					int y2 = pti.getIY();
+//					x2 += pt.getIX();
+//					y2 += pt.getIY();
+//					arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
+					arr2[i++] = getNewPoint(wpt,apt);
 				}else{
 					//No translation
 					arr2[i++] = wpt;
@@ -374,6 +380,13 @@ public class FootprintObj extends DrawObj {
 			_fpList.add(arr2);
 		}
 	}
+
+	private WorldPt getNewPoint(WorldPt wpt, WorldPt refRotatedPos) {
+		
+		WorldPt initialRefPos = (WorldPt) getCenterPt();
+		return VisUtil.rotatePosition(initialRefPos , refRotatedPos, wpt);
+	}
+
 
 	/* (non-Javadoc)
 	 * @see edu.caltech.ipac.firefly.visualize.draw.DrawObj#rotateAround(edu.caltech.ipac.firefly.visualize.WebPlot, double, edu.caltech.ipac.visualize.plot.WorldPt)

@@ -360,14 +360,36 @@ public class FootprintFactoryTest {
 			for (int i = 0; i < array.length / 2; i++) {
 				WorldPt pt0 = new WorldPt(array[2 * i].doubleValue(), array[2 * i + 1].doubleValue());
 				pts[i] = VisUtil.calculatePosition(refCenter, pt0.getLon() * 3600, pt0.getLat() * 3600);
-				System.out.println(pts[i].toString());
+				WorldPt pt = VisUtil.calculatePosition(pts[i], pt0.getLon()*3600, pt0.getLat()*3600);
+				System.out.println(pts[i].toString()+", " + pt.toString());
 			}
+			Assert.assertEquals(12.29839928, pts[0].getLon(), 1E-05);
+			Assert.assertEquals(89.82183415, pts[0].getLat(), 1E-05);
 		}
-		
-		
 
 	}
-
+	
+	@Test
+	public void testRotationMatrix(){
+		//MAst results polygons on ra,dec= 0,0, and 0,90 on FGS1 aperture:
+		String polRA00 = "POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720";
+		String polDec90 = "POLYGON   12.29839928  89.82183415  10.18848870  89.78272485  19.98322603  89.77187466  23.75460655  89.80970354  12.29839928  89.82183415";
+		WorldPt newRefCenter = new WorldPt(0, 90);
+		WorldPt pos00 = new WorldPt(0.03794999, -0.17407720);
+		WorldPt pos090 = new WorldPt(12.29839928, 89.82183415);
+		WorldPt newPos = VisUtil.rotatePosition(new WorldPt(0, 0), newRefCenter, pos00);
+		
+		System.out.println("1e-06 deg in arcseconds  = "+1e-06*3600);
+		Assert.assertEquals(pos090.getLon(), newPos.getLon(), 1E-6);
+		Assert.assertEquals(pos090.getLat(), newPos.getLat(), 1E-6);
+		
+		newPos = VisUtil.rotatePosition(new WorldPt(0, 90), new WorldPt(0,0), pos090);
+		
+		Assert.assertEquals(pos00.getLon(), newPos.getLon(), 1E-6);
+		Assert.assertEquals(pos00.getLat(), newPos.getLat(), 1E-6);
+		
+		
+	}
 	/**
 	 * Used for building regions - only matter height and zoom level
 	 * 

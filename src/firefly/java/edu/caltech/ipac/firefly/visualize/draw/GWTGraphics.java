@@ -55,6 +55,21 @@ public class GWTGraphics implements Graphics {
         drawLine(color, DEF_WIDTH,sx,sy,ex,ey);
     }
 
+	public void drawDLine(String color, double sx, double sy, double ex, double ey) {
+
+		drawDLine(color, DEF_WIDTH, sx, sy, ex, ey);
+	}
+
+	public void drawDLine(String color, int lineWidth, double sx, double sy, double ex, double ey) {
+		surfaceW.setLineWidth(lineWidth);
+		surfaceW.setStrokeStyle(makeColor(color));
+		surfaceW.beginPath();
+		surfaceW.moveTo(sx, sy);
+		surfaceW.lineTo(ex, ey);
+		surfaceW.closePath();
+		surfaceW.stroke();
+	}
+    
     public void drawLine(String color,
                          int lineWidth,
                          int sx,
@@ -130,6 +145,18 @@ public class GWTGraphics implements Graphics {
         surfaceW.lineTo(x,y);
     }
 
+	@Override
+	public void pathDMoveTo(double x, double y) {
+		surfaceW.moveTo(x, y);
+
+	}
+
+	@Override
+	public void pathDLineTo(double x, double y) {
+		surfaceW.lineTo(x, y);
+
+	}
+	
     public void rect(int x, int y, int width, int height) {
         surfaceW.rect(x,y,width,height);
     }
@@ -238,6 +265,7 @@ public class GWTGraphics implements Graphics {
         if (GwtUtil.isHexColor(c)) c= "#" + c;
         return new Color(c);
     }
+
 
 // =====================================================================
 // -------------------- Native Methods --------------------------------

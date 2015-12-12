@@ -210,6 +210,18 @@ public class HtmlGwtCanvas implements AdvancedGraphics {
         ctx.lineTo(x,y);
     }
 
+	@Override
+	public void pathDMoveTo(double x, double y) {
+		ctx.moveTo(x, y);
+
+	}
+
+	@Override
+	public void pathDLineTo(double x, double y) {
+		ctx.lineTo(x, y);
+
+	}
+	
     public void rect(int x, int y, int width, int height) {
     	ctx.rect(x,y,width,height);
     }

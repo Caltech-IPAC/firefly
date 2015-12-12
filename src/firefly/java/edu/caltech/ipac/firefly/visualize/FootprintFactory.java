@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
+import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil.CentralPointRetval;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
@@ -212,7 +214,7 @@ public class FootprintFactory  {
 			+" POLYGON   -0.00058333  -0.03417222  -0.03089722  -0.00026389  -0.01472778   0.01583889   0.01521944  -0.01804722  -0.00058333  -0.03417222   "
 			+" POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111   "
 			+" POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111";
-
+	
 	private HashMap<String,List<Double>> map;
 	private double[] offset;
 	
@@ -405,7 +407,7 @@ public class FootprintFactory  {
 
 	private Region getCircle(Double[] array, WorldPt refTarget, boolean moveBackCenter) {
 		WorldPt pt0 = new WorldPt(array[0], array[1]);
-		WorldPt ptRef= VisUtil.calculatePosition(refTarget, pt0.getLon()*3600, pt0.getLat()*3600);
+		WorldPt ptRef= VisUtil.calculatePosition(refTarget, pt0.getLon()*3600d, pt0.getLat()*3600d); // that's ok because offsetRa, offsetDec are from 0,0!
 		double[] cRel = new double[]{0,0};
 		double radius = array[2];
 		WorldPt pt;
@@ -445,8 +447,9 @@ public class FootprintFactory  {
 		//Move the footprint from ra,dec=0,0 to refCenter
 		for (int j = 0; j < tempPts.length; j++) {
 			pts[j] = VisUtil.calculatePosition(refTarget, 
-					tempPts[j].getLon() * 3600, 
-					tempPts[j].getLat() * 3600);
+					tempPts[j].getLon() * 3600.0, 
+					tempPts[j].getLat() * 3600.0);// that's ok because offsetRa, offsetDec are from 0,0!
+//			pts[j] = tempPts[j]; // works only on 0.0
 		}
 		return pts;
 		
@@ -457,20 +460,20 @@ public class FootprintFactory  {
 	 * @return
 	 */
 	public Region getPolygonRegionLines(Double[] xyCoords, WorldPt polyCenter, WorldPt refTarget, boolean moveBackCenter) {
+		WorldPt[] tmpPts = getWorldPoints(xyCoords, refTarget); // polys in ref centered on reftarget
 		WorldPt[] pts = getWorldPoints(xyCoords, refTarget);
 		double[] cRel = new double[]{0,0};
-		
-		if (moveBackCenter) {
+		if (moveBackCenter) { // if true, this is for individual aperture where we want to relocate each point relative to the polygon center
 			
 			cRel = getCenterOffset(polyCenter, refTarget); // offset of the center polygon with respect to the center of the full footprint
-
-			for (int i = 0; i < pts.length; i++) {
-				double screenXPt = plot.getScreenCoords(pts[i]).getX() - cRel[0];
-				double screenYPt = plot.getScreenCoords(pts[i]).getY() - cRel[1];
-				pts[i] = plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+//			GwtUtil.logToServer(Level.INFO, cRel[0]+", "+cRel[1]);
+			for (int i = 0; i < tmpPts.length; i++) {
+//				double screenXPt = plot.getScreenCoords(pts[i]).getX() - cRel[0];
+//				double screenYPt = plot.getScreenCoords(pts[i]).getY() - cRel[1];
+//				pts[i] = plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+				pts[i] = VisUtil.rotatePosition(polyCenter, refTarget, tmpPts[i]);
 			}
 		}
-		
 		
 		RegionLines regionLines = new RegionLines(pts);
 		
