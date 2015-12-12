@@ -11,8 +11,8 @@ import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import VisMouseCntlr  from '../VisMouseCntlr.js';
 import PlotViewUtil  from '../PlotViewUtil.js';
 import PlotGroup  from '../PlotGroup.js';
+import DrawerComponent  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
-
 
 
 
@@ -27,7 +27,8 @@ var ImageViewerView= React.createClass(
 
 
     propTypes: {
-        plotView : React.PropTypes.object.isRequired
+        plotView : React.PropTypes.object.isRequired,
+        drawLayersAry: React.PropTypes.array.isRequired
     },
 
     plotDrag: null,
@@ -83,7 +84,8 @@ var ImageViewerView= React.createClass(
 
 
     renderInside() {
-        var {primaryPlot:plot,plotId,scrollX,scrollY}= this.props.plotView;
+        var {plotView,drawLayersAry}= this.props;
+        var {primaryPlot:plot,plotId,scrollX,scrollY}= plotView;
         var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
         var {width:sw,height:sh}= plot.screenSize;
         var scrollViewWidth= Math.min(viewPortWidth,sw);
@@ -96,6 +98,7 @@ var ImageViewerView= React.createClass(
                         height:scrollViewHeight
         };
 
+        var drawingAry= makeDrawingAry(plotView, drawLayersAry);
         return (
                 <div className='plot-view-scr-view-window'
                      style={rootStyle}>
@@ -112,10 +115,7 @@ var ImageViewerView= React.createClass(
                         <div className='drawingArea'
                              style={{width:viewPortWidth, height:viewPortHeight,
                                      left:0, right:0, position:'absolute'}} >
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
+                            {drawingAry}
                         </div>
                         <EventLayer plotId={plotId} width={viewPortWidth} height={viewPortHeight}
                                     eventCallback={this.eventCB}/>
@@ -195,6 +195,17 @@ function getBorderColor(plotId) {
 
 }
 
+
+/**
+ *
+ * @param plotView
+ * @param {[]} dlAry - array of drawingLayers
+ * @return {*}
+ */
+function makeDrawingAry(plotView,dlAry) {
+    if (!dlAry) return [];
+    return dlAry.map( (dl) => <DrawerComponent plotView={plotView} drawingLayer={dl} key={dl.drawLayerId}/> );
+}
 
 
 

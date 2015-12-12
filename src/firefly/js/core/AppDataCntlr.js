@@ -13,16 +13,57 @@ const APP_LOAD = 'app-data/APP_LOAD';
 const APP_UPDATE = 'app-data/APP_UPDATE';
 const SHOW_DIALOG = 'app-data/SHOW_DIALOG';
 const HIDE_DIALOG = 'app-data/HIDE_DIALOG';
+const ADD_TASK_COUNT = 'app-data/ADD_TASK_COUNT';
+const REMOVE_TASK_COUNT = 'app-data/ADD_TASK_COUNT';
 const HIDE_ALL_DIALOGS = 'app-data/HIDE_ALL_DIALOGS';
 const APP_DATA_PATH = 'app-data';
 const ACTIVE_TARGET = 'app-data/ACTIVE_TARGET';
 
 
+const TASK= 'task-';
+var taskCnt=0;
+
+
+
+const showDialog= function(dialogId) {
+    flux.process({type: SHOW_DIALOG, payload: {dialogId}});
+};
+
+const hideDialog= function(dialogId) {
+    flux.process({type: HIDE_DIALOG, payload: {dialogId}});
+};
+
+const hideAllDialogs= function() {
+    flux.process({type: HIDE_ALL_DIALOGS, payload: {}});
+};
+
+/**
+ * @param componentId the id or array of ids of the component to record the task count
+ * @param taskId id of task, create with makeTaskId()
+ */
+const dispatchAddTaskCount= function(componentId,taskId) {
+    flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});
+};
+
+/**
+ * @param componentId the id or array of ids of the component to record the task count
+ * @param taskId id of task, create with makeTaskId()
+ */
+const dispatchRemoveTaskCount= function(componentId,taskId) {
+    flux.process({type: REMOVE_TASK_COUNT, payload: {componentId,taskId}});
+};
+
+const makeTaskId= function() {
+    taskCnt++;
+    return TASK+taskCnt++;
+};
+
 
 function getInitState() {
     return {
         isReady : false,
-        activeTarget: null
+        activeTarget: null,
+        taskCounters: []
     };
 }
 
@@ -31,24 +72,29 @@ function reducer(state=getInitState(), action={}) {
     history.add(state, action);
 
     switch (action.type) {
-        case (APP_LOAD)  :
+        case APP_LOAD  :
             return getInitState();
 
-        case (APP_UPDATE)  :
+        case APP_UPDATE  :
             return Object.assign({}, state, action.payload);
 
-        case (SHOW_DIALOG)  :
+        case SHOW_DIALOG  :
             return showDialogChange(state,action);
 
-        case (HIDE_DIALOG)  :
+        case HIDE_DIALOG  :
             return hideDialogChange(state,action);
 
-        case (HIDE_ALL_DIALOGS)  :
+        case HIDE_ALL_DIALOGS  :
             return hideAllDialogsChange(state,action);
 
-        case (ACTIVE_TARGET)  :
+        case ACTIVE_TARGET  :
             return updateActiveTarget(state,action);
 
+        case REMOVE_TASK_COUNT  :
+            return addTaskCount(state,action);
+
+        case ADD_TASK_COUNT  :
+            return removeTaskCount(state,action);
 
         default:
             return state;
@@ -60,6 +106,25 @@ const updateActiveTarget= function(state,action) {
     var {worldPt,corners}= action;
     if (!worldPt || !corners) return state;
     return Object.assign({}, state, {activeTarget:{worldPt,corners}});
+};
+
+
+const addTaskCount= function(state,action) {
+    var {componentId,taskId}= action.payload;
+    if (!componentId && !taskId) return state;
+    var taskArray= state.taskCounters[componentId] | [];
+    taskArray= [...taskArray,taskId];
+    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    return Object.assign({},state, {taskCounters});
+};
+
+const removeTaskCount= function(state,action) {
+    var {componentId,taskId}= action.payload;
+    if (!componentId && !taskId) return state;
+    var taskArray= state.taskCounters[componentId] | [];
+    taskArray= taskArray.filter( (id) => id!==taskId);
+    var taskCounters= Object.assign({}, taskCounters, {[componentId]:taskArray});
+    return Object.assign({},state, {taskCounters});
 };
 
 
@@ -165,17 +230,6 @@ const isDialogVisible= function(dialogKey) {
 };
 
 
-const showDialog= function(dialogId) {
-    flux.process({type: SHOW_DIALOG, payload: {dialogId}});
-};
-
-const hideDialog= function(dialogId) {
-    flux.process({type: HIDE_DIALOG, payload: {dialogId}});
-};
-
-const hideAllDialogs= function() {
-    flux.process({type: HIDE_ALL_DIALOGS, payload: {}});
-};
 
 /**
  * returns a Promise containing the properties object.
@@ -234,7 +288,10 @@ export default {
     hideDialog,
     hideAllDialogs,
     getActiveTarget,
-    setActiveTarget
+    setActiveTarget,
+    dispatchAddTaskCount,
+    dispatchRemoveTaskCount,
+    makeTaskId
 };
 
 

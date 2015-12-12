@@ -9,9 +9,15 @@ package edu.caltech.ipac.util.dd;
  */
 
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
+import edu.caltech.ipac.util.StringUtils;
+
 /**
  * @author Trey Roby
  */
+@JsExport
+@JsType
 public class RegionValue {
 
     public enum Unit {CONTEXT, DEGREE, ARCSEC, ARCMIN, RADIANS, SCREEN_PIXEL, IMAGE_PIXEL, UNKNOWN}
@@ -76,6 +82,11 @@ public class RegionValue {
             default:           uStr= "";   break;
         }
         return value+uStr;
+    }
+
+
+    public static RegionValue makeRegionValue(double value, String unitStr)  {
+        return new RegionValue(value, StringUtils.getEnum(unitStr,Unit.IMAGE_PIXEL));
     }
 
 }

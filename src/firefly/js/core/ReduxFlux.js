@@ -8,7 +8,7 @@ import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
-import { actionSideEffectMiddleware } from 'firefly/side-effects';
+import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
@@ -16,7 +16,7 @@ import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import HistogramCntlr from '../visualize/HistogramCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
-
+import DrawingLayerCntlr from '../visualize/DrawingLayerCntlr.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -35,7 +35,8 @@ const reducers = {
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
-    [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer
+    [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
+    [DrawingLayerCntlr.DRAWING_LAYER_KEY]: DrawingLayerCntlr.reducer
 };
 
 let redux = null;

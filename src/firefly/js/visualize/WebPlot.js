@@ -443,11 +443,15 @@ export class WebPlot {
         var projection= makeProjection(wpInit.projection);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
         var zf= plotState.getZoomLevel();
+
+        var csys= CoordinateSys.parse(wpInit.imageCoordSys);
+
+
         var webPlot= {
             plotId,
             plotImageId     : plotId+'---NEEDS___INIT',
             serverImages    : wpInit.initImages,
-            imageCoordSys   : wpInit.imageCoordSys,
+            imageCoordSys   : csys,
             plotState,
             projection,
             dataWidth       : wpInit.dataWidth,
@@ -461,7 +465,7 @@ export class WebPlot {
             zoomFactor: zf,
             percentOpaque   : 1.0,
             alive    : true,
-            attributes: {},
+            var: {},
             viewPort: WebPlot.makeViewPort(0,0,42,42),
             //=== End Mutable =====================
             asOverlay

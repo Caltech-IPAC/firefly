@@ -2,6 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import ImagePlotCntlr from './ImagePlotCntlr.js';
+import DrawingLayerCntlr from './DrawingLayerCntlr.js';
+import DrawingLayer from './draw/DrawingLayer.js';
 import PlotGroup from './PlotGroup.js';
 import {flux} from '../Firefly.js';
 
@@ -9,7 +11,8 @@ import {flux} from '../Firefly.js';
 
 
 export default {getPlotViewById, getPrimaryPlot, findPlotView, getPlotViewAry,operateOnOthersInGroup,
-    findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,getActivePlotView,getAllPlots  };
+                findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
+                getActivePlotView,getAllPlots, getAllDrawingLayers, getAllDrawingLayersStore};
 
 /**
  * get the plot view with the id
@@ -26,6 +29,9 @@ function getPlotViewById(plotId) {
 function getPlotViewAry() {
     return flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY].plotViewAry;
 }
+
+
+
 
 function isActivePlotView(plotId) {
     var store= flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY];
@@ -128,4 +134,16 @@ function operateOnOthersInGroup(sourcePv,operationFunc) {
             }
         });
     }
+}
+
+
+function getAllDrawingLayersStore() {
+    return flux.getState()[DrawingLayerCntlr.DRAWING_LAYER_KEY].dlContainerAry;
+}
+
+function getAllDrawingLayers(plotId) {
+    var ary= flux.getState()[DrawingLayerCntlr.DRAWING_LAYER_KEY].dlContainerAry;
+    return ary.filter( (c) => c.drawingLayer.plotIdAry
+        .find( (id) => id===plotId||id===DrawingLayer.ALL_PLOTS))
+        .map( (c) => c.drawingLayer);
 }

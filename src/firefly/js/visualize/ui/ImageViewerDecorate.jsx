@@ -10,7 +10,7 @@ import React from 'react';
 
 export default ImageViewDecorate;
 
-function ImageViewDecorate({plotView,allPlots}) {
+function ImageViewDecorate({plotView,drawLayersAry}) {
 
     var style= {width:'100%',
                 height:'100%',
@@ -23,7 +23,7 @@ function ImageViewDecorate({plotView,allPlots}) {
 
     return (
         <div className='image-viewer-decorate' style={style}>
-            <ImageViewerView plotView={plotView}/>
+            <ImageViewerView plotView={plotView} drawLayersAry={drawLayersAry}/>
         </div>
     );
 }
@@ -31,7 +31,7 @@ function ImageViewDecorate({plotView,allPlots}) {
 
 ImageViewDecorate.propTypes= {
     plotView : React.PropTypes.object.isRequired,
-    allPlots : React.PropTypes.object.isRequired
+    drawLayersAry: React.PropTypes.array.isRequired
 };
 
 

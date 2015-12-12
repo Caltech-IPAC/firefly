@@ -169,6 +169,10 @@ export const makeProjectionPt= function(x,y) {
     return Object.assign(new Pt(x,y), {type:PROJ_PT});
 };
 
+export const pointEquals= function(p1,p2)  {
+    return (p1.x===p2.x && p1.y===p2.y && p1.type===p2.type && p1.csys===p2.csys);
+};
+
 
 export const parsePt= function(type, inStr) {
     if (!inStr) return null;

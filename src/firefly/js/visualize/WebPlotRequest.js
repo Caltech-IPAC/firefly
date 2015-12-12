@@ -11,6 +11,7 @@ import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import Point, {parseImagePt} from './Point.js';
 import Resolver, {parseResolver} from '../astro/net/Resolver.js';
+import join from 'underscore.string/join';
 import RangeValues from './RangeValues.js';
 
 
@@ -117,7 +118,8 @@ const C= {
     DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
     GRID_ID : 'GRID_ID',
     DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
-    PLOT_ID : 'PlotID'
+    PLOT_ID : 'PlotID',
+    OVERLAY_IDS: 'PredefinedOverlayIds'
 
 };
 
@@ -159,6 +161,7 @@ const clientSideKeys =
          C.TITLE_FILENAME_MODE_PFX, C.MINIMAL_READOUT,
          C.PLOT_GROUP_ID, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID, C.GROUP_LOCKED,
+         C.OVERLAY_IDS
         ];
 
 const ignoreForEquals = [C.PROGRESS_KEY, C.ZOOM_TO_WIDTH, C.ZOOM_TO_HEIGHT,
@@ -170,18 +173,9 @@ const DEFAULT_PIPELINE_ORDER= Order.ROTATE.key+';'+
                               Order.POST_CROP.key+';'+
                               Order.POST_CROP_AND_CENTER.key;
 
-function makeOrderList(orderStr) {
-    var retList= [];
-    if (!orderStr) return retList;
-    var sAry= orderStr.split(';');
-    sAry.forEach((v) => {
-        if (Order.get(v)) retList.push(Order.get(v));
-    });
-    return retList;
-}
+const makeOrderList = (orderStr) => orderStr ? orderStr.split(';').map( (v) => Order.get(v)) : [];
 
 const DEF_ORDER= makeOrderList(DEFAULT_PIPELINE_ORDER);
-
 
 
 /**
@@ -1129,26 +1123,43 @@ class WebPlotRequest extends ServerRequest {
      * @param orderList array of Order enums, the order of the pipeline
      */
     setPipelineOrder(orderList) {
-        var out= orderList.reduce((str,v,idx,ary)=> {
-            return str+ v.key + (idx===ary.length-1 ? '': ';');
-        },'');
-        this.setParam(C.PIPELINE_ORDER, out);
+        this.setParam(C.PIPELINE_ORDER, join(';',...orderList));
     }
 
     /**
-     * @return array of Order enums
+     * @return {[]} array of Order enums
      */
     getPipelineOrder() {
-        var retList;
+        var retList= DEF_ORDER;
         if (this.containsParam(C.PIPELINE_ORDER)) {
             retList= makeOrderList(this.getParam(C.PIPELINE_ORDER));
-            if (retList.size()<2) retList= DEF_ORDER;
-        }
-        else {
-            retList= DEF_ORDER;
+            if (retList.length<2) retList= DEF_ORDER;
         }
         return retList;
     }
+
+
+    /**
+     *
+     * @param overlayIdList
+     */
+    setOverlayIds(overlayIdList) {
+        this.setParam(C.OVERLAY_IDS, join(';', ...overlayIdList));
+    }
+
+    /**
+     * @return {[]} array of Order enums
+     */
+    getOverlayIds() {
+        return this.containsParam(C.OVERLAY_IDS) ?
+            this.getParam(C.OVERLAY_IDS).split(';') :
+            ['ACTIVE_TARGET','OTHER'];
+    }
+
+
+
+
+
 
 
     /**
