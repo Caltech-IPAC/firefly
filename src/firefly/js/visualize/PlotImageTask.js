@@ -266,8 +266,7 @@ function updateActiveTarget(req,plot) {
 }
 
 function initBuildInDrawingLayers() {
-    var layer= ActiveTarget.makeLayer();
-    DrawingLayerCntlr.dispatchCreateDrawLayer('ACTIVE_TARGET',layer);
+    ActiveTarget.dispatchInitActiveTarget();
 }
 
 

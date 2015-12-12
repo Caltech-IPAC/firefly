@@ -115,7 +115,7 @@ export default {
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
  *
- * @param plotId
+ * @param {string} plotId
  * @param scrollScreenPt a new point to scroll to in screen coordinates
  */
 function dispatchProcessScroll(plotId,scrollScreenPt) {
@@ -197,11 +197,15 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 
 /**
  *
- * @param plotId
+ * @param {string} plotId
  * @param {UserZoomTypes} zoomType
  */
 function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
 
+/**
+ * Set the plotId of the active plot view
+ * @param {string} plotId
+ */
 function dispatchChangeActivePlotView(plotId) {
     if (!PlotViewUtil.isActivePlotView(plotId)) {
         flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });

@@ -16,8 +16,10 @@ const HIDE_DIALOG = 'app-data/HIDE_DIALOG';
 const ADD_TASK_COUNT = 'app-data/ADD_TASK_COUNT';
 const REMOVE_TASK_COUNT = 'app-data/ADD_TASK_COUNT';
 const HIDE_ALL_DIALOGS = 'app-data/HIDE_ALL_DIALOGS';
-const APP_DATA_PATH = 'app-data';
 const ACTIVE_TARGET = 'app-data/ACTIVE_TARGET';
+const CHANGE_COMMAND_STATE = 'app-data/CHANGE_COMMAND_STATE ';
+
+const APP_DATA_PATH = 'app-data';
 
 
 const TASK= 'task-';
@@ -53,6 +55,13 @@ const dispatchRemoveTaskCount= function(componentId,taskId) {
     flux.process({type: REMOVE_TASK_COUNT, payload: {componentId,taskId}});
 };
 
+
+const dispatchChangeCommandState= function(commandId,commandState) {
+    flux.process({type: CHANGE_COMMAND_STATE, payload: {commandId,commandState}});
+};
+
+
+
 const makeTaskId= function() {
     taskCnt++;
     return TASK+taskCnt++;
@@ -63,7 +72,9 @@ function getInitState() {
     return {
         isReady : false,
         activeTarget: null,
-        taskCounters: []
+        taskCounters: [],
+        dialogs: {},      // key is dialog id, value is object {visible:true/false} maybe more in this object in future
+        commandState:{}   // key is command id, value is anything the action drops in, only stateful commands need this
     };
 }
 
@@ -96,6 +107,9 @@ function reducer(state=getInitState(), action={}) {
         case ADD_TASK_COUNT  :
             return removeTaskCount(state,action);
 
+        case CHANGE_COMMAND_STATE  :
+            return changeCommandState(state,action);
+
         default:
             return state;
     }
@@ -127,6 +141,9 @@ const removeTaskCount= function(state,action) {
     return Object.assign({},state, {taskCounters});
 };
 
+function getCommandState(stateId) {
+    return flux.getState()[APP_DATA_PATH].commandState[stateId];
+}
 
 
 const showDialogChange= function(state,action) {
@@ -166,6 +183,12 @@ const hideAllDialogsChange= function(state) {
     return Object.assign({}, state);
 };
 
+function changeCommandState(state,action) {
+    if (!action.payload) return state;
+    var {commandId,commandState}= action.payload;
+    var s= Object.assign({},state.commandState, {[commandId]:commandState});
+    return Object.assign({},state,{commandState:s});
+}
 
 
 
@@ -231,6 +254,7 @@ const isDialogVisible= function(dialogKey) {
 
 
 
+
 /**
  * returns a Promise containing the properties object.
  */
@@ -291,7 +315,9 @@ export default {
     setActiveTarget,
     dispatchAddTaskCount,
     dispatchRemoveTaskCount,
-    makeTaskId
+    dispatchChangeCommandState,
+    makeTaskId,
+    getCommandState
 };
 
 

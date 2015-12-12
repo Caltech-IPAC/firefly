@@ -14,6 +14,7 @@ import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
+import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
 import ZoomUtil from '../ZoomUtil.js';
@@ -72,6 +73,26 @@ function resultsSuccess(request) {
 }
 
 
+function selectArea() {
+    var s= AppDataCntlr.getCommandState('SelectAreaCmd');
+
+    if (!s) {
+        s= {selectOn:false};
+    }
+
+    AppDataCntlr.dispatchChangeCommandState('SelectAreaCmd',s);
+
+    if (s.selectOn) {
+
+        // dispatch turn on select
+    }
+    else {
+        // dispatch turn off select
+    }
+
+
+
+}
 
 function zoom(zType) {
     console.log(zType);
@@ -126,6 +147,7 @@ function TestImagePanel() {
                     <button type='button' onClick={() => zoom('fit')}>Zoom Fit</button>
                     <button type='button' onClick={() => zoom('fill')}>Zoom Fill</button>
                     <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
+                    <button type='button' onClick={() => selectArea()}>Select Area</button>
                     <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <br/>

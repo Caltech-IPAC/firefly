@@ -13,29 +13,67 @@ const SELECTED_IDX_ARY='selectIdxAry';
 
 export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
 
-function makeDrawingLayer(drawLayerId, overrideOptions) {
+
+/**
+ *
+ * @param drawLayerId
+ * @param {object} options a set of options that define this drawing layer
+ * <ul>
+ *          <li>The following are the boolean options, all default to false:
+ *
+ *     <ul>
+ *               <li>canHighlight:   supports a highlighted object, must be able to produce highlighted data for this option
+ *               <li>canSelect:      supports a selected array of objects, must be able to produce a selected data array,
+ *                               only used with isPointData
+ *               <li>canFilter:      drawing layer can be used with the filter controls,
+ *                               only used with canSelect and isPointData
+ *               <li>canUseMouse:    drawing layer has mouse interaction, must set up actionIdAry
+ *               <li>canSubgroup:    can be used with subgrouping
+ *               <li>hasPerPlotData: drawing layer produces different data for each plot
+ *               <li>asyncData :     drawing layer uses async operations to get the data
+ *               <li>isPointData:    drawing layer only uses point data, @see PointDataObj.js
+ *     </ul>
+ *
+ *
+ *          <li>The following are the string options, all default to empty string
+ *     <ul>
+ *               <li>helpLine:       a one line string describing the operation, for the end user to see
+ *
+ *     </ul>
+ *
+ * </ul>
+ *
+ *
+ * @param {object} drawingDef  the defaults that the drawer will use if not overridded @see DrawingDef
+ * @param actionIdAry extra actions that are allow though to the drawing layer reducer
+ * @return {*}
+ */
+function makeDrawingLayer(drawLayerId, options, drawingDef= makeDrawingDef('red'),actionIdAry= []) {
     var drawingLayer=  {
         drawLayerId,
-        controlGroupId:drawLayerId,   // all layers that share a control group id will be controlled together, defaults to drawLayerId
+        displayGroupId:drawLayerId,   // all layers that share a display group id will be controlled together, defaults to drawLayerId
         plotIdAry: [ALL_PLOTS],  // array of plotId that are layered
         visiblePlotIdAry: [], // array of plotId that are visible
-        actionIdAry :[],      // what actions that the reducer all thought to the drawing layer reducer
+        actionIdAry,      // what actions that the reducer will allow through the drawing layer reducer
+        dataAvailable : true,  //todo
+        drawingDef,
 
         // following to fields deal with subgrouping
         subgroups : {},       // subgroupId : plotIdAry todo: decide if this is the right approach
         groupTypes: [],       // id's of types of subgroups such as single, row, all, todo: is this over generalized?
 
-        canHighlight: false,    // todo if true the the default reducer should  handle it. point data only?
+
+
+           // The following are the options that the drawing layer supports.
+           // should be set in the options parameter
+        canHighlight: false,
         canSelect: false,      // todo if true the the default reducer should  handle it. point data only?
-        selectedCnt: 0,
         canFilter: false,      // todo if true the the default reducer should  handle it
-        canUseMouse: false,      // todo this might be unnecessary now
-        canSubgroup: false,
+        canUseMouse: false,    // todo
+        canSubgroup: false,    //todo
         hasPerPlotData: false,
-        asyncData : false,
-        dataAvailable : true,
+        asyncData : false,  //todo
         isPointData: false,
-        drawingDef: makeDrawingDef('red'),
         helpLine : '',
 
            // drawData contains the components that may be drawn.
@@ -67,7 +105,7 @@ function makeDrawingLayer(drawLayerId, overrideOptions) {
         }
     };
 
-    return Object.assign(drawingLayer,overrideOptions);
+    return Object.assign(drawingLayer,options);
 }
 
 /**
