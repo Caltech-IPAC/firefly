@@ -16,18 +16,18 @@ export default {makeReducer};
 
 /**
  *
- * @param getDrawDataFunc a function that will take the drawing layer and data the type.
- *
- * @param actionIdAry a list of actions that will cause this drawing layer update by calling the drawDataReducer
- * @param options currently title,helpLine,defColor- all are strings
+ * @param {object} drawingLayerInitValue
+ * @param getDrawDataFunc
+ * @param {function} getDrawDataFunc a function that will take the drawing layer and data the type.
  * @return {Function}
  */
-function makeReducer(getDrawDataFunc, actionIdAry=[], options) {
+function makeReducer(drawingLayerInitValue, getDrawDataFunc) {
     return (drawingLayer, action={}) => {
         if (!action.payload || !action.type) return drawingLayer;
 
         if (!drawingLayer) {
-            drawingLayer= makeLayer(action.payload.drawLayerId,actionIdAry,getDrawDataFunc,options,action);
+            var drawData= getDrawData(getDrawDataFunc,drawingLayerInitValue,action);
+            drawingLayer= Object.assign({}, drawingLayerInitValue, {drawData});
         }
 
         switch (action.type) {
@@ -73,20 +73,12 @@ function handleOtherAction(drawingLayer,action, drawDataReducer) {
 
 function anyReplot(drawingLayer,action, getDrawDataFunc) {
     var {plotIdAry}= action.payload;
-
     if (drawingLayer.hasPerPlotData) {
-        var drawData= plotIdAry.reduce( (d,id) => {
-            return Object.assign({}, d, getDrawData(getDrawDataFunc,drawingLayer,action,id));
-        }, Object.assign({},drawData.data));
-        return Object.assign({},drawingLayer,{drawData});
+        drawingLayer= Object.assign({}, drawingLayer);
+        plotIdAry.forEach( (id) => drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action, id));
     }
     return drawingLayer;
-
-
 }
-
-
-
 
 
 
@@ -172,11 +164,8 @@ function changeVisibility(drawingLayer,action, getDrawDataFunc) {
 
 
 
-function makeLayer(drawLayerId, actionIdAry, getDrawDataFunc, options, action) {
-    var layer= DrawingLayer.makeDrawingLayer(drawLayerId);
-    var drawData= getDrawData(getDrawDataFunc,layer,action);
-    return Object.assign(layer, options, {actionIdAry,drawData});
-}
+//function makeLayer(drawLayerId, actionIdAry, getDrawDataFunc, options, action) {
+//}
 
 /**
  *

@@ -122,7 +122,7 @@ function reducer(state=initState(), action={}) {
             retState= deferToLayerReducer(state,action);
             break;
         case ImagePlotCntlr.ANY_REPLOT:
-            retState= deferToLayerReducer(state,action);
+            retState= determineAndCallLayerReducer(state,action,true);
             break;
         case VisMouseCntlr.MOUSE_STATE_CHANGE:
             retState= mouseStateChange(state,action);
@@ -199,10 +199,10 @@ function deferToLayerReducer(state,action) {
  * @param {{type:string,payload:object}} action
  * @return {object} the new state;
  */
-function determineAndCallLayerReducer(state,action) {
+function determineAndCallLayerReducer(state,action,force) {
     var newAry= state.dlContainerAry.map( (dlContainer) => {
         var {drawLayerReducer,drawingLayer}= dlContainer;
-        if (drawingLayer.actionIdAry && drawingLayer.actionIdAry.includes(action.type)) {
+        if (force || (drawingLayer.actionIdAry && drawingLayer.actionIdAry.includes(action.type))) {
             var newdl= drawLayerReducer(drawingLayer,action);
             if (newdl===drawingLayer) return dlContainer;  // check to see if there was a change
             else return Object.assign({}, dlContainer, {drawingLayer:newdl});
