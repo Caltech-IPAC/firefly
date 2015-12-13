@@ -853,7 +853,8 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             center.add(new Label("Center:"));
             center.add(centerPosLbl);
             HorizontalPanel center2 = new HorizontalPanel();
-            center.add(centerPosLbl2);
+            center2.add(new Label("      "));
+            center2.add(centerPosLbl2);
             p3.add(center);
             p3.add(center2);
             //TODO if boresight position need to be in the readout, uncomment the following lines:
