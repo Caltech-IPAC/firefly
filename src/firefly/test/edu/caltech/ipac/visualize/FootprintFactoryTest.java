@@ -377,13 +377,13 @@ public class FootprintFactoryTest {
 		WorldPt newRefCenter = new WorldPt(0, 90);
 		WorldPt pos00 = new WorldPt(0.03794999, -0.17407720);
 		WorldPt pos090 = new WorldPt(12.29839928, 89.82183415);
-		WorldPt newPos = VisUtil.rotatePosition(new WorldPt(0, 0), newRefCenter, pos00);
+		WorldPt newPos = VisUtil.getTranslateAndRotatePosition(new WorldPt(0, 0), newRefCenter, pos00);
 		
 		System.out.println("1e-06 deg in arcseconds  = "+1e-06*3600);
 		Assert.assertEquals(pos090.getLon(), newPos.getLon(), 1E-6);
 		Assert.assertEquals(pos090.getLat(), newPos.getLat(), 1E-6);
 		
-		newPos = VisUtil.rotatePosition(new WorldPt(0, 90), new WorldPt(0,0), pos090);
+		newPos = VisUtil.getTranslateAndRotatePosition(new WorldPt(0, 90), new WorldPt(0,0), pos090);
 		
 		Assert.assertEquals(pos00.getLon(), newPos.getLon(), 1E-6);
 		Assert.assertEquals(pos00.getLat(), newPos.getLat(), 1E-6);

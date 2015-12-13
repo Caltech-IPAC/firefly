@@ -216,9 +216,9 @@ public class FootprintObj extends DrawObj {
 				return;
 			// g.drawLine(color, DEF_WIDTH, pt0.getIX(), pt0.getIY(),
 			// pt.getIX(), pt.getIY());
-			g.pathMoveTo(pt0.getIX(), pt0.getIY());
+			g.pathDMoveTo(pt0.getX(), pt0.getY());
 			if (!plot.coordsWrap(wpt0, wpt)) {
-				g.pathLineTo(pt.getIX(), pt.getIY());
+				g.pathDLineTo(pt.getX(), pt.getY());
 			}
 			wpt0 = wpt;
 		}
@@ -364,12 +364,11 @@ public class FootprintObj extends DrawObj {
 			for (WorldPt wpt : arr) {
 				ScreenPt pti = plot.getScreenCoords(wpt);
 				if (pti != null) {
-//					int x2 = pti.getIX();
-//					int y2 = pti.getIY();
-//					x2 += pt.getIX();
-//					y2 += pt.getIY();
-//					arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
-					arr2[i++] = getNewPoint(wpt,apt);
+					double x2 = pti.getX();
+					double y2 = pti.getY();
+					x2 += pt.getX();
+					y2 += pt.getY();
+					arr2[i++] = plot.getWorldCoords(new ScreenPt(x2, y2));
 				}else{
 					//No translation
 					arr2[i++] = wpt;
@@ -384,7 +383,7 @@ public class FootprintObj extends DrawObj {
 	private WorldPt getNewPoint(WorldPt wpt, WorldPt refRotatedPos) {
 		
 		WorldPt initialRefPos = (WorldPt) getCenterPt();
-		return VisUtil.rotatePosition(initialRefPos , refRotatedPos, wpt);
+		return VisUtil.getTranslateAndRotatePosition(initialRefPos , refRotatedPos, wpt);
 	}
 
 
@@ -403,17 +402,21 @@ public class FootprintObj extends DrawObj {
 			for (WorldPt p1 : arr) {
 				// TRANSLATE TO ORIGIN
 				ScreenPt pti = plot.getScreenCoords(p1);
-				double xc = center.getX();
-				double x1 = pti.getX() - xc;
-				double yc = center.getY();
-				double y1 = pti.getY() - yc;
+				if (pti != null) {
+					double xc = center.getX();
+					double x1 = pti.getX() - xc;
+					double yc = center.getY();
+					double y1 = pti.getY() - yc;
 
-				// APPLY ROTATION
-				double temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
-				double temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+					// APPLY ROTATION
+					double temp_x1 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+					double temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
 
-				// TRANSLATE BACK
-				arr2[i++] = plot.getWorldCoords(new ScreenPt(temp_x1 + xc, temp_y1 + yc));
+					// TRANSLATE BACK
+					arr2[i++] = plot.getWorldCoords(new ScreenPt(temp_x1 + xc, temp_y1 + yc));
+				} else {
+					arr2[i++] = p1;
+				}
 			}
 			_fpList.add(arr2);
 		}

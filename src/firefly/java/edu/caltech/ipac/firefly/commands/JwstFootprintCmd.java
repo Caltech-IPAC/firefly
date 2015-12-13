@@ -852,13 +852,15 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
             HorizontalPanel center = new HorizontalPanel();
             center.add(new Label("Center:"));
             center.add(centerPosLbl);
+            HorizontalPanel center2 = new HorizontalPanel();
             center.add(centerPosLbl2);
-            HorizontalPanel dtc = new HorizontalPanel();
-            dtc.add(new Label("Boresight position:"));
-            dtc.add(centerOffsetLabel);
             p3.add(center);
-            //TODO if boresight position need to be in the readout, uncomment the following line:
-            //p3.add(dtc);
+            p3.add(center2);
+            //TODO if boresight position need to be in the readout, uncomment the following lines:
+//            HorizontalPanel dtc = new HorizontalPanel();
+//            dtc.add(new Label("Boresight position:"));
+//            dtc.add(centerOffsetLabel);
+//            p3.add(dtc);
             
             SimpleInputField posWrap = SimpleInputField.createByProp(CommandName+"JWST.field.position");
             final InputField posIf= ((ValidationInputField)posWrap.getField()).getIF();

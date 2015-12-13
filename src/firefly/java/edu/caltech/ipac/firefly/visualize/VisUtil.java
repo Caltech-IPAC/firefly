@@ -543,6 +543,57 @@ public class VisUtil {
     }
 
     /**
+     * Returns new world position rotated by an angle in radian around 
+     * @param positionToRotate
+     * @param rotAng
+     * @return
+     */
+    public static WorldPt rotateByAngle(WorldPt positionToRotate, double rotAng){
+    	double ra = Math.toRadians(positionToRotate.getLon());
+	    double dec = Math.toRadians(positionToRotate.getLat());
+	    // Compute (x, y, z), the unit vector in R3 corresponding to positionToRotate
+	    double cos_ra = Math.cos(ra);
+	    double sin_ra = Math.sin(ra);
+	    double cos_dec = Math.cos(dec);
+	    double sin_dec = Math.sin(dec);
+	    
+	    double x = cos_ra * cos_dec;
+	    double y = sin_ra * cos_dec;
+	    double z = sin_dec;
+	    
+	    // Rotate by angle theta = -ra1 around the z axis:
+	    //
+	    // [ x1 ]   [ cos(ra1) -sin(ra1) 0 ]   [ x ]
+	    // [ y1 ] = [ sin(ra1) cos(ra1)  0 ] * [ y ]
+	    // [ z1 ]   [ 0        0         1 ]   [ z ]
+	    double cos_theta = Math.cos(rotAng);
+	    double sin_theta = Math.sin(rotAng);
+	    double x1 = cos_theta * x - sin_theta * y;
+	    double y1 = sin_theta * x + cos_theta * y;
+	    double z1 = z;
+	    
+	    // Convert the unit vector result back to a WorldPt.
+	    double d = x1 * x1 + y1 * y1;
+	    double lon = 0.0;
+	    double lat = 0.0;
+	    if (d != 0.0) {
+	        lon = Math.toDegrees(Math.atan2(y1, x1));
+	        if (lon < 0.0) {
+	            lon += 360.0;
+	        }
+	    }
+	    if (z1 != 0.0) {
+	        lat = Math.toDegrees(Math.atan2(z1, Math.sqrt(d)));
+	        if (lat > 90.0) {
+	            lat = 90.0;
+	        } else if (lat < -90.0) {
+	            lat = -90.0;
+	        }
+	    }
+	    return new WorldPt(lon, lat);
+    }
+    
+    /**
 	 * Rotates the given input position and returns the result. The rotation
 	 * applied to positionToRotate is the one which maps referencePosition to
 	 * rotatedReferencePosition.
@@ -552,7 +603,7 @@ public class VisUtil {
 	 * @param positionToRotate
 	 * @return
 	 */
-	public static WorldPt rotatePosition(WorldPt referencePosition,
+	public static WorldPt getTranslateAndRotatePosition(WorldPt referencePosition,
 	                                     WorldPt rotatedReferencePosition,
 	                                     WorldPt positionToRotate) {
 	    // Extract coordinates and transform to radians

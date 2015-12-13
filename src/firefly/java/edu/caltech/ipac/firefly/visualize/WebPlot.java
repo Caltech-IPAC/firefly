@@ -811,8 +811,8 @@ public class WebPlot {
                     double imageWorkspaceX= imageX-_offsetX;
                     double imageWorkspaceY= imageY-_offsetY;
 
-                    int sx= (int)(imageWorkspaceX*zfact);
-                    int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+                    double sx= (imageWorkspaceX*zfact);
+                    double sy= ((getImageHeight() - imageWorkspaceY) *zfact);
 
                     retPt.setX(sx-_viewPortX);
                     retPt.setY(sy-_viewPortY);
@@ -824,8 +824,8 @@ public class WebPlot {
             double imageWorkspaceX= imagePt.getX()-_offsetX;
             double imageWorkspaceY= imagePt.getY()-_offsetY;
 
-            int sx= (int)(imageWorkspaceX*zfact);
-            int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+            double sx= (imageWorkspaceX*zfact);
+            double sy= ((getImageHeight() - imageWorkspaceY) *zfact);
 
             retPt.setX(sx-_viewPortX);
             retPt.setY(sy-_viewPortY);

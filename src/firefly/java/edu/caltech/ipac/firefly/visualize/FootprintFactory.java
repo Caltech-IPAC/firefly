@@ -217,6 +217,8 @@ public class FootprintFactory  {
 	
 	private HashMap<String,List<Double>> map;
 	private double[] offset;
+	private double rotAng;
+	private WorldPt initialReference = new WorldPt(0, 0);
 	
 	public HashMap<String, List<Double>> getRegionMap() {
 		return map;
@@ -289,14 +291,12 @@ public class FootprintFactory  {
 	 * @return
 	 */
 	public List<Region> getFootprintAsRegions(FOOTPRINT fp, WorldPt refCenter, boolean moveToRelativeCenter) {
-		
 		String def = getFootprintStcStringDef(fp);
 		List<Region> fpRegions = getRegionFromStc(def,refCenter, moveToRelativeCenter); //Full footprint, don't recenter
 		return fpRegions;
 	}
 	
 	public List<Region> getFootprintAsRegions(FOOTPRINT fp, INSTRUMENTS inst, WorldPt refCenter, boolean moveToRelativeCenter) {
-		
 		String def = getFootprintStcStringDef(fp, inst);
 		List<Region> fpRegions = getRegionFromStc(def,refCenter, moveToRelativeCenter); // Recenter to center of the polygons
 		return fpRegions;
@@ -407,16 +407,17 @@ public class FootprintFactory  {
 
 	private Region getCircle(Double[] array, WorldPt refTarget, boolean moveBackCenter) {
 		WorldPt pt0 = new WorldPt(array[0], array[1]);
-		WorldPt ptRef= VisUtil.calculatePosition(refTarget, pt0.getLon()*3600d, pt0.getLat()*3600d); // that's ok because offsetRa, offsetDec are from 0,0!
+		WorldPt ptRef= VisUtil.getTranslateAndRotatePosition(initialReference , refTarget, pt0);//VisUtil.calculatePosition(refTarget, pt0.getLon()*3600d, pt0.getLat()*3600d); // that's ok because offsetRa, offsetDec are from 0,0!
 		double[] cRel = new double[]{0,0};
 		double radius = array[2];
 		WorldPt pt;
 		if (moveBackCenter) {
 			cRel = getCenterOffset(ptRef, refTarget);
 
-			double screenXPt = plot.getScreenCoords(ptRef).getX() - cRel[0];
-			double screenYPt = plot.getScreenCoords(ptRef).getY() - cRel[1];
-			pt = plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+//			double screenXPt = plot.getScreenCoords(ptRef).getX() - cRel[0];
+//			double screenYPt = plot.getScreenCoords(ptRef).getY() - cRel[1];
+//			pt = plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
+			pt = VisUtil.getTranslateAndRotatePosition(ptRef, refTarget, ptRef);
 		} else {
 			pt = ptRef;
 		}
@@ -446,9 +447,10 @@ public class FootprintFactory  {
 		
 		//Move the footprint from ra,dec=0,0 to refCenter
 		for (int j = 0; j < tempPts.length; j++) {
-			pts[j] = VisUtil.calculatePosition(refTarget, 
-					tempPts[j].getLon() * 3600.0, 
-					tempPts[j].getLat() * 3600.0);// that's ok because offsetRa, offsetDec are from 0,0!
+			pts[j] = VisUtil.getTranslateAndRotatePosition(initialReference , refTarget, tempPts[j]);
+//			pts[j] = VisUtil.calculatePosition(refTarget, 
+//					tempPts[j].getLon() * 3600.0, 
+//					tempPts[j].getLat() * 3600.0);// that's ok because offsetRa, offsetDec are from 0,0!
 //			pts[j] = tempPts[j]; // works only on 0.0
 		}
 		return pts;
@@ -461,7 +463,7 @@ public class FootprintFactory  {
 	 */
 	public Region getPolygonRegionLines(Double[] xyCoords, WorldPt polyCenter, WorldPt refTarget, boolean moveBackCenter) {
 		WorldPt[] tmpPts = getWorldPoints(xyCoords, refTarget); // polys in ref centered on reftarget
-		WorldPt[] pts = getWorldPoints(xyCoords, refTarget);
+		WorldPt[] pts = tmpPts;
 		double[] cRel = new double[]{0,0};
 		if (moveBackCenter) { // if true, this is for individual aperture where we want to relocate each point relative to the polygon center
 			
@@ -471,7 +473,7 @@ public class FootprintFactory  {
 //				double screenXPt = plot.getScreenCoords(pts[i]).getX() - cRel[0];
 //				double screenYPt = plot.getScreenCoords(pts[i]).getY() - cRel[1];
 //				pts[i] = plot.getWorldCoords(new ScreenPt(screenXPt, screenYPt));
-				pts[i] = VisUtil.rotatePosition(polyCenter, refTarget, tmpPts[i]);
+				pts[i] = VisUtil.getTranslateAndRotatePosition(polyCenter, refTarget, tmpPts[i]);
 			}
 		}
 		
