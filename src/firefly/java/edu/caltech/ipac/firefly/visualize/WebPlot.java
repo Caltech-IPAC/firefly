@@ -811,8 +811,8 @@ public class WebPlot {
                     double imageWorkspaceX= imageX-_offsetX;
                     double imageWorkspaceY= imageY-_offsetY;
 
-                    int sx= (int)(imageWorkspaceX*zfact);
-                    int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+                    double sx= (imageWorkspaceX*zfact);
+                    double sy= ((getImageHeight() - imageWorkspaceY) *zfact);
 
                     retPt.setX(sx-_viewPortX);
                     retPt.setY(sy-_viewPortY);
@@ -824,8 +824,8 @@ public class WebPlot {
             double imageWorkspaceX= imagePt.getX()-_offsetX;
             double imageWorkspaceY= imagePt.getY()-_offsetY;
 
-            int sx= (int)(imageWorkspaceX*zfact);
-            int sy= (int)((getImageHeight() - imageWorkspaceY) *zfact);
+            double sx= (imageWorkspaceX*zfact);
+            double sy= ((getImageHeight() - imageWorkspaceY) *zfact);
 
             retPt.setX(sx-_viewPortX);
             retPt.setY(sy-_viewPortY);
@@ -1022,8 +1022,8 @@ public class WebPlot {
     @JsNoExport
     public ScreenPt getScreenCoords(ImageWorkSpacePt ipt, float altZLevel) {
         if (ipt==null) return null;
-        return new ScreenPt((int)((ipt.getX())*altZLevel),
-                            (int)((getImageHeight() - ipt.getY()) *altZLevel));
+        return new ScreenPt(((ipt.getX())*altZLevel),
+                            ((getImageHeight() - ipt.getY()) *altZLevel));
     }
 
 //========================================================================================
@@ -1315,7 +1315,7 @@ public class WebPlot {
         CoordinateSys csys= wp.getCoordSys();
         Pt retPt= wp;
         if (csys.equals(CoordinateSys.SCREEN_PIXEL)) {
-            retPt= new ScreenPt((int)wp.getX(), (int)wp.getY());
+            retPt= new ScreenPt(wp.getX(), wp.getY());
         }
         else if (csys.equals(CoordinateSys.PIXEL)) {
             retPt= new ImagePt(wp.getX(), wp.getY());

@@ -843,8 +843,7 @@ public class AllPlots implements HasWebEventManager {
         commandMap.put(FitsHeaderCmd.CommandName,     new FitsHeaderCmd());
         commandMap.put(FitsDownloadCmd.CommandName,   new FitsDownloadCmd());
         commandMap.put(ColorTable.CommandName,        new ColorTable());
-        //For combining marker and footprint overlay:
-        //commandMap.put(MarkerTool.CommandName,        new MarkerTool());
+        commandMap.put(MarkerTool.CommandName,        new MarkerTool());
         commandMap.put(Stretch.CommandName,           new Stretch());
         commandMap.put(LayerCmd.CommandName,          new LayerCmd());
         commandMap.put(RotateNorthCmd.CommandName,    new RotateNorthCmd());
@@ -1126,7 +1125,7 @@ public class AllPlots implements HasWebEventManager {
             return null;
         }
     }
-/*
+
     static class MarkerTool extends MenuGeneratorV2.MenuBarCmd {
         public static final String CommandName= "MarkerToolDD";
         public MarkerTool() { super(CommandName); }
@@ -1141,7 +1140,7 @@ public class AllPlots implements HasWebEventManager {
             return null;
         }
     }
-*/
+
     static class Stretch extends MenuGeneratorV2.MenuBarCmd {
         public static final String CommandName= "stretchQuick";
         public Stretch() { super(CommandName); }

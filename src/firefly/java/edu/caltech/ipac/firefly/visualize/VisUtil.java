@@ -543,6 +543,150 @@ public class VisUtil {
     }
 
     /**
+     * Returns new world position rotated by an angle in radian around 
+     * @param positionToRotate
+     * @param rotAng
+     * @return
+     */
+    public static WorldPt rotateByAngle(WorldPt positionToRotate, double rotAng){
+    	double ra = Math.toRadians(positionToRotate.getLon());
+	    double dec = Math.toRadians(positionToRotate.getLat());
+	    // Compute (x, y, z), the unit vector in R3 corresponding to positionToRotate
+	    double cos_ra = Math.cos(ra);
+	    double sin_ra = Math.sin(ra);
+	    double cos_dec = Math.cos(dec);
+	    double sin_dec = Math.sin(dec);
+	    
+	    double x = cos_ra * cos_dec;
+	    double y = sin_ra * cos_dec;
+	    double z = sin_dec;
+	    
+	    // Rotate by angle theta = -ra1 around the z axis:
+	    //
+	    // [ x1 ]   [ cos(ra1) -sin(ra1) 0 ]   [ x ]
+	    // [ y1 ] = [ sin(ra1) cos(ra1)  0 ] * [ y ]
+	    // [ z1 ]   [ 0        0         1 ]   [ z ]
+	    double cos_theta = Math.cos(rotAng);
+	    double sin_theta = Math.sin(rotAng);
+	    double x1 = cos_theta * x - sin_theta * y;
+	    double y1 = sin_theta * x + cos_theta * y;
+	    double z1 = z;
+	    
+	    // Convert the unit vector result back to a WorldPt.
+	    double d = x1 * x1 + y1 * y1;
+	    double lon = 0.0;
+	    double lat = 0.0;
+	    if (d != 0.0) {
+	        lon = Math.toDegrees(Math.atan2(y1, x1));
+	        if (lon < 0.0) {
+	            lon += 360.0;
+	        }
+	    }
+	    if (z1 != 0.0) {
+	        lat = Math.toDegrees(Math.atan2(z1, Math.sqrt(d)));
+	        if (lat > 90.0) {
+	            lat = 90.0;
+	        } else if (lat < -90.0) {
+	            lat = -90.0;
+	        }
+	    }
+	    return new WorldPt(lon, lat);
+    }
+    
+    /**
+	 * Rotates the given input position and returns the result. The rotation
+	 * applied to positionToRotate is the one which maps referencePosition to
+	 * rotatedReferencePosition.
+	 * @author Serge Monkewitz
+	 * @param referencePosition 
+	 * @param rotatedReferencePosition
+	 * @param positionToRotate
+	 * @return
+	 */
+	public static WorldPt getTranslateAndRotatePosition(WorldPt referencePosition,
+	                                     WorldPt rotatedReferencePosition,
+	                                     WorldPt positionToRotate) {
+	    // Extract coordinates and transform to radians
+	    double ra1 = Math.toRadians(referencePosition.getLon());
+	    double dec1 = Math.toRadians(referencePosition.getLat());
+	    double ra2 = Math.toRadians(rotatedReferencePosition.getLon());
+	    double dec2 = Math.toRadians(rotatedReferencePosition.getLat());
+	    double ra = Math.toRadians(positionToRotate.getLon());
+	    double dec = Math.toRadians(positionToRotate.getLat());
+
+	    // Compute (x, y, z), the unit vector in R3 corresponding to positionToRotate
+	    double cos_ra = Math.cos(ra);
+	    double sin_ra = Math.sin(ra);
+	    double cos_dec = Math.cos(dec);
+	    double sin_dec = Math.sin(dec);
+
+	    double x = cos_ra * cos_dec;
+	    double y = sin_ra * cos_dec;
+	    double z = sin_dec;
+
+	    // The rotation that maps referencePosition to rotatedReferencePosition
+	    // can be broken down into 3 rotations. The first is a rotation by an
+	    // angle of -ra1 around the z axis. The second is a rotation around the
+	    // y axis by an angle equal to (dec1 - dec2), and the last is around the
+	    // the z axis by ra2. We compute the individual rotations by
+	    // multiplication with the corresponding 3x3 rotation matrix (see
+	    // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations)
+
+	    // Rotate by angle theta = -ra1 around the z axis:
+	    //
+	    // [ x1 ]   [ cos(ra1) -sin(ra1) 0 ]   [ x ]
+	    // [ y1 ] = [ sin(ra1) cos(ra1)  0 ] * [ y ]
+	    // [ z1 ]   [ 0        0         1 ]   [ z ]
+	    double cos_theta = Math.cos(-ra1);
+	    double sin_theta = Math.sin(-ra1);
+	    double x1 = cos_theta * x - sin_theta * y;
+	    double y1 = sin_theta * x + cos_theta * y;
+	    double z1 = z;
+
+	    // Rotate by angle theta = (dec1 - dec2) around the y axis:
+	    //
+	    // [ x ]   [ cos(dec1 - dec2)  0 sin(dec1 - dec2) ]   [ x1 ]
+	    // [ y ] = [ 0                 1 0                ] * [ y1 ]
+	    // [ z ]   [ -sin(dec1 - dec2) 0 cos(dec1 - dec2) ]   [ z1 ]
+	    cos_theta = Math.cos(dec1 - dec2);
+	    sin_theta = Math.sin(dec1 - dec2);
+	    x = cos_theta * x1 + sin_theta * z1;
+	    y = y1;
+	    z = -sin_theta * x1 + cos_theta * z1;
+
+	    // Rotate by angle theta = ra2 around the z axis:
+	    //
+	    // [ x1 ]   [ cos(ra2) -sin(ra2) 0 ]   [ x ]
+	    // [ y1 ] = [ sin(ra2) cos(ra2)  0 ] * [ y ]
+	    // [ z1 ]   [ 0        0         1 ]   [ z ]
+	    cos_theta = Math.cos(ra2);
+	    sin_theta = Math.sin(ra2);
+	    x1 = cos_theta * x - sin_theta * y;
+	    y1 = sin_theta * x + cos_theta * y;
+	    z1 = z;
+
+	    // Convert the unit vector result back to a WorldPt.
+	    double d = x1 * x1 + y1 * y1;
+	    double lon = 0.0;
+	    double lat = 0.0;
+	    if (d != 0.0) {
+	        lon = Math.toDegrees(Math.atan2(y1, x1));
+	        if (lon < 0.0) {
+	            lon += 360.0;
+	        }
+	    }
+	    if (z1 != 0.0) {
+	        lat = Math.toDegrees(Math.atan2(z1, Math.sqrt(d)));
+	        if (lat > 90.0) {
+	            lat = 90.0;
+	        } else if (lat < -90.0) {
+	            lat = -90.0;
+	        }
+	    }
+	    return new WorldPt(lon, lat);
+	}
+	
+    /**
      * Find the corners of a bounding box given the center and the radius
      * of a circle
      *

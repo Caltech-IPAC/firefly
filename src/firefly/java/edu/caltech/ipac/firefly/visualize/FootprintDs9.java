@@ -319,9 +319,9 @@ public class FootprintDs9 extends CircularMarker {
 				// with at least 2 points to call translateTo method correctly -
 				// boxes or other shapes are not ok.
 				//drawObj.translateTo(plot, wpt);
-//				if (rotate) {
+				if (rotationAngle!=0) {
 					drawObj.rotateAround(plot, rotationAngle, wpt);
-//				}
+				}
 				if (drawObj != null){
 					lst.add(drawObj);
 				}
