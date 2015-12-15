@@ -1,4 +1,35 @@
 
+task createTag(dependsOn: loadConfig) << {
+  description = 'Create and push a tag to remote repo. Optional properties: ${tag_name}, ${tag_file} if ${tag_name} is missing. defaults to build/version.tag, ${tag_remote} defaults to origin, ${tag_message}.'
+
+  def tag_label = project.ext.createTagLabel();
+  println "tag: $tag_label"
+
+  exec {
+    executable 'git'
+    args 'tag'
+    args '-a'
+    args tag_label
+    args '-m'
+    if (project.hasProperty("tag_message")) {
+      args tag_message
+    } else {
+      args 'not given'
+    }
+  }
+
+  exec {
+    executable 'git'
+    args 'push'
+    if (project.hasProperty("tag_remote")) {
+      args tag_remote
+    } else {
+      args 'origin'
+    }
+    args tag_label
+  }
+}
+
 def stopTomcat(remoteHost) {
   def desc = execCmd (remoteHost, true, ["/etc/init.d/tomcat_init", "stop"])
   println ">> Stopping Tomcat:.. $desc"

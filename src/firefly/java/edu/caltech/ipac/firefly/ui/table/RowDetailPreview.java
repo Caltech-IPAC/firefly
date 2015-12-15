@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.ui.table;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.gen2.table.override.client.FlexTable;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -65,19 +66,7 @@ public class RowDetailPreview extends AbstractTablePreview {
                 public void eventNotify(WebEvent ev) {
                     final TablePanel table = (TablePanel) ev.getSource();
                     if (table != null ) {
-                        DeferredCommand.addCommand(new Command() {
-                            public void execute() {
-                                if (GwtUtil.isVisible(table.getElement())) {
-                                    clear();
-                                    if (stateId!=null) {
-                                        if (table.getStateId().equals(stateId)) {
-                                            updateDisplay(table);
-                                        }
-                                    } else
-                                        updateDisplay(table);
-                                }
-                            }
-                        });
+                        updateDisplay(table);
                     }
                 }
             };
@@ -104,19 +93,26 @@ public class RowDetailPreview extends AbstractTablePreview {
         }
     }
 
-    protected void updateDisplay(TablePanel table) {
+    protected void updateDisplay(final TablePanel table) {
 
-        if (table == null || table.getTable() == null|| !GwtUtil.isVisible(display.getElement())) {
-            showTable(false);
-            return;
-        }
+        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+            public void execute() {
+                if (table == null || table.getTable() == null|| !GwtUtil.isVisible(display.getElement())) {
+                    showTable(false);
+                    return;
+                }
 
-        TableData.Row selRow = table.getTable().getHighlightedRow();
-        if (selRow != null) {
-            doTableLoad(table, selRow);
-        } else {
-            loadTable(null);
-        }
+                clear();
+                if (stateId == null || table.getStateId().equals(stateId)) {
+                    TableData.Row selRow = table.getTable().getHighlightedRow();
+                    if (selRow != null) {
+                        doTableLoad(table, selRow);
+                    } else {
+                        loadTable(null);
+                    }
+                }
+            }
+        });
     }
 
     protected void doTableLoad(TablePanel table, TableData.Row selRow) {
