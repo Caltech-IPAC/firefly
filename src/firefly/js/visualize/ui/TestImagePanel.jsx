@@ -82,8 +82,11 @@ function selectArea() {
     var plotView= PlotViewUtils.getActivePlotView();
     if (!plotView) return;
 
+
+
     var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
     if (!s) {
+        SelectArea.dispatchInitSelectArea();
         s= {selectOn:true};
     }
     else {
@@ -94,7 +97,6 @@ function selectArea() {
 
     if (s.selectOn) {
 
-        SelectArea.dispatchInitSelectArea();
         DrawingLayerCntlr.dispatchAttachLayerToPlot(SelectArea.LAYER_ID,plotIdAry);
     }
     else {

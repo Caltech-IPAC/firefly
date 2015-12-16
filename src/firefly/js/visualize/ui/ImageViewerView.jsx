@@ -5,6 +5,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
+import shallowCompare from 'react-addons-shallow-compare';
 import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
@@ -23,7 +24,7 @@ var ImageViewerView= React.createClass(
 {
 
 
-    mixins : [PureRenderMixin],
+    //mixins : [PureRenderMixin],
 
     storeListenerRemove : null,
 
@@ -34,6 +35,10 @@ var ImageViewerView= React.createClass(
     },
 
     plotDrag: null,
+
+    shouldComponentUpdate(nextProps,nextState) {
+        return shallowCompare(this,nextProps,nextState);
+    },
 
 
     getDefaultProps: function () {
