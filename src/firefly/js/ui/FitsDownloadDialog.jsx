@@ -1,9 +1,18 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ * Lijun
+ *   Dec. 2015
+ *   propType: define all the property variable for the component
+ *   this.plot, this.plotSate are the class global variables
+ *
  */
 import React from 'react';
 import {flux} from '../Firefly.js';
 import TargetPanel from './TargetPanel.jsx';
+import AppDataCntlr from '../core/AppDataCntlr.js';
+import {Operation} from '../visualize/PlotState.js';
+import {getRootURL} from '../util/BrowserUtil.js';
+import {download} from '../util/WebUtil.js';
 import InputGroup from './InputGroup.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
@@ -11,25 +20,21 @@ import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
-import {Tabs, Tab} from './panel/TabPanel.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
-import {Operation} from '../visualize/PlotState.js';
-import PlotState   from '../visualize/PlotState.js';
-import {getRootURL} from '../util/BrowserUtil.js';
-import {download} from '../util/WebUtil.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
+import PlotState   from '../visualize/PlotState.js';
+import  WebPlotRequest, {ServiceType, WPConst} from '../visualize/WebPlotRequest.js';
 
 
-function getDialogBuilder(plot) {
+function getDialogBuilder() {
     var popup= null;
     return () => {
         if (!popup) {
             const popup= (
                 <PopupPanel title={'Fits Download Dialog'} >
-                    <FitsDialogTest pv={plot} groupKey={'FITS_DOWNLOAD_FORM'} />
+                    <FitsDialogTest groupKey={'FITS_DOWNLOAD_FORM'} />
                 </PopupPanel>
             );
             DialogRootContainer.defineDialog('fitsDownloadDialog', popup);
@@ -50,8 +55,9 @@ export function showFitsDownloadDialog() {
 
 var FitsDialogTest= React.createClass({
 
+
     propTypes: {
-        plot: React.PropTypes.object.isRequired,
+
         band: React.PropTypes.object,
         colorName: React.PropTypes.string,
         hasThreeColorBand: React.PropTypes.bool.isRequired,
@@ -71,34 +77,26 @@ var FitsDialogTest= React.createClass({
      */
     getInitialState() {
 
-        var plot =PlotViewUtil.getActivePlotView().primaryPlot;
-        var plotState = plot.plotState;
+        //plot and plotState are global variable for this class
+        this.plot =PlotViewUtil.getActivePlotView().primaryPlot;
+        this.plotState = this.plot.plotState;
 
         var threeColorBandUsed=false;
         var color;
         var band;
-        if (plotState.isThreeColor()) {
+        if (this.plotState.isThreeColor()) {
             threeColorBandUsed==true;
-            var bands = plotState.getBands();
+            var bands = this.plotState.getBands();
             band=bands[0];
             var colorID=bands[0].toString();
             color = Band.valueOf()[colorID].name();
-            /*switch(colorID){
-             case 0: color='red';
-             break;
-             case 1: color='green';
-             break;
-             case 2: color='blue';
-             break;
-             }*/
+
         }
 
 
 
-       // var operation = plotState.ops;
-
-        var isCrop = plotState.hasOperation(Operation.CROP);
-        var isRotation = plotState.hasOperation(Operation.ROTATE);
+        var isCrop = this.plotState.hasOperation(Operation.CROP);
+        var isRotation = this.plotState.hasOperation(Operation.ROTATE);
         var cropNotRotate =  isCrop && !isRotation ? true: false;
         var operationType = 'original';
         if (isCrop ||isRotation){
@@ -107,7 +105,7 @@ var FitsDialogTest= React.createClass({
 
 
         return {
-            plot:plot,
+
             band:band,
             colorName: color,
             hasThreeColorBand:threeColorBandUsed,
@@ -128,82 +126,74 @@ var FitsDialogTest= React.createClass({
 
     },
 
-    showResults(success, request) {
+    //return the field and value as an object literals
+    _showResults(success, request) {
 
-        var results= (
-            <PopupPanel title={'Example Dialog Results'} closePromise={closePromise} >
-                {this.makeResultInfoContent(statStr,s,resolver)}
-            </PopupPanel>
-        );
-
-        DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
-        AppDataCntlr.showDialog('ResultsFromExampleDialog');
-
-    },
-    resultsFail(request) {
-        this.showResults(false,request);
-    },
-
-    resultsSuccess(request) {
-        this.showResults(true,request);
-    },
-
-    //get the updated form components' state
-    _getState(){
-        //check the radio type to see if it is a Fits, a Region or a PNG
-        var fields = FieldGroupUtils.getGroupFields['FITS_DOWNLOAD_FORM'];
-
-        var fileType = fields.fileType.value;
+        var statStr= `validate state: ${success}`;
+        console.log(statStr);
+        console.log(request);
 
 
-        var band=Band.NO_BAND;
-        if(this.props.band!=Band.NO_BAND) {
-            band = {color:fields.colorName.value, idx:Band[fields.colorName.value]};
-            var color = fields.threeBandColor.value;
-        }
-        var ops;
-        if (this.props.hasOperation){
-            ops= fields.operationOption.value;
-        }
+        var rel={};
+        var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+            var kk=k;
+            var rr=request[kk];
+            rel[kk]=rr;
+            buildString+=`${k}=${request[k]}`;
+            if (idx<array.length-1) buildString+=', ';
+            return buildString;
 
-        return {fileType:fileType, color:color, operationType:ops };
+        },'');
+
+        return rel;
     },
 
 
-     _doFileDownload() {
+     // download the fits,png and reg files
+     _doFileDownload(request) {
+
+         var rel = this._showResults(true,request);
+         var ext;
+         var bandSelect=null;
+         var whichOp=null;
+         for (var key in rel){
+             var value=rel[key];
+             if (key=='fileType'){
+                 ext = value;
+
+             }
+             if (key == 'threeBandColor'){
+                 bandSelect=value;
+             }
+             if (key == 'operationOption'){
+                 whichOp=value;
+             }
+         }
+
+         var band = Band.NO_BAND;
+         if (bandSelect != null) {
+             band = Band[bandSelect];
+         }
 
 
-         //TODO add code to save the files
-         /*    var fileName = this.plotState.getUploadFileName(this.plotState.getBands());
-          //Frame f= Application.getInstance().getNullFrame();
+         var fitsFile = this.plotState.getOriginalFitsFileStr(band) == 'undefined' || whichOp == 'modified' ?
+         this.plotState.getWorkingFitsFileStr(band) :
+         this.plotState.getOriginalFitsFileStr(band);
 
-          var {fileType, color, operationOption} = _getState();
-          var url;
+         if (ext.toLowerCase() =='fits') {
 
-          if (fileType.toLowerCase() =='fits')  {
+             download(getRootURL() + '/servlet/Download?file='+ fitsFile);
+         }
 
-          var  fitsFile= this.plotState.getOriginalFitsFileStr(this.band) == "undefined"  || this.operation==("modified")?
-          state.getWorkingFitsFileStr(band) :
-          state.getOriginalFitsFileStr(band);
+         //this does not work, how to convert a fits to a png image??
+         else if (ext.toLowerCase() =='png') {
+             var indx = fitsFile.indexOf('fits');
+             var pngFile =fitsFile.substr(0, indx) + 'png';
 
-          url= WebUtil.encodeUrl(GWT.getModuleBaseURL()+ "servlet/Download",
-          new Param("file", fitsFile),
-          new Param("return", makeFileName(state,band)),
-          new Param("log", "true"));
-          if (url!=null) f.setUrl(url);
-          }
-          else if (_dType.getValue().equals("region")) {
-          retrieveRegion(plot);
-          }
-          else {
-          retrievePng(plot);
-          }
-          */
-         var fitsFile='myFits.fits';
-         download(getRootURL() + fitsFile);
+             download(getRootURL() + '/servlet/Download?png='+ pngFile);
+         }
+
     },
-
-
 
 
 
@@ -268,9 +258,9 @@ var FitsDialogTest= React.createClass({
                                           }}
                                                    options={
                                                               [
-                                                                  {label: 'FITS File', value: 'opt1'},
-                                                                  {label: 'PNG File', value: 'opt2' },
-                                                                  {label: 'Region File', value: 'opt3'},
+                                                                  {label: 'FITS File', value: 'fits'},
+                                                                  {label: 'PNG File', value: 'png' },
+                                                                  {label: 'Region File', value: 'reg'},
 
                                                               ]
 
@@ -286,8 +276,15 @@ var FitsDialogTest= React.createClass({
                             {colorRadioGroup}
 
                             <div style={{'text-align':'center'}}>
-                                <button type='button' onclick = {this._doFileDownload()} >Download</button>
+                                < CompleteButton
+                                    groupKey='FITS_DOWNLOAD_FORM'
+                                    text='Download'
+                                    onSuccess={this. _doFileDownload}
+                                    onFail={this.resultsFail}
+                                    ialogId='FitsDownloadDialog'
+                                />
 
+                                <br/>
                             </div>
 
 
