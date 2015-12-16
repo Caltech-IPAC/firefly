@@ -40,6 +40,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
     private final String FIXED_SIZE_ALGORITHM = "fixedSizeBins";
     private final String NUMBER_BINS = "numBins";
     private final String COLUMN = "columnExpression";
+
     private final String MIN = "min";
     private final String MAX = "max";
     // private final String ALGORITHM = "algorithm";
@@ -179,22 +180,33 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         }
 
 
-        double binSize = (max-min)/(numBins-1);
+        double binSize = (max-min)/numBins;
 
         double delta =( max -min)/100*numBins;
-        int[] numPointsInBin = new int[numBins];
+        int[] numPointsInBin = new int[numBins+1];
         double[] binMin = new double[numBins];
 
         double[] binMax = new double[numBins];
 
         for (int i = 0; i < columnData.length; i++) {
-            if (columnData[i] >= min && columnData[i] <= max) {
-                int iBin = (int) ((columnData[i] - min) / binSize);
+            if (columnData[i] >= min && columnData[i] < max) {
+                 int iBin = (int) ((columnData[i] - min) / binSize);
                  numPointsInBin[iBin]++;
 
             }
+            else if (columnData[i]  == max) { //put the last data in the last bin
+                numPointsInBin[numBins-1]++;
+            }
+
           }
-        for (int ibin=0; ibin<numBins; ibin++){
+        for (int i=0; i<numBins; i++){
+            binMin[i]=min+i*binSize;
+        }
+        for (int i=0; i<numBins-1; i++){
+            binMax[i]=binMin[i]+binSize;
+        }
+        binMax[numBins-1]=max;
+       /* for (int ibin=0; ibin<numBins; ibin++){
             binMin[ibin]=min+ibin*binSize;
             if (ibin==numBins-1){
                 binMax[ibin]=max+delta;
@@ -203,7 +215,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
                 binMax[ibin]=binMin[ibin]+binSize;
             }
 
-        }
+        }*/
 
        if (showEmptyBin){
 
@@ -217,38 +229,42 @@ public class HistogramProcessor extends IpacTablePartProcessor {
        }
     }
 
-    private int[]  getSelection(int[] inArray, ArrayList<Integer> selection ){
+    private int[]  getSelection(int[] inArray, ArrayList<Integer> list ){
 
-        int[] outArray=new int[selection.size()];
+        int[] outArray=new int[list.size()];
         int count=0;
         for (int i=0; i<inArray.length; i++){
-            for (int j=0; j<selection.size(); j++){
-                if (i==selection.get(j).intValue()){
-                    outArray[count]=inArray[i];
-                    count++;
-                    break;
-                }
+            if (isInSelection(i, list)){
+                outArray[count]=inArray[i];
+                count++;
             }
+
         }
         return outArray;
     }
 
-    private double[]  getSelection(double[] inArray, ArrayList<Integer> selection ){
+    private double[]  getSelection(double[] inArray, ArrayList<Integer> list ){
 
-        double[] outArray=new double[selection.size()];
+        double[] outArray=new double[list.size()];
         int count=0;
         for (int i=0; i<inArray.length; i++){
-            for (int j=0; j<selection.size(); j++){
-                if (i==selection.get(j).intValue()){
-                    outArray[count]=inArray[i];
-                    count++;
-                    break;
-                }
+            if (isInSelection(i, list)){
+                outArray[count]=inArray[i];
+                count++;
             }
+
         }
         return outArray;
     }
 
+    private boolean isInSelection( int idx, ArrayList<Integer> list){
+        for (int j=0; j<list.size(); j++){
+              if (idx==list.get(j).intValue()){
+                 return true;
+            }
+        }
+        return false;
+    }
 
 
     /**
@@ -352,7 +368,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double[] bins = getBins(columnData);
 
 
-        int nBin = bins.length + 1;  //the bin interval +1 is the total bin number
+        int nBin = bins.length;  //the bin interval +1 is the total bin number
         int[] numPointsInBin = new int[nBin];
         double[] binMin = new double[nBin];
         if (Double.isNaN(min)) {
@@ -371,13 +387,17 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         for (int ibin = 0; ibin < nBin; ibin++) {
             for (int i = 0; i < columnData.length; i++) {
-                if (columnData[i] >= min && columnData[i] <= max) {
+                if (columnData[i] >= min && columnData[i] < max) {
                     if (ibin == 0 && columnData[i] < bins[ibin] ||
                                 ibin >= 1 && ibin < nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] ||
                                 ibin == nBin - 1 && columnData[i] >= bins[ibin - 1]) {
                         numPointsInBin[ibin]++;
                      }
 
+
+                }
+                else if (columnData[i] ==max){
+                    numPointsInBin[nBin-1]++;
                 }
             }
         }
