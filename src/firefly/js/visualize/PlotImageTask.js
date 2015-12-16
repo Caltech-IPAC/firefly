@@ -182,7 +182,7 @@ const processSuccessResponse= function(dispatcher, payload, result) {
         resultPayload.plotAry
             .map( (p) => ({r:p.plotState.getWebPlotRequest(),plotId:p.plotId}))
             .forEach( (obj) => obj.r.getOverlayIds()
-                .forEach( (drawLayerId)=>  DrawingLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
+                .forEach( (drawLayerId)=>  DrawingLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,[obj.plotId])));
 
     }
     else {

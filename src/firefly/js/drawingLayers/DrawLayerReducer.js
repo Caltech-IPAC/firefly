@@ -7,6 +7,7 @@
 import DrawingLayer, {DataTypes} from '../visualize/draw/DrawingLayer.js';
 import DrawingLayerCntlr from '../visualize/DrawingLayerCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import _ from 'lodash';
 
 
 
@@ -17,11 +18,21 @@ export default {makeReducer};
 /**
  *
  * @param {object} drawingLayerInitValue
- * @param getDrawDataFunc
  * @param {function} getDrawDataFunc a function that will take the drawing layer and data the type.
+ *                   signature: getDrawDataFunc(dataType, plotId, drawingLayer, action, lastDataRet)
+ *                   where dataType is a string with constants in DrawingLayers.DataType.
+ *                   lastDataRet is the data that was return in the last call. If nothing has change
+ *                   then then lastDataRet can be the return value.
+ * @param {function} [getLayerChanges] get the changes to incorporate into the drawing layer object
+ *                    A function that returns an object literal the that has the field changes.
+ *                    <br>signature: getLayerChanges(drawingLayer,action)
+ *                    it may return null or empty object if there are no changes
+ * @callbackparam {object} drawing layer
+ * @callbackparam {action} the action
+ *
  * @return {Function}
  */
-function makeReducer(drawingLayerInitValue, getDrawDataFunc) {
+function makeReducer(drawingLayerInitValue, getDrawDataFunc, getLayerChanges=()=>{}) {
     return (drawingLayer, action={}) => {
         if (!action.payload || !action.type) return drawingLayer;
 
@@ -35,35 +46,52 @@ function makeReducer(drawingLayerInitValue, getDrawDataFunc) {
                 return drawingLayer;
                 break;
             case DrawingLayerCntlr.CHANGE_VISIBILITY:
-                return changeVisibility(drawingLayer,action,getDrawDataFunc);
+                return changeVisibility(drawingLayer,action,getDrawDataFunc,getLayerChanges);
                 break;
             case DrawingLayerCntlr.ATTACH_LAYER_TO_PLOT:
-                return attachLayerToPlot(drawingLayer,action,getDrawDataFunc);
+                return attachLayerToPlot(drawingLayer,action,getDrawDataFunc,getLayerChanges);
                 break;
             case DrawingLayerCntlr.DETACH_LAYER_FROM_PLOT:
                 return detachLayerFromPlot(drawingLayer,action);
                 break;
             case ImagePlotCntlr.ANY_REPLOT:
-                return anyReplot(drawingLayer,action,getDrawDataFunc);
+                return anyReplot(drawingLayer,action,getDrawDataFunc, getLayerChanges);
                 break;
             default:
-                return handleOtherAction(drawingLayer,action,getDrawDataFunc);
+                return handleOtherAction(drawingLayer,action,getDrawDataFunc, getLayerChanges);
                 break;
         }
 
     };
 }
 
-function handleOtherAction(drawingLayer,action, drawDataReducer) {
-    if (drawingLayer.actionIdAry.indexOf(action.type)>-1) {
-        var d= drawDataReducer(drawingLayer,action);
-        if (d.data!==drawingLayer.data ||
-            d.highlightedData!==drawingLayer.highlightedData ||
-            drawingLayer.selectedIdxAry!==d.selectedIdxAry) {
-            return Object.assign({},drawingLayer,{drawData:d});
+
+
+
+
+
+function handleOtherAction(drawingLayer,action, getDrawDataFunc, getLayerChanges) {
+    if (drawingLayer.actionTypeAry.includes(action.type)) {
+        var changes= getLayerChanges(drawingLayer,action);
+        var newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawingLayer,changes): drawingLayer;
+
+        if (newDl.hasPerPlotData) {     //todo- perPlotData does not have the same optimization as normal, look into this
+            newDl.plotIdAry.forEach( (id) =>
+                newDl.drawData= getDrawData(getDrawDataFunc,newDl, action, id));
         }
         else {
-            return drawingLayer;
+            var d= getDrawData(getDrawDataFunc,newDl, action);
+            if (newDl !==drawingLayer) {
+                return Object.assign(newDl,{drawData:d}); // already created a new object, just assign
+            }
+            else if (d.data!==newDl.data ||
+                     d.highlightedData!==newDl.highlightedData ||
+                     d.selectedIdxAry!==newDl.selectedIdxAry) {
+                return Object.assign({},newDl,{drawData:d});
+            }
+            else {
+                return drawingLayer;
+            }
         }
     }
     return drawingLayer;
@@ -71,41 +99,63 @@ function handleOtherAction(drawingLayer,action, drawDataReducer) {
 
 
 
-function anyReplot(drawingLayer,action, getDrawDataFunc) {
+function anyReplot(drawingLayer,action, getDrawDataFunc,getLayerChanges) {
     var {plotIdAry}= action.payload;
+    drawingLayer= Object.assign({}, drawingLayer, getLayerChanges(drawingLayer,action));
     if (drawingLayer.hasPerPlotData) {
-        drawingLayer= Object.assign({}, drawingLayer);
-        plotIdAry.forEach( (id) => drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action, id));
+        plotIdAry.forEach( (id) =>
+                      drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action, id));
+    }
+    else {
+        drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action);
     }
     return drawingLayer;
 }
 
 
+/**
+ *
+ * @param drawingLayer
+ * @param action
+ * @param getDrawDataFunc
+ * @param getLayerChanges
+ * @return {*}
+ */
+function attachLayerToPlot(drawingLayer,action,getDrawDataFunc,getLayerChanges) {
+    var {plotIdAry:inputPlotIdAry} = action.payload;
+    var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawingLayer;
+    //if (dlPlotIdAry.includes(plotId)) return drawingLayer;
 
-function attachLayerToPlot(drawingLayer,action,getDrawDataFunc) {
-    var {plotId} = action.payload;
-    var {plotIdAry, visiblePlotIdAry}= drawingLayer;
-    if (plotIdAry.includes(plotId)) return drawingLayer;
-    plotIdAry= [...plotIdAry,plotId];
-    if (!visiblePlotIdAry.includes(plotId)) {
-        visiblePlotIdAry= [...visiblePlotIdAry,plotId];
-    }
-    drawingLayer= Object.assign({}, drawingLayer, {plotIdAry,visiblePlotIdAry});
+    if (!_.difference(inputPlotIdAry,dlPlotIdAry).length) return drawingLayer;
 
+
+
+    dlPlotIdAry= _.union(dlPlotIdAry,inputPlotIdAry);
+    var addAry= inputPlotIdAry.filter( (plotId) => !visiblePlotIdAry.includes(plotId));
+    visiblePlotIdAry= [...visiblePlotIdAry,...addAry];
+    drawingLayer= Object.assign({}, drawingLayer,
+                             {plotIdAry:dlPlotIdAry,visiblePlotIdAry});
+
+    drawingLayer= Object.assign(drawingLayer, getLayerChanges(drawingLayer,action));
     if (drawingLayer.hasPerPlotData) {
-        drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action, plotId);
+        drawingLayer.plotIdAry.forEach( (id) =>
+            drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action, id));
     }
+
+
     return drawingLayer;
 }
 
 function detachLayerFromPlot(drawingLayer,action) {
-    var {plotId} = action.payload;
-    var plotIdAry= plotIdAry.filter( (id) => id!==plotId);
-    var visiblePlotIdAry= visiblePlotIdAry.filter( (id) => id!==plotId);
+    var {plotIdAry:inputPlotIdAry} = action.payload;
+    var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawingLayer;
+    var plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
+    visiblePlotIdAry= visiblePlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
 
     drawingLayer= Object.assign({}, drawingLayer, {plotIdAry, visiblePlotIdAry});
     if (drawingLayer.hasPerPlotData) {
-        drawingLayer.drawData= detachPerPlotData(drawingLayer.drawData,plotId);
+        inputPlotIdAry.forEach( (plotId) =>
+                      drawingLayer.drawData= detachPerPlotData(drawingLayer.drawData,plotId));
     }
     return drawingLayer;
 }
@@ -143,14 +193,15 @@ function detachPerPlotData(drawData, plotId) {
 
 
 
-function changeVisibility(drawingLayer,action, getDrawDataFunc) {
+function changeVisibility(drawingLayer,action, getDrawDataFunc, getLayerChanges ) {
     var {visible,plotId} = action.payload;
     var visiblePlotIdAry= drawingLayer.visiblePlotIdAry;
 
     if (visible) {
         if (visiblePlotIdAry.includes(plotId)) return drawingLayer;
         visiblePlotIdAry= [...visiblePlotIdAry,plotId];
-        drawingLayer= Object.assign({}, drawingLayer, {visiblePlotIdAry});
+        drawingLayer= Object.assign({}, drawingLayer, {visiblePlotIdAry},
+                                         getLayerChanges(drawingLayer,action));
         if (drawingLayer.hasPerPlotData) {
             drawingLayer.drawData= getDrawData(getDrawDataFunc,drawingLayer, action,plotId);
         }
@@ -164,7 +215,7 @@ function changeVisibility(drawingLayer,action, getDrawDataFunc) {
 
 
 
-//function makeLayer(drawLayerId, actionIdAry, getDrawDataFunc, options, action) {
+//function makeLayer(drawLayerId, actionTypeAry, getDrawDataFunc, options, action) {
 //}
 
 /**
@@ -176,6 +227,7 @@ function changeVisibility(drawingLayer,action, getDrawDataFunc) {
  * @return {{}}
  */
 function getDrawData(getDrawDataFunc, drawingLayer, action, plotId= DrawingLayer.ALL_PLOTS) {
+    if (!getDrawDataFunc) return drawingLayer.drawData;
     var pId= plotId===DrawingLayer.ALL_PLOTS ? null : plotId;
     var newDD= {[DataTypes.DATA]:{},[DataTypes.HIGHLIGHT_DATA]:{}, [DataTypes.SELECTED_IDX_ARY]: null};
 

@@ -66,21 +66,25 @@ const App = React.createClass({
                     <div style={{paddingLeft:10}}>
                         <TestImagePanel/>
                     </div>
-                    <div style={{padding:'10', height: '500px'}}>
-                        <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
-                        <input type="button" name="test" value="Load Table Below" onClick={loadTestTable} />
-                        <TablePanel
-                            tableModel={this.props.table}
-                            //width={1250}
-                            //height={400}
-                            selectable={true}
-                        />
-                    </div>
                 </div>
             );
         }
     }
 });
+
+
+//<div style={{padding:'10', height: '500px'}}>
+//    <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
+//    <input type="button" name="test" value="Load Table Below" onClick={loadTestTable} />
+//    <TablePanel
+//        tableModel={this.props.table}
+//        //width={1250}
+//        //height={400}
+//        selectable={true}
+//    />
+//</div>
+
+
 
 function connector(state) {
     return {

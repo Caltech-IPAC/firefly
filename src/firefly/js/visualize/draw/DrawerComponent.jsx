@@ -50,9 +50,15 @@ function makeCanvasLayers(drawingLayer,drawer,w,h) {
 
 
 const isVisible= (drawingLayer,plotId) => drawingLayer.visiblePlotIdAry.includes(plotId);
-const getDataForPlot= (data,plotId) => data ? (data[plotId] || data[DrawingLayer.ALL_PLOTS]) : null;
 const selectId = (drawingLayerId) => drawingLayerId+'Select';
 const highlightId = (drawingLayerId) => drawingLayerId+'Highlight';
+
+
+const getDataForPlot= (data,plotId) => {
+    if (!data) return null;
+    if (Array.isArray(data)) return data;
+    else                     return data[plotId] || data[DrawingLayer.ALL_PLOTS];
+};
 
 
 var DrawerComponent= React.createClass(
@@ -120,7 +126,7 @@ var DrawerComponent= React.createClass(
         var {dim:{width,height}}= primaryPlot.viewPort;
         var canvasLayers= makeCanvasLayers(drawingLayer,this.drawer,width,height);
 
-        var style= {position:'relative',left:0,right:0,width,height};
+        var style= {position:'absolute',left:0,right:0,width,height};
         if (!canvasLayers.length) return false;
 
 

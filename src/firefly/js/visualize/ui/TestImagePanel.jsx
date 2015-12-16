@@ -14,11 +14,15 @@ import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
+import DrawingLayerCntlr from '../DrawingLayerCntlr.js';
+import PlotViewUtils from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
 import ZoomUtil from '../ZoomUtil.js';
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
+import SelectArea from '../../drawingLayers/SelectArea.js';
+import {flux} from '../../Firefly.js';
 
 
 
@@ -75,19 +79,26 @@ function resultsSuccess(request) {
 
 function selectArea() {
     var s= AppDataCntlr.getCommandState('SelectAreaCmd');
+    var plotView= PlotViewUtils.getActivePlotView();
+    if (!plotView) return;
 
+    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
     if (!s) {
-        s= {selectOn:false};
+        s= {selectOn:true};
+    }
+    else {
+        s= {selectOn:!s.selectOn};
     }
 
     AppDataCntlr.dispatchChangeCommandState('SelectAreaCmd',s);
 
     if (s.selectOn) {
 
-        // dispatch turn on select
+        SelectArea.dispatchInitSelectArea();
+        DrawingLayerCntlr.dispatchAttachLayerToPlot(SelectArea.LAYER_ID,plotIdAry);
     }
     else {
-        // dispatch turn off select
+        DrawingLayerCntlr.dispatchDetachLayerFromPlot(SelectArea.LAYER_ID,plotIdAry);
     }
 
 
@@ -102,7 +113,6 @@ function zoom(zType) {
             break;
         case 'down':
             ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.DOWN);
-            console.log('going down');
             break;
         case 'fit':
             ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FIT);
@@ -128,12 +138,14 @@ function showFitsDialog() {
      showFitsDownloadDialog();
  }
 
-function TestImagePanel() {
+function TestImagePanelView({selectOn}) {
+    var s = AppDataCntlr.getCommandState('SelectAreaCmd');
+    var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
     return (
         <div>
             <div style={{display:'inline-block', verticalAlign:'top'}}>
                 <FieldGroup groupKey='TEST_IMAGE_PANEL' reducerFunc={ipReducer} keepState={true}>
-                    <TargetPanel groupKey='TEST_IMAGE_PANEL' />
+                    <TargetPanel groupKey='TEST_IMAGE_PANEL'/>
                     <ValidationField fieldKey={'zoom'}
                                      groupKey='TEST_IMAGE_PANEL'/>
                     <div style={{height:10}}/>
@@ -147,7 +159,7 @@ function TestImagePanel() {
                     <button type='button' onClick={() => zoom('fit')}>Zoom Fit</button>
                     <button type='button' onClick={() => zoom('fill')}>Zoom Fill</button>
                     <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
-                    <button type='button' onClick={() => selectArea()}>Select Area</button>
+                    <button type='button' onClick={() => selectArea()}>{selectText}</button>
                     <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <br/>
@@ -163,5 +175,34 @@ function TestImagePanel() {
         </div>
     );
 }
+
+var TestImagePanel= React.createClass({
+
+
+    // code that connects to store
+    // code that connects to store
+    // code that connects to store
+
+    componentWillUnmount() {
+        if (this.unbinder) this.unbinder();
+    },
+
+    componentDidMount() {
+       this.unbinder= flux.addListener( () => {
+           if (this.isMounted) {
+               var s= AppDataCntlr.getCommandState('SelectAreaCmd');
+               this.setState({selectOn:(s && s.selectOn) });
+            }
+        });
+    },
+
+    render() {
+        var selectOn= (this.state && this.state.selectOn) ? this.state.selectOn : false;
+        return (<TestImagePanelView selectOn={selectOn}/>);
+    }
+
+    // end code that connects to store
+});
+
 
 export default TestImagePanel;

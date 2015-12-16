@@ -31,12 +31,14 @@ const REMOVE_MOUSE_PERSISTENT= 'VisMouseCntlr/RemoveMousePersistent';
 const VIS_MOUSE_KEY= 'visMouseState';
 
 
-const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP', 'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK','DOUBLE_CLICK']);
+export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
+                                   'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK',
+                                   'DOUBLE_CLICK']);
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {reducer, MouseState, fireMouseEvent,
+export default {reducer, MouseState, fireMouseEvent, makeMouseStatePayload,
                 VIS_MOUSE_KEY,
                 MOUSE_STATE_CHANGE, ADD_MOUSE_GRAB,
                 REMOVE_MOUSE_GRAB, ADD_MOUSE_PERSISTENT,
@@ -167,12 +169,43 @@ function fireAddMouseGrabAction(actionConst) {
 }
 
 function fireRemoveMouseGrabAction(actionConst) {
-    flux.process({type: REMOVE_MOUSE_GRAB,
+    flux.process({typ: REMOVE_MOUSE_GRAB,
         payload: {actionConst}});
 
 }
 
 
+/**
+ *
+ * @param {string} plotId
+ * @param {Enum} mouseState
+ * @param {Object} screenPt
+ * @param {number} screenX
+ * @param {number} screenY
+ * @param shiftDown
+ * @param controlDown
+ * @param metaDown
+ * @return {{plotId: string, mouseState: Enum, screenPt: object, imagePt: object, worldPt: object, screenX: number, screenY: number}}
+ */
+function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,
+                               {shiftDown,controlDown,metaDown}= {}) {
+    var payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
+    if (plotId) {
+        var pv= PlotViewUtil.getPlotViewById(plotId);
+        if (pv && pv.primaryPlot) {
+            payload.plotId= plotId;
+            var cc= CsysConverter.make(pv.primaryPlot);
+            payload.imagePt= cc.getImageCoords(screenPt);
+            payload.worldPt= cc.getWorldCoords(screenPt);
+        }
+
+    }
+    return payload;
+
+
+
+//* @return {{plotId: string, mouseState: Enum, screenPt: object, screenX: object, screenY: object}}
+}
 //======================================== Private ======================================
 //======================================== Private ======================================
 //======================================== Private ======================================

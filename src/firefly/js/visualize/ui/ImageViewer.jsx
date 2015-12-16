@@ -47,10 +47,11 @@ var ImageViewer= React.createClass(
         if (allPlots!==this.state.allPlots  ||
             (allDraw!==this.state.allDraw &&
             drawLayersDiffer(drawLayersAry,this.state.drawLayersAry))) {
-            var plotView= PlotViewUtil.getPlotViewById(this.props.plotId);
+            var {plotId}= this.props;
+            var plotView= PlotViewUtil.getPlotViewById(plotId);
             this.setState({plotView,
                            allDraw,
-                           drawLayersAry,
+                           drawLayersAry:drawLayersAry.filter( (dl) => dl.plotIdAry.includes(plotId)),
                            allPlots:PlotViewUtil.getAllPlots()});
         }
     },

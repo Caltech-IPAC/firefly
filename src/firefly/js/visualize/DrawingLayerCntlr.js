@@ -6,10 +6,8 @@
 
 
 
-import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotViewUtil from './PlotViewUtil.js';
-import CsysConverter from './CsysConverter.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr from './ImagePlotCntlr.js';
 import _ from 'lodash';
@@ -17,12 +15,23 @@ import _ from 'lodash';
 
 
 
-const RETRIEVE_DATA= 'DrawingLayerCntlr/retrieveData';
-const CREATE_DRAWING_LAYER= 'DrawingLayerCntlr/addDrawingLayer';
-const DESTROY_DRAWING_LAYER= 'DrawingLayerCntlr/addDrawingLayer';
-const CHANGE_VISIBILITY= 'DrawingLayerCntlr/changeVisibility';
-const ATTACH_LAYER_TO_PLOT= 'DrawingLayerCntlr/attachLayerToPlot';
-const DETACH_LAYER_FROM_PLOT= 'DrawingLayerCntlr/detachLayerFromPlot';
+const RETRIEVE_DATA= 'DrawingLayerCntlr.retrieveData';
+const CREATE_DRAWING_LAYER= 'DrawingLayerCntlr.addDrawingLayer';
+const DESTROY_DRAWING_LAYER= 'DrawingLayerCntlr.addDrawingLayer';
+const CHANGE_VISIBILITY= 'DrawingLayerCntlr.changeVisibility';
+const ATTACH_LAYER_TO_PLOT= 'DrawingLayerCntlr.attachLayerToPlot';
+const DETACH_LAYER_FROM_PLOT= 'DrawingLayerCntlr.detachLayerFromPlot';
+
+
+// _- select
+const SELECT_AREA_START= 'DrawingLayerCntlr.SelectArea.selectAreaStart';
+const SELECT_AREA_MOVE= 'DrawingLayerCntlr.SelectArea.selectAreaMove';
+const SELECT_AREA_END= 'DrawingLayerCntlr.SelectArea.selectAreaEnd';
+const SELECT_MOUSE_LOC= 'DrawingLayerCntlr.SelectArea.selectMouseLoc';
+
+
+
+
 
 const DRAWING_LAYER_KEY= 'drawingLayers';
 
@@ -32,6 +41,7 @@ export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA, DRAWING_LAYER_KEY,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER,
+    SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
     reducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
@@ -72,11 +82,11 @@ function dispatchDestroyDrawLayer(drawLayerId) {
 /**
  *
  * @param drawLayerId
- * @param plotId
+ * @param plotIdAry
  */
-function dispatchAttachLayerToPlot(drawLayerId,plotId) {
+function dispatchAttachLayerToPlot(drawLayerId,plotIdAry) {
     flux.process({type: ATTACH_LAYER_TO_PLOT,
-                  payload: {drawLayerId,plotId}
+                  payload: {drawLayerId,plotIdAry}
     });
 }
 
@@ -84,11 +94,11 @@ function dispatchAttachLayerToPlot(drawLayerId,plotId) {
 /**
  *
  * @param drawLayerId
- * @param plotId
+ * @param plotIdAry
  */
-function dispatchDetachLayerFromPlot(drawLayerId,plotId) {
+function dispatchDetachLayerFromPlot(drawLayerId,plotIdAry) {
     flux.process({type: DETACH_LAYER_FROM_PLOT,
-                  payload: {drawLayerId,plotId}
+                  payload: {drawLayerId,plotIdAry}
     });
 }
 
@@ -152,10 +162,10 @@ function createDrawingLayer(state,action) {
     var container= makeDrawLayerContainer(drawLayerId,drawLayerReducer,drawLayer);
 
 
-    var allowedActions= _.union(state.allowedActions, drawLayer.actionIdAry);
+    var allowedActions= _.union(state.allowedActions, drawLayer.actionTypeAry);
 
     return Object.assign({}, state,
-        {allowedActions, dlContainerAry: [...state.dlContainerAry,container] });
+        {allowedActions, dlContainerAry: [container, ...state.dlContainerAry] });
 }
 
 /**
@@ -202,7 +212,7 @@ function deferToLayerReducer(state,action) {
 function determineAndCallLayerReducer(state,action,force) {
     var newAry= state.dlContainerAry.map( (dlContainer) => {
         var {drawLayerReducer,drawingLayer}= dlContainer;
-        if (force || (drawingLayer.actionIdAry && drawingLayer.actionIdAry.includes(action.type))) {
+        if (force || (drawingLayer.actionTypeAry && drawingLayer.actionTypeAry.includes(action.type))) {
             var newdl= drawLayerReducer(drawingLayer,action);
             if (newdl===drawingLayer) return dlContainer;  // check to see if there was a change
             else return Object.assign({}, dlContainer, {drawingLayer:newdl});

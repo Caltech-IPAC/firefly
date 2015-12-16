@@ -16,49 +16,55 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
 
 /**
  *
- * @param drawLayerId
- * @param {object} options a set of options that define this drawing layer
- * <ul>
- *          <li>The following are the boolean options, all default to false:
- *
- *     <ul>
- *               <li>canHighlight:   supports a highlighted object, must be able to produce highlighted data for this option
- *               <li>canSelect:      supports a selected array of objects, must be able to produce a selected data array,
+ * @param {object} drawLayerId
+ * @param {object} options a set of options that define this drawing layer All boolean options default to false and
+ *                 string options to the empty string
+ * @param {boolean} options.canHighlight if the layer can highlight
+ * @param {boolean} options.canSelect    supports a selected array of objects, must be able to produce a selected data array,
  *                               only used with isPointData
- *               <li>canFilter:      drawing layer can be used with the filter controls,
+ * @param {boolean} options.canFilter    drawing layer can be used with the filter controls,
  *                               only used with canSelect and isPointData
- *               <li>canUseMouse:    drawing layer has mouse interaction, must set up actionIdAry
- *               <li>canSubgroup:    can be used with subgrouping
- *               <li>hasPerPlotData: drawing layer produces different data for each plot
- *               <li>asyncData :     drawing layer uses async operations to get the data
- *               <li>isPointData:    drawing layer only uses point data, @see PointDataObj.js
- *     </ul>
+ * @param {boolean} options.canUseMouse  drawing layer has mouse interaction, must set up actionTypeAry
+ * @param {boolean} options.canSubgroup  can be used with subgrouping
+ * @param {boolean} options.hasPerPlotData drawing layer produces different data for each plot
+ * @param {boolean} options.asyncData drawing layer uses async operations to get the data
+ * @param {boolean} options.isPointData drawing layer only uses point data, @see PointDataObj.js
+ * @param {string} options.helpLine a one line string describing the operation, for the end user to see
  *
- *
- *          <li>The following are the string options, all default to empty string
- *     <ul>
- *               <li>helpLine:       a one line string describing the operation, for the end user to see
- *
- *     </ul>
- *
- * </ul>
- *
- *
- * @param {object} drawingDef  the defaults that the drawer will use if not overridded @see DrawingDef
- * @param actionIdAry extra actions that are allow though to the drawing layer reducer
+ * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
+ * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
+ * @param {object} mouseEventMap object literal with event to function mapping, see documentation below in object
  * @return {*}
  */
-function makeDrawingLayer(drawLayerId, options, drawingDef= makeDrawingDef('red'),actionIdAry= []) {
+function makeDrawingLayer(drawLayerId,
+                          options={},
+                          drawingDef= makeDrawingDef('red'),
+                          actionTypeAry= [],
+                          mouseEventMap= {}) {
     var drawingLayer=  {
+
+
+         // it section: The types of IDs
+         // drawingLayerId: unique for each layer
+         // drawingGroupLayerId: any layer in this group Id will be controlled together in the UI
+         //                       default to the drawLayerId
+         // drawingTypeId: allows for multiple layers of same type to be added (such as multiple markers)
+         //                if they share the same type id then events mapping marked static will only be fired once
+
         drawLayerId,
-        displayGroupId:drawLayerId,   // all layers that share a display group id will be controlled together, defaults to drawLayerId
+        displayGroupId: drawLayerId,   // all layers that share a display group id will be controlled together, defaults to drawLayerId
+        drawLayerTypeId : drawLayerId, // layers all have a type string that default to the id, however if multiple of same are added, the type id should be set
+
+
+
+
         plotIdAry: [ALL_PLOTS],  // array of plotId that are layered
-        visiblePlotIdAry: [], // array of plotId that are visible
-        actionIdAry,      // what actions that the reducer will allow through the drawing layer reducer
+        visiblePlotIdAry: [], // array of plotId that are visible, only ids in this array are visible
+        actionTypeAry,      // what actions that the reducer will allow through the drawing layer reducer
         dataAvailable : true,  //todo
         drawingDef,
 
-        // following to fields deal with subgrouping
+        // following to fields deal with subgrouping //todo: the subgroup is not yet finished, I still need to think through it
         subgroups : {},       // subgroupId : plotIdAry todo: decide if this is the right approach
         groupTypes: [],       // id's of types of subgroups such as single, row, all, todo: is this over generalized?
 
@@ -102,7 +108,27 @@ function makeDrawingLayer(drawLayerId, options, drawingDef= makeDrawingDef('red'
             [DataTypes.DATA]:{},
             [DataTypes.HIGHLIGHT_DATA]:{},
             [DataTypes.SELECTED_IDX_ARY]: null
-        }
+        },
+
+
+           //
+           //     Mouse type as the key and the function to call when activated @see MouseState
+           //     If the value is an object the a it should define the properties: exclusive:boolean and func:function
+           //     The function usually dispatch type functions, but can be anything
+           //     value can be an action string. In that case flux.process is call to dispatch that action.
+           //     a mouseStatePayload object is always passed.
+           //     {
+           //         [MouseState.DRAG.key]: {exclusive: true, func:dispatchSelectAreaEdit},
+           //         [MouseState.DOWN.key]: {exclusive: true, actionType:DO_SOMETHING_ELSE},
+           //         [MouseState.DOWN.key]: dispatchSelectAreaStart,
+           //         [MouseState.UP.key]: SELECT_AREA_END
+           //         [MouseState.DOWN.key]: {static: true, func:dispatchFindClosestLayer}
+           //     };
+        mouseEventMap,
+
+           // the cursor style type that should be set as the cursor on the viewer
+           // 'nw-resize' or 'se-resize', any css cursor is allowed
+        cursor : ''
     };
 
     return Object.assign(drawingLayer,options);

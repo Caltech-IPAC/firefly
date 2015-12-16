@@ -38,6 +38,9 @@ function reducer(state, action) {
         case Cntlr.PROCESS_SCROLL  :
             retState= processScroll(state,action);
             break;
+        case Cntlr.CHANGE_PLOT_ATTRIBUTE :
+            retState= changePlotAttribute(state,action);
+            break;
         default:
             break;
     }
@@ -46,6 +49,26 @@ function reducer(state, action) {
     }
     return retState;
 }
+
+
+
+
+const replaceAtt = (pv,key,val)=> PlotView.replacePrimary(pv,
+                                                WebPlot.addWPAttribute(pv.primaryPlot,key,val));
+
+function changePlotAttribute(state,action) {
+    var {plotId,attKey,attValue}= action.payload;
+    var {plotViewAry,plotGroupAry}= state;
+    var pv= PlotViewUtil.findPlotView(plotId,plotViewAry);
+    var plotGroup= PlotViewUtil.findPlotGroup(pv.plotGroupId,plotGroupAry);
+    if (pv && pv.primaryPlot) {
+        plotViewAry=  PlotView.replacePlotView(plotViewAry,replaceAtt(pv,attKey,attValue));
+        plotViewAry=  PlotViewUtil.matchPlotView(pv,plotViewAry,plotGroup, (pv)=> replaceAtt(pv,attKey,attValue));
+        return Object.assign({},state,{plotViewAry});
+    }
+    return state;
+}
+
 
 function scaleImage(plotViewAry, action) {
     const {plotId, zoomLevel}= action.payload;

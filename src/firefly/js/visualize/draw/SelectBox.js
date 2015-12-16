@@ -14,7 +14,7 @@ const Style = new Enum([ 'STANDARD','HANDLED','LIGHT' ]);
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
 
-export default {makeSelectBox};
+export default {makeSelectBox,Style};
 
 /**
  *
@@ -31,16 +31,16 @@ function makeSelectBox(pt1,pt2,style) {
     obj.pt1= pt1;
     obj.pt2= pt2;
     obj.renderOptions={shadow:DrawUtil.makeShadow(4,1,1,'black')};
-    if (style) obj.style= Style.STANDARD;
+    obj.style= style || Style.STANDARD;
 
-    obj.getCenterPt= () => {
+    obj.getCenterPt= function(){
         var {pt1,pt2}= this;
         var x= (pt1.x + pt2.x)/2;
         var y= (pt1.y + pt2.y)/2;
         return {x,y,type:pt1.type};
     };
 
-    obj.getScreenDist= (plot, pt) => {
+    obj.getScreenDist= function(plot, pt) {
         var dist = -1;
         var sp1= plot.getScreenCoords(this.pt1);
         var sp2= plot.getScreenCoords(this.pt2);
@@ -57,12 +57,12 @@ function makeSelectBox(pt1,pt2,style) {
         return dist;
     };
 
-    obj.draw= (ctx,plot,def,vpPtM,onlyAddToPath) => {
+    obj.draw= function(ctx,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(this,def);
         drawImageBox(ctx,this.pt1, this.pt2, plot,drawParams,this.renderOptions);
     };
 
-    obj.toRegion= (plot, def) => {
+    obj.toRegion= function(plot, def) {
         var drawParams= makeDrawParams(this,def);
         toRegion(this.pt, plot,drawParams,this.renderOptions);
     };
@@ -75,7 +75,7 @@ function makeDrawParams(selectBox,def) {
     var style= selectBox.style || def.style || DEFAULT_STYLE;
     var innerBoxColor= selectBox.innderBoxColor || def.innderBoxColor || 'white';
     return {
-        color: DrawUtil.getColor(this.color,def.color),
+        color: DrawUtil.getColor(selectBox.color,def.color),
         innerBoxColor,
         style
     };

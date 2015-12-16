@@ -35,10 +35,10 @@ const FullType= new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT', 'SMART'])
 
 /**
  *
- * @param x1
- * @param y1
- * @param x2
- * @param y2
+ * @param {number} x1
+ * @param {number} y1
+ * @param {number} x2
+ * @param {number} y2
  * @return {number}
  */
 const computeScreenDistance= function (x1, y1, x2, y2) {

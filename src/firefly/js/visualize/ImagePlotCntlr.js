@@ -50,6 +50,7 @@ const PROCESS_SCROLL= 'ImagePlotCntlr/ProcessScroll';
 
 
 const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr/ChangeActivePlotView';
+const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr/ChangePlotAttribute';
 
 /**
  * action should contain:
@@ -92,11 +93,12 @@ export default {
     dispatchUpdateViewSize, dispatchProcessScroll,
     dispatchPlotImage, dispatch3ColorPlotImage, dispatchZoom,
     zoomActionCreator, plotImageActionCreator,
-    dispatchChangeActivePlotView,
+    dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
+    CHANGE_PLOT_ATTRIBUTE,
     ANY_REPLOT
 };
 
@@ -212,6 +214,9 @@ function dispatchChangeActivePlotView(plotId) {
     }
 }
 
+function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
+    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
+}
 
 
 //======================================== Action Creators =============================
@@ -248,10 +253,12 @@ function reducer(state=initState(), action={}) {
         case PLOT_PROGRESS_UPDATE  :
         case UPDATE_VIEW_SIZE :
         case PROCESS_SCROLL  :
+        case CHANGE_PLOT_ATTRIBUTE:
             retState= HandlePlotChange.reducer(state,action);
             break;
         case CHANGE_ACTIVE_PLOT_VIEW:
             retState= changeActivePlotView(state,action);
+            break;
             break;
         default:
             break;
@@ -269,6 +276,8 @@ function changeActivePlotView(state,action) {
 
     return Object.assign({}, state, {activePlotId:action.payload.plotId});
 }
+
+
 
 
 //todo

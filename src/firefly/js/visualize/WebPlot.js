@@ -465,7 +465,7 @@ export class WebPlot {
             zoomFactor: zf,
             percentOpaque   : 1.0,
             alive    : true,
-            var: {},
+            attributes: {},
             viewPort: WebPlot.makeViewPort(0,0,42,42),
             //=== End Mutable =====================
             asOverlay
@@ -521,7 +521,7 @@ export class WebPlot {
      */
     static addWPAttribute(wpData,attName,attValue) {
         var att= Object.assign({},wpData.attributes, {[attName]:attValue});
-        return Object.assign({},wpData,att);
+        return Object.assign({},wpData,{attributes:att});
     }
 
     /**

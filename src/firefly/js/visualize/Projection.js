@@ -31,6 +31,9 @@ export const makeProjection= function(gwtProjStr) {
       getWorldCoords(x,y) {
          var wpt= gwtProj.getWorldCoordsSilent(x,y);
          return wpt ? parseWorldPt(wpt.serialize()) : null;
+      },
+      isSpecified() {
+         return gwtProj.isSpecified();
       }
    };
 };

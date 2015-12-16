@@ -13,6 +13,8 @@ import PlotViewUtil  from '../PlotViewUtil.js';
 import PlotGroup  from '../PlotGroup.js';
 import DrawerComponent  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
+import {flux} from '../../Firefly.js';
+import {logError} from '../../util/WebUtil.js';
 
 
 
@@ -55,19 +57,32 @@ var ImageViewerView= React.createClass(
         ImagePlotCntlr.dispatchUpdateViewSize(plotId,e.offsetWidth,e.offsetHeight);
     },
 
+    eventCB(plotId,mouseState,screenPt,screenX,screenY) {
+        var {drawLayersAry}= this.props;
+        var mouseStatePayload= VisMouseCntlr.makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
+        var list= drawLayersAry.filter( (dl) => dl.mouseEventMap.hasOwnProperty(mouseState.key));
 
-    eventCB(plotId,mouseState,spt,screenX,screenY) {
+        var exclusive= list.find((dl) => dl.mouseEventMap[mouseState.key].exclusive);
+        if (exclusive) {
+            fireMouseEvent(exclusive,mouseState,mouseStatePayload);
+        }
+        else {
+            list.forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
+            this.scroll(plotId,mouseState,screenX,screenY);
+        }
+    },
+
+    scroll(plotId,mouseState,screenX,screenY) {
         if (screenX && screenY) {
             switch (mouseState) {
                 case VisMouseCntlr.MouseState.DOWN :
                     ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
                     var {scrollX, scrollY}= this.props.plotView;
                     this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
-                    //console.log(`begin drag ${screenX},${screenY}`);
                     break;
                 case VisMouseCntlr.MouseState.DRAG :
                     if (this.plotDrag) {
-                        let newScrollPt= this.plotDrag(screenX,screenY);
+                        const newScrollPt= this.plotDrag(screenX,screenY);
                         ImagePlotCntlr.dispatchProcessScroll(plotId,newScrollPt);
                     }
                     break;
@@ -193,6 +208,28 @@ function getBorderColor(plotId) {
 
 
 
+}
+
+
+
+function fireMouseEvent(drawingLayer,mouseState,mouseStatePayload) {
+    var payload= Object.assign({},mouseStatePayload,{drawingLayer});
+    var fireObj= drawingLayer.mouseEventMap[mouseState.key];
+    if (typeof fireObj === 'string') {
+        flux.process({type: fireObj, payload});
+    }
+    else if (typeof fireObj === 'function') {
+        fireObj(payload);
+    }
+    else if (typeof fireObj === 'object' && fireObj.func) {
+        fireObj.func(payload);
+    }
+    else if (typeof fireObj === 'object' && fireObj.actionType) {
+        flux.process({type: fireObj.actionType, payload});
+    }
+    else {
+        logError(new Error('could not find a way to process MouseState'+mouseState.key),fireObj);
+    }
 }
 
 
