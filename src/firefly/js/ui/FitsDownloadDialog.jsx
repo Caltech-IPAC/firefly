@@ -7,10 +7,8 @@
  *
  */
 import React from 'react';
-import {flux} from '../Firefly.js';
-import TargetPanel from './TargetPanel.jsx';
 import AppDataCntlr from '../core/AppDataCntlr.js';
-import {Operation} from '../visualize/PlotState.js';
+import PlotState,{Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {download} from '../util/WebUtil.js';
 import InputGroup from './InputGroup.jsx';
@@ -19,13 +17,9 @@ import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
-import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
-import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import PlotState   from '../visualize/PlotState.js';
-import  WebPlotRequest, {ServiceType, WPConst} from '../visualize/WebPlotRequest.js';
 
 
 function getDialogBuilder() {
@@ -129,19 +123,13 @@ var FitsDialogTest= React.createClass({
     //return the field and value as an object literals
     _showResults(success, request) {
 
-        var statStr= `validate state: ${success}`;
-        console.log(statStr);
-        console.log(request);
 
+        console.log(request);
 
         var rel={};
         var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-            var kk=k;
-            var rr=request[kk];
-            rel[kk]=rr;
-            buildString+=`${k}=${request[k]}`;
-            if (idx<array.length-1) buildString+=', ';
-            return buildString;
+            rel[k]=request[k];
+            if (idx<array.length-1)  return;
 
         },'');
 
@@ -176,7 +164,7 @@ var FitsDialogTest= React.createClass({
          }
 
 
-         var fitsFile = this.plotState.getOriginalFitsFileStr(band) == 'undefined' || whichOp == 'modified' ?
+         var fitsFile = this.plotState.getOriginalFitsFileStr(band) == 'undefined' || whichOp == null ?
          this.plotState.getWorkingFitsFileStr(band) :
          this.plotState.getOriginalFitsFileStr(band);
 
@@ -186,12 +174,12 @@ var FitsDialogTest= React.createClass({
          }
 
          //this does not work, how to convert a fits to a png image??
-         else if (ext.toLowerCase() =='png') {
+        /* else if (ext.toLowerCase() =='png') {
              var indx = fitsFile.indexOf('fits');
              var pngFile =fitsFile.substr(0, indx) + 'png';
 
              download(getRootURL() + '/servlet/Download?png='+ pngFile);
-         }
+         }*/
 
     },
 
