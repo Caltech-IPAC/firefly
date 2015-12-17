@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import ImagePlotCntlr from './ImagePlotCntlr.js';
-import DrawingLayerCntlr from './DrawingLayerCntlr.js';
-import DrawingLayer from './draw/DrawingLayer.js';
+import DrawLayerCntlr from './DrawLayerCntlr.js';
+import DrawLayer from './draw/DrawLayer.js';
 import PlotGroup from './PlotGroup.js';
 import {flux} from '../Firefly.js';
 
@@ -12,8 +12,8 @@ import {flux} from '../Firefly.js';
 
 export default {getPlotViewById, getPrimaryPlot, findPlotView, getPlotViewAry,operateOnOthersInGroup,
                 findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
-                getActivePlotView,getAllPlots, getAllDrawingLayers, getAllDrawingLayersStore,
-                getPlotViewIdListInGroup};
+                getActivePlotView,getAllPlots, getAllDrawLayers, getAllDrawLayersStore,
+                getPlotViewIdListInGroup, getDrawLayerByType, isDrawLayerVisible, isDrawLayerAttached};
 
 
 
@@ -82,27 +82,6 @@ function getActivePlotView() {
     return store.plotViewAry.find( (pv) => pv.plotId===store.activePlotId);
 }
 
-/**
- * Get all drawing layers container from the store
- * FOR USE OUTSIDE OF REDUCER
- * @return {Array}
- */
-function getAllDrawingLayersStore() {
-    return flux.getState()[DrawingLayerCntlr.DRAWING_LAYER_KEY].dlContainerAry;
-}
-
-/**
- * construct an array of drawing layer from the store
- * FOR USE OUTSIDE OF REDUCER
- * @param plotId
- * @return {Array}
- */
-function getAllDrawingLayers(plotId) {
-    var ary= flux.getState()[DrawingLayerCntlr.DRAWING_LAYER_KEY].dlContainerAry;
-    return ary.filter( (c) => c.drawingLayer.plotIdAry
-        .find( (id) => id===plotId||id===DrawingLayer.ALL_PLOTS))
-        .map( (c) => c.drawingLayer);
-}
 
 /**
  * Perform an operation on all the PlotViews in a group except the source, get the plotViewAry and group from the store.
@@ -124,11 +103,6 @@ function operateOnOthersInGroup(sourcePv,operationFunc) {
         });
     }
 }
-
-
-
-
-
 /**
  * get the all plot object from the store
  * FOR USE OUTSIDE OF REDUCER
@@ -149,6 +123,48 @@ function getPrimaryPlot(plotId) {
     var pv= getPlotViewById(plotId);
     return pv && pv.primaryPlot ? pv.primaryPlot : null;
 }
+
+//--------------------------------------------------------------
+//--------- Drawing Layer outside functions
+//--------------------------------------------------------------
+
+
+
+/**
+ * Get all drawing layers container from the store
+ * FOR USE OUTSIDE OF REDUCER
+ * @return {Array}
+ */
+function getAllDrawLayersStore() {
+    return flux.getState()[DrawLayerCntlr.DRAWING_LAYER_KEY].drawLayerAry;
+}
+
+/**
+ * construct an array of drawing layer from the store
+ * FOR USE OUTSIDE OF REDUCER
+ * @param plotId
+ * @return {Array}
+ */
+function getAllDrawLayers(plotId) {
+    var ary= flux.getState()[DrawLayerCntlr.DRAWING_LAYER_KEY].drawLayerAry;
+    return ary.filter( (dl) => dl.plotIdAry
+        .find( (id) => id===plotId||id===DrawLayer.ALL_PLOTS));
+}
+
+
+function getDrawLayerByType(plotId, typeId) {
+    return getAllDrawLayers(plotId).find( (dl) => dl.drawLayerTypeId===typeId);
+}
+
+/**
+ *
+ * @param {Object} dl the drawLayer
+ * @param plotId
+ * @return {boolean}
+ */
+function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includes(plotId) : false; }
+
+function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.includes(plotId) : false; }
 
 
 //--------------------------------------------------------------

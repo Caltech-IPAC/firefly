@@ -5,7 +5,7 @@
 import {makeDrawingDef} from './DrawingDef.js';
 const ALL_PLOTS= 'AllPlots';
 
-export default {makeDrawingLayer,ALL_PLOTS};
+export default {makeDrawLayer,ALL_PLOTS};
 
 const DATA='data';
 const HIGHLIGHT_DATA='highlightData';
@@ -17,35 +17,37 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
 /**
  *
  * @param {object} drawLayerId
+ * @param {object} drawLayerTypeId
  * @param {object} options a set of options that define this drawing layer All boolean options default to false and
  *                 string options to the empty string
- * @param {boolean} options.canHighlight if the layer can highlight
- * @param {boolean} options.canSelect    supports a selected array of objects, must be able to produce a selected data array,
+ * @param {boolean} [options.canHighlight] if the layer can highlight
+ * @param {boolean} [options.canSelect]    supports a selected array of objects, must be able to produce a selected data array,
  *                               only used with isPointData
- * @param {boolean} options.canFilter    drawing layer can be used with the filter controls,
+ * @param {boolean} [options.canFilter]    drawing layer can be used with the filter controls,
  *                               only used with canSelect and isPointData
- * @param {boolean} options.canUseMouse  drawing layer has mouse interaction, must set up actionTypeAry
- * @param {boolean} options.canSubgroup  can be used with subgrouping
- * @param {boolean} options.hasPerPlotData drawing layer produces different data for each plot
- * @param {boolean} options.asyncData drawing layer uses async operations to get the data
- * @param {boolean} options.isPointData drawing layer only uses point data, @see PointDataObj.js
- * @param {string} options.helpLine a one line string describing the operation, for the end user to see
+ * @param {boolean} [options.canUseMouse]  drawing layer has mouse interaction, must set up actionTypeAry
+ * @param {boolean} [options.canSubgroup]  can be used with subgrouping
+ * @param {boolean} [options.hasPerPlotData] drawing layer produces different data for each plot
+ * @param {boolean} [options.asyncData] drawing layer uses async operations to get the data
+ * @param {boolean} [options.isPointData] drawing layer only uses point data, @see PointDataObj.js
+ * @param {string} [options.helpLine] a one line string describing the operation, for the end user to see
  *
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
  * @param {Array} actionTypeAry extra [actions] that are allow though to the drawing layer reducer
  * @param {object} mouseEventMap object literal with event to function mapping, see documentation below in object
  * @return {*}
  */
-function makeDrawingLayer(drawLayerId,
+function makeDrawLayer(drawLayerId,
+                          drawLayerTypeId,
                           options={},
                           drawingDef= makeDrawingDef('red'),
                           actionTypeAry= [],
                           mouseEventMap= {}) {
-    var drawingLayer=  {
+    var drawLayer=  {
 
 
          // it section: The types of IDs
-         // drawingLayerId: unique for each layer
+         // drawLayerId: unique for each layer
          // drawingGroupLayerId: any layer in this group Id will be controlled together in the UI
          //                       default to the drawLayerId
          // drawingTypeId: allows for multiple layers of same type to be added (such as multiple markers)
@@ -53,7 +55,7 @@ function makeDrawingLayer(drawLayerId,
 
         drawLayerId,
         displayGroupId: drawLayerId,   // all layers that share a display group id will be controlled together, defaults to drawLayerId
-        drawLayerTypeId : drawLayerId, // layers all have a type string that default to the id, however if multiple of same are added, the type id should be set
+        drawLayerTypeId, // layers all have a type string that default to the id, however if multiple of same are added, the type id should be set
 
 
 
@@ -131,7 +133,7 @@ function makeDrawingLayer(drawLayerId,
         cursor : ''
     };
 
-    return Object.assign(drawingLayer,options);
+    return Object.assign(drawLayer,options);
 }
 
 /**

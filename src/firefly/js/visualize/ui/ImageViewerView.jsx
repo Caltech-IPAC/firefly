@@ -72,6 +72,7 @@ var ImageViewerView= React.createClass(
             list.forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
             this.scroll(plotId,mouseState,screenX,screenY);
         }
+        VisMouseCntlr.fireMouseEvent(mouseStatePayload);
     },
 
     scroll(plotId,mouseState,screenX,screenY) {
@@ -216,9 +217,9 @@ function getBorderColor(plotId) {
 
 
 
-function fireMouseEvent(drawingLayer,mouseState,mouseStatePayload) {
-    var payload= Object.assign({},mouseStatePayload,{drawingLayer});
-    var fireObj= drawingLayer.mouseEventMap[mouseState.key];
+function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
+    var payload= Object.assign({},mouseStatePayload,{drawLayer});
+    var fireObj= drawLayer.mouseEventMap[mouseState.key];
     if (typeof fireObj === 'string') {
         flux.process({type: fireObj, payload});
     }
@@ -240,12 +241,12 @@ function fireMouseEvent(drawingLayer,mouseState,mouseStatePayload) {
 /**
  *
  * @param plotView
- * @param {[]} dlAry - array of drawingLayers
+ * @param {[]} dlAry - array of drawLayers
  * @return {*}
  */
 function makeDrawingAry(plotView,dlAry) {
     if (!dlAry) return [];
-    return dlAry.map( (dl) => <DrawerComponent plotView={plotView} drawingLayer={dl} key={dl.drawLayerId}/> );
+    return dlAry.map( (dl) => <DrawerComponent plotView={plotView} drawLayer={dl} key={dl.drawLayerId}/> );
 }
 
 

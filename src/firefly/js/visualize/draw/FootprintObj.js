@@ -13,7 +13,6 @@ const FOOTPRINT_OBJ= 'FootprintObj';
 const DEFAULT_STYLE= Style.STANDARD;
 const DEF_WIDTH = 1;
 
-export default {makeFootprintObj};
 
 /**
  * Draw one or more closed polygons.
@@ -27,18 +26,36 @@ export default {makeFootprintObj};
  * @param {Enum} style
  * @return {object}
  */
-function makeFootprintObj(footprintAry,style) {
+function make(footprintAry,style) {
 	if (!footprintAry && !footprintAry.length) return null;
 
 	var obj= DrawObj.makeDrawObj();
 	obj.type= FOOTPRINT_OBJ;
 	obj.footprintAry= footprintAry;
 	if (style) obj.style= Style.STANDARD;
+	return obj;
 
-	obj.getCanUsePathEnabledOptimization= () => this.lineWidth===1;
+}
 
-	obj.getCenterPt= () => {
-		var {footprintAry}= this;
+
+
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+var draw=  {
+
+	usePathOptimization(drawObj) {
+		return drawObj.lineWidth===1;
+	},
+
+	getCenterPt(drawObj) {
+		var {footprintAry}= drawObj;
 		var xSum = 0;
 		var ySum = 0;
 		var xTot = 0;
@@ -53,12 +70,12 @@ function makeFootprintObj(footprintAry,style) {
 			});
 		});
 		return makeWorldPt(xSum / xTot, ySum / yTot);
-	};
+	},
 
-	obj.getScreenDist= (plot, pt) => {
+	getScreenDist(drawObj,plot, pt) {
 		var minDistSq = Number.MAX_VALUE;
 
-		footprintAry.forEach( (footprint) => {
+		drawObj.footprintAry.forEach( (footprint) => {
 			var totX = 0;
 			var distSq;
 			var totY = 0;
@@ -80,29 +97,36 @@ function makeFootprintObj(footprintAry,style) {
 		});
 
 		return Math.sqrt(minDistSq);
-	};
+	},
 
-	obj.draw= (ctx,plot,def,vpPtM,onlyAddToPath) => {
-		var drawParams= makeDrawParams(this,def);
-		drawFootprint(ctx, plot, this.footprintAry, drawParams, this.renderOptions, onlyAddToPath);
-	};
+	draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+		var drawParams= makeDrawParams(drawObj,def);
+		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
+	},
 
-	obj.toRegion= (plot, def) =>
-		                  toRegion(this.footprintAry, plot,makeDrawParams(this,def),this.renderOptions);
+	toRegion(drawObj,plot, def) {
+		toRegion(drawObj.footprintAry, plot,makeDrawParams(drawObj,def),drawObj.renderOptions);
+	},
 
+	translateTo(drawObj,plot, apt) {
+		Object.assign({},drawObj, {footprintAry:translateTo(drawObj.footprintAry,plot,apt)});
+	},
 
-	obj.translateTo= (plot, apt) =>
-		                 Object.assign({},this, {footprintAry:translateTo(this.footprintAry,plot,apt)});
+	rotateAround(drawObj, plot, angle, worldPt) {
+		Object.assign({},drawObj, {footprintAry:rotateAround(drawObj.footprintAry,worldPt)});
+	}
+};
 
-	obj.rotateAround= (plot, angle, worldPt) =>
-                         Object.assign({},this, {footprintAry:rotateAround(this.footprintAry,worldPt)});
+export default {make,draw, FOOTPRINT_OBJ};
 
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
-
-
-	return obj;
-
-}
 
 
 function makeDrawParams(fpObj,def) {

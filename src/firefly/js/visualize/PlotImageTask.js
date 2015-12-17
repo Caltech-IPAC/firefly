@@ -21,7 +21,7 @@ import PlotViewUtil from './PlotViewUtil.js';
 import Band from './Band.js';
 import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
-import DrawingLayerCntlr from './DrawingLayerCntlr.js';
+import DrawLayerCntrl from './DrawLayerCntlr.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -58,7 +58,7 @@ function makePlotImageAction(rawAction) {
     return (dispatcher) => {
 
         if (firstTime) {
-            initBuildInDrawingLayers();
+            initBuildInDrawLayers();
             firstTime= false;
         }
 
@@ -182,8 +182,9 @@ const processSuccessResponse= function(dispatcher, payload, result) {
         resultPayload.plotAry
             .map( (p) => ({r:p.plotState.getWebPlotRequest(),plotId:p.plotId}))
             .forEach( (obj) => obj.r.getOverlayIds()
-                .forEach( (drawLayerId)=>  DrawingLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,[obj.plotId])));
+                .forEach( (drawLayerId)=>  DrawLayerCntrl.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
 
+        //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
     }
     else {
         var req= getRequest(payload);
@@ -265,8 +266,8 @@ function updateActiveTarget(req,plot) {
     if (activeTarget || corners) AppDataCntlr.setActiveTarget(activeTarget,corners);
 }
 
-function initBuildInDrawingLayers() {
-    ActiveTarget.dispatchInitActiveTarget();
+function initBuildInDrawLayers() {
+    DrawLayerCntrl.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
 
 

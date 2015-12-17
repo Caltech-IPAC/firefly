@@ -7,11 +7,10 @@
  */
 
 
-import DrawingLayerReducer from './DrawLayerReducer.js';
-import DrawingLayerCntlr from '../visualize/DrawingLayerCntlr.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawingLayer  from '../visualize/draw/DrawingLayer.js';
+import DrawLayer  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -20,6 +19,8 @@ import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
 import PlotViewUtils from '../visualize/PlotViewUtil.js';
+//import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
+import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
 
 import Enum from 'enum';
@@ -43,22 +44,22 @@ To select again: hold down the shift key, click, and drag`;
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 
 
-const LAYER_ID= 'SELECT_AREA';
+const ID= 'SELECT_AREA';
+const TYPE_ID= 'SELECT_AREA_TYPE';
+
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null);
+
+export default {factoryDef, TYPE_ID};
 
 
-export default {dispatchInitSelectArea, LAYER_ID};
-
-
-function dispatchInitSelectArea() {
-    DrawingLayerCntlr.dispatchCreateDrawLayer(LAYER_ID,makeLayerReducer());
-}
+var idCnt=0;
 
 function dispatchSelectAreaEnd(mouseStatePayload) {
-    var {plotId,drawingLayer}= mouseStatePayload;
-    var selectBox= drawingLayer.drawData.data[0];
+    var {plotId,drawLayer}= mouseStatePayload;
+    var selectBox= drawLayer.drawData.data[0];
     var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
     ImagePlotCntlr.dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
-    flux.process({type:DrawingLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
+    flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
 }
 
 
@@ -66,57 +67,54 @@ function dispatchSelectAreaEnd(mouseStatePayload) {
  *
  * @return {Function}
  */
-function makeLayerReducer() {
+function creator() {
 
     var drawingDef= makeDrawingDef('black');
     var pairs= {
-        [MouseState.MOVE.key]: DrawingLayerCntlr.SELECT_MOUSE_LOC,
-        [MouseState.DRAG.key]: {exclusive: true, actionType:DrawingLayerCntlr.SELECT_AREA_MOVE},
-        [MouseState.DOWN.key]: DrawingLayerCntlr.SELECT_AREA_START,
+        [MouseState.MOVE.key]: DrawLayerCntlr.SELECT_MOUSE_LOC,
+        [MouseState.DRAG.key]: {exclusive: true, actionType:DrawLayerCntlr.SELECT_AREA_MOVE},
+        [MouseState.DOWN.key]: DrawLayerCntlr.SELECT_AREA_START,
         [MouseState.UP.key]: dispatchSelectAreaEnd
     };
 
-    var actionTypes= [DrawingLayerCntlr.SELECT_AREA_START,
-                      DrawingLayerCntlr.SELECT_AREA_MOVE,
-                      DrawingLayerCntlr.SELECT_AREA_END,
-                      DrawingLayerCntlr.SELECT_MOUSE_LOC];
+    var actionTypes= [DrawLayerCntlr.SELECT_AREA_START,
+                      DrawLayerCntlr.SELECT_AREA_MOVE,
+                      DrawLayerCntlr.SELECT_AREA_END,
+                      DrawLayerCntlr.SELECT_MOUSE_LOC];
 
-    var layer= DrawingLayer.makeDrawingLayer(
-        LAYER_ID,
-        {canUseMouse:true},
-        drawingDef, actionTypes, pairs );
-
-    return DrawingLayerReducer.makeReducer( layer, null, getLayerChanges);
+    idCnt++;
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, {canUseMouse:true},
+                                          drawingDef, actionTypes, pairs );
 }
 
 
-function getLayerChanges(drawingLayer, action) {
+function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
-        case DrawingLayerCntlr.SELECT_AREA_START:
-            return start(drawingLayer,action);
+        case DrawLayerCntlr.SELECT_AREA_START:
+            return start(drawLayer,action);
             break;
-        case DrawingLayerCntlr.SELECT_AREA_MOVE:
-            return drag(drawingLayer,action);
+        case DrawLayerCntlr.SELECT_AREA_MOVE:
+            return drag(drawLayer,action);
             break;
-        case DrawingLayerCntlr.SELECT_AREA_END:
-            return end(drawingLayer,action);
+        case DrawLayerCntlr.SELECT_AREA_END:
+            return end(drawLayer,action);
             break;
-        case DrawingLayerCntlr.ATTACH_LAYER_TO_PLOT:
+        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             return attach();
             break;
-        case DrawingLayerCntlr.SELECT_MOUSE_LOC:
-            return moveMouse(drawingLayer,action);
+        case DrawLayerCntlr.SELECT_MOUSE_LOC:
+            return moveMouse(drawLayer,action);
             break;
     }
 
 }
 
-//function getDrawData(dataType, plotId, drawingLayer, action, lastDataRet) {
+//function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 //
 //    switch (dataType) {
 //        case DataTypes.DATA:
-//            return computeDrawingLayer(action);
+//            return computeDrawLayer(action);
 //            break;
 //        case DataTypes.HIGHLIGHT_DATA:
 //            break;
@@ -136,9 +134,9 @@ function attach() {
     };
 }
 
-function moveMouse(drawingLayer,action) {
+function moveMouse(drawLayer,action) {
     var {screenPt,plotId}= action.payload;
-    if (drawingLayer.mode==='edit') {
+    if (drawLayer.mode==='edit') {
         var pv= PlotViewUtils.getPlotViewById(plotId);
         if (!pv) return;
         var cc= CsysConverter.make(pv.primaryPlot);
@@ -158,9 +156,9 @@ function moveMouse(drawingLayer,action) {
 }
 
 
-function start(drawingLayer,action) {
+function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var {mode}= drawingLayer;
+    var {mode}= drawLayer;
     var pv= PlotViewUtils.getPlotViewById(plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
@@ -206,17 +204,17 @@ function getPtAry(pv) {
 
 
 
-function drag(drawingLayer,action) {
+function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
     var pv= PlotViewUtils.getPlotViewById(plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
-    var drawSel= makeSelectObj(drawingLayer.firstPt, imagePt, CsysConverter.make(plot));
+    var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));
     return {currentPt:imagePt, drawData:{data:drawSel}};
 }
 
-function end(drawingLayer,action) {
-    var {mode}= drawingLayer;
+function end(drawLayer,action) {
+    var {mode}= drawLayer;
     var retObj= {};
     if (mode==='select') {
         retObj.mode= 'edit';

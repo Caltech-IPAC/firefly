@@ -43,7 +43,7 @@ var EventLayer= React.createClass(
         }
         //var e= ReactDOM.findDOMNode(this);
         //var pc= CysConverter.make(plot);
-        //VisMouseCntlr.fireMouseEvent(plotId,mouseState, spt); // TODO -uncomment
+        //VisMouseCntlr.fireMouseEvent(plotId,mouseState, spt);
         //var ip= pc.getImageCoords(spt);
         //var wpt= pc.getWorldCoords(spt);
         //console.log(`fire: ${mouseState.key}: x:${spt.x}, y:${spt.y}, ix:${ip.x}, iy:${ip.y}, wx:${wpt.getLon()}, wy:${wpt.getLat()}`);
@@ -67,8 +67,8 @@ var EventLayer= React.createClass(
             //spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
         }
         var e= ReactDOM.findDOMNode(this);
-        var compOffX= x-getAbsoluteLeft(e);
-        var compOffY= y-getAbsoluteTop(e);
+        var compOffX= x-getAbsoluteLeft(e)+window.scrollX;
+        var compOffY= y-getAbsoluteTop(e)+window.scrollY;
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
         //console.log(`document: ${mouseState.key} screenX: ${screenX}, screenY: ${screenY}, offsetX: ${compOffX}, offsetY: ${compOffY}`);
         //this.props.eventCallback(plotId,mouseState,spt,,);

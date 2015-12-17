@@ -21,7 +21,6 @@ import VisUtil from '../VisUtil.js';
 const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
 
 
-export default {makeDirectionArrowDrawObj};
 
 /**
  *
@@ -38,14 +37,28 @@ function makeDirectionArrowDrawObj({startPt, endPt, text}) {
     obj.startPt= startPt;
     obj.endPt= endPt;
     obj.text= text;
+    return obj;
+}
 
 
-    obj.getCenterPt= () => this.startPt;
 
-    obj.getScreenDist= (plot, pt) => {
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
+var draw=  {
+
+    usePathOptimization(drawObj) { return false; },
+
+    getCenterPt(drawObj) { drawObj.startPt; },
+
+    getScreenDist(drawObj,plot, pt) {
         var dist = -1;
-        var testPt= plot ? plot.getScreenCoords(this.pt) : this.pt;
+        var testPt= plot ? plot.getScreenCoords(drawObj.pt) : drawObj.pt;
 
         if (testPt.type===Point.SPT) {
             var dx= pt.x - testPt.x;
@@ -53,21 +66,31 @@ function makeDirectionArrowDrawObj({startPt, endPt, text}) {
             dist= Math.sqrt(dx*dx + dy*dy);
         }
         return dist;
-    };
+    },
 
-    obj.draw= (ctx,plot,def,vpPtM,onlyAddToPath) => {
-        var drawParams= makeDrawParams(this,def);
-        var {startPt,endPt,renderOptions}= this;
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+        var drawParams= makeDrawParams(drawObj,def);
+        var {startPt,endPt,renderOptions}= drawObj;
         drawDirectionArrow(ctx,startPt,endPt,drawParams,renderOptions);
-    };
+    },
 
-    obj.toRegion= (plot, def) => {
-        var drawParams= makeDrawParams(this,def);
-        var {startPt,endPt,renderOptions}= this;
+    toRegion(drawObj,plot, def) {
+        var drawParams= makeDrawParams(drawObj,def);
+        var {startPt,endPt,renderOptions}= drawObj;
         toRegion(startPt,endPt,drawParams,renderOptions);
-    };
-    return obj;
-}
+    }
+};
+
+export default {makeDirectionArrowDrawObj,draw,DIR_ARROW_DRAW_OBJ};
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+
+
+
 
 
 function makeDrawParams(pointDataObj,def) {

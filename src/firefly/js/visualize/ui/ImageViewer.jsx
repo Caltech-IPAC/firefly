@@ -42,8 +42,8 @@ var ImageViewer= React.createClass(
 
     storeUpdate() {
         var allPlots= PlotViewUtil.getAllPlots();
-        var allDraw= PlotViewUtil.getAllDrawingLayersStore();
-        var drawLayersAry= PlotViewUtil.getAllDrawingLayers(this.props.plotId);
+        var allDraw= PlotViewUtil.getAllDrawLayersStore();
+        var drawLayersAry= PlotViewUtil.getAllDrawLayers(this.props.plotId);
         if (allPlots!==this.state.allPlots  ||
             (allDraw!==this.state.allDraw &&
             drawLayersDiffer(drawLayersAry,this.state.drawLayersAry))) {

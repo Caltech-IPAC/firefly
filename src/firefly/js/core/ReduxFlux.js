@@ -16,13 +16,23 @@ import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import HistogramCntlr from '../visualize/HistogramCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
-import DrawingLayerCntlr from '../visualize/DrawingLayerCntlr.js';
+import DrawLayer from '../visualize/DrawLayerCntlr.js';
+import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
+
+//--- import drawing Layers
+import ActiveTarget from '../drawingLayers/ActiveTarget.js';
+import SelectArea from '../drawingLayers/SelectArea.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
  * @type {Map<string, function>}
  */
 const actionCreators = new Map();
+
+
+
+const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea);
+
 
 /**
  * A collection of reducers keyed by the node's name under the root.
@@ -36,7 +46,7 @@ const reducers = {
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
-    [DrawingLayerCntlr.DRAWING_LAYER_KEY]: DrawingLayerCntlr.reducer
+    [DrawLayer.DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
 };
 
 let redux = null;
@@ -54,6 +64,12 @@ actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
 
 actionCreators.set(HistogramCntlr.LOAD_TBL_STATS, HistogramCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
+
+
+
+
+
+
 
 /**
  * object with a key that can be filtered out, value should be a boolean or a function that returns a boolean
@@ -206,6 +222,18 @@ function createSmartComponent(connector, component) {
     );
 }
 
+function getDrawLayerFactory() {
+    return DrawLayerFactory;
+}
+
+function registerDrawLayer(factoryDef) {
+    drawLayerFactory.register(factoryDef);
+}
+
+function createDrawLayer(drawLayerTypeId, params) {
+    return drawLayerFactory.create(drawLayerTypeId,params);
+}
+
 
 export var reduxFlux = {
     registerCreator,
@@ -214,6 +242,8 @@ export var reduxFlux = {
     getState,
     process,
     addListener,
-    createSmartComponent
+    createSmartComponent,
+    registerDrawLayer,
+    createDrawLayer
 };
 

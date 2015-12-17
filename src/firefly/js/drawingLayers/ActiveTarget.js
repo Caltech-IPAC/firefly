@@ -3,43 +3,45 @@
  */
 
 
-import DrawingLayerReducer from './DrawLayerReducer.js';
 import PlotViewUtil from '../visualize/PlotViewUtil.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
-import DrawingLayerCntlr from '../visualize/DrawingLayerCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
-import {makePointDataObj, DrawSymbol} from '../visualize/draw/PointDataObj.js';
+import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawingLayer, {DataTypes} from '../visualize/draw/DrawingLayer.js';
+import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
+import DrawLayer, {DataTypes} from '../visualize/draw/DrawLayer.js';
+import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 
-const LAYER_ID= 'ACTIVE_TARGET';
-
-export default {dispatchInitActiveTarget, LAYER_ID};
-
+const ID= 'ACTIVE_TARGET';
+const TYPE_ID= 'ACTIVE_TARGET_TYPE';
 
 
-function dispatchInitActiveTarget() {
-    DrawingLayerCntlr.dispatchCreateDrawLayer(LAYER_ID,makeLayerReducer());
-}
 
-function makeLayerReducer() {
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,null,null);
 
+export default {factoryDef, TYPE_ID};
+
+var idCnt=0;
+
+//function dispatchInitActiveTarget() {
+//    DrawLayerCntlr.dispatchCreateDrawLayer(creator());
+//}
+
+function creator(initPayload) {
     var drawingDef= makeDrawingDef('blue');
     drawingDef.symbol= DrawSymbol.CIRCLE;
-    var layer= DrawingLayer.makeDrawingLayer(LAYER_ID,
-                                             {hasPerPlotData:true, isPointData:true},
-                                             drawingDef);
-
-    return DrawingLayerReducer.makeReducer( layer, getDrawData);
+    idCnt++;
+    return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID,
+                                        {hasPerPlotData:true, isPointData:true},
+                                         drawingDef);
 }
 
 
 
-function getDrawData(dataType, plotId, drawingLayer, action, lastDataRet) {
+function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     switch (dataType) {
         case DataTypes.DATA:
-            return computeDrawingLayer(plotId);
+            return computeDrawLayer(plotId);
             break;
         case DataTypes.HIGHLIGHT_DATA:
             break;
@@ -51,11 +53,11 @@ function getDrawData(dataType, plotId, drawingLayer, action, lastDataRet) {
 
 
 
-function computeDrawingLayer(plotId) {
+function computeDrawLayer(plotId) {
     if (!plotId) return null;
     var pv= PlotViewUtil.getPlotViewById(plotId);
     var wp= pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET];
-    return wp ? [makePointDataObj(wp)] : [];
+    return wp ? [PointDataObj.make(wp)] : [];
 }
 
 

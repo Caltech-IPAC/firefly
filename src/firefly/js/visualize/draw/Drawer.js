@@ -6,11 +6,12 @@
 import Enum from 'enum';
 import Point, {makeViewPortPt,pointEquals} from '../Point.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
-import  BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
-import  DrawUtil from './DrawUtil.js';
-import  Color from '../../util/Color.js';
-import  CsysConverter, {CCUtil} from '../CsysConverter.js';
-import  {POINT_DATA_OBJ} from './PointDataObj.js';
+import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
+import DrawUtil from './DrawUtil.js';
+import Color from '../../util/Color.js';
+import CsysConverter, {CCUtil} from '../CsysConverter.js';
+import {POINT_DATA_OBJ} from './PointDataObj.js';
+import DrawOp from './DrawOp.js';
 import join from 'underscore.string/join';
 
 
@@ -481,7 +482,7 @@ function makeDrawingDeferred(drawer,params) {
  * @param {boolean} onlyAddToPath
  */
 function drawObj(ctx, def, csysConv, obj, vpPtM, onlyAddToPath) {
-    obj.draw(ctx, csysConv, def, vpPtM,onlyAddToPath);
+    DrawOp.draw(obj, ctx, csysConv, def, vpPtM,onlyAddToPath);
 }
 
 /**
@@ -515,16 +516,16 @@ function canDraw(ctx,data) {
  */
 function drawConnector(ctx, def, csysConv, dc, obj, lastObj) {
     if (!obj && !lastObj) return;
-    if (obj.getSupportsWebPlot()) {
-        var wp1= csysConv.getWorldCoords(lastObj.getCenterPt());
-        var wp2= csysConv.getWorldCoords(obj.getCenterPt());
+    if (csysConv) {
+        var wp1= csysConv.getWorldCoords(DrawOp.getCenterPt(lastObj));
+        var wp2= csysConv.getWorldCoords(DrawOp.getCenterPt(obj));
         if (!csysConv.coordsWrap(wp1,wp2)) {
             dc.draw(ctx,csysConv,def, wp1,wp2);
         }
     }
     else {
-        if (lastObj.getCenterPt().type===Point.SPT && obj.getCenterPt().type===Point.SPT) {
-            dc.draw(ctx,def, lastObj.getCenterPt(), obj.getCenterPt());
+        if (DrawOp.getCenterPt(lastObj).type===Point.SPT && DrawOp.getCenterPt(obj).type===Point.SPT) {
+            dc.draw(ctx,def, DrawOp.getCenterPt(lastObj), DrawOp.getCenterPt(obj));
         }
     }
 }
@@ -580,7 +581,7 @@ function getNextChuck(params) {
                 if (optimize) {
                     objLineWidth= obj.lineWidth || lineWidth;
                     objColor= obj.color || color;
-                    optimize= (obj.getCanUsePathEnabledOptimization() &&
+                    optimize= (DrawOp.usePathOptimization(obj) &&
                                lineWidth===objLineWidth &&
                                color===objColor);
                 }
@@ -681,7 +682,7 @@ function doDecimation(inData, plot, useColormap) {
 
     for(var obj of inData) {
         if (obj) {
-            pt= obj.getCenterPt();
+            pt= DrawOp.getCenterPt(obj);
             if (pt.type==Point.W_PT) {
                 vpPt= cc.pointInPlotRoughGuess(pt) ? getViewPortCoords(pt,seedPt,cc) : null;
             }

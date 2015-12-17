@@ -14,7 +14,6 @@ const Style = new Enum([ 'STANDARD','HANDLED','LIGHT' ]);
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
 
-export default {makeSelectBox,Style};
 
 /**
  *
@@ -33,17 +32,35 @@ function makeSelectBox(pt1,pt2,style) {
     obj.renderOptions={shadow:DrawUtil.makeShadow(4,1,1,'black')};
     obj.style= style || Style.STANDARD;
 
-    obj.getCenterPt= function(){
-        var {pt1,pt2}= this;
-        var x= (pt1.x + pt2.x)/2;
-        var y= (pt1.y + pt2.y)/2;
-        return {x,y,type:pt1.type};
-    };
+    return obj;
 
-    obj.getScreenDist= function(plot, pt) {
+}
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+var draw=  {
+
+    usePathOptimization(drawObj) {
+        return false;
+    },
+
+    getCenterPt(drawObj) {
+        var {pt1,pt2}= drawObj;
+        var x = (pt1.x + pt2.x) / 2;
+        var y = (pt1.y + pt2.y) / 2;
+        return {x, y, type: pt1.type};
+    },
+
+    getScreenDist(drawObj,plot, pt) {
         var dist = -1;
-        var sp1= plot.getScreenCoords(this.pt1);
-        var sp2= plot.getScreenCoords(this.pt2);
+        var sp1= plot.getScreenCoords(drawObj.pt1);
+        var sp2= plot.getScreenCoords(drawObj.pt2);
         if (sp1 && sp2) {
             var width= Math.abs(sp1.x - sp2.x);
             var height= Math.abs(sp1.y - sp2.y);
@@ -55,20 +72,30 @@ function makeSelectBox(pt1,pt2,style) {
             dist= Math.sqrt(dx*dx + dy*dy);
         }
         return dist;
-    };
+    },
 
-    obj.draw= function(ctx,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+        var drawParams= makeDrawParams(drawObj,def);
+        var {pt1,pt2,renderOptions}= drawObj;
+        drawImageBox(ctx,pt1, pt2, plot,drawParams,renderOptions);
+    },
+
+    toRegion(drawObj,plot, def) {
         var drawParams= makeDrawParams(this,def);
-        drawImageBox(ctx,this.pt1, this.pt2, plot,drawParams,this.renderOptions);
-    };
+        var {pt1,pt2,renderOptions}= drawObj;
+        toRegion(pt1,pt2, plot,drawParams,renderOptions);
+    }
+};
 
-    obj.toRegion= function(plot, def) {
-        var drawParams= makeDrawParams(this,def);
-        toRegion(this.pt, plot,drawParams,this.renderOptions);
-    };
-    return obj;
+export default {makeSelectBox,SELECT_BOX,Style,draw};
 
-}
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
+
+
 
 
 function makeDrawParams(selectBox,def) {

@@ -24,7 +24,6 @@ const DOT_DEFAULT_SIZE = 1;
 const DEFAULT_SYMBOL = DrawSymbol.X;
 
 
-//export default {makePointDataObj};
 
 
 /**
@@ -35,7 +34,7 @@ const DEFAULT_SYMBOL = DrawSymbol.X;
  * @param {string} [text]
  * @return {object}
  */
-export function makePointDataObj(pt,size,symbol,text) {
+export function make(pt,size,symbol,text) {
     if (!pt) return null;
 
     var obj= DrawObj.makeDrawObj();
@@ -46,17 +45,30 @@ export function makePointDataObj(pt,size,symbol,text) {
     if (symbol) obj.symbol= symbol;
     if (text) obj.text= text;
 
+    return obj;
+}
 
-    obj.getCanUsePathEnabledOptimization= function() {
-        if (!this.symbol) return true;
-        return this.symbol!=DrawSymbol.EMP_CROSS && this.symbol!=DrawSymbol.EMP_SQUARE_X;
-    };
 
-    obj.getCenterPt= function() {return this.pt; };
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
 
-    obj.getScreenDist= function(plot, pt) {
+var draw=  {
+
+    usePathOptimization(drawObj) {
+        if (!drawObj.symbol) return true;
+        return drawObj.symbol!=DrawSymbol.EMP_CROSS && drawObj.symbol!=DrawSymbol.EMP_SQUARE_X;
+    },
+
+    getCenterPt(drawObj) {return drawObj.pt; },
+
+    getScreenDist(drawObj, plot, pt) {
         var dist = -1;
-        var testPt= plot ? plot.getScreenCoords(this.pt) : this.pt;
+        var testPt= plot ? plot.getScreenCoords(drawObj.pt) : drawObj.pt;
 
         if (testPt.type===Point.SPT) {
             var dx= pt.x - testPt.x;
@@ -65,19 +77,26 @@ export function makePointDataObj(pt,size,symbol,text) {
         }
 
         return dist;
-    };
+    },
 
-    obj.draw= function(ctx,plot,def,vpPtM,onlyAddToPath) {
-        var drawParams= makeDrawParams(this,def);
-        drawPt(ctx,this.pt, plot,drawParams,this.renderOptions,vpPtM,onlyAddToPath);
-    };
+    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+        var drawParams= makeDrawParams(drawObj,def);
+        drawPt(ctx,drawObj.pt, plot,drawParams,drawObj.renderOptions,vpPtM,onlyAddToPath);
+    },
 
-    obj.toRegion= function(plot, def) {
-        var drawParams= makeDrawParams(this,def);
-        toRegion(this.pt, plot,drawParams,this.renderOptions);
-    };
-    return obj;
-}
+    toRegion(drawObj,plot, def) {
+        var drawParams= makeDrawParams(drawObj,def);
+        toRegion(drawObj.pt, plot,drawParams,drawObj.renderOptions);
+    }
+};
+
+export default {make,draw};
+
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+////////////////////////////////////////////////
+
 
 
 function makeDrawParams(pointDataObj,def) {

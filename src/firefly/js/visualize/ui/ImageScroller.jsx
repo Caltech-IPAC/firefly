@@ -59,10 +59,10 @@ var ImageScroller= React.createClass(
                         <div className='event-layer' >
                         </div>
                         <div className='drawingArea' >
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
-                            <div className='drawingLayer'></div>
+                            <div className='drawLayer'></div>
+                            <div className='drawLayer'></div>
+                            <div className='drawLayer'></div>
+                            <div className='drawLayer'></div>
                         </div>
                     </div>
                 </div>

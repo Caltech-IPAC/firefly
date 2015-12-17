@@ -14,7 +14,7 @@ import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import DrawingLayerCntlr from '../DrawingLayerCntlr.js';
+import DrawLayerCntrl from '../DrawLayerCntlr.js';
 import PlotViewUtils from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
@@ -78,32 +78,23 @@ function resultsSuccess(request) {
 
 
 function selectArea() {
-    var s= AppDataCntlr.getCommandState('SelectAreaCmd');
+    //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
     var plotView= PlotViewUtils.getActivePlotView();
     if (!plotView) return;
 
-
-
     var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
-    if (!s) {
-        SelectArea.dispatchInitSelectArea();
-        s= {selectOn:true};
+    var dl= PlotViewUtils.getDrawLayerByType(plotView.plotId,SelectArea.TYPE_ID);
+    if (!dl) {
+        DrawLayerCntrl.dispatchCreateDrawLayer(SelectArea.TYPE_ID);
+    }
+
+
+    if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
+        DrawLayerCntrl.dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotIdAry);
     }
     else {
-        s= {selectOn:!s.selectOn};
+        DrawLayerCntrl.dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotIdAry);
     }
-
-    AppDataCntlr.dispatchChangeCommandState('SelectAreaCmd',s);
-
-    if (s.selectOn) {
-
-        DrawingLayerCntlr.dispatchAttachLayerToPlot(SelectArea.LAYER_ID,plotIdAry);
-    }
-    else {
-        DrawingLayerCntlr.dispatchDetachLayerFromPlot(SelectArea.LAYER_ID,plotIdAry);
-    }
-
-
 
 }
 
@@ -191,10 +182,13 @@ var TestImagePanel= React.createClass({
 
     componentDidMount() {
        this.unbinder= flux.addListener( () => {
-           if (this.isMounted) {
-               var s= AppDataCntlr.getCommandState('SelectAreaCmd');
-               this.setState({selectOn:(s && s.selectOn) });
-            }
+           var pv= PlotViewUtils.getActivePlotView();
+           var selectOn= false;
+           if (pv) {
+               const dl= PlotViewUtils.getDrawLayerByType(pv.plotId,SelectArea.TYPE_ID);
+               selectOn=  PlotViewUtils.isDrawLayerAttached(dl,pv.plotId);
+           }
+           this.setState({selectOn});
         });
     },
 

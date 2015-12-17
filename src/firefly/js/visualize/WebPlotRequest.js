@@ -10,9 +10,10 @@ import ZoomType from './ZoomType.js';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import Point, {parseImagePt} from './Point.js';
-import Resolver, {parseResolver} from '../astro/net/Resolver.js';
+import {parseResolver} from '../astro/net/Resolver.js';
 import join from 'underscore.string/join';
 import RangeValues from './RangeValues.js';
+//import ActiveTarget from '../drawingLayers/ActiveTarget.js';
 
 
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);
@@ -1118,8 +1119,8 @@ class WebPlotRequest extends ServerRequest {
     /**
      * Set the order that the image processing pipeline runs when it reads a fits file.
      * This is experimental.  Use at your own risk.
-     * Warning- if you exclude an Order elements the pipeline will not execute that process
-     * even is you have it set in the option.
+     * Warning- if you exclude an Order element, the pipeline will not execute that process
+     * even is you have it set in the options.
      * @param orderList array of Order enums, the order of the pipeline
      */
     setPipelineOrder(orderList) {
@@ -1153,7 +1154,8 @@ class WebPlotRequest extends ServerRequest {
     getOverlayIds() {
         return this.containsParam(C.OVERLAY_IDS) ?
             this.getParam(C.OVERLAY_IDS).split(';') :
-            ['ACTIVE_TARGET','OTHER'];
+            ['ACTIVE_TARGET_TYPE','OTHER'];
+            //[ActiveTarget.TYPE_ID,'OTHER'];
     }
 
 
