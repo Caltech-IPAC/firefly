@@ -131,7 +131,8 @@ function getLayerChanges(drawingLayer, action) {
 function attach() {
     return {
         mode: 'select',
-        helpLine: selHelpText
+        helpLine: selHelpText,
+        drawData:{data:null}
     };
 }
 

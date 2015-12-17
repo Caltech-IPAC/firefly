@@ -4,8 +4,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import shallowCompare from 'react-addons-shallow-compare';
+import sCompare from 'react-addons-shallow-compare';
 import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
@@ -36,9 +35,7 @@ var ImageViewerView= React.createClass(
 
     plotDrag: null,
 
-    shouldComponentUpdate(nextProps,nextState) {
-        return shallowCompare(this,nextProps,nextState);
-    },
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
 
 
     getDefaultProps: function () {
@@ -119,12 +116,14 @@ var ImageViewerView= React.createClass(
         };
 
         var drawingAry= makeDrawingAry(plotView, drawLayersAry);
+        var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
+        if (!cursor || !cursor.length) cursor= 'crosshair';
         return (
                 <div className='plot-view-scr-view-window'
                      style={rootStyle}>
                     <div className='plot-view-master-panel'
                          style={{width:viewPortWidth,height:viewPortHeight,
-                                 left:0,right:0,position:'absolute', cursor:'crosshair'}}>
+                                 left:0,right:0,position:'absolute', cursor}}>
                         <TileDrawer x={scrollX} y={scrollY} width={viewPortWidth} height={viewPortHeight}
                                     tileData={plot.serverImages}
                                     tileZoomFactor={plot.plotState.getZoomLevel()}
@@ -162,9 +161,9 @@ var ImageViewerView= React.createClass(
         //            position: 'relative',
         //            overflow:'hidden'};
         var style= {width:'100%',
-            height:'100%',
-            position: 'relative',
-            overflow:'hidden'};
+                    height:'100%',
+                    position: 'relative',
+                    overflow:'hidden'};
 
         //var border= {
         //    borderStyle: 'ridge',
