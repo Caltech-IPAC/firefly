@@ -43,16 +43,16 @@ public class HistogramProcessorTest {
         };
         double max=12.0;
         double min=0.0;
-        int nBin=7;
-        double delta =( max -min)/100*nBin;
+        int nBin=6;
 
-        int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  1,2};
-        double[] expectedBinMin={0.0, 2, 4,  6.0, 8.0, 10.0, 12.0};
-        double[] expectedBinMax={2, 4, 6,  8, 10, 12, 12.0+delta};
+
+        int[] expectedNumPointsInBin={1, 2, 1, 6, 2,  3};
+        double[] expectedBinMin={0.0, 2, 4,  6.0, 8.0, 10.0};
+        double[] expectedBinMax={2, 4, 6,  8, 10, 12};
         DataGroup expectedDG = createDataGroup(expectedNumPointsInBin, expectedBinMin, expectedBinMax);
 
         HistogramProcessor hp = new HistogramProcessor();
-        hp.setBinNumber(7);
+        hp.setBinNumber(6);
         DataGroup outDG = hp.createHistogramTable(histData);
 
         validateResult(expectedDG, outDG);
@@ -64,7 +64,15 @@ public class HistogramProcessorTest {
         for (int i=0; i<expected.size(); i++ ){
             Object[] expectedDJ = expected.get(i).getData();
             Object[] calculatedGJ = calculated.get(i).getData();
-            Assert.assertArrayEquals(expectedDJ, calculatedGJ);
+            for (int j=0; j<calculatedGJ.length; j++){
+                if ( calculatedGJ[j] instanceof Integer){
+                     Assert.assertEquals(calculatedGJ[j], expectedDJ [j]);
+                }
+                if ( calculatedGJ[j] instanceof Double){
+                    Assert.assertEquals( ((Double) calculatedGJ[j]).doubleValue(), ( (Double) expectedDJ [j]).doubleValue(), 0.0000005);
+                }
+            }
+
         }
     }
 
@@ -303,27 +311,31 @@ public class HistogramProcessorTest {
         Arrays.sort(histData);
         double max=histData[histData.length-1];
         double min=histData[0];
-        double delta =( max -min)/100*7;
-
+        int nbin=6;
+        double delta =( max -min)/100*nbin;
         //double[] expectedBins={ -14.3997518146, -6.0146658712, 1.1825927451, 2.7383052264, 5.4734012726, 12.938348639};
-        int[] expectedNumPointInBin = {0, 12, 59, 68, 36, 15, 1};
+        boolean showEmptyBin=false;
+
+        int[] expectedNumPointInBin = {12, 59, 68, 36, 16};
 
 
-        double[] expectedBinMin = {       -14.3997518146-delta ,
-                -14.3997518146 ,
-                -6.01466587129 ,
-                1.18259274515  ,
-                2.73830522649  ,
-                5.47340127261  ,
-                12.938348639    };
+        double[] expectedBinMin = {
+
+                -14.3997518146,
+                -6.014665871295,
+                1.18259274515,
+                2.73830522649,
+                5.47340127261
+                 };
+
 
         double[] expectedBinMax = {
-          -14.3997518146 ,
-          -6.01466587129 ,
-          1.18259274515  ,
-          2.73830522649  ,
-          5.47340127261  ,
-          12.938348639 +delta
+
+                -6.01466587129,
+                1.18259274515,
+                2.73830522649,
+                5.47340127261,
+                14.57863466624
         };
 
 
@@ -343,7 +355,6 @@ public class HistogramProcessorTest {
 
 
     }
-
     public static void main(String args[]) throws IpacTableException, IOException, DataAccessException {
         HistogramProcessorTest myTest = new HistogramProcessorTest();
 
@@ -353,4 +364,5 @@ public class HistogramProcessorTest {
 
 
     }
+
 }

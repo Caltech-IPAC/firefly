@@ -183,7 +183,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double binSize = (max-min)/numBins;
 
         double delta =( max -min)/100*numBins;
-        int[] numPointsInBin = new int[numBins+1];
+        int[] numPointsInBin = new int[numBins];
         double[] binMin = new double[numBins];
 
         double[] binMax = new double[numBins];
@@ -387,18 +387,16 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         for (int ibin = 0; ibin < nBin; ibin++) {
             for (int i = 0; i < columnData.length; i++) {
-                if (columnData[i] >= min && columnData[i] < max) {
+                if (columnData[i] >= min && columnData[i] <= max) {
+
                     if (ibin == 0 && columnData[i] < bins[ibin] ||
-                                ibin >= 1 && ibin < nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] ||
-                                ibin == nBin - 1 && columnData[i] >= bins[ibin - 1]) {
+                            ibin >= 1 && ibin < nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] ||
+                            ibin == nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] <= bins[ibin]) {
                         numPointsInBin[ibin]++;
-                     }
-
+                    }
 
                 }
-                else if (columnData[i] ==max){
-                    numPointsInBin[nBin-1]++;
-                }
+
             }
         }
         for(int i=0; i<nBin; i++){
