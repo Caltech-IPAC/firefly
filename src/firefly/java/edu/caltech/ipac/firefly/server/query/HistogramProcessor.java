@@ -182,11 +182,12 @@ public class HistogramProcessor extends IpacTablePartProcessor {
 
         double binSize = (max-min)/numBins;
 
-        double delta =( max -min)/100*numBins;
+       // double delta =( max -min)/100*numBins;
         int[] numPointsInBin = new int[numBins];
         double[] binMin = new double[numBins];
 
         double[] binMax = new double[numBins];
+
 
         for (int i = 0; i < columnData.length; i++) {
             if (columnData[i] >= min && columnData[i] < max) {
@@ -201,21 +202,10 @@ public class HistogramProcessor extends IpacTablePartProcessor {
           }
         for (int i=0; i<numBins; i++){
             binMin[i]=min+i*binSize;
-        }
-        for (int i=0; i<numBins-1; i++){
             binMax[i]=binMin[i]+binSize;
         }
-        binMax[numBins-1]=max;
-       /* for (int ibin=0; ibin<numBins; ibin++){
-            binMin[ibin]=min+ibin*binSize;
-            if (ibin==numBins-1){
-                binMax[ibin]=max+delta;
-            }
-            else {
-                binMax[ibin]=binMin[ibin]+binSize;
-            }
 
-        }*/
+
 
        if (showEmptyBin){
 
@@ -368,7 +358,7 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double[] bins = getBins(columnData);
 
 
-        int nBin = bins.length;  //the bin interval +1 is the total bin number
+        int nBin = bins.length;
         int[] numPointsInBin = new int[nBin];
         double[] binMin = new double[nBin];
         if (Double.isNaN(min)) {
@@ -377,42 +367,57 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         if (Double.isNaN(max)) {
             max = columnData[columnData.length - 1];
         }
-
-        double delta =( max -min)/100*nBin;
-        //fill all entries to the maximum, thus, all data values will be smaller than it
+     //fill all entries to the maximum, thus, all data values will be smaller than it
        // Arrays.fill(binMin, Double.MAX_VALUE);
         double[] binMax = new double[nBin];
         //fill all entries to the minimum thus, all data values will be larger than it
        // Arrays.fill(binMax, -Double.MAX_VALUE);
 
-        for (int ibin = 0; ibin < nBin; ibin++) {
+        if (nBin==1){  //only one bin
+
+            double delta =( max -min)/100*nBin;
+
             for (int i = 0; i < columnData.length; i++) {
                 if (columnData[i] >= min && columnData[i] <= max) {
+                    numPointsInBin[0]++;
+                }
+            }
+            binMin[0]=min;
+            binMax[0]=bins[0];
+            if (binMin[0]==binMax[0]){
+                binMin[0]=min-delta;
+                binMax[0]=max+delta;
+            }
+        }
+        else {
+            for (int ibin = 0; ibin < nBin; ibin++) {
+                for (int i = 0; i < columnData.length; i++) {
+                    if (columnData[i] >= min && columnData[i] <= max) {
 
-                    if (ibin == 0 && columnData[i] < bins[ibin] ||
-                            ibin >= 1 && ibin < nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] ||
-                            ibin == nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] <= bins[ibin]) {
-                        numPointsInBin[ibin]++;
+                        if (ibin == 0 && columnData[i] < bins[ibin] || //left bin edge
+                                ibin >= 1 && ibin < nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] < bins[ibin] || //the middle bins
+                                ibin == nBin - 1 && columnData[i] >= bins[ibin - 1] && columnData[i] <= bins[ibin])  //the right edge bin
+                        {
+                            numPointsInBin[ibin]++;
+                        }
+
                     }
 
                 }
+            }
 
+            binMin[0] = min;
+            //assign the left edge to the binMin
+            for (int i = 1; i < nBin; i++) {
+                binMin[i] = bins[i - 1];
+              }
+
+            //assign the right edge to the binMax
+            for (int i = 0; i < nBin; i++) {
+                binMax[i] = bins[i];
             }
-        }
-        for(int i=0; i<nBin; i++){
-            if (i==0){
-                binMin[0]=min;
-                binMax[0]=bins[0];
-                if (binMin[0]==binMax[0]) binMin[0]=min-delta;
-            }
-            else if (i==nBin-1){
-                binMin[i]=bins[i-1];
-                binMax[i]=max+delta;
-            }
-            else {
-                binMin[i]=bins[i-1];
-                binMax[i]=bins[i];
-            }
+
+
         }
 
         if (showEmptyBin){
