@@ -160,13 +160,15 @@ var Histogram = React.createClass(
          * @return {Boolean} f data points are set, false if no points are present
          */
         setChartConfig(config) {
-            const TINY_OFFSET = 1000*Number.EPSILON;
+            const TINY_OFFSET = 100*Number.EPSILON;
 
-            if (!this.state.userData || this.state.userData.length < 1) {
+            const { userData }= this.state;
+
+            if (!userData || userData.length < 1) {
                 return false;
             }
 
-            if (!this.validateData(this.state.userData)) {
+            if (!this.validateData(userData)) {
                 console.error('Invalid histogram data, check console for specifics.');
                 return false;
             }
@@ -175,33 +177,45 @@ var Histogram = React.createClass(
             var lighterColor = this.shadeColor(this.props.binColor, 0.1);
             var error;
 
+            // use column chart for only one point
+            var areaPlot = (userData.length > 1);
+
             // zones mess up log scale - do not do them
-            var doZones = (this.state.userData.length>1 && (!this.props.logs || this.props.logs.indexOf('x')===-1));
+            var doZones = (areaPlot && (!this.props.logs || this.props.logs.indexOf('x')===-1));
+
+            if (!areaPlot && userData.length === 1) {
+                const xrange = userData[0][2] - userData[0][1];
+                if (xrange <= TINY_OFFSET) {
+                    config.plotOptions.column.maxPointWidth = 10;
+                } else {
+                    config.plotOptions.column.maxPointWidth = 50;
+                }
+            }
 
             try {
-                let lastBinMax = this.state.userData[0][1];
-                if (this.state.userData.length>1) {
+                let lastBinMax = userData[0][1];
+                if (areaPlot) {
                     // point before the first one
                     points.push({
                         name: '',
                         range: '',
-                        x: lastBinMax - TINY_OFFSET,
+                        x: lastBinMax - 2*TINY_OFFSET,
                         y: 0
                     });
                 }
-                this.state.userData.forEach(function (value, index) {
-                        const xrange = this.state.userData[index][2] - this.state.userData[index][1];
+                userData.forEach(function (value, index) {
+                        const xrange = userData[index][2] - userData[index][1];
                         const formatStr = getFormatString(xrange, 2);
-                        const centerStr = numeral(this.state.userData[index][1] + xrange / 2.0).format(formatStr);
-                        const rangeStr = `${numeral(this.state.userData[index][1]).format(formatStr)} to ${numeral(this.state.userData[index][2]).format(formatStr)}`;
+                        const centerStr = numeral(userData[index][1] + xrange / 2.0).format(formatStr);
+                        const rangeStr = `${numeral(userData[index][1]).format(formatStr)} to ${numeral(userData[index][2]).format(formatStr)}`;
 
                         // check for gaps and add points in necessary
-                        if (Math.abs(this.state.userData[index][1]) - lastBinMax > TINY_OFFSET &&
-                            this.state.userData[index][1] > lastBinMax) {
-                            //console.warn(`Gap in histogram data before row ${index} [${this.state.userData[index]}]`);
-                            const gapRange = this.state.userData[index][1] - lastBinMax;
+                        if (Math.abs(userData[index][1]) - lastBinMax > TINY_OFFSET &&
+                            userData[index][1] > lastBinMax) {
+                            //console.warn(`Gap in histogram data before row ${index} [${userData[index]}]`);
+                            const gapRange = userData[index][1] - lastBinMax;
                             const gapCenterStr = numeral(lastBinMax + gapRange / 2.0).format(formatStr);
-                            const gapRangeStr = `${numeral(lastBinMax).format(formatStr)} to ${numeral(this.state.userData[index][1]).format(formatStr)}`;
+                            const gapRangeStr = `${numeral(lastBinMax).format(formatStr)} to ${numeral(userData[index][1]).format(formatStr)}`;
 
                             points.push({
                                 name: gapCenterStr,
@@ -212,22 +226,22 @@ var Histogram = React.createClass(
                             points.push({
                                 name: gapCenterStr,
                                 range: gapRangeStr,
-                                x: this.state.userData[index][1] - TINY_OFFSET,
+                                x: userData[index][1] - TINY_OFFSET,
                                 y: 0
                             });
                         }
-                        lastBinMax = this.state.userData[index][2];
+                        lastBinMax = userData[index][2];
 
-                        if (xrange > 0) {
+                        if (areaPlot) {
                             // a point for the bin's left edge (minimum)
                             points.push({
                                 // name - formatted bin center
                                 name: centerStr,
                                 range: rangeStr,
                                 // x - bin min
-                                x: this.state.userData[index][1],
+                                x: userData[index][1],
                                 // y - number of points in the bin
-                                y: this.state.userData[index][0]
+                                y: userData[index][0]
                             });
 
 
@@ -237,38 +251,38 @@ var Histogram = React.createClass(
                                 name: centerStr,
                                 range: rangeStr,
                                 // x - binmax
-                                x: this.state.userData[index][2] - TINY_OFFSET,
+                                x: (xrange > TINY_OFFSET) ? (userData[index][2] - TINY_OFFSET) : (userData[index][1] + TINY_OFFSET),
                                 // y - number of points in the bin
-                                y: this.state.userData[index][0]
+                                y: userData[index][0]
                             });
-                        } else {
+                        } else { // column plot - one point
                             points.push({
                                 // name - formatted bin center
                                 name: centerStr,
                                 range: rangeStr,
                                 // x - bin min
-                                x: this.state.userData[index][1],
+                                x: (xrange > TINY_OFFSET) ? userData[index][1]+xrange/2.0 : userData[index][1],
                                 // y - number of points in the bin
-                                y: this.state.userData[index][0]
+                                y: userData[index][0]
                             });
                         }
 
                         // zones allow to separate visually one bin from another
                         if (doZones) {
                             zones.push({
-                                value: this.state.userData[index][2],
+                                value: userData[index][2],
                                 color: (index % 2 === 0) ? this.props.binColor : lighterColor
                             });
                         }
 
                     }.bind(this)
                 );
-                if (this.state.userData.length>1) {
+                if (areaPlot) {
                     // point after the last one
                     points.push({
                         name: '',
                         range: '',
-                        x: lastBinMax + TINY_OFFSET,
+                        x: lastBinMax + 2*TINY_OFFSET,
                         y: 0
                     });
                 }
@@ -287,14 +301,17 @@ var Histogram = React.createClass(
         },
 
         render() {
+
+            const { userData }= this.state;
             const yReversed = (this.props.reversed && this.props.reversed.indexOf('y')>-1 ? true : false);
 
             var chartType;
-            if (!this.state.userData || this.state.userData.length < 2) {
+            if (userData.length < 2) {
                 chartType = 'column';
             } else {
                 chartType = 'area';
             }
+
 
             var config = {
                 chart: {

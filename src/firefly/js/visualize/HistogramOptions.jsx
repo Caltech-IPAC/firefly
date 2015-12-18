@@ -98,7 +98,7 @@ var HistogramOptions = React.createClass({
                         options={
                                 colValStats.map((colVal) => {
                                     return {
-                                        label: colVal.name + ' ' + colVal.unit,
+                                        label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
                                         value: colVal.name
                                     };
                                 })
@@ -112,8 +112,7 @@ var HistogramOptions = React.createClass({
                             initialState= {{
                                 value : algorithm,
                                 tooltip: 'Please select an algorithm',
-                                label: 'Algorithm:',
-
+                                label: 'Algorithm:'
                             }}
                             options={
                             [

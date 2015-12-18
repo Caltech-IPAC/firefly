@@ -1,31 +1,15 @@
-/*
- Possible structure of histogram store:
- /histogram
-   searchReq: ServerRequest - if source table changes, histogram store should be cleared
-   isColStatsReady: boolean
-   colStats: [ColValuesStatistics]
-   isColDataReady: boolean
-   histogramData: [[numInBin: int, min: double, max: double]*]
-   histogramParams: {
-          columnOrExpr: column name or column expression
-          algorithm: 'fixedSizeBins' or 'byesianBlocks'
-          numBins: int - for 'fixedSizeBins' algorithm
-          falsePositiveRate: double - for 'byesianBlocks' algorithm (default 0.05)
-          minCutoff: double
-          maxCutoff: double
- */
-
 import {flux} from '../Firefly.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
-import {ServerRequest} from '../data/ServerRequest.js';
-import {getRawDataSet} from '../rpc/SearchServicesJson.js';
-import {parseRawDataSet} from '../util/DataSetParser.js';
+
+import TableRequest from '../tables/TableRequest.js';
+import {REQ_PRM} from '../tables/TableRequest.js';
+import {doFetchTable} from '../tables/reducers/LoadTable.js';
 
 const HISTOGRAM_DATA_KEY = 'histogram';
-const LOAD_TBL_STATS = 'histogram/LOAD_TBL_STATS';
-const UPDATE_TBL_STATS = 'histogram/UPDATE_TBL_STATS';
-const LOAD_COL_DATA = 'histogram/LOAD_COL_DATA';
-const UPDATE_COL_DATA = 'histogram/UPDATE_COL_DATA';
+const LOAD_TBL_STATS = `${HISTOGRAM_DATA_KEY}/LOAD_TBL_STATS`;
+const UPDATE_TBL_STATS = `${HISTOGRAM_DATA_KEY}/UPDATE_TBL_STATS`;
+const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
+const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
 
 /*
@@ -146,35 +130,29 @@ function updateColData(data) {
  */
 function fetchTblStats(dispatch, activeTableServerRequest) {
 
-    /*
-     // Sample TableServerRequest
-     const sreq = new ServerRequest('IpacTableFromSource');
-     req.setParam({name : 'source', value : 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl'});
-     req.setParam({name : 'startIdx', value : '0'});
-     req.setParam({name : 'pageSize', value : '1000000'});
-     */
+    // searchRequest
     const sreq = Object.assign({}, activeTableServerRequest, {'startIdx': 0, 'pageSize': 1000000});
 
-    const req = new ServerRequest('IpacTableFromSource');
-    req.setParam({name: 'processor', value: 'StatisticsProcessor'});
-    req.setParam({name: 'searchRequest', value: JSON.stringify(sreq.params)});
-    req.setParam({name: 'startIdx', value: '0'});
-    req.setParam({name: 'pageSize', value: '10000'});
-    getRawDataSet(req).then(
-        (rawDataSet) => {
-            const dataSet = parseRawDataSet(rawDataSet);
-            const model = dataSet.getModel();
-            const colStats = [];
-            for (let i = 0; i < model.size(); i++) {
-                const arow = model.getRow(i);
-                colStats.push(new ColValuesStatistics(...arow));
+    const req = TableRequest.newInstance('StatisticsProcessor');
+    req.setParam('searchRequest', JSON.stringify(sreq.params));
+    req.setParam('startIdx', '0');
+    req.setParam('pageSize', '10000');
+
+    req.setParam(REQ_PRM.TBL_ID, 'id-sreq-colstats'); // todo: use ativeTableServerRequest id plus 'colstats'
+    doFetchTable(req).then(
+        (tableModel) => {
+            if (tableModel.tableData && tableModel.tableData.data) {
+                const colStats = tableModel.tableData.data.reduce((colstats, arow) => {
+                    colstats.push(new ColValuesStatistics(...arow));
+                    return colstats;
+                }, []);
+                dispatch(updateTblStats(
+                    {
+                        isColStatsReady: true,
+                        colStats,
+                        searchReq: sreq
+                    }));
             }
-            dispatch(updateTblStats(
-                {
-                    isColStatsReady: true,
-                    colStats,
-                    searchReq: sreq
-                }));
         }
     ).catch(
         (reason) => {
@@ -195,52 +173,51 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
     const sreq = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
 
-    const req = new ServerRequest('IpacTableFromSource');
-    req.setParam({name : 'processor', value : 'HistogramProcessor'});
-    req.setParam({name : 'searchRequest', value : JSON.stringify(sreq.params)});
+    const req = TableRequest.newInstance('HistogramProcessor');
+    req.setParam('searchRequest', JSON.stringify(sreq.params));
 
     // histogarm parameters
     req.setParam({name : 'columnExpression', value : histogramParams.columnOrExpr});
     if (histogramParams.numBins) { // fixed size bins
-        req.setParam({name: 'numBins', value: histogramParams.numBins});
+        req.setParam('numBins', histogramParams.numBins);
     }
     if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
-        req.setParam({name: 'falsePositiveRate', value: histogramParams.falsePositiveRate});
+        req.setParam('falsePositiveRate', histogramParams.falsePositiveRate);
     }
     if (histogramParams.minCutoff) {
-        req.setParam({name: 'min', value: histogramParams.minCutoff});
+        req.setParam('min', histogramParams.minCutoff);
     }
     if (histogramParams.maxCutoff) {
-        req.setParam({name: 'max', value: histogramParams.maxCutoff});
+        req.setParam('max', histogramParams.maxCutoff);
     }
 
-    req.setParam({name : 'startIdx', value : '0'});
-    req.setParam({name : 'pageSize', value : '10000'});
-    getRawDataSet(req).then(
-        (rawDataSet) => {
-            const histogramData = [];
-            const dataSet = parseRawDataSet(rawDataSet);
-            const model = dataSet.getModel();
-            var toNumber = (val)=>Number(val);
-            for (let i = 0; i < model.size(); i++) {
-                const arow = model.getRow(i);
-                histogramData.push(arow.map(toNumber));
-            }
+    req.setParam('startIdx', '0');
+    req.setParam('pageSize', '10000');
+    req.setParam(REQ_PRM.TBL_ID, 'id-sreq-coldata'); // todo: use ativeTableServerRequest id plus 'colstats'
 
-            dispatch(updateColData(
-                {
-                    isColDataReady : true,
-                    histogramParams,
-                    histogramData,
-                    searchReq : sreq
-                }));
+    doFetchTable(req).then(
+        (tableModel) => {
+            if (tableModel.tableData && tableModel.tableData.data) {
+                var toNumber = (val)=>Number(val);
+                const histogramData = tableModel.tableData.data.reduce((data, arow) => {
+                    data.push(arow.map(toNumber));
+                    return data;
+                }, []);
+
+                dispatch(updateColData(
+                    {
+                        isColDataReady : true,
+                        histogramParams,
+                        histogramData,
+                        searchReq : sreq
+                    }));
+            }
         }
     ).catch(
         (reason) => {
             console.error(`Failed to fetch histogram data: ${reason}`);
         }
     );
-
 }
 
 
