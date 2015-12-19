@@ -182,8 +182,10 @@ function addListener(listener, ...types) {
     }
 }
 
-function registerCreator(type, actionCreator) {
-    actionCreators.set(type, actionCreator);
+function registerCreator(actionCreator, ...types) {
+    if (types) {
+        types.forEach( (v) => actionCreators.set(v, actionCreator) );
+    }
 }
 
 function registerReducer(dataRoot, reducer) {

@@ -4,17 +4,32 @@
 
 import React from 'react';
 import './Menu.css';
+import {flux} from '../Firefly.js';
+import appDataCntlr from '../core/AppDataCntlr.js';
+
 
 
 
 function handleAction (menuItem) {
-    window.alert('MenuItem clicked:' + menuItem.action);
+    if (menuItem.type === appDataCntlr.SEARCH_TYPE) {
+        flux.process({type: appDataCntlr.SEARCH_SHOW});
+    } else {
+        flux.process({type: appDataCntlr.SEARCH_HIDE});
+    }
+    flux.process({type:menuItem.action});
 }
 
-function makeMenuItem(menuItem) {
+/**
+ * Create the html for a menu item
+ * @param menuItem
+ * @param isSelected
+ * @returns {XML}
+ */
+function makeMenuItem(menuItem, isSelected) {
+    var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
     return (
         <td key={menuItem.action} align='left' style={{verticalAlign: 'bottom'}} onClick={handleAction.bind(this, menuItem)}>
-            <div tabIndex='0' className='menu__item' role='tab'>
+            <div tabIndex='0' className={clsname} role='tab'>
                 <input type='text' tabIndex='-1' role='presentation' style={{opacity: '0', height: '1px', width: '1px', zIndex: '-1', overflow: 'hidden', position: 'absolute'}}></input>
                 <div style={{minWidth: '75px'}}>
                     <table cellSpacing='0' cellPadding='0' style={{margin: '0px auto'}}>
@@ -38,14 +53,15 @@ function makeMenuItem(menuItem) {
 const Menu = React.createClass({
 
     propTypes: {
-        menu   : React.PropTypes.arrayOf(React.PropTypes.object).isRequired
+        menu   : React.PropTypes.object.isRequired
     },
 
     render() {
+        var {menu} = this.props;
 
         var items = [];
-        this.props.menu.forEach( (item) => {
-            items.push(makeMenuItem(item));
+        menu.menuItems.forEach( (item) => {
+            items.push(makeMenuItem(item, item.action === menu.selected));
         });
 
         return (

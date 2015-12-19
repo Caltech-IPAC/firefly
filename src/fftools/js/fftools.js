@@ -10,6 +10,9 @@ import {flux, firefly} from 'firefly/Firefly.js';
 import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
+import SearchPanel from 'firefly/ui/SearchPanel.jsx';
+import ResultsPanel from 'firefly/ui/ResultsPanel.jsx';
+import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import TblUtil from 'firefly/tables/TableUtil.js';
@@ -24,11 +27,8 @@ import {download} from 'firefly/util/WebUtil.js';
 firefly.bootstrap();
 firefly.process( {type : appDataCntlr.APP_LOAD} );
 
-const menu = flux.createSmartComponent((state) => {
-                return {menu: (get(state, `${appDataCntlr.APP_DATA_PATH}.menu`) || [])};
-            }, Menu);
-
 function loadTestTable() {
+    firefly.process({type: appDataCntlr.SEARCH_HIDE});
     var request = TableRequest.newInstance('IpacTableFromSource');
     request.setParam('source', getRootURL() + 'WiseQuery.tbl');
     request.setParam(REQ_PRM.TBL_ID, 'id-101');
@@ -48,8 +48,10 @@ const App = React.createClass({
     },
 
     render() {
+        var {appData, title, table} = this.props;
+
         const v = get(this.props, 'appData.props.version') || 'unknown';
-        if (!this.props.appData.isReady) {
+        if (!appData.isReady) {
             return (
                 <div>
                     <p>Loading... </p>
@@ -59,32 +61,37 @@ const App = React.createClass({
             return (
                 <div>
                     <Banner
-                        menu={menu}
+                        menu={<Menu menu={appData.menu} /> }
                         appTitle='Firefly'
                     />
-                    <h2>{this.props.title}</h2>
-                    <div style={{paddingLeft:10}}>
-                        <TestImagePanel/>
+                    <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
+                        <FormPanel
+                            width='500px' height='300px'
+                            onSubmit={loadTestTable}
+                            onCancel={() => flux.process({type:appDataCntlr.SEARCH_HIDE})}>
+                            <b>Click Search to load a test table</b>
+                            <p>
+                                <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
+                            </p>
+                        </FormPanel>
+                    </SearchPanel>
+                    <div style={{padding: '10px'}}>
+                        <ResultsPanel title={this.props.title} >
+                            <TestImagePanel/>
+
+                            <div style={{height: '400px'}}>
+                                <TablePanel
+                                    tableModel={table}
+                                    selectable={true}
+                                />
+                            </div>
+                        </ResultsPanel>
                     </div>
                 </div>
             );
         }
     }
 });
-
-
-//<div style={{padding:'10', height: '500px'}}>
-//    <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
-//    <input type="button" name="test" value="Load Table Below" onClick={loadTestTable} />
-//    <TablePanel
-//        tableModel={this.props.table}
-//        //width={1250}
-//        //height={400}
-//        selectable={true}
-//    />
-//</div>
-
-
 
 function connector(state) {
     return {

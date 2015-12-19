@@ -24,7 +24,7 @@ var def_config = {
     deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
     alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
-            styles : path.resolve(config.src, 'styles')
+            styles : [path.resolve(config.src, 'html', 'css', path.resolve(config.firefly_dir, 'html', 'css'))]
         }
 };
 
@@ -90,9 +90,12 @@ var webpackConfig = {
                 exclude: exclude_dirs,
                 loaders : [
                     'style-loader',
-                    'css-loader',
+                    `css-loader?root=${path.resolve(config.firefly_dir, 'html')}`,
                     'autoprefixer?browsers=last 2 version'
                 ]
+            },
+            { test: /\.(png|jpg)$/,
+                loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`
             }
         ]
     },

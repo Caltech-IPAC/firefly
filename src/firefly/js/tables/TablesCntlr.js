@@ -12,57 +12,14 @@ const TABLE_SPACE_PATH = 'table-space';
 const MAIN_SPACE_PATH = `${TABLE_SPACE_PATH}.main`;
 
 
-/**
- * Load this dataModel into the application state.
- * tableModel may be new, existing, partial, or complete.
- * If tableModel is new, it will add it.  If it existed, it will do an update.
- * Update will always attempt to merge the data, regardless of partial or complete.
- * @param tableModel the dataModel to load.
- */
-function dispatchLoadTable(tableModel) {
-    flux.process( {type: LOAD_TABLE, payload: {tableModel}});
-}
-
-/**
- * Fetch a table from the server.
- * @param tableRequest a TableRequest object.
- */
-function dispatchFetchTable(tableRequest) {
-    flux.process( {type: FETCH_TABLE, payload: tableRequest });
-}
-
-/**
- * set the highlightedRow of the given table by tbl_id.
- * @param tbl_id
- * @param highlightedRow
- */
-function dispatchHighlightRow(tbl_id, highlightedRow) {
-    flux.process( {type: HIGHLIGHT_ROW, payload: {tbl_id, highlightedRow} });
-}
-
-/**
- * validates the action object based on the given type.
- * In case when a validation error occurs, the action's err property will be
- * updated with the error.
- * @param type
- * @param action
- * @returns the given action
- */
-function validate(type, action) {
-    return TblUtil.doValidate(type, action);
-}
-
-
-
 /*---------------------------- ACTIONS -----------------------------*/
-const FETCH_TABLE           = `${TABLE_SPACE_PATH}/FETCH_TABLE`;
-const LOAD_TABLE            = `${TABLE_SPACE_PATH}/LOAD_TABLE`;
-const LOAD_TABLE_STATUS     = `${TABLE_SPACE_PATH}/LOAD_TABLE_STATUS`;
-const LOAD_TABLE_COMPLETE   = `${TABLE_SPACE_PATH}/LOAD_TABLE_COMPLETE`;
+const FETCH_TABLE           = `${TABLE_SPACE_PATH}.fetchTable`;
+const LOAD_TABLE            = `${TABLE_SPACE_PATH}.loadTable`;
+const LOAD_TABLE_STATUS     = `${TABLE_SPACE_PATH}.loadTableStatus`;
+const LOAD_TABLE_COMPLETE   = `${TABLE_SPACE_PATH}.loadTableComplete`;
 
-const SELECT_ROW    = `${TABLE_SPACE_PATH}/SELECT_ROW`;
-const HIGHLIGHT_ROW = `${TABLE_SPACE_PATH}/HIGHLIGHT_ROW`;
-
+const TBL_SELECT_ROW    = `${TABLE_SPACE_PATH}.tblSelectRow`;
+const TBL_HIGHLIGHT_ROW = `${TABLE_SPACE_PATH}.tblHighlighRow`;
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -92,7 +49,7 @@ function reducer(state={}, action={}) {
     var newState = Object.assign({}, state);
 
     switch (action.type) {
-        case (HIGHLIGHT_ROW)  :
+        case (TBL_HIGHLIGHT_ROW)  :
         case (LOAD_TABLE_STATUS)  :
         case (LOAD_TABLE_COMPLETE)  :
         case (LOAD_TABLE)  :
@@ -105,7 +62,7 @@ function reducer(state={}, action={}) {
                 TblUtil.error(action, tmpAction.err);
             }
             break;
-        case (SELECT_ROW)  :
+        case (TBL_SELECT_ROW)  :
 
 
 
@@ -113,6 +70,36 @@ function reducer(state={}, action={}) {
             return state;
     }
     return newState;
+}
+
+/*---------------------------- DISPATCHERS -----------------------------*/
+
+/**
+ * Load this dataModel into the application state.
+ * tableModel may be new, existing, partial, or complete.
+ * If tableModel is new, it will add it.  If it existed, it will do an update.
+ * Update will always attempt to merge the data, regardless of partial or complete.
+ * @param tableModel the dataModel to load.
+ */
+function dispatchLoadTable(tableModel) {
+    flux.process( {type: LOAD_TABLE, payload: {tableModel}});
+}
+
+/**
+ * Fetch a table from the server.
+ * @param tableRequest a TableRequest object.
+ */
+function dispatchFetchTable(tableRequest) {
+    flux.process( {type: FETCH_TABLE, payload: tableRequest });
+}
+
+/**
+ * set the highlightedRow of the given table by tbl_id.
+ * @param tbl_id
+ * @param highlightedRow
+ */
+function dispatchHighlightRow(tbl_id, highlightedRow) {
+    flux.process( {type: TBL_HIGHLIGHT_ROW, payload: {tbl_id, highlightedRow} });
 }
 
 
@@ -124,8 +111,8 @@ export default {
     LOAD_TABLE,
     LOAD_TABLE_STATUS,
     LOAD_TABLE_COMPLETE,
-    SELECT_ROW,
-    HIGHLIGHT_ROW,
+    TBL_SELECT_ROW,
+    TBL_HIGHLIGHT_ROW,
     reducer,
     dispatchLoadTable,
     dispatchFetchTable,
@@ -133,3 +120,20 @@ export default {
     fetchTable,
     loadTable
 };
+
+
+
+/*---------------------------- PRIVATE -----------------------------*/
+
+/**
+ * validates the action object based on the given type.
+ * In case when a validation error occurs, the action's err property will be
+ * updated with the error.
+ * @param type
+ * @param action
+ * @returns the given action
+ */
+function validate(type, action) {
+    return TblUtil.doValidate(type, action);
+}
+

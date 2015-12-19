@@ -22,7 +22,7 @@ function doValidate(type, action) {
         if (!action.payload.tbl_id || isBlank(action.payload.tbl_id)) {
             error(action, 'Required "tbl_id" field is missing.');
         }
-        if(type === TblCntlr.HIGHLIGHT_ROW) {
+        if(type === TblCntlr.TBL_HIGHLIGHT_ROW) {
             const idx = action.payload.highlightedRow;
             if (!idx || idx<0) {
                 error(action, 'highlightedRow must be a positive number.');

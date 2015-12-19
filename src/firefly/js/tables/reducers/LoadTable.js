@@ -23,7 +23,7 @@ function reducer(state={}, action={}) {
 
     switch (action.type) {
         case (TblCntlr.LOAD_TABLE)  :
-        case (TblCntlr.HIGHLIGHT_ROW)  :
+        case (TblCntlr.TBL_HIGHLIGHT_ROW)  :
             return mergeTable(state, action.payload);
             break;
 
