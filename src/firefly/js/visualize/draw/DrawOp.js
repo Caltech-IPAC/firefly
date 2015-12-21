@@ -5,6 +5,7 @@
 
 import PointDataObj, {POINT_DATA_OBJ} from './PointDataObj.js';
 import SelectBox from './SelectBox.js';
+import ShapeDataObj from './ShapeDataObj.js';
 import FootprintObj from './FootprintObj.js';
 import DirectionArrowDrawObj from './DirectionArrowDrawObj.js';
 
@@ -15,7 +16,8 @@ export var drawTypes= {
     [POINT_DATA_OBJ] : PointDataObj.draw,
     [SelectBox.SELECT_BOX] : SelectBox.draw,
     [FootprintObj.FOOTPRINT_OBJ] : FootprintObj.draw,
-    [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw
+    [DirectionArrowDrawObj.DIR_ARROW_DRAW_OBJ] : DirectionArrowDrawObj.draw,
+    [ShapeDataObj.SHAPE_DATA_OBJ] : ShapeDataObj.draw
 };
 
 class DrawOp {
@@ -24,8 +26,8 @@ class DrawOp {
      *
      * @param {{type:string}} drawObj
      */
-    static usePathOptimization(drawObj) {
-        return op(drawObj,'usePathOptimization',false)(drawObj);
+    static usePathOptimization(drawObj,drawingDef) {
+        return op(drawObj,'usePathOptimization',false)(drawObj,drawingDef);
     }
 
     /**
@@ -55,8 +57,8 @@ class DrawOp {
      * @param vpPtM
      * @param onlyAddToPath
      */
-    static draw(drawObj,ctx,csysConv,def,vpPtM,onlyAddToPath) {
-        op(drawObj,'draw')(drawObj, ctx, csysConv, def, vpPtM,onlyAddToPath);
+    static draw(drawObj,ctx,drawTextAry,csysConv,def,vpPtM,onlyAddToPath) {
+        op(drawObj,'draw')(drawObj, ctx, drawTextAry, csysConv, def, vpPtM,onlyAddToPath);
     }
 
     /**

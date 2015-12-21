@@ -1,12 +1,6 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -19,6 +13,7 @@ import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
 import PlotViewUtils from '../visualize/PlotViewUtil.js';
+import {Style} from '../visualize/draw/DrawingDef.js';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
@@ -49,7 +44,7 @@ const TYPE_ID= 'SELECT_AREA_TYPE';
 
 const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null);
 
-export default {factoryDef, TYPE_ID};
+export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
 
 var idCnt=0;
@@ -284,7 +279,7 @@ function makeSelectObj(firstPt,currentPt,cc) {
 
     if (!twoPtAry[0] || !twoPtAry[1]) twoPtAry= fallbackAry;
 
-    return [SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], SelectBox.Style.HANDLED)];
+    return [SelectBox.makeSelectBox(twoPtAry[0], twoPtAry[1], Style.HANDLED)];
 }
 
 

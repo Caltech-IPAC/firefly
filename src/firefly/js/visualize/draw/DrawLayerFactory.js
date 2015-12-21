@@ -2,33 +2,44 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-
-
-//============================================================
-//============================================================
-
-
 /**
+ * This function is just a convenience to create a draw factory definition object literal. You don't have
+ * to use it.  You can create the object directly.
+ * Every drawing layer needs a drawing
+ * factory definition to manage it. All drawing layer modules must export an factoryDef object. The factoryDef should
+ * the following properties.
  *
- * @param drawLayerTypeId
- * @param create
- * @param {function} getDrawDataFunc a function that will take the drawing layer and data the type.
+ * drawLayerTypeId - string, required- type id of the drawLayer
+ * create -function, function, required-  that will create a new draw layer of this type
+ * getDrawDataFunc - function, optional- a function that will take the drawing layer and data the type.
  *                   signature: getDrawDataFunc(dataType, plotId, drawLayer, action, lastDataRet)
  *                   where dataType is a string with constants in DrawLayers.DataType.
  *                   lastDataRet is the data that was return in the last call. If nothing has change
  *                   then then lastDataRet can be the return value.
+ * getLayerChanges - function, optional- get the changes to incorporate into the drawing layer object
+ *                    A function that returns an object literal the that has the field changes.
+ *                    <br>signature: getLayerChanges(drawLayer,action)
+ *                    it may return null or empty object if there are no changes. getLayerChanges is a super set of
+ *                    getDrawDataFunc. Usually you only need one or the other. getLayerChanges is better for more
+ *                    interactive like select area or distance tool.
+ *                    getDrawDataFunc works better for data intensive layers like catalogs.
+ * uiComponent - react pure function component, optional- react component
+ *
+ * @param drawLayerTypeId
+ * @param create
+ * @param {function} [getDrawDataFunc]
  * @param {function} [getLayerChanges] get the changes to incorporate into the drawing layer object
  *                    A function that returns an object literal the that has the field changes.
  *                    <br>signature: getLayerChanges(drawLayer,action)
  *                    it may return null or empty object if there are no changes
- * @param uiComponent
+ * @param {object} [uiComponent] react component
+ * @return {{drawLayerTypeId: string, create: function, getDrawDataFunc: function, getLayerChanges: function, uiComponent: object}}
  */
-export function makeFactoryDef(drawLayerTypeId, create, getDrawDataFunc,
-    getLayerChanges, uiComponent= null) {
+export function makeFactoryDef(drawLayerTypeId,
+                               create,
+                               getDrawDataFunc= null,
+                               getLayerChanges= null,
+                               uiComponent= null) {
     return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, uiComponent};
 }
 
@@ -83,7 +94,7 @@ class DrawLayerFactory {
 
     /**
      *
-     * @param factoryDef
+     * @param {{drawLayerTypeId: string, create: function, getDrawDataFunc: function, getLayerChanges: function, uiComponent: object}} factoryDef
      */
     register(factoryDef) {
         this.registry[factoryDef.drawLayerTypeId]= factoryDef;
@@ -93,7 +104,6 @@ class DrawLayerFactory {
         return new DrawLayerFactory(factoryDefs);
     }
 }
-
 
 export default DrawLayerFactory;
 

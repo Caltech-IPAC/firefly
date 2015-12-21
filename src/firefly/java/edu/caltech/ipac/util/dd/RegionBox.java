@@ -24,6 +24,7 @@ public class RegionBox extends Region {
     @JsNoExport
     private RegionBox() { super(null); }
 
+    @JsNoExport
     public RegionBox(WorldPt pt, RegionDimension dim) {
         this(pt,dim, new RegionValue(0, RegionValue.Unit.SCREEN_PIXEL));
     }
@@ -35,7 +36,7 @@ public class RegionBox extends Region {
     }
 
     public static RegionBox makeRegionBox(String wpStr, RegionDimension dim) {
-        return new RegionBox(WorldPt.parse(wpStr),dim);
+        return new RegionBox(WorldPt.parse(wpStr),dim,angel);
     }
 
     public RegionDimension getDim() { return dim; }

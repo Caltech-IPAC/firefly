@@ -6,10 +6,8 @@ import DrawUtil from './DrawUtil';
 import Point, {makeScreenPt, makeViewPortPt} from '../Point.js';
 import {CCUtil} from '../CsysConverter.js';
 import VisUtil from '../VisUtil.js';
+import {Style} from './DrawingDef.js';
 
-
-
-const Style = new Enum([ 'STANDARD','HANDLED','LIGHT' ]);
 
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -74,7 +72,7 @@ var draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
         var {pt1,pt2,renderOptions}= drawObj;
         drawImageBox(ctx,pt1, pt2, plot,drawParams,renderOptions);
@@ -209,7 +207,8 @@ function toRegion(pt1,pt2,plot, drawParams) {
                 window.ffgwt.util.dd.RegionValue.makeRegionValue(width, 'DEGREE'),
                 window.ffgwt.util.dd.RegionValue.makeRegionValue(height, 'DEGREE'));
     }
-    var r= window.ffgwt.util.dd.RegionBox.makeRegionBox(wp.toString(),dim);
+    var zero= window.ffgwt.util.dd.RegionValue.makeRegionValue(0, 'SCREEN_PIXEL');
+    var r= window.ffgwt.util.dd.RegionBox.makeRegionBox(wp.toString(),dim, zero);
     r.getOptions().setColor(color);
     return [r];
 }

@@ -6,7 +6,7 @@ var FALLBACK_COLOR = 'red';
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross,
-                drawEmpCross, drawDiamond, drawDot, drawCircle,clear,clearCanvas};
+                drawEmpCross, drawDiamond, drawDot, drawCircle,clear,clearCanvas, fillRec};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     var slope= NaN;
@@ -80,34 +80,41 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
     stroke(ctx);
 }
 
-//todo
-function makeDrawLabel(color, fontFamily, size, fontWeight, fontStyle, text) {
-    var label= {style:{}};
-    label.style.color= color;
-    label.style.fontFamily= fontFamily;
-    label.style.fontSize= size;
-    label.style.fontWeight= fontWeight;
-    label.style.fontStyle= fontStyle;
-    label.style.backgroundColor= 'white';
-    label.style.MozBorderRadius= '5px';
-    label.style.borderRadius= '5px';
-    label.style.webkitBorderRadius= '5px';
-    return label;
-}
-
 /**
  *
- * @param ctx
+ * @param drawTextAry
+ * @param text
  * @param x
  * @param y
  * @param color
- * @param font
- * @param text
+ * @param fontFamily
+ * @param size
+ * @param fontWeight
+ * @param fontStyle
  */
-function drawText(ctx,x,y,color,font,text, renderOptions) {
+function drawText(drawTextAry,text, x,y,color,
+                  fontFamily='helvetica', size='9px',
+                  fontWeight='normal', fontStyle='normal') {
+
+
     //todo
     // it I don't use canvas I need to set css and shadow and calculate translation
 
+    var style= {
+        position:'absolute',
+        color,
+        left:x,
+        top:y,
+        fontFamily,
+        'fontSize': size,
+        fontWeight,
+        fontStyle,
+        'backgroundColor': 'white',
+        'MozBorderRadius': '5px',
+        'borderRadius': '5px',
+        'WebkitBorderRadius': '5px'
+    };
+    drawTextAry.push({text,style});
 }
 
 
@@ -141,10 +148,10 @@ function getColor(objColor,defColor) {
 
 /**
  *
- * @param ctx
- * @param color
- * @param lineWidth
- * @param renderOptions
+ * @param {object} ctx
+ * @param {string} color
+ * @param {number} lineWidth
+ * @param {object} [renderOptions]
  */
 function beginPath(ctx,color,lineWidth,renderOptions) {
     ctx.save();
@@ -346,13 +353,34 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     if (!onlyAddToPath) stroke();
 }
 
-function drawCircle(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
-    if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
+/**
+ *
+ * @param ctx
+ * @param x
+ * @param y
+ * @param color
+ * @param lineWidth
+ * @param size
+ * @param renderOptions
+ * @param onlyAddToPath
+ */
+function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions, onlyAddToPath) {
+    if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     var radius= size+2;
     ctx.moveTo(x+radius-1,y);
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     if (!onlyAddToPath) stroke();
 }
+
+function fillRec(ctx, color, x, y, width, height, renderOptions) {
+    ctx.save();
+    ctx.fillStyle=color;
+    if (renderOptions) addStyle(ctx,renderOptions);
+    ctx.fillRect(x, y, width, height);
+    ctx.restore();
+}
+
+
 
 function clear(ctx,width,height) {
     if (!ctx) return;

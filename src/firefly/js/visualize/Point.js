@@ -18,8 +18,9 @@ const IM_WS_PT= 'ImageWorkSpacePt';
 const W_PT= 'WorldPt';
 const VP_PT= 'ViewPortPt';
 const PROJ_PT= 'ProjectionPt';
+const OFFSET_PT= 'OffsetPt';
 
-var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT};
+var Point = {  SPT, IM_PT, IM_WS_PT, VP_PT, PROJ_PT, W_PT, OFFSET_PT};
 
 var ptTypes= Object.values(Point);
 
@@ -167,6 +168,9 @@ export const makeViewPortPt= function(x,y) {
 };
 export const makeProjectionPt= function(x,y) {
     return Object.assign(new Pt(x,y), {type:PROJ_PT});
+};
+export const makeOffsetPt= function(x,y) {
+    return Object.assign(new Pt(x,y), {type:OFFSET_PT});
 };
 
 export const pointEquals= function(p1,p2)  {

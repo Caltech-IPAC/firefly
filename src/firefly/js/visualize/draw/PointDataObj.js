@@ -79,9 +79,9 @@ var draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,drawTextAry, plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
-        drawPt(ctx,drawObj.pt, plot,drawParams,drawObj.renderOptions,vpPtM,onlyAddToPath);
+        drawPt(ctx,drawTextAry,drawObj.pt, plot,drawParams,drawObj.renderOptions,vpPtM,onlyAddToPath);
     },
 
     toRegion(drawObj,plot, def) {
@@ -123,11 +123,11 @@ function makeDrawParams(pointDataObj,def) {
  * @param vpPtM
  * @param onlyAddToPath
  */
-function drawPt(ctx, pt, plot,drawParams, renderOptions, vpPtM, onlyAddToPath) {
+function drawPt(ctx, drawTextAry, pt, plot,drawParams, renderOptions, vpPtM, onlyAddToPath) {
     if (!pt) return;
 
     if (!plot || pt.type===Point.SPT) {
-        drawXY(ctx,pt.x,pt.y,drawParams, renderOptions, onlyAddToPath);
+        drawXY(ctx,drawTextAry, pt.x,pt.y,drawParams, renderOptions, onlyAddToPath);
     }
     else {
         var vpPt;
@@ -139,16 +139,16 @@ function drawPt(ctx, pt, plot,drawParams, renderOptions, vpPtM, onlyAddToPath) {
             vpPt=plot.getViewPortCoords(pt);
         }
         if (plot.pointInViewPort(vpPt)) {
-            drawXY(ctx,vpPt.x,vpPt.y,drawParams, renderOptions, onlyAddToPath);
+            drawXY(ctx,drawTextAry, vpPt.x,vpPt.y,drawParams, renderOptions, onlyAddToPath);
         }
     }
 }
 
 
-function drawXY(ctx, x, y, drawParams,renderOptions, onlyAddToPath) {
+function drawXY(ctx, drawTextAry, x, y, drawParams,renderOptions, onlyAddToPath) {
     var {text}= drawParams;
     drawSymbolOnPlot(ctx, x,y, drawParams,renderOptions, onlyAddToPath);
-    if (text) DrawUtil.drawText(ctx,x+5,y,drawParams.color,'9px serif',text);
+    if (text) DrawUtil.drawText(drawTextAry, text, x, y,drawParams.color);
 }
 
 function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
@@ -179,7 +179,7 @@ function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
             DrawUtil.drawDot(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
             break;
         case DrawSymbol.CIRCLE :
-            DrawUtil.drawCircle(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            DrawUtil.drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
             break;
         default :
             break;

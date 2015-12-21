@@ -3,11 +3,9 @@ import Enum from 'enum';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import {makeScreenPt, makeWorldPt} from '../Point.js';
+import {Style} from './DrawingDef.js';
 
 
-
-
-const Style = new Enum([ 'STANDARD','HANDLED']);
 
 const FOOTPRINT_OBJ= 'FootprintObj';
 const DEFAULT_STYLE= Style.STANDARD;
@@ -99,13 +97,13 @@ var draw=  {
 		return Math.sqrt(minDistSq);
 	},
 
-	draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+	draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
 		var drawParams= makeDrawParams(drawObj,def);
 		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
 	},
 
-	toRegion(drawObj,plot, def) {
-		toRegion(drawObj.footprintAry, plot,makeDrawParams(drawObj,def),drawObj.renderOptions);
+	toRegion(drawObj,def) {
+		toRegion(drawObj.footprintAry, makeDrawParams(drawObj,def),drawObj.renderOptions);
 	},
 
 	translateTo(drawObj,plot, apt) {
@@ -218,9 +216,6 @@ function ptSegDistSq(x1, y1, x2, y2, px, py) {
 
 
 function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyAddToPath) {
-
-
-
 	var inView = false;
 	var footprint= null;
 	var wpt= null;
@@ -267,7 +262,7 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, onlyAddToPath) 
 }
 
 
-function toRegion(footprintAry, plot, drawParams) {
+function toRegion(footprintAry, drawParams) {
 	var {color} = drawParams;
 	return footprintAry.map( (footprint) => {
 		var rl = window.ffgwt.util.dd.RegionLines.makeRegionLines(footprint.map( (wp)  => wp.toString()));

@@ -27,6 +27,14 @@ const SELECT_AREA_MOVE= 'DrawLayerCntlr.SelectArea.selectAreaMove';
 const SELECT_AREA_END= 'DrawLayerCntlr.SelectArea.selectAreaEnd';
 const SELECT_MOUSE_LOC= 'DrawLayerCntlr.SelectArea.selectMouseLoc';
 
+
+// _- Distance tool
+const DT_START= 'DrawLayerCntlr.DistanceTool.distanceToolStart';
+const DT_MOVE= 'DrawLayerCntlr.DistanceTool.distanceToolMove';
+const DT_END= 'DrawLayerCntlr.DistanceTool.distanceToolEnd';
+
+
+
 const DRAWING_LAYER_KEY= 'drawLayers';
 
 
@@ -40,6 +48,7 @@ export default {
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
+    DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,

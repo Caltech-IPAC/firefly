@@ -22,6 +22,7 @@ import ImageViewer from './ImageViewer.jsx';
 import ZoomUtil from '../ZoomUtil.js';
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import SelectArea from '../../drawingLayers/SelectArea.js';
+import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {flux} from '../../Firefly.js';
 
 
@@ -98,6 +99,27 @@ function selectArea() {
 
 }
 
+function distanceTool() {
+    //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
+    var plotView= PlotViewUtils.getActivePlotView();
+    if (!plotView) return;
+
+    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
+    var dl= PlotViewUtils.getDrawLayerByType(plotView.plotId,DistanceTool.TYPE_ID);
+    if (!dl) {
+        DrawLayerCntrl.dispatchCreateDrawLayer(DistanceTool.TYPE_ID);
+    }
+
+
+    if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
+        DrawLayerCntrl.dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotIdAry);
+    }
+    else {
+        DrawLayerCntrl.dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotIdAry);
+    }
+
+}
+
 function zoom(zType) {
     console.log(zType);
     switch (zType) {
@@ -131,9 +153,10 @@ function showFitsDialog() {
      showFitsDownloadDialog();
  }
 
-function TestImagePanelView({selectOn}) {
+function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
+    var distText = (distOn) ? 'Turn Distance Tool Off' : 'Turn Distance Tool On';
     return (
         <div>
             <div style={{display:'inline-block', verticalAlign:'top'}}>
@@ -153,6 +176,7 @@ function TestImagePanelView({selectOn}) {
                     <button type='button' onClick={() => zoom('fill')}>Zoom Fill</button>
                     <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
                     <button type='button' onClick={() => selectArea()}>{selectText}</button>
+                    <button type='button' onClick={() => distanceTool()}>{distText}</button>
                     <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <br/>
@@ -184,17 +208,21 @@ var TestImagePanel= React.createClass({
        this.unbinder= flux.addListener( () => {
            var pv= PlotViewUtils.getActivePlotView();
            var selectOn= false;
+           var distOn= false;
            if (pv) {
-               const dl= PlotViewUtils.getDrawLayerByType(pv.plotId,SelectArea.TYPE_ID);
-               selectOn=  PlotViewUtils.isDrawLayerAttached(dl,pv.plotId);
+               const selectLayer= PlotViewUtils.getDrawLayerByType(pv.plotId,SelectArea.TYPE_ID);
+               selectOn=  PlotViewUtils.isDrawLayerAttached(selectLayer,pv.plotId);
+               const distLayer= PlotViewUtils.getDrawLayerByType(pv.plotId,DistanceTool.TYPE_ID);
+               distOn=  PlotViewUtils.isDrawLayerAttached(distLayer,pv.plotId);
            }
-           this.setState({selectOn});
+           this.setState({selectOn,distOn});
         });
     },
 
     render() {
         var selectOn= (this.state && this.state.selectOn) ? this.state.selectOn : false;
-        return (<TestImagePanelView selectOn={selectOn}/>);
+        var distOn= (this.state && this.state.distOn) ? this.state.distOn : false;
+        return (<TestImagePanelView selectOn={selectOn} distOn={distOn}/>);
     }
 
     // end code that connects to store

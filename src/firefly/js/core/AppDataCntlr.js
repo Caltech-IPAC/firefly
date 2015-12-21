@@ -3,6 +3,7 @@
  */
 
 import {flux} from '../Firefly.js';
+import BrowserCache from '../util/BrowserCache.js';
 import history from './History.js';
 import layoutRenderer from './reducers/LayoutReducer.js';
 import menuRenderer from './reducers/MenuReducer.js';
@@ -14,6 +15,7 @@ import Point, {isValidPoint} from '../visualize/Point.js';
 const APP_DATA_PATH = 'app-data';
 const SEARCH_TYPE = 'search';
 const TASK= 'task-';
+const APP_PREFERENCES= 'APP_PREFERENCES';
 var taskCnt=0;
 
 /*---------------------------- ACTIONS -----------------------------*/
@@ -26,12 +28,14 @@ const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
 const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
 const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
-const CHANGE_COMMAND_STATE = `${APP_DATA_PATH}.changeCommandState `;
 
 const SEARCH_SHOW       = `${APP_DATA_PATH}.searchShow`;
 const SEARCH_HIDE       = `${APP_DATA_PATH}.searchHide`;
 
-const DISPLAY_MODE_CHANGE   = `${APP_DATA_PATH}/displayModeChange`;
+const DISPLAY_MODE_CHANGE   = `${APP_DATA_PATH}.displayModeChange`;
+
+const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
+const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 
 
 /*---------------------------- CREATORS ----------------------------*/
@@ -121,11 +125,21 @@ const hideAllDialogsChange= function(state) {
     return Object.assign({}, state);
 };
 
-function changeCommandState(state,action) {
+function addPreference(state,action) {
     if (!action.payload) return state;
-    var {commandId,commandState}= action.payload;
-    var s= Object.assign({},state.commandState, {[commandId]:commandState});
-    return Object.assign({},state,{commandState:s});
+    var {name,value}= action.payload;
+    var preferences= Object.assign({},state.preferences,{[name]:value} );
+    BrowserCache.put(APP_PREFERENCES,preferences);
+    return Object.assign({},state,{preferences})
+}
+
+function removePreference(state,action) {
+    if (!action.payload) return state;
+    var {name}= action.payload;
+    var preferences= Object.assign({},state.preferences);
+    Reflect.deleteProperty(preferences,name);
+    BrowserCache.put(APP_PREFERENCES,preferences);
+    return Object.assign({},state,{preferences})
 }
 
 function loadAppData() {
@@ -154,6 +168,10 @@ const getActiveTarget= function() {
     return flux.getState()[APP_DATA_PATH].activeTarget;
 };
 
+function getPreference(name) {
+    return flux.getState()[APP_DATA_PATH].preferences[name];
+}
+
 /**
  * @param wp center WorldPt
  * @param corners array of 4 WorldPts that represent the corners of a image
@@ -179,8 +197,14 @@ function getInitState() {
         activeTarget: null,
         taskCounters: [],
         dialogs: {},      // key is dialog id, value is object {visible:true/false} maybe more in this object in future
-        commandState:{}   // key is command id, value is anything the action drops in, only stateful commands need this
+        commandState:{},   // key is command id, value is anything the action drops in, only stateful commands need this
+        preferences:initPreferences()  // preferences, will be backed by local storage
     };
+}
+
+function initPreferences() {
+    var prefs= BrowserCache.get(APP_PREFERENCES);
+    return prefs || {};
 }
 
 
@@ -230,8 +254,11 @@ function addDataReducer(state, action={}) {
         case ADD_TASK_COUNT  :
             return removeTaskCount(state,action);
 
-        case CHANGE_COMMAND_STATE  :
-            return changeCommandState(state,action);
+        case ADD_PREF  :
+            return addPreference(state,action);
+
+        case REMOVE_PREF  :
+            return removePreference(state,action);
 
         default:
             return state;
@@ -243,22 +270,34 @@ function addDataReducer(state, action={}) {
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, create with makeTaskId()
  */
-const dispatchAddTaskCount= function(componentId,taskId) {
+function dispatchAddTaskCount(componentId,taskId) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});
-};
+}
 
 /**
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, create with makeTaskId()
  */
-const dispatchRemoveTaskCount= function(componentId,taskId) {
+function dispatchRemoveTaskCount(componentId,taskId) {
     flux.process({type: REMOVE_TASK_COUNT, payload: {componentId,taskId}});
-};
+}
 
+/**
+ *
+ * @param name name of preference
+ * @param value value of preference
+ */
+function dispatchAddPreference(name,value) {
+    flux.process({type: ADD_PREF, payload: {name,value}});
+}
 
-const dispatchChangeCommandState= function(commandId,commandState) {
-    flux.process({type: CHANGE_COMMAND_STATE, payload: {commandId,commandState}});
-};
+/**
+ *
+ * @param name name of preference
+ */
+function dispatchRemovePreference(name) {
+    flux.process({type: REMOVE_PREF, payload: {name}});
+}
 
 
 /*---------------------------- EXPORTS -----------------------------*/
@@ -282,9 +321,11 @@ export default {
     hideAllDialogs,
     getActiveTarget,
     setActiveTarget,
+    getPreference,
     dispatchAddTaskCount,
     dispatchRemoveTaskCount,
-    dispatchChangeCommandState,
+    dispatchAddPreference,
+    dispatchRemovePreference,
     makeTaskId,
     getCommandState
 };

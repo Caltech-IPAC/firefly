@@ -68,10 +68,10 @@ var draw=  {
         return dist;
     },
 
-    draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
+    draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
         var {startPt,endPt,renderOptions}= drawObj;
-        drawDirectionArrow(ctx,startPt,endPt,drawParams,renderOptions);
+        drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptions);
     },
 
     toRegion(drawObj,plot, def) {
@@ -100,7 +100,7 @@ function makeDrawParams(pointDataObj,def) {
     };
 }
 
-function drawDirectionArrow(ctx,startPt,endPt,drawParams,renderOptions) {
+function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptions) {
     var pt1= startPt;
     var pt2= endPt;
     var {color,text}=  drawParams;
@@ -114,8 +114,8 @@ function drawDirectionArrow(ctx,startPt,endPt,drawParams,renderOptions) {
 
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
 
-    DrawUtil.drawText(ctx,ret.textX, ret.textY, color, '9px serif',  text, renderOptions);
-    DrawUtil.drawText(ctx,ret.textX, ret.textY, color, '9px serif',  text, renderOptions);
+    //DrawUtil.drawText(ctx,ret.textX, ret.textY, color, '9px serif',  text, renderOptions);
+    DrawUtil.drawText(drawTextAry, text, ret.textX, tet.textY,color);
 }
 
 function toRegion(startPt,endPt,drawParams,renderOptions) {

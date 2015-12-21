@@ -3,11 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize.draw;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.visualize.OffsetScreenPt;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
@@ -22,10 +17,12 @@ import edu.caltech.ipac.util.dd.RegionLines;
 import edu.caltech.ipac.util.dd.RegionOptions;
 import edu.caltech.ipac.util.dd.RegionText;
 import edu.caltech.ipac.util.dd.RegionValue;
-import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -565,8 +562,8 @@ public class ShapeDataObj extends DrawObj {
         }
 
         if (wp!=null) {
-            RegionAnnulus ra= new RegionAnnulus(wp,new RegionValue(radius,
-                                   st== UnitType.PIXEL ? RegionValue.Unit.SCREEN_PIXEL :RegionValue.Unit.ARCSEC));
+            RegionAnnulus ra= new RegionAnnulus(wp,
+                    new RegionValue(radius, st== UnitType.PIXEL ? RegionValue.Unit.SCREEN_PIXEL :RegionValue.Unit.ARCSEC));
             ra.getOptions().setColor(color);
             retList.add(ra);
 

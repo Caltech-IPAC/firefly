@@ -48,6 +48,8 @@ class Drawer {
         this.decimateDim= null;
         this.lastDecimationPt= null;
         this.lastDecimationColor= null;
+        this.drawTextAry= [];
+        this.textUpdateCallback= null;
         //this.highPriorityLayer= false;
         this.drawerId= drawerCnt++;
     }
@@ -258,7 +260,7 @@ class Drawer {
             var cc= plot ? null : CsysConverter.make(plot);
             var vpPtM= makeViewPortPt(0,0);
             selectedData= this.decimateData(data.filter( (pt) => pt.isSelected() ),null,false);
-            selectedData.forEach( (pt) => drawObj(ctx, this.drawingDef, cc, pt, vpPtM, false));
+            selectedData.forEach( (pt) => drawObj(ctx, null, this.drawingDef, cc, pt, vpPtM, false));
         }
     }
 
@@ -270,7 +272,7 @@ class Drawer {
         if (canDraw(ctx,highlightData)) {
             var cc= plot ? CsysConverter.make(plot) : null;
             var vpPtM= makeViewPortPt(0,0);
-            highlightData.forEach( (pt) => drawObj(ctx, drawingDef, cc, pt, vpPtM, false) );
+            highlightData.forEach( (pt) => drawObj(ctx, null, drawingDef, cc, pt, vpPtM, false) );
         }
     }
 
@@ -283,16 +285,20 @@ class Drawer {
         if (canDraw(ctx,data)) {
             var cc= CsysConverter.make(plot);
             var drawData= this.decimateData(data, true);
+            this.drawTextAry= [];
             if (drawData.length>500) {
-                params= makeDrawingParams(canvas, ctx,drawingDef,cc,drawData, this.drawConnect, getMaxChunk(drawData,this.isPointData));
+                params= makeDrawingParams(canvas, this.drawTextAry, drawingDef,cc,drawData,
+                                         this.drawConnect, getMaxChunk(drawData,this.isPointData));
                 this.cancelRedraw();
                 this.drawingCanceler= makeDrawingDeferred(this,params);
                 this.removeTask();
                 if (drawData.length>15000) this.addTask();
             }
             else {
-                params= makeDrawingParams(canvas, ctx, drawingDef, cc,drawData,this.drawConnect, Number.MAX_SAFE_INTEGER);
+                params= makeDrawingParams(canvas, this.drawTextAry, drawingDef,
+                                          cc,drawData,this.drawConnect, Number.MAX_SAFE_INTEGER);
                 this.doDrawing(params);
+                if (this.textUpdateCallback) this.textUpdateCallback(this.drawTextAry);
             }
         }
         else {
@@ -422,10 +428,11 @@ function nextPt(i,fuzzLevel, max) {
     return retval;
 }
 
-function makeDrawingParams(canvas, ctx, drawingDef, csysConv, data, drawConnect, maxChunk) {
+function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, drawConnect, maxChunk) {
     var params= {
         canvas,    //const
-        ctx,    //const
+        ctx : canvas.getContext('2d'),    //const
+        drawTextAry,
         drawingDef,    //const
         csysConv,    //const
         data,    //const
@@ -466,7 +473,10 @@ function getViewPortCoords(pt, mVpPt, cc) {
 
 function makeDrawingDeferred(drawer,params) {
     var id= window.setInterval( () => {
-        if (params.done) window.clearInterval(id);
+        if (params.done) {
+            window.clearInterval(id);
+            if (drawer.textUpdateCallback) drawer.textUpdateCallback(drawer.drawTextAry);
+        }
         drawer.doDrawing(params);
     },0);
     return () => window.clearInterval(id);
@@ -475,14 +485,15 @@ function makeDrawingDeferred(drawer,params) {
 /**
  *
  * @param ctx canvas context object
+ * @param drawTextAry
  * @param def DrawingDef
  * @param csysConv web csysConv
  * @param obj DrawObj
  * @param vpPtM mutable viewport point
  * @param {boolean} onlyAddToPath
  */
-function drawObj(ctx, def, csysConv, obj, vpPtM, onlyAddToPath) {
-    DrawOp.draw(obj, ctx, csysConv, def, vpPtM,onlyAddToPath);
+function drawObj(ctx, drawTextAry, def, csysConv, obj, vpPtM, onlyAddToPath) {
+    DrawOp.draw(obj, ctx, drawTextAry, csysConv, def, vpPtM,onlyAddToPath);
 }
 
 /**
@@ -534,7 +545,7 @@ function drawChunkOptimized(drawList, params, ctx) {
     if (!drawList.length) return;
     DrawUtil.beginPath(ctx,params.drawingDef.color,1);
     for(var obj of drawList) {
-        drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
+        drawObj(ctx, params.drawTextAry, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
     }
     DrawUtil.stroke(ctx);
 }
@@ -544,11 +555,11 @@ function drawChunkNormal(drawList, params, ctx) {
     var {drawingDef,drawConnect,csysConv,vpPtM}= params;
     for(var obj of drawList) {
         if (drawConnect) { // in this case doDraw was already called
-            drawObj(ctx, drawingDef, csysConv, obj,vpPtM, false);
+            drawObj(ctx, params.drawTextAry, drawingDef, csysConv, obj,vpPtM, false);
         }
         else  {
             if (shouldDrawObj(csysConv,obj)) { // doDraw must be call when there is a connector
-                drawObj(ctx, drawingDef, csysConv, obj,vpPtM, false);
+                drawObj(ctx, params.drawTextAry, drawingDef, csysConv, obj,vpPtM, false);
                 if (drawConnect) {
                     drawConnector(ctx,drawingDef,csysConv,drawConnect,obj,lastObj);
                 }
@@ -581,7 +592,7 @@ function getNextChuck(params) {
                 if (optimize) {
                     objLineWidth= obj.lineWidth || lineWidth;
                     objColor= obj.color || color;
-                    optimize= (DrawOp.usePathOptimization(obj) &&
+                    optimize= (DrawOp.usePathOptimization(obj,drawingDef) &&
                                lineWidth===objLineWidth &&
                                color===objColor);
                 }
