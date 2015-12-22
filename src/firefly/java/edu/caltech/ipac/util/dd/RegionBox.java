@@ -36,7 +36,7 @@ public class RegionBox extends Region {
     }
 
     public static RegionBox makeRegionBox(String wpStr, RegionDimension dim) {
-        return new RegionBox(WorldPt.parse(wpStr),dim,angel);
+        return new RegionBox(WorldPt.parse(wpStr),dim,new RegionValue(0, RegionValue.Unit.SCREEN_PIXEL));
     }
 
     public RegionDimension getDim() { return dim; }
