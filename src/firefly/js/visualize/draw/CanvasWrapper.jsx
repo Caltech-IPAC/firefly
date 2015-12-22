@@ -61,49 +61,31 @@ const getDataForPlot= (data,plotId) => {
 };
 
 
-var CanvasWrapper= React.createClass(
-{
+class CanvasWrapper extends React.Component {
 
 
-    drawer: null,
+    constructor(props) {
+        super(props);
+        this.drawer= null;
+    }
 
-    propTypes: {
-        plotView : React.PropTypes.object.isRequired,
-        drawLayer : React.PropTypes.object.isRequired,
-        textUpdateCallback : React.PropTypes.func.isRequired
-    },
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
-
-    getDefaultProps: function () {
-        return { };
-    },
-
-
-    getInitialState() {
-        return {width:0,height:0};
-    },
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillMount() {
         var {drawLayer,textUpdateCallback}= this.props;
         this.drawer= Drawer.makeDrawer(drawLayer.drawingDef);
         this.drawer.textUpdateCallback= textUpdateCallback;
-    },
+    }
 
     componentDidMount() {
         this.componentDidUpdate();
-    },
-
-
+    }
 
     componentDidUpdate() {
         var {plotView,drawLayer}= this.props;
-        var {drawLayerId}= drawLayer;
+        if (this.drawer) updateDrawer(this.drawer,plotView,drawLayer);
 
-        if (this.drawer) {
-            updateDrawer(this.drawer,plotView,drawLayer);
-        }
-    },
+    }
 
 
     render() {
@@ -125,14 +107,14 @@ var CanvasWrapper= React.createClass(
                 {canvasLayers}
             </div>
         );
-    },
+    }
+}
 
-
-
-
-
-});
-
+CanvasWrapper.propTypes= {
+    plotView : React.PropTypes.object.isRequired,
+    drawLayer : React.PropTypes.object.isRequired,
+    textUpdateCallback : React.PropTypes.func.isRequired
+};
 
 export default CanvasWrapper;
 

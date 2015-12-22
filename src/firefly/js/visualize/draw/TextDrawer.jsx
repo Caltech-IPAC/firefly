@@ -3,24 +3,20 @@
  */
 
 import React from 'react';
-import CanvasWrapper from './CanvasWrapper.jsx';
-
-
-
 
 function generateText(textDrawAry) {
-    return textDrawAry.map( (t,idx) => {
-        return  ( <div style={t.style} key={idx}>{t.text}</div>);
-    });
+    return textDrawAry.map( (t,idx) => ( <div style={t.style} key={idx}>{t.text}</div>) );
 }
 
-
-
-
-
+/**
+ * React component the displays absolute divs with text.  Used as labels for drawing
+ * @param textDrawAry
+ * @param width
+ * @param height
+ * @return {object}
+ */
 function TextDrawer({textDrawAry,width,height}) {
     var style= {position:'absolute',left:0,right:0,width,height};
-
     if (!textDrawAry || !textDrawAry.length) return (<div className='textDrawer' style={style}/>);
 
     return (
@@ -36,7 +32,4 @@ TextDrawer.propTypes= {
     height : React.PropTypes.number.isRequired
 };
 
-
-
 export default TextDrawer;
-

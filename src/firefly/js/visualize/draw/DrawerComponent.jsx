@@ -21,23 +21,17 @@ function makeTextDrawIfNecessary(textDrawAry,width,height) {
 }
 
 
-var DrawerComponent= React.createClass(
-{
+class DrawerComponent extends React.Component {
+    constructor(props)  {
+        super(props);
+        this.state= {textDrawAry:[]};
+    }
 
-    propTypes: {
-        plotView : React.PropTypes.object.isRequired,
-        drawLayer : React.PropTypes.object.isRequired
-    },
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
-
-    getInitialState() {
-        return {textDrawAry:[]};
-    },
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     textUpdateCallback(textDrawAry) {
         this.setState({textDrawAry});
-    },
+    }
 
     render() {
         var {plotView, drawLayer}= this.props;
@@ -50,17 +44,19 @@ var DrawerComponent= React.createClass(
 
         return (
             <div className='drawComponent' style={style}>
-                <CanvasWrapper plotView={plotView} drawLayer={drawLayer} textUpdateCallback={this.textUpdateCallback}/>
+                <CanvasWrapper plotView={plotView} drawLayer={drawLayer} textUpdateCallback={this.textUpdateCallback.bind(this)}/>
                 {makeTextDrawIfNecessary(this.state.textDrawAry,width,height)}
             </div>
         );
     }
+}
+
+DrawerComponent.propTypes= {
+    plotView : React.PropTypes.object.isRequired,
+    drawLayer : React.PropTypes.object.isRequired
+};
 
 
-
-
-
-});
 
 
 export default DrawerComponent;

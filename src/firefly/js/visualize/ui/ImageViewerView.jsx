@@ -149,30 +149,15 @@ var ImageViewerView= React.createClass(
 
     render() {
         var {primaryPlot,viewDim:{width,height},plotId}= this.props.plotView;
-        //var {width,height}= this.state;
         var insideStuff;
 
         if (width && height && primaryPlot) {
             insideStuff= this.renderInside();
         }
-        //var style= {width:'calc(100% - 4px)',
-        //            height:'calc(100% - 5px)',
-        //            left: 2,
-        //            top: 3,
-        //            position: 'relative',
-        //            overflow:'hidden'};
         var style= {width:'100%',
                     height:'100%',
                     position: 'relative',
                     overflow:'hidden'};
-
-        //var border= {
-        //    borderStyle: 'ridge',
-        //    borderWidth: '3px 2px 2px 2px',
-        //    borderColor: getBorderColor(plotId)
-        //};
-        //Object.assign(style,border);
-
         return (
             <div className='web-plot-view-scr' style={style}>
                 {insideStuff}
