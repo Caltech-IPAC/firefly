@@ -4,7 +4,7 @@
 
 
 import Enum from 'enum';
-import Point, {makeViewPortPt,pointEquals} from '../Point.js';
+import Point, {makeViewPortPt,makeImagePt,pointEquals} from '../Point.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import DrawUtil from './DrawUtil.js';
@@ -112,6 +112,17 @@ class Drawer {
         var oldvpY= 0;
         var vpX= 0;
         var vpY= 0;
+        var dWidth= 0;
+        var oldDWidth= 0;
+        var dHeight= 0;
+        var oldDHeight= 0;
+        var zfact= 0;
+        var oldZfact= 0;
+        var oldTestPtStr;
+        var testPtStr;
+        var pt;
+        width= Math.floor(width);
+        height= Math.floor(height);
         if (this.primaryCanvas) {
             cWidth= this.primaryCanvas.width;
             cHeight= this.primaryCanvas.height;
@@ -120,17 +131,29 @@ class Drawer {
         if (plot) {
             vpX= plot.viewPort.x;
             vpY= plot.viewPort.y;
+            dWidth= plot.dataWidth;
+            dHeight= plot.dataHeight;
+            zfact= Math.round(plot.zoomFactor*100000)/100000;
+            pt= CCUtil.getWorldCoords(plot,makeImagePt(1,1));
+            testPtStr= pt ? pt.toString() : '';
         }
 
         if (this.plot) {
-            oldvpX= plot.viewPort.x;
-            oldvpY= plot.viewPort.y;
+            oldvpX= this.plot.viewPort.x;
+            oldvpY= this.plot.viewPort.y;
+            oldDWidth= this.plot.dataWidth;
+            oldDHeight= this.plot.dataHeight;
+            oldZfact= Math.round(this.plot.zoomFactor*100000)/100000;
+            pt= CCUtil.getWorldCoords(this.plot,makeImagePt(1,1));
+            oldTestPtStr= pt ? pt.toString() : '';
         }
 
 
         if (data && this.data && data===this.data &&
-            this.plot===plot && cWidth===width && cHeight===height &&
-            oldvpX===vpX && oldvpY===vpY ) {
+            cWidth===width && cHeight===height &&
+            oldvpX===vpX && oldvpY===vpY &&
+            dWidth===oldDWidth && dHeight===oldDHeight  &&
+            zfact===oldZfact  && testPtStr===oldTestPtStr ) {
             return;
         }
 
@@ -140,15 +163,20 @@ class Drawer {
         }
 
         //======== DEBUG =============================
-        var changes= [this.primaryCanvas ? 'has canvas' : 'no canvas'];
+        //var changes= [this.primaryCanvas ? '' : 'no canvas'];
+        var changes= [];
         if (data!==this.data) changes.push('data');
-        if (plot!==this.plot) changes.push('plot');
-        if (cWidth!==width ) changes.push('width');
-        if (cHeight!==height ) changes.push('height');
+        //if (plot!==this.plot) changes.push('plot');
+        if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
+        if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
+        if (dWidth!==oldDWidth ) changes.push('data width');
+        if (dHeight!==oldDHeight ) changes.push('data height');
+        if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
+        if (testPtStr!==oldTestPtStr ) changes.push('test pt');
         if (oldvpX!==vpX ) changes.push('vpX');
         if (oldvpY!==vpY ) changes.push('vpY');
         var changeStr= join(', ',...changes);
-        //console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
+        console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
         //=====================================
         this.plot= plot;
         this.data = data;

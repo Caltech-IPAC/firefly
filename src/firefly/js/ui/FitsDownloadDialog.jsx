@@ -10,6 +10,7 @@ import React from 'react';
 import AppDataCntlr from '../core/AppDataCntlr.js';
 import PlotState,{Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {download} from '../util/WebUtil.js';
 import InputGroup from './InputGroup.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
@@ -72,7 +73,7 @@ var FitsDialogTest= React.createClass({
     getInitialState() {
 
         //plot and plotState are global variable for this class
-        this.plot =PlotViewUtil.getActivePlotView().primaryPlot;
+        this.plot =PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
         this.plotState = this.plot.plotState;
 
         var threeColorBandUsed=false;

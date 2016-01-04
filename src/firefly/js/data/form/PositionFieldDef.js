@@ -120,59 +120,6 @@ var makePositionFieldDef= function(properties) {
 
     /**
      *
-     * @param csys coordinate system
-     * @returns String
-     */
-    var coordToString= function(csys) {
-        var retval= '';
-
-        if (csys === CoordinateSys.EQ_J2000)      {
-            retval = 'Equ J2000';
-        }
-        else if (csys === CoordinateSys.EQ_B1950) {
-            retval = 'Equ B1950';
-        }
-        else if (csys === CoordinateSys.GALACTIC) {
-            retval = 'Gal';
-        }
-        else if (csys === CoordinateSys.ECL_J2000) {
-            retval = 'Ecl J2000';
-        }
-        else if (csys === CoordinateSys.ECL_B1950) {
-            retval = 'Ecl B1950';
-        }
-
-        return retval;
-
-    };
-
-    /**
-     *
-     */
-    function formatPosForTextField(wp) {
-        var retval;
-        try {
-            var lon;
-            var lat;
-            if (wp.getCoordSys().isEquatorial()) {
-                lon = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
-                lat = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
-            }
-            else {
-                lon = numeral(wp.getLon()).format('#.xxxxxx');
-                lat = numeral(wp.getLat()).format('#.xxxxxx');
-            }
-            retval = lon + ' ' + lat + ' ' + coordToString(wp.getCoordSys());
-
-        } catch (e) {
-            retval = '';
-        }
-        return retval;
-
-    };
-
-    /**
-     *
      * @param {WorldPt} wp
      * @param {string}name
      * @param {Resolver} resolver
@@ -298,8 +245,61 @@ var makePositionFieldDef= function(properties) {
 
 };
 
-var PositionFieldDef = {makePositionFieldDef};
+var PositionFieldDef = {makePositionFieldDef, formatPosForTextField};
 export default PositionFieldDef;
+
+/**
+ *
+ * @param csys coordinate system
+ * @returns String
+ */
+function coordToString(csys) {
+    var retval= '';
+
+    if (csys === CoordinateSys.EQ_J2000)      {
+        retval = 'Equ J2000';
+    }
+    else if (csys === CoordinateSys.EQ_B1950) {
+        retval = 'Equ B1950';
+    }
+    else if (csys === CoordinateSys.GALACTIC) {
+        retval = 'Gal';
+    }
+    else if (csys === CoordinateSys.ECL_J2000) {
+        retval = 'Ecl J2000';
+    }
+    else if (csys === CoordinateSys.ECL_B1950) {
+        retval = 'Ecl B1950';
+    }
+
+    return retval;
+
+}
+
+/**
+ *
+ */
+export function formatPosForTextField(wp) {
+    var retval;
+    try {
+        var lon;
+        var lat;
+        if (wp.getCoordSys().isEquatorial()) {
+            lon = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
+            lat = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
+        }
+        else {
+            lon = numeral(wp.getLon()).format('#.xxxxxx');
+            lat = numeral(wp.getLat()).format('#.xxxxxx');
+        }
+        retval = `${lon} ${lat} ${coordToString(wp.getCoordSys())}`;
+
+    } catch (e) {
+        retval = '';
+    }
+    return retval;
+
+}
 
 
 

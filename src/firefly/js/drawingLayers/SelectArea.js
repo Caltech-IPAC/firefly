@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
@@ -51,10 +51,12 @@ var idCnt=0;
 
 function dispatchSelectAreaEnd(mouseStatePayload) {
     var {plotId,drawLayer}= mouseStatePayload;
-    var selectBox= drawLayer.drawData.data[0];
-    var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-    ImagePlotCntlr.dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
-    flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
+    if (drawLayer.drawData.data) {
+        var selectBox= drawLayer.drawData.data[0];
+        var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
+        ImagePlotCntlr.dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
+        flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
+    }
 }
 
 
@@ -78,8 +80,13 @@ function creator() {
                       DrawLayerCntlr.SELECT_MOUSE_LOC];
 
     idCnt++;
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, {canUseMouse:true},
-                                          drawingDef, actionTypes, pairs );
+    var options= {
+        canUseMouse:true,
+        canUserChangeColor: false,
+        canUserDelete: false
+    };
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',
+                                     options, drawingDef, actionTypes, pairs );
 }
 
 
@@ -132,7 +139,7 @@ function attach() {
 function moveMouse(drawLayer,action) {
     var {screenPt,plotId}= action.payload;
     if (drawLayer.mode==='edit') {
-        var pv= PlotViewUtils.getPlotViewById(plotId);
+        var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
         if (!pv) return;
         var cc= CsysConverter.make(pv.primaryPlot);
         var ptAry= getPtAry(pv);
@@ -154,7 +161,7 @@ function moveMouse(drawLayer,action) {
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
     var {mode}= drawLayer;
-    var pv= PlotViewUtils.getPlotViewById(plotId);
+    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
 
@@ -201,7 +208,7 @@ function getPtAry(pv) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= PlotViewUtils.getPlotViewById(plotId);
+    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));

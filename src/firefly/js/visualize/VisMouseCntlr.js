@@ -4,6 +4,7 @@
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotViewUtil from './PlotViewUtil.js';
+import {visRoot} from './ImagePlotCntlr.js';
 import CsysConverter from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
 
@@ -131,26 +132,6 @@ function fireMouseEvent(payload) {
     flux.process({type: MOUSE_STATE_CHANGE, payload});
 }
 
-//function fireMouseEvent(plotId, mouseState, currScreenPt) {
-//
-//    var plot=PlotViewUtil.getPrimaryPlot(plotId);
-//    var currViewPortPt;
-//    var currImagePt;
-//    var currWorldPt;
-//
-//    if (currScreenPt && plot) {
-//        var cc= CsysConverter.make(plot);
-//        currViewPortPt= cc.getViewPortCoords(currScreenPt);
-//        currImagePt= cc.getImageCoords(currScreenPt);
-//        currWorldPt= cc.getWorldCoords(currImagePt);
-//    }
-//
-//    flux.process({type: MOUSE_STATE_CHANGE,
-//                  payload: {plotId, mouseState, currScreenPt, currViewPortPt,
-//                            currImagePt, currWorldPt}});
-//
-//}
-
 
 function fireAddMousePersistentAction(actionConst) {
     flux.process({type: ADD_MOUSE_PERSISTENT,
@@ -194,7 +175,7 @@ function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY,
                                {shiftDown,controlDown,metaDown}= {}) {
     var payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
     if (plotId) {
-        var pv= PlotViewUtil.getPlotViewById(plotId);
+        var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
         if (pv && pv.primaryPlot) {
             payload.plotId= plotId;
             var cc= CsysConverter.make(pv.primaryPlot);

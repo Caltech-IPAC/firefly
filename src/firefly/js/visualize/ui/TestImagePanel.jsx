@@ -13,8 +13,8 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import DrawLayerCntrl from '../DrawLayerCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+import DrawLayerCntlr, {getDlAry} from '../DrawLayerCntlr.js';
 import PlotViewUtils from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
@@ -23,6 +23,7 @@ import ZoomUtil from '../ZoomUtil.js';
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
+import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {flux} from '../../Firefly.js';
 
 
@@ -80,42 +81,46 @@ function resultsSuccess(request) {
 
 function selectArea() {
     //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
-    var plotView= PlotViewUtils.getActivePlotView();
+    var plotView= PlotViewUtils.getActivePlotView(visRoot());
     if (!plotView) return;
 
-    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
-    var dl= PlotViewUtils.getDrawLayerByType(plotView.plotId,SelectArea.TYPE_ID);
+    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(visRoot(),plotView);
+    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), plotView.plotId,SelectArea.TYPE_ID);
     if (!dl) {
-        DrawLayerCntrl.dispatchCreateDrawLayer(SelectArea.TYPE_ID);
+        DrawLayerCntlr.dispatchCreateDrawLayer(SelectArea.TYPE_ID);
     }
 
 
     if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        DrawLayerCntrl.dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotIdAry);
+        DrawLayerCntlr.dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotIdAry);
     }
     else {
-        DrawLayerCntrl.dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotIdAry);
+        DrawLayerCntlr.dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotIdAry);
     }
 
 }
 
+function layerPopup() {
+    showDrawingLayerPopup();
+}
+
+
 function distanceTool() {
     //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
-    var plotView= PlotViewUtils.getActivePlotView();
+    var plotView= PlotViewUtils.getActivePlotView(visRoot());
     if (!plotView) return;
 
-    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(plotView);
-    var dl= PlotViewUtils.getDrawLayerByType(plotView.plotId,DistanceTool.TYPE_ID);
+    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(visRoot(),plotView);
+    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), plotView.plotId,DistanceTool.TYPE_ID);
     if (!dl) {
-        DrawLayerCntrl.dispatchCreateDrawLayer(DistanceTool.TYPE_ID);
+        DrawLayerCntlr.dispatchCreateDrawLayer(DistanceTool.TYPE_ID);
     }
-
 
     if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        DrawLayerCntrl.dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotIdAry);
+        DrawLayerCntlr.dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotIdAry);
     }
     else {
-        DrawLayerCntrl.dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotIdAry);
+        DrawLayerCntlr.dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotIdAry);
     }
 
 }
@@ -177,6 +182,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
                     <button type='button' onClick={() => selectArea()}>{selectText}</button>
                     <button type='button' onClick={() => distanceTool()}>{distText}</button>
+                    <button type='button' onClick={() => layerPopup()}>Layers</button>
                     <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <br/>
@@ -206,13 +212,14 @@ var TestImagePanel= React.createClass({
 
     componentDidMount() {
        this.unbinder= flux.addListener( () => {
-           var pv= PlotViewUtils.getActivePlotView();
+           var pv= PlotViewUtils.getActivePlotView(visRoot());
            var selectOn= false;
            var distOn= false;
            if (pv) {
-               const selectLayer= PlotViewUtils.getDrawLayerByType(pv.plotId,SelectArea.TYPE_ID);
+               var dlAry= getDlAry();
+               const selectLayer= PlotViewUtils.getDrawLayerByType(dlAry,pv.plotId,SelectArea.TYPE_ID);
                selectOn=  PlotViewUtils.isDrawLayerAttached(selectLayer,pv.plotId);
-               const distLayer= PlotViewUtils.getDrawLayerByType(pv.plotId,DistanceTool.TYPE_ID);
+               const distLayer= PlotViewUtils.getDrawLayerByType(dlAry,pv.plotId,DistanceTool.TYPE_ID);
                distOn=  PlotViewUtils.isDrawLayerAttached(distLayer,pv.plotId);
            }
            this.setState({selectOn,distOn});

@@ -1,19 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import ImagePlotCntlr from './ImagePlotCntlr.js';
-import DrawLayerCntlr from './DrawLayerCntlr.js';
 import DrawLayer from './draw/DrawLayer.js';
-import PlotGroup from './PlotGroup.js';
+import {getPlotGroupById} from './PlotGroup.js';
 import {flux} from '../Firefly.js';
 
 
 
 
-export default {getPlotViewById, getPrimaryPlot, findPlotView, getPlotViewAry,operateOnOthersInGroup,
-                findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
-                getActivePlotView,getAllPlots, getAllDrawLayers, getAllDrawLayersStore,
-                getPlotViewIdListInGroup, getDrawLayerByType, isDrawLayerVisible, isDrawLayerAttached};
+export default {
+    getPlotViewById, findPlotView, getPlotViewAry,operateOnOthersInGroup,
+    findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
+    hasGroupLock, getActivePlotView, getAllDrawLayers, getAllDrawLayersForPlot,
+    getPlotViewIdListInGroup, getDrawLayerByType,
+    isDrawLayerVisible, isDrawLayerAttached, getLayerTitle
+};
 
 
 
@@ -27,102 +28,76 @@ export default {getPlotViewById, getPrimaryPlot, findPlotView, getPlotViewAry,op
 
 /**
  * get the plot view with the id
+ * @param visRoot - root of the visualization object in store
  * @param {string} plotId
  * @return {object} the plot view object
  */
-function getPlotViewById(plotId) {
+function getPlotViewById(visRoot,plotId) {
     if (!plotId) return null;
-    var pv= flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY].plotViewAry.find( (pv) => pv.plotId===plotId);
-    return pv;
+    return visRoot.plotViewAry.find( (pv) => pv.plotId===plotId);
 }
 
 /**
  *
+ * @param visRoot - root of the visualization object in store
  * @param pvOrId this parameter will take the plotId or a plotView object
  * @param onlyIfGroupLocked
  * @return {*}
  */
-function getPlotViewIdListInGroup(pvOrId,onlyIfGroupLocked=true) {
+function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) {
     if (!pvOrId) return [];
-    var pv= (typeof pv ==='string') ? getPlotViewById(pvOrId) : pvOrId;
+    var pv= (typeof pv ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     var gid= pv.plotGroupId;
-    var group= PlotGroup.getPlotGroupById(gid);
+    var group= getPlotGroupById(visRoot,gid);
     var locked= hasGroupLock(pv,group);
     if (!locked && onlyIfGroupLocked) return [pv];
-    return getPlotViewAry().filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
+    return getPlotViewAry(visRoot).filter( (pv) => pv.plotGroupId===gid).map( (pv) => pv.plotId);
 }
 
 /**
+ * @param visRoot - root of the visualization object in store
  * the the PlotView array from the store
- * FOR USE OUTSIDE OF REDUCER
  * @return {Array}
  */
-function getPlotViewAry() {
-    return flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY].plotViewAry;
-}
+function getPlotViewAry(visRoot) { return visRoot.plotViewAry; }
 
 /**
  * Is this plotview the active one
- * FOR USE OUTSIDE OF REDUCER
+ * @param visRoot - root of the visualization object in store
  * @param plotId
  * @return {boolean} is active, there will be only one active at a time
  */
-function isActivePlotView(plotId) {
-    var store= flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY];
-    return store.activePlotId===plotId;
-}
+function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId===plotId; }
 
 /**
  * Get the active PlotView from the store
- * FOR USE OUTSIDE OF REDUCER
+ * @param visRoot - root of the visualization object in store
  * @return {object} the active plot view
  */
-function getActivePlotView() {
-    var store= flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY];
-    return store.plotViewAry.find( (pv) => pv.plotId===store.activePlotId);
+function getActivePlotView(visRoot) {
+    return visRoot.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
 }
 
 
 /**
  * Perform an operation on all the PlotViews in a group except the source, get the plotViewAry and group from the store.
  * The operations are only performed if the group is locked.
- * OUTSIDE REDUCER
+ * @param visRoot - root of the visualization object in store
  * @param sourcePv
- * @param plotViewAry
- * @param plotGroup
  * @param operationFunc
  * @return {[]} new plotView array after the operation
  */
-function operateOnOthersInGroup(sourcePv,operationFunc) {
-    var plotGroup= PlotGroup.getPlotGroupById(sourcePv.plotGroupId);
+function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
+    var plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     if (hasGroupLock(sourcePv,plotGroup)) {
-        getPlotViewAry().forEach( (pv) => {
+        getPlotViewAry(visRoot).forEach( (pv) => {
             if (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId)  {
                 operationFunc(pv);
             }
         });
     }
 }
-/**
- * get the all plot object from the store
- * FOR USE OUTSIDE OF REDUCER
- * @return {object}
- */
-function getAllPlots() {
-    return flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY];
-}
 
-
-/**
- * get the primary plot by the plot id
- * FOR USE OUTSIDE OF REDUCER
- * @param {string } plotId
- * @return {object} the primary plot for this plot id
- */
-function getPrimaryPlot(plotId) {
-    var pv= getPlotViewById(plotId);
-    return pv && pv.primaryPlot ? pv.primaryPlot : null;
-}
 
 //--------------------------------------------------------------
 //--------- Drawing Layer outside functions
@@ -132,28 +107,25 @@ function getPrimaryPlot(plotId) {
 
 /**
  * Get all drawing layers container from the store
- * FOR USE OUTSIDE OF REDUCER
  * @return {Array}
  */
-function getAllDrawLayersStore() {
-    return flux.getState()[DrawLayerCntlr.DRAWING_LAYER_KEY].drawLayerAry;
-}
+function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
 
 /**
  * construct an array of drawing layer from the store
- * FOR USE OUTSIDE OF REDUCER
+ * @param dlAry - the master array of all drawing layers
  * @param plotId
  * @return {Array}
  */
-function getAllDrawLayers(plotId) {
-    var ary= flux.getState()[DrawLayerCntlr.DRAWING_LAYER_KEY].drawLayerAry;
-    return ary.filter( (dl) => dl.plotIdAry
-        .find( (id) => id===plotId||id===DrawLayer.ALL_PLOTS));
+function getAllDrawLayersForPlot(dlAry,plotId) {
+    return dlAry
+        .filter( (dl) => dl.plotIdAry
+        .find( (id) => id===plotId));
 }
 
 
-function getDrawLayerByType(plotId, typeId) {
-    return getAllDrawLayers(plotId).find( (dl) => dl.drawLayerTypeId===typeId);
+function getDrawLayerByType(dlAry,plotId, typeId) {
+    return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
 }
 
 /**
@@ -166,6 +138,13 @@ function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includ
 
 function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.includes(plotId) : false; }
 
+/**
+ *
+ * @param plotId
+ * @param dl
+ * @return {*}
+ */
+function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.title : dl.title[plotId]; }
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------

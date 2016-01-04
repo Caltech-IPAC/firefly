@@ -60,6 +60,7 @@ const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr/PlotProgressUpdate';
 
 const IMAGE_PLOT_KEY= 'allPlots';
 
+export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 const initState= function() {
 
@@ -209,7 +210,7 @@ function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType
  * @param {string} plotId
  */
 function dispatchChangeActivePlotView(plotId) {
-    if (!PlotViewUtil.isActivePlotView(plotId)) {
+    if (!PlotViewUtil.isActivePlotView(visRoot(),plotId)) {
         flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });
     }
 }

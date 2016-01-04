@@ -8,7 +8,7 @@
 
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import WebPlot from './WebPlot.js';
@@ -115,7 +115,7 @@ function modifyRequest(plotId, r, band) {
 
     if (!r) return r;
 
-    var pv= PlotViewUtil.getPlotViewById(plotId);
+    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
     if (!pv) return r;
 
     var retval= r.makeCopy();

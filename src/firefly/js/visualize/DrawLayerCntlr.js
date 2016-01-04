@@ -41,6 +41,13 @@ const DRAWING_LAYER_KEY= 'drawLayers';
 
 
 
+export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
+
+/**
+ * Return, from the store, the master array of all the drawing layers on all the plots
+ * @return {[]}
+ */
+export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
 
 
 export default {
@@ -80,7 +87,7 @@ function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
  * @param {string} id make the drawLayerId or drawLayerTypeId
  */
 function dispatchDestroyDrawLayer(id) {
-    var drawLayerId= getDrawLayerId(id);
+    var drawLayerId= getDrawLayerId(dlRoot(),id);
     if (drawLayerId) {
         flux.process({type: DESTROY_DRAWING_LAYER, payload: {drawLayerId} });
     }
@@ -96,7 +103,7 @@ function dispatchAttachLayerToPlot(id,plotId) {
     const plotIdAry= Array.isArray(plotId) ? plotId : [plotId];
 
     idAry.forEach( (idItem) => {
-        const drawLayerId= getDrawLayerId(idItem);
+        const drawLayerId= getDrawLayerId(dlRoot(),idItem);
         if (drawLayerId) {
             flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId,plotIdAry} });
         }
@@ -113,18 +120,17 @@ function dispatchDetachLayerFromPlot(id,plotId) {
     const idAry= Array.isArray(id) ? id : [id];
     const plotIdAry= Array.isArray(plotId) ? plotId : [plotId];
     idAry.forEach( (idItem) => {
-        const drawLayerId= getDrawLayerId(idItem);
+        const drawLayerId= getDrawLayerId(dlRoot(),idItem);
         if (drawLayerId) {
             flux.process({type: DETACH_LAYER_FROM_PLOT, payload: {drawLayerId,plotIdAry} });
         }
     });
 }
 
-function getDrawLayerId(id) {
-    var drawLayerAry= PlotViewUtil.getAllDrawLayersStore();
-    var drawLayer= drawLayerAry.find( (dl) => id===dl.drawLayerId);
+function getDrawLayerId(dlRoot,id) {
+    var drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);
     if (!drawLayer) {
-        drawLayer= drawLayerAry.find( (dl) => id===dl.drawLayerTypeId);
+        drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerTypeId);
     }
     return drawLayer ? drawLayer.drawLayerId : null;
 }

@@ -8,7 +8,7 @@ import numeral from 'numeral';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
-import ImagePlotCntlr from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
 import PlotViewUtil from './PlotViewUtil.js';
 import PlotGroup from './PlotGroup.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
@@ -59,7 +59,7 @@ function dispatchZoom(plotId, userZoomType, zoomScope=ZoomScope.GROUP ) {
 function makeZoomAction(rawAction) {
     return (dispatcher) => {
         var {plotId,userZoomType}= rawAction.payload;
-        var pv= PlotViewUtil.getPlotViewById(plotId);
+        var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
 
@@ -93,7 +93,7 @@ function makeZoomAction(rawAction) {
         if (continueZoom) {
             doZoom(dispatcher,plotId,level,isFullScreen,useDelay);
             var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,useDelay);
-            PlotViewUtil.operateOnOthersInGroup(pv, matchFunc);
+            PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
         }
         else {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel:level, error:'zoom parameters wrong'} } );
@@ -145,12 +145,14 @@ function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, useDelay) {
         return true;
     });
 
-    if (useDelay) {
-        var timerId= setTimeout(zoomPlotIdNow, ZOOM_WAIT_MS, dispatcher,plotId,zoomLevel,isFullScreen);
+    var zoomWait= useDelay ? ZOOM_WAIT_MS : 5;
+
+    if (true) {
+        var timerId= setTimeout(zoomPlotIdNow, zoomWait, dispatcher,plotId,zoomLevel,isFullScreen);
         zoomTimers.push({plotId,timerId});
     }
     else {
-        zoomPlotIdNow(ZOOM_WAIT_MS, dispatcher,plotId,zoomLevel,isFullScreen);
+        zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen);
     }
 }
 
@@ -159,7 +161,7 @@ function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, useDelay) {
 function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
-    var pv= PlotViewUtil.getPlotViewById(plotId);
+    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
     PlotServicesJson.setZoomLevel(PlotViewUtil.getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {

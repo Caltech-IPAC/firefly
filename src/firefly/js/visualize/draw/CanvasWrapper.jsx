@@ -57,7 +57,7 @@ const highlightId = (drawLayerId) => drawLayerId+'Highlight';
 const getDataForPlot= (data,plotId) => {
     if (!data) return null;
     if (Array.isArray(data)) return data;
-    else                     return data[plotId] || data[DrawLayer.ALL_PLOTS];
+    else                     return data[plotId];
 };
 
 

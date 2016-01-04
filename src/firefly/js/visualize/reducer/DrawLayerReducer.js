@@ -195,9 +195,9 @@ function changeVisibility(drawLayer,action,factory) {
  * @param {string} plotId
  * @return {{}}
  */
-function getDrawData(factory, drawLayer, action, plotId= DrawLayer.ALL_PLOTS) {
+function getDrawData(factory, drawLayer, action, plotId= null) {
     if (!factory.hasGetDrawData(drawLayer)) return drawLayer.drawData;
-    var pId= plotId===DrawLayer.ALL_PLOTS ? null : plotId;
+    var pId= plotId;
     var newDD= {[DataTypes.DATA]:{},[DataTypes.HIGHLIGHT_DATA]:{}, [DataTypes.SELECTED_IDX_ARY]: null};
 
     newDD[DataTypes.DATA][plotId]= factory.getDrawData(DataTypes.DATA, pId, drawLayer, action,
@@ -208,7 +208,7 @@ function getDrawData(factory, drawLayer, action, plotId= DrawLayer.ALL_PLOTS) {
             drawLayer.drawData[DataTypes.HIGHLIGHT_DATA][plotId]);
     }
 
-    if (drawLayer.canSelect && plotId===DrawLayer.ALL_PLOTS) {
+    if (drawLayer.canSelect) {
         newDD[DataTypes.SELECTED_IDX_ARY]= factory.getDrawData(DataTypes.SELECTED_IDX_ARY, null, drawLayer, action,
             drawLayer.drawData[DataTypes.SELECTED_IDX_ARY]);
     }

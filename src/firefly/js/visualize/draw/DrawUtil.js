@@ -1,11 +1,12 @@
 
 import {makeScreenPt} from '../Point.js';
+import {DrawSymbol} from './PointDataObj.js';
 
 var FALLBACK_COLOR = 'red';
 
 export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, rotateAroundScreenPt,
-                drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross,
+                drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol,
                 drawEmpCross, drawDiamond, drawDot, drawCircle,clear,clearCanvas, fillRec};
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
@@ -274,14 +275,14 @@ function drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     ctx.lineTo(x + size, y + size);
     ctx.moveTo(x-size,y+size);
     ctx.lineTo(x+size,y-size);
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
 
 function drawSquareX(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
     if (!onlyAddToPath) beginPath(ctx,color,1, renderOptions);
     drawX(ctx,x,y,color,size,renderOptions, onlyAddToPath);
     drawSquare(ctx,x,y,color,size,renderOptions, true);
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
 
 function drawSquare(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
@@ -307,7 +308,7 @@ function drawCross(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
     ctx.lineTo(x+size,y);
     ctx.moveTo(x,y-size);
     ctx.lineTo(x,y+size);
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
 
 
@@ -335,7 +336,7 @@ function drawDiamond(ctx, x, y, color, size,renderOptions, onlyAddToPath) {
     ctx.lineTo(x-size,y);
     ctx.moveTo(x-size,y);
     ctx.lineTo(x,y-size);
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
 
 
@@ -350,8 +351,46 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
         ctx.lineTo(x+size,i);
     }
 
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
+
+
+function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
+    var {color,size}= drawParams;
+    switch (drawParams.symbol) {
+        case DrawSymbol.X :
+            drawX(ctx, x, y, color, size, renderOptions, onlyAddToPath);
+            break;
+        case DrawSymbol.EMP_CROSS :
+            drawEmpCross(ctx, x, y, color,size,renderOptions,   'white');
+            break;
+        case DrawSymbol.EMP_SQUARE_X:
+            drawEmpSquareX(ctx, x, y, color, size,renderOptions,  'black', 'white');
+            break;
+        case DrawSymbol.CROSS :
+            drawCross(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            break;
+        case DrawSymbol.SQUARE :
+            drawSquare(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            break;
+        case DrawSymbol.SQUARE_X :
+            drawSquareX(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            break;
+        case DrawSymbol.DIAMOND :
+            drawDiamond(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            break;
+        case DrawSymbol.DOT :
+            drawDot(ctx, x, y, color, size,renderOptions,  onlyAddToPath);
+            break;
+        case DrawSymbol.CIRCLE :
+            drawCircle(ctx, x, y, color, 1, size, renderOptions, onlyAddToPath);
+            break;
+        default :
+            break;
+    }
+}
+
+
 
 /**
  *
@@ -364,12 +403,12 @@ function drawDot(ctx, x, y, color, size, renderOptions, onlyAddToPath) {
  * @param renderOptions
  * @param onlyAddToPath
  */
-function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions, onlyAddToPath) {
+function drawCircle(ctx, x, y, color, lineWidth, size, renderOptions= null, onlyAddToPath= false) {
     if (!onlyAddToPath) beginPath(ctx,color,lineWidth, renderOptions);
     var radius= size+2;
     ctx.moveTo(x+radius-1,y);
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    if (!onlyAddToPath) stroke();
+    if (!onlyAddToPath) stroke(ctx);
 }
 
 function fillRec(ctx, color, x, y, width, height, renderOptions) {

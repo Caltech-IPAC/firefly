@@ -9,8 +9,6 @@ import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
 import VisMouseCntlr  from '../VisMouseCntlr.js';
-import PlotViewUtil  from '../PlotViewUtil.js';
-import PlotGroup  from '../PlotGroup.js';
 import DrawerComponent  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
 import {flux} from '../../Firefly.js';
@@ -19,45 +17,24 @@ import {logError} from '../../util/WebUtil.js';
 
 
 
-var ImageViewerView= React.createClass(
-{
+class ImageViewerView extends React.Component {
 
 
-    //mixins : [PureRenderMixin],
-
-    storeListenerRemove : null,
-
-
-    propTypes: {
-        plotView : React.PropTypes.object.isRequired,
-        drawLayersAry: React.PropTypes.array.isRequired
-    },
-
-    plotDrag: null,
-
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
+    constructor(props) {
+        super(props);
+        this.plotDrag= null;
+        this.state= {width:0,height:0};
+    }
 
 
-    getDefaultProps: function () {
-        return { };
-    },
 
-
-    getInitialState() {
-        return {width:0,height:0};
-    },
-
-
-    componentWillUnmount() {
-    },
-
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
         var e= ReactDOM.findDOMNode(this);
-        //this.setState({width:e.offsetWidth, height:e.offsetHeight});
         var {plotId}= this.props.plotView;
         ImagePlotCntlr.dispatchUpdateViewSize(plotId,e.offsetWidth,e.offsetHeight);
-    },
+    }
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
         var {drawLayersAry}= this.props;
@@ -73,7 +50,7 @@ var ImageViewerView= React.createClass(
             this.scroll(plotId,mouseState,screenX,screenY);
         }
         VisMouseCntlr.fireMouseEvent(mouseStatePayload);
-    },
+    }
 
     scroll(plotId,mouseState,screenX,screenY) {
         if (screenX && screenY) {
@@ -98,7 +75,7 @@ var ImageViewerView= React.createClass(
                     break;
             }
         }
-    },
+    }
 
 
     renderInside() {
@@ -137,12 +114,13 @@ var ImageViewerView= React.createClass(
                                      left:0, right:0, position:'absolute'}} >
                             {drawingAry}
                         </div>
-                        <EventLayer plotId={plotId} width={viewPortWidth} height={viewPortHeight}
-                                    eventCallback={this.eventCB}/>
+                        <EventLayer plot={plot} width={viewPortWidth} height={viewPortHeight}
+                                    eventCallback={(plotId,mouseState,screenPt,screenX,screenY) =>
+                                                    this.eventCB(plotId,mouseState,screenPt,screenX,screenY)}/>
                     </div>
                 </div>
         );
-    },
+    }
 
 
 
@@ -166,7 +144,15 @@ var ImageViewerView= React.createClass(
     }
 
 
-});
+}
+
+
+ImageViewerView.propTypes= {
+    plotView : React.PropTypes.object.isRequired,
+    drawLayersAry: React.PropTypes.array.isRequired
+};
+
+
 
 
 function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
@@ -186,21 +172,6 @@ function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
         return makeScreenPt(newX, newY);
     };
 }
-
-function getBorderColor(plotId) {
-    if (!plotId) return 'rgba(0,0,0,.4)';
-    if (PlotViewUtil.isActivePlotView(plotId)) return 'orange';
-
-    var group= PlotGroup.getPlotGroupById(plotId);
-
-    if (group && group.lockRelated) return '#005da4';
-    else return 'rgba(0,0,0,.4)';
-
-
-
-}
-
-
 
 function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     var payload= Object.assign({},mouseStatePayload,{drawLayer});

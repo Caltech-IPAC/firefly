@@ -5,7 +5,7 @@
 import numeral from 'numeral';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
@@ -76,8 +76,8 @@ function creator() {
                       DrawLayerCntlr.DT_END];
 
     idCnt++;
-    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, {canUseMouse:true},
-                                             drawingDef, actionTypes, pairs );
+    return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Distance Tool',
+                                     {canUseMouse:true}, drawingDef, actionTypes, pairs );
 }
 
 
@@ -118,7 +118,7 @@ function attach() {
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
     var {mode}= drawLayer;
-    var pv= PlotViewUtils.getPlotViewById(plotId);
+    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
     var retObj= {};
@@ -151,7 +151,7 @@ function start(drawLayer,action) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= PlotViewUtils.getPlotViewById(plotId);
+    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var cc= CsysConverter.make(pv.primaryPlot);
     //var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back

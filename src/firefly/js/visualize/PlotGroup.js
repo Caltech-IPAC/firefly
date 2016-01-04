@@ -10,7 +10,7 @@ import ImagePlotCntlr from './ImagePlotCntlr.js';
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {makePlotGroup, getPlotGroupById};
+export default {makePlotGroup};
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
@@ -37,11 +37,12 @@ function makePlotGroup(plotGroupId,groupLocked) {
 /**
  * get the plot view with the id
  * @param {string} plotGroupId
+ * @param visRoot - root of the visualization object in store
  * @return {object} the plot group object
  */
-function getPlotGroupById(plotGroupId) {
+export function getPlotGroupById(visRoot,plotGroupId) {
     if (!plotGroupId) return null;
-    return flux.getState()[ImagePlotCntlr.IMAGE_PLOT_KEY].plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
+    return visRoot.plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
 }
 
 

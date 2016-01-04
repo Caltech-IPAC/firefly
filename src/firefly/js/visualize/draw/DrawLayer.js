@@ -3,9 +3,8 @@
  */
 
 import {makeDrawingDef} from './DrawingDef.js';
-const ALL_PLOTS= 'AllPlots';
 
-export default {makeDrawLayer,ALL_PLOTS};
+export default {makeDrawLayer};
 
 const DATA='data';
 const HIGHLIGHT_DATA='highlightData';
@@ -16,10 +15,11 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
 
 /**
  *
- * @param {object} drawLayerId
- * @param {object} drawLayerTypeId
- * @param {object} options a set of options that define this drawing layer All boolean options default to false and
- *                 string options to the empty string
+ * @param {string} drawLayerId
+ * @param {string} drawLayerTypeId
+ * @param {string|{}} title can be a string title or an object {plotId:title}
+ * @param {object} options a set of options that define this drawing layer All boolean options default to false
+ *                 unless specified and string options to the empty string
  * @param {boolean} [options.canHighlight] if the layer can highlight
  * @param {boolean} [options.canSelect]    supports a selected array of objects, must be able to produce a selected data array,
  *                               only used with isPointData
@@ -30,6 +30,8 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
  * @param {boolean} [options.hasPerPlotData] drawing layer produces different data for each plot
  * @param {boolean} [options.asyncData] drawing layer uses async operations to get the data
  * @param {boolean} [options.isPointData] drawing layer only uses point data, @see PointDataObj.js
+ * @param {boolean} [options.canUserChangeColor] drawing layer color can be changed by the user, default: true
+ * @param {boolean} [options.canUserDelete] drawing layer can be deleted by the user, default: true
  * @param {string} [options.helpLine] a one line string describing the operation, for the end user to see
  *
  * @param {object} drawingDef  the defaults that the drawer will use if not overridden by the object @see DrawingDef
@@ -38,11 +40,12 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
  * @return {*}
  */
 function makeDrawLayer(drawLayerId,
-                          drawLayerTypeId,
-                          options={},
-                          drawingDef= makeDrawingDef('red'),
-                          actionTypeAry= [],
-                          mouseEventMap= {}) {
+                       drawLayerTypeId,
+                       title,
+                       options={},
+                       drawingDef= makeDrawingDef('red'),
+                       actionTypeAry= [],
+                       mouseEventMap= {}) {
     var drawLayer=  {
 
 
@@ -60,7 +63,8 @@ function makeDrawLayer(drawLayerId,
 
 
 
-        plotIdAry: [ALL_PLOTS],  // array of plotId that are layered
+        title,
+        plotIdAry: [],  // array of plotId that are layered
         visiblePlotIdAry: [], // array of plotId that are visible, only ids in this array are visible
         actionTypeAry,      // what actions that the reducer will allow through the drawing layer reducer
         dataAvailable : true,  //todo
@@ -77,11 +81,13 @@ function makeDrawLayer(drawLayerId,
         canHighlight: false,
         canSelect: false,      // todo if true the the default reducer should  handle it. point data only?
         canFilter: false,      // todo if true the the default reducer should  handle it
-        canUseMouse: false,    // todo
-        canSubgroup: false,    //todo
+        canUseMouse: false,
+        canSubgroup: false,    // todo
         hasPerPlotData: false,
         asyncData : false,  //todo
         isPointData: false,
+        canUserChangeColor: true,
+        canUserDelete: true,
         helpLine : '',
 
            // drawData contains the components that may be drawn.
@@ -90,17 +96,16 @@ function makeDrawLayer(drawLayerId,
            //
            //
            // Key:   data
-           // Value: null or [] or plotId:[] or ALL_PLOTS:[]
+           // Value: null or [] or plotId:[]
            //              arrays are arrays of drawObj
            //              if data is an array the it applies to all the plots
            //              if data is an object the it applies to the only to the plotId with
            //              the fallback being the ALL_PLOTS key
            //
            // Key:   highlightData
-           // Value: null or [] or plotId:[] or ALL_PLOTS:[]
+           // Value: null or [] or plotId:[]
            //              arrays are arrays of drawObj
            //              if data is an object the it applies to the only to the plotId with
-           //              the fallback being the ALL_PLOTS key
            //
            // Key: selectIdxAry
            // Value:      null or an array of selected indexes, does not support per plot data
