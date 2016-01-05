@@ -1182,7 +1182,7 @@ public class MiniPlotWidget extends PopoutWidget implements VisibleListener {
                 }
                 if (!found) {
 //                    ActionReporter reporter= AllPlots.getInstance().getActionReporter();
-                    BadgeButton button= new BadgeButton(ext.title());
+                    BadgeButton button= new BadgeButton(ext.title(),null,true);
                     GwtUtil.setStyle(button.getWidget(), "display", "inline-block");
                     if (ext.extType().equals(Ext.AREA_SELECT)) {
                         final GeneralCommand cmd= new ExtensionCommands.ExtensionAreaSelectCmd(this,ext);

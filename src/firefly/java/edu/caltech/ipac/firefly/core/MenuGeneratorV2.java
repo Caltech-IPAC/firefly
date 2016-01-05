@@ -267,11 +267,11 @@ public class MenuGeneratorV2 {
                 button= new BadgeButton(image, command.getName(),true);
             }
             else {
-                button= new BadgeButton(command.getLabel(),command.getName());
+                button= new BadgeButton(command.getLabel(),command.getName(),false);
             }
         }
         else {
-            button= new BadgeButton(command.getLabel(), command.getName());
+            button= new BadgeButton(command.getLabel(), command.getName(),false);
         }
 
 

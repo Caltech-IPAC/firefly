@@ -24,18 +24,19 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 public class BadgeButton {
     private final FlowPanel panel= new FlowPanel();
     private Badge badge=  null;
+    private final boolean useBorder;
 
 
     public BadgeButton(Image image) { this(image,null,true);  }
 
     public BadgeButton(Image image, String styleName, boolean backgroundIsDark) {
+        this.useBorder= false;
         init(styleName, backgroundIsDark);
         setIcon(image);
     }
 
-    public BadgeButton(String text) { this(text,null);  }
-
-    public BadgeButton(String text, String styleName) {
+    public BadgeButton(String text, String styleName,boolean useBorder) {
+        this.useBorder= useBorder;
         init(styleName,false);
         setText(text);
     }
@@ -58,10 +59,17 @@ public class BadgeButton {
     public void setText(String text) {
         panel.clear();
         Label l= new Label(text);
+        if (useBorder) {
+            GwtUtil.setStyles(l, "border", "1px solid rgba(0,0,0,.5)",
+                    "padding", "3px",
+                    "borderRadius", "5px"
+            );
+        }
         l.setStyleName("menuItemText");
         panel.add(l);
         if (getHasBadge()) panel.add(badge.badgeHTML);
     }
+
     public Widget getWidget() { return panel; }
 
     public boolean isEnabled() {
