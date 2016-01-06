@@ -3,10 +3,11 @@
  */
 
 
-import DrawLayer, {DataTypes} from '../draw/DrawLayer.js';
+import {DataTypes} from '../draw/DrawLayer.js';
 import DrawLayerCntlr from '../DrawLayerCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import _ from 'lodash';
+import union from 'lodash/array/union';
+import difference from 'lodash/array/difference';
 
 
 
@@ -26,6 +27,9 @@ function makeReducer(factory) {
         switch (action.type) {
             case DrawLayerCntlr.CHANGE_VISIBILITY:
                 return changeVisibility(drawLayer,action,factory);
+                break;
+            case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+                return changeDrawingDef(drawLayer,action,factory);
                 break;
             case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
                 return attachLayerToPlot(drawLayer,action,factory);
@@ -107,7 +111,7 @@ function attachLayerToPlot(drawLayer,action,factory) {
 
 
 
-    dlPlotIdAry= _.union(dlPlotIdAry,inputPlotIdAry);
+    dlPlotIdAry= union(dlPlotIdAry,inputPlotIdAry);
     var addAry= inputPlotIdAry.filter( (plotId) => !visiblePlotIdAry.includes(plotId));
     visiblePlotIdAry= [...visiblePlotIdAry,...addAry];
     drawLayer= Object.assign({}, drawLayer,
@@ -166,26 +170,30 @@ function detachPerPlotData(drawData, plotId) {
 
 
 function changeVisibility(drawLayer,action,factory) {
-    var {visible,plotId} = action.payload;
-    var visiblePlotIdAry= drawLayer.visiblePlotIdAry;
+    var {visible,plotIdAry} = action.payload;
+    var visiblePlotIdAry;
 
     if (visible) {
-        if (visiblePlotIdAry.includes(plotId)) return drawLayer;
-        visiblePlotIdAry= [...visiblePlotIdAry,plotId];
+        visiblePlotIdAry= union(drawLayer.visiblePlotIdAry,plotIdAry);
         drawLayer= Object.assign({}, drawLayer, {visiblePlotIdAry},
                                          factory.getLayerChanges(drawLayer,action));
         if (drawLayer.hasPerPlotData) {
-            drawLayer.drawData= getDrawData(factory,drawLayer, action,plotId);
+            plotIdAry.forEach( (id) =>
+                drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
         }
         return drawLayer;
     }
     else {
-        visiblePlotIdAry= visiblePlotIdAry.filter( (id) => id!==plotId);
+        visiblePlotIdAry= difference(drawLayer.visiblePlotIdAry,plotIdAry);
         return Object.assign({}, drawLayer, {visiblePlotIdAry});
     }
 }
 
 
+function changeDrawingDef(drawLayer,action,factory) {
+    var {drawingDef} = action.payload;
+    return Object.assign({}, drawLayer, {drawingDef}, factory.getLayerChanges(drawLayer,action));
+}
 
 /**
  *

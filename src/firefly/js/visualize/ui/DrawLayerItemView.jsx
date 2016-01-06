@@ -3,9 +3,11 @@
  */
 
 import React from 'react';
-import PlotViewUtil  from '../PlotViewUtil.js';
+import PlotViewUtil, {isDrawLayerVisible}  from '../PlotViewUtil.js';
 import SimpleCanvas from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
+import {dispatchChangeDrawingDef, dispatchChangeVisibility} from '../DrawLayerCntlr.js';
+import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
 
 
 
@@ -37,8 +39,8 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem}) {
     return (
         <div style={style} className='draw-layer-item'>
             <input type='checkbox'
-                   checked={PlotViewUtil.isDrawLayerVisible(drawLayer,plotId)}
-                   onChange={changeVisible}
+                   checked={isDrawLayerVisible(drawLayer,plotId)}
+                   onChange={(ev) => changeVisible(drawLayer, plotId)}
             />
             {getTitleTag(drawLayer,pv,maxTitleChars)}
             {makeColorChange(drawLayer,pv)}
@@ -51,10 +53,10 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem}) {
 
 
 DrawLayerItemView.propTypes= {
-    drawLayer : React.PropTypes.object.isRequired,
-    pv : React.PropTypes.object.isRequired,
+    drawLayer     : React.PropTypes.object.isRequired,
+    pv            : React.PropTypes.object.isRequired,
     maxTitleChars : React.PropTypes.number.isRequired,
-    lastItem : React.PropTypes.bool.isRequired
+    lastItem      : React.PropTypes.bool.isRequired
 };
 
 
@@ -83,9 +85,9 @@ function makeColorChange(drawLayer,pv) {
     if (drawLayer.canUserChangeColor) {
         return (
             <div style={bSty}>
-                <div style={feedBackStyle} onClick={modifyColor}  />
+                <div style={feedBackStyle} onClick={() => modifyColor(drawLayer,pv.plotId)}  />
                 <a className='href-item'
-                   onClick={modifyColor}
+                   onClick={() => modifyColor(drawLayer)}
                    style={Object.assign({},bSty,{marginLeft:5})}>Color</a>
             </div>
         );
@@ -103,25 +105,18 @@ function makeShape(drawLayer,pv) {
     };
     if (drawLayer.isPointData) {
         return (
-            <div style={shapeStyle}>{drawLayer.drawingDef.symbol.key}
-                <SimpleCanvas width={20} height={20} drawIt={ (c) => drawOnCanvas(c,drawLayer)}/>
-            </div>
+            <SimpleCanvas width={20} height={20} drawIt={ (c) => drawOnCanvas(c,drawLayer)}/>
         );
     }
     else {
-        return (<div style={Object.assign({},bSty, {width:15})}></div>);
+        return (<div style={Object.assign({},bSty, {width:20})}></div>);
     }
 
 }
 
 function drawOnCanvas(c,drawLayer) {
     if (!c) return;
-    var ctx= c.getContext('2d');
-    var symbol= drawLayer.drawingDef.symbol;
-    var color= drawLayer.drawingDef.color;
-    DrawUtil.drawCircle(ctx, 7,7,color,1,5);
-    //DrawUtil.drawSymbol(ctx, 7,7,drawLayer.drawingDef,null,false);
-
+    DrawUtil.drawSymbol(c.getContext('2d'), 10,14,drawLayer.drawingDef,null,false);
 }
 
 function makeDelete(drawLayer,pv) {
@@ -141,8 +136,13 @@ function makeDelete(drawLayer,pv) {
 }
 
 
-function modifyColor() {
+function modifyColor(dl,plotId) {
     console.log('modify color');
+    showColorPickerDialog(dl.drawingDef.color, (ev) => {
+        var {r,g,b,a}= ev.rgb;
+        var rgbStr= `rgba(${r},${g},${b},${a})`;
+        dispatchChangeDrawingDef(dl.drawLayerId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId);
+    });
 }
 
 function deleteLayer() {
@@ -150,8 +150,9 @@ function deleteLayer() {
 
 }
 
-function changeVisible() {
-    console.log('change visible');
+function changeVisible(dl, plotId) {
+    dispatchChangeVisibility(dl.drawLayerId, !isDrawLayerVisible(dl,plotId),plotId );
+    console.log('change vis');
 }
 
 export default DrawLayerItemView;

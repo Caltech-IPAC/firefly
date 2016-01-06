@@ -44,9 +44,9 @@ function getPlotViewById(visRoot,plotId) {
  * @param onlyIfGroupLocked
  * @return {*}
  */
-function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) {
+export function getPlotViewIdListInGroup(visRoot,pvOrId,onlyIfGroupLocked=true) {
     if (!pvOrId) return [];
-    var pv= (typeof pv ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
+    var pv= (typeof pvOrId ==='string') ? getPlotViewById(visRoot,pvOrId) : pvOrId;
     var gid= pv.plotGroupId;
     var group= getPlotGroupById(visRoot,gid);
     var locked= hasGroupLock(pv,group);
@@ -134,7 +134,7 @@ function getDrawLayerByType(dlAry,plotId, typeId) {
  * @param plotId
  * @return {boolean}
  */
-function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includes(plotId) : false; }
+export function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includes(plotId) : false; }
 
 function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.includes(plotId) : false; }
 

@@ -4,7 +4,6 @@
 
 import React from 'react';
 import PlotViewUtil  from '../PlotViewUtil.js';
-import {logError} from '../../util/WebUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 

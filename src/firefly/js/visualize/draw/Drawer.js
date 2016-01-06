@@ -3,7 +3,6 @@
  */
 
 
-import Enum from 'enum';
 import Point, {makeViewPortPt,makeImagePt,pointEquals} from '../Point.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
@@ -15,11 +14,8 @@ import DrawOp from './DrawOp.js';
 import join from 'underscore.string/join';
 
 
-
 const ENABLE_COLORMAP= false;
-//const DataType = new Enum (['VERY_LARGE', 'NORMAL']);
 var drawerCnt=0;
-const DEFAULT_DEFAULT_COLOR= 'red';
 
 
 
@@ -57,19 +53,20 @@ class Drawer {
 
 
 
-    setDataTypeHint(dataTypeHint) { this.dataTypeHint= dataTypeHint; }
+    //setDataTypeHint(dataTypeHint) { this.dataTypeHint= dataTypeHint; }
 
-    setHighPriorityLayer(highPriorityLayer) { this.highPriorityLayer = highPriorityLayer; }
+    //setHighPriorityLayer(highPriorityLayer) { this.highPriorityLayer = highPriorityLayer; }
 
 
-    /**
+    /*
+     * TODO - figure this out in the new system
      * when the image resize, like a zoom, then fire events to redraw
      * Certain types of data will need to recompute the data when the image size changes so this
      * methods disables the default automactic handling
      * By default, this property is true
      * @param h handle image changes
      */
-    setHandleImageChanges(h) { this.handleImagesChanges = h; }
+    //setHandleImageChanges(h) { this.handleImagesChanges = h; }
 
 
 
@@ -104,23 +101,11 @@ class Drawer {
      * @param width
      * @param height
      */
-    setData(data,plot,width,height) {
+    setData(data,plot,width,height,drawingDef) {
         if (data && !Array.isArray(data)) data= [data];
-        var cWidth= 0;
-        var cHeight= 0;
-        var oldvpX= 0;
-        var oldvpY= 0;
-        var vpX= 0;
-        var vpY= 0;
-        var dWidth= 0;
-        var oldDWidth= 0;
-        var dHeight= 0;
-        var oldDHeight= 0;
-        var zfact= 0;
-        var oldZfact= 0;
-        var oldTestPtStr;
-        var testPtStr;
-        var pt;
+        var cWidth, cHeight, oldvpX, oldvpY, vpX, vpY, dWidth, oldDWidth, dHeight;
+        var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
+
         width= Math.floor(width);
         height= Math.floor(height);
         if (this.primaryCanvas) {
@@ -150,6 +135,7 @@ class Drawer {
 
 
         if (data && this.data && data===this.data &&
+            drawingDef===this.drawingDef &&
             cWidth===width && cHeight===height &&
             oldvpX===vpX && oldvpY===vpY &&
             dWidth===oldDWidth && dHeight===oldDHeight  &&
@@ -169,17 +155,19 @@ class Drawer {
         //if (plot!==this.plot) changes.push('plot');
         if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
         if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
-        if (dWidth!==oldDWidth ) changes.push('data width');
-        if (dHeight!==oldDHeight ) changes.push('data height');
+        if (dWidth!==oldDWidth ) changes.push(`data width: ${oldDWidth}, ${dWidth}`);
+        if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
         if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
         if (testPtStr!==oldTestPtStr ) changes.push('test pt');
-        if (oldvpX!==vpX ) changes.push('vpX');
-        if (oldvpY!==vpY ) changes.push('vpY');
+        if (oldvpX!==vpX ) changes.push(`vpX: ${oldvpX}, ${vpX}`);
+        if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
+        if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
         var changeStr= join(', ',...changes);
-        console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
+        if (true) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
         //=====================================
         this.plot= plot;
         this.data = data;
+        this.drawingDef = drawingDef;
 
         this.dataUpdated(width,height);
     }

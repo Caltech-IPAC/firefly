@@ -5,9 +5,10 @@
 import {flux} from '../Firefly.js';
 import PlotViewUtil from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
-import ImagePlotCntlr from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import DrawLayerFactory from './draw/DrawLayerFactory.js';
+import {getPlotViewIdListInGroup} from './PlotViewUtil.js';
 import _ from 'lodash';
 
 
@@ -17,6 +18,7 @@ const RETRIEVE_DATA= 'DrawLayerCntlr.retrieveData';
 const CREATE_DRAWING_LAYER= 'DrawLayerCntlr.createDrawLayer';
 const DESTROY_DRAWING_LAYER= 'DrawLayerCntlr.destroyDrawLayer';
 const CHANGE_VISIBILITY= 'DrawLayerCntlr.changeVisibility';
+const CHANGE_DRAWING_DEF= 'DrawLayerCntlr.changeDrawingDef';
 const ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
 const DETACH_LAYER_FROM_PLOT= 'DrawLayerCntlr.detachLayerFromPlot';
 
@@ -52,7 +54,7 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 
 export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA, DRAWING_LAYER_KEY,
-    ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,
+    ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
     DT_START, DT_MOVE, DT_END,
@@ -62,14 +64,35 @@ export default {
 
 };
 
-
-function dispatchRetrieveData(drawLayerId) {
+/**
+ *
+ * @param drawLayerId
+ */
+export function dispatchRetrieveData(drawLayerId) {
     flux.process({type: RETRIEVE_DATA , payload: {drawLayerId} });
 
 }
 
-function dispatchChangeVisibility(drawLayerId,visible, plotId) {
-    flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotId} });
+/**
+ *
+ * @param drawLayerId
+ * @param visible
+ * @param plotId
+ */
+export function dispatchChangeVisibility(drawLayerId,visible, plotId) {
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
+}
+
+/**
+ *
+ * @param drawLayerId
+ * @param drawingDef
+ * @param plotId
+ */
+export function dispatchChangeDrawingDef(drawLayerId,drawingDef, plotId) {
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+    flux.process({type: CHANGE_DRAWING_DEF, payload: {drawLayerId, drawingDef, plotIdAry} });
 }
 
 /**
@@ -150,6 +173,9 @@ function makeReducer(factory) {
         var retState = state;
         switch (action.type) {
             case CHANGE_VISIBILITY:
+                retState = deferToLayerReducer(state, action, dlReducer);
+                break;
+            case CHANGE_DRAWING_DEF:
                 retState = deferToLayerReducer(state, action, dlReducer);
                 break;
             case CREATE_DRAWING_LAYER:
@@ -285,7 +311,9 @@ const initState= function() {
 
     return {
         allowedActions: [ RETRIEVE_DATA, CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
-                          ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, ImagePlotCntlr.ANY_REPLOT
+                          ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,
+                          CHANGE_DRAWING_DEF,
+                          ImagePlotCntlr.ANY_REPLOT
                         ],
         drawLayerAry : [],
         mouseGrabDrawLayerId : null

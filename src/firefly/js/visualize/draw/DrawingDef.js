@@ -51,6 +51,7 @@ export function makeDrawingDef(color) {
         color,
         symbol: DrawSymbol.X,
         lineWidth:1,
+        size : 4,
         renderOptions: {shadow:null,rotAngle:null,translation:null},
         textLoc: TextLocation.DEFAULT,
         fontName: 'helvetica',

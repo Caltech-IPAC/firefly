@@ -14,7 +14,8 @@ function updateDrawer(drawer,plotView, drawLayer) {
     var {drawData:{data,highlightData,selectIdxAry} }= drawLayer;
     var {dim:{width,height}}= plotView.primaryPlot.viewPort;
     drawer.isPointData= drawLayer.isPointData;
-    drawer.setData(getDataForPlot(data,plotView.plotId),plotView.primaryPlot,width,height);
+    var data= getDataForPlot(data,plotView.plotId);
+    drawer.setData(data,plotView.primaryPlot,width,height,drawLayer.drawingDef);
     drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotView.plotId));
 }
 

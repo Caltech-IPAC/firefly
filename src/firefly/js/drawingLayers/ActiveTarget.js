@@ -27,7 +27,7 @@ var idCnt=0;
 
 function creator(initPayload) {
     var drawingDef= makeDrawingDef('blue');
-    drawingDef.symbol= DrawSymbol.CIRCLE;
+    drawingDef.symbol= DrawSymbol.SQUARE;
     idCnt++;
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {},
                                         {hasPerPlotData:true, isPointData:true},
