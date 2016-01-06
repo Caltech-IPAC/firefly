@@ -9,7 +9,7 @@ import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawLayer, {DataTypes} from '../visualize/draw/DrawLayer.js';
+import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatPosForTextField} from '../data/form/PositionFieldDef.js';
 
@@ -29,9 +29,13 @@ function creator(initPayload) {
     var drawingDef= makeDrawingDef('blue');
     drawingDef.symbol= DrawSymbol.SQUARE;
     idCnt++;
-    return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {},
-                                        {hasPerPlotData:true, isPointData:true},
-                                         drawingDef);
+
+    var options= {
+        hasPerPlotData:true,
+        isPointData:true,
+        canUserChangeColor: ColorChangeType.DYNAMIC
+    };
+    return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }
 
 

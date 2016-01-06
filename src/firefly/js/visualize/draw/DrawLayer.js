@@ -10,7 +10,13 @@ const DATA='data';
 const HIGHLIGHT_DATA='highlightData';
 const SELECTED_IDX_ARY='selectIdxAry';
 
+const DISABLE=false;
+const DYNAMIC='dynamic';
+const STATIC='static';
+
+
 export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
+export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
 
 
 /**
@@ -30,7 +36,8 @@ export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
  * @param {boolean} [options.hasPerPlotData] drawing layer produces different data for each plot
  * @param {boolean} [options.asyncData] drawing layer uses async operations to get the data
  * @param {boolean} [options.isPointData] drawing layer only uses point data, @see PointDataObj.js
- * @param {boolean} [options.canUserChangeColor] drawing layer color can be changed by the user, default: true
+ * @param {boolean|string} [options.canUserChangeColor] drawing layer color can be changed by the user,
+ *                                   can be DISABLE,DYNAMIC, or STATIC, default: STATIC
  * @param {boolean} [options.canUserDelete] drawing layer can be deleted by the user, default: true
  * @param {string} [options.helpLine] a one line string describing the operation, for the end user to see
  *
@@ -55,6 +62,9 @@ function makeDrawLayer(drawLayerId,
          //                       default to the drawLayerId
          // drawingTypeId: allows for multiple layers of same type to be added (such as multiple markers)
          //                if they share the same type id then events mapping marked static will only be fired once
+         //                a drawing layer factory def should always pass the same type Id
+         //                eg. all catalog overlays will by the same type of have different layer ids
+
 
         drawLayerId,
         displayGroupId: drawLayerId,   // all layers that share a display group id will be controlled together, defaults to drawLayerId
@@ -86,7 +96,7 @@ function makeDrawLayer(drawLayerId,
         hasPerPlotData: false,
         asyncData : false,  //todo
         isPointData: false,
-        canUserChangeColor: true,
+        canUserChangeColor: ColorChangeType.STATIC,
         canUserDelete: true,
         helpLine : '',
 

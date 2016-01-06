@@ -73,27 +73,6 @@ export function dispatchRetrieveData(drawLayerId) {
 
 }
 
-/**
- *
- * @param drawLayerId
- * @param visible
- * @param plotId
- */
-export function dispatchChangeVisibility(drawLayerId,visible, plotId) {
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
-    flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
-}
-
-/**
- *
- * @param drawLayerId
- * @param drawingDef
- * @param plotId
- */
-export function dispatchChangeDrawingDef(drawLayerId,drawingDef, plotId) {
-    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
-    flux.process({type: CHANGE_DRAWING_DEF, payload: {drawLayerId, drawingDef, plotIdAry} });
-}
 
 /**
  *
@@ -103,6 +82,40 @@ export function dispatchChangeDrawingDef(drawLayerId,drawingDef, plotId) {
 function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
     flux.process({type: CREATE_DRAWING_LAYER, payload: {drawLayer}} );
+}
+
+
+
+/**
+ *
+ * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param visible
+ * @param plotId
+ * @param useGroup
+ */
+export function dispatchChangeVisibility(id,visible, plotId, useGroup= true) {
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+
+    getDrawLayerIdAry(dlRoot(),id,useGroup)
+        .forEach( (drawLayerId) => {
+            flux.process({type: CHANGE_VISIBILITY, payload: {drawLayerId, visible, plotIdAry} });
+        });
+}
+
+/**
+ *
+ * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param drawingDef
+ * @param plotId
+ * @param useGroup
+ */
+export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) {
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+
+    getDrawLayerIdAry(dlRoot(),id,useGroup)
+        .forEach( (drawLayerId) => {
+            flux.process({type: CHANGE_DRAWING_DEF, payload: {drawLayerId, drawingDef, plotIdAry}});
+        });
 }
 
 /**
@@ -120,17 +133,22 @@ function dispatchDestroyDrawLayer(id) {
  *
  * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param attachPlotGroup
  */
-function dispatchAttachLayerToPlot(id,plotId) {
-    const idAry= Array.isArray(id) ? id : [id];
-    const plotIdAry= Array.isArray(plotId) ? plotId : [plotId];
+export function dispatchAttachLayerToPlot(id,plotId, attachPlotGroup=false) {
+    var plotIdAry;
 
-    idAry.forEach( (idItem) => {
-        const drawLayerId= getDrawLayerId(dlRoot(),idItem);
-        if (drawLayerId) {
+    if (Array.isArray(plotId)) {
+        plotIdAry= plotId;
+    }
+    else {
+        plotIdAry= attachPlotGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
+    }
+
+    getDrawLayerIdAry(dlRoot(),id,false)
+        .forEach( (drawLayerId) => {
             flux.process({type: ATTACH_LAYER_TO_PLOT, payload: {drawLayerId,plotIdAry} });
-        }
-    });
+        });
 }
 
 
@@ -138,17 +156,27 @@ function dispatchAttachLayerToPlot(id,plotId) {
  *
  * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
  * @param {string|[]} plotId to attach this may by a string or an array of strings
+ * @param detachPlotGroup
+ * @param useLayerGroup
  */
-function dispatchDetachLayerFromPlot(id,plotId) {
-    const idAry= Array.isArray(id) ? id : [id];
-    const plotIdAry= Array.isArray(plotId) ? plotId : [plotId];
-    idAry.forEach( (idItem) => {
-        const drawLayerId= getDrawLayerId(dlRoot(),idItem);
-        if (drawLayerId) {
+export function dispatchDetachLayerFromPlot(id,plotId, detachPlotGroup=false, useLayerGroup=true) {
+    var plotIdAry;
+
+    if (Array.isArray(plotId)) {
+        plotIdAry= plotId;
+    }
+    else {
+        plotIdAry= detachPlotGroup ? getPlotViewIdListInGroup(visRoot(), plotId) : [plotId];
+    }
+
+    getDrawLayerIdAry(dlRoot(),id,useLayerGroup)
+        .forEach( (drawLayerId) => {
             flux.process({type: DETACH_LAYER_FROM_PLOT, payload: {drawLayerId,plotIdAry} });
-        }
-    });
+        });
+
 }
+
+
 
 function getDrawLayerId(dlRoot,id) {
     var drawLayer= dlRoot.drawLayerAry.find( (dl) => id===dl.drawLayerId);
@@ -158,6 +186,20 @@ function getDrawLayerId(dlRoot,id) {
     return drawLayer ? drawLayer.drawLayerId : null;
 }
 
+//function getDrawLayerIdAry(dlRoot,id,useGroup) {
+//    return dlRoot.drawLayerAry
+//            .filter( (dl) => id===dl.drawLayerId || id===dl.drawLayerTypeId || (useGroup && id===dl.drawLayerGroupId)
+//            .map(  (dl) => dl.drawLayerId);
+//}
+
+function getDrawLayerIdAry(dlRoot,id,useGroup) {
+    const idAry= Array.isArray(id) ? id: [id];
+    return dlRoot.drawLayerAry
+        .filter( (dl) => idAry
+            .filter( (id) => id===dl.drawLayerId || id===dl.drawLayerTypeId || (useGroup && id===dl.drawLayerGroupId))
+            .length>0)
+        .map(  (dl) => dl.drawLayerId);
+}
 
 
 /**

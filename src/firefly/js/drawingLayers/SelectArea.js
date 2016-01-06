@@ -4,7 +4,7 @@
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
-import DrawLayer  from '../visualize/draw/DrawLayer.js';
+import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -82,7 +82,7 @@ function creator() {
     idCnt++;
     var options= {
         canUseMouse:true,
-        canUserChangeColor: false,
+        canUserChangeColor: ColorChangeType.DISABLE,
         canUserDelete: false
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Selection Tool',

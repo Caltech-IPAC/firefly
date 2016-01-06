@@ -14,8 +14,8 @@ import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
-import DrawLayerCntlr, {getDlAry} from '../DrawLayerCntlr.js';
-import PlotViewUtils from '../PlotViewUtil.js';
+import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
@@ -84,18 +84,17 @@ function selectArea() {
     var plotView= PlotViewUtils.getActivePlotView(visRoot());
     if (!plotView) return;
 
-    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(visRoot(),plotView);
-    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), plotView.plotId,SelectArea.TYPE_ID);
+    var dl= getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
     if (!dl) {
         DrawLayerCntlr.dispatchCreateDrawLayer(SelectArea.TYPE_ID);
     }
 
 
     if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        DrawLayerCntlr.dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotIdAry);
+        dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotView.plotId,true);
     }
     else {
-        DrawLayerCntlr.dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotIdAry);
+        dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotView.plotId,true);
     }
 
 }
@@ -110,17 +109,16 @@ function distanceTool() {
     var plotView= PlotViewUtils.getActivePlotView(visRoot());
     if (!plotView) return;
 
-    var plotIdAry= PlotViewUtils.getPlotViewIdListInGroup(visRoot(),plotView);
-    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), plotView.plotId,DistanceTool.TYPE_ID);
+    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), DistanceTool.TYPE_ID);
     if (!dl) {
         DrawLayerCntlr.dispatchCreateDrawLayer(DistanceTool.TYPE_ID);
     }
 
     if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        DrawLayerCntlr.dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotIdAry);
+        dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotView.plotId,true);
     }
     else {
-        DrawLayerCntlr.dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotIdAry);
+        dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotView.plotId,true);
     }
 
 }
@@ -217,9 +215,9 @@ var TestImagePanel= React.createClass({
            var distOn= false;
            if (pv) {
                var dlAry= getDlAry();
-               const selectLayer= PlotViewUtils.getDrawLayerByType(dlAry,pv.plotId,SelectArea.TYPE_ID);
+               const selectLayer= PlotViewUtils.getDrawLayerByType(dlAry,SelectArea.TYPE_ID);
                selectOn=  PlotViewUtils.isDrawLayerAttached(selectLayer,pv.plotId);
-               const distLayer= PlotViewUtils.getDrawLayerByType(dlAry,pv.plotId,DistanceTool.TYPE_ID);
+               const distLayer= PlotViewUtils.getDrawLayerByType(dlAry,DistanceTool.TYPE_ID);
                distOn=  PlotViewUtils.isDrawLayerAttached(distLayer,pv.plotId);
            }
            this.setState({selectOn,distOn});

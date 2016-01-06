@@ -11,10 +11,10 @@ import ColorPicker from 'react-color';
 
 
 
-export function showColorPickerDialog(color,cb) {
+export function showColorPickerDialog(color,callbackOnOK,cb) {
     const popup= (
         <PopupPanel title={'Color Picker'} >
-            <ColorPickerWrapper callback={cb} color={color}/>
+            <ColorPickerWrapper callback={cb} color={color} callbackOnOK={callbackOnOK}/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ColorPickerDialog', popup);
@@ -23,16 +23,20 @@ export function showColorPickerDialog(color,cb) {
 
 var lastEv;
 
-function ColorPickerWrapper ({callback,color}) {
+function ColorPickerWrapper ({callback,color,callbackOnOK}) {
     return (
         <div>
-            <ColorPicker type='sketch' onChangeComplete={ (ev) => lastEv=ev } color={color} />
-            <CompleteButton onSuccess={() => callback(lastEv)} dialogId='ColorPickerDialog'/>
+            <ColorPicker type='sketch'
+                         onChangeComplete={ (ev) => callbackOnOK ? lastEv=ev : callback(ev) }
+                         color={color} />
+            <CompleteButton onSuccess={() => callbackOnOK ? callback(lastEv): null}
+                            dialogId='ColorPickerDialog'/>
         </div>
     );
 }
 
 ColorPickerWrapper.propTypes= {
     callback: React.PropTypes.func.isRequired,
-    color: React.PropTypes.string.isRequired
+    color: React.PropTypes.string.isRequired,
+    callbackOnOK: React.PropTypes.bool.isRequired
 };

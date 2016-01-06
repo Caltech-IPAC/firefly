@@ -38,9 +38,9 @@ function getPlotViewById(visRoot,plotId) {
 }
 
 /**
- *
+ * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
  * @param visRoot - root of the visualization object in store
- * @param pvOrId this parameter will take the plotId or a plotView object
+ * @param pvOrId this parameter will take the plotId string or a plotView object
  * @param onlyIfGroupLocked
  * @return {*}
  */
@@ -109,7 +109,7 @@ function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
  * Get all drawing layers container from the store
  * @return {Array}
  */
-function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
+export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
 
 /**
  * construct an array of drawing layer from the store
@@ -117,15 +117,19 @@ function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
  * @param plotId
  * @return {Array}
  */
-function getAllDrawLayersForPlot(dlAry,plotId) {
+export function getAllDrawLayersForPlot(dlAry,plotId) {
     return dlAry
         .filter( (dl) => dl.plotIdAry
         .find( (id) => id===plotId));
 }
 
 
-function getDrawLayerByType(dlAry,plotId, typeId) {
+export function getDrawLayerByType(dlAry,typeId) {
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
+}
+
+export function getDrawLayersByDisplayGroup(dlAry,displayGroupId) {
+    return dlAry.find( (dl) => dl.displayGroupId===displayGroupId);
 }
 
 /**
