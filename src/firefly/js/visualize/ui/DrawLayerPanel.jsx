@@ -73,7 +73,10 @@ class DrawLayerPanel extends React.Component {
         var {activePv}= this.state;
         if (!activePv) return false;
         return (
-            <DrawLayerPanelView dlAry={this.state.dlAry} plotView={activePv} dialogId={DRAW_LAYER_POPUP}/>
+            <DrawLayerPanelView dlAry={this.state.dlAry}
+                                drawLayerFactory={flux.getDrawLayerFactory()}
+                                plotView={activePv}
+                                dialogId={DRAW_LAYER_POPUP}/>
         );
     }
 

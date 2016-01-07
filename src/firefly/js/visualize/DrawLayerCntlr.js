@@ -21,14 +21,14 @@ const CHANGE_VISIBILITY= 'DrawLayerCntlr.changeVisibility';
 const CHANGE_DRAWING_DEF= 'DrawLayerCntlr.changeDrawingDef';
 const ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
 const DETACH_LAYER_FROM_PLOT= 'DrawLayerCntlr.detachLayerFromPlot';
-
+const MODIFY_CUSTOM_FIELD= 'DrawLayerCntlr.modifyCustomField';
+const FORCE_DRAW_LAYER_UPDATE= 'DrawLayerCntlr.forceDrawLayerUpdate';
 
 // _- select
 const SELECT_AREA_START= 'DrawLayerCntlr.SelectArea.selectAreaStart';
 const SELECT_AREA_MOVE= 'DrawLayerCntlr.SelectArea.selectAreaMove';
 const SELECT_AREA_END= 'DrawLayerCntlr.SelectArea.selectAreaEnd';
 const SELECT_MOUSE_LOC= 'DrawLayerCntlr.SelectArea.selectMouseLoc';
-
 
 // _- Distance tool
 const DT_START= 'DrawLayerCntlr.DistanceTool.distanceToolStart';
@@ -55,8 +55,9 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 export default {
     CHANGE_VISIBILITY, RETRIEVE_DATA, DRAWING_LAYER_KEY,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
-    CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER,
+    CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
+    FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
@@ -117,6 +118,36 @@ export function dispatchChangeDrawingDef(id,drawingDef, plotId, useGroup= true) 
             flux.process({type: CHANGE_DRAWING_DEF, payload: {drawLayerId, drawingDef, plotIdAry}});
         });
 }
+
+
+/**
+ *
+ * @param {string|[]} id make the drawLayerId or drawLayerTypeId, this may be an array
+ * @param changes
+ * @param plotId
+ * @param useGroup
+ */
+export function dispatchModifyCustomField(id,changes, plotId, useGroup= true) {
+
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+
+    getDrawLayerIdAry(dlRoot(),id,useGroup)
+        .forEach( (drawLayerId) => {
+            flux.process({type: MODIFY_CUSTOM_FIELD, payload: {drawLayerId, changes, plotIdAry}});
+        });
+}
+
+export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
+
+    var plotIdAry= getPlotViewIdListInGroup(visRoot(), plotId);
+
+    getDrawLayerIdAry(dlRoot(),id,useGroup)
+        .forEach( (drawLayerId) => {
+            flux.process({type: FORCE_DRAW_LAYER_UPDATE, payload: {drawLayerId, plotIdAry}});
+        });
+}
+
+
 
 /**
  *
@@ -215,9 +246,9 @@ function makeReducer(factory) {
         var retState = state;
         switch (action.type) {
             case CHANGE_VISIBILITY:
-                retState = deferToLayerReducer(state, action, dlReducer);
-                break;
             case CHANGE_DRAWING_DEF:
+            case FORCE_DRAW_LAYER_UPDATE:
+            case MODIFY_CUSTOM_FIELD:
                 retState = deferToLayerReducer(state, action, dlReducer);
                 break;
             case CREATE_DRAWING_LAYER:
@@ -353,8 +384,8 @@ const initState= function() {
 
     return {
         allowedActions: [ RETRIEVE_DATA, CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
-                          ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,
-                          CHANGE_DRAWING_DEF,
+                          ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, MODIFY_CUSTOM_FIELD,
+                          CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,
                           ImagePlotCntlr.ANY_REPLOT
                         ],
         drawLayerAry : [],

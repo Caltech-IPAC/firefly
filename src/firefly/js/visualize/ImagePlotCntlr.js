@@ -26,37 +26,37 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
  * {boolean} addToHistory - optional
  * @type {string}
  */
-const PLOT_IMAGE_START= 'ImagePlotCntlr/PlotImageStart';
-const PLOT_IMAGE_FAIL= 'ImagePlotCntlr/PlotImageFail';
-const PLOT_IMAGE= 'ImagePlotCntlr/PlotImage';
-const ANY_REPLOT= 'ImagePlotCntlr/Replot';
+const PLOT_IMAGE_START= 'ImagePlotCntlr.PlotImageStart';
+const PLOT_IMAGE_FAIL= 'ImagePlotCntlr.PlotImageFail';
+const PLOT_IMAGE= 'ImagePlotCntlr.PlotImage';
+const ANY_REPLOT= 'ImagePlotCntlr.Replot';
 
-const ZOOM_IMAGE_START= 'ImagePlotCntlr/ZoomImageStart';
-const ZOOM_IMAGE= 'ImagePlotCntlr/ZoomImage';
-const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr/ZoomImageFail';
-
-
-const FLIP_IMAGE_START= 'ImagePlotCntlr/FlipImageStart';
-const FLIP_IMAGE= 'ImagePlotCntlr/FlipImage';
-const FLIP_IMAGE_FAIL= 'ImagePlotCntlr/FlipImageFail';
+const ZOOM_IMAGE_START= 'ImagePlotCntlr.ZoomImageStart';
+const ZOOM_IMAGE= 'ImagePlotCntlr.ZoomImage';
+const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr.ZoomImageFail';
 
 
-const CROP_IMAGE_START= 'ImagePlotCntlr/CropImageStart';
-const CROP_IMAGE= 'ImagePlotCntlr/CropImage';
-const CROP_IMAGE_FAIL= 'ImagePlotCntlr/CropImageFail';
-
-const UPDATE_VIEW_SIZE= 'ImagePlotCntlr/UpdateViewSize';
-const PROCESS_SCROLL= 'ImagePlotCntlr/ProcessScroll';
+const FLIP_IMAGE_START= 'ImagePlotCntlr.FlipImageStart';
+const FLIP_IMAGE= 'ImagePlotCntlr.FlipImage';
+const FLIP_IMAGE_FAIL= 'ImagePlotCntlr.FlipImageFail';
 
 
-const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr/ChangeActivePlotView';
-const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr/ChangePlotAttribute';
+const CROP_IMAGE_START= 'ImagePlotCntlr.CropImageStart';
+const CROP_IMAGE= 'ImagePlotCntlr.CropImage';
+const CROP_IMAGE_FAIL= 'ImagePlotCntlr.CropImageFail';
+
+const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
+const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
+
+
+const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
+const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 /**
  * action should contain:
  * todo - add documentation
  */
-const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr/PlotProgressUpdate';
+const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
 
 const IMAGE_PLOT_KEY= 'allPlots';
 

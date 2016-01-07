@@ -10,7 +10,7 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 
 
 
-function DrawLayerPanelView({dlAry, plotView, dialogId}) {
+function DrawLayerPanelView({dlAry, plotView, dialogId, drawLayerFactory}) {
     var style= {width:'calc(100% - 12px)',
         height:'100%',
         padding: 6,
@@ -25,7 +25,7 @@ function DrawLayerPanelView({dlAry, plotView, dialogId}) {
 
     return (
         <div style={style}>
-            {makeDrawLayerItemAry(layers,plotView,maxTitleChars)}
+            {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
 
             <CompleteButton  text='close' dialogId={dialogId} onSuccess={() => console.log(`close: ${dialogId}`) }/>
         </div>
@@ -40,11 +40,15 @@ DrawLayerPanelView.propTypes= {
 };
 
 
-function makeDrawLayerItemAry(layers,pv, maxTitleChars) {
+function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
     var last= layers.length-1;
-    return layers.map( (l,idx) => <DrawLayerItemView drawLayer={l} pv={pv}
-                                                     maxTitleChars={maxTitleChars} key={l.drawLayerId}
-                                                     lastItem={idx===last}/>);
+    return layers.map( (l,idx) => <DrawLayerItemView key={l.drawLayerId}
+                                                     drawLayer={l}
+                                                     pv={pv}
+                                                     maxTitleChars={maxTitleChars}
+                                                     lastItem={idx===last}
+                                                     getUIComponent={factory.getGetUIComponentFunc(l)}
+    />);
 }
 
 

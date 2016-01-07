@@ -32,15 +32,15 @@
  *                    A function that returns an object literal the that has the field changes.
  *                    <br>signature: getLayerChanges(drawLayer,action)
  *                    it may return null or empty object if there are no changes
- * @param {object} [uiComponent] react component
- * @return {{drawLayerTypeId: string, create: function, getDrawDataFunc: function, getLayerChanges: function, uiComponent: object}}
+ * @param {object} [getUIComponent] react component
+ * @return {{drawLayerTypeId: string, create: function, getDrawDataFunc: function, getLayerChanges: function, getUIComponent: object}}
  */
 export function makeFactoryDef(drawLayerTypeId,
                                create,
                                getDrawDataFunc= null,
                                getLayerChanges= null,
-                               uiComponent= null) {
-    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, uiComponent};
+                               getUIComponent= null) {
+    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, getUIComponent};
 }
 
 class DrawLayerFactory {
@@ -91,6 +91,13 @@ class DrawLayerFactory {
         var f= this.registry[drawLayer.drawLayerTypeId].getLayerChanges;
         return f ? f(drawLayer, action) : {};
     }
+
+    getGetUIComponentFunc(drawLayer) {
+        if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return false;
+        return this.registry[drawLayer.drawLayerTypeId].getUIComponent;
+    }
+
+
 
     /**
      *

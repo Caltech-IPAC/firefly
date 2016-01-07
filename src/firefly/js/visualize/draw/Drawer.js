@@ -163,7 +163,7 @@ class Drawer {
         if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
         if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
         var changeStr= join(', ',...changes);
-        if (true) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
+        if (false) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
         //=====================================
         this.plot= plot;
         this.data = data;

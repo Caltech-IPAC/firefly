@@ -18,7 +18,7 @@ const bSty= {
     whiteSpace: 'nowrap'
 };
 
-function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem}) {
+function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponent}) {
     var style= {
         width:'100%',
         height:'100%',
@@ -52,6 +52,9 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem}) {
                     {makeDelete(drawLayer,pv)}
                 </div>
             </div>
+            <div style={{paddingTop:5, marginLeft:'2em'}}>
+                {getUIComponent ? getUIComponent(drawLayer,pv) : ''}
+            </div>
             <div style={{paddingTop:10,maxWidth:'30em',marginLeft:'2em'}}>{drawLayer.helpLine}</div>
         </div>
     );
@@ -62,7 +65,8 @@ DrawLayerItemView.propTypes= {
     drawLayer     : React.PropTypes.object.isRequired,
     pv            : React.PropTypes.object.isRequired,
     maxTitleChars : React.PropTypes.number.isRequired,
-    lastItem      : React.PropTypes.bool.isRequired
+    lastItem      : React.PropTypes.bool.isRequired,
+    getUIComponent: React.PropTypes.func
 };
 
 

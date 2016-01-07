@@ -224,7 +224,7 @@ function createSmartComponent(connector, component) {
 }
 
 function getDrawLayerFactory() {
-    return DrawLayerFactory;
+    return drawLayerFactory;
 }
 
 function registerDrawLayer(factoryDef) {
@@ -245,6 +245,7 @@ export var reduxFlux = {
     addListener,
     createSmartComponent,
     registerDrawLayer,
-    createDrawLayer
+    createDrawLayer,
+    getDrawLayerFactory
 };
 

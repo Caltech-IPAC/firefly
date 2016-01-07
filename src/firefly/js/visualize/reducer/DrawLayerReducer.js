@@ -37,8 +37,10 @@ function makeReducer(factory) {
             case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
                 return detachLayerFromPlot(drawLayer,action);
                 break;
+            case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
             case ImagePlotCntlr.ANY_REPLOT:
-                return anyReplot(drawLayer,action,factory);
+                return updateFromLayer(drawLayer,action,factory);
                 break;
             default:
                 return handleOtherAction(drawLayer,action,factory);
@@ -79,20 +81,20 @@ function handleOtherAction(drawLayer,action,factory) {
     return drawLayer;
 }
 
-
-
-function anyReplot(drawLayer,action,factory) {
+function updateFromLayer(drawLayer,action,factory) {
     var {plotIdAry}= action.payload;
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) =>
-                      drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
+            drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
     }
     else {
         drawLayer.drawData= getDrawData(factory,drawLayer, action);
     }
     return drawLayer;
 }
+
+
 
 
 /**
@@ -188,6 +190,7 @@ function changeVisibility(drawLayer,action,factory) {
         return Object.assign({}, drawLayer, {visiblePlotIdAry});
     }
 }
+
 
 
 function changeDrawingDef(drawLayer,action,factory) {

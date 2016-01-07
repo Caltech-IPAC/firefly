@@ -16,6 +16,7 @@ import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import PlotViewUtils from '../visualize/PlotViewUtil.js';
+import {getUIComponent} from './DistanceToolUI.jsx';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
@@ -32,10 +33,10 @@ const ID= 'DISTANCE_TOOL';
 const TYPE_ID= 'DISTANCE_TOOL_TYPE';
 
 
-const DIST_READOUT = 'DistanceReadout';
-const ARC_MIN = 'arcmin';
-const ARC_SEC = 'arcsec';
-const DEG = 'deg';
+export const DIST_READOUT = 'DistanceReadout';
+export const ARC_MIN = 'arcmin';
+export const ARC_SEC = 'arcsec';
+export const DEG = 'deg';
 const HTML_DEG= String.fromCharCode(176);
 
 
@@ -43,7 +44,7 @@ const selHelpText='Click and drag to find a distance';
 const editHelpText='Click and drag at either end to adjust distance';
 
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,getUIComponent);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -100,11 +101,41 @@ function getLayerChanges(drawLayer, action) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             return attach();
             break;
+        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
+            return dealWithMods(drawLayer,action)
+            break;
+        case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
+            return dealWithUnits(drawLayer,action)
+            break;
+
     }
     return null;
 
 }
 
+
+function dealWithUnits(drawLayer,action) {
+    var {plotIdAry}= action.payload;
+    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotIdAry[0]);
+    if (!pv) return null;
+    var cc= CsysConverter.make(pv.primaryPlot);
+    var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
+    return {drawData:{data:drawSel}};
+}
+
+
+
+function dealWithMods(drawLayer,action) {
+    var {changes,plotIdAry}= action.payload;
+    if (typeof changes.posAngle=== 'boolean') {
+        var pv= PlotViewUtils.getPlotViewById(visRoot(),plotIdAry[0]);
+        if (!pv) return null;
+        var cc= CsysConverter.make(pv.primaryPlot);
+        var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
+        return {posAngle:changes.posAngle, drawData:{data:drawSel}};
+    }
+    return null;
+}
 
 
 function attach() {
@@ -158,8 +189,8 @@ function drag(drawLayer,action) {
     var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var cc= CsysConverter.make(pv.primaryPlot);
-    //var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
-    var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, true,cc); //todo switch back
+    var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
+    //var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, true,cc); //todo switch back
     return {currentPt:imagePt, drawData:{data:drawSel}};
 }
 
@@ -338,6 +369,7 @@ function getPtAry(pv) {
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
+
 
 
 
