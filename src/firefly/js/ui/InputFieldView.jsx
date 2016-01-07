@@ -3,6 +3,7 @@ import PureRenderMixin from 'react-addons-pure-render-mixin';
 import ReactDOM from 'react-dom';
 import PointerPopup from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
+import './InputFieldView.css';
 
 const EXCLAMATION = 'tmp-stuff/exclamation16x16.gif';
 
@@ -98,10 +99,10 @@ var InputFieldView = React.createClass(
 
        computeStyle() {
            if (!this.props.valid) {
-               return 'firefly-inputfield-error';
+               return 'ff-inputfield-view-error';
            }
            else {
-               return this.state.hasFocus ? 'firefly-inputfield-focus' : 'firefly-inputfield-valid';
+               return this.state.hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
            }
        },
 

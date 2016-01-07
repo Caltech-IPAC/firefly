@@ -1,0 +1,26 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+
+.popup-panel-shadow {
+    -moz-box-shadow: 0 5px 14px rgba(0, 0, 0, 0.66);
+    -webkit-box-shadow: 0 5px 14px rgba(0, 0, 0, 0.66);
+    box-shadow: 0 5px 11px black;
+    background-color: #E5E5E5;
+    padding: 3px;
+}
+
+.popup-panel-title-background {
+    background: url('/images/popup_bg-horizontal.jpg');
+}
+
+.popup-panel-header {
+    background: #93c2f1 url('/images/bg_listgradient.png') repeat-x;
+    width: auto;
+    height: auto;
+    padding-top: 1px;
+    margin: 3px 2px 0 0;
+    cursor: default;
+    border-bottom: 1px solid #bbbbbb;
+}

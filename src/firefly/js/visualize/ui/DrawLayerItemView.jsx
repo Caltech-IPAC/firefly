@@ -96,7 +96,7 @@ function makeColorChange(drawLayer,pv) {
         return (
             <div style={bSty}>
                 <div style={feedBackStyle} onClick={() => modifyColor(drawLayer,pv.plotId)}  />
-                <a className='href-item'
+                <a className='ff-href'
                    onClick={() => modifyColor(drawLayer)}
                    style={Object.assign({},bSty,{marginLeft:5})}>Color</a>
             </div>
@@ -136,7 +136,7 @@ function makeDelete(drawLayer,pv) {
     };
     if (drawLayer.canUserDelete) {
         return (
-            <a className='href-item' onClick={() => deleteLayer(drawLayer,pv.plotId)} style={deleteStyle}>Delete</a>
+            <a className='ff-href' onClick={() => deleteLayer(drawLayer,pv.plotId)} style={deleteStyle}>Delete</a>
         );
     }
     else {

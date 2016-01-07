@@ -95,7 +95,7 @@ var webpackConfig = {
                     'autoprefixer?browsers=last 2 version'
                 ]
             },
-            { test: /\.(png|jpg)$/,
+            { test: /\.(png|jpg|gif)$/,
                 loader: `url-loader?root=${path.resolve(config.firefly_dir, 'html')}`
             }
         ]

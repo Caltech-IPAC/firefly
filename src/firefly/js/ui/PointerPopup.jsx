@@ -2,21 +2,20 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
+import sCompare from 'react-addons-shallow-compare';
 import _ from 'lodash';
+import './PointerPopup.css';
 
 
 const UP_POPUP_POINTER = 'images/up-pointer.gif';
 const LEFT_DOWN_POPUP_POINTER = 'images/left-down-pointer.gif';
-//const HOR_PTR_IMAGE_OFFSET= -6;
 
 const NONE = 'none';
 const NORTH = 'north';
 const SOUTH_WEST = 'sWest';
 
 var PointerPopup = React.createClass(
-   {
-       //mixins : [PureRenderMixin],
+{
 
        statics : {
            NONE,
@@ -24,6 +23,7 @@ var PointerPopup = React.createClass(
            SOUTH_WEST
        },
 
+       shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
 
        propTypes: {
            x : React.PropTypes.number.isRequired,
@@ -124,9 +124,9 @@ var PointerPopup = React.createClass(
                return (
                        <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}>
                            <img src={UP_POPUP_POINTER} ref='upPointer'/>
-                           <div className='firefly-popup-pointer-curve-radius' style= {{marginTop:'-3px'}}>
+                           <div style= {{marginTop:'-3px'}}>
                                <div style={{padding : '5px'}}
-                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel firefly-popup-pointer-curve-radius'>
+                                       className='ff-popup-pointer'>
                               {this.props.message}
                                </div>
                            </div>
@@ -139,9 +139,9 @@ var PointerPopup = React.createClass(
                            <img src={LEFT_DOWN_POPUP_POINTER}
                                    ref='leftDownPointer'
                                    style={{display:'inline-block', position:'absolute'}}/>
-                           <div className='firefly-popup-pointer-curve-radius' style= {{marginTop:'-5px',display:'inline-block'}}>
+                           <div style= {{marginTop:'-5px',display:'inline-block'}}>
                                <div style={{padding : '5px'}}
-                                       className='popup-pane-pointer-shadow firefly-popup-pointer-main-panel firefly-popup-pointer-curve-radius'>
+                                       className='ff-popup-pointer '>
                               {this.props.message}
                                </div>
                            </div>

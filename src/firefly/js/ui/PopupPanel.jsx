@@ -8,6 +8,7 @@ import Enum from 'enum';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
+import './PopupPanel.css';
 
 
 const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
@@ -131,13 +132,13 @@ var PopupPanel= React.createClass(
         //    })
 
         return (
-                <div style={rootStyle} className={'popup-pane-shadow disable-select'}
+                <div style={rootStyle} className={'popup-panel-shadow disable-select'}
                      onTouchStart={this.dialogMoveStart}
                      onTouchMove={this.dialogMove}
                      onTouchEnd={this.dialogMoveEnd} >
                     <div className={'standard-border'}>
                         <div style={{position:'relative', height:'14px', width:'100%', cursor:'default'}}
-                             className={'title-bar title-color popup-title-horizontal-background'}
+                             className={'title-bar title-color popup-panel-title-background'}
                             onTouchStart={this.dialogMoveStart}
                             onTouchMove={this.dialogMove}
                             onTouchEnd={this.dialogMoveEnd}
@@ -151,7 +152,7 @@ var PopupPanel= React.createClass(
                                  className={'title-label'} >
                                 {title}
                             </div>
-                            <image className={'popup-header'}
+                            <image className={'popup-panel-header'}
                                    src= {`${getRootURL()}images/blue_delete_10x10.gif`}
                                    style= {{position:'absolute', right:'0px', top:'0px'}}
                                    onClick={this.doClose} />

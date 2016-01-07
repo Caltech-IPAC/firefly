@@ -1,6 +1,30 @@
+/** The are the colors we used.  Currently was are not using a css preprocessor
+    so they are just here for reference
+@def bodyColor            #f3f3f3;
+@def borderColor          #a3aeb9;
+@def markedColor          #49a344;
+@def highlightColor       #005da4;
+@def alternateColor       #a67e45;
+@def tabsColor            #808080;
+@def popupBackgroundColor #EFEFEF;
+@def titleBackgroundColor #375885;
+@def selectedColor        #d3fad1;
+@def whiteColor           white;
+@def blackColor           black;
+@def alertColor           red;
+@def cautionColor         #ffe8e8;
+@def cautionSelectedColor #ffc1c1;
+@def relatedColor         #eeffed;
+@def relatedCcautionColor #ffdddd;
+@def focusPanelColor      #e3e3e3;
+@def toolbarButtonColor   #bcc8cf;
+@def toolbarGroupColor    rgba(0,0,0,.51);
+*/
+
+
 body {
     background-color: #e3e3e3;
-    padding: 0px 1px 0px 1px;
+    padding: 0 1px 0 1px;
     border:0 none;
     font-family: tahoma,arial,helvetica,sans-serif;
     font-size: 11px;
@@ -10,7 +34,8 @@ img, html {
     border:0 none;
 }
 
-.button-std {
+
+.button__std {
     height: 23px;
     padding: 0 3px;
 }
@@ -26,3 +51,37 @@ img, html {
 }
 
 
+.ff-href {
+    color: #005da4; /*highlightColor*/
+    font-family: tahoma,arial,helvetica,sans-serif;
+    font-style: italic;
+    cursor: pointer;
+}
+
+.ff-href:hover {
+    color: #49a344; /*markedColor*/
+}
+
+.disable-select {
+    -moz-user-select : none;
+    -khtml-user-select : none;
+    -webkit-user-select : none;
+    -o-user-select :  none;
+    user-select :  none;
+}
+
+.title-color { color : white; } /*whiteColor*/
+
+.title-label  {
+    font-style: italic;
+    font-weight: bold;
+}
+.title-bar{
+    font-weight : bold;
+    font-size: 11px;
+    padding: 2px 0 3px 0;
+    margin-bottom: 1px;
+    white-space: nowrap;
+}
+
+.standard-border { border: solid #a3aeb9 1px; } /*borderColor */
