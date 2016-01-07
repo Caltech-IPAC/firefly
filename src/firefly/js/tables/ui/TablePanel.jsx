@@ -75,8 +75,8 @@ class TablePanel extends React.Component {
         if (selectable) {
             var cbox = <Column
                 columnKey='selectable-checkbox'
-                header={<div className="tablePanel_checkbox_wrapper"><input type='checkbox' /></div>}
-                cell={<div className="tablePanel_checkbox_wrapper"><input type='checkbox' value='rowIn'/></div>}
+                header={<div className="tablePanel__checkbox_wrapper"><input type='checkbox' /></div>}
+                cell={<div className="tablePanel__checkbox_wrapper"><input type='checkbox' value='rowIn'/></div>}
                 fixed={true}
                 width={20}
                 allowCellsRecycling={true}
@@ -103,7 +103,7 @@ class TablePanel extends React.Component {
     rowClassName(index) {
         var {tableModel} = this.props;
         const hlrow = tableModel.highlightedRow || 0;
-        return (hlrow === index) ? 'tablePanel_Row_highlighted' : '';
+        return (hlrow === index) ? 'tablePanel__Row_highlighted' : '';
     }
 
     componentWillUpdate(nProps, nContext) {

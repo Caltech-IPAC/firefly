@@ -1,11 +1,11 @@
 
-.tablePanel_checkbox_wrapper {
+.tablePanel__checkbox_wrapper {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-.fixedDataTableRowLayout_rowWrapper .tablePanel_Row_highlighted {
+.fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
     background-color: #d3fad1
 }
 

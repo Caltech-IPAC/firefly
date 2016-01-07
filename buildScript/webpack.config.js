@@ -24,7 +24,8 @@ var def_config = {
     deploy_dir  : (process.env.HYDRA_ROOT || '/hydra') + `/server/tomcat/webapps/${config.name}`,
     alias       : {
             firefly : path.resolve(config.firefly_dir, 'js'),
-            styles : path.resolve(config.firefly_dir, 'html', 'css')
+            styles : path.resolve(config.firefly_dir, 'html', 'css'),
+            html : path.resolve(config.firefly_dir, 'html')
         }
 };
 

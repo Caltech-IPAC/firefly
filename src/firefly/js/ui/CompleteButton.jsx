@@ -45,7 +45,7 @@ function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnVa
     if (!groupKey && this && this.context) groupKey= this.context.groupKey;
     return (
         <div>
-            <button type='button' className='button__hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
+            <button type='button' className='button-hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
         </div>
     );
 }
