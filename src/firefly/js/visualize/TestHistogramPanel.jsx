@@ -10,7 +10,7 @@ import Validate from '../util/Validate.js';
 import FieldGroup from '../ui/FieldGroup.jsx';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 
-import {ServerRequest} from '../data/ServerRequest.js';
+import TableRequest from '../tables/TableRequest.js';
 
 
 
@@ -60,10 +60,10 @@ var TestHistogramPanel = React.createClass({
         showResults(success, request) {
             console.log(request);
             if (request.srcTable) {
-                const sreq = new ServerRequest('IpacTableFromSource');
-                sreq.setParam({name : 'source', value : request.srcTable});
-                sreq.setParam({name : 'startIdx', value : '0'});
-                sreq.setParam({name : 'pageSize', value : '10000'});
+                const sreq = TableRequest.newInstance({
+                    id:'IpacTableFromSource',
+                    source: request.srcTable,
+                });
                 dispatchLoadTblStats(sreq);
             }
         },

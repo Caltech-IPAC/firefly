@@ -6,7 +6,6 @@ import {fetchUrl} from '../../util/WebUtil.js';
 import { getRootPath } from '../../util/BrowserUtil.js';
 import TblCntlr from '../TablesCntlr.js';
 import TblUtil from '../TableUtil.js';
-import {REQ_PRM} from '../TableRequest.js';
 
 const SRV_PATH = getRootPath() + 'search/json';
 const INT_MAX = Math.pow(2,31) - 1;
@@ -48,17 +47,16 @@ function mergeTable(state, newTable) {
 
 /**
  *
- * @param tableRequest TableRequest
+ * @param tableRequest is a TableRequest params object
  * @returns {Promise.<T>}
  */
 function doFetchTable(tableRequest) {
     const def = {
-        [REQ_PRM.PAGE_SIZE] : INT_MAX,
-        [REQ_PRM.TBL_ID] : (tableRequest.tbl_id || tableRequest.params.title || tableRequest.params.id)
+        startIdx: 0,
+        pageSize : INT_MAX,
+        tbl_id : (tableRequest.tbl_id || tableRequest.title || tableRequest.id)
     };
-    var params = tableRequest.params ? Object.assign(def, tableRequest.params) : def;
-    params = Object.assign(params, tableRequest);
-    Reflect.deleteProperty( params, 'params' );
+    var params = Object.assign(def, tableRequest);
 
     return fetchUrl(SRV_PATH, {params}).then( (response) => {
         return response.json().then( (tableModel) => {

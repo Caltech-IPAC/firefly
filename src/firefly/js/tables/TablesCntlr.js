@@ -56,7 +56,7 @@ function reducer(state={}, action={}) {
             newState = LoadTable.reducer(newState, action);
             break;
         case (FETCH_TABLE)  :
-            var tmpAction = {'type' : LOAD_TABLE, 'payload': {'tbl_id' : action.payload.params.tbl_id, 'tableMeta' : {'isLoading' : true}} };
+            var tmpAction = {'type' : LOAD_TABLE, 'payload': {tbl_id : action.payload.tbl_id, tableMeta : {'isLoading' : true}} };
             newState = LoadTable.reducer(newState, tmpAction);
             if (tmpAction.err) {
                 TblUtil.error(action, tmpAction.err);
@@ -87,7 +87,7 @@ function dispatchLoadTable(tableModel) {
 
 /**
  * Fetch a table from the server.
- * @param tableRequest a TableRequest object.
+ * @param tableRequest a TableRequest params object.
  */
 function dispatchFetchTable(tableRequest) {
     flux.process( {type: FETCH_TABLE, payload: tableRequest });

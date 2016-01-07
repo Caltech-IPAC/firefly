@@ -24,14 +24,18 @@ var ResultsPanel = React.createClass({
     },
 
 
+
     render() {
         var {children, title} = this.props;
         return (
             <div style={{height: '100%', textAlign: 'center'}}>
                 <h2>{title}</h2>
-                <div style={{display:'inline-flex', width: '100%'}} >
-                    <div style={{width: '50%'}}>{children[0]}</div>
-                    <div style={{width: '50%'}}>{children[1]}</div>
+                <div style={{width: '100%'}} >
+                    <div style={{float: 'left', width: '50%', height: '60%'}}>{children[0]}</div>
+                    <div style={{float: 'left', width: '50%', height: '60%'}}>{children[1]}</div>
+                </div>
+                <div>
+                    {children[2]}
                 </div>
             </div>
         );

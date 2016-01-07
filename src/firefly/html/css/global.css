@@ -1,0 +1,14 @@
+.button__std {
+    height: 23px;
+    padding: 0 3px;
+}
+
+.button__hl {
+    font-weight: bold;
+    height: 23px;
+    padding: 0 3px;
+}
+
+.button__std:hover, .button__hl:hover {
+    cursor: pointer;
+}

@@ -4,7 +4,6 @@ import {expect} from 'chai';
 import {assert} from 'chai';
 
 import TableRequest from '../TableRequest.js';
-import {REQ_PRM} from '../TableRequest.js';
 import rewire from 'rewire';
 
 var doFetchTable = rewire('../reducers/LoadTable.js').__get__('doFetchTable');
@@ -14,9 +13,7 @@ describe('A test suite for tables/TablesCntlr.js', function () {
 
     /* run once before testing */
     before(() => {
-            request = TableRequest.newInstance('IpacTableFromSource');
-            request.setParam(REQ_PRM.START_IDX, '0');
-            request.setParam(REQ_PRM.PAGE_SIZE, '100');
+            request = TableRequest.newInstance({id:'IpacTableFromSource'});
         }
     );
     /* run once testing is done */

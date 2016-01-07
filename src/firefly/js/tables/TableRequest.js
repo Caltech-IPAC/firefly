@@ -2,7 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {ServerRequest} from '../data/ServerRequest.js';
+import {pick, identity} from 'lodash';
+
+
 
 /*
 Declaration of parameters used by TableRequest.
@@ -19,16 +21,38 @@ export const REQ_PRM = {
 };
 
 
-export default class TableRequest extends ServerRequest {
-    constructor(id, copyFromReq) {
-        super(id, copyFromReq);
+export default class TableRequest {
+    constructor(params) {
+        Object.keys(params).forEach((key) => {
+            this[key] = params[key];
+        });
     }
 
     addFilter(...filters) {
-        this[REQ_PRM.FILTERS] = (this[REQ_PRM.FILTERS] || []).push(filters);
+        this.filters = (this.filters || []).push(filters);
     }
 
-    static newInstance(id, copyFromReq) {
-        return new TableRequest(id, copyFromReq);
+    /**
+     *
+     * @param id
+     * @param tbl_id
+     * @param startIdx
+     * @param pageSize
+     * @param filters
+     * @param sortInfo
+     * @param inclCols
+     * @param decimate
+     * @param META_INFO
+     * @param rest
+     * @param copyFromReq
+     * @returns {TableRequest}
+     */
+    static newInstance({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO, ...rest}, copyFromReq) {
+        var params = Object.assign(rest, pick({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}, identity));
+        if (copyFromReq) {
+            params = Object.assign(copyFromReq, params);
+        }
+        return new TableRequest(params);
     }
+
 }

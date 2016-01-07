@@ -15,11 +15,11 @@ function doValidate(type, action) {
         error(action, 'Invalid action.  Payload is missing.');
     }
     if (type === TblCntlr.FETCH_TABLE ) {
-        if (!action.payload.params || isBlank(action.payload.params.id)) {
+        if (isBlank(action.payload.id)) {
             error(action, 'Required "id" field is missing.');
         }
     } else {
-        if (!action.payload.tbl_id || isBlank(action.payload.tbl_id)) {
+        if (isBlank(action.payload.tbl_id)) {
             error(action, 'Required "tbl_id" field is missing.');
         }
         if(type === TblCntlr.TBL_HIGHLIGHT_ROW) {

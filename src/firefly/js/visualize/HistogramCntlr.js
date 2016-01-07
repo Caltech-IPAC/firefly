@@ -2,7 +2,6 @@ import {flux} from '../Firefly.js';
 import ColValuesStatistics from './ColValuesStatistics.js';
 
 import TableRequest from '../tables/TableRequest.js';
-import {REQ_PRM} from '../tables/TableRequest.js';
 import {doFetchTable} from '../tables/reducers/LoadTable.js';
 
 const HISTOGRAM_DATA_KEY = 'histogram';
@@ -133,12 +132,12 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     // searchRequest
     const sreq = Object.assign({}, activeTableServerRequest, {'startIdx': 0, 'pageSize': 1000000});
 
-    const req = TableRequest.newInstance('StatisticsProcessor');
-    req.setParam('searchRequest', JSON.stringify(sreq.params));
-    req.setParam('startIdx', '0');
-    req.setParam('pageSize', '10000');
+    const req = TableRequest.newInstance({
+                    id:'StatisticsProcessor',
+                    searchRequest: JSON.stringify(sreq),
+                    tbl_id: 'id-sreq-colstats'      // todo: use ativeTableServerRequest id plus 'colstats'
+                });
 
-    req.setParam(REQ_PRM.TBL_ID, 'id-sreq-colstats'); // todo: use ativeTableServerRequest id plus 'colstats'
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
@@ -173,27 +172,25 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
     const sreq = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000});
 
-    const req = TableRequest.newInstance('HistogramProcessor');
-    req.setParam('searchRequest', JSON.stringify(sreq.params));
+    const req = TableRequest.newInstance({id:'HistogramProcessor'});
+    req.searchRequest = JSON.stringify(sreq);
 
     // histogarm parameters
-    req.setParam({name : 'columnExpression', value : histogramParams.columnOrExpr});
+    req.columnExpression = histogramParams.columnOrExpr;
     if (histogramParams.numBins) { // fixed size bins
-        req.setParam('numBins', histogramParams.numBins);
+        req.numBins = histogramParams.numBins;
     }
     if (histogramParams.falsePositiveRate) {  // variable size bins using Bayesian Blocks
-        req.setParam('falsePositiveRate', histogramParams.falsePositiveRate);
+        req.falsePositiveRate = histogramParams.falsePositiveRate;
     }
     if (histogramParams.minCutoff) {
-        req.setParam('min', histogramParams.minCutoff);
+        req.min = histogramParams.minCutoff;
     }
     if (histogramParams.maxCutoff) {
-        req.setParam('max', histogramParams.maxCutoff);
+        req.max = histogramParams.maxCutoff;
     }
 
-    req.setParam('startIdx', '0');
-    req.setParam('pageSize', '10000');
-    req.setParam(REQ_PRM.TBL_ID, 'id-sreq-coldata'); // todo: use ativeTableServerRequest id plus 'colstats'
+    req.tbl_id = 'id-sreq-coldata'; // todo: use ativeTableServerRequest id plus 'colstats'
 
     doFetchTable(req).then(
         (tableModel) => {

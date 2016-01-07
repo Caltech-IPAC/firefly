@@ -13,6 +13,8 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
 function validUpdate(valid,onSuccess,onFail,groupKey,dialogId) {
     var funcToCall = valid ? onSuccess : onFail;
 
+    // -lly : if there is more than one groupkey, it should combine the field values into a single request not
+    // create an array of requests.  this is my opinion atm.  remove this comment once this is resolved.
     if (Array.isArray(groupKey)) {
         var requestAry = groupKey.map( (key) => FieldGroupUtils.getResults(key));
         funcToCall(requestAry);
@@ -43,7 +45,7 @@ function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnVa
     if (!groupKey && this && this.context) groupKey= this.context.groupKey;
     return (
         <div>
-            <button type='button' onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}>{text}</button>
+            <button type='button' className='button__hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
         </div>
     );
 }

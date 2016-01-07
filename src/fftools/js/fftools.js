@@ -16,10 +16,9 @@ import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import TblUtil from 'firefly/tables/TableUtil.js';
+import TestHistogramPanel from 'firefly/visualize/TestHistogramPanel.jsx';
 
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
-import TableRequest from 'firefly/tables/TableRequest.js';
-import {REQ_PRM} from 'firefly/tables/TableRequest.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
 
@@ -27,12 +26,14 @@ import {download} from 'firefly/util/WebUtil.js';
 firefly.bootstrap();
 firefly.process( {type : appDataCntlr.APP_LOAD} );
 
-function loadTestTable() {
-    firefly.process({type: appDataCntlr.SEARCH_HIDE});
-    var request = TableRequest.newInstance('IpacTableFromSource');
-    request.setParam('source', getRootURL() + 'WiseQuery.tbl');
-    request.setParam(REQ_PRM.TBL_ID, 'id-101');
-    TablesCntlr.dispatchFetchTable(request);
+const loadTestData = {
+    id: 'IpacTableFromSource',
+    source: getRootURL() + 'WiseQuery.tbl',
+    tbl_id: 'id-101'
+};
+
+function hideSearchPanel() {
+    flux.process({type:appDataCntlr.SEARCH_HIDE});
 }
 
 function doFileDownload() {
@@ -67,8 +68,10 @@ const App = React.createClass({
                     <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
                         <FormPanel
                             width='500px' height='300px'
-                            onSubmit={loadTestTable}
-                            onCancel={() => flux.process({type:appDataCntlr.SEARCH_HIDE})}>
+                            action={TablesCntlr.FETCH_TABLE}
+                            params={ loadTestData }
+                            onSubmit={hideSearchPanel}
+                            onCancel={hideSearchPanel}>
                             <b>Click Search to load a test table</b>
                             <p>
                                 <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
@@ -79,12 +82,16 @@ const App = React.createClass({
                         <ResultsPanel title={this.props.title} >
                             <TestImagePanel/>
 
+                            <div style={{paddingLeft:10}}> 
+                                <TestHistogramPanel/> 
+                            </div>
                             <div style={{height: '400px'}}>
                                 <TablePanel
                                     tableModel={table}
                                     selectable={true}
                                 />
                             </div>
+
                         </ResultsPanel>
                     </div>
                 </div>

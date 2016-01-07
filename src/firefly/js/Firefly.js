@@ -5,6 +5,7 @@
 import 'babel/polyfill';
 import 'isomorphic-fetch';
 import React from 'react';
+import 'styles/global.css';
 
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';

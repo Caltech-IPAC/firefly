@@ -73,6 +73,11 @@ public class JsonTableUtil {
      */
     public static JSONObject toJsonTableRequest(TableServerRequest req) {
         JSONObject treq = new JSONObject();
+
+        for (Param p : req.getParams()) {
+            treq.put(p.getName(), p.getValue());
+        }
+
         treq.put(TableServerRequest.ID_KEY, req.getRequestId());
         treq.put(TableServerRequest.START_IDX, req.getStartIndex());
         treq.put(TableServerRequest.PAGE_SIZE, req.getPageSize());
@@ -84,11 +89,6 @@ public class JsonTableUtil {
                 treq.put( key, req.getMeta().get(key) );
             }
         }
-        JSONObject params = new JSONObject();
-        for (Param p : req.getParams()) {
-            params.put(p.getName(), p.getValue());
-        }
-        treq.put("params", params);
 
         return treq;
     }

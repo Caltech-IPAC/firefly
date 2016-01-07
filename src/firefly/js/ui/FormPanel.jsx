@@ -3,9 +3,31 @@
  */
 
 import React from 'react';
+import CompleteButton from './CompleteButton.jsx';
+import TablesCntlr from '../tables/TablesCntlr.js';
+
+
+function handleFailfure() {
+
+}
+
+function createSuccessHandler(action, params, onSubmit) {
+
+    return (request={}) => {
+        if (action === TablesCntlr.FETCH_TABLE) {
+            if (params) {
+                request = Object.assign(request, params);
+            }
+            TablesCntlr.dispatchFetchTable(request);
+        }
+        if (onSubmit) {
+            onSubmit(request);
+        }
+    };
+}
 
 var FormPanel = function (props) {
-    var {children, onSubmit, onCancel} = props;
+    var {children, onSubmit, onCancel, onError, groupKey, action, params} = props;
 
     return (
         <div>
@@ -13,8 +35,12 @@ var FormPanel = function (props) {
                 {children}
             </div>
             <div style={{display: 'inline-flex', margin: '5px 10px'}}>
-                <button type='button' style={{height: '25px'}} onClick={onSubmit}><b>Search</b></button> &nbsp;&nbsp;
-                <button type='button' style={{height: '25px'}} onClick={onCancel}>Cancel</button>
+                <CompleteButton groupKey={groupKey}
+                                onSuccess={createSuccessHandler(action, params, onSubmit)}
+                                onFail={onError || handleFailfure}
+                                text = 'Search'
+                /> &nbsp;&nbsp;&nbsp;
+                <button type='button' className='button__std' onClick={onCancel}>Cancel</button>
             </div>
         </div>
     );
@@ -23,7 +49,10 @@ var FormPanel = function (props) {
 
 FormPanel.propTypes = {
     onSubmit: React.PropTypes.func,
-    onCancel: React.PropTypes.func
+    onCancel: React.PropTypes.func,
+    groupKey: React.PropTypes.string,
+    action: React.PropTypes.string,
+    params: React.PropTypes.object
 };
 
 

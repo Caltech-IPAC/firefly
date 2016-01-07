@@ -11,7 +11,6 @@ config = {
     src     : __dirname,
     entry   : {
         fftools: path.resolve(__dirname, 'js/fftools.js'),
-        histogram: path.resolve(__dirname, 'js/histogram.js'),
         fflib: path.resolve(firefly_root, 'src/firefly/js/fireflyJSLib.js')
     },
     firefly_dir : path.resolve(firefly_root, 'src/firefly')
