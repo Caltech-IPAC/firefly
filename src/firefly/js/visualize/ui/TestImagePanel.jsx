@@ -26,6 +26,9 @@ import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {flux} from '../../Firefly.js';
 
+//
+import {showFitsDownloadDialogNew} from '../../ui/FitsDownloadDialogNew.jsx';
+
 
 
 /**
@@ -156,6 +159,11 @@ function showFitsDialog() {
      showFitsDownloadDialog();
  }
 
+function showFitsDialogNew() {
+	console.log('showing new Fits Download  dialog');
+	showFitsDownloadDialogNew();
+}
+
 function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
@@ -185,6 +193,8 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <br/>
                     <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
+					<br/>
+					<button type='button' onClick={showFitsDialogNew}>New Fits Download Dialog</button>
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>

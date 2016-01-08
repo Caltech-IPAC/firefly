@@ -270,7 +270,7 @@ var FitsDialogTest= React.createClass({
                                     text='Download'
                                     onSuccess={this. _doFileDownload}
                                     onFail={this.resultsFail}
-                                    ialogId='FitsDownloadDialog'
+                                    dialogId='FitsDownloadDialog'
                                 />
 
                                 <br/>
