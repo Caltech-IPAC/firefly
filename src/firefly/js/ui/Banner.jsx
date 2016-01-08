@@ -19,6 +19,8 @@ function menu(menuComp) {
     }
 }
 
+
+
 function appIcon(icoSrc) {
     const src = icoSrc || 'http://localhost:8080/fftools/images/fftools-logo-offset-small-75x75.png';
     return (
@@ -64,6 +66,7 @@ const Banner = React.createClass({
 
     propTypes: {
         menu        : React.PropTypes.object,
+        readout     : React.PropTypes.object,
         appIcon     : React.PropTypes.string,
         altAppIcon  : React.PropTypes.string,
         visPreview  : React.PropTypes.object,

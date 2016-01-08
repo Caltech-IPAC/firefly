@@ -17,6 +17,7 @@ import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import TblUtil from 'firefly/tables/TableUtil.js';
 import TestHistogramPanel from 'firefly/visualize/TestHistogramPanel.jsx';
+import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
@@ -66,6 +67,7 @@ const App = React.createClass({
                 <div>
                     <Banner
                         menu={<Menu menu={appData.menu} /> }
+                        visPreview={<VisHeader/> }
                         appTitle='Firefly'
                     />
                     <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>

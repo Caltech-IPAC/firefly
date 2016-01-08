@@ -13,6 +13,9 @@ var RadioGroupInputField= React.createClass(
             alignment:  React.PropTypes.string.isRequired,
         },
 
+        contextTypes: {
+            groupKey: React.PropTypes.string
+        },
 
         componentWillMount() {
             // if no default value is specified, select the first option
