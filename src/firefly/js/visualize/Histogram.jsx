@@ -333,9 +333,9 @@ var Histogram = React.createClass(
                     followPointer: true,
                     borderWidth: 1,
                     formatter() {
-                        return (this.point.name ? `<b>Bin center:</b> ${this.point.name}<br/>` : '')+
+                        return '<span>'+(this.point.name ? `<b>Bin center:</b> ${this.point.name}<br/>` : '')+
                             (this.point.range ? `<b>Range:</b> ${this.point.range}<br/>` : '')+
-                            `<b>Count:</b> ${this.y}`;
+                            `<b>Count:</b> ${this.y}</span>`;
                     }
                 },
                 plotOptions: {

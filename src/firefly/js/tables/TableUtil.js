@@ -69,6 +69,16 @@ function find(data, ...paths) {
 }
 
 
+function isFullyLoaded(id, space='main') {
+    const table = findById(id, space);
+    if (table && table.model) {
+        if (table.model.tableMeta.isFullyLoaded) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * This function transform the json data from the server to fit the need of the UI.
  * For instance, the column's name is repeated after transform.  This is good for the UI.
@@ -93,6 +103,7 @@ function transform(tableModel) {
 export default {
     error,
     doValidate,
+    isFullyLoaded,
     findById,
     put,
     find,

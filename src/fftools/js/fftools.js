@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import get from 'lodash/object/get';
+import {get} from 'lodash';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -18,6 +18,7 @@ import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import TblUtil from 'firefly/tables/TableUtil.js';
 import TestHistogramPanel from 'firefly/visualize/TestHistogramPanel.jsx';
 
+import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
@@ -45,11 +46,13 @@ const App = React.createClass({
     propTypes: {
         appData : React.PropTypes.object.isRequired,
         title   : React.PropTypes.string,
-        table   : React.PropTypes.object
+        table   : React.PropTypes.object,
+        activeTbl : React.PropTypes.object,
+        histogramData : React.PropTypes.object
     },
 
     render() {
-        var {appData, title, table} = this.props;
+        var {appData, title, table, activeTbl, histogramData} = this.props;
 
         const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!appData.isReady) {
@@ -74,17 +77,20 @@ const App = React.createClass({
                             onCancel={hideSearchPanel}>
                             <b>Click Search to load a test table</b>
                             <p>
-                                <input type="button" name="dowload" value="Download Sample File" onClick={doFileDownload} />
+                                <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
                             </p>
                         </FormPanel>
                     </SearchPanel>
                     <div style={{padding: '10px'}}>
-                        <ResultsPanel title={this.props.title} >
-                            <TestImagePanel/>
-
-                            <div style={{paddingLeft:10}}> 
-                                <TestHistogramPanel/> 
+                        <ResultsPanel title={title} >
+                            <div>
+                             <TestImagePanel/>
                             </div>
+
+                            <div style={{paddingLeft:10}}>
+                                <TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> 
+                            </div>
+
                             <div style={{height: '400px'}}>
                                 <TablePanel
                                     tableModel={table}
@@ -104,7 +110,10 @@ function connector(state) {
     return {
         appData: state[appDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
-        table : TblUtil.findById('id-101')
+        table : TblUtil.findById('id-101'),
+        activeTbl : TblUtil.findById('activeTable'),
+        histogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], 'activeTable')
+
     };
 }
 const container = flux.createSmartComponent(connector, App);

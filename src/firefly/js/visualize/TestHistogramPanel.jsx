@@ -1,154 +1,109 @@
 import React from 'react';
-import {flux} from '../Firefly.js';
 
-import {dispatchLoadTblStats, dispatchLoadColData, HISTOGRAM_DATA_KEY} from './HistogramCntlr.js';
-import HistogramOptions from './HistogramOptions.jsx';
-import Histogram from './Histogram.jsx';
+import {set} from 'lodash';
+
+import FieldGroup from '../ui/FieldGroup.jsx';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import ValidationField from '../ui/ValidationField.jsx';
-import Validate from '../util/Validate.js';
-import FieldGroup from '../ui/FieldGroup.jsx';
-import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 
+import HistogramCntlr from '../visualize/HistogramCntlr.js';
+import HistogramTableViewPanel from '../visualize/HistogramTableViewPanel.jsx';
+
+import TablePanel from '../tables/ui/TablePanel.jsx';
+import TableUtil from '../tables/TableUtil.js';
+
+import TablesCntlr from '../tables/TablesCntlr.js';
 import TableRequest from '../tables/TableRequest.js';
+import {REQ_PRM} from '../tables/TableRequest.js';
 
+const TEST_TABLE_ID = 'activeTable';
 
+const TestHistogramPanel = React.createClass({
 
-var TestHistogramPanel = React.createClass({
+    propTypes: {
+        title : React.PropTypes.string.isRequired,
+        activeTbl : React.PropTypes.object.isRequired,
+        histogramData: React.PropTypes.object.isRequired
+    },
 
-        storeListenerRemove : null,
+    loadViewer(request) {
+        console.log(request);
+        if (request.srcTable) {
+            var treq = TableRequest.newInstance({
+                                id:'IpacTableFromSource',
+                                source: request.srcTable
+            });
+            set(treq, REQ_PRM.TBL_ID, TEST_TABLE_ID);
 
-        getInitialState() {
-            return {
-                histogramStore: flux.getState()[HISTOGRAM_DATA_KEY],
-                fldStore: flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY]
-            };
+            HistogramCntlr.dispatchSetupTblTracking(TEST_TABLE_ID);
+            TablesCntlr.dispatchFetchTable(treq);
+        }
+    },
 
+    showError() {
+        alert('Invalid input');
 
-            /*
-             isColStatsReady: histogramStore.isColStatsReady,
-             colStats: histogramStore.colStats,
-             searchReq: histogramStore.searchReq
-             */
-        },
+    },
 
-        componentWillUnmount() {
-            if (this.storeListenerRemove) this.storeListenerRemove();
-        },
-
-
-        componentDidMount() {
-            this.storeListenerRemove= flux.addListener(this.storeUpdate);
-        },
-
-        storeUpdate() {
-            var updateState = false;
-            var histogramStore = flux.getState()[HISTOGRAM_DATA_KEY];
-            if (histogramStore !== this.state.histogramStore) {
-                updateState = true;
-            }
-            var fldStore = flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY];
-            if (fldStore !== this.state.fldStore) {
-                updateState = true;
-            }
-            if (updateState) {
-                this.setState({histogramStore, fldStore});
-            }
-        },
-
-
-        showResults(success, request) {
-            console.log(request);
-            if (request.srcTable) {
-                const sreq = TableRequest.newInstance({
-                    id:'IpacTableFromSource',
-                    source: request.srcTable,
-                });
-                dispatchLoadTblStats(sreq);
-            }
-        },
-        resultsFail(request) {
-            this.showResults(false,request);
-        },
-
-        resultsSuccess(request) {
-            this.showResults(true,request); 
-        },
-
-        renderOptions() {
-            const { searchReq, isColStatsReady, colStats } = this.state.histogramStore;
-            var optionsForm = this.state.fldStore.fieldGroupMap['HISTOGRAM_OPTIONS_FORM'];
-            var algorithm =  (optionsForm) ? optionsForm.fields.algorithm.value : 'fixedSizeBins';
-
-            if (isColStatsReady) {
-                return (
-                    <HistogramOptions groupKey = 'HISTOGRAM_OPTIONS_FORM'
-                                      algorithm= {algorithm}
-                                      colValStats={colStats}
-                                      onOptionsSelected={(histogramParams) => {
-                                            console.log(histogramParams);
-                                            dispatchLoadColData(histogramParams, searchReq);
-                                        }
-                                      }/>
-                );
-            } else {
-                return 'Loading Options...';
-            }
-
-        },
-
-        renderHistogram() {
-            const { isColDataReady, histogramData, histogramParams } = this.state.histogramStore;
-
-            if (isColDataReady) {
-                return (
-                    <Histogram data={histogramData}
-                               desc={histogramParams.columnOrExpr}
-                               binColor='#c8c8c8'
-                               height={250}
-                    />
-                );
-            } else {
-                return 'Loading Histogram...';
-            }
-
-        },
-
-        render() {
+    getResults() {
+        var {activeTbl, histogramData} = this.props;
+        if (activeTbl) {
             return (
-                <div>
+                    <div>
+                        <div style={{height: '400px'}}>
+                            <TablePanel
+                                tableModel={activeTbl}
+                                selectable={true}
+                            />
+                        </div>
+                        <br/>
+                        <div style={{height: '300px'}}>
+                            <HistogramTableViewPanel tblHistogramData={histogramData}/>
+                        </div>
+                    </div>
+                );
+        } else {
+            return (
+                <div></div>
+            );
+        }
+
+    },
+
+    render() {
+        var {title} = this.props;
+        return (
+            <div>
+                <h2>{title}</h2>
+                <div style={{paddingLeft:10}}>
                     <div style={{display:'inline-block', verticalAlign:'top'}}>
-                        <FieldGroup groupKey='TEST_HISTOGRAM_PANEL' validatorFunc={null} keepState={true}>
+                        <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
                             <ValidationField style={{width:500}}
                                              fieldKey='srcTable'
-                                             groupKey='TEST_HISTOGRAM_PANEL'
+                                             groupKey='TBL_BY_URL_PANEL'
                                              initialState= {{ 
-                                                value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
-                                                validator: null,
-                                                tooltip: 'The URL to the source table',
-                                                label : 'Source Table:',
-                                                labelWidth : 120 
-                                             }}
-                                />
-                            <div style={{height:10}}/>
-                            <CompleteButton groupKey='TEST_HISTOGRAM_PANEL'
-                                            onSuccess={this.resultsSuccess}
-                                            onFail={this.resultsFail}
-                                />
+                                                    value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                                                    validator: null,
+                                                    tooltip: 'The URL to the source table',
+                                                    label : 'Source Table:',
+                                                    labelWidth : 120 
+                                                 }}
+                            />
+                            <br/><br/><br/>
+                            <CompleteButton groupKey='TBL_BY_URL_PANEL'
+                                            onSuccess={this.loadViewer}
+                                            onFail={this.showError}
+                            />
                         </FieldGroup>
                     </div>
-                    <br/><br/>
-                    <div style={{display:'inline-block', verticalAlign:'top'}}>
-                        <div style={{display:'inline-block',overflow:'auto',width:400,height:300,border:'1px solid black', marginLeft:10}}>
-                            {this.renderOptions()}
-                        </div>
-                        <div style={{display:'inline-block',overflow:'auto', width:600,height:300,border:'1px solid black', marginLeft:10}}>
-                            {this.renderHistogram()}
-                        </div>
-                    </div>
+                    <br/>
+                    <br/>
+                    {this.getResults()}
                 </div>
-            );
-        } }
-);
+            </div>
+        );
+    }
+});
+
 
 export default TestHistogramPanel;
