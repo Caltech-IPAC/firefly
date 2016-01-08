@@ -5,151 +5,134 @@ import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import _ from 'lodash';
 import './PointerPopup.css';
-
-
-const UP_POPUP_POINTER = 'images/up-pointer.gif';
-const LEFT_DOWN_POPUP_POINTER = 'images/left-down-pointer.gif';
+import UP_POPUP_POINTER from 'html/images/up-pointer.gif';
+import LEFT_DOWN_POPUP_POINTER from 'html/images/left-down-pointer.gif';
 
 const NONE = 'none';
 const NORTH = 'north';
 const SOUTH_WEST = 'sWest';
 
-var PointerPopup = React.createClass(
-{
 
-       statics : {
-           NONE,
-           NORTH,
-           SOUTH_WEST
-       },
-
-       shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
-
-       propTypes: {
-           x : React.PropTypes.number.isRequired,
-           y : React.PropTypes.number.isRequired,
-           message : React.PropTypes.object.isRequired
-       },
+function computePosition(e,dir,tgtX,tgtY) {
+    var {left,top} = e.getBoundingClientRect();
+    var x= tgtX-left;
+    var y= tgtY-top;
+    return (dir===NORTH) ? {x,y:y+18} : {x:x+10,y:y+5};
+}
 
 
-       getInitialState() {
-           return {
-               dir : NONE
-           };
-       },
-
-       computePosition(e,dir) {
-           var retval= {};
-           var elemRect = e.getBoundingClientRect();
-           var x= this.props.x-elemRect.left;
-           var y= this.props.y-elemRect.top;
-           if (dir===NORTH) {
-               retval.x= x;
-               retval.y= y+18;
-           }
-           else {
-               retval.x= x+10;
-               retval.y= y+5;
-           }
-           return retval;
-
-       },
-
-       computeDir(e) {
-
-           var elemRect = e.getBoundingClientRect();
-
-           if ((this.props.y-window.scrollY)+elemRect.height+30>window.innerHeight) {
-               this.setState({dir: SOUTH_WEST});
-           }
-           else {
-               this.setState({dir: NORTH});
-           }
-
-       },
-
-       updateOffsets(e) {
-           var pos= this.computePosition(e,this.state.dir);
-           if (this.state.dir===NORTH) {
-               var left= pos.x - e.offsetWidth/2;
-               var adjust= 0;
-               if (left<5) {
-                   adjust= (left-5);
-                   left= 5;
-
-               }
-               e.style.left= left +'px';
-               e.style.top= pos.y+'px';
-               var upPointer= ReactDOM.findDOMNode(this.refs.upPointer);
-               upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+'px';
-               e.style.visibility='visible';
-           }
-           else if (this.state.dir===SOUTH_WEST) {
-               e.style.left= (pos.x+20) +'px';
-               var top= pos.y - (e.offsetHeight/2+15);
-               top= top<5 ? 5 : top;
-               e.style.top= top+'px';
-               var leftDownPointer= ReactDOM.findDOMNode(this.refs.leftDownPointer);
-               leftDownPointer.style.left= -20+'px';
-               leftDownPointer.style.top= 8+'px';
-               leftDownPointer.style.paddingLeft= 0;
-               e.style.visibility='visible';
-           }
-
-       },
-
-       updatePosition() {
-           var e= ReactDOM.findDOMNode(this);
-           this.updateOffsets(e);
-           _.defer(function() {
-               this.computeDir(e);
-           }.bind(this));
-       },
-
-       componentDidMount() {
-           this.updatePosition();
-           //window.addEventListener('resize',this.resizeListener)
-       },
 
 
-       componentDidUpdate() {
-           var e= ReactDOM.findDOMNode(this);
-           this.updateOffsets(e);
-       },
+
+class PointerPopup extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state= {
+            dir : NONE
+        };
+    }
+
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+
+    componentDidMount() { this.updatePosition(); }
+    componentDidUpdate() { this.updateOffsets(ReactDOM.findDOMNode(this)); }
 
 
-       render() {
-           if (!this.props.x && !this.props.y) return;
-           if (this.state.dir===NORTH || this.state.dir===NONE) {
-               return (
-                       <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}>
-                           <img src={UP_POPUP_POINTER} ref='upPointer'/>
-                           <div style= {{marginTop:'-3px'}}>
-                               <div style={{padding : '5px'}}
-                                       className='ff-popup-pointer'>
-                              {this.props.message}
-                               </div>
-                           </div>
-                       </div>
-               );
-           }
-           else {
-               return (
-                       <div style={{position:'absolute',left:0,top:0 }}>
-                           <img src={LEFT_DOWN_POPUP_POINTER}
-                                   ref='leftDownPointer'
-                                   style={{display:'inline-block', position:'absolute'}}/>
-                           <div style= {{marginTop:'-5px',display:'inline-block'}}>
-                               <div style={{padding : '5px'}}
-                                       className='ff-popup-pointer '>
-                              {this.props.message}
-                               </div>
-                           </div>
-                       </div>
-               );
+    computeDir(e) {
+        var elemRect = e.getBoundingClientRect();
+        if ((this.props.y-window.scrollY)+elemRect.height+30>window.innerHeight) {
+            this.setState({dir: SOUTH_WEST});
+        }
+        else {
+            this.setState({dir: NORTH});
+        }
+    }
 
-           }
-       }
-   });
+    updateOffsets(e) {
+        var {dir}= this.state;
+        var {x,y}= this.props;
+        var {scrollX,scrollY}= window;
+        var pos= computePosition(e,dir,x,y);
+        if (dir===NORTH) {
+            var left= pos.x - e.offsetWidth/2 - scrollX;
+            var adjust= 0;
+            if (left<5) {
+                adjust= (left-5);
+                left= 5;
+
+            }
+            e.style.left= left +'px';
+            e.style.top= (pos.y - scrollY)+'px';
+            var upPointer= ReactDOM.findDOMNode(this.refs.upPointer);
+            upPointer.style.paddingLeft= (((e.offsetWidth/2)+adjust) -15)+'px';
+            upPointer.style.display= 'block';
+            upPointer.style.marginBottom= '3px';
+            e.style.visibility='visible';
+        }
+        else if (dir===SOUTH_WEST) {
+            e.style.left= (pos.x+20 - scrollX) +'px';
+            var top= pos.y - (e.offsetHeight/2+15);
+            top= top<5 ? 5 : top;
+            e.style.top= (top-scrollY)+'px';
+            var leftDownPointer= ReactDOM.findDOMNode(this.refs.leftDownPointer);
+            leftDownPointer.style.left= -20+'px';
+            leftDownPointer.style.top= 8+'px';
+            leftDownPointer.style.paddingLeft= 0;
+            e.style.visibility='visible';
+        }
+
+    }
+
+    updatePosition() {
+        var e= ReactDOM.findDOMNode(this);
+        this.updateOffsets(e);
+        _.defer(function() {
+            this.computeDir(e);
+        }.bind(this));
+    }
+
+
+
+    render() {
+        var {x,y,message}= this.props;
+        if (!x && !y) return;
+        if (this.state.dir===NORTH || this.state.dir===NONE) {
+            return (
+                <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}>
+                    <img src={UP_POPUP_POINTER} ref='upPointer'/>
+                    <div style= {{marginTop:-3}}>
+                        <div style={{padding : 5}} className='ff-popup-pointer'>
+                            {message}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        else {
+            return (
+                <div style={{position:'absolute',left:0,top:0 }}>
+                    <img src={LEFT_DOWN_POPUP_POINTER}
+                         ref='leftDownPointer'
+                         style={{display:'inline-block', position:'absolute'}}/>
+                    <div style= {{marginTop:-5,display:'inline-block'}}>
+                        <div style={{padding : 5}} className='ff-popup-pointer '>
+                            {message}
+                        </div>
+                    </div>
+                </div>
+            );
+
+        }
+    }
+}
+
+
+PointerPopup.propTypes= {
+    x : React.PropTypes.number.isRequired,
+    y : React.PropTypes.number.isRequired,
+    message : React.PropTypes.object.isRequired
+};
+
+
 
 export default PointerPopup;

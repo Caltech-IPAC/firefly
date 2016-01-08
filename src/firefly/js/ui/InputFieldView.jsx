@@ -1,133 +1,84 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
+import sCompare from 'react-addons-shallow-compare';
 import ReactDOM from 'react-dom';
 import PointerPopup from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import './InputFieldView.css';
-
-const EXCLAMATION = 'tmp-stuff/exclamation16x16.gif';
-
-var InputFieldView = React.createClass(
-{
-
-       mixins : [PureRenderMixin],
-
-       propTypes: {
-           valid   : React.PropTypes.bool,
-           visible : React.PropTypes.bool,
-           message : React.PropTypes.string,
-           tooltip : React.PropTypes.string,
-           label : React.PropTypes.string,
-           inline : React.PropTypes.bool,
-           value   : React.PropTypes.string.isRequired,
-           onChange : React.PropTypes.func.isRequired
-       },
-
-       warnIcon : null,
-
-       getDefaultProps() {
-           return {
-               valid : true,
-               visible : true,
-               message: ''
-
-           };
-       },
-
-       getInitialState() {
-           return {
-               hasFocus : false,
-               infoPopup : false,
-               onChange : null,
-               warningOffsetX : 0,
-               warningOffsetY : 0
-           };
-       },
-
-       onChange(ev) {
-           if (this.props.onChange) {
-               this.props.onChange(ev);
-           }
-       },
-
-       alertEntry(ev) {
-
-           this.setState({infoPopup:true});
-       },
-       alertLeave(ev) {
-          this.setState({infoPopup:false});
-       },
-
-       onFocus(ev) {
-           if (!this.state.hasFocus) {
-               this.setState({hasFocus:true, infoPopup:false});
-           }
-       },
+import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 
-       onBlur(ev) {
-           this.setState({hasFocus:false, infoPopup:false});
-       },
-
-       makeWarningArea(warn) {
-           var warnIcon= '';
-           if (warn) {
-               warnIcon= (
-                       <div onMouseOver={this.alertEntry} onMouseLeave={this.alertLeave}>
-                           <img ref={(c) => {
-                                             this.computeWarningXY(c);
-                                             this.warnIcon= c;
-                                            }
-                           }
-                                src={EXCLAMATION}/>
-                       </div>
-               );
-           }
-
-           return (
-                   <div style={
-                      {
-                       paddingLeft: '3px',
-                       width: '16px',
-                       height: '16px',
-                       display:'inline-block'}
-                       }>
-                        {warnIcon}
-                   </div>
-               );
-       },
-
-       computeStyle() {
-           if (!this.props.valid) {
-               return 'ff-inputfield-view-error';
-           }
-           else {
-               return this.state.hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
-           }
-       },
-
-       makeMessage() {
-           return (
-                   <div>
-                       <img src={EXCLAMATION}
-                               style={{display:'inline-block',
-                                       paddingRight:5}}/>
-                       <div style={{display:'inline-block'}}> {this.props.message} </div>
-                   </div>
-           );
-       },
 
 
-    componentDidMount() {
-        //if (!this.props.valid) {
-        //    this.computeWarningXY();
-        //}
+function computeStyle(valid,hasFocus) {
+    if (!valid) {
+        return 'ff-inputfield-view-error';
+    }
+    else {
+        return hasFocus ? 'ff-inputfield-view-focus' : 'ff-inputfield-view-valid';
+    }
+}
 
-    },
+
+function makeMessage(message) {
+    return (
+        <div>
+            <img src={EXCLAMATION} style={{display:'inline-block', paddingRight:5}}/>
+            <div style={{display:'inline-block'}}> {message} </div>
+        </div>
+    );
+}
+
+const makeInfoPopup = (mess,x,y) => <PointerPopup x={x} y={y} message={makeMessage(mess)}/>;
+
+
+
+
+class InputFieldView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.warnIcon= null;
+        this.state= {
+            hasFocus : false,
+            infoPopup : false,
+            onChange : null,
+            warningOffsetX : 0,
+            warningOffsetY : 0
+        };
+    }
+
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+
+    makeWarningArea(warn) {
+        var warnIcon= '';
+        if (warn) {
+            warnIcon= (
+                <div onMouseOver= {() => this.setState({infoPopup:true})}
+                     onMouseLeave={() => this.setState({infoPopup:false})}>
+                    <img src={EXCLAMATION}
+                         ref={(c) => {
+                                      this.computeWarningXY(c);
+                                      this.warnIcon= c;
+                                      }
+                           } />
+                </div>
+            );
+        }
+
+        return (
+            <div style={ { paddingLeft: '3px',
+                           width: '16px',
+                           height: '16px',
+                           display:'inline-block'} }>
+                {warnIcon}
+            </div>
+        );
+    }
+
+
 
     componentDidUpdate() {
         this.computeWarningXY(this.warnIcon);
-    },
+    }
 
     computeWarningXY(warnIcon) {
         if (warnIcon) {
@@ -136,46 +87,59 @@ var InputFieldView = React.createClass(
             var elemRect = e.getBoundingClientRect();
             var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
             var warningOffsetY = elemRect.top - bodyRect.top;
-            this.setState({warningOffsetX, warningOffsetY} );
+            if (warningOffsetX!==this.state.warningOffsetX && warningOffsetY!=this.state.warningOffsetY) {
+                this.setState({warningOffsetX, warningOffsetY} );
+            }
         }
-    },
+    }
 
-    makeInfoPopup() {
-
-        return (
-                <PointerPopup x={this.state.warningOffsetX} y={this.state.warningOffsetY}
-                message={this.makeMessage()}/>
-        );
-    },
 
     render() {
-        var retval= null;
-        if (this.props.visible) {
-            retval= (
+        var {infoPopup, warningOffsetX, warningOffsetY,hasFocus}= this.state;
+        var {visible,label,tooltip,labelWidth,value,style,valid,message,onChange}= this.props;
+        if (visible) {
+            return (
                 <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'} }>
-                    <InputFieldLabel label={this.props.label}
-                        tooltip={this.props.tooltip}
-                        labelWidth={this.props.labelWidth}
+                    <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />
+                    <input style={Object.assign({display:'inline-block'}, style)}
+                           className={ () => computeStyle(valid,hasFocus)}
+                           onChange={(ev) => onChange ? onChange(ev) : null}
+                           onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
+                           onBlur={ () => this.setState({hasFocus:false, infoPopup:false})}
+                           value={value}
+                           title={tooltip}
                     />
-                    <input style={Object.assign({display:'inline-block'}, this.props.style)}
-                        className={this.computeStyle()}
-                        onChange={this.onChange}
-                        onFocus={this.onFocus}
-                        onBlur={this.onBlur}
-                        value={this.props.value}
-                        title={this.props.tooltip}
-                    />
-                       {this.makeWarningArea(!this.props.valid)}
-                       {this.state.infoPopup?this.makeInfoPopup() : ''}
+                    {this.makeWarningArea(!valid)}
+                    {infoPopup?makeInfoPopup(message,warningOffsetX,warningOffsetY) : ''}
                 </div>
             );
         }
 
-        return retval;
+        return null;
     }
 
 
-});
+
+}
+
+InputFieldView.propTypes= {
+    valid   : React.PropTypes.bool,
+    visible : React.PropTypes.bool,
+    message : React.PropTypes.string,
+    tooltip : React.PropTypes.string,
+    label : React.PropTypes.string,
+    inline : React.PropTypes.bool,
+    labelWidth: React.PropTypes.number,
+    style: React.PropTypes.object,
+    value   : React.PropTypes.string.isRequired,
+    onChange : React.PropTypes.func.isRequired
+};
+
+InputFieldView.defaultProps= {
+    valid : true,
+    visible : true,
+    message: ''
+};
 
 export default InputFieldView;
 
