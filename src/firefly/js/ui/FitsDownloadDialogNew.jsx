@@ -109,7 +109,7 @@ class FitsDownloadDialog extends React.Component {
 			var {fields}= this.state;
 			if (!fields) return false;
 
-			return <FitsDownloadDialogForm />;
+			return <FitsDownloadDialogForm fields={fields} />;
 		}
 
 
@@ -120,21 +120,23 @@ function renderOperationOption(hasOperation){
 
 	if (hasOperation) {
 		return (
-
+           <div>
 				<RadioGroupInputField
 					initialState={{
                            tooltip: 'Please select an option',
                            label : 'FITS file:'
                            }}
-					ptions={[
+					options={[
                             { label:'original', value:'fileTypeOrig'},
                             { label:'crop', value:'fileTypeCrop'}
 
                             ]}
 					alignment={'vertical'}
 					fieldKey='operationOption'
-				/>
 
+				/>
+	      <br/>
+	 </div>
 		);
 	}
 
@@ -143,7 +145,7 @@ function renderOperationOption(hasOperation){
 function renderThreeBand(hasThreeColorBand,  color) {
 	if (hasThreeColorBand) {
 		return (
-
+				<div>
 				<RadioGroupInputField
 					initialState={{
                       tooltip: 'Please select an option',
@@ -154,22 +156,30 @@ function renderThreeBand(hasThreeColorBand,  color) {
                               value: 'colorOpt'
                            }
                          ]}
+					alignment={'vertical'}
 					fieldKey='threeBandColor'
+
 				/>
+
+				<br/>
+				</div>
 
 		);
 	}
 
 }
-function FitsDownloadDialogForm( ){
+function FitsDownloadDialogForm ({fields}) {
 
 
-	const { plotState, color, hasThreeColorBand, hasOperation} = getInitialPlotState();
+	//const { plotState, color, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
-	this.plotState=plotState;
 
-    var renderOperationButtons = renderOperationOption(hasOperation);
-	var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, color);
+
+
+	//this.plotState=plotState;
+
+    var renderOperationButtons = renderOperationOption( true);//hasOperation);
+	var renderThreeBandButtons = renderThreeBand(true, 'Green');//hasThreeColorBand, color);
 	return (
 		<FieldGroup groupKey='FITS_DOWNLOAD_FORM'  keepState={true}>
 			<div style={{padding:'5px'}}>
@@ -189,7 +199,7 @@ function FitsDownloadDialogForm( ){
 							alignment={'vertical'}
 							fieldKey='fileType'
 					    	/>
-
+					    	<br/>
 						    <div>{renderOperationButtons}</div>
 						   <div>{renderThreeBandButtons}</div>
 
