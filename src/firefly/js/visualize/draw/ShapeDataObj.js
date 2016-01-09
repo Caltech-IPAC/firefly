@@ -60,7 +60,7 @@ function makeCircleWithRadius(pt1, radius, unitType= UnitType.PIXEL) {
 }
 
 function makeRectangle(pt1, width, height, unitType= UnitType.PIXEL) {
-	return Object.assign(make(ShapeType.Circle), {pts:[pt1],width,height, unitType});
+	return Object.assign(make(ShapeType.Rectangle), {pts:[pt1],width,height, unitType});
 }
 
 function makeRectangleByCorners(pt1, pt2) {
@@ -259,7 +259,8 @@ function drawLine(drawObj, ctx, drawTextAry, plot, drawParams, onlyAddToPath) {
 
 	if (text && inView) {
 		const textLocPt= makeTextLocationLine(plot, textLoc, fontSize,pts[0], pts[1]);
-		drawText(drawObj, drawTextAry, plot, plot.getViewPortCoords(textLocPt), drawParams);
+		drawText(drawObj, drawTextAry, plot, plot.getViewPortCoords(textLocPt),
+				drawParams);
 	}
 
 	if (style==Style.HANDLED && inView) {
@@ -334,7 +335,7 @@ function drawCircle(drawObj, ctx, drawTextAry, plot, drawParams) {
  * @param drawParams
  */
 function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
-	var {text, textOffset}= drawObj;
+	var {text, textOffset, renderOptions}= drawObj;
 	var {fontName, fontSize, fontWeight, fontStyle}= drawParams;
 
 	if (!inPt) return;
@@ -365,8 +366,8 @@ function drawText(drawObj, drawTextAry, plot, inPt, drawParams) {
 
 		//FIXME:color text black on white background - yellow on white background is not readable
 		//TODO: better solution would be to adapt text color with background
-		DrawUtil.drawText(drawTextAry, text, x, y,'black', fontName+FONT_FALLBACK,
-            fontSize, fontWeight, fontStyle);
+		DrawUtil.drawText(drawTextAry, text, x, y,'black', renderOptions,
+				fontName+FONT_FALLBACK, fontSize, fontWeight, fontStyle);
 	}
 }
 
@@ -387,9 +388,9 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 	var pt0, pt1;
 	var x, y, w, h;
 	if (pts.length===1 && width && height) {
-		pt0 = plot.getViewPortCoords(pts[0]);
+		pt0 = plot ? plot.getViewPortCoords(pts[0]) : pts[0];
 		textPt = pt0;
-		if (plot.pointInViewPort(pt0)) {
+		if (!plot || plot.pointInViewPort(pt0)) {
 			inView = true;
 
 			switch (unitType) {
@@ -434,11 +435,11 @@ function drawRectangle(drawObj, ctx, drawTextAry,  plot, drawParams, onlyAddToPa
 
 	}
 	else {
-		pt0 = plot.getViewPortCoords(pts[0]);
-		pt1 = plot.getViewPortCoords(pts[1]);
+		pt0 = plot ? plot.getViewPortCoords(pts[0]) : pts[0];
+		pt1 = plot ? plot.getViewPortCoords(pts[1]) : pts[1];
 		if (!pt0 || !pt1) return;
 		textPt = pt1;
-		if (plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
+		if (!plot || plot.pointInViewPort(pt0) || plot.pointInViewPort(pt1)) {
 			inView = true;
 
 			x = pt0.x;

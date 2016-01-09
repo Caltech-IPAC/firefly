@@ -3,9 +3,8 @@
  */
 
 import React from 'react';
-import sCompare from 'react-addons-shallow-compare';
-import {visRoot} from '../ImagePlotCntlr.js';
-import {flux} from '../../Firefly.js';
+import {ThumbnailView} from './ThumbnailView.jsx';
+import {getActivePlotView} from '../PlotViewUtil.js';
 
 
 export function VisHeaderView({visRoot}) {
@@ -32,8 +31,12 @@ export function VisHeaderView({visRoot}) {
     return (
         <div>
             <div style={rS}><div style={{position:'absolute', color:'white'}}>mouse readout here</div></div>
-            <div style={oS}><div style={{position:'absolute', color:'white'}}>thumbnail here</div></div>
+            <ThumbnailView plotView={getActivePlotView(visRoot)}/>
             <div style={oS}><div style={{position:'absolute', color:'white'}}>magnifier here</div></div>
         </div>
     );
 }
+
+VisHeaderView.propTypes= {
+    visRoot : React.PropTypes.object.isRequired
+};

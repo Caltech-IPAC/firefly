@@ -121,7 +121,7 @@ export default {
  * @param {string} plotId
  * @param scrollScreenPt a new point to scroll to in screen coordinates
  */
-function dispatchProcessScroll(plotId,scrollScreenPt) {
+export function dispatchProcessScroll(plotId,scrollScreenPt) {
     flux.process({type: PROCESS_SCROLL,
         payload: {plotId, scrollScreenPt}
     });
@@ -203,19 +203,19 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  * @param {string} plotId
  * @param {UserZoomTypes} zoomType
  */
-function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
+export function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
 
 /**
  * Set the plotId of the active plot view
  * @param {string} plotId
  */
-function dispatchChangeActivePlotView(plotId) {
+export function dispatchChangeActivePlotView(plotId) {
     if (!PlotViewUtil.isActivePlotView(visRoot(),plotId)) {
         flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });
     }
 }
 
-function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
+export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
     flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
 }
 

@@ -4,7 +4,7 @@
 import React from 'react';
 import CsysConverter from '../CsysConverter.js';
 import {makeScreenPt} from '../Point.js';
-import {encodeUrl, ParamType} from '../../util/WebUtil.js';
+import {encodeServerUrl, ParamType} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
 
 
@@ -123,7 +123,7 @@ function createImageUrl(plot, tile) {
         width: tile.width,
         height: tile.height
     };
-    return encodeUrl(getRootURL() + 'sticky/FireFly_ImageDownload', ParamType.QUESTION_MARK, params);
+    return encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
 }
 
 

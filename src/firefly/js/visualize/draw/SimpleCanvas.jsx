@@ -11,7 +11,7 @@ function drawOnCanvas(c,drawIt) {
     drawIt(c);
 }
 
-class SimpleCanvas extends React.Component {
+export class SimpleCanvas extends React.Component {
 
 
     constructor(props) {
@@ -46,5 +46,4 @@ SimpleCanvas.propTypes= {
     height : React.PropTypes.number.isRequired
 };
 
-export default SimpleCanvas;
 

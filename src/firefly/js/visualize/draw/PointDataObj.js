@@ -148,7 +148,7 @@ function drawPt(ctx, drawTextAry, pt, plot,drawParams, renderOptions, vpPtM, onl
 function drawXY(ctx, drawTextAry, x, y, drawParams,renderOptions, onlyAddToPath) {
     var {text}= drawParams;
     drawSymbolOnPlot(ctx, x,y, drawParams,renderOptions, onlyAddToPath);
-    if (text) DrawUtil.drawText(drawTextAry, text, x, y,drawParams.color);
+    if (text) DrawUtil.drawText(drawTextAry, text, x, y,drawParams.color, renderOptions);
 }
 
 function drawSymbolOnPlot(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {

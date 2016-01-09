@@ -24,19 +24,19 @@ const DIR_ARROW_DRAW_OBJ= 'DirectionArrayDrawObj';
 
 /**
  *
- * @param {{x:name,y:name,type:string}} startPt
- * @param {{x:name,y:name,type:string}} endPt
+ * @param startPt
+ * @param endPt
  * @param text
  * @return {object}
  */
-function makeDirectionArrowDrawObj({startPt, endPt, text}) {
+function makeDirectionArrowDrawObj(startPt, endPt, text) {
     if (!startPt || !endPt) return null;
 
     var obj= DrawObj.makeDrawObj();
     obj.type= DIR_ARROW_DRAW_OBJ;
     obj.startPt= startPt;
     obj.endPt= endPt;
-    obj.text= text;
+    if (text) obj.text= text;
     return obj;
 }
 
@@ -68,6 +68,16 @@ var draw=  {
         return dist;
     },
 
+    /**
+     *
+     * @param drawObj
+     * @param ctx
+     * @param drawTextAry
+     * @param plot
+     * @param def
+     * @param vpPtM
+     * @param onlyAddToPath
+     */
     draw(drawObj,ctx,drawTextAry,plot,def,vpPtM,onlyAddToPath) {
         var drawParams= makeDrawParams(drawObj,def);
         var {startPt,endPt,renderOptions}= drawObj;
@@ -93,10 +103,10 @@ export default {makeDirectionArrowDrawObj,draw,DIR_ARROW_DRAW_OBJ};
 
 
 
-function makeDrawParams(pointDataObj,def) {
+function makeDrawParams(obj,def) {
     return {
-        color: DrawUtil.getColor(this.color,def.color),
-        text : pointDataObj.text
+        color: DrawUtil.getColor(obj.color,def.color),
+        text : obj.text
     };
 }
 
@@ -115,7 +125,8 @@ function drawDirectionArrow(ctx,drawTextAry,startPt,endPt,drawParams,renderOptio
     DrawUtil.drawPath(ctx, color,2,drawList,false, renderOptions);
 
     //DrawUtil.drawText(ctx,ret.textX, ret.textY, color, '9px serif',  text, renderOptions);
-    DrawUtil.drawText(drawTextAry, text, ret.textX, tet.textY,color);
+
+    DrawUtil.drawText(drawTextAry, text, ret.textX, ret.textY,color, renderOptions);
 }
 
 function toRegion(startPt,endPt,drawParams,renderOptions) {

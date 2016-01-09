@@ -7,9 +7,10 @@ import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
-import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import VisMouseCntlr  from '../VisMouseCntlr.js';
-import DrawerComponent  from '../draw/DrawerComponent.jsx';
+import ImagePlotCntlr, {dispatchProcessScroll,dispatchChangeActivePlotView}
+                               from '../ImagePlotCntlr.js';
+import VisMouseCntlr, {MouseState}  from '../VisMouseCntlr.js';
+import {PlotViewDrawer}  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
 import {flux} from '../../Firefly.js';
 import {logError} from '../../util/WebUtil.js';
@@ -55,23 +56,23 @@ class ImageViewerView extends React.Component {
     scroll(plotId,mouseState,screenX,screenY) {
         if (screenX && screenY) {
             switch (mouseState) {
-                case VisMouseCntlr.MouseState.DOWN :
+                case MouseState.DOWN :
                     ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
                     var {scrollX, scrollY}= this.props.plotView;
                     this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
                     break;
-                case VisMouseCntlr.MouseState.DRAG :
+                case MouseState.DRAG :
                     if (this.plotDrag) {
                         const newScrollPt= this.plotDrag(screenX,screenY);
-                        ImagePlotCntlr.dispatchProcessScroll(plotId,newScrollPt);
+                        dispatchProcessScroll(plotId,newScrollPt);
                     }
                     break;
-                case VisMouseCntlr.MouseState.UP :
+                case MouseState.UP :
                     this.plotDrag= null;
                     //console.log(`end drag ${screenX},${screenY}`);
                     break;
-                case VisMouseCntlr.MouseState.CLICK:
-                    ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
+                case MouseState.CLICK:
+                    dispatchChangeActivePlotView(plotId);
                     break;
             }
         }
@@ -114,7 +115,8 @@ class ImageViewerView extends React.Component {
                                      left:0, right:0, position:'absolute'}} >
                             {drawingAry}
                         </div>
-                        <EventLayer plot={plot} width={viewPortWidth} height={viewPortHeight}
+                        <EventLayer plotId={plotId} viewPort={plot.viewPort}
+                                    width={viewPortWidth} height={viewPortHeight}
                                     eventCallback={(plotId,mouseState,screenPt,screenX,screenY) =>
                                                     this.eventCB(plotId,mouseState,screenPt,screenX,screenY)}/>
                     </div>
@@ -202,7 +204,10 @@ function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
  */
 function makeDrawingAry(plotView,dlAry) {
     if (!dlAry) return [];
-    return dlAry.map( (dl) => <DrawerComponent plotView={plotView} drawLayer={dl} key={dl.drawLayerId}/> );
+    var {width,height}= plotView.primaryPlot.viewPort.dim;
+    return dlAry.map( (dl) => <PlotViewDrawer plotView={plotView} drawLayer={dl}
+                                              width={width} height={height}
+                                              key={dl.drawLayerId}/> );
 }
 
 

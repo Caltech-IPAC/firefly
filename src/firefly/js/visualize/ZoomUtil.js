@@ -280,7 +280,7 @@ function getArcSecPerPix(plot, zoomFact) {
 }
 
 function getZoomLevelForScale(plot, arcsecPerPix) {
-    return plot.projection.getImagePixelScaleInArcSec() / arcsecPerPix;
+    return plot.projection.getPixelScaleArcSec() / arcsecPerPix;
 }
 
 function convertZoomToString(level) {

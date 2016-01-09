@@ -189,9 +189,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={() => selectArea()}>{selectText}</button>
                     <button type='button' onClick={() => distanceTool()}>{distText}</button>
                     <button type='button' onClick={() => layerPopup()}>Layers</button>
-                    <br/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
-                    <br/>
                     <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
                 </FieldGroup>
             </div>

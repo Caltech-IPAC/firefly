@@ -67,14 +67,14 @@ function getPlotViewAry(visRoot) { return visRoot.plotViewAry; }
  * @param plotId
  * @return {boolean} is active, there will be only one active at a time
  */
-function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId===plotId; }
+export function isActivePlotView(visRoot,plotId) { return visRoot.activePlotId===plotId; }
 
 /**
  * Get the active PlotView from the store
  * @param visRoot - root of the visualization object in store
  * @return {object} the active plot view
  */
-function getActivePlotView(visRoot) {
+export function getActivePlotView(visRoot) {
     return visRoot.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
 }
 

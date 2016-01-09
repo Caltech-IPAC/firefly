@@ -429,7 +429,7 @@ function computeScrollSizes(primaryPlot,viewDim) {
  * @param {object} plotView
  * @return {{scrollWidth: number, scrollHeight: number}}
  */
-const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPlot,plotView.viewDim);
+export const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPlot,plotView.viewDim);
 
 
 

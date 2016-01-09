@@ -76,16 +76,6 @@ var FieldGroupToStoreMixin=  {
                 value: this.getValue(),
                 fieldState: this.props.initialState
             }} );
-        //this.storeListenerRemove= FieldGroupStore.listen( ()=> this.updateFieldStateWithProps(this.props));
-        //_.defer(()=> {
-        //    FieldGroupActions.mountComponent( {
-        //        groupKey: this.props.groupKey,
-        //        fieldKey : this.props.fieldKey,
-        //        mounted : true,
-        //        value: this.getValue(),
-        //        fieldState: this.props.initialState
-        //    } );
-        //});
     },
 
     componentWillUnmount() {
@@ -99,12 +89,7 @@ var FieldGroupToStoreMixin=  {
                 value: this.getValue()
             }} );
 
-        //formActions.mountComponent(this.getFormKey(),this.props.fieldKey,false,this.getValue(),this.props.initialState)
     },
-
-    //updateFieldStateOnMount() {
-    //    this.updateFieldStateWithProps(this.props)
-    //},
 
     updateFieldStateWithProps(props) {
         var {groupKey, fieldKey}= props;

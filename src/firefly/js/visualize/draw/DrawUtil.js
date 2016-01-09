@@ -88,18 +88,25 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
  * @param x
  * @param y
  * @param color
+ * @param renderOptions
  * @param fontFamily
  * @param size
  * @param fontWeight
  * @param fontStyle
  */
 function drawText(drawTextAry,text, x,y,color,
+                  renderOptions,
                   fontFamily='helvetica', size='9px',
                   fontWeight='normal', fontStyle='normal') {
 
 
     //todo
-    // it I don't use canvas I need to set css and shadow and calculate translation
+    // it I don't use canvas I need to set css and shadow
+    if (renderOptions && renderOptions.translation) {
+        var {translation}= renderOptions;
+        x+= translation.x;
+        y+= translation.y;
+    }
 
     var style= {
         position:'absolute',
@@ -172,10 +179,10 @@ function addStyle(ctx,renderOptions) {
     var {shadow,rotAngle,translation}= renderOptions;
     if (shadow) {
         var {blur,color,offX,offY} = shadow;
-        if (blur) ctx.shawdowBlur= blur;
-        if (color) ctx.shawdowColor= color;
-        if (offX) ctx.shawdowOffsetX= offX;
-        if (offY) ctx.shawdowOffsetY= offY;
+        if (blur) ctx.shadowBlur= blur;
+        if (color) ctx.shadowColor= color;
+        if (offX) ctx.shadowOffsetX= offX;
+        if (offY) ctx.shadowOffsetY= offY;
     }
 
     if (rotAngle) {

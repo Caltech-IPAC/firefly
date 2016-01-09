@@ -124,23 +124,23 @@ function stringAryToWorldPt(wpParts) {
     var parseLat;
     var parsedCoordSys;
     if (wpParts.length===3) {
-        parsedLon= wpParts[0];
-        parseLat= wpParts[1];
+        parsedLon= Number(wpParts[0]);
+        parseLat= Number(wpParts[1]);
         parsedCoordSys= CoordinateSys.parse(wpParts[2]);
         if (!isNaN(parsedLon) && !isNaN(parseLat) && parsedCoordSys!==null) {
             retval= makeWorldPt(parsedLon,parseLat,parsedCoordSys);
         }
     }
     else if (wpParts.length===2) {
-        parsedLon= wpParts[0];
-        parseLat= wpParts[1];
+        parsedLon= Number(wpParts[0]);
+        parseLat= Number(wpParts[1]);
         if (!isNaN(parsedLon) && !isNaN(parseLat)) {
             retval= makeWorldPt(parsedLon,parseLat);
         }
     }
     else if (wpParts.length===5 || wpParts.length===4) {
-        parsedLon= wpParts[0];
-        parseLat= wpParts[1];
+        parsedLon= Number(wpParts[0]);
+        parseLat= Number(wpParts[1]);
         parsedCoordSys= CoordinateSys.parse(wpParts[2]);
         var resolver= wpParts.length===5 ? parseResolver(wpParts[4]) : Resolver.UNKNOWN;
         return makeWorldPt(parsedLon,parseLat,parsedCoordSys, wpParts[3],resolver);

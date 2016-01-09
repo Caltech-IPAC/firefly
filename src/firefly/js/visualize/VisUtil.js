@@ -14,6 +14,7 @@ import CoordinateSys from './CoordSys.js';
 import {CCUtil} from './CsysConverter.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
+import {CysConverter} from './CsysConverter.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -268,27 +269,23 @@ const getRotationAngle= function(plot) {
     return retval;
 };
 
-const isPlotNorth= function(plot) {
-
+export function isPlotNorth(plot) {
     var retval= false;
-    var iWidth = plot.getImageWidth();
-    var iHeight = plot.getImageHeight();
-    var ix = iWidth / 2;
-    var iy = iHeight / 2;
-    var wpt1 = plot.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    var ix = plot.dataWidth/ 2;
+    var iy = plot.dataHeight/ 2;
+    var cc= CysConverter.make(plot);
+    var wpt1 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
     if (wpt1) {
-        var cdelt1 = plot.getImagePixelScaleInDeg();
-        var zfact = plot.getZoomFact();
-        var wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / zfact) * (5));
-
-        var spt1 = plot.getScreenCoords(wpt1);
-        var spt2 = plot.getScreenCoords(wpt2);
+        var cdelt1 = cc.getImagePixelScaleInDeg();
+        var wpt2 = makeWorldPt(wpt1.getLon(), wpt1.getLat() + (Math.abs(cdelt1) / plot.zoomFactor) * (5));
+        var spt1 = cc.getScreenCoords(wpt1);
+        var spt2 = cc.getScreenCoords(wpt2);
         if (spt1 && spt2) {
-            retval = (spt1.getIX()===spt2.getIX() && spt1.getIY() > spt2.getIY());
+            retval = (spt1.x===spt2.x && spt1.y > spt2.y);
         }
     }
     return retval;
-};
+}
 
 const getPossibleZoomLevels= function() {
         return ZoomUtil._levels;

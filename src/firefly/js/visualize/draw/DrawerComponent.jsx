@@ -4,6 +4,7 @@
 
 import React from 'react';
 import difference from 'lodash/array/difference';
+import isEqual from 'lodash/lang/isEqual';
 import sCompare from 'react-addons-shallow-compare';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import TextDrawer from './TextDrawer.jsx';
@@ -34,21 +35,24 @@ class DrawerComponent extends React.Component {
         var {textDrawAry:old}= this.state;
         //if ((!textDrawAry && !old)  || !textDrawAry.length && !old.length) return;
         if (!difference(textDrawAry,old).length) return;
+
+        var doUpdate=
+            old.length!=textDrawAry.length ||
+            textDrawAry.some( (e,idx) =>
+                        !isEqual(e.style,old[idx].style) || e.text!=old[idx].text);
+        if (!doUpdate) return;
         this.setState({textDrawAry});
     }
 
     render() {
-        var {plotView, drawLayer}= this.props;
-        if (!plotView || !drawLayer) return false;
-        if (!isVisible(drawLayer,plotView.plotId)) return false;
-        var {primaryPlot}= plotView;
-        if (!primaryPlot) return false;
-        var {dim:{width,height}}= primaryPlot.viewPort;
+        var {plotView, drawLayer, width, height}= this.props;
+        if (plotView && !isVisible(drawLayer,plotView.plotId)) return false;
         var style= {position:'absolute',left:0,right:0,width,height};
 
         return (
-            <div className='drawComponent' style={style}>
-                <CanvasWrapper plotView={plotView} drawLayer={drawLayer} textUpdateCallback={this.textUpdateCallback.bind(this)}/>
+            <div className='drawerComponent' style={style}>
+                <CanvasWrapper {...this.props}
+                               textUpdateCallback={this.textUpdateCallback.bind(this)}/>
                 {makeTextDrawIfNecessary(this.state.textDrawAry,width,height)}
             </div>
         );
@@ -56,12 +60,34 @@ class DrawerComponent extends React.Component {
 }
 
 DrawerComponent.propTypes= {
-    plotView : React.PropTypes.object.isRequired,
-    drawLayer : React.PropTypes.object.isRequired
+    width: React.PropTypes.number.isRequired,
+    height: React.PropTypes.number.isRequired,
+    plotView : React.PropTypes.object, // plotView is not used if not drawLayer
+    drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
+    drawData : React.PropTypes.array // only used it drawLayer is not defined
 };
 
 
+export function PlotViewDrawer(props) {
+    return <DrawerComponent {...props} />;
+}
+
+PlotViewDrawer.propTypes= {
+    width: React.PropTypes.number.isRequired,
+    height: React.PropTypes.number.isRequired,
+    plotView : React.PropTypes.object.isRequired, // plotView is not used if not drawLayer
+    drawLayer : React.PropTypes.object.isRequired //drawLayer or drawData is Required
+};
+
+export function AnyDrawer(props) {
+    return <DrawerComponent {...props} />;
+}
+
+AnyDrawer.propTypes= {
+    width: React.PropTypes.number.isRequired,
+    height: React.PropTypes.number.isRequired,
+    drawData : React.PropTypes.array.isRequired // only used it drawLayer is not defined
+};
 
 
-export default DrawerComponent;
 

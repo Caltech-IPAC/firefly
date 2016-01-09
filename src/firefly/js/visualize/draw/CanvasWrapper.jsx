@@ -6,23 +6,37 @@ import React from 'react';
 import DrawLayer from './DrawLayer.js';
 import sCompare from 'react-addons-shallow-compare';
 import Drawer from './Drawer.js';
+import {makeDrawingDef} from './DrawingDef.js';
 
 
 
 
-function updateDrawer(drawer,plotView, drawLayer) {
-    var {drawData:{data,highlightData,selectIdxAry} }= drawLayer;
-    var {dim:{width,height}}= plotView.primaryPlot.viewPort;
+function updateDrawer(drawer,plotView, width, height, drawLayer) {
+
+    var data, highlightData, selectIdxAry;
+    var {drawData}= drawLayer;
+    var plot= plotView ? plotView.primaryPlot : null;
+    if (Array.isArray(drawData)) {
+        data= drawData;
+        highlightData= null;
+        selectIdxAry= null;
+    }
+    else {
+        data= getDataForPlot(drawData.data,plotView.plotId);
+        highlightData= drawData.highlightData;
+        selectIdxAry= drawData.selectIdxAry;
+    }
     drawer.isPointData= drawLayer.isPointData;
-    var data= getDataForPlot(data,plotView.plotId);
-    drawer.setData(data,plotView.primaryPlot,width,height,drawLayer.drawingDef);
-    drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotView.plotId));
+    drawer.setData(data,plot,width,height,drawLayer.drawingDef);
+    if (highlightData) {
+        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotView.plotId));
+    }
 }
 
 
 /**
  *
- * @param drawLayer
+ * @param {object} drawLayer
  * @param {object} drawer
  * @param {number} w width
  * @param {number} h height
@@ -30,29 +44,24 @@ function updateDrawer(drawer,plotView, drawLayer) {
  */
 function makeCanvasLayers(drawLayer,drawer,w,h) {
 
+    var {drawLayerId,canSelect,canHighlight}= drawLayer;
     var style={width:w, height:w, left:0, right:0, position:'absolute'};
     var retAry= [];
-    var {drawLayerId}= drawLayer;
-
 
     retAry.push(<canvas style={style} key={drawLayerId} ref={(c) => drawer.setPrimCanvas(c,w,h)}/>);
 
-    if (drawLayer.canSelect) {
-        var sId= selectId(drawLayerId);
+    if (canSelect) {
+        var sId= drawLayerId+'-Select';
         retAry.push(<canvas style={style} key={sId} ref={(c) => drawer.setHighlightCanvas(c,w,h)}/>);
     }
-    if (drawLayer.canHighlight) {
-        var hId= highlightId(drawLayerId);
+    if (canHighlight) {
+        var hId= drawLayerId+'-Highlight';
         retAry.push(<canvas style={style} key={hId} ref={(c) => drawer.setSelectCanvas(c,w,h)}/>);
     }
     return retAry;
 }
 
-
-
 const isVisible= (drawLayer,plotId) => drawLayer.visiblePlotIdAry.includes(plotId);
-const selectId = (drawLayerId) => drawLayerId+'Select';
-const highlightId = (drawLayerId) => drawLayerId+'Highlight';
 
 
 const getDataForPlot= (data,plotId) => {
@@ -60,6 +69,15 @@ const getDataForPlot= (data,plotId) => {
     if (Array.isArray(data)) return data;
     else                     return data[plotId];
 };
+
+function makeDummyDrawLayer(drawData) {
+    return {
+        drawLayerId:'no-layer-defined',
+        drawingDef:makeDrawingDef(),
+        isPointData: false,
+        drawData
+    };
+}
 
 
 class CanvasWrapper extends React.Component {
@@ -73,8 +91,8 @@ class CanvasWrapper extends React.Component {
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillMount() {
-        var {drawLayer,textUpdateCallback}= this.props;
-        this.drawer= Drawer.makeDrawer(drawLayer.drawingDef);
+        var {textUpdateCallback}= this.props;
+        this.drawer= Drawer.makeDrawer();
         this.drawer.textUpdateCallback= textUpdateCallback;
     }
 
@@ -83,25 +101,21 @@ class CanvasWrapper extends React.Component {
     }
 
     componentDidUpdate() {
-        var {plotView,drawLayer}= this.props;
-        if (this.drawer) updateDrawer(this.drawer,plotView,drawLayer);
+        var {plotView,drawData,drawLayer,width,height}= this.props;
+        if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
+        if (this.drawer) updateDrawer(this.drawer,plotView,width,height,drawLayer);
 
     }
 
 
     render() {
-        var {plotView, drawLayer}= this.props;
-        if (!plotView || !drawLayer) return false;
-        if (!isVisible(drawLayer,plotView.plotId)) return false;
-        var {primaryPlot}= plotView;
-        if (!primaryPlot) return false;
-
-        var {dim:{width,height}}= primaryPlot.viewPort;
-        var canvasLayers= makeCanvasLayers(drawLayer,this.drawer,width,height);
+        var {plotView, drawData,drawLayer,width,height}= this.props;
+        if (plotView && !isVisible(drawLayer,plotView.plotId)) return false;
+        if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
+        var canvasLayers= makeCanvasLayers(drawLayer, this.drawer,width,height);
 
         var style= {position:'absolute',left:0,right:0,width,height};
         if (!canvasLayers.length) return false;
-
 
         return (
             <div className='canvasWrapper' style={style}>
@@ -112,9 +126,12 @@ class CanvasWrapper extends React.Component {
 }
 
 CanvasWrapper.propTypes= {
-    plotView : React.PropTypes.object.isRequired,
-    drawLayer : React.PropTypes.object.isRequired,
-    textUpdateCallback : React.PropTypes.func.isRequired
+    textUpdateCallback : React.PropTypes.func.isRequired,
+    width: React.PropTypes.number.isRequired,
+    height: React.PropTypes.number.isRequired,
+    plotView : React.PropTypes.object,
+    drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
+    drawData : React.PropTypes.array // only used it drawLayer is not defined
 };
 
 export default CanvasWrapper;

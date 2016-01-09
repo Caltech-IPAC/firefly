@@ -13,7 +13,7 @@ import {getAbsoluteLeft, getAbsoluteTop} from '../../util/BrowserUtil.js';
 
 
 
-var EventLayer= React.createClass(
+export var EventLayer= React.createClass(
 {
 
     mouseDown: false,
@@ -23,53 +23,36 @@ var EventLayer= React.createClass(
     mixins : [PureRenderMixin],
 
     propTypes: {
-        plot : React.PropTypes.object.isRequired,
         width : React.PropTypes.number.isRequired,
         height : React.PropTypes.number.isRequired,
-        eventCallback : React.PropTypes.func.isRequired
+        eventCallback : React.PropTypes.func.isRequired,
+        plotId : React.PropTypes.string,
+        viewPort : React.PropTypes.object
     },
 
-    fireEvent(ev,plot,mouseState) {
+    fireEvent(ev,plotId,viewPort,mouseState) {
         var spt;
         ev.preventDefault();
         ev.stopPropagation();
-        var {x:viewPortX,y:viewPortY} = plot.viewPort;
+        var {x:viewPortX,y:viewPortY} = viewPort;
         var {screenX, screenY, offsetX, offsetY}= ev.nativeEvent;
         if (ev.clientX && ev.clientY && offsetX && offsetY) {
-            //spt= makeScreenPt( viewPortX+ev.clientX, viewPortY+ev.clientY);
             spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
         }
-        //var e= ReactDOM.findDOMNode(this);
-        //var pc= CysConverter.make(plot);
-        //VisMouseCntlr.fireMouseEvent(plotId,mouseState, spt);
-        //var ip= pc.getImageCoords(spt);
-        //var wpt= pc.getWorldCoords(spt);
-        //console.log(`fire: ${mouseState.key}: x:${spt.x}, y:${spt.y}, ix:${ip.x}, iy:${ip.y}, wx:${wpt.getLon()}, wy:${wpt.getLat()}`);
-        //console.log(`      clientX: ${ev.clientX}, clientY: ${ev.clientY}, screenX: ${ev.screenX}, screenY: ${ev.screenY}`);
-        //console.log('fire: '+mouseState.key);
-        //console.log(`component: ${mouseState.key} screenX: ${screenX}, screenY: ${screenY}, offsetX: ${offsetX}, offsetY: ${offsetY}`);
-        //if (mouseState==VisMouseCntlr.MouseState.DRAG) {
-            this.props.eventCallback(plot.plotId,mouseState,spt,screenX,screenY);
-        //}
+        this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },
 
-    fireDocEvent(nativeEv,plot,mouseState) {
+    fireDocEvent(nativeEv,plotId,viewPort,mouseState) {
         var spt;
         nativeEv.preventDefault();
         nativeEv.stopPropagation();
-        var {x:viewPortX,y:viewPortY} = plot.viewPort;
-        //var {screenX, screenY, offsetX, offsetY}= nativeEv;
+        var {x:viewPortX,y:viewPortY} = viewPort;
         var {screenX, screenY, x, y}= nativeEv;
-        if (screenX && screenY) {
-            //spt= makeScreenPt( viewPortX+offsetX, viewPortY+offsetY);
-        }
         var e= ReactDOM.findDOMNode(this);
         var compOffX= x-getAbsoluteLeft(e)+window.scrollX;
         var compOffY= y-getAbsoluteTop(e)+window.scrollY;
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
-        //console.log(`document: ${mouseState.key} screenX: ${screenX}, screenY: ${screenY}, offsetX: ${compOffX}, offsetY: ${compOffY}`);
-        //this.props.eventCallback(plotId,mouseState,spt,,);
-        this.props.eventCallback(plot.plotId,mouseState,spt,screenX,screenY);
+        this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },
 
 
@@ -85,27 +68,23 @@ var EventLayer= React.createClass(
 
     onClick(ev) {
         this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.CLICK);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.CLICK);
     },
 
     onDoubleClick(ev) {
         this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.DOUBLE_CLICK);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.DOUBLE_CLICK);
     },
 
     onMouseUp() {
-        //this.mouseDown= false;
-        //this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.UP);
-        //
-        //
-        //document.removeEventListener('mousemove', this.docMouseMoveCallback);
-        //document.removeEventListener('mouseup', this.docMouseUpCallback);
-
     },
 
     onMouseDown(ev) {
         this.mouseDown= true;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.DOWN);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.DOWN);
 
 
         document.addEventListener('mousemove', this.docMouseMoveCallback);
@@ -115,13 +94,15 @@ var EventLayer= React.createClass(
 
     onDocumentMouseMove(nativeEv) {
         if (this.mouseDown) {
-            this.fireDocEvent(nativeEv,this.props.plot,VisMouseCntlr.MouseState.DRAG);
+            var {viewPort,plotId}= this.props;
+            this.fireDocEvent(nativeEv,plotId,viewPort,VisMouseCntlr.MouseState.DRAG);
         }
     },
 
     onDocumentMouseUp(nativeEv) {
         this.mouseDown= false;
-        this.fireDocEvent(nativeEv,this.props.plot,VisMouseCntlr.MouseState.UP);
+        var {viewPort,plotId}= this.props;
+        this.fireDocEvent(nativeEv,plotId,viewPort,VisMouseCntlr.MouseState.UP);
         document.removeEventListener('mousemove', this.docMouseMoveCallback);
         document.removeEventListener('mouseup', this.docMouseUpCallback);
     },
@@ -134,37 +115,44 @@ var EventLayer= React.createClass(
 
     onMouseLeave(ev) {
         //this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.EXIT);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.EXIT);
     },
 
     onMouseEnter(ev) {
         //this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.ENTER);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.ENTER);
     },
 
 
     onMouseMove(ev) {
-        this.fireEvent(ev,this.props.plot,this.mouseDown?VisMouseCntlr.MouseState.DRAG_COMPONENT : VisMouseCntlr.MouseState.MOVE);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,this.mouseDown?VisMouseCntlr.MouseState.DRAG_COMPONENT : VisMouseCntlr.MouseState.MOVE);
     },
 
 
     onTouchCancel(ev) {
         this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.UP);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.UP);
     },
 
     onTouchEnd(ev) {
         this.mouseDown= false;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.UP);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.UP);
     },
 
     onTouchMove(ev) {
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.DRAG);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.DRAG);
     },
 
     onTouchStart(ev) {
         this.mouseDown= true;
-        this.fireEvent(ev,this.props.plot,VisMouseCntlr.MouseState.DOWN);
+        var {viewPort,plotId}= this.props;
+        this.fireEvent(ev,plotId,viewPort,VisMouseCntlr.MouseState.DOWN);
     },
 
     render() {

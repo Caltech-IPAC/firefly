@@ -13,16 +13,16 @@ export const makeProjection= function(gwtProjStr) {
    var gwtProj= window.ffgwt.Visualize.ProjectionSerializer.deserializeProjection(gwtProjStr);
    return {
       isWrappingProjection() {
-         gwtProj.isWrappingProjection();
+         return gwtProj.isWrappingProjection();
       },
       getPixelWidthDegree() {
-         gwtProj.getPixelWidthDegree();
+         return gwtProj.getPixelWidthDegree();
       },
       getPixelHeightDegree() {
-         gwtProj.getPixelHeightDegree();
+         return gwtProj.getPixelHeightDegree();
       },
       getPixelScaleArcSec() {
-         gwtProj.getPixelScaleArcSec();
+         return gwtProj.getPixelScaleArcSec();
       },
       getImageCoords(x,y) {
          var pt= gwtProj.getImageCoordsSilent(x,y);

@@ -22,9 +22,9 @@ var drawerCnt=0;
 class Drawer {
 
 
-    constructor(drawingDef) {
+    constructor() {
         this.drawerID;
-        this.drawingDef= drawingDef;
+        this.drawingDef= null;
         this.data;
         this.highlightData;
         this.drawConnect= null;
@@ -100,6 +100,7 @@ class Drawer {
      * @param plot
      * @param width
      * @param height
+     * @param drawingDef
      */
     setData(data,plot,width,height,drawingDef) {
         if (data && !Array.isArray(data)) data= [data];
@@ -219,7 +220,8 @@ class Drawer {
         var sCtx= selectLayerCanvas? selectLayerCanvas.getContext('2d') : null;
 
         if (sCtx) {
-            this.redrawSelected(sCtx, this.plot, this.data, selectedIdxAry,
+            var cc= CsysConverter.make(this.plot);
+            this.redrawSelected(sCtx, cc, this.data, selectedIdxAry,
                 selectLayerCanvas.width, selectLayerCanvas.height);
         }
     }
@@ -229,7 +231,8 @@ class Drawer {
         this.highlightData=highlightData;
         var hCtx= highlightLayerCanvas? highlightLayerCanvas.getContext('2d') : null;
         if (hCtx)  {
-            this.redrawHighlight(hCtx, this.plot, highlightData,
+            var cc= CsysConverter.make(this.plot);
+            this.redrawHighlight(hCtx, cc, highlightData,
                 highlightLayerCanvas.width,highlightLayerCanvas.height);
         }
     }
@@ -262,31 +265,33 @@ class Drawer {
         var w= primaryCanvas.width;
         var h= primaryCanvas.height;
 
-        this.redrawPrimary(primaryCanvas, this.plot, pCtx, this.data, this.drawingDef, w,h);
-        this.redrawHighlight(hCtx, this.plot, this.highlightData, this.drawingDef, w,h);
-        this.redrawSelected(sCtx, this.plot, this.data, this.selectedIdxAry, w, h);
+        var cc= CsysConverter.make(this.plot);
+        this.redrawPrimary(primaryCanvas, cc, pCtx, this.data, this.drawingDef, w,h);
+        this.redrawHighlight(hCtx, cc, this.highlightData, this.drawingDef, w,h);
+        this.redrawSelected(sCtx, cc, this.data, this.selectedIdxAry, w, h);
     }
 
 
-    redrawSelected(ctx, plot, data, selectedIdxAry,w,h) {
+    //todo - selected is not working , needs to be finished
+    redrawSelected(ctx, cc, data, selectedIdxAry,w,h) {
         if (!ctx) return;
         var selectedData= [];
         DrawUtil.clear(ctx,w,h);
         if (canDraw(ctx,data)) {
-            var cc= plot ? null : CsysConverter.make(plot);
             var vpPtM= makeViewPortPt(0,0);
+            //todo - this will not work - must use base data decimated data
+            //todo - parameters are not correct - how do a decimate with selected? figure it out
             selectedData= this.decimateData(data.filter( (pt) => pt.isSelected() ),null,false);
             selectedData.forEach( (pt) => drawObj(ctx, null, this.drawingDef, cc, pt, vpPtM, false));
         }
     }
 
-    redrawHighlight(ctx, plot, highlightData,drawingDef,w,h) {
+    redrawHighlight(ctx, cc, highlightData,drawingDef,w,h) {
         if (!ctx) return;
         DrawUtil.clear(ctx,w,h);
         if (!highlightData || !highlightData.length) return;
 
         if (canDraw(ctx,highlightData)) {
-            var cc= plot ? CsysConverter.make(plot) : null;
             var vpPtM= makeViewPortPt(0,0);
             highlightData.forEach( (pt) => drawObj(ctx, null, drawingDef, cc, pt, vpPtM, false) );
         }
@@ -294,13 +299,13 @@ class Drawer {
 
 
 
-    redrawPrimary(canvas, plot, ctx, data, drawingDef,w,h) {
+    redrawPrimary(canvas, cc, ctx, data, drawingDef,w,h) {
         if (!ctx) return;
         this.clear();
         var params;
         if (canDraw(ctx,data)) {
-            var cc= CsysConverter.make(plot);
-            var drawData= this.decimateData(data, true);
+            this.decimatedData= this.decimateData(this.decimate, data, cc,true,this.decimatedData);
+            var drawData= this.decimatedData;
             this.drawTextAry= [];
             if (drawData.length>500) {
                 params= makeDrawingParams(canvas, this.drawTextAry, drawingDef,cc,drawData,
@@ -323,36 +328,43 @@ class Drawer {
     }
 
 
-    decimateData(inData, useColormap) {
-        if (this.decimate && inData.length>150) {
-            this.decimatedData= this.doDecimateData(inData,this.decimatedData, useColormap);
-            return this.decimatedData;
-        }
-        else {
-            return inData;
-        }
-    }
+    //decimateData(decimate, inData, cc, useColormap, oldDecimatedData) {
+    //    if (decimate && inData.length>150) {
+    //        return this.doDecimateData(inData,oldDecimatedData,cc,useColormap);
+    //    }
+    //    else {
+    //        return inData;
+    //    }
+    //}
 
-    doDecimateData(inData, oldDecimatedData, useColormap) {
+    /**
+     *
+     * @param decimate
+     * @param inData
+     * @param cc
+     * @param useColormap
+     * @param oldDecimatedData
+     * @return {*}
+     */
+    decimateData(decimate, inData, cc, useColormap, oldDecimatedData) {
+        if (!decimate || inData.length<=150) return inData;
+
         var retData= inData;
-        var plot= this.plot;
-        if (this.decimate && inData.length>150 ) {
-            var dim = plot.viewPort.dim;
-            var spt= CCUtil.getScreenCoords(plot,makeViewPortPt(0,0));
-            var defCol= this.drawingDef.color;
-            if (!oldDecimatedData ||
-                dim.width!==this.decimateDim.width ||
-                dim.height!==this.decimateDim.height ||
-                    defCol!==this.lastDecimationColor ||
-                    !pointEquals(spt,this.lastDecimationPt))  {
-                retData= doDecimation(inData, plot, useColormap);
-                this.lastDecimationColor= defCol;
-                this.lastDecimationPt=spt;
-                this.decimateDim= dim;
-            }
-            else if (this.decimatedData) {
-                retData= this.decimatedData;
-            }
+        var dim = cc.viewPort.dim;
+        var spt= cc.getScreenCoords(makeViewPortPt(0,0));
+        var defCol= this.drawingDef.color;
+        if (!oldDecimatedData ||
+            dim.width!==this.decimateDim.width ||
+            dim.height!==this.decimateDim.height ||
+            defCol!==this.lastDecimationColor ||
+            !pointEquals(spt,this.lastDecimationPt))  {
+            retData= doDecimation(inData, cc, useColormap);
+            this.lastDecimationColor= defCol;
+            this.lastDecimationPt=spt;
+            this.decimateDim= dim;
+        }
+        else if (oldDecimatedData) {
+            retData= oldDecimatedData;
         }
         return retData;
     }
@@ -419,8 +431,8 @@ class Drawer {
 
 
 
-    static makeDrawer(drawingDef) {
-        return new Drawer(drawingDef);
+    static makeDrawer() {
+        return new Drawer();
     }
 
 }
@@ -675,9 +687,9 @@ function setupColorMap(data, maxEntry) {
     }
 }
 
-function doDecimation(inData, plot, useColormap) {
+function doDecimation(inData, cc, useColormap) {
     var i,j;
-    var dim = plot.viewPort.dim;
+    var dim = cc.viewPort.dim;
 
     var supportCmap= useColormap && ENABLE_COLORMAP;
 
@@ -702,7 +714,6 @@ function doDecimation(inData, plot, useColormap) {
 //                ",drawID="+drawerID+
 //                ",data="+Integer.toHexString(_data.hashCode()));
 
-    var cc= CsysConverter.make(plot);
     var first200= [];
     var decimatedAddCnt= 0;
     var totalInViewPortCnt= 0;

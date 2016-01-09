@@ -567,7 +567,7 @@ export class CysConverter {
      * @return {CysConverter}
      */
     static make(plot) {
-        return new CysConverter(plot);
+        return plot ? new CysConverter(plot) : null;
     }
 }
 

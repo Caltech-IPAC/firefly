@@ -4,7 +4,7 @@
 
 import React from 'react';
 import PlotViewUtil, {isDrawLayerVisible}  from '../PlotViewUtil.js';
-import SimpleCanvas from '../draw/SimpleCanvas.jsx';
+import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
 import {ColorChangeType} from '../draw/DrawLayer.js';
 import {dispatchChangeDrawingDef, dispatchChangeVisibility,
