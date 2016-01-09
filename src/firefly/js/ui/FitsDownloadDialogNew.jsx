@@ -22,6 +22,9 @@ import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
+//global variable
+var plotState;
+
 function getDialogBuilder() {
 	var popup= null;
 	return () => {
@@ -46,12 +49,13 @@ export function showFitsDownloadDialogNew() {
 }
 
 
- function getInitialPlotState( ) {
+ function getInitialPlotState( ){//plotState) {
 
 	//plot and plotState are global variable for this class
 
 	 var plot =  PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
-	 var plotState =plot.plotState;
+	 //var plotState =plot.plotState;
+	 plotState=plot.plotState;
 
 	var threeColorBandUsed=false;
 	var color;
@@ -71,7 +75,7 @@ export function showFitsDownloadDialogNew() {
 	var cropNotRotate =  isCrop && !isRotation ? true: false;
 
 	return {
-		plotState,
+
 		color,
 		hasThreeColorBand:threeColorBandUsed,
 		hasOperation: cropNotRotate
@@ -85,7 +89,7 @@ class FitsDownloadDialog extends React.Component {
 	 constructor(props) {
 		super(props);
 		FieldGroupUtils.initFieldGroup('FITS_DOWNLOAD_FORM');
-		this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};
+		this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};//, plotState:PlotViewUtil.getActivePlotView(visRoot()).primaryPlot.plotState};
 
 
 	  }
@@ -99,17 +103,23 @@ class FitsDownloadDialog extends React.Component {
 
 		componentDidMount()
 		{
-			this.unbinder = FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => {
-				if (this.isMounted) this.setState({fields});
+			//this.unbinder = FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields, plotState) => {
+
+			this.unbinder= FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => {
+				this.setState({fields});
 			});
 		}
 
-		render()
+
+render()
 		{
+			//var {fields}= this.state;//.fields;
+			//var {plotState }= this.state.plotState;
+
 			var {fields}= this.state;
 			if (!fields) return false;
 
-			return <FitsDownloadDialogForm fields={fields} />;
+			return <FitsDownloadDialogForm fields={fields} />;//plotSate={plotState} />;
 		}
 
 
@@ -139,7 +149,9 @@ function renderOperationOption(hasOperation){
 	 </div>
 		);
 	}
-
+	else {
+		return <br/>;
+	}
 }
 
 function renderThreeBand(hasThreeColorBand,  color) {
@@ -166,20 +178,20 @@ function renderThreeBand(hasThreeColorBand,  color) {
 
 		);
 	}
-
+    else {
+		return <br/>;
+	}
 }
+
 function FitsDownloadDialogForm ({fields}) {
 
 
-	//const { plotState, color, hasThreeColorBand, hasOperation} = getInitialPlotState();
-
-
-
+	const { color, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
 	//this.plotState=plotState;
 
-    var renderOperationButtons = renderOperationOption( true);//hasOperation);
-	var renderThreeBandButtons = renderThreeBand(true, 'Green');//hasThreeColorBand, color);
+    var renderOperationButtons = renderOperationOption(hasOperation);
+	var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, color);
 	return (
 		<FieldGroup groupKey='FITS_DOWNLOAD_FORM'  keepState={true}>
 			<div style={{padding:'5px'}}>
@@ -199,9 +211,9 @@ function FitsDownloadDialogForm ({fields}) {
 							alignment={'vertical'}
 							fieldKey='fileType'
 					    	/>
-					    	<br/>
-						    <div>{renderOperationButtons}</div>
-						   <div>{renderThreeBandButtons}</div>
+					    	
+						      {renderOperationButtons}
+					    	  {renderThreeBandButtons}
 
 						   <div style={{'text-align':'center'}}>
 							 < CompleteButton groupKey='FITS_DOWNLOAD_FORM'
@@ -223,21 +235,25 @@ function FitsDownloadDialogForm ({fields}) {
 
 
 FitsDownloadDialogForm.propTypes= {
-	fields: React.PropTypes.object.isRequired,
-    plotState:React.PropTypes.object,
+	fields: React.PropTypes.object.isRequired
+
 };
 
 
 function showResults(success, request) {
 
+	var rel = {};
 	console.log(request);
-	var rel={};
-	var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-		rel[k]=request[k];
-		if (idx<array.length-1)  return;
 
-	},'');
+	if (success) {
 
+
+	   Object.keys(request).reduce(function (buildString, k, idx, array) {
+		 rel[k] = request[k];
+		 if (idx < array.length - 1)  return;
+
+	    }, '');
+    }
 	return rel;
 }
 
@@ -250,8 +266,10 @@ function resultsFail(request) {
 function resultsSuccess(request) {
 	var rel = showResults(true,request);
 
-
-
+    if (Object.keys(rel).length==0){
+		console.log(request);
+		return resultsFail(request);
+	}
 	var ext;
 	var bandSelect=null;
 	var whichOp=null;
@@ -275,9 +293,9 @@ function resultsSuccess(request) {
 	}
 
 
-	var fitsFile = FitsDownloadDialogForm.plotState.getOriginalFitsFileStr(band) == 'undefined' || whichOp == null ?
-			FitsDownloadDialogForm.plotState.getWorkingFitsFileStr(band) :
-			FitsDownloadDialogForm.plotState.getOriginalFitsFileStr(band);
+	var fitsFile =plotState.getOriginalFitsFileStr(band) == 'undefined' || whichOp == null ?
+			plotState.getWorkingFitsFileStr(band) :
+			plotState.getOriginalFitsFileStr(band);
 
 	if (ext.toLowerCase() =='fits') {
 

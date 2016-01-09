@@ -9,6 +9,7 @@ var RadioGroupInputField= React.createClass(
         mixins: [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
+            inline : React.PropTypes.bool,
             options: React.PropTypes.array.isRequired,
             alignment:  React.PropTypes.string.isRequired,
         },
