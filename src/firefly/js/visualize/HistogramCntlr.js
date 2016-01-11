@@ -18,13 +18,15 @@ import TablesCntlr from '../tables/TablesCntlr.js';
      searchRequest: TableRequest - if source table changes, histogram store should be recreated
      isColStatsReady: boolean
      colStats: [ColValuesStatistics]
-       histogram_id
+       histogram_id - not yet implemented; the data below are at the same level as those above
        isColDataReady: boolean
        histogramData: [[numInBin: int, min: double, max: double]*]
        histogramParams: {
           columnOrExpr: column name or column expression
           algorithm: 'fixedSizeBins' or 'byesianBlocks'
           numBins: int - for 'fixedSizeBins' algorithm
+          x: [log,reverse] x (domain) axis options
+          y: [log,reverse] y (counts) axis options
           falsePositiveRate: double - for 'byesianBlocks' algorithm (default 0.05)
           minCutoff: double
           maxCutoff: double
@@ -265,8 +267,11 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     const req = TableRequest.newInstance({id:'HistogramProcessor'});
     req.searchRequest = JSON.stringify(sreq);
 
-    // histogarm parameters
+    // histogram parameters
     req.columnExpression = histogramParams.columnOrExpr;
+    if (histogramParams.x && histogramParams.x.includes('log')) {
+        req.columnExpression = 'log('+req.columnExpression+')';
+    }
     if (histogramParams.numBins) { // fixed size bins
         req.numBins = histogramParams.numBins;
     }
@@ -285,7 +290,16 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
     LoadTable.doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                var toNumber = (val)=>Number(val);
+                // if logarithmic values were requested, convert the returned exponents back
+                var toNumber = histogramParams.x.includes('log') ?
+                    (val,i)=>{
+                        if (i === 0) {
+                            return Number(val);
+                        }
+                        else {
+                            return Math.pow(10,Number(val));
+                        }
+                    } : (val)=>Number(val);
                 const histogramData = tableModel.tableData.data.reduce((data, arow) => {
                     data.push(arow.map(toNumber));
                     return data;

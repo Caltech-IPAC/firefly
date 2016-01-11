@@ -1,26 +1,20 @@
 import React from 'react';
 
-import {flux} from '../Firefly.js';
-
-
-//import PureRenderMixin from 'react-addons-pure-render-mixin';
-//import ReactDOM from 'react-dom';
-
-import {ColValuesStatistics} from './ColValuesStatistics.js';
+import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import FieldGroup from '../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import InputGroup from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import ValidationField from '../ui/ValidationField.jsx';
-import RadioGroupInputField from '../ui/RadioGroupInputField.jsx';
+import CheckboxGroupInputField from '../ui/CheckboxGroupInputField.jsx';
 import ListBoxInputField from '../ui/ListBoxInputField.jsx';
-
+import RadioGroupInputField from '../ui/RadioGroupInputField.jsx';
 
 
 var HistogramOptions = React.createClass({
 
-    storeListenerRemove : null,
+    unbinder : null,
 
     propTypes: {
         groupKey: React.PropTypes.string.isRequired,
@@ -44,19 +38,11 @@ var HistogramOptions = React.createClass({
     },
 
     componentWillUnmount() {
-        if (this.storeListenerRemove) this.storeListenerRemove();
+        if (this.unbinder) this.unbinder();
     },
-
 
     componentDidMount() {
-        this.storeListenerRemove= flux.addListener(this.storeUpdate);
-    },
-
-    storeUpdate() {
-        const newFields = FieldGroupUtils.getGroupFields(this.props.groupKey);
-        if (this.state.fields !== newFields) {
-            this.setState({fields: newFields});
-        }
+        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => this.setState({fields}));
     },
 
     resultsSuccess(histogramParams) {
@@ -92,7 +78,7 @@ var HistogramOptions = React.createClass({
                 </div>
             );
         } else { // fixedSizeBins
-            const val =  (fields && fields.numBins) ? fields.numBins.value : 5;
+            const val =  (fields && fields.numBins) ? fields.numBins.value : 10;
             return (
                 <ValidationField
                     style={{width: 30}}
@@ -115,7 +101,7 @@ var HistogramOptions = React.createClass({
         const {fields} = this.state;
         return (
             <div style={{padding:'5px'}}>
-
+                <br/>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
@@ -133,8 +119,9 @@ var HistogramOptions = React.createClass({
                             }
                         multiple={false}
                         fieldKey='columnOrExpr'
-                        groupKey={groupKey}/>
-                    <br/><br/>
+                        groupKey={groupKey}
+                    />
+                    <br/>
                     <InputGroup labelWidth={100}>
                         <RadioGroupInputField
                             initialState= {{
@@ -142,18 +129,44 @@ var HistogramOptions = React.createClass({
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}
-                            options={
-                            [
+                            options={[
                                 {label: 'Byesian blocks', value: 'byesianBlocks'},
                                 {label: 'Fixed size', value: 'fixedSizeBins'}
-                            ]
-                        }
+                            ]}
                             alignment='horizontal'
                             fieldKey='algorithm'
                             groupKey={groupKey}/>
                     </InputGroup>
                     <br/>
                     {this.renderAlgorithmParameters()}
+                    <br/>
+                    <hr width='75%'/>
+                    <InputGroup labelWidth={50}>
+                        <CheckboxGroupInputField
+                            initialState= {{
+                                value: '_none_',
+                                tooltip: 'X axis options',
+                                label : 'X:'
+                            }}
+                            options={[
+                                {label: 'log', value: 'log'},
+                                {label: 'flip', value: 'flip'}
+                            ]}
+                            fieldKey='x'
+                        />
+                        <CheckboxGroupInputField
+                            initialState= {{
+                                value: '_none_',
+                                tooltip: 'Y axis options',
+                                label : 'Y:'
+                            }}
+                            options={[
+                                {label: 'log', value: 'log'},
+                                {label: 'flip', value: 'flip'}
+                            ]}
+                            fieldKey='y'
+                        />
+                    </InputGroup>
                     <br/><br/>
                     <CompleteButton groupKey={groupKey}
                                     onSuccess={this.resultsSuccess}

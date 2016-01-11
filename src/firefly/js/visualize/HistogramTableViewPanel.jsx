@@ -7,8 +7,6 @@ import Histogram from './Histogram.jsx';
 
 var HistogramTablePanel = React.createClass({
 
-        storeListenerRemove : null,
-
         propTypes: {
             tblHistogramData : React.PropTypes.object.isRequired
         },
@@ -41,11 +39,27 @@ var HistogramTablePanel = React.createClass({
             const { isColDataReady, histogramData, histogramParams } = this.props.tblHistogramData;
 
             if (isColDataReady) {
+                var logs = undefined;
+                var reversed = undefined;
+                if (histogramParams) {
+                    var logvals = '';
+                    if (histogramParams.x.includes('log')) { logvals += 'x';}
+                    if (histogramParams.y.includes('log')) { logvals += 'y';}
+                    if (logvals.length>0) { logs = logvals;}
+
+                    var rvals = '';
+                    if (histogramParams.x.includes('flip')) { rvals += 'x';}
+                    if (histogramParams.y.includes('flip')) { rvals += 'y';}
+                    if (rvals.length>0) { reversed = rvals;}
+
+                }
                 return (
                     <Histogram data={histogramData}
                                desc={histogramParams.columnOrExpr}
-                               binColor='#c8c8c8'
+                               binColor='#8c8c8c'
                                height={250}
+                               logs={logs}
+                               reversed={reversed}
                     />
                 );
             } else {
@@ -70,13 +84,13 @@ var HistogramTablePanel = React.createClass({
             } else {
                 return (
                     <div>
-                        <div style={{display:'inline-block', verticalAlign:'top'}}>
+                        <div style={{display:'inline-block', verticalAlign:'top', whiteSpace: 'nowrap'}}>
                             <div
-                                style={{display:'inline-block',overflow:'auto',width:400,height:250,border:'1px solid black', marginLeft:10}}>
+                                style={{display:'inline-block',overflow:'auto',width:380,height:250,border:'1px solid black', marginLeft:10}}>
                                 {this.renderOptions()}
                             </div>
                             <div
-                                style={{display:'inline-block',overflow:'auto', width:600,height:250,border:'1px solid black', marginLeft:10}}>
+                                style={{display:'inline-block',overflow:'auto', width:520,height:250,border:'1px solid black', marginLeft:10}}>
                                 {this.renderHistogram()}
                             </div>
                         </div>

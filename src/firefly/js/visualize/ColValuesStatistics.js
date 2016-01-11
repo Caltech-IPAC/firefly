@@ -1,5 +1,4 @@
-
-export default class {
+export default class ColValuesStatistics{
     constructor(name, descr, unit, min, max, numpoints) {
         this.name = name;
         this.descr = descr;

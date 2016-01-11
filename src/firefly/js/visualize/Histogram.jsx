@@ -181,7 +181,7 @@ var Histogram = React.createClass(
             var areaPlot = (userData.length > 1);
 
             // zones mess up log scale - do not do them
-            var doZones = (areaPlot && (!this.props.logs || this.props.logs.indexOf('x')===-1));
+            var doZones = (areaPlot); // && (!this.props.logs || this.props.logs.indexOf('x')===-1));
 
             if (!areaPlot && userData.length === 1) {
                 const xrange = userData[0][2] - userData[0][1];
