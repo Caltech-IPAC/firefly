@@ -8,12 +8,6 @@ import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
 
 
-/**
- *
- * @param visRoot visualization store root
- * @param {object} currMouseState  the current state of the mouse
- * @return {XML}
- */
 export function VisHeaderView({visRoot,currMouseState}) {
 
     var rS= {

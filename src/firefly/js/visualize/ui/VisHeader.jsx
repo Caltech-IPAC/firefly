@@ -14,7 +14,7 @@ import {currMouseState} from '../VisMouseCntlr.js';
 export class VisHeader extends React.Component {
     constructor(props) {
         super(props);
-        this.state= {visRoot:visRoot()};
+        this.state= {visRoot:visRoot(), currMouseState:currMouseState()};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -29,15 +29,13 @@ export class VisHeader extends React.Component {
     }
 
     storeUpdate() {
-        if (visRoot()!=this.state.visRoot || currMouseState() != this.state.currMouseState) {
+        if (visRoot()!==this.state.visRoot || currMouseState() !==this.state.currMouseState) {
             this.setState({visRoot:visRoot(), currMouseState:currMouseState()});
         }
     }
 
     render() {
-        var {visRoot}= this.state;
-        return (
-            <VisHeaderView visRoot={visRoot} currMouseState={currMouseState()}/>
-        );
+        var {visRoot,currMouseState}= this.state;
+        return <VisHeaderView visRoot={visRoot} currMouseState={currMouseState}/>;
     }
 }
