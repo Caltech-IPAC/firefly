@@ -23,7 +23,7 @@ import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 
 //global variable
-var plotState;
+//var plotState;
 
 function getDialogBuilder() {
 	var popup= null;
@@ -55,7 +55,7 @@ export function showFitsDownloadDialog() {
 
 	 var plot =  PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
 	 //var plotState =plot.plotState;
-	 plotState=plot.plotState;
+	 var plotState=plot.plotState;
 
 	var threeColorBandUsed=false;
 
@@ -76,6 +76,7 @@ export function showFitsDownloadDialog() {
 	var cropNotRotate =  isCrop && !isRotation ? true: false;
 
 	return {
+		plotState,
 		color,
 		hasThreeColorBand:threeColorBandUsed,
 		hasOperation: cropNotRotate
@@ -186,7 +187,7 @@ function renderThreeBand(hasThreeColorBand,  color) {
 function FitsDownloadDialogForm () {
 
 
-	const { color, hasThreeColorBand, hasOperation} = getInitialPlotState();
+	const { color, plotState, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
 	//this.plotState=plotState;
 
@@ -218,7 +219,7 @@ function FitsDownloadDialogForm () {
 						   <div style={{'text-align':'center'}}>
 							 < CompleteButton groupKey='FITS_DOWNLOAD_FORM'
 								text='Download'
-								onSuccess={resultsSuccess}
+								onSuccess={(request) => resultsSuccess(request,plotState)}
 								onFail={resultsFail}
 								dialogId='FitsDownloadDialog'
 							 />
@@ -264,7 +265,7 @@ function resultsFail(request) {
 	showResults(false,request);
 }
 
-function resultsSuccess(request) {
+function resultsSuccess(request,plotState) {
 	var rel = showResults(true,request);
 
     if (Object.keys(rel).length==0){

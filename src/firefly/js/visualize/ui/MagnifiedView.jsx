@@ -22,7 +22,7 @@ const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, Mo
 const EMPTY= <div style={defStyle}></div>;
 
 export function MagnifiedView({plotView:pv,size,mouseState}) {
-    if (!pv) return EMPTY;
+    if (!pv || mouseState) return EMPTY;
     if (!magMouse.includes(mouseState.mouseState)) return EMPTY;
 
     var spt= mouseState.screenPt;
