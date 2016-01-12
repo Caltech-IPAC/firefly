@@ -41,8 +41,8 @@ function onClick(onSuccess,onFail,groupKey,dialogId) {
 
 
 
-function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnValid=true, dialogId,}) {
-    if (!groupKey && this && this.context) groupKey= this.context.groupKey;
+function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnValid=true, dialogId,}, context) {
+    if (!groupKey && context) groupKey= context.groupKey;
     return (
         <div>
             <button type='button' className='button-hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
