@@ -4,8 +4,7 @@
 import React from 'react';
 import CsysConverter from '../CsysConverter.js';
 import {makeScreenPt} from '../Point.js';
-import {encodeServerUrl, ParamType} from '../../util/WebUtil.js';
-import {getRootURL} from '../../util/BrowserUtil.js';
+import {makeImageFromTile,createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
 
 
 const BG_IMAGE= 'image-working-background-24x24.png';
@@ -53,29 +52,6 @@ TileDrawer.propTypes= {
 
 
 
-/**
- *
- * @param {object} tile - object returned from server the describes the file
- * @param {number} x
- * @param {number} y
- * @param {number} w
- * @param {number} h
- * @param {number} scale
- * @return {boolean}
- */
-function isTileVisible(tile, x, y, w, h, scale) {
-
-    var tileX= tile.xoff*scale;
-    var tileY= tile.yoff*scale;
-    var tileWidth= tile.width*scale;
-    var tileHeight= tile.height*scale;
-
-    return (x + w > tileX &&
-            y + h > tileY &&
-            x < tileX  + tileWidth &&
-            y < tileY + tileHeight);
-}
-
 
 
 function makeScreenToVPConverter(plot) {
@@ -83,48 +59,6 @@ function makeScreenToVPConverter(plot) {
     return (x,y) => cc.getViewPortCoords(makeScreenPt(x,y));
 }
 
-
-
-/**
- *
- * @param {string} src  url of the tile
- * @param {object} vpPt viewPortPt, where to put the tile
- * @param {number} width
- * @param {number} height
- * @param {number} scale
- * @param {number} opacity
- * @return {object}
- */
-function makeImageFromTile(src, vpPt, width, height, scale,opacity) {
-    var s= {
-        position : 'absolute',
-        left : vpPt.x,
-        top : vpPt.y,
-        width: width*scale,
-        height: height*scale,
-        background: BACKGROUND_STYLE,
-        opacity
-    };
-    return (
-        <img src={src} key={src} style={s}/>
-    );
-
-}
-
-
-
-function createImageUrl(plot, tile) {
-    var params = {
-        file: tile.url,
-        state: plot.plotState.toJson(),
-        type: 'tile',
-        x: tile.xoff,
-        y: tile.yoff,
-        width: tile.width,
-        height: tile.height
-    };
-    return encodeServerUrl(getRootURL() + 'sticky/FireFly_ImageDownload', params);
-}
 
 
 function getTilesForArea(x,y,width,height,tileData,plot,scale,opacity) {

@@ -9,8 +9,7 @@ import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
-import PlotViewUtil from './PlotViewUtil.js';
-import PlotGroup from './PlotGroup.js';
+import PlotViewUtil, {getPlotViewById} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
@@ -59,7 +58,7 @@ function dispatchZoom(plotId, userZoomType, zoomScope=ZoomScope.GROUP ) {
 function makeZoomAction(rawAction) {
     return (dispatcher) => {
         var {plotId,userZoomType}= rawAction.payload;
-        var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
+        var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
 
@@ -161,7 +160,7 @@ function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, useDelay) {
 function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
-    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     PlotServicesJson.setZoomLevel(PlotViewUtil.getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {

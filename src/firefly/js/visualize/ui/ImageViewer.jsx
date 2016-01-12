@@ -4,7 +4,7 @@
 
 import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import PlotViewUtil from '../PlotViewUtil.js';
+import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
 import ImageViewerDecorate from './ImageViewerDecorate.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
@@ -17,7 +17,7 @@ class ImageViewer extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state= {plotView:PlotViewUtil.getPlotViewById(visRoot(),this.props.plotId)};
+        this.state= {plotView:getPlotViewById(visRoot(),this.props.plotId)};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -40,7 +40,7 @@ class ImageViewer extends React.Component {
             (dlAry!==state.dlAry &&
             drawLayersDiffer(drawLayersAry,state.drawLayersAry))) {
             var {plotId}= this.props;
-            var plotView= PlotViewUtil.getPlotViewById(allPlots,plotId);
+            var plotView= getPlotViewById(allPlots,plotId);
             this.setState({plotView,
                            dlAry,
                            allPlots,

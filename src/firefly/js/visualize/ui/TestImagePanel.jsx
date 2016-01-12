@@ -191,6 +191,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={() => layerPopup()}>Layers</button>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
+                    <button type='button' onClick={() => console.log('hello form my button')}>my button</button>
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>

@@ -268,16 +268,6 @@ export class WebPlot {
     getImageDataHeight() { return this.dataHeight; }
 
     /**
-     *
-     * @return {boolean}
-     */
-    isBlankImage() {
-        if (this.isThreeColor()) return false;
-        var req= this.plotState.getWebPlotRequest();
-        return (req && req.getRequestType()===RequestType.BLANK);
-    }
-
-    /**
      * This method will return the width of the image in the world coordinate
      * system (probably degrees on the sky).
      * @return {number} the width of the image data in world coord system.
@@ -544,6 +534,19 @@ export class WebPlot {
     static makeViewPort(x,y,width,height) { return  {dim:{width,height},x,y}; }
 
 };
+
+
+/**
+ *
+ * @return {boolean}
+ */
+export function isBlankImage(plot) {
+    if (plot.plotState.isThreeColor()) return false;
+    var req= plot.plotState.getWebPlotRequest();
+    return (req && req.getRequestType()===RequestType.BLANK);
+}
+
+
 
 
 export default WebPlot;

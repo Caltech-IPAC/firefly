@@ -253,7 +253,9 @@ function FieldGroupTestView ({fields}) {
                     fieldKey='checkBoxGrpFld'
                 />
 
-                <br/><br/>
+                <br/>
+                <span>here is some text</span>
+                <br/>
                 <RadioGroupInputField  initialState= {{
                                           tooltip: 'Please select an option',
                                           label : 'Radio Group:'

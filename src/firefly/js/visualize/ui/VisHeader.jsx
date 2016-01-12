@@ -7,6 +7,7 @@ import sCompare from 'react-addons-shallow-compare';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisHeaderView} from './VisHeaderView.jsx';
+import {currMouseState} from '../VisMouseCntlr.js';
 
 
 
@@ -28,15 +29,15 @@ export class VisHeader extends React.Component {
     }
 
     storeUpdate() {
-        if (visRoot()!=this.state.visRoot) {
-            this.setState({visRoot:visRoot()});
+        if (visRoot()!=this.state.visRoot || currMouseState() != this.state.currMouseState) {
+            this.setState({visRoot:visRoot(), currMouseState:currMouseState()});
         }
     }
 
     render() {
         var {visRoot}= this.state;
         return (
-            <VisHeaderView visRoot={visRoot} />
+            <VisHeaderView visRoot={visRoot} currMouseState={currMouseState()}/>
         );
     }
 }

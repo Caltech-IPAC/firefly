@@ -9,7 +9,7 @@ import {flux} from '../Firefly.js';
 
 
 export default {
-    getPlotViewById, findPlotView, getPlotViewAry,operateOnOthersInGroup,
+    findPlotView, getPlotViewAry,operateOnOthersInGroup,
     findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
     hasGroupLock, getActivePlotView, getAllDrawLayers, getAllDrawLayersForPlot,
     getPlotViewIdListInGroup, getDrawLayerByType,
@@ -32,7 +32,7 @@ export default {
  * @param {string} plotId
  * @return {object} the plot view object
  */
-function getPlotViewById(visRoot,plotId) {
+export function getPlotViewById(visRoot,plotId) {
     if (!plotId) return null;
     return visRoot.plotViewAry.find( (pv) => pv.plotId===plotId);
 }

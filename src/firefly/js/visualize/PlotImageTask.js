@@ -17,7 +17,7 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
-import PlotViewUtil from './PlotViewUtil.js';
+import {getPlotViewById} from './PlotViewUtil.js';
 import Band from './Band.js';
 import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';

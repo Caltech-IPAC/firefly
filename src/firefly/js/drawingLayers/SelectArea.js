@@ -12,7 +12,7 @@ import {makeScreenPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
-import PlotViewUtils from '../visualize/PlotViewUtil.js';
+import {getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -139,7 +139,7 @@ function attach() {
 function moveMouse(drawLayer,action) {
     var {screenPt,plotId}= action.payload;
     if (drawLayer.mode==='edit') {
-        var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
+        var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
         var cc= CsysConverter.make(pv.primaryPlot);
         var ptAry= getPtAry(pv);
@@ -161,7 +161,7 @@ function moveMouse(drawLayer,action) {
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
     var {mode}= drawLayer;
-    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
 
@@ -208,7 +208,7 @@ function getPtAry(pv) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));

@@ -15,7 +15,7 @@ import {makeScreenPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import PlotViewUtils from '../visualize/PlotViewUtil.js';
+import {getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -116,7 +116,7 @@ function getLayerChanges(drawLayer, action) {
 
 function dealWithUnits(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotIdAry[0]);
+    var pv= getPlotViewById(visRoot(),plotIdAry[0]);
     if (!pv) return null;
     var cc= CsysConverter.make(pv.primaryPlot);
     var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
@@ -128,7 +128,7 @@ function dealWithUnits(drawLayer,action) {
 function dealWithMods(drawLayer,action) {
     var {changes,plotIdAry}= action.payload;
     if (typeof changes.posAngle=== 'boolean') {
-        var pv= PlotViewUtils.getPlotViewById(visRoot(),plotIdAry[0]);
+        var pv= getPlotViewById(visRoot(),plotIdAry[0]);
         if (!pv) return null;
         var cc= CsysConverter.make(pv.primaryPlot);
         var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
@@ -153,7 +153,7 @@ function attach() {
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
     var {mode}= drawLayer;
-    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var plot= pv.primaryPlot;
     var retObj= {};
@@ -186,7 +186,7 @@ function start(drawLayer,action) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= PlotViewUtils.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     if (!pv) return;
     var cc= CsysConverter.make(pv.primaryPlot);
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back

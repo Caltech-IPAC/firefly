@@ -9,7 +9,7 @@ import TileDrawer from './TileDrawer.jsx';
 import EventLayer from './EventLayer.jsx';
 import ImagePlotCntlr, {dispatchProcessScroll,dispatchChangeActivePlotView}
                                from '../ImagePlotCntlr.js';
-import VisMouseCntlr, {MouseState}  from '../VisMouseCntlr.js';
+import {MouseState, dispatchMouseStateChange, makeMouseStatePayload}  from '../VisMouseCntlr.js';
 import {PlotViewDrawer}  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
 import {flux} from '../../Firefly.js';
@@ -39,7 +39,7 @@ class ImageViewerView extends React.Component {
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
         var {drawLayersAry}= this.props;
-        var mouseStatePayload= VisMouseCntlr.makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
+        var mouseStatePayload= makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY);
         var list= drawLayersAry.filter( (dl) => dl.mouseEventMap.hasOwnProperty(mouseState.key));
 
         var exclusive= list.find((dl) => dl.mouseEventMap[mouseState.key].exclusive);
@@ -50,7 +50,7 @@ class ImageViewerView extends React.Component {
             list.forEach( (dl) => fireMouseEvent(dl,mouseState,mouseStatePayload) );
             this.scroll(plotId,mouseState,screenX,screenY);
         }
-        VisMouseCntlr.fireMouseEvent(mouseStatePayload);
+        dispatchMouseStateChange(mouseStatePayload);
     }
 
     scroll(plotId,mouseState,screenX,screenY) {

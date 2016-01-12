@@ -3,18 +3,15 @@
  */
 
 import React from 'react';
-import {flux} from '../../Firefly.js';
 import {isPlotNorth} from '../VisUtil.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
-import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import {AnyDrawer} from '../draw/DrawerComponent.jsx';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
-import {CCUtil,CysConverter} from '../CsysConverter.js';
+import {CysConverter} from '../CsysConverter.js';
 import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
-import {makeDrawingDef,COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
-import DrawUtil from '../draw/DrawUtil.js';
+import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
 import {getScrollSize} from '../reducer/PlotView.js';
 import {WebPlot} from '../WebPlot.js';
 import {EventLayer} from './EventLayer.jsx';
@@ -27,7 +24,6 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 export function ThumbnailView({plotView:pv}) {
 
     var s= {
-        border: '1px solid white',
         width: 70,
         height: 70,
         display: 'inline-block',
@@ -36,6 +32,7 @@ export function ThumbnailView({plotView:pv}) {
 
     if (!pv) return  <div style={s}></div>;
 
+    s.border= '1px solid rgb(187, 187, 187)';
     var plot= pv.primaryPlot;
     var {width,height}= plot.serverImages.thumbnailImage;
     var vp= WebPlot.makeViewPort(0,0,width,height);
@@ -45,10 +42,7 @@ export function ThumbnailView({plotView:pv}) {
     return (
         <div style={s}>
             {makeImageTag(plot)}
-            <div style={{position : 'absolute', left : 0, top : 0, width, height }}>
-                <AnyDrawer width={width} height={height} drawData={ary} />
-
-            </div>
+            <AnyDrawer width={width} height={height} drawData={ary} />
             <EventLayer viewPort={vp} width={width} height={height}
                         eventCallback={(plotId,mouseState,pt) =>
                                             eventCB(mouseState,pt,pv,width,height)}/>
@@ -144,23 +138,18 @@ function getScrollBoxInfo(pv, thumbW, thumbH) {
 
 
 
-function drawOnCanvas(c,ary,width,height) {
-    if (!c || !ary) return;
-
-    // === todo - use DrawingComponent instead
-    var [dataN,dataE,scrollBox]= ary;
-    var textDrawAry=[];
-    var drawDef= makeDrawingDef(COLOR_DRAW_1);
-    var ctx= c.getContext('2d');
-    DrawUtil.clear(ctx,width,height);
-    DirectionArrowDrawObj.draw.draw(dataN,ctx,textDrawAry,null,drawDef,null,null);
-    DirectionArrowDrawObj.draw.draw(dataE,ctx,textDrawAry,null,drawDef,null,null);
-    ShapeDataObj.draw.draw(scrollBox,ctx,textDrawAry,null,drawDef,null,null);
-    // === todo - use DrawingComponent instead
-
-
-
-}
+//function drawOnCanvas(c,ary,width,height) {
+//    if (!c || !ary) return;
+//
+//    var [dataN,dataE,scrollBox]= ary;
+//    var textDrawAry=[];
+//    var drawDef= makeDrawingDef(COLOR_DRAW_1);
+//    var ctx= c.getContext('2d');
+//    DrawUtil.clear(ctx,width,height);
+//    DirectionArrowDrawObj.draw.draw(dataN,ctx,textDrawAry,null,drawDef,null,null);
+//    DirectionArrowDrawObj.draw.draw(dataE,ctx,textDrawAry,null,drawDef,null,null);
+//    ShapeDataObj.draw.draw(scrollBox,ctx,textDrawAry,null,drawDef,null,null);
+//}
 
 
 

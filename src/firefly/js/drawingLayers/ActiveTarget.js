@@ -5,7 +5,7 @@
 
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import PlotViewUtil from '../visualize/PlotViewUtil.js';
+import {getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -70,7 +70,7 @@ function getLayerChanges(drawLayer, action) {
 
 
 function getTitle(plotId) {
-    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     var retval= 'Query Object';
     if (pv && pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET]) {
         var wp= pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET];
@@ -81,7 +81,7 @@ function getTitle(plotId) {
 
 function computeDrawLayer(plotId) {
     if (!plotId) return null;
-    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     var wp= pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET];
     return wp ? [PointDataObj.make(wp)] : [];
 }
