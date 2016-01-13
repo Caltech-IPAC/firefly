@@ -21,6 +21,7 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
+import InputFieldLabel from './InputFieldLabel.jsx';
 
 function getDialogBuilder() {
     var popup = null;
@@ -51,14 +52,14 @@ function getInitialPlotState() {
 
     var plotState = plot.plotState;
 
-    var threeColorBandUsed = false;
+   // var threeColorBandUsed = false;
 
-    var color;
+    //var color;
     if (plotState.isThreeColor()) {
-        threeColorBandUsed == true;
+        var threeColorBandUsed = true;
         var bands = this.plotState.getBands();
         var colorID = bands[0].toString();
-        color = Band.valueOf()[colorID].name();
+        var color = Band.valueOf()[colorID].name();
 
     }
 
@@ -112,25 +113,33 @@ class FitsDownloadDialog extends React.Component {
 }
 /// Fits dialog test
 
-function renderOperationOption(hasOperation) {
+function renderOperationOption(hasOperation,leftColumn, rightColumn) {
 
     if (hasOperation) {
         return (
             <div>
-                <RadioGroupInputField
-                    initialState={{
-                           tooltip: 'Please select an option',
-                           label : 'FITS file:'
-                           }}
+                <div style={leftColumn}>
+                    <InputFieldLabel label= 'FITS file:'
+                                     tooltip='Please select an option'
+                   />
+
+                </div>
+                <div style={rightColumn}>
+                    <RadioGroupInputField
+                        initialState={{
+                                    tooltip: 'Please select an option',
+                                   }}
                     options={[
-                            { label:'original', value:'fileTypeOrig'},
-                            { label:'crop', value:'fileTypeCrop'}
+                            { label:'Original', value:'fileTypeOrig'},
+
+                            { label:'Cropped', value:'fileTypeCrop'}
 
                             ]}
                     alignment={'vertical'}
                     fieldKey='operationOption'
 
-                />
+                    />
+                </div>
                 <br/>
             </div>
         );
@@ -140,25 +149,28 @@ function renderOperationOption(hasOperation) {
     }
 }
 
-function renderThreeBand(hasThreeColorBand, color) {
+function renderThreeBand(hasThreeColorBand, color,leftColumn, rightColumn) {
     if (hasThreeColorBand) {
         return (
-            <div>
-                <RadioGroupInputField
-                    initialState={{
-                      tooltip: 'Please select an option',
-                      label : 'Color band:'
-                  }}
-                    options={[
-                           {  label: color,
-                              value: 'colorOpt'
-                           }
+            <div >
+
+                <div style={{width: '50%', display: 'inline-block', marginLeft:10}}>
+                    <RadioGroupInputField
+                        initialState={{
+                                    tooltip: 'Please select an option',
+                                    label: 'Color Band:'
+                                     }}
+
+                      options={[
+                           {  label: color, value: 'colorOpt'},
+
+
                          ]}
-                    alignment={'vertical'}
-                    fieldKey='threeBandColor'
 
-                />
+                     fieldKey='threeBandColor'
 
+                   />
+                </div>
                 <br/>
             </div>
 
@@ -173,9 +185,22 @@ function FitsDownloadDialogForm() {
 
 
     const { plotState, color, hasThreeColorBand, hasOperation} = getInitialPlotState();
+    var leftColumnRoot = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
+        display: 'inline-block', 'line-height': 80};
 
-    var renderOperationButtons = renderOperationOption(hasOperation);
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, color);
+    var rightColumn = {width: '50%', display: 'inline-block'};
+
+
+    var renderOperationButtons = renderOperationOption(true, leftColumnRoot, rightColumn);//hasOperation
+
+    var lc1 = Object.assign({}, leftColumnRoot);
+    lc1['line-height']=10;
+    lc1['margin-left']=30;
+    var renderThreeBandButtons = renderThreeBand(true, 'Green', lc1 , rightColumn);//hasThreeColorBand, color,
+
+    var leftColumn = Object.assign({}, leftColumnRoot);
+    leftColumn['line-height']=100;
+
     return (
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
             <div style={{ padding:5 }}>
@@ -183,13 +208,19 @@ function FitsDownloadDialogForm() {
                     <InputGroup labelWidth={130}>
                         <PopupPanel  />
 
-                        <RadioGroupInputField
+						<div style={leftColumn}>
 
-                            initialState={{
+                            <InputFieldLabel label= 'Type of files:'
+                                             tooltip='Please select an option'
+
+                            />
+                        </div>
+                        <div style={rightColumn}>
+                           <RadioGroupInputField
+                               initialState={{
                                     tooltip: 'Please select an option',
-                                    label : 'Type of files:'
-                                   }}
 
+                                   }}
                             options={ [
                                       {label: 'FITS File', value: 'fits'},
                                       {label: 'PNG File', value: 'png' },
@@ -197,22 +228,26 @@ function FitsDownloadDialogForm() {
                                     ]}
                             alignment={'vertical'}
                             fieldKey='fileType'
-                        />
+                          />
+                      </div>
 
-                        {renderOperationButtons}
-                        {renderThreeBandButtons}
+                   </InputGroup>
 
-                        <div style={{'text-align':'center'}}>
-                            < CompleteButton
-                                groupKey='FITS_DOWNLOAD_FORM'
-                                text='Download'
-                                onSuccess={ (request) => resultsSuccess(request, plotState )}
-                                onFail={resultsFail}
-                                dialogId='fitsDownloadDialog'
-                            />
-                            <br/>
-                        </div>
-                    </InputGroup>
+                </div>
+                <div>
+                    {renderOperationButtons}
+
+                    <div>{renderThreeBandButtons}</div>
+               </div>
+                <br/>
+                <div style={{'text-align':'center'}}>
+                    < CompleteButton
+                        text='Download'
+                        onSuccess={ (request) => resultsSuccess(request, plotState )}
+                        onFail={resultsFail}
+                        dialogId='fitsDownloadDialog'
+                    />
+                    <br/>
                 </div>
             </div>
         </FieldGroup>
@@ -220,41 +255,38 @@ function FitsDownloadDialogForm() {
 
 }
 
-
+/*
 function showResults(success, request) {
 
     var rel = {};
     console.log(request);
 
     if (success) {
-
-
-        Object.keys(request).reduce(function (buildString, k, idx, array) {
-            if (idx < array.length - 1)  return;
-            rel[k] = request[k];
-
-        }, '');
+        Object.keys(request).forEach(function (key) {
+            rel[key] = request[key];
+        });
     }
+
     return rel;
 }
-
+*/
 
 function resultsFail(request) {
-    showResults(false, request);
+    console.log(request + ': Error');
 }
 
 function resultsSuccess(request, plotState) {
-    var rel = showResults(true, request);
+   // var rel = showResults(true, request);
 
-    if (!Object.keys(rel).length) {
+    if (!Object.keys(request).length) {
         console.log(request);
         return resultsFail(request);
     }
     var ext;
     var bandSelect;
     var whichOp;
-    Object.keys(rel).forEach(function (key) {
-        var value = rel[key];
+    Object.keys(request).forEach(function (key) {
+        var value = request[key];
         if (key === 'fileType') {
             ext = value;
         }

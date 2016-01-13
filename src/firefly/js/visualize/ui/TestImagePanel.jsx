@@ -158,12 +158,7 @@ function showFitsDialog() {
      console.log('showing Fits Download  dialog');
      showFitsDownloadDialog();
  }
-/*
-function showFitsDialogNew() {
-	console.log('showing new Fits Download  dialog');
-	showFitsDownloadDialogNew();
-}
-*/
+
 function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
