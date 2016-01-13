@@ -25,6 +25,7 @@
     "react-grid-layout": "^0.10.0-beta1",
     "react-highcharts": "^5.0.6",
     "react-redux": "^3.0.0-alpha",
+    "react-split-pane": "^0.1.22",
     "redux"     : "^3.0.0",
     "redux-thunk": "^0.1.0",
     "redux-logger": "^1.0.6",

@@ -10,6 +10,8 @@ import FixedDataTable from 'fixed-data-table';
 import './TablePanel.css';
 import Resizable from 'react-component-resizable';
 
+import throttle from 'lodash/function/throttle';
+
 
 const {Table, Column, Cell} = FixedDataTable;
 
@@ -40,9 +42,15 @@ class TablePanel extends React.Component {
             heightPx: 100,
             columnWidths: {}
         };
+
+        this.onResize = throttle( (size) => {
+            if (size) {
+                this.setState({ widthPx: size.width, heightPx: size.height });
+            }
+        }, 200);
+
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.makeColumns = this.makeColumns.bind(this);
-        this.onResize = this.onResize.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
         this.onRowSelect = this.onRowSelect.bind(this);
     }
@@ -80,17 +88,10 @@ class TablePanel extends React.Component {
                 fixed={true}
                 width={20}
                 allowCellsRecycling={true}
-            />
+            />;
             colsEl.splice(0, 0, cbox);
         }
         return colsEl;
-    }
-
-    onResize() {
-        const c = ReactDOM.findDOMNode(this);
-        if (c && c.offsetWidth && c.offsetHeight) {
-            this.setState({ widthPx: c.offsetWidth, heightPx: c.offsetHeight });
-        }
     }
 
     onRowSelect(e, index) {
@@ -113,36 +114,30 @@ class TablePanel extends React.Component {
     }
 
     componentDidMount() {
-        const c = ReactDOM.findDOMNode(this);
-        const w = c ? c.offsetWidth() : 200;
-        const h = c ? c.offsetHeight() : 100;
-        if (w > 0 && h > 0) {
-            this.state.widthPx = w;
-            this.state.heightPx = h;
-        }
+        this.onResize();
     }
 
     render() {
         var {tableModel, showFilters, selectable, width, height} = this.props;
         var {widthPx, heightPx} = this.state;
+        width = width || '100%';
 
-        if (!tableModel || !tableModel.tableData) return false;
-        height = height || '100%';
+        if (!tableModel || !tableModel.tableData) return (<div style={{display: 'none'}}></div>);
         return (
-        <Resizable style={{width:width, height:height}} onResize={this.onResize}>
-            <Table
-                rowHeight={30}
-                headerHeight={35}
-                rowsCount={tableModel.totalRows}
-                onColumnResizeEndCallback={this.onColumnResizeEndCallback}
-                onRowClick={this.onRowSelect}
-                rowClassNameGetter={this.rowClassName}
-                width={widthPx}
-                height={heightPx}
-                {...this.props}>
-                {this.makeColumns(tableModel, selectable)}
-            </Table>
-        </Resizable>
+            <Resizable id='table-resizer' style={{width, height}} onResize={this.onResize} >
+                <Table
+                    rowHeight={30}
+                    headerHeight={35}
+                    rowsCount={tableModel.totalRows}
+                    onColumnResizeEndCallback={this.onColumnResizeEndCallback}
+                    onRowClick={this.onRowSelect}
+                    rowClassNameGetter={this.rowClassName}
+                    width={widthPx}
+                    height={heightPx}
+                    {...this.props}>
+                    {this.makeColumns(tableModel, selectable)}
+                </Table>
+            </Resizable>
         );
     }
 }

@@ -3,44 +3,63 @@
  */
 
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-//import ReactGridLayout from 'react-grid-layout';
+import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
 
-/**
- * This layout demonstrates how to use static grid elements.
- * Static elements are not draggable or resizable, and cannot be moved.
- */
-var ResultsPanel = React.createClass({
-    mixins: [PureRenderMixin],
+function exists (...components) {
 
-    getInitialState() {
-        return {
-            layout: []
-        };
-    },
+    return components.reduce( (ans, cval) => {
+        return ans && cval;
+    }, true );
+}
 
-    onLayoutChange(layout) {
-        this.setState({layout: layout});
-    },
+const ResultsPanel = function (props) {
+    var {visToolbar,title, imagePlot, xyPlot, tables} = props;
+    var children = [imagePlot, xyPlot, tables].filter( (el) => { return (el); } );
 
-
-
-    render() {
-        var {children, title} = this.props;
-        return (
-            <div style={{height: '100%', textAlign: 'center'}}>
-                <h2>{title}</h2>
-                <div style={{width: '100%'}} >
-                    <div style={{float: 'left', width: '50%', height: '60%'}}>{children[0]}</div>
-                    <div style={{float: 'left', width: '50%', height: '60%'}}>{children[1]}</div>
-                </div>
-                <div>
-                    {children[2]}
-                </div>
-            </div>
-        );
+    var layout;
+    if ( exists(imagePlot, xyPlot, tables) ) {
+        layout = { north: {index: children.indexOf(imagePlot), defaultSize: '60%'},
+                   east: {index: children.indexOf(tables)},
+                   west: {index: children.indexOf(xyPlot)}
+                 };
+    } else if ( exists(imagePlot, tables) ) {
+        layout = {east: {index: children.indexOf(imagePlot)},
+                  west: {index: children.indexOf(tables)}
+                 };
+    } else if ( exists(xyPlot, tables) ) {
+        layout = {east: {index: children.indexOf(xyPlot)},
+                  west: {index: children.indexOf(tables)}
+                 };
+    } else if ( exists(imagePlot, xyPlot) ) {
+        layout = {east: {index: children.indexOf(imagePlot)},
+                  west: {index: children.indexOf(xyPlot)}
+                 };
     }
-});
+
+    return (
+        <div style={{ flex: 'auto', display: 'flex', flexFlow: 'column'}}>
+            {visToolbar}
+            <h2 style={{textAlign: 'center'}}>{title}</h2>
+            <DockLayoutPanel layout={ layout } >
+                {children}
+            </DockLayoutPanel>
+        </div>
+    );
+};
+
+ResultsPanel.propTypes = {
+    visToolbar: React.PropTypes.element,
+    title: React.PropTypes.string,
+    imagePlot: React.PropTypes.element,
+    xyPlot: React.PropTypes.element,
+    tables: React.PropTypes.element
+};
+
+
+
+
+
+
 
 export default ResultsPanel;
 

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
+import get from 'lodash/object/get';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -64,44 +64,34 @@ const App = React.createClass({
             );
         } else {
             return (
-                <div>
-                    <Banner
-                        menu={<Menu menu={appData.menu} /> }
-                        visPreview={<VisHeader/> }
-                        appTitle='Firefly'
-                    />
-                    <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
-                        <FormPanel
-                            width='500px' height='300px'
-                            action={TablesCntlr.FETCH_TABLE}
-                            params={ loadTestData }
-                            onSubmit={hideSearchPanel}
-                            onCancel={hideSearchPanel}>
-                            <b>Click Search to load a test table</b>
-                            <p>
-                                <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
-                            </p>
-                        </FormPanel>
-                    </SearchPanel>
-                    <div style={{padding: '10px'}}>
-                        <ResultsPanel title={title} >
-                            <div>
-                             <TestImagePanel/>
-                            </div>
-
-                            <div style={{paddingLeft:10}}>
-                                <TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> 
-                            </div>
-
-                            <div style={{height: '400px'}}>
-                                <TablePanel
-                                    tableModel={table}
-                                    selectable={true}
-                                />
-                            </div>
-
-                        </ResultsPanel>
-                    </div>
+                <div id='App'>
+                    <header>
+                        <Banner
+                            menu={<Menu menu={appData.menu} /> }
+                            visPreview={<VisHeader/> }
+                            appTitle='Firefly'
+                        />
+                        <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
+                            <FormPanel
+                                width='500px' height='300px'
+                                action={TablesCntlr.FETCH_TABLE}
+                                params={ loadTestData }
+                                onSubmit={hideSearchPanel}
+                                onCancel={hideSearchPanel}>
+                                <b>Click Search to load a test table</b>
+                                <p>
+                                    <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
+                                </p>
+                            </FormPanel>
+                        </SearchPanel>
+                        </header>
+                    <main>
+                        <ResultsPanel title={title}
+                            imagePlot = {<TestImagePanel />}
+                            xyPlot = {<TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> }
+                            tables = { <TablePanel tableModel={table} selectable={true}/> }
+                        />
+                    </main>
                 </div>
             );
         }
