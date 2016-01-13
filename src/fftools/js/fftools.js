@@ -18,6 +18,7 @@ import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import TblUtil from 'firefly/tables/TableUtil.js';
 import TestHistogramPanel from 'firefly/visualize/TestHistogramPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
+import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
@@ -86,6 +87,7 @@ const App = React.createClass({
                         </SearchPanel>
                         </header>
                     <main>
+                        <VisToolbar/>
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}
                             xyPlot = {<TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> }

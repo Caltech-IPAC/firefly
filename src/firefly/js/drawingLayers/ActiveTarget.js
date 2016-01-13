@@ -33,7 +33,7 @@ function creator(initPayload) {
     var options= {
         hasPerPlotData:true,
         isPointData:true,
-        canUserChangeColor: ColorChangeType.DYNAMIC
+        canUserChangeColor: ColorChangeType.DYNAMIC,
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }

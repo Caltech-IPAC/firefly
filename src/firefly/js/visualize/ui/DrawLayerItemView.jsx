@@ -27,7 +27,7 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
     };
 
     if (lastItem) {
-        style.marginBottom= 18;
+        style.marginBottom= 10;
     }
     else {
         style.borderBottomStyle= 'solid';
@@ -55,7 +55,7 @@ function DrawLayerItemView({drawLayer,pv, maxTitleChars, lastItem, getUIComponen
             <div style={{paddingTop:5, marginLeft:'2em'}}>
                 {getUIComponent ? getUIComponent(drawLayer,pv) : ''}
             </div>
-            <div style={{paddingTop:10,maxWidth:'30em',marginLeft:'2em'}}>{drawLayer.helpLine}</div>
+            {makeHelpLine(drawLayer.helpLine)}
         </div>
     );
 }
@@ -122,6 +122,17 @@ function makeShape(drawLayer,pv) {
         return (<div style={Object.assign({},bSty, {width:20})}></div>);
     }
 
+}
+
+function makeHelpLine(helpLine) {
+    if (helpLine) {
+        return (
+            <div style={{paddingTop:10,maxWidth:'30em',marginLeft:'2em'}}>{helpLine}</div>
+        );
+    }
+    else {
+        return false;
+    }
 }
 
 function drawOnCanvas(c,drawLayer) {

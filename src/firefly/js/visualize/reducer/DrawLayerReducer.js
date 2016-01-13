@@ -109,7 +109,7 @@ function attachLayerToPlot(drawLayer,action,factory) {
     var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawLayer;
     //if (dlPlotIdAry.includes(plotId)) return drawLayer;
 
-    if (!_.difference(inputPlotIdAry,dlPlotIdAry).length) return drawLayer;
+    if (!difference(inputPlotIdAry,dlPlotIdAry).length) return drawLayer;
 
 
 

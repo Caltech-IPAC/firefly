@@ -60,6 +60,9 @@ const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
 
 const IMAGE_PLOT_KEY= 'allPlots';
 
+
+
+
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 const initState= function() {
@@ -92,7 +95,7 @@ const initState= function() {
 export default {
     reducer,
     dispatchUpdateViewSize, dispatchProcessScroll,
-    dispatchPlotImage, dispatch3ColorPlotImage, dispatchZoom,
+    dispatchPlotImage, dispatch3ColorPlotImage,
     zoomActionCreator, plotImageActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
@@ -203,7 +206,7 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  * @param {string} plotId
  * @param {UserZoomTypes} zoomType
  */
-export function dispatchZoom(plotId,zoomType ) { ZoomUtil.dispatchZoom(plotId, zoomType); }
+export function dispatchZoom(plotId,zoomType,maxCheck=true) { ZoomUtil.dispatchZoom(plotId, zoomType, maxCheck); }
 
 /**
  * Set the plotId of the active plot view

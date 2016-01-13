@@ -4,6 +4,7 @@
 import DrawLayer from './draw/DrawLayer.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import {flux} from '../Firefly.js';
+import difference from 'lodash/array/difference';
 
 
 
@@ -132,6 +133,12 @@ export function getDrawLayersByDisplayGroup(dlAry,displayGroupId) {
     return dlAry.find( (dl) => dl.displayGroupId===displayGroupId);
 }
 
+export function drawLayersDiffer(dl1Ary,dl2Ary) {
+    if (dl1Ary===dl2Ary) return false;
+    if (dl1Ary.length!==dl2Ary.length) return true;
+    return difference(dl1Ary,dl2Ary).length>0;
+}
+
 /**
  *
  * @param {Object} dl the drawLayer
@@ -140,7 +147,7 @@ export function getDrawLayersByDisplayGroup(dlAry,displayGroupId) {
  */
 export function isDrawLayerVisible(dl, plotId) { return dl ? dl.visiblePlotIdAry.includes(plotId) : false; }
 
-function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.includes(plotId) : false; }
+export function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.includes(plotId) : false; }
 
 /**
  *

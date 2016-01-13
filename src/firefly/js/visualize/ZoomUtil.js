@@ -22,7 +22,7 @@ const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 const zoomMax= levels[levels.length-1];
 //const zoomMin= levels[0];
 
-const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE']);
+export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE']);
 const ZoomScope= new Enum(['GROUP','SINGLE', 'LIST']);
 const ZOOM_WAIT_MS= 2000; // 2 seconds
 
@@ -38,14 +38,15 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  *
  * @param {string} plotId
  * @param {UserZoomTypes} userZoomType
+ * @param {boolean} maxCheck
  * @param {ZoomScope} zoomScope
  */
-function dispatchZoom(plotId, userZoomType, zoomScope=ZoomScope.GROUP ) {
+function dispatchZoom(plotId, userZoomType, maxCheck= true, zoomScope=ZoomScope.GROUP ) {
 
     flux.process({
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, zoomScope
+            plotId, userZoomType, zoomScope, maxCheck
         }});
 }
 
@@ -60,7 +61,6 @@ function makeZoomAction(rawAction) {
         var {plotId,userZoomType}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
-
 
 
         var level;
@@ -212,7 +212,7 @@ function processZoomSuccess(dispatcher, plotId, zoomLevel, result) {
 
 
 
-function getNextZoomLevel(currLevel, zoomType) {
+export function getNextZoomLevel(currLevel, zoomType) {
     var newLevel= 1;
     if (zoomType===UserZoomTypes.UP) {
         newLevel= currLevel>=zoomMax ? zoomMax : levels.find( (l) => l>currLevel);
@@ -259,6 +259,7 @@ function getEstimatedFullZoomFactor(pv, screenDim, fullType, tryMinFactor=-1) {
 }
 
 
+export function getZoomMax() { return levels[levels.length-1]; }
 
 
 

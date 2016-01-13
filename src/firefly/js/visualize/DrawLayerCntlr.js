@@ -80,7 +80,7 @@ export function dispatchRetrieveData(drawLayerId) {
  * @param drawLayerTypeId
  * @param params
  */
-function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
+export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
     flux.process({type: CREATE_DRAWING_LAYER, payload: {drawLayer}} );
 }

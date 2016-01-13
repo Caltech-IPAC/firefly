@@ -58,6 +58,7 @@ function getInitialPlotState() {
     if (plotState.isThreeColor()) {
         var threeColorBandUsed = true;
         var bands = this.plotState.getBands();
+
         var colorID = bands[0].toString();
         var color = Band.valueOf()[colorID].name();
 
@@ -106,8 +107,9 @@ class FitsDownloadDialog extends React.Component {
 
         var {fields}= this.state;
         if (!fields) return false;
-			return <FitsDownloadDialogForm  />;
-		}
+
+        return <FitsDownloadDialogForm  />;
+    }
 
 
 }

@@ -27,6 +27,7 @@ import PlotPref from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from './../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';
+import {defMenuItemKeys} from '../MenuItemKeys.js'
 
 export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
@@ -80,6 +81,7 @@ function makePlotView(plotId, req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
+        menuItemKeys: defMenuItemKeys,
 
         options : {
             showInlineTitle : false,

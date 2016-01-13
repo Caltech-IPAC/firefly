@@ -13,7 +13,7 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchZoom} from '../ImagePlotCntlr.js';
 import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
@@ -130,19 +130,19 @@ function zoom(zType) {
     console.log(zType);
     switch (zType) {
         case 'up':
-            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.UP);
+            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.UP);
             break;
         case 'down':
-            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.DOWN);
+            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.DOWN);
             break;
         case 'fit':
-            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FIT);
+            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FIT);
             break;
         case 'fill':
-            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FILL);
+            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FILL);
             break;
         case '1x':
-            ImagePlotCntlr.dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.ONE);
+            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.ONE);
             break;
 
     }
@@ -176,17 +176,8 @@ function TestImagePanelView({selectOn,distOn}) {
                                     onFail={resultsFail}
                     />
                     <div style={{height:50}}/>
-                    <button type='button' onClick={() => zoom('down')}>Zoom Down</button>
-                    <button type='button' onClick={() => zoom('up')}>Zoom Up</button>
-                    <button type='button' onClick={() => zoom('fit')}>Zoom Fit</button>
-                    <button type='button' onClick={() => zoom('fill')}>Zoom Fill</button>
-                    <button type='button' onClick={() => zoom('1x')}>Zoom 1x</button>
-                    <button type='button' onClick={() => selectArea()}>{selectText}</button>
-                    <button type='button' onClick={() => distanceTool()}>{distText}</button>
-                    <button type='button' onClick={() => layerPopup()}>Layers</button>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
-                    <button type='button' onClick={() => console.log('hello form my button')}>my button</button>
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>

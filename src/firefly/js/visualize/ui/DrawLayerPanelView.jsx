@@ -5,7 +5,6 @@
 import React from 'react';
 import PlotViewUtil  from '../PlotViewUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
-import CompleteButton from '../../ui/CompleteButton.jsx';
 
 
 
@@ -26,8 +25,6 @@ function DrawLayerPanelView({dlAry, plotView, dialogId, drawLayerFactory}) {
     return (
         <div style={style}>
             {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
-
-            <CompleteButton  text='close' dialogId={dialogId} onSuccess={() => console.log(`close: ${dialogId}`) }/>
         </div>
     );
 }
