@@ -3,6 +3,7 @@ import sCompare from 'react-addons-shallow-compare';
 import ReactDOM from 'react-dom';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
+import DialogRootContainer from './DialogRootContainer.jsx';
 import './InputFieldView.css';
 import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
@@ -36,30 +37,32 @@ const makeInfoPopup = (mess,x,y) => <PointerPopup x={x} y={y} message={makeMessa
 class InputFieldView extends React.Component {
     constructor(props) {
         super(props);
-        this.warnIcon= null;
-        this.state= {
-            hasFocus : false,
-            infoPopup : false,
-            onChange : null,
-            warningOffsetX : 0,
-            warningOffsetY : 0
+        this.warnIcon = null;
+        this.state = {
+            hasFocus: false,
+            infoPopup: false,
+            onChange: null,
+            warningOffsetX: 0,
+            warningOffsetY: 0
         };
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
 
     makeWarningArea(warn) {
-        var warnIcon= '';
+        var warnIcon = '';
         if (warn) {
-            warnIcon= (
-                <div onMouseOver= {() => this.setState({infoPopup:true})}
+            warnIcon = (
+                <div onMouseOver={() => this.setState({infoPopup:true})}
                      onMouseLeave={() => this.setState({infoPopup:false})}>
                     <img src={EXCLAMATION}
                          ref={(c) => {
                                       this.computeWarningXY(c);
                                       this.warnIcon= c;
                                       }
-                           } />
+                           }/>
                 </div>
             );
         }
@@ -75,20 +78,31 @@ class InputFieldView extends React.Component {
     }
 
 
-
     componentDidUpdate() {
         this.computeWarningXY(this.warnIcon);
+
+        var {infoPopup, warningOffsetX, warningOffsetY}= this.state;
+        if (infoPopup) {
+            var {message}= this.props;
+            this.hider = DialogRootContainer.showTmpPopup(makeInfoPopup(message, warningOffsetX, warningOffsetY));
+        }
+        else {
+            if (this.hider) {
+                this.hider();
+                this.hider = null;
+            }
+        }
     }
 
     computeWarningXY(warnIcon) {
         if (warnIcon) {
-            var e= ReactDOM.findDOMNode(warnIcon);
+            var e = ReactDOM.findDOMNode(warnIcon);
             var bodyRect = document.body.getBoundingClientRect();
             var elemRect = e.getBoundingClientRect();
-            var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth/2;
+            var warningOffsetX = (elemRect.left - bodyRect.left) + e.offsetWidth / 2;
             var warningOffsetY = elemRect.top - bodyRect.top;
-            if (warningOffsetX!==this.state.warningOffsetX && warningOffsetY!=this.state.warningOffsetY) {
-                this.setState({warningOffsetX, warningOffsetY} );
+            if (warningOffsetX !== this.state.warningOffsetX && warningOffsetY != this.state.warningOffsetY) {
+                this.setState({warningOffsetX, warningOffsetY});
             }
         }
     }
@@ -100,9 +114,9 @@ class InputFieldView extends React.Component {
         if (visible) {
             return (
                 <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'} }>
-                    <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />
+                    <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/>
                     <input style={Object.assign({display:'inline-block'}, style)}
-                           className={ () => computeStyle(valid,hasFocus)}
+                           className={computeStyle(valid,hasFocus)}
                            onChange={(ev) => onChange ? onChange(ev) : null}
                            onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
                            onBlur={ () => this.setState({hasFocus:false, infoPopup:false})}
@@ -110,17 +124,14 @@ class InputFieldView extends React.Component {
                            title={tooltip}
                     />
                     {this.makeWarningArea(!valid)}
-                    {infoPopup?makeInfoPopup(message,warningOffsetX,warningOffsetY) : ''}
                 </div>
             );
         }
 
         return null;
     }
-
-
-
 }
+//{infoPopup?makeInfoPopup(message,warningOffsetX,warningOffsetY) : ''}
 
 InputFieldView.propTypes= {
     valid   : React.PropTypes.bool,

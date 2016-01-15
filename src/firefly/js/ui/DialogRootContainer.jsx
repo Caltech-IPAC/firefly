@@ -10,10 +10,13 @@ import {flux} from '../Firefly.js';
 
 
 
-export default {defineDialog};
+export default {defineDialog, showTmpPopup};
 
-var dialogs= {};
+const dialogs= {};
+const tmpPopups= {};
 const DIALOG_DIV= 'dialogRootDiv';
+const TMP_ROOT='TMP=';
+var tmpCount=0;
 var divElement;
 
 var init= function() {
@@ -22,13 +25,15 @@ var init= function() {
     divElement.id= DIALOG_DIV;
 };
 
-function DialogRootComponent({dialogs}) {
+function DialogRootComponent({dialogs,tmpPopups}) {
     var dialogAry = Object.keys(dialogs).map( (k) => React.cloneElement(dialogs[k],{key:k}));
-    return  <div> {dialogAry} </div>;
+    var tmpPopupAry = Object.keys(tmpPopups).map( (k) => React.cloneElement(tmpPopups[k],{key:k}));
+    return  <div> {dialogAry} {tmpPopupAry}</div>;
 }
 
 DialogRootComponent.propTypes = {
-    dialogs : PropTypes.object
+    dialogs : PropTypes.object,
+    tmpPopups : PropTypes.object
 };
 
 
@@ -77,6 +82,9 @@ PopupStoreConnection.propTypes= {
 };
 
 
+function reRender(dialogs,tmpPopups) {
+    ReactDOM.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups}/>, divElement);
+}
 
 
 /**
@@ -86,6 +94,21 @@ PopupStoreConnection.propTypes= {
 function defineDialog(dialogId, dialog) {
     if (!divElement) init();
     dialogs[dialogId]= <PopupStoreConnection popupPanel={dialog} dialogId={dialogId}/>;
-    ReactDOM.render(<DialogRootComponent dialogs={dialogs}/>, divElement);
+    reRender(dialogs,tmpPopups);
 }
 
+/**
+ * @param popup {object}
+ */
+function showTmpPopup(popup) {
+    if (!divElement) init();
+    tmpCount++;
+    const id= TMP_ROOT+tmpCount;
+    //tmpPopups[id]= <PopupStoreConnection popupPanel={popup} dialogId={id}/>;
+    tmpPopups[id]= popup;
+    reRender(dialogs,tmpPopups);
+    return () => {
+        Reflect.deleteProperty(tmpPopups, id);
+        reRender(dialogs,tmpPopups);
+    };
+}
