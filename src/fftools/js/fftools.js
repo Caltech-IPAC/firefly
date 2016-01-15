@@ -87,9 +87,9 @@ const App = React.createClass({
                         </SearchPanel>
                         </header>
                     <main>
-                        <VisToolbar/>
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}
+                            visToolbar = {<VisToolbar/>}
                             xyPlot = {<TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }
                         />

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
 import ImageViewerDecorate from './ImageViewerDecorate.jsx';
@@ -12,12 +12,17 @@ import {flux} from '../../Firefly.js';
 
 
 
-class ImageViewer extends React.Component {
+class ImageViewer extends Component {
 
 
     constructor(props) {
         super(props);
-        this.state= {plotView:getPlotViewById(visRoot(),this.props.plotId)};
+        var {plotId}= props;
+        var allPlots= visRoot();
+        var dlAry= getDlAry();
+        var plotView= getPlotViewById(allPlots,plotId);
+        var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,plotId);
+        this.state= {plotView, dlAry, allPlots, drawLayersAry};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -32,7 +37,7 @@ class ImageViewer extends React.Component {
     }
 
     storeUpdate() {
-        var state= this.state;
+        var {state}= this;
         var allPlots= visRoot();
         var dlAry= getDlAry();
         var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,this.props.plotId);
@@ -41,10 +46,7 @@ class ImageViewer extends React.Component {
             drawLayersDiffer(drawLayersAry,state.drawLayersAry))) {
             var {plotId}= this.props;
             var plotView= getPlotViewById(allPlots,plotId);
-            this.setState({plotView,
-                           dlAry,
-                           allPlots,
-                           drawLayersAry:drawLayersAry.filter( (dl) => dl.plotIdAry.includes(plotId))});
+            this.setState({plotView, dlAry, allPlots, drawLayersAry});
         }
     }
 
@@ -59,7 +61,7 @@ class ImageViewer extends React.Component {
 }
 
 ImageViewer.propTypes= {
-    plotId : React.PropTypes.string.isRequired
+    plotId : PropTypes.string.isRequired
 };
 
 

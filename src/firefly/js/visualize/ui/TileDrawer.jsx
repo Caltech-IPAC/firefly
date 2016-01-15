@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react';
+import React, {PropTypes} from 'react';
 import CsysConverter from '../CsysConverter.js';
 import {makeScreenPt} from '../Point.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
@@ -24,7 +24,7 @@ var TileDrawer= function({ x, y, width, height, tileData,
     const scale= zoomFactor / tileZoomFactor;
     const style=Object.assign({},containerStyle, {width,height});
     if (scale < .5 && tileData.images.length>5) {
-        return false;
+        return <div></div>;
     }
     else {
         return (
@@ -38,15 +38,15 @@ var TileDrawer= function({ x, y, width, height, tileData,
 
 
 TileDrawer.propTypes= {
-    x : React.PropTypes.number.isRequired,
-    y : React.PropTypes.number.isRequired,
-    width : React.PropTypes.number.isRequired,
-    height : React.PropTypes.number.isRequired,
-    tileData : React.PropTypes.object.isRequired,
-    tileZoomFactor : React.PropTypes.number.isRequired,
-    zoomFactor : React.PropTypes.number.isRequired,
-    plot : React.PropTypes.object.isRequired,
-    opacity : React.PropTypes.number
+    x : PropTypes.number.isRequired,
+    y : PropTypes.number.isRequired,
+    width : PropTypes.number.isRequired,
+    height : PropTypes.number.isRequired,
+    tileData : PropTypes.object.isRequired,
+    tileZoomFactor : PropTypes.number.isRequired,
+    zoomFactor : PropTypes.number.isRequired,
+    plot : PropTypes.object.isRequired,
+    opacity : PropTypes.number
 };
 
 

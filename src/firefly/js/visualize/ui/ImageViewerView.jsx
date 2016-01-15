@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import TileDrawer from './TileDrawer.jsx';
-import EventLayer from './EventLayer.jsx';
+import {EventLayer} from './EventLayer.jsx';
 import ImagePlotCntlr, {dispatchProcessScroll,dispatchChangeActivePlotView}
                                from '../ImagePlotCntlr.js';
 import {MouseState, dispatchMouseStateChange, makeMouseStatePayload}  from '../VisMouseCntlr.js';
@@ -18,7 +18,7 @@ import {logError} from '../../util/WebUtil.js';
 
 
 
-class ImageViewerView extends React.Component {
+class ImageViewerView extends Component {
 
 
     constructor(props) {
@@ -150,8 +150,8 @@ class ImageViewerView extends React.Component {
 
 
 ImageViewerView.propTypes= {
-    plotView : React.PropTypes.object.isRequired,
-    drawLayersAry: React.PropTypes.array.isRequired
+    plotView : PropTypes.object.isRequired,
+    drawLayersAry: PropTypes.array.isRequired
 };
 
 

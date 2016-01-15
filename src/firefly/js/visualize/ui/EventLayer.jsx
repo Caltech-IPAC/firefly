@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
+import sCompare from 'react-addons-shallow-compare';
 import {makeScreenPt} from '../Point.js';
 import {MouseState}  from '../VisMouseCntlr.js';
 import {getAbsoluteLeft, getAbsoluteTop} from '../../util/BrowserUtil.js';
@@ -20,15 +20,16 @@ export var EventLayer= React.createClass(
     docMouseMoveCallback: null,
     docMouseUpCallback: null,
 
-    mixins : [PureRenderMixin],
 
     propTypes: {
-        width : React.PropTypes.number.isRequired,
-        height : React.PropTypes.number.isRequired,
-        eventCallback : React.PropTypes.func.isRequired,
-        plotId : React.PropTypes.string,
-        viewPort : React.PropTypes.object
+        width : PropTypes.number.isRequired,
+        height : PropTypes.number.isRequired,
+        eventCallback : PropTypes.func.isRequired,
+        plotId : PropTypes.string,
+        viewPort : PropTypes.object
     },
+
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); },
 
     fireEvent(ev,plotId,viewPort,mouseState) {
         var spt;
@@ -78,9 +79,6 @@ export var EventLayer= React.createClass(
         this.fireEvent(ev,plotId,viewPort,MouseState.DOUBLE_CLICK);
     },
 
-    onMouseUp() {
-    },
-
     onMouseDown(ev) {
         this.mouseDown= true;
         var {viewPort,plotId}= this.props;
@@ -106,12 +104,6 @@ export var EventLayer= React.createClass(
         document.removeEventListener('mousemove', this.docMouseMoveCallback);
         document.removeEventListener('mouseup', this.docMouseUpCallback);
     },
-
-
-
-
-    onMouseOut() { }, //do nothing
-    onMouseOver() { },//do nothing
 
     onMouseLeave(ev) {
         //this.mouseDown= false;
@@ -167,9 +159,6 @@ export var EventLayer= React.createClass(
                  onMouseEnter={this.onMouseEnter}
                  onMouseLeave={this.onMouseLeave}
                  onMouseMoveCapture={this.onMouseMove}
-                 onMouseOut={this.onMouseOut}
-                 onMouseOver={this.onMouseOver}
-                 onMouseUpCapture={this.onMouseUp}
                  onTouchCancel={this.onTouchCancel}
                  onTouchEnd={this.onTouchEnd}
                  onTouchMove={this.onTouchMove}
@@ -182,4 +171,3 @@ export var EventLayer= React.createClass(
 
 });
 
-export default EventLayer;
