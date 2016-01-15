@@ -86,6 +86,18 @@ export const validateEmail = function(description,valStr) {
     return retval;
 };
 
+export const validateUrl = function(description,valStr) {
+    var retval = {
+        valid: true,
+        message: ''
+    };
+    if (!validator.isURL(valStr)) {
+        retval.valid = false;
+        retval.message = description + ': must be a valid URL';
+    }
+    return retval;
+};
+
 export const intRange = function(min,max,description, valStr) {
    return validateRange(min,max,null,description,typeInject.asInt,valStr);
 };
@@ -118,6 +130,6 @@ export const isInt = function(description, valStr) {
 };
 
 var Validate = {
-    validateEmail, intRange, floatRange, isFloat, isInt
+    validateEmail, validateUrl, intRange, floatRange, isFloat, isInt
 };
 export default Validate;
