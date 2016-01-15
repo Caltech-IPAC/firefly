@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react';
 
+import React, {Component, PropTypes} from 'react';
 import TargetPanel from './TargetPanel.jsx';
 import InputGroup from './InputGroup.jsx';
 import Validate from '../util/Validate.js';
@@ -175,7 +175,7 @@ var AllTest = React.createClass({
 });
 
 
-class FieldGroupTest extends React.Component {
+class FieldGroupTest extends Component {
 
     constructor(props)  {
         super(props);
@@ -302,7 +302,7 @@ function FieldGroupTestView ({fields}) {
 
 
 FieldGroupTestView.propTypes= {
-    fields: React.PropTypes.object.isRequired,
+    fields: PropTypes.object.isRequired,
 };
 
 

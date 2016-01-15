@@ -1,7 +1,7 @@
 import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import ReactDOM from 'react-dom';
-import PointerPopup from '../ui/PointerPopup.jsx';
+import {PointerPopup} from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import './InputFieldView.css';
 import EXCLAMATION from 'html/images/exclamation16x16.gif';

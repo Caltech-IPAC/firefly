@@ -1,6 +1,6 @@
 /*eslint "prefer-template": 0*/
 
-import React from 'react';
+import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import _ from 'lodash';
@@ -24,7 +24,7 @@ function computePosition(e,dir,tgtX,tgtY) {
 
 
 
-class PointerPopup extends React.Component {
+export class PointerPopup extends Component {
     constructor(props) {
         super(props);
         this.state= {
@@ -128,11 +128,7 @@ class PointerPopup extends React.Component {
 
 
 PointerPopup.propTypes= {
-    x : React.PropTypes.number.isRequired,
-    y : React.PropTypes.number.isRequired,
-    message : React.PropTypes.object.isRequired
+    x : PropTypes.number.isRequired,
+    y : PropTypes.number.isRequired,
+    message : PropTypes.object.isRequired
 };
-
-
-
-export default PointerPopup;

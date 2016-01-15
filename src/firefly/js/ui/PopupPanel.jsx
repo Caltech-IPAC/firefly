@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import React, {Componennt, PropTypes} from 'react';
 import {getRootURL, getAbsoluteLeft, getAbsoluteTop} from '../util/BrowserUtil.js';
 import _ from 'lodash';
 import Enum from 'enum';
-import React from 'react';
 import ReactDOM from 'react-dom';
 import {getPopupPosition, humanStart, humanMove, humanStop } from './PopupPanelHelper.js';
 import './PopupPanel.css';
@@ -22,11 +22,11 @@ var PopupPanel= React.createClass(
     buttonUpCallback : null,
 
     propTypes: {
-        layoutPosition : React.PropTypes.object,
-        title : React.PropTypes.string,
-        closePromise : React.PropTypes.object,
-        closeCallback : React.PropTypes.func,
-        visible : React.PropTypes.bool
+        layoutPosition : PropTypes.object,
+        title : PropTypes.string,
+        closePromise : PropTypes.object,
+        closeCallback : PropTypes.func,
+        visible : PropTypes.bool
     },
 
     //onClick: function(ev) {
