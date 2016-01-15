@@ -39,7 +39,8 @@ import FITS_HEADER from 'html/images/icons-2014/28x28_FITS_Information.png';
 import DS9_REGION from 'html/images/icons-2014/DS9.png';
 import MASK from 'html/images/mask_28x28.png';
 import CATALOG from 'html/images/catalog_28x28.png';
-
+import SAVE from 'html/images/icons-2014/Save.png';
+import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 
 /**
  * Vis Toolbar
@@ -65,6 +66,14 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
 
     return (
         <div style={rS}>
+            <ToolbarButton icon={SAVE}
+                           tip='Save the Fits file, PNG file, or save the overlays as a region'
+                           enabled={enabled}
+                           horizontal={true}
+                           visible={mi.fitsDownload}
+                           onClick={showFitsDialog}/>
+
+
             <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp}/>
             <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown}/>
             <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal}/>
@@ -129,6 +138,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     visible={mi.grid}
                                     todo={true}
             />
+
 
 
 
@@ -240,4 +250,7 @@ LayerButton.propTypes= {
     dlAry : PropTypes.arrayOf(React.PropTypes.object)
 };
 
-
+function showFitsDialog() {
+    console.log('showing Fits Download  dialog');
+    showFitsDownloadDialog();
+}

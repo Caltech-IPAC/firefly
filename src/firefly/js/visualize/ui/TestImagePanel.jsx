@@ -20,7 +20,6 @@ import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
 import ZoomUtil from '../ZoomUtil.js';
-import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
@@ -154,10 +153,6 @@ function showExDialog() {
 }
 
 
-function showFitsDialog() {
-     console.log('showing Fits Download  dialog');
-     showFitsDownloadDialog();
- }
 
 function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
@@ -177,7 +172,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     />
                     <div style={{height:50}}/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
-                    <button type='button' onClick={showFitsDialog}>Fits Download Dialog</button>
+                    
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>

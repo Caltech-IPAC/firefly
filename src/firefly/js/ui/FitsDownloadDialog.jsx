@@ -1,3 +1,5 @@
+
+
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Lijun
@@ -45,23 +47,41 @@ export function showFitsDownloadDialog() {
     AppDataCntlr.showDialog('fitsDownloadDialog');
 }
 
-
+/**
+ * This method is called when the dialog is rendered. Only when an image is loaded, the PlotView is available.
+ * Then, the color band, plotState etc can be determined.
+ * @returns {{plotState, colors: Array, hasThreeColorBand: boolean, hasOperation: boolean}}
+ */
 function getInitialPlotState() {
 
     var plot = PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
 
     var plotState = plot.plotState;
 
-   // var threeColorBandUsed = false;
-
-    //var color;
     if (plotState.isThreeColor()) {
         var threeColorBandUsed = true;
-        var bands = this.plotState.getBands();
 
-        var colorID = bands[0].toString();
-        var color = Band.valueOf()[colorID].name();
+        var bands = this.plotState.getBands();//array of Band
 
+        if (bands != Band.NO_BAND) {
+            var colors = [];
+            for (var i=0; i<bands.length; i++) {
+                switch (bands[i]){
+                    case Band.RED:
+                        colors[i] = 'Red';
+                        break;
+                    case Band.GREEN:
+                        colors[i] = 'Green';
+                        break;
+                    case Band.BLUE:
+                        colors[i] = 'Blue';
+                        break;
+                    default:
+                }        break;
+
+            }
+
+        }
     }
 
 
@@ -71,7 +91,7 @@ function getInitialPlotState() {
 
     return {
         plotState,
-        color,
+        colors,
         hasThreeColorBand: threeColorBandUsed,
         hasOperation: cropNotRotate
     };
@@ -107,13 +127,12 @@ class FitsDownloadDialog extends React.Component {
 
         var {fields}= this.state;
         if (!fields) return false;
-
         return <FitsDownloadDialogForm  />;
     }
 
 
 }
-/// Fits dialog test
+
 
 function renderOperationOption(hasOperation,leftColumn, rightColumn) {
 
@@ -123,26 +142,26 @@ function renderOperationOption(hasOperation,leftColumn, rightColumn) {
                 <div style={leftColumn}>
                     <InputFieldLabel label= 'FITS file:'
                                      tooltip='Please select an option'
-                   />
+                    />
 
                 </div>
                 <div style={rightColumn}>
                     <RadioGroupInputField
                         initialState={{
-                                    tooltip: 'Please select an option',
+                                    tooltip: 'Please select an option'
+                                    //move the label as InputFieldLabel above
                                    }}
-                    options={[
+                        options={[
                             { label:'Original', value:'fileTypeOrig'},
 
                             { label:'Cropped', value:'fileTypeCrop'}
 
                             ]}
-                    alignment={'vertical'}
-                    fieldKey='operationOption'
+                        alignment={'vertical'}
+                        fieldKey='operationOption'
 
                     />
                 </div>
-                <br/>
             </div>
         );
     }
@@ -151,31 +170,36 @@ function renderOperationOption(hasOperation,leftColumn, rightColumn) {
     }
 }
 
-function renderThreeBand(hasThreeColorBand, color,leftColumn, rightColumn) {
+function renderThreeBand(hasThreeColorBand, colors,leftColumn, rightColumn) {
     if (hasThreeColorBand) {
+        var optionArray=[];
+        for (var i=0; i<colors.length; i++){
+            optionArray[i]={label: colors[i], value: colors[i]+'Radio'};
+        }
+
         return (
             <div >
 
-                <div style={{width: '50%', display: 'inline-block', marginLeft:10}}>
+                <div style={leftColumn}>
+                    <InputFieldLabel label= 'Color Band:'
+                                     tooltip='Please select an option'
+                    />
+
+                </div>
+                <div style={rightColumn}>
                     <RadioGroupInputField
                         initialState={{
-                                    tooltip: 'Please select an option',
-                                    label: 'Color Band:'
+                                    tooltip: 'Please select an option'
+                                     //move the label as InputFieldLabel above
                                      }}
+                        options={optionArray}
 
-                      options={[
-                           {  label: color, value: 'colorOpt'},
-
-
-                         ]}
-
-                     fieldKey='threeBandColor'
-
-                   />
+                        alignment={'vertical'}
+                        fieldKey='threeBandColor'
+                    />
                 </div>
-                <br/>
-            </div>
 
+            </div>
         );
     }
     else {
@@ -186,22 +210,17 @@ function renderThreeBand(hasThreeColorBand, color,leftColumn, rightColumn) {
 function FitsDownloadDialogForm() {
 
 
-    const { plotState, color, hasThreeColorBand, hasOperation} = getInitialPlotState();
-    var leftColumnRoot = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
-        display: 'inline-block', 'line-height': 80};
+    const { plotState, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+    var leftColumn = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
+        display: 'inline-block', 'line-height': 40};
 
     var rightColumn = {width: '50%', display: 'inline-block'};
 
+    var renderOperationButtons = renderOperationOption(hasOperation, leftColumn, rightColumn);
 
-    var renderOperationButtons = renderOperationOption(true, leftColumnRoot, rightColumn);//hasOperation
+    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors, leftColumn , rightColumn);
 
-    var lc1 = Object.assign({}, leftColumnRoot);
-    lc1['line-height']=10;
-    lc1['margin-left']=30;
-    var renderThreeBandButtons = renderThreeBand(true, 'Green', lc1 , rightColumn);//hasThreeColorBand, color,
-
-    var leftColumn = Object.assign({}, leftColumnRoot);
-    leftColumn['line-height']=100;
+    leftColumn['line-height']=100;//change the line height for the Fits radio button group
 
     return (
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
@@ -210,7 +229,7 @@ function FitsDownloadDialogForm() {
                     <InputGroup labelWidth={130}>
                         <PopupPanel  />
 
-						<div style={leftColumn}>
+                        <div style={leftColumn}>
 
                             <InputFieldLabel label= 'Type of files:'
                                              tooltip='Please select an option'
@@ -218,29 +237,29 @@ function FitsDownloadDialogForm() {
                             />
                         </div>
                         <div style={rightColumn}>
-                           <RadioGroupInputField
-                               initialState={{
-                                    tooltip: 'Please select an option',
-
+                            <RadioGroupInputField
+                                initialState={{
+                                    tooltip: 'Please select an option'
+                                    //move the label as a InputFieldLabel
                                    }}
-                            options={ [
+                                options={ [
                                       {label: 'FITS File', value: 'fits'},
                                       {label: 'PNG File', value: 'png' },
                                        {label: 'Region File', value: 'reg'}
                                     ]}
-                            alignment={'vertical'}
-                            fieldKey='fileType'
-                          />
-                      </div>
+                                alignment={'vertical'}
+                                fieldKey='fileType'
+                            />
+                        </div>
 
-                   </InputGroup>
+                    </InputGroup>
 
                 </div>
                 <div>
                     {renderOperationButtons}
 
-                    <div>{renderThreeBandButtons}</div>
-               </div>
+                    {renderThreeBandButtons}
+                </div>
                 <br/>
                 <div style={{'text-align':'center'}}>
                     < CompleteButton
@@ -257,28 +276,17 @@ function FitsDownloadDialogForm() {
 
 }
 
-/*
-function showResults(success, request) {
-
-    var rel = {};
-    console.log(request);
-
-    if (success) {
-        Object.keys(request).forEach(function (key) {
-            rel[key] = request[key];
-        });
-    }
-
-    return rel;
-}
-*/
 
 function resultsFail(request) {
     console.log(request + ': Error');
 }
-
+/**
+ * This function process the request
+ * @param request
+ * @param plotState
+ */
 function resultsSuccess(request, plotState) {
-   // var rel = showResults(true, request);
+    // var rel = showResults(true, request);
 
     if (!Object.keys(request).length) {
         console.log(request);
