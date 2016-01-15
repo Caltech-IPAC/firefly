@@ -33,7 +33,7 @@ function appIcon(icoSrc) {
 function altAppIcon(icoSrc) {
     if (icoSrc) {
         return (
-            <div id='altAppIcon' style={{width: '100%', height: '100%'}}>
+            <div id='altAppIcon' style={{width: '75px', height: '75px', float: 'left'}}>
                 <img src={icoSrc} className='gwt-Image' style={{width: '75px', height: '75px'}}></img>
             </div>
         );
@@ -76,33 +76,23 @@ const Banner = React.createClass({
     render() {
 
         return (
-            <div id='container' style={{width: '100%', height: '75px', background: 'url(images/ipac_bar.jpg)'}}>
-                <div style={{height: '75px', width: '75px', float: 'left'}}>
-
+            <div id='container' style={{width: '100%', height: '75px', background: 'url(images/ipac_bar.jpg)', position: 'relative'}}>
+                <div style={{height: '100%', width: '100%'}}>
                     {appIcon(this.props.appIcon)}
-
                     <div style={{position: 'absolute', left: '75px', right: '158px', minWidth: '820px'}}>
                         <div id='readout' style={{height: '45px', width: '100%'}}>
-
                             {appTitle(this.props.appTitle)}
                             {visPreview(this.props.visPreview)}
-
                         </div>
-
                         {menu(this.props.menu)}
-
                     </div>
                     <div style={{height: '75px', width: '148px', right: '10px', position: 'absolute'}}>
                         <div>
                             <div style={{width: '100%', height: '100%', padding: '0px', margin: '0px'}}>
-
                                 {altAppIcon(this.props.altAppIcon)}
-
                             </div>
                             <div aria-hidden='true' style={{width: '100%', height: '100%', padding: '0px', margin: '0px', display: 'none'}}>
-
                                 {visPreview(this.props.visPreview)}
-
                             </div>
                         </div>
                     </div>

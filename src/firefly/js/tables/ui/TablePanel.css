@@ -1,8 +1,7 @@
-
-.tablePanel__checkbox_wrapper {
-    display: flex;
-    align-items: center;
-    height: 100%;
+.tablePanel__checkbox {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
@@ -81,7 +80,7 @@
 }
 
 .public_fixedDataTableCell_cellContent {
-    font-size: 12px;
+    font-size: 11px;
     white-space: nowrap;
     padding: 3px;
 }
@@ -332,7 +331,10 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
     box-sizing: border-box;
     overflow: hidden;
     position: absolute;
-    top: 0
+    top: 0;
+    border-bottom-style: solid;
+    border-width: 0 0 1px 0;
+    border-color: #d3d3d3;
 }
 
 .fixedDataTableRowLayout_body {

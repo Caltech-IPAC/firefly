@@ -11,11 +11,10 @@ import appDataCntlr from '../core/AppDataCntlr.js';
 
 
 function handleAction (menuItem) {
-    if (menuItem.type === appDataCntlr.SEARCH_TYPE) {
-        flux.process({type: appDataCntlr.SEARCH_SHOW});
-    } else {
-        flux.process({type: appDataCntlr.SEARCH_HIDE});
-    }
+
+    // set whether search menu should be shown
+    appDataCntlr.dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
+
     flux.process({type:menuItem.action});
 }
 

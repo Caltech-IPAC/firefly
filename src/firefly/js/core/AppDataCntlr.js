@@ -5,7 +5,7 @@
 import {flux} from '../Firefly.js';
 import BrowserCache from '../util/BrowserCache.js';
 import history from './History.js';
-import layoutRenderer from './reducers/LayoutReducer.js';
+import layoutReducer from './reducers/LayoutReducer.js';
 import menuRenderer from './reducers/MenuReducer.js';
 import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
@@ -29,8 +29,8 @@ const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
 const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 
-const SEARCH_SHOW       = `${APP_DATA_PATH}.searchShow`;
-const SEARCH_HIDE       = `${APP_DATA_PATH}.searchHide`;
+const SHOW_SEARCH       = `${APP_DATA_PATH}.searchShow`;
+const UPDATE_LAYOUT     = `${APP_DATA_PATH}.updateLayout`;
 
 const DISPLAY_MODE_CHANGE   = `${APP_DATA_PATH}.displayModeChange`;
 
@@ -130,7 +130,7 @@ function addPreference(state,action) {
     var {name,value}= action.payload;
     var preferences= Object.assign({},state.preferences,{[name]:value} );
     BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences})
+    return Object.assign({},state,{preferences});
 }
 
 function removePreference(state,action) {
@@ -139,7 +139,7 @@ function removePreference(state,action) {
     var preferences= Object.assign({},state.preferences);
     Reflect.deleteProperty(preferences,name);
     BrowserCache.put(APP_PREFERENCES,preferences);
-    return Object.assign({},state,{preferences})
+    return Object.assign({},state,{preferences});
 }
 
 function loadAppData() {
@@ -215,7 +215,7 @@ function reducer(state=getInitState(), action={}) {
     var newState = addDataReducer(state, action);
 
     var menu = menuRenderer.reducer(newState.menu, action);
-    var layoutInfo = layoutRenderer.reducer(newState.layoutInfo, action, menu);
+    var layoutInfo = layoutReducer.reducer(newState.layoutInfo, action, menu);
 
     return mergeAll(state, newState, {menu, layoutInfo});
 }
@@ -299,6 +299,21 @@ function dispatchRemovePreference(name) {
     flux.process({type: REMOVE_PREF, payload: {name}});
 }
 
+/**
+ * Updates the app-data layoutInfo.  This data is responsible for the layout of the top level components
+ * i.e. search panel, results panel...
+ * @param search    boolean. show the search panel.  defaults to false.
+ * @param results   boolean. show the results panel. defaults to true.
+ * @param mode      enum, one of ["auto", "tri", "sbs", "tb"]. defaults to "auto".
+ * @param views     array of enum ["tables", "images", "xyPlots"].  Used in conjunction with mode to define what to show.
+ * @param hasTables boolean.  Table data available.
+ * @param hasImages boolean. Image data available.
+ * @param hasXyPlots boolean. XY Plot data available.
+ */
+function dispatchUpdateLayout({search, results, mode, views, hasTables, hasImages, hasXyPlots}) {
+    flux.process({type: UPDATE_LAYOUT, payload: {search, results, mode, views, hasTables, hasImages, hasXyPlots}});
+}
+
 
 /*---------------------------- EXPORTS -----------------------------*/
 
@@ -308,8 +323,8 @@ export default {
     SHOW_DIALOG,
     HIDE_DIALOG,
     APP_DATA_PATH,
-    SEARCH_SHOW,
-    SEARCH_HIDE,
+    SHOW_SEARCH,
+    UPDATE_LAYOUT,
     SEARCH_TYPE,
     DISPLAY_MODE_CHANGE,
     reducer,
@@ -326,6 +341,7 @@ export default {
     dispatchRemoveTaskCount,
     dispatchAddPreference,
     dispatchRemovePreference,
+    dispatchUpdateLayout,
     makeTaskId,
     getCommandState
 };

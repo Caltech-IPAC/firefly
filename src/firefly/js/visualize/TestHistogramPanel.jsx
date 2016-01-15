@@ -50,12 +50,10 @@ const TestHistogramPanel = React.createClass({
         if (activeTbl) {
             return (
                     <div>
-                        <div style={{height: '400px'}}>
-                            <TablePanel
-                                tableModel={activeTbl}
-                                selectable={true}
-                            />
-                        </div>
+                        <TablePanel style={{height: '400px'}}
+                            tableModel={activeTbl}
+                            selectable={true}
+                        />
                         <br/>
                         <div style={{height: '300px'}}>
                             <HistogramTableViewPanel tblHistogramData={histogramData}/>

@@ -83,10 +83,10 @@ class TablePanel extends React.Component {
         if (selectable) {
             var cbox = <Column
                 columnKey='selectable-checkbox'
-                header={<div className="tablePanel__checkbox_wrapper"><input type='checkbox' /></div>}
-                cell={<div className="tablePanel__checkbox_wrapper"><input type='checkbox' value='rowIn'/></div>}
+                header={<input style={{marginTop: '6px'}} className='tablePanel__checkbox' type='checkbox' />}
+                cell={<input className='tablePanel__checkbox' type='checkbox' value='rowIn'/>}
                 fixed={true}
-                width={20}
+                width={25}
                 allowCellsRecycling={true}
             />;
             colsEl.splice(0, 0, cbox);
@@ -124,10 +124,10 @@ class TablePanel extends React.Component {
 
         if (!tableModel || !tableModel.tableData) return (<div style={{display: 'none'}}></div>);
         return (
-            <Resizable id='table-resizer' style={{width, height}} onResize={this.onResize} >
+            <Resizable id='table-resizer' style={{width, height}} onResize={this.onResize} {...this.props} >
                 <Table
-                    rowHeight={30}
-                    headerHeight={35}
+                    rowHeight={20}
+                    headerHeight={25}
                     rowsCount={tableModel.totalRows}
                     onColumnResizeEndCallback={this.onColumnResizeEndCallback}
                     onRowClick={this.onRowSelect}

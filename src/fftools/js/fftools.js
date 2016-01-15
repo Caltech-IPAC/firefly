@@ -36,7 +36,7 @@ const loadTestData = {
 };
 
 function hideSearchPanel() {
-    flux.process({type:appDataCntlr.SEARCH_HIDE});
+    appDataCntlr.dispatchUpdateLayout( {search: false});
 }
 
 function doFileDownload() {
@@ -55,6 +55,7 @@ const App = React.createClass({
 
     render() {
         var {appData, title, table, activeTbl, histogramData} = this.props;
+
 
         const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!appData.isReady) {
@@ -92,6 +93,7 @@ const App = React.createClass({
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<TestHistogramPanel title='Table with a histogram view' activeTbl={activeTbl} histogramData={histogramData}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }
+                            layoutInfo = { appData.layoutInfo }
                         />
                     </main>
                 </div>

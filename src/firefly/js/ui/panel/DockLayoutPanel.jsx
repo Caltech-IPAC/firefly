@@ -6,6 +6,17 @@ function createContentWrapper(children, index) {
    return ( <div className='wrapper'> <div className='content'>{content}</div> </div> );
 }
 
+function one(layout, items){
+    layout = layout || {center: {index: 0}};
+    const item = layout.center || layout.north || layout.east || layout.west || layout.south;
+
+    return (
+        <div className='Pane vertical' style={{height: '100%'}}>
+            {createContentWrapper(items, item.index)}
+        </div>
+    );
+}
+
 function two(layout, items){
     layout = layout || {east: {index: 0}, west: {index: 1}};
 
@@ -87,8 +98,10 @@ function three(layout, items){
 }
 
 function layoutDom(layout, items) {
-    const count = Object.keys(items).length;
-    if (count === 2) {
+    const count = Object.keys(layout).length;
+    if (count === 1) {
+        return one(layout, items);
+    } else if (count === 2) {
         return two(layout, items);
     } else if (count === 3) {
         return three(layout, items);
