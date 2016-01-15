@@ -41,8 +41,8 @@ const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 
 /*---------------------------- CREATORS ----------------------------*/
 
-const showDialog= function(dialogId) {
-    flux.process({type: SHOW_DIALOG, payload: {dialogId}});
+const showDialog= function(dialogId,ownerId=undefined) {
+    flux.process({type: SHOW_DIALOG, payload: {dialogId, ownerId}});
 };
 
 const hideDialog= function(dialogId) {
@@ -90,9 +90,8 @@ function getCommandState(stateId) {
 
 
 const showDialogChange= function(state,action) {
-    if (!action.payload) return state;
-    var {dialogId}= action.payload;
-    if (!dialogId) return state;
+    if (!action.payload || !action.payload.dialogId) return state;
+    var {dialogId,ownerId}= action.payload;
 
     state= Object.assign({},state);
 
@@ -102,8 +101,9 @@ const showDialogChange= function(state,action) {
         state.dialogs[dialogId]= {visible:false};
     }
 
-    if (!state.dialogs[dialogId].visible) {
+    if (!state.dialogs[dialogId].visible || ownerId!==state.dialogs[dialogId].ownerId) {
         state.dialogs[dialogId].visible= true;
+        if (ownerId) state.dialogs[dialogId].ownerId= ownerId;
     }
     return state;
 };
@@ -115,7 +115,7 @@ const hideDialogChange= function(state,action) {
 
     if (state.dialogs[dialogId].visible) {
         state= Object.assign({},state);
-        state.dialogs[dialogId].visible= false;
+        state.dialogs[dialogId]= {visible: false};
     }
     return state;
 };
@@ -160,10 +160,17 @@ function updateAppData(appData) {
     return { type : APP_UPDATE, payload: appData };
 }
 
-const isDialogVisible= function(dialogKey) {
+function isDialogVisible(dialogKey) {
     var dialogs= flux.getState()[APP_DATA_PATH].dialogs;
     return (dialogs && dialogs[dialogKey] && dialogs[dialogKey].visible) ? true : false;
-};
+}
+
+function getDialogOwner(dialogKey) {
+    var dialogs= flux.getState()[APP_DATA_PATH].dialogs;
+    if (!dialogs || !dialogs[dialogKey]) return null;
+    var {visible,ownerId}= dialogs[dialogKey];
+    return (visible && ownerId) ? ownerId : null;
+}
 
 const getActiveTarget= function() {
     return flux.getState()[APP_DATA_PATH].activeTarget;
@@ -332,6 +339,7 @@ export default {
     loadAppData,
     updateAppData,
     isDialogVisible,
+    getDialogOwner,
     showDialog,
     hideDialog,
     hideAllDialogs,

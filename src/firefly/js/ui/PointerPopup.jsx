@@ -1,9 +1,9 @@
 /*eslint "prefer-template": 0*/
 
 import React, {Component, PropTypes} from 'react';
+import defer from 'lodash/function/defer';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
-import _ from 'lodash';
 import './PointerPopup.css';
 import UP_POPUP_POINTER from 'html/images/up-pointer.gif';
 import LEFT_DOWN_POPUP_POINTER from 'html/images/left-down-pointer.gif';
@@ -86,7 +86,7 @@ export class PointerPopup extends Component {
     updatePosition() {
         var e= ReactDOM.findDOMNode(this);
         this.updateOffsets(e);
-        _.defer(function() {
+        defer(function() {
             this.computeDir(e);
         }.bind(this));
     }

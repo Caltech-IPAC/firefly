@@ -8,8 +8,9 @@ import {getActivePlotView,
     getPlotViewById,
     isDrawLayerAttached,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
+import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ZoomButton, ZoomType} from './ZoomButton.jsx';
 import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
@@ -17,7 +18,10 @@ import {dispatchCreateDrawLayer,
     dispatchAttachLayerToPlot,
     dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {StretchDropDownView} from './StretchDropDownView.jsx';
+import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';
 
+import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 
@@ -40,7 +44,13 @@ import DS9_REGION from 'html/images/icons-2014/DS9.png';
 import MASK from 'html/images/mask_28x28.png';
 import CATALOG from 'html/images/catalog_28x28.png';
 import SAVE from 'html/images/icons-2014/Save.png';
-import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
+
+import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
+import STRETCH from 'html/images/icons-2014/28x28_Log.png';
+import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
+
+
+
 
 /**
  * Vis Toolbar
@@ -56,7 +66,8 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
         height: 34,
         display: 'inline-block',
         position: 'relative',
-        verticalAlign: 'top'
+        verticalAlign: 'top',
+        whiteSpace: 'nowrap'
     };
 
     var pv= getActivePlotView(visRoot);
@@ -71,8 +82,9 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            enabled={enabled}
                            horizontal={true}
                            visible={mi.fitsDownload}
-                           onClick={showFitsDialog}/>
+                           onClick={showFitsDownloadDialog}/>
 
+            <ToolbarHorizontalSeparator/>
 
             <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp}/>
             <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown}/>
@@ -80,6 +92,22 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
             <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit}/>
             <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill}/>
             <ToolbarHorizontalSeparator/>
+
+
+            <DropDownToolbarButton icon={COLOR}
+                           tip='Change the color table'
+                           enabled={enabled} horizontal={true}
+                           visible={true}
+                           dropDown={<ColorTableDropDownView plotView={pv}/>} />
+
+            <DropDownToolbarButton icon={STRETCH}
+                                   tip='Quickly change the background image stretch'
+                                   enabled={enabled} horizontal={true}
+                                   visible={true}
+                                   dropDown={<StretchDropDownView plotView={pv}/>} />
+
+
+
             <ToolbarHorizontalSeparator/>
 
             <SimpleLayerOnOffButton plotView={pv}
@@ -89,8 +117,8 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     iconOn={ROTATE_NORTH_ON}
                                     iconOff={ROTATE_NORTH_OFF}
                                     visible={mi.rotateNorth}
-                                    todo={true}
-            />
+                                    todo={true} />
+
             <ToolbarButton icon={ROTATE}
                            tip='Rotate the image to any angle'
                            enabled={enabled}
@@ -98,6 +126,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            visible={mi.rotate}
                            todo={true}
                            onClick={() => console.log('todo')}/>
+
 
 
             <ToolbarHorizontalSeparator/>
@@ -108,16 +137,14 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     tip='Select an area for cropping or statistics'
                                     iconOn={SELECT_ON}
                                     iconOff={SELECT_OFF}
-                                    visible={mi.selectArea}
-            />
+                                    visible={mi.selectArea} />
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
                                     typeId={DistanceTool.TYPE_ID}
                                     tip='Select, then click and drag to measure a distance on the image'
                                     iconOn={DIST_ON}
                                     iconOff={DIST_OFF}
-                                    visible={mi.distanceTool}
-            />
+                                    visible={mi.distanceTool} />
 
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
@@ -126,8 +153,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     iconOn={COMPASS_ON}
                                     iconOff={COMPASS_OFF}
                                     visible={mi.northArrow}
-                                    todo={true}
-            />
+                                    todo={true} />
 
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
@@ -136,8 +162,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     iconOn={GRID_ON}
                                     iconOff={GRID_OFF}
                                     visible={mi.grid}
-                                    todo={true}
-            />
+                                    todo={true} />
 
 
 
@@ -216,7 +241,7 @@ const tipStyle= {
 };
 
 function showToolTip(toolTip) {
-    return toolTip ? <div style={tipStyle}>{toolTip}</div> : false;
+    return <div style={tipStyle}>{toolTip}</div>;
 }
 
 
@@ -247,10 +272,6 @@ export function LayerButton({plotView:pv,dlAry,visible}) {
 LayerButton.propTypes= {
     plotView : PropTypes.object,
     visible : PropTypes.bool.isRequired,
-    dlAry : PropTypes.arrayOf(React.PropTypes.object)
+    dlAry : PropTypes.arrayOf(PropTypes.object)
 };
 
-function showFitsDialog() {
-    console.log('showing Fits Download  dialog');
-    showFitsDownloadDialog();
-}

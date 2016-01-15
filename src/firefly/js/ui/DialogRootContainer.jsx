@@ -41,7 +41,7 @@ class PopupStoreConnection extends Component {
 
     constructor(props)  {
         super(props);
-        var visible= AppDataCntlr.isDialogVisible(this.props.dialogId);
+        var visible= AppDataCntlr.isDialogVisible(props.dialogId);
         this.state = { visible};
     }
 
@@ -104,11 +104,12 @@ function showTmpPopup(popup) {
     if (!divElement) init();
     tmpCount++;
     const id= TMP_ROOT+tmpCount;
-    //tmpPopups[id]= <PopupStoreConnection popupPanel={popup} dialogId={id}/>;
     tmpPopups[id]= popup;
     reRender(dialogs,tmpPopups);
     return () => {
-        Reflect.deleteProperty(tmpPopups, id);
-        reRender(dialogs,tmpPopups);
+        if (tmpPopups[id]) {
+            Reflect.deleteProperty(tmpPopups, id);
+            reRender(dialogs,tmpPopups);
+        }
     };
 }

@@ -6,7 +6,7 @@ import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {parseTarget} from '../ui/TargetPanelWorker.js';
 import TargetFeedback from '../ui/TargetFeedback.jsx';
-import InputFieldView from '../ui/InputFieldView.jsx';
+import {InputFieldView} from '../ui/InputFieldView.jsx';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 

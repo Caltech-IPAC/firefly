@@ -63,49 +63,10 @@
     animation:attentionAnimation 5s linear 1s 10 normal;
 }
 
-.firefly-MenuItem-v2-Active {
+.ff-MenuItem-active {
     border: 2px solid rgba(245,245,245,.97);
 }
 
-.firefly-MenuItem-v2-dropDown {
-    -moz-border-radius: 0 0 5px 5px;
-    -webkit-border-radius: 0 0 5px 5px;
-    border-radius: 0 0 5px 5px;
-    background-color: rgba(245,245,245,.97);
-    -webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    -moz-box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.3);
-}
-
-.firefly-MenuItem-v2-dropDown .menuItemText {
-    font-size: 10pt;
-    line-height: 14pt;
-}
-
-.firefly-MenuItem-v2-dropDown .menuItemText:HOVER {
-    background-color: rgba(255,255,255,.97);
-}
-
-
-.firefly-horizontal-separator-v2 {
-    width: 0;
-    height: 27px;
-    display: inline-block;
-    /*font-size: 25px;*/
-    vertical-align: baseline;
-    border-style: solid;
-    border-color: rgba(136,166,185,1);
-    border-width : 0 1px;
-    margin: 0 10px;
-    -moz-box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
-    -webkit-box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
-    box-shadow: 0 0 1px 1px rgba(0,0,0,0.8);
-
-    -moz-border-radius: 5px 5px 5px 5px;
-    -webkit-border-radius: 5px 5px 5px 5px;
-    border-radius: 5px 5px 5px 5px;
-    background-color: rgba(136,166,185,1);
-}
 
 .ff-horizontal-separator {
     width: 0;
@@ -124,4 +85,8 @@
     -webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
     background-color: rgba(136,166,185,1);
+}
+
+.ff-vertical-separator {
+    height: 4px;
 }

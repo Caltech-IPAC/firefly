@@ -2,7 +2,7 @@ import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 
-import InputFieldView from './InputFieldView.jsx';
+import {InputFieldView} from './InputFieldView.jsx';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
 
