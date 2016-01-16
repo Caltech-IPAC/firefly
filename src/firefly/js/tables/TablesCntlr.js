@@ -50,6 +50,7 @@ function reducer(state={}, action={}) {
 
     switch (action.type) {
         case (TBL_HIGHLIGHT_ROW)  :
+        case (TBL_SELECT_ROW)  :
         case (LOAD_TABLE_STATUS)  :
         case (LOAD_TABLE_COMPLETE)  :
         case (LOAD_TABLE)  :
@@ -62,9 +63,6 @@ function reducer(state={}, action={}) {
                 TblUtil.error(action, tmpAction.err);
             }
             break;
-        case (TBL_SELECT_ROW)  :
-
-
 
         default:
             return state;
@@ -102,6 +100,15 @@ function dispatchHighlightRow(tbl_id, highlightedRow) {
     flux.process( {type: TBL_HIGHLIGHT_ROW, payload: {tbl_id, highlightedRow} });
 }
 
+/**
+ * update the selectInfo of the given table by tbl_id.
+ * @param tbl_id
+ * @param selectInfo
+ */
+function dispatchRowSelect(tbl_id, selectInfo) {
+    flux.process( {type: TBL_SELECT_ROW, payload: {tbl_id, selectInfo} });
+}
+
 
 /*---------------------------- EXPORTS -----------------------------*/
 export default {
@@ -117,6 +124,7 @@ export default {
     dispatchLoadTable,
     dispatchFetchTable,
     dispatchHighlightRow,
+    dispatchRowSelect,
     fetchTable,
     loadTable
 };

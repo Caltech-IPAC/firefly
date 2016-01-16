@@ -6,12 +6,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import TblUtil from '../TableUtil.js';
 import TblCntlr from '../TablesCntlr';
+import {SelectInfo} from '../SelectInfo';
 import FixedDataTable from 'fixed-data-table';
-import './TablePanel.css';
 import Resizable from 'react-component-resizable';
+import {debounce} from 'lodash';
 
-import throttle from 'lodash/function/throttle';
-
+import './TablePanel.css';
 
 const {Table, Column, Cell} = FixedDataTable;
 
@@ -43,7 +43,7 @@ class TablePanel extends React.Component {
             columnWidths: {}
         };
 
-        this.onResize = throttle( (size) => {
+        this.onResize = debounce( (size) => {
             if (size) {
                 this.setState({ widthPx: size.width, heightPx: size.height });
             }
@@ -52,7 +52,9 @@ class TablePanel extends React.Component {
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.makeColumns = this.makeColumns.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
+        this.onRowHighlight = this.onRowHighlight.bind(this);
         this.onRowSelect = this.onRowSelect.bind(this);
+        this.onSelectAll = this.onSelectAll.bind(this);
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
@@ -81,10 +83,25 @@ class TablePanel extends React.Component {
             )
         });
         if (selectable) {
+            var selectInfo = SelectInfo.newInstance(tableModel.selectInfo);
+            const headerCB = () => {
+                  return (
+                      <input style={{marginTop: '6px'}} className='tablePanel__checkbox' type='checkbox'
+                            checked={selectInfo.isSelectAll()} onClick={(e) => this.onSelectAll(e, selectInfo)}/>
+                  );
+                } ;
+
+            const cellCB = ({rowIndex}) => {
+                return (
+                    <input className='tablePanel__checkbox' type='checkbox' value='rowIn'
+                           checked={selectInfo.isSelected(rowIndex)} onClick={(e) => this.onRowSelect(e, rowIndex, selectInfo)}/>
+                );
+            } ;
+
             var cbox = <Column
                 columnKey='selectable-checkbox'
-                header={<input style={{marginTop: '6px'}} className='tablePanel__checkbox' type='checkbox' />}
-                cell={<input className='tablePanel__checkbox' type='checkbox' value='rowIn'/>}
+                header={headerCB}
+                cell={cellCB}
                 fixed={true}
                 width={25}
                 allowCellsRecycling={true}
@@ -94,7 +111,31 @@ class TablePanel extends React.Component {
         return colsEl;
     }
 
-    onRowSelect(e, index) {
+    onSelectAll(e, selectInfo) {
+        if (e.target.checked)  {
+            selectInfo.selectAll();
+        } else {
+            selectInfo.deselectAll();
+        }
+        var {tableModel} = this.props;
+        if (tableModel) {
+            TblCntlr.dispatchRowSelect(tableModel.tbl_id, selectInfo);
+        }
+    }
+
+    onRowSelect(e, rowIndex, selectInfo) {
+        if (e.target.checked)  {
+            selectInfo.select(rowIndex);
+        } else {
+            selectInfo.deselect(rowIndex);
+        }
+        var {tableModel} = this.props;
+        if (tableModel) {
+            TblCntlr.dispatchRowSelect(tableModel.tbl_id, selectInfo);
+        }
+    }
+
+    onRowHighlight(e, index) {
         var {tableModel} = this.props;
         if (tableModel) {
             TblCntlr.dispatchHighlightRow(tableModel.tbl_id, index);
@@ -130,7 +171,7 @@ class TablePanel extends React.Component {
                     headerHeight={25}
                     rowsCount={tableModel.totalRows}
                     onColumnResizeEndCallback={this.onColumnResizeEndCallback}
-                    onRowClick={this.onRowSelect}
+                    onRowClick={this.onRowHighlight}
                     rowClassNameGetter={this.rowClassName}
                     width={widthPx}
                     height={heightPx}

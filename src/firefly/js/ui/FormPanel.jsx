@@ -27,11 +27,11 @@ function createSuccessHandler(action, params, onSubmit) {
 }
 
 var FormPanel = function (props) {
-    var {children, onSubmit, onCancel, onError, groupKey, action, params} = props;
+    var {children, onSubmit, onCancel, onError, groupKey, action, params, width, height} = props;
 
     return (
         <div>
-            <div style={{width: 500, height: 300, backgroundColor: 'white'}}>
+            <div style={{width, height, backgroundColor: 'white'}}>
                 {children}
             </div>
             <div style={{display: 'inline-flex', margin: '5px 10px'}}>

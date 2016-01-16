@@ -6,6 +6,7 @@ import {fetchUrl} from '../../util/WebUtil.js';
 import { getRootPath } from '../../util/BrowserUtil.js';
 import TblCntlr from '../TablesCntlr.js';
 import TblUtil from '../TableUtil.js';
+import {SelectInfo} from '../SelectInfo.js';
 
 const SRV_PATH = getRootPath() + 'search/json';
 const INT_MAX = Math.pow(2,31) - 1;
@@ -40,6 +41,7 @@ function mergeTable(state, newTable) {
     if (table) {
         newTable = Object.assign({}, table, newTable);
     }
+    newTable.selectInfo = newTable.selectInfo || {selectAll: false, exceptions: new Set(), rowCount: newTable.totalRows};
     TblUtil.put(state, newTable, 'main', newTable.tbl_id);
     return state;
 }

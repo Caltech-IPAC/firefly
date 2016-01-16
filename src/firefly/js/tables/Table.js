@@ -9,7 +9,7 @@ import TblUtil from './TableUtil.js';
 /**
  *
  */
-class Table {
+export class Table {
     constructor(dataModel) {
         this.model = dataModel;
     }
@@ -37,15 +37,13 @@ class Table {
 
     /**
      * return a Table with the data from the application's table-space.
-     * @param id unique table ID
+     * @param tbl_id unique table ID
      * @param root the application state root.  If not given, flux.getState() will be used.
      * @returns {Table}
      */
-    static find(id, root) {
+    static find(tbl_id, root) {
         const state = root || flux.getState();
-        var table = TblUtil.find(state, TblCntlr.TABLE_SPACE_PATH, 'main', id);
-        return (table) ? Table.newInstance(table) : null;
+        var table = TblUtil.find(state, TblCntlr.TABLE_SPACE_PATH, 'main', tbl_id);
+        return table && Table.newInstance(table);
     }
 }
-
-export default Table;

@@ -25,7 +25,7 @@ import FieldGroup from 'firefly/ui/FieldGroup.jsx';
 import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 import ValidationField from 'firefly/ui/ValidationField.jsx';
 
-import TableRequest from 'firefly/tables/TableRequest.js';
+import {TableRequest} from 'firefly/tables/TableRequest.js';
 
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
@@ -48,13 +48,6 @@ function getCurrentActiveTblId() {
     return activeTblId;
 }
 
-const loadTestData = {
-    id: 'IpacTableFromSource',
-    source: getRootURL() + 'WiseQuery.tbl',
-    tbl_id: getCurrentActiveTblId()
-};
-
-
 function hideSearchPanel() {
     appDataCntlr.dispatchUpdateLayout( {search: false});
 }
@@ -73,24 +66,19 @@ const App = React.createClass({
         histogramData : React.PropTypes.object
     },
 
-    loadViewer(request) {
+    onSearchSubmit(request) {
         console.log(request);
         if (request.srcTable) {
             var treq = TableRequest.newInstance({
-                                id:'IpacTableFromSource',
-                                source: request.srcTable,
-                                tbl_id:  newActiveTblId()
+                id:'IpacTableFromSource',
+                source: request.srcTable,
+                tbl_id:  newActiveTblId()
             });
 
             HistogramCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
             TablesCntlr.dispatchFetchTable(treq);
             hideSearchPanel();
         }
-    },
-
-    onSearchSubmit(request) {
-        HistogramCntlr.dispatchSetupTblTracking(request.tbl_id);
-        hideSearchPanel();
     },
 
     showError() {
@@ -120,7 +108,16 @@ const App = React.createClass({
                             appTitle='Firefly'
                         />
                         <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
-                            <div style={{padding:10, display:'inline-block', verticalAlign:'top'}}>
+                            <FormPanel
+                                width='640px' height='300px'
+                                action={TablesCntlr.FETCH_TABLE}
+                                groupKey='TBL_BY_URL_PANEL'
+                                params={ {id: 'IpacTableFromSource'} }
+                                onSubmit={this.onSearchSubmit}
+                                onCancel={hideSearchPanel}>
+                                <p>
+                                    <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
+                                </p>
                                 <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
                                     <ValidationField style={{width:500}}
                                                      fieldKey='srcTable'
@@ -133,23 +130,7 @@ const App = React.createClass({
                                                             labelWidth : 120 
                                                          }}
                                     />
-                                    <br/><br/><br/>
-                                    <CompleteButton groupKey='TBL_BY_URL_PANEL'
-                                                    onSuccess={this.loadViewer}
-                                                    onFail={this.showError}
-                                    />
                                 </FieldGroup>
-                            </div>
-                            <FormPanel
-                                width='500px' height='300px'
-                                action={TablesCntlr.FETCH_TABLE}
-                                params={loadTestData}
-                                onSubmit={this.onSearchSubmit}
-                                onCancel={hideSearchPanel}>
-                                <b>Click Search to load a test table</b>
-                                <p>
-                                    <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
-                                </p>
                             </FormPanel>
                         </SearchPanel>
                         </header>

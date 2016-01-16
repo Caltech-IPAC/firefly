@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {pick, isUndefined} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import BrowserCache from '../util/BrowserCache.js';
@@ -311,7 +312,7 @@ function dispatchRemovePreference(name) {
  * @param hasXyPlots boolean. XY Plot data available.
  */
 function dispatchUpdateLayout({search, results, mode, views, hasTables, hasImages, hasXyPlots}) {
-    flux.process({type: UPDATE_LAYOUT, payload: {search, results, mode, views, hasTables, hasImages, hasXyPlots}});
+    flux.process({type: UPDATE_LAYOUT, payload: pick({search, results, mode, views, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
 }
 
 

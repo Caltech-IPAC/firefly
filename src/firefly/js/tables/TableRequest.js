@@ -5,23 +5,7 @@
 import {pick, identity} from 'lodash';
 
 
-
-/*
-Declaration of parameters used by TableRequest.
- */
-export const REQ_PRM = {
-    TBL_ID: 'tbl_id',
-    START_IDX: 'startIdx',
-    PAGE_SIZE: 'pageSize',
-    FILTERS: 'filters',
-    SORT_INFO: 'sortInfo',
-    INCL_COLS: 'inclCols',
-    DECIMATE: 'decimate',
-    META_INFO: 'META_INFO'
-};
-
-
-export default class TableRequest {
+export class TableRequest {
     constructor(params) {
         Object.keys(params).forEach((key) => {
             this[key] = params[key];
@@ -48,11 +32,25 @@ export default class TableRequest {
      * @returns {TableRequest}
      */
     static newInstance({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO, ...rest}, copyFromReq) {
-        var params = Object.assign(rest, pick({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}, identity));
+        var params = Object.assign(rest, pick({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}, identity));   // take only defined params
         if (copyFromReq) {
             params = Object.assign(copyFromReq, params);
         }
         return new TableRequest(params);
     }
-
 }
+
+TableRequest.keys = {
+    id: 'id',
+    tbl_id: 'tbl_id',
+    startIdx: 'startIdx',
+    pageSize: 'pageSize',
+    filters: 'filters',
+    sortInfo: 'sortInfo',
+    inclCols: 'inclCols',
+    decimate: 'decimate',
+    META_INFO: 'META_INFO'
+};
+
+
+

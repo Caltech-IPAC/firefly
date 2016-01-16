@@ -4,7 +4,7 @@ import {has, get, set} from 'lodash';
 
 import ColValuesStatistics from './ColValuesStatistics.js';
 
-import TableRequest from '../tables/TableRequest.js';
+import {TableRequest} from '../tables/TableRequest.js';
 import LoadTable from '../tables/reducers/LoadTable.js';
 import TableUtil from '../tables/TableUtil.js';
 
