@@ -8,7 +8,7 @@ import numeral from 'numeral';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
-import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
 import PlotViewUtil, {getPlotViewById} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
@@ -20,13 +20,9 @@ const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 
 
 const zoomMax= levels[levels.length-1];
-//const zoomMin= levels[0];
 
 export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE']);
-const ZoomScope= new Enum(['GROUP','SINGLE', 'LIST']);
 const ZOOM_WAIT_MS= 2000; // 2 seconds
-
-export default {dispatchZoom, makeZoomAction, UserZoomTypes};
 
 var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
 
@@ -39,14 +35,14 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  * @param {string} plotId
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} maxCheck
- * @param {ZoomScope} zoomScope
+ * @param {ActionScope} actionScope
  */
-function dispatchZoom(plotId, userZoomType, maxCheck= true, zoomScope=ZoomScope.GROUP ) {
+export function doDispatchZoom(plotId, userZoomType, maxCheck= true, actionScope=ActionScope.GROUP ) {
 
     flux.process({
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, zoomScope, maxCheck
+            plotId, userZoomType, actionScope, maxCheck
         }});
 }
 
@@ -56,7 +52,7 @@ function dispatchZoom(plotId, userZoomType, maxCheck= true, zoomScope=ZoomScope.
  * @param rawAction
  * @return {Function}
  */
-function makeZoomAction(rawAction) {
+export function makeZoomAction(rawAction) {
     return (dispatcher) => {
         var {plotId,userZoomType}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);

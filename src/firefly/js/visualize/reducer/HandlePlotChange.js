@@ -28,8 +28,9 @@ function reducer(state, action) {
             break;
         case Cntlr.ZOOM_IMAGE_FAIL  :
             break;
+        case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
-            plotViewAry= installZoomTiles(state.plotViewAry,action);
+            plotViewAry= installTiles(state.plotViewAry,action);
             // todo: also process adding to history
             break;
         case Cntlr.UPDATE_VIEW_SIZE :
@@ -86,7 +87,7 @@ function scaleImage(plotViewAry, action) {
     return PlotView.replacePlotView(plotViewAry,pv);
 }
 
-function installZoomTiles(plotViewAry, action) {
+function installTiles(plotViewAry, action) {
     const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
     var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
     var plot= pv ? pv.primaryPlot : null;

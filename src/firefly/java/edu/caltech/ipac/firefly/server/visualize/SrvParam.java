@@ -39,7 +39,9 @@ public class SrvParam {
      * @return a PlotState object
      */
     public PlotState getState() {
-        PlotState state= PlotState.parse(getRequired(ServerParams.STATE));
+        PlotState state= null;
+        String stateStr= getRequired(ServerParams.STATE);
+        if (stateStr!=null) state= VisJsonSerializer.deserializePlotStateFromString(stateStr);
         if (state == null) {
             throw new IllegalArgumentException("parameter in wrong format: state, (see PlotState.serialize()");
         }

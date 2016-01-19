@@ -63,7 +63,7 @@ const getWebPlot= function(request) {
 
 
 function rotateNorth(stateAry, north, newZoomLevel) {
-    var params =  makeParamsWithStartAry(stateAry,[
+    var params =  makeParamsWithStateAry(stateAry,[
                    {name: ServerParams.NORTH, value: north + ''},
                    {name: ServerParams.ZOOM, value: newZoomLevel + ''},
                  ]);
@@ -71,7 +71,7 @@ function rotateNorth(stateAry, north, newZoomLevel) {
 }
 
 function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
-    var params = makeParamsWithStartAry(stateAry,[
+    var params = makeParamsWithStateAry(stateAry,[
                        {name: ServerParams.ROTATE, value: rotate + ''},
                        {name: ServerParams.ANGLE, value: angle + ''},
                        {name: ServerParams.ZOOM, value: newZoomLevel + ''},
@@ -86,10 +86,10 @@ function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
  *
  * @param {[]} stateAry
  * @param {number} level
- * @param {boolean} isFullScreen
+ * @param {boolean} isFullScreen hint, will only make on file
  */
 function setZoomLevel(stateAry, level, isFullScreen) {
-    var params= makeParamsWithStartAry(stateAry,[
+    var params= makeParamsWithStateAry(stateAry,[
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
     ]);
@@ -97,8 +97,20 @@ function setZoomLevel(stateAry, level, isFullScreen) {
 }
 
 
+function changeColor(state, colorTableId) {
+    var params= [
+        {name:ServerParams.STATE, value: JSON.stringify(PlotState.convertToJSON(state))},
+        {name:ServerParams.JSON_DEEP,value:'true'},
+        {name:ServerParams.COLOR_IDX, value:colorTableId}
+    ];
+    return doService(doJsonP(), ServerParams.CHANGE_COLOR, params);
+}
+
+
+
+
 function flipImageOnY(stateAry) {
-    return doService(doJsonP(), ServerParams.FLIP_Y, makeParamsWithStartAry(stateAry));
+    return doService(doJsonP(), ServerParams.FLIP_Y, makeParamsWithStateAry(stateAry));
 }
 
 
@@ -120,7 +132,7 @@ function makeJsonStateAryString(startAry) {
     return JSON.stringify(startAry.map( (s) => PlotState.convertToJSON(s)));
 }
 
-function makeParamsWithStartAry(stateAry, otherParams=[]) {
+function makeParamsWithStateAry(stateAry, otherParams=[]) {
     return [
         ...makeStateParamAry(stateAry),
         ...otherParams,
@@ -144,5 +156,6 @@ function makeStateParamAry(startAry) {
 
 
 
-var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel, getWebPlotGroup, getOneFileGroup};
+var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel,
+     changeColor, getWebPlotGroup, getOneFileGroup};
 export default PlotServicesJson;

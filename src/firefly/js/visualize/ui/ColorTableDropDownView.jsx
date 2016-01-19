@@ -8,6 +8,7 @@ import {
     DropDownVerticalSeparator,
     } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
+import {dispatchColorChange} from '../ImagePlotCntlr.js';
 
 
 
@@ -131,12 +132,12 @@ const colorTables=[
 
 //====================================
 
-function makeItems(ctAry) {
-    return ctAry.map( (ct,idx) => {
+function makeItems(pv,ctAry) {
+    return ctAry.map( (ct,cbarIdx) => {
         return (
             <ToolbarButton icon={ct.icon} tip={ct.tip}
-                           enabled={true} horizontal={false} key={idx}
-                           onClick={() => console.log('show: '+ct.tip)}/>
+                           enabled={true} horizontal={false} key={cbarIdx}
+                           onClick={() => dispatchColorChange(pv.plotId,cbarIdx)}/>
         );
     });
 }
@@ -147,7 +148,7 @@ function makeItems(ctAry) {
 export function ColorTableDropDownView({plotView:pv}) {
     return (
         <SingleColumnMenu>
-            {makeItems(colorTables)}
+            {makeItems(pv,colorTables)}
         </SingleColumnMenu>
         );
 

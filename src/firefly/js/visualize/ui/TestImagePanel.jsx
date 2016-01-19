@@ -19,7 +19,7 @@ import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import ImageViewer from './ImageViewer.jsx';
-import ZoomUtil from '../ZoomUtil.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
@@ -129,19 +129,19 @@ function zoom(zType) {
     console.log(zType);
     switch (zType) {
         case 'up':
-            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.UP);
+            dispatchZoom('TestImage1',UserZoomTypes.UP);
             break;
         case 'down':
-            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.DOWN);
+            dispatchZoom('TestImage1',UserZoomTypes.DOWN);
             break;
         case 'fit':
-            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FIT);
+            dispatchZoom('TestImage1',UserZoomTypes.FIT);
             break;
         case 'fill':
-            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.FILL);
+            dispatchZoom('TestImage1',UserZoomTypes.FILL);
             break;
         case '1x':
-            dispatchZoom('TestImage1',ZoomUtil.UserZoomTypes.ONE);
+            dispatchZoom('TestImage1',UserZoomTypes.ONE);
             break;
 
     }

@@ -22,6 +22,14 @@ function computeDropdownXY(divElement) {
 }
 
 
+function defineDialog(divElement,dropDown) {
+    var {x,y}= computeDropdownXY(divElement);
+    var dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
+    DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
+}
+
+
+
 export const DROP_DOWN_KEY= 'toolbar-dropDown';
 const OWNER_ROOT= 'toolbar-dropDown';
 
@@ -55,11 +63,6 @@ export class DropDownToolbarButton extends Component {
 
 
 
-    defineDialog(divElement,dropDown) {
-        var {x,y}= computeDropdownXY(divElement);
-        var dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
-        DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
-    }
 
     handleDropDown(divElement,dropDown) {
         if (divElement) {
@@ -69,13 +72,13 @@ export class DropDownToolbarButton extends Component {
                     AppDataCntlr.hideDialog(DROP_DOWN_KEY);
                 }
                 else {
-                    this.defineDialog(divElement,dropDown);
+                    defineDialog(divElement,dropDown);
                     AppDataCntlr.showDialog(DROP_DOWN_KEY,this.ownerId);
                 }
 
             }
             else {
-                this.defineDialog(divElement,dropDown);
+                defineDialog(divElement,dropDown);
                 AppDataCntlr.showDialog(DROP_DOWN_KEY,this.ownerId);
             }
         }

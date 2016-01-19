@@ -5,7 +5,8 @@
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
-import ZoomUtil from './ZoomUtil.js';
+import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
+import {makeColorChangeAction as colorChangeActionCreator,doDispatchColorChange} from './ColorStretchUtil.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import PlotViewUtil from './PlotViewUtil.js';
@@ -36,6 +37,15 @@ const ZOOM_IMAGE= 'ImagePlotCntlr.ZoomImage';
 const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr.ZoomImageFail';
 
 
+const COLOR_CHANGE_START= 'ImagePlotCntlr.ColorChangeStart';
+const COLOR_CHANGE= 'ImagePlotCntlr.ColorChange';
+const COLOR_CHANGE_FAIL= 'ImagePlotCntlr.ColorChangeFail';
+
+const STRETCH_CHANGE_START= 'ImagePlotCntlr.StretchChangeStart';
+const STRETCH_CHANGE= 'ImagePlotCntlr.StretchChange';
+const STRETCH_CHANGE_FAIL= 'ImagePlotCntlr.StretchChangeFail';
+
+
 const FLIP_IMAGE_START= 'ImagePlotCntlr.FlipImageStart';
 const FLIP_IMAGE= 'ImagePlotCntlr.FlipImage';
 const FLIP_IMAGE_FAIL= 'ImagePlotCntlr.FlipImageFail';
@@ -63,6 +73,7 @@ const IMAGE_PLOT_KEY= 'allPlots';
 
 
 
+export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 const initState= function() {
@@ -96,17 +107,18 @@ export default {
     reducer,
     dispatchUpdateViewSize, dispatchProcessScroll,
     dispatchPlotImage, dispatch3ColorPlotImage,
-    zoomActionCreator, plotImageActionCreator,
+    zoomActionCreator, colorChangeActionCreator, plotImageActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
+    COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
+    STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
     CHANGE_PLOT_ATTRIBUTE,
     ANY_REPLOT
 };
 
-
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
@@ -117,6 +129,8 @@ export default {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
+
+export const dispatchColorChange= doDispatchColorChange;
 
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
@@ -206,7 +220,9 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  * @param {string} plotId
  * @param {UserZoomTypes} zoomType
  */
-export function dispatchZoom(plotId,zoomType,maxCheck=true) { ZoomUtil.dispatchZoom(plotId, zoomType, maxCheck); }
+export function dispatchZoom(plotId,zoomType,maxCheck=true) { doDispatchZoom(plotId, zoomType, maxCheck); }
+
+
 
 /**
  * Set the plotId of the active plot view
@@ -231,9 +247,6 @@ function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
-function zoomActionCreator(rawAction) {
-    return ZoomUtil.makeZoomAction(rawAction);
-}
 
 
 //======================================== Reducer =============================
@@ -258,6 +271,8 @@ function reducer(state=initState(), action={}) {
         case UPDATE_VIEW_SIZE :
         case PROCESS_SCROLL  :
         case CHANGE_PLOT_ATTRIBUTE:
+        case COLOR_CHANGE  :
+        case COLOR_CHANGE_FAIL  :
             retState= HandlePlotChange.reducer(state,action);
             break;
         case CHANGE_ACTIVE_PLOT_VIEW:
