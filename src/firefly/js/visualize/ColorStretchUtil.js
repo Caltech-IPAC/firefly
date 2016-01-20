@@ -2,16 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
-import numeral from 'numeral';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
-import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
 import PlotViewUtil, {getPlotViewById} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
+import RangeValues from './RangeValues.js';
+import {Band} from './Band.js';
 
 
 
@@ -33,11 +32,25 @@ export function doDispatchColorChange(plotId, cbarId, actionScope=ActionScope.GR
         }});
 }
 
+/**
+ *
+ * @param {string} plotId
+ * @param {number} rangeValues
+ * @param {ActionScope} actionScope
+ */
+export function doDispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
+
+    flux.process({
+        type: ImagePlotCntlr.STRETCH_CHANGE,
+        payload :{
+            plotId, rangeValues, actionScope
+        }});
+}
 
 
 
 /**
- * zoom Action creator, todo: zoomScope, fit, fill, and much, much more
+ * color bar Action creator
  * @param rawAction
  * @return {Function}
  */
@@ -50,8 +63,7 @@ export function makeColorChangeAction(rawAction) {
 
         if (!pv.primaryPlot.plotState.isThreeColor()) {
             doColorChange(dispatcher,plotId,cbarId);
-            var matchFunc= makeColorChangeMatcher(dispatcher,cbarId);
-            PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
+            PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, (pv) => doColorChange(dispatcher,pv.plotId,cbarId));
         }
         else {
             dispatcher( {
@@ -62,25 +74,53 @@ export function makeColorChangeAction(rawAction) {
 
 }
 
-function doColorChange(dispatcher,plotId,cbarId) {
+
+/**
+ * color bar Action creator
+ * @param rawAction
+ * @return {Function}
+ */
+export function makeStretchChangeAction(rawAction) {
+    return (dispatcher) => {
+        var {plotId,rangeValues}= rawAction.payload;
+        var pv= getPlotViewById(visRoot(),plotId);
+        if (!pv || !rangeValues) return;
+        doStretch(dispatcher,plotId,rangeValues);
+        PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, (pv) => doStretch(dispatcher,pv.plotId,rangeValues));
+    };
+}
+
+
+function doStretch(dispatcher,plotId,rangeValues) {
 
     var pv= getPlotViewById(visRoot(),plotId);
-    PlotServicesJson.changeColor(pv.primaryPlot.plotState,cbarId)
-        .then( (wpResult) => processResult(dispatcher,plotId,cbarId,wpResult) )
+    var stretchDataAry= pv.primaryPlot.plotState.getBands().map( (band) => {
+        return {
+            band : band.key,
+            rv :  RangeValues.serializeRV(rangeValues),
+            bandVisible: true
+        };
+    } );
+    PlotServicesJson.recomputeStretch(pv.primaryPlot.plotState,stretchDataAry)
+        .then( (wpResult) => processStretchResult(dispatcher,plotId,wpResult) )
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
-            logError(`plot error, color change, plotId: ${pv.plotId}`, e);
+            dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, rangeValues, error:e} } );
+            logError(`plot error, stretch change, plotId: ${pv.plotId}`, e);
         });
 }
 
 
 
-function makeColorChangeMatcher(dispatcher, cbarId) {
-    return (pv) => {
-        doColorChange(dispatcher,pv.plotId,cbarId);
-    };
-}
+function doColorChange(dispatcher,plotId,cbarId) {
 
+    var pv= getPlotViewById(visRoot(),plotId);
+    PlotServicesJson.changeColor(pv.primaryPlot.plotState,cbarId)
+        .then( (wpResult) => processColorResult(dispatcher,plotId,cbarId,wpResult) )
+        .catch ( (e) => {
+            dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
+            logError(`plot error, color change, plotId: ${pv.plotId}`, e);
+        });
+}
 
 
 /**
@@ -90,7 +130,7 @@ function makeColorChangeMatcher(dispatcher, cbarId) {
  * @param cbarId
  * @param {object} result
  */
-function processResult(dispatcher, plotId, cbarId, result) {
+function processColorResult(dispatcher, plotId, cbarId, result) {
     var successSent= false;
     if (result.success) {
             dispatcher( {
@@ -106,6 +146,31 @@ function processResult(dispatcher, plotId, cbarId, result) {
     if (!successSent) {
         dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL,
             payload: {plotId, cbarId, error:Error('payload failed, color change')} } );
+    }
+}
+
+/**
+ *
+ * @param dispatcher
+ * @param plotId
+ * @param {object} result
+ */
+function processStretchResult(dispatcher, plotId, result) {
+    var successSent= false;
+    if (result.success) {
+        dispatcher( {
+            type: ImagePlotCntlr.STRETCH_CHANGE,
+            payload: {
+                plotId,
+                primaryStateJson : result[WebPlotResult.PLOT_STATE],
+                primaryTiles : result[WebPlotResult.PLOT_IMAGES]
+            }});
+        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+        successSent= true;
+    }
+    if (!successSent) {
+        dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL,
+            payload: {plotId, error:Error('payload failed, stretch change')} } );
     }
 }
 

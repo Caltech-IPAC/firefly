@@ -27,9 +27,12 @@ function reducer(state, action) {
             plotViewAry= scaleImage(state.plotViewAry, action);
             break;
         case Cntlr.ZOOM_IMAGE_FAIL  :
+        case Cntlr.STRETCH_CHANGE_FAIL:
+        case Cntlr.COLOR_CHANGE_FAIL:
             break;
         case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
+        case Cntlr.STRETCH_CHANGE  :
             plotViewAry= installTiles(state.plotViewAry,action);
             // todo: also process adding to history
             break;

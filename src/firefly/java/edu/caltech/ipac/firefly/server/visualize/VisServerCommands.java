@@ -114,14 +114,21 @@ public class VisServerCommands {
 
             SrvParam sp= new SrvParam(paramMap);
             PlotState state= sp.getState();
+            boolean jsonDeep= sp.getOptionalBoolean(ServerParams.JSON_DEEP,false);
             List<StretchData> list = new ArrayList<StretchData>(3);
 
             StretchData sd;
-            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "0"));
+//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "0"));
+            sd= VisJsonSerializer.deserializeStretchDataFromString(
+                    sp.getOptional(ServerParams.STRETCH_DATA + "0"),jsonDeep);
             if (sd != null) list.add(sd);
-            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "1"));
+            sd= VisJsonSerializer.deserializeStretchDataFromString(
+                    sp.getOptional(ServerParams.STRETCH_DATA + "1"),jsonDeep);
+//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "1"));
             if (sd != null) list.add(sd);
-            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "2"));
+//            sd = StretchData.parse(sp.getOptional(ServerParams.STRETCH_DATA + "2"));
+            sd= VisJsonSerializer.deserializeStretchDataFromString(
+                    sp.getOptional(ServerParams.STRETCH_DATA + "2"),jsonDeep);
             if (sd != null) list.add(sd);
 
             StretchData sdAry[] = list.toArray(new StretchData[list.size()]);

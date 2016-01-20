@@ -106,6 +106,14 @@ function changeColor(state, colorTableId) {
     return doService(doJsonP(), ServerParams.CHANGE_COLOR, params);
 }
 
+function recomputeStretch(state, stretchDataAry) {
+    var params= {
+        [ServerParams.STATE]: JSON.stringify(PlotState.convertToJSON(state)),
+        [ServerParams.JSON_DEEP]: true
+    };
+    stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
+    return doService(doJsonP(), ServerParams.STRETCH, params);
+}
 
 
 
@@ -157,5 +165,5 @@ function makeStateParamAry(startAry) {
 
 
 var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel,
-     changeColor, getWebPlotGroup, getOneFileGroup};
+     recomputeStretch, changeColor, getWebPlotGroup, getOneFileGroup};
 export default PlotServicesJson;

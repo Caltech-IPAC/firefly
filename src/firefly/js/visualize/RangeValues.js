@@ -171,18 +171,22 @@ class RangeValues {
     }
 
     serialize() {
-        return this.lowerWhich+','+
-               this.lowerValue+','+
-               this.upperWhich+','+
-               this.upperValue+','+
-               this.drValue+','+
-               this.bpValue+','+
-               this.wpValue+','+
-               this.gammaValue+','+
-               this.algorithm+','+
-               this.zscaleContrast+','+
-               this.zscaleSamples+','+
-               this.zscaleSamplesPerLine;
+        return RangeValues.serializeRV(this);
+    }
+
+    static serializeRV(rv) {
+        return rv.lowerWhich+','+
+               rv.lowerValue+','+
+               rv.upperWhich+','+
+               rv.upperValue+','+
+               rv.drValue+','+
+               rv.bpValue+','+
+               rv.wpValue+','+
+               rv.gammaValue+','+
+               rv.algorithm+','+
+               rv.zscaleContrast+','+
+               rv.zscaleSamples+','+
+               rv.zscaleSamplesPerLine;
     }
 }
 

@@ -41,7 +41,7 @@ var ipReducer= function(inFields, action) {
         return {
             zoom: {
                 fieldKey: 'zoom',
-                value: '3',
+                value: '1',
                 validator: Validate.floatRange.bind(null, .1, 10, 'my zoom field'),
                 tooltip: 'this is a tip for zoom',
                 label: 'Zoom:'
@@ -59,8 +59,10 @@ function showResults(success, request) {
     //====temp
     //var wp= makeWorldPt(1,1);
     var wp= parseWorldPt(request.UserTargetWorldPt);
-    var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
-    var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
+    //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
+    //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
+    var wpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
+    var wpr2= WebPlotRequest.makeWiseRequest(wp,'3a','4',.4 );
     //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
     wpr1.setPlotGroupId('2massGroup');
     wpr2.setPlotGroupId('2massGroup');

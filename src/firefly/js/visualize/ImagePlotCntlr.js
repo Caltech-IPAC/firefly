@@ -6,7 +6,9 @@ import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
-import {makeColorChangeAction as colorChangeActionCreator,doDispatchColorChange} from './ColorStretchUtil.js';
+import {makeColorChangeAction as colorChangeActionCreator,
+        makeStretchChangeAction as stretchChangeActionCreator,
+    doDispatchColorChange, doDispatchStretchChange} from './ColorStretchUtil.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import PlotViewUtil from './PlotViewUtil.js';
@@ -40,6 +42,7 @@ const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr.ZoomImageFail';
 const COLOR_CHANGE_START= 'ImagePlotCntlr.ColorChangeStart';
 const COLOR_CHANGE= 'ImagePlotCntlr.ColorChange';
 const COLOR_CHANGE_FAIL= 'ImagePlotCntlr.ColorChangeFail';
+
 
 const STRETCH_CHANGE_START= 'ImagePlotCntlr.StretchChangeStart';
 const STRETCH_CHANGE= 'ImagePlotCntlr.StretchChange';
@@ -107,7 +110,8 @@ export default {
     reducer,
     dispatchUpdateViewSize, dispatchProcessScroll,
     dispatchPlotImage, dispatch3ColorPlotImage,
-    zoomActionCreator, colorChangeActionCreator, plotImageActionCreator,
+    zoomActionCreator, colorChangeActionCreator, stretchChangeActionCreator,
+    plotImageActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
@@ -123,14 +127,12 @@ export default {
 //============ EXPORTS ===========
 
 
-
-
-
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 
-export const dispatchColorChange= doDispatchColorChange;
+export const dispatchColorChange= doDispatchColorChange;  //reference to util
+export const dispatchStretchChange= doDispatchStretchChange;  //reference to util
 
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
@@ -273,6 +275,8 @@ function reducer(state=initState(), action={}) {
         case CHANGE_PLOT_ATTRIBUTE:
         case COLOR_CHANGE  :
         case COLOR_CHANGE_FAIL  :
+        case STRETCH_CHANGE  :
+        case STRETCH_CHANGE_FAIL:
             retState= HandlePlotChange.reducer(state,action);
             break;
         case CHANGE_ACTIVE_PLOT_VIEW:

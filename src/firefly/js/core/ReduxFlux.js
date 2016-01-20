@@ -60,6 +60,7 @@ actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.e
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
 actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.colorChangeActionCreator);
+actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.stretchChangeActionCreator);
 actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
 

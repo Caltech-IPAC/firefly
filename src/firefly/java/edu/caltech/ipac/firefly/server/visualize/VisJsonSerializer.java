@@ -10,11 +10,13 @@ package edu.caltech.ipac.firefly.server.visualize;
  */
 
 
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
 import edu.caltech.ipac.firefly.visualize.PlotState;
+import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
@@ -162,6 +164,31 @@ public class VisJsonSerializer {
 
         return map;
     }
+
+
+
+    public static StretchData deserializeStretchDataFromString(String s, boolean asJson) {
+        if (s==null) return null;
+        if (!asJson) return StretchData.parse(s);
+        try {
+            JSONParser parser= new JSONParser();
+            Object obj= parser.parse(s);
+            if (obj!=null && obj instanceof JSONObject) {
+                JSONObject sdJson= (JSONObject)obj;
+                return new StretchData(
+                        Band.parse(getStr(sdJson,"band")),
+                        RangeValues.parse(getStr(sdJson,"rv")),
+                        (Boolean)sdJson.get("bandVisible"));
+            }
+        } catch (ParseException e){
+            // return null
+        }
+        return null;
+    }
+
+
+
+
 
     public static PlotState deserializePlotStateFromString(String s) {
         if (s==null) return null;
