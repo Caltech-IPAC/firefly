@@ -133,7 +133,8 @@ public class HistogramProcessor extends IpacTablePartProcessor {
      * @return
      */
     public DataGroup createHistogramTable(double[] columnData) throws DataAccessException {
-        DataGroup HistogramTable = new DataGroup("histogramTable", columns);
+
+
         /*if (!scale.equalsIgnoreCase(LINEAR_SCALE)){
             columnData = scaleData(columnData);
         }*/
@@ -151,12 +152,32 @@ public class HistogramProcessor extends IpacTablePartProcessor {
         double[] binMin = (double[]) obj[1];
         double[] binMax = (double[]) obj[2];
         int nPoints = numPointsInBin.length;
+
+        DataType[] tblcolumns = columns;
+
+        if (nPoints>1) {
+            double firstBinRange = binMax[0]-binMin[0];
+            int firstSigDigitPos = (int)Math.floor(Math.log10(Math.abs(firstBinRange)))+1;
+            if (firstSigDigitPos < -2) {
+                // increase precision
+                DataType.FormatInfo fi = DataType.FormatInfo.createFloatFormat(20, 3-firstSigDigitPos);
+                tblcolumns = new DataType[]{
+                            new DataType("numInBin", Integer.class),
+                            new DataType("binMin", Double.class),
+                            new DataType("binMax", Double.class)
+                        };
+                tblcolumns[1].setFormatInfo(fi);
+                tblcolumns[2].setFormatInfo(fi);
+            }
+        }
+
         //add each row to the DataGroup
+        DataGroup HistogramTable = new DataGroup("histogramTable", tblcolumns);
         for (int i = 0; i < nPoints; i++) {
             DataObject row = new DataObject(HistogramTable);
-            row.setDataElement(columns[0], numPointsInBin[i]);
-            row.setDataElement(columns[1], binMin[i]);
-            row.setDataElement(columns[2], binMax[i]);
+            row.setDataElement(tblcolumns[0], numPointsInBin[i]);
+            row.setDataElement(tblcolumns[1], binMin[i]);
+            row.setDataElement(tblcolumns[2], binMax[i]);
             HistogramTable.add(row);
         }
         return HistogramTable;
