@@ -209,6 +209,98 @@ const getPositionAngle= function(ra0, dec0, ra, dec) {
     return pa;
 };
 
+/**
+ * Rotates the given input position and returns the result. The rotation
+ * applied to positionToRotate is the one which maps referencePosition to
+ * rotatedReferencePosition.
+ * @author Serge Monkewitz
+ * @param {WorldPt} referencePosition the reference position to start
+ * @param {WorldPt} rotatedReferencePosition the rotated reference position
+ * @param {WorldPt} positionToRotate the position to be moved and rotated
+ * @return {WorldPt} the result new world position by applying the same displacement as the one from referencePosition to rotatedReferencePosition
+ */
+const getTranslateAndRotatePosition= function(referencePosition, rotatedReferencePosition, positionToRotate) {
+    var ra1, dec1,ra2,dec2,ra,dec,cos_ra,sin_ra,cos_dec,sin_dec,x,y,z, cos_theta,sin_theta, x1,y1,z1;
+    // Extract coordinates and transform to radians
+     ra1 = toRadians(referencePosition.getLon());
+     dec1 = toRadians(referencePosition.getLat());
+     ra2 = toRadians(rotatedReferencePosition.getLon());
+     dec2 = toRadians(rotatedReferencePosition.getLat());
+     ra = toRadians(positionToRotate.getLon());
+     dec = toRadians(positionToRotate.getLat());
+
+    // Compute (x, y, z), the unit vector in R3 corresponding to positionToRotate
+     cos_ra = Math.cos(ra);
+     sin_ra = Math.sin(ra);
+     cos_dec = Math.cos(dec);
+     sin_dec = Math.sin(dec);
+
+     x = cos_ra * cos_dec;
+     y = sin_ra * cos_dec;
+     z = sin_dec;
+
+    // The rotation that maps referencePosition to rotatedReferencePosition
+    // can be broken down into 3 rotations. The first is a rotation by an
+    // angle of -ra1 around the z axis. The second is a rotation around the
+    // y axis by an angle equal to (dec1 - dec2), and the last is around the
+    // the z axis by ra2. We compute the individual rotations by
+    // multiplication with the corresponding 3x3 rotation matrix (see
+    // https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations)
+
+    // Rotate by angle theta = -ra1 around the z axis:
+    //
+    // [ x1 ]   [ cos(ra1) -sin(ra1) 0 ]   [ x ]
+    // [ y1 ] = [ sin(ra1) cos(ra1)  0 ] * [ y ]
+    // [ z1 ]   [ 0        0         1 ]   [ z ]
+     cos_theta = Math.cos(-ra1);
+     sin_theta = Math.sin(-ra1);
+     x1 = cos_theta * x - sin_theta * y;
+     y1 = sin_theta * x + cos_theta * y;
+     z1 = z;
+
+    // Rotate by angle theta = (dec1 - dec2) around the y axis:
+    //
+    // [ x ]   [ cos(dec1 - dec2)  0 sin(dec1 - dec2) ]   [ x1 ]
+    // [ y ] = [ 0                 1 0                ] * [ y1 ]
+    // [ z ]   [ -sin(dec1 - dec2) 0 cos(dec1 - dec2) ]   [ z1 ]
+    cos_theta = Math.cos(dec1 - dec2);
+    sin_theta = Math.sin(dec1 - dec2);
+    x = cos_theta * x1 + sin_theta * z1;
+    y = y1;
+    z = -sin_theta * x1 + cos_theta * z1;
+
+    // Rotate by angle theta = ra2 around the z axis:
+    //
+    // [ x1 ]   [ cos(ra2) -sin(ra2) 0 ]   [ x ]
+    // [ y1 ] = [ sin(ra2) cos(ra2)  0 ] * [ y ]
+    // [ z1 ]   [ 0        0         1 ]   [ z ]
+    cos_theta = Math.cos(ra2);
+    sin_theta = Math.sin(ra2);
+    x1 = cos_theta * x - sin_theta * y;
+    y1 = sin_theta * x + cos_theta * y;
+    z1 = z;
+
+    // Convert the unit vector result back to a WorldPt.
+    var d, lon, lat;
+     d = x1 * x1 + y1 * y1;
+     lon = 0.0;
+     lat = 0.0;
+    if (d !== 0.0) {
+        lon = toDegrees(Math.atan2(y1, x1));
+        if (lon < 0.0) {
+            lon += 360.0;
+        }
+    }
+    if (z1 !== 0.0) {
+        lat = toDegrees(Math.atan2(z1, Math.sqrt(d)));
+        if (lat > 90.0) {
+            lat = 90.0;
+        } else if (lat < -90.0) {
+            lat = -90.0;
+        }
+    }
+    return makeWorldPt(lon, lat);
+};
 
 /**
  * Compute new position given a position and a distance and position angle
@@ -598,7 +690,7 @@ export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
     computeSimpleDistance,convert,convertToJ2000,
     computeCentralPointAndRadius, getPositionAngle, getNewPosition,
-    getBestTitle, getRotationAngle,
+    getBestTitle, getRotationAngle,getTranslateAndRotatePosition,
     isPlotNorth, getEstimatedFullZoomFactor,
     intersects, contains, containsRec,containsCircle,
     getArrowCoords, getSelectedPts, calculatePosition, getCorners,
