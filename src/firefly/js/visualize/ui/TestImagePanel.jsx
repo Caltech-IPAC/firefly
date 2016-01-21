@@ -25,6 +25,7 @@ import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {flux} from '../../Firefly.js';
 
+import {showMouseReadoutOptionDialog} from '../../visualize/ui/MouseReadoutOptionDialog.jsx';
 //
 //import {showFitsDownloadDialogNew} from '../../ui/FitsDownloadDialog.jsx';
 
@@ -154,6 +155,10 @@ function showExDialog() {
     showExampleDialog();
 }
 
+function showCoordiateSysDialog() {
+    console.log('showing coordinate dialog');
+    showMouseReadoutOptionDialog('coordinateSys');
+}
 
 
 function TestImagePanelView({selectOn,distOn}) {
@@ -174,6 +179,9 @@ function TestImagePanelView({selectOn,distOn}) {
                     />
                     <div style={{height:50}}/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
+
+                    <div style={{height:50}}/>
+                    <button type='button' onClick={showCoordiateSysDialog}>Coordinate Dialog</button>
                     
                 </FieldGroup>
             </div>

@@ -25,9 +25,9 @@ function getDialogBuilder(fieldKey) {
 	if (!popup) {
 		switch (fieldKey) {
 			case 'coordinateSys':
-				popup=renderCoordinateOptionDialog();
+				popup=renderOptionDialog(fieldKey);
 				break;
-			case 'Flux':
+			case 'flux':
 				//TODO
 				break;
 
@@ -37,35 +37,47 @@ function getDialogBuilder(fieldKey) {
 
 }
 
-function renderCoordinateOptionDialog() {
+function renderOptionDialog(fieldKey) {
+	var groupKey;
+	var title;
+	switch (fieldKey) {
+		case 'coordinateSys':
+			groupKey = 'COORDINATE_OPTION_FORM';
+			title='Coordinate Option  Dialog';
+			break;
+		case 'flux':
+			groupKey = 'FLUX_OPTION_FORM:';
+			break;
+	}
 	return () => {
 
 		const popup = (
-			<PopupPanel title={'Coordinate Option  Dialog'}>
-				<CoordinateOptionDialog groupKey={'COORDINATE_OPTION_FORM'}/>
+			<PopupPanel title={title}>
+				<MouseReadoutOptionDialog groupKey={groupKey}/>
 			</PopupPanel>
 		);
-		DialogRootContainer.defineDialog('coordinateOptionDialog', popup);
+		DialogRootContainer.defineDialog(fieldKey, popup);
 
 		return popup;
 
 	};
 }
-const dialogBuilder = getDialogBuilder();
+//const dialogBuilder = getDialogBuilder();
 
-export function showCoordinateOptionDialog(fieldKey) {
-	dialogBuilder(fieldKey);
-	AppDataCntlr.showDialog('coordinateOptionDialog');
+export function showMouseReadoutOptionDialog(fieldKey) {
+	//dialogBuilder(fieldKey);
+	getDialogBuilder(fieldKey);
+	AppDataCntlr.showDialog(fieldKey);
 }
 
 
 class MouseReadoutOptionDialog extends React.Component {
 
 
-	constructor(props) {
-		super(props);
-		FieldGroupUtils.initFieldGroup(props.groupKey);
-		this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
+	constructor(groupKey) {
+		super(groupKey);
+		FieldGroupUtils.initFieldGroup(groupKey);
+		this.state = {fields: FieldGroupUtils.getGroupFields(groupKey)};
 
 	}
 
@@ -89,7 +101,7 @@ class MouseReadoutOptionDialog extends React.Component {
 		var {fields}= this.state;
 		if (!fields) return false;
 		switch (this.props.groupKey){
-			case 'CoordinateOptionForm':
+			case 'COORDINATE_OPTION_FORM':
 				return <CoordinateOptionDialogForm />;
 			case 'FluxOPtionForm':
 				//TODO
@@ -100,10 +112,7 @@ class MouseReadoutOptionDialog extends React.Component {
 
 
 }
-MouseReadoutOptionDialog.propTypes = {
-	groupKey: React.PropTypes.string.isRequired
 
-};
 
 function CoordinateOptionDialogForm() {
 	var leftColumn = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
