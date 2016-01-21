@@ -303,7 +303,7 @@ public class FootprintDs9 extends CircularMarker {
 			lst.clear();
 			List<DrawObj> shape = super.getShape();
 			
-			updateFootprint(wpt);
+			updateFootprint(wpt);// made possible because initial reference is 0,0
 			
 			ShapeDataObj maincircleObj = (ShapeDataObj) shape.get(0);
 			maincircleObj.setLineWidth(-1);
