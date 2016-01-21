@@ -211,16 +211,15 @@ function FitsDownloadDialogForm() {
 
 
     const { plotState, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
-    var leftColumn = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
-        display: 'inline-block', 'line-height': 40};
+    var leftColumn = {width: 200, display: 'inline-block'};
 
-    var rightColumn = {width: '50%', display: 'inline-block'};
+    var rightColumn = {display: 'inline-block'};
 
     var renderOperationButtons = renderOperationOption(hasOperation, leftColumn, rightColumn);
 
     var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors, leftColumn , rightColumn);
 
-    leftColumn['line-height']=100;//change the line height for the Fits radio button group
+    //leftColumn['lineHeight']=100;//change the line height for the Fits radio button group
 
     return (
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
@@ -230,11 +229,10 @@ function FitsDownloadDialogForm() {
                         <PopupPanel  />
 
                         <div style={leftColumn}>
-
-                            <InputFieldLabel label= 'Type of files:'
-                                             tooltip='Please select an option'
-
-                            />
+                            <div style={{float:'right', paddingRight:19, paddingBottom:20}}
+                                title='Please select an option'>
+                                Type of files:
+                            </div>
                         </div>
                         <div style={rightColumn}>
                             <RadioGroupInputField
@@ -260,7 +258,6 @@ function FitsDownloadDialogForm() {
 
                     {renderThreeBandButtons}
                 </div>
-                <br/>
                 <div style={{'text-align':'center'}}>
                     < CompleteButton
                         text='Download'
@@ -268,7 +265,6 @@ function FitsDownloadDialogForm() {
                         onFail={resultsFail}
                         dialogId='fitsDownloadDialog'
                     />
-                    <br/>
                 </div>
             </div>
         </FieldGroup>
