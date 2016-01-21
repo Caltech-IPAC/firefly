@@ -6,6 +6,8 @@ import React from 'react';
 import {ThumbnailView} from './ThumbnailView.jsx';
 import {MagnifiedView} from './MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById} from '../PlotViewUtil.js';
+import {MouseReadout} from './MouseReadout.jsx';
+import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 
 
 /**
@@ -29,9 +31,15 @@ export function VisHeaderView({visRoot,currMouseState}) {
     var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
     return (
         <div>
-            <div style={rS}><div style={{position:'absolute', color:'white'}}>mouse readout here</div></div>
+            <div style={rS}>
+                <div style={{position:'absolute', color:'white'}}>
+                    <MouseReadout plotView={mousePv} size={70} mouseState={currMouseState} />
+                </div>
+            </div>
+
             <ThumbnailView plotView={pv}/>
             <MagnifiedView plotView={mousePv} size={70} mouseState={currMouseState} />
+
         </div>
     );
 }
