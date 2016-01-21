@@ -27,6 +27,7 @@ import ValidationField from 'firefly/ui/ValidationField.jsx';
 
 import {TableRequest} from 'firefly/tables/TableRequest.js';
 
+import TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
@@ -63,6 +64,7 @@ const App = React.createClass({
         title   : React.PropTypes.string,
         table   : React.PropTypes.object,
         activeTbl : React.PropTypes.object,
+        tblStatsData : React.PropTypes.object,
         histogramData : React.PropTypes.object
     },
 
@@ -75,7 +77,7 @@ const App = React.createClass({
                 tbl_id:  newActiveTblId()
             });
 
-            HistogramCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
+            TableStatsCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
             TablesCntlr.dispatchFetchTable(treq);
             hideSearchPanel();
         }
@@ -88,7 +90,7 @@ const App = React.createClass({
 
 
     render() {
-        var {appData, title, table, histogramData} = this.props;
+        var {appData, title, table, tblStatsData, histogramData} = this.props;
 
 
         const v = get(this.props, 'appData.props.version') || 'unknown';
@@ -138,7 +140,7 @@ const App = React.createClass({
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<HistogramTableViewPanel tblHistogramData={histogramData}/> }
+                            xyPlot = {<HistogramTableViewPanel tblStatsData={tblStatsData} tblHistogramData={histogramData}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
@@ -155,6 +157,7 @@ function connector(state) {
         appData: state[appDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
         table : TblUtil.findById(activeTblId),
+        tblStatsData: get(state[TableStatsCntlr.TBLSTATS_DATA_KEY], activeTblId),
         histogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], activeTblId)
     };
 }

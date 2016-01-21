@@ -14,7 +14,9 @@ import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
+import TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import HistogramCntlr from '../visualize/HistogramCntlr.js';
+import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
 import DrawLayer from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
@@ -45,7 +47,9 @@ const reducers = {
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
+    [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
+    [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DrawLayer.DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
 };
@@ -65,9 +69,9 @@ actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
 
 
-actionCreators.set(HistogramCntlr.LOAD_TBL_STATS, HistogramCntlr.loadTblStats);
+actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
-
+actionCreators.set(HistogramCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 
 

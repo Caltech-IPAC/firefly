@@ -3,7 +3,7 @@ import React from 'react';
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
 
-import {dispatchLoadColData} from './HistogramCntlr.js';
+import HistogramCntlr from '../visualize/HistogramCntlr.js';
 import HistogramOptions from './HistogramOptions.jsx';
 import Histogram from './Histogram.jsx';
 
@@ -18,7 +18,10 @@ var HistogramTablePanel = React.createClass({
             }, 500, {'leading':false}),
 
     propTypes: {
-        tblHistogramData : React.PropTypes.object.isRequired
+        tblStatsData: React.PropTypes.object.isRequired,
+        tblHistogramData : React.PropTypes.object.isRequired,
+        width : React.PropTypes.string,
+        height : React.PropTypes.string
     },
 
     getInitialState() {
@@ -30,7 +33,8 @@ var HistogramTablePanel = React.createClass({
     },
 
     shouldComponentUpdate(nextProps, nextState) {
-        return nextProps.tblHistogramData !== this.props.tblHistogramData ||
+        return nextProps.tblStatsData !== this.props.tblStatsData ||
+        nextProps.tblHistogramData !== this.props.tblHistogramData ||
             nextState !== this.state;
     },
 
@@ -45,7 +49,7 @@ var HistogramTablePanel = React.createClass({
     },
 
     renderOptions() {
-        const { searchRequest, isColStatsReady, colStats } = this.props.tblHistogramData;
+        const { searchRequest, isColStatsReady, colStats } = this.props.tblStatsData;
         const formName = 'HistogramOptionsForm_'+searchRequest.tbl_id;
 
         if (isColStatsReady) {
@@ -54,7 +58,7 @@ var HistogramTablePanel = React.createClass({
                                   colValStats={colStats}
                                   onOptionsSelected={(histogramParams) => {
                                             console.log(histogramParams);
-                                            dispatchLoadColData(histogramParams, searchRequest);
+                                            HistogramCntlr.dispatchLoadColData(histogramParams, searchRequest);
                                         }
                                       }/>
             );
@@ -65,6 +69,9 @@ var HistogramTablePanel = React.createClass({
     },
 
     renderHistogram() {
+        if (!this.props.tblHistogramData) {
+            return 'Select Histogram Parameters...';
+        }
         const { isColDataReady, histogramData, histogramParams } = this.props.tblHistogramData;
         var {heightPx} = this.state;
 
@@ -104,12 +111,12 @@ var HistogramTablePanel = React.createClass({
     },
 
     render() {
-        var {tblHistogramData, width, height} = this.props;
-        if (!tblHistogramData) {
+        var {tblStatsData, width, height} = this.props;
+        if (!tblStatsData) {
             return (<div>.....</div>);
-        } else if (!tblHistogramData.isTblLoaded) {
+        } else if (!tblStatsData.isTblLoaded) {
             return (<div>Loading Table...</div>);
-        } else if (!tblHistogramData.isColStatsReady) {
+        } else if (!tblStatsData.isColStatsReady) {
             return (<div>Loading Table Statistics...</div>);
         } else {
             var { widthPx, heightPx} = this.state;
