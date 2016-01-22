@@ -259,7 +259,10 @@ public class BrowserInfo {
                 _majorVersion= 6;
             }
         }
-        else if (_userAgent.contains("trident") || _userAgent.contains("edge")) {
+        else if (_userAgent.contains("trident") && !_userAgent.contains("edge")) {
+            _browser= Browser.IE;
+            _allRecognized= parseVersion(IE_11_KEY);
+        } else if (_userAgent.contains("edge")) {
             _browser= Browser.IE;
             _allRecognized= parseVersion("edge/");
         }
