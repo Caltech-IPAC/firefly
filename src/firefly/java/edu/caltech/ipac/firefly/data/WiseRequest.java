@@ -486,7 +486,7 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum <= SCANID_MAP.get(CRYO_3BAND)[1]) {
                 return new String[]{CRYO_3BAND};
             } else if (scanNum >= SCANID_MAP.get(NEOWISER)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER)[1]) {
+                    scanNum <= SCANID_MAP.get(NEOWISER)[2]) {
                 return new String[]{NEOWISER};
             } else {
                 // these 2 have the same range..
@@ -505,8 +505,8 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR2)[0] &&
                     scanNum <= SCANID_MAP.get(NEOWISER_YR2)[1]) {
                 return new String[]{NEOWISER_YR2};
-            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR3)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER_YR3)[1]) {
+            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR3)[1] &&
+                    scanNum <= SCANID_MAP.get(NEOWISER_YR3)[2]) {
                 return new String[]{NEOWISER_YR3};
             }else {
                 // these 2 have the same range..
