@@ -238,7 +238,7 @@ public class BrowserInfo {
     private void evaluateBrowser(Platform p) {
         _browser= Browser.UNKNOWN;
         _majorVersion= UNKNOWN_VERSION;
-        if (_userAgent.contains("msie")) {
+        if (_userAgent.contains("msie") && !_userAgent.contains("trident")) {
             _browser= Browser.IE;
             if (_userAgent.contains("msie 11")) {
                 _majorVersion= 11;
@@ -259,9 +259,12 @@ public class BrowserInfo {
                 _majorVersion= 6;
             }
         }
-        else if (_userAgent.contains("windows nt")) {
+        else if (_userAgent.contains("trident") && !_userAgent.contains("edge")) {
             _browser= Browser.IE;
             _allRecognized= parseVersion(IE_11_KEY);
+        } else if (_userAgent.contains("edge")) {
+            _browser= Browser.IE;
+            _allRecognized= parseVersion("edge/");
         }
         else if (_userAgent.contains(FIREFOX_KEY)) {
             _browser= Browser.FIREFOX;
