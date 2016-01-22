@@ -8,11 +8,7 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import edu.caltech.ipac.firefly.data.dyn.xstream.CatalogTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ParamTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.ProjectTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.SearchGroupTag;
-import edu.caltech.ipac.firefly.data.dyn.xstream.SearchTypeTag;
+import edu.caltech.ipac.firefly.data.dyn.xstream.*;
 
 import java.util.List;
 
@@ -57,6 +53,13 @@ public class ProjectConverter implements Converter {
             writer.endNode();
         }
         writer.endNode();
+
+        List<ParamTag> params = projectTag.getParams();
+        for (ParamTag p : params) {
+            writer.startNode("Param");
+            context.convertAnother(p);
+            writer.endNode();
+        }
 
         List<CatalogTag> cList = projectTag.getCatalogs();
         for (CatalogTag c : cList) {
@@ -104,6 +107,11 @@ public class ProjectConverter implements Converter {
 
                     reader.moveUp();
                 }
+
+            } else if (projectElem.equalsIgnoreCase("Param")) {
+                ParamTag p = (ParamTag) context.convertAnother(projectTag, ParamTag.class);
+                projectTag.addParam(p);
+
 
             } else if (projectElem.equalsIgnoreCase("Catalog")) {
                 CatalogTag c = (CatalogTag) context.convertAnother(projectTag, CatalogTag.class);

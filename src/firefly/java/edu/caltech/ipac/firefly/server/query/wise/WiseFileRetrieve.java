@@ -3,14 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.query.wise;
 
-import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
+import edu.caltech.ipac.firefly.data.dyn.DynUtils;
+import edu.caltech.ipac.firefly.server.query.*;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.WiseRequest;
 import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
-import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
-import edu.caltech.ipac.firefly.server.query.URLFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
@@ -331,6 +329,9 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
     }
 
     public FileInfo getData(ServerRequest sr) throws DataAccessException {
+        sr.setParam(DynUtils.HYDRA_PROJECT_ID, "wise");
+        sr = DynQueryProcessor.setXmlParams(sr);
+
         if (!sr.containsParam(WiseRequest.SCHEMA)) sr.setSafeParam(WiseRequest.SCHEMA, DEFAULT_SCHEMA);
         if (sr.containsParam("subsize") && !StringUtils.isEmpty(sr.getParam("subsize"))) {
             return getCutoutData(sr);
