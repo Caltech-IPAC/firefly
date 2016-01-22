@@ -447,6 +447,7 @@ export class WebPlot {
             dataWidth       : wpInit.dataWidth,
             dataHeight      : wpInit.dataHeight,
             imageScaleFactor: wpInit.imageScaleFactor,
+            title : '',
             plotDesc        : wpInit.desc,
             dataDesc        : wpInit.dataDesc,
             webFitsData     : wpInit.fitsData,

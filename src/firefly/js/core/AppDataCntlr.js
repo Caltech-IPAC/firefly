@@ -172,9 +172,7 @@ function getDialogOwner(dialogKey) {
     return (visible && ownerId) ? ownerId : null;
 }
 
-const getActiveTarget= function() {
-    return flux.getState()[APP_DATA_PATH].activeTarget;
-};
+export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
 
 function getPreference(name) {
     return flux.getState()[APP_DATA_PATH].preferences[name];
@@ -184,7 +182,7 @@ function getPreference(name) {
  * @param wp center WorldPt
  * @param corners array of 4 WorldPts that represent the corners of a image
  */
-const setActiveTarget= function(wp,corners) {
+export const dispatchActiveTarget= function(wp,corners) {
     var payload={};
     if (isValidPoint(wp) && wp.type==Point.W_PT) {
         payload.worldPt= wp;
@@ -343,8 +341,6 @@ export default {
     showDialog,
     hideDialog,
     hideAllDialogs,
-    getActiveTarget,
-    setActiveTarget,
     getPreference,
     dispatchAddTaskCount,
     dispatchRemoveTaskCount,

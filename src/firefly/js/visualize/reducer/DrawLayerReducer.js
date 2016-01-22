@@ -35,7 +35,7 @@ function makeReducer(factory) {
                 return attachLayerToPlot(drawLayer,action,factory);
                 break;
             case DrawLayerCntlr.DETACH_LAYER_FROM_PLOT:
-                return detachLayerFromPlot(drawLayer,action);
+                return detachLayerFromPlot(drawLayer,action,factory);
                 break;
             case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
@@ -129,13 +129,13 @@ function attachLayerToPlot(drawLayer,action,factory) {
     return drawLayer;
 }
 
-function detachLayerFromPlot(drawLayer,action) {
+function detachLayerFromPlot(drawLayer,action,factory) {
     var {plotIdAry:inputPlotIdAry} = action.payload;
     var {plotIdAry:dlPlotIdAry, visiblePlotIdAry}= drawLayer;
     var plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
     visiblePlotIdAry= visiblePlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
 
-    drawLayer= Object.assign({}, drawLayer, {plotIdAry, visiblePlotIdAry});
+    drawLayer= Object.assign(drawLayer, factory.getLayerChanges(drawLayer,action), {plotIdAry, visiblePlotIdAry});
     if (drawLayer.hasPerPlotData) {
         inputPlotIdAry.forEach( (plotId) =>
                       drawLayer.drawData= detachPerPlotData(drawLayer.drawData,plotId));

@@ -7,9 +7,14 @@ import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import TileDrawer from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
-import ImagePlotCntlr, {dispatchProcessScroll,dispatchChangeActivePlotView}
-                               from '../ImagePlotCntlr.js';
-import {MouseState, dispatchMouseStateChange, makeMouseStatePayload}  from '../VisMouseCntlr.js';
+import {
+    dispatchProcessScroll,
+    dispatchChangeActivePlotView,
+    dispatchUpdateViewSize} from '../ImagePlotCntlr.js';
+import {
+    MouseState,
+    dispatchMouseStateChange,
+    makeMouseStatePayload}  from '../VisMouseCntlr.js';
 import {PlotViewDrawer}  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
 import {flux} from '../../Firefly.js';
@@ -18,23 +23,33 @@ import {logError} from '../../util/WebUtil.js';
 
 
 
-class ImageViewerView extends Component {
+export class ImageViewerView extends Component {
 
 
     constructor(props) {
         super(props);
         this.plotDrag= null;
-        this.state= {width:0,height:0};
     }
-
-
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentDidMount() {
-        var e= ReactDOM.findDOMNode(this);
+        this.element= ReactDOM.findDOMNode(this);
+        var {offsetWidth,offsetHeight}= this.element;
         var {plotId}= this.props.plotView;
-        ImagePlotCntlr.dispatchUpdateViewSize(plotId,e.offsetWidth,e.offsetHeight);
+        this.previousDim= {prevWidth:offsetWidth,prevHeight:offsetHeight};
+        dispatchUpdateViewSize(plotId,offsetWidth,offsetHeight);
+    }
+
+    componentDidUpdate() {
+        //var e= ReactDOM.findDOMNode(this);
+        var {offsetWidth,offsetHeight}= this.element;
+        var {prevWidth,prevHeight}= this.previousDim;
+        if (prevWidth!==offsetWidth || prevHeight!==offsetHeight) {
+            var {plotId}= this.props.plotView;
+            this.previousDim= {prevWidth:offsetWidth,prevHeight:offsetHeight};
+            dispatchUpdateViewSize(plotId,offsetWidth,offsetHeight);
+        }
     }
 
     eventCB(plotId,mouseState,screenPt,screenX,screenY) {
@@ -57,7 +72,7 @@ class ImageViewerView extends Component {
         if (screenX && screenY) {
             switch (mouseState) {
                 case MouseState.DOWN :
-                    ImagePlotCntlr.dispatchChangeActivePlotView(plotId);
+                    dispatchChangeActivePlotView(plotId);
                     var {scrollX, scrollY}= this.props.plotView;
                     this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
                     break;
@@ -134,10 +149,13 @@ class ImageViewerView extends Component {
         if (width && height && primaryPlot) {
             insideStuff= this.renderInside();
         }
-        var style= {width:'100%',
-                    height:'100%',
-                    position: 'relative',
-                    overflow:'hidden'};
+        var style= {
+            position:'absolute',
+            left : 0,
+            right : 0,
+            top : 0,
+            bottom : 0,
+            overflow:'hidden'};
         return (
             <div className='web-plot-view-scr' style={style}>
                 {insideStuff}
@@ -212,4 +230,3 @@ function makeDrawingAry(plotView,dlAry) {
 
 
 
-export default ImageViewerView;

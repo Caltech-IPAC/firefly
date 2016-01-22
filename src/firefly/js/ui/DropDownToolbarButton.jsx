@@ -4,8 +4,9 @@
 
 
 import React, {Component, PropTypes} from 'react';
-import uniqueId from 'lodash/utility/uniqueId';
 import sCompare from 'react-addons-shallow-compare';
+import uniqueId from 'lodash/utility/uniqueId';
+import delay from 'lodash/function/delay';
 import {flux} from '../Firefly.js';
 import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -22,10 +23,12 @@ function computeDropdownXY(divElement) {
 }
 
 
-function defineDialog(divElement,dropDown) {
+function showDialog(divElement,dropDown,ownerId,offButtonCB) {
     var {x,y}= computeDropdownXY(divElement);
     var dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
+    AppDataCntlr.showDialog(DROP_DOWN_KEY,ownerId);
+    document.addEventListener('mousedown', offButtonCB);
 }
 
 
@@ -45,10 +48,12 @@ export class DropDownToolbarButton extends Component {
 
     componentWillUnmount() {
         if (this.storeListenerRemove) this.storeListenerRemove();
+        document.removeEventListener('mousedown', this.docMouseDownCallback);// just in case
     }
 
     componentDidMount() {
         this.storeListenerRemove= flux.addListener(() => this.update());
+        this.docMouseDownCallback= (ev)=> this.offButtonCallback(ev);
     }
 
     update() {
@@ -60,8 +65,15 @@ export class DropDownToolbarButton extends Component {
         }
     }
 
-
-
+    offButtonCallback() {
+        delay( () => {
+            document.removeEventListener('mousedown', this.docMouseDownCallback);
+            var {dropDownVisible, dropDownOwnerId}= this.state;
+            if (dropDownVisible && dropDownOwnerId===this.ownerId) {
+                AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+            }
+        },200);
+    }
 
 
     handleDropDown(divElement,dropDown) {
@@ -70,16 +82,15 @@ export class DropDownToolbarButton extends Component {
             if (dropDownVisible) {
                 if (dropDownOwnerId===this.ownerId) {
                     AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+                    document.removeEventListener('mousedown', this.docMouseDownCallback);
                 }
                 else {
-                    defineDialog(divElement,dropDown);
-                    AppDataCntlr.showDialog(DROP_DOWN_KEY,this.ownerId);
+                    showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback);
                 }
 
             }
             else {
-                defineDialog(divElement,dropDown);
-                AppDataCntlr.showDialog(DROP_DOWN_KEY,this.ownerId);
+                showDialog(divElement,dropDown,this.ownerId,this.docMouseDownCallback);
             }
         }
     }

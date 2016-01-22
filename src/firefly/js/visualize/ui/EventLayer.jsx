@@ -60,9 +60,15 @@ export var EventLayer= React.createClass(
 
 
 
-    componentWillMount() {
+    componentDidMount() {
         this.docMouseMoveCallback= (ev)=> this.onDocumentMouseMove(ev);
         this.docMouseUpCallback= (ev)=> this.onDocumentMouseUp(ev);
+    },
+
+    componentWillUnmount() {
+        // just in case that they were added
+        document.removeEventListener('mousemove', this.docMouseMoveCallback);
+        document.removeEventListener('mouseup', this.docMouseUpCallback);
     },
 
 

@@ -35,11 +35,11 @@ const activate= function(remoteChannel, extension, resultData) {
     }
 };
 
-const getRemoteChannel= function() {
+export const getRemoteChannel= function() {
     return flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY].remoteChannel ;
 };
 
-const getExtensionList= function(testPlotId) {
+export const getExtensionList= function(testPlotId) {
     var {extensionList}= flux.getState()[ExternalAccessCntlr.EXTERNAL_ACCESS_KEY];
     var retList= extensionList.filter((ext) => {
         if (!testPlotId || !ext.plotId || testPlotId === ExternalAccessCntlr.ALL_MPW || ext.plotId === testPlotId) {
@@ -49,15 +49,16 @@ const getExtensionList= function(testPlotId) {
     return retList;
 };
 
-const extensionAdd= function(extension) {
+export const extensionAdd= function(extension) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ADD, payload: {extension}});
 };
 
-const extensionActivate= function(extension, resultData) {
+export const extensionActivate= function(extension, resultData) {
     flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
 };
 
-const channelActivate= function(channelId) {
+
+export const channelActivate= function(channelId) {
     flux.process({type: ExternalAccessCntlr.CHANNEL_ACTIVATE, payload: {channelId}});
 };
 

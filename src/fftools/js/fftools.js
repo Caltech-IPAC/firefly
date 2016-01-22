@@ -7,7 +7,7 @@ import get from 'lodash/object/get';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {flux, firefly} from 'firefly/Firefly.js';
-import * as appDataCntlr from 'firefly/core/AppDataCntlr.js';
+import AppDataCntlr from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import SearchPanel from 'firefly/ui/SearchPanel.jsx';
@@ -35,7 +35,7 @@ import {download} from 'firefly/util/WebUtil.js';
 
 
 firefly.bootstrap();
-firefly.process( {type : appDataCntlr.APP_LOAD} );
+firefly.process( {type : AppDataCntlr.APP_LOAD} );
 
 var currentUniqueId = 0;
 var activeTblId = newActiveTblId();
@@ -50,7 +50,7 @@ function getCurrentActiveTblId() {
 }
 
 function hideSearchPanel() {
-    appDataCntlr.dispatchUpdateLayout( {search: false});
+    AppDataCntlr.dispatchUpdateLayout( {search: false});
 }
 
 function doFileDownload() {
@@ -154,7 +154,7 @@ const App = React.createClass({
 function connector(state) {
     const activeTblId = getCurrentActiveTblId();
     return {
-        appData: state[appDataCntlr.APP_DATA_PATH],
+        appData: state[AppDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
         table : TblUtil.findById(activeTblId),
         tblStatsData: get(state[TableStatsCntlr.TBLSTATS_DATA_KEY], activeTblId),

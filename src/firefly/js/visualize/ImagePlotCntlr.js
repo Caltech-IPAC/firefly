@@ -14,7 +14,7 @@ import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import PlotViewUtil from './PlotViewUtil.js';
 
 
-const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
+export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
 
 const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
@@ -108,7 +108,7 @@ const initState= function() {
 
 export default {
     reducer,
-    dispatchUpdateViewSize, dispatchProcessScroll,
+    dispatchProcessScroll,
     dispatchPlotImage, dispatch3ColorPlotImage,
     zoomActionCreator, colorChangeActionCreator, stretchChangeActionCreator,
     plotImageActionCreator,
@@ -155,7 +155,7 @@ export function dispatchProcessScroll(plotId,scrollScreenPt) {
  * @param {boolean} [updateScroll]
  * @param {object} [centerImagePt] image point to center on
  */
-function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,centerImagePt=null) {
+export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,centerImagePt=null) {
     flux.process({type: UPDATE_VIEW_SIZE,
         payload: {plotId, width, height,updateScroll,centerImagePt}
     });

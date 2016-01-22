@@ -11,9 +11,9 @@ import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
-import WebPlot from './WebPlot.js';
+import WebPlot, {PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
@@ -22,6 +22,7 @@ import Band from './Band.js';
 import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import DrawLayerCntrl from './DrawLayerCntlr.js';
+import {makePostPlotTitle} from './reducer/PlotTitle.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -205,26 +206,19 @@ function getRequest(payload) {
 
 
 const handleSuccess= function(result, payload) {
-    //console.log(`result from plot call:`, result);
-    var crAry= result[WebPlotResult.PLOT_CREATE];
-
-    var plotAry= crAry.map( (wpInit) => WebPlot.makeWebPlotData(payload.plotId, wpInit));
-    if (plotAry.length) {
-        updateActiveTarget(plotAry[0].plotState.getWebPlotRequest(), plotAry[0]);
-    }
+    var plotAry= result[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit,payload.plotId));
+    if (plotAry.length) updateActiveTarget(plotAry[0]);
     return Object.assign({}, payload, {plotAry});
 
-
-    //crAry.forEach( (wpInit) => {
-    //
-    //
-    //    if (getRequest(payload).isMinimalReadout()) plotInit.attributes[WPConst.MINIMAL_READOUT]=true;
-    //    //todo:  arrange plot data and make an entry for each plot
-    //
-    //});
-
-
 };
+
+function makePlot(wpInit,plotId) {
+    var plot= WebPlot.makeWebPlotData(plotId, wpInit);
+    var r= plot.plotState.getWebPlotRequest();
+    plot.title= makePostPlotTitle(plot,r);
+    if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
+    return plot;
+}
 
 
 /**
@@ -232,15 +226,17 @@ const handleSuccess= function(result, payload) {
  * @param {WebPlotRequest} req
  * @param {WebPlot} plot
  */
-function updateActiveTarget(req,plot) {
-    if (!req && !plot) return;
+function updateActiveTarget(plot) {
+    if (!plot) return;
 
+    var req= plot.plotState.getWebPlotRequest();
+    if (!req) return;
 
     var corners;
     var activeTarget;
 
 
-    if (!AppDataCntlr.getActiveTarget()) {
+    if (!getActiveTarget()) {
         var circle = req.getRequestArea();
 
         if (req.getOverlayPosition())     activeTarget= req.getOverlayPosition();
@@ -262,8 +258,7 @@ function updateActiveTarget(req,plot) {
         }
     }
 
-
-    if (activeTarget || corners) AppDataCntlr.setActiveTarget(activeTarget,corners);
+    if (activeTarget || corners) dispatchActiveTarget(activeTarget,corners);
 }
 
 function initBuildInDrawLayers() {

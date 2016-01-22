@@ -23,7 +23,7 @@ const MultiImageAction = new Enum([ 'GUESS',      // Default, guess between load
                                     'USE_ALL' // only valid in non three color, make a array of WebPlots
                                     ]);
 
-class PlotState {
+export class PlotState {
 
     /**
      * new plot state
@@ -205,7 +205,7 @@ class PlotState {
     /**
      * this method will make a copy of WebPlotRequest. Any changes to the WebPlotRequest object
      * after the set will not be reflected here.
-     * @param band the band to get the request for
+     * @param [band] the band to get the request for
      * @return {WebPlotRequest} the WebPlotRequest
      */
     getWebPlotRequest(band) { return this.get(band || this.firstBand()).getWebPlotRequest(); }

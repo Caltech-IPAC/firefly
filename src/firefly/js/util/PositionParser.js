@@ -44,7 +44,7 @@ var makePositionParser = function(helper) {
         _objName = null;
         _coordSys = null;
 
-        if (!StringUtils.isEmpty(s) ) {
+        if (s) {
             s= StringUtils.crunch(s);
             s= StringUtils.polishString(s); //remove non-standard-ASCII characters.
             _inputType= determineType(s);
@@ -100,7 +100,7 @@ var makePositionParser = function(helper) {
     };
 
     function getCoordSysFromString(s) {
-        return StringUtils.isEmpty(s) ? null : CoordinateSys.parse(s);
+        return !s ? null : CoordinateSys.parse(s);
     }
 
     retPP.getObjName= function() {
@@ -386,7 +386,7 @@ var makePositionParser = function(helper) {
         var retval='EQ_J2000';
         var array = s.trim().split(' ');
 
-        if (!StringUtils.isEmpty(s) && array.length>0) {
+        if (s && array.length>0) {
             if (array.length===1 && matches(array[0],COMBINE_SYS)) {
                 if (StringUtils.startsWith(array[0].toUpperCase(),'EC')) {
                     if (matches(array[0],ECL_1950)) {

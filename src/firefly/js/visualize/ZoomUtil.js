@@ -279,7 +279,7 @@ function getZoomLevelForScale(plot, arcsecPerPix) {
     return plot.projection.getPixelScaleArcSec() / arcsecPerPix;
 }
 
-function convertZoomToString(level) {
+export function convertZoomToString(level) {
     var retval;
     var zfInt= Math.floor(level*10000);
 
@@ -287,9 +287,9 @@ function convertZoomToString(level) {
     else if (zfInt===312)  retval= '1/32x';     // 1/32
     else if (zfInt===625)  retval= '1/16x';     // 1/16
     else if (zfInt===1250) retval= '1/8x';      // 1/8
-    else if (zfInt===2500) retval= '&#188;x';   // 1/4
-    else if (zfInt===7500) retval= '&#190;x';   // 3/4
-    else if (zfInt===5000) retval= '&#189;x';   // 1/2
+    else if (zfInt===2500) retval= String.fromCharCode(188) +'x'; // 1/4
+    else if (zfInt===7500) retval= String.fromCharCode(190) +'x';   // 3/4
+    else if (zfInt===5000) retval= String.fromCharCode(189) +'x';   // 1/2
     else                   retval= numeral(level).format('0.0')+'x';
     return retval;
 }

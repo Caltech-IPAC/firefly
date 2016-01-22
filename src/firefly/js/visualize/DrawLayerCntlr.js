@@ -3,12 +3,15 @@
  */
 
 import {flux} from '../Firefly.js';
-import PlotViewUtil from './PlotViewUtil.js';
+import PlotViewUtil, {getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
-import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchAttributeChange}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import DrawLayerFactory from './draw/DrawLayerFactory.js';
 import {getPlotViewIdListInGroup} from './PlotViewUtil.js';
+import SelectArea from '../drawingLayers/SelectArea.js';
+import DistanceTool from '../drawingLayers/DistanceTool.js';
+import {PlotAttribute} from './WebPlot.js';
 import _ from 'lodash';
 
 
@@ -233,6 +236,27 @@ function getDrawLayerIdAry(dlRoot,id,useGroup) {
 }
 
 
+//=============================================
+//=============================================
+//=============================================
+export function detachLayerActionCreator(action) {  // todo - this is betters solved with a sega, need to bring them in
+    return (dispatcher) => {
+        var {drawLayerId,plotIdAry}= action.payload;
+        var drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
+        if (drawLayer.drawLayerTypeId===SelectArea.TYPE_ID) {
+            plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null));
+        }
+        if (drawLayer.drawLayerTypeId===DistanceTool.TYPE_ID) {
+            plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null));
+        }
+        dispatcher(action);
+    };
+}
+
+
+//=============================================
+//=============================================
+//=============================================
 /**
  *
  * @param factory

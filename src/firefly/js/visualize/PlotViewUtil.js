@@ -129,6 +129,10 @@ export function getDrawLayerByType(dlAry,typeId) {
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
 }
 
+export function getDrawLayerById(dlAry,id) {
+    return dlAry.find( (dl) => dl.drawLayerId===id);
+}
+
 export function getDrawLayersByDisplayGroup(dlAry,displayGroupId) {
     return dlAry.find( (dl) => dl.displayGroupId===displayGroupId);
 }

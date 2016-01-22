@@ -2,13 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import ExternalAccessUtils from './ExternalAccessUtils.js';
+import ExternalAccessUtils, {extensionActivate} from './ExternalAccessUtils.js';
 
 const EXTENSION_ADD= 'ExternalAccessCntlr/extensionAdd';
 const EXTENSION_ACTIVATE= 'ExternalAccessCntlr/extensionActivate';
 const CHANNEL_ACTIVATE= 'ExternalAccessCntlr/channelActivate';
 
 const EXTERNAL_ACCESS_KEY= 'externalAccess';
+import {flux} from '../Firefly.js';
 
 const ALL_MPW= 'AllMpw';
 
@@ -16,6 +17,24 @@ const initState= {
     extensionList : [],
     remoteChannel : null
 };
+
+export function extensionRoot() { return flux.getState()[EXTERNAL_ACCESS_KEY]; }
+
+
+
+export function dispatchExtensionAdd(extension) {
+    flux.process({type: ExternalAccessCntlr.EXTENSION_ADD, payload: {extension}});
+}
+
+export function dispatchExtensionActivate(extension, resultData) {
+    flux.process({type: ExternalAccessCntlr.EXTENSION_ACTIVATE, payload: {extension, resultData}});
+}
+
+export function dispatchChannelActivate(channelId) {
+    flux.process({type: ExternalAccessCntlr.CHANNEL_ACTIVATE, payload: {channelId}});
+}
+
+
 
 
 const extensionActivateActionCreator= function(rawAction) {

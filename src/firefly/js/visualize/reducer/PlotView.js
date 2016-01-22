@@ -19,7 +19,7 @@ import WebPlot, {PlotAttribute} from './../WebPlot.js';
 import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
+import AppDataCntlr, {getActiveTarget} from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from './../ImagePlotCntlr.js';
 import VisUtil from './../VisUtil.js';
 import PlotViewUtil from './../PlotViewUtil.js';
@@ -27,7 +27,7 @@ import PlotPref from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from './../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';
-import {defMenuItemKeys} from '../MenuItemKeys.js'
+import {defMenuItemKeys} from '../MenuItemKeys.js';
 
 export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
@@ -57,9 +57,10 @@ export default {makePlotView, replacePlots,
 /**
  * @param {string} plotId
  * @param {WebPlotRequest} req
- * @return {{plotId: *, plotGroupId: *, drawingSubGroupId: *, plots: Array, primaryPlot: null, plotCounter: number, wcsMarginX: number, wcsMarginY: number, scrollX: number, scrollY: number, scrollWidth: number, scrollHeight: number, viewDim: {width: number, height: number}, overlayPlotViews: Array, containsMultiImageFits: boolean, containsMultipleCubes: boolean, lockPlotHint: boolean, attributes: {}, taskCnt: number, preferenceColorKey: *, preferenceZoomKey: *, defThumbnailSize, options: {showInlineTitle: boolean, inlineTitleAlwaysOnIfCollapsed: boolean, workingMsg: string, removeOldPlot: boolean, allowImageSelect: boolean, hasNewPlotContainer: *, allowImageLock: boolean, rotateNorth: boolean, userModifiedRotate: boolean, autoTearDown: boolean, saveCorners: boolean, active: boolean, boxSelection: boolean, catalogButton: boolean, hideTitleDetail: boolean, useInlineToolbar: boolean, showUnexpandedHighlight: boolean, useLayerOnPlotToolbar: boolean, turnOnGridAfterPlot: GridOnStatus, expandedTitleOptions: ExpandedTitleOptions}}}
+ * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
+ * @return  the plotView object
  */
-function makePlotView(plotId, req) {
+function makePlotView(plotId, req, pvOptions) {
     var pv= {
         plotId,
         plotGroupId: req.getPlotGroupId(),
@@ -81,42 +82,47 @@ function makePlotView(plotId, req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        menuItemKeys: defMenuItemKeys,
+        menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys),
 
         options : {
-            showInlineTitle : false,
-            inlineTitleAlwaysOnIfCollapsed : false,
+            //showInlineTitle : false,
+            //inlineTitleAlwaysOnIfCollapsed : false,
 
             // many options -- todo figure out how to set and change, some are set by request, how about the others?
             workingMsg      : DEF_WORKING_MSG,
             removeOldPlot   : true, // if false keep the last plot for flipping, if true remove the old one before plotting, todo
-            allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo
-            hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo
+            hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo control with MenuItemKeys
             allowImageLock  : false, // show the image lock button in the toolbar, todo
             rotateNorth     : false, // rotate this plot north when plotting,
             userModifiedRotate: false, // the user modified the rotate status, todo
             autoTearDown    : true,  // tear down when there is a new search, todo
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
-            active          : true,  // this is the active MiniPlotWidget, todo
             boxSelection    : false, // type of highlighting used when user selects this widget todo
-            catalogButton   : false, // show the catalog select button, todo
             hideTitleDetail : req.getHideTitleDetail(), // hide the zoom level and rotation shown in the title, todo
             useInlineToolbar: true, // show the Tool bar inline instead of on the title bar, todo
             showUnexpandedHighlight: true, // show the selected image highlight when not expanded, todo
             useLayerOnPlotToolbar: true, // show the Layer button on the plot toolbar, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
-            expandedTitleOptions: req.getExpandedTitleOptions()
+            expandedTitleOptions: req.getExpandedTitleOptions(),
+              // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
+            allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo
+            catalogButton   : false // show the catalog select button, todo
         }
     };
 
     if (req.containsParam(WPConst.GRID_ID)) {
-        pv.attributes[WPConst.GRID_ID]= req.getGridId();
+        pv.attributes[WPConst.GRID_ID]= req.getGridId(); // todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
     }
 
 
     return pv;
 }
 
+//todo - this function should determine which menuItem are visible and which are hidden
+// for now just return the default
+function makeMenuItemKeys(req,pvOptions,defMenuItemKeys) {
+    return defMenuItemKeys;
+}
 
 const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCenter(pv));
 
@@ -348,8 +354,8 @@ function getNewAttributes(plot) {
     else if (circle && circle.center) {
         worldPt= circle.center;
     }
-    else if (AppDataCntlr.getActiveTarget()) {
-        worldPt= AppDataCntlr.getActiveTarget();
+    else if (getActiveTarget()) {
+        worldPt= getActiveTarget();
     }
     else {
         worldPt= VisUtil.getCenterPtOfPlot(plot);

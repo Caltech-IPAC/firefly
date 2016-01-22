@@ -57,36 +57,77 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param active
  * @param tipOnCB
  * @param tipOffCB
+ * @param lastTextItem
  * @param todo show a todo message
  * @param ctx
  * @return {object}
  */
-export function ToolbarButton({icon,text,tip,badgeCount,enabled,dropDownCB,
-                               onClick, horizontal, bgDark, visible, active,
-                               tipOnCB,tipOffCB,todo}, ctx) {
+export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownCB,
+                               onClick, horizontal=true, bgDark, visible=true, active,
+                               tipOnCB,tipOffCB,lastTextItem=false, todo}, ctx) {
 
     if (!tipOnCB && ctx) tipOnCB= ctx.tipOnCB;
     if (!tipOffCB && ctx) tipOffCB= ctx.tipOffCB;
 
-    var s= {
-        display :  horizontal ? 'inline-block' : 'block',
-        position: 'relative'
-    };
+    var s= { position: 'relative' };
+    if (horizontal) {
+        s.display='inline-block';
+    }
+    else {
+        s.display= 'block';
+    }
+
+    var textCName= 'menuItemText';
+
+
     if (!visible) return <div style={s}></div>;
     var cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
            ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
     var divElement;
 
-    return (
-        <div title={tip} style={s} className={cName}
-             ref={(c) => divElement= c}
-             onClick={() => handleClick(onClick,dropDownCB,divElement)}
-             onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
-            {icon ? <img src={icon} />  : <div className='menuItemText'>{text}</div>}
-            {badgeCount ? makeBadge(badgeCount) : ''}
-            {todo?<div style={todoStyle}>ToDo</div>:false}
-        </div>
-    );
+    if (horizontal && !icon) {
+        s.height= 'calc(100% - 7px)';
+        s.verticalAlign= 'bottom';
+        s.fontSize= '10pt';
+        s.position= 'relative';
+        textCName= 'ff-menuItemHText';
+        return (
+            <div style={{display:'inline-block', height:'100%' }}>
+                <div style={{ display:'inline-block',
+                              margin:'0 4px 0 4px',
+                              height: 'calc(100% - 7px)',
+                              borderLeft : '1px solid rgba(0,0,0,.6)' }} />
+                <div title={tip} style={s} className={cName}
+                     ref={(c) => divElement= c}
+                     onClick={() => handleClick(onClick,dropDownCB,divElement)}
+                     onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
+                    <div className={textCName}>{text}</div>
+                    {badgeCount ? makeBadge(badgeCount) : ''}
+                    {todo?<div style={todoStyle}>ToDo</div>:false}
+                </div>
+
+                {lastTextItem ? <div style={{ display:'inline-block',
+                                              margin:'0 4px 0 4px',
+                                              height: 'calc(100% - 7px)',
+                                              borderLeft : '1px solid rgba(0,0,0,.6)' }} /> : false}
+            </div>
+            );
+
+    }
+    else {
+        return (
+            <div title={tip} style={s} className={cName}
+                 ref={(c) => divElement= c}
+                 onClick={() => handleClick(onClick,dropDownCB,divElement)}
+                 onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
+
+                {icon ? <img src={icon} />  : <div className={textCName}>{text}</div>}
+                {badgeCount ? makeBadge(badgeCount) : ''}
+                {todo?<div style={todoStyle}>ToDo</div>:false}
+            </div>
+        );
+    }
+
 }
 
 
@@ -111,10 +152,11 @@ ToolbarButton.propTypes= {
     active : PropTypes.bool,
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
-    dropDownCB : PropTypes.func
+    dropDownCB : PropTypes.func,
+    lastTextItem : PropTypes.boolean
 };
 
-ToolbarButton.defaultProps= {
+ToolbarButton.DefaultProps= {
     text : 'EMPTY TEXT',
     badgeCount: 0,
     enabled : true,
@@ -128,10 +170,13 @@ ToolbarButton.defaultProps= {
 };
 
 
-export function ToolbarHorizontalSeparator() {
-    return <div className='ff-horizontal-separator'/>;
+export function ToolbarHorizontalSeparator({top=0}) {
+    return <div style={{top}} className='ff-horizontal-separator'/>;
 }
 
+ToolbarButton.propTypes= {
+    top : PropTypes.number
+};
 
 export function DropDownVerticalSeparator() {
     return <div className='ff-vertical-separator'/>;

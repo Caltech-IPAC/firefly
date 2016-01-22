@@ -33,7 +33,7 @@ var makePositionFieldDef= function(properties) {
     };
 
     function validateInternal(s, hard) {
-        if (StringUtils.isEmpty(s)) {
+        if (!s) {
             if (isNullAllow()) {
                 return true;
             } else {
