@@ -99,14 +99,24 @@ function makePlotView(plotId, req, pvOptions) {
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
             boxSelection    : false, // type of highlighting used when user selects this widget todo
             hideTitleDetail : req.getHideTitleDetail(), // hide the zoom level and rotation shown in the title, todo
-            useInlineToolbar: true, // show the Tool bar inline instead of on the title bar, todo
             showUnexpandedHighlight: true, // show the selected image highlight when not expanded, todo
-            useLayerOnPlotToolbar: true, // show the Layer button on the plot toolbar, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
             expandedTitleOptions: req.getExpandedTitleOptions(),
+
+
+            //useLayerOnPlotToolbar: true, // show the Layer control button on the plot toolbar, todo - i now think I can remove this
+
+
+                                    // ANALYSIS about useInlineToolbar
+            useInlineToolbar: true, // show the Tool bar inline (on the plot) instead of on the title bar, todo,
+                                    // todo: the behavor should be, collapsed: inline, grid: inline: expand single: hidden
+                                   //  todo: behavor need be different for small plots link planck
+                                   //  todo: might need a ImageViewTitleDecorate panel to wrapp ImageViewDecorate when this is false
+
               // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
             allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo
             catalogButton   : false // show the catalog select button, todo
+
         }
     };
 

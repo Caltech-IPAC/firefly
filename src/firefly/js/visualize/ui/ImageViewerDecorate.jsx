@@ -8,6 +8,7 @@ import {getPlotGroupById}  from '../PlotGroup.js';
 import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {convertZoomToString} from '../ZoomUtil.js';
 import {VisCtxToolbarView} from './VisCtxToolbarView.jsx';
+import {VisInlineToolbarView} from './VisInlineToolbarView.jsx';
 import PlotViewUtil from '../PlotViewUtil.js';
 import {ImageViewerView}  from './ImageViewerView.jsx';
 import {PlotAttribute} from '../WebPlot.js';
@@ -19,14 +20,25 @@ export default ImageViewDecorate;
 const TOOLBAR_HEIGHT= 32;
 
 
-
+/**
+ * todo
+ * show the select and filter button show?
+ * @param pv
+ * @param dlAry
+ * @return {boolean}
+ */
 function showSelectAndFilter(pv,dlAry) {
-    //todo
     return false;
-
 }
+
+/**
+ * todo
+ * show the unselect button?
+ * @param pv
+ * @param dlAry
+ * @return {boolean}
+ */
 function showUnselect(pv,dlAry) {
-    //todo
     return false;
 }
 
@@ -107,6 +119,23 @@ function makeInlineTitle(visRoot,pv) {
     );
 }
 
+function makeInlineRightToolbar(visRoot,pv,dlAry) {
+    if (!pv || !pv.options.useInlineToolbar || visRoot.expanded!==ExpandType.COLLAPSE) return false;
+    return (
+        <div className='iv-decorate-inline-toolbar-container'>
+            <VisInlineToolbarView
+                plotView={pv} dlAry={dlAry}
+                showLayer={false}
+                showExpand={true}
+                showDelete ={true}
+                />
+        </div>
+    );
+
+
+
+}
+
 function getBorderColor(pv,visRoot) {
     if (!pv && !pv.plotId) return 'rgba(0,0,0,.4)';
 
@@ -139,6 +168,7 @@ function ImageViewDecorate({plotView:pv,drawLayersAry,extensionList,visRoot}) {
             <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
                 <ImageViewerView plotView={pv} drawLayersAry={drawLayersAry}/>
                 {makeInlineTitle(visRoot,pv)}
+                {makeInlineRightToolbar(visRoot,pv,drawLayersAry)}
             </div>
         </div>
     );

@@ -90,7 +90,7 @@ const initState= function() {
         activePlotId: null,
 
         expanded: ExpandType.COLLAPSE, //todo
-        toolBarIsPopup: true,    //todo
+        toolBarIsPopup: false,    //todo
         mouseReadoutWide: false, //todo
 
         //-- wcs match parameters
