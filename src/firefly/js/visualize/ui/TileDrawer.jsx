@@ -17,9 +17,13 @@ const containerStyle={position:'absolute',
                       background: BACKGROUND_STYLE
 };
 
-var TileDrawer= function({ x, y, width, height, tileData,
-                           tileZoomFactor, zoomFactor,
-                          plot, opacity=1 }) {
+export function TileDrawer({ x, y, width, height, plot}) {
+
+
+    var tileData=plot.serverImages;
+    var tileZoomFactor=plot.plotState.getZoomLevel();
+    var zoomFactor=plot.zoomFactor;
+    var opacity=plot.percentOpaque;
 
     const scale= zoomFactor / tileZoomFactor;
     const style=Object.assign({},containerStyle, {width,height});
@@ -33,7 +37,7 @@ var TileDrawer= function({ x, y, width, height, tileData,
             </div>
         );
     }
-};
+}
 
 
 
@@ -42,11 +46,7 @@ TileDrawer.propTypes= {
     y : PropTypes.number.isRequired,
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired,
-    tileData : PropTypes.object.isRequired,
-    tileZoomFactor : PropTypes.number.isRequired,
-    zoomFactor : PropTypes.number.isRequired,
-    plot : PropTypes.object.isRequired,
-    opacity : PropTypes.number
+    plot : PropTypes.object.isRequired
 };
 
 
@@ -71,7 +71,3 @@ function getTilesForArea(x,y,width,height,tileData,plot,scale,opacity) {
             return makeImageFromTile(createImageUrl(plot,tile), vpPt, tile.width, tile.height, scale, opacity);
         });
 }
-
-
-
-export default TileDrawer;

@@ -5,7 +5,7 @@
 import numeral from 'numeral';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
@@ -44,7 +44,7 @@ const selHelpText='Click and drag to find a distance';
 const editHelpText='Click and drag at either end to adjust distance';
 
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,getUIComponent);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach,getUIComponent);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -83,6 +83,11 @@ function creator() {
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt}`, TYPE_ID, 'Distance Tool',
                                      options, drawingDef, actionTypes, pairs );
+}
+
+function onDetach(drawLayer,action) {
+    var {plotIdAry}= action.payload;
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null));
 }
 
 
@@ -140,7 +145,6 @@ function dealWithMods(drawLayer,action) {
 
 function attach() {
     return {
-        mode: 'select',
         helpLine: selHelpText,
         drawData:{data:null},
         posAngle: false,
@@ -149,11 +153,16 @@ function attach() {
     };
 }
 
+function getMode(pv) {
+    if (!pv) return 'select';
+    var selection = pv.primaryPlot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+    return (selection) ? 'edit' : 'select';
+}
 
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var {mode}= drawLayer;
     var pv= getPlotViewById(visRoot(),plotId);
+    var mode= getMode(pv);
     if (!pv) return;
     var plot= pv.primaryPlot;
     var retObj= {};
@@ -195,10 +204,11 @@ function drag(drawLayer,action) {
 }
 
 function end(drawLayer,action) {
-    var {mode}= drawLayer;
+    var {plotId}= action.payload;
+    var pv= getPlotViewById(visRoot(),plotId);
+    var mode= getMode(pv);
     var retObj= {};
     if (mode==='select') {
-        retObj.mode= 'edit';
         retObj.helpLine= editHelpText;
     }
     return retObj;

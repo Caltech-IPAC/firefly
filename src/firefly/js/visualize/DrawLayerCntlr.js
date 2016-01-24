@@ -3,16 +3,16 @@
  */
 
 import {flux} from '../Firefly.js';
-import PlotViewUtil, {getDrawLayerById} from './PlotViewUtil.js';
+import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr, {visRoot,dispatchAttributeChange}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
 import DrawLayerFactory from './draw/DrawLayerFactory.js';
-import {getPlotViewIdListInGroup} from './PlotViewUtil.js';
 import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
 import {PlotAttribute} from './WebPlot.js';
-import _ from 'lodash';
+import without from 'lodash/array/without';
+import union from 'lodash/array/union';
 
 
 
@@ -239,19 +239,19 @@ function getDrawLayerIdAry(dlRoot,id,useGroup) {
 //=============================================
 //=============================================
 //=============================================
-export function detachLayerActionCreator(action) {  // todo - this is betters solved with a sega, need to bring them in
-    return (dispatcher) => {
-        var {drawLayerId,plotIdAry}= action.payload;
-        var drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
-        if (drawLayer.drawLayerTypeId===SelectArea.TYPE_ID) {
-            plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null));
-        }
-        if (drawLayer.drawLayerTypeId===DistanceTool.TYPE_ID) {
-            plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.ACTIVE_DISTANCE,null));
-        }
-        dispatcher(action);
-    };
+
+export function makeDetachLayerActionCreator(factory) {
+    return (action) => {
+        return (dispatcher) => {
+            var {drawLayerId}= action.payload;
+            var drawLayer= getDrawLayerById(getDlAry(), drawLayerId);
+            factory.onDetachAction(drawLayer,action);
+            dispatcher(action);
+        };
+    }
 }
+
+
 
 
 //=============================================
@@ -316,7 +316,7 @@ function makeReducer(factory) {
  */
 function createDrawLayer(state,action) {
     var {drawLayer}= action.payload;
-    var allowedActions= _.union(state.allowedActions, drawLayer.actionTypeAry);
+    var allowedActions= union(state.allowedActions, drawLayer.actionTypeAry);
 
     return Object.assign({}, state,
         {allowedActions, drawLayerAry: [drawLayer, ...state.drawLayerAry] });
@@ -358,7 +358,8 @@ function deferToLayerReducer(state,action,dlReducer) {
 
 /**
  * Call all the drawing layers that are interested in the action.  Since this function will be called often it does
- *  a lot of checking for change. * If nothing has changed it returns the original state.
+ *  a lot of checking for change.
+ *  If nothing has changed it returns the original state.
  * @param state
  * @param {{type:string,payload:object}} action
  * @param dlReducer drawinglayer subreducer
@@ -375,7 +376,7 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
         }
     } );
 
-    if (_.without(state.drawLayerAry,newAry).length) {  // if there are changes
+    if (without(state.drawLayerAry,...newAry).length) {  // if there are changes
         return Object.assign({},state, {drawLayerAry:newAry});
     }
     else {

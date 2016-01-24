@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
@@ -42,7 +42,7 @@ const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 10;
 const ID= 'SELECT_AREA';
 const TYPE_ID= 'SELECT_AREA_TYPE';
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach,null);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -89,6 +89,10 @@ function creator() {
                                      options, drawingDef, actionTypes, pairs );
 }
 
+function onDetach(drawLayer,action) {
+    var {plotIdAry}= action.payload;
+    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SELECTION,null));
+}
 
 function getLayerChanges(drawLayer, action) {
 
@@ -130,7 +134,7 @@ function getLayerChanges(drawLayer, action) {
 
 function attach() {
     return {
-        mode: 'select',
+        //mode: 'select',
         helpLine: selHelpText,
         drawData:{data:null}
     };
@@ -138,34 +142,42 @@ function attach() {
 
 function moveMouse(drawLayer,action) {
     var {screenPt,plotId}= action.payload;
-    if (drawLayer.mode==='edit') {
-        var pv= getPlotViewById(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
+    var mode= getMode(pv);
+    if (pv && mode==='edit') {
         if (!pv) return;
+
         var cc= CsysConverter.make(pv.primaryPlot);
         var ptAry= getPtAry(pv);
         var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
+        var cursor;
         if (corner) {
             switch (corner) {
-                case Corner.NE: return {cursor: 'ne-resize'};
-                case Corner.NW: return {cursor: 'nw-resize'};
-                case Corner.SE: return {cursor: 'se-resize'};
-                case Corner.SW: return {cursor: 'sw-resize'};
+                case Corner.NE: cursor= 'ne-resize'; break;
+                case Corner.NW: cursor= 'nw-resize'; break;
+                case Corner.SE: cursor= 'se-resize'; break;
+                case Corner.SW: cursor= 'sw-resize'; break;
             }
         } else {
-            return {cursor: ''};
+            cursor= '';
         }
+        return (drawLayer.cursor!==cursor) ? {cursor} : null;
     }
 }
 
 
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var {mode}= drawLayer;
     var pv= getPlotViewById(visRoot(),plotId);
+    var mode= getMode(pv);
     if (!pv) return;
     var plot= pv.primaryPlot;
 
     var retObj= {};
+
+
+
+
     if (mode==='select' || shiftDown) {
         retObj= setupSelect(pv,imagePt);
     }
@@ -216,17 +228,21 @@ function drag(drawLayer,action) {
 }
 
 function end(drawLayer,action) {
-    var {mode}= drawLayer;
+    var {plotId}= action.payload;
+    var pv= getPlotViewById(visRoot(),plotId);
+    var mode= getMode(pv);
     var retObj= {};
     if (mode==='select') {
-        retObj.mode= 'edit';
         retObj.helpLine= editHelpText;
     }
     return retObj;
 }
 
-
-
+function getMode(pv) {
+    if (!pv) return 'select';
+    var selection = pv.primaryPlot.attributes[PlotAttribute.SELECTION];
+    return (selection) ? 'edit' : 'select';
+}
 
 const distance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 

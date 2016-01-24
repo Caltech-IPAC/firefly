@@ -18,7 +18,7 @@ import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayer
 import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
-import ImageViewer from './ImageViewer.jsx';
+import {ImageViewer} from './ImageViewer.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';

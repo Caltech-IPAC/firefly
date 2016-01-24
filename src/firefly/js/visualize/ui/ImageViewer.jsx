@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
-import ImageViewerDecorate from './ImageViewerDecorate.jsx';
+import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {getExtensionList} from '../../core/ExternalAccessUtils.js';
@@ -14,7 +14,7 @@ import {flux} from '../../Firefly.js';
 
 
 
-class ImageViewer extends Component {
+export class ImageViewer extends Component {
 
 
     constructor(props) {
@@ -77,6 +77,3 @@ function drawLayersDiffer(dlAry1, dlAry2) {
     return true;
 }
 
-
-
-export default ImageViewer;

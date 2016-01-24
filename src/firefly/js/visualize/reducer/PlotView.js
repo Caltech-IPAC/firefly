@@ -111,7 +111,8 @@ function makePlotView(plotId, req, pvOptions) {
             useInlineToolbar: true, // show the Tool bar inline (on the plot) instead of on the title bar, todo,
                                     // todo: the behavor should be, collapsed: inline, grid: inline: expand single: hidden
                                    //  todo: behavor need be different for small plots link planck
-                                   //  todo: might need a ImageViewTitleDecorate panel to wrapp ImageViewDecorate when this is false
+                                   //  todo: when false image view decorate will use an external title bar
+                                   //  todo: might need to rename to control both the inlnie titl and the toolbar
 
               // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
             allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo

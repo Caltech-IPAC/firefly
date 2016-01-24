@@ -18,7 +18,7 @@ const TYPE_ID= 'ACTIVE_TARGET_TYPE';
 
 
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator,getDrawData,getLayerChanges,null,null);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 

@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
-import TileDrawer from './TileDrawer.jsx';
+import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {
     dispatchProcessScroll,
@@ -15,7 +15,7 @@ import {
     MouseState,
     dispatchMouseStateChange,
     makeMouseStatePayload}  from '../VisMouseCntlr.js';
-import {PlotViewDrawer}  from '../draw/DrawerComponent.jsx';
+import {PlotDrawer}  from '../draw/DrawerComponent.jsx';
 import {makeScreenPt} from '../Point.js';
 import {flux} from '../../Firefly.js';
 import {logError} from '../../util/WebUtil.js';
@@ -42,7 +42,6 @@ export class ImageViewerView extends Component {
     }
 
     componentDidUpdate() {
-        //var e= ReactDOM.findDOMNode(this);
         var {offsetWidth,offsetHeight}= this.element;
         var {prevWidth,prevHeight}= this.previousDim;
         if (prevWidth!==offsetWidth || prevHeight!==offsetHeight) {
@@ -69,27 +68,23 @@ export class ImageViewerView extends Component {
     }
 
     scroll(plotId,mouseState,screenX,screenY) {
-        if (screenX && screenY) {
-            switch (mouseState) {
-                case MouseState.DOWN :
-                    dispatchChangeActivePlotView(plotId);
-                    var {scrollX, scrollY}= this.props.plotView;
-                    this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
-                    break;
-                case MouseState.DRAG :
-                    if (this.plotDrag) {
-                        const newScrollPt= this.plotDrag(screenX,screenY);
-                        dispatchProcessScroll(plotId,newScrollPt);
-                    }
-                    break;
-                case MouseState.UP :
-                    this.plotDrag= null;
-                    //console.log(`end drag ${screenX},${screenY}`);
-                    break;
-                case MouseState.CLICK:
-                    dispatchChangeActivePlotView(plotId);
-                    break;
-            }
+        if (!screenX && !screenY) return;
+
+        switch (mouseState) {
+            case MouseState.DOWN :
+                dispatchChangeActivePlotView(plotId);
+                var {scrollX, scrollY}= this.props.plotView;
+                this.plotDrag= plotMover(screenX,screenY,scrollX,scrollY);
+                break;
+            case MouseState.DRAG :
+                if (this.plotDrag) {
+                    const newScrollPt= this.plotDrag(screenX,screenY);
+                    dispatchProcessScroll(plotId,newScrollPt);
+                }
+                break;
+            case MouseState.UP :
+                this.plotDrag= null;
+                break;
         }
     }
 
@@ -109,7 +104,7 @@ export class ImageViewerView extends Component {
                         height:scrollViewHeight
         };
 
-        var drawingAry= makeDrawingAry(plotView, drawLayersAry);
+        //var drawingAry= makeDrawingAry(plotView, drawLayersAry);
         var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
         if (!cursor || !cursor.length) cursor= 'crosshair';
         return (
@@ -118,18 +113,10 @@ export class ImageViewerView extends Component {
                     <div className='plot-view-master-panel'
                          style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor}}>
-                        <TileDrawer x={scrollX} y={scrollY} width={viewPortWidth} height={viewPortHeight}
-                                    tileData={plot.serverImages}
-                                    tileZoomFactor={plot.plotState.getZoomLevel()}
-                                    zoomFactor={plot.zoomFactor}
-                                    plot={plot}
-                                    opacity={plot.percentOpaque}
-                        />
-                        <div className='drawingArea'
-                             style={{width:viewPortWidth, height:viewPortHeight,
-                                     left:0, right:0, position:'absolute'}} >
-                            {drawingAry}
-                        </div>
+                        <TileDrawer x={scrollX} y={scrollY}
+                                    width={viewPortWidth} height={viewPortHeight}
+                                    plot={plot} />
+                        <DrawingLayers plot={plot} drawLayersAry={drawLayersAry} />
                         <EventLayer plotId={plotId} viewPort={plot.viewPort}
                                     width={viewPortWidth} height={viewPortHeight}
                                     eventCallback={(plotId,mouseState,screenPt,screenX,screenY) =>
@@ -143,7 +130,7 @@ export class ImageViewerView extends Component {
 
 
     render() {
-        var {primaryPlot,viewDim:{width,height},plotId}= this.props.plotView;
+        var {primaryPlot,viewDim:{width,height}}= this.props.plotView;
         var insideStuff;
 
         if (width && height && primaryPlot) {
@@ -213,20 +200,27 @@ function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     }
 }
 
+// ------------ React component
 
-/**
- *
- * @param plotView
- * @param {[]} dlAry - array of drawLayers
- * @return {*}
- */
-function makeDrawingAry(plotView,dlAry) {
-    if (!dlAry) return [];
-    var {width,height}= plotView.primaryPlot.viewPort.dim;
-    return dlAry.map( (dl) => <PlotViewDrawer plotView={plotView} drawLayer={dl}
-                                              width={width} height={height}
-                                              key={dl.drawLayerId}/> );
+function DrawingLayers({plot,drawLayersAry:dlAry}) {
+    var drawingAry= null;
+    var {width,height}= plot.viewPort.dim;
+    if (dlAry) {
+        drawingAry= dlAry.map( (dl) => <PlotDrawer plot={plot} drawLayer={dl}
+                                                   width={width} height={height}
+                                                   key={dl.drawLayerId}/> );
+    }
+    return (
+        <div className='drawingArea'
+             style={{width, height, left:0, right:0, position:'absolute'}} >
+            {drawingAry}
+        </div>
+    );
 }
 
+DrawingLayers.propTypes= {
+    plot: PropTypes.object.isRequired,
+    drawLayersAry: PropTypes.array.isRequired
+};
 
 

@@ -15,7 +15,6 @@ import {PlotAttribute} from '../WebPlot.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../PlotCmdExtension.js';
 import './ImageViewerDecorate.css';
 
-export default ImageViewDecorate;
 
 const TOOLBAR_HEIGHT= 32;
 
@@ -66,6 +65,7 @@ function showUnselect(pv,dlAry) {
 
 
 
+
 function contextToolbar(pv,dlAry,extensionList) {
     if (!pv) return;
     var {primaryPlot:plot}= pv;
@@ -76,7 +76,7 @@ function contextToolbar(pv,dlAry,extensionList) {
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
         return (
             <VisCtxToolbarView
-                plotView={pv} dlAry={dlAry} extensionAry={selAry}
+                plotView={pv} dlAry={dlAry} extensionAry={selAry.length?selAry:null}
                 showCrop={true} showStats={true} showSelect={selectAndFilter}
                 showUnSelect={showUnselect(pv,dlAry)} showFilter={selectAndFilter}
             />
@@ -107,17 +107,26 @@ function contextToolbar(pv,dlAry,extensionList) {
     return false;
 }
 
-function makeInlineTitle(visRoot,pv) {
-    var title= visRoot.expanded!==ExpandType.SINGLE && pv && pv.primaryPlot ? pv.primaryPlot.title : '';
-    if (!title) return false;
-    var zl= convertZoomToString(pv.primaryPlot.zoomFactor);
-    return (
-        <div className='iv-decorate-inline-title-container'>
-            <div className='iv-decorate-inline-title' >{title}</div>
-            <div className='iv-decorate-zoom'>{zl}</div>
-        </div>
-    );
-}
+
+
+//function makeTitleBarTitle(visRoot,pv) {
+//
+//}
+//
+//function makeInlineTitle(visRoot,pv) {
+//    //todo handle showing rotation
+//    //todo check pv.hideTitleDetail
+//    //todo turn pv.useInlineToolbar to something that controls both title location ad toolbar location
+//    var title= visRoot.expanded!==ExpandType.SINGLE && pv && pv.primaryPlot ? pv.primaryPlot.title : '';
+//    if (!title) return false;
+//    var zl= convertZoomToString(pv.primaryPlot.zoomFactor);
+//    return (
+//        <div className='iv-decorate-inline-title-container'>
+//            <div className='iv-decorate-inline-title' >{title}</div>
+//            <div className='iv-decorate-zoom'>{zl}</div>
+//        </div>
+//    );
+//}
 
 function makeInlineRightToolbar(visRoot,pv,dlAry) {
     if (!pv || !pv.options.useInlineToolbar || visRoot.expanded!==ExpandType.COLLAPSE) return false;
@@ -148,9 +157,15 @@ function getBorderColor(pv,visRoot) {
 }
 
 
-function ImageViewDecorate({plotView:pv,drawLayersAry,extensionList,visRoot}) {
+export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,visRoot}) {
     var ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
     var top= ctxToolbar?32:0;
+    var title, zoomFactor;
+
+    if (pv && pv.primaryPlot) {
+        title= pv && pv.primaryPlot ? pv.primaryPlot.title : '';
+        zoomFactor= pv.primaryPlot.zoomFactor;
+    }
 
     var style= {width:'100%',
                 height:'100%',
@@ -167,15 +182,16 @@ function ImageViewDecorate({plotView:pv,drawLayersAry,extensionList,visRoot}) {
             {ctxToolbar}
             <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
                 <ImageViewerView plotView={pv} drawLayersAry={drawLayersAry}/>
-                {makeInlineTitle(visRoot,pv)}
+                <InlineTitle expandMode={visRoot.expanded} titleStr={title} zoomFactor={zoomFactor}/>
                 {makeInlineRightToolbar(visRoot,pv,drawLayersAry)}
             </div>
         </div>
     );
 }
 
+//{makeInlineTitle(visRoot,pv)}
 
-ImageViewDecorate.propTypes= {
+ImageViewerDecorate.propTypes= {
     plotView : PropTypes.object.isRequired,
     drawLayersAry: PropTypes.array.isRequired,
     visRoot: PropTypes.object.isRequired,
@@ -183,4 +199,29 @@ ImageViewDecorate.propTypes= {
 };
 
 
+
+function InlineTitle({expandMode,titleStr, zoomFactor}) {
+    //todo handle showing rotation
+    //todo check pv.hideTitleDetail
+    //todo turn pv.useInlineToolbar to something that controls both title location ad toolbar location
+    //todo maybe make a title bar mode to determine how much to show
+    if (!titleStr || expandMode===ExpandType.SINGLE ) return <div></div>;
+    var zlStr= convertZoomToString(zoomFactor);
+    return (
+        <div className='iv-decorate-inline-title-container'>
+            <div className='iv-decorate-inline-title' >{titleStr}</div>
+            <div className='iv-decorate-zoom'>{zlStr}</div>
+        </div>
+    );
+}
+
+
+InlineTitle.propTypes= {
+    expandMode:PropTypes.object,
+    titleStr: PropTypes.string,
+    zoomFactor:PropTypes.number
+};
+
+
+const EMPTY_DIV= <div></div>;
 
