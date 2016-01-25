@@ -169,7 +169,7 @@ function evaluateBrowser(ua,p) {
     var retValue= {browser:Browser.UNKNOWN,majorV:UNKNOWN_VER, minorV:UNKNOWN_VER};
     if (ua.includes('msie')) {
         retValue.browser= Browser.IE;
-        if (ua.includes('msie 11')) {
+        if (ua.includes('msie 11') && !ua.includes('trident')) {
             retValue.majorV= 11;
         }
         else if (ua.includes('msie 10')) {
@@ -188,8 +188,11 @@ function evaluateBrowser(ua,p) {
             retValue.majorV= 6;
         }
     }
-    else if (ua.includes('windows nt')) {
+    else if (ua.includes('trident') && !ua.contains('edge')) {
         retValue= parseVersion(ua,IE_11_KEY);
+        retValue.browser= Browser.IE;
+    }else if (ua.includes('edge')) {
+        retValue= parseVersion(ua,'edge/');
         retValue.browser= Browser.IE;
     }
     else if (ua.includes(FIREFOX_KEY)) {
