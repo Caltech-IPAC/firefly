@@ -15,14 +15,14 @@ const containerStyle={position:'absolute',
                       left: 0,
                       right: 0,
                       background: BACKGROUND_STYLE
-};
+};;
 
 export function TileDrawer({ x, y, width, height, plot}) {
 
 
     var tileData=plot.serverImages;
     var tileZoomFactor=plot.plotState.getZoomLevel();
-    var zoomFactor=plot.zoomFactor;
+    var zoomFactor=plot.zoomFactor
     var opacity=plot.percentOpaque;
 
     const scale= zoomFactor / tileZoomFactor;

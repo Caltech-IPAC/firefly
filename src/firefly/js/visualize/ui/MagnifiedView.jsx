@@ -5,7 +5,7 @@
 import React from 'react';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import {MouseState} from '../VisMouseCntlr.js';
-import {makeImageFromTile,createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
+import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
 
 
