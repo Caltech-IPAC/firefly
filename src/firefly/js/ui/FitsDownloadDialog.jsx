@@ -134,17 +134,15 @@ class FitsDownloadDialog extends React.Component {
 }
 
 
-function renderOperationOption(hasOperation,leftColumn, rightColumn) {
+function renderOperationOption(hasOperation) {
+
+    var leftColumn = { display: 'inline-block', paddingLeft:135, paddingBottom:15, verticalAlign:'middle'};
+    var rightColumn = {display: 'inline-block', paddingLeft:20};
 
     if (hasOperation) {
         return (
-            <div>
-                <div style={leftColumn}>
-                    <InputFieldLabel label= 'FITS file:'
-                                     tooltip='Please select an option'
-                    />
-
-                </div>
+            <div  style={{ minWidth : 300, minHeight: 100} }>
+                <div title = 'Please select an option'  style={leftColumn}>FITS file: </div>
                 <div style={rightColumn}>
                     <RadioGroupInputField
                         initialState={{
@@ -153,7 +151,6 @@ function renderOperationOption(hasOperation,leftColumn, rightColumn) {
                                    }}
                         options={[
                             { label:'Original', value:'fileTypeOrig'},
-
                             { label:'Cropped', value:'fileTypeCrop'}
 
                             ]}
@@ -170,7 +167,24 @@ function renderOperationOption(hasOperation,leftColumn, rightColumn) {
     }
 }
 
-function renderThreeBand(hasThreeColorBand, colors,leftColumn, rightColumn) {
+function renderThreeBand(hasThreeColorBand, colors) {
+
+    var rightColumn={display: 'inline-block', paddingLeft:18};
+    var leftColumn;
+    switch (colors.length){
+        case 1:
+            leftColumn= { display: 'inline-block', paddingLeft:125};
+            break;
+        case 2:
+            leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign: 'middle', paddingBottom:20};
+            break;
+        case 3:
+            leftColumn ={ display: 'inline-block', paddingLeft:125,verticalAlign: 'middle', paddingBottom:40};
+            break;
+    }
+
+
+
     if (hasThreeColorBand) {
         var optionArray=[];
         for (var i=0; i<colors.length; i++){
@@ -178,14 +192,10 @@ function renderThreeBand(hasThreeColorBand, colors,leftColumn, rightColumn) {
         }
 
         return (
-            <div >
+            <div  style={{ minWidth:300, minHeight: 100} }>
 
-                <div style={leftColumn}>
-                    <InputFieldLabel label= 'Color Band:'
-                                     tooltip='Please select an option'
-                    />
+                <div title ='Please select an option' style={leftColumn}>Color Band:   </div>
 
-                </div>
                 <div style={rightColumn}>
                     <RadioGroupInputField
                         initialState={{
@@ -211,17 +221,18 @@ function FitsDownloadDialogForm() {
 
 
     const { plotState, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
-    var leftColumn = {width: 200, display: 'inline-block'};
+
+    var renderOperationButtons = renderOperationOption(hasOperation);//
+
+    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue'] 
+
+
+    var leftColumn = {width: 200, display: 'inline-block',    paddingBottom: 16};
 
     var rightColumn = {display: 'inline-block'};
 
-    var renderOperationButtons = renderOperationOption(hasOperation, leftColumn, rightColumn);
-
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors, leftColumn , rightColumn);
-
-    //leftColumn['lineHeight']=100;//change the line height for the Fits radio button group
-
     return (
+
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
             <div style={{ padding:5 }}>
                 <div style={{ minWidth : 300, minHeight: 100 } }>
@@ -258,7 +269,7 @@ function FitsDownloadDialogForm() {
 
                     {renderThreeBandButtons}
                 </div>
-                <div style={{'text-align':'center'}}>
+                <div style={{'textAlign':'center', marginBottom: 20}}>
                     < CompleteButton
                         text='Download'
                         onSuccess={ (request) => resultsSuccess(request, plotState )}

@@ -69,7 +69,7 @@ var RadioGroupInputField= React.createClass(
 
                             return (
 
-                                <span key={option.value}>
+                                <div key={option.value}>
                                     <div style={{display:'inline-block'}}>
 
                                         <input type='radio'
@@ -83,7 +83,7 @@ var RadioGroupInputField= React.createClass(
                                     </div>
 									{optionalElement}
 
-                          </span>
+                          </div>
 
                             );
 
