@@ -352,7 +352,11 @@ public abstract class CommonRequestCmd extends RequestCmd implements TableLoadHa
                         }
                     }
                     if (bgStatusList.size() == tableUiLoader.getTables().size()) {
-                        bgMonitorItem.initStatusList(bgStatusList);
+                        if (bgStatusList.size() == 1) {
+                            bgMonitorItem.setStatus(bgStatusList.get(0));
+                        } else {
+                            bgMonitorItem.setCompositeStatus(bgStatusList);
+                        }
                         Application.getInstance().getBackgroundMonitor().addItem(bgMonitorItem);
                         setBgButtonEnable(true);
                         return false;

@@ -97,7 +97,11 @@ public class MonitorItem {
 //======================================================================
 
 
-    public void initStatusList(List<BackgroundStatus> partList) {
+    /**
+     * TODO: composite status is not fully implemented.  It does not support getStatus() which is used throughout.  need to put more thought into this.
+     * @param partList
+     */
+    public void setCompositeStatus(List<BackgroundStatus> partList) {
         if (_groupMonitorList==null) {
             _groupMonitorList= new ArrayList<MonitorItem>(partList.size());
             MonitorItem mi;
@@ -135,8 +139,12 @@ public class MonitorItem {
     }
     public BackgroundState getState() { return bgStatus!=null ? bgStatus.getState() : BackgroundState.WAITING ; }
     public String getID() {
-        WebAssert.argTst(bgStatus!=null, "You have not yet set a report to monitor, use setReport");
-        return bgStatus.getID();
+        if (isComposite()) {
+            return compositeJob.getId();
+        } else {
+            WebAssert.argTst(bgStatus!=null, "You have not yet set a report to monitor, use setReport");
+            return bgStatus.getID();
+        }
     }
     public boolean isActive() { return bgStatus!=null ? bgStatus.isActive() : true; }
     public boolean isDone() { return bgStatus!=null ? bgStatus.isDone() : false; }
