@@ -29,7 +29,7 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
                 columnOrExpr
                 label
                 unit
-                options: [log,reverse]
+                options: [log,flip]
                 nbins
                 min
                 max
@@ -38,7 +38,7 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
                 columnOrExpr
                 label
                 unit
-                options: [log,reverse]
+                options: [log,flip]
                 nbins
                 min
                 max

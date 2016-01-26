@@ -3,12 +3,12 @@ import React from 'react';
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
 
-import HistogramCntlr from '../visualize/HistogramCntlr.js';
-import HistogramOptions from './HistogramOptions.jsx';
-import Histogram from './Histogram.jsx';
+import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
+import XYPlot from '../visualize/XYPlot.jsx';
 
 
-var HistogramTablePanel = React.createClass({
+var XYPlotTablePanel = React.createClass({
 
 
     throttledResize: throttle( (size) => {
@@ -19,7 +19,7 @@ var HistogramTablePanel = React.createClass({
 
     propTypes: {
         tblStatsData: React.PropTypes.object.isRequired,
-        tblHistogramData : React.PropTypes.object.isRequired,
+        tblPlotData : React.PropTypes.object.isRequired,
         width : React.PropTypes.string,
         height : React.PropTypes.string
     },
@@ -34,7 +34,7 @@ var HistogramTablePanel = React.createClass({
 
     shouldComponentUpdate(nextProps, nextState) {
         return nextProps.tblStatsData !== this.props.tblStatsData ||
-        nextProps.tblHistogramData !== this.props.tblHistogramData ||
+        nextProps.tblPlotData !== this.props.tblPlotData ||
             nextState !== this.state;
     },
 
@@ -50,15 +50,15 @@ var HistogramTablePanel = React.createClass({
 
     renderOptions() {
         const { searchRequest, isColStatsReady, colStats } = this.props.tblStatsData;
-        const formName = 'HistogramOptionsForm_'+searchRequest.tbl_id;
+        const formName = 'XYPlotOptionsForm_'+searchRequest.tbl_id;
 
         if (isColStatsReady) {
             return (
-                <HistogramOptions groupKey = {formName}
+                <XYPlotOptions groupKey = {formName}
                                   colValStats={colStats}
-                                  onOptionsSelected={(histogramParams) => {
-                                            //console.log(histogramParams);
-                                            HistogramCntlr.dispatchLoadColData(histogramParams, searchRequest);
+                                  onOptionsSelected={(xyPlotParams) => {
+                                            console.log(xyPlotParams);
+                                            XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, searchRequest);
                                         }
                                       }/>
             );
@@ -69,41 +69,44 @@ var HistogramTablePanel = React.createClass({
     },
 
     renderHistogram() {
-        if (!this.props.tblHistogramData) {
-            return 'Select Histogram Parameters...';
+        if (!this.props.tblPlotData) {
+            return 'Select XY plot parameters...';
         }
-        const { isColDataReady, histogramData, histogramParams } = this.props.tblHistogramData;
+        const { isPlotDataReady, xyPlotData, xyPlotParams } = this.props.tblPlotData;
         var {heightPx} = this.state;
 
-        if (isColDataReady) {
+        if (isPlotDataReady) {
             var logs = undefined;
             var reversed = undefined;
-            if (histogramParams) {
+            if (xyPlotParams) {
                 var logvals = '';
-                if (histogramParams.x.includes('log')) { logvals += 'x';}
-                if (histogramParams.y.includes('log')) { logvals += 'y';}
-                if (logvals.length>0) { logs = logvals;}
-
                 var rvals = '';
-                if (histogramParams.x.includes('flip')) { rvals += 'x';}
-                if (histogramParams.y.includes('flip')) { rvals += 'y';}
+                if (xyPlotParams.x.options) {
+                    if (xyPlotParams.x.options.includes('log')) { logvals += 'x'; }
+                    if (xyPlotParams.x.includes('flip')) { rvals += 'x';}
+                }
+                if (xyPlotParams.y.options)  {
+                    if (xyPlotParams.y.options.includes('log')) { logvals += 'y';}
+                    if (xyPlotParams.y.includes('flip')) { rvals += 'y';}
+                }
+                if (logvals.length>0) { logs = logvals;}
                 if (rvals.length>0) { reversed = rvals;}
 
             }
             return (
-                <Histogram data={histogramData}
-                           desc={histogramParams.columnOrExpr}
-                           binColor='#8c8c8c'
+                <XYPlot data={xyPlotData}
+                           desc={xyPlotParams.x.columnOrExpr+' vs. '+xyPlotParams.y.columnOrExpr}
                            height={heightPx}
+                           params={xyPlotParams}
                            logs={logs}
                            reversed={reversed}
                 />
             );
         } else {
-            if (histogramParams) {
-                return 'Loading Histogram...';
+            if (xyPlotParams) {
+                return 'Loading XY plot...';
             } else {
-                return 'Select Histogram Parameters';
+                return 'Select XY plot parameters';
             }
 
         }
@@ -123,7 +126,7 @@ var HistogramTablePanel = React.createClass({
             width = width || '100%';
 
             return (
-                <Resizable id='histogram-resizer' style={{width, height}} onResize={this.state.throttledResize} {...this.props} >
+                <Resizable id='xyplot-resizer' style={{width, height}} onResize={this.state.throttledResize} {...this.props} >
 
                     <div style={{display:'inline-block', verticalAlign:'top', whiteSpace: 'nowrap'}}>
                         <div
@@ -142,4 +145,4 @@ var HistogramTablePanel = React.createClass({
     } }
 );
 
-export default HistogramTablePanel;
+export default XYPlotTablePanel;

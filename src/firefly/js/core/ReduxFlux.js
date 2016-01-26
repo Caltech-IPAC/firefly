@@ -73,7 +73,7 @@ actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, detachLayerActionCreat
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
-actionCreators.set(HistogramCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
+actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 
 

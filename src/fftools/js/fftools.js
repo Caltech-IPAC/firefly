@@ -18,6 +18,7 @@ import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import Validate from 'firefly/util/Validate.js';
 import TblUtil from 'firefly/tables/TableUtil.js';
 import HistogramTableViewPanel from 'firefly/visualize/HistogramTableViewPanel.jsx';
+import XYPlotTableViewPanel from 'firefly/visualize/XYPlotTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 
@@ -29,6 +30,7 @@ import {TableRequest} from 'firefly/tables/TableRequest.js';
 
 import TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
+import XYPlotCntlr from 'firefly/visualize/XYPlotCntlr.js';
 import TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
@@ -65,6 +67,7 @@ const App = React.createClass({
         table   : React.PropTypes.object,
         activeTbl : React.PropTypes.object,
         tblStatsData : React.PropTypes.object,
+        xyPlotData : React.PropTypes.object,
         histogramData : React.PropTypes.object
     },
 
@@ -90,7 +93,7 @@ const App = React.createClass({
 
 
     render() {
-        var {appData, title, table, tblStatsData, histogramData} = this.props;
+        var {appData, title, table, tblStatsData, histogramData, xyPlotData} = this.props;
 
 
         const v = get(this.props, 'appData.props.version') || 'unknown';
@@ -140,7 +143,7 @@ const App = React.createClass({
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<HistogramTableViewPanel tblStatsData={tblStatsData} tblHistogramData={histogramData}/> }
+                            xyPlot = {<XYPlotTableViewPanel tblStatsData={tblStatsData} tblPlotData={xyPlotData}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
@@ -158,7 +161,8 @@ function connector(state) {
         title: 'FFTools entry point',
         table : TblUtil.findById(activeTblId),
         tblStatsData: get(state[TableStatsCntlr.TBLSTATS_DATA_KEY], activeTblId),
-        histogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], activeTblId)
+        histogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], activeTblId),
+        xyPlotData: get(state[XYPlotCntlr.XYPLOT_DATA_KEY], activeTblId)
     };
 }
 const container = flux.createSmartComponent(connector, App);
