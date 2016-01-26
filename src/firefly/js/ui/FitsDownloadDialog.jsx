@@ -25,7 +25,7 @@ import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
-import {RequestType} from '../visualize/RequestType.js';
+import RequestType from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 
 
@@ -229,12 +229,12 @@ function FitsDownloadDialogForm() {
 
     const { plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
-    var renderOperationButtons = renderOperationOption(hasOperation);//
+    var renderOperationButtons = renderOperationOption(hasOperation);
 
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue'] 
+    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']
 
 
-    var leftColumn = {width: 200, display: 'inline-block',    paddingBottom: 16};
+    var leftColumn = {width: 200, display: 'inline-block'};
 
     var rightColumn = {display: 'inline-block'};
 
@@ -336,7 +336,7 @@ function resultsSuccess(request, plot) {
 
 
     if (ext && ext.toLowerCase() == 'fits') {
-        var param={file: fitsFile, return:makeFileName(plotState, band), log: true};
+        var param={file: fitsFile, return:makeFileName(plot, band), log: true};
         var  url = encodeUrl(getRootURL() + '/servlet/Download', ParamType.QUESTION_MARK ,param);
         //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
         download(url);
@@ -390,6 +390,7 @@ function  makeFileName(plot,  band) {
     }
     return retval;
 }
+
 function  makeServiceFileName(req,plot, band) {
 
     var sType= req.getServiceType();
@@ -429,14 +430,31 @@ function  makeServiceFileName(req,plot, band) {
     return retval;
 }
 function  makeTitleFileName(plot, band) {
-    //TODO
 
-  /*  var retval = plot.getMiniPlotWidge().getTitle();
+
+    var retval = plot.primaryPlot.title;
     if (band!=Band.NO_BAND) {
-        retval= retval + "-"+band.toString();
+        retval= retval + '-'+ band;
     }
-    retval= StringUtils.crunch(retval);
-    retval= retval.replace(" ", "-");
-    retval= retval.replace(":", "-");
-    return retval +  ".fits";*/
+    retval= getHyphenatedName(retval);
+
+    return retval +  '.fits';
+}
+/**
+ * This method split a string by ':' and white spaces.
+ * After the str is spitted to an array, reconnect the array to a string
+ * using '-'.
+ *
+ * @param str: input string
+ * @returns {T} a string by replace ':' and white spaces by '-' in the input str.
+ */
+function getHyphenatedName(str){
+
+    var sArray=str.split(/[ :]+/).filter(Boolean);
+
+    var fName=sArray[0];
+    for(var i=1; i<sArray.length; i++){
+        fName=fName+'-'+sArray[i];
+    }
+    return fName;
 }
