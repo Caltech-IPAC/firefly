@@ -24,6 +24,11 @@ import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import InputFieldLabel from './InputFieldLabel.jsx';
+import {encodeUrl, ParamType}  from '../util/WebUtil.js';
+import {RequestType} from '../visualize/RequestType.js';
+import {ServiceType} from '../visualize/WebPlotRequest.js';
+
+
 
 function getDialogBuilder() {
     var popup = null;
@@ -55,6 +60,7 @@ export function showFitsDownloadDialog() {
 function getInitialPlotState() {
 
     var plot = PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
+
 
     var plotState = plot.plotState;
 
@@ -90,7 +96,7 @@ function getInitialPlotState() {
     var cropNotRotate = isCrop && !isRotation ? true : false;
 
     return {
-        plotState,
+        plot,
         colors,
         hasThreeColorBand: threeColorBandUsed,
         hasOperation: cropNotRotate
@@ -171,21 +177,22 @@ function renderThreeBand(hasThreeColorBand, colors) {
 
     var rightColumn={display: 'inline-block', paddingLeft:18};
     var leftColumn;
-    switch (colors.length){
-        case 1:
-            leftColumn= { display: 'inline-block', paddingLeft:125};
-            break;
-        case 2:
-            leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign: 'middle', paddingBottom:20};
-            break;
-        case 3:
-            leftColumn ={ display: 'inline-block', paddingLeft:125,verticalAlign: 'middle', paddingBottom:40};
-            break;
-    }
 
 
 
     if (hasThreeColorBand) {
+        switch (colors.length){
+            case 1:
+                leftColumn= { display: 'inline-block', paddingLeft:125};
+                break;
+            case 2:
+                leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign: 'middle', paddingBottom:20};
+                break;
+            case 3:
+                leftColumn ={ display: 'inline-block', paddingLeft:125,verticalAlign: 'middle', paddingBottom:40};
+                break;
+        }
+
         var optionArray=[];
         for (var i=0; i<colors.length; i++){
             optionArray[i]={label: colors[i], value: colors[i]+'Radio'};
@@ -220,7 +227,7 @@ function renderThreeBand(hasThreeColorBand, colors) {
 function FitsDownloadDialogForm() {
 
 
-    const { plotState, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
+    const { plot, colors, hasThreeColorBand, hasOperation} = getInitialPlotState();
 
     var renderOperationButtons = renderOperationOption(hasOperation);//
 
@@ -272,7 +279,7 @@ function FitsDownloadDialogForm() {
                 <div style={{'textAlign':'center', marginBottom: 20}}>
                     < CompleteButton
                         text='Download'
-                        onSuccess={ (request) => resultsSuccess(request, plotState )}
+                        onSuccess={ (request) => resultsSuccess(request, plot )}
                         onFail={resultsFail}
                         dialogId='fitsDownloadDialog'
                     />
@@ -292,8 +299,10 @@ function resultsFail(request) {
  * @param request
  * @param plotState
  */
-function resultsSuccess(request, plotState) {
+function resultsSuccess(request, plot) {
     // var rel = showResults(true, request);
+
+    var plotState = plot.plotState;
 
     if (!Object.keys(request).length) {
         console.log(request);
@@ -325,10 +334,109 @@ function resultsSuccess(request, plotState) {
         plotState.getWorkingFitsFileStr(band) :
         plotState.getOriginalFitsFileStr(band);
 
-    if (ext && ext.toLowerCase() == 'fits') {
 
-        download(getRootURL() + '/servlet/Download?file=' + fitsFile);
+    if (ext && ext.toLowerCase() == 'fits') {
+        var param={file: fitsFile, return:makeFileName(plotState, band), log: true};
+        var  url = encodeUrl(getRootURL() + '/servlet/Download', ParamType.QUESTION_MARK ,param);
+        //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
+        download(url);
     }
 
 }
 
+function  makeFileName(plot,  band) {
+
+
+    var plotState = plot.plotState;
+    var req= plotState.getWebPlotRequest(band);
+
+    if (req.getDownloadFileNameRoot()) {
+        return req.getDownloadFileNameRoot()+'.fits';
+    }
+
+
+   var rType= req.getRequestType();
+
+    var retval;
+    switch (rType) {
+        case RequestType.SERVICE:
+            retval= makeServiceFileName(req,plot, band);
+            break;
+        case RequestType.FILE:
+            retval= 'USE_SERVER_NAME';
+            break;
+        case RequestType.URL:
+            retval= makeTitleFileName(band);
+            break;
+        case RequestType.ALL_SKY:
+            retval= 'allsky.fits';
+            break;
+        case RequestType.BLANK:
+            retval= 'blank.fits';
+            break;
+        case RequestType.PROCESSOR:
+            retval= makeTitleFileName(plot, band);
+            break;
+        case RequestType.RAWDATASET_PROCESSOR:
+            retval= makeTitleFileName(plot, band);
+            break;
+        case RequestType.TRY_FILE_THEN_URL:
+            retval= makeTitleFileName(plot, band);
+            break;
+        default:
+            retval= makeTitleFileName(plot, band);
+            break;
+
+    }
+    return retval;
+}
+function  makeServiceFileName(req,plot, band) {
+
+    var sType= req.getServiceType();
+    var retval;
+    switch (sType) {
+        case ServiceType.IRIS:
+            retval= 'iris-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.ISSA:
+            retval= 'issa-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.DSS:
+            retval= 'dss-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.SDSS:
+            retval= 'sdss-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.TWOMASS:
+            retval= 'twomass-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.MSX:
+            retval= 'msx-'+req.getSurveyKey()+'.fits';
+            break;
+        case ServiceType.DSS_OR_IRIS:
+            retval= 'fits-'+req.getSurveyBand()+'.fits';
+            break;
+        case ServiceType.WISE:
+            retval= 'wise-'+req.getSurveyKey()+'-'+req.getSurveyBand()+'.fits';
+            break;
+        case ServiceType.NONE:
+            retval= makeTitleFileName(plot, band);
+            break;
+        default:
+            retval= makeTitleFileName(plot, band);
+            break;
+    }
+    return retval;
+}
+function  makeTitleFileName(plot, band) {
+    //TODO
+
+  /*  var retval = plot.getMiniPlotWidge().getTitle();
+    if (band!=Band.NO_BAND) {
+        retval= retval + "-"+band.toString();
+    }
+    retval= StringUtils.crunch(retval);
+    retval= retval.replace(" ", "-");
+    retval= retval.replace(":", "-");
+    return retval +  ".fits";*/
+}
