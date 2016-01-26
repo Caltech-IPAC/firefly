@@ -422,9 +422,8 @@ class Drawer {
     addTask() {
         var {plot}= this;
         if (plot) {
-            var plotTaskId= AppDataCntlr.makeTaskId();
-            setTimeout( () => AppDataCntlr.dispatchAddTaskCount(plot.plotId,plotTaskId) ,0);
-            this.plotTaskId= plotTaskId;
+            this.plotTaskId= AppDataCntlr.makeTaskId();
+            setTimeout( () => AppDataCntlr.dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
         }
     }
 

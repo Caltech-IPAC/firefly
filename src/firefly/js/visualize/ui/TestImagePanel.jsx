@@ -12,7 +12,7 @@ import FieldGroup from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
-import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
+import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot,dispatchZoom} from '../ImagePlotCntlr.js';
 import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
@@ -70,6 +70,7 @@ function showResults(success, request) {
     wpr1.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialColorTable(4);
+    wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
     ImagePlotCntlr.dispatchPlotImage('TestImage1', wpr1);
     ImagePlotCntlr.dispatchPlotImage('TestImage2', wpr2);
     //====temp

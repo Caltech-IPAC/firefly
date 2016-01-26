@@ -19,7 +19,19 @@
     border-radius : 0 0 5px 0;
 }
 
-.iv-decorate-inline-title {
+
+.iv-decorate-header-title-container {
+    pointer-events: none;
+    padding : 1px 0 0 2px;
+    color : black;
+    /*background : white;*/
+    whiteSpace : nowrap;
+    font-size : 9pt;
+}
+
+
+
+.iv-decorate-title {
     display: inline-block;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -32,6 +44,16 @@
     padding-left: 6px;
     color: #49a344;
 }
+
+
+.iv-decorate-rotation {
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 6px;
+    color: #49a344;
+}
+
+
 
 .iv-decorate-inline-toolbar-container {
     position : absolute;

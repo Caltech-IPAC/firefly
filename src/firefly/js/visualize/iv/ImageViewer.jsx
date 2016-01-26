@@ -8,6 +8,7 @@ import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
 import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
+import {currMouseState,MouseState} from '../VisMouseCntlr.js';
 import {getExtensionList} from '../../core/ExternalAccessUtils.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
@@ -25,7 +26,8 @@ export class ImageViewer extends Component {
         var plotView= getPlotViewById(allPlots,plotId);
         var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,plotId);
         var extRoot= extensionRoot();
-        this.state= {plotView, dlAry, allPlots, drawLayersAry,extRoot};
+        var mousePlotId= currMouseState().plotId;
+        this.state= {plotView, dlAry, allPlots, drawLayersAry,extRoot, mousePlotId};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -44,24 +46,47 @@ export class ImageViewer extends Component {
         var allPlots= visRoot();
         var dlAry= getDlAry();
         var extRoot= extensionRoot();
+        var mState= currMouseState();
+        var mousePlotId= mState.plotId;
+        if (this.timeId) clearTimeout(this.timeId);
+        this.timeId= null;
+        if (mState.mouseState && mState.mouseState===MouseState.EXIT) {
+            if (mousePlotId===this.props.plotId) {
+                this.timeId= setTimeout( () => this.delayMouseIdClear(), 10000); // 10 seconds
+            }
+        }
+
         var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,this.props.plotId);
         if (allPlots!==state.allPlots  ||
             extRoot!==state.extRoot ||
+            mousePlotId!==state.mousePlotId ||
             (dlAry!==state.dlAry &&
             drawLayersDiffer(drawLayersAry,state.drawLayersAry))) {
             var {plotId}= this.props;
             var plotView= getPlotViewById(allPlots,plotId);
-            this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot});
+            this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});
         }
     }
 
+    delayMouseIdClear() {
+        this.timeId= null;
+        var newState= Object.assign({},this.state,{mousePlotId:null});
+        if (currMouseState().plotId===this.props.plotId) {
+            this.setState(newState);
+        }
+
+    }
+
+
+
     render() {
-        var {plotView,allPlots,drawLayersAry}= this.state;
+        var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
         if (!plotView) return false;
         return (
             <ImageViewerDecorate plotView={plotView}
                                  drawLayersAry={drawLayersAry}
                                  visRoot={allPlots}
+                                 mousePlotId={mousePlotId}
                                  extensionList={getExtensionList(plotView.plotId)} />
         );
     }
