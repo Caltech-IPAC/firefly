@@ -199,10 +199,8 @@ function renderThreeBand(hasThreeColorBand, colors) {
         }
 
         return (
-            <div  style={{ minWidth:300, minHeight: 100} }>
-
-                <div title ='Please select an option' style={leftColumn}>Color Band:   </div>
-
+             <div  style={{ minWidth:300, minHeight: 100} }>
+                <div title ='Please select an option' style={leftColumn}> Color Band:   </div>
                 <div style={rightColumn}>
                     <RadioGroupInputField
                         initialState={{
@@ -231,27 +229,19 @@ function FitsDownloadDialogForm() {
 
     var renderOperationButtons = renderOperationOption(hasOperation);
 
-    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']
+    var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']);
 
 
-    var leftColumn = {width: 200, display: 'inline-block'};
+    var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:30};
 
-    var rightColumn = {display: 'inline-block'};
+    var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
+	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
     return (
 
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>
-            <div style={{ padding:5 }}>
-                <div style={{ minWidth : 300, minHeight: 100 } }>
-                    <InputGroup labelWidth={130}>
-                        <PopupPanel  />
-
-                        <div style={leftColumn}>
-                            <div style={{float:'right', paddingRight:19, paddingBottom:20}}
-                                title='Please select an option'>
-                                Type of files:
-                            </div>
-                        </div>
+                <div style={ dialogStyle}>
+                        <div style={leftColumn}  title='Please select an option'> Type of files:  </div>
                         <div style={rightColumn}>
                             <RadioGroupInputField
                                 initialState={{
@@ -268,7 +258,7 @@ function FitsDownloadDialogForm() {
                             />
                         </div>
 
-                    </InputGroup>
+
 
                 </div>
                 <div>
@@ -284,7 +274,7 @@ function FitsDownloadDialogForm() {
                         dialogId='fitsDownloadDialog'
                     />
                 </div>
-            </div>
+
         </FieldGroup>
     );
 
@@ -450,6 +440,7 @@ function  makeTitleFileName(plot, band) {
  */
 function getHyphenatedName(str){
 
+	//filter(Boolean) will only keep the truthy values in the array.
     var sArray=str.split(/[ :]+/).filter(Boolean);
 
     var fName=sArray[0];

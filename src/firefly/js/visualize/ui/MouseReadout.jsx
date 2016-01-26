@@ -13,7 +13,7 @@ import MouseState from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-import { showCoordinateOptionDialog} from './MouseReadoutOptionDialog.jsx';
+import {showMouseReadoutOptionDialog} from './MouseReadoutOptionDialog.jsx';
 
 
 var rS= {
@@ -25,47 +25,41 @@ var rS= {
 	verticalAlign: 'top'
 };
 
-var columnS = {
-	position: 'absolute',
-     left : 0,
-	 width: '30%',
-	height: 32,
-	display: 'inline-block',
-
-};
-var bS = {
-	border: 'none',
-background:'none',
-outline: 'none'
-
-};
 const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
 export function MouseReadout({plotView:pv,size,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
-	var pixelValue='Pixel Size:';
+	var pixelSize='Pixel Size:';
 	var coordinateSys='EQ-2000:';
+	var leftColumn = {width: 200, display: 'inline-block'};
+
+	var rightColumn = {display: 'inline-block'};
 	return (
-			<div style={rS}>
+			<div style={ rS}>
+               <div>
 
-				<label  fieldKey='coordinateSys' onclick={ (fieldKey) => showDialog(fieldKey )}>  { coordinateSys}</label>
+				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>  { pixelSize}</div>
+				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { coordinateSys}</div>
 
-
-			<br/>
-
-				<InputFieldLabel  label= 'Flux:'/>
-	     	    <InputFieldLabel label='Image Pixel:'/>
+              </div>
+	         <div>
+				 <div style={leftColumn}> Flux:</div>
+				 <div style={rightColumn}>Image Pixel:</div>
+		    </div>
 
 		  </div>
 
 	);
 }
 
+function getReadOut(fieldKey){
+	console.log('TODO');
+}
 function showDialog(fieldKey) {
 
-		console.log('showing option dialog');
-	    showCoordinateOptionDialog(fieldKey);
+		console.log('showing ' + fieldKey+ ' option dialog');
+	   showMouseReadoutOptionDialog(fieldKey);
 
 
 }

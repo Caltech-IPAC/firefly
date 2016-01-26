@@ -62,10 +62,9 @@ function renderOptionDialog(fieldKey) {
 
 	};
 }
-//const dialogBuilder = getDialogBuilder();
 
 export function showMouseReadoutOptionDialog(fieldKey) {
-	//dialogBuilder(fieldKey);
+
 	getDialogBuilder(fieldKey);
 	AppDataCntlr.showDialog(fieldKey);
 }
@@ -102,7 +101,7 @@ class MouseReadoutOptionDialog extends React.Component {
 		if (!fields) return false;
 		switch (this.props.groupKey){
 			case 'COORDINATE_OPTION_FORM':
-				return <CoordinateOptionDialogForm />;
+				return <CoordinateOptionDialogForm  groupKey={this.props.groupKey}/>;
 			case 'FluxOPtionForm':
 				//TODO
 				break;
@@ -114,28 +113,20 @@ class MouseReadoutOptionDialog extends React.Component {
 }
 
 
-function CoordinateOptionDialogForm() {
-	var leftColumn = {width: '50%', float: 'left', 'text-align': 'center', 'vertical-align': 'middle',
-		display: 'inline-block', 'line-height': 40};
+function CoordinateOptionDialogForm(groupKey) {
 
-	var rightColumn = {width: '50%', display: 'inline-block'};
 
+	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:30};
+
+	var rightColumn = {display: 'inline-block',  paddingLeft:18};
+
+	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
 	return (
-		<FieldGroup groupKey='COORDINATE_OPTION_FORM' keepState={true}>
-			<div style={{ padding:5 }}>
-				<div style={{ minWidth : 300, minHeight: 100 } }>
-					<InputGroup labelWidth={130}>
-						<PopupPanel  />
-
-						<div style={leftColumn}>
-
-							<InputFieldLabel label= 'Options:'
-											 tooltip='Please select an option'
-
-							/>
-						</div>
-						<div style={rightColumn}>
-							<RadioGroupInputField
+		<FieldGroup groupKey={groupKey} keepState={true}>
+			<div style={ dialogStyle}>
+					<div style={leftColumn} title='Please select an option'> Options</div>
+					<div style={rightColumn}>
+							  <RadioGroupInputField
 								initialState={{
                                     tooltip: 'Please select an option'
                                     //move the label as a InputFieldLabel
@@ -149,17 +140,11 @@ function CoordinateOptionDialogForm() {
                                     ]}
 								alignment={'vertical'}
 								fieldKey='option'
-							/>
-						</div>
-
-					</InputGroup>
-
-				</div>
-
-				<br/>
-
+							 />
+					</div>
 
 			</div>
+
 		</FieldGroup>
 	);
 
