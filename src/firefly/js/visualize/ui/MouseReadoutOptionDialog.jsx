@@ -21,20 +21,37 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 function getDialogBuilder(fieldKey) {
 
 
-	var popup = null;
-	if (!popup) {
-		switch (fieldKey) {
-			case 'coordinateSys':
-				popup=renderOptionDialog(fieldKey);
-				break;
-			case 'flux':
-				//TODO
-				break;
-
-		}
+	//var popup = renderOptionDialog(fieldKey);
+	//return popup;
+	var groupKey;
+	var title;
+	switch (fieldKey) {
+		case 'coordinateSys':
+			groupKey = 'COORDINATE_OPTION_FORM';
+			title='Coordinate Option  Dialog';
+			break;
+		case 'flux':
+			groupKey = 'FLUX_OPTION_FORM:';
+			break;
 	}
-	return popup;
+	return () => {
 
+		var popup = (
+			<PopupPanel title={title}>
+				<MouseReadoutOptionDialog groupKey={groupKey}/>
+			</PopupPanel>
+		);
+		DialogRootContainer.defineDialog(fieldKey, popup);
+
+		return popup;
+
+	};
+}
+
+export function showMouseReadoutOptionDialog(fieldKey) {
+
+	getDialogBuilder(fieldKey);
+	AppDataCntlr.showDialog(fieldKey);
 }
 
 function renderOptionDialog(fieldKey) {
@@ -51,7 +68,7 @@ function renderOptionDialog(fieldKey) {
 	}
 	return () => {
 
-		const popup = (
+		var popup = (
 			<PopupPanel title={title}>
 				<MouseReadoutOptionDialog groupKey={groupKey}/>
 			</PopupPanel>
@@ -61,12 +78,6 @@ function renderOptionDialog(fieldKey) {
 		return popup;
 
 	};
-}
-
-export function showMouseReadoutOptionDialog(fieldKey) {
-
-	getDialogBuilder(fieldKey);
-	AppDataCntlr.showDialog(fieldKey);
 }
 
 
@@ -99,13 +110,7 @@ class MouseReadoutOptionDialog extends React.Component {
 
 		var {fields}= this.state;
 		if (!fields) return false;
-		switch (this.props.groupKey){
-			case 'COORDINATE_OPTION_FORM':
-				return <CoordinateOptionDialogForm  groupKey={this.props.groupKey}/>;
-			case 'FluxOPtionForm':
-				//TODO
-				break;
-		}
+		return <CoordinateOptionDialogForm  groupKey={this.props.groupKey}/>;
 
 	}
 

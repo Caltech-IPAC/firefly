@@ -13,7 +13,6 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {download} from '../util/WebUtil.js';
-import InputGroup from './InputGroup.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
@@ -23,7 +22,6 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import PlotViewUtil from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
-import InputFieldLabel from './InputFieldLabel.jsx';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import RequestType from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
@@ -287,7 +285,7 @@ function resultsFail(request) {
 /**
  * This function process the request
  * @param request
- * @param plotState
+ * @param plot
  */
 function resultsSuccess(request, plot) {
     // var rel = showResults(true, request);
