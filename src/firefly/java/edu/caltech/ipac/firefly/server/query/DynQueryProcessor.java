@@ -51,7 +51,7 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
                         SortInfo si = SortInfo.parse(p.getValue());
                         if (si != null) {
                             // apply default sort if one is given
-                            doSort(dataFile, dataFile, si, request.getPageSize());
+                            doSort(dataFile, dataFile, si, request);
                         }
                         break;
                     }

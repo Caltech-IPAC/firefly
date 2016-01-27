@@ -22,8 +22,9 @@ export class TableRequest {
      * @param tbl_id
      * @param startIdx
      * @param pageSize
-     * @param filters
-     * @param sortInfo
+     * @param filters  List of conditions separted by comma(,). Format:  (col_name|index) operator value.
+     *                 operator is one of '> < = ! >= <= IN'.  See DataGroupQueryStatement.java doc for more details.
+     * @param sortInfo Sort information.  Format:  SortInfo=(ASC|DESC),col_name[,col_name]*
      * @param inclCols
      * @param decimate
      * @param META_INFO

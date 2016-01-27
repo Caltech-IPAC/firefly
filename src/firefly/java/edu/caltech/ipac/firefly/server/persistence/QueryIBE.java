@@ -80,7 +80,7 @@ public class QueryIBE extends IpacTablePartProcessor {
         if (sortInfo != null) {
             TableDef meta = IpacTableUtil.getMetaInfo(ofile);
             if (meta.getRowCount() < 100000) {
-                doSort(ofile, ofile, sortInfo, request.getPageSize());
+                doSort(ofile, ofile, sortInfo, request);
             }
         }
         return ofile;

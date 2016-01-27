@@ -77,7 +77,9 @@ const App = React.createClass({
             var treq = TableRequest.newInstance({
                 id:'IpacTableFromSource',
                 source: request.srcTable,
-                tbl_id:  newActiveTblId()
+                tbl_id:  newActiveTblId(),
+                pageSize: 50,
+                filters: request.filters
             });
 
             TableStatsCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
@@ -115,9 +117,7 @@ const App = React.createClass({
                         <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
                             <FormPanel
                                 width='640px' height='300px'
-                                action={TablesCntlr.FETCH_TABLE}
                                 groupKey='TBL_BY_URL_PANEL'
-                                params={ {id: 'IpacTableFromSource'} }
                                 onSubmit={this.onSearchSubmit}
                                 onCancel={hideSearchPanel}>
                                 <p>
@@ -128,17 +128,27 @@ const App = React.createClass({
                                                      fieldKey='srcTable'
                                                      groupKey='TBL_BY_URL_PANEL'
                                                      initialState= {{ 
-                                                            value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                                                            value: 'http://localhost:8080/fftools/300k.tbl',
                                                             validator: Validate.validateUrl.bind(null, 'Source Table'),
                                                             tooltip: 'The URL to the source table',
                                                             label : 'Source Table:',
                                                             labelWidth : 120 
                                                          }}
-                                    />
+                                                     />
+                                    <ValidationField style={{width:500}}
+                                                     fieldKey='filters'
+                                                     groupKey='TBL_BY_URL_PANEL'
+                                                     initialState= {{ 
+                                                            value: 'imag != null',
+                                                            label : 'Filters:',
+                                                            labelWidth : 120 
+                                                         }}
+                                                     />
+
                                 </FieldGroup>
                             </FormPanel>
                         </SearchPanel>
-                        </header>
+                    </header>
                     <main>
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}

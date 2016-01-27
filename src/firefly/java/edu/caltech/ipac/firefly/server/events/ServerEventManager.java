@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.server.events;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.util.List;
@@ -31,6 +32,16 @@ public class ServerEventManager {
     private static long deliveredEventCnt;
 
 
+
+    public static void fireAction(FluxAction action) {
+        fireAction(action, ServerEvent.Scope.SELF);
+    }
+
+    public static void fireAction(FluxAction action, ServerEvent.Scope scope) {
+        ServerEvent sev = new ServerEvent(Name.ACTION, scope,
+                ServerEvent.DataType.JSON, action.toString());
+        ServerEventManager.fireEvent(sev);
+    }
 
     public static void fireEvent(ServerEvent sev) {
         if (sev == null || sev.getTarget() == null) {

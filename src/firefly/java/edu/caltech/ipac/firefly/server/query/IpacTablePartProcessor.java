@@ -193,6 +193,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                     throw e;
                 }
             }
+
             onComplete(request, page);
 
             return page;
@@ -347,7 +348,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
             File sortedFile = validateFile((File) cache.get(key));
             if (sortedFile == null) {
                 sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
-                doSort(resultsFile, sortedFile, sortInfo, request.getPageSize());
+                doSort(resultsFile, sortedFile, sortInfo, request);
                 cache.put(key, sortedFile);
             }
             resultsFile = sortedFile;
@@ -371,7 +372,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
                 deciFile = File.createTempFile(getFilePrefix(request), ".tbl", ServerContext.getTempWorkDir());
                 DataGroup retval = QueryUtil.doDecimation(dg, decimateInfo);
-                DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE);
+                DataGroupWriter.write(deciFile, retval, Integer.MAX_VALUE, request.getMeta());
                 cache.put(key, deciFile);
             }
             resultsFile = deciFile;
@@ -421,10 +422,11 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return null;
     }
 
-    protected void doSort(File inFile, File outFile, SortInfo sortInfo, int pageSize) throws IOException {
+    protected void doSort(File inFile, File outFile, SortInfo sortInfo, TableServerRequest request) throws IOException {
         // do sorting...
         StopWatch timer = StopWatch.getInstance();
         timer.start("read");
+        int pageSize = request.getPageSize();
         DataGroup dg = DataGroupReader.read(inFile, true, false, true);
         // if this file does not contain ROWID, add it.
         if (!dg.containsKey(DataGroup.ROWID_NAME)) {
@@ -436,7 +438,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         QueryUtil.doSort(dg, sortInfo);
         timer.printLog("sort");
         timer.start("write");
-        DataGroupWriter.write(outFile, dg, pageSize);
+        DataGroupWriter.write(outFile, dg, pageSize, request.getMeta());
         timer.printLog("write");
     }
 
@@ -544,7 +546,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     protected void doFilter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, TableServerRequest request) throws IOException {
         StopWatch timer = StopWatch.getInstance();
         timer.start("filter");
-        DataGroupFilter.filter(outFile, source, filters, request.getPageSize());
+        DataGroupFilter.filter(outFile, source, filters, request.getPageSize(), request.getMeta());
         timer.printLog("filter");
     }
 

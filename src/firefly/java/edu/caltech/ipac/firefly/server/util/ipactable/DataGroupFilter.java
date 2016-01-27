@@ -20,8 +20,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -54,12 +55,15 @@ public class DataGroupFilter {
     private int prefetchSize = minPrefetchSize;
     private int cRowNum;
     private boolean hasRowIdFilter = false;
+    private int rowsFound;
+    private Map<String, String> meta;
 
-    DataGroupFilter(File outf, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) {
+    DataGroupFilter(File outf, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize, Map<String, String> meta) {
         this.outf = outf;
         this.source = source;
         this.filters = CollectionUtil.asList(filters);
         this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
+        this.meta = meta;
         if (filters != null) {
             for (CollectionUtil.Filter<DataObject> f : filters) {
                 if (f.isRowIndexBased()) {
@@ -72,7 +76,11 @@ public class DataGroupFilter {
     }
 
     public static void filter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize) throws IOException {
-        DataGroupFilter dgw = new DataGroupFilter(outFile, source, filters, prefetchSize);
+        filter(outFile, source, filters, prefetchSize, null);
+    }
+
+    public static void filter(File outFile, File source, CollectionUtil.Filter<DataObject>[] filters, int prefetchSize, Map<String, String> meta) throws IOException {
+        DataGroupFilter dgw = new DataGroupFilter(outFile, source, filters, prefetchSize, meta);
         try {
             dgw.start();
         } finally {
@@ -98,10 +106,22 @@ public class DataGroupFilter {
             attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
 
+        // combine meta with file attributes
+        if (meta == null) {
+            meta = new HashMap<>(attributes.size());
+        } else {
+            for (String k : meta.keySet()) {
+                attributes.add(new DataGroup.Attribute(k, meta.get(k)));
+            }
+        }
+        for (DataGroup.Attribute at : attributes) {
+            meta.put(at.getKey(), at.getValue());
+        }
+
         DataGroup dg = new DataGroup(null, headers);
 
         boolean needToWriteHeader = true;
-        int found = 0;
+        rowsFound = 0;
         cRowNum = -1;
         String line = reader.readLine();
         while (line != null) {
@@ -123,7 +143,7 @@ public class DataGroupFilter {
                             IpacTableUtil.writeHeader(writer, headers);
                         }
                         IpacTableUtil.writeRow(writer, headers, row);
-                        if (++found == prefetchSize) {
+                        if (++rowsFound == prefetchSize) {
                             processInBackground(dg);
                             doclose = false;
                             break;
@@ -147,6 +167,7 @@ public class DataGroupFilter {
                 DataGroupWriter.insertStatus(outf, DataGroupPart.State.COMPLETED);
                 writer.flush();
                 writer.close();
+                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowsFound, DataGroupPart.State.COMPLETED);
             }
         }
     }
@@ -168,6 +189,9 @@ public class DataGroupFilter {
                             if (CollectionUtil.matches(rowIdx, row, filters)) {
                                 row.setRowIdx(rowIdx);
                                 IpacTableUtil.writeRow(writer, headers, row);
+                                if (++rowsFound % minPrefetchSize == 0) {
+                                    IpacTableUtil.sendLoadStatusEvents(meta, outf, rowsFound, DataGroupPart.State.INPROGRESS);
+                                }
                             }
                             line = reader.readLine();
                         }

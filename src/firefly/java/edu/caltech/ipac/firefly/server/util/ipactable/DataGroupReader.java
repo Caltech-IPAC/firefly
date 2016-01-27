@@ -23,7 +23,7 @@ import java.util.*;
  * @version $Id: DataGroupReader.java,v 1.13 2012/11/05 18:59:59 loi Exp $
  */
 public class DataGroupReader {
-    public static final int MIN_PREFETCH_SIZE = AppProperties.getIntProperty("IpacTable.min.prefetch.size", 500);
+    public static final int MIN_PREFETCH_SIZE = AppProperties.getIntProperty("IpacTable.min.prefetch.size", 5000);
     public static final String LINE_SEP = System.getProperty("line.separator");
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 

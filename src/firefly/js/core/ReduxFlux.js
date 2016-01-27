@@ -110,7 +110,7 @@ function logFilter(getState,action) {
             return filterOutOfLogging[action.type];
         }
         else {
-            return false;
+            return true;
         }
     }
     else {

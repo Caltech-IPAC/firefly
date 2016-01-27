@@ -17,9 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -48,15 +46,23 @@ public class DataGroupWriter {
     private DataGroup source;
     private boolean doclose = true;
     private int prefetchSize = minPrefetchSize;
+    private int rowCount;
+    private Map<String, String> meta;
 
-    DataGroupWriter(File outf, DataGroup source, int prefetchSize) {
+
+    DataGroupWriter(File outf, DataGroup source, int prefetchSize, Map<String, String> meta) {
         this.outf = outf;
         this.source = source;
         this.prefetchSize = Math.max(minPrefetchSize, prefetchSize);
+        this.meta = meta;
     }
 
     public static void write(File outFile, DataGroup source, int prefetchSize) throws IOException {
-        DataGroupWriter dgw = new DataGroupWriter(outFile, source, prefetchSize);
+        write(outFile, source, prefetchSize, null);
+    }
+
+    public static void write(File outFile, DataGroup source, int prefetchSize, Map<String, String> meta) throws IOException {
+        DataGroupWriter dgw = new DataGroupWriter(outFile, source, prefetchSize, meta);
         try {
             dgw.start();
         } finally {
@@ -74,17 +80,30 @@ public class DataGroupWriter {
 
         writer = new PrintWriter(new BufferedWriter(new FileWriter(this.outf), IpacTableUtil.FILE_IO_BUFFER_SIZE));
 
+        // combine meta with file attributes
+        ArrayList<DataGroup.Attribute> attributes = new ArrayList<>(source.getKeywords());
+        if (meta == null) {
+            meta = new HashMap<>(attributes.size());
+        } else {
+            for (String k : meta.keySet()) {
+                attributes.add(new DataGroup.Attribute(k, meta.get(k)));
+            }
+        }
+        for (DataGroup.Attribute at : attributes) {
+            meta.put(at.getKey(), at.getValue());
+        }
+
+
         writeStatus(writer, DataGroupPart.State.INPROGRESS);
-        IpacTableUtil.writeAttributes(writer, source.getKeywords(), DataGroupPart.LOADING_STATUS);
+        IpacTableUtil.writeAttributes(writer, attributes, DataGroupPart.LOADING_STATUS);
         List<DataType> headers = Arrays.asList(source.getDataDefinitions());
         IpacTableUtil.writeHeader(writer, headers);
-        int count = 0;
-        for(Iterator<DataObject> itr = source.iterator(); itr.hasNext(); count++) {
+        rowCount = 0;
+        for(Iterator<DataObject> itr = source.iterator(); itr.hasNext(); rowCount++) {
             DataObject row = itr.next();
             IpacTableUtil.writeRow(writer, headers, row);
-            if (count == prefetchSize) {
+            if (rowCount == prefetchSize) {
                 processInBackground(headers, itr);
-//                insertCompleteStatus(DataGroupPart.State.INPROGRESS);
                 doclose = false;
                 break;
             }
@@ -99,6 +118,7 @@ public class DataGroupWriter {
                 insertStatus(outf, DataGroupPart.State.COMPLETED);
                 writer.flush();
                 writer.close();
+                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.COMPLETED);
             }
         }
     }
@@ -110,6 +130,9 @@ public class DataGroupWriter {
                         while(itr.hasNext()) {
                             DataObject row = itr.next();
                             IpacTableUtil.writeRow(writer, headers, row);
+                            if (++rowCount % minPrefetchSize == 0) {
+                                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.INPROGRESS);
+                            }
                         }
                     } finally {
                         doclose = true;
