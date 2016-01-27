@@ -21,31 +21,9 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 function getDialogBuilder(fieldKey) {
 
 
-	//var popup = renderOptionDialog(fieldKey);
-	//return popup;
-	var groupKey;
-	var title;
-	switch (fieldKey) {
-		case 'coordinateSys':
-			groupKey = 'COORDINATE_OPTION_FORM';
-			title='Coordinate Option  Dialog';
-			break;
-		case 'flux':
-			groupKey = 'FLUX_OPTION_FORM:';
-			break;
-	}
-	return () => {
+	var popup = renderOptionDialog(fieldKey);
+	return popup;
 
-		var popup = (
-			<PopupPanel title={title}>
-				<MouseReadoutOptionDialog groupKey={groupKey}/>
-			</PopupPanel>
-		);
-		DialogRootContainer.defineDialog(fieldKey, popup);
-
-		return popup;
-
-	};
 }
 
 export function showMouseReadoutOptionDialog(fieldKey) {
@@ -56,38 +34,41 @@ export function showMouseReadoutOptionDialog(fieldKey) {
 
 function renderOptionDialog(fieldKey) {
 	var groupKey;
-	var title;
+
+	var defaultSelectedField;
 	switch (fieldKey) {
-		case 'coordinateSys':
+		case 'coordinateSys' ||  'imagePixel':
 			groupKey = 'COORDINATE_OPTION_FORM';
-			title='Coordinate Option  Dialog';
 			break;
-		case 'flux':
-			groupKey = 'FLUX_OPTION_FORM:';
+		case  'pixelSize':
+			groupKey = 'PIXEL_OPTION_FORM';
 			break;
 	}
-	return () => {
+
 
 		var popup = (
-			<PopupPanel title={title}>
-				<MouseReadoutOptionDialog groupKey={groupKey}/>
+			<PopupPanel title={'Choose Option'}   onClick={ (request) => showSelectedField(request) } >
+				<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}/>
 			</PopupPanel>
 		);
 		DialogRootContainer.defineDialog(fieldKey, popup);
 
 		return popup;
 
-	};
+	
 }
 
+export function showSelectedField(request){
+	console.log(request);
+}
 
 class MouseReadoutOptionDialog extends React.Component {
 
 
-	constructor(groupKey) {
-		super(groupKey);
-		FieldGroupUtils.initFieldGroup(groupKey);
-		this.state = {fields: FieldGroupUtils.getGroupFields(groupKey)};
+	constructor(props) {
+		super(props);
+		FieldGroupUtils.initFieldGroup(props.groupKey);
+		this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
 
 	}
 
@@ -110,7 +91,16 @@ class MouseReadoutOptionDialog extends React.Component {
 
 		var {fields}= this.state;
 		if (!fields) return false;
-		return <CoordinateOptionDialogForm  groupKey={this.props.groupKey}/>;
+		var form;
+
+		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
+			form=  <PixelSizeOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
+		}
+		else {
+			form= <CoordinateOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
+		}
+		return form;
+		//return <CoordinateOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
 
 	}
 
@@ -118,14 +108,23 @@ class MouseReadoutOptionDialog extends React.Component {
 }
 
 
-function CoordinateOptionDialogForm(groupKey) {
+function CoordinateOptionDialogForm(groupKey, fieldKey) {
 
 
-	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:30};
+	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:75};
 
 	var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
+	var coordinateSysInitialValue='eqj2000Dhms';
+	var pixelImageInitialValue='fitsIP';
+	if (fieldKey==='coordinateSys'){
+		coordinateSysInitialValue=true;
+	}
+	else {
+		pixelImageInitialValue=true;
+	}
+
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>
 			<div style={ dialogStyle}>
@@ -137,8 +136,8 @@ function CoordinateOptionDialogForm(groupKey) {
                                     //move the label as a InputFieldLabel
                                    }}
 								options={ [
-                                      {label: 'EQ J2000 HMS', value: 'eq2000HMS'},
-                                      {label: 'EQ J2000 decimal', value: 'eq2000DCM' },
+                                      {label: 'EQ J2000 HMS', value: 'eqj2000Dhms'},
+                                      {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
                                       {label: 'Galactic', value: 'galactic'},
                                       {label: 'EQ B1950', value: 'eqb1950'},
                                       {label: 'Fits Image Pixel', value: 'fitsIP'}
@@ -156,3 +155,46 @@ function CoordinateOptionDialogForm(groupKey) {
 }
 
 
+function PixelSizeOptionDialogForm(groupKey, fieldKey) {
+
+
+	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:15};
+
+	var rightColumn = {display: 'inline-block',  paddingLeft:18};
+
+	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
+	var coordinateSysInitialValue='eqj2000Dhms';
+	var pixelImageInitialValue='fitsIP';
+	if (fieldKey==='coordinateSys'){
+		coordinateSysInitialValue=true;
+	}
+	else {
+		pixelImageInitialValue=true;
+	}
+
+	return (
+		<FieldGroup groupKey={groupKey} keepState={true}>
+			<div style={ dialogStyle}>
+				<div style={leftColumn} title='Please select an option'> Options</div>
+				<div style={rightColumn}>
+					<RadioGroupInputField
+						initialState={{
+                                    tooltip: 'Please select an option'
+                                    //move the label as a InputFieldLabel
+                                   }}
+						options={ [
+                                      {label: 'Pixel Size', value: 'pixelSize'},
+                                      {label: 'Screen Pixel Size', value: 'sPixelSize' },
+
+                                    ]}
+						alignment={'vertical'}
+						fieldKey='option'
+					/>
+				</div>
+
+			</div>
+
+		</FieldGroup>
+	);
+
+}

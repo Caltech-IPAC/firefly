@@ -31,7 +31,8 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
 	var pixelSize='Pixel Size:';
-	var coordinateSys='EQ-2000:';
+	var coordinateSys='EQ-J2000:';
+	var imagePixel='Image Pixel:';
 	var leftColumn = {width: 200, display: 'inline-block'};
 
 	var rightColumn = {display: 'inline-block'};
@@ -44,8 +45,8 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 
               </div>
 	         <div>
-				 <div style={leftColumn}> Flux:</div>
-				 <div style={rightColumn}>Image Pixel:</div>
+
+				 <div style={{display: 'inline-block', paddingLeft:200}}  onClick={ () => showDialog('imagePixel' )}>{imagePixel}</div>
 		    </div>
 
 		  </div>
@@ -60,7 +61,6 @@ function showDialog(fieldKey) {
 
 		console.log('showing ' + fieldKey+ ' option dialog');
 	   showMouseReadoutOptionDialog(fieldKey);
-
 
 }
 
