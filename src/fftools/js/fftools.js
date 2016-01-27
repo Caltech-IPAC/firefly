@@ -97,6 +97,8 @@ const App = React.createClass({
     render() {
         var {appData, title, table, tblStatsData, histogramData, xyPlotData} = this.props;
 
+        const tblId = table ? table.tbl_id : undefined;
+        const highlightedRow = table ? table.highlightedRow : undefined;
 
         const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!appData.isReady) {
@@ -128,7 +130,7 @@ const App = React.createClass({
                                                      fieldKey='srcTable'
                                                      groupKey='TBL_BY_URL_PANEL'
                                                      initialState= {{ 
-                                                            value: 'http://localhost:8080/fftools/300k.tbl',
+                                                            value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
                                                             validator: Validate.validateUrl.bind(null, 'Source Table'),
                                                             tooltip: 'The URL to the source table',
                                                             label : 'Source Table:',
@@ -139,7 +141,7 @@ const App = React.createClass({
                                                      fieldKey='filters'
                                                      groupKey='TBL_BY_URL_PANEL'
                                                      initialState= {{ 
-                                                            value: 'imag != null',
+                                                            value: 'band != 1',
                                                             label : 'Filters:',
                                                             labelWidth : 120 
                                                          }}
@@ -153,7 +155,7 @@ const App = React.createClass({
                         <ResultsPanel title={title}
                             imagePlot = {<TestImagePanel />}
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<XYPlotTableViewPanel tblStatsData={tblStatsData} tblPlotData={xyPlotData}/> }
+                            xyPlot = {<XYPlotTableViewPanel tblStatsData={tblStatsData} tblPlotData={xyPlotData} tblId={tblId} highlightedRow={highlightedRow}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />

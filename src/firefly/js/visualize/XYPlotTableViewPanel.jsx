@@ -3,6 +3,7 @@ import React from 'react';
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
 
+import TablesCntlr from '../tables/TablesCntlr.js';
 import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import XYPlot from '../visualize/XYPlot.jsx';
@@ -20,6 +21,8 @@ var XYPlotTablePanel = React.createClass({
     propTypes: {
         tblStatsData: React.PropTypes.object.isRequired,
         tblPlotData : React.PropTypes.object.isRequired,
+        tblId: React.PropTypes.string,
+        highlightedRow: React.PropTypes.number,
         width : React.PropTypes.string,
         height : React.PropTypes.string
     },
@@ -35,6 +38,7 @@ var XYPlotTablePanel = React.createClass({
     shouldComponentUpdate(nextProps, nextState) {
         return nextProps.tblStatsData !== this.props.tblStatsData ||
         nextProps.tblPlotData !== this.props.tblPlotData ||
+            nextProps.highlightedRow != this.props.highlightedRow ||
             nextState !== this.state;
     },
 
@@ -76,31 +80,16 @@ var XYPlotTablePanel = React.createClass({
         var {heightPx} = this.state;
 
         if (isPlotDataReady) {
-            var logs = undefined;
-            var reversed = undefined;
-            if (xyPlotParams) {
-                var logvals = '';
-                var rvals = '';
-                if (xyPlotParams.x.options) {
-                    if (xyPlotParams.x.options.includes('log')) { logvals += 'x'; }
-                    if (xyPlotParams.x.includes('flip')) { rvals += 'x';}
-                }
-                if (xyPlotParams.y.options)  {
-                    if (xyPlotParams.y.options.includes('log')) { logvals += 'y';}
-                    if (xyPlotParams.y.includes('flip')) { rvals += 'y';}
-                }
-                if (logvals.length>0) { logs = logvals;}
-                if (rvals.length>0) { reversed = rvals;}
-
-            }
             return (
                 <XYPlot data={xyPlotData}
-                           desc={xyPlotParams.x.columnOrExpr+' vs. '+xyPlotParams.y.columnOrExpr}
-                           height={heightPx}
-                           params={xyPlotParams}
-                           logs={logs}
-                           reversed={reversed}
-                />
+                        desc={xyPlotParams.x.columnOrExpr+' vs. '+xyPlotParams.y.columnOrExpr}
+                        height={heightPx}
+                        params={xyPlotParams}
+                        highlightedRow={this.props.highlightedRow}
+                        onHighlightChange={(highlightedRow) => {
+                                    TablesCntlr.dispatchHighlightRow(this.props.tblId, highlightedRow);
+                                }
+                           }/>
             );
         } else {
             if (xyPlotParams) {
