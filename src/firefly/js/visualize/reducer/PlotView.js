@@ -53,6 +53,15 @@ export default {makePlotView, replacePlots,
 //======================================== Exported Functions =============================
 
 
+/**
+ * There is one PlotView object for each react ImageViewer.  A plot view is uniquely identified by the plotId. The
+ * plot id will not change for the life time of the plotView. A plot view can be connected to a plot group.  That is done
+ * by the plotGroupId. The will be several plotViews in a plot group.
+ *
+ * PlotView is mostly about the viewing of the plot.  The plot data is contained in a WebPlot. A plotView can have an
+ * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
+ * files. primaryPlot referers to the plot currnetly showing in the plot view.
+ */
 
 /**
  * @param {string} plotId
