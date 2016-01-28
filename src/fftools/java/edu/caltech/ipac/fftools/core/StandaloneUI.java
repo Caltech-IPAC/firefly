@@ -59,6 +59,8 @@ class StandaloneUI {
     public  static final String SEARCH_BUTTON = "Search";
     private static final String XYVIEW_TAB_NAME = "XY View";
 
+    private static boolean useMaskButton= false;
+
     private SplitLayoutPanelFirefly main= new SplitLayoutPanelFirefly();
     private LayoutPanel             imageArea = new LayoutPanel();
     private DeckLayoutPanel         catalogDeck= new DeckLayoutPanel();
@@ -552,7 +554,7 @@ class StandaloneUI {
     public class MyMpwFactory implements DataVisGrid.MpwFactory  {
         public MiniPlotWidget make(String groupName) {
             MiniPlotWidget mpw = new MiniPlotWidget(groupName, makePopoutContainerForApp());
-            mpw.setMaskButtonEnable(true);
+            mpw.setMaskButtonEnable(useMaskButton);
             if (displayMode== FFToolsDisplayMode.minimal) {
                 mpw.setImageSelection(true);
                 mpw.setCatalogButtonEnable(true);
@@ -587,6 +589,10 @@ class StandaloneUI {
         }
         public boolean isViewControlShowing() { return true; }
         public boolean isImageSelectionShowing() { return true; }
+    }
+
+    public static void setUseMaskButton(boolean use) {
+        useMaskButton= use;
     }
 
 //    private static native void doCloseBrowserWindow()    /*-{
