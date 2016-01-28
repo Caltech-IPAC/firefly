@@ -30,9 +30,8 @@ const EMPTY= <div style={rS}></div>;
 export function MouseReadout({plotView:pv,size,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
-	var pixelSize='Pixel Size:';
-	var coordinateSys='EQ-J2000:';
-	var imagePixel='Image Pixel:';
+
+
 	var leftColumn = {width: 200, display: 'inline-block'};
 
 	var rightColumn = {display: 'inline-block'};
@@ -40,13 +39,13 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 			<div style={ rS}>
                <div>
 
-				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>  { pixelSize}</div>
-				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { coordinateSys}</div>
+				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>  { updateField('pixelSize')}</div>
+				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { updateField('coordinateSys')}</div>
 
               </div>
 	         <div>
 
-				 <div style={{display: 'inline-block', paddingLeft:200}}  onClick={ () => showDialog('imagePixel' )}>{imagePixel}</div>
+				 <div style={{display: 'inline-block', paddingLeft:200}}  onClick={ () => showDialog('imagePixel' )}>{updateField('imagePixel' )}</div>
 		    </div>
 
 		  </div>
@@ -63,7 +62,17 @@ function showDialog(fieldKey) {
 	   showMouseReadoutOptionDialog(fieldKey);
 
 }
-
+function updateField(fieldKey){
+	if (fieldKey==='pixelSize'){
+		return 'Pixel Size:';
+	}
+	else  if (fieldKey==='coordinateSys'){
+		return 'EQ-J2000:';
+	}
+	else {
+		return 'Image Pixel:';;
+	}
+}
 MouseReadout.propTypes= {
 	plotView: React.PropTypes.object,
 	size: React.PropTypes.number.isRequired,

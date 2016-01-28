@@ -47,9 +47,11 @@ function renderOptionDialog(fieldKey) {
 
 
 		var popup = (
-			<PopupPanel title={'Choose Option'}   onClick={ (request) => showSelectedField(request) } >
+
+			<PopupPanel title={'Choose Option'}  >
 				<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}/>
 			</PopupPanel>
+
 		);
 		DialogRootContainer.defineDialog(fieldKey, popup);
 
@@ -58,8 +60,10 @@ function renderOptionDialog(fieldKey) {
 	
 }
 
-export function showSelectedField(request){
-	console.log(request);
+export function showSelectedField(groupKey, fieldKey){
+	console.log('closing ' + groupKey);
+	
+	AppDataCntlr.hideDialog(fieldKey);
 }
 
 class MouseReadoutOptionDialog extends React.Component {
@@ -100,7 +104,7 @@ class MouseReadoutOptionDialog extends React.Component {
 			form= <CoordinateOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
 		}
 		return form;
-		//return <CoordinateOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
+
 
 	}
 
@@ -126,8 +130,9 @@ function CoordinateOptionDialogForm(groupKey, fieldKey) {
 	}
 
 	return (
+
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle}>
+			<div style={ dialogStyle}  onClick={ (groupKey, fieldKey) => showSelectedField(groupKey, fieldKey) }>
 					<div style={leftColumn} title='Please select an option'> Options</div>
 					<div style={rightColumn}>
 							  <RadioGroupInputField
@@ -143,13 +148,14 @@ function CoordinateOptionDialogForm(groupKey, fieldKey) {
                                       {label: 'Fits Image Pixel', value: 'fitsIP'}
                                     ]}
 								alignment={'vertical'}
-								fieldKey='option'
+								fieldKey={fieldKey}
 							 />
 					</div>
 
 			</div>
 
 		</FieldGroup>
+
 	);
 
 }
@@ -174,7 +180,7 @@ function PixelSizeOptionDialogForm(groupKey, fieldKey) {
 
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle}>
+			<div style={ dialogStyle} onClick={ (groupKey, fieldKey) => showSelectedField(groupKey, fieldKey) }>
 				<div style={leftColumn} title='Please select an option'> Options</div>
 				<div style={rightColumn}>
 					<RadioGroupInputField
@@ -188,7 +194,7 @@ function PixelSizeOptionDialogForm(groupKey, fieldKey) {
 
                                     ]}
 						alignment={'vertical'}
-						fieldKey='option'
+						fieldKey={fieldKey}
 					/>
 				</div>
 
