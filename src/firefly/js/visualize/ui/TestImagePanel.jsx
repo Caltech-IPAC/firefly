@@ -11,6 +11,7 @@ import Validate from '../../util/Validate.js';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
+import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 
 import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot,dispatchZoom} from '../ImagePlotCntlr.js';
@@ -152,6 +153,11 @@ function showExDialog() {
     showExampleDialog();
 }
 
+function showFrDialog() {
+    console.log('showing fits rotation dialog');
+    showFitsRotationDialog();
+}
+
 
 function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
@@ -172,7 +178,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <div style={{height:50}}/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
 
-
+                    <button type='button' onClick={showFrDialog}>Fits Rotation Dialog</button>
                     
                 </FieldGroup>
             </div>
