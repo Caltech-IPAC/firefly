@@ -141,7 +141,7 @@ const App = React.createClass({
                                                      fieldKey='filters'
                                                      groupKey='TBL_BY_URL_PANEL'
                                                      initialState= {{ 
-                                                            value: 'band != 1',
+                                                            value: '',
                                                             label : 'Filters:',
                                                             labelWidth : 120 
                                                          }}
