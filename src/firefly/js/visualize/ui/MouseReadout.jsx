@@ -60,7 +60,7 @@ function showDialog(fieldKey) {
 
 		console.log('showing ' + fieldKey+ ' option dialog');
 	   showMouseReadoutOptionDialog(fieldKey);
-
+       var opv = showSelectedField
 }
 function updateField(fieldKey){
 	if (fieldKey==='pixelSize'){

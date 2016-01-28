@@ -34,8 +34,6 @@ export function showMouseReadoutOptionDialog(fieldKey) {
 
 function renderOptionDialog(fieldKey) {
 	var groupKey;
-
-	var defaultSelectedField;
 	switch (fieldKey) {
 		case 'coordinateSys' ||  'imagePixel':
 			groupKey = 'COORDINATE_OPTION_FORM';
@@ -46,24 +44,33 @@ function renderOptionDialog(fieldKey) {
 	}
 
 
-		var popup = (
+	var popup = (
 
 			<PopupPanel title={'Choose Option'}  >
 				<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}/>
 			</PopupPanel>
 
-		);
-		DialogRootContainer.defineDialog(fieldKey, popup);
+	);
+	DialogRootContainer.defineDialog(fieldKey, popup);
 
-		return popup;
+	return popup;
 
 	
 }
 
-export function showSelectedField(groupKey, fieldKey){
+function showSelectedField(request, groupKey, fieldKey){
 	console.log('closing ' + groupKey);
-	
+
+	if (request.hasOwnProperty('target')){
+		var target=request.target;
+		console.log(target);
+		var result=target.value;
+		console.log(result);
+
+	}
+
 	AppDataCntlr.hideDialog(fieldKey);
+	return result;
 }
 
 class MouseReadoutOptionDialog extends React.Component {
@@ -76,7 +83,9 @@ class MouseReadoutOptionDialog extends React.Component {
 
 	}
 
+	getInitialState(){
 
+	}
 	componentWillUnmount() {
 
 		if (this.unbinder) this.unbinder();
@@ -112,7 +121,7 @@ class MouseReadoutOptionDialog extends React.Component {
 }
 
 
-function CoordinateOptionDialogForm(groupKey, fieldKey) {
+function CoordinateOptionDialogForm({groupKey,fieldKey}) {
 
 
 	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:75};
@@ -120,21 +129,14 @@ function CoordinateOptionDialogForm(groupKey, fieldKey) {
 	var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
-	var coordinateSysInitialValue='eqj2000Dhms';
-	var pixelImageInitialValue='fitsIP';
-	if (fieldKey==='coordinateSys'){
-		coordinateSysInitialValue=true;
-	}
-	else {
-		pixelImageInitialValue=true;
-	}
+
 
 	return (
 
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle}  onClick={ (groupKey, fieldKey) => showSelectedField(groupKey, fieldKey) }>
+			<div style={ dialogStyle} onClick={ (request) => showSelectedField(request, groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
-					<div style={rightColumn}>
+					<div style={rightColumn} >
 							  <RadioGroupInputField
 								initialState={{
                                     tooltip: 'Please select an option'
@@ -159,9 +161,12 @@ function CoordinateOptionDialogForm(groupKey, fieldKey) {
 	);
 
 }
+CoordinateOptionDialogForm.propTypes= {
+	groupKey:React.PropTypes.string.isRequired,
+	filedKey:React.PropTypes.string
+};
 
-
-function PixelSizeOptionDialogForm(groupKey, fieldKey) {
+function PixelSizeOptionDialogForm( {groupKey,fieldKey} ) {
 
 
 	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:15};
@@ -169,18 +174,10 @@ function PixelSizeOptionDialogForm(groupKey, fieldKey) {
 	var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
-	var coordinateSysInitialValue='eqj2000Dhms';
-	var pixelImageInitialValue='fitsIP';
-	if (fieldKey==='coordinateSys'){
-		coordinateSysInitialValue=true;
-	}
-	else {
-		pixelImageInitialValue=true;
-	}
 
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (groupKey, fieldKey) => showSelectedField(groupKey, fieldKey) }>
+			<div style={ dialogStyle} onClick={ (request) => showSelectedField(request, groupKey, fieldKey) }>
 				<div style={leftColumn} title='Please select an option'> Options</div>
 				<div style={rightColumn}>
 					<RadioGroupInputField
@@ -190,7 +187,7 @@ function PixelSizeOptionDialogForm(groupKey, fieldKey) {
                                    }}
 						options={ [
                                       {label: 'Pixel Size', value: 'pixelSize'},
-                                      {label: 'Screen Pixel Size', value: 'sPixelSize' },
+                                      {label: 'Screen Pixel Size', value: 'sPixelSize' }
 
                                     ]}
 						alignment={'vertical'}
@@ -204,3 +201,7 @@ function PixelSizeOptionDialogForm(groupKey, fieldKey) {
 	);
 
 }
+PixelSizeOptionDialogForm.propTypes= {
+	groupKey:React.PropTypes.string.isRequired,
+	filedKey:React.PropTypes.string
+};
