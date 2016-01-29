@@ -21,18 +21,6 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 function getDialogBuilder(fieldKey) {
 
 
-	var popup = renderOptionDialog(fieldKey);
-	return popup;
-
-}
-
-export function showMouseReadoutOptionDialog(fieldKey) {
-
-	getDialogBuilder(fieldKey);
-	AppDataCntlr.showDialog(fieldKey);
-}
-
-function renderOptionDialog(fieldKey) {
 	var groupKey;
 	switch (fieldKey) {
 		case 'coordinateSys' ||  'imagePixel':
@@ -46,16 +34,22 @@ function renderOptionDialog(fieldKey) {
 
 	var popup = (
 
-			<PopupPanel title={'Choose Option'}  >
-				<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}/>
-			</PopupPanel>
+		<PopupPanel title={'Choose Option'}  >
+			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey}/>
+		</PopupPanel>
 
 	);
 	DialogRootContainer.defineDialog(fieldKey, popup);
 
 	return popup;
 
-	
+
+}
+
+export function showMouseReadoutOptionDialog(fieldKey) {
+
+	getDialogBuilder(fieldKey);
+	AppDataCntlr.showDialog(fieldKey);
 }
 
 function showSelectedField(request, groupKey, fieldKey){

@@ -14,7 +14,8 @@ import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHe
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionDialog.jsx';
-
+import CoordinateSys from '../CoordSys.js';
+import CysConverter from '../CsysConverter.js';
 
 var rS= {
 	border: '1px solid white',
@@ -31,6 +32,7 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
 
+	var plot= pv.primaryPlot;
 
 	var leftColumn = {width: 200, display: 'inline-block'};
 
@@ -40,12 +42,14 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
                <div>
 
 				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>  { updateField('pixelSize')}</div>
-				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { updateField('coordinateSys')}</div>
+
+				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { updateField('coordinateSys')}  {showReadout(plot, mouseState, CoordinateSys.ECL_J2000)}</div>
 
               </div>
 	         <div>
+				 <div	style={leftColumn} > {showReadout(plot, mouseState) } </div>
 
-				 <div style={{display: 'inline-block', paddingLeft:200}}  onClick={ () => showDialog('imagePixel' )}>{updateField('imagePixel' )}</div>
+				 <div style={ rightColumn}  onClick={ () => showDialog('imagePixel' )}>{updateField('imagePixel' )} {showReadout(plot, mouseState, CoordinateSys.PIXEL)}</div>
 		    </div>
 
 		  </div>
@@ -53,14 +57,27 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 	);
 }
 
-function getReadOut(fieldKey){
-	console.log('TODO');
+function showReadout(plot, mouseState, coordinate){
+	if (!plot) return false;
+	if (isBlankImage(plot)) return false;
+	var spt= mouseState.screenPt;
+	console.log(spt);
+	var cc= CysConverter.make(plot);
+	var wpt= cc.getWorldCoords(mouseState.imagePt);
+	console.log(wpt.getLon() + ' '+wpt.getLat());
+    if (coordinate){
+       return  wpt.getLon() + ' '+ wpt.getLat();
+	}
+	else {
+		//TODO readout for pixel size
+	}
+
 }
 function showDialog(fieldKey) {
 
 		console.log('showing ' + fieldKey+ ' option dialog');
 	   showMouseReadoutOptionDialog(fieldKey);
-       var opv = showSelectedField
+
 }
 function updateField(fieldKey){
 	if (fieldKey==='pixelSize'){
