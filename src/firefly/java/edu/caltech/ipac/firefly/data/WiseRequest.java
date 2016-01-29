@@ -117,7 +117,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_i1bm_frm", "yr2_i1bs_psd"});
+            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
             put(NEOWISER_YR3 +"|1b", new String[]{"yr3_i1bm_frm", "yr3_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
@@ -166,14 +166,13 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
             put(POSTCRYO,"wise_allsky_2band");
-            put(MERGE,"wise_neowiser_merge");
-            put(MERGE_INT,"wise_neowiser_merge_int");
+            put(MERGE,"wise_merge");
+            put(MERGE_INT,"wise_merge_int");
             put(NEOWISER,"wise_neowiser");
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
             put(PASS2_2BAND, "wise_pass2_2band");
-            put(NEOWISER_PROV,"wise_neowiser_prov");
             put(NEOWISER_YR1,"wise_neowiser_yr1");
             put(NEOWISER_YR2,"wise_neowiser_yr2");
             put(NEOWISER_YR3,"wise_neowiser_yr3");
@@ -194,8 +193,7 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND,"wise_pass2_4band_i1bs_psd_view");
             put(PASS2_3BAND,"wise_pass2_3band_i1bs_psd_view");
             put(PASS2_2BAND, "wise_pass2_2band_i1bs_psd_view");
-            put(NEOWISER_PROV,"neowiser_p1bs_psd");
-            put(NEOWISER_YR1,"neowiser_p1bs_psd");
+            put(NEOWISER_YR1,"neowiser_yr1_p1bs_psd");
             put(NEOWISER_YR2,"neowiser_yr2_p1bs_psd");
             put(NEOWISER_YR3,"neowiser_i1bs_psd");
         }
