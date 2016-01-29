@@ -11,25 +11,24 @@ import {makeDrawingDef} from './DrawingDef.js';
 
 
 
-function updateDrawer(drawer,plotView, width, height, drawLayer) {
-
+function updateDrawer(drawer,plot, width, height, drawLayer) {
     var data, highlightData, selectIdxAry;
     var {drawData}= drawLayer;
-    var plot= plotView ? plotView.primaryPlot : null;
+    var plotId= plot? plot.plotId : null;
     if (Array.isArray(drawData)) {
         data= drawData;
         highlightData= null;
         selectIdxAry= null;
     }
     else {
-        data= getDataForPlot(drawData.data,plotView.plotId);
+        data= getDataForPlot(drawData.data,plotId);
         highlightData= drawData.highlightData;
         selectIdxAry= drawData.selectIdxAry;
     }
     drawer.isPointData= drawLayer.isPointData;
     drawer.setData(data,plot,width,height,drawLayer.drawingDef);
     if (highlightData) {
-        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotView.plotId));
+        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId));
     }
 }
 
@@ -101,16 +100,16 @@ class CanvasWrapper extends React.Component {
     }
 
     componentDidUpdate() {
-        var {plotView,drawData,drawLayer,width,height}= this.props;
+        var {plot,drawData,drawLayer,width,height}= this.props;
         if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
-        if (this.drawer) updateDrawer(this.drawer,plotView,width,height,drawLayer);
+        if (this.drawer) updateDrawer(this.drawer,plot,width,height,drawLayer);
 
     }
 
 
     render() {
-        var {plotView, drawData,drawLayer,width,height}= this.props;
-        if (plotView && !isVisible(drawLayer,plotView.plotId)) return false;
+        var {plot, drawData,drawLayer,width,height}= this.props;
+        if (plot && !isVisible(drawLayer,plot.plotId)) return false;
         if (!drawLayer) drawLayer= makeDummyDrawLayer(drawData);
         var canvasLayers= makeCanvasLayers(drawLayer, this.drawer,width,height);
 
@@ -129,7 +128,7 @@ CanvasWrapper.propTypes= {
     textUpdateCallback : React.PropTypes.func.isRequired,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    plotView : React.PropTypes.object,
+    plot : React.PropTypes.object,
     drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
     drawData : React.PropTypes.array // only used it drawLayer is not defined
 };

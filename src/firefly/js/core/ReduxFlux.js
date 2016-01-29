@@ -20,7 +20,7 @@ import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr';
 import DrawLayer from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
-import DrawLayerCntlr, {detachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -68,12 +68,12 @@ actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.colorChangeAction
 actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.stretchChangeActionCreator);
 actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
-actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, detachLayerActionCreator);
+actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);
-actionCreators.set(HistogramCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
+actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 
 

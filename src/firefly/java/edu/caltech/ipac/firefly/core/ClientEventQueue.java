@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.core;
 
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.user.client.Cookies;
@@ -23,6 +25,8 @@ import java.util.logging.Level;
  * @author loi
  * @version $Id: $
  */
+@JsExport
+@JsType
 public class ClientEventQueue {
     private static Timer reactivateTimer= null;
     private static int retries = 0;

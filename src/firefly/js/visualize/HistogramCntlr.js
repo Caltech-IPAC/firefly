@@ -1,3 +1,6 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
 import {flux} from '../Firefly.js';
 
 import {has, get, set} from 'lodash';
@@ -20,8 +23,8 @@ import TablesCntlr from '../tables/TablesCntlr.js';
            columnOrExpr: column name or column expression
            algorithm: 'fixedSizeBins' or 'byesianBlocks'
            numBins: int - for 'fixedSizeBins' algorithm
-           x: [log,reverse] x (domain) axis options
-           y: [log,reverse] y (counts) axis options
+           x: [log,flip] x (domain) axis options
+           y: [log,flip] y (counts) axis options
            falsePositiveRate: double - for 'byesianBlocks' algorithm (default 0.05)
            minCutoff: double
            maxCutoff: double

@@ -174,6 +174,11 @@ function getDialogOwner(dialogKey) {
 
 export const getActiveTarget= function() { return flux.getState()[APP_DATA_PATH].activeTarget; };
 
+export function getTaskCount(componentId) {
+    var state= flux.getState()[APP_DATA_PATH];
+    return state.taskCounters[componentId] ? state.taskCounters[componentId] : 0;
+}
+
 function getPreference(name) {
     return flux.getState()[APP_DATA_PATH].preferences[name];
 }
@@ -255,10 +260,10 @@ function addDataReducer(state, action={}) {
             return updateActiveTarget(state,action);
 
         case REMOVE_TASK_COUNT  :
-            return addTaskCount(state,action);
+            return removeTaskCount(state,action);
 
         case ADD_TASK_COUNT  :
-            return removeTaskCount(state,action);
+            return addTaskCount(state,action);
 
         case ADD_PREF  :
             return addPreference(state,action);
@@ -274,7 +279,7 @@ function addDataReducer(state, action={}) {
 
 /**
  * @param componentId the id or array of ids of the component to record the task count
- * @param taskId id of task, create with makeTaskId()
+ * @param taskId id of task, you create with makeTaskId()
  */
 function dispatchAddTaskCount(componentId,taskId) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId}});

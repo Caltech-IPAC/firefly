@@ -79,11 +79,17 @@ const IMAGE_PLOT_KEY= 'allPlots';
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
+/**
+ * The state is best thought of at the following:
+ * The state contains an array of PlotView each have a plotId and tie to an Image Viewer, one might be active (PlotView.js)
+ * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
+ * An ImageViewer shows the primaryPlot of a plotView. (ImageView.js)
+ */
 const initState= function() {
 
     return {
-        plotViewAry : [],
-        plotGroupAry : [], // todo, list of list of plotView ids, that are in the same group
+        plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
+        plotGroupAry : [], // there is one for each group, a plot group may have mutiple plotViews
         plottingProgressInfo : [], //todo
         plotHistoryRequest: [], //todo
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
@@ -93,7 +99,7 @@ const initState= function() {
         toolBarIsPopup: false,    //todo
         mouseReadoutWide: false, //todo
 
-        //-- wcs match parameters
+        //-- wcs match parameters //todo this might have to be in a plotGroup, not sure at this point
         matchWCS: false, //todo
         wcsMatchCenterWP: null, //todo
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo

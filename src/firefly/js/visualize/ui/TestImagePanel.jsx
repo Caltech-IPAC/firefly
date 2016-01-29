@@ -11,23 +11,20 @@ import Validate from '../../util/Validate.js';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
+import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 
-import WebPlotRequest, {ServiceType} from '../WebPlotRequest.js';
+import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot,dispatchZoom} from '../ImagePlotCntlr.js';
 import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
-import ImageViewer from './ImageViewer.jsx';
+import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {flux} from '../../Firefly.js';
-
-import {showMouseReadoutOptionDialog} from '../../visualize/ui/MouseReadoutOptionDialog.jsx';
-//
-//import {showFitsDownloadDialogNew} from '../../ui/FitsDownloadDialog.jsx';
 
 
 
@@ -70,6 +67,7 @@ function showResults(success, request) {
     wpr1.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialColorTable(4);
+    wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
     ImagePlotCntlr.dispatchPlotImage('TestImage1', wpr1);
     ImagePlotCntlr.dispatchPlotImage('TestImage2', wpr2);
     //====temp
@@ -155,9 +153,9 @@ function showExDialog() {
     showExampleDialog();
 }
 
-function showCoordiateSysDialog() {
-    console.log('showing coordinate dialog');
-    showMouseReadoutOptionDialog('coordinateSys');
+function showFrDialog() {
+    console.log('showing fits rotation dialog');
+    showFitsRotationDialog();
 }
 
 
@@ -180,8 +178,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <div style={{height:50}}/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
 
-                    <div style={{height:50}}/>
-                    <button type='button' onClick={showCoordiateSysDialog}>Coordinate Dialog</button>
+                    <button type='button' onClick={showFrDialog}>Fits Rotation Dialog</button>
                     
                 </FieldGroup>
             </div>

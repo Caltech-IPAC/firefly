@@ -2,6 +2,8 @@
 
 Firefly is IPAC's Advanced Astronomy WEB UI Framework. It is for building a web-based Front end to access science archives. It provides sophisticated data visualization capabilities not available in many web-based archives. Our efforts to create a tightly integrated and user-friendly interface has generated numerous positive feedback from scientists. Users can browse and understand large volumes of archive data in a fraction of the time it took in the past.
 
+Note - if you are pulling, look at the [branches section](#branches)
+
 
 #### Firefly Framework
 Firefly is being reused for various archives because it is a framework of archive components. This has allowed us now to implement multiple archive systems at a fraction of the cost of the first system, Spitzer Heritage Archive.
@@ -29,6 +31,14 @@ Firefly provides a first-class FITS visualization on the Web without any plugins
 
 #### 2D Line Graphs
 Firefly shows 2D line graphs interactively so that a user can read the data point values as he moves his mouse around or zooms in to investigate the data at a finer level. These graphs are used for spectrum or plotting table columns. The user can specify any column that the tables are showing. The user can also define equations from the rows for the XY Plot, such as (row1*row2/tan(row3))
+
+## Branches
+There are several branches the this repository.  Here are the ones that you should care about.
+
+ - rc: the next release canidate branch.  This is the most stable branch. 
+ - master: Update once a week.  Used for out stable, weekly build. 
+ - dev: this branch is could be updated every day. It is the active development branch. It is not stable.
+ - x-??? : Any branch that begins with x- is temporary and used development feature branches
 
 
 ## Setup

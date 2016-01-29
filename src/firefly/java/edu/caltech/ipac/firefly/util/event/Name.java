@@ -311,6 +311,8 @@ public class Name implements Serializable {
     public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
     public static final Name REPORT_ALIVE           =  new Name("REPORT_ALIVE", "report if url is alive");
     public static final Name RESPONDED_ALIVE        =  new Name("RESPONDED_ALIVE", "responded if url is alive");
+
+    public static final Name ACTION                 =  new Name("FLUX_ACTION", "an action message.");
 //====================================================================
 
 

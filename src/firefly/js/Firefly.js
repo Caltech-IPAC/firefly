@@ -20,6 +20,9 @@ import {getJsonData } from './rpc/SearchServicesJson.js';
 import ExternalAccessUtils from './core/ExternalAccessUtils.js';
 
 import {reduxFlux} from './core/ReduxFlux.js';
+import {wsConnect} from './core/messaging/WebSocketClient.js';
+import {addListener} from './core/messaging/WebSocketClient.js';
+import {GwtEventHandler, ActionEventHandler} from './core/messaging/MessageHandlers.js';
 
 export const flux = reduxFlux;
 
@@ -75,6 +78,11 @@ function fireflyInit() {
         window.firefly.gwt.ColorDialog= ColorDialog;
         window.firefly.gwt.showExampleDialog= showExampleDialog;
         window.firefly.initialized = true;
+
+        // start WebSocketClient
+        wsConnect();
+        addListener(GwtEventHandler);
+        addListener(ActionEventHandler);
     }
 }
 

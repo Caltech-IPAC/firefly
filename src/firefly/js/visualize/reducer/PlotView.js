@@ -53,6 +53,15 @@ export default {makePlotView, replacePlots,
 //======================================== Exported Functions =============================
 
 
+/**
+ * There is one PlotView object for each react ImageViewer.  A plot view is uniquely identified by the plotId. The
+ * plot id will not change for the life time of the plotView. A plot view can be connected to a plot group.  That is done
+ * by the plotGroupId. The will be several plotViews in a plot group.
+ *
+ * PlotView is mostly about the viewing of the plot.  The plot data is contained in a WebPlot. A plotView can have an
+ * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
+ * files. primaryPlot referers to the plot currnetly showing in the plot view.
+ */
 
 /**
  * @param {string} plotId
@@ -98,7 +107,6 @@ function makePlotView(plotId, req, pvOptions) {
             autoTearDown    : true,  // tear down when there is a new search, todo
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
             boxSelection    : false, // type of highlighting used when user selects this widget todo
-            hideTitleDetail : req.getHideTitleDetail(), // hide the zoom level and rotation shown in the title, todo
             showUnexpandedHighlight: true, // show the selected image highlight when not expanded, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
             expandedTitleOptions: req.getExpandedTitleOptions(),
@@ -107,11 +115,14 @@ function makePlotView(plotId, req, pvOptions) {
             //useLayerOnPlotToolbar: true, // show the Layer control button on the plot toolbar, todo - i now think I can remove this
 
 
+            annotationOps : req.getAnnotationOps(),
+            //hideTitleDetail : req.getHideTitleDetail(), // hide the zoom level and rotation shown in the title, todo
                                     // ANALYSIS about useInlineToolbar
-            useInlineToolbar: true, // show the Tool bar inline (on the plot) instead of on the title bar, todo,
+            //useInlineToolbar: true, // show the Tool bar inline (on the plot) instead of on the title bar, todo,
                                     // todo: the behavor should be, collapsed: inline, grid: inline: expand single: hidden
                                    //  todo: behavor need be different for small plots link planck
-                                   //  todo: might need a ImageViewTitleDecorate panel to wrapp ImageViewDecorate when this is false
+                                   //  todo: when false image view decorate will use an external title bar
+                                   //  todo: might need to rename to control both the inlnie titl and the toolbar
 
               // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
             allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo

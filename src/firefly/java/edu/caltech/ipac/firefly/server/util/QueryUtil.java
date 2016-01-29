@@ -78,7 +78,19 @@ public class QueryUtil {
         for (Enumeration<String> names = req.getParameterNames(); names.hasMoreElements(); ) {
             String key = names.nextElement();
             if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
-                retval.setTrueParam(key, StringUtils.toString(req.getParameterValues(key), ","));
+                String values = StringUtils.toString(req.getParameterValues(key), ",");
+                if (key.equals(TableServerRequest.TBL_ID)) {
+                    retval.setMeta(TableServerRequest.TBL_ID, values);
+                } else if (key.equals(TableServerRequest.META_INFO)) {
+                    Map<String, String> meta = StringUtils.encodedStringToMap(values);
+                    if (meta != null && meta.size() > 0) {
+                        for (String k : meta.keySet()) {
+                            retval.setMeta(k, meta.get(k));
+                        }
+                    }
+                } else {
+                    retval.setTrueParam(key, values);
+                }
             }
         }
         return retval;

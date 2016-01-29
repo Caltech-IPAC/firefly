@@ -4,8 +4,16 @@
 package edu.caltech.ipac.util;
 
 import edu.caltech.ipac.astro.IpacTableReader;
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
+import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.firefly.util.event.Name;
+import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -371,6 +379,26 @@ public class IpacTableUtil {
             meta.setRowCount((int) totalRow);
         }
         return meta;
+    }
+
+    /**
+     * Send an action event message to the client updating the status of a table read/write.
+     * @param meta
+     * @param outf
+     * @param crows
+     * @param state
+     */
+    public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
+
+        String source = meta.get("source") == null ? ServerContext.replaceWithPrefix(outf) : String.valueOf( meta.get("source") );
+        String tblId = meta.get("tbl_id") == null ? source : String.valueOf( meta.get("tbl_id") );
+
+        FluxAction action = new FluxAction("table-space.loadTableStatus");
+        action.setValue(tblId, "tbl_id");
+        action.setValue(source, "source");
+        action.setValue(crows, "totalRows");
+        action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);
+        ServerEventManager.fireAction(action);
     }
 
     //====================================================================

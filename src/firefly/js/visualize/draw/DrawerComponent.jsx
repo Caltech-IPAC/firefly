@@ -45,8 +45,8 @@ class DrawerComponent extends React.Component {
     }
 
     render() {
-        var {plotView, drawLayer, width, height}= this.props;
-        if (plotView && !isVisible(drawLayer,plotView.plotId)) return false;
+        var {plot, drawLayer, width, height}= this.props;
+        if (plot&& !isVisible(drawLayer,plot.plotId)) return false;
         var style= {position:'absolute',left:0,right:0,width,height};
 
         return (
@@ -62,20 +62,20 @@ class DrawerComponent extends React.Component {
 DrawerComponent.propTypes= {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    plotView : React.PropTypes.object, // plotView is not used if not drawLayer
+    plot: React.PropTypes.object, // plot is not used if drawLayer is not passed
     drawLayer : React.PropTypes.object, //drawLayer or drawData is Required
     drawData : React.PropTypes.array // only used it drawLayer is not defined
 };
 
 
-export function PlotViewDrawer(props) {
+export function PlotDrawer(props) {
     return <DrawerComponent {...props} />;
 }
 
-PlotViewDrawer.propTypes= {
+PlotDrawer.propTypes= {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    plotView : React.PropTypes.object.isRequired, // plotView is not used if not drawLayer
+    plot: React.PropTypes.object, // plot is not used if drawLayer is not passed
     drawLayer : React.PropTypes.object.isRequired //drawLayer or drawData is Required
 };
 

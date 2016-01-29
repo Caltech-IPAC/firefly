@@ -47,6 +47,7 @@ function filter(pv,dlAry) {
 
 
 function makeExtensionButtons(extensionAry,pv,dlAry) {
+    if (!extensionAry) return false;
     return extensionAry.map( (ext,idx) => (
             <ToolbarButton icon={ext.imageUrl} text={ext.title}
                            tip={ext.toolTip} key={ext.id}

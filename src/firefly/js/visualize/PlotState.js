@@ -164,6 +164,8 @@ export class PlotState {
      */
     getRotateType() {return this.rotationType; }
 
+    isRotated() {return this.rotationType!=RotateType.UNROTATE;}
+
     /**
      *
      * @param {boolean} flippedY

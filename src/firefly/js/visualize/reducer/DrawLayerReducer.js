@@ -68,9 +68,7 @@ function handleOtherAction(drawLayer,action,factory) {
             if (newDl !==drawLayer) {
                 return Object.assign(newDl,{drawData:d}); // already created a new object, just assign
             }
-            else if (d.data!==newDl.data ||
-                     d.highlightedData!==newDl.highlightedData ||
-                     d.selectedIdxAry!==newDl.selectedIdxAry) {
+            else if (d!==newDl.drawData) {
                 return Object.assign({},newDl,{drawData:d});
             }
             else {
@@ -198,6 +196,10 @@ function changeDrawingDef(drawLayer,action,factory) {
     return Object.assign({}, drawLayer, {drawingDef}, factory.getLayerChanges(drawLayer,action));
 }
 
+const DATA= DataTypes.DATA;
+const HIGHLIGHT_DATA= DataTypes.HIGHLIGHT_DATA;
+const SELECTED_IDX_ARY= DataTypes.SELECTED_IDX_ARY;
+
 /**
  *
  * @param {DrawLayerFactory} factory
@@ -208,26 +210,37 @@ function changeDrawingDef(drawLayer,action,factory) {
  */
 function getDrawData(factory, drawLayer, action, plotId= null) {
     if (!factory.hasGetDrawData(drawLayer)) return drawLayer.drawData;
+    var {drawData}= drawLayer;
     var pId= plotId;
-    var newDD= {[DataTypes.DATA]:{},[DataTypes.HIGHLIGHT_DATA]:{}, [DataTypes.SELECTED_IDX_ARY]: null};
+    //var newDD= {[DATA]:{},[HIGHLIGHT_DATA]:{}, [SELECTED_IDX_ARY]: null};
+    var newDD= Object.assign({},drawData);
 
-    newDD[DataTypes.DATA][plotId]= factory.getDrawData(DataTypes.DATA, pId, drawLayer, action,
-        drawLayer.drawData[DataTypes.DATA][plotId]);
+    newDD[DATA][plotId]= factory.getDrawData(DATA, pId, drawLayer, action,
+        drawData[DATA][plotId]);
 
     if (drawLayer.canHighlight) {
-        newDD[DataTypes.HIGHLIGHT_DATA][plotId]= factory.getDrawData(DataTypes.HIGHLIGHT_DATA, pId, drawLayer, action,
-            drawLayer.drawData[DataTypes.HIGHLIGHT_DATA][plotId]);
+        newDD[HIGHLIGHT_DATA][plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
+                                          drawData[HIGHLIGHT_DATA][plotId]);
     }
 
     if (drawLayer.canSelect) {
-        newDD[DataTypes.SELECTED_IDX_ARY]= factory.getDrawData(DataTypes.SELECTED_IDX_ARY, null, drawLayer, action,
-            drawLayer.drawData[DataTypes.SELECTED_IDX_ARY]);
+        newDD[SELECTED_IDX_ARY]= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action,
+                                                 drawData[SELECTED_IDX_ARY]);
     }
-    var retval= {};
-    retval[DataTypes.DATA]= Object.assign({},drawLayer.drawData[DataTypes.DATA],newDD[DataTypes.DATA]);
-    retval[DataTypes.HIGHLIGHT_DATA]= Object.assign({},drawLayer.drawData[DataTypes.HIGHLIGHT_DATA],newDD[DataTypes.HIGHLIGHT_DATA]);
-    retval[DataTypes.SELECTED_IDX_ARY]= newDD[DataTypes.SELECTED_IDX_ARY];
-    return retval;
+    var retval= {
+        [DATA]:             Object.assign({},drawData[DATA],newDD[DATA]),
+        [HIGHLIGHT_DATA]:   Object.assign({},drawData[HIGHLIGHT_DATA],newDD[HIGHLIGHT_DATA]),
+        [SELECTED_IDX_ARY]: newDD[SELECTED_IDX_ARY]
+    };
 
+    // check for differences
+    if (retval[DataTypes.DATA]!==drawData[DataTypes.DATA] ||
+        retval[DataTypes.HIGHLIGHT_DATA]!==drawData[DataTypes.HIGHLIGHT_DATA] ||
+        retval[DataTypes.SELECTED_IDX_ARY]!==drawData[DataTypes.SELECTED_IDX_ARY]) {
+        return retval;
+    }
+    else {
+        return drawLayer.drawData;
+    }
 }
 

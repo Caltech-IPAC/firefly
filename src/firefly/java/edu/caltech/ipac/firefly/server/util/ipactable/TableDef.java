@@ -43,6 +43,14 @@ public class TableDef {
         return attributes;
     }
 
+    public void setAttribute(String name, String value) {
+        DataGroup.Attribute att = getAttribute(name);
+        if (att != null) {
+            attributes.remove(att);
+        }
+        attributes.add(new DataGroup.Attribute(name, value));
+    }
+
     public void setStatus(DataGroupPart.State status) {
         addAttributes(new DataGroup.Attribute(DataGroupPart.LOADING_STATUS, status.name()));
     }

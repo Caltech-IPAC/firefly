@@ -42,10 +42,10 @@ public class JsonTableUtil {
                 }
             }
         }
-
-        String tblId = request == null ? meta.getSource() :
-                        request.containsParam(TableServerRequest.TBL_ID) ? request.getParam(TableServerRequest.TBL_ID) :
-                        request.getRequestId();
+        for (String key : request.getMeta().keySet()) {
+            meta.setAttribute(key, request.getMeta(key));
+        }
+        String tblId = meta.getAttribute(TableServerRequest.TBL_ID);
 
         JSONObject tableModel = new JSONObject();
         tableModel.put("tbl_id", tblId);

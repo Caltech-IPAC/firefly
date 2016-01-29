@@ -39,8 +39,9 @@ export function makeFactoryDef(drawLayerTypeId,
                                create,
                                getDrawDataFunc= null,
                                getLayerChanges= null,
+                               onDetachAction= null,
                                getUIComponent= null) {
-    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, getUIComponent};
+    return {drawLayerTypeId, create, getDrawDataFunc, getLayerChanges, onDetachAction,getUIComponent};
 }
 
 class DrawLayerFactory {
@@ -90,6 +91,12 @@ class DrawLayerFactory {
         if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return {};
         var f= this.registry[drawLayer.drawLayerTypeId].getLayerChanges;
         return f ? f(drawLayer, action) : {};
+    }
+
+    onDetachAction(drawLayer, action) {
+        if (!drawLayer || !this.registry[drawLayer.drawLayerTypeId]) return {};
+        var f= this.registry[drawLayer.drawLayerTypeId].onDetachAction;
+        if (f) f(drawLayer,action);
     }
 
     getGetUIComponentFunc(drawLayer) {

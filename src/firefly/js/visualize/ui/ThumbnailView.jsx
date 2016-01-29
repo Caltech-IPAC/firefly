@@ -14,7 +14,7 @@ import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
 import {getScrollSize} from '../reducer/PlotView.js';
 import {WebPlot} from '../WebPlot.js';
-import {EventLayer} from './EventLayer.jsx';
+import {EventLayer} from './../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseCntlr.js';
 import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 

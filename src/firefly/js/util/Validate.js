@@ -129,6 +129,15 @@ export const isInt = function(description, valStr) {
     return retval;
 };
 
+export const isHexColorStr = function(description, valStr) {
+    var retval= { valid : true, message : '' };
+    if (valStr && !/^#[0-9a-f]{6}/.test(valStr)) {
+        retval.valid = false;
+        retval.message = description + ': must be a hex color exactly 7 characters long';
+    }
+
+};
+
 var Validate = {
     validateEmail, validateUrl, intRange, floatRange, isFloat, isInt
 };
