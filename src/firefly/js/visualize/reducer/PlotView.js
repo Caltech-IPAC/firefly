@@ -23,6 +23,7 @@ import AppDataCntlr, {getActiveTarget} from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from './../ImagePlotCntlr.js';
 import VisUtil from './../VisUtil.js';
 import PlotViewUtil from './../PlotViewUtil.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotPref from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from './../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
@@ -39,7 +40,7 @@ const DEF_WORKING_MSG= 'Plotting ';
 //============ EXPORTS ===========
 
 export default {makePlotView, replacePlots,
-                updateViewDim, updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
+                updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
                 findCurrentCenterPoint, findScrollPtForImagePt,
                 replacePlotView, updatePlotGroupScrollXY};
 
@@ -88,6 +89,8 @@ function makePlotView(plotId, req, pvOptions) {
         lockPlotHint: false, //todo
         attributes: {},
         taskCnt: 0, //todo,
+        zoomLockingEnabled: false,
+        zoomLockingType: UserZoomTypes.FIT,
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
@@ -205,9 +208,9 @@ function replacePlots(pv, plotAry) {
  * @param {{width : number, height : number}} viewDim
  * @return {object} the PlotView with the new viewDim
  */
-function updateViewDim(pv,viewDim) {
-    return Object.assign({}, pv, {viewDim});
-}
+//function updateViewDim(pv,viewDim) {
+//    return Object.assign({}, pv, {viewDim});
+//}
 
 
 /**
@@ -406,7 +409,9 @@ function getNewAttributes(plot) {
  * @param [scrollY] optional scrollY if not defined us plotView.scrollY
  */
 function findCurrentCenterPoint(plotView,scrollX,scrollY) {
+    if (!plotView) return null;
     var {wcsMarginX,wcsMarginY, primaryPlot}= plotView;
+    if (!primaryPlot) return null;
     var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     var sx= (typeof scrollX !== 'undefined') ? scrollX : plotView.scrollX;
     var sy= (typeof scrollY !== 'undefined') ? scrollY : plotView.scrollY;

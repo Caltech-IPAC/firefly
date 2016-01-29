@@ -27,18 +27,21 @@ export class ImageViewer extends Component {
         var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,plotId);
         var extRoot= extensionRoot();
         var mousePlotId= currMouseState().plotId;
+        this.alive= true;
         this.state= {plotView, dlAry, allPlots, drawLayersAry,extRoot, mousePlotId};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
+        this.alive= false;
         if (this.removeListener) this.removeListener();
     }
 
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
+        this.storeUpdate();
     }
 
     storeUpdate() {
@@ -71,7 +74,7 @@ export class ImageViewer extends Component {
     delayMouseIdClear() {
         this.timeId= null;
         var newState= Object.assign({},this.state,{mousePlotId:null});
-        if (currMouseState().plotId===this.props.plotId) {
+        if (this.alive && currMouseState().plotId===this.props.plotId) {
             this.setState(newState);
         }
 

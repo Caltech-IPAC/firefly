@@ -35,16 +35,27 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  * @param {string} plotId
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} maxCheck
+ * @param {boolean} zoomLockingEnabled
  * @param {ActionScope} actionScope
  */
-export function doDispatchZoom(plotId, userZoomType, maxCheck= true, actionScope=ActionScope.GROUP ) {
+export function doDispatchZoom(plotId, userZoomType, maxCheck= true,
+                               zoomLockingEnabled=false, actionScope=ActionScope.GROUP ) {
 
     flux.process({
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, actionScope, maxCheck
+            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled
         }});
 }
+
+export function doDispatchZoomLocking(plotId, zoomLockingEnabled, zoomLockingType) {
+    flux.process({
+        type: ImagePlotCntlr.ZOOM_LOCKING,
+        payload :{
+            plotId, zoomLockingEnabled, zoomLockingType
+        }});
+}
+
 
 
 /**
@@ -72,7 +83,7 @@ export function makeZoomAction(rawAction) {
         else {
             var dim= pv.viewDim;
             isFullScreen= true;
-            useDelay= true; //todo
+            useDelay= false; //todo
 
             if (dim.width && dim.height) {
                 if (userZoomType===UserZoomTypes.FIT) {

@@ -1,0 +1,62 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+
+.plot-title-inline-title-container {
+    pointer-events: none;
+    position : absolute;
+    left : 0;
+    top : 0;
+    padding : 2px 0 0 2px;
+    color : white;
+    background : rgba(0,0,255,.5);
+    whiteSpace : nowrap;
+    font-size : 9pt;
+    border-radius : 0 0 5px 0;
+}
+
+
+.plot-title-header-title-container {
+    pointer-events: none;
+    padding : 1px 0 0 2px;
+    color : black;
+    /*background : white;*/
+    whiteSpace : nowrap;
+    font-size : 9pt;
+}
+
+.plot-title-expanded-title-container {
+    pointer-events: none;
+    padding : 1px 0 0 2px;
+    color : black;
+    /*background : white;*/
+    whiteSpace : nowrap;
+    font-size : 10pt;
+    font-weight : bold;
+}
+
+
+.plot-title-title {
+    display: inline-block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width:35ch;
+}
+
+.plot-title-zoom {
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 6px;
+    color: #49a344;
+}
+
+
+.plot-title-rotation {
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 6px;
+    color: #49a344;
+}
+
+

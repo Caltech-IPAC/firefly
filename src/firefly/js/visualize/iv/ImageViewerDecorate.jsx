@@ -18,6 +18,7 @@ import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../PlotCmdExtension.js';
 import {getTaskCount} from '../../core/AppDataCntlr.js';
+import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
 import LOADING from 'html/images/gxt/loading.gif';
 
@@ -140,7 +141,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId) {
     if (!pv) return false;
     var useInlineToolbar = toolsAnno.includes(pv.options.annotationOps);
 
-    if (!useInlineToolbar || visRoot.expanded!==ExpandType.COLLAPSE) return false;
+    if (!useInlineToolbar || visRoot.expandedMode!==ExpandType.COLLAPSE) return false;
     var lVis= BrowserInfo.isTouchInput() || (visRoot.toolBarIsPopup && mousePlotId===pv.plotId);
     var exVis= BrowserInfo.isTouchInput() || mousePlotId===pv.plotId;
     return (
@@ -169,24 +170,26 @@ function getBorderColor(pv,visRoot) {
     else return 'rgba(0,0,0,.4)';
 }
 
-function makeInlineTitle(annoOps, expandMode,titleStr, zoomFactor, plotState, plotId) {
-    if (!plotState || !titleStr || expandMode===ExpandType.SINGLE ) return null;
+function makeInlineTitle(annoOps, expandedMode,titleStr, zoomFactor, plotState, plotId) {
+    if (!plotState || !titleStr || expandedMode===ExpandType.SINGLE ) return null;
     if (!annoOps || titleBarAnno.includes(annoOps)) return null;
+    var brief= briefAnno.includes(annoOps);
     return (
-        <Title annotationOps={annoOps} titleStr={titleStr}
-               inline={true}
+        <PlotTitle brief={brief} titleStr={titleStr}
+               titleType={TitleType.INLINE}
                zoomFactor={zoomFactor}
                plotState={plotState} plotId={plotId}
         />
     );
 }
 
-function makeTitleLineHeader(annoOps, expandMode,titleStr, zoomFactor, plotState, plotId) {
-    if (!plotState || !titleStr || expandMode===ExpandType.SINGLE ) return null;
+function makeTitleLineHeader(annoOps, expandedMode,titleStr, zoomFactor, plotState, plotId) {
+    if (!plotState || !titleStr || expandedMode===ExpandType.SINGLE ) return null;
     if (!annoOps || !titleBarAnno.includes(annoOps)) return null;
+    var brief= briefAnno.includes(annoOps);
     return (
-        <Title annotationOps={annoOps} titleStr={titleStr}
-               inline={false}
+        <PlotTitle brief={brief} titleStr={titleStr}
+               titleType={TitleType.HEAD}
                zoomFactor={zoomFactor}
                plotState={plotState} plotId={plotId}
         />
@@ -206,15 +209,15 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
     var inlineTitle= null;
     var plotId= null;
     var plotState= null;
-    var {expanded}= visRoot;
+    var {expandedMode}= visRoot;
 
     if (pv && pv.primaryPlot) {
         title= pv && pv.primaryPlot ? pv.primaryPlot.title : '';
         zoomFactor= pv.primaryPlot.zoomFactor;
         plotState= pv.primaryPlot.plotState;
         plotId= pv.plotId;
-        titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expanded, title, zoomFactor,plotState,plotId);
-        inlineTitle= makeInlineTitle(pv.options.annotationOps,expanded, title, zoomFactor,plotState,plotId);
+        titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
+        inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
 
     }
 
@@ -233,7 +236,7 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
         overflow: 'hidden',
         position: 'absolute',
         borderStyle: 'solid',
-        borderWidth: '3px 2px 2px 2px',
+        borderWidth: (expandedMode!==ExpandType.SINGLE) ?'3px 2px 2px 2px' : '0 0 0 0',
         borderColor: getBorderColor(pv,visRoot)
     };
 
@@ -273,39 +276,39 @@ ImageViewerDecorate.propTypes= {
 };
 
 
-function Title({plotId, inline, annotationOps:annoOps,titleStr,zoomFactor,plotState}) {
-    var brief= briefAnno.includes(annoOps);
-    var styleName= inline ? 'iv-decorate-inline-title-container' : 'iv-decorate-header-title-container';
-    var zlStr= convertZoomToString(zoomFactor);
-    var rotString= null;
-    if (plotState.isRotated()) {
-        if (plotState.getRotateType()===RotateType.NORTH) {
-            rotString= 'North';
-        } else {
-            var angleStr= numeral(plotState.getRotationAngle()).format('#');
-            rotString= angleStr + String.fromCharCode(176);
-        }
-        zlStr+=',';
-    }
-    var showWorking= getTaskCount(plotId);
-
-    return (
-        <div className={styleName}>
-            <div className='iv-decorate-title' >{titleStr}</div>
-            {!brief ? <div className='iv-decorate-zoom'>{zlStr}</div> : ''}
-            {!brief && rotString ? <div className='iv-decorate-rotation'>{rotString}</div> : ''}
-            {showWorking ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
-        </div>
-    );
-}
-
-Title.propTypes= {
-    plotId: PropTypes.string,
-    inline: PropTypes.bool.isRequired,
-    titleStr: PropTypes.string,
-    zoomFactor:PropTypes.number,
-    annotationOps : PropTypes.object,
-    plotState : PropTypes.object
-};
-
+//function PlotTitle({plotId, inline, annotationOps:annoOps,titleStr,zoomFactor,plotState}) {
+//    var brief= briefAnno.includes(annoOps);
+//    var styleName= inline ? 'iv-decorate-inline-title-container' : 'iv-decorate-header-title-container';
+//    var zlStr= convertZoomToString(zoomFactor);
+//    var rotString= null;
+//    if (plotState.isRotated()) {
+//        if (plotState.getRotateType()===RotateType.NORTH) {
+//            rotString= 'North';
+//        } else {
+//            var angleStr= numeral(plotState.getRotationAngle()).format('#');
+//            rotString= angleStr + String.fromCharCode(176);
+//        }
+//        zlStr+=',';
+//    }
+//    var showWorking= getTaskCount(plotId);
+//
+//    return (
+//        <div className={styleName}>
+//            <div className='iv-decorate-title' >{titleStr}</div>
+//            {!brief ? <div className='iv-decorate-zoom'>{zlStr}</div> : ''}
+//            {!brief && rotString ? <div className='iv-decorate-rotation'>{rotString}</div> : ''}
+//            {showWorking ?<img style={{width:14,height:14,padding:'0 3px 0 5px'}} src={LOADING}/> : ''}
+//        </div>
+//    );
+//}
+//
+//PlotTitle.propTypes= {
+//    plotId: PropTypes.string,
+//    inline: PropTypes.bool.isRequired,
+//    titleStr: PropTypes.string,
+//    zoomFactor:PropTypes.number,
+//    annotationOps : PropTypes.object,
+//    plotState : PropTypes.object
+//};
+//
 

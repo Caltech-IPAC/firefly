@@ -44,18 +44,21 @@ function updateDrawer(drawer,plot, width, height, drawLayer) {
 function makeCanvasLayers(drawLayer,drawer,w,h) {
 
     var {drawLayerId,canSelect,canHighlight}= drawLayer;
-    var style={width:w, height:w, left:0, right:0, position:'absolute'};
+    var style={width:w, height:h, left:0, right:0, position:'absolute'};
     var retAry= [];
 
-    retAry.push(<canvas style={style} key={drawLayerId} ref={(c) => drawer.setPrimCanvas(c,w,h)}/>);
+    retAry.push(<canvas style={style} key={drawLayerId} width={w+''} height={h+''}
+                        ref={(c) => drawer.setPrimCanvas(c,w,h)}/>);
 
     if (canSelect) {
         var sId= drawLayerId+'-Select';
-        retAry.push(<canvas style={style} key={sId} ref={(c) => drawer.setHighlightCanvas(c,w,h)}/>);
+        retAry.push(<canvas style={style} key={sId} width={w+''} height={h+''}
+                            ref={(c) => drawer.setHighlightCanvas(c,w,h)}/>);
     }
     if (canHighlight) {
         var hId= drawLayerId+'-Highlight';
-        retAry.push(<canvas style={style} key={hId} ref={(c) => drawer.setSelectCanvas(c,w,h)}/>);
+        retAry.push(<canvas style={style} key={hId} width={w+''} height={h+''}
+                            ref={(c) => drawer.setSelectCanvas(c,w,h)}/>);
     }
     return retAry;
 }

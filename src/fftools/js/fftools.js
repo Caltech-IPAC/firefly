@@ -14,6 +14,7 @@ import SearchPanel from 'firefly/ui/SearchPanel.jsx';
 import ResultsPanel from 'firefly/ui/ResultsPanel.jsx';
 import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
+import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
 import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
 import Validate from 'firefly/util/Validate.js';
 import TblUtil from 'firefly/tables/TableUtil.js';
@@ -153,7 +154,9 @@ const App = React.createClass({
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot = {<TestImagePanel />}
+                            imagePlot = {appData.layoutInfo.mode==='expand' ?
+                                             <ExpandedModeDisplay forceExpandedMode={true}/> :
+                                             <TestImagePanel /> }
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<XYPlotTableViewPanel tblStatsData={tblStatsData} tblPlotData={xyPlotData} tblId={tblId} highlightedRow={highlightedRow}/> }
                             tables = { <TablePanel tableModel={table} selectable={true}/> }

@@ -11,7 +11,9 @@ import {makeColorChangeAction as colorChangeActionCreator,
     doDispatchColorChange, doDispatchStretchChange} from './ColorStretchUtil.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
-import PlotViewUtil from './PlotViewUtil.js';
+import {isActivePlotView,getPlotViewById, getActivePlotView} from './PlotViewUtil.js';
+
+import {doDispatchZoomLocking} from './ZoomUtil.js';
 
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -37,6 +39,8 @@ const ANY_REPLOT= 'ImagePlotCntlr.Replot';
 const ZOOM_IMAGE_START= 'ImagePlotCntlr.ZoomImageStart';
 const ZOOM_IMAGE= 'ImagePlotCntlr.ZoomImage';
 const ZOOM_IMAGE_FAIL= 'ImagePlotCntlr.ZoomImageFail';
+
+const ZOOM_LOCKING= 'ImagePlotCntlr.ZoomEnableLocking';
 
 
 const COLOR_CHANGE_START= 'ImagePlotCntlr.ColorChangeStart';
@@ -64,6 +68,10 @@ const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
 
 const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
 const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
+
+const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
+
+const CHANGE_MOUSE_READOUT_MODE= 'ImagePlotCntlr.changeMouseReadoutMode';
 
 /**
  * action should contain:
@@ -95,7 +103,8 @@ const initState= function() {
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
         activePlotId: null,
 
-        expanded: ExpandType.COLLAPSE, //todo
+        expandedMode: ExpandType.COLLAPSE,
+        previousExpandedMode: ExpandType.SINGLE, //  must be SINGLE OR GRID
         toolBarIsPopup: false,    //todo
         mouseReadoutWide: false, //todo
 
@@ -121,7 +130,7 @@ export default {
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
-    ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,
+    ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
@@ -165,6 +174,10 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
     flux.process({type: UPDATE_VIEW_SIZE,
         payload: {plotId, width, height,updateScroll,centerImagePt}
     });
+    var pv= getPlotViewById(visRoot(),plotId);
+    if (pv && pv.zoomLockingEnabled) {
+        dispatchZoom(pv.plotId,pv.zoomLockingType,true,true);
+    }
 }
 
 
@@ -228,22 +241,48 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  * @param {string} plotId
  * @param {UserZoomTypes} zoomType
  */
-export function dispatchZoom(plotId,zoomType,maxCheck=true) { doDispatchZoom(plotId, zoomType, maxCheck); }
+export function dispatchZoom(plotId,zoomType,maxCheck=true, zoomLockingEnabled=false) {
+    doDispatchZoom(plotId, zoomType, maxCheck, zoomLockingEnabled);
+}
 
+/**
+ *
+ * @param plotId
+ * @param zoomLockingEnabled
+ * @param zoomLockingType
+ */
+export function dispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType) {
+    doDispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType);
+}
 
 
 /**
  * Set the plotId of the active plot view
  * @param {string} plotId
  */
+
 export function dispatchChangeActivePlotView(plotId) {
-    if (!PlotViewUtil.isActivePlotView(visRoot(),plotId)) {
+    if (!isActivePlotView(visRoot(),plotId)) {
         flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });
     }
 }
 
 export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
     flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
+}
+
+
+/**
+ *
+ * @param expandType
+ */
+export function dispatchChangeExpandedMode(expandedMode) {
+    flux.process({ type: CHANGE_EXPANDED_MODE, payload: {expandedMode} });
+
+
+    var enable= expandedMode!==ExpandType.COLLAPSE;
+    visRoot().plotViewAry.forEach( (pv) =>
+               dispatchZoomLocking(pv.plotId,enable,pv.zoomLockingType) );
 }
 
 
@@ -272,6 +311,7 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE  :
             retState= HandlePlotCreation.reducer(state,action);
             break;
+        case ZOOM_LOCKING:
         case ZOOM_IMAGE_START  :
         case ZOOM_IMAGE_FAIL  :
         case ZOOM_IMAGE  :
@@ -288,6 +328,8 @@ function reducer(state=initState(), action={}) {
         case CHANGE_ACTIVE_PLOT_VIEW:
             retState= changeActivePlotView(state,action);
             break;
+        case CHANGE_EXPANDED_MODE:
+            retState= changeExpandedMode(state,action);
             break;
         default:
             break;
@@ -306,6 +348,16 @@ function changeActivePlotView(state,action) {
     return Object.assign({}, state, {activePlotId:action.payload.plotId});
 }
 
+function changeExpandedMode(state,action) {
+    var {expandedMode}= action.payload;
+    if (!expandedMode || expandedMode===state.expandedMode) return state;
+
+    var changes= {expandedMode};
+    if (expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE) {
+        changes.previousExpandedMode= expandedMode;
+    }
+    return Object.assign({}, state, changes);
+}
 
 
 

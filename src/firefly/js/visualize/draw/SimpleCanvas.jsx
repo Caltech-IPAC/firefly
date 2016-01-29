@@ -35,7 +35,7 @@ export class SimpleCanvas extends React.Component {
     render() {
         var {drawIt, width, height}= this.props;
         return (
-            <canvas width={width} height={height} ref={(c) => this.setUpCanvas(c)}/>
+            <canvas width={width+''} height={height+''} ref={(c) => this.setUpCanvas(c)}/>
         );
     }
 }

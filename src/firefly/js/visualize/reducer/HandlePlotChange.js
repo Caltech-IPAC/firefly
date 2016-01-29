@@ -24,7 +24,7 @@ function reducer(state, action) {
     //var plotRequestDefaults;
     switch (action.type) {
         case Cntlr.ZOOM_IMAGE_START  :
-            plotViewAry= scaleImage(state.plotViewAry, action);
+            plotViewAry= zoomStart(state.plotViewAry, action);
             break;
         case Cntlr.ZOOM_IMAGE_FAIL  :
         case Cntlr.STRETCH_CHANGE_FAIL:
@@ -44,6 +44,9 @@ function reducer(state, action) {
             break;
         case Cntlr.CHANGE_PLOT_ATTRIBUTE :
             retState= changePlotAttribute(state,action);
+            break;
+        case Cntlr.ZOOM_LOCKING:
+            retState= changeLocking(state,action);
             break;
         default:
             break;
@@ -73,9 +76,21 @@ function changePlotAttribute(state,action) {
     return state;
 }
 
+function changeLocking(state,action) {
+    var {plotId, zoomLockingEnabled, zoomLockingType}=  action.payload;
+    var {plotViewAry}= state;
+    plotViewAry= plotViewAry.map( (pv) => {
+        if (pv.plotId!==plotId) return pv;
+        pv.zoomLockingEnabled= zoomLockingEnabled;
+        pv.zoomLockingType= zoomLockingType;
+        return pv;
+    });
+    return Object.assign({},state,{plotViewAry});
+}
 
-function scaleImage(plotViewAry, action) {
-    const {plotId, zoomLevel}= action.payload;
+
+function zoomStart(plotViewAry, action) {
+    const {plotId, zoomLevel, zoomLockingEnabled}= action.payload;
     var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
     var plot= pv ? pv.primaryPlot : null;
     if (!plot) return plotViewAry;
@@ -87,6 +102,7 @@ function scaleImage(plotViewAry, action) {
         var p= WebPlot.setZoomFactor(oPv.plot,zoomLevel);
         return Object.assign({},oPv, {plot:p});
     });
+    pv.zoomLockingEnabled= zoomLockingEnabled;
     return PlotView.replacePlotView(plotViewAry,pv);
 }
 
@@ -115,8 +131,16 @@ function processScroll(state,action) {
 
 function updateViewSize(state,action) {
     const {plotId,width,height}= action.payload;
+
     var plotViewAry= state.plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.updateViewDim(pv,{width, height}) : pv;
+        if (pv.plotId!==plotId ) return pv;
+        var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
+        pv= Object.assign({}, pv, {viewDim: {width, height}});
+        if (centerImagePt) {
+            pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+        }
+        return pv;
+
     });
     return Object.assign({},state,{plotViewAry});
 }

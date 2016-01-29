@@ -5,6 +5,8 @@
 import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
+import Resizable from 'react-component-resizable';
+import debounce from 'lodash/function/debounce';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {
@@ -25,10 +27,17 @@ import {logError} from '../../util/WebUtil.js';
 
 export class ImageViewerView extends Component {
 
-
     constructor(props) {
         super(props);
         this.plotDrag= null;
+        this.onResize = debounce( (size) => {
+            if (size) {
+                var {width,height}= size;
+                // todo: this could replace getting the offsetWidth & offsetHeight in componentDidUpdate
+                this.setState({ width,height });
+            }
+        }, 200);
+        this.state={width: '100%',height:'100%'};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -42,6 +51,8 @@ export class ImageViewerView extends Component {
     }
 
     componentDidUpdate() {
+        // todo: this could be replace by the width & height in the state that I am now getting from Resizable
+        // todo: do some testing, it should be better than accessing the element all the time,which I suspect is slow
         var {offsetWidth,offsetHeight}= this.element;
         var {prevWidth,prevHeight}= this.previousDim;
         if (prevWidth!==offsetWidth || prevHeight!==offsetHeight) {
@@ -101,14 +112,17 @@ export class ImageViewerView extends Component {
         var rootStyle= {left, top,
                         position:'relative',
                         width:scrollViewWidth,
-                        height:scrollViewHeight
+                        height:scrollViewHeight,
+                        marginLeft: 'auto',
+                        marginRight: 'auto'
+
         };
 
         //var drawingAry= makeDrawingAry(plotView, drawLayersAry);
         var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
         if (!cursor || !cursor.length) cursor= 'crosshair';
         return (
-                <div className='plot-view-scr-view-window'
+                <div className='plot-view-scroll-view-window'
                      style={rootStyle}>
                     <div className='plot-view-master-panel'
                          style={{width:viewPortWidth,height:viewPortHeight,
@@ -126,6 +140,7 @@ export class ImageViewerView extends Component {
         );
     }
 
+//</Resizable>
 
 
 
@@ -144,9 +159,11 @@ export class ImageViewerView extends Component {
             bottom : 0,
             overflow:'hidden'};
         return (
-            <div className='web-plot-view-scr' style={style}>
-                {insideStuff}
-            </div>
+            <Resizable id='imageViewerResizer' onResize={this.onResize} style={style}>
+                <div className='web-plot-view-scr' style={style}>
+                    {insideStuff}
+                </div>
+            </Resizable>
         );
     }
 

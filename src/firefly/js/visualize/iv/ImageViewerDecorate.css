@@ -6,55 +6,6 @@
 
 
 
-.iv-decorate-inline-title-container {
-    pointer-events: none;
-    position : absolute;
-    left : 0;
-    top : 0;
-    padding : 2px 0 0 2px;
-    color : white;
-    background : rgba(0,0,255,.5);
-    whiteSpace : nowrap;
-    font-size : 9pt;
-    border-radius : 0 0 5px 0;
-}
-
-
-.iv-decorate-header-title-container {
-    pointer-events: none;
-    padding : 1px 0 0 2px;
-    color : black;
-    /*background : white;*/
-    whiteSpace : nowrap;
-    font-size : 9pt;
-}
-
-
-
-.iv-decorate-title {
-    display: inline-block;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    max-width:35ch;
-}
-
-.iv-decorate-zoom {
-    display: inline-block;
-    overflow: hidden;
-    padding-left: 6px;
-    color: #49a344;
-}
-
-
-.iv-decorate-rotation {
-    display: inline-block;
-    overflow: hidden;
-    padding-left: 6px;
-    color: #49a344;
-}
-
-
-
 .iv-decorate-inline-toolbar-container {
     position : absolute;
     right : 0;

@@ -49,7 +49,8 @@ function getZoomer() {
                 return;
             }
         }
-        dispatchZoom(pv.plotId,zType.utilZt);
+        var zoomLockingEnabled= (zType===ZoomType.FIT || zType===ZoomType.FILL);
+        dispatchZoom(pv.plotId,zType.utilZt,true,zoomLockingEnabled);
     };
 }
 
