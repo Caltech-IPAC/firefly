@@ -128,8 +128,8 @@ public class DownloadGroupPanel extends Composite {
 //======================================================================
 
     /**
-     * update the package report and the display the user seee.
-     * @return true, if the updated report requires the uers attension, usually the
+     * update the package report and the display the user see.
+     * @return true, if the updated report requires the users attention, usually the
      *         is a download ready. false, otherwise
      */
     boolean updateUI() {

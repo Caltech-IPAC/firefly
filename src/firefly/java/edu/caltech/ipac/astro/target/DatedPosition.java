@@ -39,7 +39,7 @@ public class DatedPosition implements java.io.Serializable {
        }
 
        /**
-        * Return the right acension (degrees) in J2000 coordnates for this position.
+        * Return the right ascension (degrees) in J2000 coordinates for this position.
         */
        public double getRaJ2000() {
            return raJ2000;

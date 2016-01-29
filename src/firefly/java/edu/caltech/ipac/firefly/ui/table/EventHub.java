@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class respresents the hub of a network of tables and previews.
+ * This class represents the hub of a network of tables and previews.
  * Once a table or a preview is binded, its events will be broadcast out to
  * the rest of the network.
  *

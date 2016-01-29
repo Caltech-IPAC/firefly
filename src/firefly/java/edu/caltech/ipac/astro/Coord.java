@@ -246,7 +246,7 @@ public class Coord
       if (islat) throw new CoordException("HMS notation not valid for latitude");
     }
 
-    // No sexigesimal input for non-equatorial systems
+    // No sexagesimal input for non-equatorial systems
     if (!isequ && !isdec) throw new CoordException("Sexagesimal for non-Equatorial coordinate");
 
     // now modularize the input and convert to a double
@@ -329,9 +329,9 @@ public class Coord
   }
 
   /**
-   *  Returns the sexigesimal form of a string representation of
+   *  Returns the sexagesimal form of a string representation of
    *  coordinates in any other form 
-   *  @return String sexigesimal representation of coordinates 
+   *  @return String sexagesimal representation of coordinates 
    */
   public String getCanonicalString() throws CoordException
   {
@@ -341,7 +341,7 @@ public class Coord
 
   /**
    *  Returns indication of whether input coordinates were in
-   *  decimal or hexidecimal
+   *  decimal or hexadecimal
    *  @return boolean
    */
   public boolean is_decimal() throws CoordException
@@ -404,7 +404,7 @@ public class Coord
 
       if (form == 1)
       {
-        // sexigesimal degrees 
+        // sexagesimal degrees 
         circ = 360;
         chd = 'd';
         switch (c_precision)
@@ -429,7 +429,7 @@ public class Coord
       }
       else
       {
-        // sexigesimal hours min sec
+        // sexagesimal hours min sec
         circ = 24;
         chd = 'h';
         switch (c_precision)

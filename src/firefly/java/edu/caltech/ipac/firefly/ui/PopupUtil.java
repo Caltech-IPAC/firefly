@@ -40,7 +40,7 @@ import java.util.Map;
 
 /**
  * A class with a bunch of static methods define the different types of
- * statandard popups we use.
+ * standard popups we use.
  *
  * @author Trey Roby
  */

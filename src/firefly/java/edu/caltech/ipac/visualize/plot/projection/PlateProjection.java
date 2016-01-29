@@ -231,7 +231,7 @@ double	ypos;		/* y (dec) coordinate (deg) */
 *             Structure with header information.                              *
 *       ra                                                                    *
 *          double, Value                                                      *
-*             The right asension of the coordinates to convert to x-y.        *
+*             The right ascension of the coordinates to convert to x-y.        *
 *       dec                                                                   *
 *          double, Value                                                      *
 *             The declination of the coordinates to convert to x-y.           *

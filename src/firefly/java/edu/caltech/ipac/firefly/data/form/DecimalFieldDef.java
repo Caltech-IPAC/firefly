@@ -38,7 +38,7 @@ public abstract class DecimalFieldDef extends RangeFieldDef {
     /**
      * This method should only be call when running on the client side in GWT compiled code.
      * @param n the number to format
-     * @return a string formated version of the number
+     * @return a string formatted version of the number
      */
     public String format(Number n) {
         return getNumberFormat().format(n.doubleValue());

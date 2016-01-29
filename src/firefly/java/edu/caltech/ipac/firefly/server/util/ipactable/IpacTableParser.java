@@ -134,7 +134,7 @@ public class IpacTableParser {
         }
 
         /**
-         * convienvence method to return the values for the given column as a list of string
+         * convenience method to return the values for the given column as a list of string
          * @param colName
          * @return
          */

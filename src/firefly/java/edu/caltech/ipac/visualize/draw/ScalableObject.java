@@ -393,7 +393,7 @@ public class ScalableObject {
     * take a shape in world coordinates and compute what in looks like in 
     * image coordinates. 
     * @param p the plot we are drawing on
-    * @param inShape the shape in world coorindates
+    * @param inShape the shape in world coordinates
     * @param pt the point that all shapes are relative to
     */
    protected GeneralPath getImageShape(Plot p, Shape inShape, ImagePt pt) {

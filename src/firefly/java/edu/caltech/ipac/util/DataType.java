@@ -472,7 +472,7 @@ public class DataType implements Serializable, Cloneable {
         //=========================================================================
 
         /**
-         * Creates a dafault FormatInfo based on its data type.
+         * Creates a default FormatInfo based on its data type.
          * If data is a String, it will be left-aligned.
          * @param dt  the class of the object to format.
          */
@@ -496,7 +496,7 @@ public class DataType implements Serializable, Cloneable {
         }
 
         /**
-         * Creates a default FormatInfo good for formating
+         * Creates a default FormatInfo good for formatting
          * floating-point numbers.  The default precision is set to 4.
          */
         public static FormatInfo createFloatFormat() {
@@ -504,7 +504,7 @@ public class DataType implements Serializable, Cloneable {
         }
 
         /**
-         * Creates a FormatInfo good for formating floating-point numbers
+         * Creates a FormatInfo good for formatting floating-point numbers
          * with the given width and precision.
          * @param width
          * @param precision
@@ -514,7 +514,7 @@ public class DataType implements Serializable, Cloneable {
         }
 
         /**
-         * Creates a FormatInfo good for formating floating-point numbers.
+         * Creates a FormatInfo good for formatting floating-point numbers.
          * @param width     the column's width
          * @param precision the number of precision
          * @param headerAlign   header's alignment.

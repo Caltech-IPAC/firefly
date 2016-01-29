@@ -233,7 +233,7 @@ public class WebAppProperties {
         //    - search the preference database
         //    - the priority of which database for isPref is as
         //        follows from highest to lowest:
-        //        1. perfs
+        //        1. prefs
         //        2. additionalPDB
         //        3. application (system, mainProperties, classProperties)
         if (isPref && _preferencesProperties.containsKey(key)) {

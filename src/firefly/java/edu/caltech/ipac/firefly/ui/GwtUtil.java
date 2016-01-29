@@ -361,7 +361,7 @@ public class GwtUtil {
 
 
     /**
-     * return true if the given element is visible.  this is based on style attribtues. it is possible that a widget is
+     * return true if the given element is visible.  this is based on style attributes. it is possible that a widget is
      * visible, but does not have width or height.
      *
      * @param elem the element to test
@@ -1288,7 +1288,7 @@ public class GwtUtil {
             strValue = $doc.defaultView.getComputedStyle(oElm, "").getPropertyValue(strCssRule);
 
         } else if(oElm.currentStyle){
-//        // Oterwise, try to us IE's method
+//        // Otherwise, try to us IE's method
             strCssRule = strCssRule.replace(/-(w)/g, function (strMatch, p1){
                             return p1.toUpperCase();
                         });

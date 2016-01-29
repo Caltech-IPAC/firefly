@@ -47,8 +47,8 @@ public final class PositionJ2000 extends Position {
 
     /**
      * Construct a Position based on a position in another coordinate system.
-     * Do the converation to a J2000. Save this positon for access later.
-     * @param userEnteredPos the positon in another coordinate system
+     * Do the convertion to a J2000. Save this position for access later.
+     * @param userEnteredPos the position in another coordinate system
      */
     public PositionJ2000(UserPosition userEnteredPos) {
        super( TargetUtil.convertTo(userEnteredPos, CoordinateSys.EQ_J2000) );
@@ -57,8 +57,8 @@ public final class PositionJ2000 extends Position {
 
     /**
      * Construct a Position based on a position in another coordinate system.
-     * Do the converation to a J2000. Save this positon for access later.
-     * @param pos the positon in another coordinate system
+     * Do the convertion to a J2000. Save this position for access later.
+     * @param pos the position in another coordinate system
      */
     public PositionJ2000(Position pos) {
        super( TargetUtil.convertTo(pos, CoordinateSys.EQ_J2000) );

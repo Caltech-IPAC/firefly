@@ -183,7 +183,7 @@ public class ExternalTaskLauncher {
 
                 process=_procBuilder.start();
 
-                // Withoout error stream redirect, you need to have two separate Threads,
+                // Without error stream redirect, you need to have two separate Threads,
                 // one reading from stdout and one reading from stderr,
                 // to avoid the standard error buffer filling
                 // while the standard output buffer was empty

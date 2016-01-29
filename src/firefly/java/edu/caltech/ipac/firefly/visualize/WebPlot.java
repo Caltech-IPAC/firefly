@@ -474,7 +474,7 @@ public class WebPlot {
     }
 
     /**
-     * Determine if a image point is in the plot boundaries and is not noull
+     * Determine if a image point is in the plot boundaries and is not null
      * @param pt the point to test.
      * @return boolean true if it is in the boundaries, false if not.
      */

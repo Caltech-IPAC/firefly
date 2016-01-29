@@ -134,7 +134,7 @@ public class FileUploadField extends InputField implements HasSubmitField {
 
     //TODO: what should this return;
     //TODO: I think it should return the cache key but it needs to be cleaned when it changes
-    //TODO: it clearing out on keypress event posible with a FileUpload widget
+    //TODO: it clearing out on keypress event possible with a FileUpload widget
     public String getValue() {
 //        return field.getFilename();
         return _fieldValue;

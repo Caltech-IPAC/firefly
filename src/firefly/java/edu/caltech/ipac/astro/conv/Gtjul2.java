@@ -30,7 +30,7 @@ public static RaDecRetval gtjul2( double eqxin, double ra, double dec,
 *   J2000.0.
 *
 *   Calls subroutines nwcprc ("old" Newcomb constants) and fk5prc and fk5prp
-*      ("new" Julian prcession formulas).
+*      ("new" Julian precession formulas).
 *
 *  Source of method:
 *    Fifth Fundamental Catalogue (FK5) Part I (1988, but not avail. till 1992)

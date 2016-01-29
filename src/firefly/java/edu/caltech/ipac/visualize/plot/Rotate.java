@@ -129,7 +129,7 @@ public void compute_rotation_angles(WorldPt point)
     
 
 
-    /* for final rotation, matrix multiply the z and y rotation martices */
+    /* for final rotation, matrix multiply the z and y rotation matrices */
     final_rotation = new double[3][3];
     final_unrotation = new double[3][3];
     final_rotation = matrix_mult(y_rotation, z_rotation);

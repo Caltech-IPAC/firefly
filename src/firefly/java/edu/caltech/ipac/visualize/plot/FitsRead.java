@@ -47,7 +47,7 @@ import java.util.Arrays;
  *  The pixelHist is removed from the input argument list in stretchPixel method
  *
  *  *
- * 8/25/15 Fixed the HDU bug at spliting HDU
+ * 8/25/15 Fixed the HDU bug at splitting HDU
  * 9/11/15
  *   Modified the stretchPixel for mask plot
  *   Removed unused methods (commented out)
@@ -880,7 +880,7 @@ public class FitsRead implements Serializable {
                      The IndexColorModel is designed in the way that each pixel[index] contains the color in
                      lsstMasks[index].  In pixel index0, it stores the lsstMasks[0]'s color. Thus, assign
                      pixelData[pixelCount]=index of the lsstMasks, this pixel is going to be plotted using the
-                     color stored there.  The color model is indexed.  For 8 bit image, it has 256 maxium colors.
+                     color stored there.  The color model is indexed.  For 8 bit image, it has 256 maximum colors.
                      For detail, see the indexColorModel defined in ImageData.java.
                      */
                     if (combinedMask.isSet( masks[index])) {
@@ -1580,7 +1580,7 @@ public class FitsRead implements Serializable {
         return masks;
     }
     /**
-     * reeturn the physical data value
+     * return the physical data value
      * @param mask
      * @return
      */

@@ -474,7 +474,7 @@ public class FixedObjectGroup implements TableConnectionList,
      * Set the color for all the objects.
      * The are three type of colors highlight color, standard color,
      * and selected color.
-     * @param colorType the color type.  Must the on of the constands:
+     * @param colorType the color type.  Must be one of the constants:
      *    <code>COLOR_TYPE_HIGHLIGHT</code>,
      *    <code>COLOR_TYPE_STANDARD</code>,
      *    <code>COLOR_TYPE_SELECTED</code>

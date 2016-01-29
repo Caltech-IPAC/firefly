@@ -104,8 +104,8 @@ public class UserServicesImpl extends BaseRemoteService implements UserServices 
     }
 
     /**
-     * Call this method when a UserInfo has been updated. This method is reposible for refreshing the UserInfo object in
-     * cache.
+     * Call this method when a UserInfo has been updated. 
+     * This method is responsible for refreshing the UserInfo object in cache.
      *
      * @param userInfo updated info
      * @throws RPCException if something goes wrong

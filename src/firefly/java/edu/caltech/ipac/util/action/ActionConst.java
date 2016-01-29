@@ -149,7 +149,7 @@ public class ActionConst {
      */
     public static final String NULL_ALLOWED = "NullAllowed";  // a boolean
     /**
-     * value is a boolean. Hint. True is the tip, label, or desc will not change durring
+     * value is a boolean. Hint. True is the tip, label, or desc will not change during
      * the life time of this field
      */
     public static final String TEXT_IMMUTABLE = "TextImmutable";  // a boolean
@@ -231,7 +231,7 @@ public class ActionConst {
      */
     public final static String ERROR_DESCRIPTION_UNITS = "ErrorDescriptionUnits";
     /**
-     * A int - the number of charaters
+     * A int - the number of characters
      */
     public final static String LENGTH = "Length";
 

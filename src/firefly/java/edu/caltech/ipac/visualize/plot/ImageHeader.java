@@ -524,7 +524,7 @@ public class ImageHeader implements Serializable
 	}
     }
 
-	/* now do Digital Sky Survey plate solution cofficients */
+	/* now do Digital Sky Survey plate solution coefficients */
 	if  (header.containsKey("PLTRAH"))
 	{
 	    if (SUTDebug.isDebug())

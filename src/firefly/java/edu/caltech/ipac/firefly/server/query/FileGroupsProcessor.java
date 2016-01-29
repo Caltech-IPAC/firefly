@@ -101,7 +101,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
     }
 
     public boolean doCache() {
-        /* may not make sense to cahe here.. defaults to false */
+        /* may not make sense to cache here.. defaults to false */
         return false;
     }
 

@@ -14,7 +14,7 @@ import java.util.Arrays;
  *
  * Edit history
  * LZ 6/15/15
- *         - Renamed and rewroted the getTblArray method and commented out the eq_tbl and deq_dtbl
+ *         - Renamed and rewrote the getTblArray method and commented out the eq_tbl and deq_dtbl
  *         - Only leave the bitpix = -32 and clean up the rest
  */
 

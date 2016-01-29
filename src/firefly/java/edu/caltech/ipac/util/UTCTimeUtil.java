@@ -181,7 +181,7 @@ public class UTCTimeUtil implements Cloneable
 
 
     /**
-     *  Get a String in HH:MM:SS format for a gievn total seconds (float)
+     *  Get a String in HH:MM:SS format for a given total seconds (float)
      *  total seconds = hour*3600 + minute*60 +seconds,  Michael Nguyen
      *  @param totalSecond of seconds
      *  @return String
@@ -193,7 +193,7 @@ public class UTCTimeUtil implements Cloneable
 
 
   /**
-   *  Get a String in HH:MM:SS format for a gievn total seconds (float)
+   *  Get a String in HH:MM:SS format for a given total seconds (float)
    *  total seconds = hour*3600 + minute*60 +seconds,  Michael Nguyen
    *  @param totalSecond of seconds 
    *  @return String 
@@ -223,7 +223,7 @@ public class UTCTimeUtil implements Cloneable
   }
 
     /**
-     *  Get a String in HH:MM:SS format for a gievn total seconds (float)
+     *  Get a String in HH:MM:SS format for a given total seconds (float)
      *  total seconds = hour*3600 + minute*60 +seconds,  Michael Nguyen
      *  @param totalSecond of seconds
      *  @return String

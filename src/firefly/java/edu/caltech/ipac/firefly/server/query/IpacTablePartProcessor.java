@@ -243,7 +243,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return uid;
     }
 
-    // unique key withoup page info
+    // unique key withou page info
     public String getDataKey(ServerRequest request) {
 
         String uid = request.getRequestId() + "-";
@@ -502,7 +502,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         }
 
         if (isInitLoad(request)) {
-            // maintain counters for applicaiton monitoring
+            // maintain counters for application monitoring
             Counters.getInstance().incrementSearch("Total Searches");
             if (isFromCache) {
                 Counters.getInstance().incrementSearch("From Cache");

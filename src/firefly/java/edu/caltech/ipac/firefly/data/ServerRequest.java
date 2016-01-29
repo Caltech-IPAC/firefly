@@ -154,7 +154,7 @@ public class ServerRequest implements Serializable, DataEntry, Cloneable {
     /**
      * Add a predefined attribute
      * @param param the param to add
-     * @return true if this was a predefined attribute and was set, false it this is an unknow attribute
+     * @return true if this was a predefined attribute and was set, false it this is an unknown attribute
      */
     protected boolean addPredefinedAttrib(Param param) { return false; }
 

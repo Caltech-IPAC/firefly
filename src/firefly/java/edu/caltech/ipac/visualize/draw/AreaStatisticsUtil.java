@@ -239,7 +239,7 @@ public class AreaStatisticsUtil {
 
     /**
      * The integrated flux (total flux from the area has different units from the flux
-     * For example, if the flux unit (BUNIT in the header is "JY/SR" (Jansky per sterradian),
+     * For example, if the flux unit (BUNIT in the header is "JY/SR" (Jansky per steradian),
      * then the integrated flux is JY.
      * This method converts flux units into integrated flux units.
      * @param fluxUnits flux units
@@ -405,7 +405,7 @@ public class AreaStatisticsUtil {
 
 	// calculate integrated flux
 	ImageHeader imageHdr = fitsRead.getImageHeader();
-	// pixel area in sterradian
+	// pixel area in steradian
 	double pixelArea =  Math.abs(imageHdr.cdelt1*DtoR*imageHdr.cdelt2*DtoR);
 	if (SUTDebug.isDebug()) System.out.println("pixelArea (STER)="+pixelArea);
 	//double integratedFlux = nPixels*pixelArea*fluxSum;

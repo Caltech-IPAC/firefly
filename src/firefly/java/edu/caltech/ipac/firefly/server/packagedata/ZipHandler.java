@@ -62,7 +62,7 @@ public class ZipHandler {
      * @param url            url string
      * @param fgList         all the files to zip
      * @param bundle         the bundle this zip represents
-     * @param backgroundInfoCacher    comunucation object
+     * @param backgroundInfoCacher    communication object
      * @param maxBundleBytes maximum uncompressed bytes that should be packaged into one bundle
      * @throws IllegalArgumentException thrown if an access to _packageInfo fails, the packageInfo actually throws the
      *                                  exception

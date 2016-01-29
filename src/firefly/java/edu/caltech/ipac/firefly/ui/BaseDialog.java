@@ -493,7 +493,7 @@ public abstract class BaseDialog {
      *
      * @return true if success, false if failure
      * @throws ValidationException thrown in failure case when you want to show the
-     * user a message that he must acknowledge.  The exception exist only for convinence.
+     * user a message that he must acknowledge.  The exception exist only for convenience.
      * It is optional it you wish to use it.
      *
      */

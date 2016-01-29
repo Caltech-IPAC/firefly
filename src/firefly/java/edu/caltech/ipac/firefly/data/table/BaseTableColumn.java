@@ -74,14 +74,14 @@ public class BaseTableColumn implements TableDataView.Column {
     }
 
     /**
-     * returns recommnended width for this columns.
+     * returns recommended width for this columns.
      */
     public int getWidth() {
         return width;
     }
 
     /**
-     * set the recommnended width for this columns.
+     * set the recommended width for this columns.
      * @param width
      */
     public void setWidth(int width) {

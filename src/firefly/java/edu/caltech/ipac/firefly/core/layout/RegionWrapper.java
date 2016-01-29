@@ -35,7 +35,7 @@ public abstract class RegionWrapper implements Region {
     abstract protected Widget makeDisplay();
 
 //====================================================================
-//  Implementing Region through delegration
+//  Implementing Region through delegation
 //====================================================================
 
     public void clear() {

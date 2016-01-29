@@ -216,7 +216,7 @@ public class FileUtil
         String currExt= getExtension(path);
         File   retval;
         if ( currExt != null && currExt.equals(extension))  {
-                                  //if extesion is correct
+                                  //if extension is correct
             retval= f;
         }
         else {

@@ -286,7 +286,7 @@ public class FootprintFactory  {
 	 * @param refCenter
 	 *            as our geometry is relative to the target used for generating
 	 *            the STC, we need to pass the new ref center when overlaying on
-	 *            a paritcular image not referenced to the one used previously
+	 *            a particular image not referenced to the one used previously
 	 *            to generate the geometry
 	 * @return
 	 */

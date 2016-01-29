@@ -27,7 +27,7 @@ public class WebUtil {
     /**
      * Returns a string where all characters that are not valid for a complete URL have been escaped.
      * Also, it will do URL rewriting for session tracking if necessary.
-     * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
+     * Fires SESSION_MISMATCH if the session ID on the client is different from the one on the server.
      *
      * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
      * @param params parameters to be appended to the url.  These parameters may contain
@@ -41,7 +41,7 @@ public class WebUtil {
     /**
      * Returns a string where all characters that are not valid for a complete URL have been escaped.
      * Also, it will do URL rewriting for session tracking if necessary.
-     * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
+     * Fires SESSION_MISMATCH if the session ID on the client is different from the one on the server.
      *
      * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
      * @param paramType  if the the parameters are for the server use QUESTION_MARK if the client use POUND

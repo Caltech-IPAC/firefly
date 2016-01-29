@@ -135,7 +135,7 @@ public class XYGraphWidget extends Composite {
         symbol.setHoverSelectionBorderColor("green");
         symbol.setHoverSelectionBorderWidth(2);
 //        symbol.setHoverSelectionBorderWidth(2);
-        // with kannotation on top of this line (above chart)
+        // with connotation on top of this line (above chart)
 //        curve.getSymbol().setHoverAnnotationSymbolType(
 //                GChart.SymbolType.XGRIDLINE);
 //        curve.getSymbol().setHoverLocation(

@@ -46,7 +46,7 @@ class Position implements Location, Serializable, Cloneable {
     /**
      * @param lon lon in degrees
      * @param lat lon in degrees
-     * @param coordSystem must be one of the predefined constansts in
+     * @param coordSystem must be one of the predefined constants in
      *                    CoordinateSys
      * @throws IllegalArgumentException
      */
@@ -65,7 +65,7 @@ class Position implements Location, Serializable, Cloneable {
     }
 
     /**
-     * a copy constructor.  Make a positon just like the one passed in
+     * a copy constructor.  Make a position just like the one passed in
      * @param pos the position
      */
     public Position(Position pos) {
@@ -77,9 +77,9 @@ class Position implements Location, Serializable, Cloneable {
      * @param lon lon in degrees
      * @param lat lon in degrees
      * @param pm the proper motion, null if position contains no proper motion
-     * @param coordSystem must be one of the predefined constansts in
+     * @param coordSystem must be one of the predefined constants in
      *                    CoordinateSys
-     * @param epoch the epoch of oberservation (date when observed)
+     * @param epoch the epoch of observation (date when observed)
      * @throws IllegalArgumentException
      */
     public Position( double        lon,

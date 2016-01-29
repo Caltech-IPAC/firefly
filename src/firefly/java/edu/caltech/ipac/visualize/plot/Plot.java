@@ -457,7 +457,7 @@ public abstract class Plot {
 
 
     /**
-     * specificly release any resources held by this object
+     * specifically release any resources held by this object
      * any subclasses who override this method should do a 
      * super.freeResoureces()
      */

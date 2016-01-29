@@ -52,7 +52,7 @@ class CoordinateSys implements Serializable {
     private final double equinoxYear;
 
       //---- these are all derived based on jsys & equinoxYear
-      //---- they are for the convience functions
+      //---- they are for the convenience functions
     private final String equinoxDesc;
     private final String coodSysName;
     private final String jsysDesc;

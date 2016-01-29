@@ -116,7 +116,7 @@ public CoveragePolygons getCoverage(List<ImageCorners> corners)
     System.out.println("rotated circle: center is at lon = " + center.getLon() +
 	"  lat = " + center.getLat() + "  radius = " + radius);
     }
-    /* now unrotat coords to get circle at original coords */
+    /* now unrotate coords to get circle at original coords */
     point = new WorldPt(center.getLon(), center.getLat());
     point = rotate.do_unrotate(point);
     Circle circle = new Circle(point, radius);

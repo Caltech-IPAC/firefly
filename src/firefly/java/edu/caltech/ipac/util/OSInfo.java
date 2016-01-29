@@ -8,7 +8,7 @@ public class OSInfo {
 
   //  --- These are the Specific OS types
   //  WINDOWS and UNKNOWN_UNIX  are for os types we have not yet
-  //  specificly identified
+  //  specifically identified
 
     public static final String SUN           = "SunOS";
     public static final String LINUX         = "Linux";
@@ -29,7 +29,7 @@ public class OSInfo {
     public static final String MAC_LION_OR_LATER = "MAC_LION_OR_LATER";
     public static final String MAC64 = "MAC64";
 
-  //  --- These are the general catagories of OS types
+  //  --- These are the general categories of OS types
     public static final String ANY_WINDOWS      = "AnyWindows";
     public static final String ANY_WIN_95_98_ME = "ANY_WIN_95_98_ME";
     public static final String ANY_WIN_NT       = "NT";

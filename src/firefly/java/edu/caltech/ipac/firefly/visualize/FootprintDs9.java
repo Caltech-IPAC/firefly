@@ -258,7 +258,7 @@ public class FootprintDs9 extends CircularMarker {
 
 	/**
 	 * Make crosshair polygons (array of points > 2) otherwise it won't
-	 * translate or rotate correclty.
+	 * translate or rotate correctly.
 	 * 
 	 * @param footprintRegions2
 	 * @param plot

@@ -39,7 +39,7 @@ public class DateFieldDef extends RangeFieldDef {
 
     /**
      *
-     * @param format    a string of formats separtated by ";".
+     * @param format    a string of formats separated by ";".
      * @param min  min date as a string
      * @param max  max date as a string
      */

@@ -80,7 +80,7 @@ public class CacheManager {
 //====================================================================
     /**
      * An empty implementation of Cache.  This is a simple method to
-     * disable caching by providing a permenantly empty cache.
+     * disable caching by providing a permanently empty cache.
      */
     private static class EmptyCache implements Cache {
 

@@ -148,7 +148,7 @@ public class MultiShapeObj extends DrawObj {
 				 drawObj.translateTo(plot, apt);
 				 retList.add(drawObj);
 			 }catch(Exception e){
-				 // implemented only in some childs... 
+				 // implemented only in some children... 
 				 logger.log(Level.INFO, "Only ShapeDataObj and FootprintObj have implementing translation", e);
 			 }
 			 
@@ -163,7 +163,7 @@ public class MultiShapeObj extends DrawObj {
 				 drawObj.rotateAround(plot, angle, wc);
 				 retList.add(drawObj);
 			 }catch(Exception e){
-				 // implemented only in some childs... 
+				 // implemented only in some children... 
 				 logger.log(Level.INFO, "Only ShapeDataObj and FootprintObj have implementing rotation", e);
 			 }
 			 

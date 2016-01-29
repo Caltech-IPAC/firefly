@@ -265,7 +265,7 @@ public class Logger {
          *
          *
          *
-         * @param function a function name.  It must not contain spaces.  Reccommend less than 20 chars.
+         * @param function a function name.  It must not contain spaces.  Recommend less than 20 chars.
          * @param msgs the messages to log.  It should be in the form of key, value, key, value etc..
          */
         static String fmt = "%-20s %-15s %8.3f -- %s";

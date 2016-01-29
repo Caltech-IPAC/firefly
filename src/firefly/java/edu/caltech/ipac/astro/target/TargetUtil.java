@@ -83,7 +83,7 @@ public class TargetUtil {
     * convert a Position from one coordSystem to another
     * @param inP the input position
     * @param coordSystem the CoordinateSys of the new position
-    *              been set as disired output system.
+    *              been set as desired output system.
     * @return a new Position converted to the CoordinateSys
     *           that you requested
     */
@@ -116,7 +116,7 @@ public class TargetUtil {
       in_sys = inP.getCoordSystem().getJsys();
       out_sys= coordSystem.getJsys();
 
-      // note change - epoch is always 2000 unless specificly 1950
+      // note change - epoch is always 2000 unless specifically 1950
       // compare to old code below- is this correct????
       float  outEpoch= Position.EPOCH2000;
       if (out_year ==  1950.0F) outEpoch= Position.EPOCH1950;

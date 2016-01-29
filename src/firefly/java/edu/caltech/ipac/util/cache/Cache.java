@@ -14,7 +14,7 @@ import java.util.List;
 public interface Cache {
     /**
      * This is a list of cache types each implementing cache may support.  The type
-     * is described using 2 words; the first is lengh of time it may idle, and the
+     * is described using 2 words; the first is length of time it may idle, and the
      * second is the type of data.
      */
     public static final String TYPE_PERM_SMALL = "PERM_SMALL";

@@ -557,7 +557,7 @@ public class Application {
 //====================================================================
 
     /**
-     * retrieves application version infomation
+     * retrieves application version information
      */
     private class VersionInfo extends ServerTask<Version> {
         AsyncCallback<Version> vAsync;

@@ -111,7 +111,7 @@ public class GridLayer  {
     //=====================================================================
 
     /**
-     remeber the relationship of plot and ppl so th eppl can be
+     remember the relationship of plot and ppl so the ppl can be
      removed when the control panel for Grid is removed.
     */
     private void addPlot(Plot p) {

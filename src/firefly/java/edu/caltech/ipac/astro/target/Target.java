@@ -63,8 +63,8 @@ public abstract class Target implements Cloneable, Serializable {
     public abstract String getCoords();
 
     /**
-     * Return the coordinage system plus the equinox
-     * @return String the coordinage system plus the equinox
+     * Return the coordinate system plus the equinox
+     * @return String the coordinate system plus the equinox
      */
     public abstract String getCoordSysDescription();
 

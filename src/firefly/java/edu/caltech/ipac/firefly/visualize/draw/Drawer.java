@@ -263,7 +263,7 @@ public class Drawer implements WebEventListener, LayerDrawer {
     /**
      * when the image resizes, like a zoom, then fire events to redraw
      * Certain types of data will need to recompute the data when the image size changes so this
-     * methods disables the default automactic handling
+     * methods disables the default automatic handling
      * By default, this property is true
      * @param h handle image changes
      */

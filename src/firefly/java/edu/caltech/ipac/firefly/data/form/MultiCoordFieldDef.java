@@ -90,7 +90,7 @@ public class MultiCoordFieldDef extends FloatFieldDef
 
     /**
      * Set the minimum boundary type of this field.  It can be either inclusive or exclusive.
-     * If this property is not given, then it implies this field has no mininum boundary.
+     * If this property is not given, then it implies this field has no minimum boundary.
      * @param minBoundType  either {@link #INCLUSIVE} or {@link #EXCLUSIVE}
      */
     public void setRaMinBoundType(String minBoundType) {
@@ -150,7 +150,7 @@ public class MultiCoordFieldDef extends FloatFieldDef
 
     /**
      * Set the minimum boundary type of this field.  It can be either inclusive or exclusive.
-     * If this property is not given, then it implies this field has no mininum boundary.
+     * If this property is not given, then it implies this field has no minimum boundary.
      * @param minBoundType  either {@link #INCLUSIVE} or {@link #EXCLUSIVE}
      */
     public void setDecMinBoundType(String minBoundType) {

@@ -199,8 +199,8 @@ public class PackageMaster  {
 //    public interface FileGroupCreator {
         /**
          * This method should compute the FileGroup list the first time it is called.
-         * However, it may be call
-         * repeatiatly so it should compute the list and save it so future calls to not
+         * However, it may be called
+         * repeatedly so it should compute the list and save it so future calls to not
          * require a another database hit or computation.
          * @return a list of FileGroup
          * @throws Exception this method may throw any exception

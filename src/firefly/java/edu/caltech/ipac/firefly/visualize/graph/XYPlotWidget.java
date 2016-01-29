@@ -1161,7 +1161,7 @@ public class XYPlotWidget extends XYPlotBasicWidget implements FilterToggle.Filt
                 }
 
                 List<String> currentFilters = _tableModel.getFilters();
-                // remove filters, that would be overriden
+                // remove filters, that would be overridden
                 Iterator<String> iter = currentFilters.iterator();
                 String f;
                 while (iter.hasNext()) {

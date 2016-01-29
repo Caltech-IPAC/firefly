@@ -29,18 +29,18 @@ public class DataList<E>  {
     transient private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
-     * Move the given elecment to the given index if that elecment exists in this list.
+     * Move the given element to the given index if that element exists in this list.
      * Otherwise, add the object to the list at the given index.
      * @param index
-     * @param elecment
+     * @param element
      * @return true if a move operation was performed.
      */
-    public boolean moveTo(int index, E elecment) {
-        int idx = list.indexOf(elecment);
+    public boolean moveTo(int index, E element) {
+        int idx = list.indexOf(element);
         if (idx >= 0) {
             remove(idx);
         }
-        this.add(index, elecment);
+        this.add(index, element);
         return idx >= 0;
     }
 

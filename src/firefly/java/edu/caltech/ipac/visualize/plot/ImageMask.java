@@ -17,7 +17,7 @@ public class ImageMask {
     public static final int MASK32 = 0xffffffff;
 
     /**
-     * contrusctor to createa new ImageMask
+     * contructor to create a new ImageMask
      * Example:
      *   ImageMask m = new ImageMask(0, Color.RED)
      *   it creates a new ImageMask object which the bit (bitoffste=0) set, the Color is read

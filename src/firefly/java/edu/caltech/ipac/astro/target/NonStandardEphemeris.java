@@ -128,7 +128,7 @@ public class NonStandardEphemeris implements Ephemeris, java.io.Serializable {
     }
 
     /**
-     * Implemenation of the Clonable interface
+     * Implementation of the Cloneable interface
      */
     public Object clone() {
         return new NonStandardEphemeris( epoch, t, e, q, i, 

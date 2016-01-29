@@ -179,7 +179,7 @@ public class WebAssert {
 
     /**
      * Test a boolean value. The test fails if the boolean is false.
-     * Throw a IllegalArgumentException with thre source as the caller.
+     * Throw a IllegalArgumentException with the source as the caller.
      * @param b the boolean value
      * @param msg print out the string if the test fails.
      */

@@ -42,10 +42,10 @@ import java.util.zip.ZipException;
  * <code>myfile.JarVersion.Major=5</code> <br>
  * You may define the following properties:
  * <ul>
- * <li><em>JarFileName</em><b>.JarVerion.Major=</b><em>verion number</em>
- * <li><em>JarFileName</em><b>.JarVerion.Minor=</b><em>verion number</em>
- * <li><em>JarFileName</em><b>.JarVerion.Revision=</b><em>revision number</em>
- * <li><em>JarFileName</em><b>.JarVerion.Type=</b><em>type description</em>
+ * <li><em>JarFileName</em><b>.JarVersion.Major=</b><em>version number</em>
+ * <li><em>JarFileName</em><b>.JarVersion.Minor=</b><em>version number</em>
+ * <li><em>JarFileName</em><b>.JarVersion.Revision=</b><em>revision number</em>
+ * <li><em>JarFileName</em><b>.JarVersion.Type=</b><em>type description</em>
  * </ul>
  * <p>
  * The manifest style uses the the following format: 
@@ -55,8 +55,8 @@ import java.util.zip.ZipException;
  * <code>myfile-MajorVersion: 5</code> <br>
  * You may define the following manifest entries:
  * <ul>
- * <li><em>JarFileName</em><b>-MajorVersion: </b><em>verion number</em>
- * <li><em>JarFileName</em><b>-MinorVersion: </b><em>verion number</em>
+ * <li><em>JarFileName</em><b>-MajorVersion: </b><em>version number</em>
+ * <li><em>JarFileName</em><b>-MinorVersion: </b><em>version number</em>
  * <li><em>JarFileName</em><b>-Revision: </b><em>revision number</em>
  * <li><em>JarFileName</em><b>-Type: </b><em>type description</em>
  * <li><em>JarFileName</em><b>-BuildDate: </b><em>date string</em>

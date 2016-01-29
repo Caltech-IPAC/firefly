@@ -5,7 +5,7 @@
 package edu.caltech.ipac.astro.target;
 
 /**
- * Ephemeris Inteface
+ * Ephemeris Interface
  * Marker interface for classes ephemeris classes
  * <BR>
  * Copyright (C) 1999 California Institute of Technology. All rights reserved.<BR>

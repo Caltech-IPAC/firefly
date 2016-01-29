@@ -33,7 +33,7 @@ public class VersionUtil {
     public static boolean init= false;
 
     /**
-     * Can be call multiple times but will only init the version on the first call.  All other
+     * Can be called multiple times but will only init the version on the first call.  All other
      * calls are noop.
      * @param context the context that should contain the version, context comes from web.xml
      */

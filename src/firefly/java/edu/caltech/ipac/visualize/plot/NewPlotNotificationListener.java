@@ -15,7 +15,7 @@ public interface NewPlotNotificationListener extends EventListener {
         * @param ev the event
         */
        public abstract void newPlot(NewPlotNotificationEvent ev);
-       // ???  other stauts methods ????
+       // ???  other status methods ????
 }
 
 

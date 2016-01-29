@@ -676,7 +676,7 @@ public class WebGrid
     *  We also take into account that zooming up makes the
     *  grid too sparse, so the zoom factor is taken when we decide the 
     *  step size between grid.
-    *  after zooming, the step size is the original size devided by zoom
+    *  after zooming, the step size is the original size divided by zoom
     *  factor.
     * @param val the value to lookup
     * @return the lookup value

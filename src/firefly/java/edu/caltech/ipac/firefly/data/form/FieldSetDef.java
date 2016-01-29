@@ -59,7 +59,7 @@ public class FieldSetDef implements Serializable {
     }
 
     /**
-     * returns the FieldDef associcated with this name.
+     * returns the FieldDef associated with this name.
      * This relativeName is appended to this Set's baseProp name to form
      * the absolute name when retrieving the field.
      * @param relativeName

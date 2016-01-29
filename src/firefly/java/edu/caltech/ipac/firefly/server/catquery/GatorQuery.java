@@ -199,7 +199,7 @@ public class GatorQuery extends BaseGator {
                 IpacTableWriter.save(uloadFile, singleTarget);
                 req.setFileName(uloadFile.getPath());
             } catch (IOException e) {
-                // shouldn not happen
+                // should not happen
             }
         }
     }

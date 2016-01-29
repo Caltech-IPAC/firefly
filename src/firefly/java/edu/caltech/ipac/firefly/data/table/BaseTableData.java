@@ -72,7 +72,7 @@ public class BaseTableData implements TableData<BaseTableData.RowData> {
      * Add this row into the set.
      *
      * @param row row to be added
-     * @return true if it is sucessfully added
+     * @return true if it is successfully added
      */
     public boolean addRow(RowData row) {
         row.setHasAccessCName(hasAccessCName);

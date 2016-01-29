@@ -328,7 +328,7 @@ public class CoordUtil
          throw new CoordException(HMS_FOR_LAT);
     }
 
-    // No sexigesimal input for non-equatorial systems
+    // No sexagesimal input for non-equatorial systems
     if (!isequ && !isdec)
        throw new CoordException(SEX_FOR_NONE_EQU);
 
@@ -520,7 +520,7 @@ public class CoordUtil
 
       if (form == FORM_DMS)
       {
-        // sexigesimal degrees 
+        // sexagesimal degrees 
         circ = 360;
         chd = 'd';
         switch (c_precision)
@@ -542,7 +542,7 @@ public class CoordUtil
       }
       else
       {
-        // sexigesimal hours min sec
+        // sexagesimal hours min sec
         circ = 24;
         chd = 'h';
         switch (c_precision)
