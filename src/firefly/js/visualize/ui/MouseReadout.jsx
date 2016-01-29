@@ -16,6 +16,7 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionDialog.jsx';
 import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
+import CoordUtil from '../CoordUtil.js';
 
 var rS= {
 	border: '1px solid white',
@@ -37,19 +38,27 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 	var leftColumn = {width: 200, display: 'inline-block'};
 
 	var rightColumn = {display: 'inline-block'};
+	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
 	return (
 			<div style={ rS}>
                <div>
 
-				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>  { updateField('pixelSize')}</div>
+				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>
+					 <div style={ textStyle} > { updateField('pixelSize')}</div>
+				 </div>
 
-				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>  { updateField('coordinateSys')}  {showReadout(plot, mouseState, CoordinateSys.ECL_J2000)}</div>
+				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>
+					 <div style={ textStyle} >{ updateField('coordinateSys')} </div>
+					 {showReadout(plot, mouseState, CoordinateSys.EQ_J2000)}</div>
 
               </div>
 	         <div>
 				 <div	style={leftColumn} > {showReadout(plot, mouseState) } </div>
 
-				 <div style={ rightColumn}  onClick={ () => showDialog('imagePixel' )}>{updateField('imagePixel' )} {showReadout(plot, mouseState, CoordinateSys.PIXEL)}</div>
+				 <div style={ rightColumn}  onClick={ () => showDialog('imagePixel' )}>
+					 <div style={ textStyle} >{updateField('imagePixel' )} </div>
+					 {showReadout(plot, mouseState, CoordinateSys.PIXEL)}
+				 </div>
 		    </div>
 
 		  </div>
@@ -60,18 +69,35 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 function showReadout(plot, mouseState, coordinate){
 	if (!plot) return false;
 	if (isBlankImage(plot)) return false;
-	var spt= mouseState.screenPt;
-	console.log(spt);
 	var cc= CysConverter.make(plot);
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
-	console.log(wpt.getLon() + ' '+wpt.getLat());
+	var spt= mouseState.screenPt;
+
+	var result;
+	var lon = wpt.getLon();
+	var lat = wpt.getLat();
     if (coordinate){
-       return  wpt.getLon() + ' '+ wpt.getLat();
+
+		switch (coordinate){
+			case CoordinateSys.EQ_J2000:
+				var hmsRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
+				var hmsDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
+				result = ' '+ hmsRa +' ' + hmsDec;
+				break;
+			case CoordinateSys.GALACTIC || CoordinateSys.SUPERGALACTIC:
+				result=  ' '+lon + ' '+ lat;
+				break;
+			case CoordinateSys.PIXEL:
+				//result = mouseState.pixelX + ' ' +  mouseState.pixelY;
+				result = ' '+spt.x + ' ' + spt.y;
+				break;
+		}
+
 	}
 	else {
 		//TODO readout for pixel size
 	}
-
+    return result;
 }
 function showDialog(fieldKey) {
 
