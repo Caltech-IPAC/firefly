@@ -13,7 +13,7 @@ import MouseState from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-import {showMouseReadoutOptionDialog} from './MouseReadoutOptionDialog.jsx';
+import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
@@ -29,7 +29,7 @@ var rS= {
 
 const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
-export function MouseReadout({plotView:pv,size,mouseState}) {
+export function MouseReadout({plotView:pv,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
 
@@ -54,7 +54,6 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
               </div>
 	         <div>
 				 <div	style={leftColumn} > {showReadout(plot, mouseState) } </div>
-
 				 <div style={ rightColumn}  onClick={ () => showDialog('imagePixel' )}>
 					 <div style={ textStyle} >{updateField('imagePixel' )} </div>
 					 {showReadout(plot, mouseState, CoordinateSys.PIXEL)}
@@ -67,16 +66,23 @@ export function MouseReadout({plotView:pv,size,mouseState}) {
 }
 
 function showReadout(plot, mouseState, coordinate){
-	if (!plot) return false;
-	if (isBlankImage(plot)) return false;
+	if (!plot) return'';
+	if (isBlankImage(plot)) return'';
+
 	var cc= CysConverter.make(plot);
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
 	var spt= mouseState.screenPt;
-
+    if (!spt) return '';
+	var {width:screenW, height:screenH }= plot.screenSize;
+	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
+		console.log(spt+  ' outside the screen');
+		return '';
+	}
 	var result;
 	var lon = wpt.getLon();
 	var lat = wpt.getLat();
-    if (coordinate){
+
+	if (coordinate){
 
 		switch (coordinate){
 			case CoordinateSys.EQ_J2000:
@@ -90,6 +96,9 @@ function showReadout(plot, mouseState, coordinate){
 			case CoordinateSys.PIXEL:
 				//result = mouseState.pixelX + ' ' +  mouseState.pixelY;
 				result = ' '+spt.x + ' ' + spt.y;
+				break;
+			default:
+				result='';
 				break;
 		}
 
