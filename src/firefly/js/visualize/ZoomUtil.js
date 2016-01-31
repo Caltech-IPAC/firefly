@@ -65,7 +65,7 @@ export function doDispatchZoomLocking(plotId, zoomLockingEnabled, zoomLockingTyp
  */
 export function makeZoomAction(rawAction) {
     return (dispatcher) => {
-        var {plotId,userZoomType}= rawAction.payload;
+        var {plotId,userZoomType,zoomLockingEnabled}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
@@ -97,7 +97,7 @@ export function makeZoomAction(rawAction) {
 
         }
         if (continueZoom) {
-            doZoom(dispatcher,plotId,level,isFullScreen,useDelay);
+            doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,useDelay);
             var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,useDelay);
             PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
         }
@@ -138,8 +138,9 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,useDelay) 
  * @param isFullScreen
  * @param useDelay
  */
-function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, useDelay) {
-    dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START, payload:{plotId,zoomLevel} } );
+function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, useDelay) {
+    dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
+                  payload:{plotId,zoomLevel, zoomLockingEnabled} } );
 
 
      // note - this filter has a side effect of canceling the timer. There might be a better way to do this.

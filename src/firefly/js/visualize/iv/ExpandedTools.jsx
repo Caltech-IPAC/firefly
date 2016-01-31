@@ -11,6 +11,7 @@ import {convertZoomToString} from '../ZoomUtil.js';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
+import {CloseButton} from '../../ui/CloseButton.jsx';
 
 
 import ONE from 'html/images/icons-2014/Images-One.png';
@@ -28,8 +29,7 @@ const tStyle= {
 
 
 function createOptions(expandedMode) {
-
-    var autoPlay= false
+    var autoPlay= false;
     if (expandedMode===ExpandType.SINGLE) {
         autoPlay= (
             <div>
@@ -43,8 +43,6 @@ function createOptions(expandedMode) {
                 <div style={tStyle}>TODO: auto</div>
             </div>
         );
-
-
     }
 
     return (
@@ -78,7 +76,7 @@ function createOptions(expandedMode) {
 
 const s= {
     display: 'inline-block',
-    paddingLeft: 30
+    paddingLeft: 10
 };
 
 export function ExpandedTools({allPlots}) {
@@ -99,7 +97,7 @@ export function ExpandedTools({allPlots}) {
     }
     return (
         <div style={{width:'100%', height:70}}>
-            <div style={s}>close button</div>
+            <CloseButton style={s} onClick={() => console.log('ExpandedTools: back button')}/>
             <div style={s}>{single ? plotTitle : 'Tiled View'} </div>
             <div style={s}></div>
             <WhichView  allPlots={allPlots}/>
