@@ -12,7 +12,7 @@ import {convertZoomToString} from '../ZoomUtil.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import PlotViewUtil from '../PlotViewUtil.js';
-import {ImageViewerView}  from './ImageViewerView.jsx';
+import {ImageViewerLayout}  from './ImageViewerLayout.jsx';
 import {PlotAttribute} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -201,15 +201,21 @@ function makeTitleLineHeader(annoOps, expandedMode,titleStr, zoomFactor, plotSta
 //---------- React Components -----------------------------------------------
 //===========================================================================
 
-export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId}) {
-    var ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
-    var top= ctxToolbar?32:0;
+export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,width,height}) {
+
+    if (!width || !height) return <div></div>;
+
+    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
+    const top= ctxToolbar?32:0;
     var title, zoomFactor;
     var titleLineHeader= null;
     var inlineTitle= null;
     var plotId= null;
     var plotState= null;
-    var {expandedMode}= visRoot;
+    const {expandedMode}= visRoot;
+    const expandedToSingle= (expandedMode===ExpandType.SINGLE);
+    const iWidth= expandedToSingle ? width : width-4;
+    const iHeight=expandedToSingle ? height-top :height-5-top;
 
     if (pv && pv.primaryPlot) {
         title= pv && pv.primaryPlot ? pv.primaryPlot.title : '';
@@ -236,7 +242,7 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
         overflow: 'hidden',
         position: 'absolute',
         borderStyle: 'solid',
-        borderWidth: (expandedMode!==ExpandType.SINGLE) ?'3px 2px 2px 2px' : '0 0 0 0',
+        borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
         borderColor: getBorderColor(pv,visRoot)
     };
 
@@ -256,7 +262,9 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
             <div className='image-viewer-decorate' style={innerStyle}>
                 {ctxToolbar}
                 <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
-                    <ImageViewerView plotView={pv} drawLayersAry={drawLayersAry}/>
+                    <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
+                                       width={iWidth} height={iHeight}
+                                       externalWidth={width} externalHeight={height}/>
                     {inlineTitle}
                     {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId)}
                 </div>
@@ -272,7 +280,9 @@ ImageViewerDecorate.propTypes= {
     drawLayersAry: PropTypes.array.isRequired,
     visRoot: PropTypes.object.isRequired,
     extensionList : PropTypes.array.isRequired,
-    mousePlotId : PropTypes.string
+    mousePlotId : PropTypes.string,
+    width : PropTypes.number.isRequired,
+    height : PropTypes.number.isRequired
 };
 
 

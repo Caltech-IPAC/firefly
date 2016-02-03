@@ -3,10 +3,12 @@
  */
 
 import Cntlr from '../ImagePlotCntlr.js';
-import PlotView from './PlotView.js';
+import PlotView, {makePlotView} from './PlotView.js';
 import WebPlot from '../WebPlot.js';
 import PlotGroup from '../PlotGroup.js';
 import PlotViewUtil from '../PlotViewUtil.js';
+import {UserZoomTypes} from '../ZoomUtil.js';
+import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 
 
 //============ EXPORTS ===========
@@ -54,15 +56,13 @@ function reducer(state, action) {
 
 
 const updateDefaults= function(plotRequestDefaults, action) {
-    var retDef;
     var {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
     if (threeColor) {
-        retDef= Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}});
+        return Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}});
     }
     else {
-        retDef= Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
+        return Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
     }
-    return retDef;
 };
 
 const addPlot= function(plotViewAry,action) {
@@ -83,9 +83,7 @@ function confirmPlotView(plotViewAry,action) {
     const {plotId}= action.payload;
     if (pvExist(plotId,plotViewAry)) return null;
 
-    const payload= action.payload;
-    var rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => payload[key] ? true : false);
-    var pv= PlotView.makePlotView(plotId, payload[rKey] );
+    var pv= makePlotView(plotId, getDefRequest(action.payload),null);
     return [...plotViewAry,pv];
 }
 
@@ -112,4 +110,8 @@ function plotGroupExist(plotGroupId, plotGroupAry) {
 }
 
 
+function getDefRequest(obj) {
+    var rKey= ['wpRequest','redReq','blueReq','greenReq'].find( (key) => obj[key] ? true : false);
+    return rKey ? obj[rKey] : null;
+}
 

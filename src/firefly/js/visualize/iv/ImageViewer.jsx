@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
-import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
+import {ImageViewerView} from './ImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
 import {currMouseState,MouseState} from '../VisMouseCntlr.js';
@@ -86,11 +86,11 @@ export class ImageViewer extends Component {
         var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
         if (!plotView) return false;
         return (
-            <ImageViewerDecorate plotView={plotView}
-                                 drawLayersAry={drawLayersAry}
-                                 visRoot={allPlots}
-                                 mousePlotId={mousePlotId}
-                                 extensionList={getExtensionList(plotView.plotId)} />
+            <ImageViewerView plotView={plotView}
+                             drawLayersAry={drawLayersAry}
+                             visRoot={allPlots}
+                             mousePlotId={mousePlotId}
+                             extensionList={getExtensionList(plotView.plotId)} />
         );
     }
 }

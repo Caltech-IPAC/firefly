@@ -75,7 +75,7 @@ function showReadout(plot, mouseState, coordinate){
     if (!spt) return '';
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
-		console.log(spt+  ' outside the screen');
+		//console.log(spt+  ' outside the screen');
 		return '';
 	}
 	var result;
