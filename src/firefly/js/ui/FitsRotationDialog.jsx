@@ -9,8 +9,10 @@ import {rotation} from '../util/WebUtil.js';
 import InputGroup from './InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import ValidationField from './ValidationField.jsx';
+import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
+import ListBoxInputField from './ListBoxInputField.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
@@ -31,7 +33,7 @@ function getDialogBuilder() {
     return () => {
         if (!popup) {
             const popup = (
-                <PopupPanel title={'Fits Rotation Dialog'}>
+                <PopupPanel title={'Rotate Image'}>
                     <FitsRotationDialog groupKey={'FITS_ROTATION_FORM'}/>
                 </PopupPanel>
             );
@@ -229,7 +231,6 @@ function FitsRotationDialogForm() {
 
     var inputfield = {display: 'inline-block', paddingTop:40, paddingLeft:40, verticalAlign:'middle', paddingBottom:30};
 
-
     return (
 
         <FieldGroup groupKey='FITS_ROTATION_FORM' keepState={true}>
@@ -240,15 +241,31 @@ function FitsRotationDialogForm() {
                                value: '',
                                validator: Validate.floatRange.bind(null, 0.0, 360.0, 2, 'rotation angle'),
                                tooltip: 'enter the angle between 0 and 360',
-                               label: 'Rotation:',
-                               labelWidth: 80
+                               label: 'Rotation Angle:',
+                               labelWidth: 100
                          }} />
+                </div>
+
+                <div style={{paddingLeft:40,marginBottom: 20}}>
+                    <CheckboxGroupInputField
+                        initialState= {{
+                              tooltip: 'Apply rotation to all related images',
+                              label : 'Apply rotation to all related images:',
+                              value: ''
+                          }}
+                        options={
+                                  [
+                                      {label: '', value: 'True'}
+                                  ]
+                                  }
+                        fieldKey='checkAllimage'
+                    />
                 </div>
 
                 <div style={{'textAlign':'center', marginBottom: 20}}>
                     < CompleteButton
                         text='OK'  groupKey='FITS_ROTATION_FORM'
-                        onSuccess={resultsOK}
+                        onSuccess={resultsSuccess}
                         onFail={resultsFail}
                         dialogId='fitsRotationDialog'
                     />
@@ -256,6 +273,48 @@ function FitsRotationDialogForm() {
         </FieldGroup>
     );
 
+}
+
+function showResults(success, request) {
+    var statStr= `validate state: ${success}`;
+    console.log(statStr);
+    console.log(request);
+
+    var s= Object.keys(request).reduce(function(buildString,k,idx,array){
+        buildString+=`${k}=${request[k]}`;
+        if (idx<array.length-1) buildString+=', ';
+        return buildString;
+    },'');
+
+
+    var resolver= null;
+    var closePromise= new Promise(function(resolve, reject) {
+        resolver= resolve;
+    });
+
+    var results= (
+        <PopupPanel title={'Rotation Dialog Results'} closePromise={closePromise} >
+            {makeResultInfoContent(statStr,s,resolver)}
+        </PopupPanel>
+    );
+
+    DialogRootContainer.defineDialog('ResultsFromRotationDialog', results);
+    AppDataCntlr.showDialog('ResultsFromRotationDialog');
+
+}
+
+
+function makeResultInfoContent(statStr,s,closePromiseClick) {
+    return (
+        <div style={{padding:'10px'}}>
+            <br/>{statStr}<br/><br/>{s}
+            <CompleteButton dialogId='ResultsFromRotationDialog' />
+        </div>
+    );
+}
+
+function resultsSuccess(request) {
+    showResults(true,request);
 }
 
 

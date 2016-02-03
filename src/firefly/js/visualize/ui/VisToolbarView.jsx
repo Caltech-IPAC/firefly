@@ -22,6 +22,7 @@ import {StretchDropDownView} from './StretchDropDownView.jsx';
 import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';
 
 import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
+import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 
@@ -124,8 +125,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            enabled={enabled}
                            horizontal={true}
                            visible={mi.rotate}
-                           todo={true}
-                           onClick={() => console.log('todo')}/>
+                           onClick={showFitsRotationDialog}/>
 
 
 
