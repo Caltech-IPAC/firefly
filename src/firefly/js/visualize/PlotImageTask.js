@@ -79,7 +79,8 @@ function makePlotImageAction(rawAction) {
         } );
 
         if (rawAction.useContextModifications) {
-            wpRequest= modifyRequest(plotId,wpRequest,Band.NO_BAND,true);
+            var pv= getPlotViewById(visRoot(),plotId);
+            if (pv) wpRequest= modifyRequest(pv.plotViewCtx,wpRequest,Band.NO_BAND);
         }
 
 
@@ -107,27 +108,24 @@ function makePlotImageAction(rawAction) {
 
 /**
  *
- * @param {string} plotId
+ * @param {object} pvCtx
  * @param {WebPlotRequest} r
  * @param {Band} band
  * @return {WebPlotRequest}
  */
-function modifyRequest(plotId, r, band) {
+function modifyRequest(pvCtx, r, band) {
 
-    if (!r) return r;
-
-    var pv= PlotViewUtil.getPlotViewById(visRoot(),plotId);
-    if (!pv) return r;
+    if (!r || !pvCtx) return r;
 
     var retval= r.makeCopy();
 
-    var userModRot= pv && pv.userModifiedRotate;
-    if (pv.options.rotateNorth) retval.setRotateNorth(true);
+    var userModRot= pvCtx.userModifiedRotate;
+    if (pvCtx.rotateNorth) retval.setRotateNorth(true);
     if (r.getRotateNorthSuggestion() && userModRot) retval.setRotateNorth(true);
 
 
 
-    //if (r.getRequestType()==RequestType.URL ) { //todo, when do we need to make if a full url, I think in cross-site mode
+    //if (r.getRequestType()===RequestType.URL ) { //todo, when do we need to make if a full url, I think in cross-site mode
     //    r.setURL(modifyURLToFull(r.getURL()));
     //}
 
@@ -137,23 +135,22 @@ function modifyRequest(plotId, r, band) {
     //    retval.setInitialZoomLevel(plot.getZoomFact());
     //}
 
-    if (pv.defThumbnailSize!=DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
-        retval.setThumbnailSize(pv.defThumbnailSize);
+    if (pvCtx.defThumbnailSize!=DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {
+        retval.setThumbnailSize(pvCtx.defThumbnailSize);
     }
 
 
-    var cPref= PlotPref.getCacheColorPref(pv.preferenceColorKey);
+    var cPref= PlotPref.getCacheColorPref(pvCtx.preferenceColorKey);
     if (cPref) {
         if (cPref[band]) retval.setInitialRangeValues(cPref[band]);
         retval.setInitialColorTable(cPref.colorTableId);
     }
 
 
-    if (pv.attributes[WPConst.GRID_ID]) {
-        retval.setGridId(pv.attributes[WPConst.GRID_ID]);
-    }
+    if (pvCtx.gridId) retval.setGridId(pvCtx.gridId);
 
-    var zPref= PlotPref.getCacheZoomPref(pv.preferenceZoomKey);
+
+    var zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
     if (zPref) {
         retval.setInitialZoomLevel(zPref.zooomLevel);
     }

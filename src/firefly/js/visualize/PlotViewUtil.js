@@ -38,6 +38,10 @@ export function getPlotViewById(visRoot,plotId) {
     return visRoot.plotViewAry.find( (pv) => pv.plotId===plotId);
 }
 
+
+
+
+
 /**
  * Return an array of plotId's that are in the plot group associated with the the pvOrId parameter.
  * @param visRoot - root of the visualization object in store

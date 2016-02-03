@@ -25,7 +25,7 @@ import VisUtil from './../VisUtil.js';
 import PlotViewUtil from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotPref from './../PlotPref.js';
-import {DEFAULT_THUMBNAIL_SIZE} from './../WebPlotRequest.js';
+import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
@@ -39,7 +39,7 @@ const DEF_WORKING_MSG= 'Plotting ';
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {makePlotView, replacePlots,
+export default {replacePlots,
                 updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
                 findCurrentCenterPoint, findScrollPtForImagePt,
                 replacePlotView, updatePlotGroupScrollXY};
@@ -70,7 +70,7 @@ export default {makePlotView, replacePlots,
  * @param {object} pvOptions options for this plot view todo- define what pvOptions is, somewhere
  * @return  the plotView object
  */
-function makePlotView(plotId, req, pvOptions) {
+export function makePlotView(plotId, req, pvOptions) {
     var pv= {
         plotId,
         plotGroupId: req.getPlotGroupId(),
@@ -80,67 +80,71 @@ function makePlotView(plotId, req, pvOptions) {
         plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
         wcsMarginY: 0, // todo
-        scrollX : 0,
-        scrollY : 0,
+        scrollX : -1,
+        scrollY : -1,
         viewDim : {width:0, height:0}, // size of viewable area  (div size: offsetWidth & offsetHeight)
         overlayPlotViews: [], //todo
         containsMultiImageFits : false,
         containsMultipleCubes : false,
         lockPlotHint: false, //todo
-        attributes: {},
+        attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
         taskCnt: 0, //todo,
-        zoomLockingEnabled: false,
-        zoomLockingType: UserZoomTypes.FIT,
-        preferenceColorKey: req.getPreferenceColorKey(),
-        preferenceZoomKey:  req.getPreferenceZoomKey(),
-        defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
+        //zoomLockingEnabled: false,
+        //zoomLockingType: UserZoomTypes.FIT,
+        //preferenceColorKey: req.getPreferenceColorKey(),
+        //preferenceZoomKey:  req.getPreferenceZoomKey(),
+        //defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys),
 
+
+        plotViewCtx: createPlotViewContextData(req),
+
+
         options : {
-            //showInlineTitle : false,
-            //inlineTitleAlwaysOnIfCollapsed : false,
 
             // many options -- todo figure out how to set and change, some are set by request, how about the others?
             workingMsg      : DEF_WORKING_MSG,
             removeOldPlot   : true, // if false keep the last plot for flipping, if true remove the old one before plotting, todo
             hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo control with MenuItemKeys
-            allowImageLock  : false, // show the image lock button in the toolbar, todo
-            rotateNorth     : false, // rotate this plot north when plotting,
-            userModifiedRotate: false, // the user modified the rotate status, todo
-            autoTearDown    : true,  // tear down when there is a new search, todo
+            //rotateNorth     : false, // rotate this plot north when plotting,
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
-            boxSelection    : false, // type of highlighting used when user selects this widget todo
-            showUnexpandedHighlight: true, // show the selected image highlight when not expanded, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
             expandedTitleOptions: req.getExpandedTitleOptions(),
+            annotationOps : req.getAnnotationOps(), // how titles are drawn
 
 
             //useLayerOnPlotToolbar: true, // show the Layer control button on the plot toolbar, todo - i now think I can remove this
 
 
-            annotationOps : req.getAnnotationOps(),
-            //hideTitleDetail : req.getHideTitleDetail(), // hide the zoom level and rotation shown in the title, todo
-                                    // ANALYSIS about useInlineToolbar
-            //useInlineToolbar: true, // show the Tool bar inline (on the plot) instead of on the title bar, todo,
-                                    // todo: the behavor should be, collapsed: inline, grid: inline: expand single: hidden
-                                   //  todo: behavor need be different for small plots link planck
-                                   //  todo: when false image view decorate will use an external title bar
-                                   //  todo: might need to rename to control both the inlnie titl and the toolbar
 
               // todo- the follow should be removed when implemented, menuItemKeys will now control option visibility
+            allowImageLock  : false, // show the image lock button in the toolbar, todo
             allowImageSelect: req.isAllowImageSelection(), // show the image selection button in the toolbar, user can change image, todo
             catalogButton   : false // show the catalog select button, todo
 
         }
     };
 
-    if (req.containsParam(WPConst.GRID_ID)) {
-        pv.attributes[WPConst.GRID_ID]= req.getGridId(); // todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
-    }
-
-
     return pv;
 }
+
+
+
+function createPlotViewContextData(req) {
+    return {
+        rotateNorth : false,// todo MAYBE!!! // rotate this plot north when plotting,
+        userModifiedRotate: false, // the user modified the rotate status, todo
+        zoomLockingEnabled : false,
+        zoomLockingType: UserZoomTypes.FIT,
+        lastUnexpandedZoomLevel : 0,
+        preferenceColorKey: req.getPreferenceColorKey(),
+        preferenceZoomKey:  req.getPreferenceZoomKey(),
+        defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
+        gridId : null// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
+    };
+}
+
+
 
 //todo - this function should determine which menuItem are visible and which are hidden
 // for now just return the default
@@ -159,7 +163,6 @@ const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCe
  */
 function replacePlots(pv, plotAry) {
 
-    //pv= pv || makePlotView(plotId);
     pv= Object.assign({},pv);
 
     if (pv.plots && pv.plots.length) {
@@ -183,15 +186,15 @@ function replacePlots(pv, plotAry) {
 
     pv.primaryPlot= pv.plots[0];
 
-    PlotPref.putCacheColorPref(pv.preferenceColorKey, pv.primaryPlot.plotState);
-    PlotPref.putCacheZoomPref(pv.preferenceZoomKey, pv.primaryPlot.plotState);
+    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.primaryPlot.plotState);
+    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.primaryPlot.plotState);
 
 
     setClientSideRequestOptions(pv,pv.primaryPlot.plotState.getWebPlotRequest());
 
     pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
-    pv.options.rotateNorth= pv.primaryPlot.plotState.getRotateType()===RotateType.NORTH;
+    pv.plotViewCtx.rotateNorth= pv.primaryPlot.plotState.getRotateType()===RotateType.NORTH;
 
     //--------- set initialized viewport here
     //var {scrollWidth,scrollHeight} = computeScrollSizes(pv.primaryPlot,pv.viewDim);
@@ -477,7 +480,7 @@ export const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPl
  * @param {object} visibleCenterPt, screen point
  * @return {{dim: {width : number, height : number}, x: number, y: number}}
  */
-function computeViewPort(primaryPlot, scrollWidth, scrollHeight, visibleCenterPt) {
+export function computeViewPort(primaryPlot, scrollWidth, scrollHeight, visibleCenterPt) {
     if (!primaryPlot) return null;
 
     var {viewPort}= primaryPlot;

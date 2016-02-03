@@ -26,6 +26,7 @@ export const ZoomType= {
     FILL:makeZT('FILL',zoomFill, 'Zoom the image to Fill the visible space', UserZoomTypes.FILL)
 };
 
+const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
 
 
 function getZoomer() {
@@ -49,8 +50,7 @@ function getZoomer() {
                 return;
             }
         }
-        var zoomLockingEnabled= (zType===ZoomType.FIT || zType===ZoomType.FILL);
-        dispatchZoom(pv.plotId,zType.utilZt,true,zoomLockingEnabled);
+        dispatchZoom(pv.plotId,zType.utilZt,true,isFitFill(zType));
     };
 }
 

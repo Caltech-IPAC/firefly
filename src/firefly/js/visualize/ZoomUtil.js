@@ -96,9 +96,16 @@ export function makeZoomAction(rawAction) {
             }
 
         }
+
+
+        if (Math.floor(pv.primaryPlot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
+            return;
+        }
+
+
         if (continueZoom) {
-            doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,useDelay);
-            var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,useDelay);
+            doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
+            var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,userZoomType,useDelay);
             PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
         }
         else {
@@ -111,7 +118,7 @@ export function makeZoomAction(rawAction) {
 
 
 
-function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,useDelay) {
+function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,userZoomType,useDelay) {
     const selectedPlot= sourcePv.primaryPlot;
     const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
 
@@ -125,7 +132,7 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,useDelay) 
             // if the new level is only slightly different then use the target level
            newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
         }
-        doZoom(dispatcher,pv.plotId,newZoomLevel,isFullScreen,useDelay);
+        doZoom(dispatcher,pv.plotId,newZoomLevel,isFullScreen,userZoomType,useDelay);
     };
 }
 
@@ -135,12 +142,14 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,useDelay) 
  * @param dispatcher
  * @param plotId
  * @param zoomLevel
+ * @param zoomLockingEnabled
+ * @param userZoomType
  * @param isFullScreen
  * @param useDelay
  */
-function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, useDelay) {
+function doZoom(dispatcher,plotId,zoomLevel,isFullScreen, zoomLockingEnabled, userZoomType,useDelay) {
     dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_START,
-                  payload:{plotId,zoomLevel, zoomLockingEnabled} } );
+                  payload:{plotId,zoomLevel, zoomLockingEnabled,userZoomType} } );
 
 
      // note - this filter has a side effect of canceling the timer. There might be a better way to do this.

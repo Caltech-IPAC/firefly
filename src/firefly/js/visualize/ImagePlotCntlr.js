@@ -97,7 +97,7 @@ const initState= function() {
 
     return {
         plotViewAry : [],  //there is one plot view for every ImageViewer, a plotView will have a plotId
-        plotGroupAry : [], // there is one for each group, a plot group may have mutiple plotViews
+        plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
         plottingProgressInfo : [], //todo
         plotHistoryRequest: [], //todo
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
@@ -174,10 +174,6 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
     flux.process({type: UPDATE_VIEW_SIZE,
         payload: {plotId, width, height,updateScroll,centerImagePt}
     });
-    var pv= getPlotViewById(visRoot(),plotId);
-    if (pv && pv.zoomLockingEnabled) {
-        dispatchZoom(pv.plotId,pv.zoomLockingType,true,true);
-    }
 }
 
 
@@ -238,8 +234,10 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 
 /**
  *
- * @param {string} plotId
+ * @param plotId
  * @param {UserZoomTypes} zoomType
+ * @param maxCheck
+ * @param zoomLockingEnabled
  */
 export function dispatchZoom(plotId,zoomType,maxCheck=true, zoomLockingEnabled=false) {
     doDispatchZoom(plotId, zoomType, maxCheck, zoomLockingEnabled);
@@ -274,7 +272,7 @@ export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
 
 /**
  *
- * @param expandType
+ * @param {ExpandType} expandedMode
  */
 export function dispatchChangeExpandedMode(expandedMode) {
     flux.process({ type: CHANGE_EXPANDED_MODE, payload: {expandedMode} });
@@ -282,7 +280,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
     var enable= expandedMode!==ExpandType.COLLAPSE;
     visRoot().plotViewAry.forEach( (pv) =>
-               dispatchZoomLocking(pv.plotId,enable,pv.zoomLockingType) );
+               dispatchZoomLocking(pv.plotId,enable,pv.plotViewCtx.zoomLockingType) );
 }
 
 
