@@ -11,7 +11,7 @@ var RadioGroupInputField= React.createClass(
         propTypes: {
             inline : React.PropTypes.bool,
             options: React.PropTypes.array.isRequired,
-            alignment:  React.PropTypes.string.isRequired,
+            alignment:  React.PropTypes.string.isRequired
         },
 
         contextTypes: {
@@ -44,63 +44,41 @@ var RadioGroupInputField= React.createClass(
         },
         render() {
 
-			   var optionalElement;
+            let optionalElement;
 
+            switch ( this.props.alignment ) {
+                case 'vertical':
+                    optionalElement  =  <br />;
+                    break;
+                default:
+                    optionalElement=null;
+                    break;
+            }
 
-				switch ( this.props.alignment ) {
-					case 'vertical':
-						optionalElement  =  <br/>;
-						break;
-					default:
-						optionalElement=null;
-						break;
-				}
-
-                return (
-
-
-                    <div style={{whiteSpace:'nowrap'}}>
-                        <InputFieldLabel label={this.getLabel()}
-                                         tooltip={this.getTip()}
-                                         labelWidth={this.props.labelWidth}
-                        />
-                        {optionalElement}
+            return (
+                <div style={{whiteSpace:'nowrap'}}>
+                    <InputFieldLabel label={this.getLabel()}
+                                     tooltip={this.getTip()}
+                                     labelWidth={this.props.labelWidth}
+                    />
+                    {optionalElement}
+                    <div style={{display:'inline-block'}} >
                         {this.props.options.map((option) => {
 
                             return (
-
-                                <div key={option.value}>
-                                    <div style={{display:'inline-block'}}>
-
-                                        <input type='radio'
-                                               name={this.props.fieldKey}
-                                               value={option.value}
-                                               defaultChecked={this.getValue()===option.value}
-                                               onChange={this.onChange}
-                                            /> &nbsp;{option.label}&nbsp;&nbsp;
-
-
-                                    </div>
-									{optionalElement}
-
-                          </div>
-
-                            );
-
-
-                        })
-
-
-                        }
-
-
+                                <div style={optionalElement ? {display:'block'}:{display:'inline-block'}} key={option.value}>
+                                    <input type='radio'
+                                           name={this.props.fieldKey}
+                                           value={option.value}
+                                           defaultChecked={this.getValue()===option.value}
+                                           onChange={this.onChange}
+                                    /> {option.label}&nbsp;&nbsp;
+                                </div>);
+                        })}
                     </div>
-
-                );
-            }
-
-
-
+                </div>
+            );
+        }
     });
 
 export default RadioGroupInputField;

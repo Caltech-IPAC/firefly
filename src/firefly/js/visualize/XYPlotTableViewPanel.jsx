@@ -19,8 +19,8 @@ var XYPlotTablePanel = React.createClass({
             }, 500, {'leading':false}),
 
     propTypes: {
-        tblStatsData: React.PropTypes.object.isRequired,
-        tblPlotData : React.PropTypes.object.isRequired,
+        tblStatsData: React.PropTypes.object,
+        tblPlotData : React.PropTypes.object,
         tblId: React.PropTypes.string,
         highlightedRow: React.PropTypes.number,
         width : React.PropTypes.string,
@@ -77,12 +77,13 @@ var XYPlotTablePanel = React.createClass({
             return 'Select XY plot parameters...';
         }
         const { isPlotDataReady, xyPlotData, xyPlotParams } = this.props.tblPlotData;
-        var {heightPx} = this.state;
+        var {widthPx, heightPx} = this.state;
 
         if (isPlotDataReady) {
             return (
                 <XYPlot data={xyPlotData}
-                        desc={xyPlotParams.x.columnOrExpr+' vs. '+xyPlotParams.y.columnOrExpr}
+                        desc=''
+                        width={widthPx-400}
                         height={heightPx}
                         params={xyPlotParams}
                         highlightedRow={this.props.highlightedRow}

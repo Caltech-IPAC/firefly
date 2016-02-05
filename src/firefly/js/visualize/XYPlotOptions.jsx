@@ -9,11 +9,13 @@ import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
 import FieldGroup from '../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import InputGroup from '../ui/InputGroup.jsx';
+//import InputGroup from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import ValidationField from '../ui/ValidationField.jsx';
 import CheckboxGroupInputField from '../ui/CheckboxGroupInputField.jsx';
+import RadioGroupInputField from '../ui/RadioGroupInputField.jsx';
 import ListBoxInputField from '../ui/ListBoxInputField.jsx';
+import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
 
 
 
@@ -26,29 +28,6 @@ var XYPlotOptions = React.createClass({
         colValStats: React.PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
         onOptionsSelected: React.PropTypes.func.isRequired
     },
-
-    /*
-
-      @param xyPlotParams key value pairs
-
-      axisParamsShape = React.PropTypes.shape({
-          columnOrExpr : React.PropTypes.string,
-          label : React.PropTypes.string,
-          unit : React.PropTypes.string,
-          options : React.PropTypes.string, // ex. 'log,flip'
-          nbins : React.PropTypes.number,
-          min : React.PropTypes.number,
-          max : React.PropTypes.number
-      });
-
-      React.PropTypes.shape({
-         grid : React.PropTypes.boolean,
-         xyRatio : React.PropTypes.number,
-         stretch : React.PropTypes.oneOf(['fit','fill'])
-         x : axisParamsShape,
-         y : axisParamsShape
-      })
-     */
 
     getInitialState() {
         return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
@@ -70,11 +49,44 @@ var XYPlotOptions = React.createClass({
 
     resultsSuccess(flds) {
         const xName = get(flds, ['x.columnOrExpr']);
+        const xOptions = get(flds, ['x.options']);
+        let xLabel = get(flds, ['x.label']), xUnit = get(flds, ['x.unit']);
+        if (!xLabel) { xLabel = xName; }
+        if (!xUnit) {xUnit = this.getUnit(xName); }
+
         const yName = get(flds, ['y.columnOrExpr']);
+        const yOptions = get(flds, ['y.options']);
+        let yLabel = get(flds, ['y.label']), yUnit = get(flds, ['y.unit']);
+        if (!yLabel) { yLabel = yName; }
+        if (!yUnit) {yUnit = this.getUnit(yName); }
+
+
+
+        /*
+          const axisParamsShape = React.PropTypes.shape({
+             columnOrExpr : React.PropTypes.string,
+             label : React.PropTypes.string,
+             unit : React.PropTypes.string,
+             options : React.PropTypes.string, // ex. 'grid,log,flip'
+             nbins : React.PropTypes.number,
+             min : React.PropTypes.number,
+             max : React.PropTypes.number
+          });
+
+          const xyPlotParamsShape = React.PropTypes.shape({
+             xyRatio : React.PropTypes.number,
+             stretch : React.PropTypes.oneOf(['fit','fill']),
+             x : axisParamsShape,
+             y : axisParamsShape
+          });
+          */
         const xyPlotParams = {
-            x : { columnOrExpr : xName, label : xName, unit : this.getUnit(xName)},
-            y : { columnOrExpr : yName, label : yName, unit : this.getUnit(yName)}
+            xyRatio : flds.xyRatio ? flds.xyRatio : undefined,
+            stretch : flds.stretch,
+            x : { columnOrExpr : xName, label : xLabel, unit : xUnit, options : xOptions},
+            y : { columnOrExpr : yName, label : yLabel, unit : yUnit, options : yOptions}
         };
+
         this.props.onOptionsSelected(xyPlotParams);
     },
 
@@ -84,7 +96,6 @@ var XYPlotOptions = React.createClass({
 
     render() {
         const { colValStats, groupKey }= this.props;
-        const {fields} = this.state;
         return (
             <div style={{padding:'5px'}}>
                 <br/>
@@ -92,8 +103,7 @@ var XYPlotOptions = React.createClass({
                     <ListBoxInputField
                         initialState= {{
                                 tooltip: 'Please select a column or expression for X axis',
-                                label : 'X:',
-                                labelWidth : 50
+                                label : 'X:'
                             }}
                         options={
                                 colValStats.map((colVal) => {
@@ -106,13 +116,53 @@ var XYPlotOptions = React.createClass({
                         multiple={false}
                         fieldKey='x.columnOrExpr'
                         groupKey={groupKey}
+                        labelWidth={20}
                     />
+                    <CollapsiblePanel  header='X Label/Unit/Options'>
+                        <ValidationField
+                            initialState= {{
+                                value: '',
+                                validator() { return {valid: true,message: ''}; },
+                                tooltip: 'X axis label',
+                                label : 'Label:'
+                            }}
+                            fieldKey='x.label'
+                            groupKey={groupKey}
+                            labelWidth={50}/>
+                        <ValidationField
+                            initialState= {{
+                                value: '',
+                                validator() { return {valid: true,message: ''}; },
+                                tooltip: 'X axis unit',
+                                label : 'Unit:'
+                                }}
+                            fieldKey='x.unit'
+                            groupKey={groupKey}
+                            labelWidth={50}/>
+
+                        <br/>
+                        <CheckboxGroupInputField
+                            initialState= {{
+                                value: '_none_',
+                                tooltip: 'Check if you would like to plot grid',
+                                label : 'Options:'
+                            }}
+                            options={[
+                                {label: 'grid', value: 'grid'},
+                                {label: 'flip', value: 'flip'},
+                                {label: 'log', value: 'log'}
+                            ]}
+                            fieldKey='x.options'
+                            groupKey={groupKey}
+                            labelWidth={50}
+                        />
+                    </CollapsiblePanel>
                     <br/>
+
                     <ListBoxInputField
                         initialState= {{
                                 tooltip: 'Please select a column or expression for Y axis',
-                                label : 'Y:',
-                                labelWidth : 50
+                                label : 'Y:'
                             }}
                         options={
                                 colValStats.map((colVal) => {
@@ -125,6 +175,73 @@ var XYPlotOptions = React.createClass({
                         multiple={false}
                         fieldKey='y.columnOrExpr'
                         groupKey={groupKey}
+                        labelWidth={20}
+                    />
+                    <CollapsiblePanel  header='Y Label/Unit/Options'>
+                        <ValidationField
+                            initialState= {{
+                                value: '',
+                                validator() { return {valid: true,message: ''}; },
+                                tooltip: 'Y axis label',
+                                label : 'Label:'
+                            }}
+                            fieldKey='y.label'
+                            groupKey={groupKey}
+                            labelWidth={50}/>
+                        <ValidationField
+                            initialState= {{
+                                value: '',
+                                validator() { return {valid: true,message: ''}; },
+                                tooltip: 'Y axis unit',
+                                label : 'Unit:'
+                                }}
+                            fieldKey='y.unit'
+                            groupKey={groupKey}
+                            labelWidth={50}/>
+
+                        <br/>
+                        <CheckboxGroupInputField
+                            initialState= {{
+                                value: 'grid',
+                                tooltip: 'Check if you would like to plot grid',
+                                label : 'Options:'
+
+                            }}
+                            options={[
+                                {label: 'grid', value: 'grid'},
+                                {label: 'flip', value: 'flip'},
+                                {label: 'log', value: 'log'}
+                            ]}
+                            fieldKey='y.options'
+                            groupKey={groupKey}
+                            labelWidth={50}
+                        />
+                        <br/>
+                    </CollapsiblePanel>
+                    <ValidationField style={{width:50}}
+                        initialState= {{
+                            value: '',
+                            validator: Validate.intRange.bind(null, 1, 10, 'X/Y ratio'),
+                            tooltip: 'X/Y ratio',
+                            label : 'X/Y ratio:'
+                        }}
+                        fieldKey='xyRatio'
+                        groupKey={groupKey}
+                        labelWidth={60}/>
+                    <br/>
+                    <RadioGroupInputField
+                        alignment='horizontal'
+                        initialState= {{
+                            tooltip: 'Should the plot fit into the available space or fill the available width?',
+                            label : 'Stretch to:'
+                        }}
+                        options={[
+                            {label: 'Fit', value: 'fit'},
+                            {label: 'Fill', value: 'fill'}
+                        ]}
+                        fieldKey='stretch'
+                        groupKey={groupKey}
+                        labelWidth={60}
                     />
                     <br/>
 

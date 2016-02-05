@@ -15,11 +15,16 @@ export default React.createClass({
         };
     },
 
-   handleClick() {
-     this.setState({
-       isOpen: !this.state.isOpen
-     });
-   },
+    handleClick() {
+        this.setState({
+            isOpen: !this.state.isOpen
+        });
+    },
+
+    getContentHeight() {
+        return this.state.isOpen ? '100%' : '0';
+    },
+
 
     render () {
         var headerClassName = 'CollapsiblePanel__Header';
@@ -32,9 +37,11 @@ export default React.createClass({
                     {this.props.header}
                 </div>
                 <div className='CollapsiblePanel__Content'>
-                    {this.state.isOpen && this.props.children}
+                    <div style={{height: this.getContentHeight()}}>
+                        {this.props.children}
+                    </div>
                 </div>
             </div>
-        );
+    );
     }
-});
+    });

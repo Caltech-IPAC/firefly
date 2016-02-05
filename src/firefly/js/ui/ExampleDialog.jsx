@@ -255,20 +255,20 @@ function FieldGroupTestView ({fields}) {
 
                 <br/>
                 <span>here is some text</span>
-                <br/>
-                <RadioGroupInputField  initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'Radio Group:'
-                                      }}
-                                       options={
-                                                              [
-                                                                  {label: 'Option 1', value: 'opt1'},
-                                                                  {label: 'Hide A Field', value: 'opt2'},
-                                                                  {label: 'Option 3', value: 'opt3'},
-                                                                  {label: 'Option 4', value: 'opt4'}
-                                                              ]
-                                                              }
-                                       fieldKey='radioGrpFld'
+                <br/><br/>
+                <RadioGroupInputField
+                    alignment='vertical'
+                    initialState= {{
+                        tooltip: 'Please select an option',
+                        label : 'Radio Group:'
+                    }}
+                    options={[
+                        {label: 'Option 1', value: 'opt1'},
+                        {label: 'Hide A Field', value: 'opt2'},
+                        {label: 'Option 3', value: 'opt3'},
+                        {label: 'Option 4', value: 'opt4'}
+                    ]}
+                    fieldKey='radioGrpFld'
                 />
                 <br/><br/>
 
