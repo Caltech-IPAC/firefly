@@ -475,16 +475,6 @@ export class WebPlot {
         return Object.assign({},wpData,{viewPort});
     }
 
-    /**
-     *
-     * @param wpData
-     * @param {number} zoomFactor
-     * @return {*}
-     */
-    static setZoomFactor(wpData,zoomFactor) {
-        var screenSize= {width:wpData.dataWidth*zoomFactor, height:wpData.dataHeight*zoomFactor};
-        return Object.assign({},wpData,{zoomFactor,screenSize});
-    }
 
     /**
      *
@@ -510,10 +500,10 @@ export class WebPlot {
      * @param attValue
      * @return {*} new version of webplotdata
      */
-    static addWPAttribute(wpData,attName,attValue) {
-        var att= Object.assign({},wpData.attributes, {[attName]:attValue});
-        return Object.assign({},wpData,{attributes:att});
-    }
+    //static addWPAttribute(wpData,attName,attValue) {
+    //    var att= Object.assign({},wpData.attributes, {[attName]:attValue});
+    //    return Object.assign({},wpData,{attributes:att});
+    //}
 
     /**
      *
@@ -547,6 +537,16 @@ export function isBlankImage(plot) {
     return (req && req.getRequestType()===RequestType.BLANK);
 }
 
+/**
+ *
+ * @param wpData
+ * @param {number} zoomFactor
+ * @return {*}
+ */
+export function clonePlotWithZoom(wpData,zoomFactor) {
+    var screenSize= {width:wpData.dataWidth*zoomFactor, height:wpData.dataHeight*zoomFactor};
+    return Object.assign({},wpData,{zoomFactor,screenSize});
+}
 
 
 

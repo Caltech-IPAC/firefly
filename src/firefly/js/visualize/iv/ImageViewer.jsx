@@ -85,12 +85,21 @@ export class ImageViewer extends Component {
     render() {
         var {plotView,allPlots,drawLayersAry,mousePlotId}= this.state;
         if (!plotView) return false;
+
+        var {plotId}= this.props;
+        if (plotView.plotId!==plotId) {
+            allPlots= visRoot();
+            plotView= getPlotViewById(allPlots,plotId);
+            drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(getDlAry(),this.props.plotId);
+            if (!plotView) return false;
+        }
+
         return (
             <ImageViewerView plotView={plotView}
                              drawLayersAry={drawLayersAry}
                              visRoot={allPlots}
                              mousePlotId={mousePlotId}
-                             extensionList={getExtensionList(plotView.plotId)} />
+                             extensionList={getExtensionList(plotId)} />
         );
     }
 }

@@ -2,10 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import update from 'react-addons-update';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
-import PlotView from './PlotView.js';
-import WebPlot from '../WebPlot.js';
-import PlotViewUtil from '../PlotViewUtil.js';
+import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
+import WebPlot, {clonePlotWithZoom} from '../WebPlot.js';
+import PlotViewUtil, {
+    primePlot,
+    applyToOnePvOrGroup,
+    getPlotViewIdxById,
+    getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 
@@ -17,13 +22,18 @@ export default {
     reducer
 };
 
+const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
+const clone = (obj,params={}) => Object.assign({},obj,params);
+
+function replaceAtt(pv,att) {
+    var p= primePlot(pv);
+    return replacePrimaryPlot(pv,clone(p,{attributes:clone(p.attributes, att)}));
+}
+
 
 function reducer(state, action) {
 
     var retState= state;
-    var plotViewAry;
-    //var plotGroupAry;
-    //var plotRequestDefaults;
     switch (action.type) {
         case Cntlr.ZOOM_IMAGE_START  :
             retState= zoomStart(state, action);
@@ -35,7 +45,7 @@ function reducer(state, action) {
         case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
         case Cntlr.STRETCH_CHANGE  :
-            plotViewAry= installTiles(state.plotViewAry,action);
+            retState= installTiles(state,action);
             // todo: also process adding to history
             break;
         case Cntlr.UPDATE_VIEW_SIZE :
@@ -53,91 +63,83 @@ function reducer(state, action) {
         default:
             break;
     }
-    if (plotViewAry) {
-        retState= Object.assign({},state, {plotViewAry});
-    }
     return retState;
 }
 
 
-const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
-const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
-const replaceAtt = (pv,key,val)=> PlotView.replacePrimary(pv,
-                                                WebPlot.addWPAttribute(pv.primaryPlot,key,val));
+
 
 function changePlotAttribute(state,action) {
     var {plotId,attKey,attValue}= action.payload;
     var {plotViewAry,plotGroupAry}= state;
-    var pv= PlotViewUtil.findPlotView(plotId,plotViewAry);
+    var pv= getPlotViewById(state,plotId);
+    var plot= primePlot(pv);
+    if (!plot) return state;
+
     var plotGroup= PlotViewUtil.findPlotGroup(pv.plotGroupId,plotGroupAry);
-    if (pv && pv.primaryPlot) {
-        plotViewAry=  PlotView.replacePlotView(plotViewAry,replaceAtt(pv,attKey,attValue));
-        plotViewAry=  PlotViewUtil.matchPlotView(pv,plotViewAry,plotGroup, (pv)=> replaceAtt(pv,attKey,attValue));
-        return clone(state,{plotViewAry});
-    }
-    return state;
+
+    plotViewAry=  applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
+        (pv)=> replaceAtt(pv,{[attKey]:attValue}) );
+    return clone(state,{plotViewAry});
 }
+
+
 
 function changeLocking(state,action) {
     var {plotId, zoomLockingEnabled, zoomLockingType}=  action.payload;
-    var {plotViewAry}= state;
-    plotViewAry= plotViewAry.map( (pv) => {
-        if (pv.plotId!==plotId) return pv;
-        pv= clone(pv);
-        pv.plotViewCtx= clone(pv.plotViewCtx,{zoomLockingEnabled,zoomLockingType});
-        return pv;
-    });
-    return clone(state,{plotViewAry});
+    return clone(state,{plotViewAry: state.plotViewAry.map( (pv) =>
+            (pv.plotId===plotId) ?
+                update(pv, {plotViewCtx : {$merge :{zoomLockingEnabled,zoomLockingType} }} ) : pv
+        )});
 }
 
 
 function zoomStart(state, action) {
     var {plotViewAry, expandedMode}= state;
     const {plotId, zoomLevel, userZoomType, zoomLockingEnabled}= action.payload;
-    var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
-    var plot= pv ? pv.primaryPlot : null;
+    var pvIdx=getPlotViewIdxById(state,plotId);
+    var plot= pvIdx>-1 ? primePlot(plotViewAry[pvIdx]) : null;
     if (!plot) return plotViewAry;
-    var originalZF= plot.zoomFactor;
+    var pv= plotViewAry[pvIdx];
+
+    // up date book keeping
+    var newCtx= {zoomLockingEnabled};
+    if (expandedMode===ExpandType.COLLAPSE) newCtx.lastCollapsedZoomLevel= plot.zoomFactor;
+    if (zoomLockingEnabled && isFitFill(userZoomType))  newCtx.zoomLockingType= userZoomType;
+
 
     // update zoom factor and scroll position
-
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
-    pv= PlotView.replacePrimary(pv,WebPlot.setZoomFactor(plot,zoomLevel));
+    pv= replacePrimaryPlot(pv,clonePlotWithZoom(plot,zoomLevel));
     pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
     pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv) =>
-                     clone(oPv, {plot:WebPlot.setZoomFactor(oPv.plot,zoomLevel)}) );
+                     clone(oPv, {plot:clonePlotWithZoom(oPv.plot,zoomLevel)}) );
 
-   // up date book keeping
-
-    pv.plotViewCtx= clone(pv.plotViewCtx,{zoomLockingEnabled});
-    if (expandedMode===ExpandType.COLLAPSE) {
-        pv.plotViewCtx.lastCollapsedZoomLevel= originalZF;
-    }
-    if (zoomLockingEnabled && isFitFill(userZoomType)) {
-        pv.plotViewCtx.zoomLockingType= userZoomType;
-    }
 
     // return new state
-    plotViewAry= PlotView.replacePlotView(plotViewAry,pv);
-    return clone(state,{plotViewAry});
+    return update(state, { plotViewAry : {
+                  [pvIdx]: {$set: update(pv, {plotViewCtx: {$merge: newCtx}
+        }) } }});
 }
 
-function installTiles(plotViewAry, action) {
+function installTiles(state, action) {
+    var {plotViewAry}= state;
     const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
     var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
-    var plot= pv ? pv.primaryPlot : null;
+    var plot= primePlot(pv);
     if (!plot) return plotViewAry;
 
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
-    pv= PlotView.replacePrimary(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
+    pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
     pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
         var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
         return clone(oPv, {plot:p});
     });
     pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
-    return PlotView.replacePlotView(plotViewAry,pv);
+
+    return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
 }
 
 
@@ -153,9 +155,10 @@ function updateViewSize(state,action) {
     var plotViewAry= state.plotViewAry.map( (pv) => {
         if (pv.plotId!==plotId ) return pv;
         var centerImagePt;
-        if (pv.primaryPlot) {
+        var plot= primePlot(pv);
+        if (plot) {
             if (pv.scrollX<0 || pv.scrollY<0) {
-                centerImagePt= makeImagePt(pv.primaryPlot.dataWidth/2, pv.primaryPlot.dataHeight/2);
+                centerImagePt= makeImagePt(plot.dataWidth/2, plot.dataHeight/2);
             }
             else {
                 centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);

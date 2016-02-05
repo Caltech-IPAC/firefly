@@ -4,23 +4,18 @@
 
 
 import React, {PropTypes} from 'react';
-import numeral from 'numeral';
 import {getPlotGroupById}  from '../PlotGroup.js';
-import {RotateType}  from '../PlotState.js';
-import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
-import {convertZoomToString} from '../ZoomUtil.js';
+import {ExpandType} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
-import PlotViewUtil from '../PlotViewUtil.js';
+import PlotViewUtil, {primePlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from './ImageViewerLayout.jsx';
 import {PlotAttribute} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../PlotCmdExtension.js';
-import {getTaskCount} from '../../core/AppDataCntlr.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
-import LOADING from 'html/images/gxt/loading.gif';
 
 const TOOLBAR_HEIGHT= 32;
 
@@ -95,7 +90,7 @@ function showUnselect(pv,dlAry) {
 
 function contextToolbar(pv,dlAry,extensionList) {
     if (!pv) return;
-    var {primaryPlot:plot}= pv;
+    var plot= primePlot(pv);
     if (!plot) return;
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
@@ -216,12 +211,13 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
     const expandedToSingle= (expandedMode===ExpandType.SINGLE);
     const iWidth= expandedToSingle ? width : width-4;
     const iHeight=expandedToSingle ? height-top :height-5-top;
+    const plot= primePlot(pv);
 
-    if (pv && pv.primaryPlot) {
-        title= pv && pv.primaryPlot ? pv.primaryPlot.title : '';
-        zoomFactor= pv.primaryPlot.zoomFactor;
-        plotState= pv.primaryPlot.plotState;
-        plotId= pv.plotId;
+    if (plot) {
+        title= plot ? plot.title : '';
+        zoomFactor= plot.zoomFactor;
+        plotState= plot.plotState;
+        plotId= plot.plotId;
         titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
         inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
 
@@ -231,7 +227,7 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
         width: '100%',
         height: '100%',
         overflow:'hidden',
-        position:'relative'
+        position:'relative',
     };
 
 
@@ -257,7 +253,7 @@ export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,vis
 
 
     return (
-        <div style={outerStyle}>
+        <div style={outerStyle} className='disable-select'>
             {titleLineHeader}
             <div className='image-viewer-decorate' style={innerStyle}>
                 {ctxToolbar}

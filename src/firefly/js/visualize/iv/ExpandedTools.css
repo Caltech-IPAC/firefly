@@ -1,0 +1,19 @@
+
+
+
+
+
+.control-dots {
+    cursor:pointer;
+}
+
+
+.text-nav-controls {
+    padding: 2px 4px 0px 0px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    text-align: right;
+    font-size: 10pt;
+    width: 100px;
+    white-space: nowrap;
+}

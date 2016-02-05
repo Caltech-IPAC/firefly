@@ -9,7 +9,7 @@ import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
-import PlotViewUtil, {getPlotViewById} from './PlotViewUtil.js';
+import PlotViewUtil, {getPlotViewById,primePlot} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
@@ -74,8 +74,9 @@ export function makeZoomAction(rawAction) {
         var isFullScreen;
         var useDelay;
         var continueZoom= false;
+        var plot= primePlot(pv);
         if ([UserZoomTypes.UP,UserZoomTypes.DOWN,UserZoomTypes.ONE].includes(userZoomType)) {
-            level= getNextZoomLevel(pv.primaryPlot.zoomFactor,userZoomType);
+            level= getNextZoomLevel(plot.zoomFactor,userZoomType);
             isFullScreen= false;
             useDelay= true; //todo
             continueZoom= true;
@@ -87,10 +88,10 @@ export function makeZoomAction(rawAction) {
 
             if (dim.width && dim.height) {
                 if (userZoomType===UserZoomTypes.FIT) {
-                    level = getEstimatedFullZoomFactor(pv, dim, VisUtil.FullType.WIDTH_HEIGHT);
+                    level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.WIDTH_HEIGHT);
                 }
                 else if (userZoomType===UserZoomTypes.FILL) {
-                    level = getEstimatedFullZoomFactor(pv, dim, VisUtil.FullType.ONLY_WIDTH);
+                    level = getEstimatedFullZoomFactor(plot, dim, VisUtil.FullType.ONLY_WIDTH);
                 }
                 continueZoom= true;
             }
@@ -98,14 +99,14 @@ export function makeZoomAction(rawAction) {
         }
 
 
-        if (Math.floor(pv.primaryPlot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
+        if (Math.floor(plot.zoomFactor*1000)===Math.floor(level*1000)) { //zoom level the same - just return
             return;
         }
 
 
         if (continueZoom) {
             doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
-            var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,userZoomType,useDelay);
+            var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
         }
         else {
@@ -118,12 +119,13 @@ export function makeZoomAction(rawAction) {
 
 
 
-function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,userZoomType,useDelay) {
-    const selectedPlot= sourcePv.primaryPlot;
+function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay) {
+    const selectedPlot= primePlot(sourcePv);
     const targetArcSecPix= getArcSecPerPix(selectedPlot, level);
 
     return (pv) => {
-        var  plot= pv.primaryPlot;
+        var  plot= primePlot(pv);
+        if (!plot) return;
         var newZoomLevel= level;
         if (targetArcSecPix) {
             var  plotLevel= getZoomLevelForScale(plot, targetArcSecPix);
@@ -132,7 +134,7 @@ function makeZoomLevelMatcher(dispatcher, sourcePv,level,isFullScreen,userZoomTy
             // if the new level is only slightly different then use the target level
            newZoomLevel= (Math.abs(plotLevel-level)<.01) ? level : plotLevel;
         }
-        doZoom(dispatcher,pv.plotId,newZoomLevel,isFullScreen,userZoomType,useDelay);
+        doZoom(dispatcher,pv.plotId,newZoomLevel,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
     };
 }
 
@@ -193,7 +195,7 @@ function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
  * @param dispatcher
  * @param plotId
  * @param zoomLevel
- * @param rawPayload
+ * @param result
  * @param {object} result
  */
 function processZoomSuccess(dispatcher, plotId, zoomLevel, result) {
@@ -257,18 +259,17 @@ export function getNextZoomLevel(currLevel, zoomType) {
 
 /**
  *
- * @param pv
+ * @param plot
  * @param screenDim
  * @param fullType
  * @param tryMinFactor
  */
-function getEstimatedFullZoomFactor(pv, screenDim, fullType, tryMinFactor=-1) {
+function getEstimatedFullZoomFactor(plot, screenDim, fullType, tryMinFactor=-1) {
     var {width,height} = screenDim;
     var overrideFullType= fullType;
-    var plot= pv.primaryPlot;
 
-    if (pv.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {
-        var s= pv.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE];
+    if (plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE]) {
+        var s= plot.attributes[PlotAttribute.EXPANDED_TO_FIT_TYPE];
         if (VisUtil.FullType.has(s)) overrideFullType= VisUtil.FullType.get(s);
     }
     return VisUtil.getEstimatedFullZoomFactor(overrideFullType, plot.dataWidth, plot.dataHeight,

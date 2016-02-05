@@ -130,7 +130,7 @@ function modifyRequest(pvCtx, r, band) {
     //}
 
 
-    //if (pv.options.rememberZoom && pv.primaryPlot) {
+    //if (pv.options.rememberZoom && primePlot(pv)) {
     //    retval.setZoomType(ZoomType.STANDARD);
     //    retval.setInitialZoomLevel(plot.getZoomFact());
     //}

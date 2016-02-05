@@ -6,6 +6,7 @@ import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {TileDrawer} from './TileDrawer.jsx';
 import {EventLayer} from './EventLayer.jsx';
+import {primePlot} from '../PlotViewUtil.js';
 import {
     dispatchZoom,
     dispatchProcessScroll,
@@ -43,9 +44,9 @@ export class ImageViewerLayout extends Component {
     }
 
     componentDidUpdate() {
-        var {plotView:pv,width,height,externalWidth,externalHeight}= this.props;
-        var {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight}= this.previousDim;
-        if (prevWidth!==width || prevHeight!==height) {
+        var {plotView:pv,width,height,externalWidth,externalHeight, plotView:pv}= this.props;
+        var {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
+        if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
             //console.log(`UpdateView Size: prevWidth=${prevWidth}, prevHeight=${prevHeight}, width=${width}, height=${height} ${pv.plotId}`);
             dispatchUpdateViewSize(pv.plotId,width,height);
             if (pv && pv.plotViewCtx.zoomLockingEnabled) {
@@ -97,7 +98,8 @@ export class ImageViewerLayout extends Component {
 
     renderInside() {
         var {plotView,drawLayersAry}= this.props;
-        var {primaryPlot:plot,plotId,scrollX,scrollY}= plotView;
+        var {plotId,scrollX,scrollY}= plotView;
+        var plot= primePlot(plotView);
         var {dim:{width:viewPortWidth,height:viewPortHeight},x:vpX,y:vpY}= plot.viewPort;
         var {width:sw,height:sh}= plot.screenSize;
         var scrollViewWidth= Math.min(viewPortWidth,sw);
@@ -136,10 +138,10 @@ export class ImageViewerLayout extends Component {
 
 
     render() {
-        var {primaryPlot,viewDim:{width,height}}= this.props.plotView;
+        var {viewDim:{width,height}}= this.props.plotView;
         var insideStuff;
 
-        if (width && height && primaryPlot) {
+        if (width && height && primePlot(this.props.plotView)) {
             insideStuff= this.renderInside();
         }
         var style= {
@@ -170,13 +172,14 @@ ImageViewerLayout.propTypes= {
 };
 
 
-function makePrevDim(currDim) {
-    var {width,height,externalWidth,externalHeight}= currDim;
+function makePrevDim(props) {
+    var {width,height,externalWidth,externalHeight,plotView}= props;
     return {
         prevWidth:width,
         prevHeight:height,
         prevExternalWidth:externalWidth,
-        prevExternalHeight:externalHeight
+        prevExternalHeight:externalHeight,
+        prevPlotId : plotView.plotId
     };
 }
 

@@ -11,6 +11,7 @@ import React from 'react';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import MouseState from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
+import {primePlot} from '../PlotViewUtil.js';
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
@@ -33,7 +34,7 @@ export function MouseReadout({plotView:pv,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
 
-	var plot= pv.primaryPlot;
+	var plot= primePlot(pv);
 
 	var leftColumn = {width: 200, display: 'inline-block'};
 

@@ -8,15 +8,21 @@ import numeral from 'numeral';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {visRoot, ExpandType, dispatchChangeExpandedMode} from '../ImagePlotCntlr.js';
 import {convertZoomToString} from '../ZoomUtil.js';
-import {getActivePlotView} from '../PlotViewUtil.js';
+import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
+import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 
+import './ExpandedTools.css';
 
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import LIST from 'html/images/icons-2014/ListOptions.png';
+import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
+import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
+import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
 
 const tStyle= {
     display:'inline-block',
@@ -79,30 +85,39 @@ const s= {
     paddingLeft: 10
 };
 
+const plotTitleStyle= {
+    display: 'inline-block',
+    paddingLeft: 10,
+    position: 'relative',
+    top: -3
+};
+
 export function ExpandedTools({allPlots}) {
     var {expandedMode}= allPlots;
     var single= expandedMode===ExpandType.SINGLE;
-    var pv= getActivePlotView(allPlots);
+    var plot= primePlot(allPlots);
     var plotTitle;
-    if (pv && pv.primaryPlot) {
-        var {title, zoomFactor, plotState}=pv.primaryPlot;
+    if (plot) {
+        var {title, zoomFactor, plotState}=plot;
         plotTitle= (
             <PlotTitle brief={false} titleStr={title} inline={false}
                        titleType={TitleType.EXPANDED}
                        zoomFactor={zoomFactor}
-                       plotState={plotState} plotId={pv.plotId}
+                       plotState={plotState} plotId={plot.plotId}
             />
         );
 
     }
     return (
-        <div style={{width:'100%', height:70}}>
+        <div style={{width:'100%', height:70}} className='disable-select'>
             <CloseButton style={s} onClick={() => console.log('ExpandedTools: back button')}/>
-            <div style={s}>{single ? plotTitle : 'Tiled View'} </div>
+            <div style={plotTitleStyle}>{single ? plotTitle : 'Tiled View'} </div>
             <div style={s}></div>
-            <WhichView  allPlots={allPlots}/>
-            {createOptions(expandedMode)}
-            {single ? <div style={s}>paging(single only)</div> : false }
+            <div style={{display: 'inline-block', float:'right'}}>
+                <WhichView  allPlots={allPlots}/>
+                {createOptions(expandedMode)}
+                {single ? <PagingControl allPlots={allPlots}/>: false }
+            </div>`
         </div>
     );
 }
@@ -119,7 +134,7 @@ ExpandedTools.propTypes= {
 
 function WhichView({allPlots}) {
     return (
-        <div style={{display: 'inline-block'}}>
+        <div style={{display: 'inline-block', verticalAlign:'top'}}>
             <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                            enabled={true} visible={true}
                            horizontal={true}
@@ -135,8 +150,94 @@ function WhichView({allPlots}) {
     );
 }
 
-//{makeInlineTitle(visRoot,pv)}
-
 WhichView.propTypes= {
+    allPlots : PropTypes.object.isRequired
+};
+
+
+const leftTitleStyle= {
+    display:'inline-block',
+    cursor : 'pointer',
+    textAlign : 'left'
+};
+const rightTitleStyle= {
+    display:'inline-block',
+    paddingLeft : 5,
+    cursor : 'pointer',
+    float : 'right'
+};
+
+
+const controlStyle= {
+    display: 'inline-block',
+    paddingLeft: 10,
+    width: 300
+};
+
+
+function pTitle(begin,pv) {
+    var plot= primePlot(pv);
+    return plot ? begin+plot.title : '';
+}
+
+
+
+function PagingControl({allPlots}) {
+
+    const {plotViewAry, activePlotId}= allPlots;
+    const pvAry=  plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
+
+    if (pvAry.length<2) return <div style={controlStyle}></div>;
+
+    const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
+    const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
+    const prevIdx= cIdx ? cIdx-1 : pvAry.length-1;
+
+
+    const dots= pvAry.map( (pv,idx) =>
+        idx===cIdx ?
+            <img src={ACTIVE_DOT} className='control-dots'
+                 title={pTitle('Active Plot: ',pvAry[idx])}
+                 key={idx}/>  :
+            <img src={INACTIVE_DOT} className='control-dots'
+                 title={pTitle('Display: ', pvAry[idx])}
+                 key={idx}
+                  onClick={() => dispatchChangeActivePlotView(pvAry[idx].plotId)}/>);
+
+    return (
+        <div style={controlStyle} >
+            <div>
+                <img style={{verticalAlign:'bottom', cursor:'pointer'}} src={PAGE_LEFT}
+                     title={pTitle('Previous: ',pvAry[prevIdx])}
+                     onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)}
+                />
+                <a style={leftTitleStyle} className='ff-href text-nav-controls'
+                   title={pTitle('Previous: ',pvAry[prevIdx])}
+                     onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)} >
+                    {pTitle('',pvAry[nextIdx])}
+                </a>
+
+                <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
+                     title={pTitle('Next: ', pvAry[nextIdx])}
+                     src={PAGE_RIGHT}
+                     onClick={() => dispatchChangeActivePlotView(pvAry[nextIdx].plotId)}
+                />
+                <a style={rightTitleStyle} className='ff-href text-nav-controls'
+                   title={pTitle('Next: ', pvAry[nextIdx])}
+                   onClick={() => dispatchChangeActivePlotView(pvAry[nextIdx].plotId)} >
+                    {pTitle('',pvAry[nextIdx])}
+                </a>
+            </div>
+            <div style={{textAlign:'center'}}>
+                {dots}
+            </div>
+        </div>
+
+    );
+
+
+}
+
+PagingControl.propTypes= {
     allPlots : PropTypes.object.isRequired
 };

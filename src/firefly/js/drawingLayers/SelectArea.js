@@ -12,7 +12,7 @@ import {makeScreenPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
-import {getPlotViewById} from '../visualize/PlotViewUtil.js';
+import {getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
@@ -142,13 +142,11 @@ function attach() {
 
 function moveMouse(drawLayer,action) {
     var {screenPt,plotId}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var mode= getMode(pv);
-    if (pv && mode==='edit') {
-        if (!pv) return;
-
-        var cc= CsysConverter.make(pv.primaryPlot);
-        var ptAry= getPtAry(pv);
+    var plot= primePlot(visRoot(),plotId);
+    var mode= getMode(plot);
+    if (plot && mode==='edit') {
+        var cc= CsysConverter.make(plot);
+        var ptAry= getPtAry(plot);
         var corner= findClosestCorner(cc,ptAry, screenPt, EDIT_DISTANCE);
         var cursor;
         if (corner) {
@@ -168,10 +166,9 @@ function moveMouse(drawLayer,action) {
 
 function start(drawLayer,action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var mode= getMode(pv);
-    if (!pv) return;
-    var plot= pv.primaryPlot;
+    var plot= primePlot(visRoot(),plotId);
+    var mode= getMode(plot);
+    if (!plot) return;
 
     var retObj= {};
 
@@ -179,10 +176,10 @@ function start(drawLayer,action) {
 
 
     if (mode==='select' || shiftDown) {
-        retObj= setupSelect(pv,imagePt);
+        retObj= setupSelect(imagePt);
     }
     else if (mode==='edit') {
-        var ptAry= getPtAry(pv);
+        var ptAry= getPtAry(plot);
         if (!ptAry) return retObj;
 
         var idx= findClosestPtIdx(ptAry,screenPt);
@@ -201,10 +198,10 @@ function start(drawLayer,action) {
 
 }
 
-function getPtAry(pv) {
-    var sel= pv.primaryPlot.attributes[PlotAttribute.SELECTION];
+function getPtAry(plot) {
+    var sel= plot.attributes[PlotAttribute.SELECTION];
     if (!sel) return null;
-    var cc= CsysConverter.make(pv.primaryPlot);
+    var cc= CsysConverter.make(plot);
     var ptAry=[];
     ptAry[0]= cc.getScreenCoords(sel.pt0);
     ptAry[2]= cc.getScreenCoords(sel.pt1);
@@ -220,33 +217,26 @@ function getPtAry(pv) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    if (!pv) return;
-    var plot= pv.primaryPlot;
+    var plot= primePlot(visRoot(),plotId);
+    if (!plot) return;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, CsysConverter.make(plot));
     return {currentPt:imagePt, drawData:{data:drawSel}};
 }
 
 function end(drawLayer,action) {
-    var {plotId}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var mode= getMode(pv);
-    var retObj= {};
-    if (mode==='select') {
-        retObj.helpLine= editHelpText;
-    }
-    return retObj;
+    var mode= getMode(primePlot(visRoot(),action.payload.plotId));
+    return  (mode==='select') ? {helpLine: editHelpText} : {};
 }
 
-function getMode(pv) {
-    if (!pv) return 'select';
-    var selection = pv.primaryPlot.attributes[PlotAttribute.SELECTION];
+function getMode(plot) {
+    if (!plot) return 'select';
+    var selection = plot.attributes[PlotAttribute.SELECTION];
     return (selection) ? 'edit' : 'select';
 }
 
 const distance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 
-function setupSelect(pv,imagePt) {
+function setupSelect(imagePt) {
     return {firstPt: imagePt, currentPt: imagePt};
 }
 

@@ -13,6 +13,7 @@ import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
 import ShapeDataObj from '../draw/ShapeDataObj.js';
 import {COLOR_DRAW_1, COLOR_DRAW_2,Style} from '../draw/DrawingDef.js';
 import {getScrollSize} from '../reducer/PlotView.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {WebPlot} from '../WebPlot.js';
 import {EventLayer} from './../iv/EventLayer.jsx';
 import {MouseState} from '../VisMouseCntlr.js';
@@ -33,7 +34,7 @@ export function ThumbnailView({plotView:pv}) {
     if (!pv) return  <div style={s}></div>;
 
     s.border= '1px solid rgb(187, 187, 187)';
-    var plot= pv.primaryPlot;
+    var plot= primePlot(pv);
     var {width,height}= plot.serverImages.thumbnailImage;
     var vp= WebPlot.makeViewPort(0,0,width,height);
     var ary= makeDrawing(pv,width,height);
@@ -73,7 +74,7 @@ function eventCB(mouseState,pt,pv,width,height) {
 
 function scrollPlot(pt,pv,width,height) {
 
-    var plot= pv.primaryPlot;
+    var plot= primePlot(pv);
     var fact= getThumbZoomFact(plot,width,height);
 
 
@@ -120,7 +121,7 @@ function getThumbZoomFact(plot, thumbW, thumbH) {
 }
 
 function getScrollBoxInfo(pv, thumbW, thumbH) {
-    var plot= pv.primaryPlot;
+    var plot= primePlot(pv);
     var fact= getThumbZoomFact(plot,thumbW,thumbH)/ plot.zoomFactor;
 
     var mx= pv.wcsMarginX;
@@ -154,7 +155,7 @@ function getScrollBoxInfo(pv, thumbW, thumbH) {
 
 
 function makeDrawing(pv,width,height) {
-    var plot= pv.primaryPlot;
+    var plot= primePlot(pv);
     var {dataWidth,dataHeight}= plot;
     var cc= CysConverter.make(plot);
     var wptC= cc.getWorldCoords(makeImagePt(dataWidth/2,dataHeight/2));

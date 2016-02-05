@@ -5,7 +5,7 @@
 
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
-import {getPlotViewById} from '../visualize/PlotViewUtil.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import PointDataObj, {DrawSymbol} from '../visualize/draw/PointDataObj.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -33,7 +33,7 @@ function creator(initPayload) {
     var options= {
         hasPerPlotData:true,
         isPointData:true,
-        canUserChangeColor: ColorChangeType.DYNAMIC,
+        canUserChangeColor: ColorChangeType.DYNAMIC
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }
@@ -70,10 +70,10 @@ function getLayerChanges(drawLayer, action) {
 
 
 function getTitle(plotId) {
-    var pv= getPlotViewById(visRoot(),plotId);
+    var plot= primePlot(visRoot(),plotId);
     var retval= 'Query Object';
-    if (pv && pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET]) {
-        var wp= pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET];
+    if (plot && plot.attributes[PlotAttribute.FIXED_TARGET]) {
+        var wp= plot.attributes[PlotAttribute.FIXED_TARGET];
         if (wp)  retval=  wp.objName ? wp.objName :formatPosForTextField(wp);
     }
     return retval;
@@ -81,8 +81,8 @@ function getTitle(plotId) {
 
 function computeDrawLayer(plotId) {
     if (!plotId) return null;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var wp= pv.primaryPlot.attributes[PlotAttribute.FIXED_TARGET];
+    var plot= primePlot(visRoot(),plotId);
+    var wp= plot.attributes[PlotAttribute.FIXED_TARGET];
     return wp ? [PointDataObj.make(wp)] : [];
 }
 

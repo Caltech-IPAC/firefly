@@ -3,12 +3,8 @@
  */
 
 import React, {PropTypes} from 'react';
-import {getActivePlotView,
-    getDrawLayerByType,
-    getPlotViewById,
-    isDrawLayerAttached,
-    getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {primePlot } from '../PlotViewUtil.js';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -18,10 +14,10 @@ import DELETE from 'html/images/blue_delete_10x10.png';
 
 
 function expand(pv) {
-    console.log('todo- expand:' + pv.primaryPlot.title);
+    console.log('todo- expand:' + primePlot(pv).title);
 }
 function deletePlot(pv) {
-    console.log('todo- delete:' + pv.primaryPlot.title);
+    console.log('todo- delete:' + primePlot(pv).title);
 }
 
 
@@ -56,7 +52,7 @@ export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand,
                            visible={showExpand}
                            onClick={() => expand(pv)}/>
 
-            <div style={{ position: 'relative', display: 'inline-block', float: 'right', }}>
+            <div style={{ position: 'relative', display: 'inline-block', float: 'right' }}>
                 <ToolbarButton icon={DELETE}
                                tip='Delete Image'
                                horizontal={true}

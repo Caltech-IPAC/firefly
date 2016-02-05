@@ -1,9 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import DrawLayer from './draw/DrawLayer.js';
 import {getPlotGroupById} from './PlotGroup.js';
-import {flux} from '../Firefly.js';
 import difference from 'lodash/array/difference';
 
 
@@ -11,20 +9,38 @@ import difference from 'lodash/array/difference';
 
 export default {
     findPlotView, getPlotViewAry,operateOnOthersInGroup,
-    findPlotGroup, findPrimaryPlot, getPlotStateAry, matchPlotView,isActivePlotView,
+    findPlotGroup, getPlotStateAry, matchPlotView,isActivePlotView,
     hasGroupLock, getActivePlotView, getAllDrawLayers, getAllDrawLayersForPlot,
     getPlotViewIdListInGroup, getDrawLayerByType,
     isDrawLayerVisible, isDrawLayerAttached, getLayerTitle
 };
 
 
-
-//--------------------------------------------------------------
-//--------------------------------------------------------------
-//--------- outside of functions
-//--------------------------------------------------------------
-//--------------------------------------------------------------
-
+/**
+ *
+ * @param {{} | [] }ref this can be the visRoot or a plotView Object.  If it is view root then it will
+ * find the active plotView and get the primePlot otherwise it will find the primePlot in the plotView
+ * @param {string} [plotId] this is passed then the behavior changes some.  If the ref is a visRoot then it will used the passed
+ * plotId instead of the visRoot active plotId. Also when the plotId is passed then ref is also allowed to be the
+ * plotViewAry.  In this case, it will find the prime plot on the plotViewAry by looking up the plotView in the array
+ * and then returning the primePLot
+ */
+export function primePlot(ref,plotId) {
+    var pv;
+    if (!ref) return null;
+    if (typeof plotId !== 'string') plotId= null;
+    if (ref.plotViewAry && ref.activePlotId) { // I was passed the visRoot
+        var id= plotId?plotId:ref.activePlotId;
+        pv= getPlotViewById(ref,id);
+    }
+    else if (plotId && Array.isArray(ref) && ref.length>0 && ref[0].plotId) { //i was passed a plotViewAry
+        pv= ref.find( (pv) => pv.plotId===plotId);
+    }
+    else if (ref.plotId && ref.plots) { // i was passed a plotView
+        pv= ref;
+    }
+    return pv ? pv.plots[pv.primeIdx] : null;
+}
 
 
 /**
@@ -38,6 +54,10 @@ export function getPlotViewById(visRoot,plotId) {
     return visRoot.plotViewAry.find( (pv) => pv.plotId===plotId);
 }
 
+export function getPlotViewIdxById(visRoot,plotId) {
+    if (!plotId) return null;
+    return visRoot.plotViewAry.findIndex( (pv) => pv.plotId===plotId);
+}
 
 
 
@@ -92,7 +112,7 @@ export function getActivePlotView(visRoot) {
  * @param operationFunc
  * @return {[]} new plotView array after the operation
  */
-function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
+export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
     var plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     if (hasGroupLock(sourcePv,plotGroup)) {
         getPlotViewAry(visRoot).forEach( (pv) => {
@@ -180,7 +200,7 @@ function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.t
  */
 function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
-    return [pv.primaryPlot.plotState, ...overlayStates];
+    return [primePlot(pv).plotState, ...overlayStates];
 }
 
 /**
@@ -210,23 +230,16 @@ function hasGroupLock(pv,plotGroup) {
  * @param plotViewAry
  * @return {*}
  */
-function findPlotView(plotId, plotViewAry) {
+export function findPlotView(plotId, plotViewAry) {
     if (!plotId || !plotViewAry) return null;
     return plotViewAry.find( (pv) => pv.plotId===plotId);
 }
 
-/**
- * find the primaryPlot from the plotViewAry
- * USE INSIDE REDUCER ONLY
- * @param plotId
- * @param plotViewAry
- * @return {null}
- */
-function findPrimaryPlot(plotId, plotViewAry) {
+export function findPlotViewIdx(plotId, plotViewAry) {
     if (!plotId || !plotViewAry) return null;
-    var pv= findPlotView(plotId,plotViewAry);
-    return pv && pv.primaryPlot ? pv.primaryPlot : null;
+    return plotViewAry.findIndex( (pv) => pv.plotId===plotId);
 }
+
 
 
 /**
@@ -236,7 +249,7 @@ function findPrimaryPlot(plotId, plotViewAry) {
  * @param plotGroupAry
  * @return {*}
  */
-function findPlotGroup(plotGroupId, plotGroupAry) {
+export function findPlotGroup(plotGroupId, plotGroupAry) {
     if (!plotGroupId || !plotGroupAry) return null;
     return plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
 }
@@ -252,7 +265,7 @@ function findPlotGroup(plotGroupId, plotGroupAry) {
  * @param operationFunc
  * @return {[]} new plotView array after the operation
  */
-function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
+export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
     if (hasGroupLock(sourcePv,plotGroup)) {
         plotViewAry= plotViewAry.map( (pv) => {
             return (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId) ?
@@ -262,3 +275,20 @@ function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
     return plotViewAry;
 }
 
+
+/**
+ * perform an operation or a plotView or its related group depending on the lock state.
+ * @param plotViewAry plotViewAry
+ * @param plotId the that is primary.
+ * @param plotGroup the group to check against
+ * @param operationFunc the function to operate on the other plot views
+ * @return {[]} new plotViewAry
+ */
+export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc) {
+    var groupLock= hasGroupLock(findPlotView(plotId,plotViewAry),plotGroup);
+    return plotViewAry.map( (pv) => {
+        if (pv.plotId===plotId) return operationFunc(pv);
+        else if (groupLock && pv.plotGroupId===plotGroup.plotGroupId) return operationFunc(pv);
+        else return pv;
+    });
+}

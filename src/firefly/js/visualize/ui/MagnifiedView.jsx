@@ -7,6 +7,7 @@ import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import {MouseState} from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {isBlankImage} from '../WebPlot.js';
+import {primePlot} from '../PlotViewUtil.js';
 
 
 var defStyle= {
@@ -30,11 +31,10 @@ export function MagnifiedView({plotView:pv,size,mouseState}) {
     if (!spt) return EMPTY;
 
     var s= Object.assign({},defStyle, {border: '1px solid rgb(187, 187, 187)'});
-    var plot= pv.primaryPlot;
 
     return (
         <div style={s}>
-            {showMag(spt,plot,size)}
+            {showMag(spt,primePlot(pv),size)}
         </div>
     );
 }
