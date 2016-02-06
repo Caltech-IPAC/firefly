@@ -2,23 +2,23 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 //import {has, get} from 'lodash';
-import React from 'react';
+import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 //import {getFormatString} from '../util/MathUtil.js';
 
-const axisParamsShape = React.PropTypes.shape({
-    columnOrExpr : React.PropTypes.string,
-    label : React.PropTypes.string,
-    unit : React.PropTypes.string,
-    options : React.PropTypes.string, // ex. 'grid,log,flip'
-    nbins : React.PropTypes.number,
-    min : React.PropTypes.number,
-    max : React.PropTypes.number
+const axisParamsShape = PropTypes.shape({
+    columnOrExpr : PropTypes.string,
+    label : PropTypes.string,
+    unit : PropTypes.string,
+    options : PropTypes.string, // ex. 'grid,log,flip'
+    nbins : PropTypes.number,
+    min : PropTypes.number,
+    max : PropTypes.number
 });
 
-const plotParamsShape = React.PropTypes.shape({
-    xyRatio : React.PropTypes.number,
-    stretch : React.PropTypes.oneOf(['fit','fill']),
+const plotParamsShape = PropTypes.shape({
+    xyRatio : PropTypes.number,
+    stretch : PropTypes.oneOf(['fit','fill']),
     x : axisParamsShape,
     y : axisParamsShape
 });
@@ -28,13 +28,13 @@ var XYPlot = React.createClass(
         displayName: 'XYPlot',
 
         propTypes: {
-            data: React.PropTypes.arrayOf(React.PropTypes.arrayOf(React.PropTypes.string)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
-            width: React.PropTypes.number,
-            height: React.PropTypes.number,
+            data: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)), // array of numbers [0] - nInBin, [1] - binMin, [2] - binMax
+            width: PropTypes.number,
+            height: PropTypes.number,
             params: plotParamsShape,
-            highlightedRow: React.PropTypes.number,
-            onHighlightChange: React.PropTypes.func,
-            desc: React.PropTypes.string
+            highlightedRow: PropTypes.number,
+            onHighlightChange: PropTypes.func,
+            desc: PropTypes.string
         },
 
         getDefaultProps() {
@@ -89,17 +89,20 @@ var XYPlot = React.createClass(
 
             const xTitle = params.x.label + (params.x.unit ? ', '+params.x.unit : '');
             const yTitle = params.y.label + (params.y.unit ? ', '+params.y.unit : '');
+
             let xGrid = false, xReversed = false, xLog = false,
                 yGrid = false, yReversed = false, yLog = false;
+            const {options:yOptions} = params.y;
             if (params.y.options) {
-                yGrid = params.y.options.includes('grid');
-                yReversed = params.y.options.includes('flip');
-                yLog = params.y.options.includes('log');
+                yGrid = yOptions.includes('grid');
+                yReversed = yOptions.includes('flip');
+                yLog = yOptions.includes('log');
             }
-            if (params.x.options) {
-                xGrid = params.x.options.includes('grid');
-                xReversed = params.x.options.includes('flip');
-                xLog = params.x.options.includes('log');
+            const {options:xOptions} = params.x;
+            if (xOptions) {
+                xGrid = xOptions.includes('grid');
+                xReversed = xOptions.includes('flip');
+                xLog = xOptions.includes('log');
             }
 
             const toNumber = (val)=>Number(val);

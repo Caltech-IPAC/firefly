@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React from 'react';
+import React, {PropTypes} from 'react';
 
 import {get} from 'lodash';
 
@@ -24,9 +24,9 @@ var XYPlotOptions = React.createClass({
     unbinder : null,
 
     propTypes: {
-        groupKey: React.PropTypes.string.isRequired,
-        colValStats: React.PropTypes.arrayOf(React.PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-        onOptionsSelected: React.PropTypes.func.isRequired
+        groupKey: PropTypes.string.isRequired,
+        colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+        onOptionsSelected: PropTypes.func.isRequired
     },
 
     getInitialState() {
@@ -56,26 +56,27 @@ var XYPlotOptions = React.createClass({
 
         const yName = get(flds, ['y.columnOrExpr']);
         const yOptions = get(flds, ['y.options']);
-        let yLabel = get(flds, ['y.label']), yUnit = get(flds, ['y.unit']);
+        let yLabel = get(flds, ['y.label']);
+        let yUnit = get(flds, ['y.unit']);
         if (!yLabel) { yLabel = yName; }
         if (!yUnit) {yUnit = this.getUnit(yName); }
 
 
 
         /*
-          const axisParamsShape = React.PropTypes.shape({
-             columnOrExpr : React.PropTypes.string,
-             label : React.PropTypes.string,
-             unit : React.PropTypes.string,
-             options : React.PropTypes.string, // ex. 'grid,log,flip'
-             nbins : React.PropTypes.number,
-             min : React.PropTypes.number,
-             max : React.PropTypes.number
+          const axisParamsShape = PropTypes.shape({
+             columnOrExpr : PropTypes.string,
+             label : PropTypes.string,
+             unit : PropTypes.string,
+             options : PropTypes.string, // ex. 'grid,log,flip'
+             nbins : PropTypes.number,
+             min : PropTypes.number,
+             max : PropTypes.number
           });
 
-          const xyPlotParamsShape = React.PropTypes.shape({
-             xyRatio : React.PropTypes.number,
-             stretch : React.PropTypes.oneOf(['fit','fill']),
+          const xyPlotParamsShape = PropTypes.shape({
+             xyRatio : PropTypes.number,
+             stretch : PropTypes.oneOf(['fit','fill']),
              x : axisParamsShape,
              y : axisParamsShape
           });

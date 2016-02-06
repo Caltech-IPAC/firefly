@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
 
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
@@ -19,12 +19,12 @@ var XYPlotTablePanel = React.createClass({
             }, 500, {'leading':false}),
 
     propTypes: {
-        tblStatsData: React.PropTypes.object,
-        tblPlotData : React.PropTypes.object,
-        tblId: React.PropTypes.string,
-        highlightedRow: React.PropTypes.number,
-        width : React.PropTypes.string,
-        height : React.PropTypes.string
+        tblStatsData: PropTypes.object,
+        tblPlotData : PropTypes.object,
+        tblId: PropTypes.string,
+        highlightedRow: PropTypes.number,
+        width : PropTypes.string,
+        height : PropTypes.string
     },
 
     getInitialState() {

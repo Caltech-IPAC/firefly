@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PropTypes}  from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
@@ -9,9 +9,9 @@ var RadioGroupInputField= React.createClass(
         mixins: [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
-            inline : React.PropTypes.bool,
-            options: React.PropTypes.array.isRequired,
-            alignment:  React.PropTypes.string.isRequired
+            inline : PropTypes.bool,
+            options: PropTypes.array.isRequired,
+            alignment:  PropTypes.string.isRequired
         },
 
         contextTypes: {
@@ -39,27 +39,26 @@ var RadioGroupInputField= React.createClass(
             }
         },
 
-        makeLineBreak(){
-            return(<br/>);
-        },
         render() {
+
+            const {alignment, labelWidth, fieldKey} = this.props;
 
             let optionalElement;
 
-            switch ( this.props.alignment ) {
+            switch (alignment) {
                 case 'vertical':
-                    optionalElement  =  <br />;
+                    optionalElement = <br />;
                     break;
                 default:
-                    optionalElement=null;
+                    optionalElement = null;
                     break;
             }
 
             return (
-                <div style={{whiteSpace:'nowrap'}}>
+                <div style={{whiteSpace:'nowrap',display: this.props.inline?'inline-block':'block'}}>
                     <InputFieldLabel label={this.getLabel()}
                                      tooltip={this.getTip()}
-                                     labelWidth={this.props.labelWidth}
+                                     labelWidth={labelWidth}
                     />
                     {optionalElement}
                     <div style={{display:'inline-block'}} >
@@ -68,7 +67,7 @@ var RadioGroupInputField= React.createClass(
                             return (
                                 <div style={optionalElement ? {display:'block'}:{display:'inline-block'}} key={option.value}>
                                     <input type='radio'
-                                           name={this.props.fieldKey}
+                                           name={fieldKey}
                                            value={option.value}
                                            defaultChecked={this.getValue()===option.value}
                                            onChange={this.onChange}
