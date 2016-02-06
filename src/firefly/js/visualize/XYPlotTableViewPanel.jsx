@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
 
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
@@ -19,12 +19,12 @@ var XYPlotTablePanel = React.createClass({
             }, 500, {'leading':false}),
 
     propTypes: {
-        tblStatsData: React.PropTypes.object.isRequired,
-        tblPlotData : React.PropTypes.object.isRequired,
-        tblId: React.PropTypes.string,
-        highlightedRow: React.PropTypes.number,
-        width : React.PropTypes.string,
-        height : React.PropTypes.string
+        tblStatsData: PropTypes.object,
+        tblPlotData : PropTypes.object,
+        tblId: PropTypes.string,
+        highlightedRow: PropTypes.number,
+        width : PropTypes.string,
+        height : PropTypes.string
     },
 
     getInitialState() {
@@ -77,12 +77,13 @@ var XYPlotTablePanel = React.createClass({
             return 'Select XY plot parameters...';
         }
         const { isPlotDataReady, xyPlotData, xyPlotParams } = this.props.tblPlotData;
-        var {heightPx} = this.state;
+        var {widthPx, heightPx} = this.state;
 
         if (isPlotDataReady) {
             return (
                 <XYPlot data={xyPlotData}
-                        desc={xyPlotParams.x.columnOrExpr+' vs. '+xyPlotParams.y.columnOrExpr}
+                        desc=''
+                        width={widthPx-400}
                         height={heightPx}
                         params={xyPlotParams}
                         highlightedRow={this.props.highlightedRow}

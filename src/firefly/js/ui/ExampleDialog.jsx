@@ -217,7 +217,7 @@ function FieldGroupTestView ({fields}) {
 
     return (
         <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} keepState={true}>
-            <InputGroup labelWidth={130}>
+            <InputGroup labelWidth={110}>
                 <TargetPanel/>
                 {field1}
                 <ValidationField fieldKey='field2' />
@@ -237,39 +237,51 @@ function FieldGroupTestView ({fields}) {
                 <br/><br/>
                 <CheckboxGroupInputField
                     initialState= {{
-                                          value: '_all_',
-                                          tooltip: 'Please select some boxes',
-                                          label : 'Checkbox Group:'
-                                      }}
-                    options={
-                                          [
-                                              {label: 'Apple', value: 'A'},
-                                              {label: 'Banana', value: 'B'},
-                                              {label: 'Cranberry', value: 'C'},
-                                              {label: 'Dates', value: 'D'},
-                                              {label: 'Grapes', value: 'G'}
-                                          ]
-                                          }
+                        value: '_all_',
+                        tooltip: 'Please select some boxes',
+                        label : 'Checkbox Group:'
+                    }}
+                    options={[
+                        {label: 'Apple', value: 'A'},
+                        {label: 'Banana', value: 'B'},
+                        {label: 'Cranberry', value: 'C'},
+                        {label: 'Dates', value: 'D'},
+                        {label: 'Grapes', value: 'G'}
+                    ]}
                     fieldKey='checkBoxGrpFld'
                 />
 
                 <br/>
                 <span>here is some text</span>
-                <br/>
-                <RadioGroupInputField  initialState= {{
-                                          tooltip: 'Please select an option',
-                                          label : 'Radio Group:'
-                                      }}
-                                       options={
-                                                              [
-                                                                  {label: 'Option 1', value: 'opt1'},
-                                                                  {label: 'Hide A Field', value: 'opt2'},
-                                                                  {label: 'Option 3', value: 'opt3'},
-                                                                  {label: 'Option 4', value: 'opt4'}
-                                                              ]
-                                                              }
-                                       fieldKey='radioGrpFld'
+                <br/><br/>
+                <RadioGroupInputField
+                    inline={true}
+                    alignment='vertical'
+                    initialState= {{
+                        tooltip: 'Please select an option',
+                        label : 'Radio Group:'
+                    }}
+                    options={[
+                        {label: 'Option 1', value: 'opt1'},
+                        {label: 'Hide A Field', value: 'opt2'}
+                    ]}
+                    fieldKey='radioGrpFld'
                 />
+                <RadioGroupInputField
+                    inline={true}
+                    alignment='vertical'
+                    initialState= {{
+                        tooltip: 'Please select an option',
+                        label: 'Another Group:',
+                        value: 'opt2'
+                    }}
+                    options={[
+                        {label: 'Option 2', value: 'opt1'},
+                        {label: 'Option 3', value: 'opt2'}
+                    ]}
+                    fieldKey='radioGrpFld2'
+                />
+
                 <br/><br/>
 
                 <ListBoxInputField  initialState= {{
@@ -288,6 +300,7 @@ function FieldGroupTestView ({fields}) {
                                     multiple={false}
                                     fieldKey='listBoxFld'
                 />
+
                 <br/><br/>
 
                 <CompleteButton groupKey='DEMO_FORM'

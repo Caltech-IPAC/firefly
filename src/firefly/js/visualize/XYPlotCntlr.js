@@ -21,7 +21,6 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
          isPlotDataReady: boolean
          xyPlotData: [[rowIdx: int, x: string, y: string]*]  or [[row]
          xyPlotParams: {
-           grid: boolean
            title: string
            xyRatio: number
            stretch: string (fit|fill)
@@ -29,7 +28,7 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
                 columnOrExpr
                 label
                 unit
-                options: [log,flip]
+                options: [grid,log,flip]
                 nbins
                 min
                 max
@@ -38,7 +37,7 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
                 columnOrExpr
                 label
                 unit
-                options: [log,flip]
+                options: [grid,log,flip]
                 nbins
                 min
                 max
