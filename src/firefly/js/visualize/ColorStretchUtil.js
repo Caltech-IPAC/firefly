@@ -5,12 +5,10 @@
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
-import PlotViewUtil, {getPlotViewById} from './PlotViewUtil.js';
+import {primePlot, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
-import VisUtil from './VisUtil.js';
 import RangeValues from './RangeValues.js';
-import {Band} from './Band.js';
 
 
 
@@ -61,9 +59,9 @@ export function makeColorChangeAction(rawAction) {
         if (!pv) return;
 
 
-        if (!pv.primaryPlot.plotState.isThreeColor()) {
+        if (!primePlot(pv).plotState.isThreeColor()) {
             doColorChange(dispatcher,plotId,cbarId);
-            PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, (pv) => doColorChange(dispatcher,pv.plotId,cbarId));
+            operateOnOthersInGroup(visRoot(),pv, (pv) => doColorChange(dispatcher,pv.plotId,cbarId));
         }
         else {
             dispatcher( {
@@ -86,26 +84,26 @@ export function makeStretchChangeAction(rawAction) {
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv || !rangeValues) return;
         doStretch(dispatcher,plotId,rangeValues);
-        PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, (pv) => doStretch(dispatcher,pv.plotId,rangeValues));
+        operateOnOthersInGroup(visRoot(),pv, (pv) => doStretch(dispatcher,pv.plotId,rangeValues));
     };
 }
 
 
 function doStretch(dispatcher,plotId,rangeValues) {
 
-    var pv= getPlotViewById(visRoot(),plotId);
-    var stretchDataAry= pv.primaryPlot.plotState.getBands().map( (band) => {
+    var plot= primePlot(visRoot(),plotId);
+    var stretchDataAry= plot.plotState.getBands().map( (band) => {
         return {
             band : band.key,
             rv :  RangeValues.serializeRV(rangeValues),
             bandVisible: true
         };
     } );
-    PlotServicesJson.recomputeStretch(pv.primaryPlot.plotState,stretchDataAry)
+    PlotServicesJson.recomputeStretch(plot.plotState,stretchDataAry)
         .then( (wpResult) => processStretchResult(dispatcher,plotId,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, rangeValues, error:e} } );
-            logError(`plot error, stretch change, plotId: ${pv.plotId}`, e);
+            logError(`plot error, stretch change, plotId: ${plot.plotId}`, e);
         });
 }
 
@@ -113,12 +111,12 @@ function doStretch(dispatcher,plotId,rangeValues) {
 
 function doColorChange(dispatcher,plotId,cbarId) {
 
-    var pv= getPlotViewById(visRoot(),plotId);
-    PlotServicesJson.changeColor(pv.primaryPlot.plotState,cbarId)
+    var plot= primePlot(visRoot(),plotId);
+    PlotServicesJson.changeColor(plot.plotState,cbarId)
         .then( (wpResult) => processColorResult(dispatcher,plotId,cbarId,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
-            logError(`plot error, color change, plotId: ${pv.plotId}`, e);
+            logError(`plot error, color change, plotId: ${plot.plotId}`, e);
         });
 }
 

@@ -3,15 +3,17 @@
  */
 
 import Enum from 'enum';
+import update from 'react-addons-update';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
         makeStretchChangeAction as stretchChangeActionCreator,
     doDispatchColorChange, doDispatchStretchChange} from './ColorStretchUtil.js';
+import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
-import {isActivePlotView,getPlotViewById, getActivePlotView} from './PlotViewUtil.js';
+import {isActivePlotView, getPlotViewById, getActivePlotView, applyToOnePvOrGroup} from './PlotViewUtil.js';
 
 import {doDispatchZoomLocking} from './ZoomUtil.js';
 
@@ -26,7 +28,7 @@ const ANY_CHANGE= 'ImagePlotCntlr/AnyChange';
  * All PLOT_IMAGES actions should contain:
  * {string} plotId,
  * {WebPlotRequest} wpRequest,
- * or
+ *  or
  * {WebPlotRequest} redReq, blueReq, greenReq - must contain one
  * {boolean} addToHistory - optional
  * @type {string}
@@ -91,7 +93,7 @@ export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
  * The state is best thought of at the following:
  * The state contains an array of PlotView each have a plotId and tie to an Image Viewer, one might be active (PlotView.js)
  * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
- * An ImageViewer shows the primaryPlot of a plotView. (ImageView.js)
+ * An ImageViewer shows the primary plot of a plotView. (ImageView.js)
  */
 const initState= function() {
 
@@ -346,14 +348,32 @@ function changeActivePlotView(state,action) {
     return Object.assign({}, state, {activePlotId:action.payload.plotId});
 }
 
+const includeInExpandedList = (pv,enable) => update(pv, {plotViewCtx : {$merge :{inExpandedList:enable}}});
+
 function changeExpandedMode(state,action) {
-    var {expandedMode}= action.payload;
+    const {expandedMode}= action.payload;
+    const {plotViewAry}= state;
     if (!expandedMode || expandedMode===state.expandedMode) return state;
 
-    var changes= {expandedMode};
+    const changes= {expandedMode};
     if (expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE) {
         changes.previousExpandedMode= expandedMode;
     }
+
+    if (expandedMode===ExpandType.COLLAPSE) {  // if we are collapsing
+        changes.plotViewAry= plotViewAry.map( (pv) =>
+                  pv.plotViewCtx.inExpandedList ? includeInExpandedList(pv,false) : pv
+        );
+    }
+    else if (state.expandedMode===ExpandType.COLLAPSE) { // if we are expanding
+        const plotId= state.activePlotId;
+        const pv= getPlotViewById(state,plotId);
+        if (pv) {
+            const group= getPlotGroupById(state,pv.plotGroupId);
+            changes.plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,group, (pv) =>includeInExpandedList(pv,true));
+        }
+    }
+
     return Object.assign({}, state, changes);
 }
 
@@ -366,7 +386,6 @@ function changeExpandedMode(state,action) {
 //
 //    var {addToHistory}= action;
 //    if (addToHistory) {
-//        var request= pv.primaryPlot.plotState.getPrimaryWebPlotRequest();
 //        //todo: add to history here -- need to figure out how
 //    }
 //}

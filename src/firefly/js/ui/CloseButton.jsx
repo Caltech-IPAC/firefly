@@ -14,7 +14,7 @@ import BUTTON_END from 'html/images/backButton-end.png';
 const middleStyle= {
     display: 'inline-block',
     lineHeight: '30px',
-    fontSize: '11pt',
+    fontSize: '12pt',
     background: `url(${BUTTON_MIDDLE}) top left repeat-x`,
     color: 'white',
     verticalAlign:'baseline'

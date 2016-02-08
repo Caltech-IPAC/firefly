@@ -3,7 +3,7 @@
 
 import Enum from 'enum';
 import {flux} from '../Firefly.js';
-import {getPlotViewById} from './PlotViewUtil.js';
+import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {visRoot} from './ImagePlotCntlr.js';
 import CsysConverter from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
@@ -103,10 +103,9 @@ export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY
                                {shiftDown,controlDown,metaDown}= {}) {
     var payload={mouseState,screenPt,screenX,screenY, shiftDown,controlDown,metaDown};
     if (plotId) {
-        var pv= getPlotViewById(visRoot(),plotId);
-        if (pv && pv.primaryPlot) {
+        var cc= CsysConverter.make(primePlot(visRoot(),plotId));
+        if (cc) {
             payload.plotId= plotId;
-            var cc= CsysConverter.make(pv.primaryPlot);
             payload.imagePt= cc.getImageCoords(screenPt);
             payload.worldPt= cc.getWorldCoords(screenPt);
         }

@@ -2,13 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Cntlr from '../ImagePlotCntlr.js';
+import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {makePlotView} from './PlotView.js';
-import WebPlot from '../WebPlot.js';
 import PlotGroup from '../PlotGroup.js';
-import PlotViewUtil from '../PlotViewUtil.js';
-import {UserZoomTypes} from '../ZoomUtil.js';
-import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 
 
 //============ EXPORTS ===========
@@ -19,6 +15,7 @@ export default {
 };
 
 
+const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
 function reducer(state, action) {
@@ -37,7 +34,7 @@ function reducer(state, action) {
         case Cntlr.PLOT_IMAGE_FAIL  :
             break;
         case Cntlr.PLOT_IMAGE  :
-            plotViewAry= addPlot(state.plotViewAry,action);
+            plotViewAry= addPlot(state,action);
             activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
@@ -45,7 +42,7 @@ function reducer(state, action) {
             break;
     }
     if (plotGroupAry || plotViewAry || plotRequestDefaults) {
-        retState= Object.assign({},state, {activePlotId});
+        retState= clone(state, {activePlotId});
         if (plotViewAry) retState.plotViewAry= plotViewAry;
         if (plotGroupAry) retState.plotGroupAry= plotGroupAry;
         if (plotRequestDefaults) retState.plotRequestDefaults= plotRequestDefaults;
@@ -57,18 +54,17 @@ function reducer(state, action) {
 
 const updateDefaults= function(plotRequestDefaults, action) {
     var {plotId,wpRequest,redReq,greenReq, blueReq,threeColor}= action.payload;
-    if (threeColor) {
-        return Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}});
-    }
-    else {
-        return Object.assign({}, plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
-    }
+    return threeColor ?
+        clone(plotRequestDefaults, {[plotId]:{threeColor,redReq,greenReq, blueReq}}) :
+        clone(plotRequestDefaults, {[plotId]:{threeColor,wpRequest}});
 };
 
-const addPlot= function(plotViewAry,action) {
+const addPlot= function(state,action) {
+    var {plotViewAry}= state;
     const {plotId, plotAry}= action.payload;
+    var expanded= state.expandedMode!==ExpandType.COLLAPSE;
     return plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry) : pv;
+        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,expanded) : pv;
     });
 };
 

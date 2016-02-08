@@ -1159,7 +1159,7 @@ class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * @return {[]} array of Order enums
+     * @return {Array} array of Order enums
      */
     getPipelineOrder() {
         var retList= DEF_ORDER;
@@ -1180,7 +1180,7 @@ class WebPlotRequest extends ServerRequest {
     }
 
     /**
-     * @return {[]} array of Order enums
+     * @return {Array} array of Order enums
      */
     getOverlayIds() {
         return this.containsParam(C.OVERLAY_IDS) ?

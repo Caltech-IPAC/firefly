@@ -7,6 +7,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
 import {getZoomMax, getNextZoomLevel} from '../ZoomUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 
 
 import zoomDown from 'html/images/icons-2014/ZoomOut.png';
@@ -59,7 +60,7 @@ const zoom= getZoomer();
 
 function isZoomMax(pv) {
     var zMax= getZoomMax();
-    var {zoomFactor}= pv.primaryPlot;
+    var {zoomFactor}= primePlot(pv);
     if (zoomFactor>=zMax) return true;
 
     var nextZ= getNextZoomLevel(zoomFactor,UserZoomTypes.UP);
@@ -69,7 +70,7 @@ function isZoomMax(pv) {
 
 
 export function ZoomButton({plotView:pv,zoomType,visible}) {
-    var enable= pv && pv.primaryPlot ? true : false;
+    var enable= primePlot(pv) ? true : false;
     return (
         <ToolbarButton icon={zoomType.icon} tip={zoomType.tip}
                        enabled={enable} visible={visible}

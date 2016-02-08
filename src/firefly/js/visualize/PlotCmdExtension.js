@@ -9,6 +9,7 @@
 import {CysConverter} from './CsysConverter.js';
 import {PlotState} from './PlotState.js';
 import {PlotAttribute} from './WebPlot.js';
+import {primePlot} from './PlotViewUtil.js';
 
 export const AREA_SELECT= 'AREA_SELECT';
 export const LINE_SELECT= 'LINE_SELECT';
@@ -35,7 +36,7 @@ export class PlotCmdExtension {
 
 
 export function makeExtActivateData(ext,pv,dlAry) {
-    var {primaryPlot:plot}= pv;
+    var plot= primePlot(pv);
     var cc= CysConverter.make(plot);
     var data= {
         id : ext.id,

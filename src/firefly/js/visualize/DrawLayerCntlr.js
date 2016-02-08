@@ -5,12 +5,8 @@
 import {flux} from '../Firefly.js';
 import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
-import ImagePlotCntlr, {visRoot,dispatchAttributeChange}  from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import DrawLayerFactory from './draw/DrawLayerFactory.js';
-import SelectArea from '../drawingLayers/SelectArea.js';
-import DistanceTool from '../drawingLayers/DistanceTool.js';
-import {PlotAttribute} from './WebPlot.js';
 import without from 'lodash/array/without';
 import union from 'lodash/array/union';
 
@@ -50,7 +46,7 @@ export function dlRoot() { return flux.getState()[DRAWING_LAYER_KEY]; }
 
 /**
  * Return, from the store, the master array of all the drawing layers on all the plots
- * @return {[]}
+ * @return {Array<Object>}
  */
 export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayerAry; }
 
@@ -64,8 +60,7 @@ export default {
     DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
-
+    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot
 };
 
 /**
@@ -248,7 +243,7 @@ export function makeDetachLayerActionCreator(factory) {
             factory.onDetachAction(drawLayer,action);
             dispatcher(action);
         };
-    }
+    };
 }
 
 
@@ -363,6 +358,7 @@ function deferToLayerReducer(state,action,dlReducer) {
  * @param state
  * @param {{type:string,payload:object}} action
  * @param dlReducer drawinglayer subreducer
+ * @param force
  * @return {object} the new state;
  */
 function determineAndCallLayerReducer(state,action,dlReducer,force) {
@@ -389,21 +385,11 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
 
 
 
-/**
- * @param state
- * @param {{type:string,payload:object}} action
- * @return {object} the new state;
- */
-function mouseStateChange(state,action) {
-    var {drawLayerId, plotId}= action.payload;
-
-    //todo: determine which drawing layer this should be passed to
-    //todo: determine it there is a mouse grab active layer to take priority and the it is on the plotId
-    //todo: call all the drawing layers that quality using newState= deferToLayerReducer()
-    //todo: if non qualify then just return the state
-
-
-}
+//function mouseStateChange(state,action) {
+//    var {drawLayerId, plotId}= action.payload;
+//
+//
+//}
 
 const initState= function() {
 

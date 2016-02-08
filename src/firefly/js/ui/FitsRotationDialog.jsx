@@ -17,7 +17,7 @@ import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import PlotViewUtil from '../visualize/PlotViewUtil.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import InputFieldLabel from './InputFieldLabel.jsx';
@@ -58,7 +58,7 @@ export function showFitsRotationDialog() {
  */
 function getInitialPlotState() {
 
-    var plot = PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
+    var plot = primePlot(visRoot());
 
 
     var plotState = plot.plotState;

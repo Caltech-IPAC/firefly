@@ -3,19 +3,11 @@
  */
 
 import React, {PropTypes} from 'react';
-import {getActivePlotView,
-    getDrawLayerByType,
-    getPlotViewById,
-    isDrawLayerAttached,
-    getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import { primePlot} from '../PlotViewUtil.js';
 import {
     ToolbarButton,
     DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';
-import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
-import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
-import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {dispatchStretchChange} from '../ImagePlotCntlr.js';
-import {defMenuItemKeys} from '../MenuItemKeys.js';
 import {
     PERCENTAGE,
     MAXMIN,
@@ -89,7 +81,7 @@ function stretchByType(pv,currRV,sType,min,max) {
 
 export function StretchDropDownView({plotView:pv}) {
     var enabled= pv ? true : false;
-    var rv= pv.primaryPlot.plotState.getRangeValues();
+    var rv= primePlot(pv).plotState.getRangeValues();
     return (
         <SingleColumnMenu>
             <ToolbarButton text='Color stretch...'

@@ -14,6 +14,7 @@
  */
 
 //import ImagePlotCntlr from './ImagePlotCntlr.js';
+import update from 'react-addons-update';
 import {flux} from '../../Firefly.js';
 import WebPlot, {PlotAttribute} from './../WebPlot.js';
 import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
@@ -29,6 +30,7 @@ import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
+import {primePlot} from '../PlotViewUtil.js';
 
 export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
@@ -40,9 +42,9 @@ const DEF_WORKING_MSG= 'Plotting ';
 //============ EXPORTS ===========
 
 export default {replacePlots,
-                updatePlotViewScrollXY, replacePrimary, replacePrimaryInAry,
+                updatePlotViewScrollXY,
                 findCurrentCenterPoint, findScrollPtForImagePt,
-                replacePlotView, updatePlotGroupScrollXY};
+                updatePlotGroupScrollXY};
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
@@ -61,7 +63,7 @@ export default {replacePlots,
  *
  * PlotView is mostly about the viewing of the plot.  The plot data is contained in a WebPlot. A plotView can have an
  * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
- * files. primaryPlot referers to the plot currnetly showing in the plot view.
+ * files. plots[primeIdx] refers to the plot currently showing in the plot view.
  */
 
 /**
@@ -76,7 +78,7 @@ export function makePlotView(plotId, req, pvOptions) {
         plotGroupId: req.getPlotGroupId(),
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
         plots:[],
-        primaryPlot: null,
+        primeIdx:-1,
         plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
         wcsMarginY: 0, // todo
@@ -88,15 +90,7 @@ export function makePlotView(plotId, req, pvOptions) {
         containsMultipleCubes : false,
         lockPlotHint: false, //todo
         attributes: {}, //todo, i hope to remove this an only hold attributes on web plot
-        taskCnt: 0, //todo,
-        //zoomLockingEnabled: false,
-        //zoomLockingType: UserZoomTypes.FIT,
-        //preferenceColorKey: req.getPreferenceColorKey(),
-        //preferenceZoomKey:  req.getPreferenceZoomKey(),
-        //defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
         menuItemKeys: makeMenuItemKeys(req,pvOptions,defMenuItemKeys),
-
-
         plotViewCtx: createPlotViewContextData(req),
 
 
@@ -106,7 +100,6 @@ export function makePlotView(plotId, req, pvOptions) {
             workingMsg      : DEF_WORKING_MSG,
             removeOldPlot   : true, // if false keep the last plot for flipping, if true remove the old one before plotting, todo
             hasNewPlotContainer: req.getHasNewPlotContainer(), // if image selection dialog come up, allow to create a new MiniPlotWidth, todo control with MenuItemKeys
-            //rotateNorth     : false, // rotate this plot north when plotting,
             saveCorners     : req.getSaveCorners(), // save the four corners of the plot to the ActiveTarget singleton, todo
             turnOnGridAfterPlot: req.getGridOn(), // turn on the grid after plot, todo
             expandedTitleOptions: req.getExpandedTitleOptions(),
@@ -140,7 +133,8 @@ function createPlotViewContextData(req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        gridId : null// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
+        gridId : null,// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
+        inExpandedList: true
     };
 }
 
@@ -161,7 +155,7 @@ const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCe
  * @param plotAry
  * @param addToHistory
  */
-function replacePlots(pv, plotAry) {
+function replacePlots(pv, plotAry,expanded) {
 
     pv= Object.assign({},pv);
 
@@ -184,23 +178,21 @@ function replacePlots(pv, plotAry) {
     });
 
 
-    pv.primaryPlot= pv.plots[0];
+    pv.primeIdx=0;
 
-    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.primaryPlot.plotState);
-    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.primaryPlot.plotState);
+    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
+    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);
 
 
-    setClientSideRequestOptions(pv,pv.primaryPlot.plotState.getWebPlotRequest());
+    setClientSideRequestOptions(pv,pv.plots[pv.primeIdx].plotState.getWebPlotRequest());
 
     pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
-    pv.plotViewCtx.rotateNorth= pv.primaryPlot.plotState.getRotateType()===RotateType.NORTH;
+    pv.plotViewCtx.rotateNorth= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;
 
-    //--------- set initialized viewport here
-    //var {scrollWidth,scrollHeight} = computeScrollSizes(pv.primaryPlot,pv.viewDim);
-    //pv.scrollWidth= scrollWidth;
-    //pv.scrollHeight= scrollHeight;
     pv= initScrollCenterPoint(pv);
+
+    if (expanded) pv.plotViewCtx.inExpandedList= true;
 
     return pv;
 }
@@ -225,7 +217,8 @@ function replacePlots(pv, plotAry) {
 function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plotView || !newScrollPt) return plotView;
 
-    var {primaryPlot:plot,scrollX:oldSx,scrollY:oldSy}= plotView;
+    var {scrollX:oldSx,scrollY:oldSy}= plotView;
+    var plot= primePlot(plotView);
     var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     if (!plot || !scrollWidth || !scrollHeight) return plotView;
 
@@ -242,7 +235,6 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
         var viewPort= computeViewPort(plot,scrollWidth,scrollHeight,cp);
         var newPrimary= WebPlot.setWPViewPort(plot,viewPort);
         newPlotView.plots= plotView.plots.map( (p) => p===plot ? newPrimary : p);
-        newPlotView.primaryPlot= newPrimary;
     }
 
     return newPlotView;
@@ -250,36 +242,23 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
 
 /**
  * replace a plotview in the plotViewAry with the passed plotview whose plotId's match
- * @param {[]} plotViewAry
+ * @param {Array} plotViewAry
  * @param {object} newPlotView
- * @return {[]} new plotView array after return a plotview
+ * @return {Array} new plotView array after return a plotview
  */
-function replacePlotView(plotViewAry,newPlotView) {
+export function replacePlotView(plotViewAry,newPlotView) {
     return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
 }
 
 /**
  *
  * @param plotView
- * @param primaryPlot
+ * @param primePlot
  * @return {*} return the new PlotView object
  */
-function replacePrimary(plotView,primaryPlot) {
-    var newPlotView= Object.assign({},plotView, {primaryPlot});
-    newPlotView.plots= plotView.plots.map( (p) => p===plotView.primaryPlot? primaryPlot : p);
-    return newPlotView;
+export function replacePrimaryPlot(plotView,primePlot) {
+    return update(plotView, { plots : {[plotView.primeIdx] : { $set : primePlot } }} );
 }
-
-
-function replacePrimaryInAry(plotViewAry, pv, plot) {
-    //var pv= PlotViewUtil.findPlotView(plot.plotId, plotViewAry);
-    if (!pv) return plotViewAry;
-    pv= replacePrimary(pv,plot);
-    return replacePlotView(plotViewAry,pv);
-}
-
-
-
 
 
 
@@ -287,10 +266,10 @@ function replacePrimaryInAry(plotViewAry, pv, plot) {
  * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plotviews in the group
  * will be scrolled to match
  * @param plotId plot id to set the scrolling on
- * @param {[]} plotViewAry an array of plotView
- * @param {[]} plotGroupAry the plotGroup array
+ * @param {Array} plotViewAry an array of plotView
+ * @param {Array} plotGroupAry the plotGroup array
  * @param newScrollPt a screen point in the plot to scroll to
- * @return {[]}
+ * @return {Array}
  */
 function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) {
     var plotView= updatePlotViewScrollXY(PlotViewUtil.findPlotView(plotId,plotViewAry),newScrollPt);
@@ -322,16 +301,18 @@ function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) 
  *                      returns the scrolled matched version
  */
 function makeScrollPosMatcher(sourcePV) {
-    var {primaryPlot:{screenSize:{width:srcScreenWidth,height:srcScreenHeight}},
-        scrollX:srcSx,scrollY:srcSy}= sourcePV;
+    var {scrollX:srcSx,scrollY:srcSy}= sourcePV;
+    var sourcePlot= primePlot(sourcePV);
+    var {screenSize:{width:srcScreenWidth,height:srcScreenHeight}}= sourcePlot;
     var {scrollWidth:srcSW,scrollHeight:srcSH}= getScrollSize(sourcePV);
     var percentX= (srcSx+srcSW/2) / srcScreenWidth;
     var percentY= (srcSy+srcSH/2) / srcScreenHeight;
 
     return (pv) => {
         var retPV= pv;
-        if (pv && pv.primaryPlot) {
-            var {primaryPlot:{screenSize:{width,height}}}= pv;
+        var plot= primePlot(pv);
+        if (plot) {
+            var {screenSize:{width,height}}= plot;
             var {scrollWidth:sw,scrollHeight:sh}= getScrollSize(pv);
             var newSx= width*percentX - sw/2;
             var newSy= height*percentY - sh/2;
@@ -413,18 +394,18 @@ function getNewAttributes(plot) {
  */
 function findCurrentCenterPoint(plotView,scrollX,scrollY) {
     if (!plotView) return null;
-    var {wcsMarginX,wcsMarginY, primaryPlot}= plotView;
-    if (!primaryPlot) return null;
+    var {wcsMarginX,wcsMarginY}= plotView;
+    var plot= primePlot(plotView);
+    if (!plot) return null;
     var {scrollWidth,scrollHeight}= getScrollSize(plotView);
     var sx= (typeof scrollX !== 'undefined') ? scrollX : plotView.scrollX;
     var sy= (typeof scrollY !== 'undefined') ? scrollY : plotView.scrollY;
-    if (!primaryPlot) return null;
 
-    var {width:screenW, height:screenH}= primaryPlot.screenSize;
+    var {width:screenW, height:screenH}= plot.screenSize;
     var cX=  (screenW<scrollWidth) ? screenW/2 : sx+scrollWidth/2- wcsMarginX;
     var cY= (screenH<scrollHeight) ? screenH/2 : sy+scrollHeight/2- wcsMarginY;
     var pt= makeScreenPt(cX,cY);
-    return CCUtil.getImageCoords(primaryPlot,pt);
+    return CCUtil.getImageCoords(plot,pt);
 }
 
 
@@ -447,12 +428,12 @@ function isRecomputeViewPortNecessary(scrollX,scrollY,scrollWidth,scrollHeight, 
 
 /**
  *
- * @param primaryPlot
+ * @param plot
  * @param {{width: number, height: number}} viewDim
  * @return {{scrollWidth: number, scrollHeight: number}}
  */
-function computeScrollSizes(primaryPlot,viewDim) {
-    var {screenSize}= primaryPlot;
+function computeScrollSizes(plot,viewDim) {
+    var {screenSize}= plot;
     var scrollWidth= Math.min(screenSize.width,viewDim.width);
     var scrollHeight= Math.min(screenSize.height,viewDim.height);
 
@@ -466,7 +447,7 @@ function computeScrollSizes(primaryPlot,viewDim) {
  * @param {object} plotView
  * @return {{scrollWidth: number, scrollHeight: number}}
  */
-export const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPlot,plotView.viewDim);
+export const getScrollSize = (plotView) => computeScrollSizes(primePlot(plotView),plotView.viewDim);
 
 
 
@@ -474,17 +455,17 @@ export const getScrollSize = (plotView) => computeScrollSizes(plotView.primaryPl
 /**
  *
  * Compute a view port based on the visibleCenterPt
- * @param primaryPlot
+ * @param plot
  * @param scrollWidth
  * @param scrollHeight
  * @param {object} visibleCenterPt, screen point
  * @return {{dim: {width : number, height : number}, x: number, y: number}}
  */
-export function computeViewPort(primaryPlot, scrollWidth, scrollHeight, visibleCenterPt) {
-    if (!primaryPlot) return null;
+export function computeViewPort(plot, scrollWidth, scrollHeight, visibleCenterPt) {
+    if (!plot) return null;
 
-    var {viewPort}= primaryPlot;
-    var {width:screenW, height:screenH} = primaryPlot.screenSize;
+    var {viewPort}= plot;
+    var {width:screenW, height:screenH} = plot.screenSize;
 
     var vpw = scrollWidth * 2;
     var vph = scrollHeight * 2;
@@ -533,7 +514,7 @@ function checkBounds(pos,screenSize,scrollSize) {
 
 function findScrollPtForCenter(plotView) {
     var {width,height}= plotView.viewDim;
-    var {width:scrW,height:scrH}= plotView.primaryPlot.screenSize;
+    var {width:scrW,height:scrH}= primePlot(plotView).screenSize;
     var x= (scrW>width) ? scrW/2- width/2 : 0;
     var y= (scrH>height) ? scrH/2- height/2 : 0;
     return makeScreenPt(x,y);
@@ -546,8 +527,9 @@ function findScrollPtForCenter(plotView) {
  */
 function findScrollPtForImagePt(plotView, ipt) {
     var {width,height}= plotView.viewDim;
-    var {width:scrW,height:scrH}= plotView.primaryPlot.screenSize;
-    var center= CCUtil.getScreenCoords(plotView.primaryPlot, ipt);
+    var plot= primePlot(plotView);
+    var {width:scrW,height:scrH}= plot.screenSize;
+    var center= CCUtil.getScreenCoords(plot, ipt);
     var x= center.x- width/2;
     var y= center.y- height/2;
     x= checkBounds(x,scrW,width);

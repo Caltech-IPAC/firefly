@@ -3,11 +3,7 @@
  */
 
 import React, {PropTypes} from 'react';
-import {getActivePlotView,
-    getDrawLayerByType,
-    getPlotViewById,
-    isDrawLayerAttached,
-    getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 
 
@@ -25,23 +21,23 @@ import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 
 
 function crop(pv) {
-    console.log('todo- crop:' + pv.primaryPlot.title);
+    console.log('todo- crop:' + primePlot(pv).title);
 }
 
 function stats(pv) {
-    console.log('todo- stats:' + pv.primaryPlot.title);
+    console.log('todo- stats:' + primePlot(pv).title);
 }
 
 function select(pv,dlAry) {
-    console.log('todo- select:' + pv.primaryPlot.title);
+    console.log('todo- select:' + primePlot(pv).title);
 }
 
 function unselect(pv,dlAry) {
-    console.log('todo- unselect:' + pv.primaryPlot.title);
+    console.log('todo- unselect:' + primePlot(pv).title);
 }
 
 function filter(pv,dlAry) {
-    console.log('todo- filter:' + pv.primaryPlot.title);
+    console.log('todo- filter:' + primePlot(pv).title);
 }
 
 

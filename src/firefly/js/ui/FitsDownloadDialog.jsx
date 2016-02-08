@@ -19,7 +19,7 @@ import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
-import PlotViewUtil from '../visualize/PlotViewUtil.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
@@ -57,7 +57,7 @@ export function showFitsDownloadDialog() {
  */
 function getInitialPlotState() {
 
-    var plot = PlotViewUtil.getActivePlotView(visRoot()).primaryPlot;
+    var plot = primePlot(visRoot());
 
 
     var plotState = plot.plotState;
@@ -420,7 +420,7 @@ function  makeServiceFileName(req,plot, band) {
 function  makeTitleFileName(plot, band) {
 
 
-    var retval = plot.primaryPlot.title;
+    var retval = plot.title;
     if (band!=Band.NO_BAND) {
         retval= retval + '-'+ band;
     }

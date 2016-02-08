@@ -11,17 +11,16 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import {makeScreenPt, makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
+import { makeOffsetPt, makeWorldPt, makeImagePt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {getPlotViewById} from '../visualize/PlotViewUtil.js';
+import {primePlot} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './DistanceToolUI.jsx';
 //import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
 
-import Enum from 'enum';
 
 
 
@@ -95,22 +94,22 @@ function getLayerChanges(drawLayer, action) {
 
     switch (action.type) {
         case DrawLayerCntlr.DT_START:
-            return start(drawLayer,action);
+            return start(action);
             break;
         case DrawLayerCntlr.DT_MOVE:
             return drag(drawLayer,action);
             break;
         case DrawLayerCntlr.DT_END:
-            return end(drawLayer,action);
+            return end(action);
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             return attach();
             break;
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            return dealWithMods(drawLayer,action)
+            return dealWithMods(drawLayer,action);
             break;
         case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
-            return dealWithUnits(drawLayer,action)
+            return dealWithUnits(drawLayer,action);
             break;
 
     }
@@ -121,9 +120,8 @@ function getLayerChanges(drawLayer, action) {
 
 function dealWithUnits(drawLayer,action) {
     var {plotIdAry}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotIdAry[0]);
-    if (!pv) return null;
-    var cc= CsysConverter.make(pv.primaryPlot);
+    var cc= CsysConverter.make(primePlot(visRoot(),plotIdAry[0]));
+    if (!cc) return null;
     var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, drawLayer.posAngle,cc);
     return {drawData:{data:drawSel}};
 }
@@ -133,9 +131,8 @@ function dealWithUnits(drawLayer,action) {
 function dealWithMods(drawLayer,action) {
     var {changes,plotIdAry}= action.payload;
     if (typeof changes.posAngle=== 'boolean') {
-        var pv= getPlotViewById(visRoot(),plotIdAry[0]);
-        if (!pv) return null;
-        var cc= CsysConverter.make(pv.primaryPlot);
+        var cc= CsysConverter.make(primePlot(visRoot(),plotIdAry[0]));
+        if (!cc) return null;
         var drawSel= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, changes.posAngle,cc);
         return {posAngle:changes.posAngle, drawData:{data:drawSel}};
     }
@@ -153,24 +150,23 @@ function attach() {
     };
 }
 
-function getMode(pv) {
-    if (!pv) return 'select';
-    var selection = pv.primaryPlot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+function getMode(plot) {
+    if (!plot) return 'select';
+    var selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     return (selection) ? 'edit' : 'select';
 }
 
-function start(drawLayer,action) {
+function start(action) {
     var {screenPt,imagePt,plotId,shiftDown}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var mode= getMode(pv);
-    if (!pv) return;
-    var plot= pv.primaryPlot;
+    var plot= primePlot(visRoot(),plotId);
+    var mode= getMode(plot);
+    if (!plot) return;
     var retObj= {};
     if (mode==='select' || shiftDown) {
         retObj= setupSelect(imagePt);
     }
     else if (mode==='edit') {
-        var ptAry= getPtAry(pv);
+        var ptAry= getPtAry(plot);
         if (!ptAry) return retObj;
 
         var idx= findClosestPtIdx(ptAry,screenPt);
@@ -195,18 +191,15 @@ function start(drawLayer,action) {
 
 function drag(drawLayer,action) {
     var {imagePt,plotId}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    if (!pv) return;
-    var cc= CsysConverter.make(pv.primaryPlot);
+    var cc= CsysConverter.make(primePlot(visRoot(),plotId));
+    if (!cc) return;
     var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, drawLayer.posAngle,cc); //todo switch back
-    //var drawSel= makeSelectObj(drawLayer.firstPt, imagePt, true,cc); //todo switch back
     return {currentPt:imagePt, drawData:{data:drawSel}};
 }
 
-function end(drawLayer,action) {
+function end(action) {
     var {plotId}= action.payload;
-    var pv= getPlotViewById(visRoot(),plotId);
-    var mode= getMode(pv);
+    var mode= getMode(primePlot(visRoot(),plotId));
     var retObj= {};
     if (mode==='select') {
         retObj.helpLine= editHelpText;
@@ -268,7 +261,7 @@ function getDistText(dist, isWorld, pref) {
  * @param {object} currentPt
  * @param {boolean} posAngle
  * @param {CysConverter} cc
- * @return {[]}
+ * @return {Array}
  */
 function makeSelectObj(firstPt,currentPt, posAngle,cc) {
     var pref= AppDataCntlr.getPreference(DIST_READOUT);
@@ -362,10 +355,10 @@ function makeSelectObj(firstPt,currentPt, posAngle,cc) {
 }
 
 
-function getPtAry(pv) {
-    var sel= pv.primaryPlot.attributes[PlotAttribute.ACTIVE_DISTANCE];
+function getPtAry(plot) {
+    var sel= plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
     if (!sel) return null;
-    var cc= CsysConverter.make(pv.primaryPlot);
+    var cc= CsysConverter.make(plot);
     var ptAry=[];
     ptAry[0]= cc.getScreenCoords(sel.pt0);
     ptAry[1]= cc.getScreenCoords(sel.pt1);
