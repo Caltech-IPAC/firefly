@@ -242,9 +242,9 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
 
 /**
  * replace a plotview in the plotViewAry with the passed plotview whose plotId's match
- * @param {[]} plotViewAry
+ * @param {Array} plotViewAry
  * @param {object} newPlotView
- * @return {[]} new plotView array after return a plotview
+ * @return {Array} new plotView array after return a plotview
  */
 export function replacePlotView(plotViewAry,newPlotView) {
     return plotViewAry.map( (pv) => pv.plotId===newPlotView.plotId ? newPlotView : pv);
@@ -266,10 +266,10 @@ export function replacePrimaryPlot(plotView,primePlot) {
  * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plotviews in the group
  * will be scrolled to match
  * @param plotId plot id to set the scrolling on
- * @param {[]} plotViewAry an array of plotView
- * @param {[]} plotGroupAry the plotGroup array
+ * @param {Array} plotViewAry an array of plotView
+ * @param {Array} plotGroupAry the plotGroup array
  * @param newScrollPt a screen point in the plot to scroll to
- * @return {[]}
+ * @return {Array}
  */
 function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) {
     var plotView= updatePlotViewScrollXY(PlotViewUtil.findPlotView(plotId,plotViewAry),newScrollPt);

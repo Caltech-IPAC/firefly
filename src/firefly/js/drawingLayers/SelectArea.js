@@ -282,7 +282,7 @@ function findClosestCorner(cc,ptAry, spt, testDist) {
  * @param {object} firstPt
  * @param {object} currentPt
  * @param {CysConverter} cc
- * @return {[]}
+ * @return {Array}
  */
 function makeSelectObj(firstPt,currentPt,cc) {
     var fallbackAry= [firstPt,currentPt];

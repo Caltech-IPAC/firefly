@@ -53,7 +53,7 @@ MagnifiedView.propTypes= {
  * @param plot
  * @param spt
  * @param size
- * @return {[]}
+ * @return {Array}
  */
 function getImagesAt(plot, spt, size) {
 

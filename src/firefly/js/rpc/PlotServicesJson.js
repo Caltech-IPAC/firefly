@@ -84,7 +84,7 @@ function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
 
 /**
  *
- * @param {[]} stateAry
+ * @param {Array} stateAry
  * @param {number} level
  * @param {boolean} isFullScreen hint, will only make on file
  */
@@ -152,8 +152,8 @@ function makeParamsWithStateAry(stateAry, otherParams=[]) {
 
 /**
  *
- * @param {[]} startAry
- * @return {[]}
+ * @param {Array} startAry
+ * @return {Array}
  */
 function makeStateParamAry(startAry) {
     return startAry.map( (s,idx) => {

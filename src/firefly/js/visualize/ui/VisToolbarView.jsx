@@ -56,7 +56,7 @@ import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 /**
  * Vis Toolbar
  * @param visRoot visualization store root
- * @param {[]} dlAry drawing layer array
+ * @param {Array} dlAry drawing layer array
  * @param toolTip tool tip to show
  * @return {XML}
  */

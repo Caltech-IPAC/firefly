@@ -261,7 +261,7 @@ function getDistText(dist, isWorld, pref) {
  * @param {object} currentPt
  * @param {boolean} posAngle
  * @param {CysConverter} cc
- * @return {[]}
+ * @return {Array}
  */
 function makeSelectObj(firstPt,currentPt, posAngle,cc) {
     var pref= AppDataCntlr.getPreference(DIST_READOUT);

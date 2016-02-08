@@ -96,7 +96,7 @@ class Drawer {
 
     /**
      *
-     * @param {[]} data the list of DataObj
+     * @param {Array} data the list of DataObj
      * @param plot
      * @param width
      * @param height

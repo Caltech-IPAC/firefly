@@ -28,7 +28,7 @@ export default {
 export function primePlot(ref,plotId) {
     var pv;
     if (!ref) return null;
-    if (typeof plotId !== 'string') plotId= null;
+    if (typeof plotId !== 'string') plotId= '';
     if (ref.plotViewAry && ref.activePlotId) { // I was passed the visRoot
         var id= plotId?plotId:ref.activePlotId;
         pv= getPlotViewById(ref,id);
@@ -110,7 +110,7 @@ export function getActivePlotView(visRoot) {
  * @param visRoot - root of the visualization object in store
  * @param sourcePv
  * @param operationFunc
- * @return {[]} new plotView array after the operation
+ * @return {Array} new plotView array after the operation
  */
 export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
     var plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
@@ -263,7 +263,7 @@ export function findPlotGroup(plotGroupId, plotGroupAry) {
  * @param plotViewAry
  * @param plotGroup
  * @param operationFunc
- * @return {[]} new plotView array after the operation
+ * @return {Array} new plotView array after the operation
  */
 export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
     if (hasGroupLock(sourcePv,plotGroup)) {
@@ -282,7 +282,7 @@ export function matchPlotView(sourcePv,plotViewAry,plotGroup,operationFunc) {
  * @param plotId the that is primary.
  * @param plotGroup the group to check against
  * @param operationFunc the function to operate on the other plot views
- * @return {[]} new plotViewAry
+ * @return {Array} new plotViewAry
  */
 export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc) {
     var groupLock= hasGroupLock(findPlotView(plotId,plotViewAry),plotGroup);
