@@ -24,16 +24,33 @@ export class ImageViewerView extends Component {
     constructor(props) {
         super(props);
         this.plotDrag= null;
-        this.onResize = debounce( (size) => {
+        this.previousDim= {prevWidth:0,prevHeight:0};
+        this.state={width: 0,height:0};
+        //this.timerId= null;
+        this.onResize = (size) => {
             if (size) {
                 var {width,height}= size;
-                //console.log(`width=${width}, height=${height}`)
-                this.previousDim= {prevWidth:width,prevHeight:height};
-                this.setState({ width,height });
+                var {prevWidth,prevHeight}= this.previousDim;
+                if (prevWidth===0 || prevHeight===0) { //the first reset should set right away, otherwise debounce
+                    this.setState({ width,height });
+                    this.previousDim= {prevWidth:width,prevHeight:height};
+                }
+                else {
+                    this.onResizeDebounced(size);
+                }
             }
-        }, 300);
-        this.state={width: 0,height:0};
+        };
+
+
+        this.onResizeDebounced = debounce( (size) => {
+            if (size) {
+                var {width,height}= size;
+                this.setState({ width,height });
+                this.previousDim= {prevWidth:width,prevHeight:height};
+            }
+        }, 100);
     }
+
 
     render() {
         var {width,height}= this.state;

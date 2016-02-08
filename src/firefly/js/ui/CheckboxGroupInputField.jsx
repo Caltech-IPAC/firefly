@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {PropTypes}  from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
 
@@ -9,11 +9,12 @@ var CheckboxGroupInputField = React.createClass(
         mixins : [PureRenderMixin, FieldGroupToStoreMixin],
 
         propTypes: {
-            options : React.PropTypes.array.isRequired
+            options : PropTypes.array.isRequired,
+            alignment:  PropTypes.string
         },
 
         contextTypes: {
-            groupKey: React.PropTypes.string
+            groupKey: PropTypes.string
         },
 
         onChange(ev) {
@@ -72,16 +73,18 @@ var CheckboxGroupInputField = React.createClass(
         },
 
         render() {
-            const { fieldKey, labelWidth, options }= this.props;
+            const { fieldKey, labelWidth, options, alignment}= this.props;
+
             return (
                 <div style={{whiteSpace: 'nowrap'}}>
-                    <InputFieldLabel label={this.getLabel()}
-                        tooltip={this.getTip()}
-                        labelWidth={labelWidth}
-                    />
+                    {this.getLabel() ? <InputFieldLabel label={this.getLabel()}
+                                                        tooltip={this.getTip()}
+                                                        labelWidth={labelWidth} /> : null
+                        }
                     {options.map( (option) => {
                         return (
-                            <div key={option.value} style={{display:'inline-block'}}>
+                            <div key={option.value}
+                                style={alignment==='vertical' ? {display:'block'}:{display:'inline-block'}}>
                                 <input type='checkbox'
                                        name={fieldKey}
                                        value={option.value}

@@ -4,14 +4,12 @@
 
 
 import React, {PropTypes} from 'react';
-import numeral from 'numeral';
-import {getPlotGroupById}  from '../PlotGroup.js';
-import {visRoot, ExpandType, dispatchChangeExpandedMode} from '../ImagePlotCntlr.js';
-import {convertZoomToString} from '../ZoomUtil.js';
-import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
+import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
+import {primePlot, expandedPlotViewAry} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
+import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 
 import './ExpandedTools.css';
@@ -34,7 +32,7 @@ const tStyle= {
 
 
 
-function createOptions(expandedMode) {
+function createOptions(expandedMode,singleAutoPlay) {
     var autoPlay= false;
     if (expandedMode===ExpandType.SINGLE) {
         autoPlay= (
@@ -42,11 +40,11 @@ function createOptions(expandedMode) {
                 <div style={{display:'inline-block'}}>
                     <input style={{margin: 0}}
                            type='checkbox'
-                           checked={false}
-                           onChange={() => console.log('auto play') }
+                          checked={singleAutoPlay}
+                           onChange={() => dispatchExpandedAutoPlay(!singleAutoPlay) }
                     />
                 </div>
-                <div style={tStyle}>TODO: auto</div>
+                <div style={tStyle}>Auto Play</div>
             </div>
         );
     }
@@ -93,7 +91,7 @@ const plotTitleStyle= {
 };
 
 export function ExpandedTools({allPlots}) {
-    var {expandedMode}= allPlots;
+    var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= allPlots;
     var single= expandedMode===ExpandType.SINGLE;
     var plot= primePlot(allPlots);
     var plotTitle;
@@ -115,8 +113,9 @@ export function ExpandedTools({allPlots}) {
             <div style={s}></div>
             <div style={{display: 'inline-block', float:'right'}}>
                 <WhichView  allPlots={allPlots}/>
-                {createOptions(expandedMode)}
-                {single ? <PagingControl allPlots={allPlots}/>: false }
+                {createOptions(expandedMode,singleAutoPlay)}
+                {single ? <PagingControl plotViewAry={plotViewAry}
+                                         activePlotId={activePlotId}/>: false }
             </div>`
         </div>
     );
@@ -144,8 +143,7 @@ function WhichView({allPlots}) {
                            onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                            enabled={true} visible={true} horizontal={true}
-                           todo={true}
-                           onClick={() => console.log('Choose which plots to show')}/>
+                           onClick={() =>showExpandedOptionsPopup(allPlots.plotViewAry) }/>
         </div>
     );
 }
@@ -155,11 +153,6 @@ WhichView.propTypes= {
 };
 
 
-const leftTitleStyle= {
-    display:'inline-block',
-    cursor : 'pointer',
-    textAlign : 'left'
-};
 const rightTitleStyle= {
     display:'inline-block',
     paddingLeft : 5,
@@ -182,16 +175,18 @@ function pTitle(begin,pv) {
 
 
 
-function PagingControl({allPlots}) {
+function PagingControl({plotViewAry, activePlotId}) {
 
-    const {plotViewAry, activePlotId}= allPlots;
-    const pvAry=  plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
+
+
+    const pvAry= expandedPlotViewAry(plotViewAry,activePlotId);
 
     if (pvAry.length<2) return <div style={controlStyle}></div>;
 
     const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
     const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : pvAry.length-1;
+
 
 
     const dots= pvAry.map( (pv,idx) =>
@@ -204,17 +199,32 @@ function PagingControl({allPlots}) {
                  key={idx}
                   onClick={() => dispatchChangeActivePlotView(pvAry[idx].plotId)}/>);
 
+    const leftTitleStyle= {
+        display:'inline-block',
+        cursor : 'pointer',
+        textAlign : 'left'
+    };
+    const leftImageStyle= {
+        verticalAlign:'bottom',
+        cursor:'pointer'
+    };
+    if (pvAry.length===2) {
+        leftTitleStyle.visibility='hidden';
+        leftImageStyle.visibility='hidden';
+    }
+
+
     return (
         <div style={controlStyle} >
             <div>
-                <img style={{verticalAlign:'bottom', cursor:'pointer'}} src={PAGE_LEFT}
+                <img style={leftImageStyle} src={PAGE_LEFT}
                      title={pTitle('Previous: ',pvAry[prevIdx])}
                      onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)}
                 />
                 <a style={leftTitleStyle} className='ff-href text-nav-controls'
                    title={pTitle('Previous: ',pvAry[prevIdx])}
                      onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)} >
-                    {pTitle('',pvAry[nextIdx])}
+                    {pTitle('',pvAry[prevIdx])}
                 </a>
 
                 <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
@@ -239,5 +249,7 @@ function PagingControl({allPlots}) {
 }
 
 PagingControl.propTypes= {
-    allPlots : PropTypes.object.isRequired
+    plotViewAry : PropTypes.array.isRequired,
+    activePlotId: PropTypes.string.isRequired
+    //allPlots : PropTypes.object.isRequired
 };

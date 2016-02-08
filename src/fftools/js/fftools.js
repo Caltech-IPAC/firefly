@@ -7,7 +7,7 @@ import get from 'lodash/object/get';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {flux, firefly} from 'firefly/Firefly.js';
-import AppDataCntlr from 'firefly/core/AppDataCntlr.js';
+import AppDataCntlr, {dispatchUpdateLayout} from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import SearchPanel from 'firefly/ui/SearchPanel.jsx';
@@ -53,7 +53,7 @@ function getCurrentActiveTblId() {
 }
 
 function hideSearchPanel() {
-    AppDataCntlr.dispatchUpdateLayout( {search: false});
+    dispatchUpdateLayout( {search: false});
 }
 
 function doFileDownload() {

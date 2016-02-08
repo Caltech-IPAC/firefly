@@ -267,6 +267,7 @@ function FieldGroupTestView ({fields}) {
                     ]}
                     fieldKey='radioGrpFld'
                 />
+                <br/>
                 <RadioGroupInputField
                     inline={true}
                     alignment='vertical'

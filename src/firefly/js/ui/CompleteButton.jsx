@@ -41,10 +41,10 @@ function onClick(onSuccess,onFail,groupKey,dialogId) {
 
 
 
-function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnValid=true, dialogId,}, context) {
+function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnValid=true, dialogId,style={}}, context) {
     if (!groupKey && context) groupKey= context.groupKey;
     return (
-        <div>
+        <div style={style}>
             <button type='button' className='button-hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
         </div>
     );
@@ -57,7 +57,8 @@ CompleteButton.propTypes= {
     groupKey: React.PropTypes.string,
     text: React.PropTypes.string,
     closeOnValid: React.PropTypes.bool,
-    dialogId: React.PropTypes.string
+    dialogId: React.PropTypes.string,
+    style: React.PropTypes.object
 };
 
 CompleteButton.contextTypes= {

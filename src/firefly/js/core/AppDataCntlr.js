@@ -321,7 +321,7 @@ function dispatchRemovePreference(name) {
  * @param hasImages boolean. Image data available.
  * @param hasXyPlots boolean. XY Plot data available.
  */
-function dispatchUpdateLayout({search, results, mode, views, hasTables, hasImages, hasXyPlots}) {
+export function dispatchUpdateLayout({search, results, mode, views, hasTables, hasImages, hasXyPlots}) {
     flux.process({type: UPDATE_LAYOUT, payload: pick({search, results, mode, views, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
 }
 
