@@ -30,11 +30,13 @@ var rS= {
 
 const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
-export function MouseReadout({plotView:pv,mouseState}) {
+export function MouseReadout({plotView:pv,mouseState, mouseReadout}) {
 
 	if (!pv || !mouseState) return EMPTY;
 
 	var plot= primePlot(pv);
+	var mouseReadout= {readout1:'EQ-J2000:', readout2:'Image Pixel:', pixelSize:'Pixel Size:'};
+
 
 	var leftColumn = {width: 200, display: 'inline-block'};
 
@@ -45,18 +47,18 @@ export function MouseReadout({plotView:pv,mouseState}) {
                <div>
 
 				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>
-					 <div style={ textStyle} > { updateField('pixelSize')}</div>
+					 <div style={ textStyle} > { mouseReadout.pixelSize}</div>
 				 </div>
 
-				 <div   style={rightColumn} onClick={ () => showDialog('coordinateSys' )}>
-					 <div style={ textStyle} >{ updateField('coordinateSys')} </div>
+				 <div   style={rightColumn} onClick={ () => showDialog('readout1' )}>
+					 <div style={ textStyle} >{mouseReadout.readout1} </div>
 					 {showReadout(plot, mouseState, CoordinateSys.EQ_J2000)}</div>
 
               </div>
 	         <div>
 				 <div	style={leftColumn} > {showReadout(plot, mouseState) } </div>
-				 <div style={ rightColumn}  onClick={ () => showDialog('imagePixel' )}>
-					 <div style={ textStyle} >{updateField('imagePixel' )} </div>
+				 <div style={ rightColumn}  onClick={ () => showDialog('readout2' )}>
+					 <div style={ textStyle} >{mouseReadout.readout2} </div>
 					 {showReadout(plot, mouseState, CoordinateSys.PIXEL)}
 				 </div>
 		    </div>
@@ -73,6 +75,7 @@ function showReadout(plot, mouseState, coordinate){
 	var cc= CysConverter.make(plot);
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
 	var spt= mouseState.screenPt;
+
     if (!spt) return '';
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
@@ -106,20 +109,22 @@ function showReadout(plot, mouseState, coordinate){
 	}
 	else {
 		//TODO readout for pixel size
+
 	}
+
     return result;
 }
 function showDialog(fieldKey) {
 
 		console.log('showing ' + fieldKey+ ' option dialog');
-	   showMouseReadoutOptionDialog(fieldKey);
+	    showMouseReadoutOptionDialog(fieldKey);
 
 }
 function updateField(fieldKey){
 	if (fieldKey==='pixelSize'){
 		return 'Pixel Size:';
 	}
-	else  if (fieldKey==='coordinateSys'){
+	else  if (fieldKey==='readout1'){
 		return 'EQ-J2000:';
 	}
 	else {
@@ -128,6 +133,6 @@ function updateField(fieldKey){
 }
 MouseReadout.propTypes= {
 	plotView: React.PropTypes.object,
-	size: React.PropTypes.number.isRequired,
-	mouseState: React.PropTypes.object
+	mouseState: React.PropTypes.object,
+	mouseReadout:React.PropTypes.object
 };

@@ -8,7 +8,8 @@
  *   this.plot, this.plotSate are the class global variables
  *
  */
-import React from 'react';
+
+import React, {Component, PropTypes} from 'react';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import InputGroup from '../../ui/InputGroup.jsx';
 import RadioGroupInputField from '../../ui/RadioGroupInputField.jsx';
@@ -17,13 +18,15 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
+import CoordinateSys from '../CoordSys.js';
+import {dispatchChangeMouseReadoutReadout1, dispatchChangeMouseReadoutReadout2, dispatchChangeMouseReadoutPixel} from '../ImagePlotCntlr.js';
 
 function getDialogBuilder(fieldKey) {
 
 
 	var groupKey;
 	switch (fieldKey) {
-		case 'coordinateSys' ||  'imagePixel':
+		case 'readout1' ||  'readout2':
 			groupKey = 'COORDINATE_OPTION_FORM';
 			break;
 		case  'pixelSize':
@@ -52,14 +55,50 @@ export function showMouseReadoutOptionDialog(fieldKey) {
 	AppDataCntlr.showDialog(fieldKey);
 }
 
+function getCoordinateMap(coordinateStr){
+	var coord;
+	var type;
+	switch (coordinateStr) {
+		case 'EQ J2000 HMS':
+			coord = CoordinateSys.EQ_J2000;
+			type = 'hhmmss';
+			break;
+		case 'EQ J2000 decimal':
+			coord = CoordinateSys.EQ_J2000;
+			type = 'decimal';
+			break;
+		case'Galactic':
+			coord = CoordinateSys.GALACTIC;
+			type = null;
+			break;
+		case 'EQ B1950':
+			coord = CoordinateSys.EQ_B1950;
+			type = null;
+
+		case 'Fits Image Pixel':
+			coord = CoordinateSys.PIXEL;
+			break;
+	}
+	return {coord, type};
+}
 function showSelectedField(request, groupKey, fieldKey){
 	console.log('closing ' + groupKey);
 
 	if (request.hasOwnProperty('target')){
 		var target=request.target;
+		var coordinate=getCoordinateMap(target).coord;
 		console.log(target);
 		var result=target.value;
 		console.log(result);
+		//TODO dispatch action here
+		switch (fieldKey){
+			case 'readout1':
+
+				dispatchChangeMouseReadoutReadout1(coordinate);
+
+				break;
+
+		}
 
 	}
 
@@ -77,9 +116,7 @@ class MouseReadoutOptionDialog extends React.Component {
 
 	}
 
-	getInitialState(){
 
-	}
 	componentWillUnmount() {
 
 		if (this.unbinder) this.unbinder();
@@ -101,10 +138,10 @@ class MouseReadoutOptionDialog extends React.Component {
 		var form;
 
 		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
-			form=  <PixelSizeOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
+			form=  <PixelSizeOptionDialogForm fields={fields}  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
 		}
 		else {
-			form= <CoordinateOptionDialogForm  groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
+			form= <CoordinateOptionDialogForm fields={fields} groupKey={this.props.groupKey} fieldKey={this.props.fieldKey}/>;
 		}
 		return form;
 
@@ -114,8 +151,7 @@ class MouseReadoutOptionDialog extends React.Component {
 
 }
 
-
-function CoordinateOptionDialogForm({groupKey,fieldKey}) {
+function CoordinateOptionDialogForm({fields, groupKey,fieldKey}) {
 
 
 	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:75};
@@ -130,24 +166,7 @@ function CoordinateOptionDialogForm({groupKey,fieldKey}) {
 		<FieldGroup groupKey={groupKey} keepState={true}>
 			<div style={ dialogStyle} onClick={ (request) => showSelectedField(request, groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
-					<div style={rightColumn} >
-							  <RadioGroupInputField
-								initialState={{
-                                    tooltip: 'Please select an option'
-                                    //move the label as a InputFieldLabel
-                                   }}
-								options={ [
-                                      {label: 'EQ J2000 HMS', value: 'eqj2000Dhms'},
-                                      {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
-                                      {label: 'Galactic', value: 'galactic'},
-                                      {label: 'EQ B1950', value: 'eqb1950'},
-                                      {label: 'Fits Image Pixel', value: 'fitsIP'}
-                                    ]}
-								alignment={'vertical'}
-								fieldKey={fieldKey}
-							 />
-					</div>
-
+				{renderReadout1RadioGroup(rightColumn,fieldKey )}
 			</div>
 
 		</FieldGroup>
@@ -155,7 +174,32 @@ function CoordinateOptionDialogForm({groupKey,fieldKey}) {
 	);
 
 }
+
+function renderReadout1RadioGroup(rightColumn,fieldKey ){
+	return(
+	<div style={rightColumn} >
+		<RadioGroupInputField
+			initialState={{
+                                    tooltip: 'Please select an option',
+                                    value:'fitsIP',
+                                    //value: (fields && fields.fieldKey) ? fields.fieldKey.value:'fitsIP'
+                                    //move the label as a InputFieldLabel
+                                   }}
+			options={ [
+                                      {label: 'EQ J2000 HMS', value: 'eqj2000Dhms'},
+                                      {label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
+                                      {label: 'Galactic', value: 'galactic'},
+                                      {label: 'EQ B1950', value: 'eqb1950'},
+                                      {label: 'Fits Image Pixel', value: 'fitsIP'}
+                                    ]}
+			alignment={'vertical'}
+			fieldKey={fieldKey}
+		/>
+	</div>
+	);
+}
 CoordinateOptionDialogForm.propTypes= {
+	fields: PropTypes.object.isRequired,
 	groupKey:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string
 };

@@ -16,7 +16,7 @@ import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import {isActivePlotView, getPlotViewById, getActivePlotView, applyToOnePvOrGroup} from './PlotViewUtil.js';
 
 import {doDispatchZoomLocking} from './ZoomUtil.js';
-
+import CoordinateSys from './CoordSys.js';
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
@@ -69,11 +69,25 @@ const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
 
 
 const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
+
 const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 
-const CHANGE_MOUSE_READOUT_MODE= 'ImagePlotCntlr.changeMouseReadoutMode';
+//LZ add those three constant on 2/1/16
+const CHANGE_MOUSE_READOUT_READOUT1 =  ()=> {
+    return {
+      type: CoordinateSys,
+      text:'ImagePlotCntlr.changeMouseReadoutModeReadout1'
+   };
+} ;
+const CHANGE_MOUSE_READOUT_READOUT2= ()=>{
+    return {
+        type: CoordinateSys,
+        text: 'ImagePlotCntlr.changeMouseReadoutModeReadout2'
+    };
+};
+const CHANGE_MOUSE_READOUT_PIXEL= 'ImagePlotCntlr.changeMouseReadoutModeReadoutPixel';
 
 /**
  * action should contain:
@@ -286,6 +300,18 @@ export function dispatchChangeExpandedMode(expandedMode) {
 }
 
 
+export function dispatchChangeMouseReadoutReadout1(readout1dMode) {
+    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {readout1dMode} });
+
+
+}
+
+export function dispatchChangeMouseReadoutReadout2(readout2dMode) {
+    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {readout2dMode} });
+
+}
+
+
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -293,6 +319,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
 function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
+
 
 
 
@@ -331,8 +358,18 @@ function reducer(state=initState(), action={}) {
         case CHANGE_EXPANDED_MODE:
             retState= changeExpandedMode(state,action);
             break;
+        case CHANGE_MOUSE_READOUT_READOUT1:
+             retState = changeMouseReadoutReadout1(state, action);
+            break;
+        case CHANGE_MOUSE_READOUT_READOUT2:
+            retState = changeMouseReadoutReadout2(state, action);
+            break;
+        case CHANGE_MOUSE_READOUT_PIXEL:
+            retState = changeMouseReadoutPixel(state, action);
+            break;
         default:
             break;
+
     }
     return retState;
 }
@@ -342,6 +379,19 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 
+function changeMouseReadoutReadout1(state, action){
+    //TODO
+    var coord = action.getCoordinates();
+
+}
+
+function changeMouseReadoutReadout2(state, action){
+//TODO
+}
+
+function changeMouseReadoutPixel(state, action){
+//TODO
+}
 function changeActivePlotView(state,action) {
     if (action.payload.plotId===state.activePlotId) return state;
 

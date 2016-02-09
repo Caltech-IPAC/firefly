@@ -29,6 +29,7 @@ export function VisHeaderView({visRoot,currMouseState}) {
 
     var pv= getActivePlotView(visRoot);
     var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
+
     return (
         <div>
             <div style={rS}>
