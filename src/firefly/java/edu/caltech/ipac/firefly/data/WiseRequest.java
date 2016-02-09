@@ -143,7 +143,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 55289});
+            put(NEOWISER, new Integer[]{44212, 66418});
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
@@ -151,8 +151,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, new Integer[]{8745, 12514});
             put(NEOWISER_PROV, new Integer[]{44212, 55289});
             put(NEOWISER_YR1, new Integer[]{44212, 55289});
-            put(NEOWISER_YR2, new Integer[]{55290, 66418});
-            put(NEOWISER_YR3, new Integer[]{66419, 999999}); // TODO: which scan is the first for yr3?
+            put(NEOWISER_YR2, new Integer[]{55290, 66418});   // 66418a is the last scan for yr2
+            put(NEOWISER_YR3, new Integer[]{66418, 999999}); // 66418b is the first scan for yr3?
         }
     };
 
@@ -484,7 +484,7 @@ public class WiseRequest extends TableServerRequest {
             } else if (scanNum <= SCANID_MAP.get(CRYO_3BAND)[1]) {
                 return new String[]{CRYO_3BAND};
             } else if (scanNum >= SCANID_MAP.get(NEOWISER)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER)[2]) {
+                    scanNum <= SCANID_MAP.get(NEOWISER)[1]) {
                 return new String[]{NEOWISER};
             } else {
                 // these 2 have the same range..
@@ -500,11 +500,11 @@ public class WiseRequest extends TableServerRequest {
                 return new String[]{PASS1, PASS2_3BAND, CRYO_3BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
                 return new String[]{PASS1, PASS2_2BAND, POSTCRYO};
-            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR2)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER_YR2)[1]) {
+            } else if (scanNum < SCANID_MAP.get(NEOWISER_YR2)[1] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR2)[1]) && scanID.trim().endsWith("a")) {
                 return new String[]{NEOWISER_YR2};
-            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR3)[1] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER_YR3)[2]) {
+            } else if (scanNum > SCANID_MAP.get(NEOWISER_YR3)[0] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR3)[0] && scanID.trim().endsWith("b")) ) {
                 return new String[]{NEOWISER_YR3};
             }else {
                 // these 2 have the same range..
