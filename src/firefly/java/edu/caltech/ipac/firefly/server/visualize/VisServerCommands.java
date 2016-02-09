@@ -253,10 +253,11 @@ public class VisServerCommands {
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
 
             SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
+//            PlotState state= sp.getState();
+            PlotState stateAry[]= sp.getStateAry();
             boolean north= sp.getRequiredBoolean(ServerParams.NORTH);
             float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
-            WebPlotResult result = VisServerOps.rotateNorth(state, north,zoomLevel);
+            WebPlotResult result = VisServerOps.rotateNorth(stateAry, north,zoomLevel);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }
@@ -265,11 +266,12 @@ public class VisServerCommands {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
             SrvParam sp= new SrvParam(paramMap);
-            PlotState state= sp.getState();
+//            PlotState state= sp.getState();
+            PlotState stateAry[]= sp.getStateAry();
             boolean rotate= sp.getRequiredBoolean(ServerParams.ROTATE);
             double angle= rotate ? sp.getRequiredDouble(ServerParams.ANGLE) : 0.0;
             float zoomLevel= sp.getOptionalFloat(ServerParams.ZOOM, -1);
-            WebPlotResult result = VisServerOps.rotateToAngle(state, rotate, angle,zoomLevel);
+            WebPlotResult result = VisServerOps.rotateToAngle(stateAry, rotate, angle,zoomLevel);
             return WebPlotResultSerializer.createJson(result, sp.isJsonDeep());
         }
     }

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchCreateDrawLayer,
@@ -10,10 +10,13 @@ import {dispatchCreateDrawLayer,
     dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 
 
-export function SimpleLayerOnOffButton({plotView:pv,tip,dlAry,typeId,iconOn,iconOff,visible,todo}) {
-    var enabled= pv && dlAry ? true : false;
-    const distLayer= getDrawLayerByType(dlAry,typeId);
-    var isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
+export function SimpleLayerOnOffButton({plotView:pv,tip,dlAry,typeId,iconOn,iconOff,visible,todo, isIconOn, onClick}) {
+    var enabled= pv ? true : false;
+    var isOn= isIconOn;
+    if (typeId) {
+        const distLayer= getDrawLayerByType(dlAry,typeId);
+        isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
+    }
 
     return (
         <ToolbarButton icon={isOn ? iconOn : iconOff}
@@ -22,19 +25,21 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,dlAry,typeId,iconOn,icon
                        horizontal={true}
                        visible={visible}
                        todo={todo}
-                       onClick={() => onOff(pv,dlAry,typeId,todo)}/>
+                       onClick={() => onClick ? onClick(pv,!isOn) : onOff(pv,dlAry,typeId,todo)}/>
     );
 }
 
 SimpleLayerOnOffButton.propTypes= {
-    plotView : React.PropTypes.object,
-    dlAry : React.PropTypes.arrayOf(React.PropTypes.object),
-    typeId :  React.PropTypes.string.isRequired,
-    tip : React.PropTypes.string,
-    iconOn : React.PropTypes.string,
-    visible : React.PropTypes.bool.isRequired,
-    todo: React.PropTypes.bool,
-    iconOff : React.PropTypes.string
+    plotView : PropTypes.object,
+    dlAry : PropTypes.arrayOf(React.PropTypes.object),
+    typeId :  PropTypes.string,
+    tip : PropTypes.string,
+    iconOn : PropTypes.string,
+    visible : PropTypes.bool.isRequired,
+    todo: PropTypes.bool,
+    iconOff : PropTypes.string,
+    onClick : PropTypes.func,
+    isIconOn : PropTypes.boolean
 };
 
 SimpleLayerOnOffButton.defaultProps= {
@@ -44,7 +49,7 @@ SimpleLayerOnOffButton.defaultProps= {
 
 
 function onOff(pv,dlAry,typeId,todo) {
-    if (!pv) return;
+    if (!pv || !dlAry || !typeId) return;
 
     if (todo) {
         console.log('todo');

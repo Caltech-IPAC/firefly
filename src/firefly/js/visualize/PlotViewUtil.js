@@ -9,7 +9,7 @@ import difference from 'lodash/array/difference';
 
 export default {
     findPlotView, getPlotViewAry,operateOnOthersInGroup,
-    findPlotGroup, getPlotStateAry, matchPlotView,isActivePlotView,
+    findPlotGroup, matchPlotView,isActivePlotView,
     hasGroupLock, getActivePlotView, getAllDrawLayers, getAllDrawLayersForPlot,
     getPlotViewIdListInGroup, getDrawLayerByType,
     isDrawLayerVisible, isDrawLayerAttached, getLayerTitle
@@ -215,7 +215,7 @@ function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.t
  * @param pv
  * @return {*[]}
  */
-function getPlotStateAry(pv) {
+export function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
     return [primePlot(pv).plotState, ...overlayStates];
 }

@@ -58,10 +58,10 @@ function showResults(success, request) {
     var wp= parseWorldPt(request.UserTargetWorldPt);
     //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
     //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
-    var wpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
-    var wpr2= WebPlotRequest.makeWiseRequest(wp,'3a','2',.4 );
-    var wpr3= WebPlotRequest.makeWiseRequest(wp,'3a','3',.4 );
-    var wpr4= WebPlotRequest.makeWiseRequest(wp,'3a','4',.4 );
+    var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
+    var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
+    var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
+    var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
     //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
     wpr1.setPlotGroupId('test-group');
     wpr2.setPlotGroupId('test-group');

@@ -2,49 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
-import {primePlot, getPlotViewById, operateOnOthersInGroup} from './PlotViewUtil.js';
+import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import RangeValues from './RangeValues.js';
+import {isPlotNorth} from './VisUtil.js';
+import WebPlot, {PlotAttribute} from './WebPlot.js';
 
-
-
-
-
-
-/**
- *
- * @param {string} plotId
- * @param {number} cbarId
- * @param {ActionScope} actionScope
- */
-export function doDispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROUP ) {
-
-    flux.process({
-        type: ImagePlotCntlr.COLOR_CHANGE,
-        payload :{
-            plotId, cbarId, actionScope
-        }});
-}
-
-/**
- *
- * @param {string} plotId
- * @param {number} rangeValues
- * @param {ActionScope} actionScope
- */
-export function doDispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
-
-    flux.process({
-        type: ImagePlotCntlr.STRETCH_CHANGE,
-        payload :{
-            plotId, rangeValues, actionScope
-        }});
-}
-
+export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 
 
 /**
@@ -89,6 +58,37 @@ export function makeStretchChangeAction(rawAction) {
 }
 
 
+/**
+ * @param rawAction
+ * @return {Function}
+ */
+export function makeRotateAction(rawAction) {
+    return (dispatcher) => {
+        var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
+        var plotView= getPlotViewById(visRoot(),plotId);
+        if (!plotView || !rotateType) return;
+        var p= primePlot(plotView);
+        if (!p) return;
+
+        if (rotateType===RotateType.NORTH && isPlotNorth(p)) {
+                return;
+        }
+        if (rotateType===RotateType.UNROTATE && !p.plotState.isRotated()) {
+            return;
+        }
+
+        doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
+        if (actionScope===ActionScope.GROUP) {
+            operateOnOthersInGroup(visRoot(),plotView, (pv) =>
+                 doRotate(dispatcher,pv,rotateType,angle,newZoomLevel));
+        }
+    };
+}
+
+
+
+
+
 function doStretch(dispatcher,plotId,rangeValues) {
 
     var plot= primePlot(visRoot(),plotId);
@@ -119,6 +119,75 @@ function doColorChange(dispatcher,plotId,cbarId) {
             logError(`plot error, color change, plotId: ${plot.plotId}`, e);
         });
 }
+
+function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
+
+    //var plot= primePlot(visRoot(),plotId);
+
+    var p;
+
+    switch (rotateType) {
+        case RotateType.NORTH:
+            p= PlotServicesJson.rotateNorth(getPlotStateAry(pv),true,newZoomLevel);
+            break;
+        case RotateType.ANGLE:
+            p= PlotServicesJson.rotateToAngle(getPlotStateAry(pv), true, angle, newZoomLevel);
+            break;
+        case RotateType.UNROTATE:
+            p= PlotServicesJson.rotateToAngle(getPlotStateAry(pv), false, NaN, 0);
+            break;
+    }
+
+
+    p.then( (wpResult) => processRotateResult(dispatcher,wpResult,pv,rotateType) )
+        .catch ( (e) => {
+            dispatcher( { type: ImagePlotCntlr.ROTATE_FAIL, payload: {plotId, error:e} } );
+            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
+        });
+}
+
+
+
+function processRotateResult(dispatcher, result, pv, rotateType) {
+    var successSent = false;
+    if (result.success) {
+        var resultAry = result[WebPlotResult.RESULT_ARY];
+        if (resultAry[0].success) {
+
+            var plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
+
+            var overlayPlotViews = [];
+            resultAry.forEach((r, i) => {
+                if (i === 0) return;
+                var plot = WebPlot.makeWebPlotData(pv.plotId, r.data[WebPlotResult.PLOT_CREATE], true);
+                overlayPlotViews[i - 1] = {plot};
+            });
+            dispatcher({
+                type: ImagePlotCntlr.ROTATE,
+                payload: {plotId: pv.plotId, plotAry, overlayPlotViews, rotateType}
+            });
+            dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry: [pv.plotId]}});
+            successSent = true;
+
+        }
+        if (!successSent) {
+            dispatcher({
+                type: ImagePlotCntlr.ZOOM_IMAGE_FAIL,
+                payload: {plotId: pv.plotId, error: Error('payload failed')}
+            });
+        }
+    }
+}
+
+
+function makePlot(wpInit,pv) {
+    var plot= WebPlot.makeWebPlotData(pv.plotId, wpInit);
+    plot.title= primePlot(pv).title;
+    plot.attributes= primePlot(pv).attributes;
+    return plot;
+}
+
+
 
 
 /**
