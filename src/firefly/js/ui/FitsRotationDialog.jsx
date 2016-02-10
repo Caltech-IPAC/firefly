@@ -267,45 +267,6 @@ function FitsRotationDialogForm() {
 
 }
 
-//function showResults(success, request) {
-//    var statStr= `validate state: ${success}`;
-//    console.log(statStr);
-//    console.log(request);
-//
-//
-//
-//    var s= Object.keys(request).reduce(function(buildString,k,idx,array){
-//        buildString+=`${k}=${request[k]}`;
-//        if (idx<array.length-1) buildString+=', ';
-//        return buildString;
-//    },'');
-//
-//
-//    var resolver= null;
-//    var closePromise= new Promise(function(resolve, reject) {
-//        resolver= resolve;
-//    });
-//
-//    var results= (
-//        <PopupPanel title={'Rotation Dialog Results'} closePromise={closePromise} >
-//            {makeResultInfoContent(statStr,s,resolver)}
-//        </PopupPanel>
-//    );
-//
-//    DialogRootContainer.defineDialog('ResultsFromRotationDialog', results);
-//    AppDataCntlr.showDialog('ResultsFromRotationDialog');
-//
-//}
-
-
-//function makeResultInfoContent(statStr,s,closePromiseClick) {
-//    return (
-//        <div style={{padding:'10px'}}>
-//            <br/>{statStr}<br/><br/>{s}
-//            <CompleteButton dialogId='ResultsFromRotationDialog' />
-//        </div>
-//    );
-//}
 
 function resultsSuccess(request,plotId) {
     if (request.rotation) {
@@ -313,13 +274,7 @@ function resultsSuccess(request,plotId) {
         dispatchRotate(plotId, rotation?RotateType.ANGLE:RotateType.UNROTATE ,rotation,
                          request.checkAllimage ? ActionScope.GROUP : ActionScope.SINGLE);
     }
-    //showResults(true,request);
 }
-
-
-//function resultsOK(request) {
-//    console.log(request + 'You clicked OK ');
-//}
 
 function resultsFail(request) {
     console.log(request + ': Error');
