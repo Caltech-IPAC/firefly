@@ -14,7 +14,7 @@ import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHe
 import {primePlot} from '../PlotViewUtil.js';
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
+import {showMouseReadoutOptionDialog, getCoordinateMap} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
@@ -30,13 +30,14 @@ var rS= {
 
 const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
-export function MouseReadout({plotView:pv,mouseState, mouseReadout}) {
+
+export function MouseReadout({plotView:pv,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
 
 	var plot= primePlot(pv);
-	var mouseReadout= {readout1:'EQ-J2000:', readout2:'Image Pixel:', pixelSize:'Pixel Size:'};
-
+	//var mouseReadout= {readout1:'EQ-J2000:', readout2:'Image Pixel:', pixelSize:'Pixel Size:'};
+	var radioValues={readout1:'eqj2000Dhms', readout2:'fitsIP', pixelSize:'pixelSize'};
 
 	var leftColumn = {width: 200, display: 'inline-block'};
 
@@ -46,20 +47,24 @@ export function MouseReadout({plotView:pv,mouseState, mouseReadout}) {
 			<div style={ rS}>
                <div>
 
-				 <div	style={leftColumn} onClick={ () => showDialog('pixelSize')}>
-					 <div style={ textStyle} > { mouseReadout.pixelSize}</div>
+				 <div style={leftColumn} onClick={ () => showDialog('pixelSize', radioValues.pixelSize)}>
+					 <div style={ textStyle} > {getRadioGroupLabel( radioValues.pixelSize) }
+					 </div>
 				 </div>
 
-				 <div   style={rightColumn} onClick={ () => showDialog('readout1' )}>
-					 <div style={ textStyle} >{mouseReadout.readout1} </div>
-					 {showReadout(plot, mouseState, CoordinateSys.EQ_J2000)}</div>
+				 <div style={rightColumn} onClick={ () => showDialog('readout1' ,radioValues.readout1)}>
+					 <div style={ textStyle} > { getRadioGroupLabel( radioValues.readout1) }
+					 </div>
+					 {showReadout(plot, mouseState,radioValues.readout1)}
+				 </div>
 
               </div>
-	         <div>
-				 <div	style={leftColumn} > {showReadout(plot, mouseState) } </div>
-				 <div style={ rightColumn}  onClick={ () => showDialog('readout2' )}>
-					 <div style={ textStyle} >{mouseReadout.readout2} </div>
-					 {showReadout(plot, mouseState, CoordinateSys.PIXEL)}
+
+			  <div>
+				 <div style={leftColumn} > {showReadout(plot, mouseState,radioValues.readout2 ) } </div>
+				 <div style={ rightColumn}  onClick={ () => showDialog('readout2' ,radioValues.readout2)}>
+					 <div style={ textStyle} >{getRadioGroupLabel( radioValues.readout2)} </div>
+					 {showReadout(plot, mouseState, radioValues.readout2)}
 				 </div>
 		    </div>
 
@@ -67,10 +72,41 @@ export function MouseReadout({plotView:pv,mouseState, mouseReadout}) {
 
 	);
 }
+MouseReadout.propTypes= {
+	plot:React.PropTypes.object.isRequired,
+	mouseReadout:React.PropTypes.object.isRequired,
+	radioValues:React.PropTypes.object.isRequired
+};
 
-function showReadout(plot, mouseState, coordinate){
+function getRadioGroupLabel(radioValue){
+	var gLabel;
+	switch(radioValue){
+		case 'eqj2000Dhms' || 'eqj2000DCM':
+			gLabel='EQ-J2000:';
+			break;
+		case 'galactic':
+			gLabel='Gal:';
+			break;
+		case 'eqb1950':
+			gLabel='Eq-B1950:';
+			break;
+		case 'fitsIP':
+			gLabel='Image Pixel:';
+			break;
+		case 'pixelSize':
+			gLabel='Pixel Size:';
+			break;
+		case 'sPixelSize':
+			gLabel='Screen Pixel Size:';
+			break;
+	}
+    return gLabel;
+}
+function showReadout(plot, mouseState, readoutValue){
 	if (!plot) return'';
 	if (isBlankImage(plot)) return'';
+
+	var {coordinate, type} =getCoordinateMap(readoutValue);
 
 	var cc= CysConverter.make(plot);
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
@@ -88,11 +124,17 @@ function showReadout(plot, mouseState, coordinate){
 
 	if (coordinate){
 
-		switch (coordinate){
+		switch (coordinate) {
 			case CoordinateSys.EQ_J2000:
+				if (type === 'hhmmss') {
+
 				var hmsRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
 				var hmsDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
-				result = ' '+ hmsRa +' ' + hmsDec;
+				result = ' ' + hmsRa + ' ' + hmsDec;
+		        }
+				else {
+					//TODO
+				}
 				break;
 			case CoordinateSys.GALACTIC || CoordinateSys.SUPERGALACTIC:
 				result=  ' '+lon + ' '+ lat;
@@ -114,23 +156,13 @@ function showReadout(plot, mouseState, coordinate){
 
     return result;
 }
-function showDialog(fieldKey) {
+function showDialog(fieldKey, radioValue) {
 
 		console.log('showing ' + fieldKey+ ' option dialog');
-	    showMouseReadoutOptionDialog(fieldKey);
+	    showMouseReadoutOptionDialog(fieldKey, radioValue);
 
 }
-function updateField(fieldKey){
-	if (fieldKey==='pixelSize'){
-		return 'Pixel Size:';
-	}
-	else  if (fieldKey==='readout1'){
-		return 'EQ-J2000:';
-	}
-	else {
-		return 'Image Pixel:';;
-	}
-}
+
 MouseReadout.propTypes= {
 	plotView: React.PropTypes.object,
 	mouseState: React.PropTypes.object,
