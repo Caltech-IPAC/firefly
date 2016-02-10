@@ -75,18 +75,20 @@ const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 
 //LZ add those three constant on 2/1/16
-const CHANGE_MOUSE_READOUT_READOUT1 =  ()=> {
-    return {
-      type: CoordinateSys,
-      text:'ImagePlotCntlr.changeMouseReadoutModeReadout1'
-   };
-} ;
-const CHANGE_MOUSE_READOUT_READOUT2= ()=>{
-    return {
-        type: CoordinateSys,
-        text: 'ImagePlotCntlr.changeMouseReadoutModeReadout2'
-    };
-};
+//const CHANGE_MOUSE_READOUT_READOUT1 =  ()=> {
+//    return {
+//      type: CoordinateSys,
+//      text:'ImagePlotCntlr.changeMouseReadoutModeReadout1'
+//   };
+//} ;
+//const CHANGE_MOUSE_READOUT_READOUT2= ()=>{
+//    return {
+//        type: CoordinateSys,
+//        text: 'ImagePlotCntlr.changeMouseReadoutModeReadout2'
+//    };
+//};
+const CHANGE_MOUSE_READOUT_READOUT1='ImagePlotCntlr.changeMouseReadoutModeReadout1';
+const CHANGE_MOUSE_READOUT_READOUT2='ImagePlotCntlr.changeMouseReadoutModeReadout2';
 const CHANGE_MOUSE_READOUT_PIXEL= 'ImagePlotCntlr.changeMouseReadoutModeReadoutPixel';
 
 /**
@@ -300,8 +302,9 @@ export function dispatchChangeExpandedMode(expandedMode) {
 }
 
 
-export function dispatchChangeMouseReadoutReadout1(readout1dMode) {
-    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {readout1dMode} });
+export function dispatchChangeMouseReadoutReadout1(radioValue, coordinate, type) {
+
+    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {radioValue, coordinate, type} });
 
 
 }
@@ -381,7 +384,11 @@ function reducer(state=initState(), action={}) {
 
 function changeMouseReadoutReadout1(state, action){
     //TODO
-    var coord = action.getCoordinates();
+    var payload = action.payload;
+    var radioValue=payload.radioValue;
+    var newRadioValue = payload.coordinate + ' ' + payload.type;
+    if (radioValue===newRadioValue) return state;
+    return Object.assign({}, state, {radioValue:newRadioValue});
 
 }
 

@@ -98,20 +98,21 @@ export function getCoordinateMap(coordinateStr){
 	}
 	return {coordinate, type};
 }
-function showSelectedField(request, groupKey, fieldKey){
+function doDispatch(form, request, groupKey, fieldKey){
 	console.log('closing ' + groupKey);
 
 	if (request.hasOwnProperty('target')){
 		var target=request.target;
-		var{coordinate,type} =getCoordinateMap(target);
+
 		console.log(target);
 		var result=target.value;
+		var{coordinate,type} =getCoordinateMap(result);
 		console.log(result);
 		//TODO dispatch action here
 		switch (fieldKey){
 			case 'readout1':
 
-				dispatchChangeMouseReadoutReadout1(coordinate);
+				dispatchChangeMouseReadoutReadout1(form.radioValue, coordinate, type);
 
 				break;
 
@@ -192,13 +193,15 @@ function CoordinateOptionDialogForm({ fields, groupKey,fieldKey,radioValue}) {
 	//var rvalue=fields.readout1.value;
 	//var rlabel = fields.readout1.label;
 
+	this.radioValue = radioValue;
+
 	var radioGroup = fieldKey==='readout1'?renderReadout1RadioGroup(rightColumn,fieldKey,radioValue ):
 		renderReadout2RadioGroup(rightColumn,fieldKey,radioValue);
 
 	return (
 
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (request) => showSelectedField(request, groupKey, fieldKey) } >
+			<div style={ dialogStyle} onClick={ (request) => doDispatch(this, request, groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
 				{radioGroup}
 			</div>
@@ -221,7 +224,7 @@ function renderReadout1RadioGroup(rightColumn,fieldKey, radioValue ){
 			<RadioGroupInputField
 				initialState={{
                                     tooltip: 'Please select an option',
-                                    value: radioValue ,
+                                    value: radioValue,
                                     //value: (fields && fields.fieldKey) ? fields.fieldKey.value:'fitsIP'
                                     //move the label as a InputFieldLabel
                                    }}
@@ -264,7 +267,7 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (request) => showSelectedField(request, groupKey, fieldKey) }>
+			<div style={ dialogStyle} onClick={ (request) => doDispatch(request, groupKey, fieldKey) }>
 				<div style={leftColumn} title='Please select an option'> Options</div>
 				<div style={rightColumn}>
 					<RadioGroupInputField
