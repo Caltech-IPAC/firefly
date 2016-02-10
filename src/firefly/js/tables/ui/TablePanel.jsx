@@ -21,9 +21,9 @@ import LOADING from 'html/images/gxt/loading.gif';
 
 const {Table, Column, Cell} = FixedDataTable;
 
-const TextCell = ({rowIndex, data, col, ...rest}) => {
+const TextCell = ({rowIndex, data, col}) => {
     return (
-        <Cell {...rest}>
+        <Cell>
             {get(data, [rowIndex, col],'undef')}
         </Cell>
     );

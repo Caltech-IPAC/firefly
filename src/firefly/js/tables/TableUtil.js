@@ -56,10 +56,10 @@ export function doValidate(type, action) {
     }
     var {request} = action.payload;
     if (type === TblCntlr.FETCH_TABLE ) {
-        if (isEmpty(request.id)) {
+        if (request.id) {
             error(action, 'Required "id" field is missing.');
         }
-        if (isEmpty(request.tbl_id)) {
+        if (request.tbl_id) {
             error(action, 'Required "tbl_id" field is missing.');
         }
     } else if(type === TblCntlr.TBL_HIGHLIGHT_ROW) {
@@ -149,8 +149,8 @@ export function transform(tableModel) {
 export function smartMerge(target, source) {
     if (!target) return source;
 
-    if ( source && typeof(source)=='object') {
-        if(source instanceof Array) {
+    if ( source && typeof(source)==='object') {
+        if(Array.isArray(source)) {
             let aryChanges = [];
             source.forEach( (v, idx) => {
                 const nval = smartMerge(target[idx], source[idx]);
@@ -175,7 +175,7 @@ export function smartMerge(target, source) {
             return (isEmpty(objChanges)) ? target : Object.assign({}, target, objChanges);
         }
     } else {
-        return (target == source) ? target : source;
+        return (target === source) ? target : source;
     }
 }
 
