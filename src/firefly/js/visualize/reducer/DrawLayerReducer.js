@@ -6,8 +6,8 @@
 import {DataTypes} from '../draw/DrawLayer.js';
 import DrawLayerCntlr from '../DrawLayerCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import union from 'lodash/array/union';
-import difference from 'lodash/array/difference';
+import union from 'lodash/union';
+import difference from 'lodash/difference';
 
 
 

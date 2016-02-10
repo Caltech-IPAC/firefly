@@ -1,0 +1,62 @@
+[role="toolbar"] {
+    position: relative;
+    height:26px;
+}
+
+[role="toolbar"] .toolbar__content {
+    position: absolute;
+    top: 0;
+    left: 0px;
+    right: 0px;
+    background-color: #a5a5a5;
+    padding: 3px;
+}
+
+[role="toolbar"] ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+[role="toolbar"] ul[role="left"] {
+    width: 10%;
+    float: left;
+}
+
+[role="toolbar"] ul[role="right"] {
+    width: 10%;
+    float: right;
+}
+
+[role="toolbar"] ul[role="middle"] {
+    margin: auto;
+}
+
+[role="toolbar"] li {
+    float: left;
+    margin: 0 3px;
+}
+
+[role="toolbar"] ul[role="right"] li {
+    float: right;
+}
+
+[role="toolbar"] button {
+    width: 50px;
+    height: 20px;
+    border: none;
+    font-size: 12px;
+    color: white;
+    padding: 0;
+    border-radius: 2px;
+    background: none;
+}
+
+[role="toolbar"] button:active {
+    background-color: #ffffff;
+}
+
+[role="toolbar"] button:hover {
+    background-color: #949494;
+    cursor: pointer;
+}

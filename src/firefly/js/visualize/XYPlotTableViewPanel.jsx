@@ -3,7 +3,7 @@ import React, {PropTypes} from 'react';
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
 
-import TablesCntlr from '../tables/TablesCntlr.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
 import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import XYPlot from '../visualize/XYPlot.jsx';

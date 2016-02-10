@@ -1,7 +1,7 @@
 /*eslint "prefer-template": 0*/
 
 import React, {Component, PropTypes} from 'react';
-import defer from 'lodash/function/defer';
+import defer from 'lodash/defer';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
 import './PointerPopup.css';

@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import difference from 'lodash/array/difference';
-import isEqual from 'lodash/lang/isEqual';
+import difference from 'lodash/difference';
+import isEqual from 'lodash/isEqual';
 import sCompare from 'react-addons-shallow-compare';
 import CanvasWrapper from './CanvasWrapper.jsx';
 import TextDrawer from './TextDrawer.jsx';
