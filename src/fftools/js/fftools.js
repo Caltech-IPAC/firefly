@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import get from 'lodash/object/get';
+import {get} from 'lodash';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -15,16 +15,15 @@ import ResultsPanel from 'firefly/ui/ResultsPanel.jsx';
 import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
-import TablePanel from 'firefly/tables/ui/TablePanel.jsx';
+import {TablePanel} from 'firefly/tables/ui/TablePanel.jsx';
 import Validate from 'firefly/util/Validate.js';
-import TblUtil from 'firefly/tables/TableUtil.js';
+import * as TblUtil from 'firefly/tables/TableUtil.js';
 import HistogramTableViewPanel from 'firefly/visualize/HistogramTableViewPanel.jsx';
 import XYPlotTableViewPanel from 'firefly/visualize/XYPlotTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 
 import FieldGroup from 'firefly/ui/FieldGroup.jsx';
-import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 import ValidationField from 'firefly/ui/ValidationField.jsx';
 
 import {TableRequest} from 'firefly/tables/TableRequest.js';
@@ -32,7 +31,7 @@ import {TableRequest} from 'firefly/tables/TableRequest.js';
 import TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
 import XYPlotCntlr from 'firefly/visualize/XYPlotCntlr.js';
-import TablesCntlr from 'firefly/tables/TablesCntlr.js';
+import * as TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
 
@@ -79,7 +78,6 @@ const App = React.createClass({
                 id:'IpacTableFromSource',
                 source: request.srcTable,
                 tbl_id:  newActiveTblId(),
-                pageSize: 50,
                 filters: request.filters
             });
 
@@ -101,7 +99,6 @@ const App = React.createClass({
         const tblId = table ? table.tbl_id : undefined;
         const highlightedRow = table ? table.highlightedRow : undefined;
 
-        const v = get(this.props, 'appData.props.version') || 'unknown';
         if (!appData.isReady) {
             return (
                 <div>
@@ -155,11 +152,11 @@ const App = React.createClass({
                     <main>
                         <ResultsPanel title={title}
                             imagePlot = {appData.layoutInfo.mode==='expand' ?
-                                             <ExpandedModeDisplay forceExpandedMode={true}/> :
-                                             <TestImagePanel /> }
+                                             <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
+                                             <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<XYPlotTableViewPanel tblStatsData={tblStatsData} tblPlotData={xyPlotData} tblId={tblId} highlightedRow={highlightedRow}/> }
-                            tables = { <TablePanel tableModel={table} selectable={true}/> }
+                            xyPlot = {<XYPlotTableViewPanel  key='results-xyplots' tblStatsData={tblStatsData} tblPlotData={xyPlotData} tblId={tblId} highlightedRow={highlightedRow}/> }
+                            tables = {<TablePanel key='results-tables' tbl_id={tblId} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
                     </main>

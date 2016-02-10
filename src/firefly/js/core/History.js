@@ -3,8 +3,7 @@
  */
 
 import {flux} from '../Firefly.js';
-import set from 'lodash/object/set';
-import get from 'lodash/object/get';
+import {set, get} from 'lodash';
 
 var HISTORY_PATH = 'history';
 const MAX_HISTORY_LENGTH = 20;

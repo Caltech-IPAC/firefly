@@ -13,6 +13,7 @@
     "classes" : true,
     "defaultParams" : true,
     "destructuring" : true,
+    "restParams" : true,
     "forOf": true,
     "jsx": true,
     "modules" : true,

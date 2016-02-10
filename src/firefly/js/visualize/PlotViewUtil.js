@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {getPlotGroupById} from './PlotGroup.js';
-import difference from 'lodash/array/difference';
+import {flux} from '../Firefly.js';
+import difference from 'lodash/difference';
 
 
 

@@ -5,8 +5,8 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import uniqueId from 'lodash/utility/uniqueId';
-import delay from 'lodash/function/delay';
+import uniqueId from 'lodash/uniqueId';
+import delay from 'lodash/delay';
 import {flux} from '../Firefly.js';
 import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';

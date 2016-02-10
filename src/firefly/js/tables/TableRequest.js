@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {pick, identity} from 'lodash';
+import {pickBy} from 'lodash';
+import {uniqueTblId} from './TableUtil.js';
 
 
 export class TableRequest {
@@ -32,8 +33,8 @@ export class TableRequest {
      * @param copyFromReq
      * @returns {TableRequest}
      */
-    static newInstance({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO, ...rest}, copyFromReq) {
-        var params = Object.assign(rest, pick({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}, identity));   // take only defined params
+    static newInstance({id, tbl_id=uniqueTblId(), startIdx, pageSize=100, filters, sortInfo, inclCols, decimate, META_INFO, ...rest}, copyFromReq) {
+        var params = Object.assign(rest, pickBy({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}));   // take only defined params
         if (copyFromReq) {
             params = Object.assign(copyFromReq, params);
         }

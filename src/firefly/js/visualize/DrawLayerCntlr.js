@@ -7,8 +7,8 @@ import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import without from 'lodash/array/without';
-import union from 'lodash/array/union';
+import without from 'lodash/without';
+import union from 'lodash/union';
 
 
 

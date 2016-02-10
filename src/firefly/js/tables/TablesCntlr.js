@@ -1,42 +1,41 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import update from 'react-addons-update';
+import {set, get, isEqual} from 'lodash';
 
 import {flux} from '../Firefly.js';
-import {fetchUrl, logError} from '../util/WebUtil.js';
-import { getRootPath } from '../util/BrowserUtil.js';
-import TblUtil from './TableUtil.js';
-import LoadTable from './reducers/LoadTable.js';
+import * as TblUtil from './TableUtil.js';
+import {logError} from '../util/WebUtil.js';
 
-const TABLE_SPACE_PATH = 'table-space';
-const MAIN_SPACE_PATH = `${TABLE_SPACE_PATH}.main`;
-
+export const TABLE_SPACE_PATH = 'table_space';
 
 /*---------------------------- ACTIONS -----------------------------*/
-const FETCH_TABLE           = `${TABLE_SPACE_PATH}.fetchTable`;
-const LOAD_TABLE            = `${TABLE_SPACE_PATH}.loadTable`;
-const LOAD_TABLE_STATUS     = `${TABLE_SPACE_PATH}.loadTableStatus`;
-const LOAD_TABLE_COMPLETE   = `${TABLE_SPACE_PATH}.loadTableComplete`;
+export const FETCH_TABLE           = `${TABLE_SPACE_PATH}.fetchTable`;
+export const LOAD_TABLE            = `${TABLE_SPACE_PATH}.loadTable`;
+export const LOAD_TABLE_STATUS     = `${TABLE_SPACE_PATH}.loadTableStatus`;
+export const LOAD_TABLE_COMPLETE   = `${TABLE_SPACE_PATH}.loadTableComplete`;
 
-const TBL_SELECT_ROW    = `${TABLE_SPACE_PATH}.tblSelectRow`;
-const TBL_HIGHLIGHT_ROW = `${TABLE_SPACE_PATH}.tblHighlighRow`;
+export const TBL_SELECT_ROW    = `${TABLE_SPACE_PATH}.selectRow`;
+export const TBL_HIGHLIGHT_ROW = `${TABLE_SPACE_PATH}.highlighRow`;
 
 /*---------------------------- CREATORS ----------------------------*/
 
-function loadTable(action) {
+export function loadTable(action) {
     return validate(LOAD_TABLE, action);
 }
 
-function fetchTable(action) {
+export function fetchTable(action) {
     return (dispatch) => {
-        dispatch(validate(FETCH_TABLE, action));
+        //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
-            LoadTable.doFetchTable(action.payload).then ( (tableModel) => {
+            var {request, hlRowIdx} = action.payload;
+            TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
                 dispatch( loadTable({type:LOAD_TABLE, payload: tableModel}) );
             }).catch( (error) => {
                 logError(error);
                 // if fetch causes error, re-dispatch that same action with error msg.
-                action.err = error;
+                TblUtil.error(error);
                 dispatch(action);
             });
         }
@@ -45,29 +44,33 @@ function fetchTable(action) {
 
 
 /*---------------------------- REDUCERS -----------------------------*/
-function reducer(state={}, action={}) {
-    var newState = Object.assign({}, state);
-
+export function reducer(state={}, action={}) {
+    var inTable;
+    const {tbl_id, selectionInfo, highlightedRow} = action.payload || {};
     switch (action.type) {
-        case (TBL_HIGHLIGHT_ROW)  :
         case (TBL_SELECT_ROW)  :
+            if (selectionInfo) {
+                return update(state, { [tbl_id] : {selectionInfo: {$set: selectionInfo}}});
+            } else return state;
+
+        case (TBL_HIGHLIGHT_ROW)  :
+            if (highlightedRow >= 0 && highlightedRow !== get(state, [tbl_id, 'highlightedRow'])) {
+                return update(state, { [tbl_id] : {highlightedRow: {$set: highlightedRow}}});
+            } else return state;
+
         case (LOAD_TABLE_STATUS)  :
         case (LOAD_TABLE_COMPLETE)  :
         case (LOAD_TABLE)  :
-            newState = LoadTable.reducer(newState, action);
-            break;
+            inTable = action.payload;
+            return TblUtil.smartMerge(state, {[inTable.tbl_id] : inTable});
+
         case (FETCH_TABLE)  :
-            var tmpAction = {'type' : LOAD_TABLE, 'payload': {tbl_id : action.payload.tbl_id, tableMeta : {'isLoading' : true}} };
-            newState = LoadTable.reducer(newState, tmpAction);
-            if (tmpAction.err) {
-                TblUtil.error(action, tmpAction.err);
-            }
-            break;
+            inTable = { tbl_id : action.payload.tbl_id, tableMeta : {'isLoading' : true}};
+            return TblUtil.smartMerge(state, {[inTable.tbl_id] : inTable});
 
         default:
             return state;
     }
-    return newState;
 }
 
 /*---------------------------- DISPATCHERS -----------------------------*/
@@ -79,16 +82,17 @@ function reducer(state={}, action={}) {
  * Update will always attempt to merge the data, regardless of partial or complete.
  * @param tableModel the dataModel to load.
  */
-function dispatchLoadTable(tableModel) {
+export function dispatchLoadTable(tableModel) {
     flux.process( {type: LOAD_TABLE, payload: {tableModel}});
 }
 
 /**
  * Fetch a table from the server.
- * @param tableRequest a TableRequest params object.
+ * @param request a TableRequest params object.
+ * @param hlRowIdx set the highlightedRow.  default to startIdx.
  */
-function dispatchFetchTable(tableRequest) {
-    flux.process( {type: FETCH_TABLE, payload: tableRequest });
+export function dispatchFetchTable(request, hlRowIdx) {
+    flux.process( {type: FETCH_TABLE, payload: {request, hlRowIdx} });
 }
 
 /**
@@ -96,7 +100,7 @@ function dispatchFetchTable(tableRequest) {
  * @param tbl_id
  * @param highlightedRow
  */
-function dispatchHighlightRow(tbl_id, highlightedRow) {
+export function dispatchHighlightRow(tbl_id, highlightedRow) {
     flux.process( {type: TBL_HIGHLIGHT_ROW, payload: {tbl_id, highlightedRow} });
 }
 
@@ -105,30 +109,9 @@ function dispatchHighlightRow(tbl_id, highlightedRow) {
  * @param tbl_id
  * @param selectInfo
  */
-function dispatchRowSelect(tbl_id, selectInfo) {
+export function dispatchRowSelect(tbl_id, selectInfo) {
     flux.process( {type: TBL_SELECT_ROW, payload: {tbl_id, selectInfo} });
 }
-
-
-/*---------------------------- EXPORTS -----------------------------*/
-export default {
-    TABLE_SPACE_PATH,
-    MAIN_SPACE_PATH,
-    FETCH_TABLE,
-    LOAD_TABLE,
-    LOAD_TABLE_STATUS,
-    LOAD_TABLE_COMPLETE,
-    TBL_SELECT_ROW,
-    TBL_HIGHLIGHT_ROW,
-    reducer,
-    dispatchLoadTable,
-    dispatchFetchTable,
-    dispatchHighlightRow,
-    dispatchRowSelect,
-    fetchTable,
-    loadTable
-};
-
 
 
 /*---------------------------- PRIVATE -----------------------------*/

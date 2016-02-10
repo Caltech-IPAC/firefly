@@ -108,7 +108,7 @@ export class SelectInfo {
      * @returns {SelectInfo}
      */
     static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0} = {}) {
-        return arguments[0] ? new SelectInfo(arguments[0]) : new SelectInfo({selectAll, exceptions, rowCount});
+        return new SelectInfo({selectAll, exceptions, rowCount});
     }
 
     /**
@@ -118,7 +118,7 @@ export class SelectInfo {
      * @returns {SelectInfo}
      */
     static find(tbl_id, root) {
-        var table = Table.find(tbl_id, root);
+        var table = Table.findTblById(tbl_id, root);
         return table && SelectInfo.newInstance(table.selectInfo);
     }
 

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import CompleteButton from './CompleteButton.jsx';
-import TablesCntlr from '../tables/TablesCntlr.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 
 function handleFailfure() {

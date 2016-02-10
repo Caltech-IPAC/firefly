@@ -5,10 +5,9 @@ import {has, get, set} from 'lodash';
 import ColValuesStatistics from './ColValuesStatistics.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
-import LoadTable from '../tables/reducers/LoadTable.js';
-import TableUtil from '../tables/TableUtil.js';
+import * as TableUtil from '../tables/TableUtil.js';
 
-import TablesCntlr from '../tables/TablesCntlr.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 /*
  Possible structure of store:
@@ -108,7 +107,7 @@ function reducer(state=getInitState(), action={}) {
         case (TablesCntlr.LOAD_TABLE)  :
             const {tbl_id, tableMeta, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (tableMeta.isFullyLoaded && !get(state, [tbl_id, 'isTblLoaded'])){
+                if (TableUtil.isTableLoaded(action.payload) && !get(state, [tbl_id, 'isTblLoaded'])){
                     const newState = Object.assign({}, state);
                     set(newState, tbl_id, {isTblLoaded:true});
                     action.sideEffect((dispatch) => fetchTblStats(dispatch,request));
@@ -159,7 +158,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                     tbl_id: activeTableServerRequest.tbl_id
                 });
 
-    LoadTable.doFetchTable(req).then(
+    TableUtil.doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
                 const colStats = tableModel.tableData.data.reduce((colstats, arow) => {

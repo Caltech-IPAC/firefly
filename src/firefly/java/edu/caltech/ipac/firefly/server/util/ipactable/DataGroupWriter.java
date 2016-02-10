@@ -130,7 +130,7 @@ public class DataGroupWriter {
                         while(itr.hasNext()) {
                             DataObject row = itr.next();
                             IpacTableUtil.writeRow(writer, headers, row);
-                            if (++rowCount % minPrefetchSize == 0) {
+                            if (++rowCount % 5000 == 0) {
                                 IpacTableUtil.sendLoadStatusEvents(meta, outf, rowCount, DataGroupPart.State.INPROGRESS);
                             }
                         }

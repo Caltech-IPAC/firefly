@@ -17,7 +17,8 @@ import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import HistogramCntlr from '../visualize/HistogramCntlr.js';
 import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
-import TablesCntlr from '../tables/TablesCntlr';
+import * as TablesCntlr from '../tables/TablesCntlr';
+import * as TablesUiCntlr from '../tables/TablesUiCntlr';
 import DrawLayer from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
@@ -52,6 +53,7 @@ const reducers = {
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
+    [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
     [DrawLayer.DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
 };
 
@@ -66,10 +68,11 @@ actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCrea
 actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
 actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.colorChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.stretchChangeActionCreator);
-actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
-actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
+actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
+actionCreators.set(TablesUiCntlr.TBL_UI_GOTO_PAGE, TablesUiCntlr.gotoPage);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);

@@ -3,9 +3,9 @@ import {flux} from '../Firefly.js';
 import {has, get, set} from 'lodash';
 
 
-import LoadTable from '../tables/reducers/LoadTable.js';
-//import TableUtil from '../tables/TableUtil.js';
-//import TablesCntlr from '../tables/TablesCntlr.js';
+import {doFetchTable} from '../tables/TableUtil.js';
+//import * from TableUtil from '../tables/TableUtil.js';
+//import * from TablesCntlr from '../tables/TablesCntlr.js';
 
 
 const XYPLOT_DATA_KEY = 'xyplot';
@@ -155,7 +155,7 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 
     req.tbl_id = activeTableServerRequest.tbl_id;
 
-    LoadTable.doFetchTable(req).then(
+    doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
                 const xyPlotData = tableModel.tableData.data;
