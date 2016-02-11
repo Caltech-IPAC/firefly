@@ -140,19 +140,19 @@ export const isHexColorStr = function(description, valStr) {
 
 /*---------------------------- validator function used by InputField to validate a value -----------------------------*/
 /*---- these factory functions creates a validation function that takes a value and return {valid,message} -----------*/
-export const IntValidator = function(min,max,description) {
+export const intValidator = function(min,max,description) {
     return (val) => intRange(min, max, description, val);
 };
 
-export const FloatValidator = function(min,max,description) {
+export const floatValidator = function(min,max,description) {
     return (val) => floatRange(min, max, description, val);
 };
 
-export const UrlValidator = function(description) {
+export const urlValidator = function(description) {
     return (val) => validateUrl(description, val);
 };
 
-export const EmailValidator = function(description) {
+export const emailValidator = function(description) {
     return (val) => validateEmail(description, val);
 };
 /*--------------------------------------------------------------------------------------------------------------------*/
