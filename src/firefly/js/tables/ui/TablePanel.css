@@ -8,6 +8,34 @@
     background-color: #d3fad1
 }
 
+.TablePanel__wrapper {
+    background-color: #a5a5a5;
+    border: 1px solid #8c8c8c;
+    padding: 0 3px 3px 3px;
+}
+
+button.paging_bar {
+    height: 16px;
+    width: 16px;
+    margin-top: 3px;
+}
+
+button.paging_bar.first {
+    background-image: url("/images/icons-2014/16x16_BackwardToEnd.png");
+}
+
+button.paging_bar.last {
+    background-image: url("/images/icons-2014/16x16_ForwardToEnd.png");
+}
+
+button.paging_bar.next {
+    background-image: url("/images/icons-2014/16x16_Forward.png");
+}
+
+button.paging_bar.previous {
+    background-image: url("/images/icons-2014/16x16_Backward.png");
+}
+
 
 
 /** below are taken from FixedDataTable with some modifications */
@@ -40,7 +68,7 @@
 }
 
 .public_fixedDataTable_main, .public_fixedDataTable_header, .public_fixedDataTable_hasBottomBorder {
-    border-color: #d3d3d3
+    border-color: #8c8c8c
 }
 
 .public_fixedDataTable_header .public_fixedDataTableCell_main {
@@ -50,7 +78,8 @@
 .public_fixedDataTable_header, .public_fixedDataTable_header .public_fixedDataTableCell_main {
     background-color: #f6f7f8;
     background-image: -webkit-linear-gradient(#fff, #efefef);
-    background-image: linear-gradient(#fff, #efefef)
+    background-image: linear-gradient(#fff, #efefef);
+    text-align: center;
 }
 
 .public_fixedDataTable_footer .public_fixedDataTableCell_main {
@@ -71,7 +100,6 @@
 }
 
 .public_fixedDataTableCell_main {
-    /*background-color: #fff;*/
     border-color: #d3d3d3;
 }
 
@@ -319,7 +347,8 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 
 .fixedDataTableLayout_rowsContainer {
     overflow: hidden;
-    position: relative
+    position: relative;
+    background-color: whitesmoke;
 }
 
 .fixedDataTableLayout_horizontalScrollbar {

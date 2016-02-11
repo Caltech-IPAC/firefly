@@ -5,7 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import sCompare from 'react-addons-shallow-compare';
-import debounce from 'lodash/function/debounce';
+import debounce from 'lodash/debounce';
 import Resizable from 'react-component-resizable';
 import {ImageViewerDecorate} from './ImageViewerDecorate.jsx';
 import {dispatchZoom} from '../ImagePlotCntlr.js';

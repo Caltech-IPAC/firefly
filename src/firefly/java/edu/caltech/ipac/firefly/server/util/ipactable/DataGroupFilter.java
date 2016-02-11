@@ -106,18 +106,6 @@ public class DataGroupFilter {
             attributes.add(new DataGroup.Attribute("col." + DataGroup.ROWID_NAME + ".Visibility", "hidden"));
         }
 
-        // combine meta with file attributes
-        if (meta == null) {
-            meta = new HashMap<>(attributes.size());
-        } else {
-            for (String k : meta.keySet()) {
-                attributes.add(new DataGroup.Attribute(k, meta.get(k)));
-            }
-        }
-        for (DataGroup.Attribute at : attributes) {
-            meta.put(at.getKey(), at.getValue());
-        }
-
         DataGroup dg = new DataGroup(null, headers);
 
         boolean needToWriteHeader = true;
@@ -189,7 +177,7 @@ public class DataGroupFilter {
                             if (CollectionUtil.matches(rowIdx, row, filters)) {
                                 row.setRowIdx(rowIdx);
                                 IpacTableUtil.writeRow(writer, headers, row);
-                                if (++rowsFound % minPrefetchSize == 0) {
+                                if (++rowsFound % 5000 == 0) {
                                     IpacTableUtil.sendLoadStatusEvents(meta, outf, rowsFound, DataGroupPart.State.INPROGRESS);
                                 }
                             }

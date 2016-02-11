@@ -124,7 +124,6 @@ public class JsonTableUtil {
         JSONObject tmeta = new JSONObject();
         tmeta.put("source", meta.getSource());
         tmeta.put("fileSize", meta.getFileSize());
-        tmeta.put("isFullyLoaded", meta.isLoaded());
         if (meta.getRelatedCols() != null) {
             tmeta.put("relatedCols", StringUtils.toString(meta.getRelatedCols(), ","));
         }

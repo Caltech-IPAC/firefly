@@ -6,10 +6,7 @@ import {flux} from '../Firefly.js';
 import {has, get, set} from 'lodash';
 
 import {TableRequest} from '../tables/TableRequest.js';
-import LoadTable from '../tables/reducers/LoadTable.js';
-import TableUtil from '../tables/TableUtil.js';
-
-import TablesCntlr from '../tables/TablesCntlr.js';
+import * as TableUtil from '../tables/TableUtil.js';
 
 /*
  Possible structure of store:
@@ -163,7 +160,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
 
     req.tbl_id = activeTableServerRequest.tbl_id;
 
-    LoadTable.doFetchTable(req).then(
+    TableUtil.doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
                 // if logarithmic values were requested, convert the returned exponents back

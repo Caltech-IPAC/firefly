@@ -4,9 +4,7 @@ import {expect} from 'chai';
 import {assert} from 'chai';
 
 import {TableRequest} from '../TableRequest.js';
-import rewire from 'rewire';
-
-var doFetchTable = rewire('../reducers/LoadTable.js').__get__('doFetchTable');
+import {doFetchTable} from '../TableUtil.js';
 
 describe('A test suite for tables/TablesCntlr.js', function () {
     var request;
