@@ -11,7 +11,8 @@ var RadioGroupInputField= React.createClass(
         propTypes: {
             inline : PropTypes.bool,
             options: PropTypes.array.isRequired,
-            alignment:  PropTypes.string.isRequired
+            alignment:  PropTypes.string,
+            labelWidth : PropTypes.number
         },
 
         contextTypes: {
@@ -43,29 +44,20 @@ var RadioGroupInputField= React.createClass(
 
             const {alignment, labelWidth, fieldKey} = this.props;
 
-            let optionalElement;
-
-            switch (alignment) {
-                case 'vertical':
-                    optionalElement = <br />;
-                    break;
-                default:
-                    optionalElement = null;
-                    break;
-            }
-
             return (
                 <div style={{whiteSpace:'nowrap',display: this.props.inline?'inline-block':'block'}}>
-                    <InputFieldLabel label={this.getLabel()}
-                                     tooltip={this.getTip()}
-                                     labelWidth={labelWidth}
-                    />
-                    {optionalElement}
+
+                    {this.getLabel() ? <InputFieldLabel label={this.getLabel()}
+                                                        tooltip={this.getTip()}
+                                                        labelWidth={labelWidth} /> : null
+                        }
                     <div style={{display:'inline-block'}} >
                         {this.props.options.map((option) => {
 
                             return (
-                                <div style={optionalElement ? {display:'block'}:{display:'inline-block'}} key={option.value}>
+                                <div
+                                    style={alignment==='vertical' ? {display:'block'}:{display:'inline-block'}}
+                                    key={option.value}>
                                     <input type='radio'
                                            name={fieldKey}
                                            value={option.value}

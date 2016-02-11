@@ -4,6 +4,7 @@
 
 import React, {PropTypes} from 'react';
 import { primePlot} from '../PlotViewUtil.js';
+import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {
     ToolbarButton,
     DropDownVerticalSeparator} from '../../ui/ToolbarButton.jsx';

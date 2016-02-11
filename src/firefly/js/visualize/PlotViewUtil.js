@@ -10,7 +10,7 @@ import difference from 'lodash/difference';
 
 export default {
     findPlotView, getPlotViewAry,operateOnOthersInGroup,
-    findPlotGroup, getPlotStateAry, matchPlotView,isActivePlotView,
+    findPlotGroup, matchPlotView,isActivePlotView,
     hasGroupLock, getActivePlotView, getAllDrawLayers, getAllDrawLayersForPlot,
     getPlotViewIdListInGroup, getDrawLayerByType,
     isDrawLayerVisible, isDrawLayerAttached, getLayerTitle
@@ -61,6 +61,23 @@ export function getPlotViewIdxById(visRoot,plotId) {
 }
 
 
+/**
+ *
+ * @param ref visRoot or plotViewAry
+ * @param [activePlotId]
+ * @return {Array.<T>}
+ */
+export function expandedPlotViewAry(ref,activePlotId=null) {
+    var plotViewAry;
+    if (ref.plotViewAry && ref.activePlotId) { // I was passed the visRoot
+        plotViewAry= ref.plotViewAry;
+    }
+    else if (Array.isArray(ref) && ref.length>0 && ref[0].plotId)  { // passwd a plotViewAry
+        plotViewAry= ref;
+    }
+    if (!plotViewAry) return null;
+    return plotViewAry.filter( (pv) => (pv.plotId===activePlotId || pv.plotViewCtx.inExpandedList));
+}
 
 
 /**
@@ -199,7 +216,7 @@ function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.t
  * @param pv
  * @return {*[]}
  */
-function getPlotStateAry(pv) {
+export function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
     return [primePlot(pv).plotState, ...overlayStates];
 }

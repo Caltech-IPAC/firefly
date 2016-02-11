@@ -32,8 +32,7 @@ export class ExpandedModeDisplay extends Component {
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate());
         if (this.props.forceExpandedMode) {
-            var prevExm= this.state.allPlots.previousExpandedMode;
-            dispatchChangeExpandedMode(prevExm);
+            dispatchChangeExpandedMode(true);
         }
     }
 

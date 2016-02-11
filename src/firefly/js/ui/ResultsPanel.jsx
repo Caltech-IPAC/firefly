@@ -4,7 +4,7 @@
 
 import React from 'react';
 import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
-import appDataCntlr from '../core/AppDataCntlr.js';
+import appDataCntlr, {dispatchUpdateLayout} from '../core/AppDataCntlr.js';
 
 
 function generateLayout(results, layoutInfo) {
@@ -66,10 +66,10 @@ function renderSearchDesc(searchDesc) {
         <div>
             {SearchDesc || <div style={{fontSize: 'medium', display: 'inline-block'}}> >>Search description not provided..</div>}
             <div style={ {display: 'inline-block', float: 'right'} }>
-                <button type='button' className='button-std' onClick={() => appDataCntlr.dispatchUpdateLayout( {mode: 'tri' })}>tri-view</button>&nbsp;
-                <button type='button' className='button-std' onClick={() => appDataCntlr.dispatchUpdateLayout( {mode: 'sbs' })}>side-by-side</button>&nbsp;
-                <button type='button' className='button-std' onClick={() => appDataCntlr.dispatchUpdateLayout( {mode: 'tb' })}>top-bottom</button>&nbsp;
-                <button type='button' className='button-std' onClick={() => appDataCntlr.dispatchUpdateLayout( {mode: 'expand' })}>expanded</button>
+                <button type='button' className='button-std' onClick={() => dispatchUpdateLayout( {mode: 'tri' })}>tri-view</button>&nbsp;
+                <button type='button' className='button-std' onClick={() => dispatchUpdateLayout( {mode: 'sbs' })}>side-by-side</button>&nbsp;
+                <button type='button' className='button-std' onClick={() => dispatchUpdateLayout( {mode: 'tb' })}>top-bottom</button>&nbsp;
+                <button type='button' className='button-std' onClick={() => dispatchUpdateLayout( {mode: 'expand' })}>expanded</button>
             </div>
         </div>
     );

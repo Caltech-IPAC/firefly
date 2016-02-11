@@ -125,7 +125,7 @@ export function makePlotView(plotId, req, pvOptions) {
 
 function createPlotViewContextData(req) {
     return {
-        rotateNorth : false,// todo MAYBE!!! // rotate this plot north when plotting,
+        rotateNorthLock : false,// todo MAYBE!!! // rotate this plot north when plotting,
         userModifiedRotate: false, // the user modified the rotate status, todo
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT,
@@ -151,11 +151,12 @@ const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCe
 /**
  *
  * @param pv
- * @param plotId
  * @param plotAry
- * @param addToHistory
+ * @param expanded
+ * @param overlayPlotViews
+ * @return {Object|*}
  */
-function replacePlots(pv, plotAry,expanded) {
+function replacePlots(pv, plotAry,expanded, overlayPlotViews=null) {
 
     pv= Object.assign({},pv);
 
@@ -168,6 +169,7 @@ function replacePlots(pv, plotAry,expanded) {
     }
 
 
+    if (overlayPlotViews) pv.overlayPlotViews= overlayPlotViews;
 
     pv.plots= plotAry;
 
@@ -188,7 +190,7 @@ function replacePlots(pv, plotAry,expanded) {
 
     pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
-    pv.plotViewCtx.rotateNorth= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;
+    pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;
 
     pv= initScrollCenterPoint(pv);
 
@@ -223,7 +225,8 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
     if (!plot || !scrollWidth || !scrollHeight) return plotView;
 
     var {x:newSx,y:newSy}= newScrollPt;
-    if (newSx===oldSx && newSy===oldSy) return plotView;
+    var {width:oldVPW, height:oldVPH} = plot.viewPort.dim;
+    if (newSx===oldSx && newSy===oldSy && oldVPW && oldVPH) return plotView;
 
     newSx= checkBounds(newSx,plot.screenSize.width,scrollWidth);
     newSy= checkBounds(newSy,plot.screenSize.height,scrollHeight);

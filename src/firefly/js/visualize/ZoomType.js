@@ -8,7 +8,7 @@
  */
 
 import Enum from 'enum';
-const ZoomType= new Enum([
+export const ZoomType= new Enum([
                       'STANDARD',       // use normal zoom, zoom to given zoom level or 1x if not specified
                       'SMART',         // use smart zoom
                       'SMART_SMALL',   // with smart zoom use sizing algorithm that produces larger size

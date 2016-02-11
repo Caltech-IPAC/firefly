@@ -51,7 +51,7 @@ function getZoomer() {
                 return;
             }
         }
-        dispatchZoom(pv.plotId,zType.utilZt,true,isFitFill(zType));
+        dispatchZoom(pv.plotId,zType.utilZt,true,false, isFitFill(zType.utilZt));
     };
 }
 

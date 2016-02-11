@@ -140,7 +140,7 @@ class FitsDownloadDialog extends React.Component {
 
 function renderOperationOption(hasOperation) {
 
-    var leftColumn = { display: 'inline-block', paddingLeft:135, paddingBottom:15, verticalAlign:'middle'};
+    var leftColumn = { display: 'inline-block', paddingLeft:85, paddingBottom:15, verticalAlign:'middle'};
     var rightColumn = {display: 'inline-block', paddingLeft:20};
 
     if (hasOperation) {
@@ -149,6 +149,7 @@ function renderOperationOption(hasOperation) {
                 <div title = 'Please select an option'  style={leftColumn}>FITS file: </div>
                 <div style={rightColumn}>
                     <RadioGroupInputField
+                        labelWidth={0}
                         initialState={{
                                     tooltip: 'Please select an option'
                                     //move the label as InputFieldLabel above
@@ -177,17 +178,16 @@ function renderThreeBand(hasThreeColorBand, colors) {
     var leftColumn;
 
 
-
     if (hasThreeColorBand) {
         switch (colors.length){
             case 1:
-                leftColumn= { display: 'inline-block', paddingLeft:125};
+                leftColumn= { display: 'inline-block', paddingLeft:75};
                 break;
             case 2:
-                leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign: 'middle', paddingBottom:20};
+                leftColumn = { display: 'inline-block', paddingLeft:75, verticalAlign: 'middle', paddingBottom:20};
                 break;
             case 3:
-                leftColumn ={ display: 'inline-block', paddingLeft:125,verticalAlign: 'middle', paddingBottom:40};
+                leftColumn ={ display: 'inline-block', paddingLeft:75,verticalAlign: 'middle', paddingBottom:40};
                 break;
         }
 
@@ -230,11 +230,11 @@ function FitsDownloadDialogForm() {
     var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']);
 
 
-    var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:30};
+    var leftColumn = { display: 'inline-block', paddingLeft:75, verticalAlign:'middle', paddingBottom:30};
 
     var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
-	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
+	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:'15px 5px 5px 5px'};
     return (
 
         <FieldGroup groupKey='FITS_DOWNLOAD_FORM' keepState={true}>

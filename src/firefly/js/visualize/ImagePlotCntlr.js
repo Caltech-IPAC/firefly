@@ -9,11 +9,16 @@ import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
         makeStretchChangeAction as stretchChangeActionCreator,
-    doDispatchColorChange, doDispatchStretchChange} from './ColorStretchUtil.js';
+        makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
-import {isActivePlotView, getPlotViewById, getActivePlotView, applyToOnePvOrGroup} from './PlotViewUtil.js';
+import {
+    isActivePlotView,
+    getPlotViewById,
+    expandedPlotViewAry,
+    getActivePlotView,
+    applyToOnePvOrGroup } from './PlotViewUtil.js';
 
 import {doDispatchZoomLocking} from './ZoomUtil.js';
 import CoordinateSys from './CoordSys.js';
@@ -55,6 +60,11 @@ const STRETCH_CHANGE= 'ImagePlotCntlr.StretchChange';
 const STRETCH_CHANGE_FAIL= 'ImagePlotCntlr.StretchChangeFail';
 
 
+const ROTATE_START= 'ImagePlotCntlr.RotateChangeStart';
+const ROTATE= 'ImagePlotCntlr.RotateChange';
+const ROTATE_FAIL= 'ImagePlotCntlr.RotateChangeFail';
+
+
 const FLIP_IMAGE_START= 'ImagePlotCntlr.FlipImageStart';
 const FLIP_IMAGE= 'ImagePlotCntlr.FlipImage';
 const FLIP_IMAGE_FAIL= 'ImagePlotCntlr.FlipImageFail';
@@ -73,6 +83,8 @@ const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
 const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
+const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
+const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
 
 //LZ add those three constant on 2/1/16
 //const CHANGE_MOUSE_READOUT_READOUT1 =  ()=> {
@@ -101,6 +113,7 @@ const IMAGE_PLOT_KEY= 'allPlots';
 
 
 
+const clone = (obj,params={}) => Object.assign({},obj,params);
 
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
@@ -121,8 +134,12 @@ const initState= function() {
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
         activePlotId: null,
 
+        // expanded stuff
         expandedMode: ExpandType.COLLAPSE,
         previousExpandedMode: ExpandType.SINGLE, //  must be SINGLE OR GRID
+        singleAutoPlay : false,
+
+        //  misc
         toolBarIsPopup: false,    //todo
         mouseReadoutWide: false, //todo
 
@@ -146,20 +163,25 @@ const initState= function() {
 export default {
     reducer,
     dispatchProcessScroll,
-    dispatchPlotImage, dispatch3ColorPlotImage,
-    zoomActionCreator, colorChangeActionCreator, stretchChangeActionCreator,
-    plotImageActionCreator,
+    dispatch3ColorPlotImage,
+    zoomActionCreator, colorChangeActionCreator,
+    stretchChangeActionCreator, rotateActionCreator,
+    plotImageActionCreator, autoPlayActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
+    ROTATE_START, ROTATE, ROTATE_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE,
+    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST,
     ANY_REPLOT
 };
 
+
+
+
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
@@ -168,8 +190,42 @@ export default {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 
-export const dispatchColorChange= doDispatchColorChange;  //reference to util
-export const dispatchStretchChange= doDispatchStretchChange;  //reference to util
+
+/**
+ *
+ * @param {string} plotId
+ * @param {number} cbarId
+ * @param {ActionScope} actionScope
+ */
+export function dispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: COLOR_CHANGE,
+        payload: { plotId, cbarId, actionScope }});
+}
+
+/**
+ *
+ * @param {string} plotId
+ * @param {number} rangeValues
+ * @param {ActionScope} actionScope
+ */
+export function dispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: STRETCH_CHANGE,
+        payload: { plotId, rangeValues, actionScope }});
+}
+
+
+/**
+ * Rotate
+ *
+ * @param {string} plotId
+ * @param {object} rotateType enum RotateType
+ * @param {number} angle
+ * @param actionScope enum ActionScope
+ */
+export function dispatchRotate(plotId, rotateType, angle, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: ROTATE,
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
+}
 
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
@@ -210,9 +266,9 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  */
-function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
+export function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
     if (plotId) wpRequest.setPlotId(plotId);
-    var payload= initPlotImagePayload(plotId,wpRequest,false, removeOldPlot,addToHistory,useContextModifications);
+    const payload= initPlotImagePayload(plotId,wpRequest,false, removeOldPlot,addToHistory,useContextModifications);
     payload.wpRequest= wpRequest;
     flux.process({ type: PLOT_IMAGE, payload});
 }
@@ -238,8 +294,8 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
         [redReq,blueReq,greenReq].forEach( (r) => {if (r) r.setPlotId(plotId);});
     }
 
-    var req= redReq ||  blueReq ||  greenReq;
-    var payload= initPlotImagePayload(plotId,req,false, removeOldPlot,addToHistory,useContextModifications);
+    const req= redReq ||  blueReq ||  greenReq;
+    const payload= initPlotImagePayload(plotId,req,false, removeOldPlot,addToHistory,useContextModifications);
     payload.redReq= redReq;
     payload.greenReq= greenReq;
     payload.blueReq= blueReq;
@@ -259,10 +315,11 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
  * @param plotId
  * @param {UserZoomTypes} zoomType
  * @param maxCheck
+ * @param forceDelay
  * @param zoomLockingEnabled
  */
-export function dispatchZoom(plotId,zoomType,maxCheck=true, zoomLockingEnabled=false) {
-    doDispatchZoom(plotId, zoomType, maxCheck, zoomLockingEnabled);
+export function dispatchZoom(plotId,zoomType,maxCheck=true, forceDelay= false, zoomLockingEnabled=false) {
+    doDispatchZoom(plotId, zoomType, maxCheck, zoomLockingEnabled, forceDelay);
 }
 
 /**
@@ -294,21 +351,25 @@ export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
 
 /**
  *
- * @param {ExpandType} expandedMode
+ * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one, if false colapse
  */
 export function dispatchChangeExpandedMode(expandedMode) {
     flux.process({ type: CHANGE_EXPANDED_MODE, payload: {expandedMode} });
 
 
-    var enable= expandedMode!==ExpandType.COLLAPSE;
+    const enable= expandedMode!==ExpandType.COLLAPSE;
     visRoot().plotViewAry.forEach( (pv) =>
                dispatchZoomLocking(pv.plotId,enable,pv.plotViewCtx.zoomLockingType) );
 }
 
 
+
 export function dispatchChangeMouseReadoutReadout1(radioValue, coordinate, type) {
 
-    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {radioValue, coordinate, type} });
+    flux.process({type: CHANGE_MOUSE_READOUT_READOUT1, payload: {radioValue, coordinate, type}});
+}
+export function dispatchExpandedAutoPlay(autoPlayOn) {
+    flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 
 
 }
@@ -318,6 +379,9 @@ export function dispatchChangeMouseReadoutReadout2(readout2dMode) {
 
 }
 
+export function dispatchExpandedList(plotIdAry) {
+    flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
+}
 
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -328,6 +392,31 @@ function plotImageActionCreator(rawAction) {
 }
 
 
+function autoPlayActionCreator(rawAction) {
+    return (dispatcher) => {
+        var {autoPlayOn}= rawAction.payload;
+        if (autoPlayOn) {
+            if (!visRoot().singleAutoPlay) {
+                dispatcher(rawAction);
+                var id= window.setInterval( () => {
+                    var {singleAutoPlay,plotViewAry,activePlotId}= visRoot();
+                    if (singleAutoPlay) {
+                        const pvAry= expandedPlotViewAry(plotViewAry,activePlotId);
+                        const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
+                        const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
+                        dispatchChangeActivePlotView(pvAry[nextIdx].plotId);
+                    }
+                    else {
+                        window.clearInterval(id);
+                    }
+                },1100);
+            }
+        }
+        else {
+            dispatcher(rawAction);
+        }
+   };
+}
 
 
 //======================================== Reducer =============================
@@ -343,8 +432,13 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
+        case ROTATE_START:
+        case ROTATE_FAIL:
+        case ROTATE:
             retState= HandlePlotCreation.reducer(state,action);
             break;
+
+
         case ZOOM_LOCKING:
         case ZOOM_IMAGE_START  :
         case ZOOM_IMAGE_FAIL  :
@@ -357,8 +451,11 @@ function reducer(state=initState(), action={}) {
         case COLOR_CHANGE_FAIL  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
+        case EXPANDED_LIST:
             retState= HandlePlotChange.reducer(state,action);
             break;
+
+
         case CHANGE_ACTIVE_PLOT_VIEW:
             retState= changeActivePlotView(state,action);
             break;
@@ -373,6 +470,10 @@ function reducer(state=initState(), action={}) {
             break;
         case CHANGE_MOUSE_READOUT_PIXEL:
             retState = changeMouseReadoutPixel(state, action);
+        case EXPANDED_AUTO_PLAY:
+            if (state.singleAutoPlay!==action.payload.autoPlayOn) {
+                retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
+            }
             break;
         default:
             break;
@@ -406,27 +507,33 @@ function changeMouseReadoutPixel(state, action){
 function changeActivePlotView(state,action) {
     if (action.payload.plotId===state.activePlotId) return state;
 
-    return Object.assign({}, state, {activePlotId:action.payload.plotId});
+    return clone(state, {activePlotId:action.payload.plotId});
 }
 
 const includeInExpandedList = (pv,enable) => update(pv, {plotViewCtx : {$merge :{inExpandedList:enable}}});
 
-function changeExpandedMode(state,action) {
-    const {expandedMode}= action.payload;
-    const {plotViewAry}= state;
-    if (!expandedMode || expandedMode===state.expandedMode) return state;
+const isExpanded = (expandedMode) => expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE;
 
-    const changes= {expandedMode};
-    if (expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE) {
+function changeExpandedMode(state,action) {
+    var {expandedMode}= action.payload;
+
+    if (expandedMode===true) expandedMode= state.previousExpandedMode;
+    else if (!expandedMode) expandedMode= ExpandType.COLLAPSE;
+
+    if (expandedMode===state.expandedMode) return state;
+
+    const {plotViewAry}= state;
+    const changes= {expandedMode,singleAutoPlay:false};
+    if (isExpanded(expandedMode)) {
         changes.previousExpandedMode= expandedMode;
     }
 
-    if (expandedMode===ExpandType.COLLAPSE) {  // if we are collapsing
+    if (!isExpanded(expandedMode)) {  // if we are collapsing
         changes.plotViewAry= plotViewAry.map( (pv) =>
                   pv.plotViewCtx.inExpandedList ? includeInExpandedList(pv,false) : pv
         );
     }
-    else if (state.expandedMode===ExpandType.COLLAPSE) { // if we are expanding
+    else if (!isExpanded(state.expandedMode)) { // if we are expanding
         const plotId= state.activePlotId;
         const pv= getPlotViewById(state,plotId);
         if (pv) {
@@ -435,7 +542,7 @@ function changeExpandedMode(state,action) {
         }
     }
 
-    return Object.assign({}, state, changes);
+    return clone(state, changes);
 }
 
 
@@ -470,8 +577,8 @@ function changeExpandedMode(state,action) {
 function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true, addToHistory=false, useContextModifications= true) {
     if (!plotId) plotId= req.getPlotId();
 
-    var plotGroupId= req.getPlotGroupId();
-    var groupLocked= req.isGroupLocked();
+    const plotGroupId= req.getPlotGroupId();
+    const groupLocked= req.isGroupLocked();
 
     return {plotId, plotGroupId, removeOldPlot,
         addToHistory, useContextModifications,
@@ -490,7 +597,7 @@ function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true, addTo
 /*globals ffgwt*/
 
 if (window.ffgwt) {
-    var allPlots= ffgwt.Visualize.AllPlots.getInstance();
+    const allPlots= ffgwt.Visualize.AllPlots.getInstance();
     allPlots.addListener({
         eventNotify(ev) {
             //console.log('ANY_CHANGE:' + ev.getName().getName());
@@ -500,5 +607,3 @@ if (window.ffgwt) {
         }
     });
 }
-
-

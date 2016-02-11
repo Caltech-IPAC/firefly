@@ -457,7 +457,7 @@ export class WebPlot {
             percentOpaque   : 1.0,
             alive    : true,
             attributes: {},
-            viewPort: WebPlot.makeViewPort(0,0,42,42),
+            viewPort: WebPlot.makeViewPort(0,0,0,0),
             //=== End Mutable =====================
             asOverlay
         };

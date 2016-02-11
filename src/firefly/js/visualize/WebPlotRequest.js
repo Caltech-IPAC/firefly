@@ -346,6 +346,14 @@ class WebPlotRequest extends ServerRequest {
     //======================== Wise =====================================
 
 
+    /**
+     *
+     * @param wp
+     * @param survey can be Atlas, 3a, 1b
+     * @param band 1,2,3,4
+     * @param sizeInDeg
+     * @return {WebPlotRequest}
+     */
     static makeWiseRequest(wp, survey, band, sizeInDeg) {
         var req = this.makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
         req.setParam(C.SURVEY_KEY_BAND, band + '');

@@ -9,7 +9,7 @@ import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
-import PlotViewUtil, {getPlotViewById,primePlot} from './PlotViewUtil.js';
+import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInGroup} from './PlotViewUtil.js';
 import PlotServicesJson from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
@@ -36,15 +36,16 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  * @param {UserZoomTypes} userZoomType
  * @param {boolean} maxCheck
  * @param {boolean} zoomLockingEnabled
+ * @param {boolean} forceDelay
  * @param {ActionScope} actionScope
  */
 export function doDispatchZoom(plotId, userZoomType, maxCheck= true,
-                               zoomLockingEnabled=false, actionScope=ActionScope.GROUP ) {
+                               zoomLockingEnabled=false, forceDelay=false, actionScope=ActionScope.GROUP ) {
 
     flux.process({
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload :{
-            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled
+            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay
         }});
 }
 
@@ -65,7 +66,7 @@ export function doDispatchZoomLocking(plotId, zoomLockingEnabled, zoomLockingTyp
  */
 export function makeZoomAction(rawAction) {
     return (dispatcher) => {
-        var {plotId,userZoomType,zoomLockingEnabled}= rawAction.payload;
+        var {plotId,userZoomType,zoomLockingEnabled, forceDelay}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
@@ -84,7 +85,7 @@ export function makeZoomAction(rawAction) {
         else {
             var dim= pv.viewDim;
             isFullScreen= true;
-            useDelay= false; //todo
+            useDelay= forceDelay ? true : false; //todo
 
             if (dim.width && dim.height) {
                 if (userZoomType===UserZoomTypes.FIT) {
@@ -107,7 +108,7 @@ export function makeZoomAction(rawAction) {
         if (continueZoom) {
             doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
-            PlotViewUtil.operateOnOthersInGroup(visRoot(),pv, matchFunc);
+            operateOnOthersInGroup(visRoot(),pv, matchFunc);
         }
         else {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel:level, error:'zoom parameters wrong'} } );
@@ -180,7 +181,7 @@ function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     var pv= getPlotViewById(visRoot(),plotId);
-    PlotServicesJson.setZoomLevel(PlotViewUtil.getPlotStateAry(pv),zoomLevel,isFullScreen)
+    PlotServicesJson.setZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel, error:e} } );

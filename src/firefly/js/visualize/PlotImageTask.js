@@ -78,7 +78,7 @@ function makePlotImageAction(rawAction) {
                       payload: rawAction.payload
         } );
 
-        if (rawAction.useContextModifications) {
+        if (rawAction.payload.useContextModifications) {
             var pv= getPlotViewById(visRoot(),plotId);
             if (pv) wpRequest= modifyRequest(pv.plotViewCtx,wpRequest,Band.NO_BAND);
         }
@@ -120,7 +120,7 @@ function modifyRequest(pvCtx, r, band) {
     var retval= r.makeCopy();
 
     var userModRot= pvCtx.userModifiedRotate;
-    if (pvCtx.rotateNorth) retval.setRotateNorth(true);
+    if (pvCtx.rotateNorthLock) retval.setRotateNorth(true);
     if (r.getRotateNorthSuggestion() && userModRot) retval.setRotateNorth(true);
 
 

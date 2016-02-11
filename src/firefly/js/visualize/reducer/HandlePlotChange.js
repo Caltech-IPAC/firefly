@@ -60,6 +60,9 @@ function reducer(state, action) {
         case Cntlr.ZOOM_LOCKING:
             retState= changeLocking(state,action);
             break;
+        case Cntlr.EXPANDED_LIST:
+            retState= updateExpandedList(state,action);
+            break;
         default:
             break;
     }
@@ -69,6 +72,19 @@ function reducer(state, action) {
 
 
 
+function updateExpandedList(state,action) {
+    var {plotIdAry}= action.payload;
+    var {plotViewAry}= state;
+    var newState= clone(state,
+        {plotViewAry: plotViewAry.map( (pv) =>
+            update(pv, {plotViewCtx : {inExpandedList :{$set :  plotIdAry.includes(pv.plotId)} }} ))
+    });
+    if (!plotIdAry.includes(state.activePlotId)) {
+        newState.activePlotId= plotIdAry[0];
+    }
+
+    return newState;
+}
 
 
 function changePlotAttribute(state,action) {
