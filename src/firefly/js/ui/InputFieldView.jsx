@@ -89,7 +89,7 @@ export class InputFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,labelWidth,value,style,valid,onChange}= this.props;
+        var {visible,label,tooltip,labelWidth,value,style,valid,size,onChange}= this.props;
         if (!visible) return null;
         return (
             <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'} }>
@@ -101,6 +101,7 @@ export class InputFieldView extends Component {
                        onBlur={ () => this.setState({hasFocus:false, infoPopup:false})}
                        value={value}
                        title={tooltip}
+                       size={size}
                 />
                 {this.makeWarningArea(!valid)}
             </div>
@@ -118,12 +119,14 @@ InputFieldView.propTypes= {
     labelWidth: PropTypes.number,
     style: PropTypes.object,
     value   : PropTypes.string.isRequired,
+    size : PropTypes.number,
     onChange : PropTypes.func.isRequired
 };
 
 InputFieldView.defaultProps= {
     valid : true,
     visible : true,
+    size : 20,
     message: ''
 };
 
