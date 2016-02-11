@@ -61,7 +61,12 @@ const getWebPlot= function(request) {
 };
 
 
-
+/**
+ *
+ * @param stateAry
+ * @param north
+ * @param newZoomLevel
+ */
 function rotateNorth(stateAry, north, newZoomLevel) {
     var params =  makeParamsWithStateAry(stateAry,[
                    {name: ServerParams.NORTH, value: north + ''},
@@ -70,6 +75,13 @@ function rotateNorth(stateAry, north, newZoomLevel) {
     return doService(doJsonP(), ServerParams.ROTATE_NORTH, params);
 }
 
+/**
+ *
+ * @param stateAry
+ * @param rotate
+ * @param angle
+ * @param newZoomLevel
+ */
 function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
     var params = makeParamsWithStateAry(stateAry,[
                        {name: ServerParams.ROTATE, value: rotate + ''},
@@ -165,5 +177,5 @@ function makeStateParamAry(startAry) {
 
 
 var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel,
-     recomputeStretch, changeColor, getWebPlotGroup, getOneFileGroup};
+     recomputeStretch, changeColor, getWebPlotGroup, getOneFileGroup, rotateToAngle, rotateNorth};
 export default PlotServicesJson;

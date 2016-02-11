@@ -38,6 +38,12 @@ function reducer(state, action) {
             activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
+        case Cntlr.ROTATE_START  :
+        case Cntlr.ROTATE_FAIL  :
+            break;
+        case Cntlr.ROTATE  :
+            plotViewAry= addPlot(state,action);
+            break;
         default:
             break;
     }
@@ -61,12 +67,15 @@ const updateDefaults= function(plotRequestDefaults, action) {
 
 const addPlot= function(state,action) {
     var {plotViewAry}= state;
-    const {plotId, plotAry}= action.payload;
+    const {plotId, plotAry, overlayPlotViews}= action.payload;
     var expanded= state.expandedMode!==ExpandType.COLLAPSE;
     return plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,expanded) : pv;
+        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,expanded, overlayPlotViews) : pv;
     });
 };
+
+
+
 
 /**
  /**

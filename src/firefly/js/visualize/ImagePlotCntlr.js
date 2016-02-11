@@ -9,7 +9,7 @@ import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
         makeStretchChangeAction as stretchChangeActionCreator,
-    doDispatchColorChange, doDispatchStretchChange} from './ColorStretchUtil.js';
+        makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
@@ -58,6 +58,11 @@ const COLOR_CHANGE_FAIL= 'ImagePlotCntlr.ColorChangeFail';
 const STRETCH_CHANGE_START= 'ImagePlotCntlr.StretchChangeStart';
 const STRETCH_CHANGE= 'ImagePlotCntlr.StretchChange';
 const STRETCH_CHANGE_FAIL= 'ImagePlotCntlr.StretchChangeFail';
+
+
+const ROTATE_START= 'ImagePlotCntlr.RotateChangeStart';
+const ROTATE= 'ImagePlotCntlr.RotateChange';
+const ROTATE_FAIL= 'ImagePlotCntlr.RotateChangeFail';
 
 
 const FLIP_IMAGE_START= 'ImagePlotCntlr.FlipImageStart';
@@ -139,12 +144,14 @@ export default {
     reducer,
     dispatchProcessScroll,
     dispatch3ColorPlotImage,
-    zoomActionCreator, colorChangeActionCreator, stretchChangeActionCreator,
+    zoomActionCreator, colorChangeActionCreator,
+    stretchChangeActionCreator, rotateActionCreator,
     plotImageActionCreator, autoPlayActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
     ANY_CHANGE, IMAGE_PLOT_KEY,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
+    ROTATE_START, ROTATE, ROTATE_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
@@ -152,6 +159,9 @@ export default {
     ANY_REPLOT
 };
 
+
+
+
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
@@ -160,8 +170,42 @@ export default {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 
-export const dispatchColorChange= doDispatchColorChange;  //reference to util
-export const dispatchStretchChange= doDispatchStretchChange;  //reference to util
+
+/**
+ *
+ * @param {string} plotId
+ * @param {number} cbarId
+ * @param {ActionScope} actionScope
+ */
+export function dispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: COLOR_CHANGE,
+        payload: { plotId, cbarId, actionScope }});
+}
+
+/**
+ *
+ * @param {string} plotId
+ * @param {number} rangeValues
+ * @param {ActionScope} actionScope
+ */
+export function dispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: STRETCH_CHANGE,
+        payload: { plotId, rangeValues, actionScope }});
+}
+
+
+/**
+ * Rotate
+ *
+ * @param {string} plotId
+ * @param {object} rotateType enum RotateType
+ * @param {number} angle
+ * @param actionScope enum ActionScope
+ */
+export function dispatchRotate(plotId, rotateType, angle, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: ROTATE,
+        payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
+}
 
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
@@ -357,8 +401,13 @@ function reducer(state=initState(), action={}) {
         case PLOT_IMAGE_START  :
         case PLOT_IMAGE_FAIL  :
         case PLOT_IMAGE  :
+        case ROTATE_START:
+        case ROTATE_FAIL:
+        case ROTATE:
             retState= HandlePlotCreation.reducer(state,action);
             break;
+
+
         case ZOOM_LOCKING:
         case ZOOM_IMAGE_START  :
         case ZOOM_IMAGE_FAIL  :
@@ -374,6 +423,8 @@ function reducer(state=initState(), action={}) {
         case EXPANDED_LIST:
             retState= HandlePlotChange.reducer(state,action);
             break;
+
+
         case CHANGE_ACTIVE_PLOT_VIEW:
             retState= changeActivePlotView(state,action);
             break;
@@ -381,7 +432,9 @@ function reducer(state=initState(), action={}) {
             retState= changeExpandedMode(state,action);
             break;
         case EXPANDED_AUTO_PLAY:
-            retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
+            if (state.singleAutoPlay!==action.payload.autoPlayOn) {
+                retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
+            }
             break;
         default:
             break;

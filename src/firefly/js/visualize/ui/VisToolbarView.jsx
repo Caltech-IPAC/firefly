@@ -4,10 +4,13 @@
 
 import React, {PropTypes} from 'react';
 import {getActivePlotView,
+    primePlot,
     getDrawLayerByType,
     getPlotViewById,
     isDrawLayerAttached,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
+import {dispatchRotate, ActionScope} from '../ImagePlotCntlr.js';
+import {RotateType} from '../PlotChangeTask.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
@@ -72,6 +75,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
     };
 
     var pv= getActivePlotView(visRoot);
+    var plot= primePlot(pv);
     var mi= pv ? pv.menuItemKeys : defMenuItemKeys;
 
     var enabled= pv ? true : false;
@@ -112,13 +116,13 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
             <ToolbarHorizontalSeparator/>
 
             <SimpleLayerOnOffButton plotView={pv}
-                                    dlAry={dlAry}
-                                    typeId={'TODO'}
+                                    isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
                                     tip='Rotate this image so that North is up'
                                     iconOn={ROTATE_NORTH_ON}
                                     iconOff={ROTATE_NORTH_OFF}
                                     visible={mi.rotateNorth}
-                                    todo={true} />
+                                    onClick={doRotateNorth}
+                                    />
 
             <ToolbarButton icon={ROTATE}
                            tip='Rotate the image to any angle'
@@ -239,6 +243,10 @@ const tipStyle= {
     top : 3,
     left : 15
 };
+
+function doRotateNorth(pv,rotate) {
+    dispatchRotate(pv.plotId, rotate?RotateType.NORTH:RotateType.UNROTATE ,-1, ActionScope.GROUP);
+}
 
 function showToolTip(toolTip) {
     return <div style={tipStyle}>{toolTip}</div>;
