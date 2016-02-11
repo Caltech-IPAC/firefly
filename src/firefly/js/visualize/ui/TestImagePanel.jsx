@@ -13,7 +13,7 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot,dispatchZoom} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot,dispatchPlotImage} from '../ImagePlotCntlr.js';
 import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
@@ -59,16 +59,30 @@ function showResults(success, request) {
     //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
     //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
     var wpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
-    var wpr2= WebPlotRequest.makeWiseRequest(wp,'3a','4',.4 );
+    var wpr2= WebPlotRequest.makeWiseRequest(wp,'3a','2',.4 );
+    var wpr3= WebPlotRequest.makeWiseRequest(wp,'3a','3',.4 );
+    var wpr4= WebPlotRequest.makeWiseRequest(wp,'3a','4',.4 );
     //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
-    wpr1.setPlotGroupId('2massGroup');
-    wpr2.setPlotGroupId('2massGroup');
+    wpr1.setPlotGroupId('test-group');
+    wpr2.setPlotGroupId('test-group');
+    wpr3.setPlotGroupId('test-group');
+    wpr4.setPlotGroupId('test-group');
+
     wpr1.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialZoomLevel(parseFloat(request.zoom));
+    wpr3.setInitialZoomLevel(parseFloat(request.zoom));
+    wpr4.setInitialZoomLevel(parseFloat(request.zoom));
+
     wpr2.setInitialColorTable(4);
-    wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
-    ImagePlotCntlr.dispatchPlotImage('TestImage1', wpr1);
-    ImagePlotCntlr.dispatchPlotImage('TestImage2', wpr2);
+    //wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
+    dispatchPlotImage('TestImage1', wpr1);
+    dispatchPlotImage('TestImage2', wpr2);
+    dispatchPlotImage('TestImage3', wpr3);
+    dispatchPlotImage('TestImage4', wpr4);
+
+
+
+
     //====temp
 }
 
@@ -81,71 +95,8 @@ function resultsSuccess(request) {
 }
 
 
-function selectArea() {
-    //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
-    var plotView= PlotViewUtils.getActivePlotView(visRoot());
-    if (!plotView) return;
-
-    var dl= getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
-    if (!dl) {
-        DrawLayerCntlr.dispatchCreateDrawLayer(SelectArea.TYPE_ID);
-    }
 
 
-    if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        dispatchAttachLayerToPlot(SelectArea.TYPE_ID,plotView.plotId,true);
-    }
-    else {
-        dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,plotView.plotId,true);
-    }
-
-}
-
-function layerPopup() {
-    showDrawingLayerPopup();
-}
-
-
-function distanceTool() {
-    //var s= AppDataCntlr.getCommandState('SelectAreaCmd');
-    var plotView= PlotViewUtils.getActivePlotView(visRoot());
-    if (!plotView) return;
-
-    var dl= PlotViewUtils.getDrawLayerByType(getDlAry(), DistanceTool.TYPE_ID);
-    if (!dl) {
-        DrawLayerCntlr.dispatchCreateDrawLayer(DistanceTool.TYPE_ID);
-    }
-
-    if (!PlotViewUtils.isDrawLayerAttached(dl,plotView.plotId)) {
-        dispatchAttachLayerToPlot(DistanceTool.TYPE_ID,plotView.plotId,true);
-    }
-    else {
-        dispatchDetachLayerFromPlot(DistanceTool.TYPE_ID,plotView.plotId,true);
-    }
-
-}
-
-function zoom(zType) {
-    console.log(zType);
-    switch (zType) {
-        case 'up':
-            dispatchZoom('TestImage1',UserZoomTypes.UP);
-            break;
-        case 'down':
-            dispatchZoom('TestImage1',UserZoomTypes.DOWN);
-            break;
-        case 'fit':
-            dispatchZoom('TestImage1',UserZoomTypes.FIT);
-            break;
-        case 'fill':
-            dispatchZoom('TestImage1',UserZoomTypes.FILL);
-            break;
-        case '1x':
-            dispatchZoom('TestImage1',UserZoomTypes.ONE);
-            break;
-
-    }
-}
 
 function showExDialog() {
     console.log('showing example dialog');
@@ -178,6 +129,12 @@ function TestImagePanelView({selectOn,distOn}) {
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage2'/>
+            </div>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
+                <ImageViewer plotId='TestImage3'/>
+            </div>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
+                <ImageViewer plotId='TestImage4'/>
             </div>
         </div>
     );

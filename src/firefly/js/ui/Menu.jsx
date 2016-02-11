@@ -5,7 +5,7 @@
 import React from 'react';
 import './Menu.css';
 import {flux} from '../Firefly.js';
-import appDataCntlr from '../core/AppDataCntlr.js';
+import appDataCntlr, {dispatchUpdateLayout} from '../core/AppDataCntlr.js';
 
 
 
@@ -13,7 +13,7 @@ import appDataCntlr from '../core/AppDataCntlr.js';
 function handleAction (menuItem) {
 
     // set whether search menu should be shown
-    appDataCntlr.dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
+    dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
 
     flux.process({type:menuItem.action});
 }

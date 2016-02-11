@@ -39,7 +39,7 @@ export class ImageViewerLayout extends Component {
         //console.log(`Mount: UpdateView Size: width=${width}, height=${height} ${plotId}`);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv && pv.plotViewCtx.zoomLockingEnabled) {
-            dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true);
+            dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,false, true);
         }
     }
 
@@ -49,9 +49,11 @@ export class ImageViewerLayout extends Component {
         if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
             //console.log(`UpdateView Size: prevWidth=${prevWidth}, prevHeight=${prevHeight}, width=${width}, height=${height} ${pv.plotId}`);
             dispatchUpdateViewSize(pv.plotId,width,height);
+            //console.log('dispatchUpdateViewSize');
             if (pv && pv.plotViewCtx.zoomLockingEnabled) {
                 if (prevExternalWidth!==externalWidth || prevExternalHeight!==externalHeight) {
-                    dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true);
+                    //console.log('dispatchZoom');
+                    dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true,true);
                 }
             }
             this.previousDim= makePrevDim(this.props);
