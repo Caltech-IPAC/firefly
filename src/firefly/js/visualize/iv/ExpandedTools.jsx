@@ -83,40 +83,60 @@ const s= {
     paddingLeft: 10
 };
 
-const plotTitleStyle= {
+const singlePlotTitleStyle= {
     display: 'inline-block',
     paddingLeft: 10,
     position: 'relative',
     top: -3
 };
 
-export function ExpandedTools({allPlots}) {
-    var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= allPlots;
+const gridPlotTitleStyle= {
+    display: 'inline-block',
+    paddingLeft: 10,
+    position: 'relative',
+    top: -3,
+    lineHeight: '2em',
+    fontSize: '10pt',
+    fontWeight: 'bold',
+    verticalAlign: 'middle'
+};
+
+
+export function ExpandedTools({visRoot}) {
+    var {expandedMode,plotViewAry,activePlotId, singleAutoPlay}= visRoot;
     var single= expandedMode===ExpandType.SINGLE;
-    var plot= primePlot(allPlots);
+    var plot= primePlot(visRoot);
+
     var plotTitle;
     if (plot) {
         var {title, zoomFactor, plotState}=plot;
-        plotTitle= (
-            <PlotTitle brief={false} titleStr={title} inline={false}
-                       titleType={TitleType.EXPANDED}
-                       zoomFactor={zoomFactor}
-                       plotState={plotState} plotId={plot.plotId}
-            />
-        );
-
+        if (single) {
+            plotTitle= (
+                <div style={singlePlotTitleStyle}>
+                    <PlotTitle brief={false} titleStr={title} inline={false}
+                               titleType={TitleType.EXPANDED}
+                               zoomFactor={zoomFactor}
+                               plotState={plotState} plotId={plot.plotId}
+                    />
+                </div>
+            );
+        }
+        else {
+            plotTitle= (<div style={gridPlotTitleStyle}>Tiled View</div>);
+        }
     }
     return (
         <div style={{width:'100%', height:70}} className='disable-select'>
             <CloseButton style={s} onClick={() => console.log('ExpandedTools: back button')}/>
-            <div style={plotTitleStyle}>{single ? plotTitle : 'Tiled View'} </div>
+            {plotTitle}
             <div style={s}></div>
             <div style={{display: 'inline-block', float:'right'}}>
-                <WhichView  allPlots={allPlots}/>
+                <WhichView  visRoot={visRoot}/>
                 {createOptions(expandedMode,singleAutoPlay)}
-                {single ? <PagingControl plotViewAry={plotViewAry}
-                                         activePlotId={activePlotId}/>: false }
-            </div>`
+                <PagingControl plotViewAry={plotViewAry}
+                                         activePlotId={activePlotId}
+                                         expandedMode={expandedMode} />
+            </div>
         </div>
     );
 }
@@ -125,13 +145,13 @@ export function ExpandedTools({allPlots}) {
 //{makeInlineTitle(visRoot,pv)}
 
 ExpandedTools.propTypes= {
-    allPlots : PropTypes.object.isRequired
+    visRoot : PropTypes.object.isRequired
 };
 
 
 
 
-function WhichView({allPlots}) {
+function WhichView({visRoot}) {
     return (
         <div style={{display: 'inline-block', verticalAlign:'top'}}>
             <ToolbarButton icon={ONE} tip={'Show single image at full size'}
@@ -143,13 +163,13 @@ function WhichView({allPlots}) {
                            onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                            enabled={true} visible={true} horizontal={true}
-                           onClick={() =>showExpandedOptionsPopup(allPlots.plotViewAry) }/>
+                           onClick={() =>showExpandedOptionsPopup(visRoot.plotViewAry) }/>
         </div>
     );
 }
 
 WhichView.propTypes= {
-    allPlots : PropTypes.object.isRequired
+    visRoot : PropTypes.object.isRequired
 };
 
 
@@ -175,13 +195,13 @@ function pTitle(begin,pv) {
 
 
 
-function PagingControl({plotViewAry, activePlotId}) {
+function PagingControl({plotViewAry, activePlotId, expandedMode}) {
 
 
 
     const pvAry= expandedPlotViewAry(plotViewAry,activePlotId);
 
-    if (pvAry.length<2) return <div style={controlStyle}></div>;
+    if (pvAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
 
     const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
     const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
@@ -250,6 +270,6 @@ function PagingControl({plotViewAry, activePlotId}) {
 
 PagingControl.propTypes= {
     plotViewAry : PropTypes.array.isRequired,
-    activePlotId: PropTypes.string.isRequired
-    //allPlots : PropTypes.object.isRequired
+    activePlotId: PropTypes.string.isRequired,
+    expandedMode: PropTypes.object.isRequired
 };

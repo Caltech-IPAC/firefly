@@ -21,41 +21,13 @@ const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
 
 const zoomMax= levels[levels.length-1];
 
-export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE']);
+export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL']);
 const ZOOM_WAIT_MS= 2000; // 2 seconds
 
 var zoomTimers= []; // todo: should I use a map? should it be in the redux store?
 
 //======================================== Exported Functions =============================
 //======================================== Exported Functions =============================
-
-
-/**
- *
- * @param {string} plotId
- * @param {UserZoomTypes} userZoomType
- * @param {boolean} maxCheck
- * @param {boolean} zoomLockingEnabled
- * @param {boolean} forceDelay
- * @param {ActionScope} actionScope
- */
-export function doDispatchZoom(plotId, userZoomType, maxCheck= true,
-                               zoomLockingEnabled=false, forceDelay=false, actionScope=ActionScope.GROUP ) {
-
-    flux.process({
-        type: ImagePlotCntlr.ZOOM_IMAGE,
-        payload :{
-            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay
-        }});
-}
-
-export function doDispatchZoomLocking(plotId, zoomLockingEnabled, zoomLockingType) {
-    flux.process({
-        type: ImagePlotCntlr.ZOOM_LOCKING,
-        payload :{
-            plotId, zoomLockingEnabled, zoomLockingType
-        }});
-}
 
 
 
@@ -66,7 +38,7 @@ export function doDispatchZoomLocking(plotId, zoomLockingEnabled, zoomLockingTyp
  */
 export function makeZoomAction(rawAction) {
     return (dispatcher) => {
-        var {plotId,userZoomType,zoomLockingEnabled, forceDelay}= rawAction.payload;
+        var {plotId,userZoomType,zoomLockingEnabled, forceDelay, actionScope}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);
         if (!pv) return;
 
@@ -80,6 +52,12 @@ export function makeZoomAction(rawAction) {
             level= getNextZoomLevel(plot.zoomFactor,userZoomType);
             isFullScreen= false;
             useDelay= true; //todo
+            continueZoom= true;
+        }
+        else if (userZoomType===UserZoomTypes.LEVEL) {
+            level= rawAction.payload.level || 1;
+            isFullScreen= false;
+            useDelay= false;
             continueZoom= true;
         }
         else {
@@ -108,7 +86,9 @@ export function makeZoomAction(rawAction) {
         if (continueZoom) {
             doZoom(dispatcher,plotId,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
             var matchFunc= makeZoomLevelMatcher(dispatcher, pv,level,isFullScreen,zoomLockingEnabled,userZoomType,useDelay);
-            operateOnOthersInGroup(visRoot(),pv, matchFunc);
+            if (actionScope===ActionScope.GROUP) {
+                operateOnOthersInGroup(visRoot(),pv, matchFunc);
+            }
         }
         else {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel:level, error:'zoom parameters wrong'} } );

@@ -237,14 +237,14 @@ export class PlotState {
 
     getCubeCnt(band) { return this.get(band || this.firstBand()).getCubeCnt(); }
     getPrimaryCubeCnt() { return this.get(this.firstBand()).getCubeCnt(); }
-    setCubeCnt(cubeCnt, band) { this.get(band).setCubeCnt(cubeCnt); }
+    //setCubeCnt(cubeCnt, band) { this.get(band).setCubeCnt(cubeCnt); }
 
 
     getCubePlaneNumber(band) {
         return this.get(band || this.firstBand()).getCubePlaneNumber();
     }
     getPrimaryCubePlaneNumber() { return this.get(this.firstBand()).getCubePlaneNumber(); }
-    setCubePlaneNumber(cubeIdx, band) { this.get(band).setCubePlaneNumber(cubeIdx); }
+    //setCubePlaneNumber(cubeIdx, band) { this.get(band).setCubePlaneNumber(cubeIdx); }
 
 
     /**
@@ -295,23 +295,23 @@ export class PlotState {
      * @return {string}
      */
     getWorkingFitsFileStr(band) { return band ? this.get(band).getWorkingFitsFileStr() : null; }
-    setWorkingFitsFileStr(fileStr, band) { this.get(band).setWorkingFitsFileStr(fileStr); }
+    //setWorkingFitsFileStr(fileStr, band) { this.get(band).setWorkingFitsFileStr(fileStr); }
 
     /**
      * @return {string}
      */
     getOriginalFitsFileStr(band) { return band ? this.get(band).getOriginalFitsFileStr() : null; }
-    setOriginalFitsFileStr(fileStr, band) { this.get(band).setOriginalFitsFileStr(fileStr); }
+    //setOriginalFitsFileStr(fileStr, band) { this.get(band).setOriginalFitsFileStr(fileStr); }
 
 
     getUploadFileName(band) { return band ? this.get(band).getUploadedFileName() : null; }
     setUploadFileName(fileStr, band) { this.get(band).setUploadedFileName(fileStr); }
 
-    setImageIdx(idx, band) { this.get(band).setImageIdx(idx); }
+    //setImageIdx(idx, band) { this.get(band).setImageIdx(idx); }
     getImageIdx(band) { return this.get(band).getImageIdx(); }
 
 
-    setOriginalImageIdx(idx, band) { this.get(band).setOriginalImageIdx(idx); }
+    //setOriginalImageIdx(idx, band) { this.get(band).setOriginalImageIdx(idx); }
     getOriginalImageIdx(band) { return this.get(band).getOriginalImageIdx(); }
 
     /**
@@ -413,12 +413,9 @@ export class PlotState {
     //}
 
     equals(obj) {
-        return (obj instanceof PlotState) ? this.toString()===obj.toString() : false;
+        return (obj instanceof PlotState) ? this.toJson()===obj.toJson() : false;
     }
 
-// =====================================================================
-// -------------------- private Methods --------------------------------
-// =====================================================================
 
     /**
      * @param {object} band
