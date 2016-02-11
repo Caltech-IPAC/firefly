@@ -28,10 +28,9 @@ var typeInject= {
 
 
 var makePrecisionStr= function(value,precision) {
-    if (value !== undefined && value!==null && precision) {
-        return sprintf('%.'+precision+'f',value);
-    }
-    return (value || '')+ '';
+    if (value !== undefined && value!==null) {
+        return (precision) ? sprintf('%.'+precision+'f',value) : value;
+    } else return '';
 };
 
 var makeErrorMessage= function(description,min,max,precision) {
@@ -137,6 +136,28 @@ export const isHexColorStr = function(description, valStr) {
     }
 
 };
+
+
+/*---------------------------- validator function used by InputField to validate a value -----------------------------*/
+/*---- these factory functions creates a validation function that takes a value and return {valid,message} -----------*/
+export const IntValidator = function(min,max,description) {
+    return (val) => intRange(min, max, description, val);
+};
+
+export const FloatValidator = function(min,max,description) {
+    return (val) => floatRange(min, max, description, val);
+};
+
+export const UrlValidator = function(description) {
+    return (val) => validateUrl(description, val);
+};
+
+export const EmailValidator = function(description) {
+    return (val) => validateEmail(description, val);
+};
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+
 
 var Validate = {
     validateEmail, validateUrl, intRange, floatRange, isFloat, isInt
