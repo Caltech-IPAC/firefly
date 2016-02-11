@@ -10,7 +10,7 @@ import {logError} from '../util/WebUtil.js';
 import {PlotAttribute} from './WebPlot.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
 import {getPlotViewById,primePlot,getPlotStateAry, operateOnOthersInGroup} from './PlotViewUtil.js';
-import PlotServicesJson from '../rpc/PlotServicesJson.js';
+import {callSetZoomLevel} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
 
@@ -181,7 +181,7 @@ function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     var pv= getPlotViewById(visRoot(),plotId);
-    PlotServicesJson.setZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
+    callSetZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.ZOOM_IMAGE_FAIL, payload: {plotId, zoomLevel, error:e} } );

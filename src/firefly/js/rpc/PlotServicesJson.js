@@ -54,7 +54,7 @@ const getWebPlot3Color= function(redRequest, greenRequest, blueRequest) {
  * @param {WebPlotRequest} request
  * @return {Promise}
  */
-const getWebPlot= function(request) {
+export const callGetWebPlot= function(request) {
     var paramList = [{name: ServerParams.NOBAND_REQUEST, value:request.toString()}];
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
     return doService(doJsonP(), ServerParams.CREATE_PLOT, paramList);
@@ -67,7 +67,7 @@ const getWebPlot= function(request) {
  * @param north
  * @param newZoomLevel
  */
-function rotateNorth(stateAry, north, newZoomLevel) {
+export function callRotateNorth(stateAry, north, newZoomLevel) {
     var params =  makeParamsWithStateAry(stateAry,[
                    {name: ServerParams.NORTH, value: north + ''},
                    {name: ServerParams.ZOOM, value: newZoomLevel + ''},
@@ -82,7 +82,7 @@ function rotateNorth(stateAry, north, newZoomLevel) {
  * @param angle
  * @param newZoomLevel
  */
-function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
+export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
     var params = makeParamsWithStateAry(stateAry,[
                        {name: ServerParams.ROTATE, value: rotate + ''},
                        {name: ServerParams.ANGLE, value: angle + ''},
@@ -92,6 +92,17 @@ function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
 }
 
 
+export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4) {
+    var params= {
+        [ServerParams.STATE]: JSON.stringify(PlotState.convertToJSON(state)),
+        [ServerParams.JSON_DEEP]:'true',
+        [ServerParams.PT1]: ipt1.toString(),
+        [ServerParams.PT2]: ipt2.toString(),
+        [ServerParams.PT3]: ipt3.toString(),
+        [ServerParams.PT4]: ipt4.toString()
+    };
+    return doService(doJsonP(), ServerParams.STAT, params);
+}
 
 
 /**
@@ -100,7 +111,7 @@ function rotateToAngle(stateAry, rotate, angle, newZoomLevel) {
  * @param {number} level
  * @param {boolean} isFullScreen hint, will only make on file
  */
-function setZoomLevel(stateAry, level, isFullScreen) {
+export function callSetZoomLevel(stateAry, level, isFullScreen) {
     var params= makeParamsWithStateAry(stateAry,[
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
@@ -109,7 +120,7 @@ function setZoomLevel(stateAry, level, isFullScreen) {
 }
 
 
-function changeColor(state, colorTableId) {
+export function callChangeColor(state, colorTableId) {
     var params= [
         {name:ServerParams.STATE, value: JSON.stringify(PlotState.convertToJSON(state))},
         {name:ServerParams.JSON_DEEP,value:'true'},
@@ -118,7 +129,7 @@ function changeColor(state, colorTableId) {
     return doService(doJsonP(), ServerParams.CHANGE_COLOR, params);
 }
 
-function recomputeStretch(state, stretchDataAry) {
+export function callRecomputeStretch(state, stretchDataAry) {
     var params= {
         [ServerParams.STATE]: JSON.stringify(PlotState.convertToJSON(state)),
         [ServerParams.JSON_DEEP]: true
@@ -176,6 +187,5 @@ function makeStateParamAry(startAry) {
 
 
 
-var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlot, setZoomLevel,
-     recomputeStretch, changeColor, getWebPlotGroup, getOneFileGroup, rotateToAngle, rotateNorth};
+export var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlotGroup, getOneFileGroup};
 export default PlotServicesJson;

@@ -7,7 +7,11 @@ import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
-import PlotServicesJson from '../rpc/PlotServicesJson.js';
+import {
+    callChangeColor,
+    callRotateNorth,
+    callRotateToAngle,
+    callRecomputeStretch} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import RangeValues from './RangeValues.js';
 import {isPlotNorth} from './VisUtil.js';
@@ -99,7 +103,7 @@ function doStretch(dispatcher,plotId,rangeValues) {
             bandVisible: true
         };
     } );
-    PlotServicesJson.recomputeStretch(plot.plotState,stretchDataAry)
+    callRecomputeStretch(plot.plotState,stretchDataAry)
         .then( (wpResult) => processStretchResult(dispatcher,plotId,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, rangeValues, error:e} } );
@@ -112,7 +116,7 @@ function doStretch(dispatcher,plotId,rangeValues) {
 function doColorChange(dispatcher,plotId,cbarId) {
 
     var plot= primePlot(visRoot(),plotId);
-    PlotServicesJson.changeColor(plot.plotState,cbarId)
+    callChangeColor(plot.plotState,cbarId)
         .then( (wpResult) => processColorResult(dispatcher,plotId,cbarId,wpResult) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
@@ -128,13 +132,13 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
 
     switch (rotateType) {
         case RotateType.NORTH:
-            p= PlotServicesJson.rotateNorth(getPlotStateAry(pv),true,newZoomLevel);
+            p= callRotateNorth(getPlotStateAry(pv),true,newZoomLevel);
             break;
         case RotateType.ANGLE:
-            p= PlotServicesJson.rotateToAngle(getPlotStateAry(pv), true, angle, newZoomLevel);
+            p= callRotateToAngle(getPlotStateAry(pv), true, angle, newZoomLevel);
             break;
         case RotateType.UNROTATE:
-            p= PlotServicesJson.rotateToAngle(getPlotStateAry(pv), false, NaN, 0);
+            p= callRotateToAngle(getPlotStateAry(pv), false, NaN, 0);
             break;
     }
 
