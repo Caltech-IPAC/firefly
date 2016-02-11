@@ -34,7 +34,7 @@ export function VisHeaderView({visRoot,currMouseState}) {
         <div>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout plotView={mousePv} mouseState={currMouseState} />
+                    <MouseReadout visRoot={visRoot} plotView={mousePv} mouseState={currMouseState} />
                 </div>
             </div>
 

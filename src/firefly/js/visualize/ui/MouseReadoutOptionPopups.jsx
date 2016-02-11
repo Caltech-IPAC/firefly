@@ -28,7 +28,7 @@ const coordOptions= [
 	{label: 'EQ B1950', value: 'eqb1950'},
 	{label: 'Fits Image Pixel', value: 'fitsIP'}
 ];
-function getDialogBuilder(fieldKey, radioValue) {
+function getDialogBuilder(fieldKey, visRoot) {
 
 
 	var groupKey;
@@ -45,7 +45,7 @@ function getDialogBuilder(fieldKey, radioValue) {
 	var popup = (
 
 		<PopupPanel title={'Choose Option'}  >
-			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}/>
+			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey} visRoot={visRoot}/>
 		</PopupPanel>
 
 	);
@@ -56,9 +56,9 @@ function getDialogBuilder(fieldKey, radioValue) {
 
 }
 
-export function showMouseReadoutOptionDialog(fieldKey, radioValue) {
+export function showMouseReadoutOptionDialog(fieldKey, visRoot) {
 
-	getDialogBuilder(fieldKey, radioValue);
+	getDialogBuilder(fieldKey, visRoot);
 	AppDataCntlr.showDialog(fieldKey);
 }
 
@@ -180,7 +180,7 @@ class MouseReadoutOptionDialog extends React.Component {
 }
 
 // ------------ React component
-function CoordinateOptionDialogForm({ fields, groupKey,fieldKey,radioValue}) {
+function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 
 
 	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:75};
@@ -189,9 +189,6 @@ function CoordinateOptionDialogForm({ fields, groupKey,fieldKey,radioValue}) {
 
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
 
-	//does not work??
-	//var rvalue=fields.readout1.value;
-	//var rlabel = fields.readout1.label;
 
 	this.radioValue = radioValue;
 
@@ -212,7 +209,7 @@ function CoordinateOptionDialogForm({ fields, groupKey,fieldKey,radioValue}) {
 
 }
 CoordinateOptionDialogForm.propTypes= {
-    fields : React.PropTypes.object.isRequired,
+   // visRoot : React.PropTypes.object.isRequired,
 	groupKey:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string,
 	radioValue:React.PropTypes.string.isRequired
@@ -230,6 +227,7 @@ function renderReadout1RadioGroup(rightColumn,fieldKey, radioValue ){
                                    }}
 				options={ coordOptions }
 				alignment={'vertical'}
+
 				fieldKey={fieldKey}
 			/>
 		</div>
