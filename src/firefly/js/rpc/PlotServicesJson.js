@@ -9,7 +9,7 @@
 import ServerParams from '../data/ServerParams.js';
 import {doService} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
-import PlotState from '../visualize/PlotState.js';
+import {PlotState} from '../visualize/PlotState.js';
 
 
 const doJsonP= function() {
@@ -94,7 +94,7 @@ export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
 
 export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4) {
     var params= {
-        [ServerParams.STATE]: JSON.stringify(PlotState.convertToJSON(state)),
+        [ServerParams.STATE]: state.toJson(),
         [ServerParams.JSON_DEEP]:'true',
         [ServerParams.PT1]: ipt1.toString(),
         [ServerParams.PT2]: ipt2.toString(),
@@ -122,7 +122,7 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
 
 export function callChangeColor(state, colorTableId) {
     var params= [
-        {name:ServerParams.STATE, value: JSON.stringify(PlotState.convertToJSON(state))},
+        {name:ServerParams.STATE, value: state.toJson()},
         {name:ServerParams.JSON_DEEP,value:'true'},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
@@ -131,7 +131,7 @@ export function callChangeColor(state, colorTableId) {
 
 export function callRecomputeStretch(state, stretchDataAry) {
     var params= {
-        [ServerParams.STATE]: JSON.stringify(PlotState.convertToJSON(state)),
+        [ServerParams.STATE]: state.toJson(),
         [ServerParams.JSON_DEEP]: true
     };
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
@@ -180,7 +180,7 @@ function makeParamsWithStateAry(stateAry, otherParams=[]) {
  */
 function makeStateParamAry(startAry) {
     return startAry.map( (s,idx) => {
-        return {name:'state'+idx, value: JSON.stringify(PlotState.convertToJSON(s)) };
+        return {name:'state'+idx, value: s.toJson() };
     } );
 }
 
