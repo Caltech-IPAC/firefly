@@ -4,7 +4,12 @@
 
 import React, {PropTypes} from 'react';
 import {primePlot} from '../PlotViewUtil.js';
+import {CysConverter} from '../CsysConverter.js';
+import {PlotAttribute} from '../WebPlot.js';
+import {makeImagePt} from '../Point.js';
+import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {logError} from '../../util/WebUtil.js';
 
 
 import {makeExtActivateData} from '../PlotCmdExtension.js';
@@ -24,8 +29,41 @@ function crop(pv) {
     console.log('todo- crop:' + primePlot(pv).title);
 }
 
+
+
+//todo move the statistics constants to where they are needed
+const Metrics= {MAX:'MAX', MIN:'MIN', CENTROID:'CENTROID', FW_CENTROID:'FW_CENTROID', MEAN:'MEAN',
+    STDEV:'STDEV', INTEGRATED_FLUX:'INTEGRATED_FLUX', NUM_PIXELS:'NUM_PIXELS', PIXEL_AREA:'PIXEL_AREA'};
+
+
+
+//TODO: call the dialog with the retrieved status
+/**
+ *
+ * @param pv
+ */
 function stats(pv) {
-    console.log('todo- stats:' + primePlot(pv).title);
+    console.log('Stats getting: ' + primePlot(pv).title);
+    console.log(Metrics);
+    var p= primePlot(pv);
+    var cc= CysConverter.make(p);
+    var sel= p.attributes[PlotAttribute.SELECTION];
+
+    var ip0=  cc.getImageCoords(sel.pt0);
+    var ip2=  cc.getImageCoords(sel.pt1);
+    var ip1=  makeImagePt(ip2.x,ip0.y);
+    var ip3=  makeImagePt(ip1.x,ip2.y);
+
+
+    callGetAreaStatistics(p.plotState, ip0,ip1,ip2,ip3)
+        .then( (wpResult) => {
+            console.log(wpResult);
+            console.log('TODO: Stats: show the dialog here and add overlays: ' + primePlot(pv).title);
+        })
+        .catch ( (e) => {
+            logError(`error, stat , plotId: ${p.plotId}`, e);
+        });
+
 }
 
 function select(pv,dlAry) {
