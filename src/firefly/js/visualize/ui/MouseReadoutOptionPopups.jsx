@@ -28,7 +28,7 @@ const coordOptions= [
 	{label: 'EQ B1950', value: 'eqb1950'},
 	{label: 'Fits Image Pixel', value: 'fitsIP'}
 ];
-function getDialogBuilder(fieldKey, visRoot) {
+function getDialogBuilder(fieldKey, radioValue) {
 
 
 	var groupKey;
@@ -45,7 +45,7 @@ function getDialogBuilder(fieldKey, visRoot) {
 	var popup = (
 
 		<PopupPanel title={'Choose Option'}  >
-			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey} visRoot={visRoot}/>
+			<MouseReadoutOptionDialog groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}/>
 		</PopupPanel>
 
 	);
@@ -56,9 +56,9 @@ function getDialogBuilder(fieldKey, visRoot) {
 
 }
 
-export function showMouseReadoutOptionDialog(fieldKey, visRoot) {
+export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 
-	getDialogBuilder(fieldKey, visRoot);
+	getDialogBuilder(fieldKey, radioValue);
 	AppDataCntlr.showDialog(fieldKey);
 }
 
@@ -77,7 +77,7 @@ export function getCoordinateMap(coordinateStr){
 	switch (coordinate) {
 		case 'EQ J2000 HMS':
 			coordinate = CoordinateSys.EQ_J2000;
-			type = 'hhmmss';
+			type = 'hms';
 			break;
 		case 'EQ J2000 decimal':
 			coordinate = CoordinateSys.EQ_J2000;
@@ -105,15 +105,14 @@ function doDispatch(form, request, groupKey, fieldKey){
 		var target=request.target;
 
 		console.log(target);
-		var result=target.value;
-		var{coordinate,type} =getCoordinateMap(result);
-		console.log(result);
+		var newRadioValue=target.value;
+		//var{coordinate,type} =getCoordinateMap(result);
+		console.log(newRadioValue);
 		//TODO dispatch action here
 		switch (fieldKey){
 			case 'readout1':
 
-				dispatchChangeMouseReadoutReadout1(form.radioValue, coordinate, type);
-
+				dispatchChangeMouseReadoutReadout1(	newRadioValue);
 				break;
 
 		}
@@ -121,7 +120,7 @@ function doDispatch(form, request, groupKey, fieldKey){
 	}
 
 	AppDataCntlr.hideDialog(fieldKey);
-	return result;
+
 }
 
 class MouseReadoutOptionDialog extends React.Component {

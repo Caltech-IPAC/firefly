@@ -109,34 +109,41 @@ function showReadout(plot, mouseState, readoutValue){
 
 	var cc= CysConverter.make(plot);
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
+	if (!wpt) return;
+
 	var spt= mouseState.screenPt;
 
     if (!spt) return '';
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
-		//console.log(spt+  ' outside the screen');
+
 		return '';
 	}
 	var result;
 	var lon = wpt.getLon();
 	var lat = wpt.getLat();
 
+
 	if (coordinate){
 
 		switch (coordinate) {
 			case CoordinateSys.EQ_J2000:
-				if (type === 'hhmmss') {
+				if (type === 'hms') {
 
 				var hmsRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
 				var hmsDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
 				result = ' ' + hmsRa + ' ' + hmsDec;
 		        }
 				else {
-					//TODO
+					var dmsRa = CoordUtil.convertLonToString('dms', wpt.getCoordSys());
+					var dmsDec = CoordUtil.convertLatToString('dms', wpt.getCoordSys());
+					result = ' ' + dmsRa + ' ' +dmsDec;
 				}
 				break;
 			case CoordinateSys.GALACTIC || CoordinateSys.SUPERGALACTIC:
-				result=  ' '+lon + ' '+ lat;
+				var lonRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
+				var latDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
+				result=  ' '+lonRa + ' '+ latDec;
 				break;
 			case CoordinateSys.PIXEL:
 				//result = mouseState.pixelX + ' ' +  mouseState.pixelY;

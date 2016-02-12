@@ -364,9 +364,9 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
 
-export function dispatchChangeMouseReadoutReadout1(radioValue, coordinate, type) {
+export function dispatchChangeMouseReadoutReadout1( newRadioValue) {
 
-    flux.process({type: CHANGE_MOUSE_READOUT_READOUT1, payload: {radioValue, coordinate, type}});
+    flux.process({type: CHANGE_MOUSE_READOUT_READOUT1, payload: {newRadioValue }});
 }
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
@@ -487,13 +487,13 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 
-function changeMouseReadoutReadout1(state, action){
-    //TODO
+function changeMouseReadoutReadout1(state, action) {
+
     var payload = action.payload;
-    var radioValue=payload.radioValue;
-    var newRadioValue = payload.coordinate + ' ' + payload.type;
-    if (radioValue===newRadioValue) return state;
-    return Object.assign({}, state, {radioValue:newRadioValue});
+    var newRadioValue = payload.newRadioValue;
+    var oldRadioValue = state.mouseReadout1;
+    if (newRadioValue ===oldRadioValue) return state;
+    return Object.assign({}, state, {mouseReadout1:newRadioValue});
 
 }
 
