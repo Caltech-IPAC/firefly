@@ -97,23 +97,25 @@ var XYPlotOptions = React.createClass({
 
     render() {
         const { colValStats, groupKey }= this.props;
+        const fields = FieldGroupUtils.getGroupFields(groupKey);
         return (
             <div style={{padding:'5px'}}>
                 <br/>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
-                                tooltip: 'Please select a column or expression for X axis',
-                                label : 'X:'
-                            }}
+                            value: FieldGroupUtils.getFldValue(fields, 'x.columnOrExpr'),
+                            tooltip: 'Please select a column or expression for X axis',
+                            label: 'X:'
+                        }}
                         options={
-                                colValStats.map((colVal) => {
-                                    return {
-                                        label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                        value: colVal.name
-                                    };
-                                })
-                            }
+                            colValStats.map((colVal) => {
+                                return {
+                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
+                                    value: colVal.name
+                                };
+                            })
+                        }
                         multiple={false}
                         fieldKey='x.columnOrExpr'
                         groupKey={groupKey}
@@ -122,7 +124,7 @@ var XYPlotOptions = React.createClass({
                     <CollapsiblePanel  header='X Label/Unit/Options'>
                         <ValidationField
                             initialState= {{
-                                value: '',
+                                value: FieldGroupUtils.getFldValue(fields, 'x.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis label',
                                 label : 'Label:'
@@ -132,7 +134,7 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
-                                value: '',
+                                value: FieldGroupUtils.getFldValue(fields, 'x.unit'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'X axis unit',
                                 label : 'Unit:'
@@ -144,7 +146,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: '_none_',
+                                value: FieldGroupUtils.getFldValue(fields, 'x.options','_none_'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
                             }}
@@ -162,17 +164,18 @@ var XYPlotOptions = React.createClass({
 
                     <ListBoxInputField
                         initialState= {{
-                                tooltip: 'Please select a column or expression for Y axis',
-                                label : 'Y:'
-                            }}
+                            tooltip: 'Please select a column or expression for Y axis',
+                            label : 'Y:',
+                            value: FieldGroupUtils.getFldValue(fields, 'y.columnOrExpr')
+                        }}
                         options={
-                                colValStats.map((colVal) => {
-                                    return {
-                                        label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                        value: colVal.name
-                                    };
-                                })
-                            }
+                            colValStats.map((colVal) => {
+                                return {
+                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
+                                    value: colVal.name
+                                };
+                            })
+                        }
                         multiple={false}
                         fieldKey='y.columnOrExpr'
                         groupKey={groupKey}
@@ -181,7 +184,7 @@ var XYPlotOptions = React.createClass({
                     <CollapsiblePanel  header='Y Label/Unit/Options'>
                         <ValidationField
                             initialState= {{
-                                value: '',
+                                value: FieldGroupUtils.getFldValue(fields, 'y.label'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis label',
                                 label : 'Label:'
@@ -191,7 +194,7 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}/>
                         <ValidationField
                             initialState= {{
-                                value: '',
+                                value: FieldGroupUtils.getFldValue(fields, 'y.init'),
                                 validator() { return {valid: true,message: ''}; },
                                 tooltip: 'Y axis unit',
                                 label : 'Unit:'
@@ -203,7 +206,7 @@ var XYPlotOptions = React.createClass({
                         <br/>
                         <CheckboxGroupInputField
                             initialState= {{
-                                value: 'grid',
+                                value: FieldGroupUtils.getFldValue(fields, 'y.options', 'grid'),
                                 tooltip: 'Check if you would like to plot grid',
                                 label : 'Options:'
 
@@ -221,7 +224,7 @@ var XYPlotOptions = React.createClass({
                     </CollapsiblePanel>
                     <ValidationField style={{width:50}}
                         initialState= {{
-                            value: '',
+                            value: FieldGroupUtils.getFldValue(fields, 'xyRatio'),
                             validator: Validate.intRange.bind(null, 1, 10, 'X/Y ratio'),
                             tooltip: 'X/Y ratio',
                             label : 'X/Y ratio:'
@@ -233,6 +236,7 @@ var XYPlotOptions = React.createClass({
                     <RadioGroupInputField
                         alignment='horizontal'
                         initialState= {{
+                            value: FieldGroupUtils.getFldValue(fields, 'stretch'),
                             tooltip: 'Should the plot fit into the available space or fill the available width?',
                             label : 'Stretch to:'
                         }}

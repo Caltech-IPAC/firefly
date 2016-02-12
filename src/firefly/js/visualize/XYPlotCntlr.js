@@ -1,5 +1,6 @@
 import {flux} from '../Firefly.js';
 
+import update from 'react-addons-update';
 import {has, get, set} from 'lodash';
 
 
@@ -11,6 +12,9 @@ import {doFetchTable} from '../tables/TableUtil.js';
 const XYPLOT_DATA_KEY = 'xyplot';
 const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
 const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
+const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
+const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
+const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 
 /*
  Possible structure of store:
@@ -23,6 +27,8 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
          xyPlotParams: {
            title: string
            xyRatio: number
+           selection: {xMin, xMax, yMin, yMax} // currently selected rectangle
+           zoom: {xMin, xMax, yMin, yMax} // currently zoomed rectangle
            stretch: string (fit|fill)
            x: {
                 columnOrExpr
@@ -46,7 +52,7 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
  */
 
 /*
- * Get column histogram data
+ * Load xy plot data
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
@@ -55,7 +61,7 @@ const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
 };
 
 /*
- * Get xy plot data
+ * Update xy plot data
  * @param {boolean} isPlotDataReady - flags that xy plot data are available
  * @param {Number[][]} xyPlotData - an array of the number arrays with rowIdx, x, y, [error]
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
@@ -63,6 +69,18 @@ const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
  */
 const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
     flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest}});
+};
+
+const dispatchSetSelection = function(tblId, selection) {
+    flux.process({type: SET_SELECTION, payload: {tblId, selection}});
+};
+
+const dispatchSetZoom = function(tblId, selection) {
+    flux.process({type: SET_ZOOM, payload: {tblId, selection}});
+};
+
+const dispatchResetZoom = function(tblId) {
+    flux.process({type: RESET_ZOOM, payload: {tblId}});
 };
 
 
@@ -106,14 +124,14 @@ function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (LOAD_PLOT_DATA)  :
         {
-            let {xyPlotParams, searchRequest} = action.payload;
+            const {xyPlotParams, searchRequest} = action.payload;
             const newState = Object.assign({}, state);
             set(newState, searchRequest.tbl_id, {isPlotDataReady: false});
             return newState;
         }
         case (UPDATE_PLOT_DATA)  :
         {
-            let {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest} = action.payload;
+            const {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest} = action.payload;
             return stateWithNewData(searchRequest.tbl_id, state, {
                 isPlotDataReady,
                 xyPlotData,
@@ -121,6 +139,37 @@ function reducer(state=getInitState(), action={}) {
                 searchRequest
             });
         }
+        case (SET_SELECTION) :
+        {
+            const {tblId, selection} = action.payload;
+            return update(state, {[tblId] : {xyPlotParams: {selection: {$set: selection}}}});
+        }
+        case (SET_ZOOM) :
+        {
+            const {tblId, selection} = action.payload;
+            return update(state,
+                {[tblId] :
+                    {xyPlotParams:
+                        {
+                            selection: {$set: undefined},
+                            zoom: {$set: selection}
+                         }
+                    }});
+        }
+        case (RESET_ZOOM) :
+        {
+            const {tblId} = action.payload;
+            return update(state,
+                {[tblId] :
+                    {xyPlotParams:
+                        {
+                            selection: {$set: undefined},
+                            zoom: {$set: undefined}
+                         }
+                    }});
+
+        }
+
         default:
             return state;
     }
@@ -182,7 +231,14 @@ var XYPlotCntlr = {
     XYPLOT_DATA_KEY,
     reducer,
     dispatchLoadPlotData,
+    dispatchSetSelection,
+    dispatchSetZoom,
+    dispatchResetZoom,
     loadPlotData,
     LOAD_PLOT_DATA,
-    UPDATE_PLOT_DATA };
+    UPDATE_PLOT_DATA,
+    SET_SELECTION,
+    SET_ZOOM,
+    RESET_ZOOM
+};
 export default XYPlotCntlr;
