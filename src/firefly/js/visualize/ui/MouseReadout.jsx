@@ -28,9 +28,16 @@ var rS= {
 	verticalAlign: 'top'
 };
 
-//const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
 
+/**
+ *
+ * @param visRoot
+ * @param pv
+ * @param mouseState
+ * @returns {XML}
+ * @constructor
+ */
 export function MouseReadout({visRoot, plotView:pv,mouseState}) {
 
 	if (!pv || !mouseState) return EMPTY;
@@ -46,22 +53,21 @@ export function MouseReadout({visRoot, plotView:pv,mouseState}) {
                <div>
 
 				 <div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					 <div style={ textStyle} > {getRadioGroupLabel(visRoot.pixelSize) }
+					 <div style={ textStyle} > {getLabel(visRoot.pixelSize) }
 					 </div>
 				 </div>
 
 				 <div style={rightColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
-					 <div style={ textStyle} > { getRadioGroupLabel( visRoot.mouseReadout1) }
+					 <div style={ textStyle} > { getLabel( visRoot.mouseReadout1) }
 					 </div>
 					 {showReadout(plot, mouseState,visRoot.mouseReadout1)}
 				 </div>
-
               </div>
 
 			  <div>
 				 <div style={leftColumn} > {showReadout(plot, mouseState,visRoot.mouseReadout2 ) } </div>
 				 <div style={ rightColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
-					 <div style={ textStyle} >{getRadioGroupLabel( visRoot.mouseReadout2)} </div>
+					 <div style={ textStyle} >{getLabel( visRoot.mouseReadout2)} </div>
 					 {showReadout(plot, mouseState, visRoot.mouseReadout2)}
 				 </div>
 		    </div>
@@ -70,14 +76,14 @@ export function MouseReadout({visRoot, plotView:pv,mouseState}) {
 
 	);
 }
-MouseReadout.propTypes= {
+/*MouseReadout.propTypes= {
 	visRoot:React.PropTypes.object.isRequired,
 	plot:React.PropTypes.object.isRequired,
 	mouseReadout:React.PropTypes.object.isRequired,
 	radioValues:React.PropTypes.object.isRequired
-};
+};*/
 
-function getRadioGroupLabel(radioValue){
+function getLabel(radioValue){
 	var gLabel;
 	switch(radioValue){
 		case 'eqj2000Dhms' || 'eqj2000DCM':
@@ -101,6 +107,14 @@ function getRadioGroupLabel(radioValue){
 	}
     return gLabel;
 }
+
+/**
+ * Display the mouse readout based on the chosen coordinate
+ * @param plot
+ * @param mouseState
+ * @param readoutValue
+ * @returns {*}
+ */
 function showReadout(plot, mouseState, readoutValue){
 	if (!plot) return'';
 	if (isBlankImage(plot)) return'';
@@ -171,8 +185,10 @@ function showDialog(fieldKey, radioValue) {
 
 }
 
+/*
 MouseReadout.propTypes= {
 	plotView: React.PropTypes.object,
 	mouseState: React.PropTypes.object,
 	mouseReadout:React.PropTypes.object
 };
+*/

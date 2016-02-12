@@ -193,7 +193,7 @@ class MouseReadoutOptionDialog extends React.Component {
 function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 
 
-	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:75};
+	var leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'middle', paddingBottom:75};
 
 	var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
@@ -218,12 +218,12 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 	);
 
 }
-CoordinateOptionDialogForm.propTypes= {
+/*CoordinateOptionDialogForm.propTypes= {
    // visRoot : React.PropTypes.object.isRequired,
 	groupKey:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string,
 	radioValue:React.PropTypes.string.isRequired
-};
+};*/
 
 function renderReadout1RadioGroup(rightColumn,fieldKey, radioValue ){
 	return(
@@ -267,7 +267,7 @@ function renderReadout2RadioGroup(rightColumn,fieldKey, radioValue ){
 function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 
 
-	var leftColumn = { display: 'inline-block', paddingLeft:125, verticalAlign:'middle', paddingBottom:15};
+	var leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'middle', paddingBottom:15};
 
 	var rightColumn = {display: 'inline-block',  paddingLeft:18};
 
@@ -300,8 +300,10 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 	);
 
 }
+/*
 PixelSizeOptionDialogForm.propTypes= {
 	groupKey:React.PropTypes.string.isRequired,
 	radioValue:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string
 };
+*/
