@@ -28,7 +28,7 @@ var rS= {
 	verticalAlign: 'top'
 };
 
-const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
+//const mrMouse= [ MouseState.ENTER,MouseState.EXIT, MouseState.MOVE, MouseState.DOWN , MouseState.CLICK];
 const EMPTY= <div style={rS}></div>;
 
 export function MouseReadout({visRoot, plotView:pv,mouseState}) {
@@ -141,9 +141,10 @@ function showReadout(plot, mouseState, readoutValue){
 				}
 				break;
 			case CoordinateSys.GALACTIC || CoordinateSys.SUPERGALACTIC:
-				var lonRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
-				var latDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
-				result=  ' '+lonRa + ' '+ latDec;
+				//var lonRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
+				//var latDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
+				//result=  ' '+lonRa + ' '+ latDec;
+				result= ' ' + lon + ' '+ lat;
 				break;
 			case CoordinateSys.PIXEL:
 				//result = mouseState.pixelX + ' ' +  mouseState.pixelY;

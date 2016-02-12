@@ -368,16 +368,24 @@ export function dispatchChangeMouseReadoutReadout1( newRadioValue) {
 
     flux.process({type: CHANGE_MOUSE_READOUT_READOUT1, payload: {newRadioValue }});
 }
+
+
+export function dispatchChangeMouseReadoutReadout2(newRadioValue) {
+    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {newRadioValue} });
+
+}
+
+
+export function dispatchChangeMouseReadoutPixel(readoutPixel) {
+    flux.process({ type: CHANGE_MOUSE_READOUT_PIXEL, payload: {readoutPixel} });
+
+}
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 
 
 }
 
-export function dispatchChangeMouseReadoutReadout2(readout2dMode) {
-    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {readout2dMode} });
-
-}
 
 export function dispatchExpandedList(plotIdAry) {
     flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
@@ -470,6 +478,7 @@ function reducer(state=initState(), action={}) {
             break;
         case CHANGE_MOUSE_READOUT_PIXEL:
             retState = changeMouseReadoutPixel(state, action);
+            break;
         case EXPANDED_AUTO_PLAY:
             if (state.singleAutoPlay!==action.payload.autoPlayOn) {
                 retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
@@ -498,11 +507,21 @@ function changeMouseReadoutReadout1(state, action) {
 }
 
 function changeMouseReadoutReadout2(state, action){
-//TODO
+    var payload = action.payload;
+    var newRadioValue = payload.newRadioValue;
+    var oldRadioValue = state.mouseReadout2;
+    if (newRadioValue ===oldRadioValue) return state;
+    return Object.assign({}, state, {mouseReadout2:newRadioValue});
+
 }
 
 function changeMouseReadoutPixel(state, action){
-//TODO
+    var payload = action.payload;
+    var newReadoutPixel = payload.readoutPixel;
+    var oldReadoutPixel  = state. pixelSize;
+    if (newReadoutPixel  ===oldReadoutPixel ) return state;
+    return Object.assign({}, state, {pixelSize:newReadoutPixel});
+
 }
 function changeActivePlotView(state,action) {
     if (action.payload.plotId===state.activePlotId) return state;

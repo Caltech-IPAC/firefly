@@ -70,11 +70,17 @@ function valueToLabel(radioValue){
 
 	}
 }
-export function getCoordinateMap(coordinateStr){
+/**
+ *
+ * This method map the value in coordinate option popup to its label
+ * @param coordinateRadioValue
+ * @returns {{coordinate: *, type: *}}
+ */
+export function getCoordinateMap(coordinateRadioValue){
 	var coordinate;
 	var type;
-	var coordinate = valueToLabel(coordinateStr);
-	switch (coordinate) {
+	var coordinateLabel = valueToLabel(coordinateRadioValue);
+	switch (coordinateLabel) {
 		case 'EQ J2000 HMS':
 			coordinate = CoordinateSys.EQ_J2000;
 			type = 'hms';
@@ -98,7 +104,7 @@ export function getCoordinateMap(coordinateStr){
 	}
 	return {coordinate, type};
 }
-function doDispatch(form, request, groupKey, fieldKey){
+function doDispatch( request, groupKey, fieldKey){
 	console.log('closing ' + groupKey);
 
 	if (request.hasOwnProperty('target')){
@@ -106,15 +112,20 @@ function doDispatch(form, request, groupKey, fieldKey){
 
 		console.log(target);
 		var newRadioValue=target.value;
-		//var{coordinate,type} =getCoordinateMap(result);
+
 		console.log(newRadioValue);
-		//TODO dispatch action here
+
 		switch (fieldKey){
 			case 'readout1':
 
 				dispatchChangeMouseReadoutReadout1(	newRadioValue);
 				break;
-
+			case 'readout2':
+				dispatchChangeMouseReadoutReadout2(	newRadioValue);
+				break;
+			case 'pixelSize':
+				 dispatchChangeMouseReadoutPixel(newRadioValue);
+				break;
 		}
 
 	}
@@ -197,7 +208,7 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 	return (
 
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (request) => doDispatch(this, request, groupKey, fieldKey) } >
+			<div style={ dialogStyle} onClick={ (request) => doDispatch(request, groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
 				{radioGroup}
 			</div>
