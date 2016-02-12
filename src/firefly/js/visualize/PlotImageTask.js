@@ -2,14 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
-import PlotServicesJson from '../rpc/PlotServicesJson.js';
+import {callGetWebPlot} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import WebPlot, {PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
@@ -21,7 +16,7 @@ import {getPlotViewById} from './PlotViewUtil.js';
 import Band from './Band.js';
 import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
-import DrawLayerCntrl from './DrawLayerCntlr.js';
+import DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
@@ -84,7 +79,7 @@ function makePlotImageAction(rawAction) {
         }
 
 
-        PlotServicesJson.getWebPlot(wpRequest)
+        callGetWebPlot(wpRequest)
             .then( (wpResult) => processSuccessResponse(dispatcher,rawAction.payload,wpResult) )
             .catch ( (e) => {
                 dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
@@ -180,7 +175,7 @@ const processSuccessResponse= function(dispatcher, payload, result) {
         resultPayload.plotAry
             .map( (p) => ({r:p.plotState.getWebPlotRequest(),plotId:p.plotId}))
             .forEach( (obj) => obj.r.getOverlayIds()
-                .forEach( (drawLayerId)=>  DrawLayerCntrl.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
+                .forEach( (drawLayerId)=>  DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
     }
@@ -219,8 +214,6 @@ function makePlot(wpInit,plotId) {
 
 
 /**
- *
- * @param {WebPlotRequest} req
  * @param {WebPlot} plot
  */
 function updateActiveTarget(plot) {
@@ -259,7 +252,7 @@ function updateActiveTarget(plot) {
 }
 
 function initBuildInDrawLayers() {
-    DrawLayerCntrl.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
+    DrawLayerCntlr.dispatchCreateDrawLayer(ActiveTarget.TYPE_ID);
 }
 
 

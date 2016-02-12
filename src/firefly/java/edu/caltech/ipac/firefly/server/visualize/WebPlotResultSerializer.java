@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
 import edu.caltech.ipac.firefly.visualize.InsertBandInitializer;
 import edu.caltech.ipac.firefly.visualize.PlotImages;
@@ -19,10 +20,14 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.visualize.draw.Metric;
+import edu.caltech.ipac.visualize.draw.Metrics;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Trey Roby
@@ -105,7 +110,7 @@ public class WebPlotResultSerializer {
             }
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);
-                map.put(WebPlotResult.BAND_INFO, bi.serialize());
+                map.put(WebPlotResult.BAND_INFO, bandInfoDeepSerialize(bi));
             }
             if (res.containsKey(WebPlotResult.REGION_DATA)) {
                 String s= res.getStringResult(WebPlotResult.REGION_DATA);
@@ -146,6 +151,36 @@ public class WebPlotResultSerializer {
         return wraperObj;
 
     }
+
+    public static JSONObject bandInfoDeepSerialize(BandInfo bi) {
+        Map<Band, HashMap<Metrics, Metric>> metMap= bi.getMetricsMap();
+        JSONObject retval= new JSONObject();
+        for(Map.Entry<Band,HashMap<Metrics, Metric>> entry : metMap.entrySet()) {
+            retval.put(entry.getKey().toString(), convertMetrics(entry.getValue()));
+        }
+        return retval;
+    }
+
+
+    private static JSONObject convertMetrics(Map<Metrics, Metric> metricMap) {
+        JSONObject retval= new JSONObject();
+        for(Map.Entry<Metrics, Metric> entry : metricMap.entrySet()) {
+            retval.put(entry.getKey().toString(), convertOneMetric(entry.getValue()));
+        }
+        return retval;
+    }
+
+    private static JSONObject convertOneMetric(Metric metric) {
+        JSONObject retval= new JSONObject();
+        retval.put("desc", metric.getDesc());
+        retval.put("value", metric.getValue());
+        retval.put("units", metric.getUnits());
+        if (metric.getImageWorkSpacePt()!=null) {
+            retval.put("ip", metric.getImageWorkSpacePt().toString());
+        }
+        return retval;
+    }
+
 
     public static String createJsonShallow(WebPlotResult res) {
         StringBuilder retval= new StringBuilder(5000);
