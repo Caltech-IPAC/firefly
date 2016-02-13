@@ -30,9 +30,9 @@ import * as TableUtil from '../tables/TableUtil.js';
  */
 
 
-const HISTOGRAM_DATA_KEY = 'histogram';
-const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
-const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
+export const HISTOGRAM_DATA_KEY = 'histogram';
+export const LOAD_COL_DATA = `${HISTOGRAM_DATA_KEY}/LOAD_COL_DATA`;
+export const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
 
 
 /*
@@ -40,7 +40,7 @@ const UPDATE_COL_DATA = `${HISTOGRAM_DATA_KEY}/UPDATE_COL_DATA`;
  * @param {Object} histogramParams - histogram options (column name, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchLoadColData = function(histogramParams, searchRequest) {
+export const dispatchLoadColData = function(histogramParams, searchRequest) {
     flux.process({type: LOAD_COL_DATA, payload: {histogramParams, searchRequest}});
 };
 
@@ -59,7 +59,7 @@ const dispatchUpdateColData = function(isColDataReady, histogramData, histogramP
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads statistics (column name, num. values, range of values) for a source table
  */
-const loadColData = function(rawAction) {
+export const loadColData = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_COL_DATA, payload : rawAction.payload });
         if (rawAction.payload.searchRequest && rawAction.payload.histogramParams) {
@@ -92,7 +92,7 @@ function stateWithNewData(tblId, state, newProps) {
     return state;
 }
 
-function reducer(state=getInitState(), action={}) {
+export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (LOAD_COL_DATA)  :
         {
@@ -193,14 +193,3 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
         }
     );
 }
-
-
-
-var HistogramCntlr = {
-    reducer,
-    HISTOGRAM_DATA_KEY,
-    dispatchLoadColData,
-    loadColData,
-    LOAD_COL_DATA,
-    UPDATE_COL_DATA };
-export default HistogramCntlr;

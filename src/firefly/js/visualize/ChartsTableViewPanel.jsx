@@ -1,6 +1,6 @@
 import React, {PropTypes} from 'react';
 
-import {get, throttle, defer} from 'lodash';
+import {get, debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
 
 import { connect } from 'react-redux';
@@ -8,9 +8,9 @@ import { connect } from 'react-redux';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
-import TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import HistogramCntlr from '../visualize/HistogramCntlr.js';
-import XYPlotCntlr from '../visualize/XYPlotCntlr.js';
+import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
+import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
+import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 
 
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
@@ -51,7 +51,7 @@ var ChartsPanel = React.createClass({
             optionsShown : true,
             widthPx: 700,
             heightPx: 300,
-            throttledResize: throttle(this.onResize, 500, {'leading':false, 'trailing':true})};
+            debouncedResize: debounce(this.onResize, 500, {'leading':false, 'trailing':true})};
     },
 
 
@@ -72,7 +72,7 @@ var ChartsPanel = React.createClass({
 
     onResize(size) {
         if (size) {
-            this.setState({ widthPx: (size.width-10), heightPx: (size.height-30), throttledResize: this.state.throttledResize });
+            this.setState({ widthPx: (size.width-10), heightPx: (size.height-30), debouncedResize: this.state.debouncedResize });
         }
     },
 
@@ -177,8 +177,7 @@ var ChartsPanel = React.createClass({
         var {heightPx} = this.state;
 
         if (isColDataReady) {
-            var logs = undefined;
-            var reversed = undefined;
+            var logs, reversed;
             if (histogramParams) {
                 var logvals = '';
                 if (histogramParams.x.includes('log')) { logvals += 'x';}
@@ -370,7 +369,7 @@ var ChartsPanel = React.createClass({
             const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
             return (
                 <Resizable id='xyplot-resizer' style={{width, height}}
-                           onResize={this.state.throttledResize} {...this.props} >
+                           onResize={this.state.debouncedResize} {...this.props} >
                     <div style={{display:'inline-block', verticalAlign:'bottom'}}>
                         <div style={{display:'block', whiteSpace: 'nowrap'}}>
                             {this.renderToolbar()}
@@ -391,13 +390,13 @@ var ChartsPanel = React.createClass({
 const connector = function(state, ownProps) {
     return {
         tableModel: TblUtil.findById(ownProps.tblId),
-        tblStatsData: get(state[TableStatsCntlr.TBLSTATS_DATA_KEY], ownProps.tblId),
-        tblHistogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], ownProps.tblId),
-        tblPlotData: get(state[XYPlotCntlr.XYPLOT_DATA_KEY], ownProps.tblId)
+        tblStatsData: state[TableStatsCntlr.TBLSTATS_DATA_KEY][ownProps.tblId],
+        tblHistogramData: state[HistogramCntlr.HISTOGRAM_DATA_KEY][ownProps.tblId],
+        tblPlotData: state[XYPlotCntlr.XYPLOT_DATA_KEY][ownProps.tblId]
     };
 };
 
-const ChartTableViewPanel = connect(connector)(ChartsPanel);
+export const ChartsTableViewPanel = connect(connector)(ChartsPanel);
 
-export default ChartTableViewPanel;
+
 

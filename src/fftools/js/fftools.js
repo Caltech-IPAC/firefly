@@ -17,9 +17,7 @@ import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx'
 import {TablePanel} from 'firefly/tables/ui/TablePanel.jsx';
 import Validate from 'firefly/util/Validate.js';
 import * as TblUtil from 'firefly/tables/TableUtil.js';
-import HistogramTableViewPanel from 'firefly/visualize/HistogramTableViewPanel.jsx';
-import XYPlotTableViewPanel from 'firefly/visualize/XYPlotTableViewPanel.jsx';
-import ChartsTableViewPanel from 'firefly/visualize/ChartsTableViewPanel.jsx';
+import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 
@@ -28,7 +26,7 @@ import ValidationField from 'firefly/ui/ValidationField.jsx';
 
 import {TableRequest} from 'firefly/tables/TableRequest.js';
 
-import TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
+import * as TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import * as TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';

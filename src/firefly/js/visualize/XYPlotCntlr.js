@@ -9,12 +9,12 @@ import {doFetchTable} from '../tables/TableUtil.js';
 //import * from TablesCntlr from '../tables/TablesCntlr.js';
 
 
-const XYPLOT_DATA_KEY = 'xyplot';
-const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
-const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
-const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
-const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
-const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
+export const XYPLOT_DATA_KEY = 'xyplot';
+export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
+export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
+export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
+export const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
+export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 
 /*
  Possible structure of store:
@@ -56,7 +56,7 @@ const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
+export const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
     flux.process({type: LOAD_PLOT_DATA, payload: {xyPlotParams, searchRequest}});
 };
 
@@ -67,19 +67,19 @@ const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
+export const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
     flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest}});
 };
 
-const dispatchSetSelection = function(tblId, selection) {
+export const dispatchSetSelection = function(tblId, selection) {
     flux.process({type: SET_SELECTION, payload: {tblId, selection}});
 };
 
-const dispatchSetZoom = function(tblId, selection) {
+export const dispatchSetZoom = function(tblId, selection) {
     flux.process({type: SET_ZOOM, payload: {tblId, selection}});
 };
 
-const dispatchResetZoom = function(tblId) {
+export const dispatchResetZoom = function(tblId) {
     flux.process({type: RESET_ZOOM, payload: {tblId}});
 };
 
@@ -88,7 +88,7 @@ const dispatchResetZoom = function(tblId) {
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads statistics (column name, num. values, range of values) for a source table
  */
-const loadPlotData = function(rawAction) {
+export const loadPlotData = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_PLOT_DATA, payload : rawAction.payload });
         if (rawAction.payload.searchRequest && rawAction.payload.xyPlotParams) {
@@ -120,7 +120,7 @@ function stateWithNewData(tblId, state, newProps) {
     return state;
 }
 
-function reducer(state=getInitState(), action={}) {
+export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (LOAD_PLOT_DATA)  :
         {
@@ -226,19 +226,3 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 }
 
 
-
-var XYPlotCntlr = {
-    XYPLOT_DATA_KEY,
-    reducer,
-    dispatchLoadPlotData,
-    dispatchSetSelection,
-    dispatchSetZoom,
-    dispatchResetZoom,
-    loadPlotData,
-    LOAD_PLOT_DATA,
-    UPDATE_PLOT_DATA,
-    SET_SELECTION,
-    SET_ZOOM,
-    RESET_ZOOM
-};
-export default XYPlotCntlr;
