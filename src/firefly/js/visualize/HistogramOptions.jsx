@@ -10,6 +10,7 @@ import ValidationField from '../ui/ValidationField.jsx';
 import CheckboxGroupInputField from '../ui/CheckboxGroupInputField.jsx';
 import ListBoxInputField from '../ui/ListBoxInputField.jsx';
 import RadioGroupInputField from '../ui/RadioGroupInputField.jsx';
+import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
 
 
 var HistogramOptions = React.createClass({
@@ -57,40 +58,38 @@ var HistogramOptions = React.createClass({
         const {groupKey} = this.props;
         const {fields} = this.state;
 
-        var algorithm =  (fields && fields.algorithm) ? fields.algorithm.value : 'fixedSizeBins';
+        var algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
 
-        if (algorithm == 'byesianBlocks') {
-            const val =  (fields && fields.falsePositiveRate) ? fields.falsePositiveRate.value : 0.05;
+        if (algorithm === 'byesianBlocks') {
             return (
                 <div>
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: val,
+                        value: FieldGroupUtils.getFldValue(fields, 'falsePositiveRate', 0.05),
                         validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
                         tooltip: 'Acceptable false positive rate',
-                        label : 'False Positive Rate:',
-                        labelWidth : 200
+                        label : 'False Positive Rate:'
                     }}
                     fieldKey='falsePositiveRate'
                     groupKey={groupKey}
+                    labelWidth={100}
                 />
                 </div>
             );
         } else { // fixedSizeBins
-            const val =  (fields && fields.numBins) ? fields.numBins.value : 10;
             return (
                 <ValidationField
                     style={{width: 30}}
                     initialState= {{
-                        value: val,
+                        value: FieldGroupUtils.getFldValue(fields, 'numBins', 10),
                         validator: Validate.intRange.bind(null, 1, 500, 'numBins'),
                         tooltip: 'Number of fixed size bins',
-                        label : 'Number of bins:',
-                        labelWidth : 150
+                        label : 'Number of bins:'
                     }}
                     fieldKey='numBins'
                     groupKey={groupKey}
+                    labelWidth={80}
                 />
             );
         }
@@ -105,27 +104,56 @@ var HistogramOptions = React.createClass({
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
                     <ListBoxInputField
                         initialState= {{
-                                tooltip: 'Please select a column',
-                                label : 'Column or expression:',
-                                labelWidth : 200
-                            }}
+                            value: FieldGroupUtils.getFldValue(fields, 'columnOrExpr'),
+                            tooltip: 'Please select a column',
+                            label : 'Column or expression:'
+                        }}
                         options={
-                                colValStats.map((colVal) => {
-                                    return {
-                                        label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                        value: colVal.name
-                                    };
-                                })
-                            }
+                            colValStats.map((colVal) => {
+                                return {
+                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
+                                    value: colVal.name
+                                };
+                            })
+                        }
                         multiple={false}
                         fieldKey='columnOrExpr'
                         groupKey={groupKey}
+                        labelWidth={120}
                     />
+                    <CollapsiblePanel  header='Options'>
+                        <InputGroup labelWidth={20}>
+                            <CheckboxGroupInputField
+                                initialState= {{
+                                    value: FieldGroupUtils.getFldValue(fields, 'x', '_none_'),
+                                    tooltip: 'X axis options',
+                                    label : 'X:'
+                                }}
+                                options={[
+                                    {label: 'log', value: 'log'},
+                                    {label: 'flip', value: 'flip'}
+                                ]}
+                                fieldKey='x'
+                            />
+                            <CheckboxGroupInputField
+                                initialState= {{
+                                    value: FieldGroupUtils.getFldValue(fields, 'y', '_none_'),
+                                    tooltip: 'Y axis options',
+                                    label : 'Y:'
+                                }}
+                                options={[
+                                    {label: 'log', value: 'log'},
+                                    {label: 'flip', value: 'flip'}
+                                ]}
+                                fieldKey='y'
+                            />
+                        </InputGroup>
+                    </CollapsiblePanel>
                     <br/>
-                    <InputGroup labelWidth={100}>
+                    <InputGroup labelWidth={60}>
                         <RadioGroupInputField
                             initialState= {{
-                                value : (fields && fields.algorithm) ? fields.algorithm.value : 'fixedSizeBins',
+                                value : FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins'),
                                 tooltip: 'Please select an algorithm',
                                 label: 'Algorithm:'
                             }}
@@ -139,34 +167,7 @@ var HistogramOptions = React.createClass({
                     </InputGroup>
                     <br/>
                     {this.renderAlgorithmParameters()}
-                    <br/>
-                    <hr width='75%'/>
-                    <InputGroup labelWidth={50}>
-                        <CheckboxGroupInputField
-                            initialState= {{
-                                value: '_none_',
-                                tooltip: 'X axis options',
-                                label : 'X:'
-                            }}
-                            options={[
-                                {label: 'log', value: 'log'},
-                                {label: 'flip', value: 'flip'}
-                            ]}
-                            fieldKey='x'
-                        />
-                        <CheckboxGroupInputField
-                            initialState= {{
-                                value: '_none_',
-                                tooltip: 'Y axis options',
-                                label : 'Y:'
-                            }}
-                            options={[
-                                {label: 'log', value: 'log'},
-                                {label: 'flip', value: 'flip'}
-                            ]}
-                            fieldKey='y'
-                        />
-                    </InputGroup>
+
                     <br/><br/>
                     <CompleteButton groupKey={groupKey}
                                     onSuccess={this.resultsSuccess}

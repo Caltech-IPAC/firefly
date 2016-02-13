@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get} from 'lodash';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -18,8 +17,7 @@ import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx'
 import {TablePanel} from 'firefly/tables/ui/TablePanel.jsx';
 import Validate from 'firefly/util/Validate.js';
 import * as TblUtil from 'firefly/tables/TableUtil.js';
-import HistogramTableViewPanel from 'firefly/visualize/HistogramTableViewPanel.jsx';
-import XYPlotTableViewPanel from 'firefly/visualize/XYPlotTableViewPanel.jsx';
+import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 
@@ -28,9 +26,7 @@ import ValidationField from 'firefly/ui/ValidationField.jsx';
 
 import {TableRequest} from 'firefly/tables/TableRequest.js';
 
-import TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
-import HistogramCntlr from 'firefly/visualize/HistogramCntlr.js';
-import XYPlotCntlr from 'firefly/visualize/XYPlotCntlr.js';
+import * as TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import * as TablesCntlr from 'firefly/tables/TablesCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
@@ -94,10 +90,9 @@ const App = React.createClass({
 
 
     render() {
-        var {appData, title, table, tblStatsData, histogramData, xyPlotData} = this.props;
+        var {appData, title, table} = this.props;
 
         const tblId = table ? table.tbl_id : undefined;
-        const highlightedRow = table ? table.highlightedRow : undefined;
 
         if (!appData.isReady) {
             return (
@@ -155,7 +150,7 @@ const App = React.createClass({
                                              <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
                                              <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<XYPlotTableViewPanel  key='results-xyplots' tblStatsData={tblStatsData} tblPlotData={xyPlotData} tblId={tblId} highlightedRow={highlightedRow}/> }
+                            xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={tblId}/> }
                             tables = {<TablePanel key='results-tables' tbl_id={tblId} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
@@ -171,10 +166,7 @@ function connector(state) {
     return {
         appData: state[AppDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
-        table : TblUtil.findById(activeTblId),
-        tblStatsData: get(state[TableStatsCntlr.TBLSTATS_DATA_KEY], activeTblId),
-        histogramData: get(state[HistogramCntlr.HISTOGRAM_DATA_KEY], activeTblId),
-        xyPlotData: get(state[XYPlotCntlr.XYPLOT_DATA_KEY], activeTblId)
+        table : TblUtil.findById(activeTblId)
     };
 }
 const container = flux.createSmartComponent(connector, App);

@@ -22,16 +22,16 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
  */
 
 
-const TBLSTATS_DATA_KEY = 'tblstats';
-const SETUP_TBL_TRACKING = `${TBLSTATS_DATA_KEY}/SETUP_TBL_TRACKING`;
-const LOAD_TBL_STATS = `${TBLSTATS_DATA_KEY}/LOAD_TBL_STATS`;
-const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
+export const TBLSTATS_DATA_KEY = 'tblstats';
+export const SETUP_TBL_TRACKING = `${TBLSTATS_DATA_KEY}/SETUP_TBL_TRACKING`;
+export const LOAD_TBL_STATS = `${TBLSTATS_DATA_KEY}/LOAD_TBL_STATS`;
+export const UPDATE_TBL_STATS = `${TBLSTATS_DATA_KEY}/UPDATE_TBL_STATS`;
 
 /*
  * Set up store, which will reflect the data relevant to the given table
  * @param {string} tblId - table id
  */
-const dispatchSetupTblTracking = function(tblId) {
+export const dispatchSetupTblTracking = function(tblId) {
     flux.process({type: SETUP_TBL_TRACKING, payload: {tblId}});
 };
 
@@ -39,7 +39,7 @@ const dispatchSetupTblTracking = function(tblId) {
  * Get the number of points, min and max values, units and description for each table column
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchLoadTblStats = function(searchRequest) {
+export const dispatchLoadTblStats = function(searchRequest) {
     flux.process({type: LOAD_TBL_STATS, payload: {searchRequest}});
 };
 
@@ -49,7 +49,7 @@ const dispatchLoadTblStats = function(searchRequest) {
  * @param {ColValuesStatistics[]} an array which holds column statistics for each column
  * @param {ServerRequest} table search request
  */
-const dispatchUpdateTblStats = function(isColStatsReady,colStats,searchRequest) {
+export const dispatchUpdateTblStats = function(isColStatsReady,colStats,searchRequest) {
     flux.process({type: UPDATE_TBL_STATS, payload: {isColStatsReady,colStats,searchRequest}});
 };
 
@@ -57,7 +57,7 @@ const dispatchUpdateTblStats = function(isColStatsReady,colStats,searchRequest) 
  * @param rawAction (its payload should contain searchRequest to get source table)
  * @returns function which loads statistics (column name, num. values, range of values) for a source table
  */
-const loadTblStats = function(rawAction) {
+export const loadTblStats = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_TBL_STATS, payload : rawAction.payload });
         if (rawAction.payload.searchRequest) {
@@ -89,7 +89,7 @@ function stateWithNewData(tblId, state, newProps) {
     return state;
 }
 
-function reducer(state=getInitState(), action={}) {
+export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (SETUP_TBL_TRACKING) :
             var {tblId} = action.payload;
@@ -179,18 +179,3 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
         }
     );
 }
-
-
-
-
-
-var TableStatsCntlr = {
-    reducer,
-    TBLSTATS_DATA_KEY,
-    dispatchSetupTblTracking,
-    dispatchLoadTblStats,
-    SETUP_TBL_TRACKING,
-    loadTblStats,
-    LOAD_TBL_STATS,
-    UPDATE_TBL_STATS};
-export default TableStatsCntlr;
