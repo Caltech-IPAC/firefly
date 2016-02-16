@@ -318,7 +318,9 @@ var Histogram = React.createClass(
                     renderTo: 'container',
                     type: chartType,
                     alignTicks: false,
-                    height: Number(this.props.height)
+                    height: Number(this.props.height),
+                    borderColor: '#a5a5a5',
+                    borderWidth: 3
                 },
                 exporting: {
                     enabled: true

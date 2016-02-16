@@ -1,5 +1,6 @@
 import {flux} from '../Firefly.js';
 
+import update from 'react-addons-update';
 import {has, get, set} from 'lodash';
 
 
@@ -8,9 +9,12 @@ import {doFetchTable} from '../tables/TableUtil.js';
 //import * from TablesCntlr from '../tables/TablesCntlr.js';
 
 
-const XYPLOT_DATA_KEY = 'xyplot';
-const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
-const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
+export const XYPLOT_DATA_KEY = 'xyplot';
+export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
+export const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
+export const SET_SELECTION = `${XYPLOT_DATA_KEY}/SET_SELECTION`;
+export const SET_ZOOM = `${XYPLOT_DATA_KEY}/SET_ZOOM`;
+export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
 
 /*
  Possible structure of store:
@@ -23,6 +27,8 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
          xyPlotParams: {
            title: string
            xyRatio: number
+           selection: {xMin, xMax, yMin, yMax} // currently selected rectangle
+           zoom: {xMin, xMax, yMin, yMax} // currently zoomed rectangle
            stretch: string (fit|fill)
            x: {
                 columnOrExpr
@@ -46,23 +52,35 @@ const UPDATE_PLOT_DATA = `${XYPLOT_DATA_KEY}/UPDATE_COL_DATA`;
  */
 
 /*
- * Get column histogram data
+ * Load xy plot data
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
+export const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
     flux.process({type: LOAD_PLOT_DATA, payload: {xyPlotParams, searchRequest}});
 };
 
 /*
- * Get xy plot data
+ * Update xy plot data
  * @param {boolean} isPlotDataReady - flags that xy plot data are available
  * @param {Number[][]} xyPlotData - an array of the number arrays with rowIdx, x, y, [error]
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
+export const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
     flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest}});
+};
+
+export const dispatchSetSelection = function(tblId, selection) {
+    flux.process({type: SET_SELECTION, payload: {tblId, selection}});
+};
+
+export const dispatchSetZoom = function(tblId, selection) {
+    flux.process({type: SET_ZOOM, payload: {tblId, selection}});
+};
+
+export const dispatchResetZoom = function(tblId) {
+    flux.process({type: RESET_ZOOM, payload: {tblId}});
 };
 
 
@@ -70,7 +88,7 @@ const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParam
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads statistics (column name, num. values, range of values) for a source table
  */
-const loadPlotData = function(rawAction) {
+export const loadPlotData = function(rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_PLOT_DATA, payload : rawAction.payload });
         if (rawAction.payload.searchRequest && rawAction.payload.xyPlotParams) {
@@ -102,18 +120,18 @@ function stateWithNewData(tblId, state, newProps) {
     return state;
 }
 
-function reducer(state=getInitState(), action={}) {
+export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (LOAD_PLOT_DATA)  :
         {
-            let {xyPlotParams, searchRequest} = action.payload;
+            const {xyPlotParams, searchRequest} = action.payload;
             const newState = Object.assign({}, state);
             set(newState, searchRequest.tbl_id, {isPlotDataReady: false});
             return newState;
         }
         case (UPDATE_PLOT_DATA)  :
         {
-            let {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest} = action.payload;
+            const {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest} = action.payload;
             return stateWithNewData(searchRequest.tbl_id, state, {
                 isPlotDataReady,
                 xyPlotData,
@@ -121,6 +139,37 @@ function reducer(state=getInitState(), action={}) {
                 searchRequest
             });
         }
+        case (SET_SELECTION) :
+        {
+            const {tblId, selection} = action.payload;
+            return update(state, {[tblId] : {xyPlotParams: {selection: {$set: selection}}}});
+        }
+        case (SET_ZOOM) :
+        {
+            const {tblId, selection} = action.payload;
+            return update(state,
+                {[tblId] :
+                    {xyPlotParams:
+                        {
+                            selection: {$set: undefined},
+                            zoom: {$set: selection}
+                         }
+                    }});
+        }
+        case (RESET_ZOOM) :
+        {
+            const {tblId} = action.payload;
+            return update(state,
+                {[tblId] :
+                    {xyPlotParams:
+                        {
+                            selection: {$set: undefined},
+                            zoom: {$set: undefined}
+                         }
+                    }});
+
+        }
+
         default:
             return state;
     }
@@ -177,12 +226,3 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 }
 
 
-
-var XYPlotCntlr = {
-    XYPLOT_DATA_KEY,
-    reducer,
-    dispatchLoadPlotData,
-    loadPlotData,
-    LOAD_PLOT_DATA,
-    UPDATE_PLOT_DATA };
-export default XYPlotCntlr;

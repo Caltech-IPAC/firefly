@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
 import FieldGroupCntlr from './FieldGroupCntlr.js';
@@ -106,6 +107,10 @@ const getGroupFields= function(groupKey) {
     return groupState?groupState.fields:null;
 };
 
+const getFldValue= function(fields, fldName, defval=undefined) {
+    return (fields? get(fields, [fldName, 'value']) : defval);
+};
+
 const defaultReducer= (state) => state;
 
 /**
@@ -160,7 +165,7 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 
 
 
-var FieldGroupUtils= {validate, getResults, getGroupState, getGroupFields,
+var FieldGroupUtils= {validate, getResults, getGroupState, getGroupFields, getFldValue,
                       initFieldGroup,mountFieldGroup,unmountFieldGroup, bindToStore };
 
 export default FieldGroupUtils;
