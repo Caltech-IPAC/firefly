@@ -22,7 +22,7 @@ import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadoutReadout1, dispatchChangeMouseReadoutReadout2, dispatchChangeMouseReadoutPixel} from '../ImagePlotCntlr.js';
 
 const coordOptions= [
-	{label: 'EQ J2000 HMS', value: 'eqj2000Dhms'},
+	{label: 'EQ J2000 HMS', value: 'eqj2000hms'},
 	{label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
 	{label: 'EQ B1950', value: 'eqb1950'},
@@ -106,7 +106,7 @@ export function getCoordinateMap(coordinateRadioValue){
 }
 function doDispatch( request, groupKey, fieldKey){
 	console.log('closing ' + groupKey);
-
+    console.log('fieldey=' + fieldKey);
 	if (request.hasOwnProperty('target')){
 		var target=request.target;
 
@@ -117,13 +117,16 @@ function doDispatch( request, groupKey, fieldKey){
 
 		switch (fieldKey){
 			case 'readout1':
-
+				
+                console.log('dispatch readout1'+ newRadioValue);
 				dispatchChangeMouseReadoutReadout1(	newRadioValue);
 				break;
 			case 'readout2':
+				console.log('dispatch readout2'+ newRadioValue);
 				dispatchChangeMouseReadoutReadout2(	newRadioValue);
 				break;
 			case 'pixelSize':
+				console.log('dispatch pixelSize'+ newRadioValue);
 				 dispatchChangeMouseReadoutPixel(newRadioValue);
 				break;
 		}
@@ -167,7 +170,7 @@ class MouseReadoutOptionDialog extends React.Component {
 
 		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
 			form=  <PixelSizeOptionDialogForm
-			     	fields={fields}
+
 				    groupKey={this.props.groupKey}
 					fieldKey={this.props.fieldKey}
 					radioValue={this.props.radioValue}
@@ -175,7 +178,7 @@ class MouseReadoutOptionDialog extends React.Component {
 		}
 		else {
 			form= <CoordinateOptionDialogForm
-				fields={fields}
+
 				groupKey={this.props.groupKey}
 				fieldKey={this.props.fieldKey}
 				radioValue={this.props.radioValue}
@@ -200,8 +203,6 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
 
 
-	this.radioValue = radioValue;
-
 	var radioGroup = fieldKey==='readout1'?renderReadout1RadioGroup(rightColumn,fieldKey,radioValue ):
 		renderReadout2RadioGroup(rightColumn,fieldKey,radioValue);
 
@@ -218,12 +219,11 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 	);
 
 }
-/*CoordinateOptionDialogForm.propTypes= {
-   // visRoot : React.PropTypes.object.isRequired,
+CoordinateOptionDialogForm.propTypes= {
 	groupKey:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string,
 	radioValue:React.PropTypes.string.isRequired
-};*/
+};
 
 function renderReadout1RadioGroup(rightColumn,fieldKey, radioValue ){
 	return(
@@ -300,10 +300,10 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 	);
 
 }
-/*
+
 PixelSizeOptionDialogForm.propTypes= {
 	groupKey:React.PropTypes.string.isRequired,
 	radioValue:React.PropTypes.string.isRequired,
 	filedKey:React.PropTypes.string
 };
-*/
+

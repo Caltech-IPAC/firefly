@@ -76,17 +76,17 @@ export function MouseReadout({visRoot, plotView:pv,mouseState}) {
 
 	);
 }
-/*MouseReadout.propTypes= {
+MouseReadout.propTypes= {
 	visRoot:React.PropTypes.object.isRequired,
 	plot:React.PropTypes.object.isRequired,
 	mouseReadout:React.PropTypes.object.isRequired,
 	radioValues:React.PropTypes.object.isRequired
-};*/
+};
 
 function getLabel(radioValue){
 	var gLabel;
 	switch(radioValue){
-		case 'eqj2000Dhms' || 'eqj2000DCM':
+		case 'eqj2000hms' || 'eqj2000DCM':
 			gLabel='EQ-J2000:';
 			break;
 		case 'galactic':
@@ -149,9 +149,13 @@ function showReadout(plot, mouseState, readoutValue){
 				result = ' ' + hmsRa + ' ' + hmsDec;
 		        }
 				else {
-					var dmsRa = CoordUtil.convertLonToString('dms', wpt.getCoordSys());
-					var dmsDec = CoordUtil.convertLatToString('dms', wpt.getCoordSys());
-					result = ' ' + dmsRa + ' ' +dmsDec;
+					var hmsRa = CoordUtil.convertLonToString(lon, wpt.getCoordSys());
+					var hmsDec = CoordUtil.convertLatToString(lat, wpt.getCoordSys());
+					var dmsRa = CoordUtil.convertStringToLon(hmsRa, wpt.getCoordSys());
+					var dmsDec = CoordUtil.convertStringToLat(hmsDec, wpt.getCoordSys());
+					var dmsRaShort = dmsRa.toString().substring(0, 8);
+					var dmsDecShort = dmsDec.toString().substring(0, 8);
+					result = ' ' + dmsRaShort + ' ' +dmsDecShort;
 				}
 				break;
 			case CoordinateSys.GALACTIC || CoordinateSys.SUPERGALACTIC:
@@ -185,10 +189,4 @@ function showDialog(fieldKey, radioValue) {
 
 }
 
-/*
-MouseReadout.propTypes= {
-	plotView: React.PropTypes.object,
-	mouseState: React.PropTypes.object,
-	mouseReadout:React.PropTypes.object
-};
-*/
+

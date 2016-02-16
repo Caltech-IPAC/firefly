@@ -148,7 +148,7 @@ const initState= function() {
         wcsMatchCenterWP: null, //todo
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
         mpwWcsPrimId: null,//todo
-        mouseReadout1:'eqj2000Dhms',
+        mouseReadout1:'eqj2000hms',
         mouseReadout2: 'fitsIP',
         pixelSize: 'pixelSize',
         flux: 'Flux'
