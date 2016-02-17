@@ -81,32 +81,26 @@ const computeSimpleDistance= function(p1, p2) {
 
 
 
-    /**
-     * Convert from one coordinate system to another.
-     *
-     * @param wpt the world point to convert
-     * @param to  CoordSys, the coordinate system to convert to
-     * @return WorldPt the world point in the new coordinate system
-     */
-const convert= function(wpt, to) {
-    var retval;
+/**
+ * Convert from one coordinate system to another.
+ *
+ * @param wpt the world point to convert
+ * @param to  CoordSys, the coordinate system to convert to
+ * @return WorldPt the world point in the new coordinate system
+ */
+function convert(wpt, to= CoordinateSys.EQ_J2000) {
     var from = wpt.getCoordSys();
-    if (!to || from==to) {
-        retval = wpt;
-    } else {
-        var tobs = 0.0;
-        if (from===CoordinateSys.EQ_B1950) tobs = 1983.5;
-        var ll = CoordConv.doConv(from.getJsys(), from.getEquinox(),
-                                  wpt.getLon(), wpt.getLat(),
-                                  to.getJsys(), to.getEquinox(), tobs);
-        retval = makeWorldPt(ll.getLon(), ll.getLat(), to);
-    }
-    return retval;
-};
+    if (!to || from==to) return wpt;
 
-const convertToJ2000= function(wpt) {
-    return convert(wpt, CoordinateSys.EQ_J2000);
-};
+    const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
+    const ll = window.ffgwt.astro.CoordConv.doConv(
+                          from.getJsys(), from.getEquinox(),
+                          wpt.getLon(), wpt.getLat(),
+                          to.getJsys(), to.getEquinox(), tobs);
+    return makeWorldPt(ll.getLon(), ll.getLat(), to);
+}
+
+function convertToJ2000(wpt) { return convert(wpt); }
 
 /**
  * Find an approximate central point and search radius for a group of positions
