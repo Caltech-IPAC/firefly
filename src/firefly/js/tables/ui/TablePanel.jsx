@@ -3,195 +3,150 @@
  */
 
 import React from 'react';
-import ReactDOM from 'react-dom';
-import FixedDataTable from 'fixed-data-table';
-import Resizable from 'react-component-resizable';
-import {debounce, get, uniqueId, isEmpty} from 'lodash';
+import sCompare from 'react-addons-shallow-compare';
+import {isEmpty, get, cloneDeep} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';
-import * as TblCntlr from '../TablesCntlr';
-import * as TblUiCntlr from '../TablesUiCntlr.js';
-import {SelectInfo} from '../SelectInfo';
-import {Toolbar} from '../../ui/Toolbar.jsx';
-import {TableStore} from '../TableStore.js';
+import {Table} from '../Table.js';
+import {TablePanelOptions} from './TablePanelOptions.jsx';
+import {BasicTable} from './BasicTable.jsx';
+import {RemoteTableStore, TableStore} from '../TableStore.js';
+import {SelectInfo} from '../SelectInfo.js';
 
-
-import './TablePanel.css';
 import LOADING from 'html/images/gxt/loading.gif';
 
-const {Table, Column, Cell} = FixedDataTable;
 
-const TextCell = ({rowIndex, data, col}) => {
-    return (
-        <Cell>
-            {get(data, [rowIndex, col],'undef')}
-        </Cell>
-    );
-};
-
-function makeColumns(tableStore, columns, columnWidths, data, selectable, selectionInfo) {
-    if (!columns) return false;
-    var colsEl = columns.map((col, idx) => {
-        return (
-            <Column
-                key={col.name}
-                columnKey={col.name}
-                header={<Cell>{col.title || col.name}</Cell>}
-                cell={<TextCell data={data} col={idx} />}
-                fixed={false}
-                width={columnWidths[col.name]}
-                isResizable={true}
-                allowCellsRecycling={true}
-            />
-        )
-    });
-    if (selectable) {
-        var selectInfo = SelectInfo.newInstance(selectionInfo);
-        const headerCB = () => {
-            return (
-                <input style={{marginTop: '6px'}} className='tablePanel__checkbox' type='checkbox'
-                       checked={selectInfo.isSelectAll()} onClick={(e) => tableStore.onSelectAll(e.target.checked, selectInfo)}/>
-            );
-        };
-
-        const cellCB = ({rowIndex}) => {
-            let absIdx = tableStore.toAbsIdx(rowIndex);
-            return (
-                <input className='tablePanel__checkbox' type='checkbox' value='rowIn'
-                       checked={selectInfo.isSelected(absIdx)}
-                       onClick={(e) => tableStore.onRowSelect(e.target.checked, rowIndex, selectInfo)}/>
-            );
-        };
-
-        var cbox = <Column
-            key="selectable-checkbox"
-            columnKey='selectable-checkbox'
-            header={headerCB}
-            cell={cellCB}
-            fixed={true}
-            width={25}
-            allowCellsRecycling={true}
-        />;
-        colsEl.splice(0, 0, cbox);
+function prepareTableData(tableModel) {
+    if (!tableModel.tableData.columns) return {};
+    const {sortInfo, selectionInfo, filterInfo} = tableModel;
+    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
+    var data = [];
+    if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
+        data = tableModel.tableData.data.slice(startIdx, endIdx);
+    } else {
+        Object.assign(tableModel.request, {startIdx, pageSize});
+        //TblCntlr.dispatchFetchTable(tableModel.request, highlightedRow);
     }
-    return colsEl;
+    var tableRowCount = data.length;
+
+    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectionInfo, filterInfo, data};
+}
+
+function ensureColumns(tableModel, columns) {
+    if (isEmpty(columns)) {
+        return cloneDeep(get(tableModel, 'tableData.columns', []));
+    } else {
+        return columns;
+    }
 }
 
 export class TablePanel extends React.Component {
     constructor(props) {
         super(props);
-        this.tableStore = TableStore.newInstance(this);
-        this.state = {
-            tableModel: undefined,
-            tableUi: {
-                tbl_id: undefined,
-                tbl_ui_id: TblUtil.uniqueTblUiId(),
-                tbl_ui_gid: undefined,
-                pageSize : 1,
-                currentPage : 1,
-                widthPx: 300,
-                heightPx: 100,
-                hlRowIdx:0,           // this is the UI hlrow.  its index is relative to only current page.
-                columns:[],
-                columnWidths : {}
-            },
-            totalPages: 0,
-            tableRowCount : 0,
-            data: []
-        };
-
-        this.onResize = debounce((size) => {
-            this.tableStore.onResize(size);
-        }, 200);
-
-        this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
-        this.rowClassName = this.rowClassName.bind(this);
         this.storeUpdate = this.storeUpdate.bind(this);
-    }
+        this.toggleOptions = this.toggleOptions.bind(this);
+        this.onOptionUpdate = this.onOptionUpdate.bind(this);
 
-    onColumnResizeEndCallback(newColumnWidth, columnKey) {
-        this.tableStore.onColumnResize({[columnKey] : newColumnWidth});
-    }
-
-    rowClassName(index) {
-        return (this.state.tableUi.hlRowIdx === index) ? 'tablePanel__Row_highlighted' : '';
-    }
-
-    componentDidMount() {
-        this.tableStore.setChangeListener(this.storeUpdate);
+        if (props.tbl_id) {
+            this.tableStore = RemoteTableStore.newInstance(props.tbl_id, this.storeUpdate);
+        } else if (props.tableModel) {
+            this.tableStore = TableStore.newInstance(props.tableModel, this.storeUpdate);
+        }
+        const columns = ensureColumns(this.tableStore.tableModel);
+        this.state = {
+            tableModel:this.tableStore.tableModel,
+            columns,
+            showOptions: false,
+            showUnits: true
+        };
     }
 
     componentWillUnmount() {
-        this.tableStore.removeChangeListener();
-    }
-
-    componentWillReceiveProps(nProps) {
-        this.tableStore.receiveProps(nProps);
+        this.props.tableStore && this.props.tableStore.onUnmount();
     }
 
     shouldComponentUpdate(nProps, nState) {
-        return nState !== this.state;
+        return sCompare(this, nProps, nState);
+    }
+
+    onOptionUpdate({pageSize, columns, showUnits}) {
+        if (pageSize) {
+            this.tableStore.onPageSizeChange(pageSize);
+        }
+        if(columns) {
+            columns = ensureColumns(this.state.tableModel, columns);
+            this.setState({columns});
+        }
+        if (showUnits !== undefined) {
+            this.setState({showUnits});
+        }
     }
 
     storeUpdate(state) {
         this.setState(state);
     }
 
+    toggleOptions() {
+        this.setState({showOptions: !this.state.showOptions});
+    }
+
     render() {
-        const {tableUi, tableModel, tableRowCount, totalPages, data} = this.state;
+        var {tableModel, columns, showOptions, showUnits} = this.state;
         const {selectable} = this.props;
-        if (isEmpty(tableUi.columns)) return false;
+        if (isEmpty(columns) || isEmpty(tableModel)) return false;
+        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectionInfo, data} = prepareTableData(tableModel);
+        const selectInfo = SelectInfo.newInstance(selectionInfo, startIdx);
 
         const showLoading = !TblUtil.isTableLoaded(tableModel);
-        const rowFrom = (tableUi.currentPage-1) * tableUi.pageSize + 1;
-        const rowTo = rowFrom + tableRowCount - 1;
+        const rowFrom = startIdx + 1;
+        const rowTo = startIdx+tableRowCount;
 
         return (
-            <Resizable id='table-resizer' style={{width: '100%'}} onResize={this.onResize} {...this.props} >
-                <div className='TablePanel__wrapper'>
-                    <Toolbar>
-                        <ul role='left'>
-                            <li><button style={{width:70}}>Download</button></li>
-                        </ul>
-                        <ul role='middle' style={{width: '320px'}}>
-                            <li><button onClick={() => this.tableStore.gotoPage(1)} className='paging_bar first' title='First Page'/></li>
-                            <li><button onClick={() => this.tableStore.gotoPage(tableUi.currentPage - 1)} className='paging_bar previous'  title='Previous Page'/></li>
-                            <li><input onClick={(e) => e.target.select()} onChange={(e) => this.tableStore.gotoPage(e.target.value)} name='pageNo' size="2" value={tableUi.currentPage}/>  of {totalPages}</li>
-                            <li><button onClick={() => this.tableStore.gotoPage(tableUi.currentPage + 1)} className='paging_bar next'  title='Next Page'/></li>
-                            <li><button onClick={() => this.tableStore.gotoPage(totalPages)} className='paging_bar last'  title='Last Page'/></li>
-                            <li><div style={{marginTop: '3px'}} >({rowFrom.toLocaleString()} - {rowTo.toLocaleString()} of {tableModel.totalRows.toLocaleString()})</div></li>
-                            {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
-                        </ul>
-                        <ul role='right'>
-                            <li>
-                                <button>Option</button>
-                            </li>
-                        </ul>
-                    </Toolbar>
-                    <Table
-                        rowHeight={20}
-                        headerHeight={25}
-                        rowsCount={tableRowCount}
-                        isColumnResizing={false}
-                        onColumnResizeEndCallback={this.onColumnResizeEndCallback}
-                        onRowClick={(e, index) => this.tableStore.onRowHighlight(index)}
-                        rowClassNameGetter={this.rowClassName}
-                        scrollToRow={tableUi.hlRowIdx}
-                        width={tableUi.widthPx}
-                        height={tableUi.heightPx}
-                        {...this.props}>
-                        {makeColumns(this.tableStore, tableUi.columns, tableUi.columnWidths, data, selectable, tableModel.selectionInfo )}
-                    </Table>
+            <div className='TablePanel__wrapper'>
+                <div role='toolbar'>
+                    <div className='group'>
+                        <button style={{width:70}}>Download</button>
+                    </div>
+                    <div className='group'>
+                        <button onClick={() => this.tableStore.gotoPage(1)} className='paging_bar first' title='First Page'/>
+                        <button onClick={() => this.tableStore.gotoPage(currentPage - 1)} className='paging_bar previous'  title='Previous Page'/>
+                        <input onClick={(e) => e.target.select()} onChange={(e) => this.tableStore.gotoPage(e.target.value)} name='pageNo' size="2" value={currentPage}/> <div style={{fontSize: 'smaller', marginTop: '5px'}} >&nbsp; of {totalPages}</div>
+                        <button onClick={() => this.tableStore.gotoPage(currentPage + 1)} className='paging_bar next'  title='Next Page'/>
+                        <button onClick={() => this.tableStore.gotoPage(totalPages)} className='paging_bar last'  title='Last Page'/>
+                        <div style={{fontSize: 'smaller', marginTop: '5px'}} > &nbsp; ({rowFrom.toLocaleString()} - {rowTo.toLocaleString()} of {tableModel.totalRows.toLocaleString()})</div>
+                        {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
+                    </div>
+                    <div className='group'>
+                        <button onClick={this.toggleOptions} className='tablepanel options'/>
+                    </div>
                 </div>
-            </Resizable>
+
+                <div className='TablePanel__table'>
+                    <BasicTable
+                        columns={columns}
+                        data={data}
+                        hlRowIdx={hlRowIdx}
+                        selectable={selectable}
+                        showUnits={showUnits}
+                        selectInfo={selectInfo}
+                        tableStore={this.tableStore}
+                    />
+                    {showOptions && <TablePanelOptions
+                        columns={columns}
+                        pageSize={pageSize}
+                        showUnits={showUnits}
+                        onChange={this.onOptionUpdate}
+                    />
+                    }
+                </div>
+            </div>
         );
     }
 }
 
 TablePanel.propTypes = {
-    tableModel: React.PropTypes.object,
     tbl_id: React.PropTypes.string,
-    tbl_ui_gid: React.PropTypes.string,
+    tableModel: React.PropTypes.object,
     pageSize: React.PropTypes.number,
     showFilters: React.PropTypes.bool,
     selectable: React.PropTypes.bool,
@@ -202,8 +157,6 @@ TablePanel.defaultProps = {
     showFilters: true,
     selectable: true,
     showToolbar: true,
-    pageSize: 50,
-    tbl_ui_gid: TblUtil.uniqueTblUiGid()
-
+    pageSize: 50
 };
 

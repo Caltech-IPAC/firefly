@@ -14,66 +14,69 @@ import {Table} from './Table.js';
 export class SelectInfo {
     constructor(selectInfo) {
         this.data = selectInfo;
+        this.offset = 0;
 
     }
 
-    selectAll() {
+    setSelectAll(flg) {
         this.data.exceptions.clear();
-        this.data.selectAll = true;
+        this.data.selectAll = flg;
     }
 
-    deselectAll() {
-        this.data.exceptions.clear();
-        this.data.selectAll = false;
-    }
-
-    select(idx) {
-        if (this.data.selectAll) {
-            this.data.exceptions.delete(idx);
+    setRowSelect(idx, flg) {
+        idx = idx + this.offset;
+        const {selectAll, exceptions, rowCount} = this.data;
+        if (flg) {
+            if (selectAll) {
+                exceptions.delete(idx);
+            } else {
+                exceptions.add(idx);
+                if (exceptions.size == rowCount) {
+                    this.setSelectAll(true);
+                }
+            }
         } else {
-            this.data.exceptions.add(idx);
-            if (this.data.exceptions.size == this.data.rowCount) {
-                this.selectAll();
+            if (selectAll) {
+                exceptions.add(idx);
+            } else {
+                exceptions.delete(idx);
             }
         }
-    }
 
-    deselect(idx) {
-        if (this.data.selectAll) {
-            this.data.exceptions.add(idx);
-        } else {
-            this.data.exceptions.delete(idx);
-        }
     }
 
     isSelected(idx) {
-        if (this.data.selectAll) {
-            return !this.data.exceptions.has(idx);
+        idx = idx + this.offset;
+        const {selectAll, exceptions} = this.data;
+        if (selectAll) {
+            return !exceptions.has(idx);
         } else {
-            return this.data.exceptions.has(idx);
+            return exceptions.has(idx);
         }
     }
 
     getSelected() {
-        if (this.data.selectAll) {
+        const {selectAll, exceptions, rowCount} = this.data;
+        if (selectAll) {
             const all = new Set();
-            for(var i = 0; i < this.data.rowCount; i++) {
-                if (!this.data.exceptions.has(i)) {
+            for(var i = 0; i < rowCount; i++) {
+                if (!exceptions.has(i)) {
                     all.add(i);
                 }
             }
             return all;
         } else {
-            return new Set(this.data.exceptions);
+            return new Set(exceptions);
         }
     }
 
     getSelectedCount() {
-        if (this.data.rowCount < 1) return 0;
-        if (this.data.selectAll) {
-            return this.data.rowCount - this.data.exceptions.size;
+        const {selectAll, exceptions, rowCount} = this.data;
+        if (rowCount < 1) return 0;
+        if (selectAll) {
+            return rowCount - exceptions.size;
         } else {
-            return this.data.exceptions.size;
+            return exceptions.size;
         }
     }
 
@@ -105,10 +108,13 @@ export class SelectInfo {
      * @param selectAll     boolean. Indicates selectAll mode. defaults to false.
      * @param exceptions    Set. A set of exceptions based on selectAll mode.
      * @param rowCount      int. Total number of rows. defaults to zero.
+     * @param offset        int. All indices passed into this class's funtion will be offsetted by this given value.
      * @returns {SelectInfo}
      */
-    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0} = {}) {
-        return new SelectInfo({selectAll, exceptions, rowCount});
+    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}, offset) {
+        var si = new SelectInfo({selectAll, exceptions, rowCount});
+        if (offset) si.offset = offset;
+        return si;
     }
 
     /**

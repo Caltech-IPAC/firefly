@@ -179,6 +179,19 @@ export function smartMerge(target, source) {
     }
 }
 
+export function gatherTableState(tableModel) {
+    var {tbl_id, highlightedRow} = tableModel;
+
+    const pageSize = get(tableModel, 'request.pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
+    const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
+    const startIdx = (currentPage-1) * pageSize;
+    const endIdx = Math.min(startIdx+pageSize, tableModel.totalRows) || startIdx ;
+    var totalPages = Math.ceil((tableModel.totalRows || 0)/pageSize);
+    return {tbl_id, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow};
+}
+
+
 export function uniqueTblId() {
     return uniqueId('tbl_id-');
 }

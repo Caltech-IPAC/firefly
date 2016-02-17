@@ -2,10 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import update from 'react-addons-update';
-import {set, get, isEqual} from 'lodash';
+import {pickBy} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
+import * as TablesCntlr from './TablesCntlr.js';
+import {Table} from './Table.js';
 import {logError} from '../util/WebUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -23,6 +25,27 @@ export const TBL_HIGHLIGHT_ROW = `${TABLE_SPACE_PATH}.highlighRow`;
 
 export function loadTable(action) {
     return validate(LOAD_TABLE, action);
+}
+
+export function highlightRow(action) {
+    return (dispatch) => {
+        const {tbl_id, request} = action.payload;
+        var table = Table.findTblById(tbl_id);
+        var tmpModel = TblUtil.smartMerge(table.data, action.payload);
+        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.gatherTableState(tmpModel);
+        if (table && table.has(startIdx, endIdx)) {
+            dispatch(action);
+        } else {
+            const request = Object.assign({}, table.data.request, {startIdx, pageSize});
+            TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
+                dispatch( TablesCntlr.loadTable({type:TablesCntlr.LOAD_TABLE, payload: tableModel}) );
+            }).catch( (error) => {
+                TblUtil.error(error);
+                // if fetch causes error, re-dispatch that same action with error msg.
+                action.err = error;
+            });
+        }
+    };
 }
 
 export function fetchTable(action) {
@@ -54,10 +77,6 @@ export function reducer(state={}, action={}) {
             } else return state;
 
         case (TBL_HIGHLIGHT_ROW)  :
-            if (highlightedRow >= 0 && highlightedRow !== get(state, [tbl_id, 'highlightedRow'])) {
-                return update(state, { [tbl_id] : {highlightedRow: {$set: highlightedRow}}});
-            } else return state;
-
         case (LOAD_TABLE_STATUS)  :
         case (LOAD_TABLE_COMPLETE)  :
         case (LOAD_TABLE)  :
@@ -99,9 +118,10 @@ export function dispatchFetchTable(request, hlRowIdx) {
  * set the highlightedRow of the given table by tbl_id.
  * @param tbl_id
  * @param highlightedRow
+ * @param request
  */
-export function dispatchHighlightRow(tbl_id, highlightedRow) {
-    flux.process( {type: TBL_HIGHLIGHT_ROW, payload: {tbl_id, highlightedRow} });
+export function dispatchHighlightRow(tbl_id, highlightedRow, request) {
+    flux.process( {type: TBL_HIGHLIGHT_ROW, payload: pickBy({tbl_id, highlightedRow, request}) });
 }
 
 /**
