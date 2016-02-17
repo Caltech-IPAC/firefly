@@ -15,8 +15,7 @@ export class ExpandedModeDisplay extends Component {
 
     constructor(props) {
         super(props);
-        var allPlots= visRoot();
-        this.state= {allPlots};
+        this.state= {visRoot:visRoot()};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -38,18 +37,17 @@ export class ExpandedModeDisplay extends Component {
 
     storeUpdate() {
         var {state}= this;
-        var allPlots= visRoot();
-        if (allPlots!==state.allPlots) {
-            this.setState({allPlots});
+        var vr= visRoot();
+        if (vr!==state.visRoot) {
+            this.setState({visRoot:vr});
         }
     }
 
 
 
     render() {
-        var {allPlots}= this.state;
         return (
-            <ExpandedModeDisplayView allPlots={allPlots}
+            <ExpandedModeDisplayView visRoot={this.state.visRoot}
             />
         );
     }

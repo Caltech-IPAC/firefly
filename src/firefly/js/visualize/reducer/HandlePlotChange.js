@@ -122,7 +122,7 @@ function zoomStart(state, action) {
 
     // up date book keeping
     var newCtx= {zoomLockingEnabled};
-    if (expandedMode===ExpandType.COLLAPSE) newCtx.lastCollapsedZoomLevel= plot.zoomFactor;
+    if (expandedMode===ExpandType.COLLAPSE) newCtx.lastCollapsedZoomLevel= zoomLevel;
     if (zoomLockingEnabled && isFitFill(userZoomType))  newCtx.zoomLockingType= userZoomType;
 
 

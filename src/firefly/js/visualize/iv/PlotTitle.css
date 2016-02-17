@@ -31,7 +31,7 @@
     padding : 1px 0 0 2px;
     color : black;
     /*background : white;*/
-    whiteSpace : nowrap;
+    white-space : nowrap;
     font-size : 10pt;
     font-weight : bold;
 }

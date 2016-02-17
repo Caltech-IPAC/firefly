@@ -129,7 +129,7 @@ function createPlotViewContextData(req) {
         userModifiedRotate: false, // the user modified the rotate status, todo
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT,
-        lastUnexpandedZoomLevel : 0,
+        lastCollapsedZoomLevel: 0,
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
@@ -191,6 +191,7 @@ function replacePlots(pv, plotAry,expanded, overlayPlotViews=null) {
     pv.containsMultiImageFits= pv.plots.every( (p) => p.plotState.isMultiImageFile());
     pv.containsMultipleCubes= pv.plots.every( (p) => p.plotState.getCubeCnt()>1);
     pv.plotViewCtx.rotateNorthLock= pv.plots[pv.primeIdx].plotState.getRotateType()===RotateType.NORTH;
+    pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
 
     pv= initScrollCenterPoint(pv);
 
@@ -226,7 +227,7 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
 
     var {x:newSx,y:newSy}= newScrollPt;
     var {width:oldVPW, height:oldVPH} = plot.viewPort.dim;
-    if (newSx===oldSx && newSy===oldSy && oldVPW && oldVPH) return plotView;
+    //if (newSx===oldSx && newSy===oldSy && oldVPW && oldVPH) return plotView;
 
     newSx= checkBounds(newSx,plot.screenSize.width,scrollWidth);
     newSy= checkBounds(newSy,plot.screenSize.height,scrollHeight);
