@@ -233,7 +233,7 @@ function reducer(state=getInitState(), action={}) {
 
 function mergeAll(orig, newval, updates) {
 
-    var hasChanged = orig != newval;
+    var hasChanged = orig !== newval;
     hasChanged = hasChanged || Object.keys(updates).reduce( (prev, next) => prev || orig[next] != updates[next], false);
 
     return hasChanged ? Object.assign({}, newval, updates) : orig;

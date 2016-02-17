@@ -12,14 +12,14 @@ function generateLayout(results, layoutInfo) {
     const mode = layoutInfo.mode || 'auto';
     if (mode === 'auto') {
         if ( results.length === 3 ) {
-            layout = {  east: {index: 0}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px'} };
+            layout = {  east: {index: 0}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px)'} };
         } else if (results.length === 2 ) {
             layout = {east: {index: 0,  defaultSize: '50%'}, west: {index: 1} };
         } else if ( results.length === 1 ) {
             layout = {center: {index: 0,  defaultSize: '50%'}, resize: false };
         }
     } else if ( mode === 'tri') {
-        layout = {  east: {index: 0}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px'} };
+        layout = {  east: {index: 0}, west: {index: 1}, south: {index: 2, defaultSize: 'calc(100% - 300px)'} };
     } else if ( mode === 'sbs') {
         layout = {east: {index: 0,  defaultSize: '50%'}, west: {index: 1} };
     } else if ( mode === 'tb') {

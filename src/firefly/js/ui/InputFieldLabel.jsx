@@ -12,7 +12,10 @@ import React from 'react';
 var InputFieldLabel= function( { label, tooltip, labelStyle, labelWidth=200, } ) {
 
     var currStyle = labelStyle || { display:'inline-block', paddingRight:'4px' };
-    currStyle.width = labelWidth;
+    if (labelWidth > 0) {
+        currStyle.width = labelWidth;
+    }
+
     return (
         <div style={currStyle} title={tooltip} className={'disable-select'} >
             {label}

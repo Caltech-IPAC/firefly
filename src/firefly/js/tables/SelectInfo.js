@@ -14,39 +14,38 @@ import {Table} from './Table.js';
 export class SelectInfo {
     constructor(selectInfo) {
         this.data = selectInfo;
+        this.offset = 0;
 
     }
 
-    selectAll() {
+    setSelectAll(flg) {
         this.data.exceptions.clear();
-        this.data.selectAll = true;
+        this.data.selectAll = flg;
     }
 
-    deselectAll() {
-        this.data.exceptions.clear();
-        this.data.selectAll = false;
-    }
-
-    select(idx) {
-        if (this.data.selectAll) {
-            this.data.exceptions.delete(idx);
+    setRowSelect(idx, flg) {
+        idx = idx + this.offset;
+        if (flg) {
+            if (this.data.selectAll) {
+                this.data.exceptions.delete(idx);
+            } else {
+                this.data.exceptions.add(idx);
+                if (this.data.exceptions.size == this.data.rowCount) {
+                    this.setSelectAll(true);
+                }
+            }
         } else {
-            this.data.exceptions.add(idx);
-            if (this.data.exceptions.size == this.data.rowCount) {
-                this.selectAll();
+            if (this.data.selectAll) {
+                this.data.exceptions.add(idx);
+            } else {
+                this.data.exceptions.delete(idx);
             }
         }
-    }
 
-    deselect(idx) {
-        if (this.data.selectAll) {
-            this.data.exceptions.add(idx);
-        } else {
-            this.data.exceptions.delete(idx);
-        }
     }
 
     isSelected(idx) {
+        idx = idx + this.offset;
         if (this.data.selectAll) {
             return !this.data.exceptions.has(idx);
         } else {
@@ -105,10 +104,13 @@ export class SelectInfo {
      * @param selectAll     boolean. Indicates selectAll mode. defaults to false.
      * @param exceptions    Set. A set of exceptions based on selectAll mode.
      * @param rowCount      int. Total number of rows. defaults to zero.
+     * @param offset        int. All indices passed into this class's funtion will be offsetted by this given value.
      * @returns {SelectInfo}
      */
-    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0} = {}) {
-        return new SelectInfo({selectAll, exceptions, rowCount});
+    static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}, offset) {
+        var si = new SelectInfo({selectAll, exceptions, rowCount});
+        if (offset) si.offset = offset;
+        return si;
     }
 
     /**
