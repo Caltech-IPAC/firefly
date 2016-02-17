@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
 import {debounce, get, isEmpty} from 'lodash';
@@ -160,21 +160,21 @@ export class BasicTable extends React.Component {
 }
 
 BasicTable.propTypes = {
-    columns: React.PropTypes.arrayOf(React.PropTypes.object),
-    data: React.PropTypes.arrayOf(React.PropTypes.array),
-    hlRowIdx: React.PropTypes.number,
-    selectInfo: React.PropTypes.instanceOf(SelectInfo),
-    filterInfo: React.PropTypes.arrayOf(React.PropTypes.string),
-    selectable: React.PropTypes.bool,
-    showUnits: React.PropTypes.bool,
-    width: React.PropTypes.string,
-    height: React.PropTypes.string,
-    tableStore: React.PropTypes.shape({
-        onRowHighlight: React.PropTypes.func,
-        onRowSelect: React.PropTypes.func,
-        onSelectAll: React.PropTypes.func,
-        onSort: React.PropTypes.func,
-        onFilter: React.PropTypes.func
+    columns: PropTypes.arrayOf(PropTypes.object),
+    data: PropTypes.arrayOf(PropTypes.array),
+    hlRowIdx: PropTypes.number,
+    selectInfo: PropTypes.instanceOf(SelectInfo),
+    filterInfo: PropTypes.arrayOf(PropTypes.string),
+    selectable: PropTypes.bool,
+    showUnits: PropTypes.bool,
+    width: PropTypes.string,
+    height: PropTypes.string,
+    tableStore: PropTypes.shape({
+        onRowHighlight: PropTypes.func,
+        onRowSelect: PropTypes.func,
+        onSelectAll: PropTypes.func,
+        onSort: PropTypes.func,
+        onFilter: PropTypes.func
     })
 };
 

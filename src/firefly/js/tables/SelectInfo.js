@@ -25,20 +25,21 @@ export class SelectInfo {
 
     setRowSelect(idx, flg) {
         idx = idx + this.offset;
+        const {selectAll, exceptions, rowCount} = this.data;
         if (flg) {
-            if (this.data.selectAll) {
-                this.data.exceptions.delete(idx);
+            if (selectAll) {
+                exceptions.delete(idx);
             } else {
-                this.data.exceptions.add(idx);
-                if (this.data.exceptions.size == this.data.rowCount) {
+                exceptions.add(idx);
+                if (exceptions.size == rowCount) {
                     this.setSelectAll(true);
                 }
             }
         } else {
-            if (this.data.selectAll) {
-                this.data.exceptions.add(idx);
+            if (selectAll) {
+                exceptions.add(idx);
             } else {
-                this.data.exceptions.delete(idx);
+                exceptions.delete(idx);
             }
         }
 
@@ -46,33 +47,36 @@ export class SelectInfo {
 
     isSelected(idx) {
         idx = idx + this.offset;
-        if (this.data.selectAll) {
-            return !this.data.exceptions.has(idx);
+        const {selectAll, exceptions} = this.data;
+        if (selectAll) {
+            return !exceptions.has(idx);
         } else {
-            return this.data.exceptions.has(idx);
+            return exceptions.has(idx);
         }
     }
 
     getSelected() {
-        if (this.data.selectAll) {
+        const {selectAll, exceptions, rowCount} = this.data;
+        if (selectAll) {
             const all = new Set();
-            for(var i = 0; i < this.data.rowCount; i++) {
-                if (!this.data.exceptions.has(i)) {
+            for(var i = 0; i < rowCount; i++) {
+                if (!exceptions.has(i)) {
                     all.add(i);
                 }
             }
             return all;
         } else {
-            return new Set(this.data.exceptions);
+            return new Set(exceptions);
         }
     }
 
     getSelectedCount() {
-        if (this.data.rowCount < 1) return 0;
-        if (this.data.selectAll) {
-            return this.data.rowCount - this.data.exceptions.size;
+        const {selectAll, exceptions, rowCount} = this.data;
+        if (rowCount < 1) return 0;
+        if (selectAll) {
+            return rowCount - exceptions.size;
         } else {
-            return this.data.exceptions.size;
+            return exceptions.size;
         }
     }
 
