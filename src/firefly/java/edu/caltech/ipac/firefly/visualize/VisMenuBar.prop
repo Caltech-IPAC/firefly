@@ -11,10 +11,37 @@ VisMenuBar.row2.Items =  colorTable stretchQuick LockImageCmd - SelectArea Dista
 stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretch99 stretch98 stretch97 stretch95 \
                      stretch85 stretchSigma stretchSigmaTo30
 
-MarkerToolDD.Items = MarkerTool - FootprintHST - FootprintACS - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIRSPEC FootprintNIS - FootprintJWST - FootprintWFIRST
+MarkerToolDD.Items = MarkerTool \
+                   - FootprintHST \
+                   - FootprintACS FootprintCOS FootprintFGSHST FootprintFOC FootprintFOS FootprintHRS FootprintHSP FootprintNICMOS FootprintSTIS FootprintWFC3 FootprintWFPC FootprintWFPC2 \
+                   - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIRSPEC FootprintNIS \
+                   - FootprintJWST \
+                   - FootprintWFIRST
 
-FootprintMIRI.Title=Add HST/ACS footprint
-FootprintMIRI.ShortDescription= Add a HST/ACS footprint (see help)
+FootprintACS.Title=Add HST/ACS footprint
+FootprintACS.ShortDescription= Add a HST/ACS footprint (see help)
+FootprintCOS.Title=Add HST/COS footprint
+FootprintCOS.ShortDescription= Add a HST/COS footprint (see help)
+FootprintFGSHST.Title=Add HST/FGSHST footprint
+FootprintFGSHST.ShortDescription= Add a HST/FGSHST footprint (see help)
+FootprintFOC.Title=Add HST/FOC footprint
+FootprintFOC.ShortDescription= Add a HST/FOC footprint (see help)
+FootprintFOS.Title=Add HST/FOS footprint
+FootprintFOS.ShortDescription= Add a HST/FOS footprint (see help)
+FootprintHRS.Title=Add HST/HRS footprint
+FootprintHRS.ShortDescription= Add a HST/HRS footprint (see help)
+FootprintHSP.Title=Add HST/HSP footprint
+FootprintHSP.ShortDescription= Add a HST/HSP footprint (see help)
+FootprintNICMOS.Title=Add HST/NICMOS footprint
+FootprintNICMOS.ShortDescription= Add a HST/NICMOS footprint (see help)
+FootprintSTIS.Title=Add HST/STIS footprint
+FootprintSTIS.ShortDescription= Add a HST/STIS footprint (see help)
+FootprintWFC3.Title=Add HST/WFC3 footprint
+FootprintWFC3.ShortDescription= Add a HST/WFC3 footprint (see help)
+FootprintWFPC.Title=Add HST/WFPC footprint
+FootprintWFPC.ShortDescription= Add a HST/WFPC footprint (see help)
+FootprintWFPC2.Title=Add HST/WFPC2 footprint
+FootprintWFPC2.ShortDescription= Add a HST/WFPC2 footprint (see help)
 
 FootprintMIRI.Title=Add JWST/MIRI prelim. footprint
 FootprintMIRI.ShortDescription= Add a JWST/MIRI preliminary footprint (see help)

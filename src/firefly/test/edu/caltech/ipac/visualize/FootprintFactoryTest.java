@@ -1,33 +1,12 @@
 package edu.caltech.ipac.visualize;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
-import edu.caltech.ipac.firefly.data.form.PositionFieldDef.ClientPositionResolverHelper;
-import edu.caltech.ipac.firefly.server.visualize.CtxControl;
-import edu.caltech.ipac.firefly.server.visualize.PlotClientCtx;
-import edu.caltech.ipac.firefly.server.visualize.WebPlotFactory;
-import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory;
-import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil.CentralPointRetval;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
@@ -35,10 +14,19 @@ import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionLines;
-import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 public class FootprintFactoryTest {
 	private static FootprintFactory footprintFactory;
@@ -151,14 +139,23 @@ public class FootprintFactoryTest {
 
 		String stcFromFootprint = FootprintFactory.getStcFromFootprint(FOOTPRINT.JWST);
 		//System.out.println(stcFromFootprint);
-		String vals[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
+		String valJwst[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
+        // Yi: added new HST instrument:
+        String valHst[] = new String[] {"ACS", "COS", "FGSHST", "FOC", "FOS", "HRS", "HSP", "NICMOS", "STIS", "WFC3", "WFPC", "WFPC2"};
 		FOOTPRINT[] fp = FOOTPRINT.values();
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
 			// System.out.println(fp[f].name());
-			for (int i = 0; i < values.length; i++) {
-				assertEquals(values[i].name(), vals[i]);
-			}
+            if (fp[f] == FOOTPRINT.JWST){
+                for (int i = 0; i < valJwst.length; i++) {
+                    assertEquals(values[i].name(), valJwst[i]);
+                }
+            } else if (fp[f] == FOOTPRINT.HST) {
+                // Yi: test the new instruments in HST
+                for (int i = 0; i < valHst.length; i++) {
+                    assertEquals(values[i].name(), valHst[i]);
+                }
+            }
 		}
 	}
 

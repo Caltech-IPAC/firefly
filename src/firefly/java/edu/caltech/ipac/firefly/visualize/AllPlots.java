@@ -17,7 +17,43 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
-import edu.caltech.ipac.firefly.commands.*;
+import edu.caltech.ipac.firefly.commands.ActivePointToolCmd;
+import edu.caltech.ipac.firefly.commands.AreaStatCmd;
+import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
+import edu.caltech.ipac.firefly.commands.ChangeColorCmd;
+import edu.caltech.ipac.firefly.commands.CropCmd;
+import edu.caltech.ipac.firefly.commands.DataFilterInCmd;
+import edu.caltech.ipac.firefly.commands.DataSelectCmd;
+import edu.caltech.ipac.firefly.commands.DataUnSelectCmd;
+import edu.caltech.ipac.firefly.commands.DistanceToolCmd;
+import edu.caltech.ipac.firefly.commands.ExpandCmd;
+import edu.caltech.ipac.firefly.commands.FitsDownloadCmd;
+import edu.caltech.ipac.firefly.commands.FitsHeaderCmd;
+import edu.caltech.ipac.firefly.commands.FlipImageCmd;
+import edu.caltech.ipac.firefly.commands.FlipLeftCmd;
+import edu.caltech.ipac.firefly.commands.FlipRightCmd;
+import edu.caltech.ipac.firefly.commands.GridCmd;
+import edu.caltech.ipac.firefly.commands.ImageSelectCmd;
+import edu.caltech.ipac.firefly.commands.IrsaCatalogCmd;
+import edu.caltech.ipac.firefly.commands.JwstFootprintCmd;
+import edu.caltech.ipac.firefly.commands.LayerCmd;
+import edu.caltech.ipac.firefly.commands.LoadDS9RegionCmd;
+import edu.caltech.ipac.firefly.commands.LockImageCmd;
+import edu.caltech.ipac.firefly.commands.LockRelatedImagesCmd;
+import edu.caltech.ipac.firefly.commands.MarkerToolCmd;
+import edu.caltech.ipac.firefly.commands.MaskOverlayCmd;
+import edu.caltech.ipac.firefly.commands.NorthArrowCmd;
+import edu.caltech.ipac.firefly.commands.QuickStretchCmd;
+import edu.caltech.ipac.firefly.commands.RestoreCmd;
+import edu.caltech.ipac.firefly.commands.RotateCmd;
+import edu.caltech.ipac.firefly.commands.RotateNorthCmd;
+import edu.caltech.ipac.firefly.commands.SelectAreaCmd;
+import edu.caltech.ipac.firefly.commands.ShowColorOpsCmd;
+import edu.caltech.ipac.firefly.commands.ZoomDownCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFillCmd;
+import edu.caltech.ipac.firefly.commands.ZoomFitCmd;
+import edu.caltech.ipac.firefly.commands.ZoomOriginalCmd;
+import edu.caltech.ipac.firefly.commands.ZoomUpCmd;
 import edu.caltech.ipac.firefly.core.Application;
 import edu.caltech.ipac.firefly.core.GeneralCommand;
 import edu.caltech.ipac.firefly.core.MenuGeneratorV2;
@@ -30,7 +66,11 @@ import edu.caltech.ipac.firefly.ui.panels.Toolbar;
 import edu.caltech.ipac.firefly.util.Dimension;
 import edu.caltech.ipac.firefly.util.PropFile;
 import edu.caltech.ipac.firefly.util.WebAppProperties;
-import edu.caltech.ipac.firefly.util.event.*;
+import edu.caltech.ipac.firefly.util.event.HasWebEventManager;
+import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.firefly.util.event.WebEvent;
+import edu.caltech.ipac.firefly.util.event.WebEventListener;
+import edu.caltech.ipac.firefly.util.event.WebEventManager;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -39,7 +79,12 @@ import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: roby
@@ -813,6 +858,7 @@ public class AllPlots implements HasWebEventManager {
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);//.values();
 			commandMap.put(JwstFootprintCmd.CommandName + fp[f].name(), new JwstFootprintCmd(fp[f]));
+            //Yi added HST footprints:
 			//if (fp[f].equals(FOOTPRINT.JWST)) {
             if ( (fp[f].equals(FOOTPRINT.JWST)) || (fp[f].equals(FOOTPRINT.HST)) ) {
 				for (int i = 0; i < values.length; i++) {
