@@ -15,6 +15,7 @@ import {CCUtil} from './CsysConverter.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
+import ZoomUntil from './ZoomUtil.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
