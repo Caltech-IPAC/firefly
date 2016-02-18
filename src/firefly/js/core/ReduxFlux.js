@@ -74,7 +74,7 @@ actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionC
 
 actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
-actionCreators.set(TablesUiCntlr.TBL_UI_GOTO_PAGE, TablesUiCntlr.gotoPage);
+actionCreators.set(TablesCntlr.TBL_HIGHLIGHT_ROW, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);

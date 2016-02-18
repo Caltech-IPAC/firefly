@@ -12,18 +12,18 @@ import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 
-export function ExpandedSingleView({allPlots}) {
-    if (allPlots.expandedMode===ExpandType.COLLAPSE) return <div></div>;
-    var pv= getActivePlotView(allPlots);
+export function ExpandedSingleView({visRoot}) {
+    if (visRoot.expandedMode===ExpandType.COLLAPSE) return <div></div>;
+    var pv= getActivePlotView(visRoot);
 
     if (!primePlot(pv)) return <div></div>;
 
 
     return (
         <div className='ExpandedSingleView' style={{flex:'auto', position:'relative'}}>
-            <ExpandedTools  allPlots={allPlots}/>
+            <ExpandedTools  visRoot={visRoot}/>
             <div style={{position:'absolute', top:60,left:0,right:0,bottom:0}}>
-                <ImageViewer plotId={pv.plotId}/>
+               <ImageViewer plotId={pv.plotId}/>
             </div>
 
 
@@ -35,6 +35,6 @@ export function ExpandedSingleView({allPlots}) {
 //{makeInlineTitle(visRoot,pv)}
 
 ExpandedSingleView.propTypes= {
-    allPlots : PropTypes.object.isRequired
+    visRoot : PropTypes.object.isRequired
 };
 

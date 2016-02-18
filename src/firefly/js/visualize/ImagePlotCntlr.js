@@ -6,22 +6,20 @@ import Enum from 'enum';
 import update from 'react-addons-update';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
-import {makeZoomAction as zoomActionCreator,doDispatchZoom} from './ZoomUtil.js';
+import {makeZoomAction as zoomActionCreator,UserZoomTypes} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
-        makeStretchChangeAction as stretchChangeActionCreator,
-        makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
+	makeStretchChangeAction as stretchChangeActionCreator,
+	makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import {
-    isActivePlotView,
-    getPlotViewById,
-    expandedPlotViewAry,
-    getActivePlotView,
-    applyToOnePvOrGroup } from './PlotViewUtil.js';
+	isActivePlotView,
+	getPlotViewById,
+	expandedPlotViewAry,
+	getActivePlotView,
+	applyToOnePvOrGroup } from './PlotViewUtil.js';
 
-import {doDispatchZoomLocking} from './ZoomUtil.js';
-import CoordinateSys from './CoordSys.js';
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 const WcsMatchMode= new Enum (['NorthAndCenter', 'ByUserPositionAndZoom']);
@@ -312,14 +310,22 @@ function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
 
 /**
  *
- * @param plotId
- * @param {UserZoomTypes} zoomType
- * @param maxCheck
- * @param forceDelay
- * @param zoomLockingEnabled
+ * @param {string} plotId
+ * @param {UserZoomTypes} userZoomType
+ * @param {boolean} maxCheck
+ * @param {boolean} zoomLockingEnabled
+ * @param {boolean} forceDelay
+ * @param {number} level
+ * @param {ActionScope} actionScope
  */
-export function dispatchZoom(plotId,zoomType,maxCheck=true, forceDelay= false, zoomLockingEnabled=false) {
-    doDispatchZoom(plotId, zoomType, maxCheck, zoomLockingEnabled, forceDelay);
+export function dispatchZoom(plotId, userZoomType, maxCheck= true,
+                               zoomLockingEnabled=false, forceDelay=false, level,
+                               actionScope=ActionScope.GROUP ) {
+    flux.process({
+        type: ZOOM_IMAGE,
+        payload :{
+            plotId, userZoomType, actionScope, maxCheck, zoomLockingEnabled, forceDelay, level
+        }});
 }
 
 /**
@@ -329,7 +335,11 @@ export function dispatchZoom(plotId,zoomType,maxCheck=true, forceDelay= false, z
  * @param zoomLockingType
  */
 export function dispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType) {
-    doDispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType);
+    flux.process({
+        type: ZOOM_LOCKING,
+        payload :{
+            plotId, zoomLockingEnabled, zoomLockingType
+        }});
 }
 
 
@@ -360,6 +370,13 @@ export function dispatchChangeExpandedMode(expandedMode) {
     const enable= expandedMode!==ExpandType.COLLAPSE;
     visRoot().plotViewAry.forEach( (pv) =>
                dispatchZoomLocking(pv.plotId,enable,pv.plotViewCtx.zoomLockingType) );
+
+    if (!enable) {
+        visRoot().plotViewAry.forEach( (pv) => {
+            const zl= pv.plotViewCtx.lastCollapsedZoomLevel;
+            if (zl>0) dispatchZoom(pv.plotId,UserZoomTypes.LEVEL,false,false,false,zl,ActionScope.SINGLE);
+        });
+    }
 }
 
 
@@ -543,7 +560,8 @@ function changeExpandedMode(state,action) {
 
     const {plotViewAry}= state;
     const changes= {expandedMode,singleAutoPlay:false};
-    if (isExpanded(expandedMode)) {
+
+    if (isExpanded(expandedMode)) { // we are currently expanded, just changing modes, e.g. grid to single
         changes.previousExpandedMode= expandedMode;
     }
 

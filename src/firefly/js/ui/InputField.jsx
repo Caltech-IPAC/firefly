@@ -55,7 +55,7 @@ export class InputField extends React.Component {
 InputField.propTypes = {
     fieldKey: React.PropTypes.string,
     label: React.PropTypes.string,
-    labelWidth: React.PropTypes.string,
+    labelWidth: React.PropTypes.number,
     validator: React.PropTypes.func,
     tooltip: React.PropTypes.string,
     visible: React.PropTypes.bool,
@@ -66,7 +66,7 @@ InputField.propTypes = {
 };
 
 InputField.defaultProps = {
-    labelWidth: '',
+    labelWidth: 0,
     value: '',
     inline: false,
     visible: true

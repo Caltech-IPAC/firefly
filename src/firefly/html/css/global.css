@@ -195,3 +195,35 @@ img, html {
     border-right: 4px solid rgba(0, 0, 0, 0.5);
 }
 /* react-split-pane style <END> */
+
+[role="toolbar"] {
+    display: flex;
+    justify-content: space-between;
+    height:30px;
+}
+
+[role="toolbar"] .group {
+    background-color: #a5a5a5;
+    display: flex;
+    align-items: center;
+}
+
+[role="toolbar"] button {
+    width: 24px;
+    height: 24px;
+    border: none;
+    font-size: 12px;
+    color: white;
+    padding: 0;
+    border-radius: 2px;
+    background: none;
+}
+
+[role="toolbar"] button:active {
+    background-color: #ffffff;
+}
+
+[role="toolbar"] button:hover {
+    background-color: #949494;
+    cursor: pointer;
+}

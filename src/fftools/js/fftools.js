@@ -151,7 +151,7 @@ const App = React.createClass({
                                              <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={tblId}/> }
-                            tables = {<TablePanel key='results-tables' tbl_id={tblId} selectable={true}/> }
+                            tables = {tblId && <TablePanel key='results-tables' tbl_id={tblId} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
                     </main>

@@ -1,7 +1,8 @@
 .tablePanel__checkbox {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
 }
 
 .fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
@@ -9,15 +10,39 @@
 }
 
 .TablePanel__wrapper {
+    position: relative;
+    width: 100%;
     background-color: #a5a5a5;
     border: 1px solid #8c8c8c;
     padding: 0 3px 3px 3px;
+}
+.TablePanel__table {
+    background-color: white;
+    position: absolute;
+    top: 29px;
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+}
+
+.TablePanel__header {
+    white-space: nowrap;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 button.paging_bar {
     height: 16px;
     width: 16px;
-    margin-top: 3px;
+    margin-top: 1px;
+}
+
+button.tablepanel {
+    height: 24px;
+    width: 24px;
 }
 
 button.paging_bar.first {
@@ -36,6 +61,40 @@ button.paging_bar.previous {
     background-image: url("/images/icons-2014/16x16_Backward.png");
 }
 
+button.tablepanel.options {
+    background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+}
+
+.TablePanelOptions {
+    position: absolute;
+    padding: 5px 7px;
+    width: 205px;
+    top: 1px;
+    bottom: 1px;
+    right: 0;
+    background-color: beige;
+    border-left: 1px solid #CCC;
+    z-index: 100;
+}
+
+.TablePanelOptions__button {
+    width: 50px;
+    height: 20px;
+    border: none;
+    font-size: 12px;
+    color: #69e;
+    padding: 0;
+    border-radius: 2px;
+    background: none;
+}
+.TablePanelOptions__button:active {
+    background-color: #ffffff;
+}
+
+.TablePanelOptions__button:hover {
+    background-color: #e6e6e6;
+    cursor: pointer;
+}
 
 
 /** below are taken from FixedDataTable with some modifications */
@@ -77,8 +136,8 @@ button.paging_bar.previous {
 
 .public_fixedDataTable_header, .public_fixedDataTable_header .public_fixedDataTableCell_main {
     background-color: #f6f7f8;
-    background-image: -webkit-linear-gradient(#fff, #efefef);
-    background-image: linear-gradient(#fff, #efefef);
+    background-image: -webkit-linear-gradient(#fff, #dcdcdc);
+    background-image: linear-gradient(#fff, #dcdcdc);
     text-align: center;
 }
 
@@ -96,7 +155,7 @@ button.paging_bar.previous {
 }
 
 .public_fixedDataTable_horizontalScrollbar .public_Scrollbar_mainHorizontal {
-    background-color: #fff
+    background-color: #fff;
 }
 
 .public_fixedDataTableCell_main {
@@ -122,7 +181,7 @@ button.paging_bar.previous {
 }
 
 .public_fixedDataTableRow_main {
-    background-color: #fff
+    /*background-color: #fff*/
 }
 
 .public_fixedDataTableRow_highlighted, .public_fixedDataTableRow_highlighted .public_fixedDataTableCell_main {
@@ -348,12 +407,13 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 .fixedDataTableLayout_rowsContainer {
     overflow: hidden;
     position: relative;
-    background-color: whitesmoke;
+    /*background-color: whitesmoke;*/
 }
 
 .fixedDataTableLayout_horizontalScrollbar {
     bottom: 0;
-    position: absolute
+    position: absolute;
+    z-index: 1;
 }
 
 .fixedDataTableRowLayout_main {
