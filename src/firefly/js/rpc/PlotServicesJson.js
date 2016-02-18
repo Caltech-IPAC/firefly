@@ -140,8 +140,19 @@ export function callRecomputeStretch(state, stretchDataAry) {
 
 
 
-function flipImageOnY(stateAry) {
-    return doService(doJsonP(), ServerParams.FLIP_Y, makeParamsWithStateAry(stateAry));
+export function callFlipImageOnY(stateAry) {
+    var state= stateAry[0]; //todo support state array, work must be done on server
+    //var params =  makeParamsWithStateAry(stateAry,[
+    //    {name: ServerParams.JSON_DEEP, value: true},
+    //]);
+
+    var params= {
+        [ServerParams.STATE]: state.toJson(),
+        [ServerParams.JSON_DEEP]: true
+    };
+
+
+    return doService(doJsonP(), ServerParams.FLIP_Y, params);
 }
 
 

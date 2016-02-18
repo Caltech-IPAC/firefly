@@ -3,22 +3,26 @@
  */
 
 import Enum from 'enum';
-import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr, {visRoot,ActionScope} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
 import {
     callChangeColor,
     callRotateNorth,
     callRotateToAngle,
+    callFlipImageOnY,
     callRecomputeStretch} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import RangeValues from './RangeValues.js';
 import {isPlotNorth} from './VisUtil.js';
-import WebPlot, {PlotAttribute} from './WebPlot.js';
+import {WebPlot} from './WebPlot.js';
 
 export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 
+
+//=======================================================================
+//-------------------- Action Creators ----------------------------------
+//=======================================================================
 
 /**
  * color bar Action creator
@@ -26,15 +30,16 @@ export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
  * @return {Function}
  */
 export function makeColorChangeAction(rawAction) {
-    return (dispatcher) => {
+    return (dispatcher,getState) => {
+        var store= getState()[IMAGE_PLOT_KEY];
         var {plotId,cbarId}= rawAction.payload;
-        var pv= getPlotViewById(visRoot(),plotId);
+        var pv= getPlotViewById(store,plotId);
         if (!pv) return;
 
 
         if (!primePlot(pv).plotState.isThreeColor()) {
-            doColorChange(dispatcher,plotId,cbarId);
-            operateOnOthersInGroup(visRoot(),pv, (pv) => doColorChange(dispatcher,pv.plotId,cbarId));
+            doColorChange(dispatcher,store,plotId,cbarId);
+            operateOnOthersInGroup(store,pv, (pv) => doColorChange(dispatcher,store,pv.plotId,cbarId));
         }
         else {
             dispatcher( {
@@ -52,12 +57,13 @@ export function makeColorChangeAction(rawAction) {
  * @return {Function}
  */
 export function makeStretchChangeAction(rawAction) {
-    return (dispatcher) => {
+    return (dispatcher,getState) => {
+        var store= getState()[IMAGE_PLOT_KEY];
         var {plotId,rangeValues}= rawAction.payload;
-        var pv= getPlotViewById(visRoot(),plotId);
+        var pv= getPlotViewById(store,plotId);
         if (!pv || !rangeValues) return;
-        doStretch(dispatcher,plotId,rangeValues);
-        operateOnOthersInGroup(visRoot(),pv, (pv) => doStretch(dispatcher,pv.plotId,rangeValues));
+        doStretch(dispatcher,store,plotId,rangeValues);
+        operateOnOthersInGroup(store,pv, (pv) => doStretch(dispatcher,store,pv.plotId,rangeValues));
     };
 }
 
@@ -67,9 +73,10 @@ export function makeStretchChangeAction(rawAction) {
  * @return {Function}
  */
 export function makeRotateAction(rawAction) {
-    return (dispatcher) => {
+    return (dispatcher,getState) => {
+        var store= getState()[IMAGE_PLOT_KEY];
         var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
-        var plotView= getPlotViewById(visRoot(),plotId);
+        var plotView= getPlotViewById(store,plotId);
         if (!plotView || !rotateType) return;
         var p= primePlot(plotView);
         if (!p) return;
@@ -83,9 +90,34 @@ export function makeRotateAction(rawAction) {
 
         doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
         if (actionScope===ActionScope.GROUP) {
-            operateOnOthersInGroup(visRoot(),plotView, (pv) =>
+            operateOnOthersInGroup(store,plotView, (pv) =>
                  doRotate(dispatcher,pv,rotateType,angle,newZoomLevel));
         }
+    };
+}
+
+
+/**
+ * @param rawAction
+ * @param store
+ * @return {Function}
+ */
+export function makeFlipAction(rawAction) {
+    return (dispatcher,getState) => {
+        var store= getState()[IMAGE_PLOT_KEY];
+        var { plotId, isY,actionScope }= rawAction.payload;
+        var plotView= getPlotViewById(store,plotId);
+        if (!plotView) return;
+        if (!isY) {
+           console.log('flip: x axis is still a todo');
+            return;
+        }
+        var p= primePlot(plotView);
+        if (!p) return;
+
+        doFlip(dispatcher,store,plotView,isY);
+        operateOnOthersInGroup(store,plotView, (pv) =>
+            doFlip(dispatcher,store,pv,isY));
     };
 }
 
@@ -93,9 +125,48 @@ export function makeRotateAction(rawAction) {
 
 
 
-function doStretch(dispatcher,plotId,rangeValues) {
+//=======================================================================
+//-------------------- End Action Creators -----------------------------
+//=======================================================================
 
-    var plot= primePlot(visRoot(),plotId);
+
+
+
+function doFlip(dispatcher,store,pv,isY) {
+
+    if (!isY) {
+        console.log('flip: x axis is still a todo');
+        return;
+    }
+
+    var p;
+    if (isY) {
+        p= callFlipImageOnY(getPlotStateAry(pv));
+    }
+    else {
+        console.log('flip: x axis is still a todo');
+        return;
+    }
+
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.FLIP,
+                                                         payload: {plotId, plotAry, overlayPlotViews, isY}
+                                                      });
+
+    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.FLIP_FAIL,
+                              payload: {plotId, error: Error('flip: payload failed')}
+                            });
+
+    p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
+        .catch ( (e) => { dispatcher( { type: ImagePlotCntlr.FLIP_FAIL, payload: {plotId:pv.plotId, error:e} } );
+            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
+        });
+}
+
+
+
+function doStretch(dispatcher,store,plotId,rangeValues) {
+
+    var plot= primePlot(store,plotId);
     var stretchDataAry= plot.plotState.getBands().map( (band) => {
         return {
             band : band.key,
@@ -104,7 +175,8 @@ function doStretch(dispatcher,plotId,rangeValues) {
         };
     } );
     callRecomputeStretch(plot.plotState,stretchDataAry)
-        .then( (wpResult) => processStretchResult(dispatcher,plotId,wpResult) )
+        .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
+                                   ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.STRETCH_CHANGE_FAIL) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, rangeValues, error:e} } );
             logError(`plot error, stretch change, plotId: ${plot.plotId}`, e);
@@ -113,11 +185,12 @@ function doStretch(dispatcher,plotId,rangeValues) {
 
 
 
-function doColorChange(dispatcher,plotId,cbarId) {
+function doColorChange(dispatcher,store,plotId,cbarId) {
 
-    var plot= primePlot(visRoot(),plotId);
+    var plot= primePlot(store,plotId);
     callChangeColor(plot.plotState,cbarId)
-        .then( (wpResult) => processColorResult(dispatcher,plotId,cbarId,wpResult) )
+        .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
+                                      ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.COLOR_CHANGE_FAIL) )
         .catch ( (e) => {
             dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
             logError(`plot error, color change, plotId: ${plot.plotId}`, e);
@@ -125,8 +198,6 @@ function doColorChange(dispatcher,plotId,cbarId) {
 }
 
 function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
-
-    //var plot= primePlot(visRoot(),plotId);
 
     var p;
 
@@ -143,21 +214,36 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
     }
 
 
-    p.then( (wpResult) => processRotateResult(dispatcher,wpResult,pv,rotateType) )
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.ROTATE,
+        payload: {plotId, plotAry, overlayPlotViews, rotateType}
+    });
+
+    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.ROTATE_FAIL,
+        payload: {plotId, error: Error('rotate: payload failed')}
+    });
+
+    p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.ROTATE_FAIL, payload: {plotId, error:e} } );
+            dispatcher( { type: ImagePlotCntlr.ROTATE_FAIL, payload: {plotId:pv.plotId, error:e} } );
             logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
         });
 }
 
 
-
-function processRotateResult(dispatcher, result, pv, rotateType) {
+/**
+ *
+ * @param dispatcher
+ * @param result
+ * @param pv
+ * @param makeSuccessAction
+ * @param makeFailAction
+ */
+function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailAction) {
     var successSent = false;
     if (result.success) {
-        var resultAry = result[WebPlotResult.RESULT_ARY];
-        if (resultAry[0].success) {
+        var resultAry= getResultAry(result);
 
+        if (resultAry[0].success) {
             var plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
 
             var overlayPlotViews = [];
@@ -166,20 +252,25 @@ function processRotateResult(dispatcher, result, pv, rotateType) {
                 var plot = WebPlot.makeWebPlotData(pv.plotId, r.data[WebPlotResult.PLOT_CREATE], true);
                 overlayPlotViews[i - 1] = {plot};
             });
-            dispatcher({
-                type: ImagePlotCntlr.ROTATE,
-                payload: {plotId: pv.plotId, plotAry, overlayPlotViews, rotateType}
-            });
+
+            dispatcher( makeSuccessAction(pv.plotId, plotAry, overlayPlotViews));
             dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry: [pv.plotId]}});
             successSent = true;
 
         }
-        if (!successSent) {
-            dispatcher({
-                type: ImagePlotCntlr.ZOOM_IMAGE_FAIL,
-                payload: {plotId: pv.plotId, error: Error('payload failed')}
-            });
-        }
+    }
+    if (!successSent) dispatcher( makeFailAction(pv.plotId));
+}
+
+function getResultAry(result) {
+    if (result.PlotCreate) {
+        return [{success:true, data:{PlotCreate:result.PlotCreate}}];
+    }
+    else if (result[WebPlotResult.RESULT_ARY]) {
+        return result[WebPlotResult.RESULT_ARY];
+    }
+    else {
+        throw Error('Could not find PlotCreate data');
     }
 }
 
@@ -191,57 +282,28 @@ function makePlot(wpInit,pv) {
     return plot;
 }
 
-
-
-
 /**
  *
  * @param dispatcher
  * @param plotId
- * @param cbarId
- * @param {object} result
+ * @param result
+ * @param succActionType
+ * @param failActionType
  */
-function processColorResult(dispatcher, plotId, cbarId, result) {
-    var successSent= false;
-    if (result.success) {
-            dispatcher( {
-                type: ImagePlotCntlr.COLOR_CHANGE,
-                payload: {
-                    plotId,
-                     primaryStateJson : result[WebPlotResult.PLOT_STATE],
-                     primaryTiles : result[WebPlotResult.PLOT_IMAGES]
-                }});
-            dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
-            successSent= true;
-    }
-    if (!successSent) {
-        dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL,
-            payload: {plotId, cbarId, error:Error('payload failed, color change')} } );
-    }
-}
-
-/**
- *
- * @param dispatcher
- * @param plotId
- * @param {object} result
- */
-function processStretchResult(dispatcher, plotId, result) {
-    var successSent= false;
+function processPlotUpdate(dispatcher, plotId, result, succActionType, failActionType) {
     if (result.success) {
         dispatcher( {
-            type: ImagePlotCntlr.STRETCH_CHANGE,
+            type: succActionType,
             payload: {
                 plotId,
                 primaryStateJson : result[WebPlotResult.PLOT_STATE],
                 primaryTiles : result[WebPlotResult.PLOT_IMAGES]
             }});
         dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
-        successSent= true;
     }
-    if (!successSent) {
-        dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL,
-            payload: {plotId, error:Error('payload failed, stretch change')} } );
+    else {
+        dispatcher( { type: failActionType,
+            payload: {plotId, error:Error('payload failed: '+ failActionType)} } );
     }
 }
 
