@@ -6,10 +6,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
@@ -17,8 +13,12 @@ import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+
 /**
- * The class footprint define combination of shapes acting as multiple markes
+ * The class footprint define combination of shapes acting as multiple markers
  * grouped
  * 
  * @author Emmanuel Joliet

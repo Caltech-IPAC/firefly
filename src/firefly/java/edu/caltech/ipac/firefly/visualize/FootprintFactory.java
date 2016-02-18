@@ -6,19 +6,17 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-
-import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil.CentralPointRetval;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionAnnulus;
 import edu.caltech.ipac.util.dd.RegionLines;
 import edu.caltech.ipac.util.dd.RegionValue;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The class footprint define combination STC regions based on a reference target at 0,0 result of 
@@ -75,6 +73,12 @@ public class FootprintFactory  {
 		NIRSPEC(FOOTPRINT.JWST," POLYGON    0.12323870  -0.14307715   0.08351106  -0.09825257   0.04008055  -0.13705249   0.07901661  -0.18294088   0.12323870  -0.14307715 "
 				+ " POLYGON    0.17122726  -0.10106889   0.13027200  -0.05699150   0.08659438  -0.09551925   0.12639146  -0.14028271   0.17122726  -0.10106889 "
 				+ " POLYGON    0.14853299  -0.12195218   0.10709987  -0.07638871   0.06203886  -0.11632755   0.10235822  -0.16286597   0.14853299  -0.12195218 "),
+
+        ACS(FOOTPRINT.HST,
+                " POLYGON  359.97238333   0.00081394 360.02865542  -0.00128328 360.02952492  -0.02919432 359.97406669  -0.02642214 359.97238333   0.00081394 "
+                        + " POLYGON  359.97100831   0.02968053 360.02784703   0.02832773 360.02866931  -0.00054995 359.97240278   0.00150838 359.97100831   0.02968053 "
+                        + " POLYGON  359.98926934   0.05775262 359.98125825   0.05858874 359.98123603   0.06564980 359.98931378   0.06482758 359.98926934   0.05775262 "
+                        + " POLYGON  359.98989990   0.05643596 359.98040826   0.05732763 359.98034714   0.06588870 359.98994989   0.06495813 359.98989990   0.05643596 "),
 		
 		//WFIRST(FOOTPRINT.WFIRST, wfirst),	
 		//HST(FOOTPRINT.HST, hst);	
