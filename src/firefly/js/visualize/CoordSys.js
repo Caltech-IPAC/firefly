@@ -6,9 +6,9 @@
 
 const EQUATORIAL_J = 0;
 const EQUATORIAL_B = 1;
-const GALACTIC     = 2;
+const GALACTIC_JSYS     = 2;
 const ECLIPTIC_B   = 3;
-const SUPERGALACTIC   = 4;
+const SUPERGALACTIC_JSYS   = 4;
 const ECLIPTIC_J   = 13;
 
 
@@ -28,8 +28,8 @@ var CoordinateSys = function () {
     var EQ_J2000 = init('EQ_J2000', true, EQUATORIAL_J, 2000 );
     var EQ_B2000 = init('EQ_B2000', true, EQUATORIAL_B, 2000);
     var EQ_B1950 = init('EQ_B1950', true, EQUATORIAL_B, 1950);
-    var GALACTIC = init('GALACTIC', false, GALACTIC, 2000);
-    var SUPERGALACTIC = init('SUPERGALACTIC', false, SUPERGALACTIC, 2000 );
+    var GALACTIC = init('GALACTIC', false, GALACTIC_JSYS, 2000);
+    var SUPERGALACTIC = init('SUPERGALACTIC', false, SUPERGALACTIC_JSYS, 2000 );
     var ECL_J2000 = init('EC_J2000', false, ECLIPTIC_J, 2000);
     var ECL_B1950 = init('EC_B1950', false, ECLIPTIC_B, 2000);
     var PIXEL = init('PIXEL', false,-999, 0);
