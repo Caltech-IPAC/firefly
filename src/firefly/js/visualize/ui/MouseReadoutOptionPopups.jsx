@@ -132,15 +132,15 @@ function doDispatch( request,  fieldKey){
 		switch (fieldKey){
 			case 'readout1':
 				
-                console.log('dispatch readout1 '+ newRadioValue);
+               // console.log('dispatch readout1 '+ newRadioValue);
 				dispatchChangeMouseReadoutReadout1(	newRadioValue);
 				break;
 			case 'readout2':
-				console.log('dispatch readout2 '+ newRadioValue);
+				//console.log('dispatch readout2 '+ newRadioValue);
 				dispatchChangeMouseReadoutReadout2(	newRadioValue);
 				break;
 			case 'pixelSize':
-				console.log('dispatch pixelSize '+ newRadioValue);
+				//console.log('dispatch pixelSize '+ newRadioValue);
 				 dispatchChangeMouseReadoutPixel(newRadioValue);
 				break;
 		}

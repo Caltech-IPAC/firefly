@@ -45,42 +45,40 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 	var plot= primePlot(plotView);
 
-	var leftColumn = {width: 180, display: 'inline-block'};
+	var leftColumn = {width: 120, display: 'inline-block'};
 
 	var title = plotView.plots[0].title;
-	var middleColumn = {width: 200, display: 'inline-block'};
+	var middleColumn = {width: 250, display: 'inline-block'};
 	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-	var rightColumn = {paddingLeft: '10px',  display: 'inline-block'};
+	var rightColumn = {paddingLeft: '35px',  display: 'inline-block'};
 	return (
 			<div style={ rS}>
                <div>
+				  <div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+					  <div style={ textStyle} > {getLabel(visRoot.pixelSize) }</div>
+					  { showReadout(plot, mouseState,visRoot.pixelSize)}
+				  </div>
 
-				 <div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					 <div style={ textStyle} > {getLabel(visRoot.pixelSize) }
-					 </div>
-				 </div>
-
-				 <div style={middleColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
-					 <div style={ textStyle} > { getLabel( visRoot.mouseReadout1) }
-					 </div>
+				  <div style={middleColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
+					 <div style={ textStyle} > { getLabel( visRoot.mouseReadout1) } </div>
 					 {showReadout(plot, mouseState,visRoot.mouseReadout1)}
-				 </div>
-				   <div style={rightColumn}> {title} </div>
+				  </div>
+
+				  <div style={rightColumn}> {title}  </div>
               </div>
 
 			  <div>
-				 <div style={leftColumn} > {showReadout(plot, mouseState,visRoot.flux ) } </div>
-				 <div style={ middleColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
+				  <div style={leftColumn} > {showReadout(plot, mouseState,visRoot.flux ) } </div>
+				  <div style={ middleColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
 					 <div style={ textStyle} >{getLabel( visRoot.mouseReadout2)} </div>
 					 {showReadout(plot, mouseState, visRoot.mouseReadout2)}
-				 </div>
+				  </div>
 				  <div style={rightColumn} title='Click on an image to lock the display at that point.'   >
-
 					  <input type='checkbox' name='aLock' value='lock'
 							 onChange = { (request) => setClickLock(plot,mouseState , request) } />
 					  Lock by click
-					  </div>
-		    </div>
+				  </div>
+		      </div>
 
 		  </div>
 
@@ -162,7 +160,7 @@ function showReadout(plot, mouseState, readoutValue){
 	}
 
 
-	if (readoutValue==='FLUX_VALUE'){
+	if (readoutValue==='Flux'){
 		//result='Flux';
 		//TODO get flux
 		return 'Flux';
@@ -183,7 +181,7 @@ function showReadout(plot, mouseState, readoutValue){
 		var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
 		var hmsLat = CoordUtil.convertLatToString(lat, coordinate);
 
-        console.log(coordinate.toString());
+       // console.log(coordinate.toString());
 		switch (coordinate) {
 			case CoordinateSys.EQ_J2000:
 				if (type === 'hms') {
@@ -200,18 +198,18 @@ function showReadout(plot, mouseState, readoutValue){
 				break;
 			case CoordinateSys.GALACTIC:
 			case CoordinateSys.SUPERGALACTIC:
-			case CoordinateSys.EQ_B1950:
+
 				var lonShort = lon.toString().substring(0, 10);
 				var latShort = lat.toString().substring(0, 10);
 				result= ' ' + lonShort + ',  '+latShort;
 				break;
-			//case CoordinateSys.EQ_B1950:
-			//	result=' ';// + lon + ', '+lat;
-			//	break;
+			case CoordinateSys.EQ_B1950:
+				result = ' ' +  hmsLon + ',  ' + hmsLat;
+				break;
 
 			case CoordinateSys.PIXEL:
 			case CoordinateSys.SCREEN_PIXEL:
-				result = ' '+ ptInCoord.toString();
+				result = ' '+ ptInCoord.getLon();//.toString();
 				break;
 			default:
 				result='';

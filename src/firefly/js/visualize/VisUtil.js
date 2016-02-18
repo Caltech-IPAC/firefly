@@ -15,7 +15,7 @@ import {CCUtil} from './CsysConverter.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
-import ZoomUntil from './ZoomUtil.js';
+import ZoomUtil from './ZoomUtil.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -93,6 +93,9 @@ function convert(wpt, to= CoordinateSys.EQ_J2000) {
     var from = wpt.getCoordSys();
     if (!to || from==to) return wpt;
 
+    if (to===CoordinateSys.GALACTIC){
+        console.log('debug');
+    }
     const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
     const ll = window.ffgwt.astro.CoordConv.doConv(
                           from.getJsys(), from.getEquinox(),
@@ -375,7 +378,7 @@ export function isPlotNorth(plot) {
 }
 
 const getPossibleZoomLevels= function() {
-        return ZoomUtil._levels;
+        return ZoomUtil.levels;
 };
 
 
