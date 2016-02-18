@@ -176,10 +176,8 @@ function showReadout(plot, mouseState, readoutValue){
 
 
 	if (coordinate){
-		//var ptInCoord= VisUtil.convert(wpt, coordinate);
-		//TODO remove the line below: it added for testing purpose
-		var ptInCoord=wpt;
-		//
+		var ptInCoord= VisUtil.convert(wpt, coordinate);
+
 		var lon = ptInCoord.getLon();
 		var lat = ptInCoord.getLat();
 		var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
@@ -213,8 +211,6 @@ function showReadout(plot, mouseState, readoutValue){
 
 			case CoordinateSys.PIXEL:
 			case CoordinateSys.SCREEN_PIXEL:
-
-
 				result = ' '+ ptInCoord.toString();
 				break;
 			default:

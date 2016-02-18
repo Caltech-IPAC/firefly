@@ -98,7 +98,7 @@ function convert(wpt, to= CoordinateSys.EQ_J2000) {
                           from.getJsys(), from.getEquinox(),
                           wpt.getLon(), wpt.getLat(),
                           to.getJsys(), to.getEquinox(), tobs);
-    return makeWorldPt(ll.getLon(), ll.getLat(), to);
+    return makeWorldPt(ll._lon, ll._lat, to);
 }
 
 function convertToJ2000(wpt) { return convert(wpt); }
