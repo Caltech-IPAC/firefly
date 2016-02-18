@@ -83,6 +83,7 @@ public class ServerCommandAccess {
 
     private static void initCommand() {
         _cmdMap.put(ServerParams.FILE_FLUX,    new VisServerCommands.FileFluxCmd());
+        _cmdMap.put(ServerParams.FILE_FLUX_JSON, new VisServerCommands.FileFluxCmdJson());
         _cmdMap.put(ServerParams.CREATE_PLOT,  new VisServerCommands.GetWebPlotCmd());
         _cmdMap.put(ServerParams.ZOOM,         new VisServerCommands.ZoomCmd());
         _cmdMap.put(ServerParams.STRETCH,      new VisServerCommands.StretchCmd());

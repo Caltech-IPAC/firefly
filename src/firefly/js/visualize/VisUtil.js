@@ -84,8 +84,8 @@ const computeSimpleDistance= function(p1, p2) {
 /**
  * Convert from one coordinate system to another.
  *
- * @param wpt the world point to convert
- * @param to  CoordSys, the coordinate system to convert to
+ * @param {object} wpt the world point to convert
+ * @param {object} to CoordSys, the coordinate system to convert to
  * @return WorldPt the world point in the new coordinate system
  */
 function convert(wpt, to= CoordinateSys.EQ_J2000) {
@@ -97,7 +97,7 @@ function convert(wpt, to= CoordinateSys.EQ_J2000) {
                           from.getJsys(), from.getEquinox(),
                           wpt.getLon(), wpt.getLat(),
                           to.getJsys(), to.getEquinox(), tobs);
-    return makeWorldPt(ll.getLon(), ll.getLat(), to);
+    return makeWorldPt(ll.lon, ll.lat, to);
 }
 
 function convertToJ2000(wpt) { return convert(wpt); }
