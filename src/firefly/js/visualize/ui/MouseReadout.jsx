@@ -30,6 +30,7 @@ var rS= {
 };
 
 const EMPTY= <div style={rS}></div>;
+const EMPTY_READOUT='';
 const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
 /**
  *
@@ -46,21 +47,15 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 	var plot= primePlot(plotView);
 	if (!plot) return'';
-	if (isBlankImage(plot)) return'';
+	if (isBlankImage(plot)) return EMPTY;
 
 	//TODO check why this does not work
-	const hideReadout= renderEmpty(plotView,plot, mouseState, visRoot);
+	//const hideReadout= renderEmpty(plotView,plot, mouseState, visRoot);
 
-	if (!magMouse.includes(mouseState.mouseState)) hideReadout;
+	if (!magMouse.includes(mouseState.mouseState)) EMPTY; //hideReadout;
 
 	var spt= mouseState.screenPt;
-	if (!spt) return hideReadout;
-
-
-	var {width:screenW, height:screenH }= plot.screenSize;
-	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
-		return hideReadout;
-	}
+	if (!spt) return EMPTY;//hideReadout;
 
 
 
@@ -208,17 +203,17 @@ function setClickLock( plot,mouseState, request) {
  */
 function showReadout(plot, mouseState, readoutValue){
 
-	if (!plot) return EMPTY;
-	if (isBlankImage(plot)) return EMPTY;
+	if (!plot) return EMPTY_READOUT;
+	if (isBlankImage(plot)) return EMPTY_READOUT;
 
 	var spt= mouseState.screenPt;
-	if (!spt) return EMPTY;
+	if (!spt) return EMPTY_READOUT;
 
 
 
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
-		return EMPTY;
+		return EMPTY_READOUT;
 	}
 
 	if (readoutValue==='Flux'){
