@@ -147,8 +147,7 @@ export default {
     stretchChangeActionCreator, rotateActionCreator, flipActionCreator,
     plotImageActionCreator, autoPlayActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
-    ANY_CHANGE, IMAGE_PLOT_KEY,
-    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    ANY_CHANGE, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     ROTATE_START, ROTATE, ROTATE_FAIL,
     FLIP_START, FLIP, FLIP_FAIL,
@@ -231,7 +230,7 @@ export function dispatchFlip(plotId, isY=true) {
 export function dispatchCrop(plotId, imagePt1, imagePt2, cropMultiAll) {
     //todo: crop is not hooked up yet
     console.log('crop: todo');
-    flux.process({ type: ROTATE,
+    flux.process({ type: CROP,
         payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
 }
 
