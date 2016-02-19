@@ -20,6 +20,10 @@ import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
 import VisUtil from '../VisUtil.js';
 
+import debounce from 'lodash/debounce'; //TEST CODE
+import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
+
+
 var rS= {
 	border: '1px solid white',
 	width: 500,
@@ -293,5 +297,4 @@ function showDialog(fieldKey, radioValue) {
 	    showMouseReadoutOptionDialog(fieldKey, radioValue);
 
 }
-
 

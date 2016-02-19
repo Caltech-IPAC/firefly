@@ -69,6 +69,7 @@ actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
 actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.colorChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.stretchChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.ROTATE, ImagePlotCntlr.rotateActionCreator);
+actionCreators.set(ImagePlotCntlr.FLIP, ImagePlotCntlr.flipActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, ImagePlotCntlr.autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 

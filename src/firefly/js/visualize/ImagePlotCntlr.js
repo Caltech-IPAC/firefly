@@ -9,6 +9,7 @@ import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,UserZoomTypes} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
 	makeStretchChangeAction as stretchChangeActionCreator,
+	makeFlipAction as flipActionCreator,
 	makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
@@ -19,6 +20,7 @@ import {
 	expandedPlotViewAry,
 	getActivePlotView,
 	applyToOnePvOrGroup } from './PlotViewUtil.js';
+
 
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -63,14 +65,14 @@ const ROTATE= 'ImagePlotCntlr.RotateChange';
 const ROTATE_FAIL= 'ImagePlotCntlr.RotateChangeFail';
 
 
-const FLIP_IMAGE_START= 'ImagePlotCntlr.FlipImageStart';
-const FLIP_IMAGE= 'ImagePlotCntlr.FlipImage';
-const FLIP_IMAGE_FAIL= 'ImagePlotCntlr.FlipImageFail';
+const FLIP_START= 'ImagePlotCntlr.FlipStart';
+const FLIP= 'ImagePlotCntlr.Flip';
+const FLIP_FAIL= 'ImagePlotCntlr.FlipFail';
 
 
-const CROP_IMAGE_START= 'ImagePlotCntlr.CropImageStart';
-const CROP_IMAGE= 'ImagePlotCntlr.CropImage';
-const CROP_IMAGE_FAIL= 'ImagePlotCntlr.CropImageFail';
+const CROP_START= 'ImagePlotCntlr.CropStart';
+const CROP= 'ImagePlotCntlr.Crop';
+const CROP_FAIL= 'ImagePlotCntlr.CropFail';
 
 const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
@@ -107,7 +109,7 @@ const CHANGE_MOUSE_READOUT_PIXEL= 'ImagePlotCntlr.changeMouseReadoutModeReadoutP
  */
 const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
 
-const IMAGE_PLOT_KEY= 'allPlots';
+export const IMAGE_PLOT_KEY= 'allPlots';
 
 
 
@@ -163,13 +165,14 @@ export default {
     dispatchProcessScroll,
     dispatch3ColorPlotImage,
     zoomActionCreator, colorChangeActionCreator,
-    stretchChangeActionCreator, rotateActionCreator,
+    stretchChangeActionCreator, rotateActionCreator, flipActionCreator,
     plotImageActionCreator, autoPlayActionCreator,
     dispatchChangeActivePlotView,dispatchAttributeChange,
-    ANY_CHANGE, IMAGE_PLOT_KEY,
-    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    ANY_CHANGE, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     ROTATE_START, ROTATE, ROTATE_FAIL,
+    FLIP_START, FLIP, FLIP_FAIL,
+    CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
@@ -224,6 +227,34 @@ export function dispatchRotate(plotId, rotateType, angle, actionScope=ActionScop
     flux.process({ type: ROTATE,
         payload: { plotId, angle, rotateType, actionScope, newZoomLevel:0 }});
 }
+
+
+/**
+ * Flip
+ *
+ * @param {string} plotId
+ * @param {boolean} isY
+ */
+export function dispatchFlip(plotId, isY=true) {
+    flux.process({ type: FLIP,
+        payload: { plotId, isY}});
+}
+
+/**
+ * Crop
+ *
+ * @param {string} plotId
+ * @param imagePt1
+ * @param imagePt2
+ * @param cropMultiAll
+ */
+export function dispatchCrop(plotId, imagePt1, imagePt2, cropMultiAll) {
+    //todo: crop is not hooked up yet
+    console.log('crop: todo');
+    flux.process({ type: CROP,
+        payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
+}
+
 
 /**
  * Move the scroll point on this plotId and possible others if it is grouped.
@@ -460,6 +491,12 @@ function reducer(state=initState(), action={}) {
         case ROTATE_START:
         case ROTATE_FAIL:
         case ROTATE:
+        case FLIP_START:
+        case FLIP_FAIL:
+        case FLIP:
+        case CROP_START:
+        case CROP_FAIL:
+        case CROP:
             retState= HandlePlotCreation.reducer(state,action);
             break;
 

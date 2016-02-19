@@ -21,6 +21,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +63,46 @@ public class VisServerCommands {
             return false;
         }
     }
+
+
+    public static class FileFluxCmdJson extends ServerCommandAccess.ServCommand {
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+
+
+            SrvParam sp= new SrvParam(paramMap);
+            PlotState state= sp.getState();
+            ImagePt pt = sp.getRequiredImagePt("pt");
+
+            FileAndHeaderInfo fahAry[];
+            List<FileAndHeaderInfo> list = new ArrayList<FileAndHeaderInfo>(3);
+            for(Band b : state.getBands()) {
+                list.add(state.getFileAndHeaderInfo(b));
+            }
+            fahAry = list.toArray(new FileAndHeaderInfo[list.size()]);
+
+            String[] res = VisServerOps.getFileFlux(fahAry, pt);
+
+            JSONObject obj= new JSONObject();
+            obj.put("JSON", true);
+            obj.put("success", true);
+
+            int cnt=0;
+            JSONObject data= new JSONObject();
+            for(Band b : state.getBands()) {
+                data.put(b.toString(), res[cnt++]);
+            }
+            data.put("success", true);
+
+            JSONArray wrapperAry= new JSONArray();
+            obj.put("data", data);
+            wrapperAry.add(obj);
+
+            return wrapperAry.toJSONString();
+        }
+
+    }
+
+
 
     public static class GetWebPlotCmd extends ServerCommandAccess.ServCommand {
 

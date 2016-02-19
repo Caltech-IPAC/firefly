@@ -9,7 +9,7 @@ import {getActivePlotView,
     getPlotViewById,
     isDrawLayerAttached,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchRotate, ActionScope} from '../ImagePlotCntlr.js';
+import {dispatchRotate, dispatchFlip, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotChangeTask.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -30,6 +30,11 @@ import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 
 
+//===================================================
+//--------------- Icons --------------------------------
+//===================================================
+
+
 import LAYER_ICON from 'html/images/icons-2014/TurnOnLayers.png';
 import DIST_ON from 'html/images/icons-2014/Measurement-ON.png';
 import DIST_OFF from 'html/images/icons-2014/Measurement.png';
@@ -48,6 +53,8 @@ import DS9_REGION from 'html/images/icons-2014/DS9.png';
 import MASK from 'html/images/mask_28x28.png';
 import CATALOG from 'html/images/catalog_28x28.png';
 import SAVE from 'html/images/icons-2014/Save.png';
+import FLIP_Y from 'html/images/icons-2014/Mirror.png';
+import RECENTER from 'html/images/icons-2014/RecenterImage.png';
 
 import COLOR from 'html/images/icons-2014/28x28_ColorPalette.png';
 import STRETCH from 'html/images/icons-2014/28x28_Log.png';
@@ -108,9 +115,19 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
             <DropDownToolbarButton icon={STRETCH}
                                    tip='Quickly change the background image stretch'
                                    enabled={enabled} horizontal={true}
-                                   visible={true}
+                                   visible={mi.stretchQuick}
                                    dropDown={<StretchDropDownView plotView={pv}/>} />
 
+            <ToolbarButton icon={FLIP_Y} tip='Flip the image on the Y Axis'
+                           enabled={enabled} horizontal={true}
+                           visible={mi.flipImageY}
+                           onClick={() => flipY(pv)}/>
+
+            <ToolbarButton icon={RECENTER} tip='Re-center image on last query or center of image'
+                           enabled={enabled} horizontal={true}
+                           visible={mi.recenter}
+                           todo={true}
+                           onClick={() => recenter(pv)}/>
 
 
             <ToolbarHorizontalSeparator/>
@@ -247,6 +264,16 @@ const tipStyle= {
 function doRotateNorth(pv,rotate) {
     dispatchRotate(pv.plotId, rotate?RotateType.NORTH:RotateType.UNROTATE ,-1, ActionScope.GROUP);
 }
+
+function recenter(pv) {
+    console.log('todo: recenter');
+}
+
+function flipY(pv) {
+    dispatchFlip(pv.plotId,true);
+}
+
+
 
 function showToolTip(toolTip) {
     return <div style={tipStyle}>{toolTip}</div>;

@@ -90,6 +90,7 @@ const ServerParams = {
 
         // commands
         FILE_FLUX : 'CmdFileFlux',
+        FILE_FLUX_JSON : 'CmdFileFluxJson',
         CREATE_PLOT : 'CmdCreatePlot',
         CREATE_PLOT_GROUP : 'CmdCreatePlotGroup',
         ZOOM : 'CmdZoom',
