@@ -8,19 +8,18 @@ import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {makeZoomAction as zoomActionCreator,UserZoomTypes} from './ZoomUtil.js';
 import {makeColorChangeAction as colorChangeActionCreator,
-	makeStretchChangeAction as stretchChangeActionCreator,
-	makeFlipAction as flipActionCreator,
-	makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
+        makeStretchChangeAction as stretchChangeActionCreator,
+        makeFlipAction as flipActionCreator,
+        makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import HandlePlotChange from './reducer/HandlePlotChange.js';
 import HandlePlotCreation from './reducer/HandlePlotCreation.js';
 import {
-	isActivePlotView,
-	getPlotViewById,
-	expandedPlotViewAry,
-	getActivePlotView,
-	applyToOnePvOrGroup } from './PlotViewUtil.js';
-
+    isActivePlotView,
+    getPlotViewById,
+    expandedPlotViewAry,
+    getActivePlotView,
+    applyToOnePvOrGroup } from './PlotViewUtil.js';
 
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -79,7 +78,6 @@ const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
 
 
 const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
-
 const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
@@ -473,7 +471,6 @@ function autoPlayActionCreator(rawAction) {
         }
    };
 }
-
 
 //======================================== Reducer =============================
 //======================================== Reducer =============================
