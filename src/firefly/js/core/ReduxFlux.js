@@ -11,7 +11,7 @@ import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../visualize/ImagePlotCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
@@ -47,7 +47,7 @@ const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
     [VisMouseCntlr.VIS_MOUSE_KEY]: VisMouseCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
-    [ImagePlotCntlr.IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
+    [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,
     [ExternalAccessCntlr.EXTERNAL_ACCESS_KEY]: ExternalAccessCntlr.reducer,
     [TableStatsCntlr.TBLSTATS_DATA_KEY]: TableStatsCntlr.reducer,
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
