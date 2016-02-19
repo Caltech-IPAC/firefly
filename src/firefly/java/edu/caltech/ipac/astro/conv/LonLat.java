@@ -3,23 +3,28 @@
  */
 package edu.caltech.ipac.astro.conv;
 
-    public class LonLat {
-       private double _lon;
-       private double _lat;
+import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsType;
 
-       public LonLat(double lon, double lat) {
-          _lon = lon;
-          _lat = lat;
-          }
+@JsExport
+@JsType
+public class LonLat {
+    public double lon;
+    public double lat;
 
-       public double getLon() {return _lon; }
-       public double getLat() {return _lat; }
-
-
-        @Override
-        public String toString() {
-            return "lon: "+_lon+", lat: "+_lat;
-        }
+    public LonLat(double lon, double lat) {
+        this.lon = lon;
+        this.lat = lat;
     }
+
+    public double getLon() {return this.lon; }
+    public double getLat() {return this.lat; }
+
+
+    @Override
+    public String toString() {
+        return "lon: "+this.lon+", lat: "+this.lat;
+    }
+}
 
 

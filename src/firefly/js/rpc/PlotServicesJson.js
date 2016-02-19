@@ -146,6 +146,16 @@ function flipImageOnY(stateAry) {
 
 
 
+export function callGetFileFlux(state, pt) {
+    var params= {
+        [ServerParams.STATE]: state.toJson(),
+        [ServerParams.PT]: pt.toString(),
+        [ServerParams.JSON_DEEP]: true
+    };
+    return doService(doJsonP(), ServerParams.FILE_FLUX_JSON, params);
+}
+
+
 
 const getWebPlotGroup= function(requestList, progressKey) {
     //todo

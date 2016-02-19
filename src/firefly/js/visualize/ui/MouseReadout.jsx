@@ -18,6 +18,8 @@ import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
+import debounce from 'lodash/debounce'; //TEST CODE
+import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
 
 var rS= {
 	border: '1px solid white',
@@ -107,6 +109,7 @@ function showReadout(plot, mouseState, coordinate){
 	else {
 		//TODO readout for pixel size
 	}
+	testFlux(plot, mouseState.imagePt); //TEST CODE
     return result;
 }
 function showDialog(fieldKey) {
@@ -131,3 +134,14 @@ MouseReadout.propTypes= {
 	size: React.PropTypes.number.isRequired,
 	mouseState: React.PropTypes.object
 };
+
+
+const testFlux = debounce( (plot,iPt) =>  {
+	callGetFileFlux(plot.plotState, iPt)
+			.then( (result) => {
+				console.log(result);
+			})
+			.catch ( (e) => {
+				console.log(`flux error: ${plot.plotId}`, e);
+			});
+},200);
