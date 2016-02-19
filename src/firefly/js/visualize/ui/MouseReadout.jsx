@@ -30,7 +30,7 @@ var rS= {
 };
 
 const EMPTY= <div style={rS}></div>;
-
+const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
 /**
  *
  * @param visRoot
@@ -43,12 +43,31 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 	if (!plotView || !mouseState) return EMPTY;
 
-	var plot= primePlot(plotView);
 
-	var leftColumn = {width: 120, display: 'inline-block'};
+	var plot= primePlot(plotView);
+	if (!plot) return'';
+	if (isBlankImage(plot)) return'';
+
+	//TODO check why this does not work
+	const hideReadout= renderEmpty(plotView,plot, mouseState, visRoot);
+
+	if (!magMouse.includes(mouseState.mouseState)) hideReadout;
+
+	var spt= mouseState.screenPt;
+	if (!spt) return hideReadout;
+
+
+	var {width:screenW, height:screenH }= plot.screenSize;
+	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
+		return hideReadout;
+	}
+
+
+
+	var leftColumn = {width: 140, display: 'inline-block'};
 
 	var title = plotView.plots[0].title;
-	var middleColumn = {width: 250, display: 'inline-block'};
+	var middleColumn = {width: 230, display: 'inline-block'};
 	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
 	var rightColumn = {paddingLeft: '35px',  display: 'inline-block'};
 	return (
@@ -91,6 +110,46 @@ MouseReadout.propTypes= {
 	mouseState:React.PropTypes.object.isRequired,
 };
 
+function renderEmpty(plotView,plot, mouseState, visRoot){
+	var leftColumn = {width: 120, display: 'inline-block'};
+
+	var title = plotView.plots[0].title;
+	var middleColumn = {width: 250, display: 'inline-block'};
+	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+	var rightColumn = {paddingLeft: '35px',  display: 'inline-block'};
+	return (
+		<div style={ rS}>
+			<div>
+				<div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+					<div style={ textStyle} > {getLabel(visRoot.pixelSize) }</div>
+					{EMPTY}
+				</div>
+
+				<div style={middleColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
+					<div style={ textStyle} > { getLabel( visRoot.mouseReadout1) } </div>
+					{EMPTY}
+				</div>
+
+				<div style={rightColumn}> {title}  </div>
+			</div>
+
+			<div>
+				<div style={leftColumn} >  </div>
+				<div style={ middleColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
+					<div style={ textStyle} >{getLabel( visRoot.mouseReadout2)} </div>
+					{EMPTY}
+				</div>
+				<div style={rightColumn} title='Click on an image to lock the display at that point.'   >
+					<input type='checkbox' name='aLock' value='lock'
+						   onChange = { (request) => setClickLock(plot,mouseState , request) } />
+					Lock by click
+				</div>
+			</div>
+
+		</div>
+
+	);
+}
 function getLabel(radioValue){
 	var gLabel;
 	switch(radioValue){
@@ -139,6 +198,7 @@ function setClickLock( plot,mouseState, request) {
 
 
 }
+
 /**
  * Display the mouse readout based on the chosen coordinate
  * @param plot
@@ -147,18 +207,19 @@ function setClickLock( plot,mouseState, request) {
  * @returns {*}
  */
 function showReadout(plot, mouseState, readoutValue){
-	if (!plot) return'';
-	if (isBlankImage(plot)) return'';
+
+	if (!plot) return EMPTY;
+	if (isBlankImage(plot)) return EMPTY;
 
 	var spt= mouseState.screenPt;
-    if (!spt) return '';
+	if (!spt) return EMPTY;
+
 
 
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
-		return '';
+		return EMPTY;
 	}
-
 
 	if (readoutValue==='Flux'){
 		//result='Flux';
@@ -208,8 +269,14 @@ function showReadout(plot, mouseState, readoutValue){
 				break;
 
 			case CoordinateSys.PIXEL:
+				var pt =plot.projection.getPixelScaleArcSec();
+				var ptShort = pt.toString().substring(0, 5);
+				result = ' '+ ptShort+'"';
+				break;
 			case CoordinateSys.SCREEN_PIXEL:
-				result = ' '+ ptInCoord.getLon();//.toString();
+				var pt =plot.projection.getPixelScaleArcSec()/plot.zoomFactor;
+				var ptShort = pt.toString().substring(0, 5);
+				result = ' '+ ptShort+'"';
 				break;
 			default:
 				result='';
