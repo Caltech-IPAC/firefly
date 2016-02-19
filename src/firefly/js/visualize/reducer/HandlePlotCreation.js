@@ -40,9 +40,18 @@ function reducer(state, action) {
             break;
         case Cntlr.ROTATE_START  :
         case Cntlr.ROTATE_FAIL  :
+        case Cntlr.FLIP_START:
+        case Cntlr.FLIP_FAIL:
+        case Cntlr.CROP_START:
+        case Cntlr.CROP_FAIL:
             break;
         case Cntlr.ROTATE  :
             plotViewAry= addPlot(state,action);
+            break;
+        case Cntlr.FLIP:
+            plotViewAry= addPlot(state,action);
+            break;
+        case Cntlr.CROP: //todo- crop
             break;
         default:
             break;
