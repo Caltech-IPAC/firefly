@@ -7,14 +7,14 @@
  *   this.plot, this.plotSate are the class global variables
  *
  */
-import React from 'react';
+import React, {PropTypes} from 'react;
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import MouseState from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {isBlankImage} from '../WebPlot.js';
 import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-import {showMouseReadoutOptionDialog, getCoordinateMap} from './MouseReadoutOptionPopups.jsx';
+import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
@@ -36,6 +36,22 @@ var rS= {
 const EMPTY= <div style={rS}></div>;
 const EMPTY_READOUT='';
 const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
+const coordinateMap = {
+	galactic:CoordinateSys.GALACTIC,
+	eqb1950:CoordinateSys.EQ_B1950,
+	pixelSize:CoordinateSys.PIXEL,
+	sPixelSize: CoordinateSys.SCREEN_PIXEL
+};
+const labelMap = {
+	eqj2000hms:'EQ-J2000:',
+	eqj2000DCM:'EQ-J2000:',
+	galactic:'Gal:',
+	eqb1950:'Eq-B1950:',
+	fitsIP:'Image Pixel:',
+	pixelSize:'Pixel Size:',
+	sPixelSize:'Screen Pixel Size:'
+};
+
 /**
  *
  * @param visRoot
@@ -73,12 +89,12 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 			<div style={ rS}>
                <div>
 				  <div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					  <div style={ textStyle} > {getLabel(visRoot.pixelSize) }</div>
+					  <div style={ textStyle} > {labelMap[visRoot.pixelSize] }</div>
 					  { showReadout(plot, mouseState,visRoot.pixelSize)}
 				  </div>
 
-				  <div style={middleColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
-					 <div style={ textStyle} > { getLabel( visRoot.mouseReadout1) } </div>
+				  <div style={middleColumn} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+					 <div style={ textStyle} > { labelMap[visRoot.mouseReadout1] } </div>
 					 {showReadout(plot, mouseState,visRoot.mouseReadout1)}
 				  </div>
 
@@ -87,8 +103,8 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 			  <div>
 				  <div style={leftColumn} > {showReadout(plot, mouseState,visRoot.flux ) } </div>
-				  <div style={ middleColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
-					 <div style={ textStyle} >{getLabel( visRoot.mouseReadout2)} </div>
+				  <div style={ middleColumn}  onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+					 <div style={ textStyle} >{labelMap[ visRoot.mouseReadout2] } </div>
 					 {showReadout(plot, mouseState, visRoot.mouseReadout2)}
 				  </div>
 				  <div style={rightColumn} title='Click on an image to lock the display at that point.'   >
@@ -104,11 +120,36 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 }
 
 MouseReadout.propTypes= {
-	visRoot:React.PropTypes.object.isRequired,
-	plotView: React.PropTypes.object,
-	mouseState:React.PropTypes.object.isRequired,
+	visRoot:   PropTypes.object.isRequired,
+	plotView:  PropTypes.object,
+	mouseState: PropTypes.object.isRequired,
 };
 
+
+/**
+ *
+ * This method map the value in coordinate option popup to its value
+ * @param coordinateRadioValue : the value in the radio button
+ * @returns {{coordinate: *, type: *}}
+ */
+function getCoordinateMap(coordinateRadioValue){
+	var coordinate;
+	var type;
+	if (coordinateRadioValue ==='eqj2000hms'){
+		coordinate = CoordinateSys.EQ_J2000;
+		type = 'hms';
+	}
+	else if (coordinateRadioValue ==='eqj2000DCM'){
+		coordinate = CoordinateSys.EQ_J2000;
+		type = 'decimal';
+	}
+	else{
+		coordinate = coordinateMap[coordinateRadioValue];
+		//if coordinate is not define, assign it as below
+		if (!coordinate) coordinate=CoordinateSys.UNDEFINED;
+	}
+	return {coordinate, type};
+}
 function renderEmpty(plotView,plot, mouseState, visRoot){
 	var leftColumn = {width: 120, display: 'inline-block'};
 
@@ -120,12 +161,12 @@ function renderEmpty(plotView,plot, mouseState, visRoot){
 		<div style={ rS}>
 			<div>
 				<div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					<div style={ textStyle} > {getLabel(visRoot.pixelSize) }</div>
+					<div style={ textStyle} > {labelMap[visRoot.pixelSize] }</div>
 					{EMPTY}
 				</div>
 
-				<div style={middleColumn} onClick={ () => showDialog('readout1' ,visRoot.mouseReadout1)}>
-					<div style={ textStyle} > { getLabel( visRoot.mouseReadout1) } </div>
+				<div style={middleColumn} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+					<div style={ textStyle} > { labelMap[ visRoot.mouseReadout1] } </div>
 					{EMPTY}
 				</div>
 
@@ -134,8 +175,8 @@ function renderEmpty(plotView,plot, mouseState, visRoot){
 
 			<div>
 				<div style={leftColumn} >  </div>
-				<div style={ middleColumn}  onClick={ () => showDialog('readout2' ,visRoot.mouseReadout2)}>
-					<div style={ textStyle} >{getLabel( visRoot.mouseReadout2)} </div>
+				<div style={ middleColumn}  onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+					<div style={ textStyle} >{labelMap[visRoot.mouseReadout2] } </div>
 					{EMPTY}
 				</div>
 				<div style={rightColumn} title='Click on an image to lock the display at that point.'   >
@@ -149,31 +190,7 @@ function renderEmpty(plotView,plot, mouseState, visRoot){
 
 	);
 }
-function getLabel(radioValue){
-	var gLabel;
-	switch(radioValue){
-		case 'eqj2000hms':
-		case 'eqj2000DCM':
-			gLabel='EQ-J2000:';
-			break;
-		case 'galactic':
-			gLabel='Gal:';
-			break;
-		case 'eqb1950':
-			gLabel='Eq-B1950:';
-			break;
-		case 'fitsIP':
-			gLabel='Image Pixel:';
-			break;
-		case 'pixelSize':
-			gLabel='Pixel Size:';
-			break;
-		case 'sPixelSize':
-			gLabel='Screen Pixel Size:';
-			break;
-	}
-    return gLabel;
-}
+
 /**
  * set the image lock
  * @param plot

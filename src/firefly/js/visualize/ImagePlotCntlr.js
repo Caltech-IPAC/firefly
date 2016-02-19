@@ -410,22 +410,23 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
 
-export function dispatchChangeMouseReadoutReadout1( newRadioValue) {
+export function dispatchChangeMouseReadout(type, newRadioValue) {
 
-    flux.process({type: CHANGE_MOUSE_READOUT_READOUT1, payload: {newRadioValue }});
+
+    if (type==='mouseReadout1'){
+        flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {newRadioValue} });
+
+    }
+    else if (type==='mouseReadout2'){
+        flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {newRadioValue} });
+
+    }
+    else if (type=='pixelSize'){
+        flux.process({ type: CHANGE_MOUSE_READOUT_PIXEL, payload: { newRadioValue} });
+    }
+
 }
 
-
-export function dispatchChangeMouseReadoutReadout2(newRadioValue) {
-    flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {newRadioValue} });
-
-}
-
-
-export function dispatchChangeMouseReadoutPixel(readoutPixel) {
-    flux.process({ type: CHANGE_MOUSE_READOUT_PIXEL, payload: {readoutPixel} });
-
-}
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 
@@ -547,6 +548,8 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 
+
+
 function changeMouseReadoutReadout1(state, action) {
 
     var payload = action.payload;
@@ -568,8 +571,8 @@ function changeMouseReadoutReadout2(state, action){
 
 function changeMouseReadoutPixel(state, action){
     var payload = action.payload;
-    var newReadoutPixel = payload.readoutPixel;
-    var oldReadoutPixel  = state. pixelSize;
+    var newReadoutPixel = payload.newRadioValue;
+    var oldReadoutPixel  = state.pixelSize;
     if (newReadoutPixel  ===oldReadoutPixel ) return state;
     return Object.assign({}, state, {pixelSize:newReadoutPixel});
 
