@@ -8,6 +8,8 @@ import Resizable from 'react-component-resizable';
 import {debounce, get, isEmpty} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
+import {FilterInfo} from '../FilterInfo.js';
+import {InputField} from '../../ui/InputField.jsx';
 
 import './TablePanel.css';
 
@@ -21,11 +23,23 @@ const TextCell = ({rowIndex, data, col}) => {
     );
 };
 
-const HeaderCell = ({col, showUnits}) => {
+const HeaderCell = ({col, showUnits, showFilters, filterInfo, onChange}) => {
+
     return (
         <div title={col.title || col.name} className='TablePanel__header'>
             <div>{col.name}</div>
             {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
+            {showFilters && <InputField
+                                validator={FilterInfo.validator}
+                                fieldKey={col.name}
+                                tooltip = {'Enter a valid filter string here'}
+                                value = {filterInfo.getFilter(col.name)}
+                                onChange = {onChange}
+                                actOn={['blur','enter']}
+                                showWarning={false}
+                                width={'100%'}
+                            />
+            }
         </div>
     );
 };
@@ -43,15 +57,23 @@ function makeColWidth(columns, data, showUnits) {
     }, {});
 }
 
-function makeColumns(columns, columnWidths, data, selectable, showUnits, selectInfo, tableStore) {
+function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore) {
     if (!columns) return false;
+
+    const onChange = ({fieldKey, valid, value}) => {
+        if (valid && !filterInfo.isEqual(fieldKey, value)) {
+            filterInfo.setFilter(fieldKey, value);
+            tableStore.onFilter && tableStore.onFilter(filterInfo.serialize());
+        }
+    };
+
     var colsEl = columns.map((col, idx) => {
         if (col.visibility !== 'show') return false;
         return (
             <Column
                 key={col.name}
                 columnKey={col.name}
-                header={<HeaderCell col={col} showUnits={showUnits}/>}
+                header={<HeaderCell {...{col, showUnits, showFilters, filterInfo, onChange}} />}
                 cell={<TextCell data={data} col={idx} />}
                 fixed={false}
                 width={columnWidths[col.name]}
@@ -134,16 +156,19 @@ export class BasicTable extends React.Component {
     }
 
     render() {
-        const {columns, data, hlRowIdx, selectable, showUnits, selectInfo, tableStore, width, height} = this.props;
+        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore, width, height} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         if (isEmpty(columns)) return false;
-        var style = {width, height};
 
+        var style = {width, height};
+        const filterInfoCls = FilterInfo.parse(filterInfo);
+
+        const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
             <Resizable id='table-resizer' style={style} onResize={this.onResize()}>
                 <Table
                     rowHeight={20}
-                    headerHeight={ showUnits ? 30 : 25}
+                    headerHeight={headerHeight}
                     rowsCount={data.length}
                     isColumnResizing={false}
                     onColumnResizeEndCallback={this.onColumnResizeEndCallback}
@@ -152,8 +177,9 @@ export class BasicTable extends React.Component {
                     scrollToRow={hlRowIdx}
                     width={widthPx}
                     height={heightPx}>
-                    {makeColumns(columns, columnWidths, data, selectable, showUnits, selectInfo, tableStore)}
+                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, tableStore)}
                 </Table>
+                {isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
             </Resizable>
         );
     }
@@ -164,9 +190,10 @@ BasicTable.propTypes = {
     data: PropTypes.arrayOf(PropTypes.array),
     hlRowIdx: PropTypes.number,
     selectInfo: PropTypes.instanceOf(SelectInfo),
-    filterInfo: PropTypes.arrayOf(PropTypes.string),
+    filterInfo: PropTypes.string,
     selectable: PropTypes.bool,
     showUnits: PropTypes.bool,
+    showFilters: PropTypes.bool,
     width: PropTypes.string,
     height: PropTypes.string,
     tableStore: PropTypes.shape({
@@ -181,6 +208,7 @@ BasicTable.propTypes = {
 BasicTable.defaultProps = {
     selectable: false,
     showUnits: false,
+    showFilters: false,
     width: '100%',
     height: '100%'
 };

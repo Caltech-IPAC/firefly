@@ -41,6 +41,7 @@ function computeWarningXY(warnIcon) {
 }
 
 const ICON_SPACE_STYLE= {
+    verticalAlign: 'middle',
     paddingLeft: 3,
     width: 16,
     height: 16,
@@ -89,21 +90,26 @@ export class InputFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,labelWidth,value,style,valid,size,onChange}= this.props;
+        var {visible,label,tooltip,labelWidth,value,style,valid,size,onChange, onBlur, onKeyPress, showWarning, message, width}= this.props;
         if (!visible) return null;
+        if (width) style = Object.assign({}, style, {width: '100%', boxSizing: 'border-box'});
         return (
-            <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'} }>
-                <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/>
+            <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block', width} }>
+                {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
                 <input style={Object.assign({display:'inline-block'}, style)}
                        className={computeStyle(valid,hasFocus)}
                        onChange={(ev) => onChange ? onChange(ev) : null}
                        onFocus={ () => !hasFocus ? this.setState({hasFocus:true, infoPopup:false}) : ''}
-                       onBlur={ () => this.setState({hasFocus:false, infoPopup:false})}
+                       onBlur={ (ev) => {
+                                onBlur && onBlur(ev);
+                                this.setState({hasFocus:false, infoPopup:false});
+                            }}
+                       onKeyPress={(ev) => onKeyPress && onKeyPress(ev)}
                        value={value}
-                       title={tooltip}
+                       title={ (!showWarning && !valid) ? message : tooltip}
                        size={size}
                 />
-                {this.makeWarningArea(!valid)}
+                {showWarning && this.makeWarningArea(!valid)}
             </div>
         );
     }
@@ -120,13 +126,17 @@ InputFieldView.propTypes= {
     style: PropTypes.object,
     value   : PropTypes.string.isRequired,
     size : PropTypes.number,
-    onChange : PropTypes.func.isRequired
+    onChange : PropTypes.func.isRequired,
+    onBlur : PropTypes.func,
+    onKeyPress : PropTypes.func,
+    width: PropTypes.string,
+    showWarning : PropTypes.bool
 };
 
 InputFieldView.defaultProps= {
+    showWarning : true,
     valid : true,
     visible : true,
-    size : 20,
     message: ''
 };
 

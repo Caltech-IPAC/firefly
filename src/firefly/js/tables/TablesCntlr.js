@@ -14,6 +14,8 @@ export const TABLE_SPACE_PATH = 'table_space';
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const FETCH_TABLE           = `${TABLE_SPACE_PATH}.fetchTable`;
+export const REFETCH_TABLE         = `${TABLE_SPACE_PATH}.refetchTable`;
+export const REPLACE_TABLE         = `${TABLE_SPACE_PATH}.replaceTable`;
 export const LOAD_TABLE            = `${TABLE_SPACE_PATH}.loadTable`;
 export const LOAD_TABLE_STATUS     = `${TABLE_SPACE_PATH}.loadTableStatus`;
 export const LOAD_TABLE_COMPLETE   = `${TABLE_SPACE_PATH}.loadTableComplete`;
@@ -54,7 +56,11 @@ export function fetchTable(action) {
         if (!action.err) {
             var {request, hlRowIdx} = action.payload;
             TblUtil.doFetchTable(request, hlRowIdx).then ( (tableModel) => {
-                dispatch( loadTable({type:LOAD_TABLE, payload: tableModel}) );
+                if (action.type === REFETCH_TABLE) {
+                    dispatch( {type:REPLACE_TABLE, payload: tableModel} );
+                } else {
+                    dispatch( loadTable({type:LOAD_TABLE, payload: tableModel}) );
+                }
             }).catch( (error) => {
                 logError(error);
                 // if fetch causes error, re-dispatch that same action with error msg.
@@ -68,7 +74,6 @@ export function fetchTable(action) {
 
 /*---------------------------- REDUCERS -----------------------------*/
 export function reducer(state={}, action={}) {
-    var inTable;
     const {tbl_id, selectionInfo, highlightedRow} = action.payload || {};
     switch (action.type) {
         case (TBL_SELECT_ROW)  :
@@ -80,12 +85,10 @@ export function reducer(state={}, action={}) {
         case (LOAD_TABLE_STATUS)  :
         case (LOAD_TABLE_COMPLETE)  :
         case (LOAD_TABLE)  :
-            inTable = action.payload;
-            return TblUtil.smartMerge(state, {[inTable.tbl_id] : inTable});
+            return TblUtil.smartMerge(state, {[tbl_id] : action.payload});
 
-        case (FETCH_TABLE)  :
-            inTable = { tbl_id : action.payload.tbl_id, tableMeta : {'isLoading' : true}};
-            return TblUtil.smartMerge(state, {[inTable.tbl_id] : inTable});
+        case (REPLACE_TABLE)  :
+            return Object.assign({}, state, {[tbl_id] : action.payload});
 
         default:
             return state;

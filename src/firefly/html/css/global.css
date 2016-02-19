@@ -160,6 +160,7 @@ img, html {
     -moz-background-clip: padding;
     -webkit-background-clip: padding;
     background-clip: padding-box;
+    border-radius: 4px;
 }
 
 .Resizer:hover {
