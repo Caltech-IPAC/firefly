@@ -60,7 +60,11 @@ public class InputFieldPanel extends Composite implements HasWidgets, InputField
             lRow= row;
             lCol= 0;
             _panel.setWidget(row,1,field);
-            _panel.getColumnFormatter().setWidth(0,_labelWidth+"px");
+            if(_labelWidth==0){
+            	_panel.getColumnFormatter().setWidth(0,"1px");
+            }else{
+            	_panel.getColumnFormatter().setWidth(0,_labelWidth+"px");
+            }
         } else {
             // label at the top
             lRow= row;
