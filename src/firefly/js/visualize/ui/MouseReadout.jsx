@@ -7,7 +7,7 @@
  *   this.plot, this.plotSate are the class global variables
  *
  */
-import React, {PropTypes} from 'react;
+import React, {PropTypes} from 'react';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import MouseState from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
@@ -25,8 +25,8 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
 
 
 var rS= {
-	border: '1px solid white',
-	width: 500,
+	//border: '1px solid white',
+	width: 550,
 	height: 32,
 	display: 'inline-block',
 	position: 'relative',
@@ -69,55 +69,62 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 	if (!plot) return'';
 	if (isBlankImage(plot)) return EMPTY;
 
-	//TODO check why this does not work
-	//const hideReadout= renderEmpty(plotView,plot, mouseState, visRoot);
-
-	if (!magMouse.includes(mouseState.mouseState)) EMPTY; //hideReadout;
+	if (!magMouse.includes(mouseState.mouseState)) EMPTY;
 
 	var spt= mouseState.screenPt;
 	if (!spt) return EMPTY;//hideReadout;
 
-
-
-	var leftColumn = {width: 140, display: 'inline-block'};
+	var column1 = {width: 90, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+    var column2 = {width: 60, display: 'inline-block'};
+	var column3 = {width: 75, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+	var column4 = {width: 170,display: 'inline-block'};
+	var column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
+	var column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
 
 	var title = plotView.plots[0].title;
-	var middleColumn = {width: 230, display: 'inline-block'};
-	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-	var rightColumn = {paddingLeft: '35px',  display: 'inline-block'};
-	return (
+		return (
 			<div style={ rS}>
-               <div>
-				  <div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					  <div style={ textStyle} > {labelMap[visRoot.pixelSize] }</div>
-					  { showReadout(plot, mouseState,visRoot.pixelSize)}
-				  </div>
+               <div  >
+				    <div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+						{labelMap[visRoot.pixelSize] }
+					 </div>
+					 <div style={column2} >{ showReadout(plot, mouseState,visRoot.pixelSize)}</div>
 
-				  <div style={middleColumn} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
-					 <div style={ textStyle} > { labelMap[visRoot.mouseReadout1] } </div>
-					 {showReadout(plot, mouseState,visRoot.mouseReadout1)}
-				  </div>
 
-				  <div style={rightColumn}> {title}  </div>
-              </div>
+				    <div  style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+						 { labelMap[visRoot.mouseReadout1] }
+				    </div>
+					<div style={column4} > {showReadout(plot, mouseState,visRoot.mouseReadout1)} </div>
 
-			  <div>
-				  <div style={leftColumn} > {showReadout(plot, mouseState,visRoot.flux ) } </div>
-				  <div style={ middleColumn}  onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
-					 <div style={ textStyle} >{labelMap[ visRoot.mouseReadout2] } </div>
-					 {showReadout(plot, mouseState, visRoot.mouseReadout2)}
-				  </div>
-				  <div style={rightColumn} title='Click on an image to lock the display at that point.'   >
-					  <input type='checkbox' name='aLock' value='lock'
-							 onChange = { (request) => setClickLock(plot,mouseState , request) } />
-					  Lock by click
-				  </div>
-		      </div>
 
-		  </div>
+				  <div style={column5}> {title}  </div>
+             </div>
+
+
+				<div>
+					<div style={ column1} ></div>
+					<div style={ column2}  > {showReadout(plot, mouseState,visRoot.flux ) }
+					</div>
+
+					<div  style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+						{labelMap[ visRoot.mouseReadout2] } </div>
+					<div style={column4} >	{showReadout(plot, mouseState, visRoot.mouseReadout2)}</div>
+
+					<div style={column5_1}  title='Click on an image to lock the display at that point.'   >
+						<input  type='checkbox' name='aLock' value='lock'
+							   onChange = { (request) => setClickLock(plot,mouseState , request) } />
+						Lock by click
+					</div>
+				</div>
+
+			</div>
+
+
+
 
 	);
 }
+
 
 MouseReadout.propTypes= {
 	visRoot:   PropTypes.object.isRequired,
@@ -149,46 +156,6 @@ function getCoordinateMap(coordinateRadioValue){
 		if (!coordinate) coordinate=CoordinateSys.UNDEFINED;
 	}
 	return {coordinate, type};
-}
-function renderEmpty(plotView,plot, mouseState, visRoot){
-	var leftColumn = {width: 120, display: 'inline-block'};
-
-	var title = plotView.plots[0].title;
-	var middleColumn = {width: 250, display: 'inline-block'};
-	var  textStyle = {textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-	var rightColumn = {paddingLeft: '35px',  display: 'inline-block'};
-	return (
-		<div style={ rS}>
-			<div>
-				<div style={leftColumn} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-					<div style={ textStyle} > {labelMap[visRoot.pixelSize] }</div>
-					{EMPTY}
-				</div>
-
-				<div style={middleColumn} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
-					<div style={ textStyle} > { labelMap[ visRoot.mouseReadout1] } </div>
-					{EMPTY}
-				</div>
-
-				<div style={rightColumn}> {title}  </div>
-			</div>
-
-			<div>
-				<div style={leftColumn} >  </div>
-				<div style={ middleColumn}  onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
-					<div style={ textStyle} >{labelMap[visRoot.mouseReadout2] } </div>
-					{EMPTY}
-				</div>
-				<div style={rightColumn} title='Click on an image to lock the display at that point.'   >
-					<input type='checkbox' name='aLock' value='lock'
-						   onChange = { (request) => setClickLock(plot,mouseState , request) } />
-					Lock by click
-				</div>
-			</div>
-
-		</div>
-
-	);
 }
 
 /**
@@ -242,6 +209,11 @@ function showReadout(plot, mouseState, readoutValue){
 		//TODO get flux
 		return 'Flux';
 	}
+	if (readoutValue==='fitsIP'){
+		return ' '+ mouseState.imagePt.x.toString().substring(0, 10)+' ,'
+			+ mouseState.imagePt.y.toString().substring(0, 10);
+
+	}
 
 	var result;
 	var cc= CysConverter.make(plot);
@@ -294,6 +266,7 @@ function showReadout(plot, mouseState, readoutValue){
 				var ptShort = pt.toString().substring(0, 5);
 				result = ' '+ ptShort+'"';
 				break;
+
 			default:
 				result='';
 				break;

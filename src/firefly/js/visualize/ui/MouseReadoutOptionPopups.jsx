@@ -8,7 +8,7 @@
  *
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, { PropTypes} from 'react';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import InputGroup from '../../ui/InputGroup.jsx';
 import RadioGroupInputField from '../../ui/RadioGroupInputField.jsx';
@@ -26,7 +26,7 @@ const coordOptions= [
 	{label: 'EQ J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
 	{label: 'EQ B1950', value: 'eqb1950'},
-	{label: 'Fits Image Pixel', value: 'fitsIP'}
+	{label: 'FITS Image Pixel', value: 'fitsIP'}
 ];
 const pixelOptions = [
 
@@ -78,15 +78,22 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
  * @param groupKey
  * @param fieldKey
  */
-function doDispatch( request,  fieldKey){
+function doDispatch(fieldGroup,  fieldKey){
 
-	if (request.hasOwnProperty('target')){
-		var target=request.target;
-		var newRadioValue=target.value;
-		dispatchChangeMouseReadout(fieldKey,newRadioValue);
-	}
 
-	AppDataCntlr.hideDialog(fieldKey);
+
+
+
+	FieldGroupUtils.validate(fieldGroup, (valid) => {
+		if(valid) {
+			var result = FieldGroupUtils.getResults(fieldGroup);
+			dispatchChangeMouseReadout(fieldKey,result[fieldKey] );
+
+		}
+		AppDataCntlr.hideDialog(fieldKey);
+	});
+
+
 
 }
 /**
@@ -161,7 +168,7 @@ function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 	return (
 
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (request) => doDispatch(request, fieldKey) } >
+			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) } >
 					<div style={leftColumn} title='Please select an option'> Options</div>
 			     	{renderCoordinateRadioGroup(rightColumn,fieldKey,radioValue)}
 			</div>
@@ -228,7 +235,7 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>
-			<div style={ dialogStyle} onClick={ (request) => doDispatch(request, fieldKey) }>
+			<div style={ dialogStyle} onClick={ () => doDispatch(groupKey, fieldKey) }>
 				<div style={leftColumn} title='Please select an option'> Options</div>
 				<div style={rightColumn}>
 					<RadioGroupInputField
