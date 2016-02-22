@@ -39,6 +39,14 @@ const groupKeys={
 	mouseReadout2:'COORDINATE_OPTION_FORM',
 	pixelSize: 'PIXEL_OPTION_FORM'
 };
+
+const leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'middle', paddingBottom:75};
+
+const rightColumn = {display: 'inline-block',  paddingLeft:18};
+
+const dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
+
+
 /**
  *
  * @param fieldKey - string: a key for the field group
@@ -80,10 +88,6 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
  */
 function doDispatch(fieldGroup,  fieldKey){
 
-
-
-
-
 	FieldGroupUtils.validate(fieldGroup, (valid) => {
 		if(valid) {
 			var result = FieldGroupUtils.getResults(fieldGroup);
@@ -92,9 +96,7 @@ function doDispatch(fieldGroup,  fieldKey){
 		}
 		AppDataCntlr.hideDialog(fieldKey);
 	});
-
-
-
+	
 }
 /**
  *  create a popup dialog
@@ -158,13 +160,6 @@ class MouseReadoutOptionDialog extends React.Component {
 function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
 
 
-	var leftColumn = { display: 'inline-block', paddingLeft:80, verticalAlign:'middle', paddingBottom:75};
-
-	var rightColumn = {display: 'inline-block',  paddingLeft:18};
-
-	var dialogStyle = { minWidth : 300, minHeight: 100 , padding:5};
-
-
 	return (
 
 		<FieldGroup groupKey={groupKey} keepState={true}>
@@ -188,23 +183,6 @@ CoordinateOptionDialogForm.propTypes= {
 	radioValue: PropTypes.string.isRequired
 };
 
-/*
-function renderReadout1RadioGroup(rightColumn,fieldKey, radioValue ){
-	return(
-		<div style={rightColumn} >
-			<RadioGroupInputField
-				initialState={{
-                                    tooltip: 'Please select an option',
-                                    value: radioValue,
-                                     }}
-				options={ coordOptions }
-				alignment={'vertical'}
-				fieldKey={fieldKey}
-			/>
-		</div>
-	);
-}
-*/
 
 function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue ){
 	return(
@@ -226,12 +204,6 @@ function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue ){
 // ------------ React component
 function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 
-
-	var leftColumn = { display: 'inline-block', paddingLeft:50, verticalAlign:'middle', paddingBottom:15};
-
-	var rightColumn = {display: 'inline-block',  paddingLeft:18};
-
-	var dialogStyle = { minWidth : 300, minHeight:54 , padding:5};
 
 	return (
 		<FieldGroup groupKey={groupKey} keepState={true}>

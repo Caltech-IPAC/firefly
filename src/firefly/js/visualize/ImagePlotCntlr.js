@@ -84,22 +84,7 @@ const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
 const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
 
-//LZ add those three constant on 2/1/16
-//const CHANGE_MOUSE_READOUT_READOUT1 =  ()=> {
-//    return {
-//      type: CoordinateSys,
-//      text:'ImagePlotCntlr.changeMouseReadoutModeReadout1'
-//   };
-//} ;
-//const CHANGE_MOUSE_READOUT_READOUT2= ()=>{
-//    return {
-//        type: CoordinateSys,
-//        text: 'ImagePlotCntlr.changeMouseReadoutModeReadout2'
-//    };
-//};
-const CHANGE_MOUSE_READOUT_READOUT1='ImagePlotCntlr.changeMouseReadoutModeReadout1';
-const CHANGE_MOUSE_READOUT_READOUT2='ImagePlotCntlr.changeMouseReadoutModeReadout2';
-const CHANGE_MOUSE_READOUT_PIXEL= 'ImagePlotCntlr.changeMouseReadoutModeReadoutPixel';
+const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 
 /**
  * action should contain:
@@ -410,20 +395,9 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
 
-export function dispatchChangeMouseReadout(type, newRadioValue) {
+export function dispatchChangeMouseReadout(readoutType, newRadioValue) {
 
-
-    if (type==='mouseReadout1'){
-        flux.process({ type: CHANGE_MOUSE_READOUT_READOUT1, payload: {newRadioValue} });
-
-    }
-    else if (type==='mouseReadout2'){
-        flux.process({ type: CHANGE_MOUSE_READOUT_READOUT2, payload: {newRadioValue} });
-
-    }
-    else if (type=='pixelSize'){
-        flux.process({ type: CHANGE_MOUSE_READOUT_PIXEL, payload: { newRadioValue} });
-    }
+     flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
 
 }
 
@@ -522,14 +496,18 @@ function reducer(state=initState(), action={}) {
         case CHANGE_EXPANDED_MODE:
             retState= changeExpandedMode(state,action);
             break;
-        case CHANGE_MOUSE_READOUT_READOUT1:
-             retState = changeMouseReadoutReadout1(state, action);
-            break;
-        case CHANGE_MOUSE_READOUT_READOUT2:
-            retState = changeMouseReadoutReadout2(state, action);
-            break;
-        case CHANGE_MOUSE_READOUT_PIXEL:
-            retState = changeMouseReadoutPixel(state, action);
+        case CHANGE_MOUSE_READOUT_MODE:
+            var readoutType=action.payload.readoutType;
+            if ( readoutType==='mouseReadout1') {
+               retState = changeMouseReadoutReadout1(state, action);
+            }
+            else if (readoutType==='mouseReadout2') {
+                retState = changeMouseReadoutReadout2(state, action);
+            }
+            else if (readoutType=== 'pixelSize'){
+                    retState = changeMouseReadoutPixel(state, action);
+            }
+
             break;
         case EXPANDED_AUTO_PLAY:
             if (state.singleAutoPlay!==action.payload.autoPlayOn) {

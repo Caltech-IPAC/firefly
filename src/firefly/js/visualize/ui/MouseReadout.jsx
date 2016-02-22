@@ -22,10 +22,9 @@ import VisUtil from '../VisUtil.js';
 
 import debounce from 'lodash/debounce'; //TEST CODE
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
-
+import numeral from 'numeral';
 
 var rS= {
-	//border: '1px solid white',
 	width: 550,
 	height: 32,
 	display: 'inline-block',
@@ -35,7 +34,7 @@ var rS= {
 
 const EMPTY= <div style={rS}></div>;
 const EMPTY_READOUT='';
-const magMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
+const magMouse= [ MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
 const coordinateMap = {
 	galactic:CoordinateSys.GALACTIC,
 	eqb1950:CoordinateSys.EQ_B1950,
@@ -51,6 +50,12 @@ const labelMap = {
 	pixelSize:'Pixel Size:',
 	sPixelSize:'Screen Pixel Size:'
 };
+const column1 = {width: 90, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+const column2 = {width: 60, display: 'inline-block'};
+const column3 = {width: 75, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+const column4 = {width: 170,display: 'inline-block'};
+const column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
+const column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
 
 /**
  *
@@ -72,14 +77,8 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 	if (!magMouse.includes(mouseState.mouseState)) EMPTY;
 
 	var spt= mouseState.screenPt;
-	if (!spt) return EMPTY;//hideReadout;
+	if (!spt) return EMPTY;
 
-	var column1 = {width: 90, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-    var column2 = {width: 60, display: 'inline-block'};
-	var column3 = {width: 75, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-	var column4 = {width: 170,display: 'inline-block'};
-	var column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
-	var column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
 
 	var title = plotView.plots[0].title;
 		return (
@@ -205,14 +204,16 @@ function showReadout(plot, mouseState, readoutValue){
 	}
 
 	if (readoutValue==='Flux'){
-		//result='Flux';
 		//TODO get flux
 		return 'Flux';
 	}
-	if (readoutValue==='fitsIP'){
-		return ' '+ mouseState.imagePt.x.toString().substring(0, 10)+' ,'
-			+ mouseState.imagePt.y.toString().substring(0, 10);
 
+	var precision7Digit='0.0000000';
+	var precision3Digit='0.000';
+
+	if (readoutValue==='fitsIP'){
+			return ' ' + numeral(mouseState.imagePt.x).format(precision3Digit)+', '+
+			numeral(mouseState.imagePt.y).format(precision3Digit);
 	}
 
 	var result;
@@ -220,7 +221,6 @@ function showReadout(plot, mouseState, readoutValue){
 	var wpt= cc.getWorldCoords(mouseState.imagePt);
 	if (!wpt) return;
 	var {coordinate, type} =getCoordinateMap(readoutValue);
-
 
 	if (coordinate){
 		var ptInCoord= VisUtil.convert(wpt, coordinate);
@@ -230,27 +230,24 @@ function showReadout(plot, mouseState, readoutValue){
 		var hmsLon = CoordUtil.convertLonToString(lon, coordinate);
 		var hmsLat = CoordUtil.convertLatToString(lat, coordinate);
 
-       // console.log(coordinate.toString());
 		switch (coordinate) {
 			case CoordinateSys.EQ_J2000:
 				if (type === 'hms') {
-					result = ' ' +  hmsLon + ',  ' + hmsLat;
+					result = ` ${hmsLon},  ${hmsLat}`;
 		        }
 				else {
 					//convert to decimal representation
-					var dmsLon = CoordUtil.convertStringToLon(hmsLon,coordinate);//wpt.getCoordSys());
-					var dmsLat = CoordUtil.convertStringToLat( hmsLat,coordinate);//wpt.getCoordSys());
-					var dmsLonShort =dmsLon.toString().substring(0, 10);
-					var dmsLatShort = dmsLat.toString().substring(0, 10);
-					result = ' ' + dmsLonShort + ',  ' +dmsLatShort;
+					var dmsLon = CoordUtil.convertStringToLon(hmsLon,coordinate);
+					var dmsLat = CoordUtil.convertStringToLat( hmsLat,coordinate);
+					result =` ${numeral(Number(dmsLon)).format(precision7Digit)}, ${numeral(Number(dmsLat)).format(precision7Digit)}`;
 				}
 				break;
 			case CoordinateSys.GALACTIC:
 			case CoordinateSys.SUPERGALACTIC:
 
-				var lonShort = lon.toString().substring(0, 10);
-				var latShort = lat.toString().substring(0, 10);
-				result= ' ' + lonShort + ',  '+latShort;
+				var lonShort = numeral(lon).format(precision7Digit) ;
+				var latShort = numeral(lat).format(precision7Digit);
+				result= ` ${lonShort}, ${latShort}`;
 				break;
 			case CoordinateSys.EQ_B1950:
 				result = ' ' +  hmsLon + ',  ' + hmsLat;
@@ -258,13 +255,11 @@ function showReadout(plot, mouseState, readoutValue){
 
 			case CoordinateSys.PIXEL:
 				var pt =plot.projection.getPixelScaleArcSec();
-				var ptShort = pt.toString().substring(0, 5);
-				result = ' '+ ptShort+'"';
+				result= `  ${numeral(pt).format(precision3Digit)}`;
 				break;
 			case CoordinateSys.SCREEN_PIXEL:
-				var pt =plot.projection.getPixelScaleArcSec()/plot.zoomFactor;
-				var ptShort = pt.toString().substring(0, 5);
-				result = ' '+ ptShort+'"';
+				var size =plot.projection.getPixelScaleArcSec()/plot.zoomFactor;
+				result= `  ${numeral(size).format(precision3Digit)}`;
 				break;
 
 			default:
@@ -273,10 +268,7 @@ function showReadout(plot, mouseState, readoutValue){
 		}
 
 	}
-	else {
-		//TODO readout for pixel size
 
-	}
 
     return result;
 }
