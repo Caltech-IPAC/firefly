@@ -238,7 +238,7 @@ public class BrowserInfo {
     private void evaluateBrowser(Platform p) {
         _browser= Browser.UNKNOWN;
         _majorVersion= UNKNOWN_VERSION;
-        if (_userAgent.contains("msie") && !_userAgent.contains("trident")) {
+        if (_userAgent.contains("msie")) {
             _browser= Browser.IE;
             if (_userAgent.contains("msie 11")) {
                 _majorVersion= 11;
