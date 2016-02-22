@@ -48,6 +48,9 @@ public class CompositeJob {
         return new CompositeJob(id, list);
     }
 
+    public String getId() {
+        return id;
+    }
 
     public List<BackgroundStatus> getPartList() { return partList; }
 

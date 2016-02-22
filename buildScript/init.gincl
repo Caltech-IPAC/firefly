@@ -178,4 +178,3 @@ ext.mergeDevIntoMaster = {  ->
     throw new GradleException("Unable to merge dev into master", e)
   }
 }
-

@@ -97,6 +97,10 @@ public class FireflyToolsEntryPoint implements EntryPoint {
         }
     }
 
+    public void setUseMaskButton(boolean use) {
+        StandaloneUI.setUseMaskButton(use);
+    }
+
     /**
      * Display mode can be one of 'full', 'minimal', or 'embedded'
      * @return  returns 'embedded' is one is not present.

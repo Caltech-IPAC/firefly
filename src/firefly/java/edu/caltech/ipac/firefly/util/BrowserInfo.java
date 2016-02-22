@@ -56,7 +56,7 @@ public class BrowserInfo {
 
     public BrowserInfo(String userAgent) {
         _userAgent= userAgent.toLowerCase();
-        _platform= getPlatform(userAgent);
+        _platform= getPlatform(userAgent.toLowerCase());
         _allRecognized = (_platform!=Platform.UNKNOWN);
         evaluateBrowser(_platform);
     }

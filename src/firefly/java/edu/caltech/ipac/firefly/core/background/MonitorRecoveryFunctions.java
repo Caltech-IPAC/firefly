@@ -305,7 +305,7 @@ public class MonitorRecoveryFunctions {
                 MonitorItem item= makeItem(_title,null,_watchable,_type,_actAry);
                 List<BackgroundStatus> statList= new ArrayList<BackgroundStatus>(_subIDAry.length);
                 statList.addAll(_check.getStatusGroup());
-                item.initStatusList(statList);
+                item.setCompositeStatus(statList);
                 _monitor.addItem(item);
             }
         }

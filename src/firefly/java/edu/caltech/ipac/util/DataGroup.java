@@ -420,18 +420,24 @@ public class DataGroup implements Serializable,
     public static class Attribute implements Serializable, Cloneable {
         private String _key;
         private String _value;
+        private String _comment;
 
         /**
          * create a comment attribute.
          * @param value
          */
         public Attribute(String value) {
-            this(null, value);
+            this(null, value, null);
         }
 
-        public Attribute(String key, String value) {
+        public Attribute(String _key, String _value) {
+            this(_key, _value, null);
+        }
+
+        public Attribute(String key, String value, String comment) {
             _key = StringUtils.isEmpty(key) ? " " : key;
             _value = value;
+            _comment = comment;
         }
 
         public String getKey() {
@@ -451,7 +457,14 @@ public class DataGroup implements Serializable,
             } else {
                 String[] keyVal = v.split("=", 2);  // key/value separated by first '='
                 if (keyVal.length == 2) {
-                    return new Attribute(keyVal[0].trim(), keyVal[1].trim());
+                    String val = keyVal[1].trim();
+                    String comment = null;
+                    String[] valParts = val.split(" /", 2);
+                    if (valParts.length == 2) {
+                        val = valParts[0].trim();
+                        comment = valParts[1].trim();
+                    }
+                    return new Attribute(keyVal[0].trim(), val, comment);
                 } else {
                     return null;
                 }
@@ -467,7 +480,7 @@ public class DataGroup implements Serializable,
             if (StringUtils.isEmpty(_key)) {
                 return "\\ " + _value;
             } else {
-                return "\\" + _key + " = " + _value;
+                return "\\" + _key + " = " + _value + (_comment == null ? "" : " /" + _comment);
             }
         }
     }

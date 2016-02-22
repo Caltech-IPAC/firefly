@@ -85,3 +85,7 @@ def execCmd(remoteHost, ignoreFailure, cmdLine) {
 }
 
 
+task purge << {
+  println('Removes all build directories.')
+  delete "${fireflyPath}/build", "${fireflyPath}/jars/build", "${fireflyPath}/node_modules"
+}

@@ -124,13 +124,26 @@ abstract public class DynQueryProcessor extends IpacTablePartProcessor {
 
         // XML params only apply to Hydra applications
         String projectId = req.getParam(DynUtils.HYDRA_PROJECT_ID);
-        if (projectId == null) return req;
+        if (StringUtils.isEmpty(projectId)) return req;
+
+        ProjectTag obj = DynConfigManager.getInstance().getCachedProject(projectId);
+
+        if (obj != null) {
+            // add any project's wide parameters into the request
+            List<ParamTag> params = obj.getParams();
+            if (params != null && params.size() > 0) {
+                for (ParamTag p : params) {
+                    if (p != null && p.getKey() != null) {
+                        req.setParam(p.getKey(), p.getValue());
+                    }
+                }
+            }
+        }
 
         String queryId = req.getParam(DynUtils.QUERY_ID);
-        if (queryId == null) return req;
+        if (StringUtils.isEmpty(queryId)) return req;
 
         String searchName = req.getParam(DynUtils.SEARCH_NAME);
-        ProjectTag obj = DynConfigManager.getInstance().getCachedProject(projectId);
 
         // find searchType
         List<SearchTypeTag> stList = obj.getSearchTypes();

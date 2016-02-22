@@ -64,7 +64,8 @@ public class WiseRequest extends TableServerRequest {
     public final static String PASS1 = "pass1";
     public final static String NEOWISER_PROV = "neowiser_prov";
     public final static String NEOWISER_YR1 = "neowiser_yr1";
-    public final static String NEOWISER_YR2 = "neowiser_yr2";       //this is the on-going yr2 internal neowiser
+    public final static String NEOWISER_YR2 = "neowiser_yr2";
+    public final static String NEOWISER_YR3 = "neowiser_yr3";       //this is the on-going yr3 internal neowiser
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -86,6 +87,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR1,"NEOWISER YR1 (2 Bands)");
             put(NEOWISER,"NEOWISER PUBLIC (2 Bands)");
             put(NEOWISER_YR2,"NEOWISER YR2 (2 Bands)");
+            put(NEOWISER_YR3,"NEOWISER YR3 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -115,7 +117,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS1+"|3o", new String[]{"i3om_cdd", "i3os_psd"});
             put(NEOWISER_PROV +"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(NEOWISER_YR1 +"|1b", new String[]{"yr1_p1bm_frm", "yr1_p1bs_psd"});
-            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_i1bm_frm", "yr2_i1bs_psd"});  // TODO: check
+            put(NEOWISER_YR2 +"|1b", new String[]{"yr2_p1bm_frm", "yr2_p1bs_psd"});
+            put(NEOWISER_YR3 +"|1b", new String[]{"yr3_i1bm_frm", "yr3_i1bs_psd"});  // TODO: check
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -140,7 +143,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 55289});
+            put(NEOWISER, new Integer[]{44212, 66418});
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
@@ -148,7 +151,8 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_2BAND, new Integer[]{8745, 12514});
             put(NEOWISER_PROV, new Integer[]{44212, 55289});
             put(NEOWISER_YR1, new Integer[]{44212, 55289});
-            put(NEOWISER_YR2, new Integer[]{55290, 999999}); // TODO: which scan is the first for yr2?
+            put(NEOWISER_YR2, new Integer[]{55290, 66418});   // 66418a is the last scan for yr2
+            put(NEOWISER_YR3, new Integer[]{66418, 999999}); // 66418b is the first scan for yr3?
         }
     };
 
@@ -162,16 +166,16 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND,"wise_allsky_4band");
             put(CRYO_3BAND,"wise_allsky_3band");
             put(POSTCRYO,"wise_allsky_2band");
-            put(MERGE,"wise_neowiser_merge");
-            put(MERGE_INT,"wise_neowiser_merge_int");
+            put(MERGE,"wise_merge");
+            put(MERGE_INT,"wise_merge_int");
             put(NEOWISER,"wise_neowiser");
             put(PASS1,"wise_pass1");
             put(PASS2_4BAND,"wise_pass2_4band");
             put(PASS2_3BAND,"wise_pass2_3band");
             put(PASS2_2BAND, "wise_pass2_2band");
-            put(NEOWISER_PROV,"wise_neowiser_prov");
             put(NEOWISER_YR1,"wise_neowiser_yr1");
             put(NEOWISER_YR2,"wise_neowiser_yr2");
+            put(NEOWISER_YR3,"wise_neowiser_yr3");
 
         }
     };
@@ -189,9 +193,9 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_4BAND,"wise_pass2_4band_i1bs_psd_view");
             put(PASS2_3BAND,"wise_pass2_3band_i1bs_psd_view");
             put(PASS2_2BAND, "wise_pass2_2band_i1bs_psd_view");
-            put(NEOWISER_PROV,"neowiser_p1bs_psd");
-            put(NEOWISER_YR1,"neowiser_p1bs_psd");
-            put(NEOWISER_YR2,"neowiser_i1bs_psd");
+            put(NEOWISER_YR1,"neowiser_yr1_p1bs_psd");
+            put(NEOWISER_YR2,"neowiser_yr2_p1bs_psd");
+            put(NEOWISER_YR3,"neowiser_i1bs_psd");
         }
     };
 
@@ -490,16 +494,19 @@ public class WiseRequest extends TableServerRequest {
 
         } else {
             if (scanNum < SCANID_MAP.get(PASS2_4BAND)[1] ||
-                    (scanNum==SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a")) ) {
-                return new String[]{PASS1,PASS2_4BAND,ALLSKY_4BAND};
+                    (scanNum == SCANID_MAP.get(PASS2_4BAND)[1] && scanID.trim().endsWith("a"))) {
+                return new String[]{PASS1, PASS2_4BAND, ALLSKY_4BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_3BAND)[1]) {
-                return new String[]{PASS1,PASS2_3BAND,CRYO_3BAND};
+                return new String[]{PASS1, PASS2_3BAND, CRYO_3BAND};
             } else if (scanNum <= SCANID_MAP.get(PASS2_2BAND)[1]) {
-                return new String[]{PASS1,PASS2_2BAND,POSTCRYO};
-            } else if (scanNum >= SCANID_MAP.get(NEOWISER_YR2)[0] &&
-                    scanNum <= SCANID_MAP.get(NEOWISER_YR2)[1]) {
+                return new String[]{PASS1, PASS2_2BAND, POSTCRYO};
+            } else if (scanNum < SCANID_MAP.get(NEOWISER_YR2)[1] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR2)[1]) && scanID.trim().endsWith("a")) {
                 return new String[]{NEOWISER_YR2};
-            } else {
+            } else if (scanNum > SCANID_MAP.get(NEOWISER_YR3)[0] ||
+                    (scanNum==SCANID_MAP.get(NEOWISER_YR3)[0] && scanID.trim().endsWith("b")) ) {
+                return new String[]{NEOWISER_YR3};
+            }else {
                 // these 2 have the same range..
                 // getImageSetFromSourceId() will determine which one to select
                 return new String[]{NEOWISER_PROV,NEOWISER_YR1};

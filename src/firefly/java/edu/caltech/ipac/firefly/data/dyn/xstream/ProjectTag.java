@@ -34,6 +34,9 @@ public class ProjectTag implements Serializable {
     // xml element 'SearchGroup*'
     protected List<SearchGroupTag> searchGroupTags;
 
+    // xml element 'Param*'
+    protected List<ParamTag> params;
+
 
     public String getName() {
         return name;
@@ -118,6 +121,12 @@ public class ProjectTag implements Serializable {
         return searchGroupTags;
     }
 
+    public List<ParamTag> getParams() {
+        if (params == null) {
+            params = new ArrayList<ParamTag>();
+        }
+        return params;
+    }
 
     public List<SearchTypeTag> getSearchTypes() {
         List<SearchGroupTag> groups = getSearchGroups();
@@ -161,6 +170,10 @@ public class ProjectTag implements Serializable {
 
     public void addSearchGroup(SearchGroupTag st) {
         getSearchGroups().add(st);
+    }
+
+    public void addParam(ParamTag p) {
+        getParams().add(p);
     }
 
 }
