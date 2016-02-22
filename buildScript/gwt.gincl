@@ -1,4 +1,4 @@
-def GWT_GROUP = "Webapp-GWT"
+def DEV_GROUP = "Development"
 
 task gwt {
   outputs.upToDateWhen { false }
@@ -22,7 +22,7 @@ task gwt {
 
 task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT Compile'
-  group = GWT_GROUP
+  group = "Build"
 
   outputs.upToDateWhen { false }
   inputs.source sourceSets.main.java.srcDirs
@@ -88,7 +88,7 @@ task gwtCompile (type: JavaExec, dependsOn: [gwt, loadConfig]) {
 
 task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT DevMode'
-  group = GWT_GROUP
+  group = DEV_GROUP
 
   inputs.source sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
@@ -132,7 +132,7 @@ task gwtRun (type: JavaExec, dependsOn: [gwt, loadConfig]) {
 
 task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   description= 'GWT SuperDev Mode'
-  group = GWT_GROUP
+  group = DEV_GROUP
 
   inputs.source sourceSets.main.java.srcDirs
   inputs.dir sourceSets.main.output.resourcesDir
@@ -161,6 +161,45 @@ task gwtSuperDev (type: JavaExec, dependsOn: [gwt, loadConfig]) {
   }
 }
 
+task devMode (dependsOn: loadConfig) {
+  description= 'JavaScript Dev Mode'
+  group = DEV_GROUP
+  outputs.upToDateWhen { false }
+
+  doLast {
+    def wpBuildDir = "${buildDir}/gwt/${project['app-name']}"
+
+    try {
+      def process = "npm version".execute()
+    } catch (Exception e) {
+      println ">> Task failed due to missing npm package manager which comes bundled with node.js"
+      throw new GradleException("Task failed due to missing npm package manager which comes bundled with node.js", e)
+    }
+
+    if (!file("webpack.config.js").exists()) {
+      println ">> webpack.config.js not found.  Skipping buildClient."
+      throw new StopExecutionException("webpack.config.js not found.  Skipping dev mode.")
+    }
+
+    if (file("${rootDir}/package.json").exists()) {
+      exec {
+        workingDir = rootDir
+        executable "npm"
+        args "install"
+      }
+    }
+
+    def res = exec {
+      environment 'WP_BUILD_DIR': wpBuildDir
+      environment 'NODE_ENV': project.env
+      executable "npm"
+      args 'run', 'dev'
+    }
+    if (res.getExitValue() != 0) {
+      throw new GradleException("Fail to run dev mode")
+    }
+  }
+}
 
 
 task immediateStart (dependsOn: gwt) << {

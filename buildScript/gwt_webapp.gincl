@@ -151,32 +151,6 @@ war {
   }
 }
 
-task dirty (type: War, dependsOn: [webapp, jar, prepareWebapp]) {
-  description= 'Create a war without GWT compile.  This is much faster.'
-  group = WEBAPP_GROUP
-
-  doFirst {
-    archiveName = "${webapp.baseWarName}.war"
-  }
-  outputs.dir gwt.warDir
-  classpath = configurations.webappLib
-  from gwt.warDir
-}
-
-task deployClient(dependsOn: [loadConfig, buildClient, webapp])  << {
-  description= 'Build and deploy the JavaScript client only.  Require ${tomcat_home} property'
-  group = WEBAPP_GROUP
-
-  copy {
-    from(gwt.warDir) {
-      include "**/*"
-      exclude "WEB-INF"
-      exclude "META-INF"
-    }
-    into "${tomcat_home}/webapps/${webapp.baseWarName}"
-  }
-}
-
 task deploy (dependsOn: [loadConfig, webapp]) << {
   description= 'Deploy webapp(war file) to Tomcat.  Require ${tomcat_home} property'
   group = WEBAPP_GROUP
@@ -198,7 +172,6 @@ task deploy (dependsOn: [loadConfig, webapp]) << {
 }
 
 task buildAndDeploy( dependsOn:[war, deploy] )
-task dirtyAndDeploy( dependsOn:[dirty, deploy] )
 
 
 task buildAndPublish( dependsOn: war ) << {
@@ -283,5 +256,4 @@ buildClient.mustRunAfter prepareWebapp
 prepareWebapp.mustRunAfter gwtCompile
 gwtCompile.mustRunAfter jar
 deploy.mustRunAfter war
-deploy.mustRunAfter dirty
 
