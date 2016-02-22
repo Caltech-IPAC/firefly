@@ -36,7 +36,7 @@ var zoomTimers= []; // todo: should I use a map? should it be in the redux store
  * @param rawAction
  * @return {Function}
  */
-export function makeZoomAction(rawAction) {
+export function zoomActionCreator(rawAction) {
     return (dispatcher) => {
         var {plotId,userZoomType,zoomLockingEnabled, forceDelay, actionScope}= rawAction.payload;
         var pv= getPlotViewById(visRoot(),plotId);

@@ -18,10 +18,6 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {
-    reducer
-};
-
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
@@ -31,7 +27,7 @@ function replaceAtt(pv,att) {
 }
 
 
-function reducer(state, action) {
+export function reducer(state, action) {
 
     var retState= state;
     switch (action.type) {
@@ -143,7 +139,7 @@ function zoomStart(state, action) {
 function installTiles(state, action) {
     var {plotViewAry}= state;
     const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
-    var pv=PlotViewUtil.findPlotView(plotId,plotViewAry);
+    var pv= getPlotViewById(state,plotId);
     var plot= primePlot(pv);
     if (!plot) return plotViewAry;
 

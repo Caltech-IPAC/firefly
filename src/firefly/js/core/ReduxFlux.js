@@ -11,7 +11,12 @@ import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY} from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {IMAGE_PLOT_KEY,
+                        plotImageActionCreator, zoomActionCreator,
+                        colorChangeActionCreator, stretchChangeActionCreator,
+                        rotateActionCreator, flipActionCreator,
+                        cropActionCreator, autoPlayActionCreator } from '../visualize/ImagePlotCntlr.js';
+
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
@@ -64,13 +69,14 @@ let redux = null;
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
-actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.plotImageActionCreator);
-actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, ImagePlotCntlr.zoomActionCreator);
-actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.colorChangeActionCreator);
-actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.stretchChangeActionCreator);
-actionCreators.set(ImagePlotCntlr.ROTATE, ImagePlotCntlr.rotateActionCreator);
-actionCreators.set(ImagePlotCntlr.FLIP, ImagePlotCntlr.flipActionCreator);
-actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, ImagePlotCntlr.autoPlayActionCreator);
+actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
+actionCreators.set(ImagePlotCntlr.ZOOM_IMAGE, zoomActionCreator);
+actionCreators.set(ImagePlotCntlr.COLOR_CHANGE, colorChangeActionCreator);
+actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, stretchChangeActionCreator);
+actionCreators.set(ImagePlotCntlr.ROTATE, rotateActionCreator);
+actionCreators.set(ImagePlotCntlr.FLIP, flipActionCreator);
+actionCreators.set(ImagePlotCntlr.CROP, cropActionCreator);
+actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);

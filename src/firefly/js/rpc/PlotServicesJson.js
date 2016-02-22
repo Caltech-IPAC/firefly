@@ -140,6 +140,21 @@ export function callRecomputeStretch(state, stretchDataAry) {
 
 
 
+export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll) {
+
+    var params= makeParamsWithStateAry(stateAry,[
+        {name:ServerParams.PT1, value: corner1ImagePt.toString()},
+        {name:ServerParams.PT2, value: corner2ImagePt.toString()},
+        {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
+    ]);
+    
+    return doService(doJsonP(), ServerParams.CROP, params);
+    
+}
+
+
+
+
 export function callFlipImageOnY(stateAry) {
     var state= stateAry[0]; //todo support state array, work must be done on server
     //var params =  makeParamsWithStateAry(stateAry,[

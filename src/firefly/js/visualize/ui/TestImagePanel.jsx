@@ -15,7 +15,7 @@ import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {visRoot,dispatchPlotImage} from '../ImagePlotCntlr.js';
 import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import PlotViewUtils, {getDrawLayerByType} from '../PlotViewUtil.js';
+import PlotViewUtils, {getDrawLayerByType, getActivePlotView} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
@@ -153,7 +153,7 @@ var TestImagePanel= React.createClass({
 
     componentDidMount() {
        this.unbinder= flux.addListener( () => {
-           var pv= PlotViewUtils.getActivePlotView(visRoot());
+           var pv= getActivePlotView(visRoot());
            var selectOn= false;
            var distOn= false;
            if (pv) {

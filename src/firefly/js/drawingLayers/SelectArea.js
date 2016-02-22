@@ -54,7 +54,7 @@ function dispatchSelectAreaEnd(mouseStatePayload) {
     if (drawLayer.drawData.data) {
         var selectBox= drawLayer.drawData.data[0];
         var sel= {pt0:selectBox.pt1,pt1:selectBox.pt2};
-        ImagePlotCntlr.dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
+        dispatchAttributeChange(plotId,true,PlotAttribute.SELECTION,sel);
         flux.process({type:DrawLayerCntlr.SELECT_AREA_END, payload:mouseStatePayload} );
     }
 }
@@ -183,6 +183,7 @@ function start(drawLayer,action) {
         if (!ptAry) return retObj;
 
         var idx= findClosestPtIdx(ptAry,screenPt);
+        if (idx<0) return {};
         var cc= CsysConverter.make(plot);
         var testPt= cc.getScreenCoords(ptAry[idx]);
         if (!testPt) return {};
@@ -243,19 +244,21 @@ function setupSelect(imagePt) {
 function findClosestPtIdx(ptAry, pt) {
     var dist= Number.MAX_VALUE;
     return ptAry.reduce( (idx,testPt,i) => {
+        if (!testPt || !pt) return idx;
         var testDist= distance(testPt,pt);
         if (testDist<dist) {
             dist= testDist;
             idx= i;
         }
         return idx;
-    },0);
+    },-1);
 
 }
 
 
 function findClosestCorner(cc,ptAry, spt, testDist) {
     var idx = findClosestPtIdx(ptAry, spt);
+    if (idx<0) return null;
     var testPt = cc.getScreenCoords(ptAry[idx]);
 
     if (!testPt) return null;

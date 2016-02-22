@@ -5,7 +5,7 @@
 
 import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import PlotViewUtil from '../PlotViewUtil.js';
+import {getActivePlotView} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
@@ -45,7 +45,7 @@ class DrawLayerPanel extends React.Component {
 
     constructor(props) {
         super(props);
-        var activePv= PlotViewUtil.getActivePlotView(visRoot());
+        var activePv= getActivePlotView(visRoot());
         this.state= {dlAry:getDlAry(),activePv};
     }
 
@@ -62,7 +62,7 @@ class DrawLayerPanel extends React.Component {
 
     storeUpdate() {
         var state= this.state;
-        var activePv= PlotViewUtil.getActivePlotView(visRoot());
+        var activePv= getActivePlotView(visRoot());
 
         if (activePv!==state.activePv  || getDlAry()!==state.dlAry) {
             this.setState({dlAry:getDlAry(),activePv});

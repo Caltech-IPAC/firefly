@@ -10,15 +10,12 @@ import PlotGroup from '../PlotGroup.js';
 //============ EXPORTS ===========
 //============ EXPORTS ===========
 
-export default {
-    reducer
-};
 
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
-function reducer(state, action) {
+export function reducer(state, action) {
 
     var retState= state;
     var plotViewAry;
@@ -52,6 +49,7 @@ function reducer(state, action) {
             plotViewAry= addPlot(state,action);
             break;
         case Cntlr.CROP: //todo- crop
+            plotViewAry= addPlot(state,action);
             break;
         default:
             break;

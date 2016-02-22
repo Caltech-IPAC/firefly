@@ -2,37 +2,28 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
-
 /**
  * REDUCER USE ONLY
  * REDUCER USE ONLY
  * REDUCER USE ONLY
  */
 
-//import ImagePlotCntlr from './ImagePlotCntlr.js';
 import update from 'react-addons-update';
-import {flux} from '../../Firefly.js';
 import WebPlot, {PlotAttribute} from './../WebPlot.js';
-import {GridOnStatus, ExpandedTitleOptions, WPConst} from './../WebPlotRequest.js';
+import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
-import AppDataCntlr, {getActiveTarget} from '../../core/AppDataCntlr.js';
-import ImagePlotCntlr from './../ImagePlotCntlr.js';
+import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import PlotViewUtil from './../PlotViewUtil.js';
+import PlotViewUtil, {getPlotViewById, matchPlotView, primePlot} from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotPref from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
-import {primePlot} from '../PlotViewUtil.js';
 
-export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
+// export const DATASET_INFO_CONVERTER = 'DATASET_INFO_CONVERTER';
 
 const DEF_WORKING_MSG= 'Plotting ';
 
@@ -267,7 +258,7 @@ export function replacePrimaryPlot(plotView,primePlot) {
 
 
 /**
- * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plotviews in the group
+ * scroll a plot view to a new screen pt, if plotGroup.lockRelated is true then all the plot views in the group
  * will be scrolled to match
  * @param plotId plot id to set the scrolling on
  * @param {Array} plotViewAry an array of plotView
@@ -276,11 +267,11 @@ export function replacePrimaryPlot(plotView,primePlot) {
  * @return {Array}
  */
 function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) {
-    var plotView= updatePlotViewScrollXY(PlotViewUtil.findPlotView(plotId,plotViewAry),newScrollPt);
+    var plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId),newScrollPt);
     plotViewAry= replacePlotView(plotViewAry, plotView);
     var plotGroup= PlotViewUtil.findPlotGroup(plotView.plotGroupId,plotGroupAry);
     if (plotGroup && plotGroup.lockRelated) {
-        plotViewAry= PlotViewUtil.matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
+        plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
     }
     return plotViewAry;
 }

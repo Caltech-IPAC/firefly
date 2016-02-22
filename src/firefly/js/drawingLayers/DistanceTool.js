@@ -53,7 +53,7 @@ var idCnt=0;
 function dispatchDistanceToolEnd(mouseStatePayload) {
     var {plotId,drawLayer}= mouseStatePayload;
     var sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-    ImagePlotCntlr.dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel);
+    dispatchAttributeChange(plotId,true,PlotAttribute.ACTIVE_DISTANCE,sel);
     flux.process({type:DrawLayerCntlr.DT_END, payload:mouseStatePayload} );
 }
 
