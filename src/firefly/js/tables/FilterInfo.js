@@ -13,6 +13,10 @@ const op_regex = new RegExp('(<|>|>=|<=|=|!=|like|in)');
 const cond_regex = new RegExp('^' + op_regex.source + '\\s+(.+)', 'i');
 const filter_regex = new RegExp('(\\S+)\\s+' + op_regex.source + '\\s+(.+)', 'i');
 
+export const FILTER_TTIPS = 'Valid values are one of (=, >, <, !=, >=, <=, LIKE) followed by a value separated by a space. \n' +
+    `Or 'IN', followed by a list of values separated by commas. \n` +
+    'Examples:  > 12345; != 3000; IN a,b,c,d';
+
 /**
  * convenience class to handle the table's filter information.
  * data is stored as a string of 'col op expression' separated by comma.  ie.  'id > 1, id < 100,band <= 2'
@@ -45,8 +49,7 @@ export class FilterInfo {
 
     static validator(conditions) {
         const valid = FilterInfo.isValid(conditions);
-        const message = valid ? '' : 'Invalid syntax';
-        return {valid, message};
+        return {valid, message: FILTER_TTIPS};
     }
 
     serialize() {

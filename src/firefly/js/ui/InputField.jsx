@@ -5,11 +5,11 @@ import {InputFieldView} from './InputFieldView.jsx';
 
 function shouldAct(e, actOn) {
     if (e.type.startsWith('key') ) {
-        return (actOn.indexOf('enter')>= 0 && e.key === 'Enter');
+        return (actOn.includes('enter') && e.key === 'Enter');
     } else if (e.type.startsWith('blur')) {
-        return  actOn.indexOf('blur')>= 0;
+        return  actOn.includes('blur');
     } else {
-        return actOn.indexOf('changes') >= 0;
+        return actOn.includes('changes');
     }
 }
 
@@ -26,13 +26,13 @@ export class InputField extends React.Component {
     }
 
     handleChanges(e) {
-        var {fieldKey, validator, onChange, label, actOn} = this.props;
+        var {fieldKey, validator, onChange, label='', actOn} = this.props;
         const value = e.target.value;
         const nState = {fieldKey, value};
         if (shouldAct(e, actOn)) {
             var {valid, message} = validator ? validator(value) : {valid:true, message:''};
             nState.valid = valid;
-            nState.message = valid ? '' : ((label ? label : '') + message).replace('::', ':');
+            nState.message = valid ? '' : (label + message).replace('::', ':');
             onChange && onChange(nState);
         }
         this.setState(nState);

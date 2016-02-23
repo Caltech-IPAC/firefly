@@ -19,33 +19,6 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import LOADING from 'html/images/gxt/loading.gif';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 
-
-function prepareTableData(tableModel) {
-    if (!tableModel.tableData.columns) return {};
-    const {sortInfo, selectionInfo} = tableModel;
-    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
-    var data = [];
-    if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
-        data = tableModel.tableData.data.slice(startIdx, endIdx);
-    } else {
-        Object.assign(tableModel.request, {startIdx, pageSize});
-        //TblCntlr.dispatchFetchTable(tableModel.request, highlightedRow);
-    }
-    var tableRowCount = data.length;
-    const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
-
-    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectionInfo, filterInfo, filterCount, data};
-}
-
-function ensureColumns(tableModel, columns) {
-    if (isEmpty(columns)) {
-        return cloneDeep(get(tableModel, 'tableData.columns', []));
-    } else {
-        return columns;
-    }
-}
-
 export class TablePanel extends Component {
     constructor(props) {
         super(props);
@@ -119,7 +92,7 @@ export class TablePanel extends Component {
 
         return (
             <div className='TablePanel__wrapper'>
-                <div role='toolbar'>
+                <div role='toolbar' style={{height: '33px'}}>
                     <div className='group'>
                         <button style={{width:70}}>Download</button>
                     </div>
@@ -142,12 +115,10 @@ export class TablePanel extends Component {
                     </div>
                     <div className='group'>
                         {filterCount > 0 && <button onClick={() => this.tableStore.onFilter('')} className='tablepanel clearFilters'/>}
-                        <button style={{marginLeft: '-2px', marginTop: '-2px'}} className='tablepanel'>
                                 <ToolbarButton icon={FILTER} tip={'The Filter Panel can be used to remove unwanted data from the search results'}
                                        visible={true}
                                        badgeCount={filterCount}
                                        onClick={() => this.onOptionUpdate({showFilters: !showFilters})}/>
-                        </button>
                         <button style={{marginLeft: '4px'}} onClick={this.toggleOptions} className='tablepanel options'/>
                     </div>
                 </div>
@@ -195,4 +166,32 @@ TablePanel.defaultProps = {
     showToolbar: true,
     pageSize: 50
 };
+
+
+
+function prepareTableData(tableModel) {
+    if (!tableModel.tableData.columns) return {};
+    const {sortInfo, selectionInfo} = tableModel;
+    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
+    var data = [];
+    if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
+        data = tableModel.tableData.data.slice(startIdx, endIdx);
+    } else {
+        Object.assign(tableModel.request, {startIdx, pageSize});
+        //TblCntlr.dispatchFetchTable(tableModel.request, highlightedRow);
+    }
+    var tableRowCount = data.length;
+    const filterInfo = get(tableModel, 'request.filters');
+    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+
+    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectionInfo, filterInfo, filterCount, data};
+}
+
+function ensureColumns(tableModel, columns) {
+    if (isEmpty(columns)) {
+        return cloneDeep(get(tableModel, 'tableData.columns', []));
+    } else {
+        return columns;
+    }
+}
 

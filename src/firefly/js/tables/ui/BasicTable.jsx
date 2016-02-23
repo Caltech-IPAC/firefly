@@ -8,112 +8,12 @@ import Resizable from 'react-component-resizable';
 import {debounce, get, isEmpty} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
-import {FilterInfo} from '../FilterInfo.js';
+import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 
 import './TablePanel.css';
 
 const {Table, Column, Cell} = FixedDataTable;
-
-const TextCell = ({rowIndex, data, col}) => {
-    return (
-        <Cell>
-            {get(data, [rowIndex, col],'undef')}
-        </Cell>
-    );
-};
-
-const HeaderCell = ({col, showUnits, showFilters, filterInfo, onChange}) => {
-
-    return (
-        <div title={col.title || col.name} className='TablePanel__header'>
-            <div>{col.name}</div>
-            {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
-            {showFilters && <InputField
-                                validator={FilterInfo.validator}
-                                fieldKey={col.name}
-                                tooltip = {'Enter a valid filter string here'}
-                                value = {filterInfo.getFilter(col.name)}
-                                onChange = {onChange}
-                                actOn={['blur','enter']}
-                                showWarning={false}
-                                width={'100%'}
-                            />
-            }
-        </div>
-    );
-};
-
-function makeColWidth(columns, data, showUnits) {
-    return !columns ? {} : columns.reduce((widths, col, cidx) => {
-        const label = col.name;
-        var nchar = col.prefWidth;
-        const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
-        if (!nchar) {
-            nchar = Math.max(label.length, unitLength, get(data, `0.${cidx}.length`, 0));
-        }
-        widths[col.name] = nchar * 8.5;
-        return widths;
-    }, {});
-}
-
-function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore) {
-    if (!columns) return false;
-
-    const onChange = ({fieldKey, valid, value}) => {
-        if (valid && !filterInfo.isEqual(fieldKey, value)) {
-            filterInfo.setFilter(fieldKey, value);
-            tableStore.onFilter && tableStore.onFilter(filterInfo.serialize());
-        }
-    };
-
-    var colsEl = columns.map((col, idx) => {
-        if (col.visibility !== 'show') return false;
-        return (
-            <Column
-                key={col.name}
-                columnKey={col.name}
-                header={<HeaderCell {...{col, showUnits, showFilters, filterInfo, onChange}} />}
-                cell={<TextCell data={data} col={idx} />}
-                fixed={false}
-                width={columnWidths[col.name]}
-                isResizable={true}
-                allowCellsRecycling={true}
-            />
-        );
-    });
-    if (selectable) {
-        const headerCB = () => {
-            const onSelectAll = (e) => tableStore.onSelectAll && tableStore.onSelectAll(e.target.checked);
-            return (
-                <div className='tablePanel__checkbox'>
-                    <input type='checkbox' checked={selectInfo.isSelectAll()} onChange ={onSelectAll}/>
-                </div>
-            );
-        };
-
-        const cellCB = ({rowIndex}) => {
-            const onRowSelect = (e) => tableStore.onRowSelect && tableStore.onRowSelect(e.target.checked, rowIndex);
-            return (
-                <div className='tablePanel__checkbox' style={{backgroundColor: 'whitesmoke'}}>
-                    <input type='checkbox' checked={selectInfo.isSelected(rowIndex)} onChange={onRowSelect}/>
-                </div>
-            );
-        };
-
-        var cbox = <Column
-            key="selectable-checkbox"
-            columnKey='selectable-checkbox'
-            header={headerCB}
-            cell={cellCB}
-            fixed={true}
-            width={25}
-            allowCellsRecycling={true}
-        />;
-        colsEl.splice(0, 0, cbox);
-    }
-    return colsEl;
-}
 
 export class BasicTable extends React.Component {
     constructor(props) {
@@ -212,4 +112,106 @@ BasicTable.defaultProps = {
     width: '100%',
     height: '100%'
 };
+
+
+
+const TextCell = ({rowIndex, data, col}) => {
+    return (
+        <Cell>
+            {get(data, [rowIndex, col],'undef')}
+        </Cell>
+    );
+};
+
+const HeaderCell = ({col, showUnits, showFilters, filterInfo, onChange}) => {
+
+    return (
+        <div title={col.title || col.name} className='TablePanel__header'>
+            <div>{col.name}</div>
+            {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
+            {showFilters && <InputField
+                validator={FilterInfo.validator}
+                fieldKey={col.name}
+                tooltip = {FILTER_TTIPS}
+                value = {filterInfo.getFilter(col.name)}
+                onChange = {onChange}
+                actOn={['blur','enter']}
+                showWarning={false}
+                width={'100%'}
+            />
+            }
+        </div>
+    );
+};
+
+function makeColWidth(columns, data, showUnits) {
+    return !columns ? {} : columns.reduce((widths, col, cidx) => {
+        const label = col.name;
+        var nchar = col.prefWidth;
+        const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
+        if (!nchar) {
+            nchar = Math.max(label.length, unitLength, get(data, `0.${cidx}.length`, 0));
+        }
+        widths[col.name] = nchar * 8.5;
+        return widths;
+    }, {});
+}
+
+function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore) {
+    if (!columns) return false;
+
+    const onChange = ({fieldKey, valid, value}) => {
+        if (valid && !filterInfo.isEqual(fieldKey, value)) {
+            filterInfo.setFilter(fieldKey, value);
+            tableStore.onFilter && tableStore.onFilter(filterInfo.serialize());
+        }
+    };
+
+    var colsEl = columns.map((col, idx) => {
+        if (col.visibility !== 'show') return false;
+        return (
+            <Column
+                key={col.name}
+                columnKey={col.name}
+                header={<HeaderCell {...{col, showUnits, showFilters, filterInfo, onChange}} />}
+                cell={<TextCell data={data} col={idx} />}
+                fixed={false}
+                width={columnWidths[col.name]}
+                isResizable={true}
+                allowCellsRecycling={true}
+            />
+        );
+    });
+    if (selectable) {
+        const headerCB = () => {
+            const onSelectAll = (e) => tableStore.onSelectAll && tableStore.onSelectAll(e.target.checked);
+            return (
+                <div className='tablePanel__checkbox'>
+                    <input type='checkbox' checked={selectInfo.isSelectAll()} onChange ={onSelectAll}/>
+                </div>
+            );
+        };
+
+        const cellCB = ({rowIndex}) => {
+            const onRowSelect = (e) => tableStore.onRowSelect && tableStore.onRowSelect(e.target.checked, rowIndex);
+            return (
+                <div className='tablePanel__checkbox' style={{backgroundColor: 'whitesmoke'}}>
+                    <input type='checkbox' checked={selectInfo.isSelected(rowIndex)} onChange={onRowSelect}/>
+                </div>
+            );
+        };
+
+        var cbox = <Column
+            key="selectable-checkbox"
+            columnKey='selectable-checkbox'
+            header={headerCB}
+            cell={cellCB}
+            fixed={true}
+            width={25}
+            allowCellsRecycling={true}
+        />;
+        colsEl.splice(0, 0, cbox);
+    }
+    return colsEl;
+}
 
