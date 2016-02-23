@@ -37,7 +37,7 @@ var ChartsPanel = React.createClass({
 
     propTypes: {
         tblId : PropTypes.string,
-        table : PropTypes.object,
+        tableModel : PropTypes.object,
         tblStatsData : PropTypes.object,
         tblPlotData : PropTypes.object,
         tblHistogramData : PropTypes.object,
@@ -61,13 +61,13 @@ var ChartsPanel = React.createClass({
             if (nextState.chartType === SCATTER) {
                 // scatter plot
                 doUpdate = nextProps.tblPlotData !== this.props.tblPlotData ||
-                    (nextProps.table && nextProps.table.highlightedRow !== this.props.table.highlightedRow);
+                    (nextProps.tableModel && nextProps.tableModel.highlightedRow !== this.props.tableModel.highlightedRow);
             } else {
                 // histogram
                 doUpdate = nextProps.tblHistogramData !== this.props.tblHistogramData;
             }
         }
-        return doUpdate;
+        return Boolean(doUpdate);
     },
 
     onResize(size) {
@@ -108,14 +108,14 @@ var ChartsPanel = React.createClass({
     },
 
     renderXYPlot() {
-        const {tblId, table, tblPlotData} = this.props;
+        const {tblId, tableModel, tblPlotData} = this.props;
         if (!tblPlotData) {
             return 'Select XY plot parameters...';
         }
         const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
         var {widthPx, heightPx, optionsShown} = this.state;
 
-        const hRow = table ? table.highlightedRow : undefined;
+        const hRow = tableModel ? tableModel.highlightedRow : undefined;
         const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
 
         if (isPlotDataReady) {
