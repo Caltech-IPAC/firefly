@@ -265,15 +265,34 @@ public class FootprintFactoryTest {
 
 	@Test
 	public void testCosineRa() {
+        /*
         INSTRUMENTS inst = INSTRUMENTS.FGS;
 		String polRA00DEC00FGS =  "POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720 "
                                 + "POLYGON   -0.01246111  -0.17438280  -0.01299444  -0.21437121   0.02619722  -0.21371843   0.02595278  -0.17398279  -0.01246111  -0.17438280 ";
 		String polRA00DEC40FGS = "POLYGON    0.04941422  39.82591228   0.05001450  39.78614026   0.10145236  39.78556517   0.09981202  39.82578277   0.04941422  39.82591228";
 		String polRA00DEC90FGS = "POLYGON   12.29839928  89.82183415  10.18848870  89.78272485  19.98322603  89.77187466  23.75460655  89.80970354  12.29839928  89.82183415";
 
-        String polRA00DEC00 = polRA00DEC00FGS;
+		String polRA00DEC00 = polRA00DEC00FGS;
         String polRA00DEC40 = polRA00DEC40FGS;
         String polRA00DEC90 = polRA00DEC90FGS;
+
+        */
+
+        INSTRUMENTS inst = INSTRUMENTS.NICMOS;
+        String polRA00DEC00NICMOS = "POLYGON   -0.01082769   0.01555834  -0.01297767   0.01773334  -0.01515545   0.01558057  -0.01300546   0.01340557  -0.01082769  0.01555834 "
+                                + "POLYGON -0.01491377   0.02102499  -0.01871653   0.02476942  -0.02249152   0.02093610  -0.01868877   0.01719167  -0.01491377   0.02102499 "
+                                + "POLYGON  0.01088058   0.00023060   0.00071672   0.01036392  -0.00944160   0.00017227   0.00072225  -0.00995826   0.01088058   0.00023060 ";
+        String polRA00DEC40NICMOS = "POLYGON   -0.01424449  40.01547667  -0.01705515  40.01764912  -0.01989529  40.01549370  -0.01708463  40.01332132  -0.01424449  40.01547667 "
+                                    + "POLYGON   -0.01958849  40.02093842  -0.02456044  40.02467805  -0.02948341  40.02083978  -0.02451146  40.01710034  -0.01958849  40.02093842 "
+                                    + "POLYGON    0.01411711  40.00017090   0.00083587  40.01029479  -0.01241157  40.00009222   0.00086964  39.98997262   0.01411711  40.00017090 ";
+        String polRA00DEC90NICMOS = "POLYGON  -33.36735846  89.91885316 -35.10679591  89.91707783 -33.88906296  89.91459224 -32.17639534  89.91631482 -33.36735846  89.91885316 "
+                                    + "POLYGON  -37.50769002  89.91556418 -40.19105027  89.91207128 -37.93920846  89.90801503 -35.29437691  89.91134798 -37.50769002  89.91556418 "
+                                    + "POLYGON  -16.54314961  89.93475855 -27.60703461  89.92895429 -22.79552621  89.91610696 -13.28299653  89.92096311 -16.54314961  89.93475855 ";
+
+        String polRA00DEC00 = polRA00DEC00NICMOS;
+        String polRA00DEC40 = polRA00DEC40NICMOS;
+        String polRA00DEC90 = polRA00DEC90NICMOS;
+
 
         //Test footprintStcStringDef:
         //RA00DEC00:
@@ -308,74 +327,145 @@ public class FootprintFactoryTest {
 						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
 			}
 		}
-        //Test getFootprintStcStringDef on JWST/MIRI:
-        String def = FootprintFactory.getFootprintStcStringDef(FOOTPRINT.JWST, INSTRUMENTS.MIRI);
-        Assert.assertTrue(def.trim(), def.equals(INSTRUMENTS.MIRI.getStc()));
+
+
+        //Test getFootprintStcStringDef(fp, inst):
+        //JWST/MIRI:
+        //FOOTPRINT fp = FOOTPRINT.JWST;
+        //inst = INSTRUMENTS.MIRI;
+
+        //HST/FGSHST:
+        FOOTPRINT fp = FOOTPRINT.HST;
+        inst = INSTRUMENTS.FGSHST;
+
+        String def = FootprintFactory.getFootprintStcStringDef(fp, inst);
+        Assert.assertTrue(def.trim(), def.equals(inst.getStc()));
 
 	}
 
 	@Test
-	public void testDist(){
-		INSTRUMENTS inst = INSTRUMENTS.NIS;
-		List<Region> list = footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				inst,
-				new WorldPt(45, 45), false);
-		List<Region> list2 = footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				inst,
-				new WorldPt(0,0), false);
-		
-		WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.919,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.1937, 1E-2);
-		
-		double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
-		Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.209, 1E-2);
-		
-		footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				new WorldPt(0,0), false);
-		worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.135, 1E-2);
-		
-		footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, INSTRUMENTS.NIRSPEC,
-				new WorldPt(0,0), false);
-		worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 0.105,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.119, 1E-2);
-		computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
-		assertEquals("Should found dist = "+computeDistance ,computeDistance,0.159, 1E-2);
-		
-		double[] dist = null, dist1 = null;
-		WorldPt[] ptAry = null, ptAry1 = null;
-		for (Region region : list) {
-			System.out.println(list.size());
-			ptAry = ((RegionLines) region).getPtAry();
-			dist = new double[ptAry.length];			
-		}
-		
-		for (Region region : list2) {
-			System.out.println(list2.size());
-			ptAry1 = ((RegionLines) region).getPtAry();
-			dist1 = new double[ptAry1.length];
-		}
-		
-		for (int i = 0; i < dist1.length-1; i++) {
-			dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
-			dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
-			System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
-		}
-		List<WorldPt> lst = new ArrayList<>();
-		for (int i = 0; i < ptAry1.length; i++) {
-			lst.add(ptAry1[i]);
-		}
-		CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
-		System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
-	}
-	
+    public void testDistJWST(){
+        INSTRUMENTS inst = INSTRUMENTS.NIS;
+        List<Region> list = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                inst,
+                new WorldPt(45, 45), false);
+        List<Region> list2 = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                inst,
+                new WorldPt(0,0), false);
+
+        WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.919,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.1937, 1E-2);
+
+        double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.209, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.135, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST, INSTRUMENTS.NIRSPEC,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 0.105, 1E-2);
+        assertEquals("Should found lat = " + worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.119, 1E-2);
+        computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        assertEquals("Should found dist = "+computeDistance ,computeDistance,0.159, 1E-2);
+
+        double[] dist = null, dist1 = null;
+        WorldPt[] ptAry = null, ptAry1 = null;
+        for (Region region : list) {
+            System.out.println(list.size());
+            ptAry = ((RegionLines) region).getPtAry();
+            dist = new double[ptAry.length];
+        }
+
+        for (Region region : list2) {
+            System.out.println(list2.size());
+            ptAry1 = ((RegionLines) region).getPtAry();
+            dist1 = new double[ptAry1.length];
+        }
+
+        for (int i = 0; i < dist1.length-1; i++) {
+            dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
+            dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
+            System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
+        }
+        List<WorldPt> lst = new ArrayList<>();
+        for (int i = 0; i < ptAry1.length; i++) {
+            lst.add(ptAry1[i]);
+        }
+        CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
+        System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
+    }
+
+    @Test
+    public void testDistHST(){
+        INSTRUMENTS inst = INSTRUMENTS.WFC3;
+        List<Region> list = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                inst,
+                new WorldPt(45, 45), false);
+        List<Region> list2 = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                inst,
+                new WorldPt(0,0), false);
+
+        WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-1.19445E-4, 1E-2);
+
+        double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,1.622E-4, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 4.708E-4,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.0377, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST, INSTRUMENTS.WFPC2,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 359.99, 1E-2);
+        assertEquals("Should found lat = " + worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.0031, 1E-2);
+        computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        assertEquals("Should found dist = "+computeDistance ,computeDistance,0.0031, 1E-2);
+
+        double[] dist = null, dist1 = null;
+        WorldPt[] ptAry = null, ptAry1 = null;
+        for (Region region : list) {
+            System.out.println(list.size());
+            ptAry = ((RegionLines) region).getPtAry();
+            dist = new double[ptAry.length];
+        }
+
+        for (Region region : list2) {
+            System.out.println(list2.size());
+            ptAry1 = ((RegionLines) region).getPtAry();
+            dist1 = new double[ptAry1.length];
+        }
+
+        for (int i = 0; i < dist1.length-1; i++) {
+            dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
+            dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
+            System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
+        }
+        List<WorldPt> lst = new ArrayList<>();
+        for (int i = 0; i < ptAry1.length; i++) {
+            lst.add(ptAry1[i]);
+        }
+        CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
+        System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
+    }
 	
 	@Test
 	public void testConvertToNewReference() {
