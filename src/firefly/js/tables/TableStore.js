@@ -27,6 +27,12 @@ export class TableStore {
 
     }
 
+    onFilter(filterIntoString) {
+        const {request} = this.tableModel;
+        request.filters = filterIntoString;
+        this.handleAction(TblCntlr.REFETCH_TABLE, {request, highlightedRow: 0});
+    }
+
     onPageSizeChange(nPageSize) {
         nPageSize = Number.parseInt(nPageSize);
         const {tbl_id, pageSize, highlightedRow} = TblUtil.gatherTableState(this.tableModel);
@@ -104,6 +110,7 @@ export class RemoteTableStore extends TableStore {
         switch (type) {
             case (TblCntlr.TBL_SELECT_ROW)  :
             case (TblCntlr.TBL_HIGHLIGHT_ROW)  :
+            case (TblCntlr.REFETCH_TABLE)  :
                 flux.process({type, payload});
                 break;
 

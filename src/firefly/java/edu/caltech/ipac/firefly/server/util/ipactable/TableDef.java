@@ -62,13 +62,17 @@ public class TableDef {
         return null;
     }
 
-    public DataGroupPart.State getStatus() {
+    public void ensureStatus() {
         DataGroup.Attribute a = getAttribute(DataGroupPart.LOADING_STATUS);
-        if (a != null && !StringUtils.isEmpty(a.getValue())) {
-            return DataGroupPart.State.valueOf(String.valueOf(a.getValue()));
-        } else {
-            return DataGroupPart.State.COMPLETED;
+        if (a == null || StringUtils.isEmpty(a.getValue())) {
+            setStatus(DataGroupPart.State.COMPLETED);
         }
+    }
+
+    public DataGroupPart.State getStatus() {
+        ensureStatus();
+        DataGroup.Attribute a = getAttribute(DataGroupPart.LOADING_STATUS);
+        return DataGroupPart.State.valueOf(String.valueOf(a.getValue()));
     }
 
     public int getLineSepLength() {
