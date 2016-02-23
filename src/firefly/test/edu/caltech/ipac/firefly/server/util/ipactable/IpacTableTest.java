@@ -38,7 +38,7 @@ public class IpacTableTest {
         request.setMeta("test-meta", "test-meta-value");
         request.setDecimateInfo(new DecimateInfo("ra", "dec", 1234, .5f));
         request.setSortInfo(new SortInfo("ra", "dec"));
-        request.setFilters(Arrays.asList("ra > 0, dec > 0"));
+        request.setFilters(Arrays.asList("ra > 0", "dec > 0"));
 
     }
 
