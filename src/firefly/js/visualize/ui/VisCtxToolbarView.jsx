@@ -22,7 +22,7 @@ import UNSELECTED from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 
 import CoordUtil from '../CoordUtil.js';
-import { parseImagePt, parseWorldPt, parseScreenPt } from '../Point.js'
+import { parseImagePt } from '../Point.js';
 
 function crop(pv) {
     console.log('todo- crop:' + primePlot(pv).title);
@@ -47,16 +47,16 @@ function formatNumber(num, fractionDigits=7)
     const SigDig = 7;
 
 
-    if (num === null || num === undefined)
+    if (num === null || num === undefined) {
         return '';
-
+    }
     thred = Math.min(Math.pow(10, SigDig - fractionDigits), 1.0);
 
-    if (Math.abs(num) >= thred)
+    if (Math.abs(num) >= thred) {
         numStr = num.toFixed(fractionDigits);
-    else
+    } else {
         numStr = num.toExponential(fractionDigits);
-
+    }
     return numStr;
 }
 
@@ -68,8 +68,8 @@ function formatNumber(num, fractionDigits=7)
 
 function tabulateStatics(wpResult, cc) {
 
-    const SSummary = "statsSummary";
-    const STable = "statsTable";
+    const SSummary = 'statsSummary';
+    const STable = 'statsTable';
 
     let b = wpResult.Band_Info.NO_BAND;
     let tblData = {};
@@ -86,8 +86,9 @@ function tabulateStatics(wpResult, cc) {
     let ipMetrics = [Metrics.MIN, Metrics.MAX, Metrics.CENTROID, Metrics.FW_CENTROID];
 
     for (let i = 0; i < ipMetrics.length; i++) {
-        if (!b.hasOwnProperty(ipMetrics[i]))
+        if (!b.hasOwnProperty(ipMetrics[i])) {
             continue;
+        }
 
         var item = b[ipMetrics[i]];
         var ipt, wpt;
@@ -102,11 +103,11 @@ function tabulateStatics(wpResult, cc) {
         wpt = cc.getWorldCoords(ipt);
         hmsRA  = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
         hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
-        statsRow.push("RA: " +  hmsRA + "\n" + "DEC: " + hmsDec);
+        statsRow.push('RA: ' +  hmsRA + '\n' + 'DEC: ' + hmsDec);
 
         // item value
         if (item.value === null || item.value === undefined) {
-            statsRow.push("");
+            statsRow.push('');
         } else {
             statsRow.push(formatNumber(item.value) + ' ' + item.units);
         }
@@ -122,8 +123,8 @@ function tabulateStatics(wpResult, cc) {
  * @param pv
  */
 function stats(pv) {
-    console.log('Stats getting: ' + primePlot(pv).title);
-    console.log(Metrics);
+    //console.log('Stats getting: ' + primePlot(pv).title);
+    //console.log(Metrics);
     var p= primePlot(pv);
     var cc= CysConverter.make(p);
     var sel= p.attributes[PlotAttribute.SELECTION];

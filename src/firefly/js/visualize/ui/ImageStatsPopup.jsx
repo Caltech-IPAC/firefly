@@ -9,12 +9,19 @@ import PopupPanel from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 
 const popupId = 'ImageAreaStatsPopup';
+const rS = {
+    padding: '10px 10px 10px 10px'
+};
+const tS = {
+    width: '450px',
+    border: '1px solid black'
+};
 
 export function showImageAreaStatsPopup(popTitle, statsResult) {
     const popup=
-        <PopupPanel title={popTitle} >
+        (<PopupPanel title={popTitle} >
             <ImageStats statsResult={statsResult}/>
-        </PopupPanel>;
+        </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
     AppDataCntlr.showDialog(popupId);
@@ -54,17 +61,13 @@ ImageStats.propTypes= {
  */
 function ImageAreaStatsSummary({statsSummary})
 {
-    var rS = {
-        padding: '10px 10px 10px 10px'
-    };
-
     var summaryRows = statsSummary.map(function(summaryLine) {
             return (
                 <tr key={summaryLine[0]}>
                    <td> {summaryLine[0] + ':'} </td>
                    <td> {summaryLine[1]}</td>
                 </tr>
-            )
+            );
         });
 
 
@@ -76,7 +79,7 @@ function ImageAreaStatsSummary({statsSummary})
                 </tbody>
             </table>
         </div>
-    )
+    );
 }
 
 ImageAreaStatsSummary.PropTypes={
@@ -92,15 +95,6 @@ ImageAreaStatsSummary.PropTypes={
 
 function ImageAreaStatsTable ({statsTbl})
 {
-
-    var rS = {
-        padding: '10px 10px 10px 10px'
-    };
-    var tS = {
-        width: '450px',
-        border: '1px solid black'
-    };
-
     var tableRows = statsTbl.map(function (statsRow) {
         return (
             <ImageAreaStatsTableRow key={statsRow[0] || statsRow[1]} statsRow={statsRow} />
@@ -134,13 +128,12 @@ ImageAreaStatsTable.propTypes= {
  *
  */
 
-var ImageAreaStatsTableRow = React.createClass(
-    {
-        propTypes: {
-            statsRow: React.PropTypes.array.isRequired
-        },
+class ImageAreaStatsTableRow extends React.Component {
 
-        rowStates: {
+    constructor(props) {
+        super(props);
+        this.state = {hover: false};
+        this.rowStates = {
             hover: {
                 backgroundColor: 'yellow',
                 cursor: 'text'
@@ -153,65 +146,65 @@ var ImageAreaStatsTableRow = React.createClass(
 
             title: {
                 backgroundColor: '#888888',
-                textAlign: "center"
+                textAlign: 'center'
             }
-
-        },
-
-        getInitialState: function() {
-            return {hover: false};
-        },
-
-        onMouseHover: function (event) {
-            this.setState({hover: true});
-        },
-
-        onMouseOut: function(event) {
-            this.setState({hover: false});
-        },
-
-        render: function() {
-            var rS;
-
-            if (!this.props.statsRow[0])
-                rS = this.rowStates.title;
-            else
-                rS = this.state.hover? this.rowStates.hover: this.rowStates.nohover;
+        };
+    }
 
 
-            var tableCells = this.props.statsRow.map( function (cell) {
-                const newline = '\n';
-                var dS = {border: "1px solid black", padding: "5px"};
+    onMouseHover() {
+        this.setState({hover: true});
+    }
 
-                // cell contains newline (location)
-                if (cell.indexOf(newline) >= 0) {
-                    var lines = cell.split(newline);
+    onMouseOut() {
+        this.setState({hover: false});
+    }
 
-                    var br = lines.map(function (line) {
-                        return (<span key={line}>{line}<br/></span>);
-                    });
+    render() {
+        var trS;
 
-                    return (
-                        <td key={cell} style={dS}>
-                            { br }
-                        </td>
-                    );
-                } else {
-                    return (
-                        <td key={cell} style={dS}>{cell}</td>
-                    )
-                }
-            });
-
-            return (
-                <tr style={rS}
-                    onMouseOver={this.onMouseHover} onMouseOut={this.onMouseOut}>
-                    {tableCells}
-                </tr>
-            );
+        if (!this.props.statsRow[0]) {
+            trS = this.rowStates.title;
+        } else {
+            trS = this.state.hover ? this.rowStates.hover : this.rowStates.nohover;
         }
-    });
 
+        var tableCells = this.props.statsRow.map(function (cell) {
+            const newline = '\n';
+            var dS = {border: '1px solid black', padding: '5'};
+
+            // cell contains newline (location)
+            if (cell.includes(newline)) {
+                var lines = cell.split(newline);
+
+                var br = lines.map(function (line) {
+                    return (<span key={line}>{line}<br/></span>);
+                });
+
+                return (
+                    <td key={cell} style={dS}>
+                        { br }
+                    </td>
+                );
+            } else {
+                return (
+                    <td key={cell} style={dS}>{cell}</td>
+                );
+            }
+        });
+
+        return (
+            <tr style={trS}
+                onMouseOver={this.onMouseHover.bind(this)} onMouseOut={this.onMouseOut.bind(this)}>
+                {tableCells}
+            </tr>
+        );
+    }
+}
+
+ImageAreaStatsTableRow.propTypes={
+    statsRow: React.PropTypes.array.isRequired
+};
 
 /**
  * component under the stats table containing close button and help icon
@@ -224,13 +217,10 @@ var ImageAreaStatsTableRow = React.createClass(
 // TODO: add help icon
 function ImageAreaStatsClose ({closeButton='Close', imgFile=''} )
 {
-    var rS = {
-        float:'right',
-        padding: '5px 10px 5px 10px'
-    };
+    var rcS = Object.assign({}, rS, {float: 'right'});
 
     return (
-        <div style={rS} >
+        <div style={rcS} >
             <CompleteButton
                 style={{padding : '5px'}}
                 text={closeButton}
