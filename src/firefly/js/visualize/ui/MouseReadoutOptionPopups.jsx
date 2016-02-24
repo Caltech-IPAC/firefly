@@ -96,7 +96,7 @@ function doDispatch(fieldGroup,  fieldKey){
 		}
 		AppDataCntlr.hideDialog(fieldKey);
 	});
-	
+
 }
 /**
  *  create a popup dialog
