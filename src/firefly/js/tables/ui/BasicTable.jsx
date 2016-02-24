@@ -10,8 +10,11 @@ import {debounce, get, isEmpty} from 'lodash';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
+import {SORT_ASC, SORT_DESC, UNSORTED, SortInfo} from '../SortInfo';
 
 import './TablePanel.css';
+import ASC_ICO from 'html/images/sort_asc.gif';
+import DESC_ICO from 'html/images/sort_desc.gif';
 
 const {Table, Column, Cell} = FixedDataTable;
 
@@ -19,8 +22,8 @@ export class BasicTable extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-                widthPx: 300,
-                heightPx: 100,
+                widthPx: 0,
+                heightPx: 0,
                 columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
@@ -56,12 +59,13 @@ export class BasicTable extends React.Component {
     }
 
     render() {
-        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore, width, height} = this.props;
+        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfo, filterInfo, sortInfo, tableStore, width, height} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         if (isEmpty(columns)) return false;
 
         var style = {width, height};
         const filterInfoCls = FilterInfo.parse(filterInfo);
+        const sortInfoCls = SortInfo.parse(sortInfo);
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
@@ -77,7 +81,7 @@ export class BasicTable extends React.Component {
                     scrollToRow={hlRowIdx}
                     width={widthPx}
                     height={heightPx}>
-                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, tableStore)}
+                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, sortInfoCls, tableStore)}
                 </Table>
                 {isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
             </Resizable>
@@ -91,6 +95,7 @@ BasicTable.propTypes = {
     hlRowIdx: PropTypes.number,
     selectInfo: PropTypes.instanceOf(SelectInfo),
     filterInfo: PropTypes.string,
+    sortInfo: PropTypes.string,
     selectable: PropTypes.bool,
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
@@ -114,6 +119,9 @@ BasicTable.defaultProps = {
 };
 
 
+const SortSymbol = ({sortDir}) => {
+    return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
+};
 
 const TextCell = ({rowIndex, data, col}) => {
     return (
@@ -123,18 +131,34 @@ const TextCell = ({rowIndex, data, col}) => {
     );
 };
 
-const HeaderCell = ({col, showUnits, showFilters, filterInfo, onChange}) => {
+const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, tableStore}) => {
+
+    const cname = col.name;
+    const sortDir = sortInfoCls.getDirection(cname);
+
+    const onfilterChange = ({fieldKey, valid, value}) => {
+        if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
+            filterInfoCls.setFilter(fieldKey, value);
+            tableStore.onFilter && tableStore.onFilter(filterInfoCls.serialize());
+        }
+    };
+
+    const onSortChange = () => {
+        tableStore.onSort && tableStore.onSort(sortInfoCls.toggle(cname).serialize());
+    };
 
     return (
-        <div title={col.title || col.name} className='TablePanel__header'>
-            <div>{col.name}</div>
+        <div title={col.title || cname} className='TablePanel__header'>
+            <div onClick={onSortChange} >{cname}
+                { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
+            </div>
             {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
             {showFilters && <InputField
                 validator={FilterInfo.validator}
-                fieldKey={col.name}
+                fieldKey={cname}
                 tooltip = {FILTER_TTIPS}
-                value = {filterInfo.getFilter(col.name)}
-                onChange = {onChange}
+                value = {filterInfoCls.getFilter(cname)}
+                onChange = {onfilterChange}
                 actOn={['blur','enter']}
                 showWarning={false}
                 width={'100%'}
@@ -152,20 +176,13 @@ function makeColWidth(columns, data, showUnits) {
         if (!nchar) {
             nchar = Math.max(label.length, unitLength, get(data, `0.${cidx}.length`, 0));
         }
-        widths[col.name] = nchar * 8.5;
+        widths[col.name] = nchar * 8 + 20;    // 20 is for the padding and sort symbol
         return widths;
     }, {});
 }
 
-function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfo, tableStore) {
+function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, sortInfoCls, tableStore) {
     if (!columns) return false;
-
-    const onChange = ({fieldKey, valid, value}) => {
-        if (valid && !filterInfo.isEqual(fieldKey, value)) {
-            filterInfo.setFilter(fieldKey, value);
-            tableStore.onFilter && tableStore.onFilter(filterInfo.serialize());
-        }
-    };
 
     var colsEl = columns.map((col, idx) => {
         if (col.visibility !== 'show') return false;
@@ -173,7 +190,7 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
             <Column
                 key={col.name}
                 columnKey={col.name}
-                header={<HeaderCell {...{col, showUnits, showFilters, filterInfo, onChange}} />}
+                header={<HeaderCell {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, tableStore}} />}
                 cell={<TextCell data={data} col={idx} />}
                 fixed={false}
                 width={columnWidths[col.name]}

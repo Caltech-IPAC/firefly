@@ -10,6 +10,10 @@ export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 const saveAsIpacUrl = getRootURL() + 'servlet/SaveAsIpacTable';
 
+/*global __MODULE_NAME__*/
+export function getModuleName() {
+    return __MODULE_NAME__;
+}
 
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.

@@ -27,10 +27,16 @@ export class TableStore {
 
     }
 
+    onSort(sortInfoString) {
+        const {request} = this.tableModel;
+        request.sortInfo = sortInfoString;
+        this.handleAction(TblCntlr.REFETCH_TABLE, {request});
+    }
+
     onFilter(filterIntoString) {
         const {request} = this.tableModel;
         request.filters = filterIntoString;
-        this.handleAction(TblCntlr.REFETCH_TABLE, {request, highlightedRow: 0});
+        this.handleAction(TblCntlr.REFETCH_TABLE, {request});
     }
 
     onPageSizeChange(nPageSize) {
@@ -76,8 +82,17 @@ export class TableStore {
     }
 
     handleAction(type, payload) {
-        var tableModel = Object.assign({}, this.tableModel, payload);
-        this.setTableModel(tableModel);
+        switch (type) {
+            case (TblCntlr.REFETCH_TABLE)  :
+                throw new Error('sorting and filtering is not implemented for localstore, yet.');
+                break;
+
+            default:
+                var tableModel = Object.assign({}, this.tableModel, payload);
+                this.setTableModel(tableModel);
+        }
+
+
     }
 
     /**

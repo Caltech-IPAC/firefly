@@ -82,7 +82,8 @@ export class TablePanel extends Component {
         var {tableModel, columns, showOptions, showUnits, showFilters} = this.state;
         const {selectable} = this.props;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
-        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectionInfo, filterInfo, filterCount, data} = prepareTableData(tableModel);
+        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount,
+                    selectionInfo, filterInfo, filterCount, sortInfo, data} = prepareTableData(tableModel);
         const selectInfo = SelectInfo.newInstance(selectionInfo, startIdx);
 
 
@@ -133,6 +134,7 @@ export class TablePanel extends Component {
                         showFilters={showFilters}
                         selectInfo={selectInfo}
                         filterInfo={filterInfo}
+                        sortInfo={sortInfo}
                         tableStore={this.tableStore}
                     />
                     {showOptions && <TablePanelOptions
@@ -171,7 +173,7 @@ TablePanel.defaultProps = {
 
 function prepareTableData(tableModel) {
     if (!tableModel.tableData.columns) return {};
-    const {sortInfo, selectionInfo} = tableModel;
+    const {selectionInfo} = tableModel;
     const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
     var data = [];
     if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
@@ -183,6 +185,7 @@ function prepareTableData(tableModel) {
     var tableRowCount = data.length;
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    const sortInfo = get(tableModel, 'request.sortInfo');
 
     return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectionInfo, filterInfo, filterCount, data};
 }
