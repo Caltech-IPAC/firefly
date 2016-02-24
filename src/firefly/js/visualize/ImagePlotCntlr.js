@@ -486,16 +486,7 @@ function reducer(state=initState(), action={}) {
             retState= changeExpandedMode(state,action);
             break;
         case CHANGE_MOUSE_READOUT_MODE:
-            var readoutType=action.payload.readoutType;
-            if ( readoutType==='mouseReadout1') {
-               retState = changeMouseReadoutReadout1(state, action);
-            }
-            else if (readoutType==='mouseReadout2') {
-                retState = changeMouseReadoutReadout2(state, action);
-            }
-            else if (readoutType=== 'pixelSize'){
-                    retState = changeMouseReadoutPixel(state, action);
-            }
+             retState = changeMouseReadout(state, action);
 
             break;
         case EXPANDED_AUTO_PLAY:
@@ -517,33 +508,17 @@ function reducer(state=initState(), action={}) {
 
 
 
-function changeMouseReadoutReadout1(state, action) {
+function changeMouseReadout(state, action) {
 
+    var fieldKey=action.payload.readoutType;
     var payload = action.payload;
     var newRadioValue = payload.newRadioValue;
-    var oldRadioValue = state.mouseReadout1;
+    var oldRadioValue = state[fieldKey];
     if (newRadioValue ===oldRadioValue) return state;
-    return Object.assign({}, state, {mouseReadout1:newRadioValue});
+    return Object.assign({}, state, {[fieldKey]:newRadioValue});
 
 }
 
-function changeMouseReadoutReadout2(state, action){
-    var payload = action.payload;
-    var newRadioValue = payload.newRadioValue;
-    var oldRadioValue = state.mouseReadout2;
-    if (newRadioValue ===oldRadioValue) return state;
-    return Object.assign({}, state, {mouseReadout2:newRadioValue});
-
-}
-
-function changeMouseReadoutPixel(state, action){
-    var payload = action.payload;
-    var newReadoutPixel = payload.newRadioValue;
-    var oldReadoutPixel  = state.pixelSize;
-    if (newReadoutPixel  ===oldReadoutPixel ) return state;
-    return Object.assign({}, state, {pixelSize:newReadoutPixel});
-
-}
 function changeActivePlotView(state,action) {
     if (action.payload.plotId===state.activePlotId) return state;
 
