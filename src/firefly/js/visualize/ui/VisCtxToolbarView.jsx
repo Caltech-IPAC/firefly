@@ -3,15 +3,18 @@
  */
 
 import React, {PropTypes} from 'react';
-import {primePlot} from '../PlotViewUtil.js';
+import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {makeImagePt} from '../Point.js';
 import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
-import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
+import SelectArea from '../../drawingLayers/SelectArea.js';
 import {showImageAreaStatsPopup} from './imageStatsPopup.jsx';
 
+import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
+import {dispatchCrop} from '../ImagePlotCntlr.js';
 import {makeExtActivateData} from '../PlotCmdExtension.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 
@@ -23,10 +26,6 @@ import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
 
 import CoordUtil from '../CoordUtil.js';
 import { parseImagePt } from '../Point.js';
-
-function crop(pv) {
-    console.log('todo- crop:' + primePlot(pv).title);
-}
 
 
 //todo move the statistics constants to where they are needed
@@ -162,6 +161,22 @@ function filter(pv,dlAry) {
     console.log('todo- filter:' + primePlot(pv).title);
 }
 
+function crop(pv) {
+    var p= primePlot(pv);
+    var cc= CysConverter.make(p);
+    var sel= p.attributes[PlotAttribute.SELECTION];
+
+    var ip0=  cc.getImageCoords(sel.pt0);
+    var ip1=  cc.getImageCoords(sel.pt1);
+
+
+    var cropMultiAll= p.plotState.isMultiImageFile() && isMultiImageFitsWithSameArea(pv);
+
+    dispatchDetachLayerFromPlot(SelectArea.TYPE_ID,pv.plotId,true);
+    dispatchCrop(pv.plotId, ip0,ip1,cropMultiAll);
+}
+
+
 
 
 function makeExtensionButtons(extensionAry,pv,dlAry) {
@@ -216,7 +231,6 @@ export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, s
                            tip='Crop the image to the selected area'
                            horizontal={true}
                            visible={showCrop}
-                           todo={true}
                            onClick={() => crop(pv)}/>
 
             <ToolbarButton icon={STATISTICS}

@@ -8,7 +8,7 @@ import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
-import PlotViewUtil, {primePlot} from '../PlotViewUtil.js';
+import {primePlot, isActivePlotView} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from './ImageViewerLayout.jsx';
 import {PlotAttribute} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
@@ -157,7 +157,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId) {
 function getBorderColor(pv,visRoot) {
     if (!pv && !pv.plotId) return 'rgba(0,0,0,.4)';
 
-    if (PlotViewUtil.isActivePlotView(visRoot,pv.plotId)) return 'orange';
+    if (isActivePlotView(visRoot,pv.plotId)) return 'orange';
 
     var group= getPlotGroupById(visRoot,pv.plotGroupId);
 

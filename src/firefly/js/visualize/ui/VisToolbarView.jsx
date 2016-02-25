@@ -5,21 +5,14 @@
 import React, {PropTypes} from 'react';
 import {getActivePlotView,
     primePlot,
-    getDrawLayerByType,
-    getPlotViewById,
-    isDrawLayerAttached,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {dispatchRotate, dispatchFlip, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotChangeTask.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
-import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {ZoomButton, ZoomType} from './ZoomButton.jsx';
 import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
-import {dispatchCreateDrawLayer,
-    dispatchAttachLayerToPlot,
-    dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {defMenuItemKeys} from '../MenuItemKeys.js';
 import {StretchDropDownView} from './StretchDropDownView.jsx';
 import {ColorTableDropDownView} from './ColorTableDropDownView.jsx';

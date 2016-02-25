@@ -6,20 +6,24 @@ import Enum from 'enum';
 import update from 'react-addons-update';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
-import {makeZoomAction as zoomActionCreator,UserZoomTypes} from './ZoomUtil.js';
-import {makeColorChangeAction as colorChangeActionCreator,
-        makeStretchChangeAction as stretchChangeActionCreator,
-        makeFlipAction as flipActionCreator,
-        makeRotateAction as rotateActionCreator} from './PlotChangeTask.js';
+import {UserZoomTypes} from './ZoomUtil.js';
+import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
+import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {getPlotGroupById} from './PlotGroup.js';
-import HandlePlotChange from './reducer/HandlePlotChange.js';
-import HandlePlotCreation from './reducer/HandlePlotCreation.js';
-import {
-    isActivePlotView,
-    getPlotViewById,
-    expandedPlotViewAry,
-    getActivePlotView,
-    applyToOnePvOrGroup } from './PlotViewUtil.js';
+import {isActivePlotView,
+        getPlotViewById,
+        expandedPlotViewAry,
+        applyToOnePvOrGroup } from './PlotViewUtil.js';
+
+
+export {zoomActionCreator} from './ZoomUtil.js';
+
+export {colorChangeActionCreator,
+        stretchChangeActionCreator,
+        flipActionCreator,
+        cropActionCreator,
+        rotateActionCreator} from './PlotChangeTask.js';
+
 
 
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
@@ -145,22 +149,17 @@ const initState= function() {
 
 export default {
     reducer,
-    dispatchProcessScroll,
-    dispatch3ColorPlotImage,
-    zoomActionCreator, colorChangeActionCreator,
-    stretchChangeActionCreator, rotateActionCreator, flipActionCreator,
-    plotImageActionCreator, autoPlayActionCreator,
-    dispatchChangeActivePlotView,dispatchAttributeChange,
-    ANY_CHANGE, PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
+    ANY_CHANGE, ANY_REPLOT,
+    PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     ROTATE_START, ROTATE, ROTATE_FAIL,
     FLIP_START, FLIP, FLIP_FAIL,
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
+
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST,
-    ANY_REPLOT
+    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST
 };
 
 
@@ -232,8 +231,6 @@ export function dispatchFlip(plotId, isY=true) {
  * @param cropMultiAll
  */
 export function dispatchCrop(plotId, imagePt1, imagePt2, cropMultiAll) {
-    //todo: crop is not hooked up yet
-    console.log('crop: todo');
     flux.process({ type: CROP,
         payload: { plotId, imagePt1, imagePt2, cropMultiAll}});
 }
@@ -298,7 +295,7 @@ export function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHi
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  */
-function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
+export function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
                                  removeOldPlot= true, addToHistory= false,
                                  useContextModifications= true) {
 
@@ -416,12 +413,12 @@ export function dispatchExpandedList(plotIdAry) {
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 
-function plotImageActionCreator(rawAction) {
+export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
 
-function autoPlayActionCreator(rawAction) {
+export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
         var {autoPlayOn}= rawAction.payload;
         if (autoPlayOn) {
@@ -469,7 +466,7 @@ function reducer(state=initState(), action={}) {
         case CROP_START:
         case CROP_FAIL:
         case CROP:
-            retState= HandlePlotCreation.reducer(state,action);
+            retState= plotCreationReducer(state,action);
             break;
 
 
@@ -486,7 +483,7 @@ function reducer(state=initState(), action={}) {
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
         case EXPANDED_LIST:
-            retState= HandlePlotChange.reducer(state,action);
+            retState= plotChangeReducer(state,action);
             break;
 
 

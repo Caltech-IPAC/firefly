@@ -7,6 +7,7 @@ import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {ActionScope,IMAGE_PLOT_KEY} from './ImagePlotCntlr.js';
 import {primePlot, getPlotViewById, operateOnOthersInGroup,getPlotStateAry} from './PlotViewUtil.js';
 import {
+    callCrop,
     callChangeColor,
     callRotateNorth,
     callRotateToAngle,
@@ -29,7 +30,7 @@ export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
  * @param rawAction
  * @return {Function}
  */
-export function makeColorChangeAction(rawAction) {
+export function colorChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var {plotId,cbarId}= rawAction.payload;
@@ -56,7 +57,7 @@ export function makeColorChangeAction(rawAction) {
  * @param rawAction
  * @return {Function}
  */
-export function makeStretchChangeAction(rawAction) {
+export function stretchChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var {plotId,rangeValues}= rawAction.payload;
@@ -72,7 +73,7 @@ export function makeStretchChangeAction(rawAction) {
  * @param rawAction
  * @return {Function}
  */
-export function makeRotateAction(rawAction) {
+export function rotateActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var { plotId, angle, rotateType, newZoomLevel, actionScope }= rawAction.payload;
@@ -99,10 +100,33 @@ export function makeRotateAction(rawAction) {
 
 /**
  * @param rawAction
+ * @return {Function}
+ */
+export function cropActionCreator(rawAction) {
+    return (dispatcher,getState) => {
+        var store= getState()[IMAGE_PLOT_KEY];
+        var { plotId, imagePt1, imagePt2, cropMultiAll, actionScope }= rawAction.payload;
+        var plotView= getPlotViewById(store,plotId);
+        if (!plotView || !imagePt1 || !imagePt2) return;
+        var p= primePlot(plotView);
+        if (!p) return;
+
+        doCrop(dispatcher,plotView,imagePt1, imagePt2, cropMultiAll);
+        // if (actionScope===ActionScope.GROUP) {
+        //     operateOnOthersInGroup(store,plotView, (pv) =>
+        //         doRotate(dispatcher,pv,rotateType,angle,newZoomLevel));
+        // }
+    };
+}
+
+
+
+/**
+ * @param rawAction
  * @param store
  * @return {Function}
  */
-export function makeFlipAction(rawAction) {
+export function flipActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
         var { plotId, isY,actionScope }= rawAction.payload;
@@ -115,9 +139,9 @@ export function makeFlipAction(rawAction) {
         var p= primePlot(plotView);
         if (!p) return;
 
-        doFlip(dispatcher,store,plotView,isY);
+        doFlip(dispatcher,plotView,isY);
         operateOnOthersInGroup(store,plotView, (pv) =>
-            doFlip(dispatcher,store,pv,isY));
+            doFlip(dispatcher,pv,isY));
     };
 }
 
@@ -130,9 +154,33 @@ export function makeFlipAction(rawAction) {
 //=======================================================================
 
 
+/**
+ *
+ * @param dispatcher
+ * @param pv plot view
+ * @param imagePt1
+ * @param imagePt2
+ * @param cropMultiAll
+ */
+function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
+
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.CROP,
+        payload: {plotId, plotAry, overlayPlotViews}
+    });
+
+    const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.CROP_FAIL,
+        payload: {plotId, error: Error('crop: payload failed')}
+    });
+
+    callCrop(getPlotStateAry(pv), imagePt1, imagePt2, cropMultiAll)
+    .then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
+        .catch ( (e) => { dispatcher( { type: ImagePlotCntlr.FLIP_FAIL, payload: {plotId:pv.plotId, error:e} } );
+            logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
+        });
+}
 
 
-function doFlip(dispatcher,store,pv,isY) {
+function doFlip(dispatcher,pv,isY) {
 
     if (!isY) {
         console.log('flip: x axis is still a todo');
