@@ -11,7 +11,7 @@ import {callGetAreaStatistics} from '../../rpc/PlotServicesJson.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {logError} from '../../util/WebUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
-import {showImageAreaStatsPopup} from './imageStatsPopup.jsx';
+import {showImageAreaStatsPopup} from './ImageStatsPopup.jsx';
 
 import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop} from '../ImagePlotCntlr.js';
