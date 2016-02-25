@@ -2,25 +2,27 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PropTypes} from 'react';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 
 const popupId = 'ImageAreaStatsPopup';
+const helpId = 'visualization.fitsViewer';
 const rS = {
-    padding: '10px 10px 10px 10px'
+    padding: '10'
 };
 const tS = {
     width: '450px',
     border: '1px solid black'
 };
 
-export function showImageAreaStatsPopup(popTitle, statsResult) {
+export function showImageAreaStatsPopup(popTitle, statsResult, helpImage) {
     const popup=
         (<PopupPanel title={popTitle} >
-            <ImageStats statsResult={statsResult}/>
+            <ImageStats statsResult={statsResult} helpImage={helpImage}/>
         </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -30,16 +32,17 @@ export function showImageAreaStatsPopup(popTitle, statsResult) {
 /**
  * component for image area stats popup
  * @param {object} statsResult
+ * @param {string} helpImage image for help icon
  * @returns {XML}
  *
  */
 
-function ImageStats ( {statsResult} ) {
+function ImageStats ( {statsResult, helpImage} ) {
     return (
         <div>
             <ImageAreaStatsSummary statsSummary={statsResult.statsSummary}/>
             <ImageAreaStatsTable statsTbl={statsResult.statsTable}/>
-            <ImageAreaStatsClose />
+            <ImageAreaStatsClose imgFile={helpImage} />
         </div>
     );
 }
@@ -48,7 +51,8 @@ ImageStats.propTypes= {
     statsResult: PropTypes.shape({
         statsSummary: PropTypes.array.isRequired,
         statsTable: PropTypes.array.isRequired
-    }).isRequired
+    }).isRequired,
+    helpImage: PropTypes.string
 };
 
 
@@ -203,7 +207,7 @@ class ImageAreaStatsTableRow extends React.Component {
 }
 
 ImageAreaStatsTableRow.propTypes={
-    statsRow: React.PropTypes.array.isRequired
+    statsRow: PropTypes.array.isRequired
 };
 
 /**
@@ -214,17 +218,22 @@ ImageAreaStatsTableRow.propTypes={
  * @constructor
  */
 
-// TODO: add help icon
 function ImageAreaStatsClose ({closeButton='Close', imgFile=''} )
 {
     var rcS = Object.assign({}, rS, {float: 'right'});
+    var sideW = 23;
 
     return (
-        <div style={rcS} >
-            <CompleteButton
+        <div>
+            <div style={rcS} >
+                <HelpIcon width={sideW} height={sideW} id={helpId} src={imgFile}/>
+            </div>
+            <div style={rcS} >
+                <CompleteButton
                 style={{padding : '5px'}}
                 text={closeButton}
                 dialogId={popupId} />
+            </div>
         </div>
     );
 }
