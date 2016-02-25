@@ -38,7 +38,8 @@ export class TablePanel extends Component {
             columns,
             showOptions: false,
             showUnits: props.showUnits,
-            showFilters: props.showFilters
+            showFilters: props.showFilters,
+            showMask: false
         };
     }
 
@@ -79,13 +80,14 @@ export class TablePanel extends Component {
     };
 
     render() {
-        var {tableModel, columns, showOptions, showUnits, showFilters} = this.state;
+        var {tableModel, columns, showOptions, showUnits, showFilters, showMask} = this.state;
         const {selectable} = this.props;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
-        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectionInfo, filterInfo, filterCount, data} = prepareTableData(tableModel);
-        const selectInfo = SelectInfo.newInstance(selectionInfo, startIdx);
+        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
+                            filterInfo, filterCount, sortInfo, data} = prepareTableData(tableModel);
 
 
+        const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const showLoading = !TblUtil.isTableLoaded(tableModel);
         const rowFrom = startIdx + 1;
         const rowTo = startIdx+tableRowCount;
@@ -100,6 +102,7 @@ export class TablePanel extends Component {
                         <button onClick={() => this.tableStore.gotoPage(1)} className='paging_bar first' title='First Page'/>
                         <button onClick={() => this.tableStore.gotoPage(currentPage - 1)} className='paging_bar previous'  title='Previous Page'/>
                         <InputField
+                            style={{textAlign: 'right'}}
                             validator = {intValidator(1,totalPages, 'Page Number')}
                             tooltip = {'Jump to this page'}
                             size = {2}
@@ -107,10 +110,10 @@ export class TablePanel extends Component {
                             onChange = {this.onPageChange}
                             actOn={['blur','enter']}
                             showWarning={false}
-                        /> <div style={{fontSize: 'smaller', marginTop: '5px'}} >&nbsp; of {totalPages}</div>
+                        /> <div style={{fontSize: 'smaller'}} >&nbsp; of {totalPages}</div>
                         <button onClick={() => this.tableStore.gotoPage(currentPage + 1)} className='paging_bar next'  title='Next Page'/>
                         <button onClick={() => this.tableStore.gotoPage(totalPages)} className='paging_bar last'  title='Last Page'/>
-                        <div style={{fontSize: 'smaller', marginTop: '5px'}} > &nbsp; ({rowFrom.toLocaleString()} - {rowTo.toLocaleString()} of {tableModel.totalRows.toLocaleString()})</div>
+                        <div style={{fontSize: 'smaller'}} > &nbsp; ({rowFrom.toLocaleString()} - {rowTo.toLocaleString()} of {tableModel.totalRows.toLocaleString()})</div>
                         {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
                     </div>
                     <div className='group'>
@@ -131,8 +134,9 @@ export class TablePanel extends Component {
                         selectable={selectable}
                         showUnits={showUnits}
                         showFilters={showFilters}
-                        selectInfo={selectInfo}
+                        selectInfoCls={selectInfoCls}
                         filterInfo={filterInfo}
+                        sortInfo={sortInfo}
                         tableStore={this.tableStore}
                     />
                     {showOptions && <TablePanelOptions
@@ -144,6 +148,9 @@ export class TablePanel extends Component {
                     />
                     }
                 </div>
+
+                {showMask && <div className='loading-mask'/>  }
+
             </div>
         );
     }
@@ -171,7 +178,7 @@ TablePanel.defaultProps = {
 
 function prepareTableData(tableModel) {
     if (!tableModel.tableData.columns) return {};
-    const {sortInfo, selectionInfo} = tableModel;
+    const {selectInfo} = tableModel;
     const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
     var data = [];
     if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
@@ -183,8 +190,9 @@ function prepareTableData(tableModel) {
     var tableRowCount = data.length;
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    const sortInfo = get(tableModel, 'request.sortInfo');
 
-    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectionInfo, filterInfo, filterCount, data};
+    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectInfo, filterInfo, filterCount, data};
 }
 
 function ensureColumns(tableModel, columns) {

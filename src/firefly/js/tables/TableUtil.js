@@ -39,8 +39,8 @@ export function doFetchTable(tableRequest, hlRowIdx) {
                 }, []);
             }
             tableModel.highlightedRow = hlRowIdx || startIdx;
-            if (!tableModel.selectionInfo) {
-                tableModel.selectionInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
+            if (!tableModel.selectInfo) {
+                tableModel.selectInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
             }
             return tableModel;
         });
@@ -55,14 +55,14 @@ export function doValidate(type, action) {
         error(action, 'Invalid action.  Payload is missing.');
     }
     var {request} = action.payload;
-    if (type === TblCntlr.FETCH_TABLE ) {
+    if (type === TblCntlr.TABLE_FETCH ) {
         if (request.id) {
             error(action, 'Required "id" field is missing.');
         }
         if (request.tbl_id) {
             error(action, 'Required "tbl_id" field is missing.');
         }
-    } else if(type === TblCntlr.TBL_HIGHLIGHT_ROW) {
+    } else if(type === TblCntlr.TABLE_HIGHLIGHT) {
         const idx = action.payload.highlightedRow;
         if (!idx || idx<0) {
             error(action, 'highlightedRow must be a positive number.');

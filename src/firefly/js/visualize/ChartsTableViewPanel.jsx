@@ -127,7 +127,7 @@ var ChartsPanel = React.createClass({
                         params={xyPlotParams}
                         highlightedRow={hRow}
                         onHighlightChange={(highlightedRow) => {
-                                    TablesCntlr.dispatchHighlightRow(tblId, highlightedRow);
+                                    TablesCntlr.dispatchTableHighlight(tblId, highlightedRow);
                                 }
                            }
                         onSelection={(selection) => {

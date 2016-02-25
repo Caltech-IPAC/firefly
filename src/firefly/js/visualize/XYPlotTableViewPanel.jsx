@@ -88,7 +88,7 @@ var XYPlotTablePanel = React.createClass({
                         params={xyPlotParams}
                         highlightedRow={this.props.highlightedRow}
                         onHighlightChange={(highlightedRow) => {
-                                    TablesCntlr.dispatchHighlightRow(this.props.tblId, highlightedRow);
+                                    TablesCntlr.dispatchTableHighlight(this.props.tblId, highlightedRow);
                                 }
                            }/>
             );
