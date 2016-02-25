@@ -238,7 +238,7 @@ public class FootprintFactoryTest {
 			}
 		} else if (fp.equals(FOOTPRINT.HST)) {
 			Assert.assertTrue(circle == 13);
-			Assert.assertTrue("Wrong " + polys, polys == 21); //should be 21
+			Assert.assertTrue("Wrong " + polys, polys == 28); //should be 28
 			Set<String> keySet = mapCir.keySet();
 			for (String string : keySet) {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
