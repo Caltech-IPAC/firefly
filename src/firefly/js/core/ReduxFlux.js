@@ -73,10 +73,9 @@ actionCreators.set(ImagePlotCntlr.FLIP, ImagePlotCntlr.flipActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, ImagePlotCntlr.autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
-actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
-actionCreators.set(TablesCntlr.REFETCH_TABLE, TablesCntlr.fetchTable);
-actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
-actionCreators.set(TablesCntlr.TBL_HIGHLIGHT_ROW, TablesCntlr.highlightRow);
+actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.TABLE_FETCH_UPDATE, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
 
 actionCreators.set(TableStatsCntlr.LOAD_TBL_STATS, TableStatsCntlr.loadTblStats);
 actionCreators.set(HistogramCntlr.LOAD_COL_DATA, HistogramCntlr.loadColData);

@@ -2,17 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+/*global __MODULE_NAME__*/
+
 import Enum from 'enum';
 import isBlank from 'underscore.string/isBlank';
 import { getRootURL } from './BrowserUtil.js';
 
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
-
 const saveAsIpacUrl = getRootURL() + 'servlet/SaveAsIpacTable';
 
-/*global __MODULE_NAME__*/
+
 export function getModuleName() {
-    return __MODULE_NAME__;
+    return (typeof __MODULE_NAME__ === 'undefined') ? undefined : __MODULE_NAME__;
 }
 
 /**

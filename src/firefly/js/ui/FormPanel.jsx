@@ -14,11 +14,11 @@ function handleFailfure() {
 function createSuccessHandler(action, params, onSubmit) {
 
     return (request={}) => {
-        if (action === TablesCntlr.FETCH_TABLE) {
+        if (action === TablesCntlr.TABLE_FETCH) {
             if (params) {
                 request = Object.assign(request, params);
             }
-            TablesCntlr.dispatchFetchTable(request);
+            TablesCntlr.dispatchTableFetch(request);
         }
         if (onSubmit) {
             onSubmit(request);

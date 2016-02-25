@@ -78,7 +78,7 @@ const App = React.createClass({
             });
 
             TableStatsCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
-            TablesCntlr.dispatchFetchTable(treq);
+            TablesCntlr.dispatchTableFetch(treq);
             hideSearchPanel();
         }
     },

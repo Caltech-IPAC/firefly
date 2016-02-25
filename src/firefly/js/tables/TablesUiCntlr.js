@@ -31,11 +31,11 @@ export function gotoPage(action) {
             const endIdx = startIdx + pageSize;
             var table = Table.findTblById(tbl_id);
             if (table && table.has(startIdx, endIdx)) {
-                TablesCntlr.dispatchHighlightRow(tbl_id, startIdx+hlRowIdx);
+                TablesCntlr.dispatchTableHighlight(tbl_id, startIdx+hlRowIdx);
             } else {
                 const request = Object.assign({}, table.data.request, {startIdx, pageSize});
                 TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                    dispatch( TablesCntlr.loadTable({type:TablesCntlr.LOAD_TABLE, payload: tableModel}) );
+                    dispatch( {type:TablesCntlr.TABLE_UPDATE, payload: tableModel} );
                 }).catch( (error) => {
                     TblUtil.error(error);
                     // if fetch causes error, re-dispatch that same action with error msg.

@@ -10,6 +10,8 @@ import * as TblUtil from './TableUtil.js';
 import {Table} from './Table.js';
 import {SelectInfo} from './SelectInfo.js';
 
+const SHOW_MASK = 'showMask';
+
 export class TableStore {
     constructor(tableModel, changeListener) {
         this.tableModel = tableModel;
@@ -19,7 +21,7 @@ export class TableStore {
     setTableModel(tableModel) {
         if (tableModel && tableModel !== this.tableModel) {
             this.tableModel = tableModel;
-            this.changeListener && this.changeListener({tableModel});
+            this.changeListener && this.changeListener({tableModel, showMask: false});
         }
     }
 
@@ -30,13 +32,15 @@ export class TableStore {
     onSort(sortInfoString) {
         const {request} = this.tableModel;
         request.sortInfo = sortInfoString;
-        this.handleAction(TblCntlr.REFETCH_TABLE, {request});
+        this.handleAction(TblCntlr.TABLE_FETCH, {request});
+        this.handleAction(SHOW_MASK);
     }
 
     onFilter(filterIntoString) {
         const {request} = this.tableModel;
         request.filters = filterIntoString;
-        this.handleAction(TblCntlr.REFETCH_TABLE, {request});
+        this.handleAction(TblCntlr.TABLE_FETCH, {request});
+        this.handleAction(SHOW_MASK);
     }
 
     onPageSizeChange(nPageSize) {
@@ -44,7 +48,7 @@ export class TableStore {
         const {tbl_id, pageSize, highlightedRow} = TblUtil.gatherTableState(this.tableModel);
         if (Number.isInteger(nPageSize) && nPageSize !== pageSize) {
             const request = {pageSize: nPageSize};
-            this.handleAction(TblCntlr.TBL_HIGHLIGHT_ROW, {tbl_id, highlightedRow, request});
+            this.handleAction(TblCntlr.TABLE_HIGHLIGHT, {tbl_id, highlightedRow, request});
         }
     }
 
@@ -53,7 +57,7 @@ export class TableStore {
         number = Number.parseInt(number);
         if (Number.isInteger(number) && number !== currentPage && number > 0 && number <= totalPages) {
             const highlightedRow = (number-1) * pageSize;
-            this.handleAction(TblCntlr.TBL_HIGHLIGHT_ROW, {tbl_id, highlightedRow});
+            this.handleAction(TblCntlr.TABLE_HIGHLIGHT, {tbl_id, highlightedRow});
         }
     }
 
@@ -61,29 +65,29 @@ export class TableStore {
         const {tbl_id, hlRowIdx, startIdx} = TblUtil.gatherTableState(this.tableModel);
         if (rowIdx !== hlRowIdx) {
             const highlightedRow = startIdx+rowIdx;
-            this.handleAction(TblCntlr.TBL_HIGHLIGHT_ROW, {tbl_id, highlightedRow});
+            this.handleAction(TblCntlr.TABLE_HIGHLIGHT, {tbl_id, highlightedRow});
         }
     }
 
     onSelectAll(checked) {
         const {tbl_id, startIdx} = TblUtil.gatherTableState(this.tableModel);
-        const selectInfo = SelectInfo.newInstance(this.tableModel.selectionInfo, startIdx);
-        selectInfo.setSelectAll(checked);
-        const selectionInfo = selectInfo.data;
-        this.handleAction(TblCntlr.TBL_SELECT_ROW, {tbl_id, selectionInfo});
+        const selectInfoCls = SelectInfo.newInstance(this.tableModel.selectInfo, startIdx);
+        selectInfoCls.setSelectAll(checked);
+        const selectInfo = selectInfoCls.data;
+        this.handleAction(TblCntlr.TABLE_SELECT, {tbl_id, selectInfo});
     }
 
     onRowSelect(checked, rowIndex) {
         const {tbl_id, startIdx} = TblUtil.gatherTableState(this.tableModel);
-        const selectInfo = SelectInfo.newInstance(this.tableModel.selectionInfo, startIdx);
-        selectInfo.setRowSelect(rowIndex, checked);
-        const selectionInfo = selectInfo.data;
-        this.handleAction(TblCntlr.TBL_SELECT_ROW, {tbl_id, selectionInfo});
+        const selectInfoCls = SelectInfo.newInstance(this.tableModel.selectInfo, startIdx);
+        selectInfoCls.setRowSelect(rowIndex, checked);
+        const selectInfo = selectInfoCls.data;
+        this.handleAction(TblCntlr.TABLE_SELECT, {tbl_id, selectInfo});
     }
 
     handleAction(type, payload) {
         switch (type) {
-            case (TblCntlr.REFETCH_TABLE)  :
+            case (TblCntlr.TABLE_FETCH_UPDATE)  :
                 throw new Error('sorting and filtering is not implemented for localstore, yet.');
                 break;
 
@@ -123,12 +127,16 @@ export class RemoteTableStore extends TableStore {
 
     handleAction(type, payload) {
         switch (type) {
-            case (TblCntlr.TBL_SELECT_ROW)  :
-            case (TblCntlr.TBL_HIGHLIGHT_ROW)  :
-            case (TblCntlr.REFETCH_TABLE)  :
+            case (TblCntlr.TABLE_SELECT)  :
+            case (TblCntlr.TABLE_HIGHLIGHT)  :
+            case (TblCntlr.TABLE_FETCH)  :
+            case (TblCntlr.TABLE_FETCH_UPDATE)  :
                 flux.process({type, payload});
                 break;
 
+            case (SHOW_MASK)  :
+                this.changeListener && this.changeListener({showMask: true});
+                break;
             default:
         }
     }

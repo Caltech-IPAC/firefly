@@ -228,3 +228,48 @@ img, html {
     background-color: #949494;
     cursor: pointer;
 }
+
+/*------------------- loading mask ---------------------*/
+.loading-mask {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.loading-mask::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.25);
+}
+@-webkit-keyframes spin {
+    from { transform: rotate(0deg);}
+    to {transform: rotate(359deg);}
+}
+@keyframes spin {
+    from { transform: rotate(0deg);}
+    to {transform: rotate(359deg);}
+}
+
+.loading-mask::after {
+    content: "";
+    position: absolute;
+    border-width: 3px;
+    border-style: solid;
+    border-color: transparent rgb(255, 255, 255) rgb(255, 255, 255);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    top: calc(50% - 12px);
+    left: calc(50% - 12px);
+    animation-name: spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    filter: drop-shadow(0 0 2 rgba(0, 0, 0, 0.33));
+}
+/*------------------- loading mask ---------------------*/

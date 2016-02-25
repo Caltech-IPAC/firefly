@@ -59,7 +59,7 @@ export class BasicTable extends React.Component {
     }
 
     render() {
-        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfo, filterInfo, sortInfo, tableStore, width, height} = this.props;
+        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfoCls, filterInfo, sortInfo, tableStore, width, height} = this.props;
         const {widthPx, heightPx, columnWidths} = this.state;
         if (isEmpty(columns)) return false;
 
@@ -81,7 +81,7 @@ export class BasicTable extends React.Component {
                     scrollToRow={hlRowIdx}
                     width={widthPx}
                     height={heightPx}>
-                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, sortInfoCls, tableStore)}
+                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfoCls, filterInfoCls, sortInfoCls, tableStore)}
                 </Table>
                 {isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
             </Resizable>
@@ -93,7 +93,7 @@ BasicTable.propTypes = {
     columns: PropTypes.arrayOf(PropTypes.object),
     data: PropTypes.arrayOf(PropTypes.array),
     hlRowIdx: PropTypes.number,
-    selectInfo: PropTypes.instanceOf(SelectInfo),
+    selectInfoCls: PropTypes.instanceOf(SelectInfo),
     filterInfo: PropTypes.string,
     sortInfo: PropTypes.string,
     selectable: PropTypes.bool,
@@ -117,6 +117,7 @@ BasicTable.defaultProps = {
     width: '100%',
     height: '100%'
 };
+
 
 
 const SortSymbol = ({sortDir}) => {
@@ -149,7 +150,7 @@ const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, ta
 
     return (
         <div title={col.title || cname} className='TablePanel__header'>
-            <div onClick={onSortChange} >{cname}
+            <div style={{width: '100%', cursor: 'pointer'}} onClick={onSortChange} >{cname}
                 { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
             </div>
             {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
@@ -181,7 +182,7 @@ function makeColWidth(columns, data, showUnits) {
     }, {});
 }
 
-function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfo, filterInfoCls, sortInfoCls, tableStore) {
+function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfoCls, filterInfoCls, sortInfoCls, tableStore) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
@@ -204,7 +205,7 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
             const onSelectAll = (e) => tableStore.onSelectAll && tableStore.onSelectAll(e.target.checked);
             return (
                 <div className='tablePanel__checkbox'>
-                    <input type='checkbox' checked={selectInfo.isSelectAll()} onChange ={onSelectAll}/>
+                    <input type='checkbox' checked={selectInfoCls.isSelectAll()} onChange ={onSelectAll}/>
                 </div>
             );
         };
@@ -213,7 +214,7 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
             const onRowSelect = (e) => tableStore.onRowSelect && tableStore.onRowSelect(e.target.checked, rowIndex);
             return (
                 <div className='tablePanel__checkbox' style={{backgroundColor: 'whitesmoke'}}>
-                    <input type='checkbox' checked={selectInfo.isSelected(rowIndex)} onChange={onRowSelect}/>
+                    <input type='checkbox' checked={selectInfoCls.isSelected(rowIndex)} onChange={onRowSelect}/>
                 </div>
             );
         };
