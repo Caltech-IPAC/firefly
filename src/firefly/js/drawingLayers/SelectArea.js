@@ -194,6 +194,9 @@ function start(drawLayer,action) {
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[idx]);
             if (retObj.firstPt==null || retObj.currentPt==null) return {};
         }
+        else {
+            retObj= setupSelect(imagePt);
+        }
     }
     return retObj;
 
