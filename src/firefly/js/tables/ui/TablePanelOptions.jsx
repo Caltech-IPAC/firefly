@@ -18,14 +18,14 @@ function prepareOptionData(columns) {
         return [v.name];
     } );
     var cols = [{name: 'Column', visibility: 'show', prefWidth: 21}];
-    var selectInfo = SelectInfo.newInstance({});
-    selectInfo.data.rowCount = data.length;
+    var selectInfoCls = SelectInfo.newInstance({});
+    selectInfoCls.data.rowCount = data.length;
     columns.forEach( (v, idx) => {
-        selectInfo.setRowSelect(idx, v.visibility === 'show');
+        selectInfoCls.setRowSelect(idx, v.visibility === 'show');
     } );
     var tableRowCount = data.length;
 
-    return {cols, data, tableRowCount, selectInfo };
+    return {cols, data, tableRowCount, selectInfoCls };
 }
 
 export const TablePanelOptions = (props) => {
@@ -60,7 +60,7 @@ export const TablePanelOptions = (props) => {
         onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: []});
     };
 
-    const {cols, data, selectInfo} = prepareOptionData(columns);
+    const {cols, data, selectInfoCls} = prepareOptionData(columns);
     return (
         <div className='TablePanelOptions'>
             <div>
@@ -90,7 +90,7 @@ export const TablePanelOptions = (props) => {
                 data={data}
                 height={'calc(100% - 42px)'}
                 selectable={true}
-                selectInfo={selectInfo}
+                selectInfoCls={selectInfoCls}
                 tableStore={{onSelectAll, onRowSelect}}
             />
         </div>

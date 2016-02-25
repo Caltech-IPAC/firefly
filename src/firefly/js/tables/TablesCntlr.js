@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import update from 'react-addons-update';
 import {pickBy} from 'lodash';
 
 import {flux} from '../Firefly.js';
@@ -68,9 +69,13 @@ export function fetchTable(action) {
 
 /*---------------------------- REDUCERS -----------------------------*/
 export function reducer(state={}, action={}) {
-    const {tbl_id} = action.payload || {};
+    const {tbl_id, selectInfo} = action.payload || {};
     switch (action.type) {
         case (TABLE_SELECT)  :
+            if (selectInfo) {
+                return update(state, { [tbl_id] : {selectInfo: {$set: selectInfo}}});
+            } else return state;
+
         case (TABLE_HIGHLIGHT)  :
         case (TABLE_LOAD_STATUS)  :
         case (TABLE_UPDATE)  :
