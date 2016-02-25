@@ -14,7 +14,7 @@ stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretc
 MarkerToolDD.Items = MarkerTool \
                    - FootprintHST \
                    - FootprintACS FootprintCOS FootprintFGSHST FootprintFOC FootprintFOS FootprintHRS FootprintHSP FootprintNICMOS FootprintSTIS FootprintWFC3 FootprintWFPC FootprintWFPC2 \
-                     FootprintWFC FootprintHRC FootprintSPC FootprintUVIS FootprintIR \
+                     FootprintWFC FootprintHRC FootprintSBC FootprintUVIS FootprintIR \
                    - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIRSPEC FootprintNIS \
                    - FootprintJWST \
                    - FootprintWFIRST
@@ -46,8 +46,8 @@ FootprintWFC.Title=Add HST/WFC footprint
 FootprintWFC.ShortDescription= Add a HST/WFC footprint (see help)
 FootprintHRC.Title=Add HST/HRC footprint
 FootprintHRC.ShortDescription= Add a HST/HRC footprint (see help)
-FootprintSPC.Title=Add HST/SPC footprint
-FootprintSPC.ShortDescription= Add a HST/SPC footprint (see help)
+FootprintSBC.Title=Add HST/SBC footprint
+FootprintSBC.ShortDescription= Add a HST/SBC footprint (see help)
 FootprintUVIS.Title=Add HST/UVIS footprint
 FootprintUVIS.ShortDescription= Add a HST/UVIS footprint (see help)
 FootprintIR.Title=Add HST/IR footprint

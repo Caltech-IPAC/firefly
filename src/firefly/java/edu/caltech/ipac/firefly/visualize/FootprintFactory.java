@@ -180,7 +180,7 @@ public class FootprintFactory  {
                 "POLYGON  360.00400540  -0.00392492 359.99599432  -0.00308881 359.99597208   0.00397226 360.00404983   0.00315004 360.00400540  -0.00392492 "),
 
         //"telescope" : hst,"instrument" : acs,"aperture" : jsbc,"raV1" : 359.9428278,"decV1" : -0.12968583,"paV3" : 0
-        SPC(FOOTPRINT.HST,
+        SBC(FOOTPRINT.HST,
                 "POLYGON  360.00477485  -0.00375547 359.99528321  -0.00286381 359.99522208   0.00569725 360.00482483   0.00476670 360.00477485  -0.00375547 "),
 
         //"telescope" : hst,"instrument" : wfc3,"aperture" : iuvis1,"raV1" : 0,"decV1" : 0,"paV3" : 0; "aperture" : iuvis2,"raV1" : 0,"decV1" : 0,"paV3" : 0
