@@ -5,6 +5,15 @@
     justify-content: center;
 }
 
+.tablePanel_NoData {
+    position: absolute;
+    top: 50%;
+    left: 42%;
+    z-index: 1;
+    color: gray;
+    font-size: large;
+}
+
 .fixedDataTableRowLayout_rowWrapper .tablePanel__Row_highlighted {
     background-color: #d3fad1
 }
@@ -19,7 +28,7 @@
 .TablePanel__table {
     background-color: white;
     position: absolute;
-    top: 29px;
+    top: 32px;
     bottom: 3px;
     left: 3px;
     right: 3px;
@@ -27,11 +36,12 @@
 
 .TablePanel__header {
     white-space: nowrap;
-    height: 100%;
+    height: calc(100% - 3px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    margin: 2px;
 }
 
 button.paging_bar {
@@ -43,6 +53,7 @@ button.paging_bar {
 button.tablepanel {
     height: 24px;
     width: 24px;
+    margin: 0 2px;
 }
 
 button.paging_bar.first {
@@ -63,6 +74,10 @@ button.paging_bar.previous {
 
 button.tablepanel.options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
+}
+
+button.tablepanel.clearFilters {
+    background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
 .TablePanelOptions {

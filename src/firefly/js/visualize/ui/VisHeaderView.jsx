@@ -19,7 +19,7 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 export function VisHeaderView({visRoot,currMouseState}) {
 
     var rS= {
-        border: '1px solid white',
+       // border: '1px solid white',
         width: 500,
         height: 32,
         display: 'inline-block',
@@ -29,11 +29,12 @@ export function VisHeaderView({visRoot,currMouseState}) {
 
     var pv= getActivePlotView(visRoot);
     var mousePv= getPlotViewById(visRoot,currMouseState.plotId);
+
     return (
         <div>
             <div style={rS}>
                 <div style={{position:'absolute', color:'white'}}>
-                    <MouseReadout plotView={mousePv} mouseState={currMouseState} />
+                    <MouseReadout visRoot={visRoot} plotView={mousePv} mouseState={currMouseState} />
                 </div>
             </div>
 

@@ -1,49 +1,67 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
 
 import {InputFieldView} from './InputFieldView.jsx';
 
 
+function shouldAct(e, actOn) {
+    if (e.type.startsWith('key') ) {
+        return (actOn.includes('enter') && e.key === 'Enter');
+    } else if (e.type.startsWith('blur')) {
+        return  actOn.includes('blur');
+    } else {
+        return actOn.includes('changes');
+    }
+}
+
+function newState({fieldKey='undef', valid=true, message='', value=''}) {
+    return {fieldKey, valid, message, value};
+}
+
 export class InputField extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            fieldKey: 'undef',
-            valid: true,
-            message:'',
-            value: props.value
-        };
 
-        this.onChange = this.onChange.bind(this);
+        this.state = newState({value: props.value});
+        this.handleChanges = this.handleChanges.bind(this);
     }
 
-    onChange(e) {
-        var {fieldKey, validator, onChange, label} = this.props;
+    handleChanges(e) {
+        var {fieldKey, validator, onChange, label='', actOn} = this.props;
         const value = e.target.value;
-        var {valid, message} = validator ? validator(value) : {valid:true, message:''};
-        message = valid ? '' : (label + message).replace('::', ':');
-        const nState = {fieldKey, valid, message, value};
-        onChange && onChange(nState);
+        const nState = {fieldKey, value};
+        if (shouldAct(e, actOn)) {
+            var {valid, message} = validator ? validator(value) : {valid:true, message:''};
+            nState.valid = valid;
+            nState.message = valid ? '' : (label + message).replace('::', ':');
+            onChange && onChange(nState);
+        }
         this.setState(nState);
+    }
+
+    componentWillReceiveProps(nProps) {
+        this.setState(newState({value: nProps.value}));
     }
 
     render() {
 
-        var {label, labelWidth, tooltip, visible, inline, size} = this.props;
+        var {label, labelWidth, tooltip, visible, inline, size, showWarning, width} = this.props;
         var {valid, value, message} = this.state;
-
         return (
             <InputFieldView
-                style={{}}
+                width={width}
                 valid={valid}
                 visible= {visible}
                 message={message}
-                onChange={this.onChange}
+                onChange={this.handleChanges}
+                onBlur={this.handleChanges}
+                onKeyPress={this.handleChanges}
                 value={value}
                 tooltip={tooltip}
                 label={label}
                 inline={inline}
                 labelWidth={labelWidth}
                 size={size}
+                showWarning={showWarning}
             />
         );
 
@@ -53,19 +71,24 @@ export class InputField extends React.Component {
 
 
 InputField.propTypes = {
-    fieldKey: React.PropTypes.string,
-    label: React.PropTypes.string,
-    labelWidth: React.PropTypes.number,
-    validator: React.PropTypes.func,
-    tooltip: React.PropTypes.string,
-    visible: React.PropTypes.bool,
-    inline: React.PropTypes.bool,
-    size: React.PropTypes.number,
-    value: React.PropTypes.string,
-    onChange: React.PropTypes.func
+    fieldKey: PropTypes.string,
+    label: PropTypes.string,
+    labelWidth: PropTypes.number,
+    validator: PropTypes.func,
+    tooltip: PropTypes.string,
+    visible: PropTypes.bool,
+    inline: PropTypes.bool,
+    size: PropTypes.number,
+    value: PropTypes.string,
+    onChange: PropTypes.func,
+    actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
+    showWarning : PropTypes.bool,
+    width: PropTypes.string
 };
 
 InputField.defaultProps = {
+    showWarning : true,
+    actOn: ['changes'],
     labelWidth: 0,
     value: '',
     inline: false,

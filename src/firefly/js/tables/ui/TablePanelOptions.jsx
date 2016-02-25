@@ -29,7 +29,7 @@ function prepareOptionData(columns) {
 }
 
 export const TablePanelOptions = (props) => {
-    const {columns, pageSize, showUnits, onChange} = props;
+    const {columns, pageSize, showUnits, showFilters, onChange} = props;
     if (isEmpty(columns)) return false;
 
     var onSelectAll = (checked) => {
@@ -52,30 +52,38 @@ export const TablePanelOptions = (props) => {
         }
     };
 
-    var onShowUnits = (e) => {
-        onChange && onChange({showUnits: e.target.checked});
+    var onPropChanged = (v, prop) => {
+        onChange && onChange({[prop]: v});
     };
 
     var onReset = () => {
-        onChange && onChange({pageSize: 50, showUnits: false, columns: []});
+        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: []});
     };
 
     const {cols, data, selectInfo} = prepareOptionData(columns);
     return (
         <div className='TablePanelOptions'>
-            <div style={{marginBottom: '4px', float: 'left'}}>
-                <InputField
-                    validator = {intValidator(1,500)}
-                    tooltip = {'Set page size'}
-                    label = {'Page Size:'}
-                    size = {3}
-                    value = {pageSize+''}
-                    onChange = {onPageSize}
-                />
-                <span style={{marginTop: '3px'}}>Show Units:</span> <input type='checkbox' onChange={onShowUnits} checked={showUnits}/>
-            </div>
-            <div style={{float: 'right'}}>
-                <button className='TablePanelOptions__button' onClick={onReset} title='Reset all options to defauls'>Reset</button>
+            <div>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2px'}}>
+                    <div style={{float: 'left'}}>
+                        <InputField
+                            validator = {intValidator(1,10000)}
+                            tooltip = {'Set page size'}
+                            label = {'Page Size:'}
+                            size = {3}
+                            value = {pageSize+''}
+                            onChange = {onPageSize}
+                            actOn={['blur','enter']}
+                        />
+                    </div>
+                    <span style={{float: 'right'}}>
+                        <button className='TablePanelOptions__button' onClick={onReset} title='Reset all options to defauls'>Reset</button>
+                    </span>
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2px'}}>
+                    <span>Show Units: <input type='checkbox' onChange={(e) => onPropChanged(e.target.checked, 'showUnits')} checked={showUnits}/></span>
+                    <span>Show Filters: <input type='checkbox' onChange={(e) => onPropChanged(e.target.checked, 'showFilters')} checked={showFilters}/></span>
+                </div>
             </div>
             <BasicTable
                 columns={cols}
@@ -93,6 +101,7 @@ TablePanelOptions.propTypes = {
     columns: React.PropTypes.arrayOf(React.PropTypes.object),
     pageSize: React.PropTypes.number,
     showUnits: React.PropTypes.bool,
+    showFilters: React.PropTypes.bool,
     onChange: React.PropTypes.func
 };
 

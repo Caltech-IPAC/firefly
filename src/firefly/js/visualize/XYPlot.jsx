@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-//import {has, get} from 'lodash';
+import {isUndefined} from 'lodash';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 //import {getFormatString} from '../util/MathUtil.js';
@@ -75,14 +75,15 @@ var XYPlot = React.createClass(
         adjustPlotDisplay() {
             const chart = this.refs.chart.getChart();
             const {highlightedRow, params} = this.props;
-            if (highlightedRow) {
+            if (!isUndefined(highlightedRow)) {
                 chart.series[0].data[highlightedRow].select(true,false);
             }
 
             if (params.zoom) {
                 const {xMin, xMax, yMin, yMax} = params.zoom;
-                chart.xAxis[0].setExtremes(xMin, xMax);
-                chart.yAxis[0].setExtremes(yMin, yMax);
+                // redraw=true, animation=false
+                chart.xAxis[0].setExtremes(xMin, xMax, true, false);
+                chart.yAxis[0].setExtremes(yMin, yMax, true, false);
             }
 
             if (params.selection) {
@@ -251,7 +252,7 @@ var XYPlot = React.createClass(
                     data: numericData,
                     point: {
                         events: {
-                            select() {
+                            click() {
                                 if (onHighlightChange) {
                                     var highlighted = this.rowIdx ? this.rowIdx : this.series.data.indexOf(this);
                                     if (highlighted !== highlightedRow) {

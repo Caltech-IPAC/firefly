@@ -44,7 +44,7 @@ import java.util.StringTokenizer;
  *      sort_info:  ORDER_ASC_BY
  *      col-name: the name of the column.
  *      index: index of the column.  index starts from 0.
- *      operator: can be one of '> < = ! >= <= IN'
+ *      operator: can be one of '> < = ! >= <= IN LIKE'
  *
  * <p>
  *

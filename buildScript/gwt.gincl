@@ -191,7 +191,7 @@ task devMode (dependsOn: loadConfig) {
 
     def res = exec {
       environment 'WP_BUILD_DIR': wpBuildDir
-      environment 'NODE_ENV': project.env
+      environment 'NODE_ENV': 'development'
       executable "npm"
       args 'run', 'dev'
     }

@@ -15,6 +15,7 @@ import {CCUtil} from './CsysConverter.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
 import {CysConverter} from './CsysConverter.js';
+import ZoomUtil from './ZoomUtil.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -374,7 +375,7 @@ export function isPlotNorth(plot) {
 }
 
 const getPossibleZoomLevels= function() {
-        return ZoomUtil._levels;
+        return ZoomUtil.levels;
 };
 
 

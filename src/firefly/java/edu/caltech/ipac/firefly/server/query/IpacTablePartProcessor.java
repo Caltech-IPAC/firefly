@@ -188,6 +188,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 try {
                     postProcessData(dgFile, request);
                     page = IpacTableParser.getData(dgFile, request.getStartIndex(), request.getPageSize());
+                    page.getTableDef().ensureStatus();      // make sure there's a status line so
                 } catch (Exception e) {
                     LOGGER.error(e, "Fail to parse ipac table file: " + dgFile);
                     throw e;

@@ -88,7 +88,7 @@ const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
 const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
 
-const CHANGE_MOUSE_READOUT_MODE= 'ImagePlotCntlr.changeMouseReadoutMode';
+const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 
 /**
  * action should contain:
@@ -134,7 +134,11 @@ const initState= function() {
         matchWCS: false, //todo
         wcsMatchCenterWP: null, //todo
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
-        mpwWcsPrimId: null //todo
+        mpwWcsPrimId: null,//todo
+        mouseReadout1:'eqj2000hms',
+        mouseReadout2: 'fitsIP',
+        pixelSize: 'pixelSize',
+        flux: 'Flux'
 
     };
 
@@ -387,11 +391,19 @@ export function dispatchChangeExpandedMode(expandedMode) {
 }
 
 
+
+export function dispatchChangeMouseReadout(readoutType, newRadioValue) {
+
+     flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
+
+}
+
 export function dispatchExpandedAutoPlay(autoPlayOn) {
     flux.process({ type: EXPANDED_AUTO_PLAY, payload: {autoPlayOn} });
 
 
 }
+
 
 export function dispatchExpandedList(plotIdAry) {
     flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
@@ -481,6 +493,19 @@ function reducer(state=initState(), action={}) {
         case CHANGE_EXPANDED_MODE:
             retState= changeExpandedMode(state,action);
             break;
+        case CHANGE_MOUSE_READOUT_MODE:
+            var readoutType=action.payload.readoutType;
+            if ( readoutType==='mouseReadout1') {
+               retState = changeMouseReadoutReadout1(state, action);
+            }
+            else if (readoutType==='mouseReadout2') {
+                retState = changeMouseReadoutReadout2(state, action);
+            }
+            else if (readoutType=== 'pixelSize'){
+                    retState = changeMouseReadoutPixel(state, action);
+            }
+
+            break;
         case EXPANDED_AUTO_PLAY:
             if (state.singleAutoPlay!==action.payload.autoPlayOn) {
                 retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
@@ -488,6 +513,7 @@ function reducer(state=initState(), action={}) {
             break;
         default:
             break;
+
     }
     return retState;
 }
@@ -497,6 +523,35 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 //============ private functions =================================
 
+
+
+function changeMouseReadoutReadout1(state, action) {
+
+    var payload = action.payload;
+    var newRadioValue = payload.newRadioValue;
+    var oldRadioValue = state.mouseReadout1;
+    if (newRadioValue ===oldRadioValue) return state;
+    return Object.assign({}, state, {mouseReadout1:newRadioValue});
+
+}
+
+function changeMouseReadoutReadout2(state, action){
+    var payload = action.payload;
+    var newRadioValue = payload.newRadioValue;
+    var oldRadioValue = state.mouseReadout2;
+    if (newRadioValue ===oldRadioValue) return state;
+    return Object.assign({}, state, {mouseReadout2:newRadioValue});
+
+}
+
+function changeMouseReadoutPixel(state, action){
+    var payload = action.payload;
+    var newReadoutPixel = payload.newRadioValue;
+    var oldReadoutPixel  = state.pixelSize;
+    if (newReadoutPixel  ===oldReadoutPixel ) return state;
+    return Object.assign({}, state, {pixelSize:newReadoutPixel});
+
+}
 function changeActivePlotView(state,action) {
     if (action.payload.plotId===state.activePlotId) return state;
 

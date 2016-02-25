@@ -48,7 +48,7 @@ export var EventLayer= React.createClass(
         nativeEv.preventDefault();
         nativeEv.stopPropagation();
         var {x:viewPortX,y:viewPortY} = viewPort;
-        var {screenX, screenY, x, y}= nativeEv;
+        var {screenX, screenY, pageX:x, pageY:y}= nativeEv;
         var e= ReactDOM.findDOMNode(this);
         var compOffX= x-getAbsoluteLeft(e)+window.scrollX;
         var compOffY= y-getAbsoluteTop(e)+window.scrollY;

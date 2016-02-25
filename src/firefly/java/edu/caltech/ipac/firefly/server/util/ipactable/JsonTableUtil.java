@@ -82,7 +82,7 @@ public class JsonTableUtil {
         treq.put(TableServerRequest.START_IDX, req.getStartIndex());
         treq.put(TableServerRequest.PAGE_SIZE, req.getPageSize());
         if (req.getFilters() != null) {
-            treq.put( TableServerRequest.FILTERS, StringUtils.toString(req.getFilters(), ",") );
+            treq.put( TableServerRequest.FILTERS, TableServerRequest.toFilterStr(req.getFilters()) );
         }
         if (req.getMeta() != null) {
             for (String key : req.getMeta().keySet()) {

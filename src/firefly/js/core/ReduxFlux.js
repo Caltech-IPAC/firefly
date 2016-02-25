@@ -80,6 +80,7 @@ actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
 actionCreators.set(TablesCntlr.FETCH_TABLE, TablesCntlr.fetchTable);
+actionCreators.set(TablesCntlr.REFETCH_TABLE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.LOAD_TABLE, TablesCntlr.loadTable);
 actionCreators.set(TablesCntlr.TBL_HIGHLIGHT_ROW, TablesCntlr.highlightRow);
 
@@ -237,9 +238,7 @@ function getState() {
 function createSmartComponent(connector, component) {
     var Wrapper = connect(connector)(component);
     return (
-        <Provider store={redux}>
-            {() => <Wrapper/>}
-        </Provider>
+        <Provider store={redux}><Wrapper/></Provider>
     );
 }
 
