@@ -13,7 +13,7 @@ stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretc
 
 MarkerToolDD.Items = MarkerTool \
                    - FootprintHST \
-                   - FootprintACS FootprintCOS FootprintFGSHST FootprintFOC FootprintFOS FootprintHRS FootprintHSP FootprintNICMOS FootprintSTIS FootprintWFC3 FootprintWFPC FootprintWFPC2 \
+                   - FootprintACS FootprintFOC FootprintFOS FootprintHRS FootprintHSP FootprintNICMOS FootprintWFC3 FootprintWFPC FootprintWFPC2 \
                      FootprintWFC FootprintHRC FootprintSBC FootprintUVIS FootprintIR \
                    - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIRSPEC FootprintNIS \
                    - FootprintJWST \
@@ -21,10 +21,6 @@ MarkerToolDD.Items = MarkerTool \
 
 FootprintACS.Title=Add HST/ACS footprint
 FootprintACS.ShortDescription= Add a HST/ACS footprint (see help)
-FootprintCOS.Title=Add HST/COS footprint
-FootprintCOS.ShortDescription= Add a HST/COS footprint (see help)
-FootprintFGSHST.Title=Add HST/FGSHST footprint
-FootprintFGSHST.ShortDescription= Add a HST/FGSHST footprint (see help)
 FootprintFOC.Title=Add HST/FOC footprint
 FootprintFOC.ShortDescription= Add a HST/FOC footprint (see help)
 FootprintFOS.Title=Add HST/FOS footprint
@@ -35,8 +31,6 @@ FootprintHSP.Title=Add HST/HSP footprint
 FootprintHSP.ShortDescription= Add a HST/HSP footprint (see help)
 FootprintNICMOS.Title=Add HST/NICMOS footprint
 FootprintNICMOS.ShortDescription= Add a HST/NICMOS footprint (see help)
-FootprintSTIS.Title=Add HST/STIS footprint
-FootprintSTIS.ShortDescription= Add a HST/STIS footprint (see help)
 FootprintWFC3.Title=Add HST/WFC3 footprint
 FootprintWFC3.ShortDescription= Add a HST/WFC3 footprint (see help)
 FootprintWFPC.Title=Add HST/WFPC footprint

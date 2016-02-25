@@ -172,7 +172,7 @@ public class FootprintFactoryTest {
 		//System.out.println(stcFromFootprint);
 		String valJwst[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
         // Yi: added new HST instrument:
-        String valHst[] = new String[] {"ACS", "COS", "FGSHST", "FOC", "FOS", "HRS", "HSP", "NICMOS", "STIS", "WFC3", "WFPC", "WFPC2"};
+        String valHst[] = new String[] {"ACS", "FOC", "FOS", "HRS", "HSP", "NICMOS", "WFC3", "WFPC", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
 		FOOTPRINT[] fp = FOOTPRINT.values();
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
@@ -237,8 +237,8 @@ public class FootprintFactoryTest {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
 			}
 		} else if (fp.equals(FOOTPRINT.HST)) {
-			Assert.assertTrue(circle == 13);
-			Assert.assertTrue("Wrong " + polys, polys == 28); //should be 28
+			Assert.assertTrue(circle == 8);
+			Assert.assertTrue("Wrong " + polys, polys == 25); //should be 25
 			Set<String> keySet = mapCir.keySet();
 			for (String string : keySet) {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
@@ -336,7 +336,7 @@ public class FootprintFactoryTest {
 
         //HST/FGSHST:
         FOOTPRINT fp = FOOTPRINT.HST;
-        inst = INSTRUMENTS.FGSHST;
+        inst = INSTRUMENTS.NICMOS;
 
         String def = FootprintFactory.getFootprintStcStringDef(fp, inst);
         Assert.assertTrue(def.trim(), def.equals(inst.getStc()));
