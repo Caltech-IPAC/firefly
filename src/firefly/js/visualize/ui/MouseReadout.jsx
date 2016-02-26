@@ -19,7 +19,8 @@ import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
 import VisUtil from '../VisUtil.js';
-
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroup from '../../ui/FieldGroup.jsx';
 import debounce from 'lodash/debounce'; //TEST CODE
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
 import numeral from 'numeral';
@@ -29,7 +30,8 @@ var rS= {
 	height: 32,
 	display: 'inline-block',
 	position: 'relative',
-	verticalAlign: 'top'
+	verticalAlign: 'top',
+	cursor:'pointer'
 };
 
 const EMPTY= <div style={rS}></div>;
@@ -56,17 +58,168 @@ const column3 = {width: 72,  paddingRight: 5, textAlign:'right',textDecoration: 
 const column4 = {width: 150,display: 'inline-block'};
 const column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
 const column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
+//const mouseReadoutForm = 'MOUSEREADOUT_FORM';
+const precision7Digit='0.0000000';
+const precision3Digit='0.000';
 
 
-/**
- *
- * @param visRoot
- * @param plotView
- * @param mouseState
- * @returns {XML}
- * @constructor
- */
-export function MouseReadout({visRoot, plotView, mouseState}) {
+export  class MouseReadout extends React.Component {
+
+
+	constructor(props) {
+		super(props);
+		this.state = {fluxUnit:EMPTY_READOUT, fluxValue:EMPTY_READOUT};
+
+		//FieldGroupUtils.initFieldGroup(mouseReadoutForm);
+		//this.state = {fields: FieldGroupUtils.getGroupFields(mouseReadoutForm)};
+	}
+
+
+	componentWillUnmount() {
+
+		if (this.unbinder) this.unbinder();
+	}
+
+
+	componentDidMount() {
+
+		this.state = this.getFluxInfo(this.props.plotView, this.props.mouseState);
+	}
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.fluxValue || nextProps.fluxUnit) {
+			this.setState({
+				fluxUnit: nextProps.fluxUnit,
+				fluxValue:nextProps.fluxValue
+			});
+		}
+	}
+
+	render() {
+
+
+		const {visRoot, plotView, mouseState}= this.props;
+		const {fluxUnit, fluxValue}= this.state;
+
+		return <MouseReadoutForm visRoot={visRoot} plotView={plotView}
+								 mouseState={mouseState}
+								 fluxUnit={fluxUnit}
+		                         fluxValue={fluxValue}
+		/>;
+
+	/*	const {visRoot, plotView, mouseState}= this.props;
+
+		if (!plotView || !mouseState) return EMPTY;
+
+
+		var plot= primePlot(plotView);
+		if (!plot) return'';
+		if (isBlankImage(plot)) return EMPTY;
+
+		if (!magMouse.includes(mouseState.mouseState)) EMPTY;
+
+		var spt= mouseState.screenPt;
+		if (!spt) return EMPTY;
+
+
+		var title = plotView.plots[0].title;
+		return (
+			<FieldGroup  groupKey= {mouseReadoutForm} keepState={true}>
+				<div style={ rS}>
+					<div  >
+						<div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+							{labelMap[visRoot.pixelSize] }
+						</div>
+						<div style={column2} >{ showReadout(plot, mouseState,visRoot.pixelSize)}</div>
+
+
+						<div  style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+							{ labelMap[visRoot.mouseReadout1] }
+						</div>
+						<div style={column4} > {showReadout(plot, mouseState,visRoot.mouseReadout1)} </div>
+
+
+						<div style={column5}> {title}  </div>
+					</div>
+
+
+					<div>
+						<div style={ column1} >{this.showUnit(plot ) }</div>
+						<div style={ column2}  > {this.showFlux(plot, mouseState.imagePt) }
+						</div>
+
+						<div  style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+							{labelMap[ visRoot.mouseReadout2] } </div>
+						<div style={column4} >	{showReadout(plot, mouseState, visRoot.mouseReadout2)}</div>
+
+						<div style={column5_1}  title='Click on an image to lock the display at that point.'   >
+							<input  type='checkbox' name='aLock' value='lock'
+									onChange = { (request) => setClickLock(plot,mouseState , request) } />
+							Lock by click
+						</div>
+					</div>
+
+				</div>
+
+
+			</FieldGroup>
+
+		);*/
+
+	}
+
+	getFluxInfo(plotView, mouseState){
+
+		var plot= primePlot(plotView);
+		if (!plot) return;
+		if (isBlankImage(plot)) return;
+
+		if (mouseState.mouseState!=MouseState.DOWN) return;
+
+		const getFlux = debounce( ( plot,iPt) =>  {
+			callGetFileFlux(plot.plotState, iPt)
+				.then( (result) => {
+
+					if (result.hasOwnProperty('NO_BAND')) {
+
+						 if (this.state.isMounted()) {
+							 this.setState({flux: result.NO_BAND});
+						 }
+					}
+					else {
+						//TODO three color band
+					}
+				})
+				.catch ( (e) => {
+					console.log(`flux error: ${plot.plotId}`, e);
+				});
+		},200);
+
+		getFlux(plot, mouseState.imagePt);
+		if (this.state.flux){
+			var webFitsData= plot.webFitsData;
+			var fluxLabel;
+			if (webFitsData[0].fluxUnits=='DN'){
+				fluxLabel='Value:';
+			}
+			else {
+				fluxLabel='Flux:';
+			}
+
+			var fluxString= `${numeral(this.state.flux).format(precision7Digit)} ${webFitsData[0].fluxUnits}`;
+			this.setState({
+				fluxUnit: {fluxLabel},
+				fluxValue:{fluxString}
+			});
+
+		}
+
+	}
+
+
+}
+
+
+function MouseReadoutForm({visRoot, plotView, mouseState, fluxUnit, fluxValue}) {
 
 	if (!plotView || !mouseState) return EMPTY;
 
@@ -102,8 +255,8 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 
 				<div>
-					<div style={ column1} >{showUnit(plot, mouseState ) }</div>
-					<div style={ column2}  > {showReadout(plot, mouseState, visRoot.flux ) }
+					<div style={ column1} >{fluxUnit }</div>
+					<div style={ column2}  > {fluxValue }
 					</div>
 
 					<div  style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
@@ -125,11 +278,71 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 	);
 }
 
+/*function MouseReadoutForm({visRoot, plotView, mouseState, flux}) {
 
-MouseReadout.propTypes= {
+	if (!plotView || !mouseState) return EMPTY;
+
+
+	var plot= primePlot(plotView);
+	if (!plot) return'';
+	if (isBlankImage(plot)) return EMPTY;
+
+	if (!magMouse.includes(mouseState.mouseState)) EMPTY;
+
+	var spt= mouseState.screenPt;
+	if (!spt) return EMPTY;
+
+
+	var title = plotView.plots[0].title;
+	return (
+		<div style={ rS}>
+			<div  >
+				<div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+					{labelMap[visRoot.pixelSize] }
+				</div>
+				<div style={column2} >{ showReadout(plot, mouseState,visRoot.pixelSize)}</div>
+
+
+				<div  style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+					{ labelMap[visRoot.mouseReadout1] }
+				</div>
+				<div style={column4} > {showReadout(plot, mouseState,visRoot.mouseReadout1)} </div>
+
+
+				<div style={column5}> {title}  </div>
+			</div>
+
+
+			<div>
+				<div style={ column1} >{showUnit(plot, mouseState ) }</div>
+				<div style={ column2}  > {showReadout(plot, mouseState, visRoot.flux)} }
+				</div>
+
+				<div  style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
+					{labelMap[ visRoot.mouseReadout2] } </div>
+				<div style={column4} >	{showReadout(plot, mouseState, visRoot.mouseReadout2)}</div>
+
+				<div style={column5_1}  title='Click on an image to lock the display at that point.'   >
+					<input  type='checkbox' name='aLock' value='lock'
+							onChange = { (request) => setClickLock(plot,mouseState , request) } />
+					Lock by click
+				</div>
+			</div>
+
+		</div>
+
+
+
+
+	);
+}*/
+
+MouseReadoutForm.propTypes= {
 	visRoot:   PropTypes.object.isRequired,
 	plotView:  PropTypes.object,
 	mouseState: PropTypes.object.isRequired,
+	fluxUnit:PropTypes.string.isRequired,
+	fluxValue:PropTypes.string.isRequired
 };
 
 
@@ -220,9 +433,7 @@ function showReadout(plot, mouseState, readoutValue){
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
 		return EMPTY_READOUT;
 	}
-    var precision7Digit='0.0000000';
-    var precision3Digit='0.000';
-	if (readoutValue==='Flux'){
+ 	/*if (readoutValue==='Flux'){
 		// get flux
         getFlux(plot, mouseState.imagePt); //TEST CODE
         var webFitsData= plot.webFitsData;
@@ -238,7 +449,7 @@ function showReadout(plot, mouseState, readoutValue){
         }
 	}
 
-
+*/
 
 	if (readoutValue==='fitsIP'){
 			return ` ${numeral(mouseState.imagePt.x).format(precision3Digit)}, ${
@@ -310,11 +521,17 @@ function showDialog(fieldKey, radioValue) {
 }
 
 
-const getFlux = debounce( (plot,iPt) =>  {
+
+const getFlux = debounce( (cls, plot,iPt) =>  {
     callGetFileFlux(plot.plotState, iPt)
         .then( (result) => {
+
             if (result.hasOwnProperty('NO_BAND')) {
                 plot.flux = result.NO_BAND;
+				//if (clss.state.isMounted()){
+					//console.log(state.props.);
+				//}
+				cls.setState ({flux: result.NO_BAND});;
             }
             else {
                 //TODO three color band
