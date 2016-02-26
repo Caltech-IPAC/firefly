@@ -13,29 +13,25 @@ stretchQuick.Items = showColorOps - zscaleLinear zscaleLog zscaleLogLog - stretc
 
 MarkerToolDD.Items = MarkerTool \
                    - FootprintHST \
-                   - FootprintACS FootprintFOC FootprintFOS FootprintHRS FootprintHSP FootprintNICMOS FootprintWFC3 FootprintWFPC FootprintWFPC2 \
-                     FootprintWFC FootprintHRC FootprintSBC FootprintUVIS FootprintIR \
-                   - FootprintFGS FootprintMIRI FootprintNIRCAM FootprintNIRSPEC FootprintNIS \
+                     FootprintNICMOS  \
+                     FootprintWFPC2 \
+                     FootprintWFC \
+                     FootprintHRC \
+                     FootprintSBC \
+                     FootprintUVIS \
+                     FootprintIR \
+                   - FootprintFGS \
+                     FootprintMIRI \
+                     FootprintNIRCAM \
+                     FootprintNIRSPEC \
+                     FootprintNIS \
                    - FootprintJWST \
                    - FootprintWFIRST
 
-FootprintACS.Title=Add HST/ACS footprint
-FootprintACS.ShortDescription= Add a HST/ACS footprint (see help)
-FootprintFOC.Title=Add HST/FOC footprint
-FootprintFOC.ShortDescription= Add a HST/FOC footprint (see help)
-FootprintFOS.Title=Add HST/FOS footprint
-FootprintFOS.ShortDescription= Add a HST/FOS footprint (see help)
-FootprintHRS.Title=Add HST/HRS footprint
-FootprintHRS.ShortDescription= Add a HST/HRS footprint (see help)
-FootprintHSP.Title=Add HST/HSP footprint
-FootprintHSP.ShortDescription= Add a HST/HSP footprint (see help)
 FootprintNICMOS.Title=Add HST/NICMOS footprint
 FootprintNICMOS.ShortDescription= Add a HST/NICMOS footprint (see help)
-FootprintWFC3.Title=Add HST/WFC3 footprint
-FootprintWFC3.ShortDescription= Add a HST/WFC3 footprint (see help)
-FootprintWFPC.Title=Add HST/WFPC footprint
-FootprintWFPC.ShortDescription= Add a HST/WFPC footprint (see help)
-
+FootprintWFPC.Title=Add HST/WFPC2 footprint
+FootprintWFPC.ShortDescription= Add a HST/WFPC2 footprint (see help)
 FootprintWFC.Title=Add HST/WFC footprint
 FootprintWFC.ShortDescription= Add a HST/WFC footprint (see help)
 FootprintHRC.Title=Add HST/HRC footprint
@@ -60,7 +56,6 @@ FootprintNIRSPEC.ShortDescription= Add a JWST/NIRSPEC preliminary footprint (see
 
 MarkerToolDD.ShortDescription = Overlay Markers and Instrument Footprints
 MarkerToolDD.UseIconOnly= true
-
 
 stretchQuick.Title = Stretch
 stretchQuick.ShortDescription= Quickly change the background image stretch

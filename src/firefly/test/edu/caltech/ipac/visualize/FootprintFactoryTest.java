@@ -172,7 +172,7 @@ public class FootprintFactoryTest {
 		//System.out.println(stcFromFootprint);
 		String valJwst[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
         // Yi: added new HST instrument:
-        String valHst[] = new String[] {"ACS", "FOC", "FOS", "HRS", "HSP", "NICMOS", "WFC3", "WFPC", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
+        String valHst[] = new String[] {"NICMOS", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
 		FOOTPRINT[] fp = FOOTPRINT.values();
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
@@ -237,8 +237,8 @@ public class FootprintFactoryTest {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
 			}
 		} else if (fp.equals(FOOTPRINT.HST)) {
-			Assert.assertTrue(circle == 8);
-			Assert.assertTrue("Wrong " + polys, polys == 25); //should be 25
+			Assert.assertTrue(circle == 0);
+			Assert.assertTrue("Wrong " + polys, polys == 14); //should be 14
 			Set<String> keySet = mapCir.keySet();
 			for (String string : keySet) {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
@@ -407,7 +407,7 @@ public class FootprintFactoryTest {
 
     @Test
     public void testDistHST(){
-        INSTRUMENTS inst = INSTRUMENTS.WFC3;
+        INSTRUMENTS inst = INSTRUMENTS.WFC;
         List<Region> list = footprintFactory.getFootprintAsRegions(
                 FOOTPRINT.HST,
                 inst,
@@ -418,11 +418,11 @@ public class FootprintFactoryTest {
                 new WorldPt(0,0), false);
 
         WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
-        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
-        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-1.19445E-4, 1E-2);
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 1.696299E-4,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.00337, 1E-2);
 
         double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
-        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,1.622E-4, 1E-2);
+        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.0033754, 1E-2);
 
         footprintFactory.getFootprintAsRegions(
                 FOOTPRINT.HST,
