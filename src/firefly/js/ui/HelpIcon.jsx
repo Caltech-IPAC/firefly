@@ -6,20 +6,15 @@ import React, {PropTypes} from 'react';
 import {flux} from '../Firefly.js';
 import appDataCntlr from '../core/AppDataCntlr.js';
 
-const Padding = '5';  // padding for div around image
-const DefaultImageSize = '20';
-const DefaultImageHelp = 'images/Help.png';
+import largeHelp from 'html/images/icons-2014/Help.png';
+import smallHelp from 'html/images/icons-2014/Help-16x16.png';
 
-export class HelpIcon extends React.Component {
+class HelpIcon extends React.Component {
     constructor(props) {
         super(props);
 
-        var {width, height} = Object.assign({}, {width: DefaultImageSize, height: DefaultImageSize}, props);
-
         this.state = {
-            width: width.toString(),
-            height: height.toString(),
-            hover: false
+            cursor: 'default'
         };
 
         this.onClick = this.onClick.bind(this);
@@ -30,40 +25,39 @@ export class HelpIcon extends React.Component {
     onClick() {
         flux.process({
                         type:appDataCntlr.HELP_LOAD,
-                        helpID: this.props.id
+                        helpID: this.props.helpid
                     });
     }
 
     onMouseHover() {
-        this.setState({hover: true});
+        this.setState({cursor: 'pointer'});
     }
 
     onMouseOut() {
-        this.setState({hover: false});
+        this.setState({cursor: 'default'});
     }
 
     render() {
-        const {width, height} = this.state;
-        var   imgStyle = {width, height};
-        var   divStyle = {padding: Padding};
-        var   imgSrc = (this.props.src) ? this.prop.src : DefaultImageHelp;
-
-        divStyle.cursor = this.state.hover ? 'pointer' : 'default';
+        var   imgSrc = this.props.largesize ? largeHelp : smallHelp;
+        var   {cursor} = this.state;
+        var   divStyle = {cursor};
 
         return (
             <div style={divStyle}
                  onMouseOver={this.onMouseHover}
                  onMouseOut={this.onMouseOut} >
-                <img style={imgStyle} onClick={this.onClick} src={imgSrc} />
+                <img onClick={this.onClick} src={imgSrc} />
             </div>);
     }
 }
 
 HelpIcon.propTypes = {
-    width: PropTypes.number,
-    height: PropTypes.number,
-    id: PropTypes.string.isRequired,
-    src: PropTypes.string
+    helpid: PropTypes.string,
+    largesize: PropTypes.bool
+};
+
+HelpIcon.defaultProps = {
+    largesize: false
 };
 
 export default HelpIcon;

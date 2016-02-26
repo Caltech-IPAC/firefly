@@ -3,26 +3,34 @@
  */
 
 import React, {PropTypes} from 'react';
+import AppDataCntlr from '../../core/AppDataCntlr.js';
+
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import PopupPanel from '../../ui/PopupPanel.jsx';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
+
 import HelpIcon from '../../ui/HelpIcon.jsx';
 
 const popupId = 'ImageAreaStatsPopup';
 const helpId = 'visualization.fitsViewer';
+
+// style of the top divs
 const rS = {
-    padding: '10'
-};
-const tS = {
-    width: '450px',
-    border: '1px solid black'
+    padding: 10
 };
 
-export function showImageAreaStatsPopup(popTitle, statsResult, helpImage) {
+const tableW = 450;
+
+/**
+ * show image area stats popup window
+ * @param {string} popTitle
+ * @param {object} statsResult image area stats content
+ */
+
+export function showImageAreaStatsPopup(popTitle, statsResult) {
     const popup=
         (<PopupPanel title={popTitle} >
-            <ImageStats statsResult={statsResult} helpImage={helpImage}/>
+            <ImageStats statsResult={statsResult}/>
         </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -32,17 +40,16 @@ export function showImageAreaStatsPopup(popTitle, statsResult, helpImage) {
 /**
  * component for image area stats popup
  * @param {object} statsResult
- * @param {string} helpImage image for help icon
  * @returns {XML}
  *
  */
 
-function ImageStats ( {statsResult, helpImage} ) {
+function ImageStats ( {statsResult} ) {
     return (
         <div>
             <ImageAreaStatsSummary statsSummary={statsResult.statsSummary}/>
             <ImageAreaStatsTable statsTbl={statsResult.statsTable}/>
-            <ImageAreaStatsClose imgFile={helpImage} />
+            <ImageAreaStatsClose />
         </div>
     );
 }
@@ -51,11 +58,8 @@ ImageStats.propTypes= {
     statsResult: PropTypes.shape({
         statsSummary: PropTypes.array.isRequired,
         statsTable: PropTypes.array.isRequired
-    }).isRequired,
-    helpImage: PropTypes.string
+    }).isRequired
 };
-
-
 
 /**
  * component of stats summary
@@ -63,6 +67,7 @@ ImageStats.propTypes= {
  * @returns {XML}
  *
  */
+
 function ImageAreaStatsSummary({statsSummary})
 {
     var summaryRows = statsSummary.map(function(summaryLine) {
@@ -99,6 +104,12 @@ ImageAreaStatsSummary.PropTypes={
 
 function ImageAreaStatsTable ({statsTbl})
 {
+    // table style
+    var tS = {
+        width: tableW,
+        border: '1px solid black'
+    };
+
     var tableRows = statsTbl.map(function (statsRow) {
         return (
             <ImageAreaStatsTableRow key={statsRow[0] || statsRow[1]} statsRow={statsRow} />
@@ -175,13 +186,13 @@ class ImageAreaStatsTableRow extends React.Component {
 
         var tableCells = this.props.statsRow.map(function (cell) {
             const newline = '\n';
-            var dS = {border: '1px solid black', padding: '5'};
+            var dS = {  border: '1px solid black',
+                        padding: 5  };
 
-            // cell contains newline (location)
+            // cell contains newline (ex. RA:..\n DEC:...)
+
             if (cell.includes(newline)) {
-                var lines = cell.split(newline);
-
-                var br = lines.map(function (line) {
+                var br = cell.split(newline).map(function (line) {
                     return (<span key={line}>{line}<br/></span>);
                 });
 
@@ -199,7 +210,8 @@ class ImageAreaStatsTableRow extends React.Component {
 
         return (
             <tr style={trS}
-                onMouseOver={this.onMouseHover.bind(this)} onMouseOut={this.onMouseOut.bind(this)}>
+                onMouseOver={this.onMouseHover.bind(this)}
+                onMouseOut={this.onMouseOut.bind(this)}>
                 {tableCells}
             </tr>
         );
@@ -213,32 +225,38 @@ ImageAreaStatsTableRow.propTypes={
 /**
  * component under the stats table containing close button and help icon
  * @param {string} closeButton
- * @param {string} imgFile
  * @returns {XML}
  * @constructor
  */
 
-function ImageAreaStatsClose ({closeButton='Close', imgFile=''} )
+function ImageAreaStatsClose ({closeButton='Close'} )
 {
-    var rcS = Object.assign({}, rS, {float: 'right'});
-    var sideW = 23;
+    var tbS = {textAlign: 'right', width: tableW};
 
     return (
-        <div>
-            <div style={rcS} >
-                <HelpIcon width={sideW} height={sideW} id={helpId} src={imgFile}/>
-            </div>
-            <div style={rcS} >
-                <CompleteButton
-                style={{padding : '5px'}}
-                text={closeButton}
-                dialogId={popupId} />
-            </div>
+        <div style={rS}>
+            <table style={tbS}>
+                <colgroup>
+                    <col style={{width: '92%'}}/>
+                    <col style={{width: '8%'}}/>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>
+                            <CompleteButton
+                            text={closeButton}
+                            dialogId={popupId} />
+                        </td>
+                        <td>
+                            <HelpIcon helpid={helpId} />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     );
 }
 
 ImageAreaStatsClose.PropTypes={
-    closeButton: PropTypes.string,
-    imgFile: PropTypes.string
+    closeButton: PropTypes.string
 };

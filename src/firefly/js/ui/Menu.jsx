@@ -14,11 +14,7 @@ function handleAction (menuItem) {
     // set whether search menu should be shown
     dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
 
-    if (menuItem.action.includes(appDataCntlr.HELP_LOAD)) {
-        flux.process({type: menuItem.action, helpID: 'overview' });
-    } else {
-        flux.process({type: menuItem.action});
-    }
+    flux.process({type: menuItem.action});
 }
 
 /**

@@ -167,6 +167,8 @@ function onlineHelpLoad( action )
 
         if (action.helpID) {
             url += '/#id=' + action.helpID;
+        } else {
+            url += '/';
         }
 
         if (url) {
