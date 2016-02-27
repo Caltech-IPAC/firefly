@@ -15,11 +15,12 @@ import java.util.List;
 /**
  * @author tatianag
  * Using Mark Taylor's regclient.jar and Ray Plante's ivoa registry rayreg.jar
+ * Latest registries can be found here: http://rofr.ivoa.net/
  */
 public class VoRegistryUtil {
 
     // NVO registry does not seem to support adqls search, only keywords
-    public static String NVO_REGISTRY = "http://nvo.stsci.edu/vor10/ristandardservice.asmx";
+    public static String NVO_REGISTRY = "http://vao.stsci.edu/directory/ristandardservice.asmx?";
 
     public static String ASTROGRID_REGISTRY = "http://registry.astrogrid.org/"
                                 + "astrogrid-registry/services/RegistryQueryv1_0";
