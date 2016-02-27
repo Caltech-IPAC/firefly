@@ -166,7 +166,7 @@ function connector(state) {
     return {
         appData: state[AppDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
-        table : TblUtil.findById(activeTblId)
+        table : TblUtil.findTblById(activeTblId)
     };
 }
 const container = flux.createSmartComponent(connector, App);

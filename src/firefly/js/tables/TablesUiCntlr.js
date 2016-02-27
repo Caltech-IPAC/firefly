@@ -7,7 +7,6 @@ import {pickBy, get, isEmpty} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {smartMerge} from './TableUtil.js';
-import {Table} from './Table.js';
 import * as TblUtil from './TableUtil.js';
 import * as TablesCntlr from './TablesCntlr.js';
 
@@ -21,31 +20,6 @@ export const TBL_UI_GOTO_PAGE = `${TABLE_UI_PATH}.uiGotoPage`;
 export const TBL_UI_RESIZE = `${TABLE_UI_PATH}.resize`;
 export const TBL_UI_COL_RESIZE = `${TABLE_UI_PATH}.colResize`;
 /*---------------------------- CREATORS ----------------------------*/
-
-export function gotoPage(action) {
-    return (dispatch) => {
-
-        if (action.payload) {
-            var {tbl_id, currentPage, pageSize, hlRowIdx} = action.payload;
-            const startIdx = (currentPage-1) * pageSize;
-            const endIdx = startIdx + pageSize;
-            var table = Table.findTblById(tbl_id);
-            if (table && table.has(startIdx, endIdx)) {
-                TablesCntlr.dispatchTableHighlight(tbl_id, startIdx+hlRowIdx);
-            } else {
-                const request = Object.assign({}, table.data.request, {startIdx, pageSize});
-                TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
-                    dispatch( {type:TablesCntlr.TABLE_UPDATE, payload: tableModel} );
-                }).catch( (error) => {
-                    TblUtil.error(error);
-                    // if fetch causes error, re-dispatch that same action with error msg.
-                    action.err = error;
-                });
-            }
-        }
-    };
-}
-
 
 /*---------------------------- REDUCERS -----------------------------*/
 export function reducer(state={}, action={}) {

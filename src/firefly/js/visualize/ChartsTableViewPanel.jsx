@@ -389,7 +389,7 @@ var ChartsPanel = React.createClass({
 
 const connector = function(state, ownProps) {
     return {
-        tableModel: TblUtil.findById(ownProps.tblId),
+        tableModel: TblUtil.findTblById(ownProps.tblId),
         tblStatsData: state[TableStatsCntlr.TBLSTATS_DATA_KEY][ownProps.tblId],
         tblHistogramData: state[HistogramCntlr.HISTOGRAM_DATA_KEY][ownProps.tblId],
         tblPlotData: state[XYPlotCntlr.XYPLOT_DATA_KEY][ownProps.tblId]
