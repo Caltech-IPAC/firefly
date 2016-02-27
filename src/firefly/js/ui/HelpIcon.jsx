@@ -9,55 +9,34 @@ import appDataCntlr from '../core/AppDataCntlr.js';
 import largeHelp from 'html/images/icons-2014/Help.png';
 import smallHelp from 'html/images/icons-2014/Help-16x16.png';
 
-class HelpIcon extends React.Component {
-    constructor(props) {
-        super(props);
+import './HelpIcon.css';
 
-        this.state = {
-            cursor: 'default'
-        };
+function HelpIcon({helpId, size='small'}) {
+    var imgSrc = (size === 'small') ? smallHelp : largeHelp;
 
-        this.onClick = this.onClick.bind(this);
-        this.onMouseHover = this.onMouseHover.bind(this);
-        this.onMouseOut = this.onMouseOut.bind(this);
-    }
-
-    onClick() {
+    var onClick = () => {
         flux.process({
-                        type:appDataCntlr.HELP_LOAD,
-                        helpID: this.props.helpid
-                    });
-    }
+            type: appDataCntlr.HELP_LOAD,
+            payload: {helpId: helpId}
+        });
+    };
 
-    onMouseHover() {
-        this.setState({cursor: 'pointer'});
-    }
-
-    onMouseOut() {
-        this.setState({cursor: 'default'});
-    }
-
-    render() {
-        var   imgSrc = this.props.largesize ? largeHelp : smallHelp;
-        var   {cursor} = this.state;
-        var   divStyle = {cursor};
-
-        return (
-            <div style={divStyle}
-                 onMouseOver={this.onMouseHover}
-                 onMouseOut={this.onMouseOut} >
-                <img onClick={this.onClick} src={imgSrc} />
-            </div>);
-    }
+    return (
+        <div>
+            <img className={'helpicon'}
+                 onClick={onClick}
+                 src={imgSrc}/>
+        </div>);
 }
 
 HelpIcon.propTypes = {
-    helpid: PropTypes.string,
-    largesize: PropTypes.bool
+    helpId: PropTypes.string,
+    size:   function(props, propName, componentName) {
+            if (props[propName] && !/^(small|large)$/.test(props[propName])){
+                return new Error(`Invalid size, should be either small or large`);
+            }
+    }
 };
 
-HelpIcon.defaultProps = {
-    largesize: false
-};
 
 export default HelpIcon;

@@ -165,8 +165,8 @@ function onlineHelpLoad( action )
             windowName += '-' + moduleName;
         }
 
-        if (action.helpID) {
-            url += '/#id=' + action.helpID;
+        if (action.payload && action.payload.helpId) {
+            url += '/#id=' + action.payload.helpId;
         } else {
             url += '/';
         }

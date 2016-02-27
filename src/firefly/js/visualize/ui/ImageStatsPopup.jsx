@@ -248,7 +248,7 @@ function ImageAreaStatsClose ({closeButton='Close'} )
                             dialogId={popupId} />
                         </td>
                         <td>
-                            <HelpIcon helpid={helpId} />
+                            <HelpIcon helpid={helpId}/>
                         </td>
                     </tr>
                 </tbody>
