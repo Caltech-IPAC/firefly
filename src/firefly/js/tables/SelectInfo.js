@@ -23,6 +23,10 @@ export class SelectInfo {
         this.data.selectAll = flg;
     }
 
+    /*
+     @param {number} idx - row index
+     @param {boolean} flg - true to select row, false to unselect
+     */
     setRowSelect(idx, flg) {
         idx = idx + this.offset;
         const {selectAll, exceptions, rowCount} = this.data;
