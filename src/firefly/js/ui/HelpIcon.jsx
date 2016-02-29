@@ -17,7 +17,7 @@ function HelpIcon({helpId, size='small'}) {
     var onClick = () => {
         flux.process({
             type: appDataCntlr.HELP_LOAD,
-            payload: {helpId: helpId}
+            payload: {helpId}
         });
     };
 
@@ -31,10 +31,10 @@ function HelpIcon({helpId, size='small'}) {
 
 HelpIcon.propTypes = {
     helpId: PropTypes.string,
-    size:   function(props, propName, componentName) {
-            if (props[propName] && !/^(small|large)$/.test(props[propName])){
-                return new Error(`Invalid size, should be either small or large`);
-            }
+    size(props, propName, componentName) {
+        if (props[propName] && !/^(small|large)$/.test(props[propName])){
+            return new Error(`Invalid size in ${componentName}, should be either small or large.`);
+        }
     }
 };
 
