@@ -225,7 +225,7 @@ var ChartsPanel = React.createClass({
 
     displaySelectionOptions() {
         if (this.state.chartType === SCATTER) {
-            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection', null);
+            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
             return Boolean(selection);
         }
         // for now selection is supported for scatter only
@@ -255,7 +255,7 @@ var ChartsPanel = React.createClass({
 
     displayUnselectAll  () {
         if (this.state.chartType === SCATTER) {
-            const selectInfo = get(this.props, 'tableModel.selectInfo', null);
+            const selectInfo = get(this.props, 'tableModel.selectInfo');
             return selectInfo && (selectInfo.selectAll || selectInfo.exceptions.size>0);
         }
     },
@@ -263,8 +263,8 @@ var ChartsPanel = React.createClass({
     addSelection() {
         if (this.state.chartType === SCATTER) {
             const {tblId, tableModel} = this.props;
-            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection', null);
-            const xyPlotData = get(this.props, 'tblPlotData.xyPlotData', null);
+            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
+            const xyPlotData = get(this.props, 'tblPlotData.xyPlotData');
             if (tableModel && xyPlotData && selection) {
                 // todo - support situations when rowId column is present or data are decimated
                 const {xMin, xMax, yMin, yMax} = selection;
@@ -323,16 +323,16 @@ var ChartsPanel = React.createClass({
         } else {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
-                    <img style={this.displayZoomOriginal()? selectionBtnStyle:{display:'none'}}
+                    {this.displayZoomOriginal() && <img style={selectionBtnStyle}
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
                          onClick={() => this.resetZoom()}
-                    />
-                    <img style={this.displayUnselectAll()? selectionBtnStyle:{display:'none'}}
+                    />}
+                    {this.displayUnselectAll() && <img style={selectionBtnStyle}
                          title='Unselect all selected points'
                          src={UNSELECT_ROWS}
                          onClick={() => this.resetSelection()}
-                    />
+                    />}
                 </div>
             );
         }
@@ -395,7 +395,7 @@ var ChartsPanel = React.createClass({
                 </div>
             );
         } else {
-            return null;
+            return undefined;
         }
     },
 
