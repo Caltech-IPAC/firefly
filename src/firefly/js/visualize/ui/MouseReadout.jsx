@@ -3,9 +3,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Lijun
  *   1/16/2016
- *   propType: define all the property variable for the component
- *   this.plot, this.plotSate are the class global variables
- *
+ *     DM-4468
+ *   2/23/16
+ *     DM-4788
  */
 import React, {PropTypes} from 'react';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
@@ -19,22 +19,24 @@ import CoordinateSys from '../CoordSys.js';
 import CysConverter from '../CsysConverter.js';
 import CoordUtil from '../CoordUtil.js';
 import VisUtil from '../VisUtil.js';
-
-import debounce from 'lodash/debounce'; //TEST CODE
-import {callGetFileFlux} from '../../rpc/PlotServicesJson.js'; //TEST CODE
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroup from '../../ui/FieldGroup.jsx';
+import debounce from 'lodash/debounce';
+import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import numeral from 'numeral';
-
+import Band from '../Band.js';
 var rS= {
 	width: 550,
 	height: 32,
 	display: 'inline-block',
 	position: 'relative',
-	verticalAlign: 'top'
+	verticalAlign: 'top',
+	cursor:'pointer'
 };
 
 const EMPTY= <div style={rS}></div>;
 const EMPTY_READOUT='';
-const magMouse= [ MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
+const readoutMouse= [ MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
 const coordinateMap = {
 	galactic:CoordinateSys.GALACTIC,
 	eqb1950:CoordinateSys.EQ_B1950,
@@ -51,36 +53,163 @@ const labelMap = {
 	sPixelSize:'Screen Pixel Size:'
 };
 const column1 = {width: 90, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-const column2 = {width: 60, display: 'inline-block'};
-const column3 = {width: 75, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-const column4 = {width: 170,display: 'inline-block'};
+const column2 = {width: 94, display: 'inline-block'};
+const column3 = {width: 74,  paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
+const column4 = {width: 148,display: 'inline-block'};
 const column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
 const column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
-
-/**
- *
- * @param visRoot
- * @param plotView
- * @param mouseState
- * @returns {XML}
- * @constructor
- */
-export function MouseReadout({visRoot, plotView, mouseState}) {
-
-	if (!plotView || !mouseState) return EMPTY;
+const precision7Digit='0.0000000';
+const precision3Digit='0.000';
+const precision1Digit='0.0';
 
 
-	var plot= primePlot(plotView);
-	if (!plot) return'';
-	if (isBlankImage(plot)) return EMPTY;
-
-	if (!magMouse.includes(mouseState.mouseState)) EMPTY;
-
-	var spt= mouseState.screenPt;
-	if (!spt) return EMPTY;
+export  class MouseReadout extends React.Component {
 
 
-	var title = plotView.plots[0].title;
+	constructor(props) {
+		super(props);
+		this.state = {flux:EMPTY_READOUT};
+			this.showFlux=this.showFlux.bind(this);
+	}
+
+
+	componentWillUnmount() {
+
+		if (this.unbinder) this.unbinder();
+	}
+
+
+	componentDidMount() {
+
+      if (!this.state.flux) this.showFlux(this.props.plotView, this.props.mouseState);
+	}
+	componentWillReceiveProps() {
+		this.showFlux(this.props.plotView, this.props.mouseState);
+	}
+
+	render() {
+
+
+		const {visRoot, plotView, mouseState}= this.props;
+		if (!plotView || !mouseState) return EMPTY;
+
+		var plot= primePlot(plotView);
+		if (!plot) return'';
+		if (isBlankImage(plot)) return EMPTY;
+
+		if (!readoutMouse.includes(mouseState.mouseState)) EMPTY;
+
+		var spt= mouseState.screenPt;
+		if (!spt) return EMPTY;
+
+	    var title = plotView.plots[0].title;
+		var bands = plot.plotState.getBands();
+
+
+
+		var {width:screenW, height:screenH }= plot.screenSize;
+		var flux;
+		var fluxLabel;
+		if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH) {
+			flux=EMPTY_READOUT;
+			fluxLabel=EMPTY_READOUT;
+		}
+		else {
+			flux=this.state.flux;
+			if (bands.length===1) {
+				fluxLabel = this.showFluxLabel(plot, bands[0]);
+			}
+		}
+
+
+		if (bands.length===1) {
+
+			return <MouseReadoutForm visRoot={visRoot} plot={plot}
+									 mouseState={mouseState}
+									 fluxLabel={fluxLabel}
+									 flux={flux} title={title}
+			/>;
+
+		}
+        else {
+			//TODO three color
+		}
+
+
+	}
+
+	showFluxLabel(plot, band){
+
+		if (!plot) return EMPTY_READOUT;
+
+		var webFitsData= plot.webFitsData;
+		if (!band) return EMPTY_READOUT;
+		var fluxUnits= webFitsData[band.value].fluxUnits;
+
+		var start;
+		switch (band) {
+			case Band.RED : start= 'Red '; break;
+			case Band.GREEN : start= 'Green '; break;
+			case Band.BLUE : start= 'Blue '; break;
+			case Band.NO_BAND : start=''; break;
+			default : start= ''; break;
+		}
+		var  valStr= start.length >0 ? 'Val: ' : 'Value: ';
+
+		if (this.state.flux) {
+			var fluxUnitInUpperCase=fluxUnits.toUpperCase();
+			if (fluxUnitInUpperCase==='DN' ||  fluxUnitInUpperCase==='FRAMES' || fluxUnitInUpperCase==='') {
+				return  start + valStr;
+			}
+			else {
+				return  start + 'Flux: ';
+			}
+		}
+		else {
+			return EMPTY_READOUT;
+		}
+	}
+
+
+	showFlux(plotView, mouseState) {
+		var plot = primePlot(plotView);
+
+		if (!plot) return;
+
+		const getFlux = debounce((plot, iPt) => {
+			callGetFileFlux(plot.plotState, iPt)
+				.then((result) => {
+
+					if (result.hasOwnProperty('NO_BAND')) {
+                        var fluxStr=`${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
+						this.setState({flux: fluxStr});
+
+					}
+					else {
+						//TODO three color band
+					}
+				})
+				.catch((e) => {
+					console.log(`flux error: ${plot.plotId}`, e);
+				});
+		}, 200);
+
+
+         var iPt=mouseState.imagePt;
+		getFlux(plot, iPt);
+        var currentPt=mouseState.imagePt;
+		if (iPt!=currentPt){
+			this.setState({flux:EMPTY_READOUT});
+		}
+		
+	}
+
+
+}
+
+
+function MouseReadoutForm({visRoot, plot, mouseState, fluxLabel, flux, title}) {
+
 		return (
 			<div style={ rS}>
                <div  >
@@ -101,10 +230,8 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 
 
 				<div>
-					<div style={ column1} ></div>
-					<div style={ column2}  > {showReadout(plot, mouseState,visRoot.flux ) }
-					</div>
-
+					<div style={ column1} >{fluxLabel}</div>
+					<div style={ column2}  > {flux}</div>
 					<div  style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
 						{labelMap[ visRoot.mouseReadout2] } </div>
 					<div style={column4} >	{showReadout(plot, mouseState, visRoot.mouseReadout2)}</div>
@@ -124,13 +251,14 @@ export function MouseReadout({visRoot, plotView, mouseState}) {
 	);
 }
 
-
-MouseReadout.propTypes= {
+MouseReadoutForm.propTypes= {
 	visRoot:   PropTypes.object.isRequired,
-	plotView:  PropTypes.object,
+	plot:  PropTypes.object.isRequired,
 	mouseState: PropTypes.object.isRequired,
+	fluxLabel:PropTypes.string.isRequired,
+	flux:PropTypes.string.isRequired,
+	title:PropTypes.string.isRequired
 };
-
 
 /**
  *
@@ -181,6 +309,20 @@ function setClickLock( plot,mouseState, request) {
 
 }
 
+const validateImage= ( plot, mouseState) =>{
+	if (!plot) return EMPTY_READOUT;
+	if (isBlankImage(plot)) return EMPTY_READOUT;
+
+	var spt= mouseState.screenPt;
+	if (!spt) return EMPTY_READOUT;
+
+
+
+	var {width:screenW, height:screenH }= plot.screenSize;
+	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
+		return EMPTY_READOUT;
+	}
+};
 /**
  * Display the mouse readout based on the chosen coordinate
  * @param plot
@@ -203,17 +345,9 @@ function showReadout(plot, mouseState, readoutValue){
 		return EMPTY_READOUT;
 	}
 
-	if (readoutValue==='Flux'){
-		//TODO get flux
-		return 'Flux';
-	}
-
-	var precision7Digit='0.0000000';
-	var precision3Digit='0.000';
-
 	if (readoutValue==='fitsIP'){
-			return ' ' + numeral(mouseState.imagePt.x).format(precision3Digit)+', '+
-			numeral(mouseState.imagePt.y).format(precision3Digit);
+			return ` ${numeral(mouseState.imagePt.x).format(precision1Digit)}, ${
+			numeral(mouseState.imagePt.y).format(precision1Digit)}`;
 	}
 
 	var result;
@@ -233,7 +367,7 @@ function showReadout(plot, mouseState, readoutValue){
 		switch (coordinate) {
 			case CoordinateSys.EQ_J2000:
 				if (type === 'hms') {
-					result = ` ${hmsLon},  ${hmsLat}`;
+					result = ` ${hmsLon}, ${hmsLat}`;
 		        }
 				else {
 					//convert to decimal representation
@@ -250,16 +384,16 @@ function showReadout(plot, mouseState, readoutValue){
 				result= ` ${lonShort}, ${latShort}`;
 				break;
 			case CoordinateSys.EQ_B1950:
-				result = ' ' +  hmsLon + ',  ' + hmsLat;
+				result = ` ${hmsLon}, ${hmsLat}`;
 				break;
 
 			case CoordinateSys.PIXEL:
 				var pt =plot.projection.getPixelScaleArcSec();
-				result= `  ${numeral(pt).format(precision3Digit)}`;
+				result= `  ${numeral(pt).format(precision3Digit)}"`;
 				break;
 			case CoordinateSys.SCREEN_PIXEL:
 				var size =plot.projection.getPixelScaleArcSec()/plot.zoomFactor;
-				result= `  ${numeral(size).format(precision3Digit)}`;
+				result= `  ${numeral(size).format(precision3Digit)}"`;
 				break;
 
 			default:
