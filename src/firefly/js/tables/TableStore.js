@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty} from 'lodash';
+import {get} from 'lodash';
 
 import * as TblCntlr from './TablesCntlr.js';
 import {flux} from '../Firefly.js';
@@ -20,11 +20,6 @@ export class TableStore {
             this.tableModel = tableModel;
             this.changeListener && this.changeListener({tableModel});
         }
-    }
-
-    onUnmount() {
-        const {tbl_id} = this.tableModel;
-        this.handleAction(TblCntlr.TABLE_REMOVE, {tbl_id});
     }
 
     onSort(sortInfoString) {
@@ -110,6 +105,10 @@ export class RemoteTableStore extends TableStore {
         this.tbl_id = tbl_id;
     }
 
+    onUnmount() {
+        this.removeListener && this.removeListener();
+    }
+
     updateFromFlux() {
         var tableModel = TblUtil.findTblById(this.tbl_id);
         if ( tableModel !== this.tableModel) {
@@ -120,7 +119,6 @@ export class RemoteTableStore extends TableStore {
     handleAction(type, payload) {
         switch (type) {
             case (TblCntlr.TABLE_REMOVE)  :
-                this.removeListener && this.removeListener();
                 flux.process({type, payload});
                 break;
 
