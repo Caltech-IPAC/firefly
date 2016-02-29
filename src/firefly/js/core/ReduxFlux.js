@@ -189,6 +189,7 @@ function process(rawAction, condition) {
     if (!redux) throw Error('firefly has not been bootstrapped');
 
     var ac = actionCreators.get(rawAction.type);
+    if (!rawAction.payload) rawAction= Object.assign({},rawAction,{payload:{}});
     if (ac) {
         redux.dispatch(ac(rawAction));
     } else {

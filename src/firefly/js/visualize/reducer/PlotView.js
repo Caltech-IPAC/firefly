@@ -9,6 +9,7 @@
  */
 
 import update from 'react-addons-update';
+import {isEqual} from 'lodash';
 import WebPlot, {PlotAttribute} from './../WebPlot.js';
 import {WPConst} from './../WebPlotRequest.js';
 import {RotateType} from './../PlotState.js';
@@ -223,16 +224,22 @@ function updatePlotViewScrollXY(plotView,newScrollPt) {
     newSx= checkBounds(newSx,plot.screenSize.width,scrollWidth);
     newSy= checkBounds(newSy,plot.screenSize.height,scrollHeight);
 
-    var newPlotView= Object.assign({},plotView, {scrollX:newSx, scrollY:newSy});
+    var newPlotView;
+    if (newSx!==oldSx || newSy!==oldSy)  {
+        newPlotView= Object.assign({},plotView, {scrollX:newSx, scrollY:newSy});
+    }
 
     if (isRecomputeViewPortNecessary(newSx,newSy,scrollWidth,scrollHeight,plot.viewPort) ) {
         var cp= CCUtil.getScreenCoords(plot,findCurrentCenterPoint(plotView,newSx,newSy));
         var viewPort= computeViewPort(plot,scrollWidth,scrollHeight,cp);
+        if (isEqual(viewPort,plot.viewPort) && !newPlotView) return plotView;
+
+        if (!newPlotView) newPlotView= Object.assign({},plotView);
         var newPrimary= WebPlot.setWPViewPort(plot,viewPort);
         newPlotView.plots= plotView.plots.map( (p) => p===plot ? newPrimary : p);
     }
 
-    return newPlotView;
+    return newPlotView || plotView;
 }
 
 /**
@@ -462,11 +469,11 @@ export function computeViewPort(plot, scrollWidth, scrollHeight, visibleCenterPt
     var {viewPort}= plot;
     var {width:screenW, height:screenH} = plot.screenSize;
 
-    var vpw = scrollWidth * 2;
-    var vph = scrollHeight * 2;
+    var vpw = scrollWidth * 1.5;
+    var vph = scrollHeight * 1.5;
 
-    if (vpw > 1500) vpw = Math.max((scrollWidth * 1.5), 2700);
-    if (vph > 1400) vph = Math.max((scrollHeight * 1.5), 1800);
+    if (vpw > 1500) vpw = Math.max((scrollWidth * 1.5), 2000);
+    if (vph > 1400) vph = Math.max((scrollHeight * 1.5), 1500);
 
     var newVpX;
     var newVpY;

@@ -68,18 +68,39 @@ function showResults(success, request) {
     wpr3.setPlotGroupId('test-group');
     wpr4.setPlotGroupId('test-group');
 
+
+
+
     wpr1.setInitialZoomLevel(parseFloat(request.zoom));
     wpr2.setInitialZoomLevel(parseFloat(request.zoom));
     wpr3.setInitialZoomLevel(parseFloat(request.zoom));
     wpr4.setInitialZoomLevel(parseFloat(request.zoom));
 
     wpr2.setInitialColorTable(4);
+
+
+    //=========== 3 color
+    var cWpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
+    var cWpr2= WebPlotRequest.makeWiseRequest(wp,'3a','2',.4 );
+    var cWpr3= WebPlotRequest.makeWiseRequest(wp,'3a','3',.4 );
+    cWpr1.setPlotGroupId('test-group');
+    cWpr2.setPlotGroupId('test-group');
+    cWpr3.setPlotGroupId('test-group');
+
+    cWpr1.setInitialZoomLevel(parseFloat(request.zoom));
+    cWpr2.setInitialZoomLevel(parseFloat(request.zoom));
+    cWpr3.setInitialZoomLevel(parseFloat(request.zoom));
+
+
+
+
     //wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
     dispatchPlotImage('TestImage1', wpr1);
     dispatchPlotImage('TestImage2', wpr2);
     dispatchPlotImage('TestImage3', wpr3);
     dispatchPlotImage('TestImage4', wpr4);
 
+    dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
 
 
 
@@ -123,6 +144,9 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
                     
                 </FieldGroup>
+            </div>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
+                <ImageViewer plotId='TestImage3Color'/>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage1'/>

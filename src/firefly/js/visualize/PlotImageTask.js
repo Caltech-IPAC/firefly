@@ -4,7 +4,7 @@
 
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
-import {callGetWebPlot} from '../rpc/PlotServicesJson.js';
+import {callGetWebPlot, callGetWebPlot3Color} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
 import WebPlot, {PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
@@ -13,7 +13,7 @@ import VisUtils from './VisUtil.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import {getPlotViewById} from './PlotViewUtil.js';
-import Band from './Band.js';
+import {Band} from './Band.js';
 import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import DrawLayerCntlr from './DrawLayerCntlr.js';
@@ -58,15 +58,13 @@ function makePlotImageAction(rawAction) {
             firstTime= false;
         }
 
-        var {plotId,wpRequest}= rawAction.payload;
+        var {plotId,wpRequest,threeColor, redReq, greenReq, blueReq}= rawAction.payload;
 
         if (!plotId) {
             dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
                          payload: {plotId, error:Error('plotId is required')} });
             return;
         }
-
-
 
         setTimeout(dispatchUpdateStatus, INIT_STATUS_UPDATE_DELAY);
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
@@ -75,12 +73,20 @@ function makePlotImageAction(rawAction) {
 
         if (rawAction.payload.useContextModifications) {
             var pv= getPlotViewById(visRoot(),plotId);
-            if (pv) wpRequest= modifyRequest(pv.plotViewCtx,wpRequest,Band.NO_BAND);
+            if (pv) {
+                var {plotViewCtx}= pv;
+                if (wpRequest && !Array.isArray(wpRequest)) {
+                    wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND);
+                }
+                if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED);
+                if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN);
+                if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE);
+            }
         }
 
+        var p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
 
-        callGetWebPlot(wpRequest)
-            .then( (wpResult) => processSuccessResponse(dispatcher,rawAction.payload,wpResult) )
+        p.then( (wpResult) => processSuccessResponse(dispatcher,rawAction.payload,wpResult) )
             .catch ( (e) => {
                 dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
                 logError(`plot error, plotId: ${plotId}`, e);

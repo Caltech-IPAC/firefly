@@ -5,6 +5,7 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {TileDrawer} from './TileDrawer.jsx';
+import {TileDrawerCanvas} from './TileDrawerCanvas.jsx';
 import {EventLayer} from './EventLayer.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {
@@ -116,6 +117,7 @@ export class ImageViewerLayout extends Component {
                         marginRight: 'auto'
 
         };
+
 
         var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
         if (!cursor || !cursor.length) cursor= 'crosshair';

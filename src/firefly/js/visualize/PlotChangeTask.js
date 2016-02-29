@@ -38,15 +38,9 @@ export function colorChangeActionCreator(rawAction) {
         if (!pv) return;
 
 
-        if (!primePlot(pv).plotState.isThreeColor()) {
-            doColorChange(dispatcher,store,plotId,cbarId);
-            operateOnOthersInGroup(store,pv, (pv) => doColorChange(dispatcher,store,pv.plotId,cbarId));
-        }
-        else {
-            dispatcher( {
-                type: ImagePlotCntlr.COLOR_CHANGE_FAIL,
-                payload: {plotId, error:`can't change color bar for 3 color plots`} } );
-        }
+        if (!primePlot(pv).plotState.isThreeColor()) doColorChange(dispatcher,store,plotId,cbarId);
+        operateOnOthersInGroup(store,pv, (pv) => doColorChange(dispatcher,store,pv.plotId,cbarId),true);
+
     };
 
 }
@@ -82,17 +76,23 @@ export function rotateActionCreator(rawAction) {
         var p= primePlot(plotView);
         if (!p) return;
 
+        var firstRotate= true;
         if (rotateType===RotateType.NORTH && isPlotNorth(p)) {
-                return;
+            firstRotate= false;
         }
         if (rotateType===RotateType.UNROTATE && !p.plotState.isRotated()) {
-            return;
+            firstRotate= false;
         }
 
-        doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
+        if (firstRotate) doRotate(dispatcher,plotView,rotateType,angle,newZoomLevel);
+
         if (actionScope===ActionScope.GROUP) {
-            operateOnOthersInGroup(store,plotView, (pv) =>
-                 doRotate(dispatcher,pv,rotateType,angle,newZoomLevel));
+            operateOnOthersInGroup(store,plotView, (pv) => {
+                var plot= primePlot(pv);
+                if (rotateType===RotateType.NORTH && isPlotNorth(plot)) return;
+                if (rotateType===RotateType.UNROTATE && !plot.plotState.isRotated()) return;
+                doRotate(dispatcher,pv,rotateType,angle,newZoomLevel);
+            });
         }
     };
 }

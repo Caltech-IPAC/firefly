@@ -14,7 +14,7 @@ import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import PopupPanel from './PopupPanel.jsx';
+import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';

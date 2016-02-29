@@ -21,11 +21,11 @@ export class SimpleCanvas extends React.Component {
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
-    componentDidUpdate() {
-        if (this.canvas) {
-            drawOnCanvas(this.canvas,this.props.drawIt);
-        }
-    }
+    //componentDidUpdate() {
+    //    if (this.canvas) {
+    //        drawOnCanvas(this.canvas,this.props.drawIt);
+    //    }
+    //}
 
     setUpCanvas(c) {
         this.canvas= c;
