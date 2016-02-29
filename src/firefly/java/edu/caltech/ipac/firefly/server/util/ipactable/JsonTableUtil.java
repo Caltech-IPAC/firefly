@@ -148,6 +148,7 @@ public class JsonTableUtil {
         for (DataType dt : tableDef.getCols()) {
             JSONObject c = new JSONObject();
             c.put("name", dt.getKeyName());
+            c.put("width", dt.getFormatInfo().getWidth());
             if (!StringUtils.isEmpty(dt.getTypeDesc())) {
                 c.put("type", dt.getTypeDesc());
             }

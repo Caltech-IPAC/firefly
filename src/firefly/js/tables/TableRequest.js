@@ -18,6 +18,24 @@ export class TableRequest {
     }
 
     /**
+     * Serialize this object into its string representation.
+     * This class uses the url convention as its format.
+     * Parameters are separated by '&'.  Keyword and value are separated
+     * by '='.  If the keyword contains a '/' char, then the left side is
+     * the keyword, and the right side is its description.
+     * @return
+     */
+    toString() {
+        const {id} = TableRequest.keys;
+        var idStr= `${id}=${this[id]}`;
+        var retStr= Object.keys(this).reduce((str,key) => {
+            if (key!==id) str+= `&${key}=${this[key]}`;
+            return str;
+        },idStr);
+        return retStr;
+    }
+
+    /**
      *
      * @param id
      * @param tbl_id

@@ -6,8 +6,8 @@ import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {isEmpty, get, cloneDeep, omitBy, isUndefined} from 'lodash';
 
+import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
-import {Table} from '../Table.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTable} from './BasicTable.jsx';
 import {RemoteTableStore, TableStore} from '../TableStore.js';
@@ -39,12 +39,12 @@ export class TablePanel extends Component {
             showOptions: false,
             showUnits: props.showUnits,
             showFilters: props.showFilters,
-            showMask: false
+            textView: false
         };
     }
 
     componentWillUnmount() {
-        this.props.tableStore && this.props.tableStore.onUnmount();
+        this.tableStore && this.tableStore.onUnmount();
     }
 
     shouldComponentUpdate(nProps, nState) {
@@ -80,7 +80,7 @@ export class TablePanel extends Component {
     };
 
     render() {
-        var {tableModel, columns, showOptions, showUnits, showFilters, showMask} = this.state;
+        var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
         const {selectable} = this.props;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
@@ -91,6 +91,7 @@ export class TablePanel extends Component {
         const showLoading = !TblUtil.isTableLoaded(tableModel);
         const rowFrom = startIdx + 1;
         const rowTo = startIdx+tableRowCount;
+        const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
 
         return (
             <div className='TablePanel__wrapper'>
@@ -122,6 +123,8 @@ export class TablePanel extends Component {
                                        visible={true}
                                        badgeCount={filterCount}
                                        onClick={() => this.onOptionUpdate({showFilters: !showFilters})}/>
+                        <button onClick={() => this.setState({textView: !textView})} className={viewIcoStyle}/>
+                        <button onClick={() => download(TblUtil.getTableSourceUrl(columns, tableModel.request))} className='tablepanel save'/>
                         <button style={{marginLeft: '4px'}} onClick={this.toggleOptions} className='tablepanel options'/>
                     </div>
                 </div>
@@ -137,6 +140,7 @@ export class TablePanel extends Component {
                         selectInfoCls={selectInfoCls}
                         filterInfo={filterInfo}
                         sortInfo={sortInfo}
+                        textView={textView}
                         tableStore={this.tableStore}
                     />
                     {showOptions && <TablePanelOptions
@@ -148,8 +152,6 @@ export class TablePanel extends Component {
                     />
                     }
                 </div>
-
-                {showMask && <div className='loading-mask'/>  }
 
             </div>
         );
@@ -174,19 +176,11 @@ TablePanel.defaultProps = {
     pageSize: 50
 };
 
-
-
 function prepareTableData(tableModel) {
     if (!tableModel.tableData.columns) return {};
     const {selectInfo} = tableModel;
     const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
-    var data = [];
-    if ( Table.newInstance(tableModel).has(startIdx, endIdx) ) {
-        data = tableModel.tableData.data.slice(startIdx, endIdx);
-    } else {
-        Object.assign(tableModel.request, {startIdx, pageSize});
-        //TblCntlr.dispatchFetchTable(tableModel.request, highlightedRow);
-    }
+    var data = tableModel.tableData.data.slice(startIdx, endIdx);
     var tableRowCount = data.length;
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;

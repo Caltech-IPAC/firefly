@@ -2,15 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, set, isEmpty} from 'lodash';
+import {get} from 'lodash';
 
 import * as TblCntlr from './TablesCntlr.js';
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
-import {Table} from './Table.js';
 import {SelectInfo} from './SelectInfo.js';
-
-const SHOW_MASK = 'showMask';
 
 export class TableStore {
     constructor(tableModel, changeListener) {
@@ -21,26 +18,20 @@ export class TableStore {
     setTableModel(tableModel) {
         if (tableModel && tableModel !== this.tableModel) {
             this.tableModel = tableModel;
-            this.changeListener && this.changeListener({tableModel, showMask: false});
+            this.changeListener && this.changeListener({tableModel});
         }
-    }
-
-    onUnmount() {
-
     }
 
     onSort(sortInfoString) {
         const {request} = this.tableModel;
         request.sortInfo = sortInfoString;
         this.handleAction(TblCntlr.TABLE_FETCH, {request});
-        this.handleAction(SHOW_MASK);
     }
 
     onFilter(filterIntoString) {
         const {request} = this.tableModel;
         request.filters = filterIntoString;
         this.handleAction(TblCntlr.TABLE_FETCH, {request});
-        this.handleAction(SHOW_MASK);
     }
 
     onPageSizeChange(nPageSize) {
@@ -109,7 +100,7 @@ export class TableStore {
 
 export class RemoteTableStore extends TableStore {
     constructor(tbl_id, changeListener) {
-        super(TblUtil.findById(tbl_id),changeListener);
+        super(TblUtil.findTblById(tbl_id),changeListener);
         this.removeListener= flux.addListener(() => this.updateFromFlux());
         this.tbl_id = tbl_id;
     }
@@ -119,7 +110,7 @@ export class RemoteTableStore extends TableStore {
     }
 
     updateFromFlux() {
-        var tableModel = TblUtil.findById(this.tbl_id);
+        var tableModel = TblUtil.findTblById(this.tbl_id);
         if ( tableModel !== this.tableModel) {
             this.setTableModel(tableModel);
         }
@@ -127,17 +118,12 @@ export class RemoteTableStore extends TableStore {
 
     handleAction(type, payload) {
         switch (type) {
-            case (TblCntlr.TABLE_SELECT)  :
-            case (TblCntlr.TABLE_HIGHLIGHT)  :
-            case (TblCntlr.TABLE_FETCH)  :
-            case (TblCntlr.TABLE_FETCH_UPDATE)  :
+            case (TblCntlr.TABLE_REMOVE)  :
                 flux.process({type, payload});
                 break;
 
-            case (SHOW_MASK)  :
-                this.changeListener && this.changeListener({showMask: true});
-                break;
             default:
+                flux.process({type, payload});
         }
     }
 

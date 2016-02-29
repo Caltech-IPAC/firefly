@@ -96,7 +96,7 @@ export function reducer(state=getInitState(), action={}) {
             var isTblLoaded;
             if (TableUtil.isFullyLoaded(tblId)) {
                 isTblLoaded = true;
-                action.sideEffect((dispatch) => fetchTblStats(dispatch, TableUtil.findById(tblId).model.request));
+                action.sideEffect((dispatch) => fetchTblStats(dispatch, TableUtil.findTblById(tblId).model.request));
 
             } else {
                 isTblLoaded = false;
