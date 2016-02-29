@@ -31,11 +31,7 @@ function HelpIcon({helpId, size='small'}) {
 
 HelpIcon.propTypes = {
     helpId: PropTypes.string,
-    size(props, propName, componentName) {
-        if (props[propName] && !/^(small|large)$/.test(props[propName])){
-            return new Error(`Invalid size in ${componentName}, should be either small or large.`);
-        }
-    }
+    size:   PropTypes.oneOf(['small', 'large'])
 };
 
 
