@@ -9,13 +9,12 @@ import appDataCntlr, {dispatchUpdateLayout} from '../core/AppDataCntlr.js';
 
 
 
-
 function handleAction (menuItem) {
 
     // set whether search menu should be shown
     dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
 
-    flux.process({type:menuItem.action});
+    flux.process({type: menuItem.action, payload:{}});
 }
 
 /**

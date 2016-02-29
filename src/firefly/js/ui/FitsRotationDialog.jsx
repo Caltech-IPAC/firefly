@@ -18,7 +18,7 @@ import Band from '../visualize/Band.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotChangeTask.js';
 
-
+import HelpIcon from './HelpIcon.jsx';
 
 function getDialogBuilder() {
     var popup = null;
@@ -253,15 +253,34 @@ function FitsRotationDialogForm() {
                         fieldKey='checkAllimage'
                     />
                 </div>
+                <table style={{width:300}}>
+                    <colgroup>
+                        <col style={{width: '20%'}} />
+                        <col style={{width: '60%'}} />
+                        <col style={{width: '20%'}} />
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div style={{'textAlign':'center', marginBottom: 20}}>
+                                    < CompleteButton
+                                        text='OK'  groupKey='FITS_ROTATION_FORM'
+                                        onSuccess={(request) =>resultsSuccess(request,plot.plotId)}
+                                        onFail={resultsFail}
+                                        dialogId='fitsRotationDialog'
 
-                <div style={{'textAlign':'center', marginBottom: 20}}>
-                    < CompleteButton
-                        text='OK'  groupKey='FITS_ROTATION_FORM'
-                        onSuccess={(request) =>resultsSuccess(request,plot.plotId)}
-                        onFail={resultsFail}
-                        dialogId='fitsRotationDialog'
-                    />
-                </div>
+                                    />
+                                </div>
+                            </td>
+                            <td>
+                                <div style={{ textAlign:'center', marginBottom: 20}}>
+                                    <HelpIcon helpid={'visualization.Rotate'} />
+                                </div>
+                            </td>
+                         </tr>
+                    </tbody>
+                </table>
         </FieldGroup>
     );
 
