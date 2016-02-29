@@ -4,9 +4,8 @@ import update from 'react-addons-update';
 import {has, get, set} from 'lodash';
 
 
-import {doFetchTable} from '../tables/TableUtil.js';
-//import * from TableUtil from '../tables/TableUtil.js';
-//import * from TablesCntlr from '../tables/TablesCntlr.js';
+import {doFetchTable, isTableLoaded} from '../tables/TableUtil.js';
+import * as TablesCntlr from '../tables/TablesCntlr.js';
 
 
 export const XYPLOT_DATA_KEY = 'xyplot';
@@ -122,6 +121,17 @@ function stateWithNewData(tblId, state, newProps) {
 
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
+        case (TablesCntlr.TABLE_NEW)  :
+            const {tbl_id, tableMeta, request} = action.payload;
+            if (has(state, tbl_id)) {
+                if (isTableLoaded(action.payload) && !get(state, [tbl_id, 'isTblLoaded'])){
+                    const newState = Object.assign({}, state);
+                    set(newState, request.tbl_id, {isPlotDataReady: false});
+                    action.sideEffect((dispatch) => fetchPlotData(dispatch,request,get(state, [tbl_id, 'xyPlotParams'])));
+                    return newState;
+                }
+            }
+            return state;
         case (LOAD_PLOT_DATA)  :
         {
             const {xyPlotParams, searchRequest} = action.payload;
@@ -169,7 +179,23 @@ export function reducer(state=getInitState(), action={}) {
                     }});
 
         }
+        case (TablesCntlr.TABLE_SELECT) :
+        {
+            const {tbl_id, selectInfo} = action.payload;
+            if (has(state, tbl_id)) {
+                return update(state,
+                    {
+                        [tbl_id]: {
+                            xyPlotParams: {
+                                selection: {$set: undefined}
+                            }
+                        }
+                    });
+            } else {
+                return state;
+            }
 
+        }
         default:
             return state;
     }
