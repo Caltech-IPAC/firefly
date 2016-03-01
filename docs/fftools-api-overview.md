@@ -420,11 +420,12 @@ Parameters object literal can contain the following values
 
 | Parameter | Description |
 | ------------ | ------------- |
-| data | required unless *source* parameter is specified; bin data |
-| source | required unless *data* parameter is specified; location of the table with bin data - url or path on the server. The table should have 3 columns: first col - number of points in the bin, second col - binMin, third col - binMax. Gaps and variable bin size are supported|
+| data | required; bin data - 2 dimensional array, each row has 3 columns: first col - number of points in the bin, second col - binMin, third col - binMax. Gaps and variable bin size are supported.|
 | descr |title of the histogram |
-| binColor | hex color,  |
+| binColor | hex color  |
 | height | height of the histogram, default is 400px |
+| logs | optional; 'x', 'y', or 'xy' - make the specified axes logarithmic|
+| reversed | optional; 'x', 'y', or 'xy' - reverse the specified axes |
 
 
 *example-*
@@ -462,18 +463,11 @@ firefly.showHistogram(
             [12,1.8556025811282,2.0750448947732],
             [0,2.0750448947732,2.2944872084182],
             [4,2.2944872084182,2.312472786789]
-        ] 
-        // or specify the url or path to the source file       
+        ]        
     },'divname'
 );
 ```
 
-Histogram supports all table formats as Table does:
-
- - IPAC Table file format
- - CSV - first row should be column headers
- - TSV - first row should be column headers
- - FITS Tables
 
 
 ###Adding Context Extensions to FITS viewer

@@ -18,7 +18,6 @@ export class ReactJavaInterface {
         var el;
 
         el = (<div><Histogram data={data}
-                             source={parsedParams.source}
                              desc={parsedParams.descr}
                              binColor={parsedParams.binColor}
                              height={height}

@@ -8,7 +8,6 @@
 
 //import {application,NetworkMode} from "../core/Application.js";
 import ServerParams from '../data/ServerParams.js';
-import {RawDataSet} from '../data/table/RawDataSet.js';
 import {doService} from '../core/JsonUtils.js';
 import {BackgroundStatus} from '../core/background/BackgroundStatus.js';
 
@@ -25,18 +24,6 @@ const doJsonP= function() {
 //TODO: convert FileStatus
 //TODO: convert BackgroundStatus
 
-/**
- *
- * @param {ServerRequest} request
- * @return {Promise}
- */
-export const getRawDataSet= function(request) {
-    var paramList = [];
-    paramList.push({name:ServerParams.REQUEST, value: request.toString()});
-
-    return doService(doJsonP(), ServerParams.RAW_DATA_SET, paramList
-    ).then((data) => {return RawDataSet.parse(data); });
-};
 
 /**
  *
@@ -150,18 +137,6 @@ export const getDownloadProgress= function(fileKey) {
     paramList.push({name: ServerParams.FILE, value: fileKey});
     return doService(doJsonP(), ServerParams.DOWNLOAD_PROGRESS, paramList
     ).then((data) => {return DownloadProgress.get(data); });
-};
-
-/**
- *
- * @param {string} filePath
- * @return {Promise}
- */
-export const getEnumValues= function(filePath) {
-    var paramList = [];
-    paramList.push({name: ServerParams.SOURCE, value: filePath});
-    return doService(doJsonP(), ServerParams.GET_ENUM_VALUES, paramList
-    ).then((data) => {return RawDataSet.parse(data); });
 };
 
 
