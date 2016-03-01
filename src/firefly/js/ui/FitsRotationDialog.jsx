@@ -55,32 +55,6 @@ function getInitialPlotState() {
 
     var plotState = plot.plotState;
 
-    if (plotState.isThreeColor()) {
-        var threeColorBandUsed = true;
-
-        var bands = this.plotState.getBands();//array of Band
-
-        if (bands != Band.NO_BAND) {
-            var colors = [];
-            for (var i=0; i<bands.length; i++) {
-                switch (bands[i]){
-                    case Band.RED:
-                        colors[i] = 'Red';
-                        break;
-                    case Band.GREEN:
-                        colors[i] = 'Green';
-                        break;
-                    case Band.BLUE:
-                        colors[i] = 'Blue';
-                        break;
-                    default:
-                }        break;
-
-            }
-
-        }
-    }
-
 
     var isCrop = plotState.hasOperation(Operation.CROP);
     var isRotation = plotState.hasOperation(Operation.ROTATE);
@@ -88,8 +62,8 @@ function getInitialPlotState() {
 
     return {
         plot,
-        colors,
-        hasThreeColorBand: threeColorBandUsed,
+        colors: [],
+        hasThreeColorBand: false,
         hasOperation: cropNotRotate
     };
 
