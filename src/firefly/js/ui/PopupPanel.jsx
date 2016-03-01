@@ -13,7 +13,7 @@ import './PopupPanel.css';
 
 const LayoutType= new Enum(['CENTER', 'TOP_CENTER', 'NONE', 'USER_POSITION']);
 
-var PopupPanel= React.createClass(
+export var PopupPanel= React.createClass(
 {
     browserResizeCallback : null,
     mouseCtx: null,
@@ -178,5 +178,3 @@ var PopupPanel= React.createClass(
     }
 
 });
-
-export default PopupPanel;

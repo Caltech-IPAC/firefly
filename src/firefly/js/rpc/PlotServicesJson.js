@@ -40,14 +40,13 @@ const getColorHistogram= function(state,band,width,height) {
  * @param {WebPlotRequest} blueRequest
  * @return {Promise}
  */
-const getWebPlot3Color= function(redRequest, greenRequest, blueRequest) {
+export const callGetWebPlot3Color= function(redRequest, greenRequest, blueRequest) {
     var paramList = [];
     if (redRequest) paramList.push({name:ServerParams.RED_REQUEST, value:redRequest.toString()});
     if (greenRequest) paramList.push({name:ServerParams.GREEN_REQUEST, value:greenRequest.toString()});
     if (blueRequest) paramList.push({name:ServerParams.BLUE_REQUEST, value:blueRequest.toString()});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
-    return doService(doJsonP(), ServerParams.CREATE_PLOT, paramList)
-        .then((data) => parse(data) );
+    return doService(doJsonP(), ServerParams.CREATE_PLOT, paramList);
 };
 
 /**
@@ -223,5 +222,5 @@ function makeStateParamAry(startAry) {
 
 
 
-export var PlotServicesJson= {getColorHistogram, getWebPlot3Color, getWebPlotGroup, getOneFileGroup};
+export var PlotServicesJson= {getColorHistogram, getWebPlotGroup, getOneFileGroup};
 export default PlotServicesJson;

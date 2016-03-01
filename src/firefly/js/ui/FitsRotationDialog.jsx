@@ -11,7 +11,7 @@ import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import PopupPanel from './PopupPanel.jsx';
+import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';

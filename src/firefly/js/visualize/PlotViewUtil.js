@@ -29,7 +29,7 @@ export function primePlot(ref,plotId) {
     var pv;
     if (!ref) return null;
     if (typeof plotId !== 'string') plotId= '';
-    if (ref.plotViewAry && ref.activePlotId) { // I was passed the visRoot
+    if (ref.plotViewAry) { // I was passed the visRoot
         var id= plotId?plotId:ref.activePlotId;
         pv= getPlotViewById(ref,id);
     }
@@ -51,7 +51,7 @@ export function primePlot(ref,plotId) {
 export function getPlotViewById(ref,plotId) {
     if (!plotId) return null;
     var plotViewAry;
-    if (ref.plotViewAry && ref.activePlotId) {// I was passed the visRoot
+    if (ref.plotViewAry) {// I was passed the visRoot
         plotViewAry= ref.plotViewAry;
     }
     else if (Array.isArray(ref)) { //i was passed a plotViewAry
@@ -122,6 +122,16 @@ export function getActivePlotView(visRoot) {
     return visRoot.plotViewAry.find( (pv) => pv.plotId===visRoot.activePlotId);
 }
 
+/**
+ *
+ * @param plotOrPv plot or plotView object.  if a plot view then it test the primePlot of the plotView
+ * @return {boolean} true if three color false if not or plot is null
+ */
+export function isThreeColor(plotOrPv) {
+    var plot= plotOrPv;
+    if (plotOrPv.plots) plot= primePlot(plotOrPv);
+    return plot ? plot.plotState.isThreeColor() : false;
+}
 
 /**
  * Perform an operation on all the PlotViews in a group except the source, get the plotViewAry and group from the store.
@@ -129,12 +139,14 @@ export function getActivePlotView(visRoot) {
  * @param visRoot - root of the visualization object in store
  * @param sourcePv
  * @param operationFunc
+ * @param ignoreThreeColor
  * @return {Array} new plotView array after the operation
  */
-export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc) {
+export function operateOnOthersInGroup(visRoot,sourcePv,operationFunc, ignoreThreeColor=false) {
     var plotGroup= getPlotGroupById(visRoot,sourcePv.plotGroupId);
     if (hasGroupLock(sourcePv,plotGroup)) {
         visRoot.plotViewAry.forEach( (pv) => {
+            if (ignoreThreeColor && isThreeColor(primePlot(pv))) return;
             if (pv.plotGroupId===sourcePv.plotGroupId && pv.plotId!==sourcePv.plotId)  {
                 operationFunc(pv);
             }

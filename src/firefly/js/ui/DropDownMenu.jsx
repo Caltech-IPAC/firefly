@@ -64,7 +64,7 @@ export class DropDownMenuWrapper extends Component {
         if (!x && !y && !content) return false;
         return (
             <div style={{position:'absolute',left:0,top:0, visibility:'hidden' }}
-                 onClick={() => console.log('drop down clicked')} >
+                 onClick={futureCallback} >
                     <div style={{padding : 5}} className='ff-dropdown-menu'>
                         {content}
                     </div>
@@ -73,6 +73,9 @@ export class DropDownMenuWrapper extends Component {
     }
 }
 
+function futureCallback() {
+   // place holder to support a future callback
+}
 
 DropDownMenuWrapper.propTypes= {
     visible : PropTypes.bool,

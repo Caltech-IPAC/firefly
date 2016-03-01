@@ -10,6 +10,7 @@ import {UserZoomTypes} from './ZoomUtil.js';
 import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
 import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {getPlotGroupById} from './PlotGroup.js';
+import {Band} from './Band.js';
 import {isActivePlotView,
         getPlotViewById,
         expandedPlotViewAry,
@@ -268,55 +269,46 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
 /**
  *
  * @param {string} plotId is required unless defined in the WebPlotRequest
- * @param {WebPlotRequest} wpRequest, plotting parameters, required
+ * @param {WebPlotRequest|Array} wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
  * @param {boolean} removeOldPlot Remove the old plot from the plotview and tell the server to delete the context.
  *                                This parameter is almost always true
  * @param {boolean} addToHistory add this request to global history of plots
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  */
-export function dispatchPlotImage(plotId,wpRequest, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
-    if (plotId) wpRequest.setPlotId(plotId);
-    const payload= initPlotImagePayload(plotId,wpRequest,false, removeOldPlot,addToHistory,useContextModifications);
-    payload.wpRequest= wpRequest;
+export function dispatchPlotImage(plotId,wpRequest, threeColor=false, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
+    var req;
+    if (plotId) {
+        if (Array.isArray(wpRequest)) {
+            wpRequest.forEach( (r) => {if (r) r.setPlotId(plotId);});
+            req= wpRequest.find( (r) => r?true:false);
+        }
+        else {
+            wpRequest.setPlotId(plotId);
+            req= wpRequest;
+        }
+
+    }
+
+    const payload= initPlotImagePayload(plotId,req,threeColor, removeOldPlot,addToHistory,useContextModifications);
+
+    if (threeColor) {
+        if (Array.isArray(wpRequest)) {
+            payload.redReq= wpRequest[Band.RED.value];
+            payload.greenReq= wpRequest[Band.GREEN.value];
+            payload.blueReq= wpRequest[Band.BLUE.value];
+        }
+        else {
+            payload.redReq= wpRequest;
+        }
+    }
+    else {
+        payload.wpRequest= wpRequest;
+    }
+
     flux.process({ type: PLOT_IMAGE, payload});
 }
 
-
-/**
- *
- * @param {string} plotId is required unless defined in the WebPlotRequest
- * @param {WebPlotRequest} redReq, red plotting parameters, 1 of red or green or blue is required
- * @param {WebPlotRequest} greenReq, blue plotting parameters, 1 of red or green or blue is required
- * @param {WebPlotRequest} blueReq, green plotting parameters, 1 of red or green or blue is required
- * @param {boolean} removeOldPlot Remove the old plot from the plotview and tell the server to delete the context.
- *                                This parameter is almost always true
- * @param {boolean} addToHistory add this request to global history of plots
- * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
- *                                 should only be false when it is doing a 'restore to defaults' type plot
- */
-export function dispatch3ColorPlotImage(plotId,redReq,blueReq,greenReq,
-                                 removeOldPlot= true, addToHistory= false,
-                                 useContextModifications= true) {
-
-    if (plotId) {
-        [redReq,blueReq,greenReq].forEach( (r) => {if (r) r.setPlotId(plotId);});
-    }
-
-    const req= redReq ||  blueReq ||  greenReq;
-    const payload= initPlotImagePayload(plotId,req,false, removeOldPlot,addToHistory,useContextModifications);
-    payload.redReq= redReq;
-    payload.greenReq= greenReq;
-    payload.blueReq= blueReq;
-
-    if (payload.plotId) {
-        flux.process({ type: PLOT_IMAGE, payload});
-    }
-    else {
-        var error= Error('plotId is required');
-        flux.process({ type: PLOT_IMAGE_FAIL, payload: {plotId, error} });
-    }
-}
 
 
 /**

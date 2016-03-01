@@ -3,13 +3,13 @@
  */
 
 import React, {PropTypes} from 'react';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
 
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import PopupPanel from '../../ui/PopupPanel.jsx';
 
 import HelpIcon from '../../ui/HelpIcon.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import AppDataCntlr from '../../core/AppDataCntlr.js';
 
 const popupId = 'ImageAreaStatsPopup';
 const helpId = 'visualization.fitsViewer';
