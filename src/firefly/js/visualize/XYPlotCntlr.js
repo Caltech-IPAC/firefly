@@ -1,7 +1,7 @@
 import {flux} from '../Firefly.js';
 
 import update from 'react-addons-update';
-import {has, get, set} from 'lodash';
+import {has} from 'lodash';
 
 
 import {doFetchTable, isTableLoaded} from '../tables/TableUtil.js';
@@ -110,10 +110,10 @@ function getInitState() {
  */
 function stateWithNewData(tblId, state, newProps) {
     if (has(state, tblId)) {
-        const tblData = get(state, tblId);
+        const tblData = state[tblId];
         const newTblData = Object.assign({}, tblData, newProps);
         const newState = Object.assign({}, state);
-        set(newState, tblId, newTblData);
+        newState[tblId] = newTblData;
         return newState;
     }
     return state;
@@ -124,14 +124,14 @@ export function reducer(state=getInitState(), action={}) {
         case (TablesCntlr.TABLE_NEW)  :
             const {tbl_id, tableMeta, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (isTableLoaded(action.payload) && !get(state, [tbl_id, 'isTblLoaded'])){
+                if (isTableLoaded(action.payload) && !state[tbl_id].isTblLoaded){
                     // use xyPlotParams with cleared selection box
-                    const prevXyPlotParams = get(state, [tbl_id, 'xyPlotParams']);
+                    const prevXyPlotParams = state[tbl_id].xyPlotParams;
                     const xyPlotParams = update(prevXyPlotParams, {selection: {$set: undefined}});
                     action.sideEffect((dispatch) => fetchPlotData(dispatch,request,xyPlotParams));
 
                     const newState = Object.assign({}, state);
-                    set(newState, request.tbl_id, {isPlotDataReady: false});
+                    newState[request.tbl_id]= {isPlotDataReady: false};
                     return newState;
                 }
             }
@@ -140,7 +140,7 @@ export function reducer(state=getInitState(), action={}) {
         {
             const {xyPlotParams, searchRequest} = action.payload;
             const newState = Object.assign({}, state);
-            set(newState, searchRequest.tbl_id, {isPlotDataReady: false});
+            newState[searchRequest.tbl_id]= {isPlotDataReady: false};
             return newState;
         }
         case (UPDATE_PLOT_DATA)  :

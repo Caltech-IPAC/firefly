@@ -312,8 +312,10 @@ var ChartsPanel = React.createClass({
                 const {xMin, xMax, yMin, yMax} = selection;
                 const filterInfo = get(this.props, 'tableModel.request.filters');
                 const filterInfoCls = FilterInfo.parse(filterInfo);
-                filterInfoCls.setFilter(xCol, '> '+xMin+'; < '+xMax);
-                filterInfoCls.setFilter(yCol, '> '+yMin+'; < '+yMax);
+                filterInfoCls.setFilter(xCol, '> '+xMin);
+                filterInfoCls.addFilter(xCol, '< '+xMax);
+                filterInfoCls.setFilter(yCol, '> '+yMin);
+                filterInfoCls.addFilter(yCol, '< '+yMax);
                 const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
                 TablesCntlr.dispatchTableFetch(newRequest);
             }
@@ -322,7 +324,7 @@ var ChartsPanel = React.createClass({
 
     clearFilters() {
         const request = get(this.props, 'tableModel.request');
-        if (request.filters) {
+        if (request && request.filters) {
             const newRequest = Object.assign({}, request, {filters: ''});
             TablesCntlr.dispatchTableFetch(newRequest);
         }
