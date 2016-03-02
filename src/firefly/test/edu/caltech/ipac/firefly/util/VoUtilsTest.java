@@ -15,9 +15,8 @@ public class VoUtilsTest {
 	@Test
 	public void testRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "spitzer");
-		Assert.assertEquals(endpoints.size(), 463);
-		for (VOResourceEndpoint voResourceEndpoint : endpoints) {
-			//System.out.println(voResourceEndpoint.getShortName()+":"+voResourceEndpoint.getUrl());
-		}
+		Assert.assertEquals(endpoints.size(), 146);
+		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "iphas");
+		Assert.assertEquals(endpoints.size(), 16);
 	}
 }

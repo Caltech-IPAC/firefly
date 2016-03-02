@@ -31,7 +31,7 @@ public class VoRegistryUtil {
         try {
             return getEndpoints(EURO_REGISTRY, type, keywords);
         } catch (RegistryQueryException e1) {
-            System.out.println("ERROR: EURO registry search failed: will try NVO");
+            System.out.println("ERROR: EURO registry search failed: will try NVO "+e1.getMessage());
             try {
                 return getEndpoints(NVO_REGISTRY, type, keywords);
             } catch (RegistryQueryException e2) {
@@ -62,13 +62,18 @@ public class VoRegistryUtil {
             SoapRequest req;
             if (registry.equals(EURO_REGISTRY)) {
                 // use adqls to search only the title - it gives much better results
-                String adqls = "capability/@xsi:type like '%"+type+"%'";
+                String adqls = "( capability/@standardID = 'ivo://ivoa.net/std/"+type+"' ) ";
 
                 String [] words = keywords.split("\\s+");
-                for (String w : words) {
-                    adqls += " and ((identifier like '%"+w+"%') OR (title like '%"+w+"%'))";
+				for (String w : words) {
+					adqls += " and ( (identifier like '%" + w + "%' OR title like '%" + w + "%') )";
+					/*
+					 * adqls += " and ( (shortName LIKE '%" + w + "%' OR curation/publisher LIKE '%" + w
+							+ "%' OR content/description LIKE '%" + w + "%' OR identifier like '%" + w
+							+ "%' OR title like '%" + w + "%') )";
+					 */
                 }
-                adqls += " and content/contentLevel like '%research%'";
+                adqls += " and ( content/contentLevel like '%research%' )";
                 //Construct the SOAP request
                 req = RegistryRequestFactory.adqlsSearch(adqls);
             } else {
@@ -104,7 +109,7 @@ public class VoRegistryUtil {
             e.printStackTrace();
             throw new RegistryQueryException(e);
         } catch (IOException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             throw new RegistryQueryException(e);
         }
         return endpoints;
@@ -112,7 +117,7 @@ public class VoRegistryUtil {
 
     public static void main(String args[]) {
 
-        String keywords = "heasarc lockman";
+        String keywords = "iphas";
         List<VOResourceEndpoint> endpoints = getEndpoints("ConeSearch", keywords);
         for (VOResourceEndpoint ep : endpoints) {
             System.out.println(ep.getId() + " \"" + ep.getTitle() + "\" "
