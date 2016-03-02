@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import PlotViewUtil, {isDrawLayerVisible}  from '../PlotViewUtil.js';
+import {isDrawLayerVisible, getLayerTitle}  from '../PlotViewUtil.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 import DrawUtil from '../draw/DrawUtil.js';
 import {ColorChangeType} from '../draw/DrawLayer.js';
@@ -79,7 +79,7 @@ function getTitleTag(drawLayer,pv,maxTitleChars) {
     };
 
     return (
-        <div style={tStyle}>{`Show: ${PlotViewUtil.getLayerTitle(pv.plotId,drawLayer)}`}</div>
+        <div style={tStyle}>{`Show: ${getLayerTitle(pv.plotId,drawLayer)}`}</div>
         );
 }
 

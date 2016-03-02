@@ -10,6 +10,7 @@ import PlotViewUtil, {
     primePlot,
     applyToOnePvOrGroup,
     getPlotViewIdxById,
+    findPlotGroup,
     getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
@@ -90,7 +91,7 @@ function changePlotAttribute(state,action) {
     var plot= primePlot(pv);
     if (!plot) return state;
 
-    var plotGroup= PlotViewUtil.findPlotGroup(pv.plotGroupId,plotGroupAry);
+    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
     plotViewAry=  applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
         (pv)=> replaceAtt(pv,{[attKey]:attValue}) );

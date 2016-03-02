@@ -4,25 +4,22 @@
 
 import React from 'react';
 import TargetPanel from '../../ui/TargetPanel.jsx';
-import InputGroup from '../../ui/InputGroup.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import FieldGroup from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
-import ImagePlotCntlr, {visRoot,dispatchPlotImage} from '../ImagePlotCntlr.js';
-import DrawLayerCntlr, {getDlAry, dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
-import PlotViewUtils, {getDrawLayerByType, getActivePlotView} from '../PlotViewUtil.js';
+import {visRoot,dispatchPlotImage} from '../ImagePlotCntlr.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
+import {getDrawLayerByType, getActivePlotView, isDrawLayerAttached} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
-import {makeWorldPt, parseWorldPt} from '../Point.js';
+import {parseWorldPt} from '../Point.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
-import {showDrawingLayerPopup} from './DrawLayerPanel.jsx';
 import {flux} from '../../Firefly.js';
 
 
@@ -182,10 +179,10 @@ var TestImagePanel= React.createClass({
            var distOn= false;
            if (pv) {
                var dlAry= getDlAry();
-               const selectLayer= PlotViewUtils.getDrawLayerByType(dlAry,SelectArea.TYPE_ID);
-               selectOn=  PlotViewUtils.isDrawLayerAttached(selectLayer,pv.plotId);
-               const distLayer= PlotViewUtils.getDrawLayerByType(dlAry,DistanceTool.TYPE_ID);
-               distOn=  PlotViewUtils.isDrawLayerAttached(distLayer,pv.plotId);
+               const selectLayer= getDrawLayerByType(dlAry,SelectArea.TYPE_ID);
+               selectOn=  isDrawLayerAttached(selectLayer,pv.plotId);
+               const distLayer= getDrawLayerByType(dlAry,DistanceTool.TYPE_ID);
+               distOn=  isDrawLayerAttached(distLayer,pv.plotId);
            }
            this.setState({selectOn,distOn});
         });

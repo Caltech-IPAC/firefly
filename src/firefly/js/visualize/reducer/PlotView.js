@@ -16,7 +16,7 @@ import {RotateType} from './../PlotState.js';
 import {makeScreenPt} from './../Point.js';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
-import PlotViewUtil, {getPlotViewById, matchPlotView, primePlot} from './../PlotViewUtil.js';
+import PlotViewUtil, {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotPref from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
@@ -276,7 +276,7 @@ export function replacePrimaryPlot(plotView,primePlot) {
 function updatePlotGroupScrollXY(plotId,plotViewAry, plotGroupAry, newScrollPt) {
     var plotView= updatePlotViewScrollXY(getPlotViewById(plotViewAry, plotId),newScrollPt);
     plotViewAry= replacePlotView(plotViewAry, plotView);
-    var plotGroup= PlotViewUtil.findPlotGroup(plotView.plotGroupId,plotGroupAry);
+    var plotGroup= findPlotGroup(plotView.plotGroupId,plotGroupAry);
     if (plotGroup && plotGroup.lockRelated) {
         plotViewAry= matchPlotView(plotView,plotViewAry,plotGroup,makeScrollPosMatcher(plotView));
     }

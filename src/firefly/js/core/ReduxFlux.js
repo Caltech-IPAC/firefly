@@ -15,7 +15,8 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         plotImageActionCreator, zoomActionCreator,
                         colorChangeActionCreator, stretchChangeActionCreator,
                         rotateActionCreator, flipActionCreator,
-                        cropActionCreator, autoPlayActionCreator } from '../visualize/ImagePlotCntlr.js';
+                        cropActionCreator, autoPlayActionCreator,
+                        changePointSelectionActionCreator  } from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import VisMouseCntlr from '../visualize/VisMouseCntlr.js';
@@ -24,7 +25,7 @@ import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
 import * as TablesUiCntlr from '../tables/TablesUiCntlr';
-import DrawLayer from '../visualize/DrawLayerCntlr.js';
+import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 
@@ -32,6 +33,7 @@ import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLay
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
 import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
+import PointSelection from '../drawingLayers/PointSelection.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -41,7 +43,8 @@ const actionCreators = new Map();
 
 
 
-const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool);
+const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
+                                                     PointSelection );
 
 
 /**
@@ -59,7 +62,7 @@ const reducers = {
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
-    [DrawLayer.DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
+    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
 };
 
 let redux = null;
@@ -77,6 +80,7 @@ actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, stretchChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.ROTATE, rotateActionCreator);
 actionCreators.set(ImagePlotCntlr.FLIP, flipActionCreator);
 actionCreators.set(ImagePlotCntlr.CROP, cropActionCreator);
+actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 

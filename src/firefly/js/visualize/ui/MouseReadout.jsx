@@ -16,6 +16,7 @@ import CoordUtil from '../CoordUtil.js';
 import VisUtil from '../VisUtil.js';
 import {debounce} from 'lodash';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
+import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import numeral from 'numeral';
 import Band from '../Band.js';
 
@@ -291,10 +292,12 @@ function setClickLock( plot,mouseState, request) {
 		var target = request.target;
 		var pixelClickLock =target.checked;
 		if (pixelClickLock) {
+			dispatchChangePointSelection('mouseReadout',true);
 			plot.plotState.getWebPlotRequest().setAllowImageSelection(false);
 			//mouseState.setAllowImageSelection(false);
 
 		} else {
+			dispatchChangePointSelection('mouseReadout',false);
 			plot.plotState.getWebPlotRequest().setAllowImageSelection(true);
 			//mouseState.setAllowImageSelection(true);
 		}
