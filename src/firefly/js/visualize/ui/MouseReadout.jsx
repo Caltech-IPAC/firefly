@@ -118,7 +118,7 @@ export  class MouseReadout extends React.Component {
 	     	);
 		}
         else {
-			//TODO three color
+			return EMPTY; //todo support 3 color
 		}
 
 
