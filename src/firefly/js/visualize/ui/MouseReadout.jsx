@@ -47,16 +47,15 @@ const labelMap = {
 	sPixelSize:'Screen Pixel Size:'
 };
 const column1 = {width: 90, paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
-const column1Fl = {width: 90, paddingRight: 5, textAlign:'right', display: 'inline-block'};
+const column1Fl = {width: 90, paddingRight: 5, textAlign:'right',color: 'DarkGray', display: 'inline-block'};
 const column2 = {width: 94, display: 'inline-block'};
 const column3 = {width: 74,  paddingRight: 5, textAlign:'right',textDecoration: 'underline', color: 'DarkGray', fontStyle:'italic' ,  display: 'inline-block'};
 const column4 = {width: 148,display: 'inline-block'};
-const column5 = {width: 90, paddingLeft:8, display: 'inline-block'};
-const column5_1 = {width: 90, paddingLeft:5, display: 'inline-block'};
+const column5 = {width: 80, paddingLeft:3, display: 'inline-block'};
+const column5_1 = {width: 90, paddingLeft:1, display: 'inline-block'};
 const precision7Digit='0.0000000';
 const precision3Digit='0.000';
 const precision1Digit='0.0';
-
 
 export  class MouseReadout extends React.Component {
 
@@ -65,26 +64,54 @@ export  class MouseReadout extends React.Component {
 		super(props);
 		this.state=({point:this.props.mouseState.imagePt, flux:EMPTY_READOUT});
 		this.showFlux=this.showFlux.bind(this);
+
+		this.getFlux = debounce((mouseState, plot, iPt) => {
+			callGetFileFlux(plot.plotState, iPt)
+
+				.then((result) => {
+					var currentPt = mouseState.imagePt;
+					if (result.hasOwnProperty('NO_BAND')) {
+						var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
+
+						if (currentPt  === this.state.point) {
+
+							this.setState({point:currentPt, flux:fluxStr});
+						}
+					}
+					else {
+					 this.setState({point:currentPt, flux:EMPTY_READOUT});//TODO three color band
+					 }
+				})
+				.catch((e) => {
+					console.log(`flux error: ${plot.plotId}`, e);
+				});
+		}, 200);
+
+
 	}
 
 
 	componentWillReceiveProps() {
-		this.setState({point:this.props.mouseState.imagePt, flux:EMPTY_READOUT});
-		this.showFlux(this.props.plotView, this.props.mouseState);
+		if(this.props.mouseState.imagePt) {
+			this.setState({point:this.props.mouseState.imagePt, flux:EMPTY_READOUT});
+			this.showFlux(this.props.plotView, this.props.mouseState);
+		}
+
 	}
 
 	render() {
 
 
 		const {visRoot, plotView, mouseState}= this.props;
-		if (!plotView || !mouseState) return EMPTY;
+		//if (visRoot.plotViewAry.length===0) return EMPTY;
+		if (!plotView ) return EMPTY;
 
 		var plot= primePlot(plotView);
 		if (!plot) return EMPTY;
 		if (isBlankImage(plot)) return EMPTY;
 
 		var spt= mouseState.screenPt;
-		if (!spt) return EMPTY;
+		//if (!spt) return EMPTY;
 
 
 		var {width:screenW, height:screenH }= plot.screenSize;
@@ -94,13 +121,13 @@ export  class MouseReadout extends React.Component {
 		     fluxLabel = showFluxLabel(plot, bands[0]);
 		 }
 		 else {
-		 //TODO three bands
+			return EMPTY_READOUT;//TODO three bands
 		 }
 		var flux;
 
 		var title = plotView.plots[0].title;
 
-		if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH) {
+		if (spt && (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH) ) {
 			fluxLabel=EMPTY_READOUT;
 		}
 		else {
@@ -118,43 +145,20 @@ export  class MouseReadout extends React.Component {
 	     	);
 		}
         else {
-			return EMPTY; //todo support 3 color
+			return EMPTY_READOUT; //todo support 3 color
 		}
 
 
 	}
 
+
 	showFlux(plotView, mouseState) {
 
 		var plot = primePlot(plotView);
-
 		if (!plot) return;
 
-
-		const getFlux = debounce((plot, iPt) => {
-			callGetFileFlux(plot.plotState, iPt)
-
-				.then((result) => {
-
-					if (result.hasOwnProperty('NO_BAND')) {
-						var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
-						var currentPt = mouseState.imagePt;
-						if (currentPt  === this.state.point) {
-
-							this.setState({point:currentPt, flux:fluxStr});
-				    	}
-					}
-					else {
-						//TODO three color band
-					}
-				})
-				.catch((e) => {
-					console.log(`flux error: ${plot.plotId}`, e);
-				});
-		}, 200);
-
 		var iPt=mouseState.imagePt;
-		getFlux(plot, iPt);
+		this.getFlux(mouseState, plot, iPt);
 
 	}
 
@@ -386,3 +390,24 @@ function showDialog(fieldKey, radioValue) {
 
 }
 
+const getFlux = debounce(( mouseState, plot, iPt) => {
+	callGetFileFlux(plot.plotState, iPt)
+
+		.then((result) => {
+
+			if (result.hasOwnProperty('NO_BAND')) {
+				var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
+				var currentPt = mouseState.imagePt;
+				if (currentPt  === this.state.point) {
+
+					this.setState({point:currentPt, flux:fluxStr});
+				}
+			}
+			else {
+				return EMPTY_READOUT;//TODO three color band
+			}
+		})
+		.catch((e) => {
+			console.log(`flux error: ${plot.plotId}`, e);
+		});
+}, 200);
