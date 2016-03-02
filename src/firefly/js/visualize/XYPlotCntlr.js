@@ -125,9 +125,13 @@ export function reducer(state=getInitState(), action={}) {
             const {tbl_id, tableMeta, request} = action.payload;
             if (has(state, tbl_id)) {
                 if (isTableLoaded(action.payload) && !get(state, [tbl_id, 'isTblLoaded'])){
+                    // use xyPlotParams with cleared selection box
+                    const prevXyPlotParams = get(state, [tbl_id, 'xyPlotParams']);
+                    const xyPlotParams = update(prevXyPlotParams, {selection: {$set: undefined}});
+                    action.sideEffect((dispatch) => fetchPlotData(dispatch,request,xyPlotParams));
+
                     const newState = Object.assign({}, state);
                     set(newState, request.tbl_id, {isPlotDataReady: false});
-                    action.sideEffect((dispatch) => fetchPlotData(dispatch,request,get(state, [tbl_id, 'xyPlotParams'])));
                     return newState;
                 }
             }

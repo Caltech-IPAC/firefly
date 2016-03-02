@@ -37,6 +37,7 @@ const plotParamsShape = PropTypes.shape({
 const unselectedColor = 'rgba(63, 127, 191, 0.5)';
 const selectedColor = 'rgba(21, 138, 15, 0.5)';
 const highlightedColor = 'rgba(250, 243, 40, 1)';
+const selectionRectColor = 'rgba(165, 165, 165, 0.25)';
 
 var XYPlot = React.createClass(
     {
@@ -98,12 +99,11 @@ var XYPlot = React.createClass(
                 const width = Math.abs(xMaxPx-xMinPx);
                 const height = Math.abs(yMaxPx-yMinPx);
                 chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
-                    .css({
+                    .attr({
+                        fill: selectionRectColor,
                         stroke: '#8c8c8c',
-                        strokeWidth: 0.5,
-                        fill: '#a5a5a5',
-                        fillOpacity: .3,
-                        zIndex: 3
+                        'stroke-width': 0.5,
+                        zIndex: 7 // same as Highcharts' selectionMrker rectangle
                     })
                     .add();
             }
@@ -178,7 +178,7 @@ var XYPlot = React.createClass(
                 return numdata;
             }, {selected: [], unselected: []});
 
-            let highlightedData = [];
+            const highlightedData = [];
             if (!isUndefined( highlightedRow)) {
                 const hrow = data[highlightedRow].map(toNumber);
                 highlightedData.push({x:hrow[0],y:hrow[1],rowIdx:highlightedRow});
@@ -224,7 +224,8 @@ var XYPlot = React.createClass(
                         theme: {
                              display: 'none'
                          }
-                    }
+                    },
+                    selectionMarkerFill: selectionRectColor
                 },
                 exporting: {
                     enabled: true

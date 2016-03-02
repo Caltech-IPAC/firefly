@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
+import {FilterInfo} from '../tables/FilterInfo.js';
 
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
@@ -27,6 +28,7 @@ import ZOOM_ORIGINAL from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
 import SELECT_ROWS from 'html/images/icons-2014/24x24_Checkmark.png';
 import UNSELECT_ROWS from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import FILTER_IN from 'html/images/icons-2014/24x24_FilterAdd.png';
+import CLEAR_FILTERS from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import LOADING from 'html/images/gxt/loading.gif';
 
 
@@ -91,15 +93,15 @@ var ChartsPanel = React.createClass({
     // -------------
 
     renderXYPlotOptions() {
-        const { searchRequest, isColStatsReady, colStats } = this.props.tblStatsData;
+        const { tblId, tableModel, tblStatsData} = this.props;
 
-        if (isColStatsReady) {
-            const formName = 'XYPlotOptionsForm_'+this.props.tblId;
+        if (tblStatsData.isColStatsReady) {
+            const formName = 'XYPlotOptionsForm_'+tblId;
             return (
                 <XYPlotOptions groupKey = {formName}
-                                  colValStats={colStats}
+                                  colValStats={tblStatsData.colStats}
                                   onOptionsSelected={(xyPlotParams) => {
-                                            XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, searchRequest);
+                                            XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
                                         }
                                       }/>
             );
@@ -138,7 +140,7 @@ var ChartsPanel = React.createClass({
                            }
                         selectInfo={sInfo}
                         onSelection={(selection) => {
-                            defer(XYPlotCntlr.dispatchSetSelection, tblId, selection);
+                            if (this.selectionNotEmpty(selection)) {defer(XYPlotCntlr.dispatchSetSelection, tblId, selection);}
                         }}
                 />
             );
@@ -294,7 +296,52 @@ var ChartsPanel = React.createClass({
         }
     },
 
+    displayClearFilters() {
+        const filterInfo = get(this.props, 'tableModel.request.filters');
+        const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+        return (filterCount > 0);
+    },
+
     addFilter() {
+        if (this.state.chartType === SCATTER) {
+            const {tblPlotData, tableModel} = this.props;
+            const selection = get(tblPlotData, 'xyPlotParams.selection');
+            const xCol = get(tblPlotData, 'xyPlotParams.x.columnOrExpr');
+            const yCol = get(tblPlotData, 'xyPlotParams.y.columnOrExpr');
+            if (selection && xCol && yCol) {
+                const {xMin, xMax, yMin, yMax} = selection;
+                const filterInfo = get(this.props, 'tableModel.request.filters');
+                const filterInfoCls = FilterInfo.parse(filterInfo);
+                filterInfoCls.setFilter(xCol, '> '+xMin+'; < '+xMax);
+                filterInfoCls.setFilter(yCol, '> '+yMin+'; < '+yMax);
+                const newRequest = Object.assign({}, tableModel.request, {filters: filterInfoCls.serialize()});
+                TablesCntlr.dispatchTableFetch(newRequest);
+            }
+        }
+    },
+
+    clearFilters() {
+        const request = get(this.props, 'tableModel.request');
+        if (request.filters) {
+            const newRequest = Object.assign({}, request, {filters: ''});
+            TablesCntlr.dispatchTableFetch(newRequest);
+        }
+    },
+
+    selectionNotEmpty(selection) {
+        const xyPlotData = get(this.props, 'tblPlotData.xyPlotData');
+        if (xyPlotData && selection) {
+            const {xMin, xMax, yMin, yMax} = selection;
+            const xIdx = 0, yIdx = 1;
+            const aPt = xyPlotData.find((arow) => {
+                const x = Number(arow[xIdx]);
+                const y = Number(arow[yIdx]);
+                return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
+            });
+            return Boolean(aPt);
+        } else {
+            return false;
+        }
 
     },
 
@@ -332,6 +379,11 @@ var ChartsPanel = React.createClass({
                          title='Unselect all selected points'
                          src={UNSELECT_ROWS}
                          onClick={() => this.resetSelection()}
+                    />}
+                    {this.displayClearFilters() && <img style={selectionBtnStyle}
+                        title='Remove all filters'
+                        src={CLEAR_FILTERS}
+                        onClick={() => this.clearFilters()}
                     />}
                 </div>
             );

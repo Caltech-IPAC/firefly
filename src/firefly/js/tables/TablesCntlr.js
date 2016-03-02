@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import update from 'react-addons-update';
-import {pickBy} from 'lodash';
+import {omitBy, isUndefined} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -111,7 +111,7 @@ export function dispatchTableFetch(request, hlRowIdx) {
  * @param request
  */
 export function dispatchTableHighlight(tbl_id, highlightedRow, request) {
-    flux.process( {type: TABLE_HIGHLIGHT, payload: pickBy({tbl_id, highlightedRow, request}) });
+    flux.process( {type: TABLE_HIGHLIGHT, payload: omitBy({tbl_id, highlightedRow, request}, isUndefined) });
 }
 
 /**
