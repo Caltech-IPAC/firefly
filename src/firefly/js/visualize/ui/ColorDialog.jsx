@@ -12,7 +12,7 @@ import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA} from '../RangeValues.js';
 import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../RangeValues.js';
 import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import PopupPanel from '../../ui/PopupPanel.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 

@@ -7,7 +7,7 @@ import React from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import PopupPanel from '../../ui/PopupPanel.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';

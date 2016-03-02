@@ -52,9 +52,6 @@ export function ThumbnailView({plotView:pv}) {
 
 }
 
-//<SimpleCanvas width={width} height={height}
-//              drawIt={ (c) => drawOnCanvas(c,ary,width,height)}/>
-
 
 ThumbnailView.propTypes= {
     plotView: React.PropTypes.object

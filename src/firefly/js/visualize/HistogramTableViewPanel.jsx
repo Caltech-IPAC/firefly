@@ -3,7 +3,7 @@ import React from 'react';
 import {throttle} from 'lodash';
 import Resizable from 'react-component-resizable';
 
-import HistogramCntlr from '../visualize/HistogramCntlr.js';
+import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import HistogramOptions from './HistogramOptions.jsx';
 import Histogram from './Histogram.jsx';
 

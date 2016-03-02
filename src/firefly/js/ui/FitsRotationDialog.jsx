@@ -11,14 +11,14 @@ import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import PopupPanel from './PopupPanel.jsx';
+import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotChangeTask.js';
 
-
+import HelpIcon from './HelpIcon.jsx';
 
 function getDialogBuilder() {
     var popup = null;
@@ -55,32 +55,6 @@ function getInitialPlotState() {
 
     var plotState = plot.plotState;
 
-    if (plotState.isThreeColor()) {
-        var threeColorBandUsed = true;
-
-        var bands = this.plotState.getBands();//array of Band
-
-        if (bands != Band.NO_BAND) {
-            var colors = [];
-            for (var i=0; i<bands.length; i++) {
-                switch (bands[i]){
-                    case Band.RED:
-                        colors[i] = 'Red';
-                        break;
-                    case Band.GREEN:
-                        colors[i] = 'Green';
-                        break;
-                    case Band.BLUE:
-                        colors[i] = 'Blue';
-                        break;
-                    default:
-                }        break;
-
-            }
-
-        }
-    }
-
 
     var isCrop = plotState.hasOperation(Operation.CROP);
     var isRotation = plotState.hasOperation(Operation.ROTATE);
@@ -88,8 +62,8 @@ function getInitialPlotState() {
 
     return {
         plot,
-        colors,
-        hasThreeColorBand: threeColorBandUsed,
+        colors: [],
+        hasThreeColorBand: false,
         hasOperation: cropNotRotate
     };
 
@@ -253,15 +227,34 @@ function FitsRotationDialogForm() {
                         fieldKey='checkAllimage'
                     />
                 </div>
+                <table style={{width:300}}>
+                    <colgroup>
+                        <col style={{width: '20%'}} />
+                        <col style={{width: '60%'}} />
+                        <col style={{width: '20%'}} />
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div style={{'textAlign':'center', marginBottom: 20}}>
+                                    < CompleteButton
+                                        text='OK'  groupKey='FITS_ROTATION_FORM'
+                                        onSuccess={(request) =>resultsSuccess(request,plot.plotId)}
+                                        onFail={resultsFail}
+                                        dialogId='fitsRotationDialog'
 
-                <div style={{'textAlign':'center', marginBottom: 20}}>
-                    < CompleteButton
-                        text='OK'  groupKey='FITS_ROTATION_FORM'
-                        onSuccess={(request) =>resultsSuccess(request,plot.plotId)}
-                        onFail={resultsFail}
-                        dialogId='fitsRotationDialog'
-                    />
-                </div>
+                                    />
+                                </div>
+                            </td>
+                            <td>
+                                <div style={{ textAlign:'center', marginBottom: 20}}>
+                                    <HelpIcon helpid={'visualization.Rotate'} />
+                                </div>
+                            </td>
+                         </tr>
+                    </tbody>
+                </table>
         </FieldGroup>
     );
 

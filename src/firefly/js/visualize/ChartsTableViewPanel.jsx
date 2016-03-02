@@ -8,6 +8,8 @@ import { connect } from 'react-redux';
 
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
+import {SelectInfo} from '../tables/SelectInfo.js';
+
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
@@ -32,6 +34,7 @@ const SCATTER = 'scatter';
 const HISTOGRAM = 'histogram';
 const OPTIONS_WIDTH = 350;
 
+const selectionBtnStyle = {verticalAlign: 'top', paddingLeft: 20};
 
 var ChartsPanel = React.createClass({
 
@@ -61,7 +64,9 @@ var ChartsPanel = React.createClass({
             if (nextState.chartType === SCATTER) {
                 // scatter plot
                 doUpdate = nextProps.tblPlotData !== this.props.tblPlotData ||
-                    (nextProps.tableModel && nextProps.tableModel.highlightedRow !== this.props.tableModel.highlightedRow);
+                    (nextProps.tableModel &&
+                    (nextProps.tableModel.highlightedRow !== this.props.tableModel.highlightedRow ||
+                     nextProps.tableModel.selectInfo !== this.props.tableModel.selectInfo));
             } else {
                 // histogram
                 doUpdate = nextProps.tblHistogramData !== this.props.tblHistogramData;
@@ -115,7 +120,8 @@ var ChartsPanel = React.createClass({
         const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
         var {widthPx, heightPx, optionsShown} = this.state;
 
-        const hRow = tableModel ? tableModel.highlightedRow : undefined;
+        const hRow = tableModel && tableModel.highlightedRow;
+        const sInfo = tableModel && tableModel.selectInfo;
         const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
 
         if (isPlotDataReady) {
@@ -130,6 +136,7 @@ var ChartsPanel = React.createClass({
                                     TablesCntlr.dispatchTableHighlight(tblId, highlightedRow);
                                 }
                            }
+                        selectInfo={sInfo}
                         onSelection={(selection) => {
                             defer(XYPlotCntlr.dispatchSetSelection, tblId, selection);
                         }}
@@ -218,7 +225,7 @@ var ChartsPanel = React.createClass({
 
     displaySelectionOptions() {
         if (this.state.chartType === SCATTER) {
-            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection', null);
+            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
             return Boolean(selection);
         }
         // for now selection is supported for scatter only
@@ -246,8 +253,45 @@ var ChartsPanel = React.createClass({
         }
     },
 
-    addSelection() {
+    displayUnselectAll  () {
+        if (this.state.chartType === SCATTER) {
+            const selectInfo = get(this.props, 'tableModel.selectInfo');
+            return selectInfo && (selectInfo.selectAll || selectInfo.exceptions.size>0);
+        }
+    },
 
+    addSelection() {
+        if (this.state.chartType === SCATTER) {
+            const {tblId, tableModel} = this.props;
+            const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
+            const xyPlotData = get(this.props, 'tblPlotData.xyPlotData');
+            if (tableModel && xyPlotData && selection) {
+                // todo - support situations when rowId column is present or data are decimated
+                const {xMin, xMax, yMin, yMax} = selection;
+                const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
+                // add all rows which fall into selection
+                const xIdx = 0, yIdx = 1;
+                xyPlotData.forEach((arow, index) => {
+                    const x = Number(arow[xIdx]);
+                    const y = Number(arow[yIdx]);
+                    if (x>=xMin && x<=xMax && y>=yMin && y<=yMax) {
+                        selectInfoCls.setRowSelect(index, true);
+                    }
+                });
+                const selectInfo = selectInfoCls.data;
+                TablesCntlr.dispatchTableSelect(tblId, selectInfo);
+            }
+        }
+    },
+
+    resetSelection() {
+        if (this.state.chartType === SCATTER) {
+            const {tblId, tableModel} = this.props;
+            if (tableModel) {
+                const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
+                TablesCntlr.dispatchTableSelect(tblId, selectInfoCls.data);
+            }
+        }
     },
 
     addFilter() {
@@ -256,39 +300,41 @@ var ChartsPanel = React.createClass({
 
     renderSelectionButtons() {
         // todo: handling unselect
-        const btnStyle = {verticalAlign: 'top', paddingLeft: 20};
         if (this.displaySelectionOptions()) {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
-                    <img style={btnStyle}
+                    <img style={selectionBtnStyle}
                          title='Zoom in the enclosed points'
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    <img style={btnStyle}
+                    <img style={selectionBtnStyle}
                          title='Select enclosed points - ToDo'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}
                     />
-                    <img style={btnStyle}
+                    <img style={selectionBtnStyle}
                          title='Filter in the selected points - ToDo'
                          src={FILTER_IN}
                          onClick={() => this.addFilter()}
                     />
                 </div>
             );
-        } else if (this.displayZoomOriginal()) {
+        } else {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
-                    <img style={btnStyle}
+                    {this.displayZoomOriginal() && <img style={selectionBtnStyle}
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
                          onClick={() => this.resetZoom()}
-                    />
+                    />}
+                    {this.displayUnselectAll() && <img style={selectionBtnStyle}
+                         title='Unselect all selected points'
+                         src={UNSELECT_ROWS}
+                         onClick={() => this.resetSelection()}
+                    />}
                 </div>
             );
-        } else {
-            return null;
         }
     },
 
@@ -349,7 +395,7 @@ var ChartsPanel = React.createClass({
                 </div>
             );
         } else {
-            return null;
+            return undefined;
         }
     },
 
@@ -389,7 +435,7 @@ var ChartsPanel = React.createClass({
 
 const connector = function(state, ownProps) {
     return {
-        tableModel: TblUtil.findById(ownProps.tblId),
+        tableModel: TblUtil.findTblById(ownProps.tblId),
         tblStatsData: state[TableStatsCntlr.TBLSTATS_DATA_KEY][ownProps.tblId],
         tblHistogramData: state[HistogramCntlr.HISTOGRAM_DATA_KEY][ownProps.tblId],
         tblPlotData: state[XYPlotCntlr.XYPLOT_DATA_KEY][ownProps.tblId]

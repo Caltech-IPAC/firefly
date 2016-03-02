@@ -3,14 +3,16 @@
  */
 
 import React, {PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import FixedDataTable from 'fixed-data-table';
 import Resizable from 'react-component-resizable';
-import {debounce, get, isEmpty} from 'lodash';
+import {debounce, get, isEmpty, pick} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, SORT_DESC, UNSORTED, SortInfo} from '../SortInfo';
+import {tableToText} from '../TableUtil.js';
 
 import './TablePanel.css';
 import ASC_ICO from 'html/images/sort_asc.gif';
@@ -22,9 +24,10 @@ export class BasicTable extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-                widthPx: 0,
-                heightPx: 0,
-                columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
+            showMask: false,
+            widthPx: 0,
+            heightPx: 0,
+            columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
         this.onResize = this.onResize.bind(this);
@@ -56,33 +59,62 @@ export class BasicTable extends React.Component {
         if (isEmpty(this.state.columnWidths) && !isEmpty(nProps.columns)) {
             this.setState({columnWidths: makeColWidth(nProps.columns, nProps.data, nProps.showUnits)});
         }
+        this.setState({showMask: false});
+    }
+
+    shouldComponentUpdate(nProps, nState) {
+        return sCompare(this, nProps, nState);
     }
 
     render() {
-        const {columns, data, hlRowIdx, selectable, showUnits, showFilters, selectInfoCls, filterInfo, sortInfo, tableStore, width, height} = this.props;
-        const {widthPx, heightPx, columnWidths} = this.state;
+        const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo,
+                    sortInfo, tableStore, width, height, textView} = this.props;
+        const {widthPx, heightPx, columnWidths, showMask} = this.state;
+
         if (isEmpty(columns)) return false;
 
         var style = {width, height};
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
 
+        const showMaskNow = () => this.setState({showMask: true});
+        const onSelect = (checked, rowIndex) => tableStore.onRowSelect && tableStore.onRowSelect(checked, rowIndex);
+        const onSelectAll = (checked) => tableStore.onSelectAll && tableStore.onSelectAll(checked);
+        const onSort = (cname) => {
+                    showMaskNow();
+                    tableStore.onSort && tableStore.onSort(sortInfoCls.toggle(cname).serialize());
+                };
+
+        const onFilter = ({fieldKey, valid, value}) => {
+                    if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
+                        filterInfoCls.setFilter(fieldKey, value);
+                        showMaskNow();
+                        tableStore.onFilter && tableStore.onFilter(filterInfoCls.serialize());
+                    }
+                };
+
+        const colProps = pick(this.props, ['columns', 'data', 'selectable', 'selectInfoCls', 'tableStore']);
+        Object.assign(colProps, {columnWidths, filterInfoCls, sortInfoCls, showUnits, showFilters}, {onSort, onFilter, onSelect, onSelectAll});
+
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
             <Resizable id='table-resizer' style={style} onResize={this.onResize()}>
-                <Table
-                    rowHeight={20}
-                    headerHeight={headerHeight}
-                    rowsCount={data.length}
-                    isColumnResizing={false}
-                    onColumnResizeEndCallback={this.onColumnResizeEndCallback}
-                    onRowClick={(e, index) => tableStore.onRowHighlight && tableStore.onRowHighlight(index)}
-                    rowClassNameGetter={this.rowClassName}
-                    scrollToRow={hlRowIdx}
-                    width={widthPx}
-                    height={heightPx}>
-                    {makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfoCls, filterInfoCls, sortInfoCls, tableStore)}
-                </Table>
+                { textView ? <TextView { ...{columns, data, showUnits} }/> :
+                    <Table
+                        rowHeight={20}
+                        headerHeight={headerHeight}
+                        rowsCount={data.length}
+                        isColumnResizing={false}
+                        onColumnResizeEndCallback={this.onColumnResizeEndCallback}
+                        onRowClick={(e, index) => tableStore.onRowHighlight && tableStore.onRowHighlight(index)}
+                        rowClassNameGetter={this.rowClassName}
+                        scrollToRow={hlRowIdx}
+                        width={widthPx}
+                        height={heightPx}>
+                        { makeColumns(colProps) }
+                    </Table>
+                }
+                {showMask && <div style={{top: 0}} className='loading-mask'/>}
                 {isEmpty(data) && <div className='tablePanel_NoData'> No Data Found </div>}
             </Resizable>
         );
@@ -99,6 +131,7 @@ BasicTable.propTypes = {
     selectable: PropTypes.bool,
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
+    textView: PropTypes.bool,
     width: PropTypes.string,
     height: PropTypes.string,
     tableStore: PropTypes.shape({
@@ -118,7 +151,10 @@ BasicTable.defaultProps = {
     height: '100%'
 };
 
-
+const TextView = ({columns, data, showUnits}) => {
+    const text = tableToText(columns, data, showUnits);
+    return <div style={{height:'100%',overflow: 'auto'}}><pre>{text}</pre></div>;
+};
 
 const SortSymbol = ({sortDir}) => {
     return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
@@ -132,25 +168,14 @@ const TextCell = ({rowIndex, data, col}) => {
     );
 };
 
-const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, tableStore}) => {
+const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}) => {
 
     const cname = col.name;
     const sortDir = sortInfoCls.getDirection(cname);
 
-    const onfilterChange = ({fieldKey, valid, value}) => {
-        if (valid && !filterInfoCls.isEqual(fieldKey, value)) {
-            filterInfoCls.setFilter(fieldKey, value);
-            tableStore.onFilter && tableStore.onFilter(filterInfoCls.serialize());
-        }
-    };
-
-    const onSortChange = () => {
-        tableStore.onSort && tableStore.onSort(sortInfoCls.toggle(cname).serialize());
-    };
-
     return (
         <div title={col.title || cname} className='TablePanel__header'>
-            <div style={{width: '100%', cursor: 'pointer'}} onClick={onSortChange} >{cname}
+            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(cname)} >{cname}
                 { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
             </div>
             {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
@@ -159,7 +184,7 @@ const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, ta
                 fieldKey={cname}
                 tooltip = {FILTER_TTIPS}
                 value = {filterInfoCls.getFilter(cname)}
-                onChange = {onfilterChange}
+                onChange = {(v) => onFilter(v)}
                 actOn={['blur','enter']}
                 showWarning={false}
                 width={'100%'}
@@ -182,7 +207,8 @@ function makeColWidth(columns, data, showUnits) {
     }, {});
 }
 
-function makeColumns(columns, columnWidths, data, selectable, showUnits, showFilters, selectInfoCls, filterInfoCls, sortInfoCls, tableStore) {
+function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters,
+            selectInfoCls, filterInfoCls, sortInfoCls, onSelect, onSelectAll, onSort, onFilter}) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
@@ -191,7 +217,7 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
             <Column
                 key={col.name}
                 columnKey={col.name}
-                header={<HeaderCell {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, tableStore}} />}
+                header={<HeaderCell {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}} />}
                 cell={<TextCell data={data} col={idx} />}
                 fixed={false}
                 width={columnWidths[col.name]}
@@ -202,16 +228,15 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
     });
     if (selectable) {
         const headerCB = () => {
-            const onSelectAll = (e) => tableStore.onSelectAll && tableStore.onSelectAll(e.target.checked);
             return (
                 <div className='tablePanel__checkbox'>
-                    <input type='checkbox' checked={selectInfoCls.isSelectAll()} onChange ={onSelectAll}/>
+                    <input type='checkbox' checked={selectInfoCls.isSelectAll()} onChange ={(e) => onSelectAll(e.target.checked)}/>
                 </div>
             );
         };
 
         const cellCB = ({rowIndex}) => {
-            const onRowSelect = (e) => tableStore.onRowSelect && tableStore.onRowSelect(e.target.checked, rowIndex);
+            const onRowSelect = (e) => onSelect(e.target.checked, rowIndex);
             return (
                 <div className='tablePanel__checkbox' style={{backgroundColor: 'whitesmoke'}}>
                     <input type='checkbox' checked={selectInfoCls.isSelected(rowIndex)} onChange={onRowSelect}/>
@@ -231,5 +256,5 @@ function makeColumns(columns, columnWidths, data, selectable, showUnits, showFil
         colsEl.splice(0, 0, cbox);
     }
     return colsEl;
-}
+};
 

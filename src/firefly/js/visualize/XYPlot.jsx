@@ -4,6 +4,8 @@
 import {isUndefined} from 'lodash';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
+
+import {SelectInfo} from '../tables/SelectInfo.js';
 //import {getFormatString} from '../util/MathUtil.js';
 
 const axisParamsShape = PropTypes.shape({
@@ -32,6 +34,10 @@ const plotParamsShape = PropTypes.shape({
     y : axisParamsShape
 });
 
+const unselectedColor = 'rgba(63, 127, 191, 0.5)';
+const selectedColor = 'rgba(21, 138, 15, 0.5)';
+const highlightedColor = 'rgba(250, 243, 40, 1)';
+
 var XYPlot = React.createClass(
     {
         displayName: 'XYPlot',
@@ -42,6 +48,11 @@ var XYPlot = React.createClass(
             height: PropTypes.number,
             params: plotParamsShape,
             highlightedRow: PropTypes.number,
+            selectInfo: PropTypes.shape({
+                selectAll: PropTypes.bool,
+                exceptions: PropTypes.instanceOf(Set),
+                rowCount: PropTypes.number
+            }),
             onHighlightChange: PropTypes.func,
             onSelection: PropTypes.func,
             desc: PropTypes.string
@@ -64,20 +75,12 @@ var XYPlot = React.createClass(
         },
 
         componentDidUpdate(pProps, pState, pContext) {
-            const chart = this.refs.chart.getChart();
-            const prevHighlighted = pProps.highlightedRow;
-            if (prevHighlighted) {
-                chart.series[0].data[prevHighlighted].select(false,false);
-            }
             this.adjustPlotDisplay();
         },
 
         adjustPlotDisplay() {
             const chart = this.refs.chart.getChart();
-            const {highlightedRow, params} = this.props;
-            if (!isUndefined(highlightedRow)) {
-                chart.series[0].data[highlightedRow].select(true,false);
-            }
+            const {params} = this.props;
 
             if (params.zoom) {
                 const {xMin, xMax, yMin, yMax} = params.zoom;
@@ -94,7 +97,7 @@ var XYPlot = React.createClass(
                 const yMaxPx = chart.yAxis[0].toPixels(yMax);
                 const width = Math.abs(xMaxPx-xMinPx);
                 const height = Math.abs(yMaxPx-yMinPx);
-                chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 3)
+                chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
                     .css({
                         stroke: '#8c8c8c',
                         strokeWidth: 0.5,
@@ -115,7 +118,7 @@ var XYPlot = React.createClass(
 
         render() {
 
-            const {data, params, width, height, highlightedRow, onHighlightChange, onSelection, desc} = this.props;
+            const {data, params, width, height, selectInfo, highlightedRow, onHighlightChange, onSelection, desc} = this.props;
             const onSelectionEvent = this.onSelectionEvent;
 
             const widthPx = width;
@@ -154,10 +157,45 @@ var XYPlot = React.createClass(
             }
 
             const toNumber = (val)=>Number(val);
-            const numericData = data.reduce((numdata, arow) => {
-                                numdata.push(arow.map(toNumber));
-                                return numdata;
-                            }, []);
+
+            // split data into selected and unselected
+            let pushFunc;
+            if (selectInfo) {
+                const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
+                pushFunc = (numdata, nrow, idx) => {
+                    selectInfoCls.isSelected(idx) ?
+                        numdata.selected.push({x:nrow[0],y:nrow[1],rowIdx:idx}) :
+                        numdata.unselected.push({x:nrow[0],y:nrow[1],rowIdx:idx});
+                };
+            } else {
+                pushFunc = (numdata, nrow) => {
+                    numdata.unselected.push(nrow);
+                };
+            }
+            const numericData = data.reduce((numdata, arow, idx) => {
+                const nrow = arow.map(toNumber);
+                pushFunc(numdata, nrow, idx);
+                return numdata;
+            }, {selected: [], unselected: []});
+
+            let highlightedData = [];
+            if (!isUndefined( highlightedRow)) {
+                const hrow = data[highlightedRow].map(toNumber);
+                highlightedData.push({x:hrow[0],y:hrow[1],rowIdx:highlightedRow});
+            }
+
+            const point = {
+                events: {
+                    click() {
+                        if (onHighlightChange) {
+                            var highlighted = this.rowIdx ? this.rowIdx : this.series.data.indexOf(this);
+                            if (highlighted !== highlightedRow) {
+                                onHighlightChange(highlighted);
+                            }
+                        }
+                    }
+                }
+            };
 
 
             var config = {
@@ -207,18 +245,8 @@ var XYPlot = React.createClass(
                 },
                 plotOptions: {
                     scatter: {
-                        allowPointSelect: true,
                         animation: false,
                         cursor: 'pointer',
-                        marker: {
-                            states: {
-                                select: {
-                                    fillColor: 'yellow',
-                                    lineWidth: 1,
-                                    radius: 7
-                                }
-                            }
-                        },
                         snap: 10, // proximity to the point for mouse events
                         stickyTracking: false
                     }
@@ -247,21 +275,32 @@ var XYPlot = React.createClass(
                     type: yLog ? 'logarithmic' : 'linear'
                 },
                 series: [{
-                    name: 'data points',
+                    name: 'unselected',
+                    color: unselectedColor,
+                    data: numericData.unselected,
+                    marker: {symbol: 'circle'},
                     turboThreshold: 0,
-                    data: numericData,
-                    point: {
-                        events: {
-                            click() {
-                                if (onHighlightChange) {
-                                    var highlighted = this.rowIdx ? this.rowIdx : this.series.data.indexOf(this);
-                                    if (highlighted !== highlightedRow) {
-                                        onHighlightChange(highlighted);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    point
+                },
+                {
+                    name: 'selected',
+                    color: selectedColor,
+                    data: numericData.selected,
+                    marker: {symbol: 'circle'},
+                    turboThreshold: 0,
+                    point
+                },
+                {
+                    name: 'highlighted',
+                    color: highlightedColor,
+                    marker: {
+                        lineColor: '#404040',
+                        lineWidth: 1,
+                        radius: 5,
+                        symbol: 'circle'
+                    },
+                    data: highlightedData
+
                 }],
                 credits: {
                     enabled: false // removes a reference to Highcharts.com from the chart

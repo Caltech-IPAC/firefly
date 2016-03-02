@@ -7,16 +7,16 @@ import {pickBy} from 'lodash';
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
 import * as TablesCntlr from './TablesCntlr.js';
-import {Table} from './Table.js';
 import {logError} from '../util/WebUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 
 /*---------------------------- ACTIONS -----------------------------*/
 export const TABLE_FETCH          = `${TABLE_SPACE_PATH}.tableFetch`;
-export const TABLE_FETCH_UPDATE     = `${TABLE_SPACE_PATH}.tableFetchMore`;
+export const TABLE_FETCH_UPDATE   = `${TABLE_SPACE_PATH}.tableFetchUpdate`;
 export const TABLE_NEW            = `${TABLE_SPACE_PATH}.tableNew`;
 export const TABLE_UPDATE         = `${TABLE_SPACE_PATH}.tableUpdate`;
+export const TABLE_REMOVE         = `${TABLE_SPACE_PATH}.tableRemove`;
 export const TABLE_LOAD_STATUS    = `${TABLE_SPACE_PATH}.tableLoadStatus`;
 
 export const TABLE_SELECT         = `${TABLE_SPACE_PATH}.tableSelect`;
@@ -27,13 +27,13 @@ export const TABLE_HIGHLIGHT      = `${TABLE_SPACE_PATH}.tableHighlight`;
 export function highlightRow(action) {
     return (dispatch) => {
         const {tbl_id} = action.payload;
-        var table = Table.findTblById(tbl_id);
-        var tmpModel = TblUtil.smartMerge(table.data, action.payload);
+        var tableModel = TblUtil.findTblById(tbl_id);
+        var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
         const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.gatherTableState(tmpModel);
-        if (table && table.has(startIdx, endIdx)) {
+        if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
             dispatch(action);
         } else {
-            const request = Object.assign({}, table.data.request, {startIdx, pageSize});
+            const request = Object.assign({}, tableModel.request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TablesCntlr.TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {
@@ -83,6 +83,10 @@ export function reducer(state={}, action={}) {
 
         case (TABLE_NEW)  :
             return Object.assign({}, state, {[tbl_id] : action.payload});
+        case (TABLE_REMOVE)  :
+            const nstate = Object.assign({}, state);
+            Reflect.deleteProperty(nstate, [tbl_id]);
+            return nstate;
 
         default:
             return state;

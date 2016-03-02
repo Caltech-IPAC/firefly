@@ -12,6 +12,7 @@ import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
 import {fetchUrl} from '../util/WebUtil.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
+import {getModuleName} from '../util/WebUtil.js';
 
 const APP_DATA_PATH = 'app-data';
 const SEARCH_TYPE = 'search';
@@ -38,6 +39,8 @@ const DISPLAY_MODE_CHANGE   = `${APP_DATA_PATH}.displayModeChange`;
 const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 
+//const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
+const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -57,7 +60,6 @@ const makeTaskId= function() {
     taskCnt++;
     return TASK+taskCnt++;
 };
-
 
 const updateActiveTarget= function(state,action) {
     var {worldPt,corners}= action;
@@ -148,6 +150,30 @@ function loadAppData() {
     return function (dispatch) {
         dispatch({ type : APP_LOAD });
         fetchAppData(dispatch, 'fftools_v1.0.1 Beta', 2);
+    };
+}
+
+function onlineHelpLoad( action )
+{
+    return () => {
+        var url = flux.getState()[APP_DATA_PATH].props['help.base.url'];  // ending with '/'
+        var windowName = 'onlineHelp';
+        var moduleName = getModuleName();
+
+        if (moduleName) {
+            url +=  moduleName;
+            windowName += '-' + moduleName;
+        }
+
+        if (action.payload && action.payload.helpId) {
+            url += '/#id=' + action.payload.helpId;
+        } else {
+            url += '/';
+        }
+
+        if (url) {
+            window.open(url, windowName);
+        }
     };
 }
 
@@ -338,8 +364,10 @@ export default {
     UPDATE_LAYOUT,
     SEARCH_TYPE,
     DISPLAY_MODE_CHANGE,
+    HELP_LOAD,
     reducer,
     loadAppData,
+    onlineHelpLoad,
     updateAppData,
     isDialogVisible,
     getDialogOwner,

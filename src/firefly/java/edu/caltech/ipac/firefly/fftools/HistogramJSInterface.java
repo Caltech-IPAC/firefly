@@ -16,10 +16,7 @@ public class HistogramJSInterface {
         JSONObject jsonObj = new JSONObject();
 
         for (String p : jspr.keySet()) {
-            if (p.equals("source")) {
-                String url =  FFToolEnv.modifyURLToFull(jspr.getParam("source"));
-                jsonObj.put("source", new JSONString(url));
-            } else if (p.equals("data")) {
+            if (p.equals("data")) {
                 jsonObj.put("data", new JSONString(jspr.getParam("data")));
             } else {
                 if (jspr.getParam(p) != null) {

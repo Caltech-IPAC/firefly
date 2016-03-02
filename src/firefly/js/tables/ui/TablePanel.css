@@ -76,6 +76,18 @@ button.tablepanel.options {
     background-image: url("/images/icons-2014/24x24_GearsNEW.png");
 }
 
+button.tablepanel.textView {
+    background-image: url("/images/icons-2014/24x24_TextView.png");
+}
+
+button.tablepanel.tableView {
+    background-image: url("/images/icons-2014/24x24_TableView.png");
+}
+
+button.tablepanel.save {
+    background-image: url("/images/icons-2014/24x24_Save.png");
+}
+
 button.tablepanel.clearFilters {
     background-image: url("/images/icons-2014/24x24_FilterOff_Circle.png");
 }

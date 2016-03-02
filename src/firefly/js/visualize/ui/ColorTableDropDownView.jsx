@@ -9,6 +9,9 @@ import {
     } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
+import {primePlot, getPlotViewIdListInGroup, isThreeColor} from '../PlotViewUtil.js';
+import {visRoot} from '../ImagePlotCntlr.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 
 
@@ -137,12 +140,25 @@ function makeItems(pv,ctAry) {
         return (
             <ToolbarButton icon={ct.icon} tip={ct.tip}
                            enabled={true} horizontal={false} key={cbarIdx}
-                           onClick={() => dispatchColorChange(pv.plotId,cbarIdx)}/>
+                           onClick={() => handleColorChange(pv,cbarIdx)}/>
         );
     });
 }
 
 
+const isAllThreeColor= (vr,plotIdAry) => plotIdAry.every( (id) => isThreeColor(primePlot(vr,id)));
+
+function handleColorChange(pv,cbarIdx) {
+    var vr= visRoot();
+    var plotIdAry= getPlotViewIdListInGroup(vr,pv);
+
+    if (isAllThreeColor(vr,plotIdAry)) {
+        showInfoPopup('This is a three color plot, you can not change the color.', 'Color change not allowed');
+    }
+    else {
+        dispatchColorChange(pv.plotId,cbarIdx);
+    }
+}
 
 
 export function ColorTableDropDownView({plotView:pv}) {

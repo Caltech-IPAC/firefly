@@ -6,10 +6,10 @@
 
 import Enum from 'enum';
 import isBlank from 'underscore.string/isBlank';
+import {cloneDeep} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
-const saveAsIpacUrl = getRootURL() + 'servlet/SaveAsIpacTable';
 
 
 export function getModuleName() {
@@ -77,26 +77,6 @@ export const encodeUrl= function(url, paramType, params) {
 export const encodeServerUrl= function(url, params) {
     return encodeUrl(url, ParamType.QUESTION_MARK,params);
 };
-
-
-
-
-/**
- *
- * @param {ServerRequest} request
- * @return {string} encoded
- */
-export const getTableSourceUrl= function(request) {
-    request.setStartIndex(0);
-    request.setPageSize(Number.MAX_SAFE_INTEGER);
-    var source = { name : 'request', value : request.toString()};  //todo : i don't think I got this line right
-    var filename = request.getParam('file_name');
-    if (!filename) filename = request.getRequestId();
-    var fn = { name: 'file_name', value : filename};
-    return encodeServerUrl(saveAsIpacUrl, source, fn);
-};
-
-
 
 /**
  * A wrapper for the underlying window.fetch function.

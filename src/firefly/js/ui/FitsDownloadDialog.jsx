@@ -17,7 +17,7 @@ import RadioGroupInputField from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import FieldGroup from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import PopupPanel from './PopupPanel.jsx';
+import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
@@ -26,6 +26,7 @@ import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import RequestType from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 
+import HelpIcon from './HelpIcon.jsx';
 
 
 function getDialogBuilder() {
@@ -264,15 +265,33 @@ function FitsDownloadDialogForm() {
 
                     {renderThreeBandButtons}
                 </div>
-                <div style={{'textAlign':'center', marginBottom: 20}}>
-                    < CompleteButton
-                        text='Download'
-                        onSuccess={ (request) => resultsSuccess(request, plot )}
-                        onFail={resultsFail}
-                        dialogId='fitsDownloadDialog'
-                    />
-                </div>
-
+                <table style={{width:300}}>
+                    <colgroup>
+                        <col style={{width: '20%'}} />
+                        <col style={{width: '60%'}} />
+                        <col style={{width: '20%'}} />
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <div style={{'textAlign':'center', marginBottom: 20}}>
+                                < CompleteButton
+                                    text='Download'
+                                    onSuccess={ (request) => resultsSuccess(request, plot )}
+                                    onFail={resultsFail}
+                                    dialogId='fitsDownloadDialog'
+                                />
+                            </div>
+                        </td>
+                        <td>
+                            <div style={{ textAlign:'center', marginBottom: 20}}>
+                               <HelpIcon helpid={'visualization.fitsDownloadOptions'} />
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                 </table>
         </FieldGroup>
     );
 

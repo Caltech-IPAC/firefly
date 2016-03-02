@@ -28,6 +28,7 @@ public class SaveAsIpacTable  extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         String reqStr = req.getParameter(Request.class.getName());
+        reqStr = reqStr == null ? req.getParameter("Request") : reqStr;
         TableServerRequest request = reqStr == null ? null : TableServerRequest.parse(reqStr);
 
         if (request == null) throw new IllegalArgumentException("Invalid request");

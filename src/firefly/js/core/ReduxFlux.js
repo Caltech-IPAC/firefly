@@ -67,6 +67,7 @@ let redux = null;
 
 // pre-map a set of action => creator prior to boostraping.
 actionCreators.set(AppDataCntlr.APP_LOAD, AppDataCntlr.loadAppData);
+actionCreators.set(AppDataCntlr.HELP_LOAD, AppDataCntlr.onlineHelpLoad);
 actionCreators.set(FieldGroupCntlr.VALUE_CHANGE, FieldGroupCntlr.valueChangeActionCreator);
 actionCreators.set(ExternalAccessCntlr.EXTENSION_ACTIVATE, ExternalAccessCntlr.extensionActivateActionCreator);
 actionCreators.set(ImagePlotCntlr.PLOT_IMAGE, plotImageActionCreator);
@@ -188,6 +189,7 @@ function process(rawAction, condition) {
     if (!redux) throw Error('firefly has not been bootstrapped');
 
     var ac = actionCreators.get(rawAction.type);
+    if (!rawAction.payload) rawAction= Object.assign({},rawAction,{payload:{}});
     if (ac) {
         redux.dispatch(ac(rawAction));
     } else {

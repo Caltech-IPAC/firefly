@@ -2,20 +2,30 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PropTypes} from 'react';
+
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import PopupPanel from '../../ui/PopupPanel.jsx';
+
+import HelpIcon from '../../ui/HelpIcon.jsx';
+import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 
 const popupId = 'ImageAreaStatsPopup';
+const helpId = 'visualization.fitsViewer';
+
+// style of the top divs
 const rS = {
-    padding: '10px 10px 10px 10px'
+    padding: 10
 };
-const tS = {
-    width: '450px',
-    border: '1px solid black'
-};
+
+const tableW = 450;
+
+/**
+ * show image area stats popup window
+ * @param {string} popTitle
+ * @param {object} statsResult image area stats content
+ */
 
 export function showImageAreaStatsPopup(popTitle, statsResult) {
     const popup=
@@ -51,14 +61,13 @@ ImageStats.propTypes= {
     }).isRequired
 };
 
-
-
 /**
  * component of stats summary
  * @param {array} statsSummary
  * @returns {XML}
  *
  */
+
 function ImageAreaStatsSummary({statsSummary})
 {
     var summaryRows = statsSummary.map(function(summaryLine) {
@@ -95,6 +104,12 @@ ImageAreaStatsSummary.PropTypes={
 
 function ImageAreaStatsTable ({statsTbl})
 {
+    // table style
+    var tS = {
+        width: tableW,
+        border: '1px solid black'
+    };
+
     var tableRows = statsTbl.map(function (statsRow) {
         return (
             <ImageAreaStatsTableRow key={statsRow[0] || statsRow[1]} statsRow={statsRow} />
@@ -171,13 +186,13 @@ class ImageAreaStatsTableRow extends React.Component {
 
         var tableCells = this.props.statsRow.map(function (cell) {
             const newline = '\n';
-            var dS = {border: '1px solid black', padding: '5'};
+            var dS = {  border: '1px solid black',
+                        padding: 5  };
 
-            // cell contains newline (location)
+            // cell contains newline (ex. RA:..\n DEC:...)
+
             if (cell.includes(newline)) {
-                var lines = cell.split(newline);
-
-                var br = lines.map(function (line) {
+                var br = cell.split(newline).map(function (line) {
                     return (<span key={line}>{line}<br/></span>);
                 });
 
@@ -195,7 +210,8 @@ class ImageAreaStatsTableRow extends React.Component {
 
         return (
             <tr style={trS}
-                onMouseOver={this.onMouseHover.bind(this)} onMouseOut={this.onMouseOut.bind(this)}>
+                onMouseOver={this.onMouseHover.bind(this)}
+                onMouseOut={this.onMouseOut.bind(this)}>
                 {tableCells}
             </tr>
         );
@@ -203,33 +219,44 @@ class ImageAreaStatsTableRow extends React.Component {
 }
 
 ImageAreaStatsTableRow.propTypes={
-    statsRow: React.PropTypes.array.isRequired
+    statsRow: PropTypes.array.isRequired
 };
 
 /**
  * component under the stats table containing close button and help icon
  * @param {string} closeButton
- * @param {string} imgFile
  * @returns {XML}
  * @constructor
  */
 
-// TODO: add help icon
-function ImageAreaStatsClose ({closeButton='Close', imgFile=''} )
+function ImageAreaStatsClose ({closeButton='Close'} )
 {
-    var rcS = Object.assign({}, rS, {float: 'right'});
+    var tbS = {textAlign: 'right', width: tableW};
 
     return (
-        <div style={rcS} >
-            <CompleteButton
-                style={{padding : '5px'}}
-                text={closeButton}
-                dialogId={popupId} />
+        <div style={rS}>
+            <table style={tbS}>
+                <colgroup>
+                    <col style={{width: '92%'}}/>
+                    <col style={{width: '8%'}}/>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>
+                            <CompleteButton
+                            text={closeButton}
+                            dialogId={popupId} />
+                        </td>
+                        <td>
+                            <HelpIcon helpId={helpId}/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     );
 }
 
 ImageAreaStatsClose.PropTypes={
-    closeButton: PropTypes.string,
-    imgFile: PropTypes.string
+    closeButton: PropTypes.string
 };
