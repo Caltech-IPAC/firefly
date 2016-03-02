@@ -10,14 +10,14 @@
 
 import React, { PropTypes} from 'react';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
-import InputGroup from '../../ui/InputGroup.jsx';
+//import InputGroup from '../../ui/InputGroup.jsx';
 import RadioGroupInputField from '../../ui/RadioGroupInputField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
-import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
-import CoordinateSys from '../CoordSys.js';
+//import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
+//import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';
 
 //define the labels and values for the radio options
@@ -82,8 +82,7 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 
 /**
  * this method dispatcher the action to the store.
- * @param request
- * @param groupKey
+ * @param fieldGroup
  * @param fieldKey
  */
 function doDispatch(fieldGroup,  fieldKey){
@@ -96,13 +95,12 @@ function doDispatch(fieldGroup,  fieldKey){
 		}
 		AppDataCntlr.hideDialog(fieldKey);
 	});
-	
+
 }
 /**
  *  create a popup dialog
  */
 class MouseReadoutOptionDialog extends React.Component {
-
 
 	constructor(props) {
 		super(props);
@@ -125,7 +123,6 @@ class MouseReadoutOptionDialog extends React.Component {
 		});
 	}
 
-
 	render() {
 
 		var {fields}= this.state;
@@ -134,19 +131,19 @@ class MouseReadoutOptionDialog extends React.Component {
 		const {groupKey,fieldKey,radioValue}= this.props;
 
 		if (this.props.groupKey==='PIXEL_OPTION_FORM'){
-			form=  <PixelSizeOptionDialogForm
+			form=(  <PixelSizeOptionDialogForm
 				    groupKey={groupKey}
 					fieldKey={fieldKey}
 					radioValue={radioValue}
-			/>;
+			/>);
 		}
 		else {
 
-			form= <CoordinateOptionDialogForm
+			form= ( <CoordinateOptionDialogForm
 				groupKey={groupKey}
 				fieldKey={fieldKey}
 				radioValue={radioValue}
-			/>;
+			/>);
 		}
 		return form;
 
@@ -155,6 +152,13 @@ class MouseReadoutOptionDialog extends React.Component {
 
 
 }
+
+MouseReadoutOptionDialog.propTypes= {
+	groupKey:   PropTypes.string.isRequired,
+	fieldKey:   PropTypes.string.isRequired,
+	radioValue:   PropTypes.string.isRequired
+};
+
 
 // ------------ React component
 function CoordinateOptionDialogForm({ groupKey,fieldKey,radioValue}) {
@@ -190,7 +194,7 @@ function renderCoordinateRadioGroup(rightColumn,fieldKey, radioValue ){
 			<RadioGroupInputField
 				initialState={{
                                     tooltip: 'Please select an option',
-                                    value:radioValue,
+                                    value:radioValue
                                     }}
 				options={coordOptions}
 				alignment={'vertical'}
@@ -214,7 +218,7 @@ function PixelSizeOptionDialogForm( {groupKey,fieldKey, radioValue} ) {
 						initialState={{
                                     tooltip: 'Please select an option',
                                     //move the label as a InputFieldLabel
-                                     value:radioValue,
+                                     value:radioValue
                                    }}
 						options={ pixelOptions }
 						alignment={'vertical'}
