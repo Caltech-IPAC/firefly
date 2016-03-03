@@ -5,12 +5,14 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {get} from 'lodash';
+
 import {flux, firefly} from 'firefly/Firefly.js';
-import AppDataCntlr, {dispatchUpdateLayout} from 'firefly/core/AppDataCntlr.js';
+import AppDataCntlr, {dispatchUpdateLayout, LO_XPD_MODE} from 'firefly/core/AppDataCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import SearchPanel from 'firefly/ui/SearchPanel.jsx';
-import ResultsPanel from 'firefly/ui/ResultsPanel.jsx';
+import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
 import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
@@ -61,6 +63,7 @@ const App = React.createClass({
         appData : React.PropTypes.object.isRequired,
         title   : React.PropTypes.string,
         table   : React.PropTypes.object,
+        expandedMode : React.PropTypes.string,
         activeTbl : React.PropTypes.object,
         tblStatsData : React.PropTypes.object,
         xyPlotData : React.PropTypes.object,
@@ -90,7 +93,7 @@ const App = React.createClass({
 
 
     render() {
-        var {appData, title, table} = this.props;
+        var {appData, title, table, expandedMode} = this.props;
 
         const tblId = table ? table.tbl_id : undefined;
 
@@ -146,12 +149,13 @@ const App = React.createClass({
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot = {appData.layoutInfo.mode==='expand' ?
+                            imagePlot = {expandedMode===LO_XPD_MODE.images.mode.expanded ?
                                              <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
                                              <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={tblId}/> }
-                            tables = {tblId && <TablePanel key='results-tables' tbl_id={tblId} selectable={true}/> }
+                            tables = {tblId && <TablePanel key='results-tables' tbl_id={tblId}
+                                                expandedMode={expandedMode===LO_XPD_MODE.tables.mode.expanded} selectable={true}/> }
                             layoutInfo = { appData.layoutInfo }
                         />
                     </main>
@@ -166,7 +170,8 @@ function connector(state) {
     return {
         appData: state[AppDataCntlr.APP_DATA_PATH],
         title: 'FFTools entry point',
-        table : TblUtil.findTblById(activeTblId)
+        table : TblUtil.findTblById(activeTblId),
+        expandedMode : get(state, [AppDataCntlr.APP_DATA_PATH,'layoutInfo','mode','expanded'])
     };
 }
 const container = flux.createSmartComponent(connector, App);

@@ -5,12 +5,14 @@
 
 import React, {PropTypes} from 'react';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
+import {dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
 import {primePlot, expandedPlotViewAry} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {LO_XPD_MODE} from '../../core/AppDataCntlr.js';
 
 import './ExpandedTools.css';
 
@@ -127,7 +129,7 @@ export function ExpandedTools({visRoot}) {
     }
     return (
         <div style={{width:'100%', height:70}} className='disable-select'>
-            <CloseButton style={s} onClick={() => console.log('ExpandedTools: back button')}/>
+            <CloseButton style={s} onClick={() => dispatchUpdateLayout(LO_XPD_MODE.none)}/>
             {plotTitle}
             <div style={s}></div>
             <div style={{display: 'inline-block', float:'right'}}>

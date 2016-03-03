@@ -19,8 +19,8 @@
 }
 
 .TablePanel__wrapper {
+    flex: auto;
     position: relative;
-    width: 100%;
     background-color: #a5a5a5;
     border: 1px solid #8c8c8c;
     padding: 0 3px 3px 3px;

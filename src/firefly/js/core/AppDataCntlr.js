@@ -42,6 +42,19 @@ const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
 
+export const LO_STD_MODE = {
+                        triview: {mode: {standard: 'tri-view'}},
+                        image_xyplot: {mode: {standard: 'image-xyplot'}},
+                        image_table: {mode: {standard: 'image-table'}},
+                        xyplot_table: {mode: {standard: 'xyplot-table'}}
+                    };
+export const LO_XPD_MODE = {
+                        tables: {mode: {expanded: 'tables'}},
+                        images: {mode: {expanded: 'images'}},
+                        xy_plots: {mode: {expanded: 'xyPlots'}},
+                        none: {mode: {expanded: undefined}}
+                    };
+
 /*---------------------------- CREATORS ----------------------------*/
 
 const showDialog= function(dialogId,ownerId=undefined) {
@@ -249,10 +262,10 @@ function reducer(state=getInitState(), action={}) {
 
     history.add(state, action);
 
-    var newState = addDataReducer(state, action);
+    var newState = appDataReducer(state, action);
 
     var menu = menuRenderer.reducer(newState.menu, action);
-    var layoutInfo = layoutReducer.reducer(newState.layoutInfo, action, menu);
+    var layoutInfo = layoutReducer.reducer(newState.layoutInfo, action);
 
     return mergeAll(state, newState, {menu, layoutInfo});
 }
@@ -265,7 +278,7 @@ function mergeAll(orig, newval, updates) {
     return hasChanged ? Object.assign({}, newval, updates) : orig;
 }
 
-function addDataReducer(state, action={}) {
+function appDataReducer(state, action={}) {
     switch (action.type) {
         case APP_LOAD  :
             return getInitState();
@@ -341,7 +354,9 @@ function dispatchRemovePreference(name) {
  * i.e. search panel, results panel...
  * @param search    boolean. show the search panel.  defaults to false.
  * @param results   boolean. show the results panel. defaults to true.
- * @param mode      enum, one of ["auto", "tri", "sbs", "tb"]. defaults to "auto".
+ * @param mode      {expanded: string,
+ *                   standard: string,    // enum of ['tri-view', 'image-table', 'image-xyplot', 'table-xyplot']
+ *                  }
  * @param views     array of enum ["tables", "images", "xyPlots"].  Used in conjunction with mode to define what to show.
  * @param hasTables boolean.  Table data available.
  * @param hasImages boolean. Image data available.
