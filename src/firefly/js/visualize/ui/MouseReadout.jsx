@@ -69,7 +69,9 @@ export  class MouseReadout extends React.Component {
 			callGetFileFlux(plot.plotState, iPt)
 
 				.then((result) => {
+
 					var currentPt = mouseState.imagePt;
+
 					if (result.hasOwnProperty('NO_BAND')) {
 						var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
 
@@ -391,24 +393,3 @@ function showDialog(fieldKey, radioValue) {
 
 }
 
-const getFlux = debounce(( mouseState, plot, iPt) => {
-	callGetFileFlux(plot.plotState, iPt)
-
-		.then((result) => {
-
-			if (result.hasOwnProperty('NO_BAND')) {
-				var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${plot.webFitsData[0].fluxUnits}`;
-				var currentPt = mouseState.imagePt;
-				if (currentPt  === this.state.point) {
-
-					this.setState({point:currentPt, flux:fluxStr});
-				}
-			}
-			else {
-				return EMPTY_READOUT;//TODO three color band
-			}
-		})
-		.catch((e) => {
-			console.log(`flux error: ${plot.plotId}`, e);
-		});
-}, 200);
