@@ -46,7 +46,7 @@ export class BasicTable extends React.Component {
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
-        var columnWidths = Object.assign(this.state.columnWidths, {[columnKey]: newColumnWidth});
+        var columnWidths = Object.assign({}, this.state.columnWidths, {[columnKey]: newColumnWidth});
         this.setState({columnWidths});
     }
 

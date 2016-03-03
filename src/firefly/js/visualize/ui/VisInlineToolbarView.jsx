@@ -8,6 +8,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
 import {dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
+import {LO_XPD_MODE} from '../../core/AppDataCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import DELETE from 'html/images/blue_delete_10x10.png';
@@ -17,7 +18,7 @@ import DELETE from 'html/images/blue_delete_10x10.png';
 
 function expand(pv) {
     //console.log('todo- expand:' + primePlot(pv).title);
-    dispatchUpdateLayout( {mode: 'expand' });
+    dispatchUpdateLayout( LO_XPD_MODE.images );
     dispatchChangeExpandedMode(true);
 }
 

@@ -2,30 +2,24 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {pick, isEqual} from 'lodash';
+import {get} from 'lodash';
 
 import cntlr from '../AppDataCntlr.js';
+import {smartMerge} from '../../tables/TableUtil.js';
 
 
-function reducer(state={}, action={}, menu) {
-    var nState = state;
+function reducer(state={}, action={}) {
 
     switch (action.type) {
         case cntlr.SHOW_SEARCH :
-            const nSearch = action.payload && action.payload.search;
-            if (nSearch !== state.search) {
-                nState = Object.assign({}, state, {search: nSearch});
-            }
-            return nState;
+            const nState = {search: get(action, 'payload.search')};
+            return smartMerge(state, nState);
 
         case cntlr.UPDATE_LAYOUT :
-            if (! isEqual(pick(state, Object.keys(action.payload)), action.payload) ) {
-                nState = Object.assign(state, action.payload);
-            }
-            return nState;
+            return smartMerge(state, action.payload);
 
         default:
-            return nState;
+            return state;
     }
 
 }

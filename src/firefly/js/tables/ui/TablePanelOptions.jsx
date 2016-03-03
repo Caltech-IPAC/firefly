@@ -17,7 +17,7 @@ function prepareOptionData(columns) {
     var data = columns.map( (v, idx) => {
         return [v.name];
     } );
-    var cols = [{name: 'Column', visibility: 'show', prefWidth: 21}];
+    var cols = [{name: 'Column', visibility: 'show', prefWidth: 20}];
     var selectInfoCls = SelectInfo.newInstance({});
     selectInfoCls.data.rowCount = data.length;
     columns.forEach( (v, idx) => {
