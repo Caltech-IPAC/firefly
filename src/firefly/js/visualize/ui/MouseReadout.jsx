@@ -121,7 +121,7 @@ export  class MouseReadout extends React.Component {
 		     fluxLabel = showFluxLabel(plot, bands[0]);
 		 }
 		 else {
-			return EMPTY_READOUT;//TODO three bands
+			return false;//TODO three bands - trey
 		 }
 		var flux;
 
@@ -145,7 +145,7 @@ export  class MouseReadout extends React.Component {
 	     	);
 		}
         else {
-			return EMPTY_READOUT; //todo support 3 color
+			return false; //todo support 3 color - trey
 		}
 
 
@@ -311,6 +311,7 @@ function setClickLock( plot,mouseState, request) {
 function showReadout(plot, mouseState, readoutValue){
 
 	var spt= mouseState.screenPt;
+	if (!spt) return EMPTY_READOUT; // todo - decide how to handle this correctly - trey
 
 	var {width:screenW, height:screenH }= plot.screenSize;
 	if (spt.x<0 || spt.x>screenW || spt.y<0 || spt.y>screenH){
