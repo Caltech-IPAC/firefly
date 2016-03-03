@@ -354,16 +354,13 @@ function dispatchRemovePreference(name) {
  * i.e. search panel, results panel...
  * @param search    boolean. show the search panel.  defaults to false.
  * @param results   boolean. show the results panel. defaults to true.
- * @param mode      {expanded: string,
- *                   standard: string,    // enum of ['tri-view', 'image-table', 'image-xyplot', 'table-xyplot']
- *                  }
- * @param views     array of enum ["tables", "images", "xyPlots"].  Used in conjunction with mode to define what to show.
+ * @param mode      see constant LO_STD_MODE and LO_XPD_MODE declaration from above
  * @param hasTables boolean.  Table data available.
  * @param hasImages boolean. Image data available.
  * @param hasXyPlots boolean. XY Plot data available.
  */
-export function dispatchUpdateLayout({search, results, mode, views, hasTables, hasImages, hasXyPlots}) {
-    flux.process({type: UPDATE_LAYOUT, payload: pickBy({search, results, mode, views, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
+export function dispatchUpdateLayout({search, results, mode, hasTables, hasImages, hasXyPlots}) {
+    flux.process({type: UPDATE_LAYOUT, payload: pickBy({search, results, mode, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
 }
 
 

@@ -15,7 +15,7 @@ import {SelectInfo} from '../SelectInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_XPD_MODE, LO_STD_MODE, dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
+import {LO_XPD_MODE, dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
@@ -100,7 +100,7 @@ export class TablePanel extends Component {
                             {filterCount > 0 &&
                             <button onClick={() => tableStore.onFilter('')} className='tablepanel clearFilters'/>}
                             <ToolbarButton icon={FILTER}
-                                           tip={'The Filter Panel can be used to remove unwanted data from the search results'}
+                                           tip='The Filter Panel can be used to remove unwanted data from the search results'
                                            visible={true}
                                            badgeCount={filterCount}
                                            onClick={() => this.onOptionUpdate({showFilters: !showFilters})}/>
@@ -208,7 +208,7 @@ const PagingBar = ({currentPage, totalPages, startIdx, tableRowCount, tableModel
             <InputField
                 style={{textAlign: 'right'}}
                 validator = {intValidator(1,totalPages, 'Page Number')}
-                tooltip = {'Jump to this page'}
+                tooltip = 'Jump to this page'
                 size = {2}
                 value = {currentPage+''}
                 onChange = {onPageChange}
