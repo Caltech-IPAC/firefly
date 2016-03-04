@@ -29,7 +29,7 @@ const middleStyle= {
  * @return react object
  */
 export function CloseButton({text='Close', tip='Close',style={}, onClick}) {
-    var s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
+    var s= Object.assign({cursor:'pointer', verticalAlign:'baseline', whiteSpace:'nowrap'},style);
     return (
         <div style={s} title={tip} onClick={onClick}>
             <img style={{verticalAlign:'bottom'}} src={BUTTON_START} />

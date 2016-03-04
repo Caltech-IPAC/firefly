@@ -64,7 +64,7 @@ function handleClick(onClick, dropdownCB ,divElement) {
  */
 export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownCB,
                                onClick, horizontal=true, bgDark, visible=true, active,
-                               tipOnCB,tipOffCB,lastTextItem=false, todo}, ctx) {
+                               imageStyle, tipOnCB,tipOffCB,lastTextItem=false, todo}, ctx) {
 
     if (!tipOnCB && ctx) tipOnCB= ctx.tipOnCB;
     if (!tipOffCB && ctx) tipOffCB= ctx.tipOffCB;
@@ -121,7 +121,7 @@ export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownC
                  onClick={() => handleClick(onClick,dropDownCB,divElement)}
                  onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
 
-                {icon ? <img src={icon} />  : <div className={textCName}>{text}</div>}
+                {icon ? <img style={imageStyle} src={icon} />  : <div className={textCName}>{text}</div>}
                 {badgeCount ? makeBadge(badgeCount) : ''}
                 {todo?<div style={todoStyle}>ToDo</div>:false}
             </div>
@@ -153,6 +153,7 @@ ToolbarButton.propTypes= {
     tipOnCB : PropTypes.func,
     tipOffCB : PropTypes.func,
     dropDownCB : PropTypes.func,
+    imageStyle : PropTypes.object,
     lastTextItem : PropTypes.boolean
 };
 
