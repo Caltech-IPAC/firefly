@@ -4,7 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import PlotViewUtil, {getPlotViewById} from '../PlotViewUtil.js';
+import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerView} from './ImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {extensionRoot} from '../../core/ExternalAccessCntlr.js';
@@ -24,7 +24,7 @@ export class ImageViewer extends Component {
         var allPlots= visRoot();
         var dlAry= getDlAry();
         var plotView= getPlotViewById(allPlots,plotId);
-        var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,plotId);
+        var drawLayersAry= getAllDrawLayersForPlot(dlAry,plotId);
         var extRoot= extensionRoot();
         var mousePlotId= currMouseState().plotId;
         this.alive= true;
@@ -59,7 +59,7 @@ export class ImageViewer extends Component {
             }
         }
 
-        var drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(dlAry,this.props.plotId);
+        var drawLayersAry= getAllDrawLayersForPlot(dlAry,this.props.plotId);
         if (allPlots!==state.allPlots  ||
             extRoot!==state.extRoot ||
             mousePlotId!==state.mousePlotId ||
@@ -90,7 +90,7 @@ export class ImageViewer extends Component {
         if (plotView.plotId!==plotId) {
             allPlots= visRoot();
             plotView= getPlotViewById(allPlots,plotId);
-            drawLayersAry= PlotViewUtil.getAllDrawLayersForPlot(getDlAry(),this.props.plotId);
+            drawLayersAry= getAllDrawLayersForPlot(getDlAry(),this.props.plotId);
             if (!plotView) return false;
         }
 

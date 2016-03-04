@@ -50,8 +50,8 @@ export var EventLayer= React.createClass(
         var {x:viewPortX,y:viewPortY} = viewPort;
         var {screenX, screenY, pageX:x, pageY:y}= nativeEv;
         var e= ReactDOM.findDOMNode(this);
-        var compOffX= x-getAbsoluteLeft(e)+window.scrollX;
-        var compOffY= y-getAbsoluteTop(e)+window.scrollY;
+        var compOffX= x-getAbsoluteLeft(e)+window.scrollX-1;
+        var compOffY= y-getAbsoluteTop(e)+window.scrollY-1;
         spt= makeScreenPt( viewPortX+compOffX, viewPortY+compOffY);
         this.props.eventCallback(plotId,mouseState,spt,screenX,screenY);
     },

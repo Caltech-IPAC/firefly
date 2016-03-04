@@ -14,8 +14,15 @@ import {Band} from './Band.js';
 import {isActivePlotView,
         getPlotViewById,
         expandedPlotViewAry,
-        applyToOnePvOrGroup } from './PlotViewUtil.js';
+        applyToOnePvOrGroup,
+        isDrawLayerAttached,
+        getDrawLayerByType } from './PlotViewUtil.js';
 
+import PointSelection from '../drawingLayers/PointSelection.js';
+import {dispatchAttachLayerToPlot,
+        dispatchCreateDrawLayer,
+        dispatchDetachLayerFromPlot,
+        DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
 
@@ -81,6 +88,7 @@ const CROP_FAIL= 'ImagePlotCntlr.CropFail';
 const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
 
+const CHANGE_POINT_SELECTION= 'ImagePlotCntlr.ChangePointSelection';
 
 const CHANGE_ACTIVE_PLOT_VIEW= 'ImagePlotCntlr.ChangeActivePlotView';
 const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
@@ -122,12 +130,13 @@ const initState= function() {
         plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
         activePlotId: null,
 
-        // expanded stuff
+        //-- expanded settings
         expandedMode: ExpandType.COLLAPSE,
         previousExpandedMode: ExpandType.SINGLE, //  must be SINGLE OR GRID
         singleAutoPlay : false,
 
-        //  misc
+        //--  misc
+        pointSelEnableAry : [],
         toolBarIsPopup: false,    //todo
         mouseReadoutWide: false, //todo
 
@@ -136,6 +145,8 @@ const initState= function() {
         wcsMatchCenterWP: null, //todo
         wcsMatchMode: WcsMatchMode.ByUserPositionAndZoom, //todo
         mpwWcsPrimId: null,//todo
+
+        //-- mouse readout settings
         mouseReadout1:'eqj2000hms',
         mouseReadout2: 'fitsIP',
         pixelSize: 'pixelSize',
@@ -158,7 +169,7 @@ export default {
     CROP_START, CROP, CROP_FAIL,
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
-
+    CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
     CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST
 };
@@ -270,13 +281,16 @@ export function dispatchUpdateViewSize(plotId,width,height,updateScroll=true,cen
  *
  * @param {string} plotId is required unless defined in the WebPlotRequest
  * @param {WebPlotRequest|Array} wpRequest, plotting parameters, required or for 3 color pass an array of WebPlotRequest
+ * @param {boolean} threeColor is a three color request, if true the wpRequest should be an array
  * @param {boolean} removeOldPlot Remove the old plot from the plotview and tell the server to delete the context.
  *                                This parameter is almost always true
  * @param {boolean} addToHistory add this request to global history of plots
  * @param {boolean} useContextModifications it true the request will be modified to use preferences, rotation, etc
  *                                 should only be false when it is doing a 'restore to defaults' type plot
  */
-export function dispatchPlotImage(plotId,wpRequest, threeColor=false, removeOldPlot= true, addToHistory=false, useContextModifications= true ) {
+export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
+                                  removeOldPlot= true, addToHistory=false,
+                                  useContextModifications= true ) {
     var req;
     if (plotId) {
         if (Array.isArray(wpRequest)) {
@@ -361,6 +375,16 @@ export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
     flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
 }
 
+/**
+ *
+ * @param requester a string id of the requester
+ * @param enabled true will add the request to the list, false will remove, when all requesters are removed
+ *                Point selection will be turned off
+ */
+export function dispatchChangePointSelection(requester, enabled) {
+    flux.process({ type: CHANGE_POINT_SELECTION, payload: {requester,enabled} });
+}
+
 
 /**
  *
@@ -385,9 +409,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
 
 export function dispatchChangeMouseReadout(readoutType, newRadioValue) {
-
-     flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
-
+    flux.process({ type: CHANGE_MOUSE_READOUT_MODE, payload: {readoutType, newRadioValue} });
 }
 
 export function dispatchExpandedAutoPlay(autoPlayOn) {
@@ -435,6 +457,47 @@ export function autoPlayActionCreator(rawAction) {
         }
    };
 }
+
+
+const attachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
+                                if (!isDrawLayerAttached(dl,pv.plotId)) {
+                                    dispatchAttachLayerToPlot(dl.drawLayerTypeId,pv.plotId,false);
+                                }
+                        });
+
+const detachAll= (plotViewAry,dl) => plotViewAry.forEach( (pv) => {
+                                if (isDrawLayerAttached(dl,pv.plotId)) {
+                                    dispatchDetachLayerFromPlot(dl.drawLayerTypeId,pv.plotId,false);
+                                }
+});
+
+
+export function changePointSelectionActionCreator(rawAction) {
+    return (dispatcher,getState) => {
+        var store= getState();
+        var wasEnabled= store[IMAGE_PLOT_KEY].pointSelEnableAry.length ? true : false;
+        var {plotViewAry}= store[IMAGE_PLOT_KEY];
+        var typeId= PointSelection.TYPE_ID;
+
+        dispatcher(rawAction);
+
+        store= getState();
+        var dl= getDrawLayerByType(store[DRAWING_LAYER_KEY], typeId);
+        if (store[IMAGE_PLOT_KEY].pointSelEnableAry.length && !wasEnabled) {
+            if (!dl) {
+                dispatchCreateDrawLayer(typeId);
+                dl= getDrawLayerByType(getState()[DRAWING_LAYER_KEY], typeId);
+            }
+            attachAll(plotViewAry,dl);
+        }
+        else if (wasEnabled) {
+            detachAll(plotViewAry,dl);
+        }
+    };
+}
+
+
+
 
 //======================================== Reducer =============================
 //======================================== Reducer =============================
@@ -494,6 +557,9 @@ function reducer(state=initState(), action={}) {
                 retState= clone(state,{singleAutoPlay:action.payload.autoPlayOn});
             }
             break;
+        case CHANGE_POINT_SELECTION:
+            retState= changePointSelection(state,action);
+            break;
         default:
             break;
 
@@ -507,6 +573,18 @@ function reducer(state=initState(), action={}) {
 //============ private functions =================================
 
 
+function changePointSelection(state,action) {
+    var {requester,enabled}= action.payload;
+    var {pointSelEnableAry}= state;
+    if (enabled) {
+        if (pointSelEnableAry.includes(requester)) return state;
+        return clone(state,{pointSelEnableAry: [...pointSelEnableAry,requester]});
+    }
+    else {
+        if (!pointSelEnableAry.includes(requester)) return state;
+        return clone(state,{pointSelEnableAry: pointSelEnableAry.filter( (e) => e!=requester)});
+    }
+}
 
 function changeMouseReadout(state, action) {
 

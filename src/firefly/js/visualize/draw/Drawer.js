@@ -12,6 +12,7 @@ import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import DrawOp from './DrawOp.js';
 import join from 'underscore.string/join';
+import {get} from 'lodash';
 
 
 const ENABLE_COLORMAP= false;
@@ -532,8 +533,9 @@ function drawObj(ctx, drawTextAry, def, csysConv, obj, vpPtM, onlyAddToPath) {
  * @return {boolean} true is it should be drawn
  */
 function shouldDrawObj(csysConv, obj) {
+    if (!obj) return false;
     var retval= true;
-    if (obj && csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
+    if (csysConv && obj.pt && obj.type===POINT_DATA_OBJ) {
         if (obj.pt.type === Point.W_PT) retval= csysConv.pointInViewPort(obj.pt);
     }
     return retval;
@@ -608,7 +610,7 @@ function getNextChuck(params) {
 
     var obj= params.next.value;
     var color= drawingDef.color;
-    var lineWidth=  obj.lineWidth || drawingDef.lineWidth || 1;
+    var lineWidth=  get(obj,'lineWidth',false) || drawingDef.lineWidth || 1;
 
     for(i= 0; (!params.next.done && i<params.maxChunk ); ) {
         obj= params.next.value;
@@ -626,7 +628,7 @@ function getNextChuck(params) {
                 i++;
             }
         }
-        else {
+        else if (obj) {
             drawList.push(obj);
             i++;
         }

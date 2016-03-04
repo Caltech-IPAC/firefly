@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import PlotViewUtil  from '../PlotViewUtil.js';
+import {getLayerTitle, getAllDrawLayersForPlot}  from '../PlotViewUtil.js';
 import DrawLayerItemView from './DrawLayerItemView.jsx';
 
 
@@ -16,9 +16,9 @@ function DrawLayerPanelView({dlAry, plotView, dialogId, drawLayerFactory}) {
         position: 'relative',
         overflow:'hidden'};
 
-    var layers= PlotViewUtil.getAllDrawLayersForPlot(dlAry,plotView.plotId);
+    var layers= getAllDrawLayersForPlot(dlAry,plotView.plotId);
     var maxTitleChars= layers.reduce( (max,l) => {
-        var t= PlotViewUtil.getLayerTitle(plotView.plotId,l);
+        var t= getLayerTitle(plotView.plotId,l);
         return Math.max(max, t?t.length:0);
     },3);
 

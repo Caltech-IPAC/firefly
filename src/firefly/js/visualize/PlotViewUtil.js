@@ -9,12 +9,6 @@ import {CsysConverter} from './CsysConverter.js';
 
 
 
-export default {
-    operateOnOthersInGroup, findPlotGroup, 
-    getAllDrawLayers, getAllDrawLayersForPlot,
-    getDrawLayerByType, isDrawLayerVisible, isDrawLayerAttached, getLayerTitle
-};
-
 
 /**
  *
@@ -169,29 +163,57 @@ export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
 
 /**
  * construct an array of drawing layer from the store
- * @param dlAry - the master array of all drawing layers
+ * @param ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param plotId
  * @return {Array}
  */
-export function getAllDrawLayersForPlot(dlAry,plotId) {
+export function getAllDrawLayersForPlot(ref,plotId) {
+    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry
         .filter( (dl) => dl.plotIdAry
         .find( (id) => id===plotId));
 }
 
 
-export function getDrawLayerByType(dlAry,typeId) {
+/**
+ *
+ * @param ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param typeId
+ * @return {object} the draw layer
+ */
+export function getDrawLayerByType(ref,typeId) {
+    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerTypeId===typeId);
 }
 
-export function getDrawLayerById(dlAry,id) {
+/**
+ *
+ * @param ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param id draw layer id
+ * @return {object} the draw layer
+ */
+export function getDrawLayerById(ref,id) {
+    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.drawLayerId===id);
 }
 
-export function getDrawLayersByDisplayGroup(dlAry,displayGroupId) {
+/**
+ * UNTESTED - I think I will need this eventually
+ * @param ref - the root of the drawing layer controller or the master array of all drawing layers
+ * @param displayGroupId
+ * @return {object} the draw layer
+ */
+export function getDrawLayersByDisplayGroup(ref,displayGroupId) {
+    var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     return dlAry.find( (dl) => dl.displayGroupId===displayGroupId);
 }
 
+/**
+ * UNTESTED - I think I will need this eventually
+ * @param dl1Ary
+ * @param dl2Ary
+ * @return {boolean}
+ */
 export function drawLayersDiffer(dl1Ary,dl2Ary) {
     if (dl1Ary===dl2Ary) return false;
     if (dl1Ary.length!==dl2Ary.length) return true;
@@ -214,7 +236,7 @@ export function isDrawLayerAttached(dl, plotId) { return dl ? dl.plotIdAry.inclu
  * @param dl
  * @return {*}
  */
-function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.title : dl.title[plotId]; }
+export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string') ? dl.title : dl.title[plotId]; }
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------

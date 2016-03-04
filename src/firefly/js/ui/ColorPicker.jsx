@@ -4,7 +4,7 @@
 
 import React from 'react';
 import AppDataCntlr from '../core/AppDataCntlr.js';
-import PopupPanel from './PopupPanel.jsx';
+import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import ColorPicker from 'react-color';

@@ -29,6 +29,9 @@ const SELECT_AREA_MOVE= 'DrawLayerCntlr.SelectArea.selectAreaMove';
 const SELECT_AREA_END= 'DrawLayerCntlr.SelectArea.selectAreaEnd';
 const SELECT_MOUSE_LOC= 'DrawLayerCntlr.SelectArea.selectMouseLoc';
 
+const SELECT_POINT=  'DrawLayerCntlr.SelectPoint.selectPoint';
+
+
 // _- Distance tool
 const DT_START= 'DrawLayerCntlr.DistanceTool.distanceToolStart';
 const DT_MOVE= 'DrawLayerCntlr.DistanceTool.distanceToolMove';
@@ -36,7 +39,7 @@ const DT_END= 'DrawLayerCntlr.DistanceTool.distanceToolEnd';
 
 
 
-const DRAWING_LAYER_KEY= 'drawLayers';
+export const DRAWING_LAYER_KEY= 'drawLayers';
 
 
 
@@ -52,10 +55,11 @@ export function getDlAry() { return flux.getState()[DRAWING_LAYER_KEY].drawLayer
 
 
 export default {
-    CHANGE_VISIBILITY, RETRIEVE_DATA, DRAWING_LAYER_KEY,
+    CHANGE_VISIBILITY, RETRIEVE_DATA,
     ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT,CHANGE_DRAWING_DEF,
     CREATE_DRAWING_LAYER,DESTROY_DRAWING_LAYER, MODIFY_CUSTOM_FIELD,
     SELECT_AREA_START, SELECT_AREA_MOVE, SELECT_AREA_END, SELECT_MOUSE_LOC,
+    SELECT_POINT,
     FORCE_DRAW_LAYER_UPDATE,
     DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
