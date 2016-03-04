@@ -3,9 +3,8 @@
  */
 
 import React from 'react';
-import {set, isEmpty, get} from 'lodash';
+import {isEmpty} from 'lodash';
 
-import * as TblUtil from '../TableUtil.js';
 import {BasicTable} from './BasicTable.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -17,7 +16,7 @@ function prepareOptionData(columns) {
     var data = columns.map( (v, idx) => {
         return [v.name];
     } );
-    var cols = [{name: 'Column', visibility: 'show', prefWidth: 21}];
+    var cols = [{name: 'Column', visibility: 'show', prefWidth: 20}];
     var selectInfoCls = SelectInfo.newInstance({});
     selectInfoCls.data.rowCount = data.length;
     columns.forEach( (v, idx) => {
@@ -68,8 +67,8 @@ export const TablePanelOptions = (props) => {
                     <div style={{float: 'left'}}>
                         <InputField
                             validator = {intValidator(1,10000)}
-                            tooltip = {'Set page size'}
-                            label = {'Page Size:'}
+                            tooltip = 'Set page size'
+                            label = 'Page Size:'
                             size = {3}
                             value = {pageSize+''}
                             onChange = {onPageSize}
@@ -88,7 +87,7 @@ export const TablePanelOptions = (props) => {
             <BasicTable
                 columns={cols}
                 data={data}
-                height={'calc(100% - 42px)'}
+                height='calc(100% - 42px)'
                 selectable={true}
                 selectInfoCls={selectInfoCls}
                 tableStore={{onSelectAll, onRowSelect}}

@@ -11,7 +11,7 @@ import {debounce, get, isEmpty, pick} from 'lodash';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
-import {SORT_ASC, SORT_DESC, UNSORTED, SortInfo} from '../SortInfo';
+import {SORT_ASC, UNSORTED, SortInfo} from '../SortInfo';
 import {tableToText} from '../TableUtil.js';
 
 import './TablePanel.css';
@@ -46,7 +46,7 @@ export class BasicTable extends React.Component {
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
-        var columnWidths = Object.assign(this.state.columnWidths, {[columnKey]: newColumnWidth});
+        var columnWidths = Object.assign({}, this.state.columnWidths, {[columnKey]: newColumnWidth});
         this.setState({columnWidths});
     }
 
@@ -187,7 +187,7 @@ const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, on
                 onChange = {(v) => onFilter(v)}
                 actOn={['blur','enter']}
                 showWarning={false}
-                width={'100%'}
+                width='100%'
             />
             }
         </div>
@@ -245,7 +245,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         };
 
         var cbox = <Column
-            key="selectable-checkbox"
+            key='selectable-checkbox'
             columnKey='selectable-checkbox'
             header={headerCB}
             cell={cellCB}
@@ -256,5 +256,5 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
         colsEl.splice(0, 0, cbox);
     }
     return colsEl;
-};
+}
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import {uniqueId, isEqual} from 'lodash';
 import SplitPane from 'react-split-pane';
 
 function createContentWrapper(children, index) {
@@ -108,12 +109,18 @@ function layoutDom(layout, items) {
     }
 }
 
+var prev = {};
+
 const DockLayoutPanel = function (props) {
     var {layout, children} = props;
+    if (!isEqual(prev.layout, layout)) {
+        prev.dpid = uniqueId('dpid-');
+        prev.layout = layout;
+    }
 
     return (
         <div style={{position: 'relative',  flex: 'auto'}}>
-            <div style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
+            <div key={prev.dpid} style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
                 {layoutDom(layout, children)}
             </div>
         </div>
