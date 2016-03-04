@@ -70,7 +70,7 @@ class PopupStoreConnection extends Component {
         return  React.cloneElement(popupPanel,
             {
                 visible,
-                closeCallback : () => AppDataCntlr.hideDialog(dialogId)
+                requestToClose : () => AppDataCntlr.hideDialog(dialogId)
             });
     }
 

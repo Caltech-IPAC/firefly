@@ -25,13 +25,11 @@ export var PopupPanel= React.createClass(
         layoutPosition : PropTypes.object,
         title : PropTypes.string,
         closePromise : PropTypes.object,
+        requestToClose : PropTypes.func,
         closeCallback : PropTypes.func,
         visible : PropTypes.bool
     },
 
-    //onClick: function(ev) {
-    //    this.doClose();
-    //},
 
     updateLayoutPosition() {
         var e= ReactDOM.findDOMNode(this);
@@ -60,6 +58,7 @@ export var PopupPanel= React.createClass(
         window.removeEventListener('resize', this.browserResizeCallback);
         document.removeEventListener('mousemove', this.moveCallback);
         document.removeEventListener('mouseup', this.buttonUpCallback);
+        if (this.props.closeCallback) this.props.closeCallback();
     },
 
 
@@ -78,15 +77,13 @@ export var PopupPanel= React.createClass(
         document.addEventListener('mouseup', this.buttonUpCallback);
         if (this.props.closePromise) {
             this.props.closePromise.then(()=>  {
-                console.log('now closing dialog');
-                this.doClose();
+                this.askParentToClose();
             });
         }
     },
 
-    doClose() {
-        if (this.props.closeCallback) this.props.closeCallback();
-        console.log('close dialog');
+    askParentToClose() {
+        if (this.props.requestToClose) this.props.requestToClose();
     },
 
     dialogMoveStart(ev)  {
@@ -127,9 +124,6 @@ export var PopupPanel= React.createClass(
 
 
         var title= this.props.title||'';
-        //var newChildren= React.Children.map(this.props.children, (c) => {
-        //        return React.cloneElement(c, {closeDialog:this.doClose.bind(this)})
-        //    })
 
         return (
                 <div style={rootStyle} className={'popup-panel-shadow disable-select'}
@@ -155,7 +149,7 @@ export var PopupPanel= React.createClass(
                             <image className={'popup-panel-header'}
                                    src= {`${getRootURL()}images/blue_delete_10x10.gif`}
                                    style= {{position:'absolute', right:'0px', top:'0px'}}
-                                   onClick={this.doClose} />
+                                   onClick={this.askParentToClose} />
 
                         </div>
                         <div style={{display:'table'}}>
