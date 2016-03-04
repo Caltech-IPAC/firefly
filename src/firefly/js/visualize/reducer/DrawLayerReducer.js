@@ -133,7 +133,7 @@ function detachLayerFromPlot(drawLayer,action,factory) {
     var plotIdAry= dlPlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
     visiblePlotIdAry= visiblePlotIdAry.filter( (id) => !inputPlotIdAry.includes(id));
 
-    drawLayer= Object.assign(drawLayer, factory.getLayerChanges(drawLayer,action), {plotIdAry, visiblePlotIdAry});
+    drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action), {plotIdAry, visiblePlotIdAry});
     if (drawLayer.hasPerPlotData) {
         inputPlotIdAry.forEach( (plotId) =>
                       drawLayer.drawData= detachPerPlotData(drawLayer.drawData,plotId));

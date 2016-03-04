@@ -61,60 +61,79 @@ function formatNumber(num, fractionDigits=7)
 
 /**
  * tabularize the area statistics into summary and stats two sections for popup display
- * @param wpResult
+ * @param {object} wpResult
+ * @param {object} cc
  * @returns { object } {statsSummary: array (for summary items), statsTable: array (for table rows)}}
  */
 
 function tabulateStatics(wpResult, cc) {
 
     const SSummary = 'statsSummary';
-    const STable = 'statsTable';
+    const STable   = 'statsTable';
+    const ipMetrics = [Metrics.MIN, Metrics.MAX, Metrics.CENTROID, Metrics.FW_CENTROID];
+    const bands  = wpResult.Band_Info;
+    const noBand = 'NO_BAND';
 
-    let b = wpResult.Band_Info.NO_BAND;
-    let tblData = {};
+    var bandData = {};
 
-    tblData[SSummary] = [
-                            [b.MEAN.desc,  formatNumber(b.MEAN.value)+ ' ' + b.MEAN.units],
-                            [b.STDEV.desc, formatNumber(b.STDEV.value) + ' ' +  b.STDEV.units],
-                            [b.INTEGRATED_FLUX.desc,
-                              formatNumber(b.INTEGRATED_FLUX.value) + ' ' + b.INTEGRATED_FLUX.units]
-                        ];
+    function getOneStatSet(b) {
 
-    tblData[STable] = [['', 'Position', 'Value']];
+        let tblData = {};
 
-    let ipMetrics = [Metrics.MIN, Metrics.MAX, Metrics.CENTROID, Metrics.FW_CENTROID];
+        tblData[SSummary] = [
+            [b.MEAN.desc, formatNumber(b.MEAN.value) + ' ' + b.MEAN.units],
+            [b.STDEV.desc, formatNumber(b.STDEV.value) + ' ' + b.STDEV.units],
+            [b.INTEGRATED_FLUX.desc,
+                formatNumber(b.INTEGRATED_FLUX.value) + ' ' + b.INTEGRATED_FLUX.units]
+        ];
 
-    for (let i = 0; i < ipMetrics.length; i++) {
-        if (!b.hasOwnProperty(ipMetrics[i])) {
-            continue;
+        tblData[STable] = [{'cells': ['', 'Position', 'Value']}];
+
+        for (let i = 0; i < ipMetrics.length; i++) {
+            if (!b.hasOwnProperty(ipMetrics[i])) {
+                continue;
+            }
+
+            const item = b[ipMetrics[i]];
+            let ipt, wpt;
+            let hmsRA, hmsDec;
+            let statsRow = [];
+
+            // item title
+            statsRow.push(item.desc);
+
+            // item location
+            ipt = parseImagePt(item.ip);
+            wpt = cc.getWorldCoords(ipt);
+            hmsRA = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
+            hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
+            statsRow.push('RA: ' + hmsRA + '\n' + 'DEC: ' + hmsDec);
+
+            // item value
+            if (item.value === null || item.value === undefined) {
+                statsRow.push('');
+            } else {
+                statsRow.push(formatNumber(item.value) + ' ' + item.units);
+            }
+
+            tblData[STable].push({'cells': statsRow, 'worldPt': wpt});
         }
-
-        var item = b[ipMetrics[i]];
-        var ipt, wpt;
-        var hmsRA, hmsDec;
-        var statsRow = [];
-
-        // item title
-        statsRow.push(item.desc);
-
-        // item location
-        ipt = parseImagePt(item.ip);
-        wpt = cc.getWorldCoords(ipt);
-        hmsRA  = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
-        hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
-        statsRow.push('RA: ' +  hmsRA + '\n' + 'DEC: ' + hmsDec);
-
-        // item value
-        if (item.value === null || item.value === undefined) {
-            statsRow.push('');
-        } else {
-            statsRow.push(formatNumber(item.value) + ' ' + item.units);
-        }
-
-        tblData[STable].push(statsRow);
+        return tblData;
     }
 
-    return tblData;
+    if (bands.hasOwnProperty(noBand)) {
+        bandData[noBand] = getOneStatSet(bands[noBand]);
+    } else {
+        const bandName = ['Blue', 'Red', 'Green'];
+
+        bandName.forEach((value) => {
+            if (bands.hasOwnProperty(value)) {
+                bandData[value] = getOneStatSet(bands[value]);
+            }
+        });
+    }
+
+    return bandData;
 }
 
 /**
@@ -141,7 +160,7 @@ function stats(pv) {
             var tblData = tabulateStatics(wpResult, cc);
 
             //console.log(wpResult);
-            showImageAreaStatsPopup(p.title, tblData);
+            showImageAreaStatsPopup(p.title, tblData, pv.plotId);
         })
         .catch ( (e) => {
             logError(`error, stat , plotId: ${p.plotId}`, e);
@@ -237,7 +256,7 @@ export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, s
                            tip='Show statistics for the selected area'
                            horizontal={true}
                            visible={showStats}
-                           onClick={() => stats(pv)}/>
+                           onClick={() => stats(pv, dlAry)}/>
 
             <ToolbarButton icon={SELECTED}
                            tip='Mark data in area as selected'

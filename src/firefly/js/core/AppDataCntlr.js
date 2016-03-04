@@ -31,6 +31,7 @@ const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
 const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 
+
 const SHOW_SEARCH       = `${APP_DATA_PATH}.searchShow`;
 const UPDATE_LAYOUT     = `${APP_DATA_PATH}.updateLayout`;
 

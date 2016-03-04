@@ -64,7 +64,8 @@ export default {
     DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot
+    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
+    dispatchModifyCustomField
 };
 
 /**
