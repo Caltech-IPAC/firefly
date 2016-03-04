@@ -13,6 +13,8 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {LO_XPD_MODE} from '../../core/AppDataCntlr.js';
+import {VisToolbar} from '../ui/VisToolbar.jsx';
+import {VIS_TOOLBAR_HEIGHT} from '../ui/VisToolbarView.jsx';
 
 import './ExpandedTools.css';
 
@@ -32,6 +34,7 @@ const tStyle= {
 };
 
 
+export const EXPANDED_TOOL_HEIGHT= 60 +VIS_TOOLBAR_HEIGHT;
 
 
 function createOptions(expandedMode,singleAutoPlay) {
@@ -80,23 +83,23 @@ function createOptions(expandedMode,singleAutoPlay) {
 
 
 
-const s= {
+const closeButtonStyle= {
     display: 'inline-block',
-    paddingLeft: 10
+    padding: '1px 12px 0 1px'
 };
 
 const singlePlotTitleStyle= {
     display: 'inline-block',
     paddingLeft: 10,
     position: 'relative',
-    top: -3
+    top: 12
 };
 
 const gridPlotTitleStyle= {
     display: 'inline-block',
     paddingLeft: 10,
     position: 'relative',
-    top: -3,
+    top: 12,
     lineHeight: '2em',
     fontSize: '10pt',
     fontWeight: 'bold',
@@ -128,16 +131,23 @@ export function ExpandedTools({visRoot}) {
         }
     }
     return (
-        <div style={{width:'100%', height:70}} className='disable-select'>
-            <CloseButton style={s} onClick={() => dispatchUpdateLayout(LO_XPD_MODE.none)}/>
-            {plotTitle}
-            <div style={s}></div>
-            <div style={{display: 'inline-block', float:'right'}}>
-                <WhichView  visRoot={visRoot}/>
-                {createOptions(expandedMode,singleAutoPlay)}
-                <PagingControl plotViewAry={plotViewAry}
-                                         activePlotId={activePlotId}
-                                         expandedMode={expandedMode} />
+        <div>
+            <div style={{display: 'flex', paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
+                <CloseButton style={closeButtonStyle} onClick={() => dispatchUpdateLayout(LO_XPD_MODE.none)}/>
+                <div style={{'flexGrow':1}}>
+                    <VisToolbar/>
+                </div>
+            </div>
+            <div style={{width:'100%', height:70, marginTop: 7}} className='disable-select'>
+                {plotTitle}
+                <div style={{ display: 'inline-block', paddingLeft: 10}}></div>
+                <div style={{display: 'inline-block', float:'right'}}>
+                    <WhichView  visRoot={visRoot}/>
+                    {createOptions(expandedMode,singleAutoPlay)}
+                    <PagingControl plotViewAry={plotViewAry}
+                                   activePlotId={activePlotId}
+                                   expandedMode={expandedMode} />
+                </div>
             </div>
         </div>
     );
@@ -157,13 +167,16 @@ function WhichView({visRoot}) {
     return (
         <div style={{display: 'inline-block', verticalAlign:'top'}}>
             <ToolbarButton icon={ONE} tip={'Show single image at full size'}
+                           imageStyle={{width:24,height:24}}
                            enabled={true} visible={true}
                            horizontal={true}
                            onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>
             <ToolbarButton icon={GRID} tip={'Show all as tiles'}
                            enabled={true} visible={true} horizontal={true}
+                           imageStyle={{width:24,height:24}}
                            onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
+                           imageStyle={{width:24,height:24}}
                            enabled={true} visible={true} horizontal={true}
                            onClick={() =>showExpandedOptionsPopup(visRoot.plotViewAry) }/>
         </div>
