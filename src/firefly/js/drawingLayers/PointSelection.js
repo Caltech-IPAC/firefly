@@ -67,33 +67,22 @@ function creator(initPayload) {
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
     if (dataType!==DataTypes.DATA) return null;
-
-    if (isActivePlotView(visRoot(), plotId)) {
-        return selectAPoint(drawLayer,action, true);
-    }
-    else {
-        return selectAPoint(drawLayer,action, false);
-    }
-
+    var active= isActivePlotView(visRoot(), plotId);
+    var drawAry= selectAPoint(drawLayer,action, active);
+    return drawAry || lastDataRet;
 }
 
 
 
 function getLayerChanges(drawLayer, action) {
-    //switch (action.type) {
-    //    case DrawLayerCntlr.SELECT_POINT:
-    //        return selectAPoint(drawLayer,action);
-    //        break;
-    //    case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-    //        break;
-    //}
     return null;
 }
 
 function makeSelectedPt(screenPt,plotId) {
     var plot= primePlot(visRoot(),plotId);
     var cc= CsysConverter.make(plot);
-    var selPt= cc.getWorldCoords(screenPt);
+    var selPt= cc.getWorldCoords(screenPt); //todo put back
+
     if (!selPt) selPt= cc.getImageCoords(screenPt);
     return selPt;
 }
@@ -101,7 +90,9 @@ function makeSelectedPt(screenPt,plotId) {
 
 function selectAPoint(drawLayer, action, active) {
     var {screenPt,plotId}= action.payload;
+    if (!screenPt) return null;
     var selPt= makeSelectedPt(screenPt,plotId);
+    if (!selPt) return null;
     var drawAry;
     if (active) {
         drawAry= [
@@ -110,7 +101,7 @@ function selectAPoint(drawLayer, action, active) {
         ];
     }
     else {
-        drawAry= [PointDataObj.make(selPt,6,DrawSymbol.CIRCLE)];
+        drawAry= [PointDataObj.make(selPt,5,DrawSymbol.CIRCLE)];
     }
     return  drawAry;
 }

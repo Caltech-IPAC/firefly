@@ -6,12 +6,12 @@ import update from 'react-addons-update';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
 import WebPlot, {clonePlotWithZoom} from '../WebPlot.js';
-import PlotViewUtil, {
-    primePlot,
-    applyToOnePvOrGroup,
-    getPlotViewIdxById,
-    findPlotGroup,
-    getPlotViewById} from '../PlotViewUtil.js';
+import {logError} from '../../util/WebUtil.js';
+import {primePlot,
+        applyToOnePvOrGroup,
+        getPlotViewIdxById,
+        findPlotGroup,
+        getPlotViewById} from '../PlotViewUtil.js';
 import {makeImagePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 
@@ -142,7 +142,12 @@ function installTiles(state, action) {
     const {plotId, primaryStateJson,primaryTiles,overlayStateJsonAry,overlayTilesAry }= action.payload;
     var pv= getPlotViewById(state,plotId);
     var plot= primePlot(pv);
-    if (!plot) return plotViewAry;
+
+    if (!plot || !primaryStateJson) {
+        logError('primePlot undefined or primaryStateJson is not set.', new Error());
+        console.log('installTiles: state, action', state, action);
+        return plotViewAry;
+    }
 
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
