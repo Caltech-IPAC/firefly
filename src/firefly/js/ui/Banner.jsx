@@ -91,9 +91,6 @@ const Banner = React.createClass({
                             <div style={{width: '100%', height: '100%', padding: '0px', margin: '0px'}}>
                                 {altAppIcon(this.props.altAppIcon)}
                             </div>
-                            <div aria-hidden='true' style={{width: '100%', height: '100%', padding: '0px', margin: '0px', display: 'none'}}>
-                                {visPreview(this.props.visPreview)}
-                            </div>
                         </div>
                     </div>
                 </div>
