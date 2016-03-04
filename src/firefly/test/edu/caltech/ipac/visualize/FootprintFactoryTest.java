@@ -1,5 +1,6 @@
 package edu.caltech.ipac.visualize;
 
+import edu.caltech.ipac.firefly.commands.JwstFootprintCmd;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
@@ -187,6 +188,29 @@ public class FootprintFactoryTest {
                     assertEquals(values[i].name(), valHst[i]);
                 }
             }
+		}
+		
+		FOOTPRINT[] fp1 = FOOTPRINT.values();
+		for (int f = 0; f < fp1.length; f++) {
+			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp1[f]);//.values();
+			HashMap<String, String> commandMap = new HashMap<>();
+			//commandMap.put(JwstFootprintCmd.CommandName + fp1[f].name(), null);
+			//if (fp1[f].equals(FOOTPRINT.JWST)) {
+				for (int i = 0; i < values.length; i++) {
+					FOOTPRINT mission = values[i].getMission();
+					String inst = values[i].getLabel();
+					commandMap.put(JwstFootprintCmd.CommandName + inst, mission + (mission.equals(FOOTPRINT.HST) ? " " : "/") + inst);
+				}
+			//}
+			Set<String> keySet = commandMap.keySet();
+			for (String key : keySet) {
+				String string = commandMap.get(key);
+				if(string.contains("HST")){
+					Assert.assertTrue(string.contains(" "));
+				}else{
+					Assert.assertTrue(key+": "+string+ " fails",string.contains("/"));
+				}
+			}
 		}
 	}
 

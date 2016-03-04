@@ -180,25 +180,25 @@ public class FootprintFactory  {
                 +"POLYGON  359.99818056  -0.00391111 360.01389167   0.01165833 360.02947778  -0.00406666 360.01376667  -0.01963889 359.99818056  -0.00391111 "),
 
         //"telescope" : hst,"instrument" : acs,"aperture" : wfc,"raV1" : 359.92710559,"decV1" : -0.06636381,"paV3" : 0
-        WFC(FOOTPRINT.HST,
+        WFC("ACS/", FOOTPRINT.HST,
                 "POLYGON  359.97153610   0.00394449 360.02780819   0.00184727 360.02867769  -0.02606378 359.97321946  -0.02329159 359.97153610   0.00394449 "
                 +"POLYGON  359.97016108   0.03281108 360.02699980   0.03145827 360.02782208   0.00258060 359.97155555   0.00463893 359.97016108   0.03281108 "),
 
         //"telescope" : hst,"instrument" : acs,"aperture" : jhrc,"raV1" : 359.94268891,"decV1" : -0.13117193,"paV3" : 0
-        HRC(FOOTPRINT.HST,
+        HRC("ACS/", FOOTPRINT.HST,
                 "POLYGON  360.00400540  -0.00392492 359.99599432  -0.00308881 359.99597208   0.00397226 360.00404983   0.00315004 360.00400540  -0.00392492 "),
 
         //"telescope" : hst,"instrument" : acs,"aperture" : jsbc,"raV1" : 359.9428278,"decV1" : -0.12968583,"paV3" : 0
-        SBC(FOOTPRINT.HST,
+        SBC("ACS/", FOOTPRINT.HST,
                 "POLYGON  360.00477485  -0.00375547 359.99528321  -0.00286381 359.99522208   0.00569725 360.00482483   0.00476670 360.00477485  -0.00375547 "),
 
         //"telescope" : hst,"instrument" : wfc3,"aperture" : iuvis1,"raV1" : 0,"decV1" : 0,"paV3" : 0; "aperture" : iuvis2,"raV1" : 0,"decV1" : 0,"paV3" : 0
-        UVIS(FOOTPRINT.HST,
+        UVIS("WFC3/", FOOTPRINT.HST,
                 "POLYGON    0.01545556  -0.01782778  -0.01446667   0.01608611   0.00152500   0.03198333   0.03108889  -0.00191111   0.01545556  -0.01782778 "
                 + "POLYGON   -0.00058333  -0.03417222  -0.03089722  -0.00026389  -0.01472778   0.01583889   0.01521944  -0.01804722  -0.00058333  -0.03417222 "),
 
         //"telescope" : hst,"instrument" : wfc3,"aperture" : ir,"raV1" : 359.999825,"decV1" : -0.00241111,"paV3" : 0
-        IR(FOOTPRINT.HST,
+        IR("WFC3/",FOOTPRINT.HST,
                 "POLYGON  360.00175833  -0.02767222 359.97505000  -0.00110278 359.99865556   0.02345556 360.02604444  -0.00377500 360.00175833  -0.02767222 ")
 
 
@@ -208,10 +208,18 @@ public class FootprintFactory  {
 		
 		private String stc;
 		private FOOTPRINT mission;
+		private String label;
 		
 		INSTRUMENTS(FOOTPRINT fp, String stcDef) {
 			this.stc = stcDef;
 			this.mission = fp;
+			this.label = this.name();
+		}
+		
+		INSTRUMENTS(String prefix, FOOTPRINT fp, String stcDef) {
+			this.stc = stcDef;
+			this.mission = fp;
+			this.label = prefix+this.name();
 		}
 		public String getStc() {
 			return this.stc;
@@ -219,6 +227,9 @@ public class FootprintFactory  {
 
 		public FOOTPRINT getMission() {
 			return this.mission;
+		}
+		public String getLabel(){
+			return this.label;
 		}
 	}
 	

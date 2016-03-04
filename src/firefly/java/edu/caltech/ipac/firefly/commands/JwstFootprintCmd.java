@@ -117,7 +117,7 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public JwstFootprintCmd(INSTRUMENTS inst) {
         super(CommandName+inst.name());//string constructor should have correspondent STRING.prop
         this.mission = inst.getMission();
-        this.name = mission+"/"+inst.name();
+		this.name = mission + (mission.equals(FOOTPRINT.HST) ? " " : "/") + inst.getLabel();
         //Yi: For HST, no "prelim."
         String label = name;
         if(!mission.equals(FOOTPRINT.HST)){
