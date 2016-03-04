@@ -54,6 +54,7 @@ import STRETCH from 'html/images/icons-2014/28x28_Log.png';
 import MARKER from 'html/images/icons-2014/MarkerCirclesIcon_28x28.png';
 
 
+export const VIS_TOOLBAR_HEIGHT=34;
 
 
 /**
@@ -67,7 +68,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
 
     var rS= {
         width: 'calc(100% - 2px)',
-        height: 34,
+        height: VIS_TOOLBAR_HEIGHT,
         display: 'inline-block',
         position: 'relative',
         verticalAlign: 'top',
