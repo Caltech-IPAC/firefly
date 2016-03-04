@@ -11,7 +11,8 @@ export var Tabs = React.createClass({
     mixins : [PureRenderMixin],
 
     propTypes: {
-        defaultSelected:  React.PropTypes.number
+        defaultSelected:  React.PropTypes.number,
+        onTabSelect: React.PropTypes.func
     },
 
     getDefaultProps() {
@@ -28,10 +29,14 @@ export var Tabs = React.createClass({
     },
 
     onSelect(index, content) {
+        const {onTabSelect} = this.props;
         this.setState({
-            selectedIdx : index,
+            selectedIdx: index,
             content
         });
+        if (onTabSelect) {
+            onTabSelect(index);
+        }
     },
 
     render () {
