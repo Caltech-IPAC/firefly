@@ -8,7 +8,7 @@ import {UserZoomTypes} from '../ZoomUtil.js';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
 import {getZoomMax, getNextZoomLevel} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
-
+import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 
 import zoomDown from 'html/images/icons-2014/ZoomOut.png';
 import zoomUp from 'html/images/icons-2014/ZoomIn.png';
@@ -16,7 +16,7 @@ import zoomOriginal from 'html/images/icons-2014/Zoom1x.png';
 import zoomFit from 'html/images/icons-2014/28x28_ZoomFitToSpace.png';
 import zoomFill from 'html/images/icons-2014/ZoomFillWidth.png';
 
-const CLICK_TIME= 200;
+const CLICK_TIME= 20000;
 const makeZT= (name,icon,tip,utilZt) => ({name,icon,tip,utilZt});
 
 export const ZoomType= {
@@ -47,7 +47,7 @@ function getZoomer() {
             else if (deltaClick < CLICK_TIME) {
                 //todo
                 console.log('todo show zoom options popup');
-                //ZoomOptionsPopup.showZoomOps();
+                showZoomOptionsPopup();
                 return;
             }
         }
