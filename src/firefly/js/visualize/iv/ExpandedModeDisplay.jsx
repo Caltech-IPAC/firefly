@@ -6,9 +6,9 @@ import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
 import {flux} from '../../Firefly.js';
-import {ExpandedModeDisplayView} from './ExpandedModeDisplayView.jsx';
-
-
+import {expandedPlotViewAry} from '../PlotViewUtil.js';
+import {ExpandedTools} from './ExpandedTools.jsx';
+import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 
 export class ExpandedModeDisplay extends Component {
 
@@ -46,8 +46,24 @@ export class ExpandedModeDisplay extends Component {
 
 
     render() {
+        const {visRoot:vr}= this.state;
+        if (vr.expandedMode===ExpandType.COLLAPSE) return false;
+
+        const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
+
+        const {plotViewAry,activePlotId}= vr;
+        const pvAry= expandedPlotViewAry(plotViewAry,activePlotId).map( (pv) => pv.plotId);
+
+
+
         return (
-            <ExpandedModeDisplayView visRoot={this.state.visRoot}
+            <MultiImageViewerView viewerPlotIds={pvAry}
+                                  layoutType={layoutType}
+                                  Toolbar={ExpandedTools}
+                                  viewerId={'EXPANDED_VIEW'}
+                                  visRoot={vr}
+                                  additionalStyle={{flex:'1 1'}} 
+                                  defaultDecoration={false} 
             />
         );
     }

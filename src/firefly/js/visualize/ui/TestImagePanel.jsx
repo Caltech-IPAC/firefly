@@ -16,11 +16,14 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import {getDrawLayerByType, getActivePlotView, isDrawLayerAttached} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {parseWorldPt} from '../Point.js';
+import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {dispatchAddImages} from '../MultiViewCntlr.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {flux} from '../../Firefly.js';
+import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 
 import {showImageSelPanel} from  './ImageSelectPanel.jsx';
 
@@ -100,6 +103,7 @@ function showResults(success, request) {
     dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
 
 
+    dispatchAddImages('imageViews', ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4']);
 
     //====temp
 }
@@ -148,19 +152,10 @@ function TestImagePanelView({selectOn,distOn}) {
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
+                <MultiImageViewer  viewerId='imageViews' canAdd={true} Toolbar={MultiViewStandardToolbar}/>
+            </div>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage3Color'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage1'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage2'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage3'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage4'/>
             </div>
         </div>
     );

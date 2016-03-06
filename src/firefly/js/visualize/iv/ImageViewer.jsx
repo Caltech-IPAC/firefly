@@ -4,6 +4,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
+import shallowequal from 'shallowequal';
 import {getPlotViewById,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerView} from './ImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -63,8 +64,7 @@ export class ImageViewer extends Component {
         if (allPlots!==state.allPlots  ||
             extRoot!==state.extRoot ||
             mousePlotId!==state.mousePlotId ||
-            (dlAry!==state.dlAry &&
-            drawLayersDiffer(drawLayersAry,state.drawLayersAry))) {
+            !shallowequal(drawLayersAry,state.drawLayersAry)) {
             var {plotId}= this.props;
             var plotView= getPlotViewById(allPlots,plotId);
             this.setState({plotView, dlAry, allPlots, drawLayersAry,extRoot,mousePlotId});

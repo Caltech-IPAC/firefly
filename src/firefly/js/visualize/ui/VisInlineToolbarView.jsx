@@ -7,7 +7,7 @@ import {primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
+import {dispatchChangeExpandedMode, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -20,10 +20,6 @@ function expand(pv) {
     //console.log('todo- expand:' + primePlot(pv).title);
     dispatchSetLayoutMode( LO_EXPANDED.images );
     dispatchChangeExpandedMode(true);
-}
-
-function deletePlot(pv) {
-    console.log('todo- delete:' + primePlot(pv).title);
 }
 
 
@@ -63,7 +59,7 @@ export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand,
                                tip='Delete Image'
                                horizontal={true}
                                visible={showDelete}
-                               onClick={() => deletePlot(pv)}/>
+                               onClick={() => dispatchDeletePlotView(pv.plotId)}/>
             </div>
 
         </div>

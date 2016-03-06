@@ -3,7 +3,6 @@
  */
 
 import React from 'react';
-import _ from 'lodash';
 import FieldGroupCntlr from './FieldGroupCntlr.js';
 import FieldGroupUtils from './FieldGroupUtils.js';
 import {flux} from '../Firefly.js';

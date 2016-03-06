@@ -98,6 +98,7 @@ const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
 const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
 
 const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
+const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
 
 /**
  * action should contain:
@@ -171,7 +172,8 @@ export default {
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST
+    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST,
+    DELETE_PLOT_VIEW
 };
 
 
@@ -423,6 +425,11 @@ export function dispatchExpandedList(plotIdAry) {
     flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
 }
 
+
+export function dispatchDeletePlotView(plotId) {
+    flux.process({ type: DELETE_PLOT_VIEW, payload: {plotId} });
+}
+
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
@@ -560,6 +567,9 @@ function reducer(state=initState(), action={}) {
         case CHANGE_POINT_SELECTION:
             retState= changePointSelection(state,action);
             break;
+        case DELETE_PLOT_VIEW:
+            retState= deletePlotView(state,action);
+            break;
         default:
             break;
 
@@ -639,6 +649,15 @@ function changeExpandedMode(state,action) {
     return clone(state, changes);
 }
 
+
+function deletePlotView(state,action) {
+    const {plotId}= action.payload;
+    if (!state.plotViewAry.find( (pv) => pv.plotId===plotId)) return state;
+    
+    state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!=plotId)});
+    if (state.activePlotId===plotId) state.activePlotId= state.plotViewAry[0];
+    return state;
+}
 
 
 //todo

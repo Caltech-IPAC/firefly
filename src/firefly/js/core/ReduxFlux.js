@@ -29,6 +29,7 @@ import * as TablesUiCntlr from '../tables/TablesUiCntlr';
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -66,7 +67,8 @@ const reducers = {
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
-    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
+    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
+    [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer
 };
 
 let redux = null;
