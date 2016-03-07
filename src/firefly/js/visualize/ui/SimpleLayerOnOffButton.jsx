@@ -39,7 +39,7 @@ SimpleLayerOnOffButton.propTypes= {
     todo: PropTypes.bool,
     iconOff : PropTypes.string,
     onClick : PropTypes.func,
-    isIconOn : PropTypes.boolean
+    isIconOn : PropTypes.bool
 };
 
 SimpleLayerOnOffButton.defaultProps= {

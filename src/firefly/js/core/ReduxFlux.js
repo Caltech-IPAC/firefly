@@ -36,6 +36,7 @@ import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
+import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -46,7 +47,7 @@ const actionCreators = new Map();
 
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
-                                                     PointSelection, StatsPoint );
+                                                     PointSelection, StatsPoint, NorthUpCompass );
 
 
 /**

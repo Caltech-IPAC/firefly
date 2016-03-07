@@ -413,8 +413,8 @@ export class CysConverter {
 
         // convert image workspace to screen
         const zFact= this.zoomFactor;
-        var sx= Math.round(imageWorkspaceX*zFact);
-        var sy= Math.round((this.dataHeight - imageWorkspaceY) *zFact);
+        var sx= Math.floor(imageWorkspaceX*zFact);
+        var sy= Math.floor((this.dataHeight - imageWorkspaceY) *zFact);
 
         // convert screen to viewPort
         retPt.x=sx-this.viewPort.x;
@@ -449,7 +449,7 @@ export class CysConverter {
                 retval= this.makeSPtFromIWPt(this.getImageWorkSpaceCoords(pt), altZoomLevel);
                 break;
             case Point.VP_PT:
-                makeScreenPt(pt.x+this.viewPort.x, pt.y+this.viewPort.y);
+                retval = makeScreenPt(pt.x+this.viewPort.x, pt.y+this.viewPort.y);
                 break;
             case Point.W_PT:
                 var checkedPt= convertToCorrect(pt);
@@ -475,8 +475,8 @@ export class CysConverter {
     makeSPtFromIWPt(iwpt, altZoomLevel) {
         if (!iwpt) return null;
         const zoom= altZoomLevel || this.zoomFactor;
-        return makeScreenPt(Math.round(iwpt.x*zoom),
-                            Math.round((this.dataHeight - iwpt.y) *zoom) );
+        return makeScreenPt(Math.floor(iwpt.x*zoom),
+                            Math.floor((this.dataHeight - iwpt.y) *zoom) );
     }
 
 
