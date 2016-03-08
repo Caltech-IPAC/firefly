@@ -7,7 +7,11 @@ import React, {PropTypes} from 'react';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {getDlAry} from '../DrawLayerCntlr.js';
-import DrawLayerCntlr from '../DrawLayerCntlr.js';
+import {dispatchCreateDrawLayer,
+        dispatchAttachLayerToPlot,
+        dispatchDetachLayerFromPlot,
+        dispatchModifyCustomField,
+        dispatchDestroyDrawLayer} from '../DrawLayerCntlr.js';
 import {getDrawLayerByType, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 
@@ -34,12 +38,10 @@ function destroyDrawLayer(plotId)
 {
     const dl = getDrawLayerByType(getDlAry(), typeId);
 
-    if (dl) {
-        if (!isDrawLayerAttached(dl, plotId)) {
-            DrawLayerCntlr.dispatchDetachLayerFromPlot(typeId, plotId, false, false);
-        }
-        DrawLayerCntlr.dispatchDestroyDrawLayer(typeId);
+    if (isDrawLayerAttached(dl, plotId)) {
+        dispatchDetachLayerFromPlot(typeId, plotId, false, false);
     }
+    dispatchDestroyDrawLayer(typeId);
 }
 
 
@@ -100,47 +102,48 @@ ImageStats.propTypes= {
  *
  */
 
-class ImageStatsTab extends React.Component {
+function ImageStatsTab({statsResult, plotId})
+{
+    var bandList = Object.keys(statsResult);
 
-    constructor (props) {
-        super(props);
-
-        this.bandList = Object.keys(props.statsResult);
-        this.state = {
-            selected: 0
-        };
-    }
-
-    onClickTab (index) {
-        this.setState({selected: index});
-    }
-
-    render() {
-        var {statsResult, plotId} = this.props;
-        var crtBand = this.bandList[this.state.selected];
-
-        var allTabs = this.bandList.map(function (bandName, index) {
-             return (
-                <Tab name={bandName.toUpperCase()} key={index}>
-                    <ImageAreaStatsTable statsTbl={statsResult[bandName].statsTable} plotId={plotId}/>
-                </Tab>
-            );
-        });
+    var allTabs = bandList.map((bandName, index) => {
+        var crtBand = statsResult[bandName];
 
         return (
-            <div>
-                <ImageAreaStatsSummary statsSummary={statsResult[crtBand].statsSummary}/>
-                <Tabs onTabSelect={this.onClickTab.bind(this)}>
-                    {allTabs}
-                </Tabs>
-                <ImageAreaStatsClose plotId={plotId}/>
-            </div>
+              <Tab name={bandName.toUpperCase()} key={index}>
+                <div>
+                    <ImageAreaStatsSummary statsSummary={crtBand.statsSummary}/>
+                    <ImageAreaStatsTable statsTbl={crtBand.statsTable} plotId={plotId}/>
+                </div>
+            </Tab>
         );
-    }
+    });
+
+    return (
+        <div style={rS}>
+            <Tabs>
+                {allTabs}
+            </Tabs>
+            <ImageAreaStatsClose plotId={plotId}/>
+        </div>
+    );
 }
 
 ImageStatsTab.propTypes= {
-    statsResult: PropTypes.object.isRequired,
+    statsResult: PropTypes.shape({
+        Blue:  PropTypes.shape({
+            statsSummary: PropTypes.array.isRequired,
+            statsTable: PropTypes.array.isRequired
+        }).isRequired,
+        Red:   PropTypes.shape({
+            statsSummary: PropTypes.array.isRequired,
+            statsTable: PropTypes.array.isRequired
+        }).isRequired,
+        Green: PropTypes.shape({
+            statsSummary: PropTypes.array.isRequired,
+            statsTable: PropTypes.array.isRequired
+        }).isRequired
+    }).isRequired,
     plotId: PropTypes.string
 };
 
@@ -153,14 +156,12 @@ ImageStatsTab.propTypes= {
 
 function ImageAreaStatsSummary({statsSummary})
 {
-    var summaryRows = statsSummary.map(function(summaryLine, index) {
-            return (
-                <tr key={index}>
-                   <td> {summaryLine[0] + ':'} </td>
-                   <td> {summaryLine[1]}</td>
-                </tr>
-            );
-        });
+    var summaryRows = statsSummary.map((summaryLine, index) => (
+            <tr key={index}>
+                <td> {summaryLine[0] + ':'} </td>
+                <td> {summaryLine[1]}</td>
+            </tr>
+        ));
 
 
     return (
@@ -194,11 +195,9 @@ function ImageAreaStatsTable ({statsTbl, plotId})
         border: '1px solid black'
     };
 
-    var tableRows = statsTbl.map(function (statsRow, index) {
-        return (
-            <ImageAreaStatsTableRow key={index} statsRow={statsRow} plotId={plotId}/>
+    var tableRows = statsTbl.map((statsRow, index) =>
+            <ImageAreaStatsTableRow key={index} statsRow={statsRow} plotId={plotId} isTitle={!index}/>
         );
-    });
 
     return (
         <div style={rS}>
@@ -233,10 +232,12 @@ class ImageAreaStatsTableRow extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {hover: false};
+
+        this.state = {  hover: false };
+
         this.rowStates = {
             hover: {
-                backgroundColor: 'yellow',
+                backgroundColor: '#d3fad1',
                 cursor: 'text'
             },
 
@@ -253,6 +254,10 @@ class ImageAreaStatsTableRow extends React.Component {
     }
 
     onMouseHover() {
+        if (this.props.isTitle) {
+            return;
+        }
+
         this.setState({hover: true});
 
         const dl = getDrawLayerByType(getDlAry(), typeId);
@@ -260,48 +265,48 @@ class ImageAreaStatsTableRow extends React.Component {
         //const {worldPt} = this.props.statsRow;
 
         if (!dl) {
-            DrawLayerCntlr.dispatchCreateDrawLayer(typeId);
+            dispatchCreateDrawLayer(typeId);
         }
 
         if (!isDrawLayerAttached(dl, plotId)) {
-            DrawLayerCntlr.dispatchAttachLayerToPlot(typeId, plotId);
+            dispatchAttachLayerToPlot(typeId, plotId);
         }
 
-        DrawLayerCntlr.dispatchModifyCustomField(typeId, {worldPt}, plotId, false);
+        dispatchModifyCustomField(typeId, {worldPt}, plotId, false);
     }
 
     onMouseOut() {
+        if (this.props.isTitle) {
+            return;
+        }
+
         this.setState({hover: false});
 
         const {plotId} = this.props;
         const dl = getDrawLayerByType(getDlAry(), typeId);
 
-        if (dl && isDrawLayerAttached(dl, plotId)) {
-            DrawLayerCntlr.dispatchModifyCustomField(typeId, {}, plotId, false);
+        if (isDrawLayerAttached(dl, plotId)) {
+            dispatchModifyCustomField(typeId, {}, plotId, false);
         }
     }
 
     render() {
         var trS;
-        var cells = this.props.statsRow.cells;
 
-        if (!cells[0]) {
+        if (this.props.isTitle) {
             trS = this.rowStates.title;
         } else {
             trS = this.state.hover ? this.rowStates.hover : this.rowStates.nohover;
         }
 
-        var tableCells = cells.map(function (cell, index) {
+        var tableCells = this.props.statsRow.cells.map( (cell, index) => {
             const newline = '\n';
             var dS = {  border: '1px solid black',
                         padding: 5  };
 
             // cell contains newline (ex. RA:..\n DEC:...)
-
             if (cell.includes(newline)) {
-                var br = cell.split(newline).map(function (line, id) {
-                    return (<span key={id}>{line}<br/></span>);
-                });
+                var br = cell.split(newline).map((line, id) => <span key={id}>{line}<br/></span>);
 
                 return (
                     <td key={index} style={dS}>
@@ -328,7 +333,11 @@ class ImageAreaStatsTableRow extends React.Component {
 }
 
 ImageAreaStatsTableRow.propTypes={
-    statsRow: PropTypes.object.isRequired,
+    statsRow: PropTypes.shape({
+        cells: PropTypes.array.isRequired,
+        worldPt: PropTypes.object
+    }).isRequired,
+    isTitle: PropTypes.bool,
     plotId: PropTypes.string.isRequired
 };
 

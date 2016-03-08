@@ -64,8 +64,7 @@ export default {
     DT_START, DT_MOVE, DT_END,
     makeReducer, dispatchRetrieveData, dispatchChangeVisibility,
     dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot,
-    dispatchModifyCustomField
+    dispatchAttachLayerToPlot, dispatchDetachLayerFromPlot
 };
 
 /**
@@ -156,7 +155,7 @@ export function dispatchForceDrawLayerUpdate(id,plotId, useGroup= true) {
  *
  * @param {string} id make the drawLayerId or drawLayerTypeId
  */
-function dispatchDestroyDrawLayer(id) {
+export function dispatchDestroyDrawLayer(id) {
     var drawLayerId= getDrawLayerId(dlRoot(),id);
     if (drawLayerId) {
         flux.process({type: DESTROY_DRAWING_LAYER, payload: {drawLayerId} });

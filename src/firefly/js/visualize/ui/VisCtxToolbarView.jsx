@@ -107,13 +107,13 @@ function tabulateStatics(wpResult, cc) {
             wpt = cc.getWorldCoords(ipt);
             hmsRA = CoordUtil.convertLonToString(wpt.getLon(), wpt.getCoordSys());
             hmsDec = CoordUtil.convertLatToString(wpt.getLat(), wpt.getCoordSys());
-            statsRow.push('RA: ' + hmsRA + '\n' + 'DEC: ' + hmsDec);
+            statsRow.push(`RA: ${hmsRA}\nDEC: ${hmsDec}`);
 
             // item value
             if (item.value === null || item.value === undefined) {
                 statsRow.push('');
             } else {
-                statsRow.push(formatNumber(item.value) + ' ' + item.units);
+                statsRow.push(`${formatNumber(item.value)} ${item.units}`);
             }
 
             tblData[STable].push({'cells': statsRow, 'worldPt': wpt});
@@ -127,7 +127,7 @@ function tabulateStatics(wpResult, cc) {
         const bandName = ['Blue', 'Red', 'Green'];
 
         bandName.forEach((value) => {
-            if (bands.hasOwnProperty(value)) {
+            if (bands[value]) {
                 bandData[value] = getOneStatSet(bands[value]);
             }
         });
@@ -256,7 +256,7 @@ export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, s
                            tip='Show statistics for the selected area'
                            horizontal={true}
                            visible={showStats}
-                           onClick={() => stats(pv, dlAry)}/>
+                           onClick={() => stats(pv)}/>
 
             <ToolbarButton icon={SELECTED}
                            tip='Mark data in area as selected'
