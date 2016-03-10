@@ -49,7 +49,7 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
     }
 
     protected String getQueryString(TableServerRequest req) throws DataAccessException {
-        String accessUrl = req.getParam(ACCESS_URL);
+        String accessUrl = req.getSafeParam(ACCESS_URL);
         if (accessUrl == null) {
             throw new DataAccessException("could not find the parameter "+ACCESS_URL);
         }
