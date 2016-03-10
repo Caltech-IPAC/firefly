@@ -78,7 +78,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
 
         final TableServerRequest req = new TableServerRequest("ConeSearchByURL");
         req.setParam("title", getSearchTitle());
-        req.setParam("accessUrl", accessUrl.getValue());
+        req.setSafeParam("accessUrl", accessUrl.getValue());
         req.setParams(targetPanel.getFieldValues());
         req.setParams(coneOps.getParams());
 
@@ -251,7 +251,7 @@ public class LoadCatalogFromVOSearchUI implements SearchUI {
                     for (VOResourceEndpoint ep : result) {
                         final String shortName = ep.getShortName();
                         final String url = ep.getUrl();
-                        grid.setWidget(row, 0, GwtUtil.makeLinkButton("Use", "Use URL for this service",
+                        grid.setWidget(row, 0, GwtUtil.makeLinkButton("Use", "Use URL for this service "+ep.getDescription(),
                                 new ClickHandler() {
                                     @Override
                                     public void onClick(ClickEvent event) {
