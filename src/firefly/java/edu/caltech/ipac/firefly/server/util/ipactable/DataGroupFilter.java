@@ -155,7 +155,6 @@ public class DataGroupFilter {
                 DataGroupWriter.insertStatus(outf, DataGroupPart.State.COMPLETED);
                 writer.flush();
                 writer.close();
-                IpacTableUtil.sendLoadStatusEvents(meta, outf, rowsFound, DataGroupPart.State.COMPLETED);
             }
         }
     }
@@ -187,6 +186,7 @@ public class DataGroupFilter {
                     } catch (Exception e) {
                         LOG.error(e, "Unable to parse row:" + line);
                     } finally {
+                        IpacTableUtil.sendLoadStatusEvents(meta, outf, rowsFound, DataGroupPart.State.COMPLETED);
                         doclose = true;
                         close();
                     }

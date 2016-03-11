@@ -82,10 +82,6 @@ export function error(action, cause) {
     (action.err = action.err || []).push(cause);
 }
 
-export function findTblById(id) {
-    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, id]);
-}
-
 /**
  * return true is there is data within the given range.  this is needed because
  * of paging table not loading the full table.
@@ -99,20 +95,32 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
     endIdx =  endIdx >0 ? Math.min( endIdx, tableModel.totalRows) : startIdx;
     if (startIdx >=0 && endIdx > startIdx) {
         const data = get(tableModel, 'tableData.data', []);
-        const aslice = data.slice(startIdx, endIdx).filter( (v) => v  );
-        return aslice.length === (endIdx-startIdx);
+        const dataCount = Object.keys(data.slice(startIdx, endIdx)).length;
+        return dataCount === (endIdx-startIdx);
     } else return false;
 }
 
 
+export function findTblById(id) {
+    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, id]);
+}
+
 /**
- * find table ui info by tbl_ui_id and tbl_ui_gid
- * @param tid
- * @param gid
+ * find table ui_group info by tbl_ui_gid
+ * @param tbl_ui_gid
  * @returns {*}
  */
-export function findUiById(tbl_ui_id, tbl_ui_gid) {
-    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, tbl_ui_gid, tbl_ui_id]);
+export function findUiGroupById(tbl_ui_gid) {
+    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'results', tbl_ui_gid]);
+}
+
+/**
+ * find working table state by tbl_ui_id
+ * @param tbl_ui_id
+ * @returns {*}
+ */
+export function findTablePanelStateById(tbl_ui_id) {
+    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'work', tbl_ui_id]);
 }
 
 /**
@@ -269,10 +277,10 @@ export function uniqueTblId() {
     return uniqueId('tbl_id-');
 }
 
-export function uniqueTblUiId() {
-    return uniqueId('tbl_ui_id-');
-}
-
 export function uniqueTblUiGid() {
     return uniqueId('tbl_ui_gid-');
+}
+
+export function uniqueTblUiId() {
+    return uniqueId('tbl_ui_id-');
 }

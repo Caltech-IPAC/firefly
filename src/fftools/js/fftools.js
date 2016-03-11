@@ -5,10 +5,10 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {get} from 'lodash';
 
 import {flux, firefly} from 'firefly/Firefly.js';
-import AppDataCntlr, {dispatchUpdateLayout, LO_XPD_MODE} from 'firefly/core/AppDataCntlr.js';
+import AppDataCntlr from 'firefly/core/AppDataCntlr.js';
+import {LO_EXPANDED, LAYOUT_PATH, dispatchUpdateLayout, getExpandedMode} from 'firefly/core/LayoutCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import SearchPanel from 'firefly/ui/SearchPanel.jsx';
@@ -16,7 +16,7 @@ import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
 import FormPanel from 'firefly/ui/FormPanel.jsx';
 import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
-import {TablePanel} from 'firefly/tables/ui/TablePanel.jsx';
+import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import Validate from 'firefly/util/Validate.js';
 import * as TblUtil from 'firefly/tables/TableUtil.js';
 import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
@@ -30,6 +30,7 @@ import {TableRequest} from 'firefly/tables/TableRequest.js';
 
 import * as TableStatsCntlr from 'firefly/visualize/TableStatsCntlr.js';
 import * as TablesCntlr from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableAdded} from 'firefly/tables/TablesUiCntlr.js';
 import {getRootURL} from 'firefly/util/BrowserUtil.js';
 import {download} from 'firefly/util/WebUtil.js';
 
@@ -57,10 +58,13 @@ function doFileDownload() {
     download(getRootURL() + 'samplehistdata.csv');
 }
 
+const resultGroupId = TblUtil.uniqueTblUiGid();
+
 const App = React.createClass({
 
     propTypes: {
         appData : React.PropTypes.object.isRequired,
+        layout : React.PropTypes.object,
         title   : React.PropTypes.string,
         table   : React.PropTypes.object,
         expandedMode : React.PropTypes.string,
@@ -71,7 +75,6 @@ const App = React.createClass({
     },
 
     onSearchSubmit(request) {
-        console.log(request);
         if (request.srcTable) {
             var treq = TableRequest.newInstance({
                 id:'IpacTableFromSource',
@@ -82,6 +85,7 @@ const App = React.createClass({
 
             TableStatsCntlr.dispatchSetupTblTracking(getCurrentActiveTblId());
             TablesCntlr.dispatchTableFetch(treq);
+            dispatchTableAdded(resultGroupId, treq.tbl_id);
             hideSearchPanel();
         }
     },
@@ -93,7 +97,7 @@ const App = React.createClass({
 
 
     render() {
-        var {appData, title, table, expandedMode} = this.props;
+        var {appData, title, table, expandedMode, layout} = this.props;
 
         const tblId = table ? table.tbl_id : undefined;
 
@@ -112,7 +116,7 @@ const App = React.createClass({
                             visPreview={<VisHeader/> }
                             appTitle='Firefly'
                         />
-                        <SearchPanel show={appData.layoutInfo && appData.layoutInfo.search}>
+                        <SearchPanel show={layout && layout.search}>
                             <FormPanel
                                 width='640px' height='300px'
                                 groupKey='TBL_BY_URL_PANEL'
@@ -149,13 +153,12 @@ const App = React.createClass({
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot = {expandedMode===LO_XPD_MODE.images.mode.expanded ?
+                            imagePlot = {expandedMode===LO_EXPANDED.images.view ?
                                              <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
                                              <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={tblId}/> }
-                            tables = {tblId && <TablePanel key='results-tables' tbl_id={tblId}
-                                                expandedMode={expandedMode===LO_XPD_MODE.tables.mode.expanded} selectable={true}/> }
+                            tables = {tblId && <TablesContainer key='results-tables' tbl_ui_gid={resultGroupId} /> }
                             layoutInfo = { appData.layoutInfo }
                         />
                     </main>
@@ -169,9 +172,10 @@ function connector(state) {
     const activeTblId = getCurrentActiveTblId();
     return {
         appData: state[AppDataCntlr.APP_DATA_PATH],
+        layout: state[LAYOUT_PATH],
         title: 'FFTools entry point',
         table : TblUtil.findTblById(activeTblId),
-        expandedMode : get(state, [AppDataCntlr.APP_DATA_PATH,'layoutInfo','mode','expanded'])
+        expandedMode: getExpandedMode()
     };
 }
 const container = flux.createSmartComponent(connector, App);

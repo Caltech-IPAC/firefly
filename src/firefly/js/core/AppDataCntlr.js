@@ -1,12 +1,10 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {pickBy, isUndefined} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import BrowserCache from '../util/BrowserCache.js';
 import history from './History.js';
-import layoutReducer from './reducers/LayoutReducer.js';
 import menuRenderer from './reducers/MenuReducer.js';
 import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
@@ -14,7 +12,7 @@ import {fetchUrl} from '../util/WebUtil.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 
-const APP_DATA_PATH = 'app-data';
+export const APP_DATA_PATH = 'app_data';
 const SEARCH_TYPE = 'search';
 const TASK= 'task-';
 const APP_PREFERENCES= 'APP_PREFERENCES';
@@ -31,30 +29,11 @@ const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
 const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 
-
-const SHOW_SEARCH       = `${APP_DATA_PATH}.searchShow`;
-const UPDATE_LAYOUT     = `${APP_DATA_PATH}.updateLayout`;
-
-const DISPLAY_MODE_CHANGE   = `${APP_DATA_PATH}.displayModeChange`;
-
 const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
-
-export const LO_STD_MODE = {
-                        triview: {mode: {standard: 'tri-view'}},
-                        image_xyplot: {mode: {standard: 'image-xyplot'}},
-                        image_table: {mode: {standard: 'image-table'}},
-                        xyplot_table: {mode: {standard: 'xyplot-table'}}
-                    };
-export const LO_XPD_MODE = {
-                        tables: {mode: {expanded: 'tables'}},
-                        images: {mode: {expanded: 'images'}},
-                        xy_plots: {mode: {expanded: 'xyPlots'}},
-                        none: {mode: {expanded: undefined}}
-                    };
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -266,9 +245,8 @@ function reducer(state=getInitState(), action={}) {
     var newState = appDataReducer(state, action);
 
     var menu = menuRenderer.reducer(newState.menu, action);
-    var layoutInfo = layoutReducer.reducer(newState.layoutInfo, action);
 
-    return mergeAll(state, newState, {menu, layoutInfo});
+    return mergeAll(state, newState, {menu});
 }
 
 function mergeAll(orig, newval, updates) {
@@ -350,21 +328,6 @@ function dispatchRemovePreference(name) {
     flux.process({type: REMOVE_PREF, payload: {name}});
 }
 
-/**
- * Updates the app-data layoutInfo.  This data is responsible for the layout of the top level components
- * i.e. search panel, results panel...
- * @param search    boolean. show the search panel.  defaults to false.
- * @param results   boolean. show the results panel. defaults to true.
- * @param mode      see constant LO_STD_MODE and LO_XPD_MODE declaration from above
- * @param hasTables boolean.  Table data available.
- * @param hasImages boolean. Image data available.
- * @param hasXyPlots boolean. XY Plot data available.
- */
-export function dispatchUpdateLayout({search, results, mode, hasTables, hasImages, hasXyPlots}) {
-    flux.process({type: UPDATE_LAYOUT, payload: pickBy({search, results, mode, hasTables, hasImages, hasXyPlots}, (v)=>(!isUndefined(v)))});
-}
-
-
 /*---------------------------- EXPORTS -----------------------------*/
 
 export default {
@@ -373,10 +336,7 @@ export default {
     SHOW_DIALOG,
     HIDE_DIALOG,
     APP_DATA_PATH,
-    SHOW_SEARCH,
-    UPDATE_LAYOUT,
     SEARCH_TYPE,
-    DISPLAY_MODE_CHANGE,
     HELP_LOAD,
     reducer,
     loadAppData,
@@ -392,7 +352,6 @@ export default {
     dispatchRemoveTaskCount,
     dispatchAddPreference,
     dispatchRemovePreference,
-    dispatchUpdateLayout,
     makeTaskId,
     getCommandState
 };
@@ -400,7 +359,7 @@ export default {
 /*---------------------------- PRIVATE -----------------------------*/
 
 /**
- * fetches all of the necessary data to construct app-data.
+ * fetches all of the necessary data to construct app_data.
  * set isReady to true once done.
  * @param dispatch
  */

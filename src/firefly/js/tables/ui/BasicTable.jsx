@@ -68,12 +68,11 @@ export class BasicTable extends React.Component {
 
     render() {
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo,
-                    sortInfo, tableStore, width, height, textView} = this.props;
+                    sortInfo, tableStore, textView} = this.props;
         const {widthPx, heightPx, columnWidths, showMask} = this.state;
 
         if (isEmpty(columns)) return false;
 
-        var style = {width, height};
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
 
@@ -98,8 +97,8 @@ export class BasicTable extends React.Component {
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
-            <Resizable id='table-resizer' style={style} onResize={this.onResize()}>
-                { textView ? <TextView { ...{columns, data, showUnits} }/> :
+            <Resizable id='table-resizer' style={{flexGrow: 1, position: 'relative', overflow: 'hidden'}} onResize={this.onResize()}>
+                { textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
                         rowHeight={20}
                         headerHeight={headerHeight}
@@ -132,8 +131,6 @@ BasicTable.propTypes = {
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
     textView: PropTypes.bool,
-    width: PropTypes.string,
-    height: PropTypes.string,
     tableStore: PropTypes.shape({
         onRowHighlight: PropTypes.func,
         onRowSelect: PropTypes.func,
@@ -146,14 +143,18 @@ BasicTable.propTypes = {
 BasicTable.defaultProps = {
     selectable: false,
     showUnits: false,
-    showFilters: false,
-    width: '100%',
-    height: '100%'
+    showFilters: false
 };
 
-const TextView = ({columns, data, showUnits}) => {
+const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
     const text = tableToText(columns, data, showUnits);
-    return <div style={{height:'100%',overflow: 'auto'}}><pre>{text}</pre></div>;
+    return (
+        <div style={{height: heightPx, width: widthPx,overflow: 'hidden'}}>
+            <div style={{height: '100%',overflow: 'auto'}}>
+                <pre>{text}</pre>
+            </div>
+        </div>
+    );
 };
 
 const SortSymbol = ({sortDir}) => {
