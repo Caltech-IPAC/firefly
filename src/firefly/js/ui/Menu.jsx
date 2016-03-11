@@ -5,7 +5,8 @@
 import React from 'react';
 import './Menu.css';
 import {flux} from '../Firefly.js';
-import appDataCntlr, {dispatchUpdateLayout} from '../core/AppDataCntlr.js';
+import appDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchUpdateLayout} from '../core/LayoutCntlr.js';
 
 
 

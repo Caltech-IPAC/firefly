@@ -31,8 +31,7 @@
 }
 
 .TabPanel__Content {
-    border: 4px solid #c8c8c8;
-    border-top-width: 6px;
+    border: 5px solid #c8c8c8;
     background: white;
     \-moz-border-radius-topleft: 4px;
     \-moz-border-radius-topright: 4px;
@@ -42,7 +41,8 @@
     border-top-right-radius: 4px;
 
     overflow: hidden;
-    padding: 2px 6px;
     clear: both;
+    flex-grow: 1;
+    display: flex;
 }
 

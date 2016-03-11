@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {isEmpty} from 'lodash';
+import {isEmpty, cloneDeep} from 'lodash';
 
 import {BasicTable} from './BasicTable.jsx';
 import {SelectInfo} from '../SelectInfo.js';
@@ -32,7 +32,7 @@ export const TablePanelOptions = (props) => {
     if (isEmpty(columns)) return false;
 
     var onSelectAll = (checked) => {
-        const nColumns = columns.slice();
+        const nColumns = cloneDeep(columns);
         nColumns.forEach((v) => {
             v.visibility = checked ? 'show' : 'hide';
         });
@@ -40,7 +40,7 @@ export const TablePanelOptions = (props) => {
     };
 
     var onRowSelect = (checked, rowIdx) => {
-        const nColumns = columns.slice();
+        const nColumns = cloneDeep(columns);
         nColumns[rowIdx].visibility = checked ? 'show' : 'hide';
         onChange && onChange({columns: nColumns});
     };
@@ -62,7 +62,7 @@ export const TablePanelOptions = (props) => {
     const {cols, data, selectInfoCls} = prepareOptionData(columns);
     return (
         <div className='TablePanelOptions'>
-            <div>
+            <div style={{flexGrow: 0}}>
                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '2px'}}>
                     <div style={{float: 'left'}}>
                         <InputField
@@ -84,14 +84,16 @@ export const TablePanelOptions = (props) => {
                     <span>Show Filters: <input type='checkbox' onChange={(e) => onPropChanged(e.target.checked, 'showFilters')} checked={showFilters}/></span>
                 </div>
             </div>
-            <BasicTable
-                columns={cols}
-                data={data}
-                height='calc(100% - 42px)'
-                selectable={true}
-                selectInfoCls={selectInfoCls}
-                tableStore={{onSelectAll, onRowSelect}}
-            />
+            <div style={{flexGrow: 1, display: 'flex'}}>
+                <BasicTable
+                    columns={cols}
+                    data={data}
+                    height='calc(100% - 42px)'
+                    selectable={true}
+                    selectInfoCls={selectInfoCls}
+                    tableStore={{onSelectAll, onRowSelect}}
+                />
+            </div>
         </div>
     );
 };

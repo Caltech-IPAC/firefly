@@ -6,14 +6,12 @@ import React from 'react';
 import {get, pick} from 'lodash';
 
 import DockLayoutPanel from './panel/DockLayoutPanel.jsx';
-import {dispatchUpdateLayout} from '../core/AppDataCntlr.js';
-import {LO_STD_MODE} from '../core/AppDataCntlr.js';
-import {LO_XPD_MODE} from '../core/AppDataCntlr.js';
+import {dispatchSetLayoutMode, getExpandedMode, getStandardMode, LO_EXPANDED, LO_STANDARD} from '../core/LayoutCntlr.js';
 
-const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column'};
+const wrapperStyle = { flex: 'auto', display: 'flex', flexFlow: 'column', overflow: 'hidden'};
 
 export const ResultsPanel = function (props) {
-    const expandedView = get(props, 'layoutInfo.mode.expanded');
+    const expandedView = getExpandedMode();
     return (
             expandedView
                 ? <ExpandedView expandedView={expandedView} { ...pick(props, ['imagePlot','xyPlot','tables'] ) } />
@@ -28,13 +26,13 @@ ResultsPanel.propTypes = {
     imagePlot: React.PropTypes.element,
     xyPlot: React.PropTypes.element,
     tables: React.PropTypes.element,
-    layoutInfo: React.PropTypes.object
+    layout: React.PropTypes.object
 };
 
 
 const ExpandedView = ({expandedView, imagePlot, xyPlot, tables}) => {
-    const view = expandedView === LO_XPD_MODE.tables.mode.expanded ? tables
-                : expandedView === LO_XPD_MODE.xy_plots.mode.expanded ? xyPlot
+    const view = expandedView === LO_EXPANDED.tables.view ? tables
+                : expandedView === LO_EXPANDED.xyPlots.view ? xyPlot
                 : imagePlot;
     return (
         <div style={wrapperStyle}>
@@ -44,16 +42,16 @@ const ExpandedView = ({expandedView, imagePlot, xyPlot, tables}) => {
 };
 
 
-const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, layoutInfo}) => {
-    const components = resolveComponents(imagePlot, xyPlot, tables, layoutInfo);
-    const layout = generateLayout(components, layoutInfo);
+const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, layout}) => {
+    const components = resolveComponents(imagePlot, xyPlot, tables, layout);
+    const config = generateLayout(components, layout);
 
     return (
         <div style={wrapperStyle}>
             {visToolbar}
             <SearchDesc searchDesc={searchDesc}/>
             title && <h2 style={{textAlign: 'center'}}>{title}</h2>
-            <DockLayoutPanel layout={ layout } >
+            <DockLayoutPanel config={ config } >
                 {components}
             </DockLayoutPanel>
         </div>
@@ -67,25 +65,25 @@ const SearchDesc = ({searchDesc}) => {
                 : <div style={{fontSize: 'medium', display: 'inline-block'}}> >>Search description not provided..</div>}
             <div style={ {display: 'inline-block', float: 'right'} }>
                 <button type='button' className='button-std'
-                        onClick={() => dispatchUpdateLayout(LO_STD_MODE.triview)}>tri-view</button>&nbsp;
+                        onClick={() => dispatchSetLayoutMode(LO_STANDARD.tri_view)}>tri-view</button>&nbsp;
                 <button type='button' className='button-std'
-                        onClick={() => dispatchUpdateLayout(LO_STD_MODE.image_table)}>img-tbl</button>&nbsp;
+                        onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_table)}>img-tbl</button>&nbsp;
                 <button type='button' className='button-std'
-                        onClick={() => dispatchUpdateLayout(LO_STD_MODE.image_xyplot)}>img-xy</button>&nbsp;
+                        onClick={() => dispatchSetLayoutMode(LO_STANDARD.image_xyplot)}>img-xy</button>&nbsp;
                 <button type='button' className='button-std'
-                        onClick={() => dispatchUpdateLayout(LO_STD_MODE.xyplot_table)}>xy-tbl</button>
+                        onClick={() => dispatchSetLayoutMode(LO_STANDARD.xyplot_table)}>xy-tbl</button>
             </div>
         </div>
     );
 };
 
-function generateLayout(results, layoutInfo) {
-    const mode = get(layoutInfo, 'mode.standard', LO_STD_MODE.triview.mode.standard);
-    if (mode === LO_STD_MODE.image_table.mode.standard) {
+function generateLayout(results) {
+    const mode = getStandardMode() || LO_STANDARD.tri_view.view;
+    if (mode === LO_STANDARD.image_table.view) {
         return {east: {index: 0,  defaultSize: '50%'}, west: {index: 1} };
-    } else if (mode === LO_STD_MODE.image_xyplot.mode.standard) {
+    } else if (mode === LO_STANDARD.image_xyplot.view) {
         return {north: {index: 0,  defaultSize: '50%'}, south: {index: 1} };
-    } else if (mode === LO_STD_MODE.xyplot_table.mode.standard) {
+    } else if (mode === LO_STANDARD.xyplot_table.view) {
         return {north: {index: 0,  defaultSize: '50%'}, south: {index: 1} };
     } else {
         if ( results.length === 3 ) {
@@ -97,13 +95,13 @@ function generateLayout(results, layoutInfo) {
         }
     }
 }
-function resolveComponents(imagePlot, xyPlot, tables, layoutInfo) {
-    const mode = get(layoutInfo, 'mode.standard', LO_STD_MODE.triview.mode.standard);
-    if (mode === LO_STD_MODE.image_table.mode.standard) {
+function resolveComponents(imagePlot, xyPlot, tables) {
+    const mode = getStandardMode() || LO_STANDARD.tri_view.view;
+    if (mode === LO_STANDARD.image_table.view) {
         return [imagePlot, tables];
-    } else if (mode === LO_STD_MODE.image_xyplot.mode.standard) {
+    } else if (mode === LO_STANDARD.image_xyplot.view) {
         return [imagePlot, xyPlot];
-    } else if (mode === LO_STD_MODE.xyplot_table.mode.standard) {
+    } else if (mode === LO_STANDARD.xyplot_table.view) {
         return [tables, xyPlot];
     } else {
         return [imagePlot, tables, xyPlot];

@@ -7,9 +7,9 @@ function createContentWrapper(children, index) {
    return ( <div className='wrapper'> <div className='content'>{content}</div> </div> );
 }
 
-function one(layout, items){
-    layout = layout || {center: {index: 0}};
-    const item = layout.center || layout.north || layout.east || layout.west || layout.south;
+function one(config, items){
+    config = config || {center: {index: 0}};
+    const item = config.center || config.north || config.east || config.west || config.south;
 
     return (
         <div className='Pane vertical' style={{height: '100%'}}>
@@ -18,12 +18,12 @@ function one(layout, items){
     );
 }
 
-function two(layout, items){
-    layout = layout || {east: {index: 0}, west: {index: 1}};
+function two(config, items){
+    config = config || {east: {index: 0}, west: {index: 1}};
 
-    if (layout.north || layout.south) {
-        const top = layout.north || layout.center;
-        const bottom = layout.south || layout.center;
+    if (config.north || config.south) {
+        const top = config.north || config.center;
+        const bottom = config.south || config.center;
         return (
             <SplitPane split='horizontal'  {...top}>
                 {createContentWrapper(items, top.index)}
@@ -31,9 +31,9 @@ function two(layout, items){
             </SplitPane>
 
         );
-    } else if (layout.east || layout.west) {
-        const left = layout.east || layout.center;
-        const right = layout.west || layout.center;
+    } else if (config.east || config.west) {
+        const left = config.east || config.center;
+        const right = config.west || config.center;
         return (
             <SplitPane split='vertical' {...left}>
                 {createContentWrapper(items, left.index)}
@@ -43,28 +43,28 @@ function two(layout, items){
     }
 }
 
-function three(layout, items){
-    layout = layout || {east: {index: 0}, west: {index: 1}, south: {index:2}};
+function three(config, items){
+    config = config || {east: {index: 0}, west: {index: 1}, south: {index:2}};
 
-    if (layout.north) {
-        if (layout.south) {
-            const two = layout.east || layout.center || layout.west;
+    if (config.north) {
+        if (config.south) {
+            const two = config.east || config.center || config.west;
             return (
-                <SplitPane split='horizontal' {...layout.north}>
-                    {createContentWrapper(items, layout.north.index)}
+                <SplitPane split='horizontal' {...config.north}>
+                    {createContentWrapper(items, config.north.index)}
                     <SplitPane split='horizontal' {...two}>
                         {createContentWrapper(items, two.index)}
-                        {createContentWrapper(items, layout.south.index)}
+                        {createContentWrapper(items, config.south.index)}
                     </SplitPane>
                 </SplitPane>
             );
         } else {
-            const two = layout.east || layout.center;
-            const three = layout.west || layout.center;
+            const two = config.east || config.center;
+            const three = config.west || config.center;
             return (
-                <SplitPane split='horizontal' {...layout.north}>
-                    {createContentWrapper(items, layout.north.index)}
-                    <SplitPane split='vertical' {...two.layout}>
+                <SplitPane split='horizontal' {...config.north}>
+                    {createContentWrapper(items, config.north.index)}
+                    <SplitPane split='vertical' {...two.config}>
                         {createContentWrapper(items, two.index)}
                         {createContentWrapper(items, three.index)}
                     </SplitPane>
@@ -72,25 +72,25 @@ function three(layout, items){
             );
         }
     } else {
-        if (layout.south) {
-            const one = layout.east || layout.center;
-            const two = layout.west || layout.center;
+        if (config.south) {
+            const one = config.east || config.center;
+            const two = config.west || config.center;
             return (
-                <SplitPane split='horizontal' {...layout.south}>
+                <SplitPane split='horizontal' {...config.south}>
                     <SplitPane split='vertical' {...one}>
                         {createContentWrapper(items, one.index)}
                         {createContentWrapper(items, two.index)}
                     </SplitPane>
-                    {createContentWrapper(items, layout.south.index)}
+                    {createContentWrapper(items, config.south.index)}
                 </SplitPane>
             );
         } else {
             return (
-                <SplitPane split='vertical' {...layout.east}>
-                    {createContentWrapper(items, layout.east.index)}
-                    <SplitPane split='vertical' {...layout.west}>
-                        {createContentWrapper(items, layout.center.index)}
-                        {createContentWrapper(items, layout.west.index)}
+                <SplitPane split='vertical' {...config.east}>
+                    {createContentWrapper(items, config.east.index)}
+                    <SplitPane split='vertical' {...config.west}>
+                        {createContentWrapper(items, config.center.index)}
+                        {createContentWrapper(items, config.west.index)}
                     </SplitPane>
                 </SplitPane>
             );
@@ -98,30 +98,30 @@ function three(layout, items){
     }
 }
 
-function layoutDom(layout, items) {
-    const count = Object.keys(layout).length;
+function layoutDom(config, items) {
+    const count = Object.keys(config).length;
     if (count === 1) {
-        return one(layout, items);
+        return one(config, items);
     } else if (count === 2) {
-        return two(layout, items);
+        return two(config, items);
     } else if (count === 3) {
-        return three(layout, items);
+        return three(config, items);
     }
 }
 
 var prev = {};
 
 const DockLayoutPanel = function (props) {
-    var {layout, children} = props;
-    if (!isEqual(prev.layout, layout)) {
+    var {config, children} = props;
+    if (!isEqual(prev.config, config)) {
         prev.dpid = uniqueId('dpid-');
-        prev.layout = layout;
+        prev.config = config;
     }
 
     return (
         <div style={{position: 'relative',  flex: 'auto'}}>
             <div key={prev.dpid} style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
-                {layoutDom(layout, children)}
+                {layoutDom(config, children)}
             </div>
         </div>
     );
@@ -133,7 +133,7 @@ DockLayoutPanel.propTypes = {
     east: React.PropTypes.number,
     west: React.PropTypes.number,
     center: React.PropTypes.number,
-    layout: React.PropTypes.object
+    config: React.PropTypes.object
 };
 
 

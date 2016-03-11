@@ -10,6 +10,7 @@ import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
+import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         plotImageActionCreator, zoomActionCreator,
@@ -54,6 +55,7 @@ const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,Dis
  */
 const reducers = {
     [AppDataCntlr.APP_DATA_PATH]: AppDataCntlr.reducer,
+    [LAYOUT_PATH]: layoutReducer,
     [VisMouseCntlr.VIS_MOUSE_KEY]: VisMouseCntlr.reducer,
     [FieldGroupCntlr.FIELD_GROUP_KEY]: FieldGroupCntlr.reducer,
     [IMAGE_PLOT_KEY]: ImagePlotCntlr.reducer,

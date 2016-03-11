@@ -15,7 +15,7 @@ import {SelectInfo} from '../SelectInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_XPD_MODE, dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
+import {LO_EXPANDED, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
@@ -25,24 +25,13 @@ import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutlin
 export class TablePanel extends Component {
     constructor(props) {
         super(props);
-        this.storeUpdate = this.storeUpdate.bind(this);
-        this.toggleOptions = this.toggleOptions.bind(this);
-        this.onOptionUpdate = this.onOptionUpdate.bind(this);
 
         if (props.tbl_id) {
-            this.tableStore = RemoteTableStore.newInstance(props.tbl_id, this.storeUpdate);
+            this.tableStore = RemoteTableStore.newInstance(props, (v) => this.setState(v));
         } else if (props.tableModel) {
-            this.tableStore = TableStore.newInstance(props.tableModel, this.storeUpdate);
+            this.tableStore = TableStore.newInstance(props, (v) => this.setState(v));
         }
-        const columns = ensureColumns(this.tableStore.tableModel);
-        this.state = {
-            tableModel:this.tableStore.tableModel,
-            columns,
-            showOptions: false,
-            showUnits: props.showUnits,
-            showFilters: props.showFilters,
-            textView: false
-        };
+        this.state = this.tableStore.cState;
     }
 
     componentWillUnmount() {
@@ -53,31 +42,9 @@ export class TablePanel extends Component {
         return sCompare(this, nProps, nState);
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters}) {
-        if (pageSize) {
-            this.tableStore.onPageSizeChange(pageSize);
-        }
-        if(columns) {
-            columns = ensureColumns(this.state.tableModel, columns);
-            this.setState({columns});
-        }
-        const changes = omitBy({showUnits, showFilters}, isUndefined);
-        if ( !isEmpty(changes) ) {
-            this.setState(changes);
-        }
-    }
-
-    storeUpdate(state) {
-        this.setState(state);
-    }
-
-    toggleOptions() {
-        this.setState({showOptions: !this.state.showOptions});
-    }
-
     render() {
-        var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
-        const {selectable, expandedMode} = this.props;
+        var {tableModel, columns, showOptions, showUnits, showFilters, textView, expandedMode} = this.state;
+        const {selectable, expandAble} = this.props;
         const {tableStore} = this;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
@@ -86,10 +53,10 @@ export class TablePanel extends Component {
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
 
         return (
-            <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column'}}>
-                {expandedMode && <Expanded />}
+            <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
+                {expandAble && expandedMode && <Expanded />}
                 <div className='TablePanel__wrapper'>
-                    <div role='toolbar' style={{height: '33px'}}>
+                    <div role='toolbar' className='TablePanel__toolbar'>
                         <div className='group'>
                             <button style={{width:70}}>Download</button>
                         </div>
@@ -103,15 +70,15 @@ export class TablePanel extends Component {
                                            tip='The Filter Panel can be used to remove unwanted data from the search results'
                                            visible={true}
                                            badgeCount={filterCount}
-                                           onClick={() => this.onOptionUpdate({showFilters: !showFilters})}/>
-                            <button onClick={() => this.setState({textView: !textView})} className={viewIcoStyle}/>
+                                           onClick={() => tableStore.onOptionUpdate({showFilters: !showFilters})}/>
+                            <button onClick={() => tableStore.toggleTextView()} className={viewIcoStyle}/>
                             <button onClick={() => download(TblUtil.getTableSourceUrl(columns, tableModel.request))}
                                     className='tablepanel save'/>
-                            <button style={{marginLeft: '4px'}} onClick={this.toggleOptions}
+                            <button style={{marginLeft: '4px'}} onClick={() => tableStore.toggleOptions()}
                                     className='tablepanel options'/>
                             { !expandedMode && <button><img src={OUTLINE_EXPAND}
                                                             title='Expand this panel to take up a larger area'
-                                                            onClick={() => dispatchUpdateLayout(LO_XPD_MODE.tables)}
+                                                            onClick={() => dispatchSetLayoutMode(LO_EXPANDED.tables)}
                             /></button>}
                         </div>
                     </div>
@@ -134,7 +101,7 @@ export class TablePanel extends Component {
                             pageSize={pageSize}
                             showUnits={showUnits}
                             showFilters={showFilters}
-                            onChange={this.onOptionUpdate}
+                            onChange={(v) => tableStore.onOptionUpdate(v)}
                         /> }
                     </div>
                 </div>
@@ -145,20 +112,24 @@ export class TablePanel extends Component {
 
 TablePanel.propTypes = {
     tbl_id: PropTypes.string,
+    tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
     pageSize: PropTypes.number,
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
     selectable: PropTypes.bool,
     expandedMode: PropTypes.bool,
+    expandable: PropTypes.bool,
     showToolbar: PropTypes.bool
 };
 
 TablePanel.defaultProps = {
+    tbl_ui_id: TblUtil.uniqueTblUiId(),
     showUnits: false,
     showFilters: false,
     selectable: true,
     expandedMode: false,
+    expandAble: false,
     showToolbar: true,
     pageSize: 50
 };
@@ -176,17 +147,9 @@ function prepareTableData(tableModel) {
     return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectInfo, filterInfo, filterCount, data};
 }
 
-function ensureColumns(tableModel, columns) {
-    if (isEmpty(columns)) {
-        return cloneDeep(get(tableModel, 'tableData.columns', []));
-    } else {
-        return columns;
-    }
-}
-
 const Expanded = ({}) => {
   return (
-      <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchUpdateLayout(LO_XPD_MODE.none)}/></div>
+      <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
     );
 };
 
