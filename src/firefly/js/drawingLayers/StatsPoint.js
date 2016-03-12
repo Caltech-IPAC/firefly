@@ -38,8 +38,6 @@ function creator(initPayload) {
 
 function getLayerChanges(drawLayer, action) {
     switch (action.type) {
-        case ImagePlotCntlr.ANY_REPLOT:
-            break;
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             let drawData = {};
             const {changes} = action.payload;

@@ -1,0 +1,61 @@
+table.imagepanel  {
+    width: 1200px;
+    background: white;
+    border-left: 20px solid #c5c5c5;
+    border-right: 20px solid #c5c5c5;
+    border-collapse: collapse;
+}
+
+table.imagepanel tr td {
+    padding-left:  20%;
+    padding-right: 20%
+}
+
+table.imagepanel tr td.sizerow {
+    padding-left:  25%;
+    padding-right: 25%;
+}
+
+table.imagepanel tr td.okrow {
+    padding-left:  8%;
+    padding-right: 8%;
+}
+
+table.imagepanel tr div.sizerow {
+    border-bottom: 2px solid #c8c8c8;
+    margin-bottom: 20px;
+    height: 100px
+}
+
+table.imagepanel tr:last-child {
+    background: #c5c5c5;
+    height: 80px;
+}
+
+div.leftpadding {
+    float: left;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+div.left {
+    float: left;
+}
+
+div.rightpadding {
+    float: right;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+div.color {
+    float: left;
+    padding-top: 10px;
+    padding-left: 90px;
+}
+
+div.cataloglist {
+    float: left;
+    padding: 15px 10px 25px 10px
+}
