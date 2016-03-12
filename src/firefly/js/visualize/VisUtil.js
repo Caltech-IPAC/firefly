@@ -680,6 +680,17 @@ const makePt= function(type,  x, y) {
     return retval;
 };
 
+export function convertAngle(from, to, angle) {
+    const angleUnit = ['deg', 'arcmin', 'arcsec'];
+    var   fromIdx, toIdx;
+
+    if (((fromIdx = angleUnit.indexOf(from)) < 0) ||
+        ((toIdx = angleUnit.indexOf(to)) < 0)) {
+        return angle;
+    } else {
+        return  angle * Math.pow(60.0, (toIdx-fromIdx));
+    }
+}
 
 export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,

@@ -175,7 +175,7 @@ function ImageAreaStatsSummary({statsSummary})
     );
 }
 
-ImageAreaStatsSummary.PropTypes={
+ImageAreaStatsSummary.propTypes={
     statsSummary: PropTypes.arrayOf(PropTypes.array.isRequired).isRequired
 };
 
