@@ -77,7 +77,7 @@ export function dispatchTableAdded(tbl_ui_gid, tbl_id, removable=true) {
  * @param tbl_ui_gid  table ui group
  * @param tbl_ui_id      table ui id.
  */
-export function dispatchTableRemoved(tbl_ui_gid, tbl_ui_id) {
+export function dispatchTableUiRemoved(tbl_ui_gid, tbl_ui_id) {
     flux.process( {type: TBL_UI_REMOVED, payload: {tbl_ui_gid, tbl_ui_id}});
 }
 

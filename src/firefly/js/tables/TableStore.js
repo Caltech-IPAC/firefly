@@ -157,9 +157,6 @@ export class RemoteTableStore extends TableStore {
 
     handleAction(type, payload) {
         switch (type) {
-            case (TblCntlr.TABLE_REMOVE)  :
-                flux.process({type, payload});
-                break;
 
             default:
                 flux.process({type, payload});

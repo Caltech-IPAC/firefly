@@ -123,6 +123,13 @@ export function dispatchTableSelect(tbl_id, selectInfo) {
     flux.process( {type: TABLE_SELECT, payload: {tbl_id, selectInfo} });
 }
 
+/**
+ * remove the table's data given its id.
+ * @param tbl_id  unique table identifier.
+ */
+export function dispatchTableRemove(tbl_id) {
+    flux.process( {type: TABLE_REMOVE, payload: {tbl_id}});
+}
 
 /*---------------------------- PRIVATE -----------------------------*/
 

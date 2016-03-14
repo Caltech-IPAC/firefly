@@ -5,7 +5,6 @@
 import './TabPanel.css';
 import React from 'react';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
-import {ToolbarButton} from '../ToolbarButton.jsx';
 
 
 export var Tabs = React.createClass({
@@ -54,7 +53,7 @@ export var Tabs = React.createClass({
             });
         return (
             <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
-                <div style={{flex: 0, height: 18}}>
+                <div style={{flexGrow: 0, height: 18}}>
                     <ul className='TabPanel__Tabs'>
                         {children}
                     </ul>

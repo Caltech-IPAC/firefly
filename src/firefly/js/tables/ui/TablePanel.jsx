@@ -43,8 +43,8 @@ export class TablePanel extends Component {
     }
 
     render() {
-        var {tableModel, columns, showOptions, showUnits, showFilters, textView, expandedMode} = this.state;
-        const {selectable, expandAble} = this.props;
+        var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
+        const {selectable, expandable, expandedMode} = this.props;
         const {tableStore} = this;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
@@ -54,7 +54,6 @@ export class TablePanel extends Component {
 
         return (
             <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-                {expandAble && expandedMode && <Expanded />}
                 <div className='TablePanel__wrapper'>
                     <div role='toolbar' className='TablePanel__toolbar'>
                         <div className='group'>
@@ -76,10 +75,10 @@ export class TablePanel extends Component {
                                     className='tablepanel save'/>
                             <button style={{marginLeft: '4px'}} onClick={() => tableStore.toggleOptions()}
                                     className='tablepanel options'/>
-                            { !expandedMode && <button><img src={OUTLINE_EXPAND}
-                                                            title='Expand this panel to take up a larger area'
-                                                            onClick={() => dispatchSetLayoutMode(LO_EXPANDED.tables)}
-                            /></button>}
+                            { expandable && !expandedMode &&
+                                <button onClick={() => dispatchSetLayoutMode(LO_EXPANDED.tables)}>
+                                    <img src={OUTLINE_EXPAND} title='Expand this panel to take up a larger area'/>
+                                </button>}
                         </div>
                     </div>
                     <div className='TablePanel__table'>
@@ -129,7 +128,7 @@ TablePanel.defaultProps = {
     showFilters: false,
     selectable: true,
     expandedMode: false,
-    expandAble: false,
+    expandable: true,
     showToolbar: true,
     pageSize: 50
 };
