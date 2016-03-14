@@ -16,12 +16,12 @@ public class VoUtilsTest {
 	@Test
 	public void testRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "iphas");
-		Assert.assertEquals(endpoints.size(), 15);
+		Assert.assertTrue("No endpoints found!" ,endpoints.size()>0);
 	}
 	@Test
 	public void testAnotherRegistryEndPoint(){
 		endpoints = VoRegistryUtil.getEndpoints("ConeSearch", "spitzer");
-		Assert.assertEquals(endpoints.size(), 783);
+		Assert.assertTrue("No endpoints found!" ,endpoints.size()>0);
 	}
 	public static void main(String[] args) {
 		
