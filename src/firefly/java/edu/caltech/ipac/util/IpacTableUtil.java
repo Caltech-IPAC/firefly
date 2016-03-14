@@ -389,9 +389,10 @@ public class IpacTableUtil {
      * @param state
      */
     public static void sendLoadStatusEvents(Map<String,String> meta, File outf, int crows, DataGroupPart.State state) {
+        if (meta == null) return;
 
-        String source = meta.get("source") == null ? ServerContext.replaceWithPrefix(outf) : String.valueOf( meta.get("source") );
-        String tblId = meta.get("tbl_id") == null ? source : String.valueOf( meta.get("tbl_id") );
+        String source = ServerContext.replaceWithPrefix(outf);
+        String tblId = String.valueOf( meta.get("tbl_id") );
 
         FluxAction action = new FluxAction("table_space.tableLoadStatus");
         action.setValue(tblId, "tbl_id");

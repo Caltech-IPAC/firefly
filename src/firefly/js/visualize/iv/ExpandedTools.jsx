@@ -5,14 +5,14 @@
 
 import React, {PropTypes} from 'react';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
-import {dispatchUpdateLayout} from '../../core/AppDataCntlr.js';
+import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {primePlot, expandedPlotViewAry} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {LO_XPD_MODE} from '../../core/AppDataCntlr.js';
+import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {VIS_TOOLBAR_HEIGHT} from '../ui/VisToolbarView.jsx';
 
@@ -133,7 +133,7 @@ export function ExpandedTools({visRoot}) {
     return (
         <div>
             <div style={{display: 'flex', paddingBottom: 2, borderBottom: '1px solid rgba(0,0,0,.2)' }}>
-                <CloseButton style={closeButtonStyle} onClick={() => dispatchUpdateLayout(LO_XPD_MODE.none)}/>
+                <CloseButton style={closeButtonStyle} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/>
                 <div style={{'flexGrow':1}}>
                     <VisToolbar/>
                 </div>
