@@ -10,7 +10,8 @@ import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
-import {dispatchTableRemoved} from '../TablesUiCntlr.js';
+import {dispatchTableUiRemoved} from '../TablesUiCntlr.js';
+import {dispatchTableRemove} from '../TablesCntlr.js';
 
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -74,7 +75,7 @@ function ExpandedView(props) {
     return (
         <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
-            <StandardView {...props} />
+            <StandardView expandedMode={true} {...props} />
         </div>
     );
 
@@ -84,11 +85,11 @@ ExpandedView.defaultProps = StandardView.defaultProps;
 
 
 function StandardView(props) {
-    const {tables, tbl_ui_gid} = props;
+    const {tables, tbl_ui_gid, expandedMode} = props;
 
     return (
         <Tabs defaultSelected={0}>
-            {layoutTables(tables, tbl_ui_gid)}
+            {layoutTables(tables, tbl_ui_gid, expandedMode)}
         </Tabs>
     );
 }
@@ -105,15 +106,16 @@ StandardView.defaultProps = {
 };
 
 
-function layoutTables(tables, tbl_ui_gid) {
-    const onTabRemove = (tbl_ui_id) => {
-        dispatchTableRemoved(tbl_ui_gid, tbl_ui_id);
-    };
+function layoutTables(tables, tbl_ui_gid, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
-            var {tbl_id, removable, tbl_ui_id, expandedMode} = tables[key];
+            var {tbl_id, removable, tbl_ui_id} = tables[key];
             tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
+            const onTabRemove = (tbl_ui_id) => {
+                dispatchTableUiRemoved(tbl_ui_gid, tbl_ui_id);
+                dispatchTableRemove(tbl_id);
+            };
 
             return  (
                 <Tab key={tbl_ui_id} name={tbl_ui_id} removable={removable} onTabRemove={onTabRemove}>

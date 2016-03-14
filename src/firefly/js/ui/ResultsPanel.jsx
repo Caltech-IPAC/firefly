@@ -50,7 +50,7 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
         <div style={wrapperStyle}>
             {visToolbar}
             <SearchDesc searchDesc={searchDesc}/>
-            title && <h2 style={{textAlign: 'center'}}>{title}</h2>
+            {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
             <DockLayoutPanel config={ config } >
                 {components}
             </DockLayoutPanel>
