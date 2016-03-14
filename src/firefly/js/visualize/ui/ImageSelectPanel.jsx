@@ -4,7 +4,6 @@
 
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
-import FieldGroupToStoreMixin from '../../fieldGroup/FieldGroupToStoreMixin.js';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage} from '../ImagePlotCntlr.js';
 import {parseWorldPt} from '../Point.js';
@@ -15,7 +14,6 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
-import InputGroup from '../../ui/InputGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import TargetPanel from '../../ui/TargetPanel.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
@@ -23,20 +21,19 @@ import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
 import panelCatalogs from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {convertAngle} from '../VisUtil.js';
+import {isEmpty} from 'lodash';
 
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
 const panelKey = 'SELECTIMAGEPANEL';
 
-const rS = {  padding: 10 };
-
 // class name for styling
 const left = 'left';
 const rightpadding = 'rightpadding';
 const leftpadding = 'leftpadding';
 
-const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'degree': 'Deg' };
+const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
 
 const keyMap = {
     'selTab':   'SELECTIMAGEPANEL_SelectedCatalog',
@@ -49,11 +46,11 @@ const keyMap = {
     'unitfield': 'SELECTIMAGEPANEL_ImgFeature_unit',
     'colorfield': 'SELECTIMAGEPANEL_ImgFeature_3color'
 };
-const [IRSA, TMASS, WISE] = [0, 1, 2];
+const [IRSA, TWOMASS, WISE] = [0, 1, 2];
 const plotMap = {
     'IRSA':  plotIRSA,
     '2MASS': plot2MASS,
-    'WISE': plotWISE
+    'WISE':  plotWISE
 };
 
 /**
@@ -79,46 +76,50 @@ function computeLabelWidth(labelStr) {
     return labelStr.length * 7;
 }
 
+/*
+ * remove trailing zero from toFixed result
+ */
+function toMaxFixed(floatNum, digits) {
+    return parseFloat(floatNum.toFixed(digits));
+}
 
 /*
  *
  * image select pane initial state for all fields
  */
-var ImageSelPanelReducer = function (inFields, action) {
+var ImageSelPanelChange = function (inFields, action) {
     var size = 'Size:';
-
 
     if (!inFields) {
         return {
             [keyMap['targettry']]: {
                 fieldKey: keyMap['targettry'],
                 value:    'NED',
-                label:    '',
-                multiple: false
+                label:    ''
             },
             [keyMap['irsatypes']]: {
                 fieldKey: keyMap['irsatypes'],
                 label: panelCatalogs[IRSA].types.Title,
                 value: panelCatalogs[IRSA].types.Default,
-                multiple: false
+                labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
             },
             [keyMap['2masstypes']]: {
                 fieldKey: keyMap['2masstypes'],
-                label: panelCatalogs[TMASS].types.Title,
-                value: panelCatalogs[TMASS].types.Default,
-                multiple: false
+                label: panelCatalogs[TWOMASS].types.Title,
+                value: panelCatalogs[TWOMASS].types.Default,
+                labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
             },
             [keyMap['wisetypes']]: {
                 fieldKey: keyMap['wisetypes'],
                 label: panelCatalogs[WISE].types.Title,
                 value: panelCatalogs[WISE].types.Default,
-                multiple: false
+                labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
             },
             [keyMap['wisebands']]: {
                 fieldKey: keyMap['wisebands'],
                 label: panelCatalogs[WISE].bands.Title,
                 value: panelCatalogs[WISE].bands.Default,
-                multiple: false
+                labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
             },
             [keyMap['sizefield']]: {
                 fieldKey: keyMap['sizefield'],
@@ -129,16 +130,11 @@ var ImageSelPanelReducer = function (inFields, action) {
             [keyMap['unitfield']]: {
                 fieldKey: keyMap['unitfield'],
                 value: 'arcsec',
-                label: '',
-                multiple: false
+                label: ''
             },
             [keyMap['colorfield']]: {
                 fieldKey: keyMap['colorfield'],
                 value: '_none_'
-            },
-            [keyMap['selTab']]: {
-                fieldKey: keyMap['selTab'],
-                value: 'IRSA'
             }
         };
     } else {
@@ -256,8 +252,11 @@ class ImageSelection extends Component {
          super(props);
 
          this.groupKey = panelKey;
-         FieldGroupUtils.initFieldGroup(this.groupKey, ImageSelPanelReducer);
-         this.state = {currentCatalogIdx: 0, currentUnit: 'arcsec'};
+         if (!FieldGroupUtils.getGroupFields(this.groupKey)) {
+             FieldGroupUtils.initFieldGroup(this.groupKey, ImageSelPanelChange, true);
+         }
+         this.state = {currentCatalogIdx: 0,
+                       fields: FieldGroupUtils.getResults(this.groupKey)};
      }
 
     componentWillUnmount() {
@@ -269,25 +268,25 @@ class ImageSelection extends Component {
     }
 
     stateUpdate() {
-        this.setState({fields: FieldGroupUtils.getResults(this.groupKey)});
 
-        if (this.state.fields) {
-            var crtCatalogId = computeCurrentCatalogId(Object.keys(this.state.fields));
-            this.setState({currentCatalogIdx: crtCatalogId});
-            this.setState({currentUnit: this.state.fields[keyMap['unitfield']]});
+        var fields = FieldGroupUtils.getResults(this.groupKey);
+
+        if (fields) {
+            var crtCatalogId = computeCurrentCatalogId(Object.keys(fields));
+            this.setState({currentCatalogIdx: crtCatalogId, fields});
         }
     }
 
 
     render() {
-         return <ImageSelectionView {...this.state}/>;
+        return <ImageSelectionView {...this.state}/>;
+
     }
 }
 
 /**
  *  presentation container for image select panel
- *  @param {number} currentCatalog
- *  @param {string} currentUnit
+ *  @param {number} currentCatalogIdx
  */
 class ImageSelectionView extends Component {
 
@@ -296,8 +295,12 @@ class ImageSelectionView extends Component {
         this.state = props;
     }
 
+    componentWillReceiveProps(props) {
+        this.state = props;
+    }
+
     changeCatalog(index) {
-        this.setState({currentCatalog: index});
+        this.setState({currentCatalogIdx: index});
     }
 
     render() {
@@ -311,7 +314,16 @@ class ImageSelectionView extends Component {
                     </Tab>);
         });
 
-        var crtCatalog = panelCatalogs[this.state.currentCatalogIdx];
+        var imageFeaturesRender = () => {
+
+            if (this.state.fields) {
+                return (<ImageFeaturesView fields = {this.state.fields}
+                                          currentCatalogIdx={this.state.currentCatalogIdx} />);
+            } else {
+                return <ImageFeaturesView currentCatalogIdx={this.state.currentCatalogIdx} />;
+            }
+        };
+
         var helpId = 'basics.catalog';
 
         /*
@@ -322,8 +334,8 @@ class ImageSelectionView extends Component {
          * Load button and help icon
          */
         return (
-            <div style={rS} >
-            <FieldGroup  groupKey={panelKey} reducerFunc={ImageSelPanelReducer} keepState={true}>
+            <div >
+            <FieldGroup  groupKey={panelKey} reducerFunc={ImageSelPanelChange} keepState={true}>
                 <table className={'imagepanel'}>
                      <tbody>
                         <tr>
@@ -331,7 +343,7 @@ class ImageSelectionView extends Component {
                         </tr>
                         <tr>
                             <td>
-                                <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={2} >
+                                <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={0} >
                                     {categoryTabs}
                                 </Tabs>
                             </td>
@@ -339,8 +351,7 @@ class ImageSelectionView extends Component {
                         <tr>
                             <td className={'sizerow'}>
                                 <div className={'sizerow'}>
-                                    <ImageFeaturesView currentCatalog={crtCatalog}
-                                                       currentUnit={this.state.currentUnit}/>
+                                    <ImageFeaturesView {...this.state} />
                                 </div>
                             </td>
                         </tr>
@@ -370,7 +381,7 @@ class ImageSelectionView extends Component {
 
 ImageSelectionView.propTypes={
      currentCatalogIdx: PropTypes.number.isRequired,
-     currentUnit: PropTypes.string
+     fields: PropTypes.object
 };
 
 /**
@@ -397,8 +408,8 @@ function TargetPanelSetView() {
                         multiple={false}
                         labelWidth={3}
                     />
-                  </div>
             </div>
+        </div>
     );
 }
 
@@ -408,18 +419,21 @@ TargetPanelSetView.propTypes= {};
 /**
  * bottom image size, size unit and color selection
  *
- * @param {object} currentCatalog
- * @param {string} currentUnit
+ * @param {number} currentCatalogIDX
+ * @param {object} fields
  * @returns {XML}
  * @constructor
  */
-function ImageFeaturesView ({currentCatalog, currentUnit}) {
-    var {min, max, unit} = currentCatalog.range;
+function ImageFeaturesView ({currentCatalogIdx, fields}) {
+    var {min, max, unit} = panelCatalogs[currentCatalogIdx].range;
+    var currentUnit = (!isEmpty(fields))&&fields[keyMap['unitfield']]?
+                                                fields[keyMap['unitfield']] : 'arcsec';
     var unitS = unitSign[currentUnit];
     var rangeMsg;
 
-    min = convertAngle(unit, currentUnit, min);
-    max = convertAngle(unit, currentUnit, max);
+
+    min = toMaxFixed(convertAngle(unit, currentUnit, min), 4);
+    max = toMaxFixed(convertAngle(unit, currentUnit, max), 4);
     rangeMsg = `Valid range between: ${min}${unitS} and ${max}${unitS}`;
 
 
@@ -434,11 +448,12 @@ function ImageFeaturesView ({currentCatalog, currentUnit}) {
                             <ListBoxInputField
                                 fieldKey={keyMap['unitfield']}
                                 options={
-                                    [{label: 'Arc Seconds', value: 'arcsec'},
+                                    [{label: 'Degree', value: 'deg'},
                                      {label: 'Arc Minutes', value: 'arcmin'},
-                                     {label: 'Degree', value: 'deg'}
+                                     {label: 'Arc Seconds', value: 'arcsec'}
                                     ]
                                 }
+                                multiple={false}
                                 labelWidth={3}
                              />
                         </div>
@@ -459,8 +474,8 @@ function ImageFeaturesView ({currentCatalog, currentUnit}) {
 }
 
 ImageFeaturesView.propsTypes={
-    currentCatalog: PropTypes.object.isRequired,
-    currentUnit: PropTypes.string
+    currentCatalogIdx: PropTypes.number.isRequired,
+    fields: PropTypes.object
 
 };
 
@@ -499,8 +514,8 @@ function SelectionList({catalog, method}) {
              <ListBoxInputField
                  fieldKey={keyMap[fkey]}
                  options={listItems}
-                 label={Title}
                  labelWidth={computeLabelWidth(Title)}
+                 multiple={false}
              />
          </div>
     );
@@ -510,4 +525,3 @@ SelectionList.propTypes = {
     catalog: PropTypes.object.isRequired,
     method: PropTypes.string.isRequired
 };
-
