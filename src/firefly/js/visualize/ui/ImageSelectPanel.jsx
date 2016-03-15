@@ -61,7 +61,7 @@ const plotMap = {
 export function showImageSelPanel(popTitle)
 {
     var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection />
+                    <ImageSelection/>
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -123,7 +123,7 @@ var ImageSelPanelChange = function (inFields, action) {
             },
             [keyMap['sizefield']]: {
                 fieldKey: keyMap['sizefield'],
-                value: '18000',
+                value: '500',
                 label: size,
                 labelWidth: computeLabelWidth(size)
             },
@@ -136,7 +136,7 @@ var ImageSelPanelChange = function (inFields, action) {
                 fieldKey: keyMap['colorfield'],
                 value: '_none_'
             }
-        };
+          };
     } else {
         return inFields;
     }
@@ -145,13 +145,14 @@ var ImageSelPanelChange = function (inFields, action) {
 
 /*
  * get the catalog id (tab id) based on stored fields of the tab
+ * TODO: temporary solution to find the tab selected
  */
 
 function computeCurrentCatalogId(fieldsAry) {
     var selectLists = fieldsAry.filter((item) => item.includes('SelectList'));
 
     if (selectLists.length > 0) {
-        var selCatalog = panelCatalogs.filter((catalog) => selectLists[0].includes(catalog.Title));
+        var selCatalog = panelCatalogs.filter((catalog) => selectLists[0].includes(catalog.Symbol));
 
         if (selCatalog.length > 0) {
             return selCatalog[0].CatalogId;
@@ -166,12 +167,11 @@ function computeCurrentCatalogId(fieldsAry) {
 /*
  * plot for IRSA
  */
-function plotIRSA(request) {
+function plotIRSA(request, plotId) {
     var worldPt = request.UserTargetWorldPt;
     var survey = request[keyMap['irsatypes']];
     var sizeInDeg = convertAngle(request[keyMap['unitfield']], 'deg',
                                  request[keyMap['sizefield']]);
-    //var colorImg = request['colorfield'].value;
 
     var wp = parseWorldPt(worldPt);
 
@@ -182,33 +182,34 @@ function plotIRSA(request) {
     } else {
         wpr = WebPlotRequest.makeIRISRequest(wp, survey, sizeInDeg);
     }
+    wpr.setPlotGroupId('irsa-group');
     wpr.setInitialZoomLevel(1);
-    wpr.setInitialColorTable(4); //??
-    dispatchPlotImage('irsaImage', wpr);
+
+    dispatchPlotImage(plotId, wpr);
 }
 
 /*
  * image plot for 2Mass
  */
-function plot2MASS(request) {
+function plot2MASS(request, plotId) {
     var worldPt = request.UserTargetWorldPt;
     var survey = request[keyMap['2masstypes']];
     var sizeInDeg = convertAngle(request[keyMap['unitfield']], 'deg',
                                  request[keyMap['sizefield']]);
-    //var colorImg = request['colorfield'].value;
 
     var wp = parseWorldPt(worldPt);
     var wpr = WebPlotRequest.makeIRISRequest(wp, survey, sizeInDeg);
 
+    wpr.setPlotGroupId('twomass-group');
     wpr.setInitialZoomLevel(1);
-    wpr.setInitialColorTable(4);
-    dispatchPlotImage('twomassImage', wpr);
+
+    dispatchPlotImage(plotId, wpr);
 }
 
 /*
  * image plot for wise
  */
-function plotWISE(request) {
+function plotWISE(request, plotId) {
     var worldPt = request.UserTargetWorldPt;
     var survey = request[keyMap['wisetypes']];
     var band = request[keyMap['wisebands']];
@@ -219,10 +220,10 @@ function plotWISE(request) {
     var wp = parseWorldPt(worldPt);
     var wpr = WebPlotRequest.makeWiseRequest(wp, survey, band, sizeInDeg);
 
-    wpr.setPlotGroupId('test-wise');
-    //wpr.setInitialZoomLevel(1);
-    //wpr.setInitialColorTable(4); //??
-    dispatchPlotImage('wiseImage', wpr);
+    wpr.setPlotGroupId('wise-group');
+    wpr.setInitialZoomLevel(1);
+
+    dispatchPlotImage(plotId, wpr);
 }
 
 /*
@@ -235,7 +236,7 @@ function showResults(success, request) {
 
     var crtCatalogId = computeCurrentCatalogId(Object.keys(request));
 
-    plotMap[panelCatalogs[crtCatalogId].Title](request);
+    plotMap[panelCatalogs[crtCatalogId].Symbol](request, 'TestImage1');
 }
 
 function resultSuccess(request) {
@@ -306,23 +307,11 @@ class ImageSelectionView extends Component {
     render() {
 
         // tabs for each catalog
-        var categoryTabs = panelCatalogs.map((item, index) => {
-            var title = item.Title;
-
-            return (<Tab key={index} name={title.toUpperCase()}>
-                        <CatalogSelectListsView catalog={item} />
-                    </Tab>);
-        });
-
-        var imageFeaturesRender = () => {
-
-            if (this.state.fields) {
-                return (<ImageFeaturesView fields = {this.state.fields}
-                                          currentCatalogIdx={this.state.currentCatalogIdx} />);
-            } else {
-                return <ImageFeaturesView currentCatalogIdx={this.state.currentCatalogIdx} />;
-            }
-        };
+        var categoryTabs = panelCatalogs.map((item, index) =>
+             (<Tab key={index} name={item.Title}>
+                  <CatalogTabView catalog={item} />
+             </Tab>)
+        );
 
         var helpId = 'basics.catalog';
 
@@ -385,7 +374,7 @@ ImageSelectionView.propTypes={
 };
 
 /**
- * component for top target panel
+ * top row for target panel
  *
  * @returns {XML}
  * @constructor
@@ -399,15 +388,15 @@ function TargetPanelSetView() {
             </div>
             <div className={leftpadding}>
                 <ListBoxInputField
-                        fieldKey={keyMap['targettry']}
-                        options={
-                            [{label: 'Try NED then Simbad', value: 'NED'},
+                    fieldKey={keyMap['targettry']}
+                    options={
+                        [{label: 'Try NED then Simbad', value: 'NED'},
                              {label: 'Try Simbad then NED', value: 'simbad'}
-                            ]
-                        }
-                        multiple={false}
-                        labelWidth={3}
-                    />
+                        ]
+                    }
+                    multiple={false}
+                    labelWidth={3}
+                />
             </div>
         </div>
     );
@@ -417,32 +406,41 @@ TargetPanelSetView.propTypes= {};
 
 
 /**
- * bottom image size, size unit and color selection
+ * bottom row for image size, size unit and color selection
  *
- * @param {number} currentCatalogIDX
+ * @param {number} currentCatalogIdx
  * @param {object} fields
  * @returns {XML}
  * @constructor
  */
 function ImageFeaturesView ({currentCatalogIdx, fields}) {
-    var {min, max, unit} = panelCatalogs[currentCatalogIdx].range;
-    var currentUnit = (!isEmpty(fields))&&fields[keyMap['unitfield']]?
-                                                fields[keyMap['unitfield']] : 'arcsec';
-    var unitS = unitSign[currentUnit];
-    var rangeMsg;
 
+    var showColor = (pos) => {
+        return (
+            <div className={pos}>
+                <CheckboxGroupInputField
+                    fieldKey={keyMap['colorfield']}
+                    options={[{label: '3-color Image', value: '3color'}]}
+                />
+            </div>);
+    };
 
-    min = toMaxFixed(convertAngle(unit, currentUnit, min), 4);
-    max = toMaxFixed(convertAngle(unit, currentUnit, max), 4);
-    rangeMsg = `Valid range between: ${min}${unitS} and ${max}${unitS}`;
+    var showSize = () => {
+        var {min, max, unit} = panelCatalogs[currentCatalogIdx].range;
+        var currentUnit = (!isEmpty(fields)) && fields[keyMap['unitfield']] ?
+            fields[keyMap['unitfield']] : 'arcsec';
+        var unitS = unitSign[currentUnit];
+        var rangeMsg;
 
-
-    return (
+        min = toMaxFixed(convertAngle(unit, currentUnit, min), 4);
+        max = toMaxFixed(convertAngle(unit, currentUnit, max), 4);
+        rangeMsg = `Valid range between: ${min}${unitS} and ${max}${unitS}`;
+        return (
             <div>
                 <div>
                     <div className={leftpadding}>
                         <div className={left}>
-                            <ValidationField fieldKey={keyMap['sizefield'] } />
+                            <ValidationField fieldKey={keyMap['sizefield']}/>
                         </div>
                         <div className={left}>
                             <ListBoxInputField
@@ -454,21 +452,21 @@ function ImageFeaturesView ({currentCatalogIdx, fields}) {
                                     ]
                                 }
                                 multiple={false}
-                                labelWidth={3}
-                             />
+                                labelWidth={2}
+                            />
                         </div>
                     </div>
-                    <div className={'color'} >
-                        <CheckboxGroupInputField
-                           fieldKey={keyMap['colorfield']}
-                           options={[
-                                {label: '3-color Image', value: '3color'}
-                            ]}
-                        />
-                    </div>
+                    {showColor('colorleft')}
                 </div>
                 <br/><br/>
                 <p>{rangeMsg}</p>
+            </div>
+        );
+    };
+
+    return (
+            <div>
+                {panelCatalogs[currentCatalogIdx].range? showSize(): showColor('colorcenter') }
             </div>
     );
 }
@@ -480,48 +478,56 @@ ImageFeaturesView.propsTypes={
 };
 
 /**
- * component inside each catalog tab
+ * component inside each catalog tab at middle row
  *
  * @param catalog
  * @returns {XML}
  * @constructor
  */
-function CatalogSelectListsView({catalog}) {
+function CatalogTabView({catalog}) {
+    var listfield = (fieldname) => {
+        var fkey = `${catalog.Symbol.toLowerCase()}${fieldname}`;
+        var listItems = catalog[fieldname].Items.map((item) => (({'label': item.name, 'value': item.item})));
+
+        return (
+            <div className={'cataloglist'}>
+                <ListBoxInputField
+                    fieldKey={keyMap[fkey]}
+                    options={listItems}
+                    labelWidth={computeLabelWidth(catalog[fieldname].Title)}
+                    multiple={false}
+                />
+            </div>
+        );
+    };
+
+    var inputfield = (fieldname) => {
+        var fkey = `${catalog.Symbol.toLowerCase()}${fieldname}`;
+
+        return (
+            <div className={'inputtext'}>
+                <ValidationField fieldKey={keyMap[fkey]}/>
+                <br/>
+            </div>
+        );
+    };
+
+    var fieldrequest = (fieldname) => {
+        if (fieldname.includes('types') || fieldname.includes('bands') ||
+            fieldname.includes('list')) {
+            return listfield(fieldname);
+        }  else if (fieldname.includes('input')) {
+            return inputfield(fieldname);
+        }
+    };
+
     return (
         <div>
-            <SelectionList catalog={catalog} method={'types'} />
-            <SelectionList catalog={catalog} method={'bands'} />
+            {(catalog.fields).map((oneField) =>  fieldrequest(oneField))}
         </div>
     );
 }
 
-CatalogSelectListsView.propTypes={
+CatalogTabView.propTypes={
     catalog: PropTypes.object.isRequired
-};
-
-
-function SelectionList({catalog, method}) {
-    if (!catalog.hasOwnProperty(method)) {
-        return <div></div>;
-    }
-
-    var listItems = catalog[method].Items.map((item) => ({'label': item.name, 'value': item.item}));
-    var fkey = `${catalog.Title.toLowerCase()}${method}`;
-    var {Title} = catalog[method];
-
-    return (
-         <div className={'cataloglist'}>
-             <ListBoxInputField
-                 fieldKey={keyMap[fkey]}
-                 options={listItems}
-                 labelWidth={computeLabelWidth(Title)}
-                 multiple={false}
-             />
-         </div>
-    );
-}
-
-SelectionList.propTypes = {
-    catalog: PropTypes.object.isRequired,
-    method: PropTypes.string.isRequired
 };

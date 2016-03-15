@@ -1,8 +1,8 @@
 table.imagepanel  {
     width: 1200px;
     background: white;
-    border-left: 20px solid #c5c5c5;
-    border-right: 20px solid #c5c5c5;
+    border-left: 20px solid #c8c8c8;
+    border-right: 20px solid #c8c8c8;
     border-collapse: collapse;
 }
 
@@ -28,7 +28,7 @@ table.imagepanel tr div.sizerow {
 }
 
 table.imagepanel tr:last-child {
-    background: #c5c5c5;
+    background: #c8c8c8;
     height: 80px;
 }
 
@@ -49,13 +49,22 @@ div.rightpadding {
     padding-right: 10px;
 }
 
-div.color {
+div.colorleft {
     float: left;
     padding-top: 10px;
     padding-left: 90px;
 }
 
+div.colorcenter {
+    padding-top: 10px;
+    text-align: center
+}
+
 div.cataloglist {
     float: left;
     padding: 15px 10px 25px 10px
+}
+
+div.inputtext {
+    padding: 10px
 }
