@@ -87,27 +87,24 @@ const column5_1 = {width: 90, paddingLeft: 1, display: 'inline-block'};
 const precision7Digit = '0.0000000';
 const precision3Digit = '0.000';
 const precision1Digit = '0.0';
-
-
 export class MouseReadout extends React.Component {
-
 
 	constructor(props) {
 		super(props);
 		this.showFlux = this.showFlux.bind(this);
 		this.setLockState = this.setLockState.bind(this);
 
-		this.fluxLabels = getFluxLabels(this.props.plotView);
-		this.pointInfo = {
+		const fluxLabels = getFluxLabels(this.props.plotView);
+		const pointInfo = {
 			coordinates: [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize],
 			mouseReadouts: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT]
 		};
 		this.state = ({
 			point: this.props.mouseState.imagePt,
 			flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
-			fluxLabel: this.fluxLabels,
+			fluxLabel: fluxLabels,
 			isLocked: false,
-			pointInfo: this.pointInfo
+			pointInfo: pointInfo
 		});
 
 
@@ -118,43 +115,23 @@ export class MouseReadout extends React.Component {
 					var fluxUnitStr = plot.webFitsData[0].fluxUnits;
 					if (result.hasOwnProperty('NO_BAND')) {
 
-						var fluxStr = `${numeral(result.NO_BAND).format(precision7Digit)} ${fluxUnitStr}`;
+						var fluxStr =`${numeral(result.NO_BAND).format(precision7Digit)} ${fluxUnitStr}`;
 						fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
-
-						if (isLocked) {
-
-							if (mouseState.mouseState.key === 'UP') {
-
-
-								this.setState({ flux: fluxArray});
-
-							}
+						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
+							this.setState({ flux: fluxArray});
 						}
-						else {
 
-								this.setState({ flux: fluxArray});
-
-
-
-						}
-					}
+				    }
 					else {
 						var blueFlux = result.hasOwnProperty('Blue') ? `${numeral(result.Blue).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						var greenFlux = result.hasOwnProperty('Green') ? `${numeral(result.Green).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						var RedFlux = result.hasOwnProperty('Red') ? `${numeral(result.Red).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						fluxArray = [RedFlux, greenFlux, blueFlux];
-						if (isLocked) {
-
-							if (mouseState.mouseState.key === 'UP') {
-								this.setState({flux: fluxArray});
-
-							}
-						}
-						else {
-
-								this.setState({flux: fluxArray});
+						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
+							this.setState({flux: fluxArray});
 
 						}
+
 					}
 				})
 				.catch((e) => {
@@ -167,34 +144,25 @@ export class MouseReadout extends React.Component {
 	componentWillReceiveProps() {
 
 
-		//if (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked) {
 		if (this.props.plotView && (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked)) {
-			//save the image point where the readouts and flux are from
-			this.setState({
-				point: this.props.mouseState.imagePt
-			});
+			this.setState( {
+				point: this.props.mouseState.imagePt,
+				fluxLabel: getFluxLabels(this.props.plotView),
+				pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)
+			} );
 
-			//update fluxLabels
-			this.setState({ fluxLabel: getFluxLabels(this.props.plotView)});
-			//update mouseReadouts
-			this.setState({pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)});
-			//update the flux values
 			this.showFlux();
 		}
 
 
-
-
-
 	}
-
 
 	setLockState(request) {
 
 		if (request.hasOwnProperty('target')) {
 			var target = request.target;
 			var pixelClickLock = target.checked;
-			this.setState({ isLocked: pixelClickLock});
+			this.setState({isLocked: pixelClickLock});
 			setPointLock(this.props.plotView, pixelClickLock);
 
 		}
@@ -241,8 +209,9 @@ export class MouseReadout extends React.Component {
 		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH));
 		if (isOutside && isLocked || !isOutside) {
 				for (var i = 0; i < bands.length; i++) {
-					fluxValues[i] = this.state.flux[i];
-					fluxLabels[i] = this.state.fluxLabel[i];
+						fluxValues[i] = this.state.flux[i];
+						fluxLabels[i] = this.state.fluxLabel[i];
+
 				}
 
 		}
@@ -267,7 +236,7 @@ export class MouseReadout extends React.Component {
 					<div style={column4}>  {mouseReadout2}  </div>
 					<div style={column5_1} title='Click on an image to lock the display at that point.'>
 						<input type='checkbox' name='aLock' value='lock'
-							   onChange={ (request) => this.setLockState(request) }/>
+							   onChange={ (request) => this.setLockState( request) }/>
 						Lock by click
 					</div>
 
@@ -330,14 +299,9 @@ function setPointLock(plotView, isLocked) {
 
 	var plot = primePlot(plotView);
 	if (!plot) return EMPTY;
-	if (isLocked) {
-		dispatchChangePointSelection('mouseReadout', true);
-		plot.plotState.getWebPlotRequest().setAllowImageSelection(false);
-
-	} else {
-		dispatchChangePointSelection('mouseReadout', false);
-		plot.plotState.getWebPlotRequest().setAllowImageSelection(true);
-	}
+	dispatchChangePointSelection('mouseReadout',isLocked);
+	plot.plotState.getWebPlotRequest().setAllowImageSelection(!isLocked);
+	
 }
 
 function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, spt, isLocked) {
