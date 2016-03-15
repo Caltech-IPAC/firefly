@@ -36,15 +36,15 @@ const leftpadding = 'leftpadding';
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
 
 const keyMap = {
-    'selTab':   'SELECTIMAGEPANEL_SelectedCatalog',
+    'selTab':    'SELECTIMAGEPANEL_SelectedCatalog',
     'targettry': 'SELECTIMAGEPANEL_targettry',
     'irsatypes': 'SELECTIMAGEPANEL_IRSASelectLists_types',
-    '2masstypes': 'SELECTIMAGEPANEL_2MASSSelectLists_types',
+    '2masstypes':'SELECTIMAGEPANEL_2MASSSelectLists_types',
     'wisetypes': 'SELECTIMAGEPANEL_WISESelectLists_types',
     'wisebands': 'SELECTIMAGEPANEL_WISESelectLists_bands',
     'sizefield': 'SELECTIMAGEPANEL_ImgFeature_size',
     'unitfield': 'SELECTIMAGEPANEL_ImgFeature_unit',
-    'colorfield': 'SELECTIMAGEPANEL_ImgFeature_3color'
+    'colorfield':'SELECTIMAGEPANEL_ImgFeature_3color'
 };
 const [IRSA, TWOMASS, WISE] = [0, 1, 2];
 const plotMap = {
@@ -198,7 +198,7 @@ function plot2MASS(request, plotId) {
                                  request[keyMap['sizefield']]);
 
     var wp = parseWorldPt(worldPt);
-    var wpr = WebPlotRequest.makeIRISRequest(wp, survey, sizeInDeg);
+    var wpr = WebPlotRequest.make2MASSRequest(wp, survey, sizeInDeg);
 
     wpr.setPlotGroupId('twomass-group');
     wpr.setInitialZoomLevel(1);
@@ -326,13 +326,13 @@ class ImageSelectionView extends Component {
             <div >
             <FieldGroup  groupKey={panelKey} reducerFunc={ImageSelPanelChange} keepState={true}>
                 <table className={'imagepanel'}>
-                     <tbody>
+                    <tbody>
                         <tr>
                             <td> <TargetPanelSetView /> </td>
                         </tr>
                         <tr>
                             <td>
-                                <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={0} >
+                                <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={1} >
                                     {categoryTabs}
                                 </Tabs>
                             </td>
@@ -391,7 +391,7 @@ function TargetPanelSetView() {
                     fieldKey={keyMap['targettry']}
                     options={
                         [{label: 'Try NED then Simbad', value: 'NED'},
-                             {label: 'Try Simbad then NED', value: 'simbad'}
+                         {label: 'Try Simbad then NED', value: 'simbad'}
                         ]
                     }
                     multiple={false}
