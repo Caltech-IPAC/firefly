@@ -5,7 +5,7 @@ const panelCatalogs = [
     {
         'Title':'IRSA',
         'Symbol': 'IRSA',
-        'CatalogId': '0',
+        'CatalogId': 0,
         'fields': ['types'],
         'types': {
             'Title': 'Choose IRAS ISSA/IRIS Image:',
@@ -14,10 +14,10 @@ const panelCatalogs = [
                 {'item':'issa-25',  'id': 1, 'name': 'ISSA 25 microns'},
                 {'item':'issa-60',  'id': 2, 'name': 'ISSA 60 microns'},
                 {'item':'issa-100', 'id': 3, 'name': 'ISSA 100 microns'},
-                {'item':'iris-12',  'id': 4, 'name': 'IRIS 12 microns'},
-                {'item':'iris-25',  'id': 5, 'name': 'IRIS 25 microns'},
-                {'item':'iris-60',  'id': 6, 'name': 'IRIS 60 microns'},
-                {'item':'iris-100', 'id': 7, 'name': 'IRIS 100 microns'}],
+                {'item':'iris-12',  'id': 4, 'name': 'IRAS: IRIS 12 microns'},
+                {'item':'iris-25',  'id': 5, 'name': 'IRAS: IRIS 25 microns'},
+                {'item':'iris-60',  'id': 6, 'name': 'IRAS: IRIS 60 microns'},
+                {'item':'iris-100', 'id': 7, 'name': 'IRAS: IRIS 100 microns'}],
             'Default': 'iris-25'
         },
         'range': {'min': 3600, 'max': 45000, 'unit': 'arcsec'},
