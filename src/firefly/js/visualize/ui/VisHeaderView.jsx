@@ -19,7 +19,7 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 export function VisHeaderView({visRoot,currMouseState}) {
 
     var rS= {
-        width: 640,
+        width: 650,
         minWidth:550,
         height: 32,
         minHeight:32,

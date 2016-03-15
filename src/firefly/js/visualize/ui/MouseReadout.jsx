@@ -18,9 +18,10 @@ import {debounce} from 'lodash';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import numeral from 'numeral';
 import Band from '../Band.js';
+import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 
 const rS = {
-	width: 640,
+	width: 650,
 	minWidth: 550,
 	height: 32,
 	minHeight: 32,
@@ -78,8 +79,8 @@ const column3 = {
 	fontStyle: 'italic',
 	display: 'inline-block'
 };
-const column4 = {width: 148, display: 'inline-block'};
-const column5 = {width: 80, paddingLeft: 3, display: 'inline-block'};
+const column4 = {width: 152, display: 'inline-block'};
+const column5 = {width: 80, paddingLeft: 4, display: 'inline-block'};
 const column5_1 = {width: 90, paddingLeft: 1, display: 'inline-block'};
 
 
@@ -94,10 +95,8 @@ export class MouseReadout extends React.Component {
 	constructor(props) {
 		super(props);
 		this.showFlux = this.showFlux.bind(this);
-		this.showReadout = this.showReadout.bind(this);
-		this.setFluxLabels = this.setFluxLabels.bind(this);
 
-		this.fluxLabels = this.setFluxLabels();
+		this.fluxLabels = getFluxLabels(this.props.plotView);
 		this.pointInfo = {
 			coordinates: [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize],
 			mouseReadouts: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT]
@@ -145,14 +144,13 @@ export class MouseReadout extends React.Component {
 						if (isLocked) {
 
 							if (mouseState.mouseState.key === 'UP') {
-								this.setState({point: iPt, flux: fluxArray});
+								this.setState({flux: fluxArray});
 
 							}
 						}
 						else {
 							if (mouseState.imagePt === this.state.point) {
-								this.setState({point: mouseState.imagePt, flux: fluxArray});
-
+								this.setState({flux: fluxArray});
 							}
 
 						}
@@ -167,21 +165,24 @@ export class MouseReadout extends React.Component {
 
 	componentWillReceiveProps() {
 		this.setState({
-			point: this.props.mouseState.imagePt,
-			flux: this.state.flux,
-			fluxLabel: this.state.fluxLabel,
-			isLocked: this.state.isLocked,
-			mouseReadouts: this.state.mouseReadouts
+			point: this.props.mouseState.imagePt
 		});
 
-		this.setFluxLabels();
+		//update fluxLabels
+		if (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked) {
+			this.setState({ fluxLabel: getFluxLabels(this.props.plotView)});
+		}
+		//update the flux values
 		this.showFlux();
 
 
-		this.showReadout();
+		//update mouseReadouts
+		if (this.props.plotView && (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked)) {
+			this.setState({pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)});
+		}
+
 
 	}
-
 
 
 	setLockState(request) {
@@ -191,10 +192,10 @@ export class MouseReadout extends React.Component {
 			var pixelClickLock = target.checked;
 			if (pixelClickLock) {
 				this.setState({point: this.state.point, flux: [], fluxLabel: [], isLocked: true});
-
+				setPointLock(this.props.plotView, true);
 			} else {
 				this.setState({point: this.state.point, flux: this.state.flux, fluxLabel: [], isLocked: false});
-
+				setPointLock(this.props.plotView, false);
 			}
 		}
 
@@ -211,46 +212,6 @@ export class MouseReadout extends React.Component {
 			this.getFlux(this.props.mouseState, plot, iPt, this.state.isLocked);
 		}
 
-	}
-
-	setFluxLabels() {
-
-		var plot = primePlot(this.props.plotView);
-		if (!plot) return EMPTY;
-		var bands = plot.plotState.getBands();
-		var fluxLabels = [];
-		for (var i = 0; i < 3; i++) {
-			if (i === 0 || bands.length === 3) {
-				fluxLabels[i] = showFluxLabel(plot, bands[i]);
-			}
-			else {
-				fluxLabels[i] = EMPTY_READOUT;
-			}
-		}
-		if (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked){
-			this.setState({fluxLabel: fluxLabels});
-		}
-
-	}
-
-	showReadout() {
-
-		var plot = primePlot(this.props.plotView);
-		if (!plot) return EMPTY;
-		var spt = this.props.mouseState.screenPt;
-		if (!spt) return false;
-		var readoutValues = [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize];
-
-
-		var result = [];
-
-		for (var i = 0; i < readoutValues.length; i++) {
-			if (this.state.isLocked &&  this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked){
-				result[i] = getMouseReadout(plot, this.props.mouseState.imagePt, readoutValues[i]);
-			}
-	
-		}
-		if (result.length != 0) this.setState({pointInfo: {coordinates: readoutValues, mouseReadouts: result}});
 	}
 
 	render() {
@@ -277,10 +238,10 @@ export class MouseReadout extends React.Component {
 		var {width:screenW, height:screenH }= plot.screenSize;
 		var fluxValues = [];
 		var fluxLabels = [];
-		const isOutside =(spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH)) ;
-		if ( isOutside && isLocked || !isOutside )  {
+		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH));
+		if (isOutside && isLocked || !isOutside) {
 
-			for ( var i = 0; i < bands.length; i++) {
+			for (var i = 0; i < bands.length; i++) {
 				fluxValues[i] = this.state.flux[i];
 				fluxLabels[i] = this.state.fluxLabel[i];
 			}
@@ -330,6 +291,55 @@ MouseReadout.propTypes = {
 
 //===================end of MouseReadout class===========================================================
 
+function renderMouseReadoutRow1({visRoot, title,  mouseReadout1, pixelSize, fluxLabels, fluxValues}) {
+
+	return (
+		<div  >
+			<div style={ columnColorBandFluxLabel}>{fluxLabels[1]} </div>
+			<div style={ columnColorBandFluxValue}> { fluxValues[1]} </div>
+			<div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+				{labelMap[visRoot.pixelSize] }
+			</div>
+			<div style={column2}>{ pixelSize}</div>
+
+			<div style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+				{ labelMap[visRoot.mouseReadout1] }
+			</div>
+			<div style={column4}> {mouseReadout1} </div>
+
+
+			<div style={column5}> {title}  </div>
+		</div>
+
+
+
+	);
+
+}
+renderMouseReadoutRow1.propTypes = {
+	visRoot: PropTypes.object.isRequired,
+	mouseReadout1: PropTypes.string.isRequired,
+	title: PropTypes.string.isRequired,
+	pixelSize: PropTypes.string.isRequired,
+	fuxLabel: PropTypes.array.isRequired,
+	fluxValue: PropTypes.array.isRequired
+
+};
+
+function setPointLock(plotView, isLocked) {
+
+	var plot = primePlot(plotView);
+	if (!plot) return EMPTY;
+	if (isLocked) {
+		dispatchChangePointSelection('mouseReadout', true);
+		plot.plotState.getWebPlotRequest().setAllowImageSelection(false);
+
+	} else {
+		dispatchChangePointSelection('mouseReadout', false);
+		plot.plotState.getWebPlotRequest().setAllowImageSelection(true);
+	}
+}
+
 function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, spt, isLocked) {
 
 	var coordinatesInPt = pointInfo.coordinates;
@@ -343,7 +353,7 @@ function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, sp
 			for (i = 0; i < 3; i++) {
 				//convert the existing readouts to the newly changed coordinates
 				if (currentCoordinates[i] != coordinatesInPt[i]) {
-					mouseReadouts[i] = getMouseReadout(plot, imagePtInPt, currentCoordinates[i]);
+					mouseReadouts[i] = getSingleMouseReadout(plot, imagePtInPt, currentCoordinates[i]);
 				}
 			}
 		}
@@ -361,7 +371,25 @@ function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, sp
 	return {mouseReadout1, mouseReadout2, pixelSize};
 
 }
-function showFluxLabel(plot, band) {
+
+function getFluxLabels(plotView) {
+
+	var plot = primePlot(plotView);
+	if (!plot) return EMPTY;
+	var bands = plot.plotState.getBands();
+	var fluxLabels = [];
+	for (var i = 0; i < 3; i++) {
+		if (i === 0 || bands.length === 3) {
+			fluxLabels[i] = showSingleBandFluxLabel(plot, bands[i]);
+		}
+		else {
+			fluxLabels[i] = EMPTY_READOUT;
+		}
+	}
+	return fluxLabels;
+
+}
+function showSingleBandFluxLabel(plot, band) {
 
 	if (!plot) return EMPTY_READOUT;
 
@@ -399,41 +427,6 @@ function showFluxLabel(plot, band) {
 
 }
 
-function renderMouseReadoutRow1({visRoot, title,  mouseReadout1, pixelSize, fluxLabels, fluxValues}) {
-
-	return (
-		<div  >
-			<div style={ columnColorBandFluxLabel}>{fluxLabels[1]} </div>
-			<div style={ columnColorBandFluxValue}> { fluxValues[1]} </div>
-			<div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-				{labelMap[visRoot.pixelSize] }
-			</div>
-			<div style={column2}>{ pixelSize}</div>
-
-			<div style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
-				{ labelMap[visRoot.mouseReadout1] }
-			</div>
-			<div style={column4}> {mouseReadout1} </div>
-
-
-			<div style={column5}> {title}  </div>
-		</div>
-
-
-
-	);
-
-}
-renderMouseReadoutRow1.propTypes = {
-	visRoot: PropTypes.object.isRequired,
-	mouseReadout1: PropTypes.string.isRequired,
-	title: PropTypes.string.isRequired,
-	pixelSize: PropTypes.string.isRequired,
-	fuxLabel: PropTypes.array.isRequired,
-	fluxValue: PropTypes.array.isRequired
-
-};
-
 
 /**
  *
@@ -459,7 +452,23 @@ function getCoordinateMap(coordinateRadioValue) {
 	}
 	return {coordinate, type};
 }
-function getMouseReadout(plot, imagePt, toCoordinateName) {
+
+
+function getAllMouseReadouts(plotView, mouseState, visRoot){
+	var results = [];
+
+	var readoutValues = [visRoot.mouseReadout1, visRoot.mouseReadout2, visRoot.pixelSize];
+
+	var plot = primePlot(plotView);
+	for (var i = 0; i < readoutValues.length; i++) {
+
+		results[i] = getSingleMouseReadout(plot, mouseState.imagePt, readoutValues[i]);
+	}
+	return  {coordinates: readoutValues, mouseReadouts: results};
+}
+
+function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
+	if (!imagePt) return;
 	if (toCoordinateName === 'fitsIP') {
 		return ` ${numeral(imagePt.x).format(precision1Digit)}, ${
 			numeral(imagePt.y).format(precision1Digit)}`;
