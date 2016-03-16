@@ -11,6 +11,7 @@ import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.j
 import { encodeServerUrl } from '../util/WebUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
+import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 
 //var http= require('http');
 
@@ -58,8 +59,9 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
 
                 if (result[0] && result[0].success && result[0].success !== 'false' && result[0].data) {
                     resolve(result[0].data);
+
                 }
-                else if (result[0] && result[0].error) {
+                else if (result[0] && get(result,'0.error')){//result[0].error) {
                     reject(new Error(result[0].error));
                 } else {
                     reject(new Error(`Unreconized result: ${result}`));
@@ -67,6 +69,7 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
               }
                 else { //this part did not use WebPlotResultSerializer for making the return result in VisServerCommands
                     resolve(result);
+
                 }
             });
         }).catch(function(err) {

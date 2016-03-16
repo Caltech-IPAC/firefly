@@ -22,7 +22,7 @@ import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
-import { FitsHeaderView} from './FitsHeaderView.jsx';
+import { fitsHeaderView} from './FitsHeaderView.jsx';
 
 
 
@@ -231,7 +231,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            enabled={enabled}
                            horizontal={true}
                            visible={mi.fitsHeader}
-                           onClick={() =>  FitsHeaderView(pv)}/>
+                           onClick={() =>  fitsHeaderView(pv)}/>
 
 
 
