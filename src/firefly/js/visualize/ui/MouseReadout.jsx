@@ -126,9 +126,9 @@ export class MouseReadout extends React.Component {
 
 				    }
 					else {
-						var blueFlux = result.hasOwnProperty('Blue') ? `${numeral(result.Blue).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
+						var blueFlux = result.hasOwnProperty('Blue')  ? `${numeral(result.Blue).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						var greenFlux = result.hasOwnProperty('Green') ? `${numeral(result.Green).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
-						var RedFlux = result.hasOwnProperty('Red') ? `${numeral(result.Red).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
+						var RedFlux = result.hasOwnProperty('Red')  ? `${numeral(result.Red).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						fluxArray = [RedFlux, greenFlux, blueFlux];
 						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
 							this.setState({flux: fluxArray});
@@ -169,8 +169,8 @@ export class MouseReadout extends React.Component {
 		if (request.hasOwnProperty('target')) {
 			var target = request.target;
 			var pixelClickLock = target.checked;
-			//the default flux values from the getFlux could have 0.0000 due to converting the '' to string expression
-			//thus, when setting lock, force to empty the 0.000 to ''
+
+			//add a callback function to handle the asyn behavior
 			this.setState({isLocked: pixelClickLock}, ()=>{
 				//force this to be executed before the lock state is st
 				setPointLock(this.props.plotView, pixelClickLock);
@@ -271,14 +271,6 @@ MouseReadout.propTypes = {
 };
 
 //===================end of MouseReadout class===========================================================
-function sleep(milliseconds) {
-	var start = new Date().getTime();
-	for (var i = 0; i < 1e7; i++) {
-		if ((new Date().getTime() - start) > milliseconds){
-			break;
-		}
-	}
-}
 
 function renderMouseReadoutRow1({visRoot, title,  mouseReadout1, pixelSize, fluxLabels, fluxValues}) {
 
