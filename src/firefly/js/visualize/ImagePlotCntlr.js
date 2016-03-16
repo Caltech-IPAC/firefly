@@ -149,8 +149,8 @@ const initState= function() {
         //-- mouse readout settings
         mouseReadout1:'eqj2000hms',
         mouseReadout2: 'fitsIP',
-        pixelSize: 'pixelSize',
-        flux: 'Flux'
+        pixelSize: 'pixelSize'
+
 
     };
 

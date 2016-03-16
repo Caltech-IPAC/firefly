@@ -116,7 +116,9 @@ export class MouseReadout extends React.Component {
 					var fluxUnitStr = plot.webFitsData[0].fluxUnits;
 					if (result.hasOwnProperty('NO_BAND')) {
 
-						var fluxStr =`${numeral(result.NO_BAND).format(precision7Digit)} ${fluxUnitStr}`;
+						var fValue = result.NO_BAND;
+
+						var fluxStr =(fValue)?`${numeral(fValue).format(precision7Digit)} ${fluxUnitStr}`:'';
 						fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
 						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
 							this.setState({ flux: fluxArray});
@@ -167,11 +169,14 @@ export class MouseReadout extends React.Component {
 		if (request.hasOwnProperty('target')) {
 			var target = request.target;
 			var pixelClickLock = target.checked;
+			//the default flux values from the getFlux could have 0.0000 due to converting the '' to string expression
+			//thus, when setting lock, force to empty the 0.000 to ''
 			this.setState({isLocked: pixelClickLock}, ()=>{
-				this.setState({isLocked:pixelClickLock, flux:['', '','']});
-			});
-			setPointLock(this.props.plotView, pixelClickLock);
+				//force this to be executed before the lock state is st
+				setPointLock(this.props.plotView, pixelClickLock);
 
+				this.setState({isLocked:pixelClickLock, flux:[], fluxLabel:[]});
+			});
 		}
 
 	}
