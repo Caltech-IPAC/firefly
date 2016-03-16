@@ -19,6 +19,7 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import numeral from 'numeral';
 import Band from '../Band.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
+import sCompare from 'react-addons-shallow-compare';
 
 const rS = {
 	width: 650,
@@ -156,13 +157,19 @@ export class MouseReadout extends React.Component {
 
 
 	}
+	shouldComponentUpdate(np,ns) {
+		return sCompare(this,np,ns);
+
+	}
 
 	setLockState(request) {
 
 		if (request.hasOwnProperty('target')) {
 			var target = request.target;
 			var pixelClickLock = target.checked;
-			this.setState({isLocked: pixelClickLock});
+			this.setState({isLocked: pixelClickLock}, ()=>{
+				this.setState({isLocked:pixelClickLock, flux:['', '','']});
+			});
 			setPointLock(this.props.plotView, pixelClickLock);
 
 		}
