@@ -150,8 +150,17 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
     return doService(doJsonP(), ServerParams.CROP, params);
     
 }
+//LZ 3/22/16 DM-4494
+export  function  callGetFitsHeaderInfo(plotState, tableId) {
 
+    var params ={ [ServerParams.STATE]: plotState.toJson(),
+        [ServerParams.JSON_DEEP]: true,
+        tableId
+    };
 
+    var result = doService(doJsonP(), ServerParams.FITS_HEADER, params);
+    return result;//doService(doJsonP(), ServerParams.FITS_HEADER, params);
+}
 
 
 export function callFlipImageOnY(stateAry) {

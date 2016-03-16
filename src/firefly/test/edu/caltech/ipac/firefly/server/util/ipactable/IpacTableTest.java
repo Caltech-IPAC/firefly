@@ -4,9 +4,11 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.firefly.data.DecimateInfo;
+import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -18,6 +20,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * @author loi
@@ -69,5 +72,16 @@ public class IpacTableTest {
         String jsonStr = json.toJSONString();
         String expected = FileUtil.readFile(jsonResults);
         Assert.assertEquals(expected, jsonStr);
+
+
+        //JSONObject json = JsonTableUtil.toJsonTableModel(page, new TableMeta(tableDef.getSource()), request);
+        // set fields that changes based on env to static values
+       /* HashMap<Band, DataGroup> dataMap = new HashMap<>();
+        dataMap.put(Band.NO_BAND, data);
+        jsonStr = JsonTableUtil.dataGroupMapToJasonString(dataMap, request);
+        Assert.assertNotNull(jsonStr );*/
     }
+
+
+
 }

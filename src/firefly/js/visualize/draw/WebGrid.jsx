@@ -13,10 +13,11 @@ import VisUtil from '../VisUtil.js';
 import numeral from 'numeral';
 import Band from '../Band.js';
 
-export function drawGrids(){
-
+export function drawGrids(plotView, coordinate){
+  //TODO return a drawing objecther
 }
-function computeLines(){
+function computeLines(plotView){
 
+	//TODO compute lines
 }
 

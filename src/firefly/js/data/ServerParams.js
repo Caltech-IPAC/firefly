@@ -96,6 +96,7 @@ export const ServerParams = {
         CROP : 'CmdCrop',
         STAT : 'CmdStat',
         HEADER : 'CmdHeader',
+        FITS_HEADER:'CmdFitsHeader', //LZ DM DM-4494
         DELETE : 'CmdDelete',
         USER_KEY : 'CmdUserKey',
         VERSION : 'CmdVersion',
