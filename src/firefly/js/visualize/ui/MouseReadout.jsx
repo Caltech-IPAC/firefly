@@ -117,9 +117,9 @@ export class MouseReadout extends React.Component {
 					if (result.hasOwnProperty('NO_BAND')) {
 
 						var fValue = result.NO_BAND;
-
-						var fluxStr =(fValue)?`${numeral(fValue).format(precision7Digit)} ${fluxUnitStr}`:'';
+						var fluxStr =(fValue!=='NoContext')?`${numeral(fValue).format(precision7Digit)} ${fluxUnitStr}`:'';
 						fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
+
 						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
 							this.setState({ flux: fluxArray});
 						}
@@ -271,6 +271,14 @@ MouseReadout.propTypes = {
 };
 
 //===================end of MouseReadout class===========================================================
+function sleep(milliseconds) {
+	var start = new Date().getTime();
+	for (var i = 0; i < 1e7; i++) {
+		if ((new Date().getTime() - start) > milliseconds){
+			break;
+		}
+	}
+}
 
 function renderMouseReadoutRow1({visRoot, title,  mouseReadout1, pixelSize, fluxLabels, fluxValues}) {
 
