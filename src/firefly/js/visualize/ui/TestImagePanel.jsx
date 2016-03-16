@@ -22,7 +22,7 @@ import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {flux} from '../../Firefly.js';
 
-
+import {showImageSelPanel} from  './ImageSelectPanel.jsx';
 
 /**
  *
@@ -121,6 +121,10 @@ function showExDialog() {
     showExampleDialog();
 }
 
+function showImageSelectPanel() {
+    showImageSelPanel('Image Select');
+}
+
 function TestImagePanelView({selectOn,distOn}) {
     var s = AppDataCntlr.getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
@@ -139,7 +143,8 @@ function TestImagePanelView({selectOn,distOn}) {
                     />
                     <div style={{height:50}}/>
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
-                    
+
+                    <button type='button' style={{marginLeft: 30}} onClick={showImageSelectPanel}> Images </button>
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
