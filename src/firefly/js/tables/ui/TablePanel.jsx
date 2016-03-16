@@ -34,6 +34,10 @@ export class TablePanel extends Component {
         this.state = this.tableStore.cState;
     }
 
+    componentWillReceiveProps(nProps) {
+        this.tableStore.init(nProps);
+    }
+
     componentWillUnmount() {
         this.tableStore && this.tableStore.onUnmount();
     }

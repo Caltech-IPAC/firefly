@@ -13,7 +13,7 @@ import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName} from '../util/WebUtil.js';
 
 export const APP_DATA_PATH = 'app_data';
-const SEARCH_TYPE = 'search';
+const DROP_DOWN_TYPE = 'dropdownType';
 const TASK= 'task-';
 const APP_PREFERENCES= 'APP_PREFERENCES';
 var taskCnt=0;
@@ -336,7 +336,7 @@ export default {
     SHOW_DIALOG,
     HIDE_DIALOG,
     APP_DATA_PATH,
-    SEARCH_TYPE,
+    DROP_DOWN_TYPE,
     HELP_LOAD,
     reducer,
     loadAppData,
@@ -413,7 +413,7 @@ function makeMenu(props) {
         const label = props[`${action}.Title`];
         const desc = props[`${action}.ShortDescription`];
         const icon = props[`${action}.Icon`];
-        const type = props[`${action}.ToolbarButtonType`] || SEARCH_TYPE;
+        const type = props[`${action}.ToolbarButtonType`] || DROP_DOWN_TYPE;
         menuItems.push({label, action, icon, desc, type});
     });
     return {selected, menuItems};
