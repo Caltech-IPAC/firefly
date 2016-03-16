@@ -20,6 +20,7 @@ import numeral from 'numeral';
 import Band from '../Band.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
+import {MouseState} from '../VisMouseCntlr.js';
 
 const rS = {
 	width: 650,
@@ -88,6 +89,8 @@ const column5_1 = {width: 90, paddingLeft: 1, display: 'inline-block'};
 const precision7Digit = '0.0000000';
 const precision3Digit = '0.000';
 const precision1Digit = '0.0';
+const readoutMouse= [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
+
 export class MouseReadout extends React.Component {
 
 	constructor(props) {
@@ -151,6 +154,7 @@ export class MouseReadout extends React.Component {
 			this.setState( {
 				point: this.props.mouseState.imagePt,
 				fluxLabel: getFluxLabels(this.props.plotView),
+				flux:[],
 				pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)
 			} );
 
@@ -170,16 +174,20 @@ export class MouseReadout extends React.Component {
 			var target = request.target;
 			var pixelClickLock = target.checked;
 
-			//add a callback function to handle the asyn behavior
-			this.setState({isLocked: pixelClickLock}, ()=>{
-				//force this to be executed before the lock state is st
-				setPointLock(this.props.plotView, pixelClickLock);
+			//window.setInterval(dispatchChangePointSelection('mouseReadout',pixelClickLock), 5000);
+			//this.setState({isLocked: pixelClickLock, flux:[], pointInfo:null});
+			//dispatchChangePointSelection('mouseReadout',pixelClickLock);
+			//this.setState({isLocked: pixelClickLock}, ()=>{
 
-				this.setState({isLocked:pixelClickLock, flux:[], fluxLabel:[]});
+			this.setState({isLocked: pixelClickLock}, ()=>{
+				//force this to be executed before the lock state is set
+				dispatchChangePointSelection('mouseReadout',pixelClickLock);
+				this.setState({flux:[], fluxLabel:[], pointInfo:null});
 			});
 		}
 
 	}
+
 
 	showFlux() {
 		var plot = primePlot(this.props.plotView);
@@ -203,7 +211,7 @@ export class MouseReadout extends React.Component {
 		if (!plot) return EMPTY;
 		if (isBlankImage(plot)) return EMPTY;
 
-		var spt = mouseState.screenPt;
+
 
 		var bands = plot.plotState.getBands();
 
@@ -211,20 +219,37 @@ export class MouseReadout extends React.Component {
 		var title = plotView.plots[0].title;
 		var isLocked = this.state.isLocked;
 
-		var pointInfo = this.state.pointInfo;
-		var currentCoordinates = [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize];
-
-		var {mouseReadout1, mouseReadout2, pixelSize} = precessReadoutInfo(pointInfo,  this.state.point, currentCoordinates, plot, spt, isLocked);
-		var {width:screenW, height:screenH }= plot.screenSize;
 		var fluxValues = [];
 		var fluxLabels = [];
-		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH));
-		if (isOutside && isLocked || !isOutside) {
+		var mouseReadouts=[];
+		var spt = mouseState.screenPt;
+		var {width:screenW, height:screenH }= plot.screenSize;
+		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH)) || mouseState.mouseState=='EXIT'
+			|| !readoutMouse.includes(mouseState.mouseState);
+
+		if (isLocked || !isOutside) {
 				for (var i = 0; i < bands.length; i++) {
 						fluxValues[i] = this.state.flux[i];
 						fluxLabels[i] = this.state.fluxLabel[i];
 
 				}
+			var pointInfo = this.state.pointInfo;
+			if (pointInfo) {
+				var currentCoordinates = [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize];
+				var coordinatesInPt = pointInfo.coordinates;
+				var mouseReadouts = pointInfo.mouseReadouts;
+
+				if (currentCoordinates !== coordinatesInPt) {
+
+					for (var i = 0; i < 3; i++) {
+						//convert the existing readouts to the newly changed coordinates
+						if (currentCoordinates[i] != coordinatesInPt[i]) {
+							mouseReadouts[i] = getSingleMouseReadout(plot, this.state.point, currentCoordinates[i]);
+						}
+					}
+
+				}
+			}
 
 		}
 
@@ -233,7 +258,7 @@ export class MouseReadout extends React.Component {
 
 			<div style={ rS}>
 
-				{renderMouseReadoutRow1({visRoot, title, mouseReadout1, pixelSize, fluxLabels, fluxValues})}
+				{renderMouseReadoutRow1({visRoot, title, mouseReadout1:mouseReadouts[0], pixelSize:mouseReadouts[2], fluxLabels, fluxValues})}
 
 				<div>
 					<div style={ columnColorBandFluxLabel}>{fluxLabels[2]} </div>
@@ -245,7 +270,7 @@ export class MouseReadout extends React.Component {
 					<div style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
 						{labelMap[visRoot.mouseReadout2] } </div>
 
-					<div style={column4}>  {mouseReadout2}  </div>
+					<div style={column4}>  {mouseReadouts[1]}  </div>
 					<div style={column5_1} title='Click on an image to lock the display at that point.'>
 						<input type='checkbox' name='aLock' value='lock'
 							   onChange={ (request) => this.setLockState( request) }/>
@@ -307,49 +332,6 @@ renderMouseReadoutRow1.propTypes = {
 
 };
 
-function setPointLock(plotView, isLocked) {
-
-	var plot = primePlot(plotView);
-	if (!plot) return EMPTY;
-	dispatchChangePointSelection('mouseReadout',isLocked);
-	plot.plotState.getWebPlotRequest().setAllowImageSelection(!isLocked);
-	
-}
-
-function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, spt, isLocked) {
-
-
-
-
-	var coordinatesInPt = pointInfo.coordinates;
-	var mouseReadouts = pointInfo.mouseReadouts;
-
-
-	var i;
-	var {width:screenW, height:screenH }= plot.screenSize;
-	if (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH)) {
-		if (isLocked) {
-			for (i = 0; i < 3; i++) {
-				//convert the existing readouts to the newly changed coordinates
-				if (currentCoordinates[i] != coordinatesInPt[i]) {
-					mouseReadouts[i] = getSingleMouseReadout(plot, imagePtInPt, currentCoordinates[i]);
-				}
-			}
-		}
-		else {
-
-			for (i = 0; i < 3; i++) {
-				mouseReadouts[i] = EMPTY_READOUT;
-			}
-		}
-	}
-
-	var mouseReadout1 = mouseReadouts[0];
-	var mouseReadout2 = mouseReadouts[1];
-	var pixelSize = mouseReadouts[2];
-	return {mouseReadout1, mouseReadout2, pixelSize};
-
-}
 
 function getFluxLabels(plotView) {
 
