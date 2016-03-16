@@ -95,6 +95,7 @@ export class MouseReadout extends React.Component {
 	constructor(props) {
 		super(props);
 		this.showFlux = this.showFlux.bind(this);
+		this.setLockState = this.setLockState.bind(this);
 
 		this.fluxLabels = getFluxLabels(this.props.plotView);
 		this.pointInfo = {
@@ -124,15 +125,16 @@ export class MouseReadout extends React.Component {
 
 							if (mouseState.mouseState.key === 'UP') {
 
-								this.setState({point: iPt, flux: fluxArray});
+
+								this.setState({ flux: fluxArray});
 
 							}
 						}
 						else {
-							if (mouseState.imagePt === this.state.point) {
-								this.setState({point: mouseState.imagePt, flux: fluxArray});
 
-							}
+								this.setState({ flux: fluxArray});
+
+
 
 						}
 					}
@@ -149,9 +151,8 @@ export class MouseReadout extends React.Component {
 							}
 						}
 						else {
-							if (mouseState.imagePt === this.state.point) {
+
 								this.setState({flux: fluxArray});
-							}
 
 						}
 					}
@@ -164,22 +165,25 @@ export class MouseReadout extends React.Component {
 	}
 
 	componentWillReceiveProps() {
-		this.setState({
-			point: this.props.mouseState.imagePt
-		});
-
-		//update fluxLabels
-		if (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked) {
-			this.setState({ fluxLabel: getFluxLabels(this.props.plotView)});
-		}
-		//update the flux values
-		this.showFlux();
 
 
-		//update mouseReadouts
+		//if (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked) {
 		if (this.props.plotView && (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked)) {
+			//save the image point where the readouts and flux are from
+			this.setState({
+				point: this.props.mouseState.imagePt
+			});
+
+			//update fluxLabels
+			this.setState({ fluxLabel: getFluxLabels(this.props.plotView)});
+			//update mouseReadouts
 			this.setState({pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)});
+			//update the flux values
+			this.showFlux();
 		}
+
+
+
 
 
 	}
@@ -190,15 +194,10 @@ export class MouseReadout extends React.Component {
 		if (request.hasOwnProperty('target')) {
 			var target = request.target;
 			var pixelClickLock = target.checked;
-			if (pixelClickLock) {
-				this.setState({point: this.state.point, flux: [], fluxLabel: [], isLocked: true});
-				setPointLock(this.props.plotView, true);
-			} else {
-				this.setState({point: this.state.point, flux: this.state.flux, fluxLabel: [], isLocked: false});
-				setPointLock(this.props.plotView, false);
-			}
-		}
+			this.setState({ isLocked: pixelClickLock});
+			setPointLock(this.props.plotView, pixelClickLock);
 
+		}
 
 	}
 
@@ -234,17 +233,18 @@ export class MouseReadout extends React.Component {
 
 		var pointInfo = this.state.pointInfo;
 		var currentCoordinates = [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize];
-		var {mouseReadout1, mouseReadout2, pixelSize} = precessReadoutInfo(pointInfo, this.state.point, currentCoordinates, plot, spt, isLocked);
+
+		var {mouseReadout1, mouseReadout2, pixelSize} = precessReadoutInfo(pointInfo,  this.state.point, currentCoordinates, plot, spt, isLocked);
 		var {width:screenW, height:screenH }= plot.screenSize;
 		var fluxValues = [];
 		var fluxLabels = [];
 		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH));
 		if (isOutside && isLocked || !isOutside) {
+				for (var i = 0; i < bands.length; i++) {
+					fluxValues[i] = this.state.flux[i];
+					fluxLabels[i] = this.state.fluxLabel[i];
+				}
 
-			for (var i = 0; i < bands.length; i++) {
-				fluxValues[i] = this.state.flux[i];
-				fluxLabels[i] = this.state.fluxLabel[i];
-			}
 		}
 
 
@@ -341,6 +341,9 @@ function setPointLock(plotView, isLocked) {
 }
 
 function precessReadoutInfo(pointInfo, imagePtInPt, currentCoordinates, plot, spt, isLocked) {
+
+
+
 
 	var coordinatesInPt = pointInfo.coordinates;
 	var mouseReadouts = pointInfo.mouseReadouts;
