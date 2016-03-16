@@ -17,8 +17,7 @@ import FieldGroup from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import TargetPanel from '../../ui/TargetPanel.jsx';
 import ValidationField from '../../ui/ValidationField.jsx';
-import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
-import panelCatalogs from './ImageSelectPanelProp.js';
+import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {isEmpty} from 'lodash';
@@ -27,11 +26,6 @@ import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
 const panelKey = 'SELECTIMAGEPANEL';
-
-// class name for styling
-const left = 'left';
-const rightpadding = 'rightpadding';
-const leftpadding = 'leftpadding';
 
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
 
@@ -323,46 +317,35 @@ class ImageSelectionView extends Component {
          * Load button and help icon
          */
         return (
-            <div >
             <FieldGroup  groupKey={panelKey} reducerFunc={ImageSelPanelChange} keepState={true}>
-                <table className={'imagepanel'}>
-                    <tbody>
-                        <tr>
-                            <td> <TargetPanelSetView /> </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={1} >
-                                    {categoryTabs}
-                                </Tabs>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td className={'sizerow'}>
-                                <div className={'sizerow'}>
-                                    <ImageFeaturesView {...this.state} />
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td className={'okrow'}>
-                                <div className={rightpadding}>
-                                    <HelpIcon helpId={helpId}/>
-                                </div>
-                                <div className={rightpadding} >
-                                    <CompleteButton
-                                        groupKey={panelKey}
-                                        onSuccess={resultSuccess}
-                                        text={'Load'}
-                                        dialogId={popupId}
-                                    />
-                                </div>
-                             </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </FieldGroup>
-            </div>
+                <div className={'imagepanel'}>
+                    <div className={'section'}>
+                        <TargetPanelSetView />
+                    </div>
+                    <div className={'section'}>
+                        <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={1} >
+                            {categoryTabs}
+                        </Tabs>
+                    </div>
+                    <div className={'size'}>
+                        <ImageFeaturesView {...this.state} />
+                    </div>
+
+                    <div className={'close'}>
+                       <div className={'padding'}>
+                           <CompleteButton
+                                groupKey={panelKey}
+                                onSuccess={resultSuccess}
+                                text={'Load'}
+                                dialogId={popupId}
+                           />
+                       </div>
+                       <div className={'padding'}>
+                           <HelpIcon helpId={helpId}/>
+                       </div>
+                    </div>
+                </div>
+                </FieldGroup>
         );
      }
 }
@@ -382,22 +365,16 @@ ImageSelectionView.propTypes={
 
 function TargetPanelSetView() {
      return (
-        <div>
-            <div className={leftpadding}>
-                <TargetPanel groupKey={panelKey}/>
-            </div>
-            <div className={leftpadding}>
-                <ListBoxInputField
-                    fieldKey={keyMap['targettry']}
-                    options={
-                        [{label: 'Try NED then Simbad', value: 'NED'},
-                         {label: 'Try Simbad then NED', value: 'simbad'}
-                        ]
-                    }
-                    multiple={false}
-                    labelWidth={3}
-                />
-            </div>
+        <div className={'intarget'}>
+            <TargetPanel groupKey={panelKey}/>
+            <ListBoxInputField
+                fieldKey={keyMap['targettry']}
+                options = {[{label: 'Try NED then Simbad', value: 'NED'},
+                           {label: 'Try Simbad then NED', value: 'simbad'}
+                          ]}
+                multiple={false}
+                labelWidth={3}
+            />
         </div>
     );
 }
@@ -415,16 +392,6 @@ TargetPanelSetView.propTypes= {};
  */
 function ImageFeaturesView ({currentCatalogIdx, fields}) {
 
-    var showColor = (pos) => {
-        return (
-            <div className={pos}>
-                <CheckboxGroupInputField
-                    fieldKey={keyMap['colorfield']}
-                    options={[{label: '3-color Image', value: '3color'}]}
-                />
-            </div>);
-    };
-
     var showSize = () => {
         var {min, max, unit} = panelCatalogs[currentCatalogIdx].range;
         var currentUnit = (!isEmpty(fields)) && fields[keyMap['unitfield']] ?
@@ -436,29 +403,20 @@ function ImageFeaturesView ({currentCatalogIdx, fields}) {
         max = toMaxFixed(convertAngle(unit, currentUnit, max), 4);
         rangeMsg = `Valid range between: ${min}${unitS} and ${max}${unitS}`;
         return (
-            <div>
-                <div>
-                    <div className={leftpadding}>
-                        <div className={left}>
-                            <ValidationField fieldKey={keyMap['sizefield']}/>
-                        </div>
-                        <div className={left}>
-                            <ListBoxInputField
-                                fieldKey={keyMap['unitfield']}
-                                options={
-                                    [{label: 'Degree', value: 'deg'},
-                                     {label: 'Arc Minutes', value: 'arcmin'},
-                                     {label: 'Arc Seconds', value: 'arcsec'}
-                                    ]
-                                }
-                                multiple={false}
-                                labelWidth={2}
-                            />
-                        </div>
-                    </div>
-                    {showColor('colorleft')}
+            <div className={'sizeline'}>
+                <div className={'sizeinput'}>
+                    <ValidationField fieldKey={keyMap['sizefield']}/>
+                    <ListBoxInputField
+                       fieldKey={keyMap['unitfield']}
+                       options={
+                          [{label: 'Degree', value: 'deg'},
+                           {label: 'Arc Minutes', value: 'arcmin'},
+                           {label: 'Arc Seconds', value: 'arcsec'}
+                           ]}
+                       multiple={false}
+                       labelWidth={2}
+                    />
                 </div>
-                <br/><br/>
                 <p>{rangeMsg}</p>
             </div>
         );
@@ -466,7 +424,7 @@ function ImageFeaturesView ({currentCatalogIdx, fields}) {
 
     return (
             <div>
-                {panelCatalogs[currentCatalogIdx].range? showSize(): showColor('colorcenter') }
+                {showSize()}
             </div>
     );
 }
@@ -505,7 +463,7 @@ function CatalogTabView({catalog}) {
         var fkey = `${catalog.Symbol.toLowerCase()}${fieldname}`;
 
         return (
-            <div className={'inputtext'}>
+            <div className={'padding'}>
                 <ValidationField fieldKey={keyMap[fkey]}/>
                 <br/>
             </div>
@@ -522,7 +480,7 @@ function CatalogTabView({catalog}) {
     };
 
     return (
-        <div>
+        <div className={'tabview'}>
             {(catalog.fields).map((oneField) =>  fieldrequest(oneField))}
         </div>
     );
