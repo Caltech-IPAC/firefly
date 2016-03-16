@@ -175,14 +175,11 @@ export class MouseReadout extends React.Component {
 			var pixelClickLock = target.checked;
 
 			//window.setInterval(dispatchChangePointSelection('mouseReadout',pixelClickLock), 5000);
-			//this.setState({isLocked: pixelClickLock, flux:[], pointInfo:null});
-			//dispatchChangePointSelection('mouseReadout',pixelClickLock);
-			//this.setState({isLocked: pixelClickLock}, ()=>{
-
-			this.setState({isLocked: pixelClickLock}, ()=>{
+			
+			this.setState({isLocked: pixelClickLock, flux:[], fluxLabel:[], pointInfo:null}, ()=>{
 				//force this to be executed before the lock state is set
 				dispatchChangePointSelection('mouseReadout',pixelClickLock);
-				this.setState({flux:[], fluxLabel:[], pointInfo:null});
+
 			});
 		}
 
