@@ -1,7 +1,7 @@
 /**
  * Created by cwang on 3/10/16.
  */
-const panelCatalogs = [
+export const panelCatalogs = [
     {
         'Title':'IRSA',
         'Symbol': 'IRSA',
@@ -34,7 +34,7 @@ const panelCatalogs = [
                 {'item':'j', 'id': 0, 'name': 'J (1.25 microns)'},
                 {'item':'h', 'id': 1, 'name': 'H (1.65 microns)'},
                 {'item':'k', 'id': 2, 'name': 'K (2.17 microns)'}],
-            'Default': 'j',
+            'Default': 'j'
         },
         'range': {'min': 29, 'max': 500, 'unit': 'arcsec'},
         'size': 500
@@ -49,7 +49,7 @@ const panelCatalogs = [
             'Items': [
                 {'item':'1b', 'id': 0, 'name': '4 Band level 1'},
                 {'item':'3a', 'id': 1, 'name': '4 Band Atlas'}],
-            'Default': '1b',
+            'Default': '1b'
         },
         'bands': {
             'Title': 'WISE Bands:',
@@ -58,11 +58,10 @@ const panelCatalogs = [
                 {'item':'2', 'id': 1, 'name': 'Band 2'},
                 {'item':'3', 'id': 0, 'name': 'Band 3'},
                 {'item':'4', 'id': 1, 'name': 'Band 4'}],
-            'Default': '1',
+            'Default': '1'
         },
         'range': {'min': 36, 'max': 10800, 'unit': 'arcsec'},
         'size': 500
     }
 ];
 
-export default panelCatalogs;
