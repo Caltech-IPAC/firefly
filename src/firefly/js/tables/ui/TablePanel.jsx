@@ -48,7 +48,7 @@ export class TablePanel extends Component {
 
     render() {
         var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
-        const {selectable, expandable, expandedMode} = this.props;
+        const {selectable, expandable, expandedMode, border} = this.props;
         const {tableStore} = this;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
@@ -58,7 +58,7 @@ export class TablePanel extends Component {
 
         return (
             <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
-                <div className='TablePanel__wrapper'>
+                <div className={'TablePanel__wrapper' + (border ? ' border' : '')}>
                     <div role='toolbar' className='TablePanel__toolbar'>
                         <div className='group'>
                             <button style={{width:70}}>Download</button>
@@ -123,7 +123,8 @@ TablePanel.propTypes = {
     selectable: PropTypes.bool,
     expandedMode: PropTypes.bool,
     expandable: PropTypes.bool,
-    showToolbar: PropTypes.bool
+    showToolbar: PropTypes.bool,
+    border: PropTypes.bool
 };
 
 TablePanel.defaultProps = {
@@ -134,6 +135,7 @@ TablePanel.defaultProps = {
     expandedMode: false,
     expandable: true,
     showToolbar: true,
+    border: true,
     pageSize: 50
 };
 

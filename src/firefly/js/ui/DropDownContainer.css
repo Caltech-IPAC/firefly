@@ -32,6 +32,7 @@
     display: inline-block;
     text-decoration: none;
     margin-right: 40px;
+    white-space: nowrap;
 }
 .DD-ToolBar__footer--icons a {
     margin: 0 10px;
@@ -45,9 +46,7 @@
 
 .DD-ToolBar__footer--links ul li {
     margin-bottom: 5px;
-    background-position: 0 4px;
-    background-image: url("/images/footer/bullet.png");
-    background-repeat: no-repeat;
+    background: url("/images/footer/bullet.png") 0 4px no-repeat;
     padding-left: 10px
 }
 

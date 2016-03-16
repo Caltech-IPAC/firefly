@@ -125,7 +125,7 @@ function tablesAsTab(tables, tbl_ui_gid, expandedMode) {
 
             return  (
                 <Tab key={tbl_ui_id} name={tbl_ui_id} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_ui_id} {...{tbl_id, tbl_ui_id, expandedMode}} />
+                    <TablePanel key={tbl_ui_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
                 </Tab>
             );
         } );
