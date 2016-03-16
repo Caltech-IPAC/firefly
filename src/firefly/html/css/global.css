@@ -204,7 +204,7 @@ img, html {
 }
 
 [role="toolbar"] .group {
-    background-color: #a5a5a5;
+    background-color: #c8c8c8;
     display: flex;
     align-items: center;
 }
@@ -225,7 +225,7 @@ img, html {
 }
 
 [role="toolbar"] button:hover {
-    background-color: #949494;
+    background-color: rgba(0,0,0,.15);
     cursor: pointer;
 }
 

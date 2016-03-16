@@ -1,0 +1,69 @@
+.DD-ToolBar {
+    display: flex;
+    z-index: 10;
+    position: absolute;
+    width: 100%;
+    background-color: rgba(200,200,200,0.92);
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: calc(100% - 75px);
+}
+
+.DD-ToolBar__content {
+    box-shadow:inset 0 0 3px #000000;
+    background-color: #E5E5E5;
+    margin: 3px;
+    padding: 3px;
+}
+
+.DD-ToolBar__footer {
+    background: url("/images/ipac_bar.jpg") repeat center center transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 0;
+    margin-bottom: 10px;
+    min-height: 100px;
+    width: 100%;
+}
+
+.DD-ToolBar__footer--icons {
+    display: inline-block;
+    text-decoration: none;
+    margin-right: 40px;
+    white-space: nowrap;
+}
+.DD-ToolBar__footer--icons a {
+    margin: 0 10px;
+}
+
+.DD-ToolBar__footer--links ul {
+    display: inline-block;
+    list-style-type: none;
+    margin-right: 60px;
+}
+
+.DD-ToolBar__footer--links ul li {
+    margin-bottom: 5px;
+    background: url("/images/footer/bullet.png") 0 4px no-repeat;
+    padding-left: 10px
+}
+
+.DD-ToolBar__footer--links ul li a {
+    font-family: "Varela", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    color: #fff;
+    text-decoration: none;
+}
+
+@font-face {
+    font-family: 'Varela';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Varela'), url(http://themes.googleusercontent.com/static/fonts/varela/v4/maB5vWJo0EAVzvHPjBkLM-vvDin1pK8aKteLpeZ5c0A.woff) format('woff');
+}
+
+

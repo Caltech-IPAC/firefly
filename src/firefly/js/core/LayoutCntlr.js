@@ -30,22 +30,37 @@ export const LO_STANDARD = {
 
 export const UPDATE_LAYOUT     = 'layout.updateLayout';
 export const SET_LAYOUT_MODE   = 'layout.setLayoutMode';
+export const SET_DROPDOWN_UI   = 'layout.setDropDownUi';
+export const ACTIVE_TABLE_CHANGED   = 'layout.activeTableChanged';
 
 
 /*---------------------------- Reducers ----------------------------*/
 
 export function reducer(state={}, action={}) {
+    const {mode, view, visible} = action.payload || {};
 
     switch (action.type) {
         case UPDATE_LAYOUT :
             return smartMerge(state, action.payload);
 
         case SET_LAYOUT_MODE :
-            const {mode, view} = action.payload;
             if (!has(state, ['mode', mode])) {
                 set(state, ['mode', mode], undefined);
             }
             return update(state, {mode: {[mode]: {$set: view}}});
+
+        case SET_DROPDOWN_UI :
+            if (state.dropDown) {
+                state.dropDown = {};
+            }
+            return update(state, {dropDown: {$set: {visible, view}}});
+
+        case ACTIVE_TABLE_CHANGED :
+            const {tbl_id} = action.payload;
+            if (!has(state, 'active.table')) {
+                set(state, 'active.table', undefined);
+            }
+            return update(state, {active: {table: {$set: tbl_id}}});
 
         default:
             return state;
@@ -78,7 +93,18 @@ export function dispatchSetLayoutMode({mode=LO_STANDARD.mode, view}) {
     flux.process({type: SET_LAYOUT_MODE, payload: {mode, view}});
 }
 
+/**
+ * set the behavior of the drop down container
+ * @param visible true to show the drop-down container
+ * @param view name of the component to display in the drop-down container
+ */
+export function dispatchSetDropDownUi({visible=true, view}) {
+    flux.process({type: SET_DROPDOWN_UI, payload: {visible, view}});
+}
 
+export function dispatchActiveTableChanged(tbl_id) {
+    flux.process({type: ACTIVE_TABLE_CHANGED, payload: {tbl_id}});
+}
 
 /*------------------------- Util functions -------------------------*/
 export function getExpandedMode() {
@@ -87,4 +113,12 @@ export function getExpandedMode() {
 
 export function getStandardMode() {
     return get(flux.getState(), ['layout','mode','standard']);
+}
+
+export function getDropDownInfo() {
+    return get(flux.getState(), 'layout.dropDown', {visible: false});
+}
+
+export function getActiveTableId() {
+    return get(flux.getState(), 'layout.active.table');
 }

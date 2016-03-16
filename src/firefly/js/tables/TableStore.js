@@ -12,11 +12,11 @@ import {SelectInfo} from './SelectInfo.js';
 
 export class TableStore {
     constructor(props, changeListener) {
-        this.cState = this.getInitState(props);
+        this.init(props);
         this.changeListener = changeListener;
     }
 
-    getInitState(props) {
+    init(props) {
         const defs =  {
             showOptions: false,
             showUnits: false,
@@ -24,7 +24,7 @@ export class TableStore {
             textView: false
         };
         const columns = ensureColumns(props);
-        return Object.assign({}, defs, props, {columns})
+        this.cState = Object.assign({}, defs, props, {columns})
     }
 
     updateState(state) {

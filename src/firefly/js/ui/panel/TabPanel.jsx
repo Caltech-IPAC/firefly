@@ -29,11 +29,10 @@ export var Tabs = React.createClass({
         };
     },
 
-    onSelect(index, content) {
+    onSelect(index) {
         const {onTabSelect} = this.props;
         this.setState({
-            selectedIdx: index,
-            content
+            selectedIdx: index
         });
         if (onTabSelect) {
             onTabSelect(index);
@@ -41,10 +40,14 @@ export var Tabs = React.createClass({
     },
 
     render () {
-        var { selectedIdx, content }= this.state;
+        var { selectedIdx}= this.state;
+        var content;
         selectedIdx = Math.min(selectedIdx, this.props.children.length-1);
-        var index = 0,
-            children = React.Children.map(this.props.children, (child) => {
+        var children = React.Children.map(this.props.children, (child, index) => {
+                if (index === selectedIdx) {
+                    content = React.Children.only(child.props.children);
+                }
+
                 return React.cloneElement(child, {
                     selected: (index == selectedIdx),
                     onSelect: this.onSelect.bind(this, index),
@@ -83,26 +86,21 @@ export var Tab = React.createClass({
     },
 
     componentWillMount() {
-        const {selected, onSelect, children} = this.props;
+        const {selected, onSelect} = this.props;
         if (selected) {
-            onSelect(React.Children.only(children));
+            onSelect();
         }
     },
 
     render () {
-        const {name, selected, onSelect, children, removable, onTabRemove} = this.props;
-        var content = React.Children.only(children);
+        const {name, selected, onSelect, removable, onTabRemove} = this.props;
         var tabClassName = 'TabPanel__Tab';
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
-        const style = {position: 'relative',
-                        display: 'inline-block',
-                        top: -3,
-                        right: -6};
         return (
-            <li className={tabClassName} onClick={onSelect.bind(null,content)}>
-                {name}
+            <li className={tabClassName}>
+                <div style={{display: 'inline-block'}} onClick={onSelect} >{name}</div>
                 {removable &&
                         <div style={{right: -5, top: -2}} className='btn-close'
                              title='Remove Tab'
