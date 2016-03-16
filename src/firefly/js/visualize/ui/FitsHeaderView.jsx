@@ -173,15 +173,19 @@ function prepareData(band, fitsHeaderInfo) {
         columnNames[i] = columns[i].name;
     }
     const sortInfo = SortInfo.newInstance('', columnNames).serialize();
-    var request = {};
+
+    /*var request = {};
     request['sortInfo'] = sortInfo;
     meta['request'] = request;
     //var newTableModel = Object.assign({}, tableModel, {request:request });
 
     tableModel['request'] = request;
 
-    const tableStore = TableStore.newInstance(tableModel);//this is not working
+   const tableStore = TableStore.newInstance(tableModel);//this is not working
     return {columns, data, sortInfo, tableStore};
+
+    const tableStore = TableStore.newInstance(tableModel);//this is not working*/
+    return {columns, data, sortInfo};//, tableStore};
 }
 
 /**
@@ -192,14 +196,16 @@ function prepareData(band, fitsHeaderInfo) {
  */
 function getTable(band, fitsHeaderInfo) {
 
-    const {columns, data, sortInfo, tableStore} = prepareData(band, fitsHeaderInfo);
+
+   // const {columns, data, sortInfo, tableStore} = prepareData(band, fitsHeaderInfo);
+    const {columns, data, sortInfo} = prepareData(band, fitsHeaderInfo);
     return (
         <BasicTable
             columns={columns}
             data={data}
             height='calc(100% - 42px)'
             sortInfo={sortInfo}
-            tableStore={tableStore}
+            //tableStore={tableStore}
         />
     );
 }
