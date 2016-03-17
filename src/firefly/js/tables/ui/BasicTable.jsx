@@ -9,16 +9,14 @@ import Resizable from 'react-component-resizable';
 import {debounce, get, isEmpty, pick} from 'lodash';
 
 import {SelectInfo} from '../SelectInfo.js';
-import {FilterInfo, FILTER_TTIPS} from '../FilterInfo.js';
-import {InputField} from '../../ui/InputField.jsx';
-import {SORT_ASC, UNSORTED, SortInfo} from '../SortInfo';
+import {FilterInfo} from '../FilterInfo.js';
+import {SortInfo} from '../SortInfo';
 import {tableToText} from '../TableUtil.js';
+import {TextCell, HeaderCell} from './TableRenderer.js';
 
 import './TablePanel.css';
-import ASC_ICO from 'html/images/sort_asc.gif';
-import DESC_ICO from 'html/images/sort_desc.gif';
 
-const {Table, Column, Cell} = FixedDataTable;
+const {Table, Column} = FixedDataTable;
 
 export class BasicTable extends React.Component {
     constructor(props) {
@@ -30,19 +28,16 @@ export class BasicTable extends React.Component {
             columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
-        this.onResize = this.onResize.bind(this);
+        this.onResize =  debounce((size) => {
+                if (size) {
+                    var widthPx = size.width;
+                    var heightPx = size.height;
+                    this.setState({widthPx, heightPx});
+                }
+            }, 100);
+
         this.onColumnResizeEndCallback = this.onColumnResizeEndCallback.bind(this);
         this.rowClassName = this.rowClassName.bind(this);
-    }
-
-    onResize() {
-        return debounce((size) => {
-            if (size) {
-                var widthPx = size.width;
-                var heightPx = size.height;
-                this.setState({widthPx, heightPx});
-            }
-        }, 200);
     }
 
     onColumnResizeEndCallback(newColumnWidth, columnKey) {
@@ -68,10 +63,10 @@ export class BasicTable extends React.Component {
 
     render() {
         const {columns, data, hlRowIdx, showUnits, showFilters, filterInfo,
-                    sortInfo, tableStore, textView} = this.props;
+                    sortInfo, tableStore, textView, rowHeight} = this.props;
         const {widthPx, heightPx, columnWidths, showMask} = this.state;
 
-        if (isEmpty(columns)) return false;
+        if (isEmpty(columns)) return (<div style={{top: 0}} className='loading-mask'/>);
 
         const filterInfoCls = FilterInfo.parse(filterInfo);
         const sortInfoCls = SortInfo.parse(sortInfo);
@@ -92,15 +87,15 @@ export class BasicTable extends React.Component {
                     }
                 };
 
-        const colProps = pick(this.props, ['columns', 'data', 'selectable', 'selectInfoCls', 'tableStore']);
+        const colProps = pick(this.props, ['columns', 'data', 'selectable', 'selectInfoCls', 'tableStore', 'renderers']);
         Object.assign(colProps, {columnWidths, filterInfoCls, sortInfoCls, showUnits, showFilters}, {onSort, onFilter, onSelect, onSelectAll});
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
-            <Resizable id='table-resizer' style={{flexGrow: 1, position: 'relative', overflow: 'hidden'}} onResize={this.onResize()}>
+            <Resizable id='table-resizer' style={{position: 'relative', width: '100%', overflow: 'hidden'}} onResize={this.onResize}>
                 { textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
-                        rowHeight={20}
+                        rowHeight={rowHeight}
                         headerHeight={headerHeight}
                         rowsCount={data.length}
                         isColumnResizing={false}
@@ -131,6 +126,13 @@ BasicTable.propTypes = {
     showUnits: PropTypes.bool,
     showFilters: PropTypes.bool,
     textView: PropTypes.bool,
+    rowHeight: PropTypes.number,
+    renderers: PropTypes.objectOf(
+        PropTypes.shape({
+            cellRenderer: PropTypes.func,
+            headRenderer: PropTypes.func
+        })
+    ),
     tableStore: PropTypes.shape({
         onRowHighlight: PropTypes.func,
         onRowSelect: PropTypes.func,
@@ -143,7 +145,8 @@ BasicTable.propTypes = {
 BasicTable.defaultProps = {
     selectable: false,
     showUnits: false,
-    showFilters: false
+    showFilters: false,
+    rowHeight: 20
 };
 
 const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
@@ -153,44 +156,6 @@ const TextView = ({columns, data, showUnits, widthPx, heightPx}) => {
             <div style={{height: '100%',overflow: 'auto'}}>
                 <pre>{text}</pre>
             </div>
-        </div>
-    );
-};
-
-const SortSymbol = ({sortDir}) => {
-    return <img style={{marginLeft: 2}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>;
-};
-
-const TextCell = ({rowIndex, data, col}) => {
-    return (
-        <Cell>
-            {get(data, [rowIndex, col],'undef')}
-        </Cell>
-    );
-};
-
-const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}) => {
-
-    const cname = col.name;
-    const sortDir = sortInfoCls.getDirection(cname);
-
-    return (
-        <div title={col.title || cname} className='TablePanel__header'>
-            <div style={{width: '100%', cursor: 'pointer'}} onClick={() => onSort(cname)} >{cname}
-                { sortDir!==UNSORTED && <SortSymbol sortDir={sortDir}/> }
-            </div>
-            {showUnits && col.units && <div style={{fontWeight: 'normal'}}>({col.units})</div>}
-            {showFilters && <InputField
-                validator={FilterInfo.validator}
-                fieldKey={cname}
-                tooltip = {FILTER_TTIPS}
-                value = {filterInfoCls.getFilter(cname)}
-                onChange = {(v) => onFilter(v)}
-                actOn={['blur','enter']}
-                showWarning={false}
-                width='100%'
-            />
-            }
         </div>
     );
 };
@@ -208,18 +173,21 @@ function makeColWidth(columns, data, showUnits) {
     }, {});
 }
 
-function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters,
+function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers,
             selectInfoCls, filterInfoCls, sortInfoCls, onSelect, onSelectAll, onSort, onFilter}) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
         if (col.visibility !== 'show') return false;
+        const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
+        const CellRenderer = get(renderers, [col.name, 'cellRenderer'], TextCell);
+
         return (
             <Column
                 key={col.name}
                 columnKey={col.name}
-                header={<HeaderCell {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}} />}
-                cell={<TextCell data={data} col={idx} />}
+                header={<HeadRenderer {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}} />}
+                cell={<CellRenderer data={data} col={idx} />}
                 fixed={false}
                 width={columnWidths[col.name]}
                 isResizable={true}
