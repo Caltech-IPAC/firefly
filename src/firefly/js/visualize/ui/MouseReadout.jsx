@@ -123,7 +123,7 @@ export class MouseReadout extends React.Component {
 						var fluxStr =(fValue!=='NoContext')?`${numeral(fValue).format(precision7Digit)} ${fluxUnitStr}`:'';
 						fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
 
-						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
+						if (isLocked && mouseState.mouseState === MouseState.UP  || !isLocked  && mouseState.imagePt===iPt){
 							this.setState({ flux: fluxArray});
 						}
 
@@ -133,7 +133,7 @@ export class MouseReadout extends React.Component {
 						var greenFlux = result.hasOwnProperty('Green') ? `${numeral(result.Green).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						var RedFlux = result.hasOwnProperty('Red')  ? `${numeral(result.Red).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
 						fluxArray = [RedFlux, greenFlux, blueFlux];
-						if (isLocked && mouseState.mouseState.key === 'UP'  || !isLocked  && mouseState.imagePt===iPt){
+						if (isLocked && mouseState.mouseState === MouseState.UP   || !isLocked  && mouseState.imagePt===iPt){
 							this.setState({flux: fluxArray});
 
 						}
@@ -150,6 +150,10 @@ export class MouseReadout extends React.Component {
 	componentWillReceiveProps(nextProps) {
 
 		const {mouseState}= nextProps.mouseState;
+		if (this.props.mouseState.mouseState ==MouseState.EXIT && mouseState==MouseState.ENTER){
+
+			this.setState( getPropsDiff(this.props,  nextProps, this.state));
+		}
 
 		if (nextProps.plotView && (this.state.isLocked && mouseState===MouseState.UP || !this.state.isLocked)) {
 			if (mouseState===MouseState.EXIT) {
@@ -295,6 +299,29 @@ MouseReadout.propTypes = {
 
 //===================end of MouseReadout class===========================================================
 
+function getPropsDiff(oldProps, newProps,oldState){
+	var oldPlot =   primePlot(oldProps.plotView);
+	var newPlot =   primePlot(newProps.plotView);
+	var oldBandLength=oldPlot.plotState.getBands().length;
+	var newBandLength=newPlot.plotState.getBands().length;
+	var oldFlux = oldState.flux;
+	var oldFluxLabels =oldState.fluxLabel;
+	if ( newBandLength <= oldBandLength) {
+		return {fluxLabel:oldFluxLabels, flux: oldFlux};
+	}
+	else {
+
+		var flux=oldFlux;
+		var fluxLabels=oldFluxLabels;
+		for (var i=oldBandLength; i< newBandLength; i++){
+	        flux[i]='';
+			fluxLabels[i]='';
+		}
+		return {fluxLabel:fluxLabels, flux:flux};
+	}
+
+
+}
 function renderMouseReadoutRow1({visRoot, title,  mouseReadout1, pixelSize, fluxLabels, fluxValues}) {
 
 	return (
