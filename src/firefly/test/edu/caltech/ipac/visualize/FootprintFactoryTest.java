@@ -1,6 +1,5 @@
 package edu.caltech.ipac.visualize;
 
-import edu.caltech.ipac.firefly.commands.JwstFootprintCmd;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
@@ -194,29 +193,6 @@ public class FootprintFactoryTest {
                 }
             }
 		}
-		
-		FOOTPRINT[] fp1 = FOOTPRINT.values();
-		for (int f = 0; f < fp1.length; f++) {
-			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp1[f]);//.values();
-			HashMap<String, String> commandMap = new HashMap<>();
-			//commandMap.put(JwstFootprintCmd.CommandName + fp1[f].name(), null);
-			//if (fp1[f].equals(FOOTPRINT.JWST)) {
-				for (int i = 0; i < values.length; i++) {
-					FOOTPRINT mission = values[i].getMission();
-					String inst = values[i].getLabel();
-					commandMap.put(JwstFootprintCmd.CommandName + inst, mission + (mission.equals(FOOTPRINT.HST) ? " " : "/") + inst);
-				}
-			//}
-			Set<String> keySet = commandMap.keySet();
-			for (String key : keySet) {
-				String string = commandMap.get(key);
-				if(string.contains("HST")){
-					Assert.assertTrue(string.contains(" "));
-				}else{
-					Assert.assertTrue(key+": "+string+ " fails",string.contains("/"));
-				}
-			}
-		}
 	}
 
 	@Test
@@ -385,7 +361,7 @@ public class FootprintFactoryTest {
                 new WorldPt(0,0), false);
 
         WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
-        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.919,1E-2);
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.91942506,1E-2);
         assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.1937, 1E-2);
 
         double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
@@ -395,7 +371,7 @@ public class FootprintFactoryTest {
                 FOOTPRINT.JWST,
                 new WorldPt(0,0), false);
         worldCoordCenters = footprintFactory.getWorldCoordCenter();
-        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 0.01509294,1E-2);
         assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.135, 1E-2);
 
         footprintFactory.getFootprintAsRegions(
@@ -447,7 +423,7 @@ public class FootprintFactoryTest {
                 new WorldPt(0,0), false);
 
         WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
-        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 1.696299E-4,1E-2);
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.9994193849,1E-2);
         assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.00337, 1E-2);
 
         double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
@@ -464,7 +440,7 @@ public class FootprintFactoryTest {
                 FOOTPRINT.HST, INSTRUMENTS.WFPC2,
                 new WorldPt(0,0), false);
         worldCoordCenters = footprintFactory.getWorldCoordCenter();
-        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 359.99, 1E-2);
+        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 359.99983750, 1E-2);
         assertEquals("Should found lat = " + worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.0031, 1E-2);
         computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
         assertEquals("Should found dist = "+computeDistance ,computeDistance,0.0031, 1E-2);
@@ -545,6 +521,23 @@ public class FootprintFactoryTest {
 		
 		
 	}
+
+    @Test
+    public void testRA0(){
+        WorldPt[] worldCoordCenters = new WorldPt[1000];
+        for (int i = 0; i < 1000; i++){
+            double ra = i * 0.0001;
+            //ra = 0.0007;
+            footprintFactory.getFootprintAsRegions(
+                    FOOTPRINT.HST, INSTRUMENTS.UVIS,
+                    new WorldPt(ra, 0), false);
+            worldCoordCenters[i] = footprintFactory.getWorldCoordCenter();
+            System.out.println("ra =" + ra + " " + "center  = " + worldCoordCenters[i].toString());
+        }
+
+    }
+
+
 	/**
 	 * Used for building regions - only matter height and zoom level
 	 * 
