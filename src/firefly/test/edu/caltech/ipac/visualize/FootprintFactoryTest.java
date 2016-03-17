@@ -174,6 +174,7 @@ public class FootprintFactoryTest {
 		String valJwst[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
         // Yi: added new HST instrument:
         String valHst[] = new String[] {"NICMOS", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
+        String valSpitzer[] = new String[] {"IRAC36", "IRAC45"};
 		FOOTPRINT[] fp = FOOTPRINT.values();
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
@@ -186,6 +187,10 @@ public class FootprintFactoryTest {
                 // Yi: test the instruments in HST
                 for (int i = 0; i < valHst.length; i++) {
                     assertEquals(values[i].name(), valHst[i]);
+                }
+            } else if (fp[f] == FOOTPRINT.SPITZER) {
+                for (int i = 0; i < valSpitzer.length; i++) {
+                    assertEquals(values[i].name(), valSpitzer[i]);
                 }
             }
 		}

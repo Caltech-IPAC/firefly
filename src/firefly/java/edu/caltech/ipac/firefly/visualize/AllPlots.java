@@ -858,8 +858,9 @@ public class AllPlots implements HasWebEventManager {
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);//.values();
 			commandMap.put(JwstFootprintCmd.CommandName + fp[f].name(), new JwstFootprintCmd(fp[f]));
-            //Yi added HST footprints:
-			//if (fp[f].equals(FOOTPRINT.JWST)) {
+            //Yi added HST and SPITZER footprints:
+            //if ( (fp[f].equals(FOOTPRINT.JWST)) || (fp[f].equals(FOOTPRINT.HST)) || (fp[f].equals(FOOTPRINT.SPITZER)) ) {
+            // if no Spitzer:
             if ( (fp[f].equals(FOOTPRINT.JWST)) || (fp[f].equals(FOOTPRINT.HST)) ) {
 				for (int i = 0; i < values.length; i++) {
 					commandMap.put(JwstFootprintCmd.CommandName + values[i].name(), new JwstFootprintCmd(values[i]));
