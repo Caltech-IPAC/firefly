@@ -147,18 +147,24 @@ export class MouseReadout extends React.Component {
 
 	}
 
-	componentWillReceiveProps() {
+	componentWillReceiveProps(nextProps) {
 
+		const {mouseState}= nextProps.mouseState;
 
-		if (this.props.plotView && (this.state.isLocked && this.props.mouseState.mouseState.key === 'UP' || !this.state.isLocked)) {
-			this.setState( {
-				point: this.props.mouseState.imagePt,
-				fluxLabel: getFluxLabels(this.props.plotView),
-				flux:[],
-				pointInfo: getAllMouseReadouts(this.props.plotView, this.props.mouseState, this.props.visRoot)
-			} );
+		if (nextProps.plotView && (this.state.isLocked && mouseState===MouseState.UP || !this.state.isLocked)) {
+			if (mouseState===MouseState.EXIT) {
+				this.setState( { point: null, fluxLabel: [], flux:[], pointInfo: null } );
+			}
+			else {
+				this.setState( {
+					point: nextProps.mouseState.imagePt,
+					fluxLabel: getFluxLabels(nextProps.plotView),
+					flux:[],
+					pointInfo: getAllMouseReadouts(nextProps.plotView, nextProps.mouseState, nextProps.visRoot)
+				} );
 
-			this.showFlux();
+				this.showFlux(nextProps.plotView,nextProps.mouseState);
+			}
 		}
 
 
@@ -174,26 +180,21 @@ export class MouseReadout extends React.Component {
 			var target = request.target;
 			var pixelClickLock = target.checked;
 
-			//window.setInterval(dispatchChangePointSelection('mouseReadout',pixelClickLock), 5000);
-			
-			this.setState({isLocked: pixelClickLock, flux:[], fluxLabel:[], pointInfo:null}, ()=>{
-				//force this to be executed before the lock state is set
-				dispatchChangePointSelection('mouseReadout',pixelClickLock);
-
-			});
+			this.setState({isLocked: pixelClickLock, flux:[], fluxLabel:[], pointInfo:null});
+			dispatchChangePointSelection('mouseReadout',pixelClickLock);
 		}
 
 	}
 
 
-	showFlux() {
-		var plot = primePlot(this.props.plotView);
-		if (!plot) return EMPTY;
-		var spt = this.props.mouseState.screenPt;
-		if (!spt) return false;
-		var iPt = this.props.mouseState.imagePt;
+	showFlux(plotView,mouseState) {
+		var plot = primePlot(plotView);
+		if (!plot) return;
+		var spt = mouseState.screenPt;
+		if (!spt) return;
+		var iPt = mouseState.imagePt;
 		if (iPt) {
-			this.getFlux(this.props.mouseState, plot, iPt, this.state.isLocked);
+			this.getFlux(mouseState, plot, iPt, this.state.isLocked);
 		}
 
 	}
@@ -221,7 +222,7 @@ export class MouseReadout extends React.Component {
 		var mouseReadouts=[];
 		var spt = mouseState.screenPt;
 		var {width:screenW, height:screenH }= plot.screenSize;
-		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH)) || mouseState.mouseState=='EXIT'
+		const isOutside = (spt && (spt.x < 0 || spt.x > screenW || spt.y < 0 || spt.y > screenH)) || mouseState.mouseState===MouseState.EXIT
 			|| !readoutMouse.includes(mouseState.mouseState);
 
 		if (isLocked || !isOutside) {
