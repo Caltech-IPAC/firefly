@@ -10,11 +10,11 @@ import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {MouseState} from '../visualize/VisMouseCntlr.js';
 import {PlotAttribute} from '../visualize/WebPlot.js';
 import CsysConverter from '../visualize/CsysConverter.js';
-import { makeOffsetPt, makeWorldPt, makeImagePt, makeViewPortPt} from '../visualize/Point.js';
+import { makeOffsetPt, makeWorldPt, makeImagePt, makeViewPortPt,makeScreenPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {primePlot} from '../visualize/PlotViewUtil.js';
+import {primePlot, getPlotViewById} from '../visualize/PlotViewUtil.js';
 import {getUIComponent} from './NorthUpCompassUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
@@ -42,7 +42,7 @@ var idCnt=0;
 function creator() {
 
     var drawingDef= makeDrawingDef('red');
-    var actionTypes= [];// [DrawLayerCntlr.UPDATE_VIEW_SIZE, DrawLayerCntlr.PROCESS_SCROLL];
+    var actionTypes= [ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.PROCESS_SCROLL];
 
     idCnt++;
 
@@ -102,20 +102,22 @@ function makeCompass(plotId, action){
 
 
     var plot= primePlot(visRoot(),plotId);
+    var pv= getPlotViewById(visRoot(),plotId);
     var cc= CsysConverter.make(primePlot(visRoot(),plotId));
     if (!cc) return null;
 
-    var iWidth= cc.viewPort.dim.width;//plot.dataWidth;
-    var iHeight= cc.viewPort.dim.height;//plot.dataHeight;
-    var ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
-    var iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
-    var  vpt = makeViewPortPt(ix,iy);
+    //var iWidth= cc.viewPort.dim.width;//plot.dataWidth;
+    //var iHeight= cc.viewPort.dim.height;//plot.dataHeight;
+    //var ix= (iWidth<100) ? iWidth*.5 : iWidth*.25;
+    //var iy= (iHeight<100) ? iHeight*.5 : iWidth*.25;
+    //var  vpt = makeViewPortPt(ix,iy);
+    var  sPt = makeScreenPt(plot.viewPort.x+pv.scrollX+70, plot.viewPort.y+pv.scrollY+70);
 
     /*if(!cc.imageWorkSpacePtInPlot(vpt)){
         vpt = makeImagePt(ix,iy);
 
     }*/
-    var wpStart= cc.getWorldCoords(vpt);
+    var wpStart= cc.getWorldCoords(sPt);
     var cdelt1 = cc.getImagePixelScaleInDeg();
     var zf= cc.zoomFactor || 1;
     var wpt2= makeWorldPt(wpStart.getLon(), wpStart.getLat() + (Math.abs(cdelt1)/zf)*(60/2));
