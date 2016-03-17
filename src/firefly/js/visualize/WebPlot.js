@@ -53,6 +53,7 @@ export const PlotAttribute= {
      */
     ACTIVE_DISTANCE:          'ACTIVE_DISTANCE',
 
+    SHOW_COMPASS:          'SHOW_COMPASS',
 
     /**
      * This will probably be a PointSelection class

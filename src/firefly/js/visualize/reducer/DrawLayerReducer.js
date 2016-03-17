@@ -3,11 +3,10 @@
  */
 
 
+import {get,difference,union} from 'lodash';
 import {DataTypes} from '../draw/DrawLayer.js';
 import DrawLayerCntlr from '../DrawLayerCntlr.js';
 import ImagePlotCntlr from '../ImagePlotCntlr.js';
-import union from 'lodash/union';
-import difference from 'lodash/difference';
 
 
 
@@ -55,28 +54,33 @@ function makeReducer(factory) {
 
 
 function handleOtherAction(drawLayer,action,factory) {
-    if (drawLayer.actionTypeAry.includes(action.type)) {
-        var changes= factory.getLayerChanges(drawLayer,action);
-        var newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawLayer,changes): drawLayer;
 
-        if (newDl.hasPerPlotData) {     //todo- perPlotData does not have the same optimization as normal, look into this
-            newDl.plotIdAry.forEach( (id) =>
-                newDl.drawData= getDrawData(factory,newDl, action, id));
-        }
-        else {
-            var d= getDrawData(factory,newDl, action);
-            if (newDl !==drawLayer) {
-                return Object.assign(newDl,{drawData:d}); // already created a new object, just assign
-            }
-            else if (d!==newDl.drawData) {
-                return Object.assign({},newDl,{drawData:d});
-            }
-            else {
-                return drawLayer;
-            }
-        }
+
+    if (!drawLayer.actionTypeAry.includes(action.type)) return drawLayer;
+
+    var changes= factory.getLayerChanges(drawLayer,action);
+    var newDl= (changes && Object.keys(changes).length) ? Object.assign({},drawLayer,changes): drawLayer;
+    var drawData;
+
+    if (newDl.hasPerPlotData) {     //todo- perPlotData does not have the same optimization as normal, look into this
+        newDl.plotIdAry.forEach( (id) => {
+            drawData= getDrawData(factory,newDl, action, id);
+        });
     }
-    return drawLayer;
+    else {
+        drawData= getDrawData(factory,newDl, action);
+    }
+
+    if (newDl !==drawLayer){
+        newDl.drawData= drawData;
+        return newDl;
+    }
+    else if (drawData!==newDl.drawData) {
+        return Object.assign({},newDl,{drawData});
+    }
+    else {
+        return drawLayer;
+    }
 }
 
 function updateFromLayer(drawLayer,action,factory) {
@@ -211,32 +215,33 @@ const SELECTED_IDX_ARY= DataTypes.SELECTED_IDX_ARY;
 function getDrawData(factory, drawLayer, action, plotId= null) {
     if (!factory.hasGetDrawData(drawLayer)) return drawLayer.drawData;
     var {drawData}= drawLayer;
+    if (!drawData) drawData= {};
     var pId= plotId;
-    //var newDD= {[DATA]:{},[HIGHLIGHT_DATA]:{}, [SELECTED_IDX_ARY]: null};
     var newDD= Object.assign({},drawData);
 
-    newDD[DATA][plotId]= factory.getDrawData(DATA, pId, drawLayer, action,
-        drawData[DATA][plotId]);
+    if (!newDD.data) newDD.data={};
+    newDD.data[plotId]= factory.getDrawData(DATA, pId, drawLayer, action, get(drawData,`data.${plotId}`));
 
     if (drawLayer.canHighlight) {
-        newDD[HIGHLIGHT_DATA][plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
-                                          drawData[HIGHLIGHT_DATA][plotId]);
+        if (!newDD.highlightData) newDD.highlightData={};
+        newDD.highlightData[plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
+                                                          get(drawData,`highlightData.${plotId}`));
     }
 
     if (drawLayer.canSelect) {
-        newDD[SELECTED_IDX_ARY]= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action,
-                                                 drawData[SELECTED_IDX_ARY]);
+        newDD.selectIdxAry= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action,
+                                                 drawData.selectIdxAry);
     }
     var retval= {
-        [DATA]:             Object.assign({},drawData[DATA],newDD[DATA]),
-        [HIGHLIGHT_DATA]:   Object.assign({},drawData[HIGHLIGHT_DATA],newDD[HIGHLIGHT_DATA]),
-        [SELECTED_IDX_ARY]: newDD[SELECTED_IDX_ARY]
+        data:             Object.assign({},drawData.data,newDD.data),
+        highlightData:   Object.assign({},drawData.highlightData,newDD.highlightData),
+        selectIdxAry: newDD.selectIdxAry
     };
 
     // check for differences
-    if (retval[DataTypes.DATA]!==drawData[DataTypes.DATA] ||
-        retval[DataTypes.HIGHLIGHT_DATA]!==drawData[DataTypes.HIGHLIGHT_DATA] ||
-        retval[DataTypes.SELECTED_IDX_ARY]!==drawData[DataTypes.SELECTED_IDX_ARY]) {
+    if (retval.data!==drawData.data ||
+        retval.highlightData!==drawData.highlightData ||
+        retval.selectIdxAry!==drawData.selectIdxAry) {
         return retval;
     }
     else {
