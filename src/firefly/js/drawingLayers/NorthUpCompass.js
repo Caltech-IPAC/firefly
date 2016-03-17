@@ -27,7 +27,7 @@ const TYPE_ID= 'NORTH_UP_COMPASS_TYPE';
 const selHelpText='North Arrow - EQ. J2000';
 const editHelpText='Help text here!';
 
-const factoryDef= makeFactoryDef(TYPE_ID,creator, getDrawData,/* getLayerChanges*/ null, onDetach,/*getUIComponent*/null);
+const factoryDef= makeFactoryDef(TYPE_ID,creator, getDrawData,/* getLayerChanges*/ null, null,/*getUIComponent*/null);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
 
@@ -58,44 +58,6 @@ function creator() {
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
     var drawCompass= makeCompass(plotId, action);
     return drawCompass || lastDataRet;
-}
-
-function getLayerChanges(drawLayer, action) {
-
-    switch (action.type) {
-/*        case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            return attach(drawLayer,action);
-        case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
-            console.log(action.type);
-            break;
-        case DrawLayerCntlr.FORCE_DRAW_LAYER_UPDATE:
-            console.log(action.type);
-            break;*/
-        case DrawLayerCntlr.PROCESS_SCROLL:
-            console.log(action.type);
-            break;
-
-    }
-    return null;
-
-}
-
-function overlay(action) {
-    /*var {plotIdAry}= action.payload;
-
-    var cc= CsysConverter.make(primePlot(visRoot(),plotIdAry[0]));
-    if (!cc) return null;
-    */
-    var {plotIdAry}= action.payload;
-    var drawCompass= makeCompass(plotIdAry[0], action);
-    return drawCompass;
-
-}
-
-//TODO: WHY and WHEN is it used????
-function onDetach(drawLayer,action) {
-    var {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => dispatchAttributeChange(plotId,false,PlotAttribute.SHOW_COMPASS,null));
 }
 
 function makeCompass(plotId, action){
@@ -144,31 +106,3 @@ function makeCompass(plotId, action){
     obj.color = 'yellow';
     return [dataE, dataN];
 }
-
-function attach(drawLayer, action) {
-    var sel = overlay(action);
-    return {
-        drawData:{
-            data:sel
-        }
-    };
-}
-
-
-
-
-
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
-//////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
