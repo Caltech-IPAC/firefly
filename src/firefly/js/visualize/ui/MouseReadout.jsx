@@ -98,7 +98,7 @@ export class MouseReadout extends React.Component {
 		this.showFlux = this.showFlux.bind(this);
 		this.setLockState = this.setLockState.bind(this);
 
-		const fluxLabels = getFluxLabels(this.props.plotView);
+		//const fluxLabels = getFluxLabels(this.props.plotView);
 		const pointInfo = {
 			coordinates: [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize],
 			mouseReadouts: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT]
@@ -106,7 +106,6 @@ export class MouseReadout extends React.Component {
 		this.state = ({
 			point: this.props.mouseState.imagePt,
 			flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
-			fluxLabel: fluxLabels,
 			isLocked: false,
 			pointInfo: pointInfo
 		});
@@ -157,12 +156,12 @@ export class MouseReadout extends React.Component {
 
 		if (nextProps.plotView && (this.state.isLocked && mouseState===MouseState.UP || !this.state.isLocked)) {
 			if (mouseState===MouseState.EXIT) {
-				this.setState( { point: null, fluxLabel: [], flux:[], pointInfo: null } );
+				this.setState( { point: null,  flux:[], pointInfo: null } );
+
 			}
 			else {
 				this.setState( {
 					point: nextProps.mouseState.imagePt,
-					fluxLabel: getFluxLabels(nextProps.plotView),
 					flux:[],
 					pointInfo: getAllMouseReadouts(nextProps.plotView, nextProps.mouseState, nextProps.visRoot)
 				} );
@@ -184,7 +183,8 @@ export class MouseReadout extends React.Component {
 			var target = request.target;
 			var pixelClickLock = target.checked;
 
-			this.setState({isLocked: pixelClickLock, flux:[], fluxLabel:[], pointInfo:null});
+			//this.setState({isLocked: pixelClickLock, flux:[], fluxLabel:[], pointInfo:null});
+			this.setState({isLocked: pixelClickLock, flux:[], pointInfo:null});
 			dispatchChangePointSelection('mouseReadout',pixelClickLock);
 		}
 
@@ -222,7 +222,7 @@ export class MouseReadout extends React.Component {
 		var isLocked = this.state.isLocked;
 
 		var fluxValues = [];
-		var fluxLabels = [];
+		var fluxLabels = getFluxLabels(this.props.plotView);//[];
 		var mouseReadouts=[];
 		var spt = mouseState.screenPt;
 		var {width:screenW, height:screenH }= plot.screenSize;
@@ -232,7 +232,7 @@ export class MouseReadout extends React.Component {
 		if (isLocked || !isOutside) {
 				for (var i = 0; i < bands.length; i++) {
 						fluxValues[i] = this.state.flux[i];
-						fluxLabels[i] = this.state.fluxLabel[i];
+
 
 				}
 			var pointInfo = this.state.pointInfo;
@@ -305,19 +305,19 @@ function getPropsDiff(oldProps, newProps,oldState){
 	var oldBandLength=oldPlot.plotState.getBands().length;
 	var newBandLength=newPlot.plotState.getBands().length;
 	var oldFlux = oldState.flux;
-	var oldFluxLabels =oldState.fluxLabel;
+
 	if ( newBandLength <= oldBandLength) {
-		return {fluxLabel:oldFluxLabels, flux: oldFlux};
+
+		return { flux: oldFlux};
 	}
 	else {
 
 		var flux=oldFlux;
-		var fluxLabels=oldFluxLabels;
+
 		for (var i=oldBandLength; i< newBandLength; i++){
 	        flux[i]='';
-			fluxLabels[i]='';
 		}
-		return {fluxLabel:fluxLabels, flux:flux};
+		return {flux:flux};
 	}
 
 
