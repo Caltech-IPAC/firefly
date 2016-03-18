@@ -1,33 +1,12 @@
 package edu.caltech.ipac.visualize;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
-import edu.caltech.ipac.firefly.data.form.PositionFieldDef.ClientPositionResolverHelper;
-import edu.caltech.ipac.firefly.server.visualize.CtxControl;
-import edu.caltech.ipac.firefly.server.visualize.PlotClientCtx;
-import edu.caltech.ipac.firefly.server.visualize.WebPlotFactory;
-import edu.caltech.ipac.firefly.util.PositionParser;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory;
-import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.FOOTPRINT;
 import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.firefly.visualize.VisUtil.CentralPointRetval;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
 import edu.caltech.ipac.firefly.visualize.draw.FootprintObj;
 import edu.caltech.ipac.firefly.visualize.draw.RegionConnection;
@@ -35,10 +14,19 @@ import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj;
 import edu.caltech.ipac.firefly.visualize.draw.ShapeDataObj.ShapeType;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.dd.RegionLines;
-import edu.caltech.ipac.util.dd.ValidationException;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.GeomException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 public class FootprintFactoryTest {
 	private static FootprintFactory footprintFactory;
@@ -53,7 +41,40 @@ public class FootprintFactoryTest {
 	}
 
 	private String getFootprintString() {
-		String hst = "POLYGON    0.04443055   0.07030828   0.10070267   0.06821097   0.10157212   0.04029993   0.04611388   0.04307220   0.04443055   0.07030828 POLYGON    0.04305555   0.09917487   0.09989434   0.09782198   0.10071656   0.06894430   0.04444999   0.07100272   0.04305555   0.09917487 POLYGON    0.06131664   0.12724694   0.05330554   0.12808307   0.05328332   0.13514413   0.06136109   0.13432190   0.06131664   0.12724694 POLYGON    0.06194720   0.12593028   0.05245554   0.12682196   0.05239443   0.13538303   0.06199720   0.13445245   0.06194720   0.12593028 CIRCLE    0.06462497  -0.06595826   0.00069444 CIRCLE    0.06462497  -0.06595826   0.00069444 POLYGON    0.12901798   0.11616805   0.13973823   0.10302369   0.14912465   0.08889596   0.15708764   0.07391970   0.16355120   0.05823786   0.16845363   0.04200014   0.17174815   0.02536152   0.17340331   0.00848082   0.17340331  -0.00848082   0.17174815  -0.02536152   0.16845363  -0.04200014   0.16355120  -0.05823786   0.15708764  -0.07391970   0.14912465  -0.08889596   0.13973823  -0.10302369   0.12901798  -0.11616805   0.17030352  -0.15334139   0.18445419  -0.13599087   0.19684420  -0.11734230   0.20735529  -0.09757369   0.21588714  -0.07687373   0.22235832  -0.05544000   0.22670706  -0.03347709   0.22889186  -0.01119465   0.22889186   0.01119465   0.22670706   0.03347709   0.22235832   0.05544000   0.21588714   0.07687373   0.20735529   0.09757369   0.19684420   0.11734230   0.18445419   0.13599087   0.17030352   0.15334139   0.12901798   0.11616805 POLYGON    0.11616835  -0.12901772   0.10302400  -0.13973800   0.08889626  -0.14912447   0.07391997  -0.15708751   0.05823810  -0.16355111   0.04200032  -0.16845359   0.02536164  -0.17174814   0.00848086  -0.17340331  -0.00848086  -0.17340331  -0.02536164  -0.17174814  -0.04200032  -0.16845359  -0.05823810  -0.16355111  -0.07391997  -0.15708751  -0.08889626  -0.14912447  -0.10302400  -0.13973800  -0.11616835  -0.12901772  -0.15334206  -0.17030291  -0.13599157  -0.18445367  -0.11734299  -0.19684379  -0.09757433  -0.20735499  -0.07687427  -0.21588695  -0.05544042  -0.22235822  -0.03347736  -0.22670702  -0.01119474  -0.22889185   0.01119474  -0.22889185   0.03347736  -0.22670702   0.05544042  -0.22235822   0.07687427  -0.21588695   0.09757433  -0.20735499   0.11734299  -0.19684379   0.13599157  -0.18445367   0.15334206  -0.17030291   0.11616835  -0.12901772 POLYGON   -0.12901798  -0.11616805  -0.13973823  -0.10302369  -0.14912465  -0.08889596  -0.15708764  -0.07391970  -0.16355120  -0.05823786  -0.16845363  -0.04200014  -0.17174815  -0.02536152  -0.17340331  -0.00848082  -0.17340331   0.00848082  -0.17174815   0.02536152  -0.16845363   0.04200014  -0.16355120   0.05823786  -0.15708764   0.07391970  -0.14912465   0.08889596  -0.13973823   0.10302369  -0.12901798   0.11616805  -0.17030352   0.15334139  -0.18445419   0.13599087  -0.19684420   0.11734230  -0.20735529   0.09757369  -0.21588714   0.07687373  -0.22235832   0.05544000  -0.22670706   0.03347709  -0.22889186   0.01119465  -0.22889186  -0.01119465  -0.22670706  -0.03347709  -0.22235832  -0.05544000  -0.21588714  -0.07687373  -0.20735529  -0.09757369  -0.19684420  -0.11734230  -0.18445419  -0.13599087  -0.17030352  -0.15334139  -0.12901798  -0.11616805 POLYGON   -0.07989995   0.08093320  -0.08204995   0.08310819  -0.08422772   0.08095541  -0.08207772   0.07878042  -0.07989995   0.08093320 POLYGON   -0.08398605   0.08639984  -0.08778882   0.09014426  -0.09156381   0.08631094  -0.08776104   0.08256651  -0.08398605   0.08639984 POLYGON   -0.05819165   0.06560549  -0.06835552   0.07573879  -0.07851384   0.06554713  -0.06834997   0.05541661  -0.05819165   0.06560549 CIRCLE   -0.05935553  -0.06245550   0.01979722 CIRCLE   -0.05935553  -0.06245550   0.01979722 CIRCLE   -0.05935553  -0.06245550   0.01979722 POLYGON    0.01545556  -0.01782778  -0.01446667   0.01608611   0.00152500   0.03198333   0.03108889  -0.00191111   0.01545556  -0.01782778 POLYGON   -0.00058333  -0.03417222  -0.03089722  -0.00026389  -0.01472778   0.01583889   0.01521944  -0.01804722  -0.00058333  -0.03417222 POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111 POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111";
+		String hst = "POLYGON    0.04443055   0.07030828   0.10070267   0.06821097   0.10157212   0.04029993   0.04611388   0.04307220   0.04443055   0.07030828 "
+                    +"POLYGON    0.04305555   0.09917487   0.09989434   0.09782198   0.10071656   0.06894430   0.04444999   0.07100272   0.04305555   0.09917487 "
+                    +"POLYGON    0.06131664   0.12724694   0.05330554   0.12808307   0.05328332   0.13514413   0.06136109   0.13432190   0.06131664   0.12724694 "
+                    +"POLYGON    0.06194720   0.12593028   0.05245554   0.12682196   0.05239443   0.13538303   0.06199720   0.13445245   0.06194720   0.12593028 "
+                    +"CIRCLE    0.06462497  -0.06595826   0.00069444 "
+                    +"CIRCLE    0.06462497  -0.06595826   0.00069444 "
+                    +"POLYGON    0.12901798   0.11616805   0.13973823   0.10302369   0.14912465   0.08889596   0.15708764   0.07391970   0.16355120   0.05823786 "
+                        +"0.16845363   0.04200014   0.17174815   0.02536152   0.17340331   0.00848082   0.17340331  -0.00848082   0.17174815  -0.02536152   0.16845363  "
+                        +"-0.04200014   0.16355120  -0.05823786   0.15708764  -0.07391970   0.14912465  -0.08889596   0.13973823  -0.10302369   0.12901798  -0.11616805  "
+                        +"0.17030352  -0.15334139   0.18445419  -0.13599087   0.19684420  -0.11734230   0.20735529  -0.09757369   0.21588714  -0.07687373   0.22235832 "
+                        +"-0.05544000   0.22670706  -0.03347709   0.22889186  -0.01119465   0.22889186   0.01119465   0.22670706   0.03347709   0.22235832   0.05544000  "
+                        +"0.21588714   0.07687373   0.20735529   0.09757369   0.19684420   0.11734230   0.18445419   0.13599087   0.17030352   0.15334139   0.12901798 0.11616805 "
+                    +"POLYGON    0.11616835  -0.12901772   0.10302400  -0.13973800   0.08889626  -0.14912447   0.07391997  -0.15708751   0.05823810  -0.16355111 "
+                        +"0.04200032  -0.16845359   0.02536164  -0.17174814   0.00848086  -0.17340331  -0.00848086  -0.17340331  -0.02536164  -0.17174814  -0.04200032 "
+                        +"-0.16845359  -0.05823810  -0.16355111  -0.07391997  -0.15708751  -0.08889626  -0.14912447  -0.10302400  -0.13973800  -0.11616835  -0.12901772 "
+                        +"-0.15334206  -0.17030291  -0.13599157  -0.18445367  -0.11734299  -0.19684379  -0.09757433  -0.20735499  -0.07687427  -0.21588695  -0.05544042 "
+                        +"-0.22235822  -0.03347736  -0.22670702  -0.01119474  -0.22889185   0.01119474  -0.22889185   0.03347736  -0.22670702   0.05544042  -0.22235822 "
+                        +"0.07687427  -0.21588695   0.09757433  -0.20735499   0.11734299  -0.19684379   0.13599157  -0.18445367   0.15334206  -0.17030291   0.11616835  -0.12901772 "
+                    +"POLYGON   -0.12901798  -0.11616805  -0.13973823  -0.10302369  -0.14912465  -0.08889596  -0.15708764  -0.07391970  -0.16355120  -0.05823786  -0.16845363 "
+                        +"-0.04200014  -0.17174815  -0.02536152  -0.17340331  -0.00848082  -0.17340331   0.00848082  -0.17174815   0.02536152  -0.16845363   0.04200014 "
+                        +"-0.16355120   0.05823786  -0.15708764   0.07391970  -0.14912465   0.08889596  -0.13973823   0.10302369  -0.12901798   0.11616805  -0.17030352  "
+                        +"0.15334139  -0.18445419   0.13599087  -0.19684420   0.11734230  -0.20735529   0.09757369  -0.21588714   0.07687373  -0.22235832   0.05544000 "
+                        +"-0.22670706   0.03347709  -0.22889186   0.01119465  -0.22889186  -0.01119465  -0.22670706  -0.03347709  -0.22235832  -0.05544000  -0.21588714 "
+                        +"-0.07687373  -0.20735529  -0.09757369  -0.19684420  -0.11734230  -0.18445419  -0.13599087  -0.17030352  -0.15334139  -0.12901798  -0.11616805 "
+                    +"POLYGON   -0.07989995   0.08093320  -0.08204995   0.08310819  -0.08422772   0.08095541  -0.08207772   0.07878042  -0.07989995   0.08093320 "
+                    +"POLYGON   -0.08398605   0.08639984  -0.08778882   0.09014426  -0.09156381   0.08631094  -0.08776104   0.08256651  -0.08398605   0.08639984 "
+                    +"POLYGON   -0.05819165   0.06560549  -0.06835552   0.07573879  -0.07851384   0.06554713  -0.06834997   0.05541661  -0.05819165   0.06560549 "
+                    +"CIRCLE   -0.05935553  -0.06245550   0.01979722 "
+                    +"CIRCLE   -0.05935553  -0.06245550   0.01979722 "
+                    +"CIRCLE   -0.05935553  -0.06245550   0.01979722 "
+                    +"POLYGON    0.01545556  -0.01782778  -0.01446667   0.01608611   0.00152500   0.03198333   0.03108889  -0.00191111   0.01545556  -0.01782778 "
+                    +"POLYGON   -0.00058333  -0.03417222  -0.03089722  -0.00026389  -0.01472778   0.01583889   0.01521944  -0.01804722  -0.00058333  -0.03417222 "
+                    +"POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111 "
+                    +"POLYGON    0.00193333  -0.02526111  -0.02477500   0.00130833  -0.00116944   0.02586667   0.02621944  -0.00136389   0.00193333  -0.02526111";
 		/*
 		 * String jwst =
 		 * " POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720"
@@ -122,9 +143,7 @@ public class FootprintFactoryTest {
 	@Test
 	public void testFpString() {
 		FOOTPRINT fp = FOOTPRINT.HST;
-		List<Region> footprintRegions = footprintFactory.getFootprintAsRegionsFromString(getFootprintString(),
-				new WorldPt(0, 0), false);// FootprintFactory.getFootprintAsRegions(fp,
-									// new WorldPt(0,0));
+		List<Region> footprintRegions = footprintFactory.getFootprintAsRegionsFromString(getFootprintString(), new WorldPt(0, 0), false);// FootprintFactory.getFootprintAsRegions(fp, new WorldPt(0,0));
 
 		MockPlot plot = new MockPlot();
 		RegionConnection regConnection = new RegionConnection(footprintRegions);
@@ -151,21 +170,35 @@ public class FootprintFactoryTest {
 
 		String stcFromFootprint = FootprintFactory.getStcFromFootprint(FOOTPRINT.JWST);
 		//System.out.println(stcFromFootprint);
-		String vals[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
+		String valJwst[] = new String[] { "FGS", "MIRI", "NIRCAM", "NIS", "NIRSPEC"};
+        // Yi: added new HST instrument:
+        String valHst[] = new String[] {"NICMOS", "WFPC2", "WFC", "HRC", "SBC", "UVIS", "IR"};
+        String valSpitzer[] = new String[] {"IRAC36", "IRAC45"};
 		FOOTPRINT[] fp = FOOTPRINT.values();
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);// .values();
 			// System.out.println(fp[f].name());
-			for (int i = 0; i < values.length; i++) {
-				assertEquals(values[i].name(), vals[i]);
-			}
+            if (fp[f] == FOOTPRINT.JWST){
+                for (int i = 0; i < valJwst.length; i++) {
+                    assertEquals(values[i].name(), valJwst[i]);
+                }
+            } else if (fp[f] == FOOTPRINT.HST) {
+                // Yi: test the instruments in HST
+                for (int i = 0; i < valHst.length; i++) {
+                    assertEquals(values[i].name(), valHst[i]);
+                }
+            } else if (fp[f] == FOOTPRINT.SPITZER) {
+                for (int i = 0; i < valSpitzer.length; i++) {
+                    assertEquals(values[i].name(), valSpitzer[i]);
+                }
+            }
 		}
 	}
 
 	@Test
 	public void testSplit() {
-		FOOTPRINT fp = FOOTPRINT.JWST;
-		String stcFromFootprint = FootprintFactory.getStcFromFootprint(FOOTPRINT.JWST);// FootprintFactory.getFootprintStcStringDef(fp)
+		FOOTPRINT fp = FOOTPRINT.HST;
+		String stcFromFootprint = FootprintFactory.getStcFromFootprint(fp);// FootprintFactory.getFootprintStcStringDef(fp)
 		String[] split = stcFromFootprint.split("\\s");
 		int polys = 0, circle = 0, pickle = 0;
 		HashMap<String, List<Double>> map = new HashMap<>();
@@ -202,15 +235,15 @@ public class FootprintFactoryTest {
 				Assert.assertTrue("Wrong " + map.get(string).size(), map.get(string).size() == 8);// should
 			}
 		} else if (fp.equals(FOOTPRINT.WFIRST)) {
-			Assert.assertTrue(circle == 1);
+			Assert.assertTrue(circle == 2);
 			Assert.assertTrue("Wrong " + polys, polys == 18);
 			Set<String> keySet = mapCir.keySet();
 			for (String string : keySet) {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
 			}
 		} else if (fp.equals(FOOTPRINT.HST)) {
-			Assert.assertTrue(circle == 5);
-			Assert.assertTrue("Wrong " + polys, polys == 13);
+			Assert.assertTrue(circle == 0);
+			Assert.assertTrue("Wrong " + polys, polys == 14); //should be 14
 			Set<String> keySet = mapCir.keySet();
 			for (String string : keySet) {
 				Assert.assertTrue("Wrong " + mapCir.get(string).size(), mapCir.get(string).size() == 3);// should
@@ -237,20 +270,43 @@ public class FootprintFactoryTest {
 
 	@Test
 	public void testCosineRa() {
-		// FGS
-		String polRA00 = "POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720 "
-				+ " POLYGON   -0.01246111  -0.17438280  -0.01299444  -0.21437121   0.02619722  -0.21371843   0.02595278  -0.17398279  -0.01246111  -0.17438280 ";
-		
+        /*
+        INSTRUMENTS inst = INSTRUMENTS.FGS;
+		String polRA00DEC00FGS =  "POLYGON    0.03794999  -0.17407720   0.03843333  -0.21384895   0.07796106  -0.21439047   0.07665551  -0.17417432   0.03794999  -0.17407720 "
+                                + "POLYGON   -0.01246111  -0.17438280  -0.01299444  -0.21437121   0.02619722  -0.21371843   0.02595278  -0.17398279  -0.01246111  -0.17438280 ";
+		String polRA00DEC40FGS = "POLYGON    0.04941422  39.82591228   0.05001450  39.78614026   0.10145236  39.78556517   0.09981202  39.82578277   0.04941422  39.82591228";
+		String polRA00DEC90FGS = "POLYGON   12.29839928  89.82183415  10.18848870  89.78272485  19.98322603  89.77187466  23.75460655  89.80970354  12.29839928  89.82183415";
 
-		double dec = 40;
-		String polDEC40 = "POLYGON    0.04941422  39.82591228   0.05001450  39.78614026   0.10145236  39.78556517   0.09981202  39.82578277   0.04941422  39.82591228";
-		String polDec90 = "POLYGON   12.29839928  89.82183415  10.18848870  89.78272485  19.98322603  89.77187466  23.75460655  89.80970354  12.29839928  89.82183415";
-		String footprintStcStringDef = INSTRUMENTS.FGS.getStc();
-		Assert.assertTrue(footprintStcStringDef.trim(), polRA00.trim().equals(footprintStcStringDef.trim()));
-		String def = FootprintFactory.getFootprintStcStringDef(FOOTPRINT.JWST, INSTRUMENTS.MIRI);
-		Assert.assertTrue(def.trim(), def.equals(INSTRUMENTS.MIRI.getStc()));
+		String polRA00DEC00 = polRA00DEC00FGS;
+        String polRA00DEC40 = polRA00DEC40FGS;
+        String polRA00DEC90 = polRA00DEC90FGS;
 
-		List<Region> listref = footprintFactory.getFootprintAsRegionsFromString(polRA00, new WorldPt(0, 0), false);
+        */
+
+        INSTRUMENTS inst = INSTRUMENTS.NICMOS;
+        String polRA00DEC00NICMOS = "POLYGON   -0.01082769   0.01555834  -0.01297767   0.01773334  -0.01515545   0.01558057  -0.01300546   0.01340557  -0.01082769  0.01555834 "
+                                + "POLYGON -0.01491377   0.02102499  -0.01871653   0.02476942  -0.02249152   0.02093610  -0.01868877   0.01719167  -0.01491377   0.02102499 "
+                                + "POLYGON  0.01088058   0.00023060   0.00071672   0.01036392  -0.00944160   0.00017227   0.00072225  -0.00995826   0.01088058   0.00023060 ";
+        String polRA00DEC40NICMOS = "POLYGON   -0.01424449  40.01547667  -0.01705515  40.01764912  -0.01989529  40.01549370  -0.01708463  40.01332132  -0.01424449  40.01547667 "
+                                    + "POLYGON   -0.01958849  40.02093842  -0.02456044  40.02467805  -0.02948341  40.02083978  -0.02451146  40.01710034  -0.01958849  40.02093842 "
+                                    + "POLYGON    0.01411711  40.00017090   0.00083587  40.01029479  -0.01241157  40.00009222   0.00086964  39.98997262   0.01411711  40.00017090 ";
+        String polRA00DEC90NICMOS = "POLYGON  -33.36735846  89.91885316 -35.10679591  89.91707783 -33.88906296  89.91459224 -32.17639534  89.91631482 -33.36735846  89.91885316 "
+                                    + "POLYGON  -37.50769002  89.91556418 -40.19105027  89.91207128 -37.93920846  89.90801503 -35.29437691  89.91134798 -37.50769002  89.91556418 "
+                                    + "POLYGON  -16.54314961  89.93475855 -27.60703461  89.92895429 -22.79552621  89.91610696 -13.28299653  89.92096311 -16.54314961  89.93475855 ";
+
+        String polRA00DEC00 = polRA00DEC00NICMOS;
+        String polRA00DEC40 = polRA00DEC40NICMOS;
+        String polRA00DEC90 = polRA00DEC90NICMOS;
+
+
+        //Test footprintStcStringDef:
+        //RA00DEC00:
+        String footprintStcStringDef = inst.getStc();
+                Assert.assertTrue(footprintStcStringDef.trim(), polRA00DEC00.trim().equals(footprintStcStringDef.trim()));
+
+        //Test getFootprintAsRegionsFromString:
+        //fov at RA00DEC00:
+		List<Region> listref = footprintFactory.getFootprintAsRegionsFromString(polRA00DEC00, new WorldPt(0, 0), false);
 		for (Region region : listref) {
 			WorldPt[] ptAry = ((RegionLines) region).getPtAry();
 			for (int i = 0; i < ptAry.length - 1; i++) {
@@ -258,88 +314,163 @@ public class FootprintFactoryTest {
 						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
 			}
 		}
-		List<Region> list2 = footprintFactory.getFootprintAsRegionsFromString(polDEC40, new WorldPt(0, 0), false);
+        //fov at RA00DEC40:
+		List<Region> list2 = footprintFactory.getFootprintAsRegionsFromString(polRA00DEC40, new WorldPt(0, 0), false);
 		for (Region region : list2) {
 			WorldPt[] ptAry = ((RegionLines) region).getPtAry();
+			for (int i = 0; i < ptAry.length - 1; i++) {
+				System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
+						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
+			}
+		}
+		//fov at RA00DEC90:
+		list2 = footprintFactory.getFootprintAsRegionsFromString(polRA00DEC90, new WorldPt(0, 0), false);
+		for (Region region : list2) {
+			WorldPt[] ptAry = ((RegionLines) region).getPtAry();
+			for (int i = 0; i < ptAry.length - 1; i++) {
+				System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
+						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
+			}
+		}
 
-			for (int i = 0; i < ptAry.length - 1; i++) {
-				System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
-						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
-			}
-		}
-		dec = 90;
-		list2 = footprintFactory.getFootprintAsRegionsFromString(polDec90, new WorldPt(0, 0), false);
-		for (Region region : list2) {
-			WorldPt[] ptAry = ((RegionLines) region).getPtAry();
-			for (int i = 0; i < ptAry.length - 1; i++) {
-				System.out.println("Dist " + i + " " + ptAry[i].toString() + ":"
-						+ VisUtil.computeDistance(ptAry[i], ptAry[i + 1]));
-			}
-		}
+
+        //Test getFootprintStcStringDef(fp, inst):
+        //JWST/MIRI:
+        //FOOTPRINT fp = FOOTPRINT.JWST;
+        //inst = INSTRUMENTS.MIRI;
+
+        //HST/FGSHST:
+        FOOTPRINT fp = FOOTPRINT.HST;
+        inst = INSTRUMENTS.NICMOS;
+
+        String def = FootprintFactory.getFootprintStcStringDef(fp, inst);
+        Assert.assertTrue(def.trim(), def.equals(inst.getStc()));
+
 	}
 
 	@Test
-	public void testDist(){
-		INSTRUMENTS inst = INSTRUMENTS.NIS;
-		List<Region> list = footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				inst,
-				new WorldPt(45, 45), false);
-		List<Region> list2 = footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				inst,
-				new WorldPt(0,0), false);
-		
-		WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.919,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.1937, 1E-2);
-		
-		double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
-		Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.209, 1E-2);
-		
-		footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, 
-				new WorldPt(0,0), false);
-		worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.999,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.135, 1E-2);
-		
-		footprintFactory.getFootprintAsRegions(
-				FOOTPRINT.JWST, INSTRUMENTS.NIRSPEC,
-				new WorldPt(0,0), false);
-		worldCoordCenters = footprintFactory.getWorldCoordCenter();
-		assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 0.105,1E-2);
-		assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.119, 1E-2);
-		computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
-		assertEquals("Should found dist = "+computeDistance ,computeDistance,0.159, 1E-2);
-		
-		double[] dist = null, dist1 = null;
-		WorldPt[] ptAry = null, ptAry1 = null;
-		for (Region region : list) {
-			System.out.println(list.size());
-			ptAry = ((RegionLines) region).getPtAry();
-			dist = new double[ptAry.length];			
-		}
-		
-		for (Region region : list2) {
-			System.out.println(list2.size());
-			ptAry1 = ((RegionLines) region).getPtAry();
-			dist1 = new double[ptAry1.length];
-		}
-		
-		for (int i = 0; i < dist1.length-1; i++) {
-			dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
-			dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
-			System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
-		}
-		List<WorldPt> lst = new ArrayList<>();
-		for (int i = 0; i < ptAry1.length; i++) {
-			lst.add(ptAry1[i]);
-		}
-		CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
-		System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
-	}
-	
+    public void testDistJWST(){
+        INSTRUMENTS inst = INSTRUMENTS.NIS;
+        List<Region> list = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                inst,
+                new WorldPt(45, 45), false);
+        List<Region> list2 = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                inst,
+                new WorldPt(0,0), false);
+
+        WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.91942506,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.1937, 1E-2);
+
+        double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.209, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 0.01509294,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.135, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.JWST, INSTRUMENTS.NIRSPEC,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 0.105, 1E-2);
+        assertEquals("Should found lat = " + worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.119, 1E-2);
+        computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        assertEquals("Should found dist = "+computeDistance ,computeDistance,0.159, 1E-2);
+
+        double[] dist = null, dist1 = null;
+        WorldPt[] ptAry = null, ptAry1 = null;
+        for (Region region : list) {
+            System.out.println(list.size());
+            ptAry = ((RegionLines) region).getPtAry();
+            dist = new double[ptAry.length];
+        }
+
+        for (Region region : list2) {
+            System.out.println(list2.size());
+            ptAry1 = ((RegionLines) region).getPtAry();
+            dist1 = new double[ptAry1.length];
+        }
+
+        for (int i = 0; i < dist1.length-1; i++) {
+            dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
+            dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
+            System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
+        }
+        List<WorldPt> lst = new ArrayList<>();
+        for (int i = 0; i < ptAry1.length; i++) {
+            lst.add(ptAry1[i]);
+        }
+        CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
+        System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
+    }
+
+    @Test
+    public void testDistHST(){
+        INSTRUMENTS inst = INSTRUMENTS.WFC;
+        List<Region> list = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                inst,
+                new WorldPt(45, 45), false);
+        List<Region> list2 = footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                inst,
+                new WorldPt(0,0), false);
+
+        WorldPt worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 359.9994193849,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.00337, 1E-2);
+
+        double computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        Assert.assertEquals("Should found dist = "+computeDistance ,computeDistance,0.0033754, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon() ,worldCoordCenters.getLon(), 4.708E-4,1E-2);
+        assertEquals("Should found lat = "+worldCoordCenters.getLat() ,worldCoordCenters.getLat(),-0.0377, 1E-2);
+
+        footprintFactory.getFootprintAsRegions(
+                FOOTPRINT.HST, INSTRUMENTS.WFPC2,
+                new WorldPt(0,0), false);
+        worldCoordCenters = footprintFactory.getWorldCoordCenter();
+        assertEquals("Should found lon = "+worldCoordCenters.getLon(), worldCoordCenters.getLon(), 359.99983750, 1E-2);
+        assertEquals("Should found lat = " + worldCoordCenters.getLat() ,worldCoordCenters.getLat(),0.0031, 1E-2);
+        computeDistance = VisUtil.computeDistance(worldCoordCenters, new WorldPt(0,0));
+        assertEquals("Should found dist = "+computeDistance ,computeDistance,0.0031, 1E-2);
+
+        double[] dist = null, dist1 = null;
+        WorldPt[] ptAry = null, ptAry1 = null;
+        for (Region region : list) {
+            System.out.println(list.size());
+            ptAry = ((RegionLines) region).getPtAry();
+            dist = new double[ptAry.length];
+        }
+
+        for (Region region : list2) {
+            System.out.println(list2.size());
+            ptAry1 = ((RegionLines) region).getPtAry();
+            dist1 = new double[ptAry1.length];
+        }
+
+        for (int i = 0; i < dist1.length-1; i++) {
+            dist[i] = VisUtil.computeDistance(ptAry[i], ptAry[i + 1]);
+            dist1[i] = VisUtil.computeDistance(ptAry1[i], ptAry1[i + 1]);
+            System.out.println(dist[i]*3600+ ", "+dist1[i]*3600);
+        }
+        List<WorldPt> lst = new ArrayList<>();
+        for (int i = 0; i < ptAry1.length; i++) {
+            lst.add(ptAry1[i]);
+        }
+        CentralPointRetval cp = VisUtil.computeCentralPointAndRadius(lst);
+        System.out.println(cp.getWorldPt()+", "+cp.getRadius()*3600);//arcsec
+    }
 	
 	@Test
 	public void testConvertToNewReference() {
@@ -390,6 +521,23 @@ public class FootprintFactoryTest {
 		
 		
 	}
+
+    @Test
+    public void testRA0(){
+        WorldPt[] worldCoordCenters = new WorldPt[1000];
+        for (int i = 0; i < 1000; i++){
+            double ra = i * 0.0001;
+            //ra = 0.0007;
+            footprintFactory.getFootprintAsRegions(
+                    FOOTPRINT.HST, INSTRUMENTS.UVIS,
+                    new WorldPt(ra, 0), false);
+            worldCoordCenters[i] = footprintFactory.getWorldCoordCenter();
+            System.out.println("ra =" + ra + " " + "center  = " + worldCoordCenters[i].toString());
+        }
+
+    }
+
+
 	/**
 	 * Used for building regions - only matter height and zoom level
 	 * 

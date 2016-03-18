@@ -128,12 +128,22 @@ public class VisUtil {
         double min_lat = Double.POSITIVE_INFINITY;
 
         for (WorldPt pt : points) {
-            if (pt.getLon() > max_lon) {
-                max_lon = pt.getLon();
+
+            //Yi added:
+            double lonInput = pt.getLon();
+            if (lonInput > 359.0) {
+                lonInput -= 360.0;
             }
-            if (pt.getLon() < min_lon) {
-                min_lon = pt.getLon();
+
+            //Yi changed to use lonInput:
+            if (lonInput > max_lon) {
+                max_lon = lonInput;
             }
+            if (lonInput < min_lon) {
+                min_lon = lonInput;
+            }
+
+
             if (pt.getLat() > max_lat) {
                 max_lat = pt.getLat();
             }
@@ -145,7 +155,11 @@ public class VisUtil {
             min_lon = 360 + min_lon;
         }
         lon = (max_lon + min_lon) / 2;
+
         if (lon > 360) lon -= 360;
+        // Yi added:
+        if (lon < 0) lon += 360;
+
         lat = (max_lat + min_lat) / 2;
         WorldPt central_point = new WorldPt(lon, lat);
 

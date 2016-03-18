@@ -3,13 +3,6 @@
  */
 package edu.caltech.ipac.firefly.commands;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -30,7 +23,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-
 import edu.caltech.ipac.firefly.data.form.PositionFieldDef;
 import edu.caltech.ipac.firefly.ui.GwtUtil;
 import edu.caltech.ipac.firefly.ui.input.InputField;
@@ -49,8 +41,6 @@ import edu.caltech.ipac.firefly.visualize.FootprintFactory.INSTRUMENTS;
 import edu.caltech.ipac.firefly.visualize.MiniPlotWidget;
 import edu.caltech.ipac.firefly.visualize.OverlayMarker;
 import edu.caltech.ipac.firefly.visualize.ScreenPt;
-import edu.caltech.ipac.firefly.visualize.WebDefaultMouseReadoutHandler;
-import edu.caltech.ipac.firefly.visualize.WebMouseReadoutHandler;
 import edu.caltech.ipac.firefly.visualize.WebPlot;
 import edu.caltech.ipac.firefly.visualize.WebPlotView;
 import edu.caltech.ipac.firefly.visualize.draw.DrawObj;
@@ -61,6 +51,12 @@ import edu.caltech.ipac.firefly.visualize.draw.SimpleDataConnection;
 import edu.caltech.ipac.firefly.visualize.draw.WebLayerItem;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class JwstFootprintCmd extends    BaseGroupVisCmd
@@ -121,8 +117,12 @@ public class JwstFootprintCmd extends    BaseGroupVisCmd
     public JwstFootprintCmd(INSTRUMENTS inst) {
         super(CommandName+inst.name());//string constructor should have correspondent STRING.prop
         this.mission = inst.getMission();
-        this.name = mission+"/"+inst.name();
-        String label = name+ " prelim.";
+		this.name = mission + (mission.equals(FOOTPRINT.HST) ? " " : "/") + inst.getLabel();
+        //Yi: For HST, no "prelim."
+        String label = name;
+        if(!mission.equals(FOOTPRINT.HST)){
+            label = name+ " prelim.";
+        }
         this.instrument = inst;
         AllPlots.getInstance().addListener(this);
         _onLabel = _onLabel.replace("@", label);
