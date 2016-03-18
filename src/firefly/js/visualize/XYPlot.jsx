@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isUndefined, debounce} from 'lodash';
+import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 
@@ -34,6 +35,10 @@ const plotParamsShape = PropTypes.shape({
     y : axisParamsShape
 });
 
+const UNSELECTED = 'unselected';
+const SELECTED = 'selected';
+const HIGHLIGHTED = 'highlighted';
+
 const unselectedColor = 'rgba(63, 127, 191, 0.5)';
 const selectedColor = 'rgba(21, 138, 15, 0.5)';
 const highlightedColor = 'rgba(250, 243, 40, 1)';
@@ -41,40 +46,101 @@ const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
 
 const toNumber = (val)=>Number(val);
 
+const getXAxisOptions = function(params) {
+    const xTitle = params.x.label + (params.x.unit ? ', ' + params.x.unit : '');
+    let xGrid = false, xReversed = false, xLog = false;
+    const {options:xOptions} = params.x;
+    if (xOptions) {
+        xGrid = xOptions.includes('grid');
+        xReversed = xOptions.includes('flip');
+        xLog = xOptions.includes('log');
+    }
+    return {xTitle, xGrid, xReversed, xLog};
+};
+
+const getYAxisOptions = function(params) {
+    const yTitle = params.y.label + (params.y.unit ? ', ' + params.y.unit : '');
+
+    let yGrid = false, yReversed = false, yLog = false;
+    const {options:yOptions} = params.y;
+    if (params.y.options) {
+        yGrid = yOptions.includes('grid');
+        yReversed = yOptions.includes('flip');
+        yLog = yOptions.includes('log');
+    }
+    return {yTitle, yGrid, yReversed, yLog};
+};
+
+const getZoomSelection = function(params) {
+    return (params.zoom ? params.zoom : {xMin:null, xMax: null, yMin:null, yMax:null});
+};
 
 export class XYPlot extends React.Component {
 
     constructor(props) {
         super(props);
+        this.updateSelectionRect = this.updateSelectionRect.bind(this);
         this.adjustPlotDisplay = this.adjustPlotDisplay.bind(this);
-        this.onSelectionEvent = this.onSelectionEvent.bind(this);
+        this.calculateChartSize=this.calculateChartSize.bind(this);
         this.debouncedResize = this.debouncedResize.bind(this);
+        this.onSelectionEvent = this.onSelectionEvent.bind(this);
+        this.shouldAnimate = this.shouldAnimate.bind(this);
     }
 
     shouldComponentUpdate(nextProps) {
-        const {data, width, height, params, highlightedRow, selectInfo, desc} = this.props;
+        const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
         if (nextProps.data !== data ||
-            nextProps.params !== params ||
             nextProps.selectInfo !== selectInfo) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();
             if (chart) {
-                const {highlightedRow:newHighlighted, width:newWidth, height:newHeight, desc:newDesc} = nextProps;
+                const {params:newParams, highlighted:newHighlighted, width:newWidth, height:newHeight, desc:newDesc } = nextProps;
                 if (newDesc !== desc) {
                     chart.setTitle(newDesc, undefined, false);
                 }
-                if (newHighlighted !== highlightedRow) {
+                if (!shallowequal(highlighted, newHighlighted)) {
                     const highlightedData = [];
                     if (!isUndefined(newHighlighted)) {
-                        const hrow = data[newHighlighted].map(toNumber);
-                        highlightedData.push({x: hrow[0], y: hrow[1], rowIdx: newHighlighted});
+                        highlightedData.push(newHighlighted);
+                    }
+                    chart.get(HIGHLIGHTED).setData(highlightedData);
+                }
+
+                if (params !== newParams) {
+                    const xoptions = {};
+                    const yoptions = {};
+                    const newXOptions = getXAxisOptions(newParams);
+                    const newYOptions = getYAxisOptions(newParams);
+                    if (!shallowequal(getXAxisOptions(params), newXOptions)) {
+                        Object.assign(xoptions, newXOptions);
+                    }
+                    if (!shallowequal(getYAxisOptions(params), newYOptions)) {
+                        Object.assign(yoptions, newYOptions);
+                    }
+                    if (!shallowequal(params.zoom, newParams.zoom)) {
+                        const {xMin, xMax, yMin, yMax} = getZoomSelection(newParams);
+                        Object.assign(xoptions, {min:xMin, max:xMax});
+                        Object.assign(yoptions, {min:yMin, max:yMax});
+                    }
+                    const xUpdate = Object.getOwnPropertyNames(xoptions).length > 0;
+                    const yUpdate = Object.getOwnPropertyNames(yoptions).length > 0;
+                    if (xUpdate || yUpdate) {
+                        const animate = this.shouldAnimate();
+                        xUpdate && chart.xAxis[0].update(xoptions, !yUpdate, animate);
+                        yUpdate && chart.yAxis[0].update(yoptions, true, animate);
                     }
 
-                    chart.get('highlighted').setData(highlightedData);
+                    if (!shallowequal(params.selection, newParams.selection)) {
+                        this.updateSelectionRect(newParams.selection);
+                    }
+
                 }
-                if (nextProps.width !== width || nextProps.height !== height) {
+
+                if (newWidth !== width || newHeight !== height) {
                     if (this.pendingResize) {
+                        // if resize is fast (small dataset), the animation will do
+                        // if resize is slow, we want to do it only once
                         this.pendingResize.cancel();
                     }
                     this.pendingResize = this.debouncedResize();
@@ -86,34 +152,6 @@ export class XYPlot extends React.Component {
         }
     }
 
-    debouncedResize() {
-        return debounce((newWidth, newHeight) => {
-            const chart = this.refs.chart && this.refs.chart.getChart();
-            if (chart) {
-                const params = this.props.params;
-                const widthPx = newWidth;
-                const heightPx = newHeight;
-
-                let chartWidth = undefined, chartHeight = undefined;
-                if (params.xyRatio) {
-                    if (params.stretch === 'fit') {
-                        chartHeight = Number(heightPx) - 2;
-                        chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
-                    } else {
-                        chartWidth = Number(widthPx) - 15;
-                        chartHeight = Number(widthPx) / Number(params.xyRatio);
-                    }
-                } else {
-                    chartWidth = Number(widthPx);
-                    chartHeight = Number(heightPx);
-                }
-                const noAnimation = (chart.series[0].data && chart.series[0].data.length>500) ||
-                    (chart.series[1].data && chart.series[1].data.length>500);
-                chart.setSize(chartWidth, chartHeight, !noAnimation );
-            }
-        }, 500);
-    }
-
     componentDidMount() {
         this.adjustPlotDisplay();
     }
@@ -122,42 +160,68 @@ export class XYPlot extends React.Component {
         this.adjustPlotDisplay();
     }
 
+    calculateChartSize(widthPx, heightPx) {
+        const {params} = this.props;
+        let chartWidth = undefined, chartHeight = undefined;
+        if (params.xyRatio) {
+            if (params.stretch === 'fit') {
+                chartHeight = Number(heightPx) - 2;
+                chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
+            } else {
+                chartWidth = Number(widthPx) - 15;
+                chartHeight = Number(widthPx) / Number(params.xyRatio);
+            }
+        } else {
+            chartWidth = Number(widthPx);
+            chartHeight = Number(heightPx);
+        }
+        return {chartWidth, chartHeight};
+    }
+
+    debouncedResize() {
+        return debounce((newWidth, newHeight) => {
+            const chart = this.refs.chart && this.refs.chart.getChart();
+            if (chart) {
+                const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
+
+                chart.setSize(chartWidth, chartHeight, this.shouldAnimate() );
+            }
+        }, 500);
+    }
+
+    shouldAnimate() {
+        const {data} = this.props;
+        return (!data || data.length <= 250);
+    }
+
     adjustPlotDisplay() {
         const {params, onSelection, desc} = this.props;
         const onSelectionEvent = this.onSelectionEvent;
 
-        const chart = this.refs.chart.getChart();
-
-        //setting chart.events.selection
-        chart.bind('selection', (event) => {
-            if (onSelection) {
-                onSelectionEvent(event);
-                // prevent the default behavior
-                return false;
-            } else {
-                // do the default behavior - zoom
-                return true;
-            }
-        });
-
-        chart.setTitle(desc, undefined, false);
-
-        if (params.zoom) {
-            const {xMin, xMax, yMin, yMax} = params.zoom;
-            // redraw=true, animation=false
-            chart.xAxis[0].setExtremes(xMin, xMax, false, false);
-            chart.yAxis[0].setExtremes(yMin, yMax, true, false);
-        }
+        // can add more chart events here like
+        // chart.bind('selection', (event) => {});
 
         if (params.selection) {
-            const {xMin, xMax, yMin, yMax} = params.selection;
+            this.updateSelectionRect(params.selection);
+        }
+    }
+
+    updateSelectionRect(selection) {
+        const chart = this.refs.chart.getChart();
+
+        if (this.selectionRect) {
+            this.selectionRect.destroy();
+            this.selectionRect = undefined;
+        }
+        if (selection) {
+            const {xMin, xMax, yMin, yMax} = selection;
             const xMinPx = chart.xAxis[0].toPixels(xMin);
             const xMaxPx = chart.xAxis[0].toPixels(xMax);
             const yMinPx = chart.yAxis[0].toPixels(yMin);
             const yMaxPx = chart.yAxis[0].toPixels(yMax);
             const width = Math.abs(xMaxPx - xMinPx);
             const height = Math.abs(yMaxPx - yMinPx);
-            chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
+            this.selectionRect = chart.renderer.rect(Math.min(xMinPx, xMaxPx), Math.min(yMinPx, yMaxPx), width, height, 1)
                 .attr({
                     fill: selectionRectColor,
                     stroke: '#8c8c8c',
@@ -177,42 +241,14 @@ export class XYPlot extends React.Component {
 
     render() {
 
-        const {data, params, width, height, selectInfo, highlightedRow, onHighlightChange, desc} = this.props;
+        const {data, params, width, height, selectInfo, highlighted, onHighlightChange, onSelection, desc} = this.props;
+        const onSelectionEvent = this.onSelectionEvent;
 
-        const widthPx = width;
-        const heightPx = height;
+        const {chartWidth, chartHeight} = this.calculateChartSize(width, height);
 
-        let chartWidth = undefined, chartHeight = undefined;
-        if (params.xyRatio) {
-            if (params.stretch === 'fit') {
-                chartHeight = Number(heightPx) - 2;
-                chartWidth = Number(params.xyRatio) * Number(chartHeight) + 20;
-            } else {
-                chartWidth = Number(widthPx) - 15;
-                chartHeight = Number(widthPx) / Number(params.xyRatio);
-            }
-        } else {
-            chartWidth = Number(widthPx);
-            chartHeight = Number(heightPx);
-        }
-
-        const xTitle = params.x.label + (params.x.unit ? ', ' + params.x.unit : '');
-        const yTitle = params.y.label + (params.y.unit ? ', ' + params.y.unit : '');
-
-        let xGrid = false, xReversed = false, xLog = false,
-            yGrid = false, yReversed = false, yLog = false;
-        const {options:yOptions} = params.y;
-        if (params.y.options) {
-            yGrid = yOptions.includes('grid');
-            yReversed = yOptions.includes('flip');
-            yLog = yOptions.includes('log');
-        }
-        const {options:xOptions} = params.x;
-        if (xOptions) {
-            xGrid = xOptions.includes('grid');
-            xReversed = xOptions.includes('flip');
-            xLog = xOptions.includes('log');
-        }
+        const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
+        const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);
+        const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
 
         // split data into selected and unselected
         let pushFunc;
@@ -220,12 +256,12 @@ export class XYPlot extends React.Component {
             const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
             pushFunc = (numdata, nrow, idx) => {
                 selectInfoCls.isSelected(idx) ?
-                    numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: idx}) :
-                    numdata.unselected.push({x: nrow[0], y: nrow[1], rowIdx: idx});
+                    numdata.selected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]}) :
+                    numdata.unselected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
             };
         } else {
             pushFunc = (numdata, nrow) => {
-                numdata.unselected.push(nrow);
+                numdata.unselected.push({x: nrow[0], y: nrow[1], rowIdx: nrow[2]});
             };
         }
         const numericData = data.reduce((numdata, arow, idx) => {
@@ -235,18 +271,17 @@ export class XYPlot extends React.Component {
         }, {selected: [], unselected: []});
 
         const highlightedData = [];
-        if (!isUndefined(highlightedRow)) {
-            const hrow = data[highlightedRow].map(toNumber);
-            highlightedData.push({x: hrow[0], y: hrow[1], rowIdx: highlightedRow});
+        if (!isUndefined(highlighted)) {
+            highlightedData.push(highlighted);
         }
 
         const point = {
             events: {
                 click() {
                     if (onHighlightChange) {
-                        var highlighted = this.rowIdx ? this.rowIdx : this.series.data.indexOf(this);
-                        if (highlighted !== highlightedRow) {
-                            onHighlightChange(highlighted);
+                        var highlightedIdx = this.rowIdx ? this.rowIdx : this.series.data.indexOf(this);
+                        if (highlightedIdx !== highlighted.rowIdx) {
+                            onHighlightChange(highlightedIdx);
                         }
                     }
                 }
@@ -256,6 +291,7 @@ export class XYPlot extends React.Component {
 
         var config = {
             chart: {
+                animation: data && data.length < 250,
                 renderTo: 'container',
                 type: 'scatter',
                 alignTicks: false,
@@ -264,6 +300,18 @@ export class XYPlot extends React.Component {
                 borderColor: '#a5a5a5',
                 borderWidth: 3,
                 zoomType: 'xy',
+                events: {
+                    selection(event) {
+                        if (onSelection) {
+                            onSelectionEvent(event);
+                            // prevent the default behavior
+                            return false;
+                        } else {
+                            // do the default behavior - zoom
+                            return true;
+                        }
+                    }
+                },
                 resetZoomButton: {
                     theme: {
                         display: 'none'
@@ -297,6 +345,8 @@ export class XYPlot extends React.Component {
                 }
             },
             xAxis: {
+                min: xMin,
+                max: xMax,
                 gridLineColor: '#e9e9e9',
                 gridLineWidth: xGrid ? 1 : 0,
                 lineColor: '#999',
@@ -307,6 +357,8 @@ export class XYPlot extends React.Component {
                 type: xLog ? 'logarithmic' : 'linear'
             },
             yAxis: {
+                min: yMin,
+                max: yMax,
                 gridLineColor: '#e9e9e9',
                 gridLineWidth: yGrid ? 1 : 0,
                 tickWidth: 1,
@@ -319,16 +371,19 @@ export class XYPlot extends React.Component {
                 title: {text: yTitle},
                 type: yLog ? 'logarithmic' : 'linear'
             },
-            series: [{
-                name: 'unselected',
-                color: unselectedColor,
-                data: numericData.unselected,
-                marker: {symbol: 'circle'},
-                turboThreshold: 0,
-                point
-            },
+            series: [
                 {
-                    name: 'selected',
+                    id: UNSELECTED,
+                    name: UNSELECTED,
+                    color: unselectedColor,
+                    data: numericData.unselected,
+                    marker: {symbol: 'circle'},
+                    turboThreshold: 0,
+                    point
+                },
+                {
+                    id: SELECTED,
+                    name: SELECTED,
                     color: selectedColor,
                     data: numericData.selected,
                     marker: {symbol: 'circle'},
@@ -336,8 +391,8 @@ export class XYPlot extends React.Component {
                     point
                 },
                 {
-                    id: 'highlighted',
-                    name: 'highlighted',
+                    id: HIGHLIGHTED,
+                    name: HIGHLIGHTED,
                     color: highlightedColor,
                     marker: {
                         lineColor: '#404040',
@@ -367,7 +422,11 @@ XYPlot.propTypes = {
     width: PropTypes.number,
     height: PropTypes.number,
     params: plotParamsShape,
-    highlightedRow: PropTypes.number,
+    highlighted: PropTypes.shape({
+        x: PropTypes.number,
+        y: PropTypes.number,
+        rowIdx: PropTypes.number
+    }),
     selectInfo: PropTypes.shape({
         selectAll: PropTypes.bool,
         exceptions: PropTypes.instanceOf(Set),
@@ -381,9 +440,10 @@ XYPlot.propTypes = {
 XYPlot.defaultProps = {
     data: undefined,
     params: undefined,
-    highlightedRow: 0,
+    highlighted: undefined,
     onHighlightChange: undefined,
     onSelection: undefined,
     height: 300,
     desc: 'Sample XY Plot'
 };
+

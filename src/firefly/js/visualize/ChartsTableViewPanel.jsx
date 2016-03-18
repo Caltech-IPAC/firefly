@@ -19,7 +19,7 @@ import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 
-
+import {getHighlighted} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import {XYPlot} from '../visualize/XYPlot.jsx';
 
@@ -130,7 +130,7 @@ var ChartsPanel = React.createClass({
         const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
         var {widthPx, heightPx, optionsShown} = this.state;
 
-        const hRow = tableModel && tableModel.highlightedRow;
+        const hRow = getHighlighted(xyPlotParams, tblId);
         const sInfo = tableModel && tableModel.selectInfo;
         const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
 
@@ -141,7 +141,7 @@ var ChartsPanel = React.createClass({
                         width={chartWidth}
                         height={heightPx}
                         params={xyPlotParams}
-                        highlightedRow={hRow}
+                        highlighted={hRow}
                         onHighlightChange={(highlightedRow) => {
                                     TablesCntlr.dispatchTableHighlight(tblId, highlightedRow);
                                 }
