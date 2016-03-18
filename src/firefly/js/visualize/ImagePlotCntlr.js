@@ -4,7 +4,6 @@
 
 import Enum from 'enum';
 import {get} from 'lodash';
-import update from 'react-addons-update';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
@@ -14,8 +13,7 @@ import {getPlotGroupById} from './PlotGroup.js';
 import {Band} from './Band.js';
 import {isActivePlotView,
         getPlotViewById,
-        expandedPlotViewAry,
-        applyToOnePvOrGroup,
+        getOnePvOrGroup,
         isDrawLayerAttached,
         getDrawLayerByType } from './PlotViewUtil.js';
 
@@ -24,6 +22,7 @@ import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
+import {dispatchReplaceImages, getExpandedViewerPlotIds, getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
 
@@ -96,7 +95,7 @@ const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
-const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
+// const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
 
 const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
@@ -173,7 +172,7 @@ export default {
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,EXPANDED_LIST,
+    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW
 };
 
@@ -394,6 +393,20 @@ export function dispatchChangePointSelection(requester, enabled) {
  * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one, if false colapse
  */
 export function dispatchChangeExpandedMode(expandedMode) {
+
+    const vr= visRoot();
+
+    if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to epanded
+        const plotId= vr.activePlotId;
+        const pv= getPlotViewById(vr,plotId);
+        if (pv) {
+            const group= getPlotGroupById(vr,pv.plotGroupId);
+            const plotIdAry= getOnePvOrGroup(vr.plotViewAry,plotId,group).map( (pv) => pv.plotId);
+            dispatchReplaceImages(EXPANDED_MODE_RESERVED,plotIdAry);
+        }
+    }
+
+
     flux.process({ type: CHANGE_EXPANDED_MODE, payload: {expandedMode} });
 
 
@@ -407,6 +420,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
             if (zl>0) dispatchZoom(pv.plotId,UserZoomTypes.LEVEL,false,false,false,zl,ActionScope.SINGLE);
         });
     }
+    
 }
 
 
@@ -422,9 +436,9 @@ export function dispatchExpandedAutoPlay(autoPlayOn) {
 }
 
 
-export function dispatchExpandedList(plotIdAry) {
-    flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
-}
+// export function dispatchExpandedList(plotIdAry) {
+//     flux.process({ type: EXPANDED_LIST, payload: {plotIdAry} });
+// }
 
 
 export function dispatchDeletePlotView(plotId) {
@@ -447,12 +461,13 @@ export function autoPlayActionCreator(rawAction) {
             if (!visRoot().singleAutoPlay) {
                 dispatcher(rawAction);
                 var id= window.setInterval( () => {
-                    var {singleAutoPlay,plotViewAry,activePlotId}= visRoot();
+                    var {singleAutoPlay,activePlotId}= visRoot();
                     if (singleAutoPlay) {
-                        const pvAry= expandedPlotViewAry(plotViewAry,activePlotId);
-                        const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
-                        const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
-                        dispatchChangeActivePlotView(pvAry[nextIdx].plotId);
+
+                        const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+                        const cIdx= plotIdAry.indexOf(activePlotId);
+                        const nextIdx= cIdx===plotIdAry.length-1 ? 0 : cIdx+1;
+                        dispatchChangeActivePlotView(plotIdAry[nextIdx]);
                     }
                     else {
                         window.clearInterval(id);
@@ -545,7 +560,6 @@ function reducer(state=initState(), action={}) {
         case COLOR_CHANGE_FAIL  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
-        case EXPANDED_LIST:
             retState= plotChangeReducer(state,action);
             break;
 
@@ -614,9 +628,8 @@ function changeActivePlotView(state,action) {
     return clone(state, {activePlotId:action.payload.plotId});
 }
 
-const includeInExpandedList = (pv,enable) => update(pv, {plotViewCtx : {$merge :{inExpandedList:enable}}});
 
-const isExpanded = (expandedMode) => expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE;
+const isExpanded = (expandedMode) => expandedMode===true || expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE;
 
 function changeExpandedMode(state,action) {
     var {expandedMode}= action.payload;
@@ -626,25 +639,10 @@ function changeExpandedMode(state,action) {
 
     if (expandedMode===state.expandedMode) return state;
 
-    const {plotViewAry}= state;
     const changes= {expandedMode,singleAutoPlay:false};
 
     if (isExpanded(expandedMode)) { // we are currently expanded, just changing modes, e.g. grid to single
         changes.previousExpandedMode= expandedMode;
-    }
-
-    if (!isExpanded(expandedMode)) {  // if we are collapsing
-        changes.plotViewAry= plotViewAry.map( (pv) =>
-                  pv.plotViewCtx.inExpandedList ? includeInExpandedList(pv,false) : pv
-        );
-    }
-    else if (!isExpanded(state.expandedMode)) { // if we are expanding
-        const plotId= state.activePlotId;
-        const pv= getPlotViewById(state,plotId);
-        if (pv) {
-            const group= getPlotGroupById(state,pv.plotGroupId);
-            changes.plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,group, (pv) =>includeInExpandedList(pv,true));
-        }
     }
 
     return clone(state, changes);

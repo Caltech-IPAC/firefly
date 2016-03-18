@@ -17,7 +17,7 @@ import {getDrawLayerByType, getActivePlotView, isDrawLayerAttached} from '../Plo
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {dispatchAddImages} from '../MultiViewCntlr.js';
+import {dispatchAddImages,getMultiViewRoot, findViewerWithPlotId} from '../MultiViewCntlr.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
@@ -102,8 +102,10 @@ function showResults(success, request) {
 
     dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
 
+    dispatchAddImages('imageViews', ['TestImage1']);
+    const vId= findViewerWithPlotId(getMultiViewRoot(),'TestImage1');
 
-    dispatchAddImages('imageViews', ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4']);
+    dispatchAddImages(vId, ['TestImage2', 'TestImage3', 'TestImage4']);
 
     //====temp
 }
@@ -152,7 +154,7 @@ function TestImagePanelView({selectOn,distOn}) {
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <MultiImageViewer  viewerId='imageViews' canAdd={true} Toolbar={MultiViewStandardToolbar}/>
+                <MultiImageViewer  viewerId='imageViews' canReceiveNewPlots={true} Toolbar={MultiViewStandardToolbar}/>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage3Color'/>

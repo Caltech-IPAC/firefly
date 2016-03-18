@@ -29,8 +29,8 @@ export class MultiImageViewer extends Component {
 
     componentDidMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
-        var {viewerId, canAdd}= this.props;
-        dispatchAddViewer(viewerId,canAdd);
+        var {viewerId, canReceiveNewPlots}= this.props;
+        dispatchAddViewer(viewerId,canReceiveNewPlots);
     }
 
     storeUpdate(props) {
@@ -63,7 +63,7 @@ export class MultiImageViewer extends Component {
 
 MultiImageViewer.propTypes= {
     viewerId : PropTypes.string.isRequired,
-    canAdd : PropTypes.bool,
+    canReceiveNewPlots : PropTypes.bool,
     Toolbar : PropTypes.func,
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,
@@ -82,5 +82,5 @@ MultiImageViewer.propTypes= {
 
 
 MultiImageViewer.defaultProps= {
-    canAdd : false
+    canReceiveNewPlots : false
 };

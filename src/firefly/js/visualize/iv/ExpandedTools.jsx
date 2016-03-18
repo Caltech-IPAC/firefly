@@ -6,7 +6,7 @@
 import React, {PropTypes} from 'react';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay} from '../ImagePlotCntlr.js';
 import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {primePlot, expandedPlotViewAry} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
@@ -15,6 +15,7 @@ import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {VIS_TOOLBAR_HEIGHT} from '../ui/VisToolbarView.jsx';
+import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
 
 import './ExpandedTools.css';
 
@@ -146,6 +147,7 @@ export function ExpandedTools({visRoot}) {
                     {createOptions(expandedMode,singleAutoPlay)}
                     <PagingControl plotViewAry={plotViewAry}
                                    activePlotId={activePlotId}
+                                   visRoot={visRoot}
                                    expandedMode={expandedMode} />
                 </div>
             </div>
@@ -203,36 +205,34 @@ const controlStyle= {
 };
 
 
-function pTitle(begin,pv) {
-    var plot= primePlot(pv);
+function pTitle(begin,visRoot,plotId) {
+    var plot= primePlot(visRoot,plotId);
     return plot ? begin+plot.title : '';
 }
 
 
 
-function PagingControl({plotViewAry, activePlotId, expandedMode}) {
+function PagingControl({plotViewAry, visRoot,activePlotId, expandedMode}) {
+
+    const plotIdAry= getExpandedViewerPlotIds(getMultiViewRoot());
+
+    if (plotIdAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
+
+    const cIdx= plotIdAry.indexOf(activePlotId);
+    const nextIdx= cIdx===plotIdAry.length-1 ? 0 : cIdx+1;
+    const prevIdx= cIdx ? cIdx-1 : plotIdAry.length-1;
 
 
 
-    const pvAry= expandedPlotViewAry(plotViewAry,activePlotId);
-
-    if (pvAry.length<2 || expandedMode!==ExpandType.SINGLE) return <div style={controlStyle}></div>;
-
-    const cIdx= pvAry.findIndex( (pv) => pv.plotId===activePlotId);
-    const nextIdx= cIdx===pvAry.length-1 ? 0 : cIdx+1;
-    const prevIdx= cIdx ? cIdx-1 : pvAry.length-1;
-
-
-
-    const dots= pvAry.map( (pv,idx) =>
+    const dots= plotIdAry.map( (plotId,idx) =>
         idx===cIdx ?
             <img src={ACTIVE_DOT} className='control-dots'
-                 title={pTitle('Active Plot: ',pvAry[idx])}
+                 title={pTitle('Active Plot: ', visRoot,plotId)}
                  key={idx}/>  :
             <img src={INACTIVE_DOT} className='control-dots'
-                 title={pTitle('Display: ', pvAry[idx])}
+                 title={pTitle('Display: ', visRoot,plotId)}
                  key={idx}
-                  onClick={() => dispatchChangeActivePlotView(pvAry[idx].plotId)}/>);
+                  onClick={() => dispatchChangeActivePlotView(plotId)}/>);
 
     const leftTitleStyle= {
         display:'inline-block',
@@ -243,7 +243,7 @@ function PagingControl({plotViewAry, activePlotId, expandedMode}) {
         verticalAlign:'bottom',
         cursor:'pointer'
     };
-    if (pvAry.length===2) {
+    if (plotIdAry.length===2) {
         leftTitleStyle.visibility='hidden';
         leftImageStyle.visibility='hidden';
     }
@@ -253,24 +253,24 @@ function PagingControl({plotViewAry, activePlotId, expandedMode}) {
         <div style={controlStyle} >
             <div>
                 <img style={leftImageStyle} src={PAGE_LEFT}
-                     title={pTitle('Previous: ',pvAry[prevIdx])}
-                     onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)}
+                     title={pTitle('Previous: ',visRoot,plotIdAry[prevIdx])}
+                     onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])}
                 />
                 <a style={leftTitleStyle} className='ff-href text-nav-controls'
-                   title={pTitle('Previous: ',pvAry[prevIdx])}
-                     onClick={() => dispatchChangeActivePlotView(pvAry[prevIdx].plotId)} >
-                    {pTitle('',pvAry[prevIdx])}
+                   title={pTitle('Previous: ',visRoot,plotIdAry[prevIdx])}
+                     onClick={() => dispatchChangeActivePlotView(plotIdAry[prevIdx])} >
+                    {pTitle('',visRoot,plotIdAry[prevIdx])}
                 </a>
 
                 <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right'}}
-                     title={pTitle('Next: ', pvAry[nextIdx])}
+                     title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
                      src={PAGE_RIGHT}
-                     onClick={() => dispatchChangeActivePlotView(pvAry[nextIdx].plotId)}
+                     onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])}
                 />
                 <a style={rightTitleStyle} className='ff-href text-nav-controls'
-                   title={pTitle('Next: ', pvAry[nextIdx])}
-                   onClick={() => dispatchChangeActivePlotView(pvAry[nextIdx].plotId)} >
-                    {pTitle('',pvAry[nextIdx])}
+                   title={pTitle('Next: ', visRoot,plotIdAry[nextIdx])}
+                   onClick={() => dispatchChangeActivePlotView(plotIdAry[nextIdx])} >
+                    {pTitle('',visRoot,plotIdAry[nextIdx])}
                 </a>
             </div>
             <div style={{textAlign:'center'}}>
@@ -286,5 +286,6 @@ function PagingControl({plotViewAry, activePlotId, expandedMode}) {
 PagingControl.propTypes= {
     plotViewAry : PropTypes.array.isRequired,
     activePlotId: PropTypes.string.isRequired,
-    expandedMode: PropTypes.object.isRequired
+    expandedMode: PropTypes.object.isRequired,
+    visRoot : PropTypes.object.isRequired
 };

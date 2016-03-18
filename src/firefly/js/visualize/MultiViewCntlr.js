@@ -15,13 +15,16 @@ export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
 const ADD_VIEWER= 'MultiViewCntlr.AddViewer';
 const REMOVE_VIEWER= 'MultiViewCntlr.RemoveViewer';
 const ADD_IMAGES= 'MultiViewCntlr.addImages';
-const REMOVE_IMAGES= 'MultiViewCntlr.addImages';
-const REPLACE_IMAGES= 'MultiViewCntlr.addImages';
+const REMOVE_IMAGES= 'MultiViewCntlr.removeImages';
+const REPLACE_IMAGES= 'MultiViewCntlr.replaceImages';
 const IMAGE_VIEW_TYPE= 'MultiViewCntlr.imageViewType';
 const CHANGE_LAYOUT= 'MultiViewCntlr.changeLayout';
+const ADD_TO_AUTO_RECEIVER = 'MultiViewCntlr.addToAutoReceiver';
 
 
-export function getMultiViewRoot() { return flux.getState()[IMAGE_MULTI_VIEW_KEY]; }
+export function getMultiViewRoot() { 
+    return flux.getState()[IMAGE_MULTI_VIEW_KEY]; 
+}
 
 const clone = (obj,params={}) => Object.assign({},obj,params);
 
@@ -33,17 +36,22 @@ export default {
 
 export const SINGLE='single';
 export const GRID='grid';
-const EXPANDAND_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
+export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 
 function initState() {
 
     return [
-        { viewerId:EXPANDAND_MODE_RESERVED,  plotIdAry:[], viewType:'single', reservedContainer:true}
+        { viewerId:EXPANDED_MODE_RESERVED,  
+            plotIdAry:[], 
+            viewType:'single', 
+            canReceiveNewPlots: true,
+            reservedContainer:true
+        }
     ];
 
     /*
        array  { viewerId : string
-                canAdd : boolean // can this viewer support adding images.
+                canReceiveNewPlots : boolean // can this viewer support adding images.
                 viewType : string // 'single', 'grid'
                 plotIdAry : array of string plotId
      *
@@ -60,10 +68,10 @@ function initState() {
 /**
  *
  * @param viewerId
- * @param canAdd
+ * @param canReceiveNewPlots
  */
-export function dispatchAddViewer(viewerId, canAdd) {
-    flux.process({type: ADD_VIEWER , payload: {viewerId, canAdd} });
+export function dispatchAddViewer(viewerId, canReceiveNewPlots) {
+    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots} });
 }
 
 /**
@@ -84,6 +92,14 @@ export function dispatchAddImages(viewerId, imageAry) {
     flux.process({type: ADD_IMAGES , payload: {viewerId, imageAry} });
 }
 
+/**
+ *
+ * @param {[]} imageAry  array of {plotId : string, requestAry : array of WebPlotRequest}
+ *
+ */
+export function dispatchAddToAutoReceiver(imageAry) {
+    flux.process({type: ADD_TO_AUTO_RECEIVER , payload: {imageAry} });
+}
 
 /**
  * 
@@ -128,6 +144,9 @@ export function getLayoutType(multiViewRoot, viewerId) {
     return v ? v.layout : GRID;
 }
 
+export function getExpandedViewerPlotIds(multiViewRoot) {
+    return getViewerPlotIds(multiViewRoot,EXPANDED_MODE_RESERVED);
+}
 
 export function getViewerPlotIds(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return null;
@@ -140,12 +159,22 @@ export function getViewer(multiViewRoot,viewerId) {
     return multiViewRoot.find( (entry) => entry.viewerId===viewerId);
 }
 
-export function getViewerPlotRequest(multiViewRoot,viewerId) {
-    if (!multiViewRoot || !viewerId) return null;
-    var viewerObj= multiViewRoot.find( (entry) => entry.viewerId===viewerId);
-    if (!viewerObj) return null;
-    return viewerObj.plotIdAry;
+// export function getViewerPlotRequest(multiViewRoot,viewerId) {
+//     if (!multiViewRoot || !viewerId) return null;
+//     var viewerObj= multiViewRoot.find( (entry) => entry.viewerId===viewerId);
+//     if (!viewerObj) return null;
+//     return viewerObj.plotIdAry;
+// }
+
+
+export function findViewerWithPlotId(multiViewRoot, plotId) {
+    if (!multiViewRoot) return null;
+    const v= multiViewRoot.find((entry) =>
+               entry.viewerId!==EXPANDED_MODE_RESERVED && entry.plotIdAry.includes(plotId));
+    return v ? v.viewerId : null;
 }
+
+
 
 //======================================== Action Creator =============================
 //======================================== Action Creator =============================
@@ -176,6 +205,9 @@ function reducer(state=initState(), action={}) {
         case ADD_IMAGES:
             retState= addImages(state,action);
             break;
+        case ADD_TO_AUTO_RECEIVER:
+            retState= addToAutoReceiver(state,action);
+            break;
         case REMOVE_IMAGES:
             retState= removeImages(state,action);
             break;
@@ -199,10 +231,10 @@ function reducer(state=initState(), action={}) {
 
 function addViewer(state,action) {
 
-    const {viewerId,layout=GRID,canAdd=false}= action.payload;
+    const {viewerId,layout=GRID,canReceiveNewPlots=false}= action.payload;
     if (hasViewerId(state,viewerId)) return state;
 
-    const entry= { viewerId, canAdd, layout, plotIdAry: [] };
+    const entry= { viewerId, canReceiveNewPlots, layout, plotIdAry: [] };
     return [...state,entry];
 }
 
@@ -223,6 +255,17 @@ function addImages(state,action) {
     var plotIdAry= union(viewer.plotIdAry,imageAry);
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {plotIdAry}) : entry);
 }
+
+
+function addToAutoReceiver(state,action) {
+    const {imageAry}= action.payload;
+    return state.map( (entry) => 
+              entry.canReceiveNewPlots ? clone(entry, {plotIdAry: union(entry.plotIdAry,imageAry)}) : entry);
+}
+
+
+
+
 
 function removeImages(state,action) {
     var {viewerId,imageAry}= action.payload;
