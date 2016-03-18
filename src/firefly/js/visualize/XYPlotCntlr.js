@@ -7,6 +7,7 @@ import {has} from 'lodash';
 import {doFetchTable, isTableLoaded} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
+import {DecimateInfo} from '../tables/DecimateInfo.js';
 
 export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -227,9 +228,12 @@ function updatePlotData(data) {
  */
 function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 
+    const decimateInfoCls = new DecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000);
+
     // todo support expressions
     const req = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000,
-        'inclCols' : xyPlotParams.x.columnOrExpr+','+xyPlotParams.y.columnOrExpr
+        'inclCols' : xyPlotParams.x.columnOrExpr+','+xyPlotParams.y.columnOrExpr,
+        'decimate' : decimateInfoCls.serialize()
         });
 
     req.tbl_id = activeTableServerRequest.tbl_id;

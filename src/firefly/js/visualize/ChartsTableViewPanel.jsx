@@ -1,3 +1,7 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
 import React, {PropTypes} from 'react';
 
 import {get, debounce, defer} from 'lodash';
@@ -17,7 +21,7 @@ import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 
 
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
-import XYPlot from '../visualize/XYPlot.jsx';
+import {XYPlot} from '../visualize/XYPlot.jsx';
 
 import HistogramOptions from '../visualize/HistogramOptions.jsx';
 import Histogram from '../visualize/Histogram.jsx';
@@ -52,11 +56,11 @@ var ChartsPanel = React.createClass({
 
     getInitialState() {
         return {
-            chartType : SCATTER,
-            optionsShown : true,
+            chartType: SCATTER,
+            optionsShown: true,
             widthPx: 700,
             heightPx: 300,
-            debouncedResize: debounce(this.onResize, 500, {'leading':false, 'trailing':true})};
+            debouncedResize: debounce(this.onResize, 200, {'leading':false, 'trailing':true, 'maxWait':10000})};
     },
 
 
@@ -79,13 +83,17 @@ var ChartsPanel = React.createClass({
 
     onResize(size) {
         if (size) {
-            this.setState({ widthPx: (size.width-10), heightPx: (size.height-30), debouncedResize: this.state.debouncedResize });
+            this.state.debouncedResize.cancel;
+            const {width, height} = size;
+                this.setState({
+                    widthPx: (width - 10),
+                    heightPx: (height - 30),
+                    debouncedResize: debounce(this.onResize, 200, {'leading':false, 'trailing':true, 'maxWait':10000})
+                });
         }
     },
 
-    componentDidMount() {
-        this.onResize();
-    },
+
 
 
     // -------------
