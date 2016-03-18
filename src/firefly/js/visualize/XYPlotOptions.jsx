@@ -33,6 +33,11 @@ var XYPlotOptions = React.createClass({
         return {fields : FieldGroupUtils.getGroupFields(this.props.groupKey)};
     },
 
+    shouldComponentUpdate(nextProps, nextState) {
+        return Boolean(this.state.fields !== nextState.fields ||
+            this.props.colValStats !== nextProps.colValStats);
+    },
+
     componentWillUnmount() {
         if (this.unbinder) this.unbinder();
     },
