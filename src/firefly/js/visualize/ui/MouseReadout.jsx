@@ -152,8 +152,8 @@ export class MouseReadout extends React.Component {
 			if (nextProps.plotView && (this.isLocked && mouseState === MouseState.UP || !this.isLocked  )) {
 				if (mouseState === MouseState.EXIT) {
 
-					//this.setState({ fluxLabel: [], flux: []});
-					this.setState({  flux: []});
+					this.setState({ fluxLabel: [], flux: []});
+					//this.setState({  flux: []});
 				}
 				else {
 					this.setState({
@@ -251,15 +251,15 @@ export class MouseReadout extends React.Component {
 
 			}
 		}
-		var mouseReadouts=( this.isLocked && mouseState &&  mouseState.mouseState !==MouseState.UP || !isOutside ) ? mouseReadoutInState:['','',''];
+		var mouseReadouts=( this.isLocked && mouseState &&  mouseState.mouseState !==MouseState.UP || !isOutside ) ? mouseReadoutInState:[];
 
 		return (
 
 
 			<div style={ rS}>
 
-				{renderMouseReadoutRow1({ visRoot, title, fluxLabel:fluxLabels[1],fluxValue:fluxValues[1],mouseReadout1:mouseReadouts[0],
-					pixelSize:mouseReadouts[2] } )}
+				{renderMouseReadoutRow1({ visRoot, title, fluxLabel:fluxLabels[1],fluxValue:fluxValues[1],mouseReadout1:(mouseReadouts?mouseReadouts[0]:''),
+					pixelSize:(mouseReadouts?mouseReadouts[2]:'') } )}
 
 				<div>
 					<div style={ columnColorBandFluxLabel}>{fluxLabels[2]} </div>
@@ -271,7 +271,7 @@ export class MouseReadout extends React.Component {
 					<div style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
 						{labelMap[visRoot.mouseReadout2] } </div>
 
-					<div style={column4}>  { mouseReadouts[1]}  </div>
+					<div style={column4}>  { (mouseReadouts?mouseReadouts[1]:'')}  </div>
 					<div style={column5_1} title='Click on an image to lock the display at that point.'>
 						<input type='checkbox' name='aLock' value='lock'
 							   onChange={ (request) => this.setLockState( request) }/>
