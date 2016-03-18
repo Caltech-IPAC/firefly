@@ -36,7 +36,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
     const leftImageStyle= {
         verticalAlign:'bottom',
         cursor:'pointer',
-        flex: '0 0',
+        flex: '0 0 auto',
         paddingLeft: 10
     };
     if (viewerPlotIds.length===2) {
@@ -50,20 +50,20 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, layo
     return (
         <div style={toolsStyle}>
             <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                           imageStyle={{width:24,height:24, flex: '0 0'}}
+                           imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                            enabled={true} visible={true}
                            horizontal={true}
                            onClick={() => dispatchChangeLayout(viewerId,'single')}/>
             <ToolbarButton icon={GRID} tip={'Show all as tiles'}
                            enabled={true} visible={true} horizontal={true}
-                           imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0'}}
+                           imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                            onClick={() => dispatchChangeLayout(viewerId,'grid')}/>
             {layoutType==='single' && viewerPlotIds.length>1 &&
                         <img style={leftImageStyle} src={PAGE_LEFT}
                              onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />
             }
             {layoutType==='single' && viewerPlotIds.length>1 &&
-                        <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:5, flex: '0 0'}}
+                        <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:5, flex: '0 0 auto'}}
                              src={PAGE_RIGHT}
                              onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
             }

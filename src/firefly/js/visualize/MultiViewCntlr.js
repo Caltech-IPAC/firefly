@@ -33,10 +33,13 @@ export default {
 
 export const SINGLE='single';
 export const GRID='grid';
+const EXPANDAND_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 
 function initState() {
 
-    return [];
+    return [
+        { viewerId:EXPANDAND_MODE_RESERVED,  plotIdAry:[], viewType:'single', reservedContainer:true}
+    ];
 
     /*
        array  { viewerId : string
@@ -116,7 +119,7 @@ export function dispatchReplaceImages(viewerId, imageAry) {
 
 export function hasViewerId(multiViewRoot, viewerId) {
     if (!multiViewRoot || !viewerId) return false;
-    multiViewRoot.find((entry) => entry.viewerId === viewerId) ? true : false;
+    return multiViewRoot.find((entry) => entry.viewerId === viewerId) ? true : false;
 }
 
 export function getLayoutType(multiViewRoot, viewerId) {

@@ -9,9 +9,6 @@ import {flux} from '../../Firefly.js';
 import {dispatchAddViewer, getMultiViewRoot, getViewer, getLayoutType} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
-import shallowequal from 'shallowequal';
-
-
 
 export class MultiImageViewer extends Component {
 

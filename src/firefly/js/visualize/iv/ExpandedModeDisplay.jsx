@@ -52,17 +52,17 @@ export class ExpandedModeDisplay extends Component {
         const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
 
         const {plotViewAry,activePlotId}= vr;
-        const pvAry= expandedPlotViewAry(plotViewAry,activePlotId).map( (pv) => pv.plotId);
+        const plotIdAry= expandedPlotViewAry(plotViewAry,activePlotId).map( (pv) => pv.plotId);
 
 
 
         return (
-            <MultiImageViewerView viewerPlotIds={pvAry}
+            <MultiImageViewerView viewerPlotIds={plotIdAry}
                                   layoutType={layoutType}
                                   Toolbar={ExpandedTools}
                                   viewerId={'EXPANDED_VIEW'}
                                   visRoot={vr}
-                                  additionalStyle={{flex:'1 1'}} 
+                                  additionalStyle={{flex:'1 1 auto'}}
                                   defaultDecoration={false} 
             />
         );

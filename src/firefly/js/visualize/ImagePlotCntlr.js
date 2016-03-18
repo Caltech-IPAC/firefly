@@ -3,6 +3,7 @@
  */
 
 import Enum from 'enum';
+import {get} from 'lodash';
 import update from 'react-addons-update';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
@@ -655,7 +656,7 @@ function deletePlotView(state,action) {
     if (!state.plotViewAry.find( (pv) => pv.plotId===plotId)) return state;
     
     state= clone(state, {plotViewAry:state.plotViewAry.filter( (pv) => pv.plotId!=plotId)});
-    if (state.activePlotId===plotId) state.activePlotId= state.plotViewAry[0];
+    if (state.activePlotId===plotId) state.activePlotId= get(state,'plotViewAry.0.plotId',null);
     return state;
 }
 

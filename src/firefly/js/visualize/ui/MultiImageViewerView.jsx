@@ -4,10 +4,7 @@
 
 
 import React, {PropTypes} from 'react';
-import {visRoot, ExpandType} from '../ImagePlotCntlr.js';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
-import {convertZoomToString} from '../ZoomUtil.js';
-import {primePlot, expandedPlotViewAry} from '../PlotViewUtil.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 
 
@@ -30,7 +27,7 @@ const defDecStyle= {
 };
 
 const flexToolbarStyle= {
-    flex: '0 0'
+    flex: '0 0 auto'
 };
 
 
@@ -68,7 +65,7 @@ export function MultiImageViewerView({Toolbar, layoutType,viewerId, visRoot,
                     <Toolbar visRoot={visRoot} viewerId={viewerId} 
                              viewerPlotIds={viewerPlotIds} layoutType={layoutType}/> 
                 </div>}
-            <div style={{position:'relative', width:'100%', height:'100%', flex:'1 1'}}>
+            <div style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto'}}>
                 {container}
             </div>
         </div>
