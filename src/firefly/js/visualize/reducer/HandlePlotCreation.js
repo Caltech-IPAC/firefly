@@ -75,9 +75,8 @@ const updateDefaults= function(plotRequestDefaults, action) {
 const addPlot= function(state,action) {
     var {plotViewAry}= state;
     const {plotId, plotAry, overlayPlotViews}= action.payload;
-    var expanded= state.expandedMode!==ExpandType.COLLAPSE;
     return plotViewAry.map( (pv) => {
-        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,expanded, overlayPlotViews) : pv;
+        return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,overlayPlotViews) : pv;
     });
 };
 

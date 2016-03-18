@@ -3,13 +3,15 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import {isEmpty} from 'lodash';
 import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import FieldGroup from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {dispatchExpandedList} from '../ImagePlotCntlr.js';
+import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
+import {getMultiViewRoot,getExpandedViewerPlotIds,dispatchReplaceImages,EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
 
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 
@@ -28,8 +30,9 @@ export function showExpandedOptionsPopup(plotViewAry) {
 function ExpandedOptionsPanel ({plotViewAry}) {
     var loadedPv= plotViewAry.filter( (pv) => primePlot(pv)?true:false );
     var options= loadedPv.map( (pv) => ({label: primePlot(pv).title, value:pv.plotId}));
+    const expandedIds= getExpandedViewerPlotIds(getMultiViewRoot());
     var enabledStr= loadedPv.reduce( (s,pv) => {
-        if (!pv.plotViewCtx.inExpandedList) return s;
+        if (!expandedIds.includes(pv.plotId)) return s;
         return s ? `${s},${pv.plotId}` : pv.plotId;
     },'');
 
@@ -63,6 +66,14 @@ ExpandedOptionsPanel.propTypes= {
 
 function updateView(request) {
     if (request.optionCheckBox) {
-        dispatchExpandedList(request.optionCheckBox.split(','));
+        const plotIdAry= request.optionCheckBox.split(',');
+        if (!isEmpty(plotIdAry)) {
+            if (!plotIdAry.includes(visRoot().activePlotId)) {
+                dispatchChangeActivePlotView(plotIdAry[0]);
+            }
+            dispatchReplaceImages(EXPANDED_MODE_RESERVED, plotIdAry);
+        }
     }
 }
+
+

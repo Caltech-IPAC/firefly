@@ -7,7 +7,7 @@ import {primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
+import {dispatchChangeExpandedMode, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -20,10 +20,6 @@ function expand(pv) {
     //console.log('todo- expand:' + primePlot(pv).title);
     dispatchSetLayoutMode( LO_EXPANDED.images );
     dispatchChangeExpandedMode(true);
-}
-
-function deletePlot(pv) {
-    console.log('todo- delete:' + primePlot(pv).title);
 }
 
 
@@ -42,10 +38,18 @@ export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand,
     var rS= {
         width: '100% - 2px',
         height: 34,
-        display: 'inline-block',
+        // display: 'inline-block',
         position: 'relative',
         verticalAlign: 'top',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+
+
+        display:'inline-flex',
+        flexDirection:'row',
+        flexWrap:'nowrap',
+        alignItems: 'center',
+
+
     };
 
     return (
@@ -58,18 +62,19 @@ export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand,
                            visible={showExpand}
                            onClick={() => expand(pv)}/>
 
-            <div style={{ position: 'relative', display: 'inline-block', float: 'right' }}>
-                <ToolbarButton icon={DELETE}
-                               tip='Delete Image'
-                               horizontal={true}
-                               visible={showDelete}
-                               onClick={() => deletePlot(pv)}/>
-            </div>
+            <ToolbarButton icon={DELETE}
+                           tip='Delete Image'
+                           additionalStyle={{alignSelf:'flex-start'}}
+                           horizontal={true}
+                           visible={showDelete}
+                           onClick={() => dispatchDeletePlotView(pv.plotId)}/>
 
         </div>
     );
 }
 
+// <div style={{ position: 'relative', display: 'inline-block', float: 'right' }}>
+// </div>
 
 VisInlineToolbarView.propTypes= {
     plotView : PropTypes.object.isRequired,

@@ -40,7 +40,7 @@ export class ImageViewerLayout extends Component {
         //console.log(`Mount: UpdateView Size: width=${width}, height=${height} ${plotId}`);
         dispatchUpdateViewSize(pv.plotId,width,height);
         if (pv && pv.plotViewCtx.zoomLockingEnabled) {
-            dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,false, true);
+            dispatchZoom(pv.plotId,pv.plotViewCtx.zoomLockingType,true,true, true);
         }
     }
 
@@ -48,7 +48,6 @@ export class ImageViewerLayout extends Component {
         var {plotView:pv,width,height,externalWidth,externalHeight, plotView:pv}= this.props;
         var {prevWidth,prevHeight, prevExternalWidth, prevExternalHeight, prevPlotId}= this.previousDim;
         if (prevWidth!==width || prevHeight!==height || prevPlotId!==pv.plotId) {
-            //console.log(`UpdateView Size: prevWidth=${prevWidth}, prevHeight=${prevHeight}, width=${width}, height=${height} ${pv.plotId}`);
             dispatchUpdateViewSize(pv.plotId,width,height);
             //console.log('dispatchUpdateViewSize');
             if (pv && pv.plotViewCtx.zoomLockingEnabled) {
