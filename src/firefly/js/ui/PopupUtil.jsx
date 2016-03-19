@@ -5,7 +5,7 @@
 import React from 'react';
 import CompleteButton from './CompleteButton.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 
 const INFO_POPUP= 'InfoPopup';
@@ -31,7 +31,7 @@ export function showInfoPopup(content, title='Information') {
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
-    AppDataCntlr.showDialog(INFO_POPUP);
+    dispatchShowDialog(INFO_POPUP);
 }
 
 function makeContent(content) {

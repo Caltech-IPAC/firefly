@@ -3,25 +3,24 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import TargetPanel from './TargetPanel.jsx';
+import {TargetPanel} from './TargetPanel.jsx';
 import InputGroup from './InputGroup.jsx';
 import Validate from '../util/Validate.js';
-import ValidationField from './ValidationField.jsx';
-import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
-import RadioGroupInputField from './RadioGroupInputField.jsx';
-import ListBoxInputField from './ListBoxInputField.jsx';
+import {ValidationField} from './ValidationField.jsx';
+import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
+import {ListBoxInputField} from './ListBoxInputField.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import FieldGroup from './FieldGroup.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
+import {dispatchInitFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
-import {Tabs, Tab} from './panel/TabPanel.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
-import {flux} from '../Firefly.js';
-
+import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 
 
 
@@ -44,7 +43,7 @@ const dialogBuilder= getDialogBuilder();
 
 export function showExampleDialog() {
     dialogBuilder();
-    AppDataCntlr.showDialog('ExampleDialog');
+    dispatchShowDialog('ExampleDialog');
 }
 
 
@@ -179,7 +178,7 @@ class FieldGroupTest extends Component {
 
     constructor(props)  {
         super(props);
-        FieldGroupUtils.initFieldGroup('DEMO_FORM',exDialogReducer);
+        dispatchInitFieldGroup('DEMO_FORM',false,null,exDialogReducer);
         this.state = {fields:FieldGroupUtils.getGroupFields('DEMO_FORM')};
     }
 
@@ -190,7 +189,9 @@ class FieldGroupTest extends Component {
 
     componentDidMount() {
         this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => {
-            this.setState({fields});
+            if (fields!==this.state.fields) {
+                this.setState({fields});
+            }
         });
     }
 
@@ -202,13 +203,12 @@ class FieldGroupTest extends Component {
 
 }
 
-
+// initValues={{extraData:'asdf'}}
 
 
 
 function FieldGroupTestView ({fields}) {
 
-    //var fields= FieldGroupUtils.getGroupFields('DEMO_FORM');
     if (fields) {
         const {radioGrpFld}= fields;
         var hide= (radioGrpFld && radioGrpFld.value==='opt2');
@@ -216,7 +216,7 @@ function FieldGroupTestView ({fields}) {
     var field1= makeField1(hide);
 
     return (
-        <FieldGroup groupKey={'DEMO_FORM'} reducerFunc={exDialogReducer} keepState={true}>
+        <FieldGroup groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}} reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel/>
                 {field1}
@@ -235,22 +235,6 @@ function FieldGroupTestView ({fields}) {
                 <ValidationField fieldKey='high'/>
 
                 <br/><br/>
-                <CheckboxGroupInputField
-                    initialState= {{
-                        value: '_all_',
-                        tooltip: 'Please select some boxes',
-                        label : 'Checkbox Group:'
-                    }}
-                    options={[
-                        {label: 'Apple', value: 'A'},
-                        {label: 'Banana', value: 'B'},
-                        {label: 'Cranberry', value: 'C'},
-                        {label: 'Dates', value: 'D'},
-                        {label: 'Grapes', value: 'G'}
-                    ]}
-                    fieldKey='checkBoxGrpFld'
-                />
-
                 <br/>
                 <span>here is some text</span>
                 <br/><br/>
@@ -259,7 +243,8 @@ function FieldGroupTestView ({fields}) {
                     alignment='vertical'
                     initialState= {{
                         tooltip: 'Please select an option',
-                        label : 'Radio Group:'
+                        label : 'Radio Group:',
+                        value: 'opt1'
                     }}
                     options={[
                         {label: 'Option 1', value: 'opt1'},
@@ -302,12 +287,77 @@ function FieldGroupTestView ({fields}) {
                                     fieldKey='listBoxFld'
                 />
 
+
+
+                <FieldGroupTabs initialState= {{ value:'x2' }}
+                                fieldKey='TabsFgTest'>
+                    <Tab name='X 1' id='x1'>
+                        <CheckboxGroupInputField
+                            initialState= {{
+                                    value: '_all_',
+                                    tooltip: 'Please select some boxes',
+                                    label : 'Checkbox Group:' }}
+                            options={[
+                                    {label: 'Apple', value: 'A'},
+                                    {label: 'Banana', value: 'B'},
+                                    {label: 'Cranberry', value: 'C'},
+                                    {label: 'Dates', value: 'D'},
+                                    {label: 'Grapes', value: 'G'}
+                                ]}
+                            fieldKey='checkBoxGrpFld'
+                            alignment='vertical'
+                        />
+                    </Tab>
+                    <Tab name='X 2' id='x2'>
+                        <ValidationField fieldKey='fieldInTabX2'
+                                         initialState= {{
+                                          fieldKey: 'fieldInTabX2',
+                                          value: '88',
+                                          validator: Validate.intRange.bind(null, 66, 666, 3,'Tab Test Field'),
+                                          tooltip: 'more tipping',
+                                          label : 'tab test field:',
+                                          labelWidth : 100
+                                      }} />
+                    </Tab>
+                    <Tab name='X 3' id='x3'>
+                        <div>
+                            <ValidationField fieldKey='fieldInTabX3'
+                                             initialState= {{
+                                          fieldKey: 'fieldInTabX3',
+                                          value: '88',
+                                          validator: Validate.intRange.bind(null, 22, 33, 23,'Tab Test Field 22-33'),
+                                          tooltip: 'more tipping',
+                                          label : 'tab test field:',
+                                          labelWidth : 100
+                                      }} />
+                            <div style={{paddingTop: 10}}></div>
+                            <CheckboxGroupInputField
+                                initialState= {{
+                                    value: '_all_',
+                                    tooltip: 'Please select some boxes',
+                                    label : 'Checkbox Group:' }}
+                                options={[
+                                    {label: 'Carrots', value: 'C'},
+                                    {label: 'Squash', value: 'S'},
+                                    {label: 'Green Beans', value: 'G'},
+                                    {label: 'Peas', value: 'P'},
+                                ]}
+                                fieldKey='checkBoxGrpFldAgain'
+                            />
+                        </div>
+                    </Tab>
+                </FieldGroupTabs>
+                
+                
+                
+
                 <br/><br/>
 
                 <CompleteButton groupKey='DEMO_FORM'
                                 onSuccess={resultsSuccess}
                                 onFail={resultsFail}
                                 dialogId='ExampleDialog'
+                                includeUnmounted={true}
                 />
             </InputGroup>
         </FieldGroup>
@@ -344,7 +394,7 @@ function showResults(success, request) {
     );
 
     DialogRootContainer.defineDialog('ResultsFromExampleDialog', results);
-    AppDataCntlr.showDialog('ResultsFromExampleDialog');
+    dispatchShowDialog('ResultsFromExampleDialog');
 
 }
 
@@ -371,11 +421,9 @@ function resultsSuccess(request) {
 
 function makeField1(hide) {
     var f1= (
-        <ValidationField fieldKey={'field1'}
-                         groupKey='DEMO_FORM'/>
+        <ValidationField fieldKey={'field1'} />
     );
     var hidden= <div style={{paddingLeft:30}}>field is hidden</div>;
-    console.log('hide='+hide);
     return hide ? hidden : f1;
 }
 

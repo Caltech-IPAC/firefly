@@ -19,7 +19,7 @@ import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import StatsPoint from '../../drawingLayers/StatsPoint.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../../core/DialogCntlr.js';
 
 
 const popupId = 'ImageAreaStatsPopup';
@@ -63,7 +63,7 @@ export function showImageAreaStatsPopup(popTitle, statsResult, plotId) {
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
-    AppDataCntlr.showDialog(popupId);
+    dispatchShowDialog(popupId);
 }
 
 

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, {PropTypes}  from 'react';
+import InputFieldLabel from './InputFieldLabel.jsx';
 
 
 
-function makeOptions(options,alignment,fieldKey,value,onChange) {
+function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
     return options.map((option) => (
         <span key={option.value}>
-            <div style={{display:'inline-block'}}>
+            <div style={{display:'inline-block'}} title={tooltip}>
                 <input type='radio'
+                       title={tooltip}
                        name={fieldKey}
                        value={option.value}
                        defaultChecked={value===option.value}
@@ -18,21 +20,26 @@ function makeOptions(options,alignment,fieldKey,value,onChange) {
     ));
 }
 
-function RadioGroupInputFieldView({options,alignment,fieldKey,value,onChange}) {
+export function RadioGroupInputFieldView({options,alignment,fieldKey,value,onChange,label,inline,tooltip,labelWidth}) {
     return (
-        <div>
-            {makeOptions(options,alignment,fieldKey,value,onChange)}
+        <div style={{whiteSpace:'nowrap',display: inline?'inline-block':'block'}}>
+            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
+            <div style={{display:'inline-block'}} >
+                {makeOptions(options,alignment,fieldKey,value,onChange,tooltip)}
+            </div>
         </div>
     );
 }
 
 RadioGroupInputFieldView.propTypes= {
-    options: React.PropTypes.array.isRequired,
-    fieldKey: React.PropTypes.string.isRequired,
-    value: React.PropTypes.string.isRequired,
-    alignment:  React.PropTypes.string,
-    onChange: React.PropTypes.func
+    options: PropTypes.array.isRequired,
+    fieldKey: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+    alignment:  PropTypes.string,
+    onChange: PropTypes.func,
+    label : PropTypes.string,
+    tooltip : PropTypes.string,
+    inline : PropTypes.bool,
+    labelWidth : PropTypes.number
 };
-
-export default RadioGroupInputFieldView;
 

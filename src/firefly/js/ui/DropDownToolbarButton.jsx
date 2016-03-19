@@ -10,7 +10,7 @@ import delay from 'lodash/delay';
 import {flux} from '../Firefly.js';
 import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/DialogCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
 
 
@@ -27,7 +27,7 @@ function showDialog(divElement,dropDown,ownerId,offButtonCB) {
     var {x,y}= computeDropdownXY(divElement);
     var dd= <DropDownMenuWrapper x={x} y={y} content={dropDown}/>;
     DialogRootContainer.defineDialog(DROP_DOWN_KEY,dd);
-    AppDataCntlr.showDialog(DROP_DOWN_KEY,ownerId);
+    dispatchShowDialog(DROP_DOWN_KEY,ownerId);
     document.addEventListener('mousedown', offButtonCB);
 }
 
@@ -57,8 +57,8 @@ export class DropDownToolbarButton extends Component {
     }
 
     update() {
-        var v= AppDataCntlr.isDialogVisible(DROP_DOWN_KEY);
-        var ownerId= v ? AppDataCntlr.getDialogOwner(DROP_DOWN_KEY) : null;
+        var v= isDialogVisible(DROP_DOWN_KEY);
+        var ownerId= v ? getDialogOwner(DROP_DOWN_KEY) : null;
         var {dropDownVisible, dropDownOwnerId}= this.state;
         if (v!==dropDownVisible || ownerId!=dropDownOwnerId) {
             this.setState({dropDownVisible:v, dropDownOwnerId:ownerId});
@@ -70,7 +70,7 @@ export class DropDownToolbarButton extends Component {
             document.removeEventListener('mousedown', this.docMouseDownCallback);
             var {dropDownVisible, dropDownOwnerId}= this.state;
             if (dropDownVisible && dropDownOwnerId===this.ownerId) {
-                AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+                dispatchHideDialog(DROP_DOWN_KEY);
             }
         },200);
     }
@@ -81,7 +81,7 @@ export class DropDownToolbarButton extends Component {
             var {dropDownVisible, dropDownOwnerId}= this.state;
             if (dropDownVisible) {
                 if (dropDownOwnerId===this.ownerId) {
-                    AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+                    dispatchHideDialog(DROP_DOWN_KEY);
                     document.removeEventListener('mousedown', this.docMouseDownCallback);
                 }
                 else {

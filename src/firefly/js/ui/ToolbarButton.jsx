@@ -5,9 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import './ToolbarButton.css';
-import {DropDownMenuWrapper} from './DropDownMenu.jsx';
-import DialogRootContainer from './DialogRootContainer.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchHideDialog} from '../core/DialogCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 
 
@@ -35,7 +33,7 @@ var todoStyle= {
 
 function handleClick(onClick, dropdownCB ,divElement) {
     if (onClick) onClick();
-    dropdownCB ? dropdownCB(divElement) : AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+    dropdownCB ? dropdownCB(divElement) : dispatchHideDialog(DROP_DOWN_KEY);
 }
 
 
