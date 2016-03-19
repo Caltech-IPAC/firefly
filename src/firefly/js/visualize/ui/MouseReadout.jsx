@@ -99,7 +99,7 @@ export class MouseReadout extends React.Component {
         this.setLockState = this.setLockState.bind(this);
         this.isLocked = false;
         //const fluxLabels = getFluxLabels(this.props.plotView);
-
+        this.coordChangd=false;
 
         this.state = ({
             flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
@@ -147,8 +147,14 @@ export class MouseReadout extends React.Component {
     componentWillReceiveProps(nextProps) {
 
         const {mouseState}= nextProps.mouseState;
+
+        if (this.coordChange && this.isLocked && mouseState !== MouseState.UP ){
+            return false;
+        }
+
         if (nextProps.plotView && (this.isLocked && mouseState === MouseState.UP || !this.isLocked  )) {
 
+            this.coordChange=false;
             this.setState({
 
                 fluxLabel: getFluxLabels(nextProps.plotView),
@@ -223,12 +229,14 @@ export class MouseReadout extends React.Component {
         var mouseReadoutInfo = this.state.mouseReadouts;
 
         var mouseReadoutInState = [];
+
         if (mouseReadoutInfo) {
             var currentCoordinates = [this.props.visRoot.mouseReadout1, this.props.visRoot.mouseReadout2, this.props.visRoot.pixelSize];
             var coordinatesInPt = mouseReadoutInfo.coordinates;
             mouseReadoutInState = mouseReadoutInfo.mouseReadouts;
 
             if (coordinatesInPt && currentCoordinates !== coordinatesInPt) {
+                this.coordChange=true;
 
                 for (var i = 0; i < 3; i++) {
                     //convert the existing readouts to the newly changed coordinates
