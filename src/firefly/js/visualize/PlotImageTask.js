@@ -18,6 +18,7 @@ import PlotPref from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
+import {dispatchAddImages, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 const INIT_STATUS_UPDATE_DELAY= 7000;
 
@@ -184,6 +185,7 @@ const processSuccessResponse= function(dispatcher, payload, result) {
                 .forEach( (drawLayerId)=>  DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
 
         //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
+        dispatchAddImages(EXPANDED_MODE_RESERVED, [resultPayload.plotId]);
     }
     else {
         var req= getRequest(payload);

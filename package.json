@@ -34,7 +34,8 @@
     "uniq"      : "1.0.1",
     "validator" : "4.5.0",
     "whatwg-fetch": "0.10.1",
-    "react-color": "1.3.6"
+    "react-color": "1.3.6",
+    "shallowequal": "0.2.2"
   },
   "devDependencies": {
     "chai": "^2.3.0",

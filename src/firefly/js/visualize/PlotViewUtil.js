@@ -337,6 +337,21 @@ export function applyToOnePvOrGroup(plotViewAry, plotId,plotGroup,operationFunc)
 
 
 /**
+ * based on groupLock return an array which will either contain one plotView or the whole group 
+ * @param plotViewAry
+ * @param plotId
+ * @param plotGroup
+ * @return {*}
+ */
+export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
+    var groupLock= hasGroupLock(getPlotViewById(plotViewAry,plotId),plotGroup);
+    return groupLock ? plotViewAry.filter( (pv) => pv.plotGroupId===plotGroup.plotGroupId) : [plotId];
+}
+
+
+
+
+/**
  *
  * @param pv plot view
  * @return {boolean}
