@@ -48,7 +48,7 @@ export class TablePanel extends Component {
 
     render() {
         var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
-        const {selectable, expandable, expandedMode, border} = this.props;
+        const {selectable, expandable, expandedMode, border, renderers} = this.props;
         const {tableStore} = this;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
@@ -98,6 +98,7 @@ export class TablePanel extends Component {
                             sortInfo={sortInfo}
                             textView={textView}
                             tableStore={tableStore}
+                            renderers={renderers}
                         />
                         {showOptions && <TablePanelOptions
                             columns={columns}
@@ -124,7 +125,13 @@ TablePanel.propTypes = {
     expandedMode: PropTypes.bool,
     expandable: PropTypes.bool,
     showToolbar: PropTypes.bool,
-    border: PropTypes.bool
+    border: PropTypes.bool,
+    renderers: PropTypes.objectOf(
+        PropTypes.shape({
+            cellRenderer: PropTypes.func,
+            headRenderer: PropTypes.func
+        })
+    )
 };
 
 TablePanel.defaultProps = {
