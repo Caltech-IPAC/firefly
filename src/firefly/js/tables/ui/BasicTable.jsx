@@ -23,8 +23,8 @@ export class BasicTable extends React.Component {
         super(props);
         this.state = {
             showMask: false,
-            widthPx: 0,
-            heightPx: 0,
+            widthPx: 75,
+            heightPx: 75,
             columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
