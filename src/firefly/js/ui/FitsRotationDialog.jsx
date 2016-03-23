@@ -16,7 +16,6 @@ import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotChangeTask.js';
-import {dispatchInitFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -75,7 +74,6 @@ class FitsRotationDialog extends React.Component {
 
     constructor(props)  {
         super(props);
-        dispatchInitFieldGroup('FITS_ROTATION_FORM');
         this.state = {fields:FieldGroupUtils.getGroupFields('FITS_ROTATION_FORM')};
     }
 
@@ -94,9 +92,6 @@ class FitsRotationDialog extends React.Component {
 
 
     render() {
-
-        var {fields}= this.state;
-        if (!fields) return false;
         return <FitsRotationDialogForm  />;
     }
 

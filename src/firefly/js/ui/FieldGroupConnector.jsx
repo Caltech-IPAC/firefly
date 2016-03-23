@@ -1,16 +1,17 @@
 import React, {Component,PropTypes} from 'react';
-import {get,pickBy,omit} from 'lodash';
+import {get,omit} from 'lodash';
 import {dispatchMountComponent,dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldGroupState} from '../fieldGroup/FieldGroupUtils.js';
 import {flux} from '../Firefly.js';
 import sCompare from 'react-addons-shallow-compare';
 
+const defaultConfirmInitValue= (v) => v;
 
 /**
  * Wraps a react component to connect to the field group store.
  *
  * @param FieldComponent the component to be wrapped
- * @param getComponentProps a function that will be called for the properties for the FieldComponent
+ * @param {function} getComponentProps a function that will be called for the properties for the FieldComponent
  *                          when it is renders.
  *                          getComponentProps(params, fireValueChange)
  *                             - params is is a combination of all values in properties, fieldStore, and State
@@ -18,12 +19,20 @@ import sCompare from 'react-addons-shallow-compare';
  * @param {object} connectorPropTypes - the prop type of the connector.  
  *                             The connector already has propType however, this is a way to add more
  * @param {object} connectorDefProps - the default properties of the connector
+ * @param {function} confirmInitialValue - call just before mount, 
+ *                          confirmInitialValue(value, props, fieldState)
+ *                             - value is the current value 
+ *                             - props is the props to the connector
+ *                             - fieldState is the current fieldState
+ *                              return a new value
+ *                          the current default value is pass and it can be overridden here
  * @return {FGConnector} return the wrapped component
  */
 export function fieldGroupConnector(FieldComponent,
                                     getComponentProps=()=>({}),
                                     connectorPropTypes=undefined,
-                                    connectorDefProps=undefined) {
+                                    connectorDefProps=undefined,
+                                    confirmInitialValue= defaultConfirmInitValue ) {
     class FGConnector extends Component {
 
         constructor(props, context) {
@@ -53,34 +62,30 @@ export function fieldGroupConnector(FieldComponent,
 
         updateFieldState(props, context) {
             var {fieldKey}= props;
-            var groupState = FieldGroupUtils.getGroupState(getGroupKey(props,context));
+            var groupState = getFieldGroupState(getGroupKey(props,context));
             if (get(groupState,'mounted') && get(groupState,['fields',fieldKey])) {
-                if (this.state.fieldState !== groupState.fields[fieldKey]) {
+                if (this.iAmMounted && this.state.fieldState !== groupState.fields[fieldKey]) {
                     this.setState({fieldState: groupState.fields[fieldKey]});
                 }
             }
         }
 
         componentDidMount() {
-            this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(this.props,this.context));
+            const {fieldState}= this.state;
+            const {props}= this;
+            this.iAmMounted= true;
+            this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props,this.context));
             dispatchMountComponent(
-                    getGroupKey(this.props,this.context),
-                    this.props.fieldKey,
+                    getGroupKey(props,this.context),
+                    props.fieldKey,
                     true,
-                    get(this.state, 'fieldState.value'),
-                    this.props.initialState
+                    confirmInitialValue(get(fieldState, 'value'),props,fieldState),
+                    props.initialState
                 );
-            // window.setTimeout(
-            //     () => dispatchMountComponent(
-            //         getGroupKey(this.props,this.context),
-            //         this.props.fieldKey,
-            //         true,
-            //         get(this.state, 'fieldState.value'),
-            //         this.props.initialState
-            //     ),0);
         }
 
         componentWillUnmount() {
+            this.iAmMounted= false;
             if (this.storeListenerRemove) this.storeListenerRemove();
             dispatchMountComponent(
                 getGroupKey(this.props,this.context),
@@ -102,13 +107,13 @@ export function fieldGroupConnector(FieldComponent,
         }
     }
 
-    FGConnector.contextTypes = { groupKey: React.PropTypes.string };
+    FGConnector.contextTypes = { groupKey: PropTypes.string };
 
     FGConnector.propTypes = {
-        fieldKey: React.PropTypes.string,
-        groupKey: React.PropTypes.string, // usually comes from context but this is a fallback
-        initialState: React.PropTypes.object,
-        labelWidth: React.PropTypes.number
+        fieldKey: PropTypes.string,
+        groupKey: PropTypes.string, // usually comes from context but this is a fallback
+        initialState: PropTypes.object,
+        labelWidth: PropTypes.number
     };
     
     if (connectorPropTypes) {

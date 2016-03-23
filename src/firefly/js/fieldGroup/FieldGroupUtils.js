@@ -13,7 +13,8 @@ const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.
 
 function validateResolvedSingle(groupKey,includeUnmounted, doneCallback) {
     var flds= getGroupFields(groupKey);
-    var valid = Object.keys(flds).every( (key) => includeForValidation(flds[key]) ? flds[key].valid : true);
+    var valid = Object.keys(flds).every( (key) =>
+                     includeForValidation(flds[key],includeUnmounted) ? flds[key].valid : true);
     doneCallback(valid);
 }
 
@@ -51,7 +52,7 @@ var validateSingle= function(groupKey, includeUnmounted, doneCallback) {
 
     if (!fields) return Promise.resolve(true);
     return Promise.all( Object.keys(fields).map( (key) => Promise.resolve(fields[key].value),this ) )
-        .then( (allResults) =>
+        .then( () =>
         {
             window.setTimeout(validateResolvedSingle(groupKey,includeUnmounted, doneCallback));
         }
@@ -81,7 +82,7 @@ export var validateFieldGroup= function(groupKey, includeUnmounted, doneCallback
 
 /**
  * 
- * @param {string} groupKey the group key for the fieldgroup
+ * @param {string} groupKey the group key for the fieldGroup
  * @param includeUnmounted if true, get the results for any fields that are not showing
  * @return {*}
  */
@@ -103,7 +104,7 @@ export function getFieldGroupResults(groupKey,includeUnmounted=false) {
  * @param {string} groupKey
  * @return {object}
  */
-const getGroupState= function(groupKey) {
+export const getFieldGroupState= function(groupKey) {
     var fieldGroupMap= flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY];
     return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
 };
@@ -115,12 +116,12 @@ const getGroupState= function(groupKey) {
  * @return {object}
  */
 const getGroupFields= function(groupKey) {
-    var groupState= getGroupState(groupKey);
+    var groupState= getFieldGroupState(groupKey);
     return groupState?groupState.fields:null;
 };
 
 const getFldValue= function(fields, fldName, defval=undefined) {
-    return (fields? get(fields, [fldName, 'value']) : defval);
+    return (fields? get(fields, [fldName, 'value'], defval) : defval);
 };
 
 
@@ -144,7 +145,7 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 
 
 
-var FieldGroupUtils= {getGroupState, getGroupFields, getFldValue, bindToStore };
+var FieldGroupUtils= {getGroupFields, getFldValue, bindToStore };
 
 export default FieldGroupUtils;
 

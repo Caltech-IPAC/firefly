@@ -99,11 +99,11 @@ ReactDOM.render(container,
 );
 
 
-// 
-//  == Save this it is anternative to react-redux
-// 
+
+// == Save this it is anternative to react-redux
+
 // function getNextState() {
-//     const storeState= flux.getState()
+//     const storeState= flux.getState();
 //     const appData= storeState[AppDataCntlr.APP_DATA_PATH];
 //     const layout= storeState[LAYOUT_PATH];
 //     const  title= 'FFTools entry point';
@@ -148,7 +148,7 @@ ReactDOM.render(container,
 //
 //     render() { return ( <App {...this.state}/> ); }
 // }
-
+//
 // AppWrapper.childContextTypes= {
 //     store: PropTypes.object
 // };

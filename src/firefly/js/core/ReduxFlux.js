@@ -30,7 +30,7 @@ import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
-import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js'
+import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js';
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';

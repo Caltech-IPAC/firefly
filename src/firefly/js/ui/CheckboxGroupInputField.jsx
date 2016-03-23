@@ -81,12 +81,13 @@ function handleOnChange(ev, params, fireValueChange) {
     var {valid,message} = params.validator(curValueArr.toString());
 
     fireValueChange({ value: curValueArr.toString(), message, valid });
-
 }
+
+
 const propTypes= {
     options : PropTypes.array.isRequired,
     alignment:  PropTypes.string
 };
 
-export const CheckboxGroupInputField= fieldGroupConnector(CheckboxGroupInputFieldView,
-                                                          getProps,propTypes,null);
+export const CheckboxGroupInputField= fieldGroupConnector(CheckboxGroupInputFieldView, getProps,propTypes);
+

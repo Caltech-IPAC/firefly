@@ -1,5 +1,4 @@
-import React, {Component,PropTypes} from 'react';
-import {pick} from 'lodash';
+import React from 'react';
 
 import {InputFieldView} from './InputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -12,8 +11,6 @@ function onChange(ev, store, fireValueChange) {
     fireValueChange({ value : ev.target.value, message, valid });
 }
 
-
-
 function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
@@ -25,7 +22,5 @@ function getProps(params, fireValueChange) {
 const propTypes= {
       inline : React.PropTypes.bool
 };
-
-
 
 export const ValidationField= fieldGroupConnector(InputFieldView,getProps,propTypes);

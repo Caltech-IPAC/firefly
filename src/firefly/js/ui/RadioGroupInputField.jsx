@@ -1,4 +1,5 @@
 import React, {PropTypes}  from 'react';
+import {isEmpty}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
@@ -13,7 +14,7 @@ function getProps(params, fireValueChange) {
     return Object.assign({}, params,
         {
             value,
-            onChange: (ev) => handleOnChange(ev,params, fireValueChange),
+            onChange: (ev) => handleOnChange(ev,params, fireValueChange)
         });
 }
 
@@ -34,7 +35,11 @@ const propTypes= {
     labelWidth : PropTypes.number
 };
 
+function checkForUndefined(v,props) {
+    return  (!v && !isEmpty(props.options)) ? props.options[0].value : v;
+}
+
 
 export const RadioGroupInputField= fieldGroupConnector(RadioGroupInputFieldView,
-    getProps,propTypes,null);
+    getProps,propTypes,null,checkForUndefined);
 
