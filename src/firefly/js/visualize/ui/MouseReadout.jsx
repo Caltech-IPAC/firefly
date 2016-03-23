@@ -209,7 +209,7 @@ export class MouseReadout extends React.Component {
         if (isBlankImage(plot)) return EMPTY;
 
 
-        var title = plotView.plots[0].title;
+        var title = plot.title;
 
 
         var spt = mouseState.screenPt;
