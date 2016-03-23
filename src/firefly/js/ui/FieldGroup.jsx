@@ -6,7 +6,7 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {dispatchMountFieldGroup,dispatchUnmountFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
+import {dispatchMountFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 
 export class FieldGroup extends Component {

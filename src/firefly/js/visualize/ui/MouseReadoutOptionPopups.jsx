@@ -19,7 +19,6 @@ import FieldGroupUtils, {validateFieldGroup,getFieldGroupResults} from '../../fi
 //import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';
 
-import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/DialogCntlr.js';
 
 //define the labels and values for the radio options
@@ -106,7 +105,6 @@ class MouseReadoutOptionDialog extends React.Component {
 
 	constructor(props) {
 		super(props);
-		dispatchInitFieldGroup(props.groupKey);
 		this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
 
 	}
@@ -126,9 +124,6 @@ class MouseReadoutOptionDialog extends React.Component {
 	}
 
 	render() {
-
-		var {fields}= this.state;
-		if (!fields) return false;
 		var form;
 		const {groupKey,fieldKey,radioValue}= this.props;
 

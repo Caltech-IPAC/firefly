@@ -1,4 +1,5 @@
 import React, {PropTypes}  from 'react';
+import {isEmpty}  from 'lodash';
 import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
@@ -94,7 +95,10 @@ const propTypes= {
     labelWidth : React.PropTypes.number
 };
 
+function checkForUndefined(v,props) {
+    return  (!v && !isEmpty(props.options)) ? props.options[0].value : v;
+}
 
 export const ListBoxInputField = fieldGroupConnector(ListBoxInputFieldView,
-                                                     getProps,propTypes,null);
+                                                     getProps,propTypes,null,checkForUndefined);
 

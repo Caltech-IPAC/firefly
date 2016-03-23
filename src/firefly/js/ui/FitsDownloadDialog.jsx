@@ -25,7 +25,6 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import RequestType from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
-import {dispatchInitFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -109,7 +108,6 @@ class FitsDownloadDialog extends React.Component {
 
     constructor(props) {
         super(props);
-        dispatchInitFieldGroup('FITS_DOWNLOAD_FORM');
         this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};
 
     }
@@ -117,22 +115,21 @@ class FitsDownloadDialog extends React.Component {
 
     componentWillUnmount() {
 
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     }
 
 
     componentDidMount() {
 
+        this.iAmMounted= true;
         this.unbinder = FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => {
-            this.setState({fields});
+            if (this.iAmMounted) this.setState({fields});
         });
     }
 
 
     render() {
-
-        var {fields}= this.state;
-        if (!fields) return false;
         return <FitsDownloadDialogForm  />;
     }
 

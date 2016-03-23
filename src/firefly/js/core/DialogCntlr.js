@@ -86,7 +86,7 @@ const showDialogChange= function(state,action) {
     if (!state[dialogId] || !state[dialogId].visible || ownerId!==state[dialogId].ownerId) {
         state= Object.assign({},state, {[dialogId]: {visible: true, ownerId}});
     }
-    return state
+    return state;
 };
 
 const hideDialogChange= function(state,action) {

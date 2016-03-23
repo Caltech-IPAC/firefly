@@ -16,7 +16,6 @@ import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
-import {dispatchInitFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
@@ -178,18 +177,19 @@ class FieldGroupTest extends Component {
 
     constructor(props)  {
         super(props);
-        dispatchInitFieldGroup('DEMO_FORM',false,null,exDialogReducer);
         this.state = {fields:FieldGroupUtils.getGroupFields('DEMO_FORM')};
     }
 
     componentWillUnmount() {
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     }
 
 
     componentDidMount() {
+        this.iAmMounted= true;
         this.unbinder= FieldGroupUtils.bindToStore('DEMO_FORM', (fields) => {
-            if (fields!==this.state.fields) {
+            if (fields!==this.state.fields && this.iAmMounted) {
                 this.setState({fields});
             }
         });
@@ -197,7 +197,7 @@ class FieldGroupTest extends Component {
 
     render() {
         var {fields}= this.state;
-        if (!fields) return false;
+        // if (!fields) return false;
         return <FieldGroupTestView fields={fields} />;
     }
 
@@ -209,9 +209,10 @@ class FieldGroupTest extends Component {
 
 function FieldGroupTestView ({fields}) {
 
+    var hide= false;
     if (fields) {
         const {radioGrpFld}= fields;
-        var hide= (radioGrpFld && radioGrpFld.value==='opt2');
+        hide= (radioGrpFld && radioGrpFld.value==='opt2');
     }
     var field1= makeField1(hide);
 
@@ -259,7 +260,6 @@ function FieldGroupTestView ({fields}) {
                     initialState= {{
                         tooltip: 'Please select an option',
                         label: 'Another Group:',
-                        value: 'opt2'
                     }}
                     options={[
                         {label: 'Option 2', value: 'opt1'},
@@ -273,7 +273,6 @@ function FieldGroupTestView ({fields}) {
                 <ListBoxInputField  initialState= {{
                                           tooltip: 'Please select an option',
                                           label : 'ListBox Field:',
-                                          value: 'i3'
                                       }}
                                     options={
                                           [
@@ -340,7 +339,7 @@ function FieldGroupTestView ({fields}) {
                                     {label: 'Carrots', value: 'C'},
                                     {label: 'Squash', value: 'S'},
                                     {label: 'Green Beans', value: 'G'},
-                                    {label: 'Peas', value: 'P'},
+                                    {label: 'Peas', value: 'P'}
                                 ]}
                                 fieldKey='checkBoxGrpFldAgain'
                             />
@@ -357,7 +356,7 @@ function FieldGroupTestView ({fields}) {
                                 onSuccess={resultsSuccess}
                                 onFail={resultsFail}
                                 dialogId='ExampleDialog'
-                                includeUnmounted={true}
+                                includeUnmounted={false}
                 />
             </InputGroup>
         </FieldGroup>
@@ -366,7 +365,7 @@ function FieldGroupTestView ({fields}) {
 
 
 FieldGroupTestView.propTypes= {
-    fields: PropTypes.object.isRequired,
+    fields: PropTypes.object
 };
 
 
@@ -383,7 +382,7 @@ function showResults(success, request) {
 
 
     var resolver= null;
-    var closePromise= new Promise(function(resolve, reject) {
+    var closePromise= new Promise(function(resolve) {
         resolver= resolve;
     });
 

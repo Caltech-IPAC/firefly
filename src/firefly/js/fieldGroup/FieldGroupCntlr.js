@@ -20,8 +20,6 @@ import {omit,get} from 'lodash';
 //
 //});
 
-const clone = (obj,params={}) => Object.assign({},obj,params);
-
 const INIT_FIELD_GROUP= 'FieldGroupCntlr/initFieldGroup';
 const MOUNT_COMPONENT= 'FieldGroupCntlr/mountComponent';
 const MOUNT_FIELD_GROUP= 'FieldGroupCntlr/mountFieldGroup';
@@ -38,6 +36,8 @@ const defaultReducer= (state) => state;
 //======================================== Dispatch Functions =============================
 
 /**
+ * This will init a field group. In general, you should not need to use this.  Mount does the same thing and is automatic
+ * through the FieldGroupConnector. Have a good reason if you are using this action
  * 
  * @param groupKey
  * @param keepState
@@ -48,7 +48,6 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
                                        initValues=null, reducerFunc= defaultReducer) {
 
     flux.process({type: INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,initValues, keepState}});
-    // window.setTimeout( () => flux.process({type: INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,initValues, keepState}}),
 }
 
 
@@ -267,22 +266,19 @@ const valueChange= function(state,action) {
 
 
 const updateMount= function(state, action) {
-    var {fieldKey,value, mounted,fieldState,groupKey,valid=true}= action.payload;
+    var {fieldKey,mounted,fieldState={},groupKey,valid=true}= action.payload;
     if (!getFieldGroup(state,groupKey)) return state;
 
     var fg= findAndCloneFieldGroup(state,groupKey);
-    var {fields}= fg;
-    var newField;
 
-    var omitPayload= omit(action.payload, ['fieldState','groupKey']);
-    if (mounted && !fields[fieldKey]) {
-        var old= fieldState||{};
-        newField= Object.assign({},old, omitPayload,{value,valid,fieldKey,mounted});
+    if (mounted) {
+        var omitPayload= omit(action.payload, ['fieldState','groupKey']);
+        fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],
+                                           fieldState, omitPayload,{valid});
     }
     else {
-        newField= Object.assign({},fields[fieldKey],omitPayload,{value,valid,fieldKey,mounted});
+        fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],{mounted});
     }
-    fields[fieldKey]= newField;
 
     return createState(state,groupKey,fg);
 };
@@ -297,7 +293,7 @@ const createState= function(oldState,groupKey,fieldGroup) {
 };
 
 
-function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
+// function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
 
 /**
  *
