@@ -89,7 +89,6 @@ const column5_1 = {width: 90, paddingLeft: 1, display: 'inline-block'};
 const precision7Digit = '0.0000000';
 const precision3Digit = '0.000';
 const precision1Digit = '0.0';
-const readoutMouse = [MouseState.DRAG_COMPONENT, MouseState.DRAG, MouseState.MOVE, MouseState.DOWN];
 
 export class MouseReadout extends React.Component {
 
@@ -115,19 +114,25 @@ export class MouseReadout extends React.Component {
                     var fluxUnitStr = plot.webFitsData[0].fluxUnits;
                     if (result.hasOwnProperty('NO_BAND')) {
 
-                        var fValue = result.NO_BAND;
-                        var fluxStr = (fValue !== 'NoContext') ? `${numeral(fValue).format(precision7Digit)} ${fluxUnitStr}` : '';
-                        fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
+                        var fValue = parseFloat(result.NO_BAND);
 
+                        var fluxStr =fValue<1000? fValue.toFixed(6):fValue.toExponential(6).replace('e+', 'E');
+                        fluxStr = (fValue !== 'NoContext') ? `${fluxStr} ${fluxUnitStr}` : '';
+                        fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});
                         }
-
                     }
                     else {
-                        var blueFlux = result.hasOwnProperty('Blue') ? `${numeral(result.Blue).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
-                        var greenFlux = result.hasOwnProperty('Green') ? `${numeral(result.Green).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
-                        var RedFlux = result.hasOwnProperty('Red') ? `${numeral(result.Red).format(precision7Digit)} ${fluxUnitStr}` : EMPTY_READOUT;
+                        var numBLue=parseFloat(result.Blue);
+                        var numGreen=parseFloat(result.Green);
+                        var numRed=parseFloat(result.Red);
+                        var rBlueStr = (numBLue<1000)? numBLue.toFixed(6): numBLue.toExponential(6).replace('e+', 'E');
+                        var rGreenStr = (numGreen<1000)? numGreen.toFixed(6): numGreen.toExponential(6).replace('e+', 'E');
+                        var rRedStr = (numRed<1000)? numRed.toFixed(6): numRed.toExponential(6).replace('e+', 'E');
+                        var blueFlux = result.hasOwnProperty('Blue') ? `${rBlueStr} ${fluxUnitStr}` : EMPTY_READOUT;
+                        var greenFlux = result.hasOwnProperty('Green') ? `${rGreenStr} ${fluxUnitStr}` : EMPTY_READOUT;
+                        var RedFlux = result.hasOwnProperty('Red') ? `${rRedStr} ${fluxUnitStr}` : EMPTY_READOUT;
                         fluxArray = [RedFlux, greenFlux, blueFlux];
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});
