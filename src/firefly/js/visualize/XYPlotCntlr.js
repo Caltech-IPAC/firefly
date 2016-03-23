@@ -86,7 +86,7 @@ export const dispatchResetZoom = function(tblId) {
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
- * @returns function which loads statistics (column name, num. values, range of values) for a source table
+ * @returns function which loads plot data (x, y, rowIdx, etc.)
  */
 export const loadPlotData = function(rawAction) {
     return (dispatch) => {
@@ -123,20 +123,22 @@ function stateWithNewData(tblId, state, newProps) {
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_NEW)  :
+        {
             const {tbl_id, tableMeta, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (isTableLoaded(action.payload) && !state[tbl_id].isTblLoaded){
+                if (isTableLoaded(action.payload) && !state[tbl_id].isTblLoaded) {
                     // use xyPlotParams with cleared selection box
                     const prevXyPlotParams = state[tbl_id].xyPlotParams;
                     const xyPlotParams = update(prevXyPlotParams, {selection: {$set: undefined}});
-                    action.sideEffect((dispatch) => fetchPlotData(dispatch,request,xyPlotParams));
+                    action.sideEffect((dispatch) => fetchPlotData(dispatch, request, xyPlotParams));
 
                     const newState = Object.assign({}, state);
-                    newState[request.tbl_id]= {isPlotDataReady: false};
+                    newState[request.tbl_id] = {isPlotDataReady: false};
                     return newState;
                 }
             }
             return state;
+        }
         case (LOAD_PLOT_DATA)  :
         {
             const {xyPlotParams, searchRequest} = action.payload;
