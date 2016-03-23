@@ -115,6 +115,16 @@ export function findUiGroupById(tbl_ui_gid) {
 }
 
 /**
+ * find table ui_group info by tbl_ui_gid
+ * @param tbl_ui_gid
+ * @param tbl_ui_id
+ * @returns {*}
+ */
+export function findTblUiById(tbl_ui_gid, tbl_ui_id) {
+    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'results', tbl_ui_gid, 'tables', tbl_ui_id]);
+}
+
+/**
  * find working table state by tbl_ui_id
  * @param tbl_ui_id
  * @returns {*}

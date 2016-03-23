@@ -2,19 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {Component, PropTypes} from 'react';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import Validate from '../util/Validate.js';
-import ValidationField from './ValidationField.jsx';
-import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
-import RadioGroupInputField from './RadioGroupInputField.jsx';
+import {ValidationField} from './ValidationField.jsx';
+import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import FieldGroup from './FieldGroup.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import Band from '../visualize/Band.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotChangeTask.js';
 
@@ -39,7 +38,7 @@ const dialogBuilder = getDialogBuilder();
 
 export function showFitsRotationDialog() {
     dialogBuilder();
-    AppDataCntlr.showDialog('fitsRotationDialog');
+    dispatchShowDialog('fitsRotationDialog');
 }
 
 
@@ -75,7 +74,6 @@ class FitsRotationDialog extends React.Component {
 
     constructor(props)  {
         super(props);
-        FieldGroupUtils.initFieldGroup('FITS_ROTATION_FORM');
         this.state = {fields:FieldGroupUtils.getGroupFields('FITS_ROTATION_FORM')};
     }
 
@@ -94,9 +92,6 @@ class FitsRotationDialog extends React.Component {
 
 
     render() {
-
-        var {fields}= this.state;
-        if (!fields) return false;
         return <FitsRotationDialogForm  />;
     }
 

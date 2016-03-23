@@ -4,17 +4,17 @@
 
 import React from 'react';
 
-import ValidationField from '../../ui/ValidationField.jsx';
-import FieldGroup from '../../ui/FieldGroup.jsx';
-import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
-import CheckboxGroupInputField from '../../ui/CheckboxGroupInputField.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
 import {PERCENTAGE, MAXMIN, ABSOLUTE,SIGMA} from '../RangeValues.js';
 import {STRETCH_LINEAR, STRETCH_LOG, STRETCH_LOGLOG, STRETCH_EQUAL} from '../RangeValues.js';
 import {STRETCH_SQUARED, STRETCH_SQRT, STRETCH_ASINH, STRETCH_POWERLAW_GAMMA} from '../RangeValues.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 
 import {RED_PANEL,
         GREEN_PANEL,
@@ -39,8 +39,8 @@ class ColorDialog {
     }
 
     showDialog() {
-        FieldGroupUtils.initFieldGroup( NO_BAND_PANEL, colorPanelChange(Band.NO_BAND), true);
-        AppDataCntlr.showDialog('ColorStretchDialog');
+        dispatchInitFieldGroup( NO_BAND_PANEL, true, null, colorPanelChange(Band.NO_BAND));
+        dispatchShowDialog('ColorStretchDialog');
     }
 }
 

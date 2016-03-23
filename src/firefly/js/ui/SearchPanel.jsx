@@ -5,18 +5,17 @@
 import React, {Component, PropTypes} from 'react';
 
 import FormPanel from './FormPanel.jsx';
-import FieldGroup from '../ui/FieldGroup.jsx';
-import ValidationField from '../ui/ValidationField.jsx';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
+import {ValidationField} from '../ui/ValidationField.jsx';
 import Validate from '../util/Validate.js';
 import {download} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 
-import {dispatchSetDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 
-import {dispatchTableAdded} from '../tables/TablesUiCntlr.js';
 import {TableRequest} from '../tables/TableRequest.js';
 import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
-import * as TablesCntlr from '../tables/TablesCntlr.js';
+import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 
 
@@ -76,7 +75,7 @@ function doFileDownload() {
 }
 
 function hideSearchPanel() {
-    dispatchSetDropDownUi( {visible: false});
+    dispatchHideDropDownUi();
 }
 
 function onSearchSubmit(request, resultId) {
@@ -88,11 +87,9 @@ function onSearchSubmit(request, resultId) {
             tbl_id:  activeTblId,
             filters: request.filters
         });
-
+        const tbl_ui_id = TblUtil.uniqueTblUiId();
         TableStatsCntlr.dispatchSetupTblTracking(activeTblId);
-        TablesCntlr.dispatchTableFetch(treq);
-        dispatchTableAdded(resultId, treq.tbl_id);
-        hideSearchPanel();
+        dispatchTableSearch(treq, resultId, tbl_ui_id);
     }
 }
 

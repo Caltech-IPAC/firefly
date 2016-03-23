@@ -3,18 +3,6 @@
  */
 package edu.caltech.ipac.firefly.visualize;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-/**
- * User: roby
- * Date: May 19, 2008
- * Time: 2:35:43 PM
- */
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsNoExport;
@@ -29,7 +17,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
-
 import edu.caltech.ipac.firefly.commands.ActivePointToolCmd;
 import edu.caltech.ipac.firefly.commands.AreaStatCmd;
 import edu.caltech.ipac.firefly.commands.CenterPlotOnQueryCmd;
@@ -91,6 +78,19 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * User: roby
+ * Date: May 19, 2008
+ * Time: 2:35:43 PM
+ */
 
 
 /**
@@ -858,7 +858,10 @@ public class AllPlots implements HasWebEventManager {
 		for (int f = 0; f < fp.length; f++) {
 			INSTRUMENTS[] values = FootprintFactory.getInstruments(fp[f]);//.values();
 			commandMap.put(JwstFootprintCmd.CommandName + fp[f].name(), new JwstFootprintCmd(fp[f]));
-			if (fp[f].equals(FOOTPRINT.JWST)) {
+            //Yi added HST and SPITZER footprints:
+            //if ( (fp[f].equals(FOOTPRINT.JWST)) || (fp[f].equals(FOOTPRINT.HST)) || (fp[f].equals(FOOTPRINT.SPITZER)) ) {
+            // if no Spitzer:
+            if ( (fp[f].equals(FOOTPRINT.JWST)) || (fp[f].equals(FOOTPRINT.HST)) ) {
 				for (int i = 0; i < values.length; i++) {
 					commandMap.put(JwstFootprintCmd.CommandName + values[i].name(), new JwstFootprintCmd(values[i]));
 				}

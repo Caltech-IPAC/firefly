@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchHideDialog,isDialogVisible} from '../core/DialogCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../Firefly.js';
 
@@ -41,7 +41,7 @@ class PopupStoreConnection extends Component {
 
     constructor(props)  {
         super(props);
-        var visible= AppDataCntlr.isDialogVisible(props.dialogId);
+        var visible= isDialogVisible(props.dialogId);
         this.state = { visible};
     }
 
@@ -57,7 +57,7 @@ class PopupStoreConnection extends Component {
 
     updateVisibility() {
         var {visible}= this.state;
-        var newVisible= AppDataCntlr.isDialogVisible(this.props.dialogId);
+        var newVisible= isDialogVisible(this.props.dialogId);
         if (newVisible !== visible) {
             this.setState( {visible : newVisible} );
         }
@@ -70,7 +70,7 @@ class PopupStoreConnection extends Component {
         return  React.cloneElement(popupPanel,
             {
                 visible,
-                requestToClose : () => AppDataCntlr.hideDialog(dialogId)
+                requestToClose : () => dispatchHideDialog(dialogId)
             });
     }
 

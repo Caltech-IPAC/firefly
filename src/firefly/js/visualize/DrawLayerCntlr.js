@@ -7,8 +7,7 @@ import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import without from 'lodash/without';
-import union from 'lodash/union';
+import {without,union} from 'lodash';
 
 
 
@@ -41,6 +40,7 @@ const DT_END= 'DrawLayerCntlr.DistanceTool.distanceToolEnd';
 
 export const DRAWING_LAYER_KEY= 'drawLayers';
 
+const clone = (obj,params={}) => Object.assign({},obj,params);
 
 
 
@@ -286,6 +286,9 @@ function makeReducer(factory) {
             case DETACH_LAYER_FROM_PLOT:
                 retState = deferToLayerReducer(state, action, dlReducer);
                 break;
+            case ImagePlotCntlr.DELETE_PLOT_VIEW:
+                retState = deletePlotView(state, action, dlReducer);
+                break;
             case ImagePlotCntlr.ANY_REPLOT:
                 retState = determineAndCallLayerReducer(state, action, dlReducer, true);
                 break;
@@ -386,7 +389,16 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
 
 
 
+function deletePlotView(state,action, dlReducer) {
+    const {plotId} = action.payload;
 
+
+    const drawLayerAry= state.drawLayerAry.map( (dl) => {
+        return dlReducer(dl, {type:DETACH_LAYER_FROM_PLOT, payload:{plotIdAry:[plotId]}});
+    } );
+
+    return Object.assign({},state, {drawLayerAry});
+}
 
 
 //function mouseStateChange(state,action) {
@@ -401,7 +413,7 @@ const initState= function() {
         allowedActions: [ RETRIEVE_DATA, CREATE_DRAWING_LAYER, DESTROY_DRAWING_LAYER, CHANGE_VISIBILITY,
                           ATTACH_LAYER_TO_PLOT, DETACH_LAYER_FROM_PLOT, MODIFY_CUSTOM_FIELD,
                           CHANGE_DRAWING_DEF,FORCE_DRAW_LAYER_UPDATE,
-                          ImagePlotCntlr.ANY_REPLOT
+                          ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW
                         ],
         drawLayerAry : [],
         mouseGrabDrawLayerId : null

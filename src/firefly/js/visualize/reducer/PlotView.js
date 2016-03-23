@@ -125,8 +125,7 @@ function createPlotViewContextData(req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        gridId : null,// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
-        inExpandedList: true
+        gridId : null// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
     };
 }
 
@@ -148,7 +147,7 @@ const initScrollCenterPoint= (pv) => updatePlotViewScrollXY(pv,findScrollPtForCe
  * @param overlayPlotViews
  * @return {Object|*}
  */
-function replacePlots(pv, plotAry,expanded, overlayPlotViews=null) {
+function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
     pv= Object.assign({},pv);
 
@@ -186,8 +185,6 @@ function replacePlots(pv, plotAry,expanded, overlayPlotViews=null) {
     pv.plotViewCtx.lastCollapsedZoomLevel= pv.plots[pv.primeIdx].zoomFactor;
 
     pv= initScrollCenterPoint(pv);
-
-    if (expanded) pv.plotViewCtx.inExpandedList= true;
 
     return pv;
 }

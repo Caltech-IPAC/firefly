@@ -9,16 +9,17 @@
  */
 
 import React, { PropTypes} from 'react';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
 //import InputGroup from '../../ui/InputGroup.jsx';
-import RadioGroupInputField from '../../ui/RadioGroupInputField.jsx';
-import FieldGroup from '../../ui/FieldGroup.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {validateFieldGroup,getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 //import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 //import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';
+
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/DialogCntlr.js';
 
 //define the labels and values for the radio options
 const coordOptions= [
@@ -76,7 +77,7 @@ function getDialogBuilder(fieldKey, radioValue) {
 export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 
 	getDialogBuilder(fieldKey, radioValue);
-	AppDataCntlr.showDialog(fieldKey);
+	dispatchShowDialog(fieldKey);
 }
 
 
@@ -87,13 +88,13 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
  */
 function doDispatch(fieldGroup,  fieldKey){
 
-	FieldGroupUtils.validate(fieldGroup, (valid) => {
+	validateFieldGroup(fieldGroup, (valid) => {
 		if(valid) {
-			var result = FieldGroupUtils.getResults(fieldGroup);
+			var result = getFieldGroupResults(fieldGroup);
 			dispatchChangeMouseReadout(fieldKey,result[fieldKey] );
 
 		}
-		AppDataCntlr.hideDialog(fieldKey);
+		dispatchHideDialog(fieldKey);
 	});
 
 }
@@ -104,7 +105,6 @@ class MouseReadoutOptionDialog extends React.Component {
 
 	constructor(props) {
 		super(props);
-		FieldGroupUtils.initFieldGroup(props.groupKey);
 		this.state = {fields: FieldGroupUtils.getGroupFields(props.groupKey)};
 
 	}
@@ -124,9 +124,6 @@ class MouseReadoutOptionDialog extends React.Component {
 	}
 
 	render() {
-
-		var {fields}= this.state;
-		if (!fields) return false;
 		var form;
 		const {groupKey,fieldKey,radioValue}= this.props;
 

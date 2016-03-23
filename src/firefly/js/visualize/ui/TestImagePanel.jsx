@@ -3,11 +3,11 @@
  */
 
 import React from 'react';
-import TargetPanel from '../../ui/TargetPanel.jsx';
+import {TargetPanel} from '../../ui/TargetPanel.jsx';
 import CompleteButton from '../../ui/CompleteButton.jsx';
-import ValidationField from '../../ui/ValidationField.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
-import FieldGroup from '../../ui/FieldGroup.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {showExampleDialog} from '../../ui/ExampleDialog.jsx';
 
 import WebPlotRequest, {ServiceType, AnnotationOps} from '../WebPlotRequest.js';
@@ -16,11 +16,13 @@ import {getDlAry} from '../DrawLayerCntlr.js';
 import {getDrawLayerByType, getActivePlotView, isDrawLayerAttached} from '../PlotViewUtil.js';
 import AppDataCntlr from '../../core/AppDataCntlr.js';
 import {parseWorldPt} from '../Point.js';
+import {MultiImageViewer} from './MultiImageViewer.jsx';
+import {dispatchAddImages,getMultiViewRoot, findViewerWithPlotId} from '../MultiViewCntlr.js';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
-import {UserZoomTypes} from '../ZoomUtil.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import {flux} from '../../Firefly.js';
+import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 
 import {showImageSelPanel} from  './ImageSelectPanel.jsx';
 
@@ -99,7 +101,10 @@ function showResults(success, request) {
 
     dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
 
+    dispatchAddImages('imageViews', ['TestImage1']);
+    var vId= findViewerWithPlotId(getMultiViewRoot(),'TestImage1');
 
+    dispatchAddImages(vId, ['TestImage2', 'TestImage3', 'TestImage4']);
 
     //====temp
 }
@@ -133,7 +138,7 @@ function TestImagePanelView({selectOn,distOn}) {
         <div>
             <div style={{display:'inline-block', verticalAlign:'top'}}>
                 <FieldGroup groupKey='TEST_IMAGE_PANEL' reducerFunc={ipReducer} keepState={true}>
-                    <TargetPanel groupKey='TEST_IMAGE_PANEL'/>
+                    <TargetPanel/>
                     <ValidationField fieldKey={'zoom'}
                                      groupKey='TEST_IMAGE_PANEL'/>
                     <div style={{height:10}}/>
@@ -148,19 +153,10 @@ function TestImagePanelView({selectOn,distOn}) {
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
+                <MultiImageViewer  viewerId='imageViews' canReceiveNewPlots={true} Toolbar={MultiViewStandardToolbar}/>
+            </div>
+            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
                 <ImageViewer plotId='TestImage3Color'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage1'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage2'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage3'/>
-            </div>
-            <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>
-                <ImageViewer plotId='TestImage4'/>
             </div>
         </div>
     );
@@ -174,29 +170,13 @@ var TestImagePanel= React.createClass({
     // code that connects to store
 
     componentWillUnmount() {
-        if (this.unbinder) this.unbinder();
     },
 
     componentDidMount() {
-       this.unbinder= flux.addListener( () => {
-           var pv= getActivePlotView(visRoot());
-           var selectOn= false;
-           var distOn= false;
-           if (pv) {
-               var dlAry= getDlAry();
-               const selectLayer= getDrawLayerByType(dlAry,SelectArea.TYPE_ID);
-               selectOn=  isDrawLayerAttached(selectLayer,pv.plotId);
-               const distLayer= getDrawLayerByType(dlAry,DistanceTool.TYPE_ID);
-               distOn=  isDrawLayerAttached(distLayer,pv.plotId);
-           }
-           this.setState({selectOn,distOn});
-        });
     },
 
     render() {
-        var selectOn= (this.state && this.state.selectOn) ? this.state.selectOn : false;
-        var distOn= (this.state && this.state.distOn) ? this.state.distOn : false;
-        return (<TestImagePanelView selectOn={selectOn} distOn={distOn}/>);
+        return (<TestImagePanelView selectOn={false} distOn={false}/>);
     }
 
     // end code that connects to store

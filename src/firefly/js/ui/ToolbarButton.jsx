@@ -5,9 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import './ToolbarButton.css';
-import {DropDownMenuWrapper} from './DropDownMenu.jsx';
-import DialogRootContainer from './DialogRootContainer.jsx';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchHideDialog} from '../core/DialogCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 
 
@@ -35,7 +33,7 @@ var todoStyle= {
 
 function handleClick(onClick, dropdownCB ,divElement) {
     if (onClick) onClick();
-    dropdownCB ? dropdownCB(divElement) : AppDataCntlr.hideDialog(DROP_DOWN_KEY);
+    dropdownCB ? dropdownCB(divElement) : dispatchHideDialog(DROP_DOWN_KEY);
 }
 
 
@@ -58,18 +56,20 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param tipOnCB
  * @param tipOffCB
  * @param lastTextItem
+ * @param additionalStyle
  * @param todo show a todo message
  * @param ctx
  * @return {object}
  */
 export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownCB,
                                onClick, horizontal=true, bgDark, visible=true, active,
-                               imageStyle, tipOnCB,tipOffCB,lastTextItem=false, todo}, ctx) {
+                               imageStyle, tipOnCB,tipOffCB,lastTextItem=false, todo, additionalStyle},
+                               ctx) {
 
     if (!tipOnCB && ctx) tipOnCB= ctx.tipOnCB;
     if (!tipOffCB && ctx) tipOffCB= ctx.tipOffCB;
 
-    var s= { position: 'relative' };
+    var s= { position: 'relative'};
     if (horizontal) {
         s.display='inline-block';
     }
@@ -91,8 +91,9 @@ export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownC
         s.fontSize= '10pt';
         s.position= 'relative';
         textCName= 'ff-menuItemHText';
+        const topStyle= Object.assign({display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
         return (
-            <div style={{display:'inline-block', height:'100%' }}>
+            <div style={topStyle}>
                 <div style={{ display:'inline-block',
                               margin:'0 4px 0 4px',
                               height: 'calc(100% - 7px)',
@@ -115,6 +116,8 @@ export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownC
 
     }
     else {
+        s.flex= '0 0 auto';
+        Object.assign(s,additionalStyle);
         return (
             <div title={tip} style={s} className={cName}
                  ref={(c) => divElement= c}
@@ -154,7 +157,8 @@ ToolbarButton.propTypes= {
     tipOffCB : PropTypes.func,
     dropDownCB : PropTypes.func,
     imageStyle : PropTypes.object,
-    lastTextItem : PropTypes.boolean
+    lastTextItem : PropTypes.boolean,
+    additionalStyle : PropTypes.object
 };
 
 ToolbarButton.DefaultProps= {

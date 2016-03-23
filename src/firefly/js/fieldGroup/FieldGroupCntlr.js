@@ -2,6 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {flux} from '../Firefly.js';
+import {omit,get} from 'lodash';
+
 /**
  * Reducer for 'fieldGroup' key
  */
@@ -17,7 +20,6 @@
 //
 //});
 
-
 const INIT_FIELD_GROUP= 'FieldGroupCntlr/initFieldGroup';
 const MOUNT_COMPONENT= 'FieldGroupCntlr/mountComponent';
 const MOUNT_FIELD_GROUP= 'FieldGroupCntlr/mountFieldGroup';
@@ -26,17 +28,91 @@ const VALUE_CHANGE= 'FieldGroupCntlr/valueChange';
 
 const FIELD_GROUP_KEY= 'fieldGroup';
 
+const defaultReducer= (state) => state;
+
+
+//======================================== Dispatch Functions =============================
+//======================================== Dispatch Functions =============================
+//======================================== Dispatch Functions =============================
+
+/**
+ * This will init a field group. In general, you should not need to use this.  Mount does the same thing and is automatic
+ * through the FieldGroupConnector. Have a good reason if you are using this action
+ * 
+ * @param groupKey
+ * @param keepState
+ * @param initValues
+ * @param reducerFunc
+ */
+export function dispatchInitFieldGroup(groupKey,keepState=false, 
+                                       initValues=null, reducerFunc= defaultReducer) {
+
+    flux.process({type: INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,initValues, keepState}});
+}
+
+
+
+/**
+ * 
+ * @param groupKey
+ * @param mounted
+ * @param keepState
+ * @param initValues
+ * @param reducerFunc
+ */
+export function dispatchMountFieldGroup(groupKey, mounted, keepState= false, 
+                                        initValues=null, reducerFunc= defaultReducer) {
+    flux.process({type: MOUNT_FIELD_GROUP, payload: {groupKey, mounted, initValues, reducerFunc, keepState} });
+}
+
+
+/**
+ * 
+ * @param groupKey
+ * @param fieldKey
+ * @param mounted
+ * @param value
+ * @param fieldState
+ */
+export function dispatchMountComponent(groupKey,fieldKey,mounted,value,fieldState) {
+        flux.process({
+            type: MOUNT_COMPONENT, payload: { groupKey, fieldKey, mounted, value, fieldState }
+        });
+}
+
+/**
+ * 
+ * @param payload
+ */
+export function dispatchValueChange(payload) {
+    flux.process({type: VALUE_CHANGE, payload});
+}
+
+//======================================== Action Creators =============================
+//======================================== Action Creators =============================
+//======================================== Action Creators =============================
+
+
+/**
+ *
+ * @param rawAction
+ * @return {function()}
+ */
 const valueChangeActionCreator= function(rawAction) {
     return (dispatcher) => {
+        const {value}= rawAction.payload;
         dispatcher(rawAction);
-        if (rawAction.payload.asyncUpdatePromise) {
-            rawAction.payload.asyncUpdatePromise.then((payload) => {
-                dispatcher({type: VALUE_CHANGE, payload});
+        if (value && value.then) {
+            const {fieldKey,groupKey}= rawAction.payload;
+            value.then((payload) => {
+                    dispatcher({
+                        type: VALUE_CHANGE,
+                        payload: Object.assign({}, payload, {fieldKey, groupKey})
+                    });
             }).catch((e) => console.log(e));
         }
     };
 };
-
 
 /**
  * main reducer
@@ -44,7 +120,7 @@ const valueChangeActionCreator= function(rawAction) {
  * @param {object} action
  * @return {object} return state
  */
-function reducer(state={fieldGroupMap: {}}, action={}) {
+function reducer(state={}, action={}) {
 
     if (!action.payload || !action.type) return state;
 
@@ -62,74 +138,69 @@ function reducer(state={fieldGroupMap: {}}, action={}) {
         case VALUE_CHANGE  :
             retState= valueChange(state, action);
             break;
-        default:
-            retState= fireOnAllMountedGroups(state,action);
-            break;
+        // default:
+        //     retState= fireOnAllMountedGroups(state,action);
+        //     break;
     }
     return retState;
 }
 
 
+// todo: determine if I need to readd this
 
-const fireOnAllMountedGroups= function(state,action) {
-    var {type}= action;
-                                                          //todo: I really need to think about this next line
-    if (!type.startsWith('ImagePlotCntlr')) return state; //todo: determine what category of actions is allowed through
-
-    var changes;
-    var retState= state;
-
-    Object.keys(state.fieldGroupMap).forEach((groupKey)=> {
-        var fg= state.fieldGroupMap[groupKey];
-        if (fg.mounted) {
-            if (!changes) changes= {};
-            var fields= fireFieldsReducer(fg,action);
-            changes[groupKey]= Object.assign({},fg,{fields});
-        }
-    });
-
-    if (changes) {
-        retState= {};
-        retState.fieldGroupMap= Object.assign({},state.fieldGroupMap,changes);
-
-    }
-    return retState;
-};
-
-
-//const fireOnAllMountedGroupsEXPERIMENTAL= function(state,action) {
-//    //var changes;
-//    var retState= state;
-//    var {fieldGroupMap}= state;
+// const fireOnAllMountedGroups= function(state,action) {
+//     var {type}= action;
+//                                                           //todo: I really need to think about this next line
+//     if (!type.startsWith('ImagePlotCntlr')) return state; //todo: determine what category of actions is allowed through
 //
+//     var changes;
+//     var retState= state;
 //
-//    var changes= Object.keys(fieldGroupMap)
-//        .filter( (groupKey)=> fieldGroupMap[groupKey].mounted)
-//        .map((groupKey) =>{
-//            var fg= fieldGroupMap[groupKey];
-//            var fields= fireFieldsReducer(fg,action);
-//            return Object.assign({},fg,{fields});
-//        });
+//     Object.keys(state).forEach((groupKey)=> {
+//         var fg= state[groupKey];
+//         if (fg.mounted) {
+//             if (!changes) changes= {};
+//             var fields= fireFieldsReducer(fg,action);
+//             changes[groupKey]= Object.assign({},fg,{fields});
+//         }
+//     });
 //
-//    if (changes.length) {
-//        retState= {fieldGroupMap: Object.assign({},fieldGroupMap) };
-//        changes.forEach( (fg)=> retState.fieldGroupMap[fg.groupKey]= fg);
-//    }
-//    return retState;
-//};
+//     if (changes) {
+//         retState= Object.assign({},state,changes);
+//     }
+//     return retState;
+// };
 
+function addInitValues(fields,initValues) {
+    fields= Object.assign({},fields);
+    return Object.keys(initValues).reduce( (obj,key)=> {
+        if (!fields[key]) fields[key]= {};
+        fields[key].value= initValues[key];
+        fields[key].fieldKey= key;
+        fields[key].mounted= true;
+        return fields;
+    },fields);
+}
 
 const initFieldGroup= function(state,action) {
-    var {groupKey, reducerFunc, keepState}= action.payload;
+    var {groupKey, reducerFunc, keepState, initValues}= action.payload;
 
+    const mounted= get(state, [groupKey,'mounted'],false);
+    
     var fields= reducerFunc ? reducerFunc(null, action) : {};
 
+    if (initValues) {
+        fields= addInitValues(fields,initValues);
+    }
+
+
     var fg= constructFieldGroup(groupKey,fields,reducerFunc,keepState);
+    fg.mounted= mounted;
     return createState(state,groupKey,fg);
 };
 
 const updateFieldGroupMount= function(state,action) {
-    var {groupKey, mounted}= action.payload;
+    var {groupKey, mounted, initValues}= action.payload;
     if (!groupKey) return state;
 
     var retState= state;
@@ -137,11 +208,16 @@ const updateFieldGroupMount= function(state,action) {
     if (mounted) {
         if (isFieldGroupDefined(state,groupKey)) {
             fg= findAndCloneFieldGroup(state, groupKey, {mounted:true});
+
+            if (initValues) {
+                fg.fields= addInitValues(fg.fields,initValues);
+            }
+
             retState= createState(state,groupKey,fg);
         }
         else {
             retState= initFieldGroup(state,action);
-            retState.fieldGroupMap[groupKey].mounted= true;
+            retState[groupKey].mounted= true;
         }
     }
     else {
@@ -165,40 +241,23 @@ const fireFieldsReducer= function(fg, action) {
 };
 
 const valueChange= function(state,action) {
-    var {fieldKey,newValue,displayValue,extraData,groupKey}= action.payload;
+    var {fieldKey, groupKey,message='', valid=true}= action.payload;
 
-    if (!getFieldGroup(state,groupKey)) return state;
+    if (!getFieldGroup(state,groupKey)) {
+        state = initFieldGroup(state,action);
+        state[groupKey].mounted= true;
+    }
 
     var fg= findAndCloneFieldGroup(state, groupKey);
 
-    fg.fields[fieldKey]=  cloneField(fg.fields[fieldKey],
-        {
-            message: action.payload.message||'',
-            valid : (action.payload.hasOwnProperty('valid') ? action.payload.valid :true),
-            value : newValue,
-            asyncUpdatePromise : action.payload.asyncUpdatePromise||false,
-            displayValue,
-            extraData
-        });
-
+    fg.fields[fieldKey]=  Object.assign({},
+                                  fg.fields[fieldKey],
+                                  action.payload,
+                                  {message, valid});
 
     fg.fields= fireFieldsReducer(fg, action);
 
     return createState(state,groupKey,fg);
-
-
-
-    //fields[payload.fieldKey]=
-    //    {
-    //        ...fields[payload.fieldKey],
-    //        message :payload.message||"",
-    //        valid : (payload.hasOwnProperty('valid') ? payload.valid :true),
-    //        value : payload.newValue,
-    //        asyncUpdatePromise : payload.asyncUpdatePromise||false,
-    //        displayValue : payload.displayValue,
-    //        extraData: payload.extraData
-    //    };
-
 };
 
 
@@ -207,26 +266,20 @@ const valueChange= function(state,action) {
 
 
 const updateMount= function(state, action) {
-    var {fieldKey,mounted,value,fieldState,displayValue,extraData,groupKey}= action.payload;
+    var {fieldKey,mounted,fieldState={},groupKey,valid=true}= action.payload;
     if (!getFieldGroup(state,groupKey)) return state;
 
     var fg= findAndCloneFieldGroup(state,groupKey);
-    var fields= fg.fields;
-    var newField;
 
-    if (mounted && !fields[fieldKey]) {
-        var old= fieldState||{};
-        newField= Object.assign({},old, { fieldKey, mounted, value, displayValue, extraData } );
+    if (mounted) {
+        var omitPayload= omit(action.payload, ['fieldState','groupKey']);
+        fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],
+                                           fieldState, omitPayload,{valid});
     }
     else {
-        newField= cloneField(fields[fieldKey],{ mounted, value, displayValue });
+        fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],{mounted});
     }
-    fields[fieldKey]= newField;
 
-
-    if (typeof fields[fieldKey].valid === 'undefined') {
-        newField.valid= true;
-    }
     return createState(state,groupKey,fg);
 };
 
@@ -236,14 +289,11 @@ const updateMount= function(state, action) {
 //============ private utilities =================================
 
 const createState= function(oldState,groupKey,fieldGroup) {
-
-    var retState= {fieldGroupMap : Object.assign({},oldState.fieldGroupMap)};
-    retState.fieldGroupMap[groupKey]= fieldGroup;
-    return retState;
+    return Object.assign({},oldState, {[groupKey]:fieldGroup});
 };
 
 
-function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
+// function cloneField(field, newKeys={}) { return Object.assign({},field,newKeys); }
 
 /**
  *
@@ -261,7 +311,7 @@ function findAndCloneFieldGroup(state,groupKey, newValues={}) {
 }
 
 function isFieldGroupDefined(state,groupKey) {
-    return groupKey && state.fieldGroupMap[groupKey] && state.fieldGroupMap[groupKey].fields;
+    return groupKey && state[groupKey] && state[groupKey].fields;
 }
 
 /**
@@ -273,7 +323,7 @@ function isFieldGroupDefined(state,groupKey) {
  */
 function getFieldGroup(state,groupKey) {
     if (!groupKey) return null;
-    return state.fieldGroupMap[groupKey];
+    return state[groupKey];
 }
 
 const constructFieldGroup= function(groupKey,fields, reducerFunc, keepState) {
