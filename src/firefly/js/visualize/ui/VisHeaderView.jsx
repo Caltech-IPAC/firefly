@@ -19,12 +19,16 @@ import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 export function VisHeaderView({visRoot,currMouseState}) {
 
     var rS= {
-       // border: '1px solid white',
-        width: 500,
+        width: 650,
+        minWidth:550,
         height: 32,
+        minHeight:32,
         display: 'inline-block',
         position: 'relative',
-        verticalAlign: 'top'
+        verticalAlign: 'top',
+        cursor:'pointer',
+        whiteSpace : 'nowrap',
+        overflow : 'hidden'
     };
 
     var pv= getActivePlotView(visRoot);
