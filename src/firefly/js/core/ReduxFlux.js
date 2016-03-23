@@ -10,6 +10,7 @@ import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
+import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
@@ -90,6 +91,7 @@ actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionAc
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
+actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
 actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.TABLE_FETCH_UPDATE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
@@ -205,6 +207,8 @@ function process(rawAction, condition) {
     } else {
         redux.dispatch( rawAction );
     }
+
+    recordHistory(rawAction);
 
     return new Promise(
         function (resolve, reject) {

@@ -7,6 +7,7 @@ import 'isomorphic-fetch';
 import React from 'react';
 import 'styles/global.css';
 
+import {APP_LOAD} from 'firefly/core/AppDataCntlr.js';
 import {ExtensionJavaInterface } from './gwtinterface/ExtensionJavaInterface.js';
 import {ExtensionResult } from './gwtinterface/ExtensionResult.js';
 import {PlotCmdExtension } from './visualize/PlotCmdExtension.js';
@@ -95,6 +96,7 @@ export var firefly = {
     bootstrap() {
         return new Promise(function(resolve, reject) {
             fireflyInit();
+            flux.process( {type : APP_LOAD} );
             resolve();
         });
     },

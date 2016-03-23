@@ -30,14 +30,15 @@ export const LO_STANDARD = {
 
 export const UPDATE_LAYOUT     = 'layout.updateLayout';
 export const SET_LAYOUT_MODE   = 'layout.setLayoutMode';
-export const SET_DROPDOWN_UI   = 'layout.setDropDownUi';
+export const SHOW_DROPDOWN_UI   = 'layout.showDropDownUi';
+export const HIDE_DROPDOWN_UI   = 'layout.hideDropDownUi';
 export const ACTIVE_TABLE_CHANGED   = 'layout.activeTableChanged';
 
 
 /*---------------------------- Reducers ----------------------------*/
 
-export function reducer(state={}, action={}) {
-    const {mode, view, visible} = action.payload || {};
+export function reducer(state={dropDown: {}}, action={}) {
+    const {mode, view} = action.payload || {};
 
     switch (action.type) {
         case UPDATE_LAYOUT :
@@ -49,11 +50,11 @@ export function reducer(state={}, action={}) {
             }
             return update(state, {mode: {[mode]: {$set: view}}});
 
-        case SET_DROPDOWN_UI :
-            if (state.dropDown) {
-                state.dropDown = {};
-            }
-            return update(state, {dropDown: {$set: {visible, view}}});
+        case SHOW_DROPDOWN_UI :
+            return update(state, {dropDown: {$set: {visible: true, view}}});
+
+        case HIDE_DROPDOWN_UI :
+            return update(state, {dropDown: {$set: {visible: false}}});
 
         case ACTIVE_TABLE_CHANGED :
             const {tbl_id} = action.payload;
@@ -94,12 +95,18 @@ export function dispatchSetLayoutMode({mode=LO_STANDARD.mode, view}) {
 }
 
 /**
- * set the behavior of the drop down container
- * @param visible true to show the drop-down container
+ * show the drop down container
  * @param view name of the component to display in the drop-down container
  */
-export function dispatchSetDropDownUi({visible=true, view}) {
-    flux.process({type: SET_DROPDOWN_UI, payload: {visible, view}});
+export function dispatchShowDropDownUi({view}) {
+    flux.process({type: SHOW_DROPDOWN_UI, payload: {view}});
+}
+
+/**
+ * hide the drop down container
+ */
+export function dispatchHideDropDownUi() {
+    flux.process({type: HIDE_DROPDOWN_UI, payload: {}});
 }
 
 export function dispatchActiveTableChanged(tbl_id) {

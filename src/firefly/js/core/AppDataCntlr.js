@@ -4,7 +4,6 @@
 
 import {flux} from '../Firefly.js';
 import BrowserCache from '../util/BrowserCache.js';
-import history from './History.js';
 import menuRenderer from './reducers/MenuReducer.js';
 import strLeft from 'underscore.string/strLeft';
 import strRight from 'underscore.string/strRight';
@@ -20,20 +19,20 @@ var taskCnt=0;
 
 /*---------------------------- ACTIONS -----------------------------*/
 
-const APP_LOAD = `${APP_DATA_PATH}.appLoad`;
-const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
-const SHOW_DIALOG = `${APP_DATA_PATH}.showDialog`;
-const HIDE_DIALOG = `${APP_DATA_PATH}.hideDialog`;
-const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
-const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
-const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
-const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
+export const APP_LOAD = `${APP_DATA_PATH}.appLoad`;
+export const APP_UPDATE = `${APP_DATA_PATH}.appUpdate`;
+export const SHOW_DIALOG = `${APP_DATA_PATH}.showDialog`;
+export const HIDE_DIALOG = `${APP_DATA_PATH}.hideDialog`;
+export const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
+export const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
+export const HIDE_ALL_DIALOGS = `${APP_DATA_PATH}.hideAllDialogs`;
+export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 
-const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
-const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
+export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
+export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
 
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
-const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
+export const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop
 
 /*---------------------------- CREATORS ----------------------------*/
 
@@ -239,8 +238,6 @@ function initPreferences() {
 
 
 function reducer(state=getInitState(), action={}) {
-
-    history.add(state, action);
 
     var newState = appDataReducer(state, action);
 

@@ -64,11 +64,12 @@ function tableRemoved(state, action) {
 /**
  * Add this table into the TableResults
  * @param tbl_ui_gid  table ui group
+ * @param tbl_ui_id   table ui id
  * @param tbl_id      table id.
  * @param removable  true if this table can be removed from view.
  */
-export function dispatchTableAdded(tbl_ui_gid, tbl_id, removable=true) {
-    const tbl_ui = {tbl_id, removable, tbl_ui_id: uniqueTblUiId()};
+export function dispatchTableAdded(tbl_ui_gid, tbl_ui_id=uniqueTblUiId(), tbl_id, removable=true) {
+    const tbl_ui = {tbl_id, removable, tbl_ui_id};
     flux.process( {type: TBL_UI_ADDED, payload: {tbl_ui_gid, tbl_ui}});
 }
 
