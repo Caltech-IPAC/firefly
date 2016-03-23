@@ -1,6 +1,5 @@
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import ReactDOM from 'react-dom';
 import {PointerPopup} from '../ui/PointerPopup.jsx';
 import InputFieldLabel from './InputFieldLabel.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';

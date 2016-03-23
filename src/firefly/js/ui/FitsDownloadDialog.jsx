@@ -9,13 +9,13 @@
  *
  */
 import React from 'react';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {download} from '../util/WebUtil.js';
-import RadioGroupInputField from './RadioGroupInputField.jsx';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import FieldGroup from './FieldGroup.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
@@ -25,6 +25,7 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import RequestType from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
+import {dispatchInitFieldGroup} from '../fieldGroup/FieldGroupCntlr.js';
 
 import HelpIcon from './HelpIcon.jsx';
 
@@ -48,7 +49,7 @@ const dialogBuilder = getDialogBuilder();
 
 export function showFitsDownloadDialog() {
     dialogBuilder();
-    AppDataCntlr.showDialog('fitsDownloadDialog');
+    dispatchShowDialog('fitsDownloadDialog');
 }
 
 /**
@@ -66,7 +67,7 @@ function getInitialPlotState() {
     if (plotState.isThreeColor()) {
         var threeColorBandUsed = true;
 
-        var bands = this.plotState.getBands();//array of Band
+        var bands = plotState.getBands();//array of Band
 
         if (bands != Band.NO_BAND) {
             var colors = [];
@@ -108,7 +109,7 @@ class FitsDownloadDialog extends React.Component {
 
     constructor(props) {
         super(props);
-        FieldGroupUtils.initFieldGroup('FITS_DOWNLOAD_FORM');
+        dispatchInitFieldGroup('FITS_DOWNLOAD_FORM');
         this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};
 
     }
@@ -244,7 +245,8 @@ function FitsDownloadDialogForm() {
                         <div style={rightColumn}>
                             <RadioGroupInputField
                                 initialState={{
-                                    tooltip: 'Please select an option'
+                                    tooltip: 'Please select an option',
+                                    value : 'fits'
                                     //move the label as a InputFieldLabel
                                    }}
                                 options={ [

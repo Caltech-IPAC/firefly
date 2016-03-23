@@ -5,84 +5,96 @@
 import {get} from 'lodash';
 import {flux} from '../Firefly.js';
 import {logError} from '../util/WebUtil.js';
-import FieldGroupCntlr from './FieldGroupCntlr.js';
+import FieldGroupCntlr, {dispatchValueChange} from './FieldGroupCntlr.js';
+
+
+const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.mounted||includeUnmounted);
+
+
+function validateResolvedSingle(groupKey,includeUnmounted, doneCallback) {
+    var flds= getGroupFields(groupKey);
+    var valid = Object.keys(flds).every( (key) => includeForValidation(flds[key]) ? flds[key].valid : true);
+    doneCallback(valid);
+}
+
 
 /**
- * make a promise for this field key to guarantee that all async validation has completed
- * @param fields the fields
- * @param fieldKey the field key to convert to non async
- * @return Promise
+ * 
+ * @param groupKey
+ * @param includeUnmounted
+ * @param doneCallback
+ * @return Promise with the valid state true/false --- todo: the return value does not work
  */
-var makeValidationPromise= function(fields,fieldKey) {
-    if (fields[fieldKey].mounted && fields[fieldKey].asyncUpdatePromise) {
-        return fields[fieldKey].asyncUpdatePromise;
-    }
-    else {
-        return Promise.resolve(fieldKey);
-    }
-};
-
-/**
- *
- * @return Promise with the valid state true/false
- */
-var validateSingle= function(groupKey, doneCallback) {
+var validateSingle= function(groupKey, includeUnmounted, doneCallback) {
     var fields= getGroupFields(groupKey);
+
+    //====== clear out all functions
+    Object.keys(fields).forEach( (key) => {
+        if (typeof fields[key].value === 'function') {
+            var newValue= fields[key].value();
+            if (typeof newValue=== 'object' &&       // check to see if return is an object with {value:string,valid:boolean}
+                Object.keys(newValue).length===2 &&
+                newValue.hasOwnProperty('valid') &&
+                newValue.hasOwnProperty('value') ) {
+                dispatchValueChange({fieldKey:key,groupKey,valid:newValue.valid,value:newValue.value});
+            }
+            else {
+                dispatchValueChange({fieldKey:key,groupKey,valid:true,value:newValue});
+            }
+        }
+    });
+
+
+    //===============
+
+    fields= getGroupFields(groupKey); // need a new copy
+
     if (!fields) return Promise.resolve(true);
-    return Promise.all( Object.keys(fields).map( (fieldKey) => makeValidationPromise(fields,fieldKey),this ) )
+    return Promise.all( Object.keys(fields).map( (key) => Promise.resolve(fields[key].value),this ) )
         .then( (allResults) =>
         {
-            var valid = allResults.every(
-                (result) => {
-                    var fieldKey;
-                    if (typeof result==='string') {
-                        fieldKey= result;
-                    }
-                    else if (typeof result==='object' && result.fieldKey){
-                        fieldKey= result.fieldKey;
-                    }
-                    else {
-                        throw new Error('could not find fieldKey from promise results');
-                    }
-                    var f = fields[fieldKey];
-                    return (f.valid !== undefined && f.mounted) ? f.valid : true;
-                });
-            doneCallback(valid);
+            window.setTimeout(validateResolvedSingle(groupKey,includeUnmounted, doneCallback));
         }
-    ).catch( (e) => logError(e));
+    )
+        .catch( (e) => logError(e));
 };
 
-//var validateGroup= function(groupKeyAry, doneCallback) {
-//   //todo
-//};
 var validateGroup= function() {
     //todo
 };
 
-var validate= function(groupKey, doneCallback) {
+/**
+ * 
+ * @param groupKey
+ * @param includeUnmounted
+ * @param doneCallback
+ */
+export var validateFieldGroup= function(groupKey, includeUnmounted, doneCallback) {
     if (Array.isArray(groupKey)) {
-        validateGroup(groupKey,doneCallback);
+        validateGroup(groupKey,includeUnmounted, doneCallback);
     }
     else {
-        validateSingle(groupKey,doneCallback);
+        validateSingle(groupKey,includeUnmounted, doneCallback);
     }
 };
 
 
 /**
- *
+ * 
  * @param {string} groupKey the group key for the fieldgroup
- * @return {{}}
+ * @param includeUnmounted if true, get the results for any fields that are not showing
+ * @return {*}
  */
-var getResults= function(groupKey) {
+export function getFieldGroupResults(groupKey,includeUnmounted=false) {
     var fields= getGroupFields(groupKey);
+    if (!fields) return null;
     return Object.keys(fields).
-        filter((fieldKey) => fields[fieldKey].mounted).
+        filter((fieldKey) => (fields[fieldKey].mounted||includeUnmounted)).
         reduce((request, key) => {
             request[key] = fields[key].value;
             return request;
         }, {});
-};
+}
 
 
 /**
@@ -92,7 +104,7 @@ var getResults= function(groupKey) {
  * @return {object}
  */
 const getGroupState= function(groupKey) {
-    var fieldGroupMap= flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY].fieldGroupMap;
+    var fieldGroupMap= flux.getState()[FieldGroupCntlr.FIELD_GROUP_KEY];
     return fieldGroupMap[groupKey] ? fieldGroupMap[groupKey] : null;
 };
 
@@ -109,39 +121,6 @@ const getGroupFields= function(groupKey) {
 
 const getFldValue= function(fields, fldName, defval=undefined) {
     return (fields? get(fields, [fldName, 'value']) : defval);
-};
-
-const defaultReducer= (state) => state;
-
-/**
- *
- * @param {string} groupKey
- * @param {function} reducerFunc
- * @param {boolean} keepState
- */
-const initFieldGroup= function(groupKey,reducerFunc= defaultReducer,keepState=false) {
-    flux.process({type: FieldGroupCntlr.INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,keepState}});
-};
-
-/**
- *
- * @param {string} groupKey
- * @param {function} reducerFunc
- * @param {boolean} keepState
- */
-const mountFieldGroup= function(groupKey, reducerFunc= defaultReducer, keepState= false) {
-    flux.process({type: FieldGroupCntlr.MOUNT_FIELD_GROUP,
-                  payload: {groupKey, reducerFunc, keepState, mounted:true}
-    });
-};
-/**
- *
- * @param groupKey
- */
-const unmountFieldGroup= function(groupKey) {
-    flux.process({type: FieldGroupCntlr.MOUNT_FIELD_GROUP,
-        payload: {groupKey, mounted:false}
-    });
 };
 
 
@@ -165,8 +144,7 @@ const bindToStore= function(groupKey, stateUpdaterFunc) {
 
 
 
-var FieldGroupUtils= {validate, getResults, getGroupState, getGroupFields, getFldValue,
-                      initFieldGroup,mountFieldGroup,unmountFieldGroup, bindToStore };
+var FieldGroupUtils= {getGroupState, getGroupFields, getFldValue, bindToStore };
 
 export default FieldGroupUtils;
 

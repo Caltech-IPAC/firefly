@@ -36,7 +36,7 @@ export class VisToolbar extends Component {
     }
 
     storeUpdate() {
-        if (visRoot()!==this.state.visRoot || getDlAry() !==this.state.dlARy) {
+        if (visRoot()!==this.state.visRoot || getDlAry() !==this.state.dlAry) {
             this.setState({visRoot:visRoot(), dlAry:getDlAry()});
         }
     }

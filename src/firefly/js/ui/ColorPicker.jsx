@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -18,7 +18,7 @@ export function showColorPickerDialog(color,callbackOnOK,cb) {
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ColorPickerDialog', popup);
-    setTimeout( () => AppDataCntlr.showDialog('ColorPickerDialog'), 0);
+    setTimeout( () => dispatchShowDialog('ColorPickerDialog'), 0);
 }
 
 var lastEv;

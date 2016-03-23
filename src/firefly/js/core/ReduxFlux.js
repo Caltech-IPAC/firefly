@@ -30,6 +30,7 @@ import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
+import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js'
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -68,7 +69,8 @@ const reducers = {
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
-    [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer
+    [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
+    [DIALOG_KEY]: DialogCntlr.reducer
 };
 
 let redux = null;
@@ -157,7 +159,8 @@ function createRedux() {
 
     // redux is a store and more.. it manages reducers as well as thunk actions
     // we'll call it redux for now.
-    return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, logger)(createStore)(rootReducer);
+    // return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, logger)(createStore)(rootReducer);
+    return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware)(createStore)(rootReducer);
 }
 
 function bootstrap() {
@@ -245,6 +248,9 @@ function getState() {
     return redux ? redux.getState() : null;
 }
 
+function getRedux() {
+   return redux;
+}
 
 function createSmartComponent(connector, component) {
     var Wrapper = connect(connector)(component);
@@ -276,6 +282,7 @@ export var reduxFlux = {
     createSmartComponent,
     registerDrawLayer,
     createDrawLayer,
-    getDrawLayerFactory
+    getDrawLayerFactory,
+    getRedux
 };
 

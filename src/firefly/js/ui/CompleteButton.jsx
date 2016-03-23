@@ -2,68 +2,76 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
+import React, {Component, PropTypes} from 'react';
+import FieldGroupUtils, {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchHideDialog} from '../core/DialogCntlr.js';
 
 
 
 
 
-function validUpdate(valid,onSuccess,onFail,groupKey,dialogId) {
+function validUpdate(valid,onSuccess,onFail,groupKey,dialogId, includeUnmounted= false) {
     var funcToCall = valid ? onSuccess : onFail;
 
     // -lly : if there is more than one groupkey, it should combine the field values into a single request not
     // create an array of requests.  this is my opinion atm.  remove this comment once this is resolved.
     if (Array.isArray(groupKey)) {
-        var requestAry = groupKey.map( (key) => FieldGroupUtils.getResults(key));
+        var requestAry = groupKey.map( (key) => getFieldGroupResults(key,includeUnmounted));
         funcToCall(requestAry);
     }
     else {
-        var request = FieldGroupUtils.getResults(groupKey);
+        var request = getFieldGroupResults(groupKey,includeUnmounted);
         funcToCall(request);
     }
 
-    if (valid && dialogId) AppDataCntlr.hideDialog(dialogId);
+    if (valid && dialogId) dispatchHideDialog(dialogId);
 }
 
-function onClick(onSuccess,onFail,groupKey,dialogId) {
+function onClick(onSuccess,onFail,groupKey,dialogId,includeUnmounted) {
     if (groupKey) {
-        FieldGroupUtils.validate(groupKey, (valid) => {
-            validUpdate(valid,onSuccess,onFail,groupKey,dialogId);
+        validateFieldGroup(groupKey, includeUnmounted, (valid) => {
+            validUpdate(valid,onSuccess,onFail,groupKey,dialogId, includeUnmounted);
         });
     }
     else {
         if (onSuccess) onSuccess();
-        if (dialogId) AppDataCntlr.hideDialog(dialogId);
+        if (dialogId) dispatchHideDialog(dialogId);
     }
 }
 
 
 
-function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK', closeOnValid=true, dialogId,style={}}, context) {
+function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
+                          closeOnValid=true, dialogId,includeUnmounted= false,
+                          style={}}, context) {
     if (!groupKey && context) groupKey= context.groupKey;
     return (
         <div style={style}>
-            <button type='button' className='button-hl'  onClick={() => onClick(onSuccess,onFail,groupKey,dialogId)}><b>{text}</b></button>
+            <button type='button' className='button-hl'  onClick={() =>
+                                    onClick(onSuccess,onFail,groupKey,dialogId,includeUnmounted)}>
+                <b>{text}</b>
+            </button>
         </div>
     );
 }
 
 
 CompleteButton.propTypes= {
-    onFail: React.PropTypes.func,
-    onSuccess: React.PropTypes.func,
-    groupKey: React.PropTypes.string,
-    text: React.PropTypes.string,
-    closeOnValid: React.PropTypes.bool,
-    dialogId: React.PropTypes.string,
-    style: React.PropTypes.object
+    onFail: PropTypes.func,
+    onSuccess: PropTypes.func,
+    groupKey: PropTypes.string,
+    text: PropTypes.string,
+    closeOnValid: PropTypes.bool,
+    dialogId: PropTypes.string,
+    style: PropTypes.object,
+    includeUnmounted : PropTypes.bool
 };
 
 CompleteButton.contextTypes= {
     groupKey: React.PropTypes.string
 };
 
+CompleteButton.defaultProps= { includeUnmounted : false };
 
 export default CompleteButton;

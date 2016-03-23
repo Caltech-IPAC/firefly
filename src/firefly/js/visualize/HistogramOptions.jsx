@@ -2,14 +2,14 @@ import React from 'react';
 
 import ColValuesStatistics from './ColValuesStatistics.js';
 import CompleteButton from '../ui/CompleteButton.jsx';
-import FieldGroup from '../ui/FieldGroup.jsx';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import InputGroup from '../ui/InputGroup.jsx';
 import Validate from '../util/Validate.js';
-import ValidationField from '../ui/ValidationField.jsx';
-import CheckboxGroupInputField from '../ui/CheckboxGroupInputField.jsx';
-import ListBoxInputField from '../ui/ListBoxInputField.jsx';
-import RadioGroupInputField from '../ui/RadioGroupInputField.jsx';
+import {ValidationField} from '../ui/ValidationField.jsx';
+import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
+import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
+import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
 
 
