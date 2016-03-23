@@ -87,15 +87,11 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
  * @param fieldKey
  */
 function doDispatch(fieldGroup,  fieldKey){
-
-	validateFieldGroup(fieldGroup, (valid) => {
-		if(valid) {
-			var result = getFieldGroupResults(fieldGroup);
-			dispatchChangeMouseReadout(fieldKey,result[fieldKey] );
-
-		}
+	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions
+		var results= getFieldGroupResults(fieldGroup,true);
+		dispatchChangeMouseReadout(fieldKey,results[fieldKey] );
 		dispatchHideDialog(fieldKey);
-	});
+	},0);
 
 }
 /**

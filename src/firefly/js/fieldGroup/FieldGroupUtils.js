@@ -15,7 +15,7 @@ function validateResolvedSingle(groupKey,includeUnmounted, doneCallback) {
     var flds= getGroupFields(groupKey);
     var valid = Object.keys(flds).every( (key) =>
                      includeForValidation(flds[key],includeUnmounted) ? flds[key].valid : true);
-    doneCallback(valid);
+    if (doneCallback) doneCallback(valid);
 }
 
 
