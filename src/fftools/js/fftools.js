@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 
 import {flux, firefly} from 'firefly/Firefly.js';
 import AppDataCntlr from 'firefly/core/AppDataCntlr.js';
-import {LO_EXPANDED, LAYOUT_PATH, getActiveTableId, getExpandedMode} from 'firefly/core/LayoutCntlr.js';
+import {LO_EXPANDED, LAYOUT_PATH, getActiveTableId, getExpandedMode, SHOW_DROPDOWN_UI} from 'firefly/core/LayoutCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import {SearchPanel} from 'firefly/ui/SearchPanel.jsx';
@@ -22,10 +22,14 @@ import * as TblUtil from 'firefly/tables/TableUtil.js';
 import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
+import {getActionFromUrl} from 'firefly/core/History.js';
 
+
+const HOME = {type: SHOW_DROPDOWN_UI, payload: {view:'AnyDataSetSearch'}};
 
 firefly.bootstrap();
-firefly.process( {type : AppDataCntlr.APP_LOAD} );
+const goto = getActionFromUrl();
+firefly.process(goto || HOME);
 
 const resultId = TblUtil.uniqueTblUiGid();
 

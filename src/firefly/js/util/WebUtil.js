@@ -142,7 +142,7 @@ export function fetchUrl(url, options) {
         });
 }
 
-function makeUrl(url, params) {
+export function makeUrl(url, params) {
     var rval = url.trim();
     if ( !(rval.toLowerCase().startsWith('http') || rval.startsWith('/')) ) {
         rval = getRootURL() + rval;
@@ -184,4 +184,52 @@ export function download(url) {
         document.body.appendChild(nullFrame);
     }
     nullFrame.src = url;
+}
+
+export function parseUrl(url) {
+    const parser = document.createElement('a');
+    const searchObject = {}, pathAry = [];
+    parser.href = url;
+
+    // Convert query string to object
+    const queries = parser.search.replace(/^\?/, '').split('&');
+    queries.forEach((v) => {
+        const parts = v.split('=').map((s) => decodeURIComponent(s));
+        var pv = parts[1];
+        if (pv && pv.includes('&')) {
+            const pvObject = {};
+            pv.split('&').forEach( (s) =>{
+                const kv = s.split('=').map((s) => decodeURIComponent(s));
+                pvObject[kv[0]] = kv[1];
+            });
+            pv = pvObject;
+        }
+        searchObject[parts[0]] = pv;
+    });
+
+    // Convert path string to object
+    const paths = parser.pathname.split('/');
+    paths.forEach((v) => {
+        v.split(';').forEach( (pp, idx) => {
+            if (idx > 0) {
+                pp.split(',').forEach( (kvp) => {
+                    const kv = kvp.split('=').map((s) => s.trim()).map((s) => decodeURIComponent(s));
+                    pathAry[idx-1] = Object.assign(pathAry[idx-1] || {}, {path: v, [kv[0]]: kv[1]});
+                    }
+                );
+            }
+        });
+    });
+
+    return {
+        protocol: parser.protocol,
+        host: parser.host,
+        hostname: parser.hostname,
+        port: parser.port,
+        pathname: parser.pathname,
+        search: parser.search,
+        hash: parser.hash,
+        searchObject,
+        pathAry
+    };
 }
