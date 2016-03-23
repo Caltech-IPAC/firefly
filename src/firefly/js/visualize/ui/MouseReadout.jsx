@@ -102,7 +102,7 @@ export class MouseReadout extends React.Component {
             flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
             fluxLabel: [],
             mouseReadouts: {},
-            imagePt:this.props.mouseState.imagePt,
+            imagePt:this.props.mouseState.imagePt
 
     });
 
@@ -159,7 +159,7 @@ export class MouseReadout extends React.Component {
                 fluxLabel: getFluxLabels(nextProps.plotView),
                 flux: [],
                 mouseReadouts: getAllMouseReadouts(nextProps.plotView, nextProps.mouseState, nextProps.visRoot),
-                imagePt: nextProps.mouseState.imagePt,
+                imagePt: nextProps.mouseState.imagePt
 
             });
 
@@ -401,6 +401,7 @@ function showSingleBandFluxLabel(plot, band) {
 function getCoordinateMap(coordinateRadioValue) {
     var coordinate;
     var type;
+
     if (coordinateRadioValue === 'eqj2000hms') {
         coordinate = CoordinateSys.EQ_J2000;
         type = 'hms';
