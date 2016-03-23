@@ -11,12 +11,12 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import AppDataCntlr from '../../core/AppDataCntlr.js';
-import ListBoxInputField from '../../ui/ListBoxInputField.jsx';
-import FieldGroup from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import TargetPanel from '../../ui/TargetPanel.jsx';
-import ValidationField from '../../ui/ValidationField.jsx';
+import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
+import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils';
+import {TargetPanel} from '../../ui/TargetPanel.jsx';
+import {ValidationField} from '../../ui/ValidationField.jsx';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {convertAngle} from '../VisUtil.js';
@@ -59,7 +59,7 @@ export function showImageSelPanel(popTitle)
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
-    AppDataCntlr.showDialog(popupId);
+    dispatchShowDialog(popupId);
 }
 
 /*
@@ -247,28 +247,31 @@ class ImageSelection extends Component {
          super(props);
 
          this.groupKey = panelKey;
-         if (!FieldGroupUtils.getGroupFields(this.groupKey)) {
-             FieldGroupUtils.initFieldGroup(this.groupKey, ImageSelPanelChange, true);
-         }
-         this.state = {currentCatalogIdx: 0,
-                       fields: FieldGroupUtils.getResults(this.groupKey)};
+         // if (!FieldGroupUtils.getGroupFields(this.groupKey)) {
+         //     dispatchInitFieldGroup(this.groupKey, true, null, ImageSelPanelChange);
+         // }
+         this.state = {currentCatalogIdx: 0 };
      }
 
     componentWillUnmount() {
-        if (this.unbinder) this.unbinder();
+        this.iAmMounted= false;
+        if (this.removeListener) this.removeListener();
     }
 
     componentDidMount() {
+        this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.stateUpdate());
     }
 
     stateUpdate() {
 
-        var fields = FieldGroupUtils.getResults(this.groupKey);
+        var fields = getFieldGroupResults(this.groupKey);
 
         if (fields) {
             var crtCatalogId = computeCurrentCatalogId(Object.keys(fields));
-            this.setState({currentCatalogIdx: crtCatalogId, fields});
+            if (this.iAmMounted) {
+                this.setState({currentCatalogIdx: crtCatalogId});
+            }
         }
     }
 

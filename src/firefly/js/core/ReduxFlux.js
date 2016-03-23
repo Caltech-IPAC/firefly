@@ -10,6 +10,7 @@ import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { connect, Provider } from 'react-redux';
 import { actionSideEffectMiddleware } from '../side-effects';
 import AppDataCntlr  from './AppDataCntlr.js';
+import {recordHistory} from './History.js';
 import {LAYOUT_PATH, reducer as layoutReducer}  from './LayoutCntlr.js';
 import FieldGroupCntlr from '../fieldGroup/FieldGroupCntlr.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY,
@@ -29,6 +30,8 @@ import * as TablesUiCntlr from '../tables/TablesUiCntlr';
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
+import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
+import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js';
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -36,6 +39,7 @@ import SelectArea from '../drawingLayers/SelectArea.js';
 import DistanceTool from '../drawingLayers/DistanceTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
+import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -46,7 +50,7 @@ const actionCreators = new Map();
 
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
-                                                     PointSelection, StatsPoint );
+                                                     PointSelection, StatsPoint, NorthUpCompass );
 
 
 /**
@@ -65,7 +69,9 @@ const reducers = {
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
-    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory)
+    [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
+    [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
+    [DIALOG_KEY]: DialogCntlr.reducer
 };
 
 let redux = null;
@@ -87,6 +93,7 @@ actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionAc
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
+actionCreators.set(TablesCntlr.TABLE_SEARCH, TablesCntlr.tableSearch);
 actionCreators.set(TablesCntlr.TABLE_FETCH, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.TABLE_FETCH_UPDATE, TablesCntlr.fetchTable);
 actionCreators.set(TablesCntlr.TABLE_HIGHLIGHT, TablesCntlr.highlightRow);
@@ -154,7 +161,8 @@ function createRedux() {
 
     // redux is a store and more.. it manages reducers as well as thunk actions
     // we'll call it redux for now.
-    return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, logger)(createStore)(rootReducer);
+    // return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, logger)(createStore)(rootReducer);
+    return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware)(createStore)(rootReducer);
 }
 
 function bootstrap() {
@@ -203,6 +211,8 @@ function process(rawAction, condition) {
         redux.dispatch( rawAction );
     }
 
+    recordHistory(rawAction);
+
     return new Promise(
         function (resolve, reject) {
             if (condition) {
@@ -242,6 +252,9 @@ function getState() {
     return redux ? redux.getState() : null;
 }
 
+function getRedux() {
+   return redux;
+}
 
 function createSmartComponent(connector, component) {
     var Wrapper = connect(connector)(component);
@@ -273,6 +286,7 @@ export var reduxFlux = {
     createSmartComponent,
     registerDrawLayer,
     createDrawLayer,
-    getDrawLayerFactory
+    getDrawLayerFactory,
+    getRedux
 };
 

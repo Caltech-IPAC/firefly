@@ -21,6 +21,7 @@ import {showFitsDownloadDialog} from '../../ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
+import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 
 
 //===================================================
@@ -163,12 +164,12 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
 
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
-                                    typeId={'TODO'}
+                                    typeId={NorthUpCompass.TYPE_ID}
                                     tip='Show the directions of Equatorial J2000 North and East'
                                     iconOn={COMPASS_ON}
                                     iconOff={COMPASS_OFF}
                                     visible={mi.northArrow}
-                                    todo={true} />
+                                    />
 
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}

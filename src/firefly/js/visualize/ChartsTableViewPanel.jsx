@@ -98,7 +98,7 @@ var ChartsPanel = React.createClass({
         if (tblStatsData.isColStatsReady) {
             const formName = 'XYPlotOptionsForm_'+tblId;
             return (
-                <XYPlotOptions groupKey = {formName}
+                <XYPlotOptions key={formName} groupKey = {formName}
                                   colValStats={tblStatsData.colStats}
                                   onOptionsSelected={(xyPlotParams) => {
                                             XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);

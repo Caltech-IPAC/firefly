@@ -2,16 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import update from 'react-addons-update';
-import {omitBy, isUndefined} from 'lodash';
+import {get,omitBy, isUndefined} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
 import * as TablesCntlr from './TablesCntlr.js';
+import {dispatchTableAdded} from './TablesUiCntlr.js';
+import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 import {logError} from '../util/WebUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
 
 /*---------------------------- ACTIONS -----------------------------*/
+export const TABLE_SEARCH         = `${TABLE_SPACE_PATH}.tableSearch`;
 export const TABLE_FETCH          = `${TABLE_SPACE_PATH}.tableFetch`;
 export const TABLE_FETCH_UPDATE   = `${TABLE_SPACE_PATH}.tableFetchUpdate`;
 export const TABLE_NEW            = `${TABLE_SPACE_PATH}.tableNew`;
@@ -23,6 +26,21 @@ export const TABLE_SELECT         = `${TABLE_SPACE_PATH}.tableSelect`;
 export const TABLE_HIGHLIGHT      = `${TABLE_SPACE_PATH}.tableHighlight`;
 
 /*---------------------------- CREATORS ----------------------------*/
+
+export function tableSearch(action) {
+    return (dispatch) => {
+        //dispatch(validate(FETCH_TABLE, action));
+        if (!action.err) {
+            var {request, resultId, tbl_ui_id} = action.payload;
+
+            dispatchTableFetch(request);
+            dispatchHideDropDownUi();
+            if (!TblUtil.findTblUiById(resultId, tbl_ui_id)) {
+                dispatchTableAdded(resultId, tbl_ui_id, request.tbl_id);
+            }
+        }
+    };
+}
 
 export function highlightRow(action) {
     return (dispatch) => {
@@ -94,6 +112,17 @@ export function reducer(state={}, action={}) {
 }
 
 /*---------------------------- DISPATCHERS -----------------------------*/
+
+/**
+ * Initiate a search that returns a table which will be added to a UI
+ * view designated by the given resultId.
+ * @param request
+ * @param resultId
+ * @param tbl_ui_id
+ */
+export function dispatchTableSearch(request, resultId, tbl_ui_id) {
+    flux.process( {type: TABLE_SEARCH, payload: {request, resultId, tbl_ui_id} });
+}
 
 /**
  * Fetch a table from the server.

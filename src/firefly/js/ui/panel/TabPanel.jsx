@@ -3,48 +3,55 @@
  */
 
 import './TabPanel.css';
-import React from 'react';
+import React, {Component, PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
+import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 
 
-export var Tabs = React.createClass({
+export class Tabs extends Component {
 
-    mixins : [PureRenderMixin],
 
-    propTypes: {
-        defaultSelected:  React.PropTypes.number,
-        onTabSelect: React.PropTypes.func
-    },
+    constructor(props) {
+        super(props);
+        const {defaultSelected} = props;
+        var selectedIdx;
+        if (!isNaN(defaultSelected)) {
+            selectedIdx = defaultSelected;
+        }
+        else {
+            const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
+            selectedIdx= idx>-1 ? idx : 0;
+        }
 
-    getDefaultProps() {
-        return {
-            defaultSelected: 0
-        };
-    },
+        this.state= {selectedIdx};
+    }
 
-    getInitialState() {
-        const {defaultSelected} = this.props;
-        return {
-            selectedIdx : defaultSelected ? defaultSelected : 0
-        };
-    },
+    
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
 
-    onSelect(index, content) {
+
+    onSelect(index,id,name) {
         const {onTabSelect} = this.props;
         this.setState({
-            selectedIdx: index,
-            content
+            selectedIdx: index
         });
         if (onTabSelect) {
-            onTabSelect(index);
+            onTabSelect(index,id,name);
         }
-    },
+    }
 
     render () {
-        var { selectedIdx, content }= this.state;
+        var { selectedIdx}= this.state;
+        var content;
         selectedIdx = Math.min(selectedIdx, this.props.children.length-1);
-        var index = 0,
-            children = React.Children.map(this.props.children, (child) => {
+        var children = React.Children.map(this.props.children, (child, index) => {
+                if (index === selectedIdx) {
+                    content = React.Children.only(child.props.children);
+                }
+
                 return React.cloneElement(child, {
                     selected: (index == selectedIdx),
                     onSelect: this.onSelect.bind(this, index),
@@ -62,47 +69,45 @@ export var Tabs = React.createClass({
             </div>
         );
     }
-});
+}
 
-export var Tab = React.createClass({
 
-    mixins : [PureRenderMixin],
+Tabs.propTypes= {
+    defaultSelected:  PropTypes.any,
+    onTabSelect: PropTypes.func
+};
 
-    propTypes: {
-        name: React.PropTypes.string.isRequired, //public
-        selected:  React.PropTypes.bool.isRequired, // private - true is the tab is currently selected
-        onSelect: React.PropTypes.func, // private - called whenever the tab is clicked
-        removable: React.PropTypes.bool,
-        onTabRemove: React.PropTypes.func
-    },
+Tabs.defaultProps= {
+    defaultSelected: 0
+};
 
-    getDefaultProps() {
-        return {
-            selected: false
-        };
-    },
+
+export class Tab extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    shouldComponentUpdate(np, ns) {
+        return sCompare(this, np, ns);
+    }
+
 
     componentWillMount() {
-        const {selected, onSelect, children} = this.props;
+        const {selected, onSelect} = this.props;
         if (selected) {
-            onSelect(React.Children.only(children));
+            onSelect();
         }
-    },
+    }
 
     render () {
-        const {name, selected, onSelect, children, removable, onTabRemove} = this.props;
-        var content = React.Children.only(children);
+        const {name, selected, onSelect, removable, onTabRemove,id} = this.props;
         var tabClassName = 'TabPanel__Tab';
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
-        const style = {position: 'relative',
-                        display: 'inline-block',
-                        top: -3,
-                        right: -6};
         return (
-            <li className={tabClassName} onClick={onSelect.bind(null,content)}>
-                {name}
+            <li className={tabClassName}>
+                <div style={{display: 'inline-block'}} onClick={() => onSelect(id,name)} >{name}</div>
                 {removable &&
                         <div style={{right: -5, top: -2}} className='btn-close'
                              title='Remove Tab'
@@ -112,4 +117,35 @@ export var Tab = React.createClass({
         );
 
     }
-});
+}
+
+
+Tab.propTypes= {
+    name: PropTypes.string.isRequired, //public
+    id: PropTypes.string,
+    selected:  PropTypes.bool.isRequired, // private - true is the tab is currently selected
+    onSelect: PropTypes.func, // private - called whenever the tab is clicked
+    removable: PropTypes.bool,
+    onTabRemove: PropTypes.func
+};
+
+Tab.defaultProps= { selected: false };
+
+
+
+function onChange(idx,id, name, params, fireValueChange) {
+    var value= id||name;
+    if (!value) value= idx;
+
+    fireValueChange({ value});
+}
+
+function getProps(params, fireValueChange) {
+    return Object.assign({}, params,
+        {
+            onTabSelect: (idx,id,name) => onChange(idx,id,name,params, fireValueChange),
+            defaultSelected:params.value
+        });
+}
+
+export const FieldGroupTabs= fieldGroupConnector(Tabs,getProps);

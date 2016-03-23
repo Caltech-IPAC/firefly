@@ -15,7 +15,7 @@ import {dispatchTableRemove} from '../TablesCntlr.js';
 
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_EXPANDED, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
+import {LO_EXPANDED, dispatchSetLayoutMode, getExpandedMode, dispatchActiveTableChanged} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import LOADING from 'html/images/gxt/loading.gif';
@@ -52,11 +52,13 @@ export class TablesContainer extends Component {
     }
 
     render() {
-        const {expandedMode, ...others} = this.state;
+        const {expandedMode, tables, layout} = this.state;
         const {tbl_ui_gid} = this.props;
 
-        return expandedMode ? <ExpandedView tbl_ui_gid={tbl_ui_gid} {...others} /> : <StandardView tbl_ui_gid={tbl_ui_gid} {...others} />;
-
+        if (isEmpty(tables)) return false;
+        else {
+            return expandedMode ? <ExpandedView {...{tbl_ui_gid, tables, layout}} /> : <TabsView {...{tbl_ui_gid, tables}} />;
+        }
     }
 }
 
@@ -75,38 +77,42 @@ function ExpandedView(props) {
     return (
         <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
-            <StandardView expandedMode={true} {...props} />
+            <TabsView expandedMode={true} {...props} />
         </div>
     );
 
 }
-ExpandedView.propTypes = StandardView.propTypes;
-ExpandedView.defaultProps = StandardView.defaultProps;
+ExpandedView.propTypes = TabsView.propTypes;
+ExpandedView.defaultProps = TabsView.defaultProps;
 
 
-function StandardView(props) {
+function TabsView(props) {
     const {tables, tbl_ui_gid, expandedMode} = props;
+    const onTabSelect = (idx) => {
+        const tbl_id = get(tables, [Object.keys(tables)[idx], 'tbl_id']);
+        tbl_id && dispatchActiveTableChanged(tbl_id)
+    };
 
     return (
-        <Tabs defaultSelected={0}>
-            {layoutTables(tables, tbl_ui_gid, expandedMode)}
+        <Tabs defaultSelected={0} onTabSelect={onTabSelect}>
+            {tablesAsTab(tables, tbl_ui_gid, expandedMode)}
         </Tabs>
     );
 }
-StandardView.propTypes = {
+TabsView.propTypes = {
     tbl_ui_gid: PropTypes.string,
     expandedMode: PropTypes.bool,
     mode: PropTypes.oneOf(['tabs', 'grid'])
 };
 
-StandardView.defaultProps = {
+TabsView.defaultProps = {
     tbl_gid: TblUtil.uniqueTblUiGid(),
     expandedMode: false,
     mode: 'tabs'
 };
 
 
-function layoutTables(tables, tbl_ui_gid, expandedMode) {
+function tablesAsTab(tables, tbl_ui_gid, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
@@ -119,7 +125,7 @@ function layoutTables(tables, tbl_ui_gid, expandedMode) {
 
             return  (
                 <Tab key={tbl_ui_id} name={tbl_ui_id} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_ui_id} {...{tbl_id, tbl_ui_id, expandedMode}} />
+                    <TablePanel key={tbl_ui_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
                 </Tab>
             );
         } );

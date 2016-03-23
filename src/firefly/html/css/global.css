@@ -204,7 +204,7 @@ img, html {
 }
 
 [role="toolbar"] .group {
-    background-color: #a5a5a5;
+    background-color: #c8c8c8;
     display: flex;
     align-items: center;
 }
@@ -225,8 +225,26 @@ img, html {
 }
 
 [role="toolbar"] button:hover {
-    background-color: #949494;
+    background-color: rgba(0,0,0,.15);
     cursor: pointer;
+}
+
+.btn-close {
+    color: #666;
+    font-size: 10px;
+    display: inline-block;
+    position: relative;
+    text-shadow: 0 1px 0 #fff;
+    width: 12px;
+    height: 14px;
+}
+.btn-close:hover {
+    background-color: #949494;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.btn-close:after {
+    content: '×'; /* UTF-8 symbol */
 }
 
 .btn-close {

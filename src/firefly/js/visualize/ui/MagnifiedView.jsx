@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import {isEmpty} from 'lodash';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import {MouseState} from '../VisMouseCntlr.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './../iv/TileDrawHelper.jsx';
@@ -129,7 +130,7 @@ function showMag(spt,plot,size) {
 
 
     var {tiles,newX,newY} =getImagesAt(plot,makeScreenPt(x, y), size);
-    if (!tiles || !tiles.length) return false;
+    if (isEmpty(tiles)) return false;
 
     var pt1, pt2, pt3, pt4;
     var [t1,t2,t3,t4]= tiles;

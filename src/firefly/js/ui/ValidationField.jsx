@@ -1,60 +1,26 @@
 import React from 'react';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-
 
 import {InputFieldView} from './InputFieldView.jsx';
-import FieldGroupToStoreMixin from '../fieldGroup/FieldGroupToStoreMixin.js';
+import {fieldGroupConnector} from './FieldGroupConnector.jsx';
 
 
-var ValidationField= React.createClass(
-{
+function onChange(ev, store, fireValueChange) {
 
-    mixins : [PureRenderMixin, FieldGroupToStoreMixin],
+    var {valid,message}= store.validator(ev.target.value);
 
+    fireValueChange({ value : ev.target.value, message, valid });
+}
 
-    propTypes: {
-        fieldKey: React.PropTypes.string,
-        inline : React.PropTypes.bool
-    },
-
-    contextTypes: {
-        groupKey: React.PropTypes.string
-    },
-
-    onChange(ev) {
-
-        var {valid,message}= this.getValidator()(ev.target.value);
-
-        this.fireValueChange({
-            fieldKey : this.props.fieldKey,
-            newValue : ev.target.value,
-            message,
-            valid,
-            fieldState : this.state.fieldState
+function getProps(params, fireValueChange) {
+    return Object.assign({}, params,
+        {
+            onChange: (ev) => onChange(ev,params, fireValueChange),
+            value: String(params.value)
         });
-    },
+}
 
+const propTypes= {
+      inline : React.PropTypes.bool
+};
 
-
-    render() {
-        return (
-            <InputFieldView
-                style={this.props.style}
-                valid={this.isValid()}
-                visible= {this.isVisible()}
-                message={this.getMessage()}
-                onChange={this.onChange}
-                value={String(this.getValue())}
-                tooltip={this.getTip()}
-                label={this.getLabel()}
-                inline={this.props.inline||false}
-                labelWidth={this.props.labelWidth||this.getLabelWidth()}
-            />
-        );
-    }
-
-
-});
-
-export default ValidationField;
-
+export const ValidationField= fieldGroupConnector(InputFieldView,getProps,propTypes);

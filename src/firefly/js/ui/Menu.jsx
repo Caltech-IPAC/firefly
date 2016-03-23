@@ -6,16 +6,19 @@ import React from 'react';
 import './Menu.css';
 import {flux} from '../Firefly.js';
 import appDataCntlr from '../core/AppDataCntlr.js';
-import {dispatchUpdateLayout} from '../core/LayoutCntlr.js';
+import {dispatchShowDropDownUi} from '../core/LayoutCntlr.js';
 
 
 
 function handleAction (menuItem) {
 
     // set whether search menu should be shown
-    dispatchUpdateLayout( {search: (menuItem.type === appDataCntlr.SEARCH_TYPE)});
+    if (menuItem.type === appDataCntlr.DROP_DOWN_TYPE) {
+        dispatchShowDropDownUi( {view: menuItem.action});
+    } else {
+        flux.process({type: menuItem.action, payload:{}});
+    }
 
-    flux.process({type: menuItem.action, payload:{}});
 }
 
 /**

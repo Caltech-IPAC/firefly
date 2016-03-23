@@ -23,8 +23,12 @@
     flex-direction: column;
     flex: auto;
     position: relative;
-    background-color: #a5a5a5;
-    border: 1px solid #8c8c8c;
+    background-color: #c8c8c8;
+    padding: 0;
+}
+
+.TablePanel__wrapper .border {
+    border: 1px solid #b3b3b3;
     padding: 0 3px 3px 3px;
 }
 
@@ -162,7 +166,7 @@ button.tablepanel.clearFilters {
 }
 
 .public_fixedDataTable_main, .public_fixedDataTable_header, .public_fixedDataTable_hasBottomBorder {
-    border-color: #8c8c8c
+    border-color: #b5b5b5
 }
 
 .public_fixedDataTable_header .public_fixedDataTableCell_main {

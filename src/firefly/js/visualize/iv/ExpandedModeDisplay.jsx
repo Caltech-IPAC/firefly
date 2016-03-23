@@ -5,17 +5,17 @@
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
 import {visRoot, dispatchChangeExpandedMode, ExpandType} from '../ImagePlotCntlr.js';
+import {getMultiViewRoot, getExpandedViewerPlotIds} from '../MultiViewCntlr.js';
 import {flux} from '../../Firefly.js';
-import {ExpandedModeDisplayView} from './ExpandedModeDisplayView.jsx';
-
-
+import {ExpandedTools} from './ExpandedTools.jsx';
+import {MultiImageViewerView} from '../ui/MultiImageViewerView.jsx';
 
 export class ExpandedModeDisplay extends Component {
 
 
     constructor(props) {
         super(props);
-        this.state= {visRoot:visRoot()};
+        this.state= {visRoot:visRoot(), multiViewRoot:getMultiViewRoot()};
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -36,18 +36,31 @@ export class ExpandedModeDisplay extends Component {
     }
 
     storeUpdate() {
-        var {state}= this;
-        var vr= visRoot();
-        if (vr!==state.visRoot) {
-            this.setState({visRoot:vr});
+        const {state}= this;
+        const vr= visRoot();
+        const mvR= getMultiViewRoot();
+
+        if (vr!==state.visRoot || mvR!=state.multiViewRoot) {
+            this.setState({visRoot:vr, multiViewRoot:mvR});
         }
     }
 
 
 
     render() {
+        const {visRoot:vr,multiViewRoot}= this.state;
+        if (vr.expandedMode===ExpandType.COLLAPSE) return false;
+
+        const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
+
         return (
-            <ExpandedModeDisplayView visRoot={this.state.visRoot}
+            <MultiImageViewerView viewerPlotIds={getExpandedViewerPlotIds(multiViewRoot)}
+                                  layoutType={layoutType}
+                                  Toolbar={ExpandedTools}
+                                  viewerId={'EXPANDED_VIEW'}
+                                  visRoot={vr}
+                                  additionalStyle={{flex:'1 1 auto'}}
+                                  defaultDecoration={false} 
             />
         );
     }

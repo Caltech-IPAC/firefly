@@ -2,95 +2,94 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import {flux} from '../Firefly.js';
-import './SearchPanel.css';
+import React, {Component, PropTypes} from 'react';
+
+import FormPanel from './FormPanel.jsx';
+import {FieldGroup} from '../ui/FieldGroup.jsx';
+import {ValidationField} from '../ui/ValidationField.jsx';
+import Validate from '../util/Validate.js';
+import {download} from '../util/WebUtil.js';
+import {getRootURL} from '../util/BrowserUtil.js';
+
+import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+
+import {TableRequest} from '../tables/TableRequest.js';
+import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
+import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import * as TblUtil from '../tables/TableUtil.js';
 
 
-function showFooters() {
+export const SearchPanel = (props) => {
+    const {resultId} = props;
     return (
-        <div id='region-footer' className='footer'>
-            <div className='footer_wrapper'>
-                <div className='footer-container'>
-                    <div className='footer-panel'>
-                        <div className='footer-row'>
-                            <div className='footer-contact'>
-                                <ul>
-                                    <li>
-                                        <a href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</a>
-                                    </li>
-                                    <li>
-                                        <a href='http://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy
-                                            Policy</a>
-                                    </li>
-                                    <li>
-                                        <a href='http://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge
-                                            IRSA</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div className='footer-span5'>
-                                <div className='affiliates right'>
-                                    <a href='http://www.ipac.caltech.edu/'
-                                       alt='Infrared Processing and Analysis Center' target='ipac'
-                                       title='Infrared Processing and Analysis Center'><img alt='Icon_ipac'
-                                                                                            src='footer/icon_ipac-white-78x60.png'/></a>
-                                    <a href='http://www.caltech.edu/'
-                                       alt='California Institute of Technology'
-                                       target='caltech' title='California Institute of Technology'><img
-                                        alt='Icon_caltech' src='footer/icon_caltech-new.png'/></a>
-                                    <a href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
-                                       target='jpl' title='Jet Propulsion Laboratory'><img alt='Icon_jpl'
-                                                                                           src='footer/icon_jpl-white-91x60.png'/></a>
-                                    <a href='http://www.nasa.gov/'
-                                       alt='National Aeronautics and Space Administration' target='nasa'
-                                       title='National Aeronautics and Space Administration'><img
-                                        alt='Icon_nasa' src='footer/icon_nasa-white-59x60.png'/></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+        <div style={{padding: 10}}>
+            <FormPanel
+                width='640px' height='300px'
+                groupKey='TBL_BY_URL_PANEL'
+                onSubmit={(request) => onSearchSubmit(request, resultId)}
+                onCancel={hideSearchPanel}>
+                <p>
+                    <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
+                </p>
+                <FieldGroup groupKey='TBL_BY_URL_PANEL' validatorFunc={null} keepState={true}>
+                    <ValidationField style={{width:500}}
+                                     fieldKey='srcTable'
+                                     groupKey='TBL_BY_URL_PANEL'
+                                     initialState= {{ 
+                                                                value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
+                                                                validator: Validate.validateUrl.bind(null, 'Source Table'),
+                                                                tooltip: 'The URL to the source table',
+                                                                label : 'Source Table:',
+                                                                labelWidth : 120 
+                                                             }}
+                    />
+                    <ValidationField style={{width:500}}
+                                     fieldKey='filters'
+                                     groupKey='TBL_BY_URL_PANEL'
+                                     initialState= {{ 
+                                                                value: '',
+                                                                label : 'Filters:',
+                                                                labelWidth : 120 
+                                                             }}
+                    />
 
-function showAlerts() {
-    return (
-        <div id="region-alerts" aria-hidden="true" style="width: 100%; height: 100%; display: none;">
-            <div align="left" style="width: 100%; height: 100%;"></div>
-        </div>
-    );
-}
-
-
-const SearchPanel = function (props) {
-    var {show, children} = props;
-    const visi = show ? 'block' : 'none';
-
-    return (
-        <div className='DropDownToolBar'
-             style={{display: visi, zIndex: 10, position: 'absolute', width: '100%', height: 'calc(100% - 90px)'}}>
-            <div className='content'>
-                <div style={{display: 'table', margin: '0 auto'}}>
-                    <div className='shadow'>
-                        {children}
-                    </div>
-                </div>
-
-                {showFooters()}
-            </div>
-
+                </FieldGroup>
+            </FormPanel>
         </div>
     );
 };
 
 SearchPanel.propTypes = {
-    show: React.PropTypes.bool
+    name: PropTypes.oneOf(['AnyDataSetSearch']),
+    resultId: PropTypes.string
+};
+
+SearchPanel.defaultProps = {
+    name: 'AnyDataSetSearch',
+    resultId: TblUtil.uniqueTblUiGid()
 };
 
 
-export default SearchPanel;
+function doFileDownload() {
+    download(getRootURL() + 'samplehistdata.csv');
+}
 
+function hideSearchPanel() {
+    dispatchHideDropDownUi();
+}
+
+function onSearchSubmit(request, resultId) {
+    const activeTblId = TblUtil.uniqueTblId();
+    if (request.srcTable) {
+        var treq = TableRequest.newInstance({
+            id:'IpacTableFromSource',
+            source: request.srcTable,
+            tbl_id:  activeTblId,
+            filters: request.filters
+        });
+        const tbl_ui_id = TblUtil.uniqueTblUiId();
+        TableStatsCntlr.dispatchSetupTblTracking(activeTblId);
+        dispatchTableSearch(treq, resultId, tbl_ui_id);
+    }
+}
 
