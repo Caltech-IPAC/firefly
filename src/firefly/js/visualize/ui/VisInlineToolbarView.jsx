@@ -38,18 +38,13 @@ export function VisInlineToolbarView({plotView:pv, dlAry, showLayer, showExpand,
     var rS= {
         width: '100% - 2px',
         height: 34,
-        // display: 'inline-block',
         position: 'relative',
         verticalAlign: 'top',
         whiteSpace: 'nowrap',
-
-
         display:'inline-flex',
         flexDirection:'row',
         flexWrap:'nowrap',
-        alignItems: 'center',
-
-
+        alignItems: 'center'
     };
 
     return (

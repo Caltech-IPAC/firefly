@@ -9,13 +9,13 @@
  *
  */
 import React from 'react';
-import AppDataCntlr from '../core/AppDataCntlr.js';
+import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {download} from '../util/WebUtil.js';
-import RadioGroupInputField from './RadioGroupInputField.jsx';
+import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import CompleteButton from './CompleteButton.jsx';
-import FieldGroup from './FieldGroup.jsx';
+import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
@@ -48,7 +48,7 @@ const dialogBuilder = getDialogBuilder();
 
 export function showFitsDownloadDialog() {
     dialogBuilder();
-    AppDataCntlr.showDialog('fitsDownloadDialog');
+    dispatchShowDialog('fitsDownloadDialog');
 }
 
 /**
@@ -66,7 +66,7 @@ function getInitialPlotState() {
     if (plotState.isThreeColor()) {
         var threeColorBandUsed = true;
 
-        var bands = this.plotState.getBands();//array of Band
+        var bands = plotState.getBands();//array of Band
 
         if (bands != Band.NO_BAND) {
             var colors = [];
@@ -108,7 +108,6 @@ class FitsDownloadDialog extends React.Component {
 
     constructor(props) {
         super(props);
-        FieldGroupUtils.initFieldGroup('FITS_DOWNLOAD_FORM');
         this.state = {fields: FieldGroupUtils.getGroupFields('FITS_DOWNLOAD_FORM')};
 
     }
@@ -116,22 +115,21 @@ class FitsDownloadDialog extends React.Component {
 
     componentWillUnmount() {
 
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     }
 
 
     componentDidMount() {
 
+        this.iAmMounted= true;
         this.unbinder = FieldGroupUtils.bindToStore('FITS_DOWNLOAD_FORM', (fields) => {
-            this.setState({fields});
+            if (this.iAmMounted) this.setState({fields});
         });
     }
 
 
     render() {
-
-        var {fields}= this.state;
-        if (!fields) return false;
         return <FitsDownloadDialogForm  />;
     }
 
@@ -244,7 +242,8 @@ function FitsDownloadDialogForm() {
                         <div style={rightColumn}>
                             <RadioGroupInputField
                                 initialState={{
-                                    tooltip: 'Please select an option'
+                                    tooltip: 'Please select an option',
+                                    value : 'fits'
                                     //move the label as a InputFieldLabel
                                    }}
                                 options={ [

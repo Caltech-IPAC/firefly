@@ -41,7 +41,9 @@ export class DropDownContainer extends Component {
 
     storeUpdate() {
         const {visible, view} = getDropDownInfo();
-        this.setState({visible, selected: view});
+        if (visible!==this.state.visible || view!==this.state.view) {
+            this.setState({visible, selected: view});
+        }
     }
 
     render() {
