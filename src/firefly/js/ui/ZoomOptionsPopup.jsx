@@ -8,8 +8,9 @@ import Validate from '../util/Validate.js';
 import ValidationField from './ValidationField.jsx';
 import CheckboxGroupInputField from './CheckboxGroupInputField.jsx';
 import RadioGroupInputField from './RadioGroupInputField.jsx';
-import CompleteButton from './CompleteButton.jsx';
+import {SingleColumnMenu} from './DropDownMenu.jsx';
 import FieldGroup from './FieldGroup.jsx';
+import InputGroup from './InputGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import PopupPanel from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
@@ -17,7 +18,13 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot, dispatchRotate, ActionScope} from '../visualize/ImagePlotCntlr.js';
 import {RotateType} from '../visualize/PlotChangeTask.js';
-import {makeZoomLevelMatcher} from '../visualize/ZoomUtil';
+import {levels} from '../visualize/ZoomUtil';
+import {convertZoomToString} from '../visualize/ZoomUtil';
+import {makeZoomAction} from '../visualize/ZoomUtil';
+import {getZoomFactor}  from '../visualize/ZoomUtil';
+import {ToolbarButton} from './ToolbarButton.jsx';
+
+const _levels = levels;
 
 function getDialogBuilder() {
     var popup = null;
@@ -51,7 +58,7 @@ function getInitialPlotState() {
 
     var plot = primePlot(visRoot());
 
-
+    var zoomfactor = getZoomFactor(plot);
     var plotState = plot.plotState;
 
     if (plotState.isThreeColor()) {
@@ -88,6 +95,7 @@ function getInitialPlotState() {
     return {
         plot,
         colors,
+        zoomfactor,
         hasThreeColorBand: threeColorBandUsed,
         hasOperation: cropNotRotate
     };
@@ -158,7 +166,7 @@ function renderThreeBand(hasThreeColorBand, colors) {
                 <div title ='Please select an option' style={leftColumn}>Color Band:   </div>
 
                 <div style={rightColumn}>
-                    <RadioGroupInputField
+                    <Single
                         initialState={{
                                     tooltip: 'Please select an option'
                                      //move the label as InputFieldLabel above
@@ -213,15 +221,85 @@ class ZoomOptionsPopup extends React.Component {
 
 function ZoomOptionsPopupForm() {
 
-    const { plot, colors, hasThreeColorBand,hasOperation} = getInitialPlotState();
+    const { plot, colors, currzoomLevel, hasThreeColorBand,hasOperation} = getInitialPlotState();
 
     var renderOperationButtons = renderOperationOption(hasOperation);
 
     var renderThreeBandButtons = renderThreeBand(hasThreeColorBand, colors);//true, ['Green','Red', 'Blue']
 
-    var inputfield = {display: 'inline-block', paddingTop:40, paddingLeft:40, verticalAlign:'middle', paddingBottom:30};
+    var verticalColumn={ display: 'inline-block', paddingLeft:10, paddingBottom:20,paddingRight:10};
+    var rightColumn={display: 'inline-block', paddingLeft:20};
 
+    var zoom_levels = levels;
+
+    var currZoomLevelStr= convertZoomToString(currzoomLevel);
+    console.log(currZoomLevelStr);
+
+    var optionArray=[];
+        for (var i=0; i<zoom_levels.length; i++){
+            optionArray[i]={label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
+        }
+
+
+    return (
+        <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
+            <div  style={{ minWidth:100, minHeight: 300} }>
+
+                <div style={verticalColumn}>
+                    <SingleColumnMenu>
+                        {makeItems(plot,optionArray)}
+                    </SingleColumnMenu>
+
+                </div>
+
+            </div>
+        </FieldGroup>
+
+    );
+
+
+}
+
+function makeItems(pv,opAry) {
+    return opAry.map( (levelStr,opId) => {
         return (
+            <ToolbarButton text={levelStr.label} tip={levelStr.label}
+                           enabled={true} horizontal={false} key={levelStr.value}
+                           onClick={() => makeZoomAction(pv.plotId,levelStr.value)}/>
+        );
+    });
+}
+
+
+/*function getCurrZoomLevel(pv) {
+    var currZoomLevel= primePlot(pv);
+    return(
+        currZoomLevel
+
+    );
+
+}*/
+
+    /*var clsname = 'zoom_option' + (isSelected ? ' zoom__option-selected' : '');
+        return (
+            <div style={{minWidth: '75px'}}>
+                <table cellSpacing='0' cellPadding='0' style={{margin: '0px auto'}}>
+                    <tbody>
+                    <tr>
+                        <td align='left' style={{marginRight: '3px', display: 'none'}} />
+                        <td align='left' style={{verticalAlign: 'top'}}>
+                            <div className='zoom_Option-label' title={zoomOption.desc}
+                                 style={{whiteSpace: 'nowrap', padding: '6px 0px'}}>{zoomOption.label}
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
+    }*/
+
+        /*return (
 
             <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
                     <div style={inputfield}>
@@ -263,7 +341,43 @@ function ZoomOptionsPopupForm() {
             </FieldGroup>
         );
 
+}+/
+
+/**
+ *
+ * @param props
+ * @returns {{selected: string, zoomOptions: Array}}
+ */
+/*
+function makeZoom(props) {
+    var zoomLevels = [];
+    var selected = '';
+    var options = props['Zoom.Levevls'] || '';
+    options.split(/\s+/).forEach( (action) => {
+        const label = props[`${action}.Title`];
+        const desc = props[`${action}.ShortDescription`];
+        const icon = props[`${action}.Icon`];
+        const type = props[`${action}.ToolbarButtonType`] || SEARCH_TYPE;
+        menuItems.push({label, action, icon, desc, type});
+    });
+    return {selected, menuItems};
 }
+*/
+
+/**
+ *
+ */
+
+/*function getZoomLevels(levels){
+    var retval;
+    var zoom_levels = levels;
+    var optionArray=[];
+    for (var i=0; i<zoom_levels.length; i++){
+        optionArray[i]={label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
+    }
+    return retval=optionArray;
+
+}*/
 
 /*function showResults(success, request) {
     var statStr= `validate state: ${success}`;
