@@ -15,9 +15,8 @@ import WebPlotResult from './WebPlotResult.js';
 import VisUtil from './VisUtil.js';
 
 
-const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
+export const levels= [ .03125, .0625, .125,.25,.5, .75, 1,2,3, 4,5, 6,
                 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 32];
-
 
 const zoomMax= levels[levels.length-1];
 
