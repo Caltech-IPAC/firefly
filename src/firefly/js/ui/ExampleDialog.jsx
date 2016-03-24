@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {TargetPanel} from './TargetPanel.jsx';
-import InputGroup from './InputGroup.jsx';
+import {InputGroup} from './InputGroup.jsx';
 import Validate from '../util/Validate.js';
 import {ValidationField} from './ValidationField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
@@ -223,6 +223,7 @@ function FieldGroupTestView ({fields}) {
                 {field1}
                 <ValidationField fieldKey='field2' />
                 <ValidationField fieldKey='field3'
+                                 forceReinit={true}
                                  initialState= {{
                                           fieldKey: 'field3',
                                           value: '12',

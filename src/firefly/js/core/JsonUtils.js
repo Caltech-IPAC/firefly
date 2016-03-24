@@ -9,7 +9,7 @@
 /*eslint prefer-template:0 */
 import { getRootURL, getRootPath, getHost, getPort } from '../util/BrowserUtil.js';
 import { encodeServerUrl } from '../util/WebUtil.js';
-import ServerParams from '../data/ServerParams.js';
+import {ServerParams} from '../data/ServerParams.js';
 import {fetchUrl} from '../util/WebUtil.js';
 
 //var http= require('http');

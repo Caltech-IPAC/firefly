@@ -68,9 +68,9 @@ var draw=  {
 
     getScreenDist(drawObj, plot, pt) {
         var dist = -1;
-        var testPt= plot ? plot.getScreenCoords(drawObj.pt) : drawObj.pt;
+        var testPt= plot ? CCUtil.getScreenCoords(plot,drawObj.pt) : drawObj.pt;
 
-        if (testPt.type===Point.SPT) {
+        if (testPt && testPt.type===Point.SPT) {
             var dx= pt.x - testPt.x;
             var dy= pt.y - testPt.y;
             dist= Math.sqrt(dx*dx + dy*dy);

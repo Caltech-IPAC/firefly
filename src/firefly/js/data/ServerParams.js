@@ -1,21 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-/**
- * User: roby
- * Date: 2/7/12
- * Time: 10:14 AM
- */
-
-
-/**
- * @author Trey Roby
- */
 
 /**
  * List of constants that are used as the names of parameters passed to the server.
  */
-const ServerParams = {
+export const ServerParams = {
         COMMAND : 'cmd',
         DO_JSONP : 'doJsonp',
         RED_REQUEST : 'red',
@@ -154,5 +144,3 @@ const ServerParams = {
 
         USER_TARGET_WORLD_PT : 'UserTargetWorldPt'
 };
-
-export default ServerParams;

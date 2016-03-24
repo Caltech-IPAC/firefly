@@ -126,6 +126,9 @@ function attachLayerToPlot(drawLayer,action,factory) {
         drawLayer.plotIdAry.forEach( (id) =>
             drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
     }
+    else {
+        drawLayer.drawData= getDrawData(factory,drawLayer, action);
+    }
 
 
     return drawLayer;
@@ -220,23 +223,42 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     var newDD= Object.assign({},drawData);
 
     if (!newDD.data) newDD.data={};
-    newDD.data[plotId]= factory.getDrawData(DATA, pId, drawLayer, action, get(drawData,`data.${plotId}`));
+    
+    if (plotId) {
+        newDD.data[plotId]= factory.getDrawData(DATA, pId, drawLayer, action, get(drawData,`data.${plotId}`));
+    }
+    else {
+        newDD.data= factory.getDrawData(DATA, pId, drawLayer, action, drawData.data);
+    }
+
 
     if (drawLayer.canHighlight) {
         if (!newDD.highlightData) newDD.highlightData={};
-        newDD.highlightData[plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
-                                                          get(drawData,`highlightData.${plotId}`));
+        if (plotId) {
+            newDD.highlightData[plotId]= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,
+                                             get(drawData,`highlightData.${plotId}`));
+        }
+        else {
+            newDD.highlightData= factory.getDrawData(HIGHLIGHT_DATA, pId, drawLayer, action,drawData.highlightData);
+        }
     }
 
     if (drawLayer.canSelect) {
-        newDD.selectIdxAry= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action,
-                                                 drawData.selectIdxAry);
+        newDD.selectIdxAry= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action, drawData.selectIdxAry);
     }
-    var retval= {
-        data:             Object.assign({},drawData.data,newDD.data),
-        highlightData:   Object.assign({},drawData.highlightData,newDD.highlightData),
-        selectIdxAry: newDD.selectIdxAry
-    };
+
+
+    var retval;
+    if (plotId) {
+        retval= {
+            data:             Object.assign({},drawData.data,newDD.data),
+            highlightData:   Object.assign({},drawData.highlightData,newDD.highlightData),
+            selectIdxAry: newDD.selectIdxAry
+        };
+    }
+    else {
+        retval= newDD;
+    }
 
     // check for differences
     if (retval.data!==drawData.data ||

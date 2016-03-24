@@ -189,7 +189,7 @@ class Drawer {
             this.highlightCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw highlight- canvas update`);
             updateCanvasSize(width,height,c);
-            this.updateDataHighlightLayer(this.highlightData);
+            this.updateDataHighlightLayer(this.highlightData, width, height);
         }
     }
 
@@ -217,24 +217,23 @@ class Drawer {
     updateDataSelectLayer(data, selectedIdxAry) {
         this.data = data;
         this.selectedIdxAry= selectedIdxAry;
-        var {selectLayerCanvas}= this;
-        var sCtx= selectLayerCanvas? selectLayerCanvas.getContext('2d') : null;
+        var {selectCanvas}= this;
+        var sCtx= selectCanvas? selectCanvas.getContext('2d') : null;
 
         if (sCtx) {
             var cc= CsysConverter.make(this.plot);
             this.redrawSelected(sCtx, cc, this.data, selectedIdxAry,
-                selectLayerCanvas.width, selectLayerCanvas.height);
+                selectCanvas.width, selectCanvas.height);
         }
     }
 
-    updateDataHighlightLayer(highlightData) {
-        var {highlightLayerCanvas}= this;
+    updateDataHighlightLayer(highlightData,width,height) {
+        var {highlightCanvas, drawingDef}= this;
         this.highlightData=highlightData;
-        var hCtx= highlightLayerCanvas? highlightLayerCanvas.getContext('2d') : null;
+        var hCtx= highlightCanvas? highlightCanvas.getContext('2d') : null;
         if (hCtx)  {
             var cc= CsysConverter.make(this.plot);
-            this.redrawHighlight(hCtx, cc, highlightData,
-                highlightLayerCanvas.width,highlightLayerCanvas.height);
+            this.redrawHighlight(hCtx, cc, highlightData,drawingDef,width,height);
         }
     }
 
@@ -246,22 +245,22 @@ class Drawer {
 
     clear() {
         this.cancelRedraw();
-        var {primaryCanvas,selectLayerCanvas,highlightLayerCanvas}= this;
+        var {primaryCanvas,selectCanvas,highlightCanvas}= this;
 
         DrawUtil.clearCanvas(primaryCanvas);
-        DrawUtil.clearCanvas(selectLayerCanvas);
-        DrawUtil.clearCanvas(highlightLayerCanvas);
+        DrawUtil.clearCanvas(selectCanvas);
+        DrawUtil.clearCanvas(highlightCanvas);
         this.removeTask();
     }
 
 
     redraw() {
-        var {primaryCanvas,selectLayerCanvas,highlightLayerCanvas}= this;
+        var {primaryCanvas,selectCanvas,highlightCanvas}= this;
         if (!primaryCanvas) return;
 
         var pCtx= primaryCanvas ? primaryCanvas.getContext('2d') : null;
-        var sCtx= selectLayerCanvas? selectLayerCanvas.getContext('2d') : null;
-        var hCtx= highlightLayerCanvas? highlightLayerCanvas.getContext('2d') : null;
+        var sCtx= selectCanvas? selectCanvas.getContext('2d') : null;
+        var hCtx= highlightCanvas? highlightCanvas.getContext('2d') : null;
 
         var w= primaryCanvas.width;
         var h= primaryCanvas.height;
@@ -275,6 +274,7 @@ class Drawer {
 
     //todo - selected is not working , needs to be finished
     redrawSelected(ctx, cc, data, selectedIdxAry,w,h) {
+        return; // revamp this section
         if (!ctx) return;
         var selectedData= [];
         DrawUtil.clear(ctx,w,h);
@@ -287,6 +287,15 @@ class Drawer {
         }
     }
 
+    /**
+     * 
+     * @param ctx
+     * @param cc
+     * @param highlightData
+     * @param drawingDef
+     * @param w
+     * @param h
+     */
     redrawHighlight(ctx, cc, highlightData,drawingDef,w,h) {
         if (!ctx) return;
         DrawUtil.clear(ctx,w,h);

@@ -1,4 +1,4 @@
-AppMenu.Items = AnyDataSetSearch IrsaCatalogDropDown ImageSelectDropDownCmd overviewHelp
+AppMenu.Items = AnyDataSetSearch IrsaCatalogDropDown TestACatalog ImageSelectDropDownCmd overviewHelp exampleDialog
 
 
 
@@ -30,9 +30,19 @@ IrsaCatalogDropDown.Title= Catalogs CLASSIC
 IrsaCatalogDropDown.ShortDescription= Choose a catalog to add to your results
 
 about.Title=
+
 overviewHelp.Title= Help
 overviewHelp.ShortDescription= About IRSA view Tool
 overviewHelp.ToolbarButtonType= COMMAND
+
+
+exampleDialog.Title= Example Dialog
+exampleDialog.ShortDescription= An example
+exampleDialog.ToolbarButtonType= COMMAND
+
+
+TestACatalog.Title = Cat Test
+TestACatalog.ShortDescription= test...
 
 
 AnyDataSetSearch.Name = AnyDataSetSearch

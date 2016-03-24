@@ -6,7 +6,7 @@
  * Date: 3/5/12
  */
 
-import ServerParams from '../data/ServerParams.js';
+import {ServerParams} from '../data/ServerParams.js';
 import {doService} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
 import {PlotState} from '../visualize/PlotState.js';

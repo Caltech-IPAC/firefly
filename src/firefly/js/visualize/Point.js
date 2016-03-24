@@ -149,27 +149,41 @@ function stringAryToWorldPt(wpParts) {
 }
 
 export const makeWorldPt= function (lon,lat,coordSys,objName,resolver) {
-   return new WorldPt(lon,lat,coordSys,objName,resolver) ;
+    if (typeof lon === 'string') lon= Number(lon);
+    if (typeof lat === 'string') lat= Number(lat);
+    return new WorldPt(lon,lat,coordSys,objName,resolver) ;
 };
 
 
 export const makeImagePt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:IM_PT});
 };
 
 export const makeImageWorkSpacePt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:IM_WS_PT});
 };
 export const makeScreenPt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:SPT});
 };
 export const makeViewPortPt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:VP_PT});
 };
 export const makeProjectionPt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:PROJ_PT});
 };
 export const makeOffsetPt= function(x,y) {
+    if (typeof x === 'string') x= Number(x);
+    if (typeof y === 'string') y= Number(y);
     return Object.assign(new Pt(x,y), {type:OFFSET_PT});
 };
 
