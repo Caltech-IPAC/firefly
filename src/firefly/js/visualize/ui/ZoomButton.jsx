@@ -58,13 +58,20 @@ function getZoomer() {
 const zoom= getZoomer();
 
 
-function isZoomMax(pv) {
+export function isZoomMax(pv) {
     var zMax= getZoomMax();
     var {zoomFactor}= primePlot(pv);
     if (zoomFactor>=zMax) return true;
 
     var nextZ= getNextZoomLevel(zoomFactor,UserZoomTypes.UP);
     return (nextZ>=zMax );
+}
+
+export function getzoomFactor(pv){
+    var {zoomFactor}= primePlot(pv);
+    return zoomFactor;
+
+
 }
 
 
@@ -76,6 +83,10 @@ export function ZoomButton({plotView:pv,zoomType,visible}) {
                        enabled={enable} visible={visible}
                        horizontal={true} onClick={() => zoom(pv,zoomType)}/>
     );
+}
+
+export function makeZoomOptionButton({plotView:pv,zoomLevel,visible}){
+
 }
 
 
