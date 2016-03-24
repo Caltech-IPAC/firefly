@@ -9,10 +9,10 @@ import AppDataCntlr from '../core/AppDataCntlr.js';
 
 export const getUIComponent = (drawLayer,pv) => <NorthUpCompassUI drawLayer={drawLayer} pv={pv}/>;
 
-/*      TODO: NOT USED BUT KEPT FOR FUTURE USE 
-       Component that goes in layer option windows attached to the northup compass overlay 
-       Kept here in case we need it. 
-       To be called when creating a drawing factory passed in as 'getComponentUI' in NorthUpCompass.js 
+/*     TODO: NOT USED BUT KEPT FOR FUTURE USE
+       Component that goes in layer option windows attached to the northup compass overlay
+       Kept here in case we need it.
+       To be called when creating a drawing factory passed in as 'getComponentUI' in NorthUpCompass.js
 */
 function NorthUpCompassUI({drawLayer,pv}) {
 

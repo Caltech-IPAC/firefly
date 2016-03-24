@@ -132,7 +132,7 @@ var XYPlotTablePanel = React.createClass({
                 </Resizable>
             );
         }
-    } }
+    }}
 );
 
 export default XYPlotTablePanel;
