@@ -139,7 +139,7 @@ var HistogramTablePanel = React.createClass({
                 </Resizable>
             );
         }
-    } }
+    }}
 );
 
 export default HistogramTablePanel;

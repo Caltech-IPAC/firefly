@@ -15,7 +15,6 @@ import BrowserInfo from '../util/BrowserInfo.js';
 import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {primePlot, getPlotViewById} from '../visualize/PlotViewUtil.js';
-import {getUIComponent} from './NorthUpCompassUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {flux} from '../Firefly.js';
 import {makeDirectionArrowDrawObj} from '../visualize/draw/DirectionArrowDrawObj.js';

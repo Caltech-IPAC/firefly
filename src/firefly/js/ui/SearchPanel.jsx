@@ -35,21 +35,21 @@ export const SearchPanel = (props) => {
                     <ValidationField style={{width:500}}
                                      fieldKey='srcTable'
                                      groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{ 
+                                     initialState= {{
                                                                 value: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',
                                                                 validator: Validate.validateUrl.bind(null, 'Source Table'),
                                                                 tooltip: 'The URL to the source table',
                                                                 label : 'Source Table:',
-                                                                labelWidth : 120 
+                                                                labelWidth : 120
                                                              }}
                     />
                     <ValidationField style={{width:500}}
                                      fieldKey='filters'
                                      groupKey='TBL_BY_URL_PANEL'
-                                     initialState= {{ 
+                                     initialState= {{
                                                                 value: '',
                                                                 label : 'Filters:',
-                                                                labelWidth : 120 
+                                                                labelWidth : 120
                                                              }}
                     />
 

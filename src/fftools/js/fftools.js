@@ -76,7 +76,7 @@ const App = React.createClass({
                                              <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
                                              <TestImagePanel key='results-plots'/> }
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={activeTblId} /> }
+                            xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={activeTblId} />}
                             tables = {<TablesContainer key='results-tables' tbl_ui_gid={resultId} /> }
                         />
                     </main>
