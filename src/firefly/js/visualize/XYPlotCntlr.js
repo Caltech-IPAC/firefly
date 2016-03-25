@@ -1,7 +1,7 @@
 import {flux} from '../Firefly.js';
 
 import update from 'react-addons-update';
-import {has} from 'lodash';
+import {has, omitBy, isUndefined, isString} from 'lodash';
 
 
 import {doFetchTable, isTableLoaded} from '../tables/TableUtil.js';
@@ -23,7 +23,17 @@ export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
     {
          // tblXYPlotData
          isPlotDataReady: boolean
-         xyPlotData: [[rowIdx: int, x: string, y: string]*]  or [[row]
+         xyPlotData: {
+                    rows: [[x: string, y: string, rowIdx: string]*] ,
+                    decimateKey: string,
+                    xMin: string,
+                    xMax: string,
+                    yMin: string,
+                    yMax: string,
+                    weightMin: string,
+                    weightMax: string,
+                    idStr: string
+         }
          xyPlotParams: {
            title: string
            xyRatio: number
@@ -243,7 +253,25 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                const xyPlotData = tableModel.tableData.data;
+                const {tableData, tableMeta} = tableModel;
+                const xyPlotData = omitBy({
+                    rows: tableData.data,
+                    decimateKey: tableMeta['decimate_key'],
+                    xMin: tableMeta['decimate.X-MIN'],
+                    xMax: tableMeta['decimate.X-MAX'],
+                    yMin: tableMeta['decimate.Y-MIN'],
+                    yMax: tableMeta['decimate.Y-MAX'],
+                    weightMin: tableMeta['decimate.WEIGHT-MIN'],
+                    weightMax: tableMeta['decimate.WEIGHT-MAX'],
+                    idStr: tableMeta['tbl_id']
+                }, isUndefined);
+
+                // convert strings with numbers into numbers
+                let val, prop;
+                for (prop in xyPlotData) {
+                    val = xyPlotData[prop];
+                    if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
+                }
 
                 dispatch(updatePlotData(
                     {

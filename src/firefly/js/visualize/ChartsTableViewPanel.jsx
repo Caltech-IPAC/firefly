@@ -84,12 +84,11 @@ var ChartsPanel = React.createClass({
     onResize(size) {
         if (size) {
             this.state.debouncedResize.cancel;
-            const {width, height} = size;
-                this.setState({
-                    widthPx: (width - 10),
-                    heightPx: (height - 30),
-                    debouncedResize: debounce(this.onResize, 200, {'leading':false, 'trailing':true, 'maxWait':10000})
-                });
+            this.setState({
+                widthPx: (size.width - 10),
+                heightPx: (size.height - 30),
+                debouncedResize: debounce(this.onResize, 200, {'leading':false, 'trailing':true, 'maxWait':10000})
+            });
         }
     },
 
@@ -274,14 +273,13 @@ var ChartsPanel = React.createClass({
         if (this.state.chartType === SCATTER) {
             const {tblId, tableModel} = this.props;
             const selection = get(this.props, 'tblPlotData.xyPlotParams.selection');
-            const xyPlotData = get(this.props, 'tblPlotData.xyPlotData');
-            if (tableModel && xyPlotData && selection) {
-                // todo - support situations when rowId column is present or data are decimated
+            const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
+            if (tableModel && rows && selection) {
                 const {xMin, xMax, yMin, yMax} = selection;
                 const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
                 // add all rows which fall into selection
                 const xIdx = 0, yIdx = 1;
-                xyPlotData.forEach((arow, index) => {
+                rows.forEach((arow, index) => {
                     const x = Number(arow[xIdx]);
                     const y = Number(arow[yIdx]);
                     if (x>=xMin && x<=xMax && y>=yMin && y<=yMax) {
@@ -339,11 +337,11 @@ var ChartsPanel = React.createClass({
     },
 
     selectionNotEmpty(selection) {
-        const xyPlotData = get(this.props, 'tblPlotData.xyPlotData');
-        if (xyPlotData && selection) {
+        const rows = get(this.props, 'tblPlotData.xyPlotData.rows');
+        if (rows && selection) {
             const {xMin, xMax, yMin, yMax} = selection;
             const xIdx = 0, yIdx = 1;
-            const aPt = xyPlotData.find((arow) => {
+            const aPt = rows.find((arow) => {
                 const x = Number(arow[xIdx]);
                 const y = Number(arow[yIdx]);
                 return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
@@ -356,7 +354,6 @@ var ChartsPanel = React.createClass({
     },
 
     renderSelectionButtons() {
-        // todo: handling unselect
         if (this.displaySelectionOptions()) {
             return (
                 <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
@@ -365,13 +362,13 @@ var ChartsPanel = React.createClass({
                          src={ZOOM_IN}
                          onClick={() => this.addZoom()}
                     />
-                    <img style={selectionBtnStyle}
-                         title='Select enclosed points - ToDo'
+                    {!get(this.props, 'tblPlotData.xyPlotData.decimateKey') && <img style={selectionBtnStyle}
+                         title='Select enclosed points'
                          src={SELECT_ROWS}
                          onClick={() => this.addSelection()}
-                    />
+                    />}
                     <img style={selectionBtnStyle}
-                         title='Filter in the selected points - ToDo'
+                         title='Filter in the selected points'
                          src={FILTER_IN}
                          onClick={() => this.addFilter()}
                     />
