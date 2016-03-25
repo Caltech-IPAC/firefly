@@ -26,6 +26,7 @@ export const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfo
 
     const cname = col.name;
     const sortDir = sortInfoCls.getDirection(cname);
+    const style = {width: '100%', boxSizing: 'border-box'};
 
     return (
         <div title={col.title || cname} className='TablePanel__header'>
@@ -41,7 +42,8 @@ export const HeaderCell = ({col, showUnits, showFilters, filterInfoCls, sortInfo
                 onChange = {(v) => onFilter(v)}
                 actOn={['blur','enter']}
                 showWarning={false}
-                width='100%'
+                style={style}
+                wrapperStyle={style}
             />
             }
         </div>

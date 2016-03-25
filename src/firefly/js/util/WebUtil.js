@@ -108,7 +108,6 @@ export function fetchUrl(url, options) {
     const headers = {};
     if (options.method.toUpperCase() === 'POST') {
         // add default content-type header when method is 'post'
-        headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
     }
     options.headers = Object.assign(headers, options.headers);
 
