@@ -9,6 +9,7 @@ import * as TblUtil from './TableUtil.js';
 import * as TablesCntlr from './TablesCntlr.js';
 import {dispatchTableAdded} from './TablesUiCntlr.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
+import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {logError} from '../util/WebUtil.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -33,6 +34,7 @@ export function tableSearch(action) {
         if (!action.err) {
             var {request, resultId, tbl_ui_id} = action.payload;
 
+            dispatchSetupTblTracking(request.tbl_id);
             dispatchTableFetch(request);
             dispatchHideDropDownUi();
             if (!TblUtil.findTblUiById(resultId, tbl_ui_id)) {

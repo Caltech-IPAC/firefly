@@ -15,7 +15,6 @@ import {FileUpload} from '../ui/FileUpload.jsx';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 
@@ -97,7 +96,6 @@ function onSearchSubmit(request, resultId) {
             filters: request.filters
         });
         const tbl_ui_id = TblUtil.uniqueTblUiId();
-        TableStatsCntlr.dispatchSetupTblTracking(activeTblId);
         dispatchTableSearch(treq, resultId, tbl_ui_id);
     }
 }
