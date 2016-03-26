@@ -184,7 +184,7 @@ export class XYPlot extends React.Component {
     shouldComponentUpdate(nextProps) {
         const {data, width, height, params, highlighted, selectInfo, desc} = this.props;
         if (nextProps.data !== data ||
-            nextProps.selectInfo !== selectInfo) {
+            (nextProps.selectInfo !== selectInfo && !data.decimateKey)) {
             return true;
         } else {
             const chart = this.refs.chart && this.refs.chart.getChart();
@@ -241,6 +241,7 @@ export class XYPlot extends React.Component {
                     this.pendingResize = this.debouncedResize();
                     this.pendingResize(newWidth, newHeight);
                 }
+
                 return false;
             }
             return true;
@@ -347,7 +348,7 @@ export class XYPlot extends React.Component {
         //const chart = this.refs.chart && this.refs.chart.getChart();
         if (chart) {
             const {data, selectInfo, highlighted, onHighlightChange} = this.props;
-            const {rows, decimateKey, weightMin, weightMax, idStr} = data;
+            const {rows, decimateKey, weightMin, weightMax} = data;
 
             let allSeries, marker;
 
@@ -492,7 +493,7 @@ export class XYPlot extends React.Component {
         const {xTitle, xGrid, xReversed, xLog} = getXAxisOptions(params);
         const {yTitle, yGrid, yReversed, yLog} = getYAxisOptions(params);
         const {xMin, xMax, yMin, yMax} = getZoomSelection(params);
-        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax} = data;
+        const {xMin:xDataMin, xMax:xDataMax, yMin:yDataMin, yMax:yDataMax, decimateKey} = data;
 
         const makeSeries = this.makeSeries;
 
@@ -547,7 +548,9 @@ export class XYPlot extends React.Component {
                     return '<span> ' + `${params.x.label} = ${this.point.x} ${params.x.unit} <br/>` +
                         `${params.y.label} = ${this.point.y} ${params.y.unit} <br/> ` +
                         `${weight}</span>`;
-                }
+                },
+                shadow: !(decimateKey),
+                useHTML: Boolean((decimateKey))
             },
             plotOptions: {
                 scatter: {
