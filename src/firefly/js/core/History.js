@@ -17,7 +17,7 @@ import {get, pick} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import {TABLE_SEARCH} from '../tables/TablesCntlr.js';
-import {makeUrl, parseUrl} from '../util/WebUtil.js';
+import {encodeUrl, parseUrl} from '../util/WebUtil.js';
 import * as LO from './LayoutCntlr.js';
 
 const MAX_HISTORY_LENGTH = 20;
@@ -73,7 +73,7 @@ export function recordHistory(action={}) {
 function genericHandler(baseUrl='') {
     return {
         actionToUrl: (action) => {
-            return makeUrl(`${baseUrl};a=${action.type}?`, action.payload);
+            return encodeUrl(`${baseUrl};a=${action.type}?`, action.payload);
         }
     };
 }

@@ -1,5 +1,3 @@
-
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Lijun
@@ -343,7 +341,7 @@ function resultsSuccess(request, plot) {
 
     if (ext && ext.toLowerCase() == 'fits') {
         var param={file: fitsFile, return:makeFileName(plot, band), log: true};
-        var  url = encodeUrl(getRootURL() + '/servlet/Download', ParamType.QUESTION_MARK ,param);
+        var  url = encodeUrl(getRootURL() + '/servlet/Download', param);
         //download(getRootURL() + '/servlet/Download?file=' + fitsFile);
         download(url);
     }

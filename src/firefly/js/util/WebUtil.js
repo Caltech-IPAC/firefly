@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import isBlank from 'underscore.string/isBlank';
-import {cloneDeep} from 'lodash';
+import {get} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
@@ -22,46 +22,73 @@ export function getModuleName() {
  * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
  *
  * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
- * @param paramType  if the the parameters are for the server use QUESTION_MARK, if the client use POUND - TODO: make this optional
  * @param {array|Object} params parameters to be appended to the url.  These parameters may contain
  *               delimiter characters.  Unlike url, delimiter characters will be encoded as well.
  *               if the parameters are a array then it should be objects {name:string,value:string} otherwise
  *               it can be an object literal
  * @return {string} encoded url
  */
-export const encodeUrl= function(url, paramType, params) {
-    var paramChar= paramType===ParamType.QUESTION_MARK ? '?': '#';
-    var parts = url.split('\\'+paramChar, 2);
+export const encodeUrl= function(url, params) {
+
+    var rval = url.trim();
+    if ( !(rval.toLowerCase().startsWith('http') || rval.startsWith('/')) ) {
+        rval = getRootURL() + rval;
+    }
+    if (!params) return rval;
+
+    var parts = url.split('?');
     var baseUrl = parts[0];
-    //var queryStr = encodeURI(parts.length===2 ? parts[1] : '');
+    var queryStr= encodeParams(params);
 
-    var paramAry;
+    return encodeURI(baseUrl) + (queryStr.length ? '?' : '') + queryStr;
+};
 
+/**
+ * convert a params object to an encoded url fragment.
+ * this function supports nested object.  if the value of a param is an object
+ * or an array of {name, value}, it will encode the child, and then encode the parent as well.
+ * @param params key/value object or an array of {name,value}.
+ * @returns {*}
+ */
+export function encodeParams(params) {
     if (Array.isArray(params)) {
-        paramAry= params;
-    }
-    else {
-        paramAry= Object.keys(params).reduce( (ary,key) => {
-            ary.push({name:key, value : params[key]});
-            return ary;
-        },[]);
+        params = params.reduce( (rval, val) => {
+            const key = get(val, 'name');
+            key && (rval[key] = get(val, 'value'));
+            return rval;
+        }, {});
     }
 
-    var queryStr= paramAry.reduce((str,param,idx) => {
-        if (param && param.name) {
-            var key = encodeURI(param.name.trim());
-            var valStr='';
-            if (typeof(param.value) != 'undefined' && param.value != null) {
-                valStr= String(param.value);
-            }
-            var val = valStr.length ? encodeURIComponent(valStr.trim()) : '';
-            str += val.length ? key + '=' + val + (idx < paramAry.length-1 ? '&' : '') : key;
-            return str;
+    return Object.keys(params).reduce((rval, key) => {
+        key = encodeURIComponent(key.trim());
+        var val = get(params, key, '');
+        rval = rval.length ? rval + '&' : rval;
+        if (typeof val === 'object') {
+            return rval + key + '=' + encodeURIComponent(encodeParams(val));
+        } else {
+            return rval + key + '=' + encodeURIComponent(val);
         }
     },'');
+}
 
-    return encodeURI(baseUrl) + (queryStr.length ? paramChar + queryStr : '');
-};
+/**
+ * convert a queryStr into an Object.  This is an inverse of encodeParams.
+ * It support Object whose value is another Object.
+ * @param queryStr
+ * @returns {*}
+ */
+export function decodeParams(queryStr) {
+    const params = queryStr.replace(/^\?/, '').split('&');
+    return params.reduce( (rval, param) => {
+        const parts = param.split('=').map((s) => decodeURIComponent(s.trim()));
+        var val = decodeURIComponent(get(parts, [1], ''));
+        if (val.includes('&')) {
+            val = decodeParams(val);
+        }
+        rval[parts[0]] = val;
+        return rval;
+    }, {});
+}
 
 
 /**
@@ -75,7 +102,7 @@ export const encodeUrl= function(url, paramType, params) {
  * @return encoded url
  */
 export const encodeServerUrl= function(url, params) {
-    return encodeUrl(url, ParamType.QUESTION_MARK,params);
+    return encodeUrl(url, params);
 };
 
 /**
@@ -108,15 +135,14 @@ export function fetchUrl(url, options) {
     const headers = {};
     if (options.method.toUpperCase() === 'POST') {
         // add default content-type header when method is 'post'
-        headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
     }
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
         if (options.method.toUpperCase() === 'GET') {
-            url = makeUrl(url, options.params);
+            url = encodeUrl(url, options.params);
         } else {
-            url = makeUrl(url);
+            url = encodeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
                 var data = new FormData();
@@ -142,30 +168,6 @@ export function fetchUrl(url, options) {
         });
 }
 
-export function makeUrl(url, params) {
-    var rval = url.trim();
-    if ( !(rval.toLowerCase().startsWith('http') || rval.startsWith('/')) ) {
-        rval = getRootURL() + rval;
-    }
-    if (!params) return rval;
-
-    if (rval.indexOf('?') < 0) {
-        rval += '?';
-    }
-    for(var key in params) {
-        if(!rval.match('[?&]$')) {
-            rval += '&';
-        }
-        rval += encodeURI(key);
-        let val = params[key];
-        if (!isBlank(val)) {
-            rval += '=' + encodeURIComponent(val.toString().trim());
-        }
-    }
-    return rval;
-}
-
-
 export function logError(...message) {
     if (message) {
         message.forEach( (m) => console.log(m.stack ? m.stack : m) );
@@ -188,24 +190,11 @@ export function download(url) {
 
 export function parseUrl(url) {
     const parser = document.createElement('a');
-    const searchObject = {}, pathAry = [];
+    const pathAry = [];
     parser.href = url;
 
     // Convert query string to object
-    const queries = parser.search.replace(/^\?/, '').split('&');
-    queries.forEach((v) => {
-        const parts = v.split('=').map((s) => decodeURIComponent(s));
-        var pv = parts[1];
-        if (pv && pv.includes('&')) {
-            const pvObject = {};
-            pv.split('&').forEach( (s) =>{
-                const kv = s.split('=').map((s) => decodeURIComponent(s));
-                pvObject[kv[0]] = kv[1];
-            });
-            pv = pvObject;
-        }
-        searchObject[parts[0]] = pv;
-    });
+    const searchObject = decodeParams(parser.search);
 
     // Convert path string to object
     const paths = parser.pathname.split('/');

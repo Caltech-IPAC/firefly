@@ -89,11 +89,12 @@ export class InputFieldView extends Component {
 
     render() {
         var {hasFocus}= this.state;
-        var {visible,label,tooltip,labelWidth,value,style,valid,size,onChange, onBlur, onKeyPress, showWarning, message, width}= this.props;
+        var {visible,label,tooltip,labelWidth,value,style,wrapperStyle,
+             valid,size,onChange, onBlur, onKeyPress, showWarning, message, type}= this.props;
         if (!visible) return null;
-        if (width) style = Object.assign({}, style, {width: '100%', boxSizing: 'border-box'});
+        wrapperStyle = Object.assign({whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block'}, wrapperStyle);
         return (
-            <div style={{whiteSpace:'nowrap', display: this.props.inline?'inline-block':'block', width} }>
+            <div style={wrapperStyle}>
                 {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth}/> }
                 <input style={Object.assign({display:'inline-block'}, style)}
                        className={computeStyle(valid,hasFocus)}
@@ -104,9 +105,10 @@ export class InputFieldView extends Component {
                                 this.setState({hasFocus:false, infoPopup:false});
                             }}
                        onKeyPress={(ev) => onKeyPress && onKeyPress(ev)}
-                       value={value}
+                       value={type==='file' ? undefined : value}
                        title={ (!showWarning && !valid) ? message : tooltip}
                        size={size}
+                       type={type}
                 />
                 {showWarning && this.makeWarningArea(!valid)}
             </div>
@@ -123,19 +125,21 @@ InputFieldView.propTypes= {
     inline : PropTypes.bool,
     labelWidth: PropTypes.number,
     style: PropTypes.object,
+    wrapperStyle: PropTypes.object,
     value   : PropTypes.string.isRequired,
     size : PropTypes.number,
     onChange : PropTypes.func.isRequired,
     onBlur : PropTypes.func,
     onKeyPress : PropTypes.func,
-    width: PropTypes.string,
-    showWarning : PropTypes.bool
+    showWarning : PropTypes.bool,
+    type: PropTypes.string
 };
 
 InputFieldView.defaultProps= {
     showWarning : true,
     valid : true,
     visible : true,
-    message: ''
+    message: '',
+    type: 'text'
 };
 

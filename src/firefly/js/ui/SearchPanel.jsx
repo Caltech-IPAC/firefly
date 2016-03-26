@@ -10,11 +10,11 @@ import {ValidationField} from '../ui/ValidationField.jsx';
 import Validate from '../util/Validate.js';
 import {download} from '../util/WebUtil.js';
 import {getRootURL} from '../util/BrowserUtil.js';
+import {FileUpload} from '../ui/FileUpload.jsx';
 
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 
 import {TableRequest} from '../tables/TableRequest.js';
-import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import * as TblUtil from '../tables/TableUtil.js';
 
@@ -53,6 +53,14 @@ export const SearchPanel = (props) => {
                                                              }}
                     />
 
+                    <FileUpload
+                        wrapperStyle={{margin: '5px 0'}}
+                        fieldKey='fileUpload'
+                        upload_url='sdlfjslf'
+                        initialState= {{
+                        tooltip: 'Select a file to upload',
+                        label: 'Upload File:'}}
+                    />
                 </FieldGroup>
             </FormPanel>
         </div>
@@ -88,7 +96,6 @@ function onSearchSubmit(request, resultId) {
             filters: request.filters
         });
         const tbl_ui_id = TblUtil.uniqueTblUiId();
-        TableStatsCntlr.dispatchSetupTblTracking(activeTblId);
         dispatchTableSearch(treq, resultId, tbl_ui_id);
     }
 }
