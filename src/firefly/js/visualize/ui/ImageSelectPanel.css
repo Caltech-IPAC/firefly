@@ -14,21 +14,25 @@ div.section {
 }
 
 div.intarget {
+    height: 75px;
     display: flex;
     justify-content: flex-start;
     align-items: flex-start;
 }
 
 div.size {
-    margin-top: 10px;
-    padding-left: 25%;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 30%;
+    border-bottom: 2px solid #c8c8c8;
+    height: 60px;
 }
 
 div.close {
     display:flex;
     align-items: center;
     justify-content: flex-end;
-    background: #c5c5c5;
+    background: #c8c8c8;
     width: 1000px;
     height: 80px;
 }
@@ -40,6 +44,11 @@ div.left {
 div.cataloglist {
     display: inline-block;
     padding: 15px 10px 25px 10px
+}
+
+div.cataloglist_nottop {
+    display: inline-block;
+    padding: 15px 10px 10px 10px
 }
 
 div.sizeinput {
@@ -55,8 +64,22 @@ div.sizeline {
     margin-bottom: 20px;
 }
 
-div.padding {
+div.sizeempty {
     padding: 10px;
+    height: 60px;
+    margin-bottom: 20px;
+}
+
+div.padding {
+    padding: 15px 10px 15px 10px
+}
+
+div.padding_top {
+    padding: 15px 10px 24px 10px
+}
+
+div.padding_nottop {
+    padding: 0px 10px 10px 10px;
 }
 
 div.tabview {

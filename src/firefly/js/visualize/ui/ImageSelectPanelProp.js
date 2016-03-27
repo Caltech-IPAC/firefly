@@ -20,12 +20,12 @@ export const panelCatalogs = [
                 {'item':'iris-100', 'id': 7, 'name': 'IRAS: IRIS 100 microns'}],
             'Default': 'iris-25'
         },
-        'range': {'min': 3600, 'max': 45000, 'unit': 'arcsec'},
-        'size': 18000
+        'range': {'min': 1, 'max': 12.5, 'unit': 'deg'},
+        'size': 5
     },
     {
         'Title':'2MASS',
-        'Symbol': '2MASS',
+        'Symbol': 'TWOMASS',
         'CatalogId': 1,
         'fields': ['types'],
         'types': {
@@ -36,8 +36,8 @@ export const panelCatalogs = [
                 {'item':'k', 'id': 2, 'name': 'K (2.17 microns)'}],
             'Default': 'j'
         },
-        'range': {'min': 29, 'max': 500, 'unit': 'arcsec'},
-        'size': 500
+        'range': {'min':.008, 'max':.139, 'unit': 'deg'},
+        'size':.139
     },
     {
         'Title': 'WISE',
@@ -60,8 +60,134 @@ export const panelCatalogs = [
                 {'item':'4', 'id': 1, 'name': 'Band 4'}],
             'Default': '1'
         },
-        'range': {'min': 36, 'max': 10800, 'unit': 'arcsec'},
-        'size': 500
-    }
+        'range': {'min':.01, 'max': 3, 'unit': 'deg'},
+        'size':.15
+    },
+    {
+        'Title': 'MSX',
+        'Symbol': 'MSX',
+        'CatalogId': 3,
+        'fields': ['types'],
+        'types': {
+            'Title': 'Choose MSX Image:',
+            'Items': [
+                {'item': '3', 'id': 0, 'name': 'A (8.28 microns)'},
+                {'item': '4', 'id': 1, 'name': 'C (12.13 microns)'},
+                {'item': '5', 'id': 2, 'name': 'D (14.65 microns)'},
+                {'item': '6', 'id': 3, 'name': 'E (21.3 microns)'}
+            ],
+            'Default': '3'
+        },
+        'range': {'min': 0.1, 'max': 1.5, 'unit': 'deg'},
+        'size': 1.0
+    },
+    {
+        'Title': 'DSS',
+        'Symbol': 'DSS',
+        'CatalogId': 4,
+        'fields': ['types'],
+        'types': {
+            'Title': 'DSS Survey Types:',
+            'Items': [
+                {'item':'poss2ukstu_red', 'id': 0, 'name': 'POSS2/UKSTU Red'},
+                {'item':'poss2ukstu_ir', 'id': 1, 'name': 'POSS2/UKSTU Infrared'},
+                {'item':'poss2ukstu_blue', 'id': 2, 'name': 'POSS2/UKSTU Blue'},
+                {'item':'poss1_red', 'id': 3, 'name': 'POSS1 Red'},
+                {'item':'poss1_blue', 'id': 4, 'name': 'POSS1 Blue'},
+                {'item':'quickv', 'id': 5, 'name': 'Quick-V Survey'},
+                {'item':'phase2_gsc2', 'id': 6, 'name': 'HST Phase 2 Target Positioning(GSC 2)'},
+                {'item':'phase2_gsc1', 'id': 7, 'name': 'HST Phase 1 Target Positioning(GSC 1)'},
+                {'item':'all', 'id': 8, 'name': 'The best of a combined list of all plates'}
+            ],
+            'Default': 'poss2ukstu_red'
+        },
+        'range': {'min':.016, 'max': 0.5, 'unit': 'deg'},
+        'size':.25
+    },
+    {
+        'Title': 'SDSS',
+        'Symbol': 'SDSS',
+        'CatalogId': 5,
+        'fields': ['types'],
+        'types': {
+            'Title': 'Sloan DSS Survey Types:',
+            'Items': [
+                {'item':'u', 'id': 0, 'name': 'U'},
+                {'item':'g', 'id': 1, 'name': 'G'},
+                {'item':'r', 'id': 2, 'name': 'R'},
+                {'item':'i', 'id': 3, 'name': 'I'},
+                {'item':'z', 'id': 4, 'name': 'Z'}
+            ],
+            'Default': 'u'
+        },
+        'range': {'min': 0.016, 'max': 0.5, 'unit': 'deg'},
+        'size':.25
+    },
+    {
+        'Title': 'FITS File',
+        'Symbol': 'FITS',
+        'CatalogId': 6,
+        'fields': ['upload', 'list', 'extinput'],
+        'button': {
+            'Title': 'Enter URL of a FITS File:',
+            'nullallowed': false
+        },
+        'upload': {
+            'Title': '',
+            'url': 'sdlfjslf'
+        },
+        'list': {
+            'Title': 'If file contains multiple extensions:',
+            'Items': [
+                {'item':'loadAll', 'id': 0, 'name': 'Load all the extensions'},
+                {'item':'loadOne', 'id': 1, 'name': 'Load only one'}
+            ]
+        },
+        'extinput': {
+            'Title': 'Extension:',
+            'nullallowed': false,
+            'dependon': {
+                'list':'loadOne'
+            }
+        }
+    },
+    {
+        'Title': 'URL',
+        'Symbol': 'URL',
+        'CatalogId': 7,
+        'fields': ['input', 'list', 'extinput'],
+        'input': {
+            'Title': 'Enter URL of a FITS File:',
+            'nullallowed': false
+        },
+        'list': {
+            'Title': 'If file contains multiple extensions:',
+            'Items': [
+                {'item':'loadAll', 'id': 0, 'name': 'Load all the extensions'},
+                {'item':'loadOne', 'id': 1, 'name': 'Load only one'}
+            ]
+        },
+        'extinput': {
+            'Title': 'Extension:',
+            'nullallowed': false,
+            'dependon': {
+                'list': 'loadOne'
+            }
+        }
+    },
+    {
+        'Title': 'Blank Image',
+        'Symbol': 'BLANK',
+        'CatalogId': 8,
+        'fields': ['input'],
+        'input': {
+            'Title': 'Pixel Size:',
+            'nullallowed': false,
+            'Default': 400,
+            'range': {'min': 100, 'max': 800}
+        },
+        'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
+        'size': 0.139
+    },
 ];
 
