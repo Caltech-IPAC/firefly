@@ -683,12 +683,13 @@ const makePt= function(type,  x, y) {
 export function convertAngle(from, to, angle) {
     const angleUnit = ['deg', 'arcmin', 'arcsec'];
     var   fromIdx, toIdx;
+    var   numAngle = (typeof angle === 'string') ? parseFloat(angle) : angle;
 
     if (((fromIdx = angleUnit.indexOf(from)) < 0) ||
         ((toIdx = angleUnit.indexOf(to)) < 0)) {
-        return angle;
+        return numAngle;
     } else {
-        return  angle * Math.pow(60.0, (toIdx-fromIdx));
+        return  numAngle * Math.pow(60.0, (toIdx-fromIdx));
     }
 }
 
