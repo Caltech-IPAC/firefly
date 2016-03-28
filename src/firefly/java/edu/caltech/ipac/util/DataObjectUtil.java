@@ -22,7 +22,9 @@ public class DataObjectUtil {
    public static double getDouble(Object val) {
        if (val != null) {
            if (val instanceof Double) {
-               return (Double)val;
+               return (Double) val;
+           } else if (val instanceof Number) {
+               return ((Number)val).doubleValue();
            } else {
                try {
                    return Double.parseDouble(String.valueOf(val));

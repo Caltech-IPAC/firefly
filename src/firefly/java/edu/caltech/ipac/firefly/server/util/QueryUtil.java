@@ -537,7 +537,7 @@ public class QueryUtil {
     private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
     private static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
     /**
-     * returns 4 columns; x-column, y-column, ROWID, weight
+     * returns 4 columns; x-column, y-column, rowidx, weight, decimate_key
      * @param dg
      * @param decimateInfo
      * @return
@@ -559,19 +559,24 @@ public class QueryUtil {
 
         boolean doDecimation = dg.size() >= DECI_ENABLE_SIZE;
 
-        DataType[] columns = new DataType[doDecimation ? 6 : 3];
+        DataType[] columns = new DataType[doDecimation ? 5 : 3];
+        Class xColClass = Double.class;
+        Class yColClass = Double.class;
+
         try {
-            columns[0] = (!xValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", Double.class, DataType.Importance.HIGH, "", false));
-            columns[1] = (!yValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", Double.class, DataType.Importance.HIGH, "", false));
-            columns[2] = DataGroup.ROWID; // Do we need it?
+            columns[0] = (!xValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getxColumnName()).copyWithNoColumnIdx(0) : new DataType("x", "x", xColClass, DataType.Importance.HIGH, "", false));
+            columns[1] = (!yValGetter.isExpression() ? dg.getDataDefintion(decimateInfo.getyColumnName()).copyWithNoColumnIdx(1) : new DataType("y", "y", yColClass, DataType.Importance.HIGH, "", false));
+            columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
             if (doDecimation) {
-                columns[3] = new DataType("rowidx", Integer.class);
-                columns[4] = new DataType("weight", Integer.class);
-                columns[5] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
+                columns[3] = new DataType("weight", Integer.class);
+                columns[4] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
             }
+            xColClass = columns[0].getDataType();
+            yColClass = columns[1].getDataType();
         } catch (Exception e) {
 
         }
+
 
         DataGroup retval = new DataGroup("decimated results", columns);
 
@@ -602,9 +607,9 @@ public class QueryUtil {
 
             if (!doDecimation) {
                 DataObject retrow = new DataObject(retval);
-                retrow.setDataElement(columns[0], xval);
-                retrow.setDataElement(columns[1], yval);
-                retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                retrow.setDataElement(columns[0], convertData(xColClass,xval));
+                retrow.setDataElement(columns[1], convertData(xColClass,yval));
+                retrow.setDataElement(columns[2], rIdx); // natural index
                 retval.add(retrow);
             } else if (checkDeciLimits) {
                 if (xval>xDeciMax || xval<xDeciMin || yval>yDeciMax || yval<yDeciMin) {
@@ -648,9 +653,9 @@ public class QueryUtil {
 
                     if (checkLimits && (xval<xMin || xval>xMax || yval<yMin || yval>yMax)) { continue; }
                     DataObject retrow = new DataObject(retval);
-                    retrow.setDataElement(columns[0], xval);
-                    retrow.setDataElement(columns[1], yval);
-                    retrow.setDataElement(columns[2], row.getRowIdx());  // ROWID
+                    retrow.setDataElement(columns[0], convertData(xColClass, xval));
+                    retrow.setDataElement(columns[1], convertData(yColClass, yval));
+                    retrow.setDataElement(columns[2], rIdx);
                     retval.add(retrow);
                 }
 
@@ -690,26 +695,29 @@ public class QueryUtil {
                         // representative sample point is a random point from the bin
                         int numRepRows = pt.getRepresentedRows()+1;
                         if (Math.random() < 1d/(double)numRepRows) {
-                            SamplePoint replacePt = new SamplePoint(xval, yval, row.getRowIdx(), idx, numRepRows);
+                            SamplePoint replacePt = new SamplePoint(xval, yval, idx, numRepRows);
                             samples.put(key, replacePt);
                         } else {
                             pt.addRepresentedRow();
                         }
                     } else {
-                        SamplePoint pt = new SamplePoint(xval, yval, row.getRowIdx(), idx);
+                        SamplePoint pt = new SamplePoint(xval, yval, idx);
                         samples.put(key, pt);
                     }
                 }
 
+                int minWeight=samples.size(), maxWeight=1, weight;
                 for(String key : samples.keySet()) {
                     SamplePoint pt = samples.get(key);
                     DataObject row = new DataObject(retval);
-                    row.setDataElement(columns[0], convertData(columns[0].getDataType(), pt.getX()));
-                    row.setDataElement(columns[1], convertData(columns[1].getDataType(),pt.getY()));
-                    row.setDataElement(columns[2], pt.getRowId());
-                    row.setDataElement(columns[3], pt.getRowIdx());
-                    row.setDataElement(columns[4], pt.getRepresentedRows());
-                    row.setDataElement(columns[5], key);
+                    weight = pt.getRepresentedRows();
+                    if (weight<minWeight) minWeight = weight;
+                    if (weight>maxWeight) maxWeight = weight;
+                    row.setDataElement(columns[0], convertData(xColClass, pt.getX()));
+                    row.setDataElement(columns[1], convertData(yColClass, pt.getY()));
+                    row.setDataElement(columns[2], pt.getRowIdx());
+                    row.setDataElement(columns[3], weight);
+                    row.setDataElement(columns[4], key);
                     retval.add(row);
                 }
                 String decimateInfoStr = decimateInfo.toString();
@@ -720,6 +728,8 @@ public class QueryUtil {
                         decimateKey.toString());
                 retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit));
                 retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MIN", String.valueOf(minWeight));
+                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MAX", String.valueOf(maxWeight));
 
                 java.util.Date endTime = new java.util.Date();
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
@@ -766,18 +776,16 @@ public class QueryUtil {
         double x;
         double y;
         int rowIdx;
-        int rowId;
         int representedRows;
 
-        public SamplePoint(double x, double y, int rowId, int rowIdx) {
-            this(x, y, rowId, rowIdx, 1);
+        public SamplePoint(double x, double y, int rowIdx) {
+            this(x, y, rowIdx, 1);
         }
 
 
-        public SamplePoint(double x, double y, int rowId, int rowIdx, int representedRows) {
+        public SamplePoint(double x, double y, int rowIdx, int representedRows) {
             this.x = x;
             this.y = y;
-            this.rowId = rowId;
             this.rowIdx = rowIdx;
             this.representedRows = representedRows;
         }
@@ -785,7 +793,6 @@ public class QueryUtil {
         public void addRepresentedRow() { representedRows++; }
         public int getRepresentedRows() { return representedRows; }
 
-        public int getRowId() { return rowId; }
         public int getRowIdx() { return rowIdx; }
         public double getX() { return x; }
         public double getY() { return y; }

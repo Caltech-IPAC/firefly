@@ -1,12 +1,13 @@
 import {flux} from '../Firefly.js';
 
 import update from 'react-addons-update';
-import {has} from 'lodash';
+import {has, omitBy, isUndefined, isString} from 'lodash';
 
 
-import {doFetchTable, isTableLoaded} from '../tables/TableUtil.js';
+import {doFetchTable, isTableLoaded, findTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 
+import {serializeDecimateInfo} from '../tables/Decimate.js';
 
 export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -22,7 +23,17 @@ export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
     {
          // tblXYPlotData
          isPlotDataReady: boolean
-         xyPlotData: [[rowIdx: int, x: string, y: string]*]  or [[row]
+         xyPlotData: {
+                    rows: [[x: string, y: string, rowIdx: string]*] ,
+                    decimateKey: string,
+                    xMin: string,
+                    xMax: string,
+                    yMin: string,
+                    yMax: string,
+                    weightMin: string,
+                    weightMax: string,
+                    idStr: string
+         }
          xyPlotParams: {
            title: string
            xyRatio: number
@@ -64,10 +75,10 @@ export const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
  * @param {boolean} isPlotDataReady - flags that xy plot data are available
  * @param {Number[][]} xyPlotData - an array of the number arrays with rowIdx, x, y, [error]
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
- * @param {ServerRequest} searchRequest - table search request
+ * @param {String} tblId - table id
  */
-export const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, searchRequest) {
-    flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest}});
+export const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, tblId) {
+    flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, tblId}});
 };
 
 export const dispatchSetSelection = function(tblId, selection) {
@@ -85,7 +96,7 @@ export const dispatchResetZoom = function(tblId) {
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
- * @returns function which loads statistics (column name, num. values, range of values) for a source table
+ * @returns function which loads plot data (x, y, rowIdx, etc.)
  */
 export const loadPlotData = function(rawAction) {
     return (dispatch) => {
@@ -122,35 +133,36 @@ function stateWithNewData(tblId, state, newProps) {
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_NEW)  :
-            const {tbl_id, tableMeta, request} = action.payload;
+        case (TablesCntlr.TABLE_LOAD_STATUS)  :
+        {
+            // in both cases action.payload contains tableMeta, but request is not present in TABLE_LOAD_STATUS
+            var {tbl_id, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (isTableLoaded(action.payload) && !state[tbl_id].isTblLoaded){
+                if (isTableLoaded(action.payload)) {
+                    if (!request) {request = findTblById(tbl_id).request;}
                     // use xyPlotParams with cleared selection box
                     const prevXyPlotParams = state[tbl_id].xyPlotParams;
-                    const xyPlotParams = update(prevXyPlotParams, {selection: {$set: undefined}});
-                    action.sideEffect((dispatch) => fetchPlotData(dispatch,request,xyPlotParams));
-
-                    const newState = Object.assign({}, state);
-                    newState[request.tbl_id]= {isPlotDataReady: false};
-                    return newState;
+                    const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
+                        update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
+                    action.sideEffect((dispatch) => fetchPlotData(dispatch, request, xyPlotParamsNext));
                 }
             }
             return state;
+        }
         case (LOAD_PLOT_DATA)  :
         {
-            const {xyPlotParams, searchRequest} = action.payload;
+            const {searchRequest} = action.payload;
             const newState = Object.assign({}, state);
             newState[searchRequest.tbl_id]= {isPlotDataReady: false};
             return newState;
         }
         case (UPDATE_PLOT_DATA)  :
         {
-            const {isPlotDataReady, xyPlotData, xyPlotParams, searchRequest} = action.payload;
-            return stateWithNewData(searchRequest.tbl_id, state, {
+            const {isPlotDataReady, xyPlotData, xyPlotParams, tblId} = action.payload;
+            return stateWithNewData(tblId, state, {
                 isPlotDataReady,
                 xyPlotData,
-                xyPlotParams,
-                searchRequest
+                xyPlotParams
             });
         }
         case (SET_SELECTION) :
@@ -172,20 +184,19 @@ export function reducer(state=getInitState(), action={}) {
         }
         case (RESET_ZOOM) :
         {
-            const {tblId} = action.payload;
             return update(state,
-                {[tblId] :
+                {[action.payload.tblId] :
                     {xyPlotParams:
                         {
                             selection: {$set: undefined},
                             zoom: {$set: undefined}
-                         }
+                        }
                     }});
 
         }
         case (TablesCntlr.TABLE_SELECT) :
         {
-            const {tbl_id, selectInfo} = action.payload;
+            tbl_id = action.payload.tbl_id; //also has selectInfo
             if (has(state, tbl_id)) {
                 return update(state,
                     {
@@ -215,8 +226,6 @@ function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
 }
 
-
-
 /**
  * fetches xy plot data
  * set isColStatsReady to true once done.
@@ -227,24 +236,45 @@ function updatePlotData(data) {
  */
 function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 
+    if (!xyPlotParams) { return; }
+
     // todo support expressions
     const req = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000,
-        'inclCols' : xyPlotParams.x.columnOrExpr+','+xyPlotParams.y.columnOrExpr
+        'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`,
+        'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000)
         });
 
-    req.tbl_id = activeTableServerRequest.tbl_id;
+    const tblId = activeTableServerRequest.tbl_id;
+    req.tbl_id = 'xyplot-'+tblId;
 
     doFetchTable(req).then(
         (tableModel) => {
             if (tableModel.tableData && tableModel.tableData.data) {
-                const xyPlotData = tableModel.tableData.data;
+                const {tableData, tableMeta} = tableModel;
+                const xyPlotData = omitBy({
+                    rows: tableData.data,
+                    decimateKey: tableMeta['decimate_key'],
+                    xMin: tableMeta['decimate.X-MIN'],
+                    xMax: tableMeta['decimate.X-MAX'],
+                    yMin: tableMeta['decimate.Y-MIN'],
+                    yMax: tableMeta['decimate.Y-MAX'],
+                    weightMin: tableMeta['decimate.WEIGHT-MIN'],
+                    weightMax: tableMeta['decimate.WEIGHT-MAX'],
+                    idStr: tableMeta['tbl_id']
+                }, isUndefined);
+
+                // convert strings with numbers into numbers
+                Object.keys(xyPlotData).forEach( (prop) => {
+                    const val = xyPlotData[prop];
+                    if (isString(val) && isFinite(val)) { xyPlotData[prop] = Number(val); }
+                });
 
                 dispatch(updatePlotData(
                     {
                         isPlotDataReady : true,
                         xyPlotParams,
                         xyPlotData,
-                        searchRequest : req
+                        tblId
                     }));
             }
         }

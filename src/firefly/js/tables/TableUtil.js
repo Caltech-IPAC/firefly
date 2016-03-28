@@ -142,6 +142,18 @@ export function isFullyLoaded(tbl_id) {
     return isTableLoaded(findTblById(tbl_id));
 }
 
+export function getCellValue(tableModel, rowIdx, colName) {
+    if (tableModel.tableData && tableModel.tableData.data) {
+        const cols = tableModel.tableData.columns;
+        const colIdx = cols.findIndex((col) => {
+            return col.name === colName;
+        });
+        // might be undefined if row is not loaded
+        return get(tableModel.tableData.data, [rowIdx, colIdx]);
+    }
+}
+
+
 /**
  * return true if the given table is fully loaded.
  * @param tableModel
