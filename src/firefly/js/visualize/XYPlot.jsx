@@ -1,12 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce} from 'lodash';
+import {isUndefined, debounce, defer} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
 
 import {SelectInfo} from '../tables/SelectInfo.js';
+import {parseDecimateKey} from '../tables/Decimate.js';
 //import {getFormatString} from '../util/MathUtil.js';
 
 const axisParamsShape = PropTypes.shape({
@@ -59,39 +60,40 @@ const selectionRectColor = 'rgba(165, 165, 165, 0.5)';
 const toNumber = (val)=>Number(val);
 
 /*
- @param weight for a given point
- @param minWeight minimum weight for all points
- @param maxWeight maximum weigh for all points
- @param logShading - if true use log color scale
- @return{number} from 1 to 6, 1 for 1 pt series
+ @param {number} weight for a given point
+ @param {number} minWeight minimum weight for all points
+ @param {number} maxWeight maximum weight for all points
+ @param {boolean} logShading - if true use log color scale
+ @param {boolean} returnNum - if true return group number rather than group description
+ @return {number|string} from 1 to 6, 1 for 1 pt series
  */
-const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=true) {
-    if (weight == 1) return 1; // 1pt;
+const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=true, returnNum=true) {
+    if (weight == 1) return returnNum ? 1 : '1pt';
     else {
         if (logShading) {
             //use log scale for shade assignment
-            let max; //min=2, max;
+            let min=2, max;
             const base = Math.pow(maxWeight+0.5, 0.2);
             for (var e = 1; e <=5; e++) {
                 max = Math.round(Math.pow(base, e));
                 if (weight <= max) {
                     if (max > maxWeight) { max = maxWeight; }
-                    return e+1; //(min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? e+1 : (min==max ? min : (min+'-'+max))+'pts';
                 }
-                //min = max+1;
+                min = max+1;
             }
         } else {
             // use linear scale for order assignment
             const range =  maxWeight-minWeight-1;
             let n=2;
-            let max;// min=2, max;
+            let min=2, max;
             // 5 groups incr=0.20
             for (let incr = 0.20; incr <=1; incr += 0.20) {
                 max = Math.round(minWeight+1+incr*range);
                 if (weight <= max) {
-                    return n; //(min==max ? min : (min+'-'+max))+'pts';
+                    return returnNum ? n : (min==max ? min : (min+'-'+max))+'pts';
                 }
-                //min = max+1;
+                min = max+1;
                 n++;
             }
         }
@@ -99,24 +101,7 @@ const getWeightBasedGroup = function(weight, minWeight, maxWeight, logShading=tr
     // should not reach
 };
 
-const parseDecimateKey = function(str) {
-    if (!str) return;
-    let v = str.replace('decimate_key', '');
-    if (v.length < 3) return null;
-    v = v.substring(1,v.length-1); // remove outer braces
-    const parts = v.split(',');
-    if (parts.length == 8) {
-        const xColNameOrExpr= parts[0];
-        const yColNameOrExpr = parts[1];
-        const xMin = Number(parts[2]);
-        const yMin = Number(parts[3]);
-        const nX = Number(parts[4]);
-        const nY = Number(parts[5]);
-        const xUnit = Number(parts[6]);
-        const yUnit = Number(parts[7]);
-        return {xColNameOrExpr, yColNameOrExpr, xMin, yMin, nX, nY, xUnit, yUnit};
-    }
-};
+
 
 const getXAxisOptions = function(params) {
     const xTitle = params.x.label + (params.x.unit ? ', ' + params.x.unit : '');
@@ -167,6 +152,35 @@ ReactHighcharts.Highcharts.SVGRenderer.prototype.symbols.rectangle = function (x
         x, y+h-hD,
         'Z'];
 };
+
+/*
+ * Since decimated symbol should accurately reflect bin size,
+ * the size of the symbol depends on the chart size.
+ * @param {object} Highcharts' Chart object
+ * @param {string} decimate key string (contains binning info)
+ * @returns {object} x and y pixel size if the bin
+ */
+const getDeciSymbolSize = function(chart, decimateKeyStr) {
+    const {xUnit,yUnit} = parseDecimateKey(decimateKeyStr);
+
+    const getPxSize = (axis, unit) => {
+        const {min} = axis.getExtremes();
+        const max = min+unit;
+        const minPx = axis.toPixels(min);
+        const maxPx = axis.toPixels(max);
+        let unitPx = Math.abs(maxPx-minPx);
+        if (unitPx < 2) { unitPx = 2; }
+        return unitPx;
+    };
+
+    const xUnitPx = getPxSize(chart.xAxis[0], xUnit);
+    const yUnitPx = getPxSize(chart.yAxis[0], yUnit);
+    return {xUnitPx, yUnitPx};
+};
+
+/*
+ * Get data series
+ */
 
 export class XYPlot extends React.Component {
 
@@ -278,20 +292,18 @@ export class XYPlot extends React.Component {
         return debounce((newWidth, newHeight) => {
             const chart = this.refs.chart && this.refs.chart.getChart();
             if (chart) {
+                const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
+                chart.setSize(chartWidth, chartHeight, this.shouldAnimate() );
                 const {data} = this.props;
                 if (data.decimateKey) {
                     // update marker's size
-                    const {xUnitPx, yUnitPx} = this.getDeciSymbolSize(chart, data.decimateKey);
+                    const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, data.decimateKey);
                     chart.series.forEach((series) => {
                         series.name.includes(UNSELECTED) && series.update({
-                            marker: {radius: xUnitPx / 2, hD: (xUnitPx - yUnitPx) / 2}}, false);
+                            marker: {radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0}}, false);
                     });
+                    chart.redraw();
                 }
-                const {chartWidth, chartHeight} = this.calculateChartSize(newWidth, newHeight);
-
-                chart.setSize(chartWidth, chartHeight, this.shouldAnimate() );
-
-                if (data.decimate) {chart.redraw();}
             }
         }, 500);
     }
@@ -413,8 +425,8 @@ export class XYPlot extends React.Component {
                     }
                 ];
             } else {
-                const {xUnitPx, yUnitPx} = this.getDeciSymbolSize(chart, decimateKey);
-                marker = {symbol: 'rectangle', radius: xUnitPx/2, hD: (xUnitPx-yUnitPx)/2};
+                const {xUnitPx, yUnitPx} = getDeciSymbolSize(chart, decimateKey);
+                marker = {symbol: 'rectangle', radius: xUnitPx/2.0, hD: (xUnitPx-yUnitPx)/2.0};
 
                 const {xMin, xUnit, yMin, yUnit} = parseDecimateKey(decimateKey);
                 const getCenter = (xval,yval) => {
@@ -427,14 +439,14 @@ export class XYPlot extends React.Component {
                 };
 
                 // split into 6 groups by weight
-                const numericDataArr = rows.reduce((numdata, arow) => {
-                    const nrow = arow.map(toNumber);
+                const numericDataArr = [[],[],[],[],[],[]];
+                for (var i= 0, l = rows.length; i < l; i++) {
+                    const nrow = rows[i].map(toNumber);
                     const weight = nrow[3];
                     const group = getWeightBasedGroup(weight, weightMin, weightMax);
                     const {x,y} = getCenter(nrow[0], nrow[1]);
-                    numdata[group-1].push({x, y, rowIdx: nrow[2], weight});
-                    return numdata;
-                }, [[],[],[],[],[],[]]);
+                    numericDataArr[group-1].push({x, y, rowIdx: nrow[2], weight});
+                }
 
                 // 5 colors (use http://colorbrewer2.org)
                 const weightBasedColors = ['#d9d9d9', '#BDBDBD', '#969696', '#737373', '#525252', '#252525'];
@@ -463,24 +475,6 @@ export class XYPlot extends React.Component {
                 data: highlightedData
             }, true, false);
         }
-    }
-
-    getDeciSymbolSize(chart, decimateKeyStr) {
-        const {xUnit,yUnit} = parseDecimateKey(decimateKeyStr);
-
-        const getPxSize = (axis, unit) => {
-            const {min} = axis.getExtremes();
-            const max = min+unit;
-            const minPx = axis.toPixels(min);
-            const maxPx = axis.toPixels(max);
-            let unitPx = Math.abs(maxPx-minPx);
-            if (unitPx < 2) { unitPx = 2; }
-            return unitPx;
-        };
-
-        const xUnitPx = getPxSize(chart.xAxis[0], xUnit);
-        const yUnitPx = getPxSize(chart.yAxis[0], yUnit);
-        return {xUnitPx, yUnitPx};
     }
 
     render() {
