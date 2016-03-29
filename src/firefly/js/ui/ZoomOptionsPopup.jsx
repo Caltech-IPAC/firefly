@@ -4,8 +4,6 @@
 import React, {Component, PropTypes} from 'react';
 import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import Validate from '../util/Validate.js';
-import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import InputGroup from './InputGroup.jsx';
@@ -112,11 +110,11 @@ function ZoomOptionsPopupForm() {
     const { pv, plot, initcurrLevel, colors,  hasThreeColorBand,hasOperation} = getInitialPlotState();
 
     var verticalColumn = {display: 'inline-block', paddingLeft: 10, paddingBottom: 20, paddingRight: 10};
-    var message = {display: 'inline-block', paddingTop:40, paddingLeft:40, verticalAlign:'middle', paddingBottom:30}
-    var zoom_levels = levels;
+    var message = {display: 'inline-block', paddingTop:40, paddingLeft:20, verticalAlign:'middle', paddingBottom:30};
+    var zoom_levels = _levels;
 
     var initcurrZoomLevelStr = convertZoomToString(plot.zoomFactor);
-    console.log(initcurrZoomLevelStr);
+
     var resolver= null;
     var closePromise= new Promise(function(resolve) {
         resolver= resolve;
@@ -133,7 +131,6 @@ function ZoomOptionsPopupForm() {
             <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
                 <div style={message}>
                    <p>{messageStr}</p>
-
                 </div>
 
                 <table style={{width:300}}>
@@ -158,7 +155,7 @@ function ZoomOptionsPopupForm() {
                             </td>
                             <td>
                                 <div style={{ textAlign:'center', marginBottom: 20}}>
-                                    <HelpIcon helpid={'visualization.Zoom'} />
+                                    <HelpIcon helpid={'visualization.imageoptions'} />
                                 </div>
                             </td>
                          </tr>
