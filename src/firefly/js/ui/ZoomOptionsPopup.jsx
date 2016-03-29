@@ -5,10 +5,7 @@ import React, {Component, PropTypes} from 'react';
 import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import Validate from '../util/Validate.js';
-import {ValidationField} from './ValidationField.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
-import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import InputGroup from './InputGroup.jsx';
@@ -17,14 +14,16 @@ import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchZoom, ActionScope} from '../visualize/ImagePlotCntlr.js';
-import {levels} from '../visualize/ZoomUtil';
-import {convertZoomToString} from '../visualize/ZoomUtil';
-import {UserZoomTypes} from '../visualize/ZoomUtil';
+import {levels, UserZoomTypes, convertZoomToString, getZoomMax} from '../visualize/ZoomUtil';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {LinkButton} from './LinkButton.jsx';
+import CompleteButton from './CompleteButton.jsx';
+
+import HelpIcon from './HelpIcon.jsx';
 
 const _levels = levels;
 const _userZoomTypes = UserZoomTypes;
+const zoomMax = getZoomMax();
 
 function getDialogBuilder() {
     var popup = null;
@@ -35,7 +34,7 @@ function getDialogBuilder() {
                     <ZoomOptionsPopup groupKey={'ZOOM_OPTIONS_FORM'}/>
                 </PopupPanel>
             );
-            DialogRootContainer.defineDialog('zoomOptionsPopup', popup);
+            DialogRootContainer.defineDialog('zoomOptionsDialog', popup);
         }
         return popup;
     };
@@ -45,7 +44,7 @@ const dialogBuilder = getDialogBuilder();
 
 export function showZoomOptionsPopup() {
     dialogBuilder();
-    dispatchShowDialog('zoomOptionsPopup');
+    dispatchShowDialog('zoomOptionsDialog');
 }
 
 
@@ -112,32 +111,76 @@ function ZoomOptionsPopupForm() {
 
     const { pv, plot, initcurrLevel, colors,  hasThreeColorBand,hasOperation} = getInitialPlotState();
 
-    var verticalColumn={ display: 'inline-block', paddingLeft:10, paddingBottom:20,paddingRight:10};
-
+    var verticalColumn = {display: 'inline-block', paddingLeft: 10, paddingBottom: 20, paddingRight: 10};
+    var message = {display: 'inline-block', paddingTop:40, paddingLeft:40, verticalAlign:'middle', paddingBottom:30}
     var zoom_levels = levels;
 
-    var initcurrZoomLevelStr= convertZoomToString(plot.zoomFactor);
+    var initcurrZoomLevelStr = convertZoomToString(plot.zoomFactor);
     console.log(initcurrZoomLevelStr);
+    var resolver= null;
+    var closePromise= new Promise(function(resolve) {
+        resolver= resolve;
+    });
+    var messageStr = `You may not zoom beyond the max zoom Level:${zoomMax}x`;
 
+    var optionArray = [];
+    for (var i = 0; i < zoom_levels.length; i++) {
+        optionArray[i] = {label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
+    }
 
-    var optionArray=[];
-        for (var i=0; i<zoom_levels.length; i++){
-            optionArray[i]={label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
-        }
+    if (initcurrLevel === zoomMax) {
+        return (
+            <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
+                <div style={message}>
+                   <p>{messageStr}</p>
 
-
-    return (
-        <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
-            <div  style={{ minWidth:100, minHeight: 300} }>
-
-                <div style={verticalColumn} >
-                    {makezoomItems(plot,optionArray)}
                 </div>
 
-           </div>
-        </FieldGroup>
+                <table style={{width:300}}>
+                    <colgroup>
+                        <col style={{width: '20%'}} />
+                        <col style={{width: '60%'}} />
+                        <col style={{width: '20%'}} />
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div style={{'textAlign':'center', marginBottom: 20}}>
+                                    < CompleteButton
+                                        text='OK'  groupKey='FITS_ROTATION_FORM'
+                                        onSuccess={() =>resultsOK}
+                                        onFail={resultsFail}
+                                        dialogId='zoomOptionsDialog'
 
-    );
+                                    />
+                                </div>
+                            </td>
+                            <td>
+                                <div style={{ textAlign:'center', marginBottom: 20}}>
+                                    <HelpIcon helpid={'visualization.Zoom'} />
+                                </div>
+                            </td>
+                         </tr>
+                    </tbody>
+                </table>
+            </FieldGroup>
+        );
+    }
+    else {
+        return (
+            <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
+                <div style={{ minWidth:100, minHeight: 300} }>
+
+                    <div style={verticalColumn}>
+                        {makezoomItems(plot, optionArray)}
+                    </div>
+
+                </div>
+            </FieldGroup>
+
+        );
+    }
 
 
 }
@@ -168,9 +211,6 @@ makezoomItems.propTypes= {
     opAry : React.PropTypes.array.isRequired,
     currLevel : React.PropTypes.number.isRequired
 };
-
-/*function updateLevels(plotId,zoomLevel) {
-}*/
 
 function resultsSuccess(plotId,zoomLevel) {
         var zoom= Number(zoomLevel);

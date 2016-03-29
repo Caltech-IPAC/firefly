@@ -16,7 +16,7 @@ import zoomOriginal from 'html/images/icons-2014/Zoom1x.png';
 import zoomFit from 'html/images/icons-2014/28x28_ZoomFitToSpace.png';
 import zoomFill from 'html/images/icons-2014/ZoomFillWidth.png';
 
-const CLICK_TIME= 20000;
+const CLICK_TIME= 200;
 const makeZT= (name,icon,tip,utilZt) => ({name,icon,tip,utilZt});
 
 export const ZoomType= {
@@ -37,7 +37,7 @@ function getZoomer() {
         var deltaClick= time-lastClick;
         lastClick= time;
 
-        if (zType===ZoomType.UP) {
+        /*if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
                 //todo
                 console.log('todo show zoom options popup');
@@ -50,7 +50,15 @@ function getZoomer() {
                 showZoomOptionsPopup();
                 return;
             }
+        }*/
+
+        if (deltaClick < CLICK_TIME) {
+            //todo
+            console.log('todo show zoom options popup');
+            showZoomOptionsPopup();
+            return;
         }
+
         dispatchZoom(pv.plotId,zType.utilZt,true,false, isFitFill(zType.utilZt));
     };
 }
