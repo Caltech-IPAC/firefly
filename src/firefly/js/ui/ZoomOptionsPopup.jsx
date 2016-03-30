@@ -107,19 +107,13 @@ class ZoomOptionsPopup extends React.Component {
 
 function ZoomOptionsPopupForm() {
 
-    const { pv, plot, initcurrLevel, colors,  hasThreeColorBand,hasOperation} = getInitialPlotState();
+    const {plot, initcurrLevel} = getInitialPlotState();
 
     var verticalColumn = {display: 'inline-block', paddingLeft: 10, paddingBottom: 20, paddingRight: 10};
-    var message = {display: 'inline-block', paddingTop:40, paddingLeft:20, verticalAlign:'middle', paddingBottom:30};
     var zoom_levels = _levels;
 
-    var initcurrZoomLevelStr = convertZoomToString(plot.zoomFactor);
+    var initcurrZoomLevelStr = convertZoomToString(initcurrLevel);
 
-    var resolver= null;
-    var closePromise= new Promise(function(resolve) {
-        resolver= resolve;
-    });
-    var messageStr = `You may not zoom beyond the max zoom Level:${zoomMax}x`;
 
     var optionArray = [];
     for (var i = 0; i < zoom_levels.length; i++) {
