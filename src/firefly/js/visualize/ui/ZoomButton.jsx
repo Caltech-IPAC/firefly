@@ -9,6 +9,7 @@ import {dispatchZoom} from '../ImagePlotCntlr.js';
 import {getZoomMax, getNextZoomLevel} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import zoomDown from 'html/images/icons-2014/ZoomOut.png';
 import zoomUp from 'html/images/icons-2014/ZoomIn.png';
@@ -37,24 +38,18 @@ function getZoomer() {
         var deltaClick= time-lastClick;
         lastClick= time;
 
-        /*if (zType===ZoomType.UP) {
+        if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
                 //todo
-                console.log('todo show zoom options popup');
-                //ZoomOptionsPopup.showZoomOps("You may not zoom beyond " + getZoomMax() + "x", true);
+                console.log('show max zoom info popup ');
+                showInfoPopup('You may not zoom beyond ' + getZoomMax() + 'x', 'Zoom Info');
                 return;
             }
-            else if (deltaClick < CLICK_TIME) {
-                //todo
-                console.log('todo show zoom options popup');
-                showZoomOptionsPopup();
-                return;
-            }
-        }*/
+        }
 
         if (deltaClick < CLICK_TIME) {
             //todo
-            console.log('todo show zoom options popup');
+            console.log('show zoom options popup');
             showZoomOptionsPopup();
             return;
         }
