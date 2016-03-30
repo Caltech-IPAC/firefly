@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {Component, PropTypes} from 'react';
+import {flux} from '../Firefly.js';
 import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
@@ -81,33 +82,33 @@ class ZoomOptionsPopup extends React.Component {
 
     constructor(props)  {
         super(props);
-        this.state = {fields:FieldGroupUtils.getGroupFields('ZOOM_OPTIONS_FORM')};
+        this.state = {plot:primePlot(visRoot()),initcurrLevel:primePlot(visRoot()).zoomFactor};
     }
 
     componentWillUnmount() {
+        if (this.removeListener) this.removeListener();
 
-        if (this.unbinder) this.unbinder();
     }
-
 
     componentDidMount() {
 
-        this.unbinder = FieldGroupUtils.bindToStore('ZOOM_OPTIONS_FORM', (fields) => {
-            this.setState({fields});
+        this.removeListener= flux.addListener(() => {
+            const { plot, initcurrLevel} = getInitialPlotState();
+            this.setState({plot, initcurrLevel});
         });
     }
 
 
     render() {
-        return <ZoomOptionsPopupForm  />;
+        const { plot, initcurrLevel} = this.state;
+        return <ZoomOptionsPopupForm  plot={plot} initcurrLevel={initcurrLevel}/>;
     }
-
 
 }
 
 function ZoomOptionsPopupForm() {
 
-    const {plot, initcurrLevel} = getInitialPlotState();
+   const {plot, initcurrLevel} = getInitialPlotState();
 
     var verticalColumn = {display: 'inline-block', paddingLeft: 10, paddingBottom: 20, paddingRight: 10};
     var zoom_levels = _levels;
@@ -121,7 +122,6 @@ function ZoomOptionsPopupForm() {
     }
 
     return (
-        <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
             <div style={{ minWidth:100, minHeight: 300} }>
 
                 <div style={verticalColumn}>
@@ -129,7 +129,6 @@ function ZoomOptionsPopupForm() {
                 </div>
 
             </div>
-        </FieldGroup>
 
     );
 

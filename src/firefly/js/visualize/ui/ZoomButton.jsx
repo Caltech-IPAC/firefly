@@ -40,7 +40,6 @@ function getZoomer() {
 
         if (zType===ZoomType.UP) {
             if (isZoomMax(pv)) {
-                //todo
                 console.log('show max zoom info popup ');
                 showInfoPopup('You may not zoom beyond ' + getZoomMax() + 'x', 'Zoom Info');
                 return;
@@ -48,7 +47,6 @@ function getZoomer() {
         }
 
         if (deltaClick < CLICK_TIME) {
-            //todo
             console.log('show zoom options popup');
             showZoomOptionsPopup();
             return;
