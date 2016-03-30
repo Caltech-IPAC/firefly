@@ -70,7 +70,7 @@ export const TestCatalog = (props) => {
                                          initialState= {{
                                           fieldKey: 'radius',
                                           value: '300',
-                                          validator: Validate.floatRange.bind(null, 0, 1000, 3,'field 3'),
+                                          validator: Validate.floatRange.bind(null, 0, 2000, 3,'field 3'),
                                           tooltip: 'radius',
                                           label : 'radius:',
                                           labelWidth : 100

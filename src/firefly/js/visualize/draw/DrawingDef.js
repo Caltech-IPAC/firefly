@@ -56,6 +56,7 @@ export function makeDrawingDef(color= 'red') {
         fontName: 'helvetica',
         fontSize:  DEFAULT_FONT_SIZE,
         fontWeight: 'normal',
-        fontStyle: 'normal'
+        fontStyle: 'normal',
+        selectedColor: COLOR_SELECTED_PT
     };
 }

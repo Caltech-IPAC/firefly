@@ -4,10 +4,11 @@
 
 import {take} from 'redux-saga/effects';
 import {isEmpty} from 'lodash';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_SPACE_PATH} from '../../tables/TablesCntlr.js';
+import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_SPACE_PATH} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {findTblById,doFetchTable} from '../../tables/TableUtil.js';
+import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {getDrawLayerById} from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
@@ -41,23 +42,25 @@ export function* watchCatalogs() {
 
 
     while (true) {
-        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
+        const action= yield take([TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_UPDATE,
+                                  TABLE_REMOVE, ImagePlotCntlr.PLOT_IMAGE]);
+        const {tbl_id}= action.payload;
         switch (action.type) {
             case TABLE_NEW:
-                handleCatalogUpdate(action.payload.tbl_id);
+                handleCatalogUpdate(tbl_id);
                 break;
             
             case TABLE_SELECT:
-                console.log('todo: select:',action); //todo - next ticket
+                dispatchModifyCustomField(tbl_id, {selectInfo:action.payload.selectInfo});
                 break;
             
             case TABLE_HIGHLIGHT:
-                const {tbl_id, highlightedRow}= action.payload;
-                dispatchModifyCustomField(tbl_id, {highlightedRow});
+            case TABLE_UPDATE:
+                dispatchModifyCustomField(tbl_id, {highlightedRow:action.payload.highlightedRow});
                 break;
                 
             case TABLE_REMOVE:
-                dispatchDestroyDrawLayer(action.payload.tbl_id);
+                dispatchDestroyDrawLayer(tbl_id);
                 break;
 
             case ImagePlotCntlr.PLOT_IMAGE:
@@ -65,7 +68,6 @@ export function* watchCatalogs() {
                 break;
         }
     }
-
 }
 
 
@@ -75,7 +77,7 @@ function handleCatalogUpdate(tbl_id) {
     const sourceTable= findTblById(tbl_id);
 
     
-    const {tableMeta,totalRows,tableData, request, highlightedRow}= sourceTable;
+    const {tableMeta,totalRows,tableData, request, highlightedRow,selectInfo}= sourceTable;
     
 
 
@@ -92,7 +94,7 @@ function handleCatalogUpdate(tbl_id) {
         latCol: s[1],
         csys : CoordinateSys.parse(s[2])
     };
-    
+
     if (!tableData.columns.find( isCName(columns.lonCol)) && !tableData.columns.find(isCName(columns.latCol))) {
         return;
     }
@@ -103,6 +105,11 @@ function handleCatalogUpdate(tbl_id) {
         inclCols : `${columns.lonCol},${columns.latCol}`
     };
 
+    var dataTooBigForSelection= false;
+    if (totalRows>5000) {
+        params.decimate=  serializeDecimateInfo(columns.lonCol, columns.latCol, 10000);
+        dataTooBigForSelection= true;
+    }
 
     const req = Object.assign({}, sourceTable.request, params);
     req.tbl_id = tbl_id;
@@ -112,7 +119,7 @@ function handleCatalogUpdate(tbl_id) {
             if (tableModel.tableData && tableModel.tableData.data) {
                 updateDrawingLayer(tbl_id,
                     tableModel.tableData, tableModel.tableMeta,
-                    request, highlightedRow, columns);
+                    request, highlightedRow, selectInfo, columns, dataTooBigForSelection);
             }
         }
     ).catch(
@@ -122,7 +129,8 @@ function handleCatalogUpdate(tbl_id) {
     );
 }
 
-function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest, highlightedRow, columns) {
+function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest, 
+                            highlightedRow, selectInfo, columns, dataTooBigForSelection) {
 
     const plotIdAry= visRoot().plotViewAry
         .filter( (pv) => pv.options.acceptAutoLayers)
@@ -130,11 +138,14 @@ function updateDrawingLayer(tbl_id, tableData, tableMeta, tableRequest, highligh
 
     const dl= getDrawLayerById(dlRoot(),tbl_id);
     if (dl) { // update drawing layer
-        dispatchModifyCustomField(tbl_id, {tableData, tableMeta, tableRequest, highlightedRow, columns});
+        dispatchModifyCustomField(tbl_id, {tableData, tableMeta, tableRequest, 
+                                           highlightedRow, selectInfo, columns,
+                                           dataTooBigForSelection});
     }
-    else { // new new
+    else { // new drawing layer
         dispatchCreateDrawLayer(Catalog.TYPE_ID,
-            {catalogId:tbl_id, tableData, tableMeta, tableRequest, highlightedRow, columns});
+            {catalogId:tbl_id, tableData, tableMeta, tableRequest, highlightedRow, 
+                                selectInfo, columns, dataTooBigForSelection});
         dispatchAttachLayerToPlot(tbl_id, plotIdAry);
     }
 }
