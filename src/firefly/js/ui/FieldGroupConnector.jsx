@@ -40,7 +40,14 @@ export function fieldGroupConnector(FieldComponent,
             this.fireValueChange = this.fireValueChange.bind(this);
             const {fieldKey} = props;
             const groupKey= getGroupKey(props,context);
-            var fieldState = props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
+
+            var fieldState;
+            if (props.forceReinit) {
+                fieldState = props.initialState || FieldGroupUtils.getGroupFields(groupKey)[fieldKey];
+            }
+            else {
+                fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || props.initialState;
+            }
             this.state = {fieldState};
         }
 
@@ -74,12 +81,16 @@ export function fieldGroupConnector(FieldComponent,
             const {fieldState}= this.state;
             const {props}= this;
             this.iAmMounted= true;
+            var value= get(fieldState, 'value');
+            if (props.forceReinit) {
+                value= props.initialState.value;
+            }
             this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props,this.context));
             dispatchMountComponent(
                     getGroupKey(props,this.context),
                     props.fieldKey,
                     true,
-                    confirmInitialValue(get(fieldState, 'value'),props,fieldState),
+                    confirmInitialValue(value,props,fieldState),
                     props.initialState
                 );
         }
@@ -113,7 +124,8 @@ export function fieldGroupConnector(FieldComponent,
         fieldKey: PropTypes.string,
         groupKey: PropTypes.string, // usually comes from context but this is a fallback
         initialState: PropTypes.object,
-        labelWidth: PropTypes.number
+        labelWidth: PropTypes.number,
+        forceReinit: PropTypes.bool
     };
     
     if (connectorPropTypes) {

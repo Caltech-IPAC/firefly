@@ -28,7 +28,7 @@ var init= function() {
 function DialogRootComponent({dialogs,tmpPopups}) {
     var dialogAry = Object.keys(dialogs).map( (k) => React.cloneElement(dialogs[k],{key:k}));
     var tmpPopupAry = Object.keys(tmpPopups).map( (k) => React.cloneElement(tmpPopups[k],{key:k}));
-    return  <div> {dialogAry} {tmpPopupAry}</div>;
+    return  <div style={{position:'relative', zIndex:200}}> {dialogAry} {tmpPopupAry}</div>;
 }
 
 DialogRootComponent.propTypes = {

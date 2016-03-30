@@ -321,7 +321,7 @@ function createDrawLayer(state,action) {
     var allowedActions= union(state.allowedActions, drawLayer.actionTypeAry);
 
     return Object.assign({}, state,
-        {allowedActions, drawLayerAry: [drawLayer, ...state.drawLayerAry] });
+        {allowedActions, drawLayerAry: [...state.drawLayerAry, drawLayer] });
 }
 
 /**

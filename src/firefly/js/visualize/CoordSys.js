@@ -13,7 +13,7 @@ const ECLIPTIC_J   = 13;
 
 
 
-var CoordinateSys = function () {
+export const CoordinateSys = function () {
 
 
     var init = function (desc, equatorial, jsys, equinox) {

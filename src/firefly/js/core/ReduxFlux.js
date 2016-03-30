@@ -4,6 +4,7 @@
 
 
 import React from 'react';
+import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import loggerMiddleware from 'redux-logger';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
@@ -32,6 +33,7 @@ import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
 import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js';
+import {masterSaga} from './MasterSaga.js';
 
 //--- import drawing Layers
 import ActiveTarget from '../drawingLayers/ActiveTarget.js';
@@ -40,6 +42,9 @@ import DistanceTool from '../drawingLayers/DistanceTool.js';
 import PointSelection from '../drawingLayers/PointSelection.js';
 import StatsPoint from '../drawingLayers/StatsPoint.js';
 import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
+import Catalog from '../drawingLayers/Catalog.js';
+
+import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
 /**
  * A map to rawAction.type to an ActionCreator
@@ -50,7 +55,8 @@ const actionCreators = new Map();
 
 
 const drawLayerFactory= DrawLayerFactory.makeFactory(ActiveTarget,SelectArea,DistanceTool,
-                                                     PointSelection, StatsPoint, NorthUpCompass );
+                                                     PointSelection, StatsPoint, NorthUpCompass,
+                                                     Catalog);
 
 
 /**
@@ -104,6 +110,10 @@ actionCreators.set(XYPlotCntlr.LOAD_PLOT_DATA, XYPlotCntlr.loadPlotData);
 
 
 
+actionCreators.set('exampleDialog', (rawAction) => {
+    showExampleDialog();
+    return rawAction;
+});
 
 
 
@@ -158,11 +168,9 @@ var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:coll
 function createRedux() {
     // create a rootReducer from all of the registered reducers
     const rootReducer = combineReducers(reducers);
-
-    // redux is a store and more.. it manages reducers as well as thunk actions
-    // we'll call it redux for now.
-    // return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, logger)(createStore)(rootReducer);
-    return applyMiddleware(actionSideEffectMiddleware, thunkMiddleware)(createStore)(rootReducer);
+    const middleWare=  applyMiddleware(actionSideEffectMiddleware, thunkMiddleware, createSagaMiddleware(masterSaga));
+    
+    return createStore(rootReducer, middleWare);
 }
 
 function bootstrap() {
@@ -184,7 +192,7 @@ function bootstrap() {
  *
  * <i>Note: </i> Often it makes sense to have a utility function call <code>process</code>. In that case
  * the utility function should meet the follow criteria.  This is a good way to document and default the
- * payload parameters.  The utility function should implment the following standard:
+ * payload parameters.  The utility function should implement the following standard:
  * <ul>
  *     <li>The function name should start with "dispatch"</li>
  *     <li>The action type as the second part of the name</li>

@@ -28,7 +28,7 @@ function updateDrawer(drawer,plot, width, height, drawLayer) {
     drawer.isPointData= drawLayer.isPointData;
     drawer.setData(data,plot,width,height,drawLayer.drawingDef);
     if (highlightData) {
-        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId));
+        drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId),width,height);
     }
 }
 

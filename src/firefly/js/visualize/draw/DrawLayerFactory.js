@@ -66,7 +66,10 @@ class DrawLayerFactory {
      * @return {*}
      */
     create(drawLayerTypeId, initPayload) {
-        if (!this.registry[drawLayerTypeId]) return null;
+        if (!this.registry[drawLayerTypeId]) {
+            console.warn(`DrawingLayerType: ${drawLayerTypeId} does not exist in the registry, did you forget to add it?`);
+            return null;
+        }
         return this.registry[drawLayerTypeId].create(initPayload);
     }
 

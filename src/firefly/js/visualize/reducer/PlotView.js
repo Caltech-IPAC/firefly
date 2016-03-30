@@ -88,6 +88,7 @@ export function makePlotView(plotId, req, pvOptions) {
 
         options : {
 
+            acceptAutoLayers : true,
             // many options -- todo figure out how to set and change, some are set by request, how about the others?
             workingMsg      : DEF_WORKING_MSG,
             removeOldPlot   : true, // if false keep the last plot for flipping, if true remove the old one before plotting, todo
