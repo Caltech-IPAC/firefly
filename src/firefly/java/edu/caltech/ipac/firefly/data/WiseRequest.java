@@ -257,22 +257,28 @@ public class WiseRequest extends TableServerRequest {
         return imageSet.contains(",");
     }
 
-    public static String getTableSchema(ServerRequest req, String imageSet) {
-        if (useMergedTable(imageSet)) {
+    /**
+     * This returns the schema after necessary conversion, like
+     * merge, internal, public, etc.
+     * @return
+     */
+    public static String getTrueSchema(ServerRequest req) {
+        String schema = req.getParam(SCHEMA);
+        if (useMergedTable(schema)) {
             return req.getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
         } else {
-            String schema = imageSet;
-            schema = schema.contains("-") ? schema.split("-")[0] : schema;
             return schema;
         }
+    };
+
+    public String getTableSchema() {
+        String schema = getTrueSchema(this);
+        schema = schema.contains("-") ? schema.split("-")[0] : schema;
+        return schema;
     }
 
-
     public String getTable() {
-        String imageSet = getParam(SCHEMA);
-        if (useMergedTable(imageSet)) {
-            imageSet = getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
-        }
+        String imageSet = getTrueSchema(this);
         String[] names = TABLE_MAP.get(imageSet + "|" + getParam("ProductLevel"));
         return names == null || names.length < 2 ? null : names[0];
     }
@@ -332,10 +338,7 @@ public class WiseRequest extends TableServerRequest {
     }
 
     public static String getMosCatalog(TableServerRequest req) {
-        String imageSet = req.getParam(SCHEMA);
-        if (useMergedTable(imageSet)) {
-            imageSet = req.getBooleanParam(PUBLIC_RELEASE, true) ? MERGE : MERGE_INT;
-        }
+        String imageSet = getTrueSchema(req);
         return MOS_CATALOGS.get(imageSet);
     }
 

@@ -214,15 +214,9 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
         String host = req.getHost();
         String schemaGroup = req.getSchemaGroup();
         String table = req.getTable();
-        String schema = WiseRequest.getTableSchema(req, req.getSchema());
+        String schema = req.getTableSchema();
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table;
-    }
-
-    public static String getBaseFilePath(ServerRequest sr) {
-        String schema = WiseRequest.getTableSchema(sr, sr.getSafeParam(WiseRequest.SCHEMA));
-        String productLevel = sr.getSafeParam("ProductLevel");
-        return getBaseFilePath(schema, productLevel);
     }
 
     public static String getBaseFilePath(String schema, String productLevel) {
@@ -311,7 +305,8 @@ public class WiseFileRetrieve extends BaseFileInfoProcessor {
         // build service
         String productLevel = sr.getSafeParam("ProductLevel");
 
-        String schema = WiseRequest.getTableSchema(sr, sr.getSafeParam(WiseRequest.SCHEMA));
+        String schema = WiseRequest.getTrueSchema(sr);
+
         if (productLevel.equalsIgnoreCase("1b")) {
             String scanId = sr.getSafeParam("scan_id");
             String frameNum = sr.getSafeParam("frame_num");
