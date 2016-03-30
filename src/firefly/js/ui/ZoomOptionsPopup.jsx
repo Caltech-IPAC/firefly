@@ -126,59 +126,18 @@ function ZoomOptionsPopupForm() {
         optionArray[i] = {label: convertZoomToString(zoom_levels[i]), value: zoom_levels[i]};
     }
 
-    if (initcurrLevel === zoomMax) {
-        return (
-            <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
-                <div style={message}>
-                   <p>{messageStr}</p>
+    return (
+        <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
+            <div style={{ minWidth:100, minHeight: 300} }>
+
+                <div style={verticalColumn}>
+                    {makezoomItems(plot, optionArray)}
                 </div>
 
-                <table style={{width:300}}>
-                    <colgroup>
-                        <col style={{width: '20%'}} />
-                        <col style={{width: '60%'}} />
-                        <col style={{width: '20%'}} />
-                    </colgroup>
-                    <tbody>
-                        <tr>
-                            <td></td>
-                            <td>
-                                <div style={{'textAlign':'center', marginBottom: 20}}>
-                                    < CompleteButton
-                                        text='OK'  groupKey='FITS_ROTATION_FORM'
-                                        onSuccess={() =>resultsOK}
-                                        onFail={resultsFail}
-                                        dialogId='zoomOptionsDialog'
+            </div>
+        </FieldGroup>
 
-                                    />
-                                </div>
-                            </td>
-                            <td>
-                                <div style={{ textAlign:'center', marginBottom: 20}}>
-                                    <HelpIcon helpid={'visualization.imageoptions'} />
-                                </div>
-                            </td>
-                         </tr>
-                    </tbody>
-                </table>
-            </FieldGroup>
-        );
-    }
-    else {
-        return (
-            <FieldGroup groupKey='ZOOM_OPTIONS_FORM' keepState={true}>
-                <div style={{ minWidth:100, minHeight: 300} }>
-
-                    <div style={verticalColumn}>
-                        {makezoomItems(plot, optionArray)}
-                    </div>
-
-                </div>
-            </FieldGroup>
-
-        );
-    }
-
+    );
 
 }
 
@@ -187,7 +146,7 @@ function makezoomItems(plot,opAry) {
     return opAry.map( (levelStr,opId) => {
         if (levelStr.value===plot.zoomFactor) {
             return(
-                <u>{levelStr.label} :  Current </u>
+                <u key={opId}>{levelStr.label} :  Current </u>
 
             );
 
@@ -195,7 +154,7 @@ function makezoomItems(plot,opAry) {
         else {
             return (
                 <ToolbarButton text={levelStr.label} tip={levelStr.label}
-                               enabled={true} horizontal={false} key={levelStr.value}
+                               enabled={true} horizontal={false} key={opId}
                                onClick={() =>resultsSuccess(plot.plotId,levelStr.value)}
                 />
             );
