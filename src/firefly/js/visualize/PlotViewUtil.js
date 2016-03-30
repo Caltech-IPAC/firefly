@@ -165,14 +165,21 @@ export function getAllDrawLayers(dlRoot) { return dlRoot.drawLayerAry; }
  * construct an array of drawing layer from the store
  * @param ref - the root of the drawing layer controller or the master array of all drawing layers
  * @param plotId
+ * @param mustBeVisible
  * @return {Array}
  */
-export function getAllDrawLayersForPlot(ref,plotId) {
+export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
     var dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
-    return dlAry
-        .filter( (dl) => dl.plotIdAry
-        .find( (id) => id===plotId));
+    if (mustBeVisible) {
+        return dlAry.filter( (dl) => dl.visiblePlotIdAry.includes(plotId));
+    }
+    else {
+        return dlAry.filter( (dl) => dl.plotIdAry.includes(plotId));
+    }
 }
+
+
+
 
 
 /**

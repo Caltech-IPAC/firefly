@@ -4,11 +4,12 @@
 
 
 import React, {PropTypes} from 'react';
+import {get} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
-import {primePlot, isActivePlotView} from '../PlotViewUtil.js';
+import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from './ImageViewerLayout.jsx';
 import {PlotAttribute} from '../WebPlot.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
@@ -16,6 +17,8 @@ import BrowserInfo from '../../util/BrowserInfo.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../PlotCmdExtension.js';
 import {PlotTitle, TitleType} from './PlotTitle.jsx';
 import './ImageViewerDecorate.css';
+import Catalog from '../../drawingLayers/Catalog.js';
+import {DataTypes} from '../draw/DrawLayer.js';
 
 const TOOLBAR_HEIGHT= 32;
 
@@ -48,9 +51,21 @@ const toolsAnno= [
  * @param dlAry
  * @return {boolean}
  */
-function showSelectAndFilter(pv,dlAry) {
-    return false;
+function showSelect(pv,dlAry) {
+    return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canSelect);
 }
+
+function showFilter(pv,dlAry) {
+    return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID && dl.canFilter);
+}
+
+function showClearFilter(pv,dlAry) {
+    return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
+        .some( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID &&  get(dl,'tableRequest.filters') );
+}
+
 
 /**
  * todo
@@ -60,7 +75,9 @@ function showSelectAndFilter(pv,dlAry) {
  * @return {boolean}
  */
 function showUnselect(pv,dlAry) {
-    return false;
+    return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
+        .filter( (dl) => dl.drawLayerTypeId===Catalog.TYPE_ID)
+        .some( (dl) => Boolean(dl.drawData[DataTypes.SELECTED_IDXS] && dl.canSelect));
 }
 
 
@@ -86,21 +103,23 @@ function showUnselect(pv,dlAry) {
 
 
 
-
-
 function contextToolbar(pv,dlAry,extensionList) {
     if (!pv) return;
     var plot= primePlot(pv);
     if (!plot) return;
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
-        var selectAndFilter= showSelectAndFilter(pv,dlAry);
+        var select= showSelect(pv,dlAry);
+        var unselect= showUnselect(pv,dlAry);
+        var filter= showFilter(pv,dlAry);
+        var clearFilter= showClearFilter(pv,dlAry);
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
+        const extensionAry= selAry.length ? selAry : null;
         return (
-            <VisCtxToolbarView
-                plotView={pv} dlAry={dlAry} extensionAry={selAry.length?selAry:null}
-                showCrop={true} showStats={true} showSelect={selectAndFilter}
-                showUnSelect={showUnselect(pv,dlAry)} showFilter={selectAndFilter}
+            <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry,
+                                    showCrop:true, showStats:true, showSelect:select,
+                                    showUnSelect:unselect,
+                                    showFilter:filter, showClearFilter:clearFilter}}
             />
         );
     }
@@ -108,22 +127,14 @@ function contextToolbar(pv,dlAry,extensionList) {
         var distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
         if (!distAry.length) return false;
         return (
-            <VisCtxToolbarView
-                plotView={pv} dlAry={dlAry} extensionAry={distAry}
-                showCrop={false} showStats={false} showSelect={false}
-                showUnSelect={false} showFilter={false}
-            />
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={distAry} />
         );
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
         if (!ptAry.length) return false;
         return (
-            <VisCtxToolbarView
-                plotView={pv} dlAry={dlAry} extensionAry={ptAry}
-                showCrop={false} showStats={false} showSelect={false}
-                showUnSelect={false} showFilter={false}
-            />
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={ptAry} />
         );
     }
     return false;

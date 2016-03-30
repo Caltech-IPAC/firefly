@@ -29,7 +29,7 @@ class Drawer {
         this.data;
         this.highlightData;
         this.drawConnect= null;
-        this.selectedIdxAry=[];
+        this.selectedIndexes=[];
 
         this.plot= null;
         this.primaryCanvas= null;
@@ -98,12 +98,13 @@ class Drawer {
     /**
      *
      * @param {Array} data the list of DataObj
+     * @param selectedIndexes
      * @param plot
      * @param width
      * @param height
      * @param drawingDef
      */
-    setData(data,plot,width,height,drawingDef) {
+    setData(data,selectedIndexes,plot,width,height,drawingDef) {
         if (data && !Array.isArray(data)) data= [data];
         var cWidth, cHeight, oldvpX, oldvpY, vpX, vpY, dWidth, oldDWidth, dHeight;
         var oldDHeight, zfact, oldZfact, oldTestPtStr, testPtStr, pt;
@@ -135,43 +136,63 @@ class Drawer {
             oldTestPtStr= pt ? pt.toString() : '';
         }
 
+        var viewUpdated= true;
 
-        if (data && this.data && data===this.data &&
-            drawingDef===this.drawingDef &&
+        if (drawingDef===this.drawingDef &&
             cWidth===width && cHeight===height &&
             oldvpX===vpX && oldvpY===vpY &&
             dWidth===oldDWidth && dHeight===oldDHeight  &&
             zfact===oldZfact  && testPtStr===oldTestPtStr ) {
-            return;
+            viewUpdated= false;
         }
+        
+        
+        const primaryUpdated= (data && data!==this.data) || viewUpdated;
+
+        const selectedUpdated= (selectedIndexes!==this.selectedIndexes) || viewUpdated;
 
 
         if (data!==this.data || this.plot!==plot) {
             this.decimatedData= null;
         }
 
-        //======== DEBUG =============================
-        //var changes= [this.primaryCanvas ? '' : 'no canvas'];
-        var changes= [];
-        if (data!==this.data) changes.push('data');
-        //if (plot!==this.plot) changes.push('plot');
-        if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
-        if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
-        if (dWidth!==oldDWidth ) changes.push(`data width: ${oldDWidth}, ${dWidth}`);
-        if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
-        if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
-        if (testPtStr!==oldTestPtStr ) changes.push('test pt');
-        if (oldvpX!==vpX ) changes.push(`vpX: ${oldvpX}, ${vpX}`);
-        if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
-        if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
-        var changeStr= join(', ',...changes);
-        if (false) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
-        //=====================================
+        if (!primaryUpdated && !selectedUpdated) return;
+
         this.plot= plot;
         this.data = data;
+        this.selectedIndexes = selectedIndexes;
         this.drawingDef = drawingDef;
+        
 
-        this.dataUpdated(width,height);
+        if (primaryUpdated) {
+            this.dataUpdated(width,height);
+        }
+
+        if (selectedUpdated) {
+            this.updateDataSelectLayer();
+        }
+
+
+
+
+        //======== DEBUG =============================
+        //var changes= [this.primaryCanvas ? '' : 'no canvas'];
+        // var changes= [];
+        // if (data!==this.data) changes.push('data');
+        // //if (plot!==this.plot) changes.push('plot');
+        // if (cWidth!==width ) changes.push(`width: ${width}, ${cWidth}`);
+        // if (cHeight!==height ) changes.push(`height: ${height}, ${cHeight}`);
+        // if (dWidth!==oldDWidth ) changes.push(`data width: ${oldDWidth}, ${dWidth}`);
+        // if (dHeight!==oldDHeight ) changes.push(`data height: ${oldDHeight}, ${dHeight}`);
+        // if (zfact!==oldZfact ) changes.push(`zoom factor ${oldZfact}, ${zfact}`);
+        // if (testPtStr!==oldTestPtStr ) changes.push('test pt');
+        // if (oldvpX!==vpX ) changes.push(`vpX: ${oldvpX}, ${vpX}`);
+        // if (oldvpY!==vpY ) changes.push(`vpY: ${oldvpY}, ${vpY}`);
+        // if (drawingDef!==this.drawingDef ) changes.push('drawingDef');
+        // var changeStr= join(', ',...changes);
+        // if (false && primaryUpdated) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
+        //=====================================
+        
     }
 
 
@@ -198,7 +219,7 @@ class Drawer {
             this.selectCanvas= c;
             //console.log(`Drawer ${this.drawerId}: redraw select- canvas update`);
             updateCanvasSize(width,height,c);
-            this.updateDataSelectLayer(this.data,this.selectedIdxAry);
+            this.updateDataSelectLayer();
         }
     }
 
@@ -214,19 +235,23 @@ class Drawer {
         }
     }
 
-    updateDataSelectLayer(data, selectedIdxAry) {
-        this.data = data;
-        this.selectedIdxAry= selectedIdxAry;
-        var {selectCanvas}= this;
+    updateDataSelectLayer() {
+        var {plot,selectCanvas,selectedIndexes,data}= this;
         var sCtx= selectCanvas? selectCanvas.getContext('2d') : null;
 
         if (sCtx) {
-            var cc= CsysConverter.make(this.plot);
-            this.redrawSelected(sCtx, cc, this.data, selectedIdxAry,
+            var cc= CsysConverter.make(plot);
+            this.redrawSelected(selectCanvas, sCtx, cc, data, selectedIndexes,
                 selectCanvas.width, selectCanvas.height);
         }
     }
 
+    /**
+     *
+     * @param highlightData
+     * @param width
+     * @param height
+     */
     updateDataHighlightLayer(highlightData,width,height) {
         var {highlightCanvas, drawingDef}= this;
         this.highlightData=highlightData;
@@ -268,22 +293,30 @@ class Drawer {
         var cc= CsysConverter.make(this.plot);
         this.redrawPrimary(primaryCanvas, cc, pCtx, this.data, this.drawingDef, w,h);
         this.redrawHighlight(hCtx, cc, this.highlightData, this.drawingDef, w,h);
-        this.redrawSelected(sCtx, cc, this.data, this.selectedIdxAry, w, h);
+        this.redrawSelected(selectCanvas, sCtx, cc, this.data, this.selectedIndexes, w, h);
     }
 
 
-    //todo - selected is not working , needs to be finished
-    redrawSelected(ctx, cc, data, selectedIdxAry,w,h) {
-        return; // revamp this section
+    redrawSelected(selectCanvas, ctx, cc, data, selectedIndexes,w,h) {
         if (!ctx) return;
-        var selectedData= [];
+        var selectedData;
         DrawUtil.clear(ctx,w,h);
         if (canDraw(ctx,data)) {
-            var vpPtM= makeViewPortPt(0,0);
-            //todo - this will not work - must use base data decimated data
-            //todo - parameters are not correct - how do a decimate with selected? figure it out
-            selectedData= this.decimateData(data.filter( (pt) => pt.isSelected() ),null,false);
-            selectedData.forEach( (pt) => drawObj(ctx, null, this.drawingDef, cc, pt, vpPtM, false));
+            if (!selectedIndexes) return;
+            if (Array.isArray(selectedIndexes)) {
+                selectedData= this.decimateData(this.decimate,
+                             selectedIndexes.map( (dataIdx)=> data[dataIdx]), cc,false,null);
+            }
+            else if (typeof selectedIndexes ==='function') {
+                selectedData= this.decimateData(this.decimate,
+                    data.filter( (d,idx)=> selectedIndexes(idx)), cc,false,null);
+            }
+            else {
+                return;
+            }
+            const selDrawDef= Object.assign({}, this.drawingDef, {color:this.drawingDef.selectedColor});
+            const params= makeDrawingParams(selectCanvas, null, selDrawDef, cc,selectedData,null, Number.MAX_SAFE_INTEGER);
+            this.doDrawing(params);
         }
     }
 
@@ -465,6 +498,17 @@ function nextPt(i,fuzzLevel, max) {
     return retval;
 }
 
+/***
+ *
+ * @param canvas
+ * @param drawTextAry
+ * @param drawingDef
+ * @param csysConv
+ * @param data
+ * @param drawConnect
+ * @param maxChunk
+ * @return {{canvas: *, ctx: (CanvasRenderingContext2D|*), drawTextAry: *, drawingDef: *, csysConv: *, data: *, maxChunk: *, drawConnect: *, iterator: *, startTime: number, opCnt: number, done: boolean, begin: boolean, deferCnt: number, vpPtM}}
+ */
 function makeDrawingParams(canvas, drawTextAry, drawingDef, csysConv, data, drawConnect, maxChunk) {
     var params= {
         canvas,    //const
