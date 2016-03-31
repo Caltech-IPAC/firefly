@@ -1,7 +1,7 @@
 import {flux} from '../Firefly.js';
 
 import update from 'react-addons-update';
-import {has, omitBy, isUndefined, isString} from 'lodash';
+import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 
 
 import {doFetchTable, isTableLoaded, findTblById} from '../tables/TableUtil.js';
@@ -23,6 +23,7 @@ export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
     {
          // tblXYPlotData
          isPlotDataReady: boolean
+         decimatedUnzoomed: boolean // tells that unzoomed data are decimated
          xyPlotData: {
                     rows: [[x: string, y: string, rowIdx: string]*] ,
                     decimateKey: string,
@@ -144,7 +145,7 @@ export function reducer(state=getInitState(), action={}) {
                     const prevXyPlotParams = state[tbl_id].xyPlotParams;
                     const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
                         update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
-                    action.sideEffect((dispatch) => fetchPlotData(dispatch, request, xyPlotParamsNext));
+                    action.sideEffect((dispatch) => debouncedFetchPlotData(dispatch, request, xyPlotParamsNext));
                 }
             }
             return state;
@@ -152,15 +153,22 @@ export function reducer(state=getInitState(), action={}) {
         case (LOAD_PLOT_DATA)  :
         {
             const {searchRequest} = action.payload;
+            const tblId = searchRequest.tbl_id;
             const newState = Object.assign({}, state);
-            newState[searchRequest.tbl_id]= {isPlotDataReady: false};
+            newState[tblId]= {isPlotDataReady: false};
+            // we need to know if the original unzoomed plot was decimated
+            if (state[tblId]) {
+                newState[tblId].decimatedUnzoomed = state[tblId].decimatedUnzoomed;
+            }
             return newState;
         }
         case (UPDATE_PLOT_DATA)  :
         {
-            const {isPlotDataReady, xyPlotData, xyPlotParams, tblId} = action.payload;
+            const {isPlotDataReady, decimatedUnzoomed, xyPlotData, xyPlotParams, tblId} = action.payload;
+            const decimatedUnzoomedNext = isUndefined(decimatedUnzoomed) ? state[tblId].decimatedUnzoomed : decimatedUnzoomed;
             return stateWithNewData(tblId, state, {
                 isPlotDataReady,
+                decimatedUnzoomed: decimatedUnzoomedNext,
                 xyPlotData,
                 xyPlotParams
             });
@@ -173,7 +181,7 @@ export function reducer(state=getInitState(), action={}) {
         case (SET_ZOOM) :
         {
             const {tblId, selection} = action.payload;
-            return update(state,
+            const newState = update(state,
                 {[tblId] :
                     {xyPlotParams:
                         {
@@ -181,17 +189,32 @@ export function reducer(state=getInitState(), action={}) {
                             zoom: {$set: selection}
                          }
                     }});
+            if  (get(newState[tblId], 'xyPlotData.decimateKey')) {
+                const nextPlotParams = newState[tblId].xyPlotParams;
+                newState[tblId] = {plotDataReady: false, decimatedUnzoomed: state[tblId].decimatedUnzoomed};
+                request = findTblById(tblId).request;
+                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
+            }
+            return newState;
         }
         case (RESET_ZOOM) :
         {
-            return update(state,
-                {[action.payload.tblId] :
+            const tblId = action.payload.tblId;
+            const newState = update(state,
+                {[tblId] :
                     {xyPlotParams:
                         {
                             selection: {$set: undefined},
                             zoom: {$set: undefined}
                         }
                     }});
+            if  (state[tblId].decimatedUnzoomed || isUndefined(state[tblId].decimatedUnzoomed)) {
+                const nextPlotParams = newState[tblId].xyPlotParams;
+                newState[tblId] = {plotDataReady: false};
+                request = findTblById(tblId).request;
+                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
+            }
+            return newState;
 
         }
         case (TablesCntlr.TABLE_SELECT) :
@@ -227,6 +250,12 @@ function updatePlotData(data) {
 }
 
 /**
+ * Walkaround for TABLE_LOAD action arriving before NEW_TABLE.
+ * When it happens the data in table space (in particular the request) are not yet updated
+ */
+const debouncedFetchPlotData = debounce(fetchPlotData, 200);
+
+/**
  * fetches xy plot data
  * set isColStatsReady to true once done.
  * @param dispatch
@@ -238,10 +267,16 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
 
     if (!xyPlotParams) { return; }
 
+    let limits = [];
+    if (xyPlotParams.zoom) {
+        const {xMin, xMax, yMin, yMax}  = xyPlotParams.zoom;
+        limits = [xMin, xMax, yMin, yMax];
+    }
+
     // todo support expressions
     const req = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000,
         'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`,
-        'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000)
+        'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
         });
 
     const tblId = activeTableServerRequest.tbl_id;
@@ -272,6 +307,8 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
                 dispatch(updatePlotData(
                     {
                         isPlotDataReady : true,
+                        // when zoomed, we don't know if the unzoomed data are decimated or not
+                        decimatedUnzoomed: Boolean(tableMeta['decimate_key']) || (xyPlotParams.zoom ? undefined : false),
                         xyPlotParams,
                         xyPlotData,
                         tblId
@@ -283,6 +320,7 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
             console.error(`Failed to fetch XY plot data: ${reason}`);
         }
     );
+
 }
 
 
