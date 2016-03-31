@@ -5,7 +5,9 @@
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
 import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
+import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
+import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
+import {dispatchAddImages, getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
@@ -22,11 +24,12 @@ import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {convertAngle} from '../VisUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
+
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {RadiusInputFields} from '../../ui/RadiusInputFields.jsx';
+import {SizeInputFields} from '../../ui/sizeInputFields.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import {dispatchAddImages, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
+import Enum from 'enum';
 import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
@@ -55,7 +58,8 @@ const keyMap = {
     'fitslist':    'SELECTIMAGEPANEL_FITS_list',
     'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
     'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
-    'radiusfield': 'SELECTIMAGEPANEL_ImgFeature_radius'
+    'radiusfield': 'SELECTIMAGEPANEL_ImgFeature_radius',
+    'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
 const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -68,30 +72,41 @@ const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 
 // this version is made to add a new plot to an existing viewer if no plot is found
 // or replace the plot from the active viewer
 
+const PlotSelectMode = new Enum(['AddNewPlot', 'ReplacePlot', 'ReplaceOrCreate']);
+
+var getAViewId = () => {
+    var aView;
+
+    aView = getAViewFromMultiView();
+    return aView ? aView.viewerId : '';
+};
+
 export function showImageSelPanel(popTitle)
 {
-    var plotId;
-    var plotView = getActivePlotView(visRoot());
+    var visroot = visRoot();
+    var plotId = get(visroot, 'activePlotId');
+    var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : (getAViewId());
+    var plotMode;
 
-    if (!plotView)  {
-        var multiview = getMultiViewRoot();
-        plotView = multiview.find((pv) => (!pv.viewerId.includes('RESERVED')));
-
-        if (!plotView) {
+    if (viewerId) {
+        if (plotId) {
+            plotMode = PlotSelectMode.ReplaceOrCreate;
+        } else {
+            plotMode = PlotSelectMode.AddNewPlot;
+            plotId = `${ImageId}${imgNo}`;
+            imgNo++;
+        }
+    } else {
+        if (plotId) {
+            plotMode = PlotSelectMode.Replace;
+        } else {
             return null;
         }
-
-        plotId = `${ImageId}${imgNo}`;
-        dispatchAddImages(plotView.viewerId, [plotId]);
-    } else {
-        //var plot = plotView ? primePlot(plotView) : null;
-        // var threeColor = plot? plot.plotState.isThreeColor(): null;
-
-        plotId = plotView.plotId;
     }
+    // dispatchAddImages(plotView.viewerId, [plotId]);
 
     var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection plotId={plotId} catalogId={TWOMASS}/>
+                    <ImageSelection plotId={plotId} viewerId={viewerId} plotMode={plotMode} catalogId={TWOMASS}/>
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -457,7 +472,7 @@ var resultFail = (request, fromFail = true)  => {
 /*
  * onSucess callback for 'load' button on image select panel
  */
-function resultSuccess(plotId) {
+function resultSuccess(plotId, isAddNewPlot, viewerId) {
     return (request) => {
         var wpr = null;
         const crtCatalogId = computeCurrentCatalogId(request);
@@ -482,6 +497,9 @@ function resultSuccess(plotId) {
         }
 
         if (wpr) {
+            if (isAddNewPlot && viewerId) {
+                dispatchAddImages(viewerId, [plotId]);
+            }
             dispatchPlotImage(plotId, wpr);
         } else {
             outputMessage('failplot');
@@ -503,7 +521,6 @@ class ImageSelection extends Component {
          // }
 
          this.state = { initCatalogId:  props.catalogId ? props.catalogId: IRSA,
-                        plotId:         props.plotId,
                         fields:         FieldGroupUtils.getGroupFields(this.groupKey)
 
          };
@@ -532,14 +549,19 @@ class ImageSelection extends Component {
 
 
     render() {
-        return <ImageSelectionView {...this.state}/>;
+        var {plotId, viewerId, plotMode} = this.props;
+        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode});
+
+        return <ImageSelectionView {...params}/>;
 
     }
 }
 
 ImageSelection.propTypes = {
     catalogId: PropTypes.number,
-    plotId: PropTypes.string.isRequired
+    plotId: PropTypes.string.isRequired,
+    viewerId: PropTypes.string,
+    plotMode: PropTypes.object
 };
 
 
@@ -548,17 +570,29 @@ class ImageSelectionView extends Component {
     constructor(props) {
         super(props);
 
-        this.state = {crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId)};
+        this.state = {
+            crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId),
+            plotId: props.plotId,
+            addPlot: (props.plotMode && props.plotMode === PlotSelectMode.AddNewPlot) ? true : false
+        };
+
     }
 
     componentWillReceiveProps(nextProps) {
-        this.state = { crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId)};
+        this.setState ({ crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId) });
     }
 
     onSelect(index) {
         this.setState({ crtCatalogId: index});
     }
 
+    onChangePlotId(ev) {
+        if (get(ev, 'target.value') === 'create') {
+            this.setState ({plotId: `${ImageId}${imgNo}`,
+                              addPlot: true});
+            imgNo++;
+        }
+    }
     render() {
 
         // tabs for each catalog
@@ -574,11 +608,7 @@ class ImageSelectionView extends Component {
                 var catalog = panelCatalogs[this.state.crtCatalogId];
 
                 return (
-                    <RadiusInputFields fieldKey={keyMap['radiusfield']}
-                                       min={catalog.range.min}
-                                       max={catalog.range.max}
-                                       value={catalog.size.toString()}
-                                       unit={catalog.range.unit} />
+                    <SizeInputFields fieldKey={keyMap['radiusfield']} />
                 );
             } else {
                 return (<div></div>);
@@ -600,7 +630,9 @@ class ImageSelectionView extends Component {
                          keepState={true}>
                 <div className={'imagepanel'}>
                     <div className={'section'}>
-                        <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId} />
+                        <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId}
+                                            plotMode={this.props.plotMode}
+                                            changePlot={this.onChangePlotId.bind(this)} />
                     </div>
                     <div className={'section'}>
                         <FieldGroupTabs
@@ -616,9 +648,10 @@ class ImageSelectionView extends Component {
                     <div className={'close'}>
                         <div className={'padding'}>
                             <CompleteButton
-                                dialogId={popupId}
                                 groupKey={panelKey}
-                                onSuccess={resultSuccess(this.props.plotId)}
+                                onSuccess={resultSuccess(this.state.plotId,
+                                                         this.state.addPlot,
+                                                         this.props.viewerId)}
                                 onFail={resultFail}
                                 text={'Load'}
                             />
@@ -636,7 +669,9 @@ class ImageSelectionView extends Component {
 ImageSelectionView.propTypes={
     initCatalogId: PropTypes.number.isRequired,
     fields: PropTypes.object,
-    plotId: PropTypes.string.isRequired
+                        plotId: PropTypes.string.isRequired,
+                        viewerId: PropTypes.string,
+                        plotMode: PropTypes.object
 };
 
 /**
@@ -647,37 +682,61 @@ ImageSelectionView.propTypes={
  */
 
 
-function TargetPanelSetView({currentCatalogIdx}) {
+function TargetPanelSetView({currentCatalogIdx, changePlot, plotMode}) {
 
-     var showTarget = () => (
-         <div className={'intarget'}>
-             <TargetPanel groupKey={panelKey}/>
-             <ListBoxInputField
-                 fieldKey={keyMap['targettry']}
-                 options={[{label: 'Try NED then Simbad', value: 'NED'},
-                           {label: 'Try Simbad then NED', value: 'simbad'}
-                          ]}
-                 multiple={false}
-                 labelWidth={3}
-             />
-         </div>
-     );
+     var showTarget = () => {
+         if ((currentCatalogIdx === URL || currentCatalogIdx === FITS)) {
+             return <div className={'intarget'}></div>;
+         } else {
+             return (
+                 <div className={'intarget'}>
+                     <TargetPanel groupKey={panelKey}/>
+                     <ListBoxInputField
+                         fieldKey={keyMap['targettry']}
+                         options={[{label: 'Try NED then Simbad', value: 'NED'},
+                               {label: 'Try Simbad then NED', value: 'simbad'}
+                              ]}
+                         multiple={false}
+                         labelWidth={3}
+                     />
+                 </div>
+             );
+         }
+     };
 
+    var showPlotMode = () => {
+        if ((plotMode && (plotMode === PlotSelectMode.ReplaceOrCreate))) {
+            return (
+                <div className={'padding_noleft'}>
+                    <RadioGroupInputFieldView
+                        alignment={'horizontal'}
+                        fieldKey={keyMap['plotmode']}
+                        value={'replace'}
+                        onChange={changePlot}
+                        options={[
+                                {label: 'Replace Image', value: 'replace'},
+                                {label: 'Create New Plot', value: 'create'}
+                                ]} />
+                </div>
+            );
+        } else {
+            return undefined;
+        }
+    };
 
-    var showNone = () => (
-        <div className={'intarget'}></div>
-    );
 
     return (
-        <div>
-            {(currentCatalogIdx === URL || currentCatalogIdx === FITS)  ? showNone()
-                                                                        : showTarget() }
+        <div className={'targetpanel'}>
+            { showPlotMode() }
+            { showTarget() }
         </div>
     );
 }
 
 TargetPanelSetView.propsTypes={
-    currentCatalogIdx: PropTypes.number.isRequired
+    currentCatalogIdx: PropTypes.number.isRequired,
+    changePlot: PropTypes.func,
+    plotMode: PropTypes.object
  };
 
 
@@ -718,7 +777,6 @@ function CatalogTabView({catalog, fields}) {
         return (
             <div className={padding} key={index}>
                 <ValidationField fieldKey={keyMap[fkey]}
-                                 value={ fval }
                                  labelWidth={computeLabelWidth(catalog[fieldname].Title)}
                                  label={ catalog[fieldname].Title } />
             </div>

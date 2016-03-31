@@ -20,6 +20,12 @@ div.intarget {
     align-items: flex-start;
 }
 
+div.targetnel {
+    display: flex;
+    flex-direction: column;
+    align-item: flex-start;
+}
+
 div.size {
     margin-top: 20px;
     margin-bottom: 20px;
@@ -80,6 +86,10 @@ div.padding_top {
 
 div.padding_nottop {
     padding: 0px 10px 10px 10px;
+}
+
+div.padding_noleft {
+    padding: 10px 10px 10px 0px;
 }
 
 div.tabview {
