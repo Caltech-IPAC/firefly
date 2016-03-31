@@ -55,12 +55,33 @@ function showResults(success, request) {
     //====temp
     //var wp= makeWorldPt(1,1);
     var wp= parseWorldPt(request.UserTargetWorldPt);
+    
+    // -example call to 2mass
     //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
     //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
-    var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
-    var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
-    var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
-    var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
+
+
+
+    // -example call to wise
+    // var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
+    // var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
+    // var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
+    // var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
+
+
+    // -example call to IRIS
+    // var wpr1= WebPlotRequest.makeIRISRequest(wp,'12',5);
+    // var wpr2= WebPlotRequest.makeIRISRequest(wp,'25',5);
+    // var wpr3= WebPlotRequest.makeIRISRequest(wp,'60',5);
+    // var wpr4= WebPlotRequest.makeIRISRequest(wp,'100', 5);
+
+    // -example call to ISSA
+    var wpr1= WebPlotRequest.makeISSARequest(wp,'12',5);
+    var wpr2= WebPlotRequest.makeISSARequest(wp,'25',5);
+    var wpr3= WebPlotRequest.makeISSARequest(wp,'60',5);
+    var wpr4= WebPlotRequest.makeISSARequest(wp,'100', 5);
+    
+    
     //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
     wpr1.setPlotGroupId('test-group');
     wpr2.setPlotGroupId('test-group');

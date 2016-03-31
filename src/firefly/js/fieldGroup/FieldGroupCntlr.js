@@ -218,6 +218,7 @@ const updateFieldGroupMount= function(state,action) {
         else {
             retState= initFieldGroup(state,action);
             retState[groupKey].mounted= true;
+            retState[groupKey].fields= fireFieldsReducer(retState[groupKey], action);
         }
     }
     else {
@@ -237,7 +238,7 @@ const updateFieldGroupMount= function(state,action) {
  * fire the reducer for field group if it has been defined
  */
 const fireFieldsReducer= function(fg, action) {
-    return  fg.reducerFunc ? fg.reducerFunc(fg.fields, action) : Object.assign({},fg.fields);
+    return  fg.reducerFunc ? fg.reducerFunc(fg.fields, action) : fg.fields;
 };
 
 const valueChange= function(state,action) {
