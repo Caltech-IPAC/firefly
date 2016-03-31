@@ -174,6 +174,11 @@ export function findViewerWithPlotId(multiViewRoot, plotId) {
     return v ? v.viewerId : null;
 }
 
+// get an available view from multiple views
+
+export function getAViewFromMultiView() {
+    return  getMultiViewRoot().find((pv) => (!pv.viewerId.includes('RESERVED')));
+}
 
 
 //======================================== Action Creator =============================

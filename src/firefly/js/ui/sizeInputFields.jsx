@@ -34,17 +34,22 @@ var isSizeValid = (sizeDeg,  min, max) => (
     (sizeDeg && Validate.floatRange(min, max, 1, 'value of radius size in degree', sizeDeg).valid) ? true : false
 );
 
-
-function getProps(params, fireValueChange) {
-
+function updateSizeInfo(params) {
     var unit = params.unit ? params.unit : 'deg';
     var valid = isSizeValid(params.value, params.min, params.max);
     var value = (valid&&params.value) ? params.value  : '';
     var displayValue = params.displayValue ? params.displayValue : sizeFromDeg(value, unit);
 
+    return {unit, valid, value, displayValue};
+}
+
+function getProps(params, fireValueChange) {
+
+    var {unit, valid, value, displayValue} = updateSizeInfo(params);
+
     return Object.assign({}, params,
         {
-            onChange: (ev) => handleOnChange(ev, params, fireValueChange),
+            onChange: (ev, sizeInfo) => handleOnChange(ev, sizeInfo, params, fireValueChange),
             unit,
             displayValue,
             value,
@@ -52,9 +57,8 @@ function getProps(params, fireValueChange) {
         });
 }
 
-function handleOnChange(ev, params, fireValueChange) {
-     var sizeInfo = Object.assign({}, {displayValue: '', unit: 'deg', value: '', valid: true}, ev.sizeInfo);
-     var {displayValue, unit, value, valid} = sizeInfo;
+function handleOnChange(ev, sizeInfo, params, fireValueChange) {
+     var {unit, value, valid, displayValue} = Object.assign({}, params, sizeInfo);
 
      fireValueChange({
          feedback: valid ? invalidSizeMsg: '',
@@ -82,38 +86,24 @@ const propTypes={
  *
  */
 
-class RadiusInputFieldView extends Component {
+class SizeInputFieldView extends Component {
     constructor(props) {
         super(props);
 
-        this.updateState(props);
-
         this.onSizeChange = this.onSizeChange.bind(this);
         this.onUnitChange = this.onUnitChange.bind(this);
+
+        this.state = updateSizeInfo(props);
     }
 
     componentWillReceiveProps(nextProps) {
-        this.updateState(nextProps);
+        this.setState( updateSizeInfo(nextProps) );
     }
 
-    updateState(props) {
-        var unit = props.unit ? props.unit : 'deg';
-        var valid = isSizeValid(props.value, props.min, props.max);
-        var value = (valid&&props.value) ? props.value  : '';
-        var displayValue = props.displayValue ? props.displayValue : sizeFromDeg(value, unit);
 
-        this.state = {
-            value,
-            unit,
-            displayValue,
-            valid
-        };
-    }
 
     onSizeChange(ev) {
         var displayValue = get(ev, 'target.value');
-
-        //console.log('type '+ev.type + ' displayValue '+displayValue);
 
         // validation test is determined when the typing is done
         // update displayVvalue, value, and valid
@@ -123,8 +113,8 @@ class RadiusInputFieldView extends Component {
             var value = (valid) ? tmpDeg: '';
             var stateUpdate = Object.assign({}, this.state, { displayValue,  value, valid });
 
-            this.setState(stateUpdate);
-            this.props.onChange(Object.assign({}, ev, {sizeInfo: stateUpdate }));
+            this.setState({displayValue, value, valid});
+            this.props.onChange(ev, stateUpdate);
         } else {
             this.setState( { displayValue, valid: true });
         }
@@ -139,16 +129,16 @@ class RadiusInputFieldView extends Component {
             var stateUpdate = Object.assign({}, this.state, {unit, displayValue});
 
             this.setState({unit, displayValue});
-            this.props.onChange(Object.assign({}, ev, {sizeInfo: stateUpdate}));
+            this.props.onChange(ev, stateUpdate);
         }
     }
 
     render() {
-        var minInUnit = sizeFromDeg(this.props.min, this.state.unit);
-        var maxInUnit = sizeFromDeg(this.props.max, this.state.unit);
-        var sign = unitSign[this.state.unit];
-        var message = `Valid range between: ${minInUnit}${sign} and ${maxInUnit}${sign}`;
         var {displayValue, valid, unit} = this.state;
+        var {min, max} = this.props;
+        var sign = unitSign[unit];
+        var message = `Valid range between: ${sizeFromDeg(min, unit)}${sign} and ${sizeFromDeg(max, unit)}${sign}`;
+
 
         return (
             <div >
@@ -184,7 +174,7 @@ class RadiusInputFieldView extends Component {
     }
 }
 
-RadiusInputFieldView.propTypes = {
+SizeInputFieldView.propTypes = {
     unit:  PropTypes.string,
     min:   PropTypes.number.isRequired,
     max:   PropTypes.number.isRequired,
@@ -196,10 +186,10 @@ RadiusInputFieldView.propTypes = {
     valid: PropTypes.bool
 };
 
-RadiusInputFieldView.defaultProps = {
+SizeInputFieldView.defaultProps = {
     label: 'Size: ',
     labelWidth: 50,
     unit: 'deg'
 };
 
-export const RadiusInputFields = fieldGroupConnector(RadiusInputFieldView, getProps, propTypes, null);
+export const SizeInputFields = fieldGroupConnector(SizeInputFieldView, getProps, propTypes, null);
