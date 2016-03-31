@@ -289,6 +289,13 @@ class WebPlotRequest extends ServerRequest {
     //======================== ISSA =====================================
 
 
+    /**
+     *
+     * @param worldPt
+     * @param {string} survey  must be one of '12','25','60','100'
+     * @param sizeInDeg less then 12.5
+     * @return {WebPlotRequest}
+     */
     static makeISSARequest(worldPt, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.ISSA, worldPt, survey, sizeInDeg);
         req.setTitle('ISSA '+survey);
@@ -298,6 +305,13 @@ class WebPlotRequest extends ServerRequest {
     //======================== IRIS =====================================
 
 
+    /**
+     * 
+     * @param worldPt
+     * @param {string} survey  must be one of '12','25','60','100'
+     * @param sizeInDeg less then 12.5
+     * @return {WebPlotRequest}
+     */
     static makeIRISRequest(worldPt, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.IRIS, worldPt, survey, sizeInDeg);
         req.setTitle('IRIS '+survey);
@@ -307,6 +321,13 @@ class WebPlotRequest extends ServerRequest {
 
     //======================== 2MASS =====================================
 
+    /**
+     *
+     * @param worldPt
+     * @param {string} survey  must be one of 'j','h','k'
+     * @param sizeInDeg less then .138 degreess (500 arcsec)
+     * @return {WebPlotRequest}
+     */
     static make2MASSRequest(wp, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.TWOMASS, wp, survey, sizeInDeg);
         req.setTitle('2MASS '+survey);
@@ -316,6 +337,15 @@ class WebPlotRequest extends ServerRequest {
     //======================== MSX =====================================
 
 
+    /**
+     *
+     * @param wp
+     * @param survey must be  '3','4','5','6'
+     *          for 'A (8.28 microns)', 'C (12.13 microns)', 'D (14.65 microns)', 'E (21.3 microns)'
+     *
+     * @param sizeInDeg .1 to 1.5
+     * @return {WebPlotRequest}
+     */
     static makeMSXRequest(wp, survey, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.MSX, wp, survey, sizeInDeg);
         req.setTitle('MSX '+survey);
@@ -324,6 +354,13 @@ class WebPlotRequest extends ServerRequest {
 
     //======================== SDSS =====================================
 
+    /**
+     *
+     * @param wp
+     * @param band  one of: 'u' 'g' 'r' 'i' 'z'
+     * @param sizeInDeg .016 to .25
+     * @return {WebPlotRequest}
+     */
     static makeSloanDSSRequest(wp, band, sizeInDeg) {
         var req= this.makePlotServiceReq(ServiceType.SDSS, wp, band, sizeInDeg);
         req.setTitle('SDSS '+band);
@@ -336,7 +373,7 @@ class WebPlotRequest extends ServerRequest {
      *
      * @param wp
      * @param {string} survey must be one of : poss2ukstu_red poss2ukstu_ir poss2ukstu_blue poss1_red poss1_blue quickv phase2_gsc2 phase2_gsc1
-     * @param sizeInDeg
+     * @param sizeInDeg .016 to .25
      * @return {WebPlotRequest}
      */
     static makeDSSRequest(wp, survey, sizeInDeg) {
@@ -351,7 +388,7 @@ class WebPlotRequest extends ServerRequest {
      * @param wp
      * @param survey can be Atlas, 3a, 1b
      * @param band 1,2,3,4
-     * @param sizeInDeg
+     * @param sizeInDeg  .01 to 3
      * @return {WebPlotRequest}
      */
     static makeWiseRequest(wp, survey, band, sizeInDeg) {
