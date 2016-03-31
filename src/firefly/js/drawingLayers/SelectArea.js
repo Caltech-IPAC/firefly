@@ -116,20 +116,6 @@ function getLayerChanges(drawLayer, action) {
 
 }
 
-//function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-//
-//    switch (dataType) {
-//        case DataTypes.DATA:
-//            return computeDrawLayer(action);
-//            break;
-//        case DataTypes.HIGHLIGHT_DATA:
-//            break;
-//        case DataTypes.SELECTED_IDX_ARY:
-//            break;
-//    }
-//    return null;
-//}
-
 
 
 function attach() {

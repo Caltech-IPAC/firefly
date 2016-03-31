@@ -40,17 +40,8 @@ function creator(initPayload) {
 
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
-
-    switch (dataType) {
-        case DataTypes.DATA:
-            return lastDataRet || computeDrawLayer(plotId);
-            break;
-        case DataTypes.HIGHLIGHT_DATA:
-            break;
-        case DataTypes.SELECTED_IDX_ARY:
-            break;
-    }
-    return null;
+    if (dataType!= DataTypes.DATA) return null;
+    return lastDataRet || computeDrawLayer(plotId);
 }
 
 function getLayerChanges(drawLayer, action) {

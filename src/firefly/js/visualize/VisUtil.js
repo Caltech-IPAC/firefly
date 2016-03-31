@@ -11,11 +11,11 @@
 
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
-import {CCUtil} from './CsysConverter.js';
+import {CCUtil, CysConverter} from './CsysConverter.js';
 import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
     makeScreenPt, makeWorldPt, isValidPoint} from './Point.js';
-import {CysConverter} from './CsysConverter.js';
 import ZoomUtil from './ZoomUtil.js';
+import DrawOp from './draw/DrawOp.js';
 
 var {AllPlots} = window.ffgwt ? window.ffgwt.Visualize : {AllPlots:null};
 
@@ -520,11 +520,12 @@ export const getCurrentPlot= function() {
  * @param objList array of DrawObj (must be an array and contain a getCenterPt() method)
  * @return {Array} indexes from the objList array that are selected
  */
-const getSelectedPts= function(selection, plot, objList) {
+export function getSelectedPts(selection, plot, objList) {
     var selectedList= [];
     if (selection && plot && objList && objList.length) {
-        var pt0= plot.getScreenCoords(selection.pt0);
-        var pt1= plot.getScreenCoords(selection.pt1);
+        const cc= CysConverter.make(plot);
+        var pt0= cc.getScreenCoords(selection.pt0);
+        var pt1= cc.getScreenCoords(selection.pt1);
         if (!pt0 || !pt1) return selectedList;
 
         var x= Math.min( pt0.x,  pt1.x);
@@ -533,14 +534,14 @@ const getSelectedPts= function(selection, plot, objList) {
         var height= Math.abs(pt0.y-pt1.y);
         var testObj;
         objList.forEach( (obj,idx) => {
-            testObj = plot.getScreenCoords(obj.getCenterPt());
+            testObj = cc.getScreenCoords(DrawOp.getCenterPt(obj));
             if (testObj && contains(x,y,width,height,testObj.x, testObj.y)) {
-                selectedList.add(idx);
+                selectedList.push(idx);
             }
         });
     }
     return selectedList;
-};
+}
 
 const getCenterPtOfPlot= function(plot) {
     var dw = plot.dataWidth;

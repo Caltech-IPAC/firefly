@@ -3,7 +3,7 @@
  */
 
 import React, {PropTypes} from 'react';
-import {primePlot,isMultiImageFitsWithSameArea} from '../PlotViewUtil.js';
+import {primePlot,isMultiImageFitsWithSameArea,getAllDrawLayersForPlot} from '../PlotViewUtil.js';
 import {CysConverter} from '../CsysConverter.js';
 import {PlotAttribute} from '../WebPlot.js';
 import {makeImagePt} from '../Point.js';
@@ -17,12 +17,14 @@ import {dispatchDetachLayerFromPlot} from '../DrawLayerCntlr.js';
 import {dispatchCrop} from '../ImagePlotCntlr.js';
 import {makeExtActivateData} from '../PlotCmdExtension.js';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
+import {selectCatalog,unselectCatalog,filterCatalog,clearFilterCatalog} from '../../drawingLayers/Catalog.js';
 
 import CROP from 'html/images/icons-2014/24x24_Crop.png';
 import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
 import SELECTED from 'html/images/icons-2014/24x24_Checkmark.png';
 import UNSELECTED from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
+import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 
 import CoordUtil from '../CoordUtil.js';
 import { parseImagePt } from '../Point.js';
@@ -168,17 +170,6 @@ function stats(pv) {
 
 }
 
-function select(pv,dlAry) {
-    console.log('todo- select:' + primePlot(pv).title);
-}
-
-function unselect(pv,dlAry) {
-    console.log('todo- unselect:' + primePlot(pv).title);
-}
-
-function filter(pv,dlAry) {
-    console.log('todo- filter:' + primePlot(pv).title);
-}
 
 function crop(pv) {
     var p= primePlot(pv);
@@ -222,12 +213,14 @@ function makeExtensionButtons(extensionAry,pv,dlAry) {
  * @param showSelect
  * @param showUnSelect
  * @param showFilter
+ * @param showClearFilter
  * @param extensionAry
  * @return {XML}
  * @constructor
  */
-export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, showStats,
-                                   showSelect, showUnSelect, showFilter}) {
+export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop=false, 
+                                   showStats=false, showSelect=false, showUnSelect=false, 
+                                   showFilter=false, showClearFilter=false }) {
 
     var rS= {
         width: '100% - 2px',
@@ -238,7 +231,7 @@ export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, s
         whiteSpace: 'nowrap'
 
     };
-    var showSeparator= (showCrop|| showStats|| showSelect|| showUnSelect|| showFilter)
+    var showSeparator= (showCrop|| showStats|| showSelect|| showUnSelect|| showFilter || showClearFilter)
                         && extensionAry && extensionAry.length;
 
     return (
@@ -262,22 +255,25 @@ export function VisCtxToolbarView({plotView:pv, dlAry, extensionAry, showCrop, s
                            tip='Mark data in area as selected'
                            horizontal={true}
                            visible={showSelect}
-                           todo={true}
-                           onClick={() => select(pv,dlAry)}/>
+                           onClick={() => selectCatalog(pv,dlAry)}/>
 
             <ToolbarButton icon={UNSELECTED}
                            tip='Mark all data unselected'
                            horizontal={true}
                            visible={showUnSelect}
-                           todo={true}
-                           onClick={() => unselect(pv,dlAry)}/>
+                           onClick={() => unselectCatalog(pv,dlAry)}/>
 
             <ToolbarButton icon={FILTER}
                            tip='Filter in the selected area'
                            horizontal={true}
                            visible={showFilter}
-                           todo={true}
-                           onClick={() => filter(pv,dlAry)}/>
+                           onClick={() => filterCatalog(pv,dlAry)}/>
+
+            <ToolbarButton icon={CLEAR_FILTER}
+                           tip='Clear all the Filters'
+                           horizontal={true}
+                           visible={showClearFilter}
+                           onClick={() => clearFilterCatalog(pv,dlAry)}/>
 
 
             {makeExtensionButtons(extensionAry,pv,dlAry)}
@@ -294,7 +290,8 @@ VisCtxToolbarView.propTypes= {
     showStats : PropTypes.bool,
     showSelect : PropTypes.bool,
     showUnSelect : PropTypes.bool,
-    showFilter : PropTypes.bool
+    showFilter : PropTypes.bool,
+    showClearFilter : PropTypes.bool
 };
 
 

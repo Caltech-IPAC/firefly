@@ -154,7 +154,7 @@ function detachLayerFromPlot(drawLayer,action,factory) {
 
 function detachPerPlotData(drawData, plotId) {
     var highlightData= null;
-    var selectIdxAry= drawData.selectIdxAry;
+    var selectIdxs= drawData.selectIdxs;
 
     var data= Object.keys(drawData.data).reduce( (d,key) => {
         if (key!==plotId) d[key]= drawData.data[key];
@@ -168,7 +168,7 @@ function detachPerPlotData(drawData, plotId) {
         },{});
     }
 
-    return {data,highlightData,selectIdxAry};
+    return {data,highlightData,selectIdxs};
 }
 
 
@@ -205,7 +205,7 @@ function changeDrawingDef(drawLayer,action,factory) {
 
 const DATA= DataTypes.DATA;
 const HIGHLIGHT_DATA= DataTypes.HIGHLIGHT_DATA;
-const SELECTED_IDX_ARY= DataTypes.SELECTED_IDX_ARY;
+const SELECTED_IDXS= DataTypes.SELECTED_IDXS;
 
 /**
  *
@@ -244,7 +244,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     }
 
     if (drawLayer.canSelect) {
-        newDD.selectIdxAry= factory.getDrawData(SELECTED_IDX_ARY, null, drawLayer, action, drawData.selectIdxAry);
+        newDD.selectIdxs= factory.getDrawData(SELECTED_IDXS, null, drawLayer, action, drawData.selectIdxs);
     }
 
 
@@ -253,7 +253,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
         retval= {
             data:             Object.assign({},drawData.data,newDD.data),
             highlightData:   Object.assign({},drawData.highlightData,newDD.highlightData),
-            selectIdxAry: newDD.selectIdxAry
+            selectIdxs: newDD.selectIdxs
         };
     }
     else {
@@ -263,7 +263,7 @@ function getDrawData(factory, drawLayer, action, plotId= null) {
     // check for differences
     if (retval.data!==drawData.data ||
         retval.highlightData!==drawData.highlightData ||
-        retval.selectIdxAry!==drawData.selectIdxAry) {
+        retval.selectIdxs!==drawData.selectIdxs) {
         return retval;
     }
     else {

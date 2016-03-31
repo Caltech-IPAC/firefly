@@ -12,21 +12,21 @@ import {makeDrawingDef} from './DrawingDef.js';
 
 
 function updateDrawer(drawer,plot, width, height, drawLayer) {
-    var data, highlightData, selectIdxAry;
+    var data, highlightData, selectIdxs;
     var {drawData}= drawLayer;
     var plotId= plot? plot.plotId : null;
     if (Array.isArray(drawData)) {
         data= drawData;
         highlightData= null;
-        selectIdxAry= null;
+        selectIdxs= null;
     }
     else {
         data= getDataForPlot(drawData.data,plotId);
         highlightData= drawData.highlightData;
-        selectIdxAry= drawData.selectIdxAry;
+        selectIdxs= drawData.selectIdxs;
     }
     drawer.isPointData= drawLayer.isPointData;
-    drawer.setData(data,plot,width,height,drawLayer.drawingDef);
+    drawer.setData(data,selectIdxs,plot,width,height,drawLayer.drawingDef);
     if (highlightData) {
         drawer.updateDataHighlightLayer(getDataForPlot(highlightData,plotId),width,height);
     }
@@ -53,12 +53,12 @@ function makeCanvasLayers(drawLayer,drawer,w,h) {
     if (canSelect) {
         var sId= drawLayerId+'-Select';
         retAry.push(<canvas style={style} key={sId} width={w+''} height={h+''}
-                            ref={(c) => drawer.setHighlightCanvas(c,w,h)}/>);
+                            ref={(c) => drawer.setSelectCanvas(c,w,h)}/>);
     }
     if (canHighlight) {
         var hId= drawLayerId+'-Highlight';
         retAry.push(<canvas style={style} key={hId} width={w+''} height={h+''}
-                            ref={(c) => drawer.setSelectCanvas(c,w,h)}/>);
+                            ref={(c) => drawer.setHighlightCanvas(c,w,h)}/>);
     }
     return retAry;
 }

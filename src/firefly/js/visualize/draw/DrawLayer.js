@@ -8,14 +8,14 @@ export default {makeDrawLayer};
 
 const DATA='data';
 const HIGHLIGHT_DATA='highlightData';
-const SELECTED_IDX_ARY='selectIdxAry';
+const SELECTED_IDXS='selectIdxs';
 
 const DISABLE=false;
 const DYNAMIC='dynamic';
 const STATIC='static';
 
 
-export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDX_ARY};
+export const DataTypes= {DATA,HIGHLIGHT_DATA,SELECTED_IDXS};
 export const ColorChangeType= {DISABLE,DYNAMIC,STATIC};
 
 
@@ -90,6 +90,7 @@ function makeDrawLayer(drawLayerId,
            // should be set in the options parameter
         canHighlight: false,
         canSelect: false,      // todo if true the the default reducer should  handle it. point data only?
+        dataTooBigForSelection : false,
         canFilter: false,      // todo if true the the default reducer should  handle it
         canUseMouse: false,
         canSubgroup: false,    // todo
@@ -117,14 +118,17 @@ function makeDrawLayer(drawLayerId,
            //              arrays are arrays of drawObj
            //              if data is an object the it applies to the only to the plotId with
            //
-           // Key: selectIdxAry
-           // Value:      null or an array of selected indexes, does not support per plot data
+           // Key: selectIdxs
+           // Value:      null or an array of selected indexes or a function, does not support per plot data
            //             the indexes in the array refer to  the indexes of the data array
+           //             OPTIONALLY you can return a function for this parameter 
+           //             this function should be f(arrayIdx : number) : boolean, true if the index is selected
+           //             IMPORTANT: if the selected data changes a new function must be passed.
            //             This key is typically only used with catalogs and PointDataObj
         drawData : {
             [DataTypes.DATA]:{},
             [DataTypes.HIGHLIGHT_DATA]:{},
-            [DataTypes.SELECTED_IDX_ARY]: null
+            [DataTypes.SELECTED_IDXS]: null
         },
 
 
