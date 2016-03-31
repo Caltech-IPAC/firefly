@@ -6,8 +6,8 @@ import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 
 import {doFetchTable, isTableLoaded, findTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
-
 import {serializeDecimateInfo} from '../tables/Decimate.js';
+import {logError} from '../util/WebUtil.js';
 
 export const XYPLOT_DATA_KEY = 'xyplot';
 export const LOAD_PLOT_DATA = `${XYPLOT_DATA_KEY}/LOAD_COL_DATA`;
@@ -67,9 +67,9 @@ export const RESET_ZOOM = `${XYPLOT_DATA_KEY}/RESET_ZOOM`;
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {ServerRequest} searchRequest - table search request
  */
-export const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
+export function dispatchLoadPlotData(xyPlotParams, searchRequest) {
     flux.process({type: LOAD_PLOT_DATA, payload: {xyPlotParams, searchRequest}});
-};
+}
 
 /*
  * Update xy plot data
@@ -78,28 +78,28 @@ export const dispatchLoadPlotData = function(xyPlotParams, searchRequest) {
  * @param {Object} xyPlotParams - XY plot options (column names, etc.)
  * @param {String} tblId - table id
  */
-export const dispatchUpdatePlotData = function(isPlotDataReady, xyPlotData, xyPlotParams, tblId) {
+export function dispatchUpdatePlotData(isPlotDataReady, xyPlotData, xyPlotParams, tblId) {
     flux.process({type: UPDATE_PLOT_DATA, payload: {isPlotDataReady, xyPlotData, xyPlotParams, tblId}});
-};
+}
 
-export const dispatchSetSelection = function(tblId, selection) {
+export function dispatchSetSelection(tblId, selection) {
     flux.process({type: SET_SELECTION, payload: {tblId, selection}});
-};
+}
 
-export const dispatchSetZoom = function(tblId, selection) {
+export function dispatchSetZoom(tblId, selection) {
     flux.process({type: SET_ZOOM, payload: {tblId, selection}});
-};
+}
 
-export const dispatchResetZoom = function(tblId) {
+export function dispatchResetZoom(tblId) {
     flux.process({type: RESET_ZOOM, payload: {tblId}});
-};
+}
 
 
 /*
  * @param rawAction (its payload should contain searchRequest to get source table and histogram parameters)
  * @returns function which loads plot data (x, y, rowIdx, etc.)
  */
-export const loadPlotData = function(rawAction) {
+export function loadPlotData (rawAction) {
     return (dispatch) => {
         dispatch({ type : LOAD_PLOT_DATA, payload : rawAction.payload });
         if (rawAction.payload.searchRequest && rawAction.payload.xyPlotParams) {
@@ -107,11 +107,8 @@ export const loadPlotData = function(rawAction) {
         }
 
     };
-};
-
-function getInitState() {
-    return {};
 }
+
 
 /*
  Get the new state related to a particular table (if it's tracked)
@@ -131,7 +128,7 @@ function stateWithNewData(tblId, state, newProps) {
     return state;
 }
 
-export function reducer(state=getInitState(), action={}) {
+export function reducer(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_NEW)  :
         case (TablesCntlr.TABLE_LOAD_STATUS)  :
@@ -317,7 +314,7 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
         }
     ).catch(
         (reason) => {
-            console.error(`Failed to fetch XY plot data: ${reason}`);
+            logError(`Failed to fetch XY plot data: ${reason}`);
         }
     );
 
