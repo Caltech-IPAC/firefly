@@ -176,21 +176,30 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 }
 
 
-
+/**
+ * 
+ * @param tableData
+ * @param columns
+ * @return {[]} build and return an array of PointDataObj for drawing.
+ */
 function computeDrawLayer(tableData, columns) {
 
     const lonIdx= findColIdx(tableData.columns, columns.lonCol);
     const latIdx= findColIdx(tableData.columns, columns.latCol);
     if (lonIdx<0 || latIdx<0) return null;
 
-    const ptAry= tableData.data.map( (d) => {
+    return tableData.data.map( (d) => {
         const wp= makeWorldPt( d[lonIdx], d[latIdx], columns.csys);
         return PointDataObj.make(wp, 5, DrawSymbol.SQUARE);
     });
-
-    return ptAry;
 }
 
+/**
+ *
+ * @param drawLayer
+ * @param columns
+ * @return {[]} return a array of PointDataObj that represents the highlighted object
+ */
 function computeHighlightLayer(drawLayer, columns) {
 
 
@@ -205,7 +214,6 @@ function computeHighlightLayer(drawLayer, columns) {
     const obj2= PointDataObj.make(wp, 5, DrawSymbol.X);
     obj.color= COLOR_HIGHLIGHTED_PT;
     obj2.color= COLOR_HIGHLIGHTED_PT;
-
     return [obj,obj2];
 }
 
