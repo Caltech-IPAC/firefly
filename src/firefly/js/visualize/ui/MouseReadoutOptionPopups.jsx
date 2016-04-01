@@ -14,7 +14,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import FieldGroupUtils, {validateFieldGroup,getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 //import InputFieldLabel from '../../ui/InputFieldLabel.jsx';
 //import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';

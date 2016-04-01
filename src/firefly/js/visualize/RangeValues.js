@@ -43,7 +43,7 @@ const BYTE_MAX_VALUE= 127;
 
 
 
-class RangeValues {
+export class RangeValues {
     constructor( lowerWhich= PERCENTAGE,
                  lowerValue= 1.0,
                  upperWhich= PERCENTAGE,
@@ -58,54 +58,21 @@ class RangeValues {
                  zscaleSamplesPerLine= 120,
                  bias= 0.5,
                  contrast= 1.0 ) {
-        this.lowerWhich= Number.parseInt(`${lowerWhich}`);
-        this.lowerValue= Number.parseFloat(`${lowerValue}`);
-        this.upperWhich= Number.parseInt(`${upperWhich}`);
-        this.upperValue= Number.parseFloat(`${upperValue}`);
-        this.drValue = Number.parseFloat(`${drValue}`);
-        this.bpValue = Number.parseFloat(`${bpValue}`);
-        this.wpValue = Number.parseFloat(`${wpValue}`);
-        this.gammaValue=Number.parseFloat(`${gammaValue}`);
-        this.algorithm=  Number.parseInt(`${algorithm}`);
-        this.zscaleContrast= Number.parseInt(`${zscaleContrast}`);
-        this.zscaleSamples= Number.parseInt(`${zscaleSamples}`); /* desired number of pixels in sample */
-        this.zscaleSamplesPerLine= Number.parseInt(`${zscaleSamplesPerLine}`); /* optimal number of pixels per line */
-        this.bias= Number.parseFloat(`${bias}`);
-        this.contrast= Number.parseFloat(`${contrast}`);
+        this.lowerWhich= parseInt(lowerWhich);
+        this.lowerValue= parseFloat(lowerValue);
+        this.upperWhich= parseInt(upperWhich);
+        this.upperValue= parseFloat(upperValue);
+        this.drValue = parseFloat(drValue);
+        this.bpValue = parseFloat(bpValue);
+        this.wpValue = parseFloat(wpValue);
+        this.gammaValue=parseFloat(gammaValue);
+        this.algorithm=  parseInt(algorithm);
+        this.zscaleContrast= parseInt(zscaleContrast);
+        this.zscaleSamples= parseInt(zscaleSamples); /* desired number of pixels in sample */
+        this.zscaleSamplesPerLine= parseInt(zscaleSamplesPerLine); /* optimal number of pixels per line */
+        this.bias= parseFloat(bias);
+        this.contrast= parseFloat(contrast);
     }
-
-    /**
-     *
-     * @param stretchType the stretch type, possible values:  "Percent", "Absolute", "Sigma"
-     * @param lowerValue the lower value based on the stretch type
-     * @param upperValue the upper value based on the stretch type
-     * @param algorithm The Stretch algorithm, possible values "Linear", "Log", "LogLog", "Equal", "Squared", "Sqrt"
-     *
-     * @return
-     */
-    static create(stretchType, lowerValue, upperValue, drValue, bpValue, wpValue, gammaValue, algorithm) {
-        var s= PERCENTAGE;
-        if (stretchType) {
-            stretchType= stretchType.toLowerCase();
-            if (stretchType===PERCENTAGE_STR.toLowerCase()) s=PERCENTAGE;
-            else if (stretchType===ABSOLUTE_STR.toLowerCase()) s=ABSOLUTE;
-            else if (stretchType===SIGMA_STR.toLowerCase()) s=SIGMA;
-        }
-        var a= STRETCH_LINEAR;
-        if (algorithm) {
-            algorithm= algorithm.toLowerCase();
-            if (algorithm===LINEAR_STR.toLowerCase()) a= STRETCH_LINEAR;
-            else if (algorithm===LOG_STR.toLowerCase()) a=STRETCH_LOG;
-            else if (algorithm===LOGLOG_STR.toLowerCase()) a= STRETCH_LOGLOG;
-            else if (algorithm===EQUAL_STR.toLowerCase()) a= STRETCH_EQUAL;
-            else if (algorithm===SQUARED_STR.toLowerCase()) a= STRETCH_SQUARED;
-            else if (algorithm===SQRT_STR.toLowerCase()) a= STRETCH_SQRT;
-            else if (algorithm===ASINH_STR.toLowerCase()) a= STRETCH_ASINH;
-            else if (algorithm===POWERLAW_GAMMA_STR.toLowerCase()) a= STRETCH_POWERLAW_GAMMA;
-        }
-        return new RangeValues(s,lowerValue,s,upperValue,drValue,0, 1, gammaValue, a);
-    }
-
 
 
     computeBiasAndContrast(data) {
@@ -157,6 +124,44 @@ class RangeValues {
     }
 
     /**
+     * 
+     * @param lowerWhich
+     * @param lowerValue
+     * @param upperWhich
+     * @param upperValue
+     * @param drValue
+     * @param bpValue
+     * @param wpValue
+     * @param gammaValue
+     * @param algorithm
+     * @param zscaleContrast
+     * @param zscaleSamples
+     * @param zscaleSamplesPerLine
+     * @param bias
+     * @param contrast
+     * @return {RangeValues}
+     */
+    static make(lowerWhich= PERCENTAGE,
+                lowerValue= 1.0,
+                upperWhich= PERCENTAGE,
+                upperValue= 99.0,
+                drValue=1.0,
+                bpValue=0.0,
+                wpValue=1.0,
+                gammaValue=2.0,
+                algorithm= STRETCH_LINEAR,
+                zscaleContrast= 25,
+                zscaleSamples= 600,
+                zscaleSamplesPerLine= 120,
+                bias= 0.5,
+                contrast= 1.0 ) {
+
+        return new RangeValues( lowerWhich, lowerValue, upperWhich, upperValue, drValue,
+            bpValue, wpValue, gammaValue, algorithm, zscaleContrast, zscaleSamples,
+            zscaleSamplesPerLine, bias, contrast);
+    }
+
+    /**
      * @param sIn serialized string representation of RangeValues
      * @return {RangeValues}
      */
@@ -188,6 +193,7 @@ class RangeValues {
                rv.zscaleSamples+','+
                rv.zscaleSamplesPerLine;
     }
+    
 }
 
 export default RangeValues;

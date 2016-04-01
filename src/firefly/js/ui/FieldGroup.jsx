@@ -23,17 +23,17 @@ export class FieldGroup extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        var {groupKey, reducerFunc, keepState}= nextProps;
+        var {groupKey, reducerFunc, keepState, actionTypes}= nextProps;
                        // support change the groupKey property on the form with out unmounting
         if (this.props.groupKey!==groupKey) {   //todo: not quite sure how to test that this works
             dispatchMountFieldGroup(groupKey, false);
-            dispatchMountFieldGroup(groupKey, true, keepState, null, reducerFunc);
+            dispatchMountFieldGroup(groupKey, true, keepState, null, reducerFunc, actionTypes);
         }
     }
 
     componentWillMount() {
-        var {groupKey, reducerFunc, keepState, initValues}= this.props;
-        dispatchMountFieldGroup(groupKey, true, keepState, initValues, reducerFunc);
+        var {groupKey, reducerFunc, keepState, initValues, actionTypes}= this.props;
+        dispatchMountFieldGroup(groupKey, true, keepState, initValues, reducerFunc, actionTypes);
     }
 
     componentWillUnmount() {
@@ -53,6 +53,7 @@ export class FieldGroup extends Component {
 FieldGroup.propTypes= {
     groupKey : PropTypes.string.isRequired,
     reducerFunc: PropTypes.func,
+    actionTypes: PropTypes.arrayOf(PropTypes.string),
     keepState : PropTypes.bool,
     initValues : PropTypes.object
 };

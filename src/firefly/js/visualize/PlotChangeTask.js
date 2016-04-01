@@ -14,7 +14,7 @@ import {
     callFlipImageOnY,
     callRecomputeStretch} from '../rpc/PlotServicesJson.js';
 import WebPlotResult from './WebPlotResult.js';
-import RangeValues from './RangeValues.js';
+import {RangeValues} from './RangeValues.js';
 import {isPlotNorth} from './VisUtil.js';
 import {WebPlot} from './WebPlot.js';
 
@@ -39,7 +39,12 @@ export function colorChangeActionCreator(rawAction) {
 
 
         if (!primePlot(pv).plotState.isThreeColor()) doColorChange(dispatcher,store,plotId,cbarId);
-        operateOnOthersInGroup(store,pv, (pv) => doColorChange(dispatcher,store,pv.plotId,cbarId),true);
+        operateOnOthersInGroup(store,pv, (pv) => {
+            var p= primePlot(pv);
+            if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
+                doColorChange(dispatcher,store,pv.plotId,cbarId);
+            }
+        });
 
     };
 
@@ -54,11 +59,18 @@ export function colorChangeActionCreator(rawAction) {
 export function stretchChangeActionCreator(rawAction) {
     return (dispatcher,getState) => {
         var store= getState()[IMAGE_PLOT_KEY];
-        var {plotId,rangeValues}= rawAction.payload;
+        var {plotId,stretchData}= rawAction.payload;
         var pv= getPlotViewById(store,plotId);
-        if (!pv || !rangeValues) return;
-        doStretch(dispatcher,store,plotId,rangeValues);
-        operateOnOthersInGroup(store,pv, (pv) => doStretch(dispatcher,store,pv.plotId,rangeValues));
+        var plot= primePlot(pv);
+        if (!plot || !pv || !stretchData) return;
+        const threeColor= plot.plotState.isThreeColor();
+        doStretch(dispatcher,store,plotId,stretchData);
+        operateOnOthersInGroup(store,pv, (pv) => {
+            var p= primePlot(pv);
+            if (p && p.plotState.isThreeColor()===threeColor) { // only do others that are similar
+                doStretch(dispatcher,store,pv.plotId,stretchData);
+            }
+        });
     };
 }
 
@@ -212,21 +224,14 @@ function doFlip(dispatcher,pv,isY) {
 
 
 
-function doStretch(dispatcher,store,plotId,rangeValues) {
+function doStretch(dispatcher,store,plotId,stretchData) {
 
     var plot= primePlot(store,plotId);
-    var stretchDataAry= plot.plotState.getBands().map( (band) => {
-        return {
-            band : band.key,
-            rv :  RangeValues.serializeRV(rangeValues),
-            bandVisible: true
-        };
-    } );
-    callRecomputeStretch(plot.plotState,stretchDataAry)
+    callRecomputeStretch(plot.plotState,stretchData)
         .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
                                    ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.STRETCH_CHANGE_FAIL) )
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, rangeValues, error:e} } );
+            dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, stretchData, error:e} } );
             logError(`plot error, stretch change, plotId: ${plot.plotId}`, e);
         });
 }

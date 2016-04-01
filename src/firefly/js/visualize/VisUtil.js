@@ -694,6 +694,25 @@ export function convertAngle(from, to, angle) {
     }
 }
 
+
+export function formatFlux(value, plot, band) {
+    if (typeof value==='undefined') return '';
+    const fluxUnits= plot.webFitsData[band.value].fluxUnits;
+    return `${formatFluxValue(value)} ${fluxUnits}`;
+
+}
+
+export function formatFluxValue(value) {
+    var absV= Math.abs(value);
+    return (absV>1000||absV<.01) ?
+        value.toExponential(6).replace('e+', 'E') :
+        value.toFixed(6);
+}
+
+
+
+
+
 export default {
     DtoR,RtoD,FullType,computeScreenDistance, computeDistance,
     computeSimpleDistance,convert,convertToJ2000,
