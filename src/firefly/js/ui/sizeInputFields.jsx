@@ -20,12 +20,12 @@ function toMaxFixed(floatNum, digits) {
 }
 
 // in string format, size in degree
-var sizeToDeg = (size, unit) => (
+export const sizeToDeg = (size, unit) => (
     (size)? toMaxFixed(convertAngle(((unit) ? unit :'deg'), 'deg', size), DECDIGIT).toString() : ''
 );
 
 // in string format, size from degree to any other unit
-var sizeFromDeg= (sizeDeg, unit) => (
+export const sizeFromDeg= (sizeDeg, unit) => (
     (sizeDeg)? toMaxFixed(convertAngle('deg', ((unit) ? unit :'deg'), sizeDeg), DECDIGIT).toString() : ''
 );
 
