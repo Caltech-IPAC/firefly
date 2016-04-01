@@ -26,7 +26,7 @@ import {convertAngle} from '../VisUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {SizeInputFields} from '../../ui/sizeInputFields.jsx';
+import {SizeInputFields, sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import Enum from 'enum';
@@ -277,22 +277,36 @@ var ImageSelPanelChange = function (crtCatalogId) {
                     var catalogId = parseInt(inFields[keyMap['catalogtab']].value);
 
                     if (catalogId !== URL && catalogId !== FITS) {
-                        var radiusKey = keyMap['radiusfield'];
-                        var radiusField = Object.assign({}, inFields[radiusKey],
-                            {
-                                unit: getRangeItem(catalogId, 'unit'),
-                                min: getRangeItem(catalogId, 'min'),
-                                max: getRangeItem(catalogId, 'max'),
-                                value: getSize(catalogId)
-                            });
+                        var originalSize = get(inFields, keyMap['radiusfield']);
+                        var {value, unit} = originalSize;
+                        var min = getRangeItem(catalogId, 'min');
+                        var max = getRangeItem(catalogId, 'max');
+                        var radiusField;
 
-                        if (radiusField.hasOwnProperty('displayValue')) {
-                            radiusField = Object.assign({}, radiusField,
-                                {displayValue: radiusField.value});
+                        // update value if no value or value is out of range while changing tab
+                        // otherwise keep the value and unit as being left off from previous tab
+                        if (!value || !(Validate.floatRange(min, max, 1, 'value of radius size in degree', value).valid)) {
+                            value = getSize(catalogId);
+
+                            radiusField = Object.assign({}, originalSize,
+                                {
+                                    min,
+                                    max,
+                                    value
+                                 });
+                        } else {
+                            radiusField = Object.assign({}, originalSize,
+                                {
+                                    min: getRangeItem(catalogId, 'min'),
+                                    max: getRangeItem(catalogId, 'max')
+                                });
                         }
 
-                        return Object.assign({}, inFields, {[radiusKey]: radiusField});
-                    }
+                        radiusField = Object.assign({}, radiusField,
+                                                        {'displayValue': sizeFromDeg(value, unit)});
+
+                        return Object.assign({}, inFields, {[keyMap['radiusfield']]: radiusField});
+                    }    
                 }
             }
 
@@ -367,10 +381,12 @@ function imagePlotOnSurvey(crtCatalogId, request) {
 
     switch(crtCatalogId) {
         case IRSA:
+            var s = (survey) ? survey.split('-')[1]: '';
+
             if (survey.includes('issa')) {
-                wpr = WebPlotRequest.makeISSARequest(wp, survey, sizeInDeg);
+                wpr = WebPlotRequest.makeISSARequest(wp, s, sizeInDeg);
             } else if (survey.includes('iris')) {
-                wpr = WebPlotRequest.makeIRISRequest(wp, survey, sizeInDeg);
+                wpr = WebPlotRequest.makeIRISRequest(wp, s, sizeInDeg);
             }
 
             break;
