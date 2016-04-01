@@ -8,7 +8,7 @@ import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
 
 
-const invalidSizeMsg = 'size is out of range';
+const invalidSizeMsg = 'size is out of range or not set yet';
 const DECDIGIT = 6;
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
 
@@ -57,11 +57,18 @@ function getProps(params, fireValueChange) {
         });
 }
 
+/**
+ *
+ * @param ev
+ * @param sizeInfo
+ * @param params
+ * @param fireValueChange unit, value, displayValue are string, and valid is bool
+ */
 function handleOnChange(ev, sizeInfo, params, fireValueChange) {
      var {unit, value, valid, displayValue} = Object.assign({}, params, sizeInfo);
 
      fireValueChange({
-         feedback: valid ? invalidSizeMsg: '',
+         feedback: valid ? '' :  invalidSizeMsg,
          displayValue,
          unit,
          value,
@@ -105,6 +112,8 @@ class SizeInputFieldView extends Component {
     onSizeChange(ev) {
         var displayValue = get(ev, 'target.value');
 
+        //console.log('evtype = ' + ev.type );
+
         // validation test is determined when the typing is done
         // update displayVvalue, value, and valid
         if (ev.type.startsWith('blur') || (ev.type.startsWith('key') && ev.key === 'Enter')) {
@@ -125,10 +134,22 @@ class SizeInputFieldView extends Component {
 
         // update displayValue and unit
         if (unit !== this.state.unit) {
-            var displayValue = sizeFromDeg(this.state.value, unit);
-            var stateUpdate = Object.assign({}, this.state, {unit, displayValue});
+            var {value, valid, displayValue} = this.state;
 
-            this.setState({unit, displayValue});
+            // in case current displayed value is invalid
+            // try keep it if it is good for new unit
+            if ( !valid ) {
+                value = sizeToDeg(displayValue, unit);
+                valid = isSizeValid(value, this.props.min, this.props.max);
+                if (!valid) {
+                    value = '';   // set back to empty string in case still invalid
+                }
+            } else {
+                displayValue = sizeFromDeg(value, unit);
+            }
+            var stateUpdate = Object.assign({}, this.state, {unit, displayValue, value, valid});
+
+            this.setState(stateUpdate);
             this.props.onChange(ev, stateUpdate);
         }
     }

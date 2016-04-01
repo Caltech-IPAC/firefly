@@ -4,11 +4,8 @@
 
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
-import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
-import {primePlot, getPlotViewById} from '../PlotViewUtil.js';
-import {dispatchAddImages, getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
-import {parseWorldPt} from '../Point.js';
+import {visRoot } from '../ImagePlotCntlr.js';
+import {getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -22,13 +19,11 @@ import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {convertAngle} from '../VisUtil.js';
-import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {SizeInputFields, sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
+import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import Enum from 'enum';
 import {get} from 'lodash';
 
@@ -36,10 +31,8 @@ import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
 const panelKey = 'SELECTIMAGEPANEL';
-const ImageId = 'imgPlot';
-var   imgNo = 1;
 
-const keyMap = {
+export const keyMap = {
     'selTab':    'SELECTIMAGEPANEL_SelectedCatalog',
     'targettry': 'SELECTIMAGEPANEL_targettry',
     'targetrep': 'SELECTIMAGEPANEL_targetrep',
@@ -62,7 +55,24 @@ const keyMap = {
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
-const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+export const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+/*
+ * get the catalog id (tab id) based on stored fields of the tab
+ *
+ */
+
+export function computeCurrentCatalogId( fields, catalogId = IRSA ) {
+
+    const keytab = keyMap['catalogtab'];
+
+    if (fields && fields.hasOwnProperty(keytab)) {
+        var tval = fields[keytab];
+        return parseInt( typeof tval === 'object' ? tval.value : tval);
+    }
+
+    return catalogId;
+}
 
 /**
  * show image select popup window
@@ -93,8 +103,6 @@ export function showImageSelPanel(popTitle)
             plotMode = PlotSelectMode.ReplaceOrCreate;
         } else {
             plotMode = PlotSelectMode.AddNewPlot;
-            plotId = `${ImageId}${imgNo}`;
-            imgNo++;
         }
     } else {
         if (plotId) {
@@ -106,7 +114,7 @@ export function showImageSelPanel(popTitle)
     // dispatchAddImages(plotView.viewerId, [plotId]);
 
     var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection plotId={plotId} viewerId={viewerId} plotMode={plotMode} catalogId={TWOMASS}/>
+                    <ImageSelection viewerId={viewerId} plotMode={plotMode} catalogId={TWOMASS}/>
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -121,21 +129,136 @@ function computeLabelWidth(labelStr) {
     return labelStr.length * 6;
 }
 
-/*
- * get the catalog id (tab id) based on stored fields of the tab
- *
- */
 
-function computeCurrentCatalogId( fields, catalogId = IRSA ) {
 
-    const keytab = keyMap['catalogtab'];
-
-    if (fields && fields.hasOwnProperty(keytab)) {
-        var tval = fields[keytab];
-        return parseInt( typeof tval === 'object' ? tval.value : tval);
+// get unit, min and max from the data file
+var getRangeItem = (crtCatalogId, rangeItem) => {
+    if (panelCatalogs[crtCatalogId].hasOwnProperty('range')) {
+        return panelCatalogs[crtCatalogId]['range'][rangeItem];
+    } else {
+        if (rangeItem === 'unit') {
+            return 'deg';
+        } else {
+            return 0.0;
+        }
     }
+};
 
-    return catalogId;
+// get default size from the data file
+var getSize = (crtCatalogId) => {
+    if (panelCatalogs[crtCatalogId].hasOwnProperty('size')) {
+        return panelCatalogs[crtCatalogId]['size'].toString();
+    } else {
+        return '0.0';
+    }
+};
+
+
+function fieldInit(crtCatalogId) {
+    var size = 'Size:';
+
+    return (
+        {[keyMap['targettry']]: {
+            fieldKey: keyMap['targettry'],
+            value: 'NED',
+            label: ''
+        },
+        [keyMap['catalogtab']]: {
+            fieldKey: keyMap['catalogtab'],
+            value: panelCatalogs[crtCatalogId].CatalogId.toString()
+        },
+        [keyMap['irsatypes']]: {
+            fieldKey: keyMap['irsatypes'],
+            label: panelCatalogs[IRSA].types.Title,
+            value: panelCatalogs[IRSA].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
+        },
+        [keyMap['twomasstypes']]: {
+            fieldKey: keyMap['twomasstypes'],
+            label: panelCatalogs[TWOMASS].types.Title,
+            value: panelCatalogs[TWOMASS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
+        },
+        [keyMap['wisetypes']]: {
+            fieldKey: keyMap['wisetypes'],
+            label: panelCatalogs[WISE].types.Title,
+            value: panelCatalogs[WISE].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
+        },
+        [keyMap['wisebands']]: {
+            fieldKey: keyMap['wisebands'],
+            label: panelCatalogs[WISE].bands.Title,
+            value: panelCatalogs[WISE].bands.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
+        },
+        [keyMap['msxtypes']]: {
+            fieldKey: keyMap['msxtypes'],
+            label: panelCatalogs[MSX].types.Title,
+            value: panelCatalogs[MSX].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[MSX].types.Title)
+        },
+        [keyMap['dsstypes']]: {
+            fieldKey: keyMap['dsstypes'],
+            label: panelCatalogs[DSS].types.Title,
+            value: panelCatalogs[DSS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[DSS].types.Title)
+        },
+        [keyMap['sdsstypes']]: {
+            fieldKey: keyMap['sdsstypes'],
+            label: panelCatalogs[SDSS].types.Title,
+            value: panelCatalogs[SDSS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[SDSS].types.Title)
+        },
+        [keyMap['fitslist']]: {
+            fieldKey: keyMap['fitslist'],
+            label: panelCatalogs[FITS].list.Title,
+            value: panelCatalogs[FITS].list.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[FITS].list.Title)
+        },
+        [keyMap['fitsextinput']]: {
+            fieldKey: keyMap['fitsextinput'],
+            label: panelCatalogs[FITS].extinput.Title,
+            value: '0',
+            labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
+        },
+        [keyMap['blankinput']]: {
+            fieldKey: keyMap['blankinput'],
+            label: panelCatalogs[BLANK].input.Title,
+            value: panelCatalogs[BLANK].input.Default.toString(),
+            validator: Validate.floatRange.bind(null,
+                panelCatalogs[BLANK].input.range.min,
+                panelCatalogs[BLANK].input.range.max, 1.0, 'a float field'),
+            labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
+        },
+        [keyMap['urlinput']]: {
+            fieldKey: keyMap['urlinput'],
+            label: panelCatalogs[URL].input.Title,
+            validator: Validate.validateUrl.bind(null, 'a url field'),
+            value: '',
+            labelWidth: computeLabelWidth(panelCatalogs[URL].input.Title)
+        },
+        [keyMap['urllist']]: {
+            fieldKey: keyMap['urllist'],
+            label: panelCatalogs[URL].list.Title,
+            value: panelCatalogs[URL].list.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[URL].list.Title)
+
+        },
+        [keyMap['urlextinput']]: {
+            fieldKey: keyMap['urlextinput'],
+            label: panelCatalogs[URL].extinput.Title,
+            value: '0',
+            labelWidth: computeLabelWidth(panelCatalogs[URL].extinput.Title)
+        },
+        [keyMap['radiusfield']]: {
+            fieldKey: keyMap['radiusfield'],
+            label: size,
+            labelWidth: computeLabelWidth(size),
+            unit: getRangeItem(crtCatalogId, 'unit'),
+            min:  getRangeItem(crtCatalogId, 'min'),
+            max:  getRangeItem(crtCatalogId, 'max'),
+            value: getSize(crtCatalogId)}
+        });
 }
 
 /*
@@ -144,132 +267,8 @@ function computeCurrentCatalogId( fields, catalogId = IRSA ) {
  */
 var ImageSelPanelChange = function (crtCatalogId) {
     return (inFields, action) => {
-        var size = 'Size:';
-
-        var getRangeItem = (crtCatalogId, rangeItem) => {
-            if (panelCatalogs[crtCatalogId].hasOwnProperty('range')) {
-                return panelCatalogs[crtCatalogId]['range'][rangeItem];
-            } else {
-                if (rangeItem === 'unit') {
-                    return 'deg';
-                } else {
-                    return 0.0;
-                }
-            }
-        };
-
-        var getSize = (crtCatalogId) => {
-            if (panelCatalogs[crtCatalogId].hasOwnProperty('size')) {
-                return panelCatalogs[crtCatalogId]['size'].toString();
-            } else {
-                return '0.0';
-            }
-        };
-
         if (!inFields) {
-             return {
-                [keyMap['targettry']]: {
-                    fieldKey: keyMap['targettry'],
-                    value: 'NED',
-                    label: ''
-                },
-                [keyMap['catalogtab']]: {
-                    fieldKey: keyMap['catalogtab'],
-                    value: panelCatalogs[crtCatalogId].CatalogId.toString()
-                },
-                [keyMap['irsatypes']]: {
-                    fieldKey: keyMap['irsatypes'],
-                    label: panelCatalogs[IRSA].types.Title,
-                    value: panelCatalogs[IRSA].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
-                },
-                [keyMap['twomasstypes']]: {
-                    fieldKey: keyMap['twomasstypes'],
-                    label: panelCatalogs[TWOMASS].types.Title,
-                    value: panelCatalogs[TWOMASS].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
-                },
-                [keyMap['wisetypes']]: {
-                    fieldKey: keyMap['wisetypes'],
-                    label: panelCatalogs[WISE].types.Title,
-                    value: panelCatalogs[WISE].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
-                },
-                [keyMap['wisebands']]: {
-                    fieldKey: keyMap['wisebands'],
-                    label: panelCatalogs[WISE].bands.Title,
-                    value: panelCatalogs[WISE].bands.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
-                },
-                [keyMap['msxtypes']]: {
-                    fieldKey: keyMap['msxtypes'],
-                    label: panelCatalogs[MSX].types.Title,
-                    value: panelCatalogs[MSX].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[MSX].types.Title)
-                },
-                [keyMap['dsstypes']]: {
-                    fieldKey: keyMap['dsstypes'],
-                    label: panelCatalogs[DSS].types.Title,
-                    value: panelCatalogs[DSS].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[DSS].types.Title)
-                },
-                [keyMap['sdsstypes']]: {
-                    fieldKey: keyMap['sdsstypes'],
-                    label: panelCatalogs[SDSS].types.Title,
-                    value: panelCatalogs[SDSS].types.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[SDSS].types.Title)
-                },
-                [keyMap['fitslist']]: {
-                    fieldKey: keyMap['fitslist'],
-                    label: panelCatalogs[FITS].list.Title,
-                    value: panelCatalogs[FITS].list.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[FITS].list.Title)
-                },
-                [keyMap['fitsextinput']]: {
-                    fieldKey: keyMap['fitsextinput'],
-                    label: panelCatalogs[FITS].extinput.Title,
-                    value: '0',
-                    labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
-                },
-                [keyMap['blankinput']]: {
-                    fieldKey: keyMap['blankinput'],
-                    label: panelCatalogs[BLANK].input.Title,
-                    value: panelCatalogs[BLANK].input.Default.toString(),
-                    validator: Validate.floatRange.bind(null,
-                        panelCatalogs[BLANK].input.range.min,
-                        panelCatalogs[BLANK].input.range.max, 1.0, 'a float field'),
-                    labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
-                },
-                [keyMap['urlinput']]: {
-                    fieldKey: keyMap['urlinput'],
-                    label: panelCatalogs[URL].input.Title,
-                    validator: Validate.validateUrl.bind(null, 'a url field'),
-                    value: '',
-                    labelWidth: computeLabelWidth(panelCatalogs[URL].input.Title)
-                },
-                [keyMap['urllist']]: {
-                    fieldKey: keyMap['urllist'],
-                    label: panelCatalogs[URL].list.Title,
-                    value: panelCatalogs[URL].list.Default,
-                    labelWidth: computeLabelWidth(panelCatalogs[URL].list.Title)
-
-                },
-                [keyMap['urlextinput']]: {
-                    fieldKey: keyMap['urlextinput'],
-                    label: panelCatalogs[URL].extinput.Title,
-                    value: '0',
-                    labelWidth: computeLabelWidth(panelCatalogs[URL].extinput.Title)
-                },
-                [keyMap['radiusfield']]: {
-                    fieldKey: keyMap['radiusfield'],
-                    label: size,
-                    labelWidth: computeLabelWidth(size),
-                    unit: getRangeItem(crtCatalogId, 'unit'),
-                    min:  getRangeItem(crtCatalogId, 'min'),
-                    max:  getRangeItem(crtCatalogId, 'max'),
-                    value: getSize(crtCatalogId)
-                }
-            };
+            return fieldInit(crtCatalogId);
         } else {
 
             if (action.type === FieldGroupCntlr.VALUE_CHANGE) {
@@ -306,7 +305,7 @@ var ImageSelPanelChange = function (crtCatalogId) {
                                                         {'displayValue': sizeFromDeg(value, unit)});
 
                         return Object.assign({}, inFields, {[keyMap['radiusfield']]: radiusField});
-                    }    
+                    }
                 }
             }
 
@@ -315,213 +314,6 @@ var ImageSelPanelChange = function (crtCatalogId) {
     };
 };
 
-const loadErrorMsg = {
-    'nosize': 'no valid size is specified',
-    'nopixelsize': 'no valid pixel size is specified',
-    'notarget': 'no valid target name or position is specified',
-    'nourl': 'no valid url of fits file is specified',
-    'nofits': 'no fits file uploaded',
-    'failplot': 'fail to make plot request'
-};
-
-
-var outputMessage = (errMsg) => errMsg&&showInfoPopup(errMsg, 'Load Selected Image Error');
-
-// image plot on specified url
-function imagePlotOnURL(request) {
-    var url = get(request, keyMap['urlinput']);
-    var wpr = WebPlotRequest.makeURLPlotRequest(url);
-
-
-    if (wpr && request[keyMap['urllist']] === 'loadOne' && request.hasOwnProperty(keyMap['urlextinput'])) {
-        wpr.setMultiImageIdx(request[keyMap['urlextinput']]);
-    }
-    return wpr;
-}
-
-// image plot on specified upload FITS
-function imagePlotOnFITS(request) {
-    var fits = get(request, keyMap['fitsupload']);
-    var wpr = WebPlotRequest.makeFilePlotRequest(fits);
-
-
-    if (wpr && request[keyMap['fitslist']] === 'loadOne' && request.hasOwnProperty(keyMap['fitsextinput'])) {
-          wpr.setMultiImageIdx(request[keyMap['fitsextinput']]);
-    }
-    return wpr;
-}
-
-
-
-// image plot on blank image
-function imagePlotOnBlank(request) {
-    var sizeV = request[keyMap['blankinput']];
-    var size = request[keyMap['sizefield']];
-    var unit = request[keyMap['unitfield']];
-
-    return WebPlotRequest.makeBlankPlotRequest(
-        parseWorldPt(request.UserTargetWorldPt),
-        convertAngle(unit, 'arcsec', size),
-        sizeV, sizeV);
-}
-
-// image plot on IRSA, 2MASS, WISE, MSX, DSS, SDSS
-function imagePlotOnSurvey(crtCatalogId, request) {
-
-    var wp = parseWorldPt(request.UserTargetWorldPt);
-    var sym = panelCatalogs[crtCatalogId].Symbol.toLowerCase();
-
-    var t = `${sym}types`;
-    var b = `${sym}bands`;
-    var survey = get(request, keyMap[t]);
-    var band = get(request, keyMap[b]);
-    var sizeInDeg = parseFloat(request[keyMap['radiusfield']]);
-
-    var wpr = null;
-
-    switch(crtCatalogId) {
-        case IRSA:
-            var s = (survey) ? survey.split('-')[1]: '';
-
-            if (survey.includes('issa')) {
-                wpr = WebPlotRequest.makeISSARequest(wp, s, sizeInDeg);
-            } else if (survey.includes('iris')) {
-                wpr = WebPlotRequest.makeIRISRequest(wp, s, sizeInDeg);
-            }
-
-            break;
-
-        case TWOMASS:
-            wpr = WebPlotRequest.make2MASSRequest(wp, survey, sizeInDeg);
-            break;
-
-        case WISE:
-            if (band) {
-                wpr = WebPlotRequest.makeWiseRequest(wp, survey, band, sizeInDeg);
-            }
-            break;
-
-        case MSX:
-            wpr = WebPlotRequest.makeMSXRequest(wp, survey, sizeInDeg);
-            break;
-
-        case DSS:
-            wpr = WebPlotRequest.makeDSSRequest(wp, survey, sizeInDeg);
-            break;
-
-        case SDSS:
-            wpr = WebPlotRequest.makeSloanDSSRequest(wp, survey, sizeInDeg);
-            break;
-        default:
-            break;
-    }
-
-    return wpr;
-}
-
-/*
- * onFail callback and blank input checker for request sent to onSuccess
- */
-var resultFail = (request, fromFail = true)  => {
-    var crtCatalogId = computeCurrentCatalogId(request);
-    var errCode = '';
-    var errMsg = '';
-    const skey = 'radiusfield';
-
-    switch (crtCatalogId) {
-        case URL:
-            if (fromFail) {
-                errMsg = 'invalid url';
-            } else {
-                if (!get(request, keyMap['urlinput'])) {
-                    errCode = 'nourl';
-                }
-            }
-            break;
-
-        case FITS:
-            if (fromFail) {
-                errMsg = 'invalid file upload';
-            } else {
-                if (!get(request, keyMap['fitsupload'])) {
-                    errCode = 'nofits';
-                }
-            }
-            break;
-
-        case BLANK:
-            if (fromFail) {
-                errMsg = 'invalid name or position or invalid pixel size or invalid size';
-            } else {
-                if (!request.hasOwnProperty('UserTargetWorldPt') || !request.UserTargetWorldPt) {
-                    errCode = 'notarget';
-                } else if (!get(request, keyMap['blankinput'])) {
-                    errCode = 'nopixelsize';
-                } else if (!get(request, keyMap[skey])) {
-                    errCode = 'nosize';
-                }
-            }
-            break;
-
-        default:
-            if (fromFail) {
-                errMsg = 'invalid name or position or invalid size';
-            } else {
-                if (!request.hasOwnProperty('UserTargetWorldPt') || !request.UserTargetWorldPt) {
-                    errCode = 'notarget';
-                } else if (!get(request, keyMap[skey])) {
-                    errCode = 'nosize';
-                }
-            }
-    }
-
-    if (errCode) {
-        errMsg = loadErrorMsg[errCode];
-    }
-    if (errMsg) {
-        outputMessage(errMsg);
-    }
-
-    return errMsg;
-};
-
-/*
- * onSucess callback for 'load' button on image select panel
- */
-function resultSuccess(plotId, isAddNewPlot, viewerId) {
-    return (request) => {
-        var wpr = null;
-        const crtCatalogId = computeCurrentCatalogId(request);
-
-        var errMsg = resultFail(request, false);
-        if (errMsg) {
-            return;
-        }
-
-        switch (crtCatalogId) {
-            case URL:
-                wpr = imagePlotOnURL(request);
-                break;
-            case FITS:
-                wpr = imagePlotOnFITS(request);
-                break;
-            case BLANK:
-                wpr = imagePlotOnBlank(request);
-                break;
-            default:
-                wpr = imagePlotOnSurvey(crtCatalogId, request);
-        }
-
-        if (wpr) {
-            if (isAddNewPlot && viewerId) {
-                dispatchAddImages(viewerId, [plotId]);
-            }
-            dispatchPlotImage(plotId, wpr);
-        } else {
-            outputMessage('failplot');
-        }
-    };
-}
 
 /**
  *  container component for image select panel
@@ -575,7 +367,7 @@ class ImageSelection extends Component {
 
 ImageSelection.propTypes = {
     catalogId: PropTypes.number,
-    plotId: PropTypes.string.isRequired,
+    plotId: PropTypes.string,
     viewerId: PropTypes.string,
     plotMode: PropTypes.object
 };
@@ -588,10 +380,8 @@ class ImageSelectionView extends Component {
 
         this.state = {
             crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId),
-            plotId: props.plotId,
             addPlot: (props.plotMode && props.plotMode === PlotSelectMode.AddNewPlot) ? true : false
         };
-
     }
 
     componentWillReceiveProps(nextProps) {
@@ -602,14 +392,13 @@ class ImageSelectionView extends Component {
         this.setState({ crtCatalogId: index});
     }
 
-    onChangePlotId(ev) {
-        if (get(ev, 'target.value') === 'create') {
-            this.setState ({plotId: `${ImageId}${imgNo}`,
-                              addPlot: true});
-            imgNo++;
-        }
+    onChangeAddPlot(ev) {
+        this.setState({addPlot: get(ev, 'target.value') === 'create'});
     }
+
     render() {
+
+        var {addPlot} = this.state;
 
         // tabs for each catalog
         var categoryTabs = panelCatalogs.map((item, index) =>
@@ -621,8 +410,6 @@ class ImageSelectionView extends Component {
 
         var radius = () => {
             if (this.state.crtCatalogId != URL && this.state.crtCatalogId != FITS) {
-                var catalog = panelCatalogs[this.state.crtCatalogId];
-
                 return (
                     <SizeInputFields fieldKey={keyMap['radiusfield']} />
                 );
@@ -648,7 +435,7 @@ class ImageSelectionView extends Component {
                     <div className={'section'}>
                         <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId}
                                             plotMode={this.props.plotMode}
-                                            changePlot={this.onChangePlotId.bind(this)} />
+                                            changePlot={this.onChangeAddPlot.bind(this)} />
                     </div>
                     <div className={'section'}>
                         <FieldGroupTabs
@@ -665,10 +452,9 @@ class ImageSelectionView extends Component {
                         <div className={'padding'}>
                             <CompleteButton
                                 groupKey={panelKey}
-                                onSuccess={resultSuccess(this.state.plotId,
-                                                         this.state.addPlot,
+                                onSuccess={resultSuccess(addPlot,
                                                          this.props.viewerId)}
-                                onFail={resultFail}
+                                onFail={resultFail()}
                                 text={'Load'}
                             />
                         </div>
@@ -685,9 +471,9 @@ class ImageSelectionView extends Component {
 ImageSelectionView.propTypes={
     initCatalogId: PropTypes.number.isRequired,
     fields: PropTypes.object,
-                        plotId: PropTypes.string.isRequired,
-                        viewerId: PropTypes.string,
-                        plotMode: PropTypes.object
+    plotId: PropTypes.string,
+    viewerId: PropTypes.string,
+    plotMode: PropTypes.object
 };
 
 /**
@@ -788,7 +574,6 @@ function CatalogTabView({catalog, fields}) {
     var inputfield = (fieldname, index) => {
         var fkey = `${sym}${fieldname}`;
         var padding = (index === 0)? 'padding_top' : 'padding_nottop';
-        var fval = fields.hasOwnProperty(keyMap[fkey]) ? fields[keyMap[fkey]].value : '';
 
         return (
             <div className={padding} key={index}>
