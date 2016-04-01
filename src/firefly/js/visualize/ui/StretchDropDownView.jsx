@@ -4,6 +4,7 @@
 
 import React, {PropTypes} from 'react';
 import { primePlot} from '../PlotViewUtil.js';
+import { RangeValues} from '../RangeValues.js';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {
     ToolbarButton,
@@ -11,8 +12,6 @@ import {
 import {dispatchStretchChange} from '../ImagePlotCntlr.js';
 import {
     PERCENTAGE,
-    MAXMIN,
-    ABSOLUTE,
     ZSCALE,
     SIGMA,
     STRETCH_LINEAR,
@@ -24,6 +23,7 @@ import {
     STRETCH_ASINH,
     STRETCH_POWERLAW_GAMMA,
 } from '../RangeValues.js';
+import {showColorDialog} from './ColorDialog.jsx';
 
 
 
@@ -42,6 +42,17 @@ function getLabel(rv,baseLabel) {
     return baseLabel;
 }
 
+
+function changeStretch(pv,rv) {
+
+    const serRv= RangeValues.serializeRV(rv);
+    const p= primePlot(pv);
+    const stretchData= p.plotState.getBands().map( (b) =>
+        ({ band : b.key, rv :  serRv, bandVisible: true }) );
+    dispatchStretchChange(pv.plotId,stretchData);
+}
+
+
 /**
  *
  * @param pv
@@ -58,7 +69,7 @@ function stretchByZscaleAlgorithm(pv,currRV,algorithm) {
     newRv.zscaleContrast= 25;
     newRv.zscaleSamples= 600;
     newRv.zscaleSamplesPerLine= 120;
-    dispatchStretchChange(pv.plotId,newRv);
+    changeStretch(pv,newRv);
 }
 
 /**
@@ -75,7 +86,7 @@ function stretchByType(pv,currRV,sType,min,max) {
     newRv.lowerWhich= sType;
     newRv.upperValue= max;
     newRv.lowerValue= min;
-    dispatchStretchChange(pv.plotId,newRv);
+    changeStretch(pv,newRv);
 }
 
 
@@ -88,8 +99,7 @@ export function StretchDropDownView({plotView:pv}) {
             <ToolbarButton text='Color stretch...'
                            tip='Change the background image stretch'
                            enabled={enabled} horizontal={false}
-                           todo={true}
-                           onClick={() => console.log('show color stretch dialog')}/>
+                           onClick={() => showColorDialog()}/>
             <DropDownVerticalSeparator/>
 
             <ToolbarButton text='Z Scale Linear Stretch'
@@ -113,19 +123,19 @@ export function StretchDropDownView({plotView:pv}) {
             <ToolbarButton text={getLabel(rv,'Stretch to 98%')}
                            tip='Stretch range 2% to 98%'
                            enabled={enabled} horizontal={false}
-                           onClick={() => stretchByType(pv,rv,PERCENTAGE,1,98)}/>
+                           onClick={() => stretchByType(pv,rv,PERCENTAGE,2,98)}/>
             <ToolbarButton text={getLabel(rv,'Stretch to 97%')}
                            tip='Stretch range 3% to 97%'
                            enabled={enabled} horizontal={false}
-                           onClick={() => stretchByType(pv,rv,PERCENTAGE,1,97)}/>
+                           onClick={() => stretchByType(pv,rv,PERCENTAGE,3,97)}/>
             <ToolbarButton text={getLabel(rv,'Stretch to 95%')}
                            tip='Stretch range 5% to 95%'
                            enabled={enabled} horizontal={false}
-                           onClick={() => stretchByType(pv,rv,PERCENTAGE,1,95)}/>
+                           onClick={() => stretchByType(pv,rv,PERCENTAGE,5,95)}/>
             <ToolbarButton text={getLabel(rv,'Stretch to 85%')}
                            tip='Stretch range 15% to 85%'
                            enabled={enabled} horizontal={false}
-                           onClick={() => stretchByType(pv,rv,PERCENTAGE,1,85)}/>
+                           onClick={() => stretchByType(pv,rv,PERCENTAGE,15,85)}/>
             <ToolbarButton text={getLabel(rv,'Stretch -2 Sigma to 10 Sigma')}
                            tip='Stretch -2 Sigma to 10 Sigma'
                            enabled={enabled} horizontal={false}

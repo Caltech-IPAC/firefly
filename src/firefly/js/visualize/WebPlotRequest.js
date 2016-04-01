@@ -12,8 +12,7 @@ import CoordinateSys from './CoordSys.js';
 import Point, {parseImagePt} from './Point.js';
 import {parseResolver} from '../astro/net/Resolver.js';
 import join from 'underscore.string/join';
-import RangeValues from './RangeValues.js';
-//import ActiveTarget from '../drawingLayers/ActiveTarget.js';
+import {RangeValues} from './RangeValues.js';
 
 
 export const ServiceType= new Enum(['IRIS', 'ISSA', 'DSS', 'SDSS', 'TWOMASS', 'MSX', 'DSS_OR_IRIS', 'WISE', 'NONE']);

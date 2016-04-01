@@ -11,11 +11,11 @@ import FieldGroupCntlr, {dispatchValueChange} from './FieldGroupCntlr.js';
 const includeForValidation= (f,includeUnmounted) => f.valid !== undefined && (f.mounted||includeUnmounted);
 
 
-function validateResolvedSingle(groupKey,includeUnmounted, doneCallback) {
+function validateResolvedSingle(groupKey,includeUnmounted) {
     var flds= getGroupFields(groupKey);
     var valid = Object.keys(flds).every( (key) =>
                      includeForValidation(flds[key],includeUnmounted) ? flds[key].valid : true);
-    if (doneCallback) doneCallback(valid);
+    return valid;
 }
 
 
@@ -23,21 +23,19 @@ function validateResolvedSingle(groupKey,includeUnmounted, doneCallback) {
  * 
  * @param groupKey
  * @param includeUnmounted
- * @param doneCallback
  * @return Promise with the valid state true/false --- todo: the return value does not work
  */
-var validateSingle= function(groupKey, includeUnmounted, doneCallback) {
+var validateSingle= function(groupKey, includeUnmounted) {
     var fields= getGroupFields(groupKey);
 
     //====== clear out all functions
     Object.keys(fields).forEach( (key) => {
         if (typeof fields[key].value === 'function') {
             var newValue= fields[key].value();
-            if (typeof newValue=== 'object' &&       // check to see if return is an object with {value:string,valid:boolean}
-                Object.keys(newValue).length===2 &&
-                newValue.hasOwnProperty('valid') &&
+            if (typeof newValue=== 'object' && // check to see if return is an object that includes {value: any} and not a promise
+                !newValue.then &&
                 newValue.hasOwnProperty('value') ) {
-                dispatchValueChange({fieldKey:key,groupKey,valid:newValue.valid,value:newValue.value});
+                dispatchValueChange(Object.assign({fieldKey:key,groupKey},newValue));
             }
             else {
                 dispatchValueChange({fieldKey:key,groupKey,valid:true,value:newValue});
@@ -54,28 +52,38 @@ var validateSingle= function(groupKey, includeUnmounted, doneCallback) {
     return Promise.all( Object.keys(fields).map( (key) => Promise.resolve(fields[key].value),this ) )
         .then( () =>
         {
-            window.setTimeout(validateResolvedSingle(groupKey,includeUnmounted, doneCallback));
+            return new Promise( (resolve, reject) => 
+                window.setTimeout( () => resolve(validateResolvedSingle(groupKey,includeUnmounted))
+            ));
         }
     )
         .catch( (e) => logError(e));
 };
 
-var validateGroup= function() {
-    //todo
+/**
+ *
+ * @param groupKeyAry
+ * @param includeUnmounted
+ */
+var validateGroup= function(groupKeyAry, includeUnmounted) {
+    return Promise.all(groupKeyAry.map( (groupKey) => validateSingle(groupKey,includeUnmounted)))
+        .then( (validAry) => {
+            return validAry.every( (v) => v);
+        });
 };
 
 /**
  * 
  * @param groupKey
  * @param includeUnmounted
- * @param doneCallback
+ * @return {Promise} promise of a boolean true if valid
  */
-export var validateFieldGroup= function(groupKey, includeUnmounted, doneCallback) {
+export var validateFieldGroup= function(groupKey, includeUnmounted) {
     if (Array.isArray(groupKey)) {
-        validateGroup(groupKey,includeUnmounted, doneCallback);
+        return validateGroup(groupKey,includeUnmounted);
     }
     else {
-        validateSingle(groupKey,includeUnmounted, doneCallback);
+        return validateSingle(groupKey,includeUnmounted);
     }
 };
 

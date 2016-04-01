@@ -22,12 +22,12 @@ const doJsonP= function() {
  *
  * @return {Promise}
  */
-const getColorHistogram= function(state,band,width,height) {
+export const callGetColorHistogram= function(state,band,width,height) {
     var paramList = [];
-    paramList.push({name:ServerParams.STATE, value: state.serialize()});
+    paramList.push({name:ServerParams.STATE, value: state.toJson()});
     paramList.push({name:ServerParams.WIDTH, value: width+''});
     paramList.push({name:ServerParams.HEIGHT, value: height+''});
-    paramList.push({name:ServerParams.BAND, value: band.toString()});
+    paramList.push({name:ServerParams.BAND, value: band.key});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
 
     return doService(doJsonP(), ServerParams.HISTOGRAM, paramList
@@ -228,8 +228,3 @@ function makeStateParamAry(startAry) {
     } );
 }
 
-
-
-
-export var PlotServicesJson= {getColorHistogram, getWebPlotGroup, getOneFileGroup};
-export default PlotServicesJson;

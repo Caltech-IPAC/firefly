@@ -173,7 +173,8 @@ const initState= function() {
 
 export default {
     reducer,
-    ANY_CHANGE, ANY_REPLOT,
+    ANY_CHANGE,  // todo remove soon- only for interface with GWT
+    ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     ROTATE_START, ROTATE, ROTATE_FAIL,
@@ -213,12 +214,12 @@ export function dispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROU
 /**
  *
  * @param {string} plotId
- * @param {number} rangeValues
+ * @param {[{band:object,rv:object,bandVisible:boolean}]} stretchData
+ * 
  * @param {ActionScope} actionScope
  */
-export function dispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
-    flux.process({ type: STRETCH_CHANGE,
-        payload: { plotId, rangeValues, actionScope }});
+export function dispatchStretchChange(plotId, stretchData, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
 }
 
 
@@ -764,7 +765,6 @@ if (window.ffgwt) {
     const allPlots= ffgwt.Visualize.AllPlots.getInstance();
     allPlots.addListener({
         eventNotify(ev) {
-            //console.log('ANY_CHANGE:' + ev.getName().getName());
             if (ev.getName().getName()==='Replot') {
                 flux.process({type: ANY_CHANGE, payload: { } });
             }

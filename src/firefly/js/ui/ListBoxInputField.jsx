@@ -46,7 +46,7 @@ export function ListBoxInputFieldView({inline, value, onChange, fieldKey, option
 
 ListBoxInputFieldView.propTypes= {
     options : PropTypes.array.isRequired,
-    value:  PropTypes.string,
+    value:  PropTypes.any,
     fieldKey : PropTypes.string,
     onChange:  PropTypes.func,
     inline : PropTypes.bool,
