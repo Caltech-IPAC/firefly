@@ -5,24 +5,15 @@ import React, {Component, PropTypes} from 'react';
 import {flux} from '../Firefly.js';
 import {dispatchShowDialog} from '../core/DialogCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
-import {SingleColumnMenu} from './DropDownMenu.jsx';
-import {FieldGroup} from './FieldGroup.jsx';
-import InputGroup from './InputGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchZoom, ActionScope} from '../visualize/ImagePlotCntlr.js';
-import {levels, UserZoomTypes, convertZoomToString, getZoomMax} from '../visualize/ZoomUtil';
+import {levels, UserZoomTypes, convertZoomToString} from '../visualize/ZoomUtil';
 import {ToolbarButton} from './ToolbarButton.jsx';
-import {LinkButton} from './LinkButton.jsx';
-import CompleteButton from './CompleteButton.jsx';
-
-import HelpIcon from './HelpIcon.jsx';
 
 const _levels = levels;
 const _userZoomTypes = UserZoomTypes;
-const zoomMax = getZoomMax();
 
 function getDialogBuilder() {
     var popup = null;
@@ -164,12 +155,4 @@ makezoomItems.propTypes= {
 function resultsSuccess(plotId,zoomLevel) {
         var zoom= Number(zoomLevel);
         dispatchZoom(plotId, _userZoomTypes.LEVEL, true, false, false, zoom, ActionScope.GROUP);
-}
-
-function resultsOK(request) {
-    console.log(request + 'You clicked OK ');
-}
-
-function resultsFail(request) {
-    console.log(request + ': Error');
 }

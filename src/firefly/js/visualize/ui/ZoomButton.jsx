@@ -68,15 +68,6 @@ export function isZoomMax(pv) {
     return (nextZ>=zMax );
 }
 
-export function getzoomFactor(pv){
-    var {zoomFactor}= primePlot(pv);
-    return zoomFactor;
-
-
-}
-
-
-
 export function ZoomButton({plotView:pv,zoomType,visible}) {
     var enable= primePlot(pv) ? true : false;
     return (
@@ -84,10 +75,6 @@ export function ZoomButton({plotView:pv,zoomType,visible}) {
                        enabled={enable} visible={visible}
                        horizontal={true} onClick={() => zoom(pv,zoomType)}/>
     );
-}
-
-export function makeZoomOptionButton({plotView:pv,zoomLevel,visible}){
-
 }
 
 
