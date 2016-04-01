@@ -36,7 +36,7 @@ const popupPanelFixedSizeStyle = {
     minWidth: 480,
     height: 480,
     minHeight: 480,
-    //resize: 'both',
+    resize: 'horizontal',
     overflow: 'auto',
     position: 'relative'
 };
