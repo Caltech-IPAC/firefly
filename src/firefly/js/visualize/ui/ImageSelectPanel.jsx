@@ -451,6 +451,7 @@ class ImageSelectionView extends Component {
                     <div className={'close'}>
                         <div className={'padding'}>
                             <CompleteButton
+                                dialogId={popupId}
                                 groupKey={panelKey}
                                 onSuccess={resultSuccess(addPlot,
                                                          this.props.viewerId)}
