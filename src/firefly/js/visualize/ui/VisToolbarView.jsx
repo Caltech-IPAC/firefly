@@ -6,7 +6,8 @@ import React, {PropTypes} from 'react';
 import {getActivePlotView,
     primePlot,
     getAllDrawLayersForPlot} from '../PlotViewUtil.js';
-import {dispatchRotate, dispatchFlip, ActionScope} from '../ImagePlotCntlr.js';
+import {dispatchRotate, dispatchFlip, dispatchRecenter, 
+        dispatchRestoreDefaults, ActionScope} from '../ImagePlotCntlr.js';
 import {RotateType} from '../PlotChangeTask.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -123,7 +124,6 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
             <ToolbarButton icon={RECENTER} tip='Re-center image on last query or center of image'
                            enabled={enabled} horizontal={true}
                            visible={mi.recenter}
-                           todo={true}
                            onClick={() => recenter(pv)}/>
 
 
@@ -223,8 +223,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            enabled={enabled}
                            horizontal={true}
                            visible={mi.restore}
-                           todo={true}
-                           onClick={() => console.log('todo - restore to defaults')}/>
+                           onClick={() => dispatchRestoreDefaults(pv.plotId)}/>
 
             <ToolbarButton icon={FITS_HEADER}
                            tip='Show FITS header'
@@ -263,9 +262,7 @@ function doRotateNorth(pv,rotate) {
     dispatchRotate(pv.plotId, rotate?RotateType.NORTH:RotateType.UNROTATE ,-1, ActionScope.GROUP);
 }
 
-function recenter(pv) {
-    console.log('todo: recenter');
-}
+function recenter(pv) { dispatchRecenter(pv.plotId); }
 
 function flipY(pv) {
     dispatchFlip(pv.plotId,true);

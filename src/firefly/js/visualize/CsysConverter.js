@@ -571,6 +571,11 @@ export class CysConverter {
     }
 }
 
+/**
+ * 
+ * @param pt
+ * @return {*}
+ */
 function getWorldPtRepresentation(pt) {
     if (!isValidPoint(pt)) return null;
 
@@ -584,11 +589,50 @@ function getWorldPtRepresentation(pt) {
 
 
 export const CCUtil = {
+    /**
+     * Convert to ImageWorkSpace Point
+     * @param plot
+     * @param pt
+     */
     getImageWorkSpaceCoords : (plot,pt) => CysConverter.make(plot).getImageWorkSpaceCoords(pt),
+    
+    /**
+     *
+     * Convert to Image Point
+     * @param plot
+     * @param pt
+     */
     getImageCoords: (plot,pt) => CysConverter.make(plot).getImageCoords(pt),
+    
+    /**
+     *
+     * Convert to ViewPoint point
+     * @param plot
+     * @param pt
+     */
     getViewPortCoords: (plot,pt) => CysConverter.make(plot).getViewPortCoords(pt),
+    
+    /**
+     *
+     * Convert to Screen Point
+     * @param plot
+     * @param pt
+     */
     getScreenCoords: (plot,pt) => CysConverter.make(plot).getScreenCoords(pt),
+    
+    /**
+     *
+     * Convert to World Point
+     * @param plot
+     * @param pt
+     */
     getWorldCoords: (plot,pt) => CysConverter.make(plot).getWorldCoords(pt),
+    
+    /**
+     *
+     * @param pt
+     * @return {*}
+     */
     getWorldPtRepresentation
 };
 

@@ -382,7 +382,7 @@ function getNewAttributes(plot) {
 
 
 /**
- * Given the scrollX and scrollY then find the point in the plo that is at the center of
+ * Given the scrollX and scrollY then find the point in the plot that is at the center of
  * the display.  The point returned is in ImagePt coordinates.
  * We return it in and ImagePt not screen because if the plot
  * is zoomed the image point will be what we want in the center.

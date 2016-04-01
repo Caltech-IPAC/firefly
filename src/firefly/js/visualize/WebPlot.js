@@ -33,7 +33,7 @@ export const PlotAttribute= {
     READOUT_ROW_PARAMS:             'READOUT_ROW_PARAMS',
 
     /**
-     * This will probably be a ActiveTarget.PosEntry class
+     * This will probably be a WorldPt
      */
     FIXED_TARGET:             'FIXED_TARGET',
 
@@ -44,19 +44,22 @@ export const PlotAttribute= {
 
 
     /**
-     * This will probably be a RecSelection class
+     * This will probably an object represent a rectangle {pt0: point,pt1: point}
+     * @See ./Point.js
      */
     SELECTION:                'SELECTION',
 
     /**
-     * This will probably be a LineSelection class
+     * This will probably an object to represent a line {pt0: point,pt1: point}
+     * @See ./Point.js
      */
     ACTIVE_DISTANCE:          'ACTIVE_DISTANCE',
 
     SHOW_COMPASS:          'SHOW_COMPASS',
 
     /**
-     * This will probably be a PointSelection class
+     * This will probably an object {pt: point}
+     * @See ./Point.js
      */
     ACTIVE_POINT:          'ACTIVE_POINT',
 
