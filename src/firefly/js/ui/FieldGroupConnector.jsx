@@ -64,7 +64,16 @@ export function fieldGroupConnector(FieldComponent,
         }
 
         componentWillReceiveProps(nextProps, context) {
-            this.updateFieldState(nextProps, context);
+            const {fieldKey}= nextProps;
+            if (this.props.fieldKey!==fieldKey) {
+                const groupKey= getGroupKey(this.props,this.context);
+                const fieldState= get(FieldGroupUtils.getGroupFields(groupKey),fieldKey);
+                this.storeUnmount(this.props.fieldKey,groupKey);
+                this.reinit(nextProps,fieldState);
+            }
+            else {
+                this.updateFieldState(nextProps, context);
+            }
         }
 
         updateFieldState(props, context) {
@@ -77,33 +86,40 @@ export function fieldGroupConnector(FieldComponent,
             }
         }
 
-        componentDidMount() {
-            const {fieldState}= this.state;
-            const {props}= this;
-            this.iAmMounted= true;
+
+        storeUnmount(fieldKey,groupKey) {
+            if (this.storeListenerRemove) this.storeListenerRemove();
+            this.storeListenerRemove= null;
+            dispatchMountComponent(
+                groupKey, fieldKey, false, get(this.state, 'fieldState.value')
+            );
+        }
+
+
+        reinit(props,fieldState) {
             var value= get(fieldState, 'value');
             if (props.forceReinit) {
                 value= props.initialState.value;
             }
+            if (this.storeListenerRemove) this.storeListenerRemove();
             this.storeListenerRemove = flux.addListener(()=> this.updateFieldState(props,this.context));
             dispatchMountComponent(
-                    getGroupKey(props,this.context),
-                    props.fieldKey,
-                    true,
-                    confirmInitialValue(value,props,fieldState),
-                    props.initialState
-                );
+                getGroupKey(props,this.context),
+                props.fieldKey,
+                true,
+                confirmInitialValue(value,props,fieldState),
+                props.initialState
+            );
+        }
+
+        componentDidMount() {
+            this.reinit(this.props,this.state.fieldState);
+            this.iAmMounted= true;
         }
 
         componentWillUnmount() {
+            this.storeUnmount(this.props.fieldKey, getGroupKey(this.props,this.context));
             this.iAmMounted= false;
-            if (this.storeListenerRemove) this.storeListenerRemove();
-            dispatchMountComponent(
-                getGroupKey(this.props,this.context),
-                this.props.fieldKey,
-                false,
-                get(this.state, 'fieldState.value')
-            );
         }
 
         render() {

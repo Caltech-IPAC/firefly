@@ -4,58 +4,117 @@
 
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
-import WebPlotRequest from '../WebPlotRequest.js';
-import {dispatchPlotImage} from '../ImagePlotCntlr.js';
-import {parseWorldPt} from '../Point.js';
+import {visRoot } from '../ImagePlotCntlr.js';
+import {getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
+import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchShowDialog} from '../../core/DialogCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils';
+import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
+import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {convertAngle} from '../VisUtil.js';
-import {isEmpty} from 'lodash';
+import {FileUpload} from '../../ui/FileUpload.jsx';
+import {SizeInputFields, sizeFromDeg} from '../../ui/sizeInputFields.jsx';
+import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
+import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
+import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
+import Enum from 'enum';
+import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
 const panelKey = 'SELECTIMAGEPANEL';
 
-const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
-
-const keyMap = {
+export const keyMap = {
     'selTab':    'SELECTIMAGEPANEL_SelectedCatalog',
     'targettry': 'SELECTIMAGEPANEL_targettry',
-    'irsatypes': 'SELECTIMAGEPANEL_IRSASelectLists_types',
-    '2masstypes':'SELECTIMAGEPANEL_2MASSSelectLists_types',
-    'wisetypes': 'SELECTIMAGEPANEL_WISESelectLists_types',
-    'wisebands': 'SELECTIMAGEPANEL_WISESelectLists_bands',
-    'sizefield': 'SELECTIMAGEPANEL_ImgFeature_size',
-    'unitfield': 'SELECTIMAGEPANEL_ImgFeature_unit',
-    'colorfield':'SELECTIMAGEPANEL_ImgFeature_3color'
+    'targetrep': 'SELECTIMAGEPANEL_targetrep',
+    'catalogtab':'SELECTIMAGEPANEL_catalogtab',
+    'irsatypes': 'SELECTIMAGEPANEL_IRSA_types',
+    'twomasstypes':'SELECTIMAGEPANEL_2MASS_types',
+    'wisetypes': 'SELECTIMAGEPANEL_WISE_types',
+    'wisebands': 'SELECTIMAGEPANEL_WISE_bands',
+    'msxtypes':    'SELECTIMAGEPANEL_MSX_types',
+    'dsstypes':    'SELECTIMAGEPANEL_DSS_types',
+    'sdsstypes':   'SELECTIMAGEPANEL_SDSS_types',
+    'blankinput':  'SELECTIMAGEPANEL_BLANK_input',
+    'urlinput':    'SELECTIMAGEPANEL_URL_input',
+    'urllist':     'SELECTIMAGEPANEL_URL_list',
+    'urlextinput': 'SELECTIMAGEPANEL_URL_extinput',
+    'fitslist':    'SELECTIMAGEPANEL_FITS_list',
+    'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
+    'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
+    'radiusfield': 'SELECTIMAGEPANEL_ImgFeature_radius',
+    'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
-const [IRSA, TWOMASS, WISE] = [0, 1, 2];
-const plotMap = {
-    'IRSA':  plotIRSA,
-    '2MASS': plot2MASS,
-    'WISE':  plotWISE
-};
+
+export const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+/*
+ * get the catalog id (tab id) based on stored fields of the tab
+ *
+ */
+
+export function computeCurrentCatalogId( fields, catalogId = IRSA ) {
+
+    const keytab = keyMap['catalogtab'];
+
+    if (fields && fields.hasOwnProperty(keytab)) {
+        var tval = fields[keytab];
+        return parseInt( typeof tval === 'object' ? tval.value : tval);
+    }
+
+    return catalogId;
+}
 
 /**
  * show image select popup window
  * @param {string} popTitle
  */
 
+// this version is made to add a new plot to an existing viewer if no plot is found
+// or replace the plot from the active viewer
+
+const PlotSelectMode = new Enum(['AddNewPlot', 'ReplacePlot', 'ReplaceOrCreate']);
+
+var getAViewId = () => {
+    var aView;
+
+    aView = getAViewFromMultiView();
+    return aView ? aView.viewerId : '';
+};
+
 export function showImageSelPanel(popTitle)
 {
+    var visroot = visRoot();
+    var plotId = get(visroot, 'activePlotId');
+    var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : (getAViewId());
+    var plotMode;
+
+    if (viewerId) {
+        if (plotId) {
+            plotMode = PlotSelectMode.ReplaceOrCreate;
+        } else {
+            plotMode = PlotSelectMode.AddNewPlot;
+        }
+    } else {
+        if (plotId) {
+            plotMode = PlotSelectMode.Replace;
+        } else {
+            return null;
+        }
+    }
+    // dispatchAddImages(plotView.viewerId, [plotId]);
+
     var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection/>
+                    <ImageSelection viewerId={viewerId} plotMode={plotMode} catalogId={TWOMASS}/>
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -67,175 +126,193 @@ export function showImageSelPanel(popTitle)
  */
 
 function computeLabelWidth(labelStr) {
-    return labelStr.length * 7;
+    return labelStr.length * 6;
 }
 
-/*
- * remove trailing zero from toFixed result
- */
-function toMaxFixed(floatNum, digits) {
-    return parseFloat(floatNum.toFixed(digits));
+
+
+// get unit, min and max from the data file
+var getRangeItem = (crtCatalogId, rangeItem) => {
+    if (panelCatalogs[crtCatalogId].hasOwnProperty('range')) {
+        return panelCatalogs[crtCatalogId]['range'][rangeItem];
+    } else {
+        if (rangeItem === 'unit') {
+            return 'deg';
+        } else {
+            return 0.0;
+        }
+    }
+};
+
+// get default size from the data file
+var getSize = (crtCatalogId) => {
+    if (panelCatalogs[crtCatalogId].hasOwnProperty('size')) {
+        return panelCatalogs[crtCatalogId]['size'].toString();
+    } else {
+        return '0.0';
+    }
+};
+
+
+function fieldInit(crtCatalogId) {
+    var size = 'Size:';
+
+    return (
+        {[keyMap['targettry']]: {
+            fieldKey: keyMap['targettry'],
+            value: 'NED',
+            label: ''
+        },
+        [keyMap['catalogtab']]: {
+            fieldKey: keyMap['catalogtab'],
+            value: panelCatalogs[crtCatalogId].CatalogId.toString()
+        },
+        [keyMap['irsatypes']]: {
+            fieldKey: keyMap['irsatypes'],
+            label: panelCatalogs[IRSA].types.Title,
+            value: panelCatalogs[IRSA].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
+        },
+        [keyMap['twomasstypes']]: {
+            fieldKey: keyMap['twomasstypes'],
+            label: panelCatalogs[TWOMASS].types.Title,
+            value: panelCatalogs[TWOMASS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
+        },
+        [keyMap['wisetypes']]: {
+            fieldKey: keyMap['wisetypes'],
+            label: panelCatalogs[WISE].types.Title,
+            value: panelCatalogs[WISE].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
+        },
+        [keyMap['wisebands']]: {
+            fieldKey: keyMap['wisebands'],
+            label: panelCatalogs[WISE].bands.Title,
+            value: panelCatalogs[WISE].bands.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
+        },
+        [keyMap['msxtypes']]: {
+            fieldKey: keyMap['msxtypes'],
+            label: panelCatalogs[MSX].types.Title,
+            value: panelCatalogs[MSX].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[MSX].types.Title)
+        },
+        [keyMap['dsstypes']]: {
+            fieldKey: keyMap['dsstypes'],
+            label: panelCatalogs[DSS].types.Title,
+            value: panelCatalogs[DSS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[DSS].types.Title)
+        },
+        [keyMap['sdsstypes']]: {
+            fieldKey: keyMap['sdsstypes'],
+            label: panelCatalogs[SDSS].types.Title,
+            value: panelCatalogs[SDSS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[SDSS].types.Title)
+        },
+        [keyMap['fitslist']]: {
+            fieldKey: keyMap['fitslist'],
+            label: panelCatalogs[FITS].list.Title,
+            value: panelCatalogs[FITS].list.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[FITS].list.Title)
+        },
+        [keyMap['fitsextinput']]: {
+            fieldKey: keyMap['fitsextinput'],
+            label: panelCatalogs[FITS].extinput.Title,
+            value: '0',
+            labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
+        },
+        [keyMap['blankinput']]: {
+            fieldKey: keyMap['blankinput'],
+            label: panelCatalogs[BLANK].input.Title,
+            value: panelCatalogs[BLANK].input.Default.toString(),
+            validator: Validate.floatRange.bind(null,
+                panelCatalogs[BLANK].input.range.min,
+                panelCatalogs[BLANK].input.range.max, 1.0, 'a float field'),
+            labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
+        },
+        [keyMap['urlinput']]: {
+            fieldKey: keyMap['urlinput'],
+            label: panelCatalogs[URL].input.Title,
+            validator: Validate.validateUrl.bind(null, 'a url field'),
+            value: '',
+            labelWidth: computeLabelWidth(panelCatalogs[URL].input.Title)
+        },
+        [keyMap['urllist']]: {
+            fieldKey: keyMap['urllist'],
+            label: panelCatalogs[URL].list.Title,
+            value: panelCatalogs[URL].list.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[URL].list.Title)
+
+        },
+        [keyMap['urlextinput']]: {
+            fieldKey: keyMap['urlextinput'],
+            label: panelCatalogs[URL].extinput.Title,
+            value: '0',
+            labelWidth: computeLabelWidth(panelCatalogs[URL].extinput.Title)
+        },
+        [keyMap['radiusfield']]: {
+            fieldKey: keyMap['radiusfield'],
+            label: size,
+            labelWidth: computeLabelWidth(size),
+            unit: getRangeItem(crtCatalogId, 'unit'),
+            min:  getRangeItem(crtCatalogId, 'min'),
+            max:  getRangeItem(crtCatalogId, 'max'),
+            value: getSize(crtCatalogId)}
+        });
 }
 
 /*
  *
  * image select pane initial state for all fields
  */
-var ImageSelPanelChange = function (inFields, action) {
-    var size = 'Size:';
+var ImageSelPanelChange = function (crtCatalogId) {
+    return (inFields, action) => {
+        if (!inFields) {
+            return fieldInit(crtCatalogId);
+        } else {
 
-    if (!inFields) {
-        return {
-            [keyMap['targettry']]: {
-                fieldKey: keyMap['targettry'],
-                value:    'NED',
-                label:    ''
-            },
-            [keyMap['irsatypes']]: {
-                fieldKey: keyMap['irsatypes'],
-                label: panelCatalogs[IRSA].types.Title,
-                value: panelCatalogs[IRSA].types.Default,
-                labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
-            },
-            [keyMap['2masstypes']]: {
-                fieldKey: keyMap['2masstypes'],
-                label: panelCatalogs[TWOMASS].types.Title,
-                value: panelCatalogs[TWOMASS].types.Default,
-                labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
-            },
-            [keyMap['wisetypes']]: {
-                fieldKey: keyMap['wisetypes'],
-                label: panelCatalogs[WISE].types.Title,
-                value: panelCatalogs[WISE].types.Default,
-                labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
-            },
-            [keyMap['wisebands']]: {
-                fieldKey: keyMap['wisebands'],
-                label: panelCatalogs[WISE].bands.Title,
-                value: panelCatalogs[WISE].bands.Default,
-                labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
-            },
-            [keyMap['sizefield']]: {
-                fieldKey: keyMap['sizefield'],
-                value: '500',
-                label: size,
-                labelWidth: computeLabelWidth(size)
-            },
-            [keyMap['unitfield']]: {
-                fieldKey: keyMap['unitfield'],
-                value: 'arcsec',
-                label: ''
-            },
-            [keyMap['colorfield']]: {
-                fieldKey: keyMap['colorfield'],
-                value: '_none_'
+            if (action.type === FieldGroupCntlr.VALUE_CHANGE) {
+                if (action.payload.fieldKey === keyMap['catalogtab']) {
+                    var catalogId = parseInt(inFields[keyMap['catalogtab']].value);
+
+                    if (catalogId !== URL && catalogId !== FITS) {
+                        var originalSize = get(inFields, keyMap['radiusfield']);
+                        var {value, unit} = originalSize;
+                        var min = getRangeItem(catalogId, 'min');
+                        var max = getRangeItem(catalogId, 'max');
+                        var radiusField;
+
+                        // update value if no value or value is out of range while changing tab
+                        // otherwise keep the value and unit as being left off from previous tab
+                        if (!value || !(Validate.floatRange(min, max, 1, 'value of radius size in degree', value).valid)) {
+                            value = getSize(catalogId);
+
+                            radiusField = Object.assign({}, originalSize,
+                                {
+                                    min,
+                                    max,
+                                    value
+                                 });
+                        } else {
+                            radiusField = Object.assign({}, originalSize,
+                                {
+                                    min: getRangeItem(catalogId, 'min'),
+                                    max: getRangeItem(catalogId, 'max')
+                                });
+                        }
+
+                        radiusField = Object.assign({}, radiusField,
+                                                        {'displayValue': sizeFromDeg(value, unit)});
+
+                        return Object.assign({}, inFields, {[keyMap['radiusfield']]: radiusField});
+                    }
+                }
             }
-          };
-    } else {
-        return inFields;
-    }
-};
 
-
-/*
- * get the catalog id (tab id) based on stored fields of the tab
- * TODO: temporary solution to find the tab selected
- */
-
-function computeCurrentCatalogId(fieldsAry) {
-    var selectLists = fieldsAry.filter((item) => item.includes('SelectList'));
-
-    if (selectLists.length > 0) {
-        var selCatalog = panelCatalogs.filter((catalog) => selectLists[0].includes(catalog.Symbol));
-
-        if (selCatalog.length > 0) {
-            return selCatalog[0].CatalogId;
+            return inFields;
         }
-    }
-}
-
-/***********************************
- * image plots for all catalogs
- ***********************************/
-
-/*
- * plot for IRSA
- */
-function plotIRSA(request, plotId) {
-    var worldPt = request.UserTargetWorldPt;
-    var survey = request[keyMap['irsatypes']];
-    var sizeInDeg = convertAngle(request[keyMap['unitfield']], 'deg',
-                                 request[keyMap['sizefield']]);
-
-    var wp = parseWorldPt(worldPt);
-
-    var wpr;
-
-    if (survey.includes('ISSA')) {
-        wpr = WebPlotRequest.makeISSARequest(wp, survey, sizeInDeg);
-    } else {
-        wpr = WebPlotRequest.makeIRISRequest(wp, survey, sizeInDeg);
-    }
-    wpr.setPlotGroupId('irsa-group');
-    wpr.setInitialZoomLevel(1);
-
-    dispatchPlotImage(plotId, wpr);
-}
-
-/*
- * image plot for 2Mass
- */
-function plot2MASS(request, plotId) {
-    var worldPt = request.UserTargetWorldPt;
-    var survey = request[keyMap['2masstypes']];
-    var sizeInDeg = convertAngle(request[keyMap['unitfield']], 'deg',
-                                 request[keyMap['sizefield']]);
-
-    var wp = parseWorldPt(worldPt);
-    var wpr = WebPlotRequest.make2MASSRequest(wp, survey, sizeInDeg);
-
-    wpr.setPlotGroupId('twomass-group');
-    wpr.setInitialZoomLevel(1);
-
-    dispatchPlotImage(plotId, wpr);
-}
-
-/*
- * image plot for wise
- */
-function plotWISE(request, plotId) {
-    var worldPt = request.UserTargetWorldPt;
-    var survey = request[keyMap['wisetypes']];
-    var band = request[keyMap['wisebands']];
-    var sizeInDeg = convertAngle(request[keyMap['unitfield']], 'deg',
-                                 request[keyMap['sizefield']]);
-    //var colorImg = request['colorfield'].value;
-
-    var wp = parseWorldPt(worldPt);
-    var wpr = WebPlotRequest.makeWiseRequest(wp, survey, band, sizeInDeg);
-
-    wpr.setPlotGroupId('wise-group');
-    wpr.setInitialZoomLevel(1);
-
-    dispatchPlotImage(plotId, wpr);
-}
-
-/*
- * callback for 'load' button on image select panel
- */
-function showResults(success, request) {
-    if (!success) {
-        return;
-    }
-
-    var crtCatalogId = computeCurrentCatalogId(Object.keys(request));
-
-    plotMap[panelCatalogs[crtCatalogId].Symbol](request, 'TestImage1');
-}
-
-function resultSuccess(request) {
-    showResults(true, request);
-}
+    };
+};
 
 
 /**
@@ -250,7 +327,12 @@ class ImageSelection extends Component {
          // if (!FieldGroupUtils.getGroupFields(this.groupKey)) {
          //     dispatchInitFieldGroup(this.groupKey, true, null, ImageSelPanelChange);
          // }
-         this.state = {currentCatalogIdx: 0 };
+
+         this.state = { initCatalogId:  props.catalogId ? props.catalogId: IRSA,
+                        fields:         FieldGroupUtils.getGroupFields(this.groupKey)
+
+         };
+         // this.state = {currentCatalogIdx: 0 };
      }
 
     componentWillUnmount() {
@@ -264,51 +346,77 @@ class ImageSelection extends Component {
     }
 
     stateUpdate() {
-
-        var fields = getFieldGroupResults(this.groupKey);
+        var fields = FieldGroupUtils.getGroupFields(this.groupKey);
 
         if (fields) {
-            var crtCatalogId = computeCurrentCatalogId(Object.keys(fields));
             if (this.iAmMounted) {
-                this.setState({currentCatalogIdx: crtCatalogId});
+                this.setState({ fields });
             }
         }
     }
 
 
     render() {
-        return <ImageSelectionView {...this.state}/>;
+        var {plotId, viewerId, plotMode} = this.props;
+        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode});
+
+        return <ImageSelectionView {...params}/>;
 
     }
 }
 
-/**
- *  presentation container for image select panel
- *  @param {number} currentCatalogIdx
- */
+ImageSelection.propTypes = {
+    catalogId: PropTypes.number,
+    plotId: PropTypes.string,
+    viewerId: PropTypes.string,
+    plotMode: PropTypes.object
+};
+
+
 class ImageSelectionView extends Component {
 
     constructor(props) {
         super(props);
-        this.state = props;
+
+        this.state = {
+            crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId),
+            addPlot: (props.plotMode && props.plotMode === PlotSelectMode.AddNewPlot) ? true : false
+        };
     }
 
-    componentWillReceiveProps(props) {
-        this.state = props;
+    componentWillReceiveProps(nextProps) {
+        this.setState ({ crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId) });
     }
 
-    changeCatalog(index) {
-        this.setState({currentCatalogIdx: index});
+    onSelect(index) {
+        this.setState({ crtCatalogId: index});
+    }
+
+    onChangeAddPlot(ev) {
+        this.setState({addPlot: get(ev, 'target.value') === 'create'});
     }
 
     render() {
 
+        var {addPlot} = this.state;
+
         // tabs for each catalog
         var categoryTabs = panelCatalogs.map((item, index) =>
-             (<Tab key={index} name={item.Title}>
-                  <CatalogTabView catalog={item} />
-             </Tab>)
+            (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
+                <CatalogTabView catalog={item}  fields={this.props.fields}/>
+            </Tab>)
         );
+
+
+        var radius = () => {
+            if (this.state.crtCatalogId != URL && this.state.crtCatalogId != FITS) {
+                return (
+                    <SizeInputFields fieldKey={keyMap['radiusfield']} />
+                );
+            } else {
+                return (<div></div>);
+            }
+        };
 
         var helpId = 'basics.catalog';
 
@@ -320,43 +428,53 @@ class ImageSelectionView extends Component {
          * Load button and help icon
          */
         return (
-            <FieldGroup  groupKey={panelKey} reducerFunc={ImageSelPanelChange} keepState={true}>
+            <FieldGroup  groupKey={panelKey}
+                         reducerFunc={ImageSelPanelChange(this.props.initCatalogId)}
+                         keepState={true}>
                 <div className={'imagepanel'}>
                     <div className={'section'}>
-                        <TargetPanelSetView />
+                        <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId}
+                                            plotMode={this.props.plotMode}
+                                            changePlot={this.onChangeAddPlot.bind(this)} />
                     </div>
                     <div className={'section'}>
-                        <Tabs onTabSelect={this.changeCatalog.bind(this)} defaultSelected={1} >
+                        <FieldGroupTabs
+                            onTabSelected={this.onSelect.bind(this)}
+                            fieldKey={keyMap['catalogtab']} >
                             {categoryTabs}
-                        </Tabs>
+                        </FieldGroupTabs>
                     </div>
                     <div className={'size'}>
-                        <ImageFeaturesView {...this.state} />
+                        {radius()}
                     </div>
 
                     <div className={'close'}>
-                       <div className={'padding'}>
-                           <CompleteButton
-                                groupKey={panelKey}
-                                onSuccess={resultSuccess}
-                                text={'Load'}
+                        <div className={'padding'}>
+                            <CompleteButton
                                 dialogId={popupId}
-                           />
-                       </div>
-                       <div className={'padding'}>
-                           <HelpIcon helpId={helpId}/>
-                       </div>
+                                groupKey={panelKey}
+                                onSuccess={resultSuccess(addPlot,
+                                                         this.props.viewerId)}
+                                onFail={resultFail()}
+                                text={'Load'}
+                            />
+                        </div>
+                        <div className={'padding'}>
+                            <HelpIcon helpId={helpId}/>
+                        </div>
                     </div>
                 </div>
-                </FieldGroup>
+            </FieldGroup>
         );
-     }
+    }
 }
 
-
 ImageSelectionView.propTypes={
-     currentCatalogIdx: PropTypes.number.isRequired,
-     fields: PropTypes.object
+    initCatalogId: PropTypes.number.isRequired,
+    fields: PropTypes.object,
+    plotId: PropTypes.string,
+    viewerId: PropTypes.string,
+    plotMode: PropTypes.object
 };
 
 /**
@@ -366,95 +484,87 @@ ImageSelectionView.propTypes={
  * @constructor
  */
 
-function TargetPanelSetView() {
-     return (
-        <div className={'intarget'}>
-            <TargetPanel groupKey={panelKey}/>
-            <ListBoxInputField
-                fieldKey={keyMap['targettry']}
-                options = {[{label: 'Try NED then Simbad', value: 'NED'},
-                           {label: 'Try Simbad then NED', value: 'simbad'}
-                          ]}
-                multiple={false}
-                labelWidth={3}
-            />
+
+function TargetPanelSetView({currentCatalogIdx, changePlot, plotMode}) {
+
+     var showTarget = () => {
+         if ((currentCatalogIdx === URL || currentCatalogIdx === FITS)) {
+             return <div className={'intarget'}></div>;
+         } else {
+             return (
+                 <div className={'intarget'}>
+                     <TargetPanel groupKey={panelKey}/>
+                     <ListBoxInputField
+                         fieldKey={keyMap['targettry']}
+                         options={[{label: 'Try NED then Simbad', value: 'NED'},
+                               {label: 'Try Simbad then NED', value: 'simbad'}
+                              ]}
+                         multiple={false}
+                         labelWidth={3}
+                     />
+                 </div>
+             );
+         }
+     };
+
+    var showPlotMode = () => {
+        if ((plotMode && (plotMode === PlotSelectMode.ReplaceOrCreate))) {
+            return (
+                <div className={'padding_noleft'}>
+                    <RadioGroupInputFieldView
+                        alignment={'horizontal'}
+                        fieldKey={keyMap['plotmode']}
+                        value={'replace'}
+                        onChange={changePlot}
+                        options={[
+                                {label: 'Replace Image', value: 'replace'},
+                                {label: 'Create New Plot', value: 'create'}
+                                ]} />
+                </div>
+            );
+        } else {
+            return undefined;
+        }
+    };
+
+
+    return (
+        <div className={'targetpanel'}>
+            { showPlotMode() }
+            { showTarget() }
         </div>
     );
 }
 
-TargetPanelSetView.propTypes= {};
-
-
-/**
- * bottom row for image size, size unit and color selection
- *
- * @param {number} currentCatalogIdx
- * @param {object} fields
- * @returns {XML}
- * @constructor
- */
-function ImageFeaturesView ({currentCatalogIdx, fields}) {
-
-    var showSize = () => {
-        var {min, max, unit} = panelCatalogs[currentCatalogIdx].range;
-        var currentUnit = (!isEmpty(fields)) && fields[keyMap['unitfield']] ?
-            fields[keyMap['unitfield']] : 'arcsec';
-        var unitS = unitSign[currentUnit];
-        var rangeMsg;
-
-        min = toMaxFixed(convertAngle(unit, currentUnit, min), 4);
-        max = toMaxFixed(convertAngle(unit, currentUnit, max), 4);
-        rangeMsg = `Valid range between: ${min}${unitS} and ${max}${unitS}`;
-        return (
-            <div className={'sizeline'}>
-                <div className={'sizeinput'}>
-                    <ValidationField fieldKey={keyMap['sizefield']}/>
-                    <ListBoxInputField
-                       fieldKey={keyMap['unitfield']}
-                       options={
-                          [{label: 'Degree', value: 'deg'},
-                           {label: 'Arc Minutes', value: 'arcmin'},
-                           {label: 'Arc Seconds', value: 'arcsec'}
-                           ]}
-                       multiple={false}
-                       labelWidth={2}
-                    />
-                </div>
-                <p>{rangeMsg}</p>
-            </div>
-        );
-    };
-
-    return (
-            <div>
-                {showSize()}
-            </div>
-    );
-}
-
-ImageFeaturesView.propsTypes={
+TargetPanelSetView.propsTypes={
     currentCatalogIdx: PropTypes.number.isRequired,
-    fields: PropTypes.object
+    changePlot: PropTypes.func,
+    plotMode: PropTypes.object
+ };
 
-};
 
 /**
  * component inside each catalog tab at middle row
  *
- * @param catalog
+ * @param {Object} catalog
+ * @param {Object} fields
  * @returns {XML}
  * @constructor
  */
-function CatalogTabView({catalog}) {
-    var listfield = (fieldname) => {
-        var fkey = `${catalog.Symbol.toLowerCase()}${fieldname}`;
+function CatalogTabView({catalog, fields}) {
+    const sym = catalog.Symbol.toLowerCase();
+
+    var listfield = (fieldname, index) => {
+        var fkey = `${sym}${fieldname}`;
         var listItems = catalog[fieldname].Items.map((item) => (({'label': item.name, 'value': item.item})));
+        var padding = (index === 0)? 'cataloglist' : 'cataloglist_nottop';
 
         return (
-            <div className={'cataloglist'}>
+            <div className={padding} key={index}>
                 <ListBoxInputField
                     fieldKey={keyMap[fkey]}
                     options={listItems}
+                    label={ catalog[fieldname].Title }
                     labelWidth={computeLabelWidth(catalog[fieldname].Title)}
                     multiple={false}
                 />
@@ -462,33 +572,64 @@ function CatalogTabView({catalog}) {
         );
     };
 
-    var inputfield = (fieldname) => {
-        var fkey = `${catalog.Symbol.toLowerCase()}${fieldname}`;
+    var inputfield = (fieldname, index) => {
+        var fkey = `${sym}${fieldname}`;
+        var padding = (index === 0)? 'padding_top' : 'padding_nottop';
 
         return (
-            <div className={'padding'}>
-                <ValidationField fieldKey={keyMap[fkey]}/>
-                <br/>
+            <div className={padding} key={index}>
+                <ValidationField fieldKey={keyMap[fkey]}
+                                 labelWidth={computeLabelWidth(catalog[fieldname].Title)}
+                                 label={ catalog[fieldname].Title } />
             </div>
         );
     };
 
-    var fieldrequest = (fieldname) => {
+    var fieldrequest = (fieldname, index) => {
         if (fieldname.includes('types') || fieldname.includes('bands') ||
             fieldname.includes('list')) {
-            return listfield(fieldname);
+            return listfield(fieldname, index);
         }  else if (fieldname.includes('input')) {
-            return inputfield(fieldname);
+            var dkey = 'dependon';
+
+            if (catalog[fieldname].hasOwnProperty(dkey)) {
+                var dependKey = Object.keys(catalog[fieldname][dkey])[0];
+                var fkey = `${sym}${dependKey}`;
+
+                if (fields && fields.hasOwnProperty(keyMap[fkey]) &&
+                    fields[keyMap[fkey]].value === catalog[fieldname][dkey][dependKey]) {
+                    return inputfield(fieldname, index);
+                } else {
+                    return undefined;
+                }
+            }
+
+            return inputfield(fieldname, index);
+        } else if ( fieldname.includes('upload')) {
+            return (
+                <div key={index} >
+                    <FileUpload
+                        wrapperStyle={{margin: '15px 10px 21px 10px'}}
+                        fieldKey={keyMap['fitsupload']}
+                        upload_url= {catalog[fieldname].url}
+                        initialState= {{
+                        tooltip: 'Select a file to upload' }}
+                    />
+                </div>
+            );
+        } else {
+            return undefined;
         }
     };
 
     return (
         <div className={'tabview'}>
-            {(catalog.fields).map((oneField) =>  fieldrequest(oneField))}
+            {(catalog.fields).map((oneField, index) =>  fieldrequest(oneField, index))}
         </div>
     );
 }
 
 CatalogTabView.propTypes={
-    catalog: PropTypes.object.isRequired
+    catalog: PropTypes.object.isRequired,
+    fields: PropTypes.object
 };
