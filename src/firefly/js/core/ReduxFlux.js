@@ -19,6 +19,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         colorChangeActionCreator, stretchChangeActionCreator,
                         rotateActionCreator, flipActionCreator,
                         cropActionCreator, autoPlayActionCreator,
+                        restoreDefaultsActionCreator,
                         changePointSelectionActionCreator  } from '../visualize/ImagePlotCntlr.js';
 
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
@@ -96,6 +97,7 @@ actionCreators.set(ImagePlotCntlr.ROTATE, rotateActionCreator);
 actionCreators.set(ImagePlotCntlr.FLIP, flipActionCreator);
 actionCreators.set(ImagePlotCntlr.CROP, cropActionCreator);
 actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
+actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);
 actionCreators.set(DrawLayerCntlr.DETACH_LAYER_FROM_PLOT, makeDetachLayerActionCreator(drawLayerFactory));
 
