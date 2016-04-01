@@ -66,11 +66,10 @@ export function fieldGroupConnector(FieldComponent,
         componentWillReceiveProps(nextProps, context) {
             const {fieldKey}= nextProps;
             if (this.props.fieldKey!==fieldKey) {
-                // const groupKey= getGroupKey(nextProps,context);
-                // const fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || nextProps.initialState;
-                // this.setState({fieldState});
-                this.storeUnmount(this.props.fieldKey,getGroupKey(this.props,this.context))
-                this.reinit(nextProps,getGroupKey(nextProps,this.context));
+                const groupKey= getGroupKey(this.props,this.context);
+                const fieldState= get(FieldGroupUtils.getGroupFields(groupKey),fieldKey);
+                this.storeUnmount(this.props.fieldKey,groupKey);
+                this.reinit(nextProps,fieldState);
             }
             else {
                 this.updateFieldState(nextProps, context);
