@@ -70,7 +70,7 @@ export function fieldGroupConnector(FieldComponent,
                 // const fieldState = FieldGroupUtils.getGroupFields(groupKey)[fieldKey] || nextProps.initialState;
                 // this.setState({fieldState});
                 this.storeUnmount(this.props.fieldKey,getGroupKey(this.props,this.context))
-                this.reinit(fieldKey,getGroupKey(nextProps,this.context));
+                this.reinit(nextProps,getGroupKey(nextProps,this.context));
             }
             else {
                 this.updateFieldState(nextProps, context);
