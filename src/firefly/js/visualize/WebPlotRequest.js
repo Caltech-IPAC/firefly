@@ -376,7 +376,10 @@ class WebPlotRequest extends ServerRequest {
      * @return {WebPlotRequest}
      */
     static makeDSSRequest(wp, survey, sizeInDeg) {
-        return this.makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+        var req = this.makePlotServiceReq(ServiceType.DSS, wp, survey, sizeInDeg);
+        req.setTitle(`DSS ${survey}`);
+        return req;
+
     }
 
     //======================== Wise =====================================

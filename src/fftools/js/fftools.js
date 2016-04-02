@@ -13,6 +13,7 @@ import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import {SearchPanel} from 'firefly/ui/SearchPanel.jsx';
 import {TestCatalog} from 'firefly/ui/TestCatalog.jsx';
+import {ImageSelectDropdown} from 'firefly/ui/ImageSelectDropdown.jsx';
 import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
@@ -70,6 +71,7 @@ const App = React.createClass({
                         <DropDownContainer>
                             <SearchPanel resultId={resultId} />
                             <TestCatalog resultId={resultId} />
+                            <ImageSelectDropdown />
                         </DropDownContainer>
                     </header>
                     <main>

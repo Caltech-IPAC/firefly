@@ -12,6 +12,7 @@ import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import {get} from 'lodash';
+import {dispatchHideDropDownUi} from '../../core/LayoutCntlr.js';
 
 const loadErrorMsg = {
     'nosize': 'no valid size is specified',
@@ -198,7 +199,7 @@ export function resultFail(fromFail = true) {
 /*
  * onSucess callback for 'load' button on image select panel
  */
-export function resultSuccess(isAddNewPlot, viewerId) {
+export function resultSuccess(isAddNewPlot, viewerId, hideDropdown = false) {
     return (request) => {
         var wpr = null;
         const crtCatalogId = computeCurrentCatalogId(request);
@@ -236,6 +237,10 @@ export function resultSuccess(isAddNewPlot, viewerId) {
             }
 
             dispatchPlotImage(nPlotId, wpr);
+
+            if (hideDropdown) {
+                dispatchHideDropDownUi();
+            }
         } else {
             outputMessage('failplot');
         }
