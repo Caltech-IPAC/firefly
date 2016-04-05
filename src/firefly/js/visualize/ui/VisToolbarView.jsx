@@ -23,6 +23,8 @@ import {showFitsRotationDialog} from '../../ui/FitsRotationDialog.jsx';
 import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
+import { fitsHeaderView} from './FitsHeaderView.jsx';
+
 
 
 //===================================================
@@ -228,8 +230,9 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                            enabled={enabled}
                            horizontal={true}
                            visible={mi.fitsHeader}
-                           todo={true}
-                           onClick={() => console.log('todo- fits header dialog')}/>
+                           onClick={() =>  fitsHeaderView(pv)}/>
+
+
 
             {showToolTip(toolTip)}
         </div>

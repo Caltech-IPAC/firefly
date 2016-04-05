@@ -9,6 +9,12 @@ import isBlank from 'underscore.string/isBlank';
 import {get} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
+const  MEG          = 1048576;
+const GIG          = 1048576 * 1024;
+const MEG_TENTH    = MEG / 10;
+const GIG_HUNDREDTH= GIG / 100;
+const K            = 1024;
+
 export const ParamType= new Enum(['POUND', 'QUESTION_MARK']);
 
 
@@ -221,4 +227,27 @@ export function parseUrl(url) {
         searchObject,
         pathAry
     };
+}
+export function getSizeAsString(size) {
+    var  kStr= 'K';
+    var  mStr= 'M';
+    var  gStr= 'G';
+
+    var retval;
+    if (size > 0 && size < (1*MEG)) {
+        retval= ((size / K) + 1) + kStr;
+    }
+    else if (size >= (1*MEG) && size <  (2*GIG) ) {
+        var megs = Math.round(size / MEG);
+        var  remain=  Math.round(size % MEG);
+        var decimal =  Math.round(remain / MEG_TENTH);
+        retval= megs +'.'+ decimal + mStr;
+    }
+    else if (size >= (2*GIG) ) {
+        var  gigs =  Math.round(size / GIG);
+        var remain=  Math.round(size % GIG);
+        var decimal =  Math.round(remain / GIG_HUNDREDTH);
+        retval= gigs +'.'+ decimal + gStr;
+    }
+    return retval;
 }

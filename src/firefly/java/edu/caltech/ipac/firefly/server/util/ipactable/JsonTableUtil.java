@@ -3,18 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
+import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.Param;
+import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.util.DataSetParser;
+import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.*;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 /**
- *
  * @author loi
  * @version $Id: IpacTableParser.java,v 1.18 2011/12/08 19:34:02 loi Exp $
  */
@@ -22,6 +25,7 @@ public class JsonTableUtil {
 
     /**
      * convert data to JSON TableModel. Use toJSONString() to turn it into a String.
+     *
      * @param page
      * @param meta
      * @param request
@@ -33,7 +37,7 @@ public class JsonTableUtil {
         if (meta == null) {
             meta = new TableMeta("unknown");
         }
-        if (page.getTableDef().getAttributes() != null) {
+        if (page.getTableDef()!=null && page.getTableDef().getAttributes() != null) {
             // merge tableDef's attributes with tablemeta's.
             for (DataGroup.Attribute attr : page.getTableDef().getAttributes()) {
                 // meta override tabledef's.
@@ -53,13 +57,20 @@ public class JsonTableUtil {
         tableModel.put("type", guessType(meta));
         tableModel.put("totalRows", page.getRowCount());
 
-        if (page.getData() != null) {
-            tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
+        if (page.getData() != null ) {
+            if (page.getTableDef()!=null){
+                tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
+            }
+            else {
+                tableModel.put("tableData", toJsonTableData(page.getData(),null, meta));
+            }
+
         }
+
         if (meta != null) {
             tableModel.put("tableMeta", toJsonTableMeta(meta));
         }
-        if (request != null) {
+        if (request != null  && request.getMeta().keySet().size()>1) {
             tableModel.put("request", toJsonTableRequest(request));
         }
 
@@ -68,6 +79,7 @@ public class JsonTableUtil {
 
     /**
      * convert to JSON TableRequest
+     *
      * @param req
      * @return
      */
@@ -82,11 +94,11 @@ public class JsonTableUtil {
         treq.put(TableServerRequest.START_IDX, req.getStartIndex());
         treq.put(TableServerRequest.PAGE_SIZE, req.getPageSize());
         if (req.getFilters() != null) {
-            treq.put( TableServerRequest.FILTERS, TableServerRequest.toFilterStr(req.getFilters()) );
+            treq.put(TableServerRequest.FILTERS, TableServerRequest.toFilterStr(req.getFilters()));
         }
         if (req.getMeta() != null) {
             for (String key : req.getMeta().keySet()) {
-                treq.put( key, req.getMeta().get(key) );
+                treq.put(key, req.getMeta().get(key));
             }
         }
 
@@ -95,13 +107,14 @@ public class JsonTableUtil {
 
     /**
      * convert to JSON TableData
+     *
      * @param data
      * @param tableDef
      * @return
      */
     public static JSONObject toJsonTableData(DataGroup data, TableDef tableDef, TableMeta meta) {
         List<List<String>> tableData = new ArrayList<List<String>>();
-        for (int i = 0; i < data.size(); i ++) {
+        for (int i = 0; i < data.size(); i++) {
             List<String> row = new ArrayList<String>();
             for (Object o : data.get(i).getData()) {
                 row.add(String.valueOf(o));
@@ -110,13 +123,15 @@ public class JsonTableUtil {
         }
 
         JSONObject tdata = new JSONObject();
-        tdata.put("columns", toJsonTableColumn(tableDef, meta));
+
+        tdata.put("columns", toJsonTableColumn(tableDef!=null?tableDef.getCols().toArray(new DataType[0]):data.getDataDefinitions() , meta));
         tdata.put("data", tableData);
         return tdata;
     }
 
     /**
      * convert to JSON TableMeta
+     *
      * @param meta
      * @return
      */
@@ -131,7 +146,7 @@ public class JsonTableUtil {
             tmeta.put("groupByCols", StringUtils.toString(meta.getGroupByCols(), ","));
         }
         if (meta.getAttributes() != null) {
-            for (String key : meta.getAttributes().keySet())  {
+            for (String key : meta.getAttributes().keySet()) {
                 tmeta.put(key, meta.getAttribute(key));
             }
         }
@@ -142,10 +157,10 @@ public class JsonTableUtil {
 //
 //====================================================================
 
-    private static List<JSONObject> toJsonTableColumn(TableDef tableDef, TableMeta meta) {
+    private static List<JSONObject> toJsonTableColumn(DataType[] dataTypes, TableMeta meta) {
 
         ArrayList<JSONObject> cols = new ArrayList<JSONObject>();
-        for (DataType dt : tableDef.getCols()) {
+        for (DataType dt :dataTypes) {
             JSONObject c = new JSONObject();
             c.put("name", dt.getKeyName());
             c.put("width", dt.getFormatInfo().getWidth());
@@ -160,7 +175,7 @@ public class JsonTableUtil {
             }
 
             boolean sortable = StringUtils.getBoolean(meta.getAttribute(DataSetParser.makeAttribKey(
-                            DataSetParser.SORT_BY_TAG, dt.getKeyName())), true);
+                    DataSetParser.SORT_BY_TAG, dt.getKeyName())), true);
             c.put("sortable", sortable);
 
             String visikey = DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, dt.getKeyName());
@@ -168,21 +183,20 @@ public class JsonTableUtil {
             c.put("visibility", visibility);
 
             String sortByKey = DataSetParser.makeAttribKey(DataSetParser.SORT_BY_TAG, dt.getKeyName());
-            if ( meta.contains(sortByKey) ) {
-                c.put("sortByCols", StringUtils.asList(meta.getAttribute(sortByKey), ",") );
+            if (meta.contains(sortByKey)) {
+                c.put("sortByCols", StringUtils.asList(meta.getAttribute(sortByKey), ","));
             }
             String prefWidth = DataSetParser.makeAttribKey(DataSetParser.PREF_WIDTH_TAG, dt.getKeyName());
-            if ( meta.contains(prefWidth) ) {
+            if (meta.contains(prefWidth)) {
                 c.put("prefWidth", meta.getAttribute(prefWidth));
             }
             cols.add(c);
         }
         return cols;
     }
-
-
     /**
      * get the type of data this table contains based on its meta information
+     *
      * @param meta
      * @return
      */
@@ -191,4 +205,42 @@ public class JsonTableUtil {
     }
 
 
+    //=============================
+
+    //LZ DM-4494
+    public static String toJsonString(DataGroup dataGroup, Long fileSize, String tableID) throws IOException {
+
+        DataGroupPart dp = new DataGroupPart();
+        dp.setData(dataGroup);
+
+        TableServerRequest  request = new TableServerRequest("fitsHeaderTale");
+        request.setMeta(TableServerRequest.TBL_ID, tableID);
+
+        TableMeta meta = new TableMeta("fitsHeader");
+        meta.setFileSize((fileSize));
+
+        JSONObject jsonObj = JsonTableUtil.toJsonTableModel(dp, meta,  request);
+
+
+
+        return jsonObj.toJSONString();
+
+
+    }
+
+    //LZ DM-4494
+    public static String dataGroupMapToJasonString(HashMap<Band, DataGroup> dataMap,HashMap<Band,Long> fileSizeMap, String tableID) throws IOException {
+
+
+        JSONObject jsoObj = new JSONObject();
+        for (Band band : dataMap.keySet()) {
+            jsoObj.put(band.name(), toJsonString(dataMap.get(band), fileSizeMap.get(band), tableID));
+
+        }
+
+        return jsoObj.toJSONString();
+    }
+
+    //============================= //============================= //============================= //============================= //============================= //=============================
 }
+

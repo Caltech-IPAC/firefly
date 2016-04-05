@@ -10,9 +10,13 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 
 import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -20,14 +24,14 @@ import edu.caltech.ipac.firefly.visualize.StretchData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
+import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Trey Roby
@@ -265,6 +269,35 @@ public class VisServerCommands {
     }
 
 
+  /**
+  * 03/20/16, LZ
+  * DM-4494
+   */
+
+    public static class FitsHeader extends ServerCommandAccess.ServCommand  {
+
+       public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException, FitsException, IOException {
+
+            SrvParam sp= new SrvParam(paramMap);
+
+            String tableID = paramMap.get("tableId")[0];
+
+
+            //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
+            PlotState state= sp.getState();
+
+           Object[]  dataInfo = VisServerOps.getFitsHeader(state);
+           HashMap<Band, DataGroup> dataGroupMap= (HashMap<Band, DataGroup> ) dataInfo[0];
+           HashMap<Band, Long> fileSizeMap = ( HashMap<Band, Long> ) dataInfo[1];
+
+
+           return JsonTableUtil.dataGroupMapToJasonString(dataGroupMap, fileSizeMap,tableID);
+
+
+        }
+
+
+    }
     public static class GetImagePng extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {

@@ -109,6 +109,8 @@ public class ServerParams {
     public static final String CROP = "CmdCrop";
     public static final String STAT = "CmdStat";
     public static final String HEADER = "CmdHeader";
+    public static final String FITS_HEADER = "CmdFitsHeader";  //LZ 3/21/16  DM-4494
+
     public static final String DELETE = "CmdDelete";
     public static final String USER_KEY = "CmdUserKey";
     public static final String VERSION = "CmdVersion";
