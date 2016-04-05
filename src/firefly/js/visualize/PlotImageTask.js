@@ -71,29 +71,31 @@ function makePlotImageAction(rawAction) {
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
                       payload: rawAction.payload
         } );
+        // NOTE - sega ImagePlotter handles next step
+        // keeping the commented code for time being, might clean this up more
 
-        if (rawAction.payload.useContextModifications) {
-            var pv= getPlotViewById(visRoot(),plotId);
-            if (pv) {
-                var {plotViewCtx}= pv;
-                if (wpRequest && !Array.isArray(wpRequest)) {
-                    wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND);
-                }
-                if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED);
-                if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN);
-                if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE);
-            }
-        }
+        //
+        // if (rawAction.payload.useContextModifications) {
+        //     var pv= getPlotViewById(visRoot(),plotId);
+        //     if (pv) {
+        //         var {plotViewCtx}= pv;
+        //         if (wpRequest && !Array.isArray(wpRequest)) {
+        //             wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND);
+        //         }
+        //         if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED);
+        //         if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN);
+        //         if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE);
+        //     }
+        // }
+        //
+        // var p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
+        //
+        // p.then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
+        //     .catch ( (e) => {
+        //         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
+        //         logError(`plot error, plotId: ${plotId}`, e);
+        //     });
 
-        var p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
-
-        p.then( (wpResult) => processSuccessResponse(dispatcher,rawAction.payload,wpResult) )
-            .catch ( (e) => {
-                dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
-                logError(`plot error, plotId: ${plotId}`, e);
-            });
-
-        //do network call.then => call completed action
     };
 }
 
@@ -115,7 +117,7 @@ function makePlotImageAction(rawAction) {
  * @param {Band} band
  * @return {WebPlotRequest}
  */
-function modifyRequest(pvCtx, r, band) {
+export function modifyRequest(pvCtx, r, band) {
 
     if (!r || !pvCtx) return r;
 
@@ -172,7 +174,7 @@ function modifyRequest(pvCtx, r, band) {
  * @param {object} payload the payload of the original action
  * @param {object} result the result of the search
  */
-const processSuccessResponse= function(dispatcher, payload, result) {
+export const processPlotImageSuccessResponse= function(dispatcher, payload, result) {
     var resultPayload;
 
     if (result.success) {

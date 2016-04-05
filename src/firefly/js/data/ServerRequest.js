@@ -83,7 +83,12 @@ export class ServerRequest {
     setParam() {
         if (arguments.length===1 && typeof arguments[0] === 'object') {
             var v= arguments[0];
-            if (v.name && v.value) this.params[v.name]= v.value;
+            if (v.name && v.value) {
+                this.params[v.name]= v.value;
+            }
+            else if (Object.keys(v).length===1) {
+                Object.assign(this.params,v);
+            }
         }
         else if (arguments.length===2) {
             this.params[arguments[0]]= arguments[1];

@@ -26,7 +26,7 @@ export function reducer(state, action) {
         case Cntlr.PLOT_IMAGE_START  :
             plotRequestDefaults= updateDefaults(state.plotRequestDefaults,action);
             plotGroupAry= confirmPlotGroup(state.plotGroupAry,action);
-            plotViewAry= confirmPlotView(state.plotViewAry,action);
+            plotViewAry= preNewPlotPrep(state.plotViewAry,action);
             break;
         case Cntlr.PLOT_IMAGE_FAIL  :
             break;
@@ -90,12 +90,16 @@ const addPlot= function(state,action) {
  * @param action
  * @return {[]|null} new PlotViewAry or null it nothing is created.
  */
-function confirmPlotView(plotViewAry,action) {
+function preNewPlotPrep(plotViewAry,action) {
     const {plotId}= action.payload;
-    if (pvExist(plotId,plotViewAry)) return null;
+    if (pvExist(plotId,plotViewAry)) { //  clear old plot data
+        return plotViewAry.map( (pv) => (pv.plotId===plotId) ? clone(pv, {plots:[], primeIdx:-1}) :pv);
+    }
+    else {
+        var pv= makePlotView(plotId, getDefRequest(action.payload),null);
+        return [...plotViewAry,pv];
+    }
 
-    var pv= makePlotView(plotId, getDefRequest(action.payload),null);
-    return [...plotViewAry,pv];
 }
 
 /**

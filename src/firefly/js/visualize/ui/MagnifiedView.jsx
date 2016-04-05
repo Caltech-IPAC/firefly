@@ -25,6 +25,9 @@ const EMPTY= <div style={defStyle}></div>;
 
 export function MagnifiedView({plotView:pv,size,mouseState}) {
     if (!pv || !mouseState) return EMPTY;
+    const p= primePlot(pv);
+    if (!p) return EMPTY;
+
     if (!magMouse.includes(mouseState.mouseState)) return EMPTY;
 
     var spt= mouseState.screenPt;
@@ -32,10 +35,9 @@ export function MagnifiedView({plotView:pv,size,mouseState}) {
     if (!spt) return EMPTY;
 
     var s= Object.assign({},defStyle, {border: '1px solid rgb(187, 187, 187)'});
-
     return (
         <div style={s}>
-            {showMag(spt,primePlot(pv),size)}
+            {showMag(spt,p,size)}
         </div>
     );
 }

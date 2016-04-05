@@ -27,6 +27,7 @@ export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 
 export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
+export const REINIT_RESULT_VIEW = `${APP_DATA_PATH}.reinitResultView`;
 
 //const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 export const HELP_LOAD = `overviewHelp`;    //note: consistent with AppMenu.prop

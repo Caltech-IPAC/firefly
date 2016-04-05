@@ -20,9 +20,12 @@ function makeOptions(options,alignment,fieldKey,value,onChange,tooltip) {
     ));
 }
 
-export function RadioGroupInputFieldView({options,alignment,fieldKey,value,onChange,label,inline,tooltip,labelWidth}) {
+export function RadioGroupInputFieldView({options,alignment,fieldKey,value,
+                                          onChange,label,inline,tooltip,
+                                          labelWidth, wrapperStyle={}}) {
+    const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle); 
     return (
-        <div style={{whiteSpace:'nowrap',display: inline?'inline-block':'block'}}>
+        <div style={style}>
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
             <div style={{display:'inline-block'}} >
                 {makeOptions(options,alignment,fieldKey,value,onChange,tooltip)}
@@ -40,6 +43,7 @@ RadioGroupInputFieldView.propTypes= {
     label : PropTypes.string,
     tooltip : PropTypes.string,
     inline : PropTypes.bool,
-    labelWidth : PropTypes.number
+    labelWidth : PropTypes.number,
+    wrapperStyle: PropTypes.object
 };
 

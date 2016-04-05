@@ -4,7 +4,7 @@
 
 
 
-import RequestType from './RequestType.js';
+import {RequestType} from './RequestType.js';
 import CoordinateSys from './CoordSys.js';
 import VisUtil from './VisUtil.js';
 import {makeProjection} from './Projection.js';

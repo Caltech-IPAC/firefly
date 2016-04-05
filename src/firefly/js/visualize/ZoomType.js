@@ -20,4 +20,10 @@ export const ZoomType= new Enum([
                       'ARCSEC_PER_SCREEN_PIX' // arcsec
                       ]);
 
-export default ZoomType;
+const whArray= [ZoomType.TO_WIDTH, ZoomType.TO_HEIGHT, ZoomType.FULL_SCREEN, ZoomType.ARCSEC_PER_SCREEN_PIX];
+
+/**
+ * Return true if zoom type requires width and height
+ * @param zoomType
+ */
+export const requiresWidthHeight= (zoomType) => whArray.includes( zoomType);

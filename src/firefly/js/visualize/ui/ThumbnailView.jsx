@@ -35,6 +35,7 @@ export function ThumbnailView({plotView:pv}) {
 
     s.border= '1px solid rgb(187, 187, 187)';
     var plot= primePlot(pv);
+    if (!plot) return  <div style={s}></div>;
     var {width,height}= plot.serverImages.thumbnailImage;
     var vp= WebPlot.makeViewPort(0,0,width,height);
     var ary= makeDrawing(pv,width,height);

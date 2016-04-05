@@ -18,6 +18,7 @@ const DESTROY_DRAWING_LAYER= 'DrawLayerCntlr.destroyDrawLayer';
 const CHANGE_VISIBILITY= 'DrawLayerCntlr.changeVisibility';
 const CHANGE_DRAWING_DEF= 'DrawLayerCntlr.changeDrawingDef';
 const ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
+const PRE_ATTACH_LAYER_TO_PLOT= 'DrawLayerCntlr.attachLayerToPlot';
 const DETACH_LAYER_FROM_PLOT= 'DrawLayerCntlr.detachLayerFromPlot';
 const MODIFY_CUSTOM_FIELD= 'DrawLayerCntlr.modifyCustomField';
 const FORCE_DRAW_LAYER_UPDATE= 'DrawLayerCntlr.forceDrawLayerUpdate';
@@ -85,6 +86,11 @@ export function dispatchRetrieveData(drawLayerId) {
 export function dispatchCreateDrawLayer(drawLayerTypeId, params={}) {
     var drawLayer= flux.createDrawLayer(drawLayerTypeId,params);
     flux.process({type: CREATE_DRAWING_LAYER, payload: {drawLayer}} );
+
+    const plotIdAry= dlRoot().preAttachedTypes[drawLayerTypeId];
+    if (plotIdAry) {
+        dispatchAttachLayerToPlot(drawLayerTypeId,plotIdAry);
+    }
 }
 
 
@@ -286,6 +292,9 @@ function makeReducer(factory) {
             case DETACH_LAYER_FROM_PLOT:
                 retState = deferToLayerReducer(state, action, dlReducer);
                 break;
+            case PRE_ATTACH_LAYER_TO_PLOT:
+                retState = preattachLayerToPlot(state,action);
+                break;
             case ImagePlotCntlr.DELETE_PLOT_VIEW:
                 retState = deletePlotView(state, action, dlReducer);
                 break;
@@ -388,6 +397,27 @@ function determineAndCallLayerReducer(state,action,dlReducer,force) {
 }
 
 
+function clearPreattachLayer(state,action) {
+    var {drawLayerId}= action.payload;
+    var drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
+    if (drawLayer) return state;
+    if (!state.preAttachedTypes[drawLayer.drawLayerTypeId]) return state;
+
+    const preAttachedTypes= clone(preAttachedTypes);
+    Reflect.deleteProperty(preAttachedTypes, drawLayerTypeId);
+
+    return clone(state, {preAttachedTypes});
+}
+
+
+function preattachLayerToPlot(state,action) {
+    const {drawLayerTypeId,plotIdAry}= action.payload;
+    const currentAry= state.preAttachedTypes[drawLayerTypeId] || [];
+
+    const preAttachedTypes=  clone( state.preAttachedTypes, {[drawLayerTypeId]: union(currentAry,plotIdAry)});
+    return clone(state, {preAttachedTypes});
+}
+
 
 function deletePlotView(state,action, dlReducer) {
     const {plotId} = action.payload;
@@ -416,7 +446,9 @@ const initState= function() {
                           ImagePlotCntlr.ANY_REPLOT, ImagePlotCntlr.DELETE_PLOT_VIEW
                         ],
         drawLayerAry : [],
-        mouseGrabDrawLayerId : null
+        mouseGrabDrawLayerId : null,
+        preAttachedTypes : {}  // {futureDrawLayerTypeId : [string] }
+                               //  i.e. an object: keys are futureDrawLayerTypeId, values: array of plot id
 
     };
 

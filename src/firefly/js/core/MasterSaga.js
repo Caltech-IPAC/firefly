@@ -5,6 +5,7 @@
 import {flux} from '../Firefly.js';
 import {fork, take} from 'redux-saga/effects';
 import {watchCatalogs} from '../visualize/saga/CatalogWatcher.js';
+import {imagePlotter} from '../visualize/saga/ImagePlotter.js';
 
 export const ADD_SAGA= 'MasterSaga.addSaga';
 
@@ -13,8 +14,8 @@ export const ADD_SAGA= 'MasterSaga.addSaga';
  * 
  * @param saga a generator function that uses redux-saga
  */
-export function dispatchAddSaga(saga) {
-    flux.process({ type: ADD_SAGA, payload: { saga }});
+export function dispatchAddSaga(saga, params) {
+    flux.process({ type: ADD_SAGA, payload: { saga,params}});
 }
 
 
@@ -22,15 +23,15 @@ export function dispatchAddSaga(saga) {
  * This saga launches all the predefined Sagas then loops and waits for any ADD_SAGA actions and launches those Segas
  */
 export function* masterSaga() {
-    var saga;
-    
+
     // This section starts any predefined Sagas
     yield fork( watchCatalogs);
+    yield fork( imagePlotter);
     
     // Start a saga from any action
     while (true) {
         var action= yield take(ADD_SAGA);
-        saga= action.payload.saga;
-        if (typeof saga === 'function') yield fork( saga);
+        const {saga,params}= action.payload;
+        if (typeof saga === 'function') yield fork( saga,params);
     }
 }
