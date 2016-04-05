@@ -29,7 +29,12 @@ import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 import {TableRequest} from '../tables/TableRequest.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
+import {parseWorldPt} from '../visualize/Point.js';
 import * as TblUtil from '../tables/TableUtil.js';
+import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCntlr.js';
+import WebPlotRequest from '../visualize/WebPlotRequest.js';
+import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 
 const options= [
     {label: 'AllWISE Source Catalog', value:'wise_allwise_p3as_psd', proj:'WISE'},
@@ -53,21 +58,26 @@ export const TestCatalog = (props) => {
                 onSubmit={(request) => onSearchSubmit(request, resultId)}
                 onCancel={hideSearchPanel}>
                 <FieldGroup groupKey='TEST_CAT_PANEL' validatorFunc={null} keepState={true}>
-
-                    <InputGroup labelWidth={110}>
+                    <div style={{padding:'5px 0 5px 0'}}>
                         <TargetPanel/>
-                        <ListBoxInputField  initialState= {{
+                    </div>
+                    <FieldGroupTabs initialState= {{ value:'catalog' }} fieldKey='Tabs'>
+                        <Tab name='Test Catalog' id='catalog'>
+                            <div style={{padding:5}}>
+
+                                <InputGroup labelWidth={110}>
+                                    <ListBoxInputField  initialState= {{
                                           tooltip: 'Select Catalog',
                                           label : 'Select Catalog:'
                                       }}
-                                            options={options }
-                                            multiple={false}
-                                            fieldKey='catalog'
-                        />
+                                                        options={options }
+                                                        multiple={false}
+                                                        fieldKey='catalog'
+                                    />
 
 
-                        <ValidationField fieldKey='radius'
-                                         initialState= {{
+                                    <ValidationField fieldKey='radius'
+                                                     initialState= {{
                                           fieldKey: 'radius',
                                           value: '300',
                                           validator: Validate.floatRange.bind(null, 0, 2000, 3,'field 3'),
@@ -75,8 +85,24 @@ export const TestCatalog = (props) => {
                                           label : 'radius:',
                                           labelWidth : 100
                                       }} />
+                                </InputGroup>
+                            </div>
+                        </Tab>
+                        <Tab name='Images' id='images'>
+                            <div style={{padding:'5px 0 10px 10px'}}>
+                                <ValidationField fieldKey={'zoom'}
+                                                 initialState={{
+                                                        value: '1',
+                                                        validator: Validate.floatRange.bind(null, .1, 10, 'my zoom field'),
+                                                        tooltip: 'this is a tip for zoom',
+                                                        label: 'Zoom:',
+                                                        labelWidth : 100
+                                                  }}
+                                />
+                            </div>
+                        </Tab>
 
-                    </InputGroup>
+                    </FieldGroupTabs>
 
                 </FieldGroup>
             </FormPanel>
@@ -103,6 +129,20 @@ function hideSearchPanel() {
 
 
 function onSearchSubmit(request, resultId) {
+    console.log(request);
+    if (request.Tabs==='catalog') {
+        doCatalog(request,resultId);
+    }
+    else if (request.Tabs==='images') {
+        doImages(request,resultId);
+    }
+    else {
+        console.log('request no supported');
+
+    }
+}
+
+function doCatalog(request, resultId) {
     const activeTblId = TblUtil.uniqueTblId();
     var tReq = TableRequest.newInstance({
         [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
@@ -120,3 +160,78 @@ function onSearchSubmit(request, resultId) {
     dispatchTableSearch(tReq, resultId, tbl_ui_id);
 }
 
+
+function doImages(request, resultsId) {
+    var wp= parseWorldPt(request.UserTargetWorldPt);
+
+    // -example call to 2mass
+    //var wpr1= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'h',.1 );
+    //var wpr2= WebPlotRequest.makePlotServiceReq(ServiceType.TWOMASS, wp,'k',.1 );
+
+
+
+    // -example call to wise
+    var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
+    var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
+    var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
+    var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
+
+
+    // -example call to IRIS
+    // var wpr1= WebPlotRequest.makeIRISRequest(wp,'12',5);
+    // var wpr2= WebPlotRequest.makeIRISRequest(wp,'25',5);
+    // var wpr3= WebPlotRequest.makeIRISRequest(wp,'60',5);
+    // var wpr4= WebPlotRequest.makeIRISRequest(wp,'100', 5);
+
+    // -example call to ISSA
+    // var wpr1= WebPlotRequest.makeISSARequest(wp,'12',5);
+    // var wpr2= WebPlotRequest.makeISSARequest(wp,'25',5);
+    // var wpr3= WebPlotRequest.makeISSARequest(wp,'60',5);
+    // var wpr4= WebPlotRequest.makeISSARequest(wp,'100', 5);
+
+
+    //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );
+    wpr1.setPlotGroupId('test-group');
+    wpr2.setPlotGroupId('test-group');
+    wpr3.setPlotGroupId('test-group');
+    wpr4.setPlotGroupId('test-group');
+
+
+
+
+    wpr1.setInitialZoomLevel(parseFloat(request.zoom));
+    wpr2.setInitialZoomLevel(parseFloat(request.zoom));
+    wpr3.setInitialZoomLevel(parseFloat(request.zoom));
+    wpr4.setInitialZoomLevel(parseFloat(request.zoom));
+
+    wpr2.setInitialColorTable(4);
+
+
+    //=========== 3 color
+    var cWpr1= WebPlotRequest.makeWiseRequest(wp,'3a','1',.4 );
+    var cWpr2= WebPlotRequest.makeWiseRequest(wp,'3a','2',.4 );
+    var cWpr3= WebPlotRequest.makeWiseRequest(wp,'3a','3',.4 );
+    cWpr1.setPlotGroupId('test-group');
+    cWpr2.setPlotGroupId('test-group');
+    cWpr3.setPlotGroupId('test-group');
+
+    cWpr1.setInitialZoomLevel(parseFloat(request.zoom));
+    cWpr2.setInitialZoomLevel(parseFloat(request.zoom));
+    cWpr3.setInitialZoomLevel(parseFloat(request.zoom));
+
+
+
+
+    //wpr1.setAnnotationOps(AnnotationOps.TITLE_BAR);
+    dispatchPlotImage('TestImage1', wpr1);
+    dispatchPlotImage('TestImage2', wpr2);
+    dispatchPlotImage('TestImage3', wpr3);
+    dispatchPlotImage('TestImage4', wpr4);
+
+    dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
+    
+    var viewer= getAViewFromMultiView();
+    dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
+    dispatchHideDropDownUi();
+
+}

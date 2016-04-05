@@ -43,11 +43,15 @@ const defaultReducer= (state) => state;
  * @param keepState
  * @param initValues
  * @param reducerFunc
+ * @param actionTypes any action types (beyond the FieldGroup action types) that the reducer should allow though
  */
 export function dispatchInitFieldGroup(groupKey,keepState=false, 
-                                       initValues=null, reducerFunc= defaultReducer) {
+                                       initValues=null, 
+                                       reducerFunc= defaultReducer,
+                                       actionTypes=[]) {
 
-    flux.process({type: INIT_FIELD_GROUP, payload: {groupKey,reducerFunc,initValues, keepState}});
+    flux.process({type: INIT_FIELD_GROUP, payload: {groupKey,reducerFunc, actionTypes, 
+                                                    initValues, keepState}});
 }
 
 
@@ -59,10 +63,13 @@ export function dispatchInitFieldGroup(groupKey,keepState=false,
  * @param keepState
  * @param initValues
  * @param reducerFunc
+ * @param actionTypes any action types (beyond the FieldGroup action types) that the reducer should allow though
  */
 export function dispatchMountFieldGroup(groupKey, mounted, keepState= false, 
-                                        initValues=null, reducerFunc= defaultReducer) {
-    flux.process({type: MOUNT_FIELD_GROUP, payload: {groupKey, mounted, initValues, reducerFunc, keepState} });
+                                        initValues=null, reducerFunc= defaultReducer,
+                                        actionTypes=[]) {
+    flux.process({type: MOUNT_FIELD_GROUP, payload: {groupKey, mounted, initValues, reducerFunc, 
+                                                     actionTypes, keepState} });
 }
 
 
@@ -138,15 +145,35 @@ function reducer(state={}, action={}) {
         case VALUE_CHANGE  :
             retState= valueChange(state, action);
             break;
-        // default:
-        //     retState= fireOnAllMountedGroups(state,action);
-        //     break;
+        default:
+            retState= fireOnAllMountedGroups(state,action);
+            break;
     }
     return retState;
 }
 
 
-// todo: determine if I need to readd this
+
+const fireOnAllMountedGroups= function(state,action) {
+    var changes= null;
+    var retState= state;
+
+    Object.keys(state).forEach((groupKey)=> {
+        var fg= state[groupKey];
+        if (fg.mounted && fg.actionTypes.includes(action.type)) {
+            if (!changes) changes= {};
+            changes[groupKey]= Object.assign({},fg,{fields:fireFieldsReducer(fg,action)});
+        }
+    });
+
+    if (changes) retState= Object.assign({},state,changes);
+    return retState;
+};
+
+
+
+
+
 
 // const fireOnAllMountedGroups= function(state,action) {
 //     var {type}= action;
@@ -183,7 +210,7 @@ function addInitValues(fields,initValues) {
 }
 
 const initFieldGroup= function(state,action) {
-    var {groupKey, reducerFunc, keepState, initValues}= action.payload;
+    var {groupKey, reducerFunc, actionTypes=[], keepState, initValues}= action.payload;
 
     const mounted= get(state, [groupKey,'mounted'],false);
     
@@ -194,7 +221,7 @@ const initFieldGroup= function(state,action) {
     }
 
 
-    var fg= constructFieldGroup(groupKey,fields,reducerFunc,keepState);
+    var fg= constructFieldGroup(groupKey,fields,reducerFunc,actionTypes, keepState);
     fg.mounted= mounted;
     return createState(state,groupKey,fg);
 };
@@ -327,7 +354,7 @@ function getFieldGroup(state,groupKey) {
     return state[groupKey];
 }
 
-const constructFieldGroup= function(groupKey,fields, reducerFunc, keepState) {
+const constructFieldGroup= function(groupKey,fields, reducerFunc, actionTypes, keepState) {
     fields= fields || {};
 
     Object.keys(fields).forEach( (key) => {
@@ -340,6 +367,7 @@ const constructFieldGroup= function(groupKey,fields, reducerFunc, keepState) {
              fields,
              reducerFunc,
              keepState,
+             actionTypes,
              mounted : false,
              fieldGroupValid : false
     };

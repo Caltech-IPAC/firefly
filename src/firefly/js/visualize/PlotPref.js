@@ -4,7 +4,7 @@
 
 import Band from './Band.js';
 import BrowserCache from '../util/BrowserCache.js';
-import RangeValues from './RangeValues.js';
+import {RangeValues} from './RangeValues.js';
 import PlotState from './PlotState.js';
 
 /**

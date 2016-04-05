@@ -3,9 +3,9 @@
  */
 
 
-import Band from './Band.js';
-import BandState from './BandState.js';
-import RangeValues from './RangeValues.js';
+import {Band} from './Band.js';
+import {BandState} from './BandState.js';
+import {RangeValues} from './RangeValues.js';
 import CoordinateSys from './CoordSys.js';
 import Enum from 'enum';
 

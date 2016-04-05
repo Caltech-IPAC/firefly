@@ -5,9 +5,11 @@
 import update from 'react-addons-update';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
-import WebPlot, {clonePlotWithZoom} from '../WebPlot.js';
+import WebPlot, {clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
 import {logError} from '../../util/WebUtil.js';
+import {CCUtil} from '../CsysConverter.js';
 import {primePlot,
+        matchPlotView,
         applyToOnePvOrGroup,
         getPlotViewIdxById,
         findPlotGroup,
@@ -51,6 +53,9 @@ export function reducer(state, action) {
         case Cntlr.PROCESS_SCROLL  :
             retState= processScroll(state,action);
             break;
+        case Cntlr.RECENTER:
+            retState= recenter(state,action);
+            break;
         case Cntlr.CHANGE_PLOT_ATTRIBUTE :
             retState= changePlotAttribute(state,action);
             break;
@@ -73,7 +78,7 @@ function changePlotAttribute(state,action) {
 
     var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
-    plotViewAry=  applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
+    plotViewAry= applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
         (pv)=> replaceAtt(pv,{[attKey]:attValue}) );
     return clone(state,{plotViewAry});
 }
@@ -172,5 +177,32 @@ function updateViewSize(state,action) {
     return Object.assign({},state,{plotViewAry});
 }
 
+function recenter(state,action) {
+    const {plotId}= action.payload;
+    var {plotGroupAry,plotViewAry}= state;
+    const pv= getPlotViewById(state,plotId);
+    var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
 
+    plotViewAry= applyToOnePvOrGroup(plotViewAry,plotId,plotGroup,recenterPv);
+    return clone(state,{plotViewAry});
+}
+
+/**
+ * Center on the FIXED_TARGET attribute or the center of the plot
+ * @param pv a plot view
+ * @return {{}} a new plot view
+ */
+function recenterPv(pv) {
+    const plot= primePlot(pv);
+    if (!plot) return pv;
+    var centerImagePt;
+    var wp= plot.attributes[PlotAttribute.FIXED_TARGET];
+    if (wp) {
+        centerImagePt= CCUtil.getImageCoords(plot,wp);
+    }
+    else {
+        centerImagePt= makeImagePt(plot.dataWidth/2, plot.dataHeight/2);
+    }
+    return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+}
 

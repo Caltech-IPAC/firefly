@@ -14,6 +14,8 @@ import {Band} from './Band.js';
 import {isActivePlotView,
         getPlotViewById,
         getOnePvOrGroup,
+        applyToOnePvOrGroup,
+        findPlotGroup,
         isDrawLayerAttached,
         getDrawLayerByType } from './PlotViewUtil.js';
 
@@ -87,6 +89,8 @@ const CROP_FAIL= 'ImagePlotCntlr.CropFail';
 
 const UPDATE_VIEW_SIZE= 'ImagePlotCntlr.UpdateViewSize';
 const PROCESS_SCROLL= 'ImagePlotCntlr.ProcessScroll';
+const RECENTER= 'ImagePlotCntlr.recenter';
+const RESTORE_DEFAULTS= 'ImagePlotCntlr.restoreDefaults';
 
 const CHANGE_POINT_SELECTION= 'ImagePlotCntlr.ChangePointSelection';
 
@@ -128,8 +132,15 @@ const initState= function() {
         plotGroupAry : [], // there is one for each group, a plot group may have multiple plotViews
         plottingProgressInfo : [], //todo
         plotHistoryRequest: [], //todo
-        plotRequestDefaults : {}, // keys are the plot id, values are object with {band : WebPlotRequest}
         activePlotId: null,
+
+        plotRequestDefaults : {}, // object: if normal request;
+        //                                         {plotId : {threeColor:boolean, wpRequest : object, }
+        //                                   if 3 color:
+        //                                         {plotId : {threeColor:boolean,
+        //                                                    redReq : object,
+        //                                                    greenReq : object,
+        //                                                    blueReq : object }
 
         //-- expanded settings
         expandedMode: ExpandType.COLLAPSE,
@@ -162,7 +173,8 @@ const initState= function() {
 
 export default {
     reducer,
-    ANY_CHANGE, ANY_REPLOT,
+    ANY_CHANGE,  // todo remove soon- only for interface with GWT
+    ANY_REPLOT,
     PLOT_IMAGE_START, PLOT_IMAGE_FAIL, PLOT_IMAGE,
     ZOOM_IMAGE_START, ZOOM_IMAGE_FAIL, ZOOM_IMAGE,ZOOM_LOCKING,
     ROTATE_START, ROTATE, ROTATE_FAIL,
@@ -171,8 +183,8 @@ export default {
     COLOR_CHANGE_START, COLOR_CHANGE, COLOR_CHANGE_FAIL,
     STRETCH_CHANGE_START, STRETCH_CHANGE, STRETCH_CHANGE_FAIL,
     CHANGE_POINT_SELECTION,
-    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL,
-    CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
+    PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
+    RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
     DELETE_PLOT_VIEW
 };
 
@@ -202,12 +214,12 @@ export function dispatchColorChange(plotId, cbarId, actionScope=ActionScope.GROU
 /**
  *
  * @param {string} plotId
- * @param {number} rangeValues
+ * @param {[{band:object,rv:object,bandVisible:boolean}]} stretchData
+ * 
  * @param {ActionScope} actionScope
  */
-export function dispatchStretchChange(plotId, rangeValues, actionScope=ActionScope.GROUP ) {
-    flux.process({ type: STRETCH_CHANGE,
-        payload: { plotId, rangeValues, actionScope }});
+export function dispatchStretchChange(plotId, stretchData, actionScope=ActionScope.GROUP ) {
+    flux.process({ type: STRETCH_CHANGE, payload: { plotId, stretchData, actionScope }});
 }
 
 
@@ -257,10 +269,28 @@ export function dispatchCrop(plotId, imagePt1, imagePt2, cropMultiAll) {
  * @param scrollScreenPt a new point to scroll to in screen coordinates
  */
 export function dispatchProcessScroll(plotId,scrollScreenPt) {
-    flux.process({type: PROCESS_SCROLL,
-        payload: {plotId, scrollScreenPt}
-    });
+    flux.process({type: PROCESS_SCROLL, payload: {plotId, scrollScreenPt} });
 }
+
+
+/**
+ * recenter the images on the plot center or the ACTIVE_TARGET
+ *
+ * @param {string} plotId
+ */
+export function dispatchRecenter(plotId) {
+    flux.process({type: RECENTER, payload: {plotId} });
+}
+
+/**
+ * recenter the images to the original plot parameters
+ *
+ * @param {string} plotId
+ */
+export function dispatchRestoreDefaults(plotId) {
+    flux.process({type: RESTORE_DEFAULTS, payload: {plotId} });
+}
+
 
 /**
  * Notify that the size of the plot viewing area has changed
@@ -453,6 +483,28 @@ export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
 }
 
+export function restoreDefaultsActionCreator(rawAction) {
+    return (dispatcher, getState) => {
+        const vr= getState()[IMAGE_PLOT_KEY];
+        const {plotId}= rawAction.payload;
+        const {plotGroupAry,plotViewAry}= vr;
+        var pv= getPlotViewById(vr,plotId);
+        var plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+        applyToOnePvOrGroup( plotViewAry, plotId, plotGroup,
+            (pv)=> {
+                if (vr.plotRequestDefaults[pv.plotId]) {
+                    const def= vr.plotRequestDefaults[pv.plotId];
+                    if (def.threeColor) {
+                        dispatchPlotImage(pv.plotId, [def.redReq,def.greenReq,def.blueReq],true,false,false);
+                    }
+                    else {
+                        dispatchPlotImage(pv.plotId, def.wpRequest,false, false, false);
+                    }
+                }
+            });
+    };
+}
+
 
 export function autoPlayActionCreator(rawAction) {
     return (dispatcher) => {
@@ -560,6 +612,7 @@ function reducer(state=initState(), action={}) {
         case COLOR_CHANGE_FAIL  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
+        case RECENTER:
             retState= plotChangeReducer(state,action);
             break;
 
@@ -712,7 +765,6 @@ if (window.ffgwt) {
     const allPlots= ffgwt.Visualize.AllPlots.getInstance();
     allPlots.addListener({
         eventNotify(ev) {
-            //console.log('ANY_CHANGE:' + ev.getName().getName());
             if (ev.getName().getName()==='Replot') {
                 flux.process({type: ANY_CHANGE, payload: { } });
             }

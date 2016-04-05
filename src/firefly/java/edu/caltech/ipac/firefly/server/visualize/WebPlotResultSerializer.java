@@ -25,7 +25,6 @@ import edu.caltech.ipac.visualize.draw.Metrics;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -99,14 +98,14 @@ public class WebPlotResultSerializer {
             if (res.containsKey(WebPlotResult.DATA_HISTOGRAM)) {
                 int intAry[]= ((DataEntry.IntArray)res.getResult(WebPlotResult.DATA_HISTOGRAM)).getArray();
                 JSONArray ary = new JSONArray();
-                ary.addAll(Arrays.asList(intAry));
+                for(int v : intAry) ary.add(v);
                 map.put(WebPlotResult.DATA_HISTOGRAM, ary);
             }
             if (res.containsKey(WebPlotResult.DATA_BIN_MEAN_ARRAY)) {
                 double dAry[]= ((DataEntry.DoubleArray)res.getResult(WebPlotResult.DATA_BIN_MEAN_ARRAY)).getArray();
                 JSONArray ary = new JSONArray();
-                ary.addAll(Arrays.asList(dAry));
-                map.put(WebPlotResult.DATA_BIN_MEAN_ARRAY, dAry);
+                for(double v : dAry) ary.add(v);
+                map.put(WebPlotResult.DATA_BIN_MEAN_ARRAY, ary);
             }
             if (res.containsKey(WebPlotResult.BAND_INFO)) {
                 BandInfo bi= (BandInfo)res.getResult(WebPlotResult.BAND_INFO);

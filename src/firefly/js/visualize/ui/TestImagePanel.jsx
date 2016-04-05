@@ -63,10 +63,10 @@ function showResults(success, request) {
 
 
     // -example call to wise
-    // var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
-    // var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
-    // var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
-    // var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
+    var wpr1= WebPlotRequest.makeWiseRequest(wp,'1b','1',.4 );
+    var wpr2= WebPlotRequest.makeWiseRequest(wp,'1b','2',.4 );
+    var wpr3= WebPlotRequest.makeWiseRequest(wp,'1b','3',.4 );
+    var wpr4= WebPlotRequest.makeWiseRequest(wp,'1b','4',.4 );
 
 
     // -example call to IRIS
@@ -76,10 +76,10 @@ function showResults(success, request) {
     // var wpr4= WebPlotRequest.makeIRISRequest(wp,'100', 5);
 
     // -example call to ISSA
-    var wpr1= WebPlotRequest.makeISSARequest(wp,'12',5);
-    var wpr2= WebPlotRequest.makeISSARequest(wp,'25',5);
-    var wpr3= WebPlotRequest.makeISSARequest(wp,'60',5);
-    var wpr4= WebPlotRequest.makeISSARequest(wp,'100', 5);
+    // var wpr1= WebPlotRequest.makeISSARequest(wp,'12',5);
+    // var wpr2= WebPlotRequest.makeISSARequest(wp,'25',5);
+    // var wpr3= WebPlotRequest.makeISSARequest(wp,'60',5);
+    // var wpr4= WebPlotRequest.makeISSARequest(wp,'100', 5);
     
     
     //var wpr2= WebPlotRequest.makeDSSRequest(wp,'poss2ukstu_red',.1 );

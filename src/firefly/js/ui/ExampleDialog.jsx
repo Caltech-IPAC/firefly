@@ -312,7 +312,7 @@ function FieldGroupTestView ({fields}) {
                         <ValidationField fieldKey='fieldInTabX2'
                                          initialState= {{
                                           fieldKey: 'fieldInTabX2',
-                                          value: '88',
+                                          value: '87',
                                           validator: Validate.intRange.bind(null, 66, 666, 3,'Tab Test Field'),
                                           tooltip: 'more tipping',
                                           label : 'tab test field:',

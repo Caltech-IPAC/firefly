@@ -4,7 +4,6 @@
 
 
 import React, {Component,PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
 import ReactDOM from 'react-dom';
 
 import {flux, firefly} from 'firefly/Firefly.js';
@@ -17,7 +16,6 @@ import {TestCatalog} from 'firefly/ui/TestCatalog.jsx';
 import {ImageSelectDropdown} from 'firefly/ui/ImageSelectDropdown.jsx';
 import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
-import TestImagePanel from 'firefly/visualize/ui/TestImagePanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
 import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import * as TblUtil from 'firefly/tables/TableUtil.js';
@@ -25,6 +23,8 @@ import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 import {getActionFromUrl} from 'firefly/core/History.js';
+import {MultiImageViewer} from 'firefly/visualize/ui/MultiImageViewer.jsx';
+import {MultiViewStandardToolbar} from 'firefly/visualize/ui/MultiViewStandardToolbar.jsx';
 
 
 const HOME = {type: SHOW_DROPDOWN_UI, payload: {view:'AnyDataSetSearch'}};
@@ -76,9 +76,15 @@ const App = React.createClass({
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot = {expandedMode===LO_EXPANDED.images.view ?
+                            imagePlot ={expandedMode===LO_EXPANDED.images.view ?
                                              <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
-                                             <TestImagePanel key='results-plots'/> }
+                                             <div style={{display:'inline-block', position:'absolute', 
+                                                           left:2, right:2, top:3, bottom:4}}>
+                                                    <MultiImageViewer  viewerId='imageViews' 
+                                                         canReceiveNewPlots={true} 
+                                                         Toolbar={MultiViewStandardToolbar}/>
+                                             </div>
+                              }
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={activeTblId} />}
                             tables = {<TablesContainer key='results-tables' tbl_ui_gid={resultId} /> }
@@ -164,8 +170,4 @@ ReactDOM.render(container,
 // ReactDOM.render(<AppWrapper/>,
 //     document.getElementById('app')
 // );
-
-
-
-
 

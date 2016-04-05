@@ -4,7 +4,7 @@
 
 
 import WebPlotRequest from './WebPlotRequest.js';
-import RangeValues from './RangeValues.js';
+import {RangeValues} from './RangeValues.js';
 import {makeClientFitsHeader} from './ClientFitsHeader.js';
 import join from 'underscore.string/join';
 import toBoolean from 'underscore.string/toBoolean';
@@ -12,7 +12,7 @@ import {parseInt,checkNull} from '../util/StringUtils.js';
 
 const SPLIT_TOKEN= '--BandState--';
 
-class BandState {
+export class BandState {
     constructor() {
         this.workingFitsFileStr = null;
         this.originalFitsFileStr= null;
