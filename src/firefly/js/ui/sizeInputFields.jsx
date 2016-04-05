@@ -119,24 +119,6 @@ class SizeInputFieldView extends Component {
 
         this.setState({displayValue, value, valid});
         this.props.onChange(ev, stateUpdate);
-
-        //console.log('evtype = ' + ev.type );
-
-        // validation test is determined when the typing is done
-        // update displayVvalue, value, and valid
-        /*
-        if (ev.type.startsWith('blur') || (ev.type.startsWith('key') && ev.key === 'Enter')) {
-            var tmpDeg = sizeToDeg(displayValue, this.state.unit);
-            var valid = isSizeValid(tmpDeg, this.props.min, this.props.max);
-            var value = (valid) ? tmpDeg: '';
-            var stateUpdate = Object.assign({}, this.state, { displayValue,  value, valid });
-
-            this.setState({displayValue, value, valid});
-            this.props.onChange(ev, stateUpdate);
-        } else {
-            this.setState( { displayValue, valid: true });
-        }
-        */
     }
 
     onUnitChange(ev) {
