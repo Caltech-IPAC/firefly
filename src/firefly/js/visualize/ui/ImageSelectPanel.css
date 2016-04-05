@@ -2,15 +2,17 @@ div.imagepanel  {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 1000px;
+    width: 800px;
     background: white;
+/*
     border-left: 20px solid #c8c8c8;
     border-right: 20px solid #c8c8c8;
+*/
 }
 
 div.section {
     margin-top: 10px;
-    padding-left: 19%;
+    padding-left: 15%;
 }
 
 div.intarget {
@@ -39,8 +41,8 @@ div.close {
     align-items: center;
     justify-content: flex-end;
     background: #c8c8c8;
-    width: 1000px;
-    height: 80px;
+    width: 800px;
+    height: 60px;
 }
 
 div.left {

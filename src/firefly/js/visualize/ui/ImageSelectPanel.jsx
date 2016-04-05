@@ -22,15 +22,14 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {SizeInputFields, sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
-import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
+import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
-import Enum from 'enum';
 import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
-const panelKey = 'SELECTIMAGEPANEL';
+export const panelKey = 'SELECTIMAGEPANEL';
 
 export const keyMap = {
     'selTab':    'SELECTIMAGEPANEL_SelectedCatalog',
@@ -82,7 +81,11 @@ export function computeCurrentCatalogId( fields, catalogId = IRSA ) {
 // this version is made to add a new plot to an existing viewer if no plot is found
 // or replace the plot from the active viewer
 
-const PlotSelectMode = new Enum(['AddNewPlot', 'ReplacePlot', 'ReplaceOrCreate']);
+const [REPLACE, CREATE, CREATE3COLOR] = [0x100, 0x010, 0x001];
+export const PlotSelectMode = {
+                            'AddNewPlot': CREATE,     //change to CREATE3COLOR later
+                            'ReplacePlot':REPLACE,
+                            'ReplaceOrCreate': REPLACE|CREATE};
 
 var getAViewId = () => {
     var aView;
@@ -91,8 +94,8 @@ var getAViewId = () => {
     return aView ? aView.viewerId : '';
 };
 
-export function showImageSelPanel(popTitle)
-{
+
+export function getPlotInfo() {
     var visroot = visRoot();
     var plotId = get(visroot, 'activePlotId');
     var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : (getAViewId());
@@ -106,15 +109,20 @@ export function showImageSelPanel(popTitle)
         }
     } else {
         if (plotId) {
-            plotMode = PlotSelectMode.Replace;
-        } else {
-            return null;
+            plotMode = PlotSelectMode.ReplacePlot;
         }
     }
+
+    return {plotId, plotMode, viewerId};
+}
+
+export function showImageSelPanel(popTitle) {
+    var {plotMode, viewerId} = getPlotInfo();
+
     // dispatchAddImages(plotView.viewerId, [plotId]);
 
     var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection viewerId={viewerId} plotMode={plotMode} catalogId={TWOMASS}/>
+                    <ImageSelection plotMode={plotMode} viewerId={viewerId} catalogId={TWOMASS}/>
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -162,6 +170,10 @@ function fieldInit(crtCatalogId) {
             fieldKey: keyMap['targettry'],
             value: 'NED',
             label: ''
+        },
+        [keyMap['plotmode']]: {
+            fieldKey: keyMap['plotmode'],
+            value: 'replace'
         },
         [keyMap['catalogtab']]: {
             fieldKey: keyMap['catalogtab'],
@@ -319,7 +331,7 @@ var ImageSelPanelChange = function (crtCatalogId) {
  *  container component for image select panel
  *
  */
-class ImageSelection extends Component {
+export class ImageSelection extends Component {
      constructor(props) {
          super(props);
 
@@ -330,7 +342,6 @@ class ImageSelection extends Component {
 
          this.state = { initCatalogId:  props.catalogId ? props.catalogId: IRSA,
                         fields:         FieldGroupUtils.getGroupFields(this.groupKey)
-
          };
          // this.state = {currentCatalogIdx: 0 };
      }
@@ -357,8 +368,8 @@ class ImageSelection extends Component {
 
 
     render() {
-        var {plotId, viewerId, plotMode} = this.props;
-        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode});
+        var {plotId, viewerId, plotMode, loadButton} = this.props;
+        var params = Object.assign({}, this.state, {plotId, viewerId, plotMode, loadButton});
 
         return <ImageSelectionView {...params}/>;
 
@@ -369,9 +380,22 @@ ImageSelection.propTypes = {
     catalogId: PropTypes.number,
     plotId: PropTypes.string,
     viewerId: PropTypes.string,
-    plotMode: PropTypes.object
+    plotMode: PropTypes.number,
+    loadButton: PropTypes.bool
 };
 
+
+export function isCreatePlot(pMode, fields) {
+    if (!pMode || !fields) {
+        return false;
+    } else {
+        return (
+        (pMode === PlotSelectMode.AddNewPlot) ||
+        ((pMode === PlotSelectMode.ReplaceOrCreate) &&
+         (fields.hasOwnProperty(keyMap['plotmode']) && fields[keyMap['plotmode']].value === 'create'))
+        );
+    }
+}
 
 class ImageSelectionView extends Component {
 
@@ -380,25 +404,19 @@ class ImageSelectionView extends Component {
 
         this.state = {
             crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId),
-            addPlot: (props.plotMode && props.plotMode === PlotSelectMode.AddNewPlot) ? true : false
+            addPlot:  isCreatePlot(props.plotMode, props.fields)
         };
     }
 
     componentWillReceiveProps(nextProps) {
-        this.setState ({ crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId) });
-    }
 
-    onSelect(index) {
-        this.setState({ crtCatalogId: index});
-    }
-
-    onChangeAddPlot(ev) {
-        this.setState({addPlot: get(ev, 'target.value') === 'create'});
+        this.setState ({
+            crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId),
+            addPlot: isCreatePlot(nextProps.plotMode, nextProps.fields)}
+        );
     }
 
     render() {
-
-        var {addPlot} = this.state;
 
         // tabs for each catalog
         var categoryTabs = panelCatalogs.map((item, index) =>
@@ -418,6 +436,27 @@ class ImageSelectionView extends Component {
             }
         };
 
+        var loadButtonArea = () => {
+             if (!this.props.loadButton) {
+                 return <div></div>;
+             } else {
+                return (
+                    <div className={'close'}>
+                        <div className={'padding'}>
+                            <CompleteButton
+                                dialogId={popupId}
+                                groupKey={panelKey}
+                                onSuccess={resultSuccess(this.state.addPlot, this.props.viewerId)}
+                                onFail={resultFail()}
+                                text={'Load'} />
+                        </div>
+                        <div className={'padding'}>
+                            <HelpIcon helpId={helpId}/>
+                        </div>
+                    </div>);
+            }
+        };
+
         var helpId = 'basics.catalog';
 
         /*
@@ -434,12 +473,10 @@ class ImageSelectionView extends Component {
                 <div className={'imagepanel'}>
                     <div className={'section'}>
                         <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId}
-                                            plotMode={this.props.plotMode}
-                                            changePlot={this.onChangeAddPlot.bind(this)} />
+                                            plotMode={this.props.plotMode} />
                     </div>
                     <div className={'section'}>
                         <FieldGroupTabs
-                            onTabSelected={this.onSelect.bind(this)}
                             fieldKey={keyMap['catalogtab']} >
                             {categoryTabs}
                         </FieldGroupTabs>
@@ -448,21 +485,7 @@ class ImageSelectionView extends Component {
                         {radius()}
                     </div>
 
-                    <div className={'close'}>
-                        <div className={'padding'}>
-                            <CompleteButton
-                                dialogId={popupId}
-                                groupKey={panelKey}
-                                onSuccess={resultSuccess(addPlot,
-                                                         this.props.viewerId)}
-                                onFail={resultFail()}
-                                text={'Load'}
-                            />
-                        </div>
-                        <div className={'padding'}>
-                            <HelpIcon helpId={helpId}/>
-                        </div>
-                    </div>
+                    { loadButtonArea() }
                 </div>
             </FieldGroup>
         );
@@ -474,7 +497,12 @@ ImageSelectionView.propTypes={
     fields: PropTypes.object,
     plotId: PropTypes.string,
     viewerId: PropTypes.string,
-    plotMode: PropTypes.object
+    plotMode: PropTypes.number,
+    loadButton: PropTypes.bool
+};
+
+ImageSelectionView.defaultProps={
+   loadButton: true
 };
 
 /**
@@ -483,9 +511,7 @@ ImageSelectionView.propTypes={
  * @returns {XML}
  * @constructor
  */
-
-
-function TargetPanelSetView({currentCatalogIdx, changePlot, plotMode}) {
+function TargetPanelSetView({currentCatalogIdx, plotMode}) {
 
      var showTarget = () => {
          if ((currentCatalogIdx === URL || currentCatalogIdx === FITS)) {
@@ -511,15 +537,14 @@ function TargetPanelSetView({currentCatalogIdx, changePlot, plotMode}) {
         if ((plotMode && (plotMode === PlotSelectMode.ReplaceOrCreate))) {
             return (
                 <div className={'padding_noleft'}>
-                    <RadioGroupInputFieldView
+                    <RadioGroupInputField
                         alignment={'horizontal'}
                         fieldKey={keyMap['plotmode']}
-                        value={'replace'}
-                        onChange={changePlot}
                         options={[
                                 {label: 'Replace Image', value: 'replace'},
                                 {label: 'Create New Plot', value: 'create'}
-                                ]} />
+                                ]}
+                    />
                 </div>
             );
         } else {
@@ -538,8 +563,7 @@ function TargetPanelSetView({currentCatalogIdx, changePlot, plotMode}) {
 
 TargetPanelSetView.propsTypes={
     currentCatalogIdx: PropTypes.number.isRequired,
-    changePlot: PropTypes.func,
-    plotMode: PropTypes.object
+    plotMode: PropTypes.number
  };
 
 
@@ -633,3 +657,4 @@ CatalogTabView.propTypes={
     catalog: PropTypes.object.isRequired,
     fields: PropTypes.object
 };
+
