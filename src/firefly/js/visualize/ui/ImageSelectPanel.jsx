@@ -15,26 +15,27 @@ import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import {TargetPanel} from '../../ui/TargetPanel.jsx';
-import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {SizeInputFields, sizeFromDeg} from '../../ui/sizeInputFields.jsx';
-import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
+import {SizeInputFields} from '../../ui/sizeInputFields.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
+import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
+import CollapsiblePanel from '../../ui/panel/CollapsiblePanel.jsx';
+import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelState.js';
 import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
 
 const popupId = 'ImageSelectPopup';
 export const panelKey = 'SELECTIMAGEPANEL';
+export const rgbFieldGroup = ['REDFieldGroup', 'GREENFieldGroup', 'BLUEFieldGroup'];
+export const [RED, GREEN, BLUE] = [0, 1, 2];
 
 export const keyMap = {
-    'selTab':    'SELECTIMAGEPANEL_SelectedCatalog',
     'targettry': 'SELECTIMAGEPANEL_targettry',
-    'targetrep': 'SELECTIMAGEPANEL_targetrep',
     'catalogtab':'SELECTIMAGEPANEL_catalogtab',
     'irsatypes': 'SELECTIMAGEPANEL_IRSA_types',
     'twomasstypes':'SELECTIMAGEPANEL_2MASS_types',
@@ -50,27 +51,40 @@ export const keyMap = {
     'fitslist':    'SELECTIMAGEPANEL_FITS_list',
     'fitsextinput':'SELECTIMAGEPANEL_FITS_extinput',
     'fitsupload':  'SELECTIMAGEPANEL_FITS_upload',
-    'radiusfield': 'SELECTIMAGEPANEL_ImgFeature_radius',
+    'sizefield': 'SELECTIMAGEPANEL_ImgFeature_radius',
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
-export const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+export const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+export const rgb = ['red', 'green', 'blue'];
+
+export function completeButtonKey( isThreeColor = false ) {
+    return isThreeColor ? [panelKey,...rgbFieldGroup] :[panelKey];
+}
 
 /*
  * get the catalog id (tab id) based on stored fields of the tab
  *
  */
 
-export function computeCurrentCatalogId( fields, catalogId = IRSA ) {
+export function computeCurrentCatalogId( fields, colorFields, catalogId = [IRSA, IRSA, IRSA] ) {
 
     const keytab = keyMap['catalogtab'];
+    var   newId = catalogId;
+    var   getTabNo = (val) => parseInt(typeof val === 'object' ? val.value : val);
+    var   isFieldTabExist = (f) => (f && f[keytab] && (typeof f[keytab] !== 'object' || f[keytab].mounted));
 
-    if (fields && fields.hasOwnProperty(keytab)) {
-        var tval = fields[keytab];
-        return parseInt( typeof tval === 'object' ? tval.value : tval);
+    if (isFieldTabExist(fields)) {
+        newId[0] = getTabNo(fields[keytab]);
+    } else {
+        rgb.forEach((color, index) => {
+            if (isFieldTabExist(colorFields[index])) {
+                newId[index] = getTabNo(colorFields[index][keytab]);
+            }
+        });
     }
 
-    return catalogId;
+    return newId;
 }
 
 /**
@@ -81,31 +95,32 @@ export function computeCurrentCatalogId( fields, catalogId = IRSA ) {
 // this version is made to add a new plot to an existing viewer if no plot is found
 // or replace the plot from the active viewer
 
-const [REPLACE, CREATE, CREATE3COLOR] = [0x100, 0x010, 0x001];
+export const [PLOT_NO, PLOT_REPLACE, PLOT_CREATE, PLOT_CREATE3COLOR] = [0x000, 0x100, 0x0010, 0x001];
 export const PlotSelectMode = {
-                            'AddNewPlot': CREATE,     //change to CREATE3COLOR later
-                            'ReplacePlot':REPLACE,
-                            'ReplaceOrCreate': REPLACE|CREATE};
+                            'NoPlot':     PLOT_NO,
+                            'CreatePlot': PLOT_CREATE|PLOT_CREATE3COLOR,
+                            'ReplacePlot':PLOT_REPLACE,
+                            'ReplaceOrCreate': PLOT_REPLACE|PLOT_CREATE|PLOT_CREATE3COLOR};
 
 var getAViewId = () => {
-    var aView;
-
-    aView = getAViewFromMultiView();
+    var aView = getAViewFromMultiView();
     return aView ? aView.viewerId : '';
 };
 
-
-export function getPlotInfo() {
-    var visroot = visRoot();
+// if there is plotID, find the viewer (plotId & viewerId => replace or create)
+//                                     (plotId & no viewerid => replace)
+// if there is no plotID, find an avaiable multiImageViewer (no plotId & viewerId => create)
+export function getPlotInfo( vr ) {
+    var visroot = !vr ? visRoot() : vr;
     var plotId = get(visroot, 'activePlotId');
     var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : (getAViewId());
-    var plotMode;
+    var plotMode = PlotSelectMode.NoPlot;
 
     if (viewerId) {
         if (plotId) {
             plotMode = PlotSelectMode.ReplaceOrCreate;
         } else {
-            plotMode = PlotSelectMode.AddNewPlot;
+            plotMode = PlotSelectMode.CreatePlot;
         }
     } else {
         if (plotId) {
@@ -117,12 +132,8 @@ export function getPlotInfo() {
 }
 
 export function showImageSelPanel(popTitle) {
-    var {plotMode, viewerId} = getPlotInfo();
-
-    // dispatchAddImages(plotView.viewerId, [plotId]);
-
-    var popup = (<PopupPanel title={popTitle}>
-                    <ImageSelection plotMode={plotMode} viewerId={viewerId} catalogId={TWOMASS}/>
+     var popup = (<PopupPanel title={popTitle}>
+                    <ImageSelection />
                  </PopupPanel>);
 
     DialogRootContainer.defineDialog(popupId, popup);
@@ -133,200 +144,28 @@ export function showImageSelPanel(popTitle) {
  * compute the space for string to be displayed
  */
 
-function computeLabelWidth(labelStr) {
+export function computeLabelWidth(labelStr) {
     return labelStr.length * 6;
 }
 
 
+/*
+ * check if the tab selection need target setting or not
+ */
 
-// get unit, min and max from the data file
-var getRangeItem = (crtCatalogId, rangeItem) => {
-    if (panelCatalogs[crtCatalogId].hasOwnProperty('range')) {
-        return panelCatalogs[crtCatalogId]['range'][rangeItem];
+export function isTargetNeeded(tabId, isThreeColor = false) {
+    var notargets = (isThreeColor) ? [URL, FITS, NONE] : [URL, FITS];
+
+    if (typeof tabId !== 'number') {
+        return (isThreeColor) ? tabId.some((item) => !notargets.includes(item)) : !notargets.includes(tabId[0]);
     } else {
-        if (rangeItem === 'unit') {
-            return 'deg';
-        } else {
-            return 0.0;
-        }
+        return !notargets.includes(tabId);
     }
-};
-
-// get default size from the data file
-var getSize = (crtCatalogId) => {
-    if (panelCatalogs[crtCatalogId].hasOwnProperty('size')) {
-        return panelCatalogs[crtCatalogId]['size'].toString();
-    } else {
-        return '0.0';
-    }
-};
-
-
-function fieldInit(crtCatalogId) {
-    var size = 'Size:';
-
-    return (
-        {[keyMap['targettry']]: {
-            fieldKey: keyMap['targettry'],
-            value: 'NED',
-            label: ''
-        },
-        [keyMap['plotmode']]: {
-            fieldKey: keyMap['plotmode'],
-            value: 'replace'
-        },
-        [keyMap['catalogtab']]: {
-            fieldKey: keyMap['catalogtab'],
-            value: panelCatalogs[crtCatalogId].CatalogId.toString()
-        },
-        [keyMap['irsatypes']]: {
-            fieldKey: keyMap['irsatypes'],
-            label: panelCatalogs[IRSA].types.Title,
-            value: panelCatalogs[IRSA].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
-        },
-        [keyMap['twomasstypes']]: {
-            fieldKey: keyMap['twomasstypes'],
-            label: panelCatalogs[TWOMASS].types.Title,
-            value: panelCatalogs[TWOMASS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[TWOMASS].types.Title)
-        },
-        [keyMap['wisetypes']]: {
-            fieldKey: keyMap['wisetypes'],
-            label: panelCatalogs[WISE].types.Title,
-            value: panelCatalogs[WISE].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[WISE].types.Title)
-        },
-        [keyMap['wisebands']]: {
-            fieldKey: keyMap['wisebands'],
-            label: panelCatalogs[WISE].bands.Title,
-            value: panelCatalogs[WISE].bands.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[WISE].bands.Title)
-        },
-        [keyMap['msxtypes']]: {
-            fieldKey: keyMap['msxtypes'],
-            label: panelCatalogs[MSX].types.Title,
-            value: panelCatalogs[MSX].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[MSX].types.Title)
-        },
-        [keyMap['dsstypes']]: {
-            fieldKey: keyMap['dsstypes'],
-            label: panelCatalogs[DSS].types.Title,
-            value: panelCatalogs[DSS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[DSS].types.Title)
-        },
-        [keyMap['sdsstypes']]: {
-            fieldKey: keyMap['sdsstypes'],
-            label: panelCatalogs[SDSS].types.Title,
-            value: panelCatalogs[SDSS].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[SDSS].types.Title)
-        },
-        [keyMap['fitslist']]: {
-            fieldKey: keyMap['fitslist'],
-            label: panelCatalogs[FITS].list.Title,
-            value: panelCatalogs[FITS].list.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[FITS].list.Title)
-        },
-        [keyMap['fitsextinput']]: {
-            fieldKey: keyMap['fitsextinput'],
-            label: panelCatalogs[FITS].extinput.Title,
-            value: '0',
-            labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
-        },
-        [keyMap['blankinput']]: {
-            fieldKey: keyMap['blankinput'],
-            label: panelCatalogs[BLANK].input.Title,
-            value: panelCatalogs[BLANK].input.Default.toString(),
-            validator: Validate.floatRange.bind(null,
-                panelCatalogs[BLANK].input.range.min,
-                panelCatalogs[BLANK].input.range.max, 1.0, 'a float field'),
-            labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
-        },
-        [keyMap['urlinput']]: {
-            fieldKey: keyMap['urlinput'],
-            label: panelCatalogs[URL].input.Title,
-            validator: Validate.validateUrl.bind(null, 'a url field'),
-            value: '',
-            labelWidth: computeLabelWidth(panelCatalogs[URL].input.Title)
-        },
-        [keyMap['urllist']]: {
-            fieldKey: keyMap['urllist'],
-            label: panelCatalogs[URL].list.Title,
-            value: panelCatalogs[URL].list.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[URL].list.Title)
-
-        },
-        [keyMap['urlextinput']]: {
-            fieldKey: keyMap['urlextinput'],
-            label: panelCatalogs[URL].extinput.Title,
-            value: '0',
-            labelWidth: computeLabelWidth(panelCatalogs[URL].extinput.Title)
-        },
-        [keyMap['radiusfield']]: {
-            fieldKey: keyMap['radiusfield'],
-            label: size,
-            labelWidth: computeLabelWidth(size),
-            unit: getRangeItem(crtCatalogId, 'unit'),
-            min:  getRangeItem(crtCatalogId, 'min'),
-            max:  getRangeItem(crtCatalogId, 'max'),
-            value: getSize(crtCatalogId)}
-        });
 }
 
-/*
- *
- * image select pane initial state for all fields
- */
-var ImageSelPanelChange = function (crtCatalogId) {
-    return (inFields, action) => {
-        if (!inFields) {
-            return fieldInit(crtCatalogId);
-        } else {
-
-            if (action.type === FieldGroupCntlr.VALUE_CHANGE) {
-                if (action.payload.fieldKey === keyMap['catalogtab']) {
-                    var catalogId = parseInt(inFields[keyMap['catalogtab']].value);
-
-                    if (catalogId !== URL && catalogId !== FITS) {
-                        var originalSize = get(inFields, keyMap['radiusfield']);
-                        var {value, unit} = originalSize;
-                        var min = getRangeItem(catalogId, 'min');
-                        var max = getRangeItem(catalogId, 'max');
-                        var radiusField;
-
-                        // update value if no value or value is out of range while changing tab
-                        // otherwise keep the value and unit as being left off from previous tab
-                        if (!value || !(Validate.floatRange(min, max, 1, 'value of radius size in degree', value).valid)) {
-                            value = getSize(catalogId);
-
-                            radiusField = Object.assign({}, originalSize,
-                                {
-                                    min,
-                                    max,
-                                    value
-                                 });
-                        } else {
-                            radiusField = Object.assign({}, originalSize,
-                                {
-                                    min: getRangeItem(catalogId, 'min'),
-                                    max: getRangeItem(catalogId, 'max')
-                                });
-                        }
-
-                        radiusField = Object.assign({}, radiusField,
-                                                        {'displayValue': sizeFromDeg(value, unit)});
-
-                        return Object.assign({}, inFields, {[keyMap['radiusfield']]: radiusField});
-                    }
-                }
-            }
-
-            return inFields;
-        }
-    };
-};
-
-
+function getAllGroupFields(...keys) {
+    return keys.reduce((prev, fg) => (Object.assign(prev, {[fg]: FieldGroupUtils.getGroupFields(fg)})), {});
+}
 /**
  *  container component for image select panel
  *
@@ -336,15 +175,31 @@ export class ImageSelection extends Component {
          super(props);
 
          this.groupKey = panelKey;
-         // if (!FieldGroupUtils.getGroupFields(this.groupKey)) {
-         //     dispatchInitFieldGroup(this.groupKey, true, null, ImageSelPanelChange);
-         // }
+         this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
 
-         this.state = { initCatalogId:  props.catalogId ? props.catalogId: IRSA,
-                        fields:         FieldGroupUtils.getGroupFields(this.groupKey)
+         this.state = {
+             initCatalogId: props.catalogId ? props.catalogId : [IRSA, IRSA, IRSA],
+             fields: this.allfields[panelKey],
+             [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
+             [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
+             [rgbFieldGroup[BLUE]]: this.allfields[rgbFieldGroup[BLUE]],
+             visroot: visRoot()
          };
-         // this.state = {currentCatalogIdx: 0 };
      }
+
+    componentWillReceiveProps (nextProps) {
+        this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
+
+        this.setState({
+            fields: this.allfields[panelKey],
+            [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
+            [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
+            [rgbFieldGroup[BLUE]]: this.allfields[rgbFieldGroup[BLUE]],
+            visroot: visRoot()
+        });
+    }
+
+
 
     componentWillUnmount() {
         this.iAmMounted= false;
@@ -357,18 +212,33 @@ export class ImageSelection extends Component {
     }
 
     stateUpdate() {
-        var fields = FieldGroupUtils.getGroupFields(this.groupKey);
+        var allfields = getAllGroupFields(this.groupKey,...rgbFieldGroup);
+        var vr = visRoot();
 
-        if (fields) {
+        var isfieldChanged = (allfields) =>
+                {
+                    var fields = rgbFieldGroup.find((fg) => (this.state[fg] !== allfields[fg]));
+                    return (fields) ? true : allfields[this.groupkey] !== this.state.fields;
+                };
+
+
+        if (isfieldChanged(allfields) || vr != this.state.visroot) {
+
             if (this.iAmMounted) {
-                this.setState({ fields });
+                this.setState({
+                    visroot: vr,
+                    fields: allfields[panelKey],
+                    [rgbFieldGroup[RED]]: allfields[rgbFieldGroup[RED]],
+                    [rgbFieldGroup[GREEN]]: allfields[rgbFieldGroup[GREEN]],
+                    [rgbFieldGroup[BLUE]]: allfields[rgbFieldGroup[BLUE]]
+                });
             }
         }
     }
 
-
     render() {
-        var {plotId, viewerId, plotMode, loadButton} = this.props;
+        var {loadButton} = this.props;
+        var {plotId, viewerId, plotMode} = getPlotInfo(this.state.visroot);
         var params = Object.assign({}, this.state, {plotId, viewerId, plotMode, loadButton});
 
         return <ImageSelectionView {...params}/>;
@@ -377,24 +247,48 @@ export class ImageSelection extends Component {
 }
 
 ImageSelection.propTypes = {
-    catalogId: PropTypes.number,
-    plotId: PropTypes.string,
-    viewerId: PropTypes.string,
-    plotMode: PropTypes.number,
+    catalogId: PropTypes.arrayOf(PropTypes.number),
     loadButton: PropTypes.bool
 };
 
+// detect if create new plot or new 3 color plots according to the option selected
+// output: PLOT_REPLACE, PLOT_CREATE, PLOT_CREATE3COLOR, PLOT_NO
 
 export function isCreatePlot(pMode, fields) {
-    if (!pMode || !fields) {
-        return false;
+    if (!pMode || pMode == PLOT_NO) {    // no plot to draw
+        return PLOT_NO;
     } else {
-        return (
-        (pMode === PlotSelectMode.AddNewPlot) ||
-        ((pMode === PlotSelectMode.ReplaceOrCreate) &&
-         (fields.hasOwnProperty(keyMap['plotmode']) && fields[keyMap['plotmode']].value === 'create'))
-        );
+        if (pMode & (PLOT_CREATE | PLOT_CREATE3COLOR)) {        // check plotMode and fields
+
+            var pm = fields ? get(fields, keyMap['plotmode']) : null;
+
+            if (pm && pm.value.includes('create')) {
+                return (pm.value.includes('3color')) ? PLOT_CREATE3COLOR : PLOT_CREATE;
+            } else {
+                return (pMode & PLOT_REPLACE)? PLOT_REPLACE :PLOT_CREATE|PLOT_CREATE3COLOR;
+            }
+        }
+        return PLOT_REPLACE;
     }
+}
+
+export function isOnThreeColorSetting(pMode, fields) {
+    var pmField = fields ? get(fields, keyMap['plotmode']) : null;
+
+    if (pmField && pmField.value === 'create3color') {
+        return true;
+    }
+
+    // no radio button is mounted, then check the mode
+    if ((pmField && pmField.value === 'replace') ||              // select replace already
+        (!pmField && pMode && (pMode & PLOT_REPLACE)))  {        // createorreplace or replace (no field yet)
+        var plotView = getActivePlotView(visRoot());
+
+        if (plotView) {
+            return primePlot(plotView).plotState.isThreeColor();
+        }
+    }
+    return false;
 }
 
 class ImageSelectionView extends Component {
@@ -403,50 +297,113 @@ class ImageSelectionView extends Component {
         super(props);
 
         this.state = {
-            crtCatalogId: computeCurrentCatalogId(props.fields, props.initCatalogId),
-            addPlot:  isCreatePlot(props.plotMode, props.fields)
+            crtCatalogId: computeCurrentCatalogId(props.fields,
+                            [props[rgbFieldGroup[RED]], props[rgbFieldGroup[GREEN]], props[rgbFieldGroup[BLUE]]],
+                            props.initCatalogId),
+            addPlot:  isCreatePlot(props.plotMode, props.fields),
+            isThreeColor: isOnThreeColorSetting(props.plotMode, props.fields)
         };
     }
 
     componentWillReceiveProps(nextProps) {
 
         this.setState ({
-            crtCatalogId: computeCurrentCatalogId(nextProps.fields, nextProps.initCatalogId),
-            addPlot: isCreatePlot(nextProps.plotMode, nextProps.fields)}
+            crtCatalogId: computeCurrentCatalogId(nextProps.fields,
+                [nextProps[rgbFieldGroup[RED]], nextProps[rgbFieldGroup[GREEN]], nextProps[rgbFieldGroup[BLUE]]],
+                 nextProps.initCatalogId),
+            addPlot: isCreatePlot(nextProps.plotMode, nextProps.fields),
+            isThreeColor: isOnThreeColorSetting(nextProps.plotMode, nextProps.fields)}
         );
     }
 
     render() {
 
         // tabs for each catalog
-        var categoryTabs = panelCatalogs.map((item, index) =>
-            (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
-                <CatalogTabView catalog={item}  fields={this.props.fields}/>
-            </Tab>)
-        );
+        var categoryTabs = (fieldName, msg='') => {
+               var tabsRes = panelCatalogs.map((item, index) =>
+                    (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
+                        <CatalogTabView catalog={item}  fields={get(this.props, fieldName)}/>
+                    </Tab>));
+                if (this.state.isThreeColor) {
+                    var noneTab = 'Disable';
+                    tabsRes.push(
+                        (<Tab key={noneTab} name={noneTab} id={`${NONE}`}>
+                            <div className='tabview padding_disable'>
+                                <span> {msg} </span>
+                            </div>
+                        </Tab>));
+                }
+                return tabsRes;
+        };
 
 
-        var radius = () => {
-            if (this.state.crtCatalogId != URL && this.state.crtCatalogId != FITS) {
+        var oneImageTabs = () => (
+                <FieldGroupTabs fieldKey={keyMap['catalogtab']} >
+                    {categoryTabs('fields')}
+                </FieldGroupTabs>
+            );
+
+
+        var threeColorTabs = rgb.map((color, index) => {
+                var msg = `${color.toUpperCase()} is not selected`;
+
                 return (
-                    <SizeInputFields fieldKey={keyMap['radiusfield']} />
+                    <CollapsiblePanel key={index}
+                                      header={color.toUpperCase()}
+                                      isOpen={ index === RED }>
+                        <FieldGroup groupKey={rgbFieldGroup[index]}
+                                    reducerFunc={ImageSelPanelChangeOneColor(this.state.crtCatalogId[index])}
+                                    keepState={true}>
+                            <FieldGroupTabs fieldKey={keyMap['catalogtab']}>
+                                {categoryTabs(rgbFieldGroup[index], msg)}
+                            </FieldGroupTabs>
+                        </FieldGroup>
+                    </CollapsiblePanel>
                 );
+            });
+
+        var tabsArea = () => {
+            if (this.state.isThreeColor) {
+                return (
+                    <div className={'section_lesstop'}>
+                        { threeColorTabs }
+                    </div>);
             } else {
-                return (<div></div>);
+                return (
+                    <div className={'section'}>
+                        { oneImageTabs() }
+                    </div>);
             }
+        };
+
+        var sizeArea = () => {
+            return isTargetNeeded(this.state.crtCatalogId, this.state.isThreeColor) ?
+                    <SizeInputFields fieldKey={keyMap['sizefield']} showFeedback={true} /> :
+                    <div></div>;
+        };
+
+        var targetPanelArea = () => {
+            var anytab = isTargetNeeded(this.state.crtCatalogId, this.state.isThreeColor);
+            return (<TargetPanelSetView plotMode={this.props.plotMode}
+                                displayEntry={anytab ? true : false} />);
+
         };
 
         var loadButtonArea = () => {
              if (!this.props.loadButton) {
                  return <div></div>;
              } else {
+                var plotInfo = {addPlot: this.state.addPlot,
+                                isThreeColor: this.state.isThreeColor,
+                                plotId: this.props.plotId,
+                                viewerId: this.props.viewerId};
                 return (
                     <div className={'close'}>
                         <div className={'padding'}>
                             <CompleteButton
                                 dialogId={popupId}
-                                groupKey={panelKey}
-                                onSuccess={resultSuccess(this.state.addPlot, this.props.viewerId)}
+                                groupKey={completeButtonKey(this.state.isThreeColor)}
+                                onSuccess={resultSuccess(plotInfo)}
                                 onFail={resultFail()}
                                 text={'Load'} />
                         </div>
@@ -468,23 +425,16 @@ class ImageSelectionView extends Component {
          */
         return (
             <FieldGroup  groupKey={panelKey}
-                         reducerFunc={ImageSelPanelChange(this.props.initCatalogId)}
+                         reducerFunc={ImageSelPanelChange(this.state.crtCatalogId, this.state.isThreeColor)}
                          keepState={true}>
                 <div className={'imagepanel'}>
                     <div className={'section'}>
-                        <TargetPanelSetView currentCatalogIdx={this.state.crtCatalogId}
-                                            plotMode={this.props.plotMode} />
+                        {targetPanelArea()}
                     </div>
-                    <div className={'section'}>
-                        <FieldGroupTabs
-                            fieldKey={keyMap['catalogtab']} >
-                            {categoryTabs}
-                        </FieldGroupTabs>
-                    </div>
+                    { tabsArea() }
                     <div className={'size'}>
-                        {radius()}
+                        { sizeArea()}
                     </div>
-
                     { loadButtonArea() }
                 </div>
             </FieldGroup>
@@ -493,8 +443,11 @@ class ImageSelectionView extends Component {
 }
 
 ImageSelectionView.propTypes={
-    initCatalogId: PropTypes.number.isRequired,
+    initCatalogId: PropTypes.arrayOf(PropTypes.number).isRequired,
     fields: PropTypes.object,
+    [rgbFieldGroup[RED]]: PropTypes.object,
+    [rgbFieldGroup[GREEN]]: PropTypes.object,
+    [rgbFieldGroup[BLUE]]: PropTypes.object,
     plotId: PropTypes.string,
     viewerId: PropTypes.string,
     plotMode: PropTypes.number,
@@ -511,10 +464,10 @@ ImageSelectionView.defaultProps={
  * @returns {XML}
  * @constructor
  */
-function TargetPanelSetView({currentCatalogIdx, plotMode}) {
+function TargetPanelSetView({plotMode, displayEntry}) {
 
-     var showTarget = () => {
-         if ((currentCatalogIdx === URL || currentCatalogIdx === FITS)) {
+    var showTarget = () => {
+         if ( !displayEntry ) {
              return <div className={'intarget'}></div>;
          } else {
              return (
@@ -523,7 +476,7 @@ function TargetPanelSetView({currentCatalogIdx, plotMode}) {
                      <ListBoxInputField
                          fieldKey={keyMap['targettry']}
                          options={[{label: 'Try NED then Simbad', value: 'NED'},
-                               {label: 'Try Simbad then NED', value: 'simbad'}
+                                   {label: 'Try Simbad then NED', value: 'simbad'}
                               ]}
                          multiple={false}
                          labelWidth={3}
@@ -534,16 +487,28 @@ function TargetPanelSetView({currentCatalogIdx, plotMode}) {
      };
 
     var showPlotMode = () => {
-        if ((plotMode && (plotMode === PlotSelectMode.ReplaceOrCreate))) {
+        var options = [];
+
+        // not showing the options if PLOT_REPLACE only
+        if (plotMode && (plotMode & PLOT_REPLACE) && (plotMode !== PLOT_REPLACE)) {
+            options.push({label: 'Replace Image', value: 'replace'});
+        }
+        if (plotMode && (plotMode & PLOT_CREATE)) {
+            options.push({label: 'Create New Plot', value: 'create'});
+        }
+        if (plotMode && (plotMode & PLOT_CREATE3COLOR)) {
+            options.push({label: 'Create New Plot - 3 Colors', value: 'create3color'});
+        }
+
+        if (options.length > 0) {
             return (
                 <div className={'padding_noleft'}>
                     <RadioGroupInputField
+                        initialState={{value: options[0].value,
+                                       fieldKey: keyMap['plotmode'] }}
                         alignment={'horizontal'}
                         fieldKey={keyMap['plotmode']}
-                        options={[
-                                {label: 'Replace Image', value: 'replace'},
-                                {label: 'Create New Plot', value: 'create'}
-                                ]}
+                        options={options}
                     />
                 </div>
             );
@@ -562,9 +527,13 @@ function TargetPanelSetView({currentCatalogIdx, plotMode}) {
 }
 
 TargetPanelSetView.propsTypes={
-    currentCatalogIdx: PropTypes.number.isRequired,
-    plotMode: PropTypes.number
+    plotMode: PropTypes.number,
+    displayEntry: PropTypes.bool
  };
+
+TargetPanelSetView.defaultProps={
+    displayEntry: false
+};
 
 
 /**
@@ -598,7 +567,7 @@ function CatalogTabView({catalog, fields}) {
 
     var inputfield = (fieldname, index) => {
         var fkey = `${sym}${fieldname}`;
-        var padding = (index === 0)? 'padding_top' : 'padding_nottop';
+        var padding = (index === 0)? 'tab_padding_top' : 'tab_padding_nottop';
 
         return (
             <div className={padding} key={index}>
@@ -635,7 +604,6 @@ function CatalogTabView({catalog, fields}) {
                     <FileUpload
                         wrapperStyle={{margin: '15px 10px 21px 10px'}}
                         fieldKey={keyMap['fitsupload']}
-                        upload_url= {catalog[fieldname].url}
                         initialState= {{
                         tooltip: 'Select a file to upload' }}
                     />

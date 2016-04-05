@@ -15,6 +15,11 @@ div.section {
     padding-left: 15%;
 }
 
+div.section_lesstop {
+    padding-top: -5px;
+    padding-left: 15%;
+}
+
 div.intarget {
     height: 75px;
     display: flex;
@@ -82,12 +87,16 @@ div.padding {
     padding: 15px 10px 15px 10px
 }
 
-div.padding_top {
+div.tab_padding_top {
     padding: 15px 10px 24px 10px
 }
 
-div.padding_nottop {
+div.tab_padding_nottop {
     padding: 0px 10px 10px 10px;
+}
+
+div.padding_disable {
+    padding: 15px 10px 30px 10px
 }
 
 div.padding_noleft {

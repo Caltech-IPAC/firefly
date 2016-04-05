@@ -6,11 +6,15 @@ import {convertAngle} from '../visualize/VisUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import Validate from '../util/Validate.js';
+import validator from 'validator';
 
-
-const invalidSizeMsg = 'size is out of range or not set yet';
+const invalidSizeMsg = 'size is not set properly or size is out of range';
 const DECDIGIT = 6;
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' Deg' };
+
+function getUnit(unit) {
+    return unitSign[unit];
+}
 
 /*
  * remove trailing zero from toFixed result
@@ -19,19 +23,24 @@ function toMaxFixed(floatNum, digits) {
     return parseFloat(floatNum.toFixed(digits));
 }
 
-// in string format, size in degree
-export const sizeToDeg = (size, unit) => (
-    (size)? toMaxFixed(convertAngle(((unit) ? unit :'deg'), 'deg', size), DECDIGIT).toString() : ''
-);
+// input: string format,
+// output: size in degree (string foramt, no decimal digit limit), '': invalid input
+export const sizeToDeg = (sizestr, unit) => {
+    if (sizestr && !validator.isFloat(sizestr)) {
+        return '';
+    }
+    return (sizestr) ? convertAngle(((unit) ? unit : 'deg'), 'deg', sizestr).toString() : '';
+};
 
-// in string format, size from degree to any other unit
+// input: size in degree string format
+// output: size in string format in any given unit (for displaying)
 export const sizeFromDeg= (sizeDeg, unit) => (
     (sizeDeg)? toMaxFixed(convertAngle('deg', ((unit) ? unit :'deg'), sizeDeg), DECDIGIT).toString() : ''
 );
 
-// validate size (in degree) within the range
+// validate if size (in degree, string foramt) is within the range
 var isSizeValid = (sizeDeg,  min, max) => (
-    (sizeDeg && Validate.floatRange(min, max, 1, 'value of radius size in degree', sizeDeg).valid) ? true : false
+    (sizeDeg && Validate.floatRange(min, max, 1, 'value of  size in degree', sizeDeg).valid) ? true : false
 );
 
 function updateSizeInfo(params) {
@@ -66,9 +75,13 @@ function getProps(params, fireValueChange) {
  */
 function handleOnChange(ev, sizeInfo, params, fireValueChange) {
      var {unit, value, valid, displayValue} = Object.assign({}, params, sizeInfo);
+     var min = () => sizeFromDeg(params.min, params.unit);
+     var max = () => sizeFromDeg(params.max, params.unit);
+     var msg = valid? '': `${invalidSizeMsg}, ${min()}-(${max()}${getUnit(params.unit)}.`;
+
 
      fireValueChange({
-         feedback: valid ? '' :  invalidSizeMsg,
+         feedback: msg,
          displayValue,
          unit,
          value,
@@ -82,7 +95,8 @@ const propTypes={
     value:       PropTypes.string.required,
     unit:        PropTypes.string,
     min:         PropTypes.number.isRequired,
-    max:         PropTypes.number.isRequired
+    max:         PropTypes.number.isRequired,
+    showFeedback:    PropTypes.bool
 };
 
 /**
@@ -148,10 +162,21 @@ class SizeInputFieldView extends Component {
 
     render() {
         var {displayValue, valid, unit} = this.state;
-        var {min, max} = this.props;
         var sign = unitSign[unit];
-        var message = `Valid range between: ${sizeFromDeg(min, unit)}${sign} and ${sizeFromDeg(max, unit)}${sign}`;
+        var minmsg = `${sizeFromDeg(this.props.min, unit)}`;
+        var maxmsg = `${sizeFromDeg(this.props.max, unit)}`;
+        var errmsg = `${invalidSizeMsg}, ${minmsg}-${maxmsg}${sign}.`;
 
+
+        var showFeedback = () => {
+            if (this.props.showFeedback) {
+                var message = `Valid range between: ${minmsg}${sign} and ${maxmsg}${sign}`;
+
+                return <p>{message}</p>;
+            } else {
+                return undefined;
+            }
+        };
 
         return (
             <div >
@@ -162,7 +187,7 @@ class SizeInputFieldView extends Component {
                         onBlur={this.onSizeChange}
                         onKeyPress={this.onSizeChange}
                         value={displayValue}
-                        message={invalidSizeMsg}
+                        message={errmsg}
                         label={this.props.label}
                         labelWidth={this.props.labelWidth}
                         tooltip={'enter size within the valid range'}
@@ -181,7 +206,7 @@ class SizeInputFieldView extends Component {
                         tooltip={'unit of the size'}
                     />
                 </div>
-                <p>{message}</p>
+                {showFeedback()}
             </div>
         );
     }
@@ -196,13 +221,15 @@ SizeInputFieldView.propTypes = {
     label:    PropTypes.string,
     onChange: PropTypes.func,
     value: PropTypes.string,
-    valid: PropTypes.bool
+    valid: PropTypes.bool,
+    showFeedback: PropTypes.bool
 };
 
 SizeInputFieldView.defaultProps = {
     label: 'Size: ',
     labelWidth: 50,
-    unit: 'deg'
+    unit: 'deg',
+    showFeedback: false
 };
 
 export const SizeInputFields = fieldGroupConnector(SizeInputFieldView, getProps, propTypes, null);

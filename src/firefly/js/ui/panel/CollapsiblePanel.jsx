@@ -9,9 +9,13 @@ import React from 'react';
 
 export default React.createClass({
 
+    propTypes: {
+        isOpen: React.PropTypes.bool
+    },
+
     getInitialState() {
         return {
-            isOpen: false
+            isOpen: this.props.isOpen? this.props.isOpen: false
         };
     },
 
