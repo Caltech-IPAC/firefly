@@ -54,9 +54,8 @@ export const SearchPanel = (props) => {
                     />
 
                     <FileUpload
-                        wrapperStyle={{margin: '5px 0'}}
-                        fieldKey='fileUpload'
-                        upload_url='sdlfjslf'
+                        wrapperStyle = {{margin: '5px 0'}}
+                        fieldKey = 'fileUpload'
                         initialState= {{
                         tooltip: 'Select a file to upload',
                         label: 'Upload File:'}}

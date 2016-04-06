@@ -316,15 +316,19 @@ public class FileUtil
 
 
     public static String readFile(File file) throws IOException {
-        DataInputStream in=null;
-        DataOutputStream out=null;
         if (!file.canRead()) {
             throw new IOException("Cannot read file");
         }
-        ByteArrayOutputStream byteAry= new ByteArrayOutputStream( (int)file.length()+200);
+        return readFile(new FileInputStream(file));
+    }
+
+    public static String readFile(InputStream inStream) throws IOException {
+        DataInputStream in=null;
+        DataOutputStream out=null;
+        ByteArrayOutputStream byteAry= new ByteArrayOutputStream();
 
         try {
-            in=new DataInputStream(new BufferedInputStream( new FileInputStream(file), BUFFER_SIZE));
+            in=new DataInputStream(new BufferedInputStream( inStream, BUFFER_SIZE));
             out=new DataOutputStream(byteAry);
 
             byte[] buffer = new byte[BUFFER_SIZE];
@@ -340,7 +344,6 @@ public class FileUtil
         }
         return byteAry.toString();
     }
-
 
 
     public static boolean writeStringToFile(File f, String s) {

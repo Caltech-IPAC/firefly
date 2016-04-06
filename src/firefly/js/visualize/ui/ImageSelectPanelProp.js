@@ -134,7 +134,6 @@ export const panelCatalogs = [
         },
         'upload': {
             'Title': '',
-            'url': 'sdlfjslf'
         },
         'list': {
             'Title': 'If file contains multiple extensions:',
