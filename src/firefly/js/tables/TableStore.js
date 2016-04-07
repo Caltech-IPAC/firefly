@@ -11,6 +11,12 @@ import * as TblUtil from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
 
 export class TableStore {
+
+    /**
+     * 
+     * @param props props from Table
+     * @param changeListener function called when data changed
+     */
     constructor(props, changeListener) {
         this.init(props);
         this.changeListener = changeListener;
@@ -39,15 +45,17 @@ export class TableStore {
         }
     }
 
+    onUnmount() {}
+
     onSort(sortInfoString) {
-        const {request} = this.cState.tableModel;
-        request.sortInfo = sortInfoString;
+        var {request} = this.cState.tableModel;
+        request = Object.assign({}, request, {sortInfo: sortInfoString});
         this.handleAction(TblCntlr.TABLE_FETCH, {request});
     }
 
     onFilter(filterIntoString) {
-        const {request} = this.cState.tableModel;
-        request.filters = filterIntoString;
+        var {request} = this.cState.tableModel;
+        request = Object.assign({}, request, {filters: filterIntoString});
         this.handleAction(TblCntlr.TABLE_FETCH, {request});
     }
 
@@ -93,15 +101,14 @@ export class TableStore {
         this.handleAction(TblCntlr.TABLE_SELECT, {tbl_id, selectInfo});
     }
 
-    onOptionUpdate({pageSize, columns, showUnits, showFilters}) {
+    onOptionUpdate({pageSize, columns, showUnits, showFilters, colSortDir}) {
         if (pageSize) {
             this.onPageSizeChange(pageSize);
-        } else {
-            const changes = omitBy({columns, showUnits, showFilters}, isUndefined);
-            if ( !isEmpty(changes) ) {
-                changes.tbl_ui_id = this.cState.tbl_ui_id;
-                this.handleAction(TblUiCntlr.TBL_UI_STATE_UPDATE, changes);
-            }
+        }
+        const changes = omitBy({columns, showUnits, showFilters, colSortDir}, isUndefined);
+        if ( !isEmpty(changes) ) {
+            changes.tbl_ui_id = this.cState.tbl_ui_id;
+            this.handleAction(TblUiCntlr.TBL_UI_STATE_UPDATE, changes);
         }
     }
 
@@ -116,17 +123,25 @@ export class TableStore {
     }
 
     handleAction(type, payload) {
+        var {tableModel, origTableModel} = this.cState;
+        if (! origTableModel && tableModel) {
+            // for localStore
+            // need to save orig tableModel when user wants to reset.
+            this.cState.origTableModel = cloneDeep(tableModel);
+            origTableModel = this.cState.origTableModel;
+        }
         switch (type) {
-            case (TblCntlr.TABLE_FETCH_UPDATE)  :
-                throw new Error('sorting and filtering is not implemented for localstore, yet.');
+            case (TblCntlr.TABLE_FETCH)  :
+                if (get(payload, ['request', 'sortInfo']) !== get(tableModel, ['request', 'sortInfo'])) {
+                    tableModel = TblUtil.sortTable(origTableModel, payload.request.sortInfo);
+                }
+                this.updateState({tableModel});
                 break;
 
             default:
-                var tableModel = Object.assign({}, this.cState.tableModel, payload);
+                tableModel = Object.assign({}, this.cState.tableModel, payload);
                 this.updateState({tableModel});
         }
-
-
     }
 
     /**

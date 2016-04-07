@@ -4,12 +4,12 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty, get, cloneDeep, omitBy, isUndefined} from 'lodash';
+import {isEmpty} from 'lodash';
 
 import {download} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
-import {BasicTable} from './BasicTable.jsx';
+import {BasicTableView} from './BasicTableView.jsx';
 import {RemoteTableStore, TableStore} from '../TableStore.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -47,12 +47,12 @@ export class TablePanel extends Component {
     }
 
     render() {
-        var {tableModel, columns, showOptions, showUnits, showFilters, textView} = this.state;
+        var {tableModel, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
         const {selectable, expandable, expandedMode, border, renderers} = this.props;
         const {tableStore} = this;
         if (isEmpty(columns) || isEmpty(tableModel)) return false;
         const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
-                            filterInfo, filterCount, sortInfo, data} = prepareTableData(tableModel);
+                            filterInfo, filterCount, sortInfo, data} = TblUtil.prepareTableData(tableModel);
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
 
@@ -86,7 +86,7 @@ export class TablePanel extends Component {
                         </div>
                     </div>
                     <div className='TablePanel__table'>
-                        <BasicTable
+                        <BasicTableView
                             columns={columns}
                             data={data}
                             hlRowIdx={hlRowIdx}
@@ -97,11 +97,12 @@ export class TablePanel extends Component {
                             filterInfo={filterInfo}
                             sortInfo={sortInfo}
                             textView={textView}
-                            tableStore={tableStore}
+                            callbacks={tableStore}
                             renderers={renderers}
                         />
                         {showOptions && <TablePanelOptions
                             columns={columns}
+                            colSortDir={colSortDir}
                             pageSize={pageSize}
                             showUnits={showUnits}
                             showFilters={showFilters}
@@ -145,19 +146,6 @@ TablePanel.defaultProps = {
     border: true,
     pageSize: 50
 };
-
-function prepareTableData(tableModel) {
-    if (!tableModel.tableData.columns) return {};
-    const {selectInfo} = tableModel;
-    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = TblUtil.gatherTableState(tableModel);
-    var data = tableModel.tableData.data.slice(startIdx, endIdx);
-    var tableRowCount = data.length;
-    const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
-    const sortInfo = get(tableModel, 'request.sortInfo');
-
-    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectInfo, filterInfo, filterCount, data};
-}
 
 const Expanded = ({}) => {
   return (

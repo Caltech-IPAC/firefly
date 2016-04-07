@@ -5,7 +5,9 @@ package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.DataEntry;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.RawDataSet;
+import edu.caltech.ipac.firefly.data.table.TableMeta;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
@@ -1014,7 +1016,7 @@ public class VisServerOps {
      */
 
     public static Map  getFitsHeaderExtend(PlotState state) throws FitsException {
-        HashMap<Band, DataGroup> dataMap = new HashMap<Band, DataGroup>();
+        HashMap<String, DataGroup> dataMap = new HashMap<String, DataGroup>();
         ActiveCallCtx ctx = null;
 
         try {
@@ -1025,7 +1027,7 @@ public class VisServerOps {
                 FitsRead fr = plot.getHistogramOps(band, ctx.getFitsReadGroup()).getFitsRead();
                 DataGroup dg = getFitsHeaders(fr.getHeader(), plot.getPlotDesc());
 
-                dataMap.put(band, dg);
+                dataMap.put(band.name(), dg);
 
             }
           return dataMap;
@@ -1045,31 +1047,38 @@ public class VisServerOps {
      * @return
      */
 
-    public static  Object[] getFitsHeader(PlotState state) throws FitsException {
+    public static  Object[] getFitsHeader(PlotState state, String tableID) throws FitsException {
 
 
-        HashMap<Band, DataGroup> dataMap = new HashMap< Band, DataGroup>();
+        HashMap<String, DataGroup> dataMap = new HashMap<String, DataGroup>();
 
-        HashMap<Band, Long> fileSizeMap = new HashMap<Band, Long>();
+        HashMap<String, TableMeta> metaMap = new HashMap<String, TableMeta>();
         try {
             for (Band band : state.getBands()) {
                 File f = PlotStateUtil.getWorkingFitsFile(state, band);
                 if (f == null) f = PlotStateUtil.getOriginalFile(state, band);
                 Fits fits = new Fits(f);
-                fileSizeMap.put(band,f.length() );
+                TableServerRequest  request = new TableServerRequest("fitsHeaderTale");
+                request.setMeta(TableServerRequest.TBL_ID, tableID);
+
+                TableMeta meta = new TableMeta("fitsHeader");
+                meta.setFileSize(f.length());
+                meta.setAttribute(TableServerRequest.TBL_ID, tableID + '-' + band.name());
+
+                metaMap.put(band.name(), meta);
                 BasicHDU hdu[] = fits.read();
                 Header header = hdu[0].getHeader();
                 if (header.containsKey("EXTEND") && header.getBooleanValue("EXTEND")) {
-                    dataMap = (HashMap<Band, DataGroup>) getFitsHeaderExtend(state);
+                    dataMap = (HashMap<String, DataGroup>) getFitsHeaderExtend(state);
                 } else {
                     DataGroup dg = getFitsHeaders(header, "fits data");
 
-                    dataMap.put(band, dg);
+                    dataMap.put(band.name(), dg);
                 }
             }
 
             ////LZcounters.incrementVis("Fits header");
-            Object[] mapObj =  {dataMap, fileSizeMap};
+            Object[] mapObj =  {dataMap, metaMap};
             return mapObj;
 
         }

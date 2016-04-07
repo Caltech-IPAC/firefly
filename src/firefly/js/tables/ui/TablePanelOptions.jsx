@@ -3,63 +3,23 @@
  */
 
 import React from 'react';
-import {isEmpty, cloneDeep} from 'lodash';
+import {isEmpty, cloneDeep, get} from 'lodash';
 
-import {BasicTable} from './BasicTable.jsx';
+import {BasicTableView} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
+import {SortInfo, SORT_ASC} from '../SortInfo.js';
+import {sortTable} from '../TableUtil.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 
 
-function prepareOptionData(columns) {
-
-    var data = columns.map( (v, idx) => {
-        return [v.name];
-    } );
-    var cols = [{name: 'Column', visibility: 'show', prefWidth: 20}];
-    var selectInfoCls = SelectInfo.newInstance({});
-    selectInfoCls.data.rowCount = data.length;
-    columns.forEach( (v, idx) => {
-        selectInfoCls.setRowSelect(idx, v.visibility === 'show');
-    } );
-    var tableRowCount = data.length;
-
-    return {cols, data, tableRowCount, selectInfoCls };
-}
-
 export const TablePanelOptions = (props) => {
-    const {columns, pageSize, showUnits, showFilters, onChange} = props;
+    const {columns, pageSize, showUnits, showFilters, onChange, colSortDir} = props;
     if (isEmpty(columns)) return false;
 
-    var onSelectAll = (checked) => {
-        const nColumns = cloneDeep(columns);
-        nColumns.forEach((v) => {
-            v.visibility = checked ? 'show' : 'hide';
-        });
-        onChange && onChange({columns: nColumns});
-    };
-
-    var onRowSelect = (checked, rowIdx) => {
-        const nColumns = cloneDeep(columns);
-        nColumns[rowIdx].visibility = checked ? 'show' : 'hide';
-        onChange && onChange({columns: nColumns});
-    };
-
-    var onPageSize = (pageSize) => {
-        if (pageSize.valid) {
-            onChange && onChange({pageSize: pageSize.value});
-        }
-    };
-
-    var onPropChanged = (v, prop) => {
-        onChange && onChange({[prop]: v});
-    };
-
-    var onReset = () => {
-        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: []});
-    };
-
-    const {cols, data, selectInfoCls} = prepareOptionData(columns);
+    const {cols, data, sortInfo, selectInfoCls} = prepareOptionData(columns, colSortDir);
+    const callbacks = makeCallbacks(onChange, columns, data);
+    const {onPageSize, onPropChanged, onReset, ...tableCallbacks} = callbacks;
     return (
         <div className='TablePanelOptions'>
             <div style={{flexGrow: 0}}>
@@ -85,13 +45,14 @@ export const TablePanelOptions = (props) => {
                 </div>
             </div>
             <div style={{height: 'calc(100% - 40px)'}}>
-                <BasicTable
+                <BasicTableView 
                     columns={cols}
                     data={data}
                     height='calc(100% - 42px)'
                     selectable={true}
                     selectInfoCls={selectInfoCls}
-                    tableStore={{onSelectAll, onRowSelect}}
+                    sortInfo={sortInfo}
+                    callbacks={tableCallbacks}
                 />
             </div>
         </div>
@@ -100,10 +61,78 @@ export const TablePanelOptions = (props) => {
 
 TablePanelOptions.propTypes = {
     columns: React.PropTypes.arrayOf(React.PropTypes.object),
+    colSortDir: React.PropTypes.oneOf(['ASC', 'DESC', '']),
     pageSize: React.PropTypes.number,
     showUnits: React.PropTypes.bool,
     showFilters: React.PropTypes.bool,
     onChange: React.PropTypes.func
 };
 
+function prepareOptionData(columns, colSortDir) {
 
+    if (colSortDir) {
+        // sort the columns according to colSortDir
+        const multiplier = colSortDir === SORT_ASC ? 1 : -1;
+        const comparator = (r1, r2) => {
+            const [s1, s2] = [r1.name, r2.name];
+            return multiplier * (s1 > s2 ? 1 : -1);
+        };
+        columns = columns.slice();      // shallow clone
+        columns.sort(comparator);
+    }
+
+    var data = columns.map( (v, idx) => {
+        return [v.name];
+    } );
+
+    var cols = [{name: 'Column', visibility: 'show', prefWidth: 20}];
+    const sortInfo = SortInfo.newInstance(colSortDir, 'Column').serialize();
+
+    var selectInfoCls = SelectInfo.newInstance({});
+    selectInfoCls.data.rowCount = data.length;
+    columns.forEach( (v, idx) => {
+        selectInfoCls.setRowSelect(idx, v.visibility === 'show');
+    } );
+    var tableRowCount = data.length;
+
+    return {cols, data, tableRowCount, selectInfoCls, sortInfo};
+}
+
+function makeCallbacks(onChange, columns, data) {
+    var onSelectAll = (checked) => {
+        const nColumns = cloneDeep(columns);
+        nColumns.forEach((v) => {
+            v.visibility = checked ? 'show' : 'hide';
+        });
+        onChange && onChange({columns: nColumns});
+    };
+
+    var onRowSelect = (checked, rowIdx) => {
+        const selColName = get(data, [rowIdx, 0]);
+        const nColumns = cloneDeep(columns);
+        const selCol = nColumns.find((col) => col.name === selColName);
+        selCol && (selCol.visibility = checked ? 'show' : 'hide');
+        onChange && onChange({columns: nColumns});
+    };
+
+    var onPageSize = (pageSize) => {
+        if (pageSize.valid) {
+            onChange && onChange({pageSize: pageSize.value});
+        }
+    };
+
+    var onSort = (sortInfoString) => {
+        const colSortDir = SortInfo.parse(sortInfoString).direction;
+        onChange && onChange({colSortDir});
+    };
+
+    var onPropChanged = (v, prop) => {
+        onChange && onChange({[prop]: v});
+    };
+
+    var onReset = () => {
+        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: null});
+    };
+
+    return {onSelectAll, onRowSelect, onPageSize, onSort, onPropChanged, onReset};
+}

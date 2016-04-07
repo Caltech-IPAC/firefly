@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
+import {get, set, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
 import * as TblUiCntlr from './TablesUiCntlr.js';
 import {SelectInfo} from './SelectInfo.js';
+import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
 import {fetchUrl, encodeServerUrl} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
@@ -142,12 +143,16 @@ export function isFullyLoaded(tbl_id) {
     return isTableLoaded(findTblById(tbl_id));
 }
 
+export function findColumnIdx(tableModel, colName) {
+    const cols = get(tableModel, 'tableData.columns', []);
+    return cols.findIndex((col) => {
+        return col.name === colName;
+    });
+}
+
 export function getCellValue(tableModel, rowIdx, colName) {
-    if (tableModel.tableData && tableModel.tableData.data) {
-        const cols = tableModel.tableData.columns;
-        const colIdx = cols.findIndex((col) => {
-            return col.name === colName;
-        });
+    if (get(tableModel, 'tableData.data.length', 0) > 0) {
+        const colIdx = findColumnIdx(tableModel, colName);
         // might be undefined if row is not loaded
         return get(tableModel.tableData.data, [rowIdx, colIdx]);
     }
@@ -228,6 +233,41 @@ export function smartMerge(target, source) {
     }
 }
 
+/**
+ * sort the given tableModel based on the given request
+ * @param origTableModel original table model.  this is returned when direction is UNSORTED.
+ * @param sortInfoStr
+ */
+export function sortTable(origTableModel, sortInfoStr) {
+    const sortInfoCls = SortInfo.parse(sortInfoStr);
+    const colName = get(sortInfoCls, 'sortColumns.0');
+    const dir = get(sortInfoCls, 'direction', UNSORTED);
+    if (dir === UNSORTED || get(origTableModel, 'tableData.data.length', 0) === 0) return origTableModel;
+
+    const multiplier = dir === SORT_ASC ? 1 : -1;
+    const colIdx = findColumnIdx(origTableModel, colName);
+    const col = get(origTableModel, ['tableData','columns', colIdx]);
+
+    var tableModel = cloneDeep(origTableModel);
+    set(tableModel, 'request.sortInfo', sortInfoStr);
+
+    var comparator;
+    if (!col.type || ['char', 'c'].includes(col.type) ) {
+        comparator = (r1, r2) => {
+                const [s1, s2] = [r1[colIdx], r2[colIdx]];
+                return multiplier * (s1 > s2 ? 1 : -1);
+            };
+    } else {
+        comparator = (r1, r2) => {
+                const [v1, v2] = [r1[colIdx], r2[colIdx]];
+                return multiplier * (Number(v1) - Number(v2));
+            };
+    }
+    tableModel.tableData.data.sort(comparator);
+    return tableModel;
+}
+
+
 export function gatherTableState(tableModel) {
     var {tbl_id, highlightedRow} = tableModel;
 
@@ -260,6 +300,19 @@ export function tableToText(columns, dataAry, showUnits=false) {
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;
+}
+
+export function prepareTableData(tableModel) {
+    if (!tableModel.tableData.columns) return {};
+    const selectInfo = get(tableModel, 'selectInfo', {});
+    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = gatherTableState(tableModel);
+    var data = tableModel.tableData.data.slice(startIdx, endIdx);
+    var tableRowCount = data.length;
+    const filterInfo = get(tableModel, 'request.filters');
+    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
+    const sortInfo = get(tableModel, 'request.sortInfo');
+
+    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectInfo, filterInfo, filterCount, data};
 }
 
 

@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.data.table.RawDataSet;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupPart;
 import edu.caltech.ipac.firefly.server.util.ipactable.DataGroupReader;
+import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataGroup;
@@ -266,6 +267,16 @@ public class QueryUtil {
         return dataset;
     }
 
+    public static DataGroupPart convertToDataGroupPart(DataGroup dg, int startIdx, int pageSize) {
+        DataGroup page = dg.subset(startIdx, startIdx+pageSize);
+        page.setRowIdxOffset(startIdx);
+        TableDef tableDef = new TableDef();
+        tableDef.setSource("unknown");
+        tableDef.setStatus(DataGroupPart.State.COMPLETED);
+        tableDef.setCols(Arrays.asList(page.getDataDefinitions()));
+
+        return new DataGroupPart(tableDef, dg, startIdx, page.size());
+    }
 
     /**
      * return Float.NaN if val is null or not a float

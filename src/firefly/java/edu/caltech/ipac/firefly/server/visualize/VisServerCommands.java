@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.servlets.CommandService;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.ipactable.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.util.ipactable.TableDef;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -286,12 +285,13 @@ public class VisServerCommands {
             //TableServerRequest req=TableServerRequest.parse(sp.getRequired(ServerParams.FITS_HEADER));
             PlotState state= sp.getState();
 
-           Object[]  dataInfo = VisServerOps.getFitsHeader(state);
-           HashMap<Band, DataGroup> dataGroupMap= (HashMap<Band, DataGroup> ) dataInfo[0];
-           HashMap<Band, Long> fileSizeMap = ( HashMap<Band, Long> ) dataInfo[1];
+           Object[]  dataInfo = VisServerOps.getFitsHeader(state, tableID);
+           HashMap<String, DataGroup> dataGroupMap= (HashMap<String, DataGroup> ) dataInfo[0];
+           HashMap<String, TableMeta> metaMap = ( HashMap<String, TableMeta> ) dataInfo[1];
 
-
-           return JsonTableUtil.dataGroupMapToJasonString(dataGroupMap, fileSizeMap,tableID);
+           TableServerRequest treq = new TableServerRequest("fitsHeaderTale");
+           treq.setPageSize(Integer.MAX_VALUE);
+           return JsonTableUtil.toJsonTableModelMap(dataGroupMap, metaMap, treq).toJSONString();
 
 
         }

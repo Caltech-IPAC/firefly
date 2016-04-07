@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.*;
@@ -46,8 +47,10 @@ public class JsonTableUtil {
                 }
             }
         }
-        for (String key : request.getMeta().keySet()) {
-            meta.setAttribute(key, request.getMeta(key));
+        if (request != null && request.getMeta() != null) {
+            for (String key : request.getMeta().keySet()) {
+                meta.setAttribute(key, request.getMeta(key));
+            }
         }
         String tblId = meta.getAttribute(TableServerRequest.TBL_ID);
 
@@ -58,7 +61,7 @@ public class JsonTableUtil {
         tableModel.put("totalRows", page.getRowCount());
 
         if (page.getData() != null ) {
-                tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
+            tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
         }
         
 
@@ -203,37 +206,17 @@ public class JsonTableUtil {
     //=============================
 
     //LZ DM-4494
-    public static String toJsonString(DataGroup dataGroup, Long fileSize, String tableID) throws IOException {
-
-        DataGroupPart dp = new DataGroupPart();
-        dp.setData(dataGroup);
-
-        TableServerRequest  request = new TableServerRequest("fitsHeaderTale");
-        request.setMeta(TableServerRequest.TBL_ID, tableID);
-
-        TableMeta meta = new TableMeta("fitsHeader");
-        meta.setFileSize((fileSize));
-
-        JSONObject jsonObj = JsonTableUtil.toJsonTableModel(dp, meta,  request);
-
-
-
-        return jsonObj.toJSONString();
-
-
-    }
-
-    //LZ DM-4494
-    public static String dataGroupMapToJasonString(HashMap<Band, DataGroup> dataMap,HashMap<Band,Long> fileSizeMap, String tableID) throws IOException {
-
-
+    public static JSONObject toJsonTableModelMap(Map<String, DataGroup> dataMap, Map<String, TableMeta> metaMap, TableServerRequest request) throws IOException {
         JSONObject jsoObj = new JSONObject();
-        for (Band band : dataMap.keySet()) {
-            jsoObj.put(band.name(), toJsonString(dataMap.get(band), fileSizeMap.get(band), tableID));
+        for (Object key : dataMap.keySet()) {
+            TableMeta meta = metaMap.get(key);
+            DataGroupPart dp = QueryUtil.convertToDataGroupPart(dataMap.get(key), 0, Integer.MAX_VALUE);
+            JSONObject aJsonTable = JsonTableUtil.toJsonTableModel(dp, meta, request);
+
+            jsoObj.put(key, aJsonTable);
 
         }
-
-        return jsoObj.toJSONString();
+        return jsoObj;
     }
 
     //============================= //============================= //============================= //============================= //============================= //=============================

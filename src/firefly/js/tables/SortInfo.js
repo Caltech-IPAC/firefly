@@ -17,10 +17,16 @@ export const UNSORTED = '';
  **/
  export class SortInfo {
     constructor(direction=UNSORTED, sortColumns=[]) {
-        this.direction = direction !== SORT_DESC ? SORT_ASC : direction;
+        this.direction = direction;
         this.sortColumns = sortColumns;
     }
 
+    /**
+     * returns the sort direction of the given column name based on
+     * this SortInfo.
+     * @param colName
+     * @returns {*}
+     */
     getDirection(colName) {
         if (this.sortColumns.includes(colName)) {
             return this.direction;
@@ -33,7 +39,7 @@ export const UNSORTED = '';
         const dir = this.getDirection(colName);
         this.direction = dir === UNSORTED ? SORT_ASC :
                          dir === SORT_ASC ? SORT_DESC : UNSORTED;
-        this.sortColumns = [colName];
+        this.sortColumns = UNSORTED ? [] : [colName];
         return this;
     }
 

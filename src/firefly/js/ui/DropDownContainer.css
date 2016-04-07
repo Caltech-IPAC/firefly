@@ -1,6 +1,6 @@
 .DD-ToolBar {
     display: flex;
-    z-index: 10;
+    z-index: 110;
     position: absolute;
     width: 100%;
     background-color: rgba(200,200,200,0.92);

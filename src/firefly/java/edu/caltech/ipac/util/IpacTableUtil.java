@@ -368,10 +368,7 @@ public class IpacTableUtil {
             meta.addAttributes(attribs.toArray(new DataGroup.Attribute[attribs.size()]));
         }
         if (cols != null) {
-            for (DataType c : cols) {
-                meta.addCols(c);
-            }
-            meta.setColCount(cols.size());
+            meta.setCols(cols);
         }
         if (src != null) {
             long totalRow = meta.getLineWidth() == 0 ? 0 :
