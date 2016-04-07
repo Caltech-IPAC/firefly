@@ -84,7 +84,7 @@ export const TablePanelOptions = (props) => {
                     <span>Show Filters: <input type='checkbox' onChange={(e) => onPropChanged(e.target.checked, 'showFilters')} checked={showFilters}/></span>
                 </div>
             </div>
-            <div style={{flexGrow: 1, display: 'flex'}}>
+            <div style={{height: 'calc(100% - 40px)'}}>
                 <BasicTable
                     columns={cols}
                     data={data}
