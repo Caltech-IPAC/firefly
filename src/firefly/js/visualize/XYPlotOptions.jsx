@@ -15,6 +15,7 @@ import {ValidationField} from '../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
 import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
+import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
 import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
 
 
@@ -100,28 +101,48 @@ var XYPlotOptions = React.createClass({
         // TODO: do I need to do anything here?
     },
 
+
     render() {
         const { colValStats, groupKey }= this.props;
         const fields = FieldGroupUtils.getGroupFields(groupKey);
+
+        // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
+        const allSuggestions = colValStats.map((colVal,idx)=>{return idx;});
+
+        const getSuggestions = (val)=>{
+            const matches = allSuggestions.filter((idx)=>{return colValStats[idx].name.startsWith(val);});
+            return matches.length ? matches : allSuggestions;
+        };
+
+        const renderSuggestion = (idx)=>{
+            const colVal = colValStats[idx];
+            return colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : '');
+        };
+
+        const valueOnSuggestion = (prevVal, idx)=>{return colValStats[idx].name;};
+
+        const colValidator = (val) => {
+            let retval = {valid: true, message: ''};
+            if (!colValStats.find((colVal) => (colVal.name === val))) {
+                retval = {valid: false, message: `${val} is not a valid column`};
+            }
+            return retval;
+        };
+
         return (
             <div style={{padding:'5px'}}>
                 <br/>
                 <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={true}>
-                    <ListBoxInputField
+                    <SuggestBoxInputField
                         initialState= {{
                             value: FieldGroupUtils.getFldValue(fields, 'x.columnOrExpr'),
-                            tooltip: 'Please select a column or expression for X axis',
-                            label: 'X:'
+                            tooltip: 'Column or expression for X axis',
+                            label: 'X:',
+                            validator: colValidator
                         }}
-                        options={
-                            colValStats.map((colVal) => {
-                                return {
-                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                    value: colVal.name
-                                };
-                            })
-                        }
-                        multiple={false}
+                        getSuggestions={getSuggestions}
+                        renderSuggestion={renderSuggestion}
+                        valueOnSuggestion={valueOnSuggestion}
                         fieldKey='x.columnOrExpr'
                         groupKey={groupKey}
                         labelWidth={20}
@@ -167,21 +188,16 @@ var XYPlotOptions = React.createClass({
                     </CollapsiblePanel>
                     <br/>
 
-                    <ListBoxInputField
+                    <SuggestBoxInputField
                         initialState= {{
-                            tooltip: 'Please select a column or expression for Y axis',
+                            tooltip: 'Column or expression for Y axis',
                             label : 'Y:',
-                            value: FieldGroupUtils.getFldValue(fields, 'y.columnOrExpr')
+                            value: FieldGroupUtils.getFldValue(fields, 'y.columnOrExpr'),
+                            validator: colValidator
                         }}
-                        options={
-                            colValStats.map((colVal) => {
-                                return {
-                                    label: colVal.name + ' ' + (colVal.unit && colVal.unit !== 'null' ? colVal.unit : ''),
-                                    value: colVal.name
-                                };
-                            })
-                        }
-                        multiple={false}
+                        getSuggestions={getSuggestions}
+                        renderSuggestion={renderSuggestion}
+                        valueOnSuggestion={valueOnSuggestion}
                         fieldKey='y.columnOrExpr'
                         groupKey={groupKey}
                         labelWidth={20}
