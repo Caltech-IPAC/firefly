@@ -92,7 +92,7 @@ export class BasicTable extends React.Component {
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
-            <Resizable id='table-resizer' style={{position: 'relative', width: '100%', overflow: 'hidden'}} onResize={this.onResize}>
+            <Resizable id='table-resizer' style={{position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}} onResize={this.onResize}>
                 { textView ? <TextView { ...{columns, data, showUnits, heightPx, widthPx} }/> :
                     <Table
                         rowHeight={rowHeight}

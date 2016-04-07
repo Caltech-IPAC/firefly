@@ -19,12 +19,10 @@
 }
 
 .TablePanel__wrapper {
-    display: flex;
-    flex-direction: column;
-    flex: auto;
     position: relative;
     background-color: #c8c8c8;
     padding: 0;
+    flex-grow: 1;
 }
 
 .TablePanel__wrapper .border {
@@ -34,14 +32,20 @@
 
 .TablePanel__toolbar {
     height: 33px;
-    flex-grow: 0;
-}
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;}
 
 .TablePanel__table {
     background-color: white;
-    display: flex;
-    flex-grow: 1;
-}
+    display: -ms-flexbox;
+    -ms-flex-positive: 1;
+    position: absolute;
+    top: 33px;
+    bottom: 0;
+    left: 0;
+    right: 0;}
 
 .TablePanel__header {
     white-space: nowrap;
@@ -105,7 +109,7 @@ button.tablepanel.clearFilters {
     position: absolute;
     padding: 5px 7px;
     width: 205px;
-    top: 34px;
+    top: 1px;
     bottom: 0;
     right: 0;
     background-color: beige;
