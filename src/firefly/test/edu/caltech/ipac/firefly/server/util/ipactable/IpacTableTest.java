@@ -4,11 +4,9 @@
 package edu.caltech.ipac.firefly.server.util.ipactable;
 
 import edu.caltech.ipac.firefly.data.DecimateInfo;
-import edu.caltech.ipac.firefly.data.FinderChartRequestUtil;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.TableMeta;
-import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.DataGroup;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.IpacTableUtil;
@@ -20,7 +18,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 
 /**
  * @author loi
@@ -28,7 +25,7 @@ import java.util.HashMap;
  */
 public class IpacTableTest {
 
-    private static final String TEST_ROOT = "/test" + File.separatorChar;
+    private static final String TEST_ROOT = "test" + File.separatorChar;
     private static final String TEST_RES_PATH = IpacTableTest.class.getCanonicalName().replaceAll("\\.", "/").replace(IpacTableTest.class.getSimpleName(), "") + File.separatorChar;
 
     private static final File ipacTable = new File(TEST_ROOT, TEST_RES_PATH + "test_data.tbl");
@@ -59,7 +56,6 @@ public class IpacTableTest {
 
     @Test
     public void testJsonTableUtil() throws IOException {
-        String dir = System.getProperty("user.dir");
         TableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
         DataGroup data = DataGroupReader.read(ipacTable);
         DataGroupPart page = new DataGroupPart(tableDef, data, 0, tableDef.getRowCount());
