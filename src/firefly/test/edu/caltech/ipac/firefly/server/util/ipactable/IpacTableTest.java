@@ -28,7 +28,7 @@ import java.util.HashMap;
  */
 public class IpacTableTest {
 
-    private static final String TEST_ROOT = "test" + File.separatorChar;
+    private static final String TEST_ROOT = "/test" + File.separatorChar;
     private static final String TEST_RES_PATH = IpacTableTest.class.getCanonicalName().replaceAll("\\.", "/").replace(IpacTableTest.class.getSimpleName(), "") + File.separatorChar;
 
     private static final File ipacTable = new File(TEST_ROOT, TEST_RES_PATH + "test_data.tbl");
@@ -59,6 +59,7 @@ public class IpacTableTest {
 
     @Test
     public void testJsonTableUtil() throws IOException {
+        String dir = System.getProperty("user.dir");
         TableDef tableDef = IpacTableUtil.getMetaInfo(ipacTable);
         DataGroup data = DataGroupReader.read(ipacTable);
         DataGroupPart page = new DataGroupPart(tableDef, data, 0, tableDef.getRowCount());

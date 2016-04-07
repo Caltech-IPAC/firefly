@@ -58,19 +58,14 @@ public class JsonTableUtil {
         tableModel.put("totalRows", page.getRowCount());
 
         if (page.getData() != null ) {
-            if (page.getTableDef()!=null){
                 tableModel.put("tableData", toJsonTableData(page.getData(), page.getTableDef(), meta));
-            }
-            else {
-                tableModel.put("tableData", toJsonTableData(page.getData(),null, meta));
-            }
-
         }
+        
 
         if (meta != null) {
             tableModel.put("tableMeta", toJsonTableMeta(meta));
         }
-        if (request != null  && request.getMeta().keySet().size()>1) {
+        if (request != null ){
             tableModel.put("request", toJsonTableRequest(request));
         }
 
@@ -242,5 +237,11 @@ public class JsonTableUtil {
     }
 
     //============================= //============================= //============================= //============================= //============================= //=============================
+
+
+
 }
+
+
+
 
