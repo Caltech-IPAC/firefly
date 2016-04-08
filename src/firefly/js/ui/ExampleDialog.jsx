@@ -10,6 +10,7 @@ import {ValidationField} from './ValidationField.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
+import {SuggestBoxInputField} from './SuggestBoxInputField.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -102,8 +103,8 @@ var exDialogReducer= function(inFields, action) {
             return Object.assign({},inFields,{low,high});
         }
         else {
-            low= Object.assign({},low, {valid:true});
-            high= Object.assign({},high, {valid:true});
+            low= Object.assign({},low, low.validator(low.value));
+            high= Object.assign({},high, high.validator(high.value));
             return Object.assign({},inFields,{low,high});
         }
     }
@@ -216,10 +217,35 @@ function FieldGroupTestView ({fields}) {
     }
     var field1= makeField1(hide);
 
+    const validSuggestions = [];
+    for (var i=1; i<100; i++) { validSuggestions.push(...[`w${i}mpro`, `w${i}mprosig`, `w${i}snr`]); }
+
     return (
         <FieldGroup groupKey={'DEMO_FORM'} initValues={{extraData:'asdf',field1:'4'}} reducerFunc={exDialogReducer} keepState={true}>
             <InputGroup labelWidth={110}>
                 <TargetPanel/>
+                <SuggestBoxInputField
+                    fieldKey='suggestion1'
+                    initialState= {{
+                        fieldKey: 'suggestion1',
+                        value: '',
+                        validator:  (val) => {
+                            let retval = {valid: true, message: ''};
+                            if (!validSuggestions.includes(val)) {
+                                retval = {valid: false, message: `${val} is not a valid column`};
+                            }
+                            return retval;
+                        },
+                        tooltip: 'Start typing and the list of suggestions will appear',
+                        label : 'Suggestion Field:',
+                        labelWidth : 100
+                    }}
+                    getSuggestions = {(val)=>{
+                        const suggestions = validSuggestions.filter((el)=>{return el.startsWith(val);});
+                        return suggestions.length > 0 ? suggestions : validSuggestions;
+                    }}
+                />
+
                 {field1}
                 <ValidationField fieldKey='field2' />
                 <ValidationField fieldKey='field3'
@@ -313,7 +339,7 @@ function FieldGroupTestView ({fields}) {
                                          initialState= {{
                                           fieldKey: 'fieldInTabX2',
                                           value: '87',
-                                          validator: Validate.intRange.bind(null, 66, 666, 3,'Tab Test Field'),
+                                          validator: Validate.intRange.bind(null, 66, 666, 'Tab Test Field'),
                                           tooltip: 'more tipping',
                                           label : 'tab test field:',
                                           labelWidth : 100
@@ -325,7 +351,7 @@ function FieldGroupTestView ({fields}) {
                                              initialState= {{
                                           fieldKey: 'fieldInTabX3',
                                           value: '88',
-                                          validator: Validate.intRange.bind(null, 22, 33, 23,'Tab Test Field 22-33'),
+                                          validator: Validate.intRange.bind(null, 22, 33, 'Tab Test Field 22-33'),
                                           tooltip: 'more tipping',
                                           label : 'tab test field:',
                                           labelWidth : 100
