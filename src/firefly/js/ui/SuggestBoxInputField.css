@@ -1,5 +1,5 @@
 .SuggestBoxInputField {
-  position: relative;
+    position: relative;
 }
 
 .SuggestBoxPopup {
@@ -20,7 +20,7 @@
 
 .SuggestBox__Suggestion {
   display: block;
-  padding: 2px 20px;
+  padding: 2px 20px 2px 10px;
   cursor: default;
 }
 
