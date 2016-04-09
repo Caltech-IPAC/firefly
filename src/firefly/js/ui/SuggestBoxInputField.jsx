@@ -98,18 +98,15 @@ class SuggestBoxInputFieldView extends Component {
 
     updateSuggestions(displayValue) {
         const arrayOrPromise = this.props.getSuggestions(displayValue);
-        if (arrayOrPromise.then) {
-            this.suggestionsPromise = arrayOrPromise;
-            arrayOrPromise.then((suggestions) => {
-                // make sure the suggestions are still relevant
-                if (arrayOrPromise === this.suggestionsPromise) {
-                    this.setState({isOpen: true, suggestions: arrayOrPromise});
-                }
-            }).catch(err =>  logError(e))
-        } else if (isArray(arrayOrPromise) && arrayOrPromise.length>0) {
-            this.setState({isOpen: true, suggestions: arrayOrPromise});
-        }
+        this.suggestionsPromise = arrayOrPromise;
+        Promise.resolve(arrayOrPromise).then((suggestions) => {
+            // make sure the suggestions are still relevant when promise returns
+            if (arrayOrPromise === this.suggestionsPromise && isArray(suggestions) && suggestions.length > 0) {
+                this.setState({isOpen: true, suggestions});
+            }
+        }).catch(err => logError(err))
     }
+
 
     changeHighlighted(newHighlightedIdx) {
         if (newHighlightedIdx !== this.state.highlightedIdx) { this.setState({highlightedIdx: newHighlightedIdx}); }
