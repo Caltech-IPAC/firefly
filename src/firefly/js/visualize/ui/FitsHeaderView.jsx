@@ -15,7 +15,6 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {SortInfo} from '../../tables/SortInfo';
-import {TableStore} from  '../../tables/TableStore.js';
 
 import Band from '../Band.js';
 
@@ -142,7 +141,7 @@ function render3BandFitsHeaders(plot, fitsHeaderInfo) {
 
 function getFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
 
-    const tableModel = JSON.parse(fitsHeaderInfo[band]);
+    const tableModel = fitsHeaderInfo[band];
     const pt = plot.projection.getPixelScaleArcSec();
     const pixelSize = pt.toFixed(2) + '"';
     const meta = tableModel.tableMeta;
@@ -156,56 +155,18 @@ function getFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
 }
 
 /**
- * this method prepare the data needs to make the table
- * @param band
- * @param fitsHeaderInfo
- * @returns {{columns: *, data: *, sortInfo: (*|string|{id, name, isReady}), tableStore: TableStore}}
- */
-function prepareData(band, fitsHeaderInfo) {
-    const tableModel = JSON.parse(fitsHeaderInfo[band]);
-
-    const tableData = tableModel.tableData;
-    const data = tableData.data;
-    const columns = tableData.columns;
-    const meta = tableModel.tableMeta;
-    var columnNames = [];
-    for (var i = 0; i < columns.length; i++) {
-        columnNames[i] = columns[i].name;
-    }
-    const sortInfo = SortInfo.newInstance('', columnNames).serialize();
-
-    /*var request = {};
-    request['sortInfo'] = sortInfo;
-    meta['request'] = request;
-    //var newTableModel = Object.assign({}, tableModel, {request:request });
-
-    tableModel['request'] = request;
-
-   const tableStore = TableStore.newInstance(tableModel);//this is not working
-    return {columns, data, sortInfo, tableStore};
-
-    const tableStore = TableStore.newInstance(tableModel);//this is not working*/
-    return {columns, data, sortInfo};//, tableStore};
-}
-
-/**
  * display the data into a tabular format
  * @param band
  * @param fitsHeaderInfo
  * @returns {XML}
  */
 function getTable(band, fitsHeaderInfo) {
-
-
-   // const {columns, data, sortInfo, tableStore} = prepareData(band, fitsHeaderInfo);
-    const {columns, data, sortInfo} = prepareData(band, fitsHeaderInfo);
+    const tableModel = fitsHeaderInfo[band];
     return (
         <BasicTable
-            columns={columns}
-            data={data}
+            key={tableModel.tbl_id}
+            tableModel={tableModel}
             height='calc(100% - 42px)'
-            sortInfo={sortInfo}
-            //tableStore={tableStore}
         />
     );
 }

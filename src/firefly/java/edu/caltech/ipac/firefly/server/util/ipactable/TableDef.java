@@ -30,6 +30,7 @@ public class TableDef {
             }
         }
     }
+    public void setCols(List<DataType> cols) { this.cols = cols; }
 
     public List<DataType> getCols() {
         return cols;
@@ -97,14 +98,6 @@ public class TableDef {
 
     public void setRowCount(int rowCount) {
         this.rowCount = rowCount < 0 ? 0 : rowCount;
-    }
-
-    public int getColCount() {
-        return colCount;
-    }
-
-    public void setColCount(int colCount) {
-        this.colCount = colCount;
     }
 
     public int getRowStartOffset() {
