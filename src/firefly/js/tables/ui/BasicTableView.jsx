@@ -12,7 +12,8 @@ import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo';
 import {tableToText} from '../TableUtil.js';
-import {TextCell, HeaderCell} from './TableRenderer.js';
+import {TextCell, HeaderCell, SelectableHeader, SelectableCell} from './TableRenderer.js';
+import {deepDiff} from '../../util/WebUtil.js';
 
 import './TablePanel.css';
 
@@ -23,8 +24,9 @@ export class BasicTableView extends React.Component {
         super(props);
         this.state = {
             showMask: false,
-            widthPx: 75,
-            heightPx: 75,
+            widthPx: 0,
+            heightPx: 200,
+            data: [],
             columnWidths: makeColWidth(props.columns, props.data, props.showUnits)
         };
 
@@ -72,7 +74,7 @@ export class BasicTableView extends React.Component {
         const sortInfoCls = SortInfo.parse(sortInfo);
 
         const showMaskNow = () => this.setState({showMask: true});
-        const onSelect = (checked, rowIndex) => callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
+        const onRowSelect = (checked, rowIndex) => callbacks.onRowSelect && callbacks.onRowSelect(checked, rowIndex);
         const onSelectAll = (checked) => callbacks.onSelectAll && callbacks.onSelectAll(checked);
         const onSort = (cname) => {
                 if (callbacks.onSort) {
@@ -92,7 +94,7 @@ export class BasicTableView extends React.Component {
             };
 
         const colProps = pick(this.props, ['columns', 'data', 'selectable', 'selectInfoCls', 'callbacks', 'renderers']);
-        Object.assign(colProps, {columnWidths, filterInfoCls, sortInfoCls, showUnits, showFilters}, {onSort, onFilter, onSelect, onSelectAll});
+        Object.assign(colProps, {columnWidths, filterInfoCls, sortInfoCls, showUnits, showFilters}, {onSort, onFilter, onRowSelect, onSelectAll});
 
         const headerHeight = 22 + (showUnits && 12) + (showFilters && 20);
         return (
@@ -120,6 +122,7 @@ export class BasicTableView extends React.Component {
 }
 
 BasicTableView.propTypes = {
+    tbl_ui_id: PropTypes.string,
     columns: PropTypes.arrayOf(PropTypes.object),
     data: PropTypes.arrayOf(PropTypes.array),
     hlRowIdx: PropTypes.number,
@@ -170,15 +173,15 @@ function makeColWidth(columns, data, showUnits) {
         var nchar = col.prefWidth;
         const unitLength = showUnits ? get(col, 'units.length', 0) : 0;
         if (!nchar) {
-            nchar = Math.max(label.length, unitLength, get(data, `0.${cidx}.length`, 0));
+            nchar = Math.max(label.length+2, unitLength+2, get(data, `0.${cidx}.length`, 0)); // 2 is for padding and sort symbol
         }
-        widths[col.name] = nchar * 8 + 20;    // 20 is for the padding and sort symbol
+        widths[col.name] = nchar * 8;
         return widths;
     }, {});
 }
 
 function makeColumns ({columns, columnWidths, data, selectable, showUnits, showFilters, renderers,
-            selectInfoCls, filterInfoCls, sortInfoCls, onSelect, onSelectAll, onSort, onFilter}) {
+            selectInfoCls, filterInfoCls, sortInfoCls, onRowSelect, onSelectAll, onSort, onFilter}) {
     if (!columns) return false;
 
     var colsEl = columns.map((col, idx) => {
@@ -195,36 +198,19 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
                 fixed={false}
                 width={columnWidths[col.name]}
                 isResizable={true}
-                allowCellsRecycling={true}
+                allowCellsRecycling={false}
             />
         );
     });
     if (selectable) {
-        const headerCB = () => {
-            return (
-                <div className='tablePanel__checkbox'>
-                    <input type='checkbox' checked={selectInfoCls.isSelectAll()} onChange ={(e) => onSelectAll(e.target.checked)}/>
-                </div>
-            );
-        };
-
-        const cellCB = ({rowIndex}) => {
-            const onRowSelect = (e) => onSelect(e.target.checked, rowIndex);
-            return (
-                <div className='tablePanel__checkbox' style={{backgroundColor: 'whitesmoke'}}>
-                    <input type='checkbox' checked={selectInfoCls.isSelected(rowIndex)} onChange={onRowSelect}/>
-                </div>
-            );
-        };
-
         var cbox = <Column
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
-            header={headerCB}
-            cell={cellCB}
+            header={<SelectableHeader checked={selectInfoCls.isSelectAll()} onSelectAll={onSelectAll} />}
+            cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
-            allowCellsRecycling={true}
+            allowCellsRecycling={false}
         />;
         colsEl.splice(0, 0, cbox);
     }

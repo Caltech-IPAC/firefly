@@ -391,7 +391,7 @@ public class IpacTableUtil {
         String source = ServerContext.replaceWithPrefix(outf);
         String tblId = String.valueOf( meta.get("tbl_id") );
 
-        FluxAction action = new FluxAction("table_space.tableLoadStatus");
+        FluxAction action = new FluxAction("table.loadStatus");
         action.setValue(tblId, "tbl_id");
         action.setValue(crows, "totalRows");
         action.setValue(state.name(), "tableMeta", DataGroupPart.LOADING_STATUS);

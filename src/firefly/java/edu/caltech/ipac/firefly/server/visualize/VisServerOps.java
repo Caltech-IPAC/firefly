@@ -1059,7 +1059,7 @@ public class VisServerOps {
                 if (f == null) f = PlotStateUtil.getOriginalFile(state, band);
                 Fits fits = new Fits(f);
                 TableServerRequest  request = new TableServerRequest("fitsHeaderTale");
-                request.setMeta(TableServerRequest.TBL_ID, tableID);
+                request.setTblId(tableID);
 
                 TableMeta meta = new TableMeta("fitsHeader");
                 meta.setFileSize(f.length());

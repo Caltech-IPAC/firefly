@@ -10,22 +10,18 @@ import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
-import {dispatchTableUiRemoved} from '../TablesUiCntlr.js';
-import {dispatchTableRemove} from '../TablesCntlr.js';
+import {dispatchTableRemove, dispatchActiveTableChanged} from '../TablesCntlr.js';
 
 
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {LO_EXPANDED, dispatchSetLayoutMode, getExpandedMode, dispatchActiveTableChanged} from '../../core/LayoutCntlr.js';
+import {LO_EXPANDED, dispatchSetLayoutMode, getExpandedMode} from '../../core/LayoutCntlr.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 
-import LOADING from 'html/images/gxt/loading.gif';
-import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
 export class TablesContainer extends Component {
     constructor(props) {
         super(props);
-        const uiGroup = TblUtil.findUiGroupById(props.tbl_ui_gid);
-        this.state = uiGroup ||
+        const tblResults = TblUtil.findTableResults();
+        this.state = tblResults ||
             {
                 layout: 'tabs',
                 tables: {}
@@ -46,38 +42,37 @@ export class TablesContainer extends Component {
     }
 
     storeUpdate() {
-        const tblUiGroup = TblUtil.findUiGroupById(this.props.tbl_ui_gid);
+        const tblResults = TblUtil.findTableResults();
         const expandedMode = getExpandedMode() === LO_EXPANDED.tables.view;
-        this.setState({expandedMode,...tblUiGroup});
+        this.setState({expandedMode,...tblResults});
     }
 
     render() {
-        const {expandedMode, tables, layout} = this.state;
-        const {tbl_ui_gid} = this.props;
+        const {expandedMode, tables, layout, active} = this.state;
 
-        if (isEmpty(tables)) return false;
-        else {
-            return expandedMode ? <ExpandedView {...{tbl_ui_gid, tables, layout}} /> : <TabsView {...{tbl_ui_gid, tables}} />;
+        if (expandedMode) {
+            return <ExpandedView {...{active, tables, layout, expandedMode}} />;
+        } else {
+            return isEmpty(tables) ? <div></div> : <TabsView {...{active, tables, expandedMode}} />;
         }
     }
 }
 
 TablesContainer.propTypes = {
-    tbl_ui_gid: PropTypes.string,
     expandedMode: PropTypes.bool
 };
 TablesContainer.defaultProps = {
-    tbl_ui_gid: TblUtil.uniqueTblUiGid(),
     expandedMode: false
 };
 
 
 
 function ExpandedView(props) {
+    const {tables} = props;
     return (
         <div style={{ display: 'flex', flex: 'auto', flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
-            <TabsView expandedMode={true} {...props} />
+            {!isEmpty(tables) && <TabsView expandedMode={true} {...props} />}
         </div>
     );
 
@@ -87,44 +82,42 @@ ExpandedView.defaultProps = TabsView.defaultProps;
 
 
 function TabsView(props) {
-    const {tables, tbl_ui_gid, expandedMode} = props;
+    const {tables, expandedMode, active} = props;
+
+    var activeIdx = Object.keys(tables).findIndex( (tbl_ui_id) => get(tables,[tbl_ui_id,'tbl_id']) === active);
+    activeIdx = activeIdx === -1 ? 0 : activeIdx;
     const onTabSelect = (idx) => {
         const tbl_id = get(tables, [Object.keys(tables)[idx], 'tbl_id']);
         tbl_id && dispatchActiveTableChanged(tbl_id)
     };
 
     return (
-        <Tabs defaultSelected={0} onTabSelect={onTabSelect}>
-            {tablesAsTab(tables, tbl_ui_gid, expandedMode)}
+        <Tabs defaultSelected={activeIdx} onTabSelect={onTabSelect}>
+            {tablesAsTab(tables, expandedMode)}
         </Tabs>
     );
 }
 TabsView.propTypes = {
-    tbl_ui_gid: PropTypes.string,
     expandedMode: PropTypes.bool,
     mode: PropTypes.oneOf(['tabs', 'grid'])
 };
 
 TabsView.defaultProps = {
-    tbl_gid: TblUtil.uniqueTblUiGid(),
     expandedMode: false,
     mode: 'tabs'
 };
 
 
-function tablesAsTab(tables, tbl_ui_gid, expandedMode) {
+function tablesAsTab(tables, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
-            var {tbl_id, removable, tbl_ui_id} = tables[key];
-            tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
+            var {tbl_id, title, removable, tbl_ui_id} = tables[key];
             const onTabRemove = (tbl_ui_id) => {
-                dispatchTableUiRemoved(tbl_ui_gid, tbl_ui_id);
                 dispatchTableRemove(tbl_id);
             };
-
             return  (
-                <Tab key={tbl_ui_id} name={tbl_ui_id} removable={removable} onTabRemove={onTabRemove}>
+                <Tab key={tbl_ui_id} name={title} removable={removable} onTabRemove={onTabRemove}>
                     <TablePanel key={tbl_ui_id} border={false} {...{tbl_id, tbl_ui_id, expandedMode}} />
                 </Tab>
             );

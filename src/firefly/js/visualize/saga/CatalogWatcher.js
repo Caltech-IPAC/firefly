@@ -3,8 +3,8 @@
  */
 
 import {take} from 'redux-saga/effects';
-import {isEmpty} from 'lodash';
-import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_SPACE_PATH} from '../../tables/TablesCntlr.js';
+import {isEmpty, get} from 'lodash';
+import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE, TABLE_RESULTS_PATH} from '../../tables/TablesCntlr.js';
 import {dispatchCreateDrawLayer,dispatchAttachLayerToPlot,dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {findTblById,doFetchTable} from '../../tables/TableUtil.js';
@@ -35,9 +35,9 @@ export function* watchCatalogs() {
 
     yield take(ImagePlotCntlr.PLOT_IMAGE);
 
-    const tableSpace= flux.getState()[TABLE_SPACE_PATH];
+    const tableSpace= get(flux.getState(), TABLE_RESULTS_PATH);
     if (!isEmpty(tableSpace)) {
-        Object.keys(tableSpace).forEach( (tbl_id) => handleCatalogUpdate(tbl_id));
+        Object.keys(tableSpace).forEach( (tbl_ui_id) => handleCatalogUpdate(get(tableSpace, [tbl_ui_id, 'tbl_id'])) );
     }
 
 

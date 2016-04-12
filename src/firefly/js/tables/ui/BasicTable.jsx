@@ -4,44 +4,66 @@
 
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {isEmpty} from 'lodash';
+import {isEmpty, get, set} from 'lodash';
 
+import {flux} from '../../Firefly.js';
 import * as TblUtil from '../TableUtil.js';
 import {BasicTableView} from './BasicTableView.jsx';
-import {RemoteTableStore, TableStore} from '../TableStore.js';
+import {TableConnector} from '../TableConnector.js';
+import {dispatchTableReplace, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
 
 export class BasicTable extends Component {
+
     constructor(props) {
         super(props);
+        var {tbl_id, tbl_ui_id, tableModel} = props;
 
-        if (props.tbl_id) {
-            this.tableStore = RemoteTableStore.newInstance(props, (v) => this.setState(v));
-        } else if (props.tableModel) {
-            this.tableStore = TableStore.newInstance(props, (v) => this.setState(v));
+        var isLocal = false;
+        if (!tbl_id && tableModel) {
+            tbl_id = get(tableModel, 'tbl_id');
+            isLocal = true;
         }
-        this.state = this.tableStore.cState;
+        tbl_ui_id = tbl_ui_id || tbl_id + '-ui';
+        this.tableConnector = TableConnector.newInstance(tbl_id, tbl_ui_id, isLocal);
+        const uiState = TblUtil.findTableUiById(tbl_ui_id);
+        this.state = uiState || {};
     }
 
-    componentWillReceiveProps(nProps) {
-        this.tableStore.init(nProps);
+    componentDidMount() {
+        this.removeListener= flux.addListener(() => this.storeUpdate());
+        const {tableModel} = this.props;
+        const {tbl_id, tbl_ui_id} = this.tableConnector;
+        if (!get(this.state, 'tbl_id')) {
+            dispatchTableUiUpdate({tbl_ui_id, tbl_id});
+        }
+        if (tableModel && isEmpty(this.state)) {
+            set(tableModel, 'meta.local', true);
+            dispatchTableReplace(tableModel);
+        }
     }
 
     componentWillUnmount() {
-        this.tableStore && this.tableStore.onUnmount();
+        this.removeListener && this.removeListener();
     }
 
     shouldComponentUpdate(nProps, nState) {
         return sCompare(this, nProps, nState);
     }
 
+    storeUpdate() {
+        const {tbl_ui_id} = this.tableConnector;
+        const uiState = TblUtil.findTableUiById(tbl_ui_id) || {columns: []};
+        this.setState(uiState);
+    }
+
     render() {
-        var {tableModel, columns, showUnits, showFilters, textView} = this.state;
         const {selectable, border, renderers} = this.props;
-        const {tableStore} = this;
-        if (isEmpty(columns) || isEmpty(tableModel)) return false;
-        const {hlRowIdx, selectInfo, filterInfo, sortInfo, data} = TblUtil.prepareTableData(tableModel);
-        const selectInfoCls = SelectInfo.newInstance(selectInfo, 0);
+        const {columns, showUnits, showFilters, textView, startIdx,
+                hlRowIdx, selectInfo, filterInfo, sortInfo, data} = this.state;
+        const {tableConnector} = this;
+        if (isEmpty(columns)) return false;
+        const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
 
         return (
             <div className={'TablePanel__wrapper' + (border ? ' border' : '')}>
@@ -57,7 +79,7 @@ export class BasicTable extends Component {
                         filterInfo={filterInfo}
                         sortInfo={sortInfo}
                         textView={textView}
-                        callbacks={tableStore}
+                        callbacks={tableConnector}
                         renderers={renderers}
                     />
                 </div>
@@ -83,7 +105,6 @@ BasicTable.propTypes = {
 };
 
 BasicTable.defaultProps = {
-    tbl_ui_id: TblUtil.uniqueTblUiId(),
     selectable: false,
     border: true
 };

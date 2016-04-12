@@ -4,7 +4,6 @@
 
 import {get, set, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import * as TblUiCntlr from './TablesUiCntlr.js';
 import {SelectInfo} from './SelectInfo.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
@@ -41,9 +40,9 @@ export function doFetchTable(tableRequest, hlRowIdx) {
                 }, []);
             }
             tableModel.highlightedRow = hlRowIdx || startIdx;
-            if (!tableModel.selectInfo) {
-                tableModel.selectInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
-            }
+            // if (!tableModel.selectInfo) {
+            //     tableModel.selectInfo = SelectInfo.newInstance({rowCount:tableModel.totalRows}).data;
+            // }
             return tableModel;
         });
     });
@@ -103,26 +102,24 @@ export function isTblDataAvail(startIdx, endIdx, tableModel) {
 
 
 export function findTblById(id) {
-    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, id]);
+    return get(flux.getState(),[TblCntlr.TABLE_SPACE_PATH, 'data', id]);
 }
 
 /**
- * find table ui_group info by tbl_ui_gid
- * @param tbl_ui_gid
+ * return the table results area
  * @returns {*}
  */
-export function findUiGroupById(tbl_ui_gid) {
-    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'results', tbl_ui_gid]);
+export function findTableResults() {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results']);
 }
 
 /**
  * find table ui_group info by tbl_ui_gid
- * @param tbl_ui_gid
  * @param tbl_ui_id
  * @returns {*}
  */
-export function findTblUiById(tbl_ui_gid, tbl_ui_id) {
-    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'results', tbl_ui_gid, 'tables', tbl_ui_id]);
+export function findTblResultsById(tbl_ui_id) {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'results', 'tables', tbl_ui_id]);
 }
 
 /**
@@ -130,8 +127,8 @@ export function findTblUiById(tbl_ui_gid, tbl_ui_id) {
  * @param tbl_ui_id
  * @returns {*}
  */
-export function findTablePanelStateById(tbl_ui_id) {
-    return get(flux.getState(), [TblUiCntlr.TABLE_UI_PATH, 'work', tbl_ui_id]);
+export function findTableUiById(tbl_ui_id) {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH, 'ui', tbl_ui_id]);
 }
 
 /**
@@ -148,6 +145,10 @@ export function findColumnIdx(tableModel, colName) {
     return cols.findIndex((col) => {
         return col.name === colName;
     });
+}
+
+export function getActiveTableId() {
+    return get(flux.getState(), [TblCntlr.TABLE_SPACE_PATH,'results','active']);
 }
 
 /**
@@ -287,6 +288,24 @@ export function gatherTableState(tableModel) {
     return {tbl_id, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow};
 }
 
+export function getTblInfoById(tbl_id) {
+    const tableModel = findTblById(tbl_id);
+    return Object.assign(getTblInfo(tableModel), {tableModel});
+}
+
+export function getTblInfo(tableModel) {
+    if (!tableModel) return {};
+    var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo} = tableModel;
+    const {title} = tableMeta;
+    const pageSize = get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    highlightedRow = highlightedRow < 0 || highlightedRow > totalRows ? 0 : highlightedRow;
+    const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
+    const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
+    const startIdx = (currentPage-1) * pageSize;
+    const endIdx = Math.min(startIdx+pageSize, totalRows) || startIdx ;
+    var totalPages = Math.ceil((totalRows || 0)/pageSize);
+    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo};
+}
 
 export function tableToText(columns, dataAry, showUnits=false) {
 
@@ -307,19 +326,6 @@ export function tableToText(columns, dataAry, showUnits=false) {
             }, ' ') + '\n';
     }, '');
     return textHead + '\n' + textData;
-}
-
-export function prepareTableData(tableModel) {
-    if (!tableModel.tableData.columns) return {};
-    const selectInfo = get(tableModel, 'selectInfo', {});
-    const {startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages} = gatherTableState(tableModel);
-    var data = tableModel.tableData.data.slice(startIdx, endIdx);
-    var tableRowCount = data.length;
-    const filterInfo = get(tableModel, 'request.filters');
-    const filterCount = filterInfo ? filterInfo.split(';').length : 0;
-    const sortInfo = get(tableModel, 'request.sortInfo');
-
-    return {startIdx, hlRowIdx, currentPage, pageSize,totalPages, tableRowCount, sortInfo, selectInfo, filterInfo, filterCount, data};
 }
 
 
@@ -356,7 +362,12 @@ export function getTableSourceUrl(columns, request, filename) {
 
 
 export function uniqueTblId() {
-    return uniqueId('tbl_id-');
+    const id = uniqueId('tbl_id-');
+    if (findTblById(id)) {
+        return uniqueTblId();
+    } else {
+        return id;
+    }
 }
 
 export function uniqueTblUiGid() {

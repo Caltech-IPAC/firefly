@@ -169,29 +169,27 @@ public class StringUtils {
     }
 
     /**
-     * convert a map back into a Map<String,String>
+     * convert a key=value[,key=value] string into a Map<String,String>
      * this take into consideration that value may be url encoded.
+     * due to GWT limitation on the server-side, a limited charset is used.
+     * should convert to true encodeUriComponent in the future.
      * @param str
      * @return
      */
     public static Map<String, String> encodedStringToMap(String str) {
-        if (str.startsWith("{") && str.endsWith("}")) {
-            HashMap<String, String> map = new HashMap<String, String>();
-            str = str.substring(1, str.length()-1);
-            for (String entry : str.split(",")) {
-                String[] kv = entry.split("=", 2);
-                String value = kv.length > 1 ? kv[1].trim() : "";
-                if (value.contains("%")) {
-                    value = value.replaceAll("%26", "&");
-                    value = value.replaceAll("%2C", ",");
-                    value = value.replaceAll("%3D", "=");
-                }
-                map.put(kv[0].trim(), value);
+        if (isEmpty(str)) return null;
+        HashMap<String, String> map = new HashMap<String, String>();
+        for (String entry : str.split("&")) {
+            String[] kv = entry.split("=", 2);
+            String value = kv.length > 1 ? kv[1].trim() : "";
+            if (value.contains("%")) {
+                value = value.replaceAll("%26", "&");
+                value = value.replaceAll("%2C", ",");
+                value = value.replaceAll("%3D", "=");
             }
-            return map;
-        } else {
-            return null;
+            map.put(kv[0].trim(), value);
         }
+        return map;
     }
 
     /**
@@ -205,7 +203,7 @@ public class StringUtils {
             for (String key : map.keySet()) {
                 String v = map.get(key);
                 if (val.length() > 0) {
-                    val.append(",");
+                    val.append("&");
                 }
                 val.append(key).append("=");
                 if (v != null) {
@@ -216,7 +214,7 @@ public class StringUtils {
                 }
             }
         }
-        return "{" + val.toString() + "}";
+        return val.toString();
     }
 
     /**

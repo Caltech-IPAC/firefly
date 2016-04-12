@@ -3,6 +3,8 @@
  */
 
 import React, {PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
+import {deepDiff} from '../util/WebUtil.js';
 
 import {get, debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
@@ -68,7 +70,7 @@ class ChartsPanel extends React.Component {
             }
         }, 200);
 
-        this.renderXYPlotOptions = this.renderXYPlotOptions.bind(this);
+        // this.renderXYPlotOptions = this.renderXYPlotOptions.bind(this);
         this.renderXYPlot = this.renderXYPlot.bind(this);
         this.renderHistogramOptions = this.renderHistogramOptions.bind(this);
         this.renderHistogram = this.renderHistogram.bind(this);
@@ -112,27 +114,27 @@ class ChartsPanel extends React.Component {
     // SCATTER PLOT
     // -------------
 
-    renderXYPlotOptions() {
-        const { tblId, tableModel, tblStatsData} = this.props;
-
-        if (tblStatsData.isColStatsReady) {
-            const formName = 'XYPlotOptionsForm_'+tblId;
-            return (
-                <XYPlotOptions key={formName} groupKey = {formName}
-                                  colValStats={tblStatsData.colStats}
-                                  onOptionsSelected={(xyPlotParams) => {
-                                            XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
-                                        }
-                                      }/>
-            );
-        } else {
-            return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-                title='Loading Options...'
-                src={LOADING}
-            />);
-        }
-
-    }
+    // renderXYPlotOptions() {
+    //     const { tblId, tableModel, tblStatsData} = this.props;
+    //
+    //     if (tblStatsData.isColStatsReady) {
+    //         const formName = 'XYPlotOptionsForm_'+tblId;
+    //         return (
+    //             <XYPlotOptions key={formName} groupKey = {formName}
+    //                               colValStats={tblStatsData.colStats}
+    //                               onOptionsSelected={(xyPlotParams) => {
+    //                                         XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
+    //                                     }
+    //                                   }/>
+    //         );
+    //     } else {
+    //         return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
+    //             title='Loading Options...'
+    //             src={LOADING}
+    //         />);
+    //     }
+    //
+    // }
 
     renderXYPlot() {
         const {tblId, tableModel, tblPlotData} = this.props;
@@ -471,11 +473,12 @@ class ChartsPanel extends React.Component {
 
     renderOptions() {
         const {optionsShown, chartType, heightPx} = this.state;
+        const { tblId, tableModel, tblStatsData} = this.props;
         if (optionsShown) {
             return (
                 <div style={{display:'inline-block',overflow:'auto',width:(OPTIONS_WIDTH-20),height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
                     {this.renderChartSelection()}
-                    {chartType === SCATTER ? this.renderXYPlotOptions() : this.renderHistogramOptions()}
+                    {chartType === SCATTER ? <OptionsWrapper  {...{tblId, tableModel, tblStatsData}}/> : this.renderHistogramOptions()}
                 </div>
             );
         } else {
@@ -546,5 +549,43 @@ const connector = function(state, ownProps) {
 
 export const ChartsTableViewPanel = connect(connector)(ChartsPanel);
 
+
+export class OptionsWrapper extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    shouldComponentUpdate(nProps, nState) {
+        return get(nProps, 'tableModel.tbl_id') !== get(this.props, 'tableModel.tbl_id') ||
+            get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ;
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        // deepDiff({props: prevProps, state: prevState},
+        //     {props: this.props, state: this.state},
+        //     this.constructor.displayName);
+    }
+
+    render() {
+        const { tblId, tableModel, tblStatsData} = this.props;
+
+        if (tblStatsData.isColStatsReady) {
+            const formName = 'XYPlotOptionsForm_'+tblId;
+            return (
+                <XYPlotOptions key={formName} groupKey = {formName}
+                               colValStats={tblStatsData.colStats}
+                               onOptionsSelected={(xyPlotParams) => {
+                                                XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
+                                            }
+                                          }/>
+            );
+        } else {
+            return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
+                         title='Loading Options...'
+                         src={LOADING}
+            />);
+        }
+    }
+}
 
 

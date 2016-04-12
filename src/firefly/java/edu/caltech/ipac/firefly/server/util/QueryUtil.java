@@ -80,9 +80,7 @@ public class QueryUtil {
             String key = names.nextElement();
             if (!StringUtils.isEmpty(key) && req.getParameterValues(key) != null) {
                 String values = StringUtils.toString(req.getParameterValues(key), ",");
-                if (key.equals(TableServerRequest.TBL_ID)) {
-                    retval.setMeta(TableServerRequest.TBL_ID, values);
-                } else if (key.equals(TableServerRequest.META_INFO)) {
+                if (key.equals(TableServerRequest.META_INFO)) {
                     Map<String, String> meta = StringUtils.encodedStringToMap(values);
                     if (meta != null && meta.size() > 0) {
                         for (String k : meta.keySet()) {

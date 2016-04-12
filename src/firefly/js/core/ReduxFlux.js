@@ -28,7 +28,6 @@ import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr';
-import * as TablesUiCntlr from '../tables/TablesUiCntlr';
 import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
@@ -75,7 +74,6 @@ const reducers = {
     [HistogramCntlr.HISTOGRAM_DATA_KEY]: HistogramCntlr.reducer,
     [XYPlotCntlr.XYPLOT_DATA_KEY]: XYPlotCntlr.reducer,
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
-    [TablesUiCntlr.TABLE_UI_PATH]: TablesUiCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
     [DIALOG_KEY]: DialogCntlr.reducer
