@@ -23,6 +23,7 @@ const DETACH_LAYER_FROM_PLOT= 'DrawLayerCntlr.detachLayerFromPlot';
 const MODIFY_CUSTOM_FIELD= 'DrawLayerCntlr.modifyCustomField';
 const FORCE_DRAW_LAYER_UPDATE= 'DrawLayerCntlr.forceDrawLayerUpdate';
 
+
 // _- select
 const SELECT_AREA_START= 'DrawLayerCntlr.SelectArea.selectAreaStart';
 const SELECT_AREA_MOVE= 'DrawLayerCntlr.SelectArea.selectAreaMove';
@@ -36,6 +37,7 @@ const SELECT_POINT=  'DrawLayerCntlr.SelectPoint.selectPoint';
 const DT_START= 'DrawLayerCntlr.DistanceTool.distanceToolStart';
 const DT_MOVE= 'DrawLayerCntlr.DistanceTool.distanceToolMove';
 const DT_END= 'DrawLayerCntlr.DistanceTool.distanceToolEnd';
+
 
 
 
@@ -305,6 +307,7 @@ function makeReducer(factory) {
                 retState= state;
                 //retState = mouseStateChange(state, action);
                 break;
+
             case RETRIEVE_DATA:
                 // todo: for async data:
                 // todo: get the data in action creator, update the retrieved data here

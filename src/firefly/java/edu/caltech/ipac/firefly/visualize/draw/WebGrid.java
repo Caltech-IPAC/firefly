@@ -93,8 +93,8 @@ public class WebGrid
 
     //location of the labels
     ImageWorkSpacePt[] _points;
-    int _nLivel0;  //line count in levels[0] direction
-    int _nLivel1; //line count in levels[1] direction
+    int _nLevel0;  //line count in levels[0] direction
+    int _nLevel1; //line count in levels[1] direction
 
 
     /**
@@ -306,7 +306,7 @@ public class WebGrid
 
             for (int i = 0; i < lineCount; i++) {
 
-                if (i< _nLivel0){
+                if (i< _nLevel0){
                     points[i] = new ImageWorkSpacePt(_xLines[i][0], bounds.y);
 
                 }
@@ -325,7 +325,7 @@ public class WebGrid
               Put the label in the middle of this direction.
              */
             int hM = _xLines[0].length/2; //in the middle of the line
-            for (int i=0; i< _nLivel0; i++){
+            for (int i = 0; i< _nLevel0; i++){
              points[i] = new ImageWorkSpacePt(_xLines[i][hM],_yLines[i][hM]);
 
             }
@@ -337,9 +337,9 @@ public class WebGrid
               Find the middle point which is the half of the length of the _xLines (or _yLines) in this direction.
               Put the label in the middle of this direction.
              */
-            int vM=_xLines[_nLivel0].length/2;
-            for (int i=0; i< _nLivel1; i++){
-                 points[i+ _nLivel0] = new ImageWorkSpacePt(_xLines[_nLivel0 +i][vM], _yLines[_nLivel0 +i][vM]);
+            int vM=_xLines[_nLevel0].length/2;
+            for (int i = 0; i< _nLevel1; i++){
+                 points[i+ _nLevel0] = new ImageWorkSpacePt(_xLines[_nLevel0 +i][vM], _yLines[_nLevel0 +i][vM]);
 
             }
 
@@ -391,7 +391,7 @@ public class WebGrid
         // draw the label.
 
        if (useLabels){
-          if (count< _nLivel0) { //vertical line labels
+          if (count< _nLevel0) { //vertical line labels
 
                drawData.add(ShapeDataObj.makeText(_points[count], label));
            }
@@ -419,10 +419,10 @@ public class WebGrid
 	     
 
 
-        _nLivel0 =levels[0].length;
-        _nLivel1 = levels[1].length;
+        _nLevel0 =levels[0].length;
+        _nLevel1 = levels[1].length;
 	    _labels = getLabels(levels);
-        int size = _nLivel0 + _nLivel1;
+        int size = _nLevel0 + _nLevel1;
 
 	  _xLines = new double[size][];
 	  _yLines = new double[size][];

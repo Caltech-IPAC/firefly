@@ -24,7 +24,7 @@ import DistanceTool from '../../drawingLayers/DistanceTool.js';
 import SelectArea from '../../drawingLayers/SelectArea.js';
 import NorthUpCompass from '../../drawingLayers/NorthUpCompass.js';
 import { fitsHeaderView} from './FitsHeaderView.jsx';
-
+import WebGrid from '../../drawingLayers/WebGrid.js';
 
 
 //===================================================
@@ -156,6 +156,7 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
                                     iconOn={SELECT_ON}
                                     iconOff={SELECT_OFF}
                                     visible={mi.selectArea} />
+
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
                                     typeId={DistanceTool.TYPE_ID}
@@ -175,14 +176,12 @@ export function VisToolbarView({visRoot,dlAry,toolTip}) {
 
             <SimpleLayerOnOffButton plotView={pv}
                                     dlAry={dlAry}
-                                    typeId={'TODO'}
-                                    tip='Add grid annotation to image'
+                                    typeId={WebGrid.TYPE_ID}
+                                    tip='Add grid layer to the image'
                                     iconOn={GRID_ON}
                                     iconOff={GRID_OFF}
                                     visible={mi.grid}
-                                    todo={true} />
-
-
+                                   />
 
 
 

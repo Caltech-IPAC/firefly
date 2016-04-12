@@ -41,6 +41,10 @@ function makeReducer(factory) {
             case ImagePlotCntlr.ANY_REPLOT:
                 return updateFromLayer(drawLayer,action,factory);
                 break;
+            //LZ
+            case DrawLayerCntlr.FORCE_DRAW_GRID_LAYER_UPDATE:
+                return updateGridLayer(drawLayer,action,factory);
+                break;
             default:
                 return handleOtherAction(drawLayer,action,factory);
                 break;
@@ -96,6 +100,18 @@ function updateFromLayer(drawLayer,action,factory) {
     return drawLayer;
 }
 
+function updateGridLayer(drawLayer,action,factory) {
+    var {plotIdAry}= action.payload;
+    drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
+    if (drawLayer.hasPerPlotData) {
+        plotIdAry.forEach( (id) =>
+            drawLayer.drawData= getDrawData(factory,drawLayer, action, id));
+    }
+    else {
+        drawLayer.drawData= getDrawData(factory,drawLayer, action);
+    }
+    return drawLayer;
+}
 
 
 
