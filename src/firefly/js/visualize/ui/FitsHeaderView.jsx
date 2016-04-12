@@ -14,8 +14,6 @@ import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {SortInfo} from '../../tables/SortInfo';
-
 import Band from '../Band.js';
 
 const popupIdRoot = 'fitsHeader';
@@ -30,59 +28,51 @@ const popupPanelResizableStyle = {
     position: 'relative'
 };
 
-const popupPanelFixedSizeStyle = {
-    width: 450,
-    minWidth: 480,
-    height: 480,
-    minHeight: 480,
-    resize: 'horizontal',
-    overflow: 'auto',
-    position: 'relative'
-};
-const tabStyle = {width: '100%', height: '85%'};
-const tableStyle = {width: '100%', height: '100%',  overflow: 'auto', flexGrow: 1, display: 'flex'};
 
-const titleStyle = {width: '100%', height: 20, whiteSpace: 'nowrap', display: 'inline-block'};
+//define the display style for the file size and pixel information and the table in the same div
+const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)'};
 
+//define the table style only in the table div
+const tableStyle = {width: '100%', height: 'calc(100% - 30px)',  overflow: 'auto', flexGrow: 1, display: 'flex'};
+
+//define the size of the text on the tableInfo style in the title div
+const titleStyle = {width: '100%', height: 20};
+
+//define the first column in the textStyle div
 const textColumn1 = {
     width: 200, paddingLet: 2, textAlign: 'left', color: 'Black', fontWeight: 'bold',
     display: 'inline-block'
 };
+//define the second column in the textStyle div
 const textColumn2 = {width: 100, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
 
-const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', marginTop: 30, width: '90%'};
-const helpIdStyle = {'textAlign': 'center', display: 'inline-block', marginTop: 30, marginRight: 20};
+//define the complete button
+const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:8, width: '90%'};
+//define the helpButton
+const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
-const mTableStyle = {width: '100%', height: 370, overflow: 'auto', flexGrow: 1, display: 'flex'};
+
+
+//3-color styles
+const tabStyle =  {width: '100%',height:'100%'};//,  display: 'inline-block',  overflow: 'auto', flexGrow: 1};
+
 
 
 function popupForm(plot, fitsHeaderInfo, popupId) {
-
-    var stats = (fitsHeaderInfo && fitsHeaderInfo.NO_BAND) ?
+    var fitsHeaderRenderInfo = (fitsHeaderInfo && fitsHeaderInfo.NO_BAND) ?
         renderSingleBandFitsHeader(plot, Band.NO_BAND,fitsHeaderInfo) :
         render3BandFitsHeaders(plot, fitsHeaderInfo);
-    //the tab panel can not have the table grow with size, thus use a fixed size panel for now
-    var panelStyle = (fitsHeaderInfo && fitsHeaderInfo.NO_BAND) ? popupPanelResizableStyle
-        : popupPanelFixedSizeStyle;
+
     return (
-        <div style={panelStyle}>
-            { stats}
-            <div>
-                <div style={closeButtonStyle}>
-                    < CompleteButton
-                        text='close'
-                        onClick={()=>dispatchHideDialog( popupId)}
-                        dialogId={popupId}
-                    />
-                </div>
-                <div style={helpIdStyle}>
-                    <HelpIcon helpid={'visualization.fitsDownloadOptions'}/>
-                </div>
-            </div>
+        <div style={popupPanelResizableStyle}>
+            {fitsHeaderRenderInfo}
+            {renderCloseAndHelpButtons(popupId)}
+
         </div>
     );
 
 }
+
 function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo) {
 
     var popupId = popupIdRoot + '_' + tableId;
@@ -99,52 +89,68 @@ function showFitsHeaderPopup(plot, tableId, fitsHeaderInfo) {
 }
 
 
-function renderSingleBandFitsHeader(plot,band, fitsHeaderInfo) {
-
-    var myTableStyle = band===Band.NO_BAND?tableStyle:mTableStyle;
-    return (
-
-        <div style={tabStyle}>
-            {getFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
-            <div style={myTableStyle}>
-                {getTable(band, fitsHeaderInfo)}
-            </div>
-        </div>
-
-    );
-
-}
-
 function render3BandFitsHeaders(plot, fitsHeaderInfo) {
 
     return (
-        <div  >
-            <Tabs defaultSelected={0}>
-                <Tab name='RED'>
+          <div style = {tableAndTitleInfoStyle}>
+            <Tabs defaultSelected={0} >
+                <Tab name='RED'  >
                     {renderSingleBandFitsHeader(plot, Band.RED, fitsHeaderInfo)}
                 </Tab>
 
                 <Tab name='GREEN'>
                     {renderSingleBandFitsHeader(plot, Band.GREEN, fitsHeaderInfo)}
+
                 </Tab>
                 <Tab name='BLUE'>
-                    {renderSingleBandFitsHeader(plot, Band.BLUE, fitsHeaderInfo)}
+                        {renderSingleBandFitsHeader(plot, Band.BLUE, fitsHeaderInfo)}
                 </Tab>
             </Tabs>
-
         </div>
+
 
 
     );
 
 }
+function renderCloseAndHelpButtons(popupId){
+    return(
+    <div>
+        <div style={closeButtonStyle}>
+            < CompleteButton
+                text='close'
+                onClick={()=>dispatchHideDialog( popupId)}
+                dialogId={popupId}
+            />
+        </div>
+        <div style={helpIdStyle}>
+            <HelpIcon helpid={'visualization.fitsDownloadOptions'}/>
+        </div>
+    </div>
+);
+}
+function renderSingleBandFitsHeader(plot,band, fitsHeaderInfo) {
 
-function getFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
+
+    var fitsHeaderInfoStyle = band==Band.NO_BAND? tableAndTitleInfoStyle: tabStyle;
+
+    return (
+
+        <div style={fitsHeaderInfoStyle}>
+            {renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
+            { renderTable( band,fitsHeaderInfo)}
+        </div>
+
+    );
+}
+
+function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
 
     const tableModel = fitsHeaderInfo[band];
     const pt = plot.projection.getPixelScaleArcSec();
     const pixelSize = pt.toFixed(2) + '"';
-    const meta = tableModel.tableMeta;
+
+    const  meta = tableModel.tableMeta;
     const fileSize = getSizeAsString(meta.fileSize);
     return (
         <div style={titleStyle}>
@@ -154,21 +160,27 @@ function getFileSizeAndPixelSize(plot, band, fitsHeaderInfo) {
     );
 }
 
+
 /**
  * display the data into a tabular format
  * @param band
  * @param fitsHeaderInfo
  * @returns {XML}
  */
-function getTable(band, fitsHeaderInfo) {
+function renderTable(band, fitsHeaderInfo) {
+
     const tableModel = fitsHeaderInfo[band];
     return (
-        <BasicTable
-            key={tableModel.tbl_id}
-            tableModel={tableModel}
-            height='calc(100% - 42px)'
-        />
+        <div style={tableStyle }>
+           <BasicTable
+               key={tableModel.tbl_id}
+               tableModel={tableModel}
+               height='calc(100% - 42px)'
+           />
+
+        </div>
     );
+
 }
 
 /**

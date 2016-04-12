@@ -59,7 +59,7 @@ export class Tabs extends Component {
                 });
             });
         return (
-            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
+            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', height:'100%'}}>
                 <div style={{flexGrow: 0, height: 18}}>
                     <ul className='TabPanel__Tabs'>
                         {children}
@@ -101,10 +101,11 @@ export class Tab extends Component {
 
     render () {
         const {name, selected, onSelect, removable, onTabRemove,id} = this.props;
-        var tabClassName = 'TabPanel__Tab';
+        var tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
+
         return (
             <li className={tabClassName}>
                 <div style={{display: 'inline-block'}} onClick={() => onSelect(id,name)} >{name}</div>
