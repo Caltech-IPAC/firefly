@@ -296,6 +296,7 @@ public class VisJsonSerializer {
 
 
     public static JSONObject serializeClientFitsHeader(ClientFitsHeader cfH) {
+        if (cfH==null) return null;
         JSONObject map = new JSONObject();
         for(String k : cfH) {
             map.put(k,cfH.getStringHeader(k));

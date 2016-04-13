@@ -253,7 +253,8 @@ class WebPlotRequest extends ServerRequest {
             req.setParam(C.INIT_ZOOM_LEVEL, initZoomLevel + '');
         }
         else {
-            req.setZoomType(ZoomType.TO_WIDTH);
+            req.setParam(C.INIT_ZOOM_LEVEL, 1);
+            // req.setZoomType(ZoomType.TO_WIDTH); //todo fix when we can auto zoom to with: dm-4759
         }
         return req;
     }
