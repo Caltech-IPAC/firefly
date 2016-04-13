@@ -70,7 +70,7 @@ export function completeButtonKey( isThreeColor = false ) {
 export function computeCurrentCatalogId( fields, colorFields, catalogId = [IRSA, IRSA, IRSA] ) {
 
     const keytab = keyMap['catalogtab'];
-    var   newId = catalogId;
+    var   newId = catalogId.slice();
     var   getTabNo = (val) => parseInt(typeof val === 'object' ? val.value : val);
     var   isFieldTabExist = (f) => (f && f[keytab] && (typeof f[keytab] !== 'object' || f[keytab].mounted));
 
@@ -352,7 +352,7 @@ class ImageSelectionView extends Component {
                                       header={color.toUpperCase()}
                                       isOpen={ index === RED }>
                         <FieldGroup groupKey={rgbFieldGroup[index]}
-                                    reducerFunc={ImageSelPanelChangeOneColor(this.state.crtCatalogId[index])}
+                                    reducerFunc={ImageSelPanelChangeOneColor}
                                     keepState={true}>
                             <FieldGroupTabs fieldKey={keyMap['catalogtab']}>
                                 {categoryTabs(rgbFieldGroup[index], msg)}
@@ -568,12 +568,14 @@ function CatalogTabView({catalog, fields}) {
     var inputfield = (fieldname, index) => {
         var fkey = `${sym}${fieldname}`;
         var padding = (index === 0)? 'tab_padding_top' : 'tab_padding_nottop';
+        var style = (catalog['CatalogId'] === URL) ? {width: '50%'} : null;
 
         return (
             <div className={padding} key={index}>
                 <ValidationField fieldKey={keyMap[fkey]}
                                  labelWidth={computeLabelWidth(catalog[fieldname].Title)}
-                                 label={ catalog[fieldname].Title } />
+                                 label={ catalog[fieldname].Title }
+                                 style={style} />
             </div>
         );
     };

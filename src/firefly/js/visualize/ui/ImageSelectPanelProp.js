@@ -133,7 +133,7 @@ export const panelCatalogs = [
             'nullallowed': false
         },
         'upload': {
-            'Title': '',
+            'Title': ''
         },
         'list': {
             'Title': 'If file contains multiple extensions:',
@@ -187,6 +187,6 @@ export const panelCatalogs = [
         },
         'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
         'size': 0.139
-    },
+    }
 ];
 

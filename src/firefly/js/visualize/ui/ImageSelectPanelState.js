@@ -184,15 +184,14 @@ var initTargetSize = (crtCatalogId) => {
 };
 
 // reducer for the child field group (fieldgrouptabs for r, g, b)
-export var ImageSelPanelChangeOneColor = function (crtCatalogId) {
-    return (inFields, action) => {
-        if (!inFields) {
-            return initTabFields(crtCatalogId);
-        } else {
-            return inFields;
-        }
-    };
+export var ImageSelPanelChangeOneColor = (inFields, action) => {
+    if (!inFields) {
+        return initTabFields(IRSA);
+    } else {
+        return inFields;
+    }
 };
+
 /*
  *
  * image select pane initial state for all fields
