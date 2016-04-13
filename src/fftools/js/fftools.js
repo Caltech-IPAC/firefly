@@ -3,7 +3,7 @@
  */
 
 
-import React, {Component,PropTypes} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 
 import {flux, firefly} from 'firefly/Firefly.js';
@@ -19,7 +19,7 @@ import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
 import {ExpandedModeDisplay} from 'firefly/visualize/iv/ExpandedModeDisplay.jsx';
 import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import * as TblUtil from 'firefly/tables/TableUtil.js';
-import {ChartsTableViewPanel} from 'firefly/visualize/ChartsTableViewPanel.jsx';
+import {ChartsContainer} from 'firefly/visualize/ChartsContainer.jsx';
 import {VisHeader} from 'firefly/visualize/ui/VisHeader.jsx';
 import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 import {getActionFromUrl} from 'firefly/core/History.js';
@@ -41,7 +41,7 @@ const App = React.createClass({
         appData : React.PropTypes.object.isRequired,
         title   : React.PropTypes.string,
         expandedMode : React.PropTypes.string,
-        activeTblId : React.PropTypes.string,
+        activeTblId : React.PropTypes.string
     },
 
     showError() {
@@ -86,7 +86,7 @@ const App = React.createClass({
                                              </div>
                               }
                             visToolbar = {<VisToolbar/>}
-                            xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={activeTblId} />}
+                            xyPlot = {<ChartsContainer key='results-xyplots' tblId={activeTblId} />}
                             tables = {<TablesContainer key='results-tables' tbl_ui_gid={resultId} /> }
                         />
                     </main>

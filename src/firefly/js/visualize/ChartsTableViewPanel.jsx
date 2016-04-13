@@ -19,6 +19,8 @@ import * as TableStatsCntlr from '../visualize/TableStatsCntlr.js';
 import * as HistogramCntlr from '../visualize/HistogramCntlr.js';
 import * as XYPlotCntlr from '../visualize/XYPlotCntlr.js';
 
+import {LO_EXPANDED, dispatchSetLayoutMode} from '../core/LayoutCntlr.js';
+
 import {getHighlighted} from './ChartUtil.js';
 import XYPlotOptions from '../visualize/XYPlotOptions.jsx';
 import {XYPlot} from '../visualize/XYPlot.jsx';
@@ -26,6 +28,7 @@ import {XYPlot} from '../visualize/XYPlot.jsx';
 import HistogramOptions from '../visualize/HistogramOptions.jsx';
 import Histogram from '../visualize/Histogram.jsx';
 
+import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import SETTINGS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import ZOOM_IN from 'html/images/icons-2014/24x24_ZoomIn.png';
 import ZOOM_ORIGINAL from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
@@ -40,6 +43,9 @@ const SCATTER = 'scatter';
 const HISTOGRAM = 'histogram';
 const OPTIONS_WIDTH = 350;
 
+const PREF_CHART_TYPE = 'pref.chartType';
+const PREF_OPTIONS_SHOWN = 'pref.chartOptionsShown';
+
 const selectionBtnStyle = {verticalAlign: 'top', paddingLeft: 20, cursor: 'pointer'};
 
 class ChartsPanel extends React.Component {
@@ -47,9 +53,9 @@ class ChartsPanel extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            chartType: SCATTER,
-            optionsShown: true,
-            widthPx: 700,
+            chartType: localStorage.getItem(PREF_CHART_TYPE) || SCATTER,
+            optionsShown: !(localStorage.getItem(PREF_OPTIONS_SHOWN)==='false'),
+            widthPx: 50,
             heightPx: 300
         };
 
@@ -57,6 +63,7 @@ class ChartsPanel extends React.Component {
             if (size) {
                 var widthPx = size.width - 10;
                 var heightPx = size.height - 30;
+                //console.log('width: '+widthPx+', height: '+heightPx);
                 this.setState({widthPx, heightPx});
             }
         }, 200);
@@ -82,7 +89,9 @@ class ChartsPanel extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        let doUpdate = nextState !== this.state || nextProps.tblStatsData !== this.props.tblStatsData;
+        let doUpdate = nextState !== this.state ||
+            nextProps.tblStatsData !== this.props.tblStatsData ||
+            nextProps.expandedMode !== this.props.expandedMode;
         if (!doUpdate) {
             if (nextState.chartType === SCATTER) {
                 // scatter plot
@@ -136,6 +145,7 @@ class ChartsPanel extends React.Component {
         const hRow = getHighlighted(xyPlotParams, tblId);
         const sInfo = tableModel && tableModel.selectInfo;
         const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
+        if (chartWidth <= 0) {return false;}
 
         if (isPlotDataReady) {
             return (
@@ -233,6 +243,7 @@ class ChartsPanel extends React.Component {
     // -----------------
 
     toggleOptions() {
+        localStorage.setItem(PREF_OPTIONS_SHOWN, !this.state.optionsShown);
         this.setState({optionsShown : !this.state.optionsShown});
     }
 
@@ -360,7 +371,7 @@ class ChartsPanel extends React.Component {
     renderSelectionButtons() {
         if (this.displaySelectionOptions()) {
             return (
-                <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
+                <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
                     <img style={selectionBtnStyle}
                          title='Zoom in the enclosed points'
                          src={ZOOM_IN}
@@ -380,7 +391,7 @@ class ChartsPanel extends React.Component {
             );
         } else {
             return (
-                <div style={{display:'inline-block', whiteSpace: 'nowrap', float: 'right'}}>
+                <div style={{display:'inline-block', whiteSpace: 'nowrap'}}>
                     {this.displayZoomOriginal() && <img style={selectionBtnStyle}
                          title='Zoom out to original chart'
                          src={ZOOM_ORIGINAL}
@@ -402,6 +413,7 @@ class ChartsPanel extends React.Component {
     }
 
     renderToolbar() {
+        const {expandable, expandedMode} = this.props;
         return (
             <div style={{display:'block', whiteSpace: 'nowrap', height: 30}}>
                 <img style={{verticalAlign:'top', float: 'left', cursor: 'pointer'}}
@@ -409,7 +421,16 @@ class ChartsPanel extends React.Component {
                      src={SETTINGS}
                      onClick={() => this.toggleOptions()}
                 />
-                {this.renderSelectionButtons()}
+                <div style={{display:'inline-block', float: 'right'}}>
+                    {this.renderSelectionButtons()}
+                    { expandable && !expandedMode &&
+                    <img style={selectionBtnStyle}
+                         title='Expand this panel to take up a larger area'
+                         src={OUTLINE_EXPAND}
+                         onClick={() => dispatchSetLayoutMode(LO_EXPANDED.xyPlots)}
+                    />
+                    }
+                </div>
             </div>
         );
     }
@@ -443,6 +464,7 @@ class ChartsPanel extends React.Component {
 
         if (checked) {
             if (val !== this.state.chartType) {
+                localStorage.setItem(PREF_CHART_TYPE, val);
                 this.setState({chartType : val});
             }
         }
@@ -476,10 +498,11 @@ class ChartsPanel extends React.Component {
         } else {
             var {widthPx, heightPx, chartType, optionsShown} = this.state;
             const chartWidth = optionsShown ? widthPx-OPTIONS_WIDTH : widthPx;
+            const knownSize = chartWidth>OPTIONS_WIDTH;
             return (
-                <Resizable id='xyplot-resizer' style={{width, height}}
+                <Resizable id='xyplot-resizer' style={{width, height, overflow: 'hidden'}}
                            onResize={this.onResize} {...this.props} >
-                    <div style={{display:'inline-block', verticalAlign:'bottom'}}>
+                    {{knownSize} && <div style={{display:'inline-block', verticalAlign:'bottom'}}>
                         <div style={{display:'block', whiteSpace: 'nowrap'}}>
                             {this.renderToolbar()}
                         </div>
@@ -489,14 +512,16 @@ class ChartsPanel extends React.Component {
                                 {chartType === SCATTER ? this.renderXYPlot() : this.renderHistogram()}
                             </div>
                         </div>
-                    </div>
+                    </div>}
                 </Resizable>
             );
         }
     }
-};
+}
 
 ChartsPanel.propTypes = {
+    expandedMode: PropTypes.bool,
+    expandable: PropTypes.bool,
     tblId : PropTypes.string,
     tableModel : PropTypes.object,
     tblStatsData : PropTypes.object,
@@ -506,6 +531,10 @@ ChartsPanel.propTypes = {
     height : PropTypes.string
 };
 
+ChartsPanel.defaultProps = {
+    expandedMode: false,
+    expandable: true
+};
 
 const connector = function(state, ownProps) {
     return {
