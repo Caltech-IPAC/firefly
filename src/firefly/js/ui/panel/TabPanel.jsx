@@ -59,7 +59,7 @@ export class Tabs extends Component {
                 });
             });
         return (
-            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden', height:'100%'}}>
+            <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <div style={{flexGrow: 0, height: 18}}>
                     <ul className='TabPanel__Tabs'>
                         {children}
