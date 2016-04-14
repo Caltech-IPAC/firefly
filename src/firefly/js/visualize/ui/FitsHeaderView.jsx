@@ -42,11 +42,12 @@ const titleStyle = {width: '100%', height: 20};
 
 //define the first column in the textStyle div
 const textColumn1 = {
-    width: 200, paddingLet: 2, textAlign: 'left', color: 'Black', fontWeight: 'bold',
-    display: 'inline-block'
+    width: 100, paddingLet: 2, textAlign: 'left', color: 'Black', fontWeight: 'bold',
+    display: 'inline-block',paddingLeft:10
 };
+
 //define the second column in the textStyle div
-const textColumn2 = {width: 100, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
+const textColumn2 = {paddingLeft:80, width: 100, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
 
 //define the complete button
 const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:8, width: '90%'};
