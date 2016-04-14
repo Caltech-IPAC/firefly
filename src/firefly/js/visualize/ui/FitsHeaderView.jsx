@@ -33,9 +33,10 @@ const popupPanelResizableStyle = {
 const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex'};
 
 //define the table style only in the table div
-const tableStyle = {paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 60px)',  overflow: 'hidden', flexGrow: 1, display: 'flex'};
+const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 60px)',  overflow: 'hidden', flexGrow: 1, display: 'flex'};
 
-const tableOnTabStyle = {paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 20px)', overflow: 'hidden', flexGrow: 1, display: 'flex'};//
+
+const tableOnTabStyle = {boxSizing: 'border-box',paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 20px)', overflow: 'hidden', flexGrow: 1, display: 'flex'};//
 //define the size of the text on the tableInfo style in the title div
 const titleStyle = {width: '100%', height: 20};
 
