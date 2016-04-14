@@ -33,7 +33,7 @@ export function primePlot(ref,plotId) {
     else if (ref.plotId && ref.plots) { // i was passed a plotView
         pv= ref;
     }
-    return pv ? pv.plots[pv.primeIdx] : null;
+    return (pv && pv.primeIdx>=0) ? pv.plots[pv.primeIdx] : null;
 }
 
 

@@ -21,7 +21,7 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import Band from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
-import RequestType from '../visualize/RequestType.js';
+import {RequestType} from '../visualize/RequestType.js';
 import {ServiceType} from '../visualize/WebPlotRequest.js';
 
 import HelpIcon from './HelpIcon.jsx';

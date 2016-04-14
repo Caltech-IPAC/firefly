@@ -14,6 +14,8 @@ export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
 
 const ADD_VIEWER= 'MultiViewCntlr.AddViewer';
 const REMOVE_VIEWER= 'MultiViewCntlr.RemoveViewer';
+const VIEWER_MOUNTED= 'MultiViewCntlr.viewMounted';
+const VIEWER_UNMOUNTED= 'MultiViewCntlr.viewUnmounted';
 const ADD_IMAGES= 'MultiViewCntlr.addImages';
 const REMOVE_IMAGES= 'MultiViewCntlr.removeImages';
 const REPLACE_IMAGES= 'MultiViewCntlr.replaceImages';
@@ -31,12 +33,16 @@ const clone = (obj,params={}) => Object.assign({},obj,params);
 export default {
     ADD_VIEWER, REMOVE_VIEWER,
     ADD_IMAGES, REMOVE_IMAGES, REPLACE_IMAGES,
+    VIEWER_MOUNTED, VIEWER_UNMOUNTED,
     CHANGE_LAYOUT, reducer
 };
 
 export const SINGLE='single';
 export const GRID='grid';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
+
+export const GRID_RELATED='gridRelated';
+export const GRID_FULL='gridFull';
 
 function initState() {
 
@@ -54,6 +60,9 @@ function initState() {
                 canReceiveNewPlots : boolean // can this viewer support adding images.
                 viewType : string // 'single', 'grid'
                 plotIdAry : array of string plotId
+                mounted : boolean, if the react component using the store is mounted
+                layout :  string, one of GRID, SINGLE
+                layoutDetail :  hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      *
      */
 }
@@ -69,9 +78,10 @@ function initState() {
  *
  * @param viewerId
  * @param canReceiveNewPlots
+ * @param mounted
  */
-export function dispatchAddViewer(viewerId, canReceiveNewPlots) {
-    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots} });
+export function dispatchAddViewer(viewerId, canReceiveNewPlots, mounted=false) {
+    flux.process({type: ADD_VIEWER , payload: {viewerId, canReceiveNewPlots,mounted} });
 }
 
 /**
@@ -104,10 +114,11 @@ export function dispatchAddToAutoReceiver(imageAry) {
 /**
  * 
  * @param viewerId
- * @param {string} layout must be grid or single
+ * @param layout single or grid
+ * @param layoutDetail more detail about the type of layout, hint to UI
  */
-export function dispatchChangeLayout(viewerId, layout) {
-    flux.process({type: CHANGE_LAYOUT , payload: {viewerId, layout} });
+export function dispatchChangeLayout(viewerId, layout, layoutDetail) {
+    flux.process({type: CHANGE_LAYOUT , payload: {viewerId, layout, layoutDetail} });
 }
 
 
@@ -128,6 +139,15 @@ export function dispatchRemoveImages(viewerId, plotIdAry) {
 export function dispatchReplaceImages(viewerId, imageAry) {
     flux.process({type: REPLACE_IMAGES , payload: {viewerId, imageAry} });
 }
+
+export function dispatchViewerMounted(viewerId) {
+    flux.process({type: VIEWER_MOUNTED , payload: {viewerId} });
+}
+
+export function dispatchViewerUnmounted(viewerId) {
+    flux.process({type: VIEWER_UNMOUNTED , payload: {viewerId} });
+}
+
 
 //======================================== Utilities =============================
 //======================================== Utilities =============================
@@ -151,9 +171,15 @@ export function getExpandedViewerPlotIds(multiViewRoot) {
 export function getViewerPlotIds(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return null;
     var viewerObj= multiViewRoot.find( (entry) => entry.viewerId===viewerId);
-    return (viewerObj) ? viewerObj.plotIdAry : null;
+    return (viewerObj) ? viewerObj.plotIdAry : [];
 }
 
+/**
+ * get the viewer for an id
+ * @param multiViewRoot
+ * @param viewerId
+ * @return {*}
+ */
 export function getViewer(multiViewRoot,viewerId) {
     if (!multiViewRoot || !viewerId) return null;
     return multiViewRoot.find( (entry) => entry.viewerId===viewerId);
@@ -222,6 +248,12 @@ function reducer(state=initState(), action={}) {
         case CHANGE_LAYOUT:
             retState= changeLayout(state,action);
             break;
+        case VIEWER_MOUNTED:
+            retState= changeMount(state,action.payload.viewerId,true);
+            break;
+        case VIEWER_UNMOUNTED:
+            retState= changeMount(state,action.payload.viewerId,false);
+            break;
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             retState= deletePlotView(state,action);
             break;
@@ -236,10 +268,10 @@ function reducer(state=initState(), action={}) {
 
 function addViewer(state,action) {
 
-    const {viewerId,layout=GRID,canReceiveNewPlots=false}= action.payload;
+    const {viewerId,layout=GRID,canReceiveNewPlots=false,mounted}= action.payload;
     if (hasViewerId(state,viewerId)) return state;
 
-    const entry= { viewerId, canReceiveNewPlots, layout, plotIdAry: [] };
+    const entry= { viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [] };
     return [...state,entry];
 }
 
@@ -300,10 +332,16 @@ function replaceImages(state,action) {
 
 
 function changeLayout(state,action) {
-    const {viewerId,layout}= action.payload;
+    const {viewerId,layout,layoutDetail}= action.payload;
     var viewer= state.find( (entry) => entry.viewerId===viewerId);
     if (!viewer) return state;
-    if (viewer.layout===layout) return state;
-    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {layout}) : entry);
+    if (viewer.layout===layout && viewer.layoutDetail===layoutDetail) return state;
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {layout,layoutDetail}) : entry);
 }
 
+function changeMount(state,viewerId,mounted) {
+    var viewer= state.find( (entry) => entry.viewerId===viewerId);
+    if (!viewer) return state;
+    if (viewer.mounted===mounted) return state;
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {mounted}) : entry);
+}

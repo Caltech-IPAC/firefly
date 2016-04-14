@@ -160,6 +160,7 @@ function zoomPlotIdNow(dispatcher,plotId,zoomLevel,isFullScreen) {
     zoomTimers= zoomTimers.filter((t) => t.plotId!==plotId);
 
     var pv= getPlotViewById(visRoot(),plotId);
+    if (!primePlot(pv)) return;  // the plot what changed, abort zoom
     callSetZoomLevel(getPlotStateAry(pv),zoomLevel,isFullScreen)
         .then( (wpResult) => processZoomSuccess(dispatcher,plotId,zoomLevel,wpResult) )
         .catch ( (e) => {

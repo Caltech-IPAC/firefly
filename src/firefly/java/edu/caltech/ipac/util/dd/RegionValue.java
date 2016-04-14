@@ -43,6 +43,11 @@ public class RegionValue {
                 unit!=Unit.CONTEXT;
     }
 
+    public boolean isPixelCoords() {
+        return (unit==Unit.SCREEN_PIXEL || unit==Unit.IMAGE_PIXEL);
+    }
+
+
     public double toDegree() {
         if (!isWorldCoords()) {
             throw new IllegalArgumentException("Can't convert to degrees");

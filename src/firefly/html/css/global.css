@@ -139,6 +139,7 @@ img, html {
     display: flex;
     overflow: hidden;
     margin: 5px;
+    position: relative;
 }
 
 .Pane.vertical .wrapper, .Pane.horizontal .wrapper{
@@ -148,6 +149,7 @@ img, html {
     border: 1px solid #a3aeb9;
     border-radius: 5px;
     margin: 3px;
+    position: relative;
 }
 
 .Resizer {

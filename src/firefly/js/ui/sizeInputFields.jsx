@@ -148,13 +148,13 @@ class SizeInputFieldView extends Component {
 
     render() {
         var {displayValue, valid, unit} = this.state;
-        var {min, max} = this.props;
+        var {min, max, wrapperStyle={}} = this.props;
         var sign = unitSign[unit];
         var message = `Valid range between: ${sizeFromDeg(min, unit)}${sign} and ${sizeFromDeg(max, unit)}${sign}`;
 
 
         return (
-            <div >
+            <div style={wrapperStyle}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
                     <InputFieldView
                         valid={valid}
@@ -196,7 +196,8 @@ SizeInputFieldView.propTypes = {
     label:    PropTypes.string,
     onChange: PropTypes.func,
     value: PropTypes.string,
-    valid: PropTypes.bool
+    valid: PropTypes.bool,
+    wrapperStyle: PropTypes.object
 };
 
 SizeInputFieldView.defaultProps = {

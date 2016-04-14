@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {TitleOptions,RequestType} from '../WebPlotRequest.js';
+import {TitleOptions} from '../WebPlotRequest.js';
+import {RequestType} from '../RequestType.js';
 
 /**
  *
