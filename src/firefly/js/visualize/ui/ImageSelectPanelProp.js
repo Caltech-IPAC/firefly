@@ -3,8 +3,8 @@
  */
 export const panelCatalogs = [
     {
-        'Title':'IRSA',
-        'Symbol': 'IRSA',
+        'Title':'IRAS',
+        'Symbol': 'IRAS',
         'CatalogId': 0,
         'fields': ['types'],
         'types': {
@@ -60,7 +60,7 @@ export const panelCatalogs = [
                 {'item':'4', 'id': 1, 'name': 'Band 4'}],
             'Default': '1'
         },
-        'range': {'min':.01, 'max': 3, 'unit': 'deg'},
+        'range': {'min':.01, 'max': 2, 'unit': 'deg'},
         'size':.15
     },
     {

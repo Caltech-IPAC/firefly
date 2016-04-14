@@ -23,8 +23,8 @@ import {SizeInputFields} from '../../ui/sizeInputFields.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
-import CollapsiblePanel from '../../ui/panel/CollapsiblePanel.jsx';
-import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelState.js';
+import CollapsiblePanel, {CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
+import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
 import {get} from 'lodash';
 
 import './ImageSelectPanel.css';
@@ -37,7 +37,7 @@ export const [RED, GREEN, BLUE] = [0, 1, 2];
 export const keyMap = {
     'targettry': 'SELECTIMAGEPANEL_targettry',
     'catalogtab':'SELECTIMAGEPANEL_catalogtab',
-    'irsatypes': 'SELECTIMAGEPANEL_IRSA_types',
+    'irastypes': 'SELECTIMAGEPANEL_IRAS_types',
     'twomasstypes':'SELECTIMAGEPANEL_2MASS_types',
     'wisetypes': 'SELECTIMAGEPANEL_WISE_types',
     'wisebands': 'SELECTIMAGEPANEL_WISE_bands',
@@ -55,7 +55,7 @@ export const keyMap = {
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
-export const [IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+export const [IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 export const rgb = ['red', 'green', 'blue'];
 
 export function completeButtonKey( isThreeColor = false ) {
@@ -67,7 +67,7 @@ export function completeButtonKey( isThreeColor = false ) {
  *
  */
 
-export function computeCurrentCatalogId( fields, colorFields, catalogId = [IRSA, IRSA, IRSA] ) {
+export function computeCurrentCatalogId( fields, colorFields, catalogId = [IRAS, IRAS, IRAS] ) {
 
     const keytab = keyMap['catalogtab'];
     var   newId = catalogId.slice();
@@ -178,7 +178,7 @@ export class ImageSelection extends Component {
          this.allfields = getAllGroupFields(panelKey,...rgbFieldGroup);
 
          this.state = {
-             initCatalogId: props.catalogId ? props.catalogId : [IRSA, IRSA, IRSA],
+             initCatalogId: props.catalogId ? props.catalogId : [IRAS, IRAS, IRAS],
              fields: this.allfields[panelKey],
              [rgbFieldGroup[RED]]: this.allfields[rgbFieldGroup[RED]],
              [rgbFieldGroup[GREEN]]: this.allfields[rgbFieldGroup[GREEN]],
@@ -255,7 +255,7 @@ ImageSelection.propTypes = {
 // output: PLOT_REPLACE, PLOT_CREATE, PLOT_CREATE3COLOR, PLOT_NO
 
 export function isCreatePlot(pMode, fields) {
-    if (!pMode || pMode == PLOT_NO) {    // no plot to draw
+    if (!pMode || pMode === PLOT_NO) {    // no plot to draw
         return PLOT_NO;
     } else {
         if (pMode & (PLOT_CREATE | PLOT_CREATE3COLOR)) {        // check plotMode and fields
@@ -346,11 +346,22 @@ class ImageSelectionView extends Component {
 
         var threeColorTabs = rgb.map((color, index) => {
                 var msg = `${color.toUpperCase()} is not selected`;
+                var corner = CollapseHeaderCorner.BottomLeft;
 
                 return (
                     <CollapsiblePanel key={index}
                                       header={color.toUpperCase()}
-                                      isOpen={ index === RED }>
+                                      isOpen={ index === RED }
+                                      borderStyle={index === BLUE ? CollapseBorder.Threeborder : CollapseBorder.Twoborder}
+                                      headerRoundCorner={ index === RED ? corner|CollapseHeaderCorner.TopRight : corner}
+                                      headerStyle={{background: color,
+                                                    opacity: 0.8,
+                                                    color: 'white',
+                                                    fontWeight: 'bold' }}
+                                      contentStyle={{padding: 10,
+                                                     paddingTop: 10,
+                                                     paddingBottom: 10,
+                                                     margin: '0px 0px 0px 10px'}}>
                         <FieldGroup groupKey={rgbFieldGroup[index]}
                                     reducerFunc={ImageSelPanelChangeOneColor}
                                     keepState={true}>

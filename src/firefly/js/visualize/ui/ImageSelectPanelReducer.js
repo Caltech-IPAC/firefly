@@ -7,7 +7,7 @@ import Validate from '../../util/Validate.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded,
-        IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE} from './ImageSelectPanel.jsx';
+        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE} from './ImageSelectPanel.jsx';
 import {sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import {get} from 'lodash';
 
@@ -42,11 +42,11 @@ function initTabFields(crtCatalogId) {
             fieldKey: keyMap['catalogtab'],
             value: panelCatalogs[crtCatalogId].CatalogId.toString()
         },
-        [keyMap['irsatypes']]: {
-            fieldKey: keyMap['irsatypes'],
-            label: panelCatalogs[IRSA].types.Title,
-            value: panelCatalogs[IRSA].types.Default,
-            labelWidth: computeLabelWidth(panelCatalogs[IRSA].types.Title)
+        [keyMap['irastypes']]: {
+            fieldKey: keyMap['irastypes'],
+            label: panelCatalogs[IRAS].types.Title,
+            value: panelCatalogs[IRAS].types.Default,
+            labelWidth: computeLabelWidth(panelCatalogs[IRAS].types.Title)
         },
         [keyMap['twomasstypes']]: {
             fieldKey: keyMap['twomasstypes'],
@@ -186,7 +186,7 @@ var initTargetSize = (crtCatalogId) => {
 // reducer for the child field group (fieldgrouptabs for r, g, b)
 export var ImageSelPanelChangeOneColor = (inFields, action) => {
     if (!inFields) {
-        return initTabFields(IRSA);
+        return initTabFields(IRAS);
     } else {
         return inFields;
     }

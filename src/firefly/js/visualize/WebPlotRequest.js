@@ -398,7 +398,7 @@ class WebPlotRequest extends ServerRequest {
         var req = this.makePlotServiceReq(ServiceType.WISE, wp, survey, sizeInDeg);
         req.setParam(C.SURVEY_KEY_BAND, band + '');
         var sDesc= survey.toLowerCase()==='3a' ? 'Atlas' : survey;
-        req.setTitle('Wise: '+sDesc+ ', B'+ band);
+        req.setTitle('WISE: '+sDesc+ ', B'+ band);
         return req;
     }
 

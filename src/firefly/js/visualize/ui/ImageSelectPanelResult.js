@@ -3,7 +3,7 @@
  */
 
 import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup,
-        IRSA, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE,
+        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE,
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
@@ -24,7 +24,8 @@ const loadErrorMsg = {
     'nofits': 'no fits file uploaded',
     'failplot': 'fail to make plot request',
     'noplotid': 'no plot id or group id found',
-    'noplot': 'no plot to replace or create'
+    'noplot': 'no plot to replace or create',
+    'norgbselect': 'no image is selected'
 };
 
 function *newPlotIdMaker() {
@@ -75,7 +76,7 @@ function imagePlotOnBlank(request) {
                      sizeV, sizeV);
 }
 
-// image plot on IRSA, 2MASS, WISE, MSX, DSS, SDSS
+// image plot on IRAS, 2MASS, WISE, MSX, DSS, SDSS
 function imagePlotOnSurvey(crtCatalogId, request) {
 
     var wp = parseWorldPt(request.UserTargetWorldPt);
@@ -90,7 +91,7 @@ function imagePlotOnSurvey(crtCatalogId, request) {
     var wpr = null;
 
     switch(crtCatalogId) {
-        case IRSA:
+        case IRAS:
             var s = (survey) ? survey.split('-')[1]: '';
 
             if (survey.includes('issa')) {
@@ -140,7 +141,7 @@ export function resultFail(fromFail = true) {
 
         var validate = (fg, cId, rgbNote = '') => {
             var errMsg = '';
-            var msg = (code) => `${rgbNote}${loadErrorMsg[code]}`;
+            var msg = (code, note = '') => `${note}${loadErrorMsg[code]}`;
             const skey = 'sizefield';
 
             // error message is for the validation made by complete button callback
@@ -151,7 +152,7 @@ export function resultFail(fromFail = true) {
                         errMsg = 'invalid url';
                     } else {
                         if (!get(fg, keyMap['urlinput'])) {
-                            errMsg = msg('nourl');
+                            errMsg = msg('nourl', rgbNote);
                         }
                     }
                     break;
@@ -161,7 +162,7 @@ export function resultFail(fromFail = true) {
                         errMsg = 'invalid file upload';
                     } else {
                         if (!get(fg, keyMap['fitsupload'])) {
-                            errMsg = msg('nofits');
+                            errMsg = msg('nofits', rgbNote);
                         }
                     }
                     break;
@@ -173,7 +174,7 @@ export function resultFail(fromFail = true) {
                         if (!fg.hasOwnProperty('UserTargetWorldPt') || !fg.UserTargetWorldPt) {
                             errMsg = msg('notarget');
                         } else if (!get(fg, keyMap['blankinput'])) {
-                            errMsg = msg('nopixelsize');
+                            errMsg = msg('nopixelsize', rgbNote);
                         } else if (!get(fg, keyMap[skey])) {
                             errMsg = msg('nosize');
                         }
@@ -274,15 +275,16 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             wpSet.push(wpr);
         } else {
             rgbFieldGroup.map((item, index) => {
-                // add target and size data into r, g, b field group
-                var fgRequest = Object.assign({}, request[item],
-                    {
-                        UserTargetWorldPt: get(request[panelKey], 'UserTargetWorldPt'),
-                        [keyMap['sizefield']]: get(request[panelKey], keyMap['sizefield'])
-                    });
-
                 wpr = null;
                 if (crtCatalogId[index] !== NONE) {
+                    // add target and size data into r, g, b field group
+
+                    var fgRequest = Object.assign({}, request[item],
+                        {
+                            UserTargetWorldPt: get(request[panelKey], 'UserTargetWorldPt'),
+                            [keyMap['sizefield']]: get(request[panelKey], keyMap['sizefield'])
+                        });
+
                     wpr = webRequest(crtCatalogId[index], fgRequest);
                     if (!wpr) {
                         return outputMessage(`${loadErrorMsg['failplot']} on ${rgb[index]} image`);
@@ -290,6 +292,9 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
                 }
                 wpSet.push(wpr);
             });
+            if (wpSet.every((wpr)=>( !wpr ))) {
+                return outputMessage(`${loadErrorMsg['norgbselect']}`);
+            }
         }
         const create = (PLOT_CREATE|PLOT_CREATE3COLOR);
         var nPlotId = null;
