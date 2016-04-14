@@ -420,7 +420,7 @@ public class RegionFactory {
         if (x.isWorldCoords() && y.isWorldCoords()) {
             wp= new WorldPt(x.toDegree(), y.toDegree(), csys);
         }
-        else if (isWorldCoords(coord_sys)) {
+        else if (isWorldCoords(coord_sys) && !x.isPixelCoords()) {
             wp= new WorldPt(x.toDegree(), y.toDegree(), csys);
         }
         else {

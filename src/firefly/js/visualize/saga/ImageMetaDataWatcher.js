@@ -15,6 +15,7 @@ import MultiViewCntlr, {dispatchReplaceImages, getViewerPlotIds,
 import {ACTIVE_TABLE_CHANGED} from '../../core/LayoutCntlr.js';
 import {converterFactory} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable} from '../../metaConvert/converterUtils.js';
+import {getActiveTableId} from '../../core/LayoutCntlr.js';
 
 
 /**
@@ -41,13 +42,16 @@ export function* watchImageMetaData(params) {
                                   REINIT_RESULT_VIEW]);
         const {payload}= action;
 
-        if (payload.tbl_id) {
+        if (payload.viewerId && payload.viewerId!==viewerId) continue;
+
+        if (action.type===TABLE_REMOVE) {
+            tbl_id= getActiveTableId();
+        }
+        else if (payload.tbl_id) {
             if (!isMetaDataTable(payload.tbl_id)) continue;
             tbl_id= payload.tbl_id; // otherwise us the last one
         }
-        if (payload.viewerId && payload.viewerId!==viewerId) {
-            continue;
-        }
+
 
         switch (action.type) {
 

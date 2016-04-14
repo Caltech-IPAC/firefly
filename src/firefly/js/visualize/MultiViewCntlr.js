@@ -60,6 +60,9 @@ function initState() {
                 canReceiveNewPlots : boolean // can this viewer support adding images.
                 viewType : string // 'single', 'grid'
                 plotIdAry : array of string plotId
+                mounted : boolean, if the react component using the store is mounted
+                layout :  string, one of GRID, SINGLE
+                layoutDetail :  hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      *
      */
 }

@@ -41,11 +41,16 @@ export function TriViewImageSection({showCoverage=true, showFits=true, showImage
                                    left:0, right:0, top:0, bottom:0}} >
                     <FieldGroupTabs defaultSelected={0} initialState= {{ value:'image' }}>
                         <Tab name='Fits Data' removable={false} id='image'>
-                            <MultiImageViewer  insideFlex={true} viewerId='triViewImages' Toolbar={MultiViewStandardToolbar}/>
+                            <MultiImageViewer viewerId='triViewImages'
+                                              insideFlex={true}
+                                              canReceiveNewPlots={true}
+                                              Toolbar={MultiViewStandardToolbar}/>
                         </Tab>
                         <Tab name='Image Meta Data' removable={false} id='meta'>
-                            <MultiImageViewer  insideFlex={true} viewerId='triViewImageMetaData' 
-                                               Toolbar={ImageMetaDataToolbar}/>
+                            <MultiImageViewer viewerId='triViewImageMetaData'
+                                              insideFlex={true}
+                                              canReceiveNewPlots={false}
+                                              Toolbar={ImageMetaDataToolbar}/>
                         </Tab>
                         <Tab name='Coverage' removable={false} id='cov'>
                             <div style={{padding:10}}>TODO: Coverage Here</div>

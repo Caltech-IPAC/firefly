@@ -15,7 +15,6 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import {Band} from '../Band.js';
 import {requiresWidthHeight} from '../ZoomType.js';
 import {logError} from '../../util/WebUtil.js';
-import {flux} from '../../Firefly.js';
 
 
 /**
@@ -27,7 +26,7 @@ import {flux} from '../../Firefly.js';
  * </ul>
  *
  */
-export function* imagePlotter() {
+export function* imagePlotter(params, dispatch, getState) {
 
     var waitingPlotActions= [];
 
@@ -38,7 +37,7 @@ export function* imagePlotter() {
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
                 if (canContinue(action,pv)) {
-                    continuePlotting(makeContinueAction(action,pv),flux.getRedux().dispatch);
+                    continuePlotting(makeContinueAction(action,pv),dispatch);
                 }
                 else {
                     waitingPlotActions= unionWith(waitingPlotActions,[action], 
@@ -49,7 +48,7 @@ export function* imagePlotter() {
             case ImagePlotCntlr.UPDATE_VIEW_SIZE:
                 const waitAction= waitingPlotActions.find( (a) => a.payload.plotId===plotId);
                 if (waitAction) {
-                    continuePlotting(makeContinueAction(waitAction,pv),flux.getRedux().dispatch);
+                    continuePlotting(makeContinueAction(waitAction,pv),dispatch);
                     waitingPlotActions= waitingPlotActions.filter( (a) => a.payload.plotId!==plotId);
                 }
                 break;

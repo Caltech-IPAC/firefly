@@ -7,7 +7,7 @@ import {getPlotViewIdListInGroup, getDrawLayerById} from './PlotViewUtil.js';
 import VisMouseCntlr from './VisMouseCntlr.js';
 import ImagePlotCntlr, {visRoot}  from './ImagePlotCntlr.js';
 import DrawLayerReducer from './reducer/DrawLayerReducer.js';
-import {without,union} from 'lodash';
+import {without,union,omit} from 'lodash';
 
 
 
@@ -402,10 +402,7 @@ function clearPreattachLayer(state,action) {
     var drawLayer= state.drawLayerAry.find( (dl) => drawLayerId===dl.drawLayerId);
     if (drawLayer) return state;
     if (!state.preAttachedTypes[drawLayer.drawLayerTypeId]) return state;
-
-    const preAttachedTypes= clone(preAttachedTypes);
-    Reflect.deleteProperty(preAttachedTypes, drawLayerTypeId);
-
+    const preAttachedTypes= omit(state.preAttachedTypes,drawLayer.drawLayerTypeId);
     return clone(state, {preAttachedTypes});
 }
 

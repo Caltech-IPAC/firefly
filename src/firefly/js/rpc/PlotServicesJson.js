@@ -189,6 +189,24 @@ export function callGetFileFlux(state, pt) {
     return doService(doJsonP(), ServerParams.FILE_FLUX_JSON, params);
 }
 
+export function getDS9Region(fileKey) {
+
+    var params= {
+        [ServerParams.FILE_KEY]: fileKey,
+        [ServerParams.JSON_DEEP]: true
+    };
+    return doService(doJsonP(), ServerParams.DS9_REGION, params);
+}
+
+
+export function saveDS9RegionFile(regionData) {
+
+    var params= {
+        [ServerParams.REGION_DATA]: regionData,
+        [ServerParams.JSON_DEEP]: true
+    };
+    return doService(doJsonP(), ServerParams.SAVE_DS9_REGION, params);
+}
 
 
 const getWebPlotGroup= function(requestList, progressKey) {
@@ -215,7 +233,6 @@ function makeParamsWithStateAry(stateAry, otherParams=[]) {
     ];
 
 }
-
 
 /**
  *

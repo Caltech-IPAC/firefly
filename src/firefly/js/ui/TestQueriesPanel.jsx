@@ -35,11 +35,13 @@ import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
+import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
+import {getDS9Region} from '../rpc/PlotServicesJson.js';
 
 const options= [
     {label: 'AllWISE Source Catalog', value:'wise_allwise_p3as_psd', proj:'WISE'},
@@ -85,6 +87,7 @@ export class TestQueriesPanel extends Component {
                             <Tab name='Images' id='images'>{renderImagesTab()}</Tab>
                             <Tab name='Wise Search' id='wiseImage'><div>{renderWiseSearch(fields)}</div></Tab>
                             <Tab name='2Mass Search' id='2massImage'><div>{render2MassSearch(fields)}</div></Tab>
+                            <Tab name='Load Region' id='loadRegion'><div>{renderLoadRegion(fields)}</div></Tab>
 
                         </FieldGroupTabs>
 
@@ -102,12 +105,12 @@ export class TestQueriesPanel extends Component {
 
 
 TestQueriesPanel.propTypes = {
-    name: PropTypes.oneOf(['TestACatalog']),
+    name: PropTypes.oneOf(['TestSearches']),
     resultId: PropTypes.string
 };
 
 TestQueriesPanel.defaultProps = {
-    name: 'TestACatalog',
+    name: 'TestSearches',
     resultId: TblUtil.uniqueTblUiGid()
 };
 
@@ -245,7 +248,20 @@ function render2MassSearch(fields) {
 
 
 
+function renderLoadRegion(fields) {
+    return (
+        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+            <FileUpload
+                wrapperStyle = {{margin: '5px 0'}}
+                fieldKey = 'fileUpload'
+                initialState= {{
+                        tooltip: 'Select a region file to upload',
+                        label: 'Upload File:'}}
+            />
+        </div>
+    );
 
+}
 
 
 
@@ -281,6 +297,9 @@ function onSearchSubmit(request, resultId) {
     }
     else if (request.Tabs==='2massImage') {
         do2Mass(request,resultId);
+    }
+    else if (request.Tabs==='loadRegion') {
+        doRegionLoad(request,resultId);
     }
     else {
         console.log('request no supported');
@@ -433,3 +452,16 @@ function do2Mass(request, resultId) {
     dispatchTableSearch(TableRequest.newInstance(reqParams), resultId, tbl_ui_id);
 
 }
+
+
+
+function doRegionLoad(request, resultId) {
+    getDS9Region(request.fileUpload)
+        .then( (result) => {
+            console.log(result);
+
+        });
+    console.log('load region');
+    
+}
+
