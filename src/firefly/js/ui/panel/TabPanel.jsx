@@ -101,10 +101,11 @@ export class Tab extends Component {
 
     render () {
         const {name, selected, onSelect, removable, onTabRemove,id} = this.props;
-        var tabClassName = 'TabPanel__Tab';
+        var tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
+
         return (
             <li className={tabClassName}>
                 <div style={{display: 'inline-block'}} onClick={() => onSelect(id,name)} >{name}</div>
