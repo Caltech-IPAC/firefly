@@ -8,7 +8,7 @@ import {panelCatalogs} from './ImageSelectPanelProp.js';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded,
         IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE} from './ImageSelectPanel.jsx';
-import {sizeFromDeg} from '../../ui/sizeInputFields.jsx';
+import {sizeFromDeg} from '../../ui/SizeInputFields.jsx';
 import {get} from 'lodash';
 
 // get unit (string), min (float) and max (float) from the data file

@@ -11,7 +11,7 @@ import {dispatchAddImages} from '../MultiViewCntlr.js';
 import {parseWorldPt} from '../Point.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {sizeFromDeg} from '../../ui/sizeInputFields.jsx';
+import {sizeFromDeg} from '../../ui/SizeInputFields.jsx';
 import {get} from 'lodash';
 import {dispatchHideDropDownUi} from '../../core/LayoutCntlr.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
