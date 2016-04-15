@@ -42,6 +42,24 @@ public class WebPlotResultSerializer {
     public static String createJson(WebPlotResult res, boolean useDeepJson) {
         return useDeepJson ? createJsonDeepString(res) : createJsonShallow(res);
     }
+
+    public static String createJson(WebPlotResult resAry[], boolean useDeepJson) {
+        if (useDeepJson) {
+
+            JSONArray ary= new JSONArray();
+            for(WebPlotResult res : resAry) ary.add(createJsonDeep(res));
+
+            JSONObject map = new JSONObject();
+            map.put( "success", true);
+            map.put("data", ary);
+            return map.toString();
+        }
+        else {
+           return "false";
+        }
+    }
+
+
     public static String createJsonDeepString(WebPlotResult res) {
         JSONObject obj= createJsonDeep(res);
         JSONArray wrapperAry= new JSONArray();

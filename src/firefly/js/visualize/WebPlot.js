@@ -105,6 +105,7 @@ export const PlotAttribute= {
      */
     MINIMAL_READOUT : 'MINIMAL_READOUT',
 
+    TABLE_ROW : 'TABLE_ROW',
 
 
     UNIQUE_KEY : 'UNIQUE_KEY'

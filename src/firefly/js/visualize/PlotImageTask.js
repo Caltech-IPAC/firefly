@@ -3,18 +3,18 @@
  */
 
 import {logError} from '../util/WebUtil.js';
-import ImagePlotCntlr, {visRoot} from './ImagePlotCntlr.js';
-import {callGetWebPlot, callGetWebPlot3Color} from '../rpc/PlotServicesJson.js';
+import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from './ImagePlotCntlr.js';
 import WebPlotResult from './WebPlotResult.js';
 import WebPlot, {PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
+import {PlotState} from './PlotState.js';
 import {makeImagePt} from './Point.js';
 import {WPConst, DEFAULT_THUMBNAIL_SIZE} from './WebPlotRequest.js';
 import {getPlotViewById} from './PlotViewUtil.js';
 import {Band} from './Band.js';
-import PlotPref from './PlotPref.js';
+import {PlotPref} from './PlotPref.js';
 import ActiveTarget  from '../drawingLayers/ActiveTarget.js';
 import DrawLayerCntlr from './DrawLayerCntlr.js';
 import {makePostPlotTitle} from './reducer/PlotTitle.js';
@@ -59,43 +59,15 @@ function makePlotImageAction(rawAction) {
             firstTime= false;
         }
 
-        var {plotId,wpRequest,threeColor, redReq, greenReq, blueReq}= rawAction.payload;
-
-        if (!plotId) {
-            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
-                         payload: {plotId, error:Error('plotId is required')} });
-            return;
-        }
+        const requestKey= makeUniqueRequestKey();
 
         setTimeout(dispatchUpdateStatus, INIT_STATUS_UPDATE_DELAY);
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_START,
-                      payload: rawAction.payload
+                      payload: Object.assign({},rawAction.payload, {requestKey})
         } );
         // NOTE - sega ImagePlotter handles next step
-        // keeping the commented code for time being, might clean this up more
-
-        //
-        // if (rawAction.payload.useContextModifications) {
-        //     var pv= getPlotViewById(visRoot(),plotId);
-        //     if (pv) {
-        //         var {plotViewCtx}= pv;
-        //         if (wpRequest && !Array.isArray(wpRequest)) {
-        //             wpRequest= modifyRequest(plotViewCtx,wpRequest,Band.NO_BAND);
-        //         }
-        //         if (redReq) redReq= modifyRequest(plotViewCtx,redReq,Band.RED);
-        //         if (greenReq) greenReq= modifyRequest(plotViewCtx,greenReq,Band.GREEN);
-        //         if (blueReq) blueReq= modifyRequest(plotViewCtx,blueReq,Band.BLUE);
-        //     }
-        // }
-        //
-        // var p= threeColor ? callGetWebPlot3Color(redReq,greenReq,blueReq) : callGetWebPlot(wpRequest);
-        //
-        // p.then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
-        //     .catch ( (e) => {
-        //         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotId, error:e} } );
-        //         logError(`plot error, plotId: ${plotId}`, e);
-        //     });
-
+        // NOTE - sega ImagePlotter handles next step
+        // NOTE - sega ImagePlotter handles next step
     };
 }
 
@@ -150,10 +122,6 @@ export function modifyRequest(pvCtx, r, band) {
         retval.setInitialColorTable(cPref.colorTableId);
     }
 
-
-    if (pvCtx.gridId) retval.setGridId(pvCtx.gridId);
-
-
     var zPref= PlotPref.getCacheZoomPref(pvCtx.preferenceZoomKey);
     if (zPref) {
         retval.setInitialZoomLevel(zPref.zooomLevel);
@@ -165,41 +133,60 @@ export function modifyRequest(pvCtx, r, band) {
     return retval;
 
 }
-
-
-
 /**
  *
  * @param dispatcher
  * @param {object} payload the payload of the original action
  * @param {object} result the result of the search
  */
-export const processPlotImageSuccessResponse= function(dispatcher, payload, result) {
+export function processPlotImageSuccessResponse(dispatcher, payload, result) {
     var resultPayload;
+    var successAry= [];
+    var failAry= [];
 
-    if (result.success) {
-        resultPayload= handleSuccess(result,payload);
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE, payload:resultPayload} );
-        dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[resultPayload.plotId]}} );
-        resultPayload.plotAry
-            .map( (p) => ({r:p.plotState.getWebPlotRequest(),plotId:p.plotId}))
-            .forEach( (obj) => obj.r.getOverlayIds()
-                .forEach( (drawLayerId)=>  DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId,obj.plotId)));
-
-        //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
-        dispatchAddImages(EXPANDED_MODE_RESERVED, [resultPayload.plotId]);
+    if (result.success && Array.isArray(result.data)) {
+        successAry= result.data.filter( (d) => d.success);
+        failAry= result.data.filter( (d) => !d.success);
     }
     else {
-        var req= getRequest(payload);
+        if (result.success) successAry= [{data:result}];
+        else                failAry= [{data:result}];
+    }
+
+
+    const pvNewPlotInfoAry= successAry.map( (r) => handleSuccess(r.data.PlotCreate,payload) );
+    resultPayload= Object.assign({},payload, {pvNewPlotInfoAry});
+    if (successAry.length) {
+        dispatcher({type: ImagePlotCntlr.PLOT_IMAGE, payload: resultPayload});
+        const plotIdAry = pvNewPlotInfoAry.map((info) => info.plotId);
+        dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotIdAry}});
+
+
+        pvNewPlotInfoAry.forEach((info) => {
+            info.plotAry.map((p) => ({r: p.plotState.getWebPlotRequest(), plotId: p.plotId}))
+                .forEach((obj) => obj.r.getOverlayIds()
+                    .forEach((drawLayerId)=> DrawLayerCntlr.dispatchAttachLayerToPlot(drawLayerId, obj.plotId)));
+        });
+
+        //todo- this this plot is in a group and locked, make a unique list of all the drawing layers in the group and add to new
+        dispatchAddImages(EXPANDED_MODE_RESERVED, plotIdAry);
+    }
+
+
+    failAry.forEach( (r) => {
+        const {data}= r;
         resultPayload= Object.assign({},payload);
         // todo: add failure stuff to resultPayload here
-        var title = req.getTitle() || '';
-        resultPayload.briefDescription= result.briefFailReason;
-        resultPayload.description= title + ': Plot Failed- ' + result.userFailReason;
-        resultPayload.detailFailReason= result.detailFailReason;
+        resultPayload.briefDescription= data.briefFailReason;
+        resultPayload.description= 'Plot Failed- ' + data.userFailReason;
+        resultPayload.detailFailReason= data.detailFailReason;
         dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload:resultPayload} );
-    }
-};
+    });
+
+}
+
+
+
 
 
 function getRequest(payload) {
@@ -207,11 +194,13 @@ function getRequest(payload) {
 }
 
 
-const handleSuccess= function(result, payload) {
-    var plotAry= result[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit,payload.plotId));
-    if (plotAry.length) updateActiveTarget(plotAry[0]);
-    return Object.assign({}, payload, {plotAry});
+const handleSuccess= function(plotCreate, payload) { //TODO: finish
+    const plotState= PlotState.makePlotStateWithJson(plotCreate[0].plotState);
+    const plotId= plotState.getWebPlotRequest().getPlotId();
 
+    var plotAry= plotCreate.map((wpInit) => makePlot(wpInit,plotId));
+    if (plotAry.length) updateActiveTarget(plotAry[0]);
+    return {plotId, plotAry, overlayPlotViews:null};
 };
 
 function makePlot(wpInit,plotId) {
@@ -219,6 +208,7 @@ function makePlot(wpInit,plotId) {
     var r= plot.plotState.getWebPlotRequest();
     plot.title= makePostPlotTitle(plot,r);
     if (r.isMinimalReadout()) plot.attributes[PlotAttribute.MINIMAL_READOUT]= true;
+    if (r.getRelatedTableRow()>-1) plot.attributes[PlotAttribute.TABLE_ROW]= r.getRelatedTableRow();
     return plot;
 }
 

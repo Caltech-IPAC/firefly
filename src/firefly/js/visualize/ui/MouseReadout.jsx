@@ -7,6 +7,7 @@
  *     DM-4789
  */
 import React, {PropTypes} from 'react';
+import {get} from 'lodash';
 import {primePlot} from '../PlotViewUtil.js';
 import {isBlankImage} from '../WebPlot.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
@@ -17,7 +18,7 @@ import VisUtil from '../VisUtil.js';
 import {debounce} from 'lodash';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import numeral from 'numeral';
-import Band from '../Band.js';
+import {Band} from '../Band.js';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
 import {MouseState} from '../VisMouseCntlr.js';
@@ -111,9 +112,8 @@ export class MouseReadout extends React.Component {
             callGetFileFlux(plot.plotState, iPt)
                 .then((result) => {
                     var fluxArray = [];
-                    var fluxUnitStr = plot.webFitsData[0].fluxUnits;
                     if (result.hasOwnProperty('NO_BAND')) {
-
+                        var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
                         var fValue = parseFloat(result.NO_BAND);
 
                         var fluxStr =fValue<1000? fValue.toFixed(6):fValue.toExponential(6).replace('e+', 'E');
@@ -124,15 +124,18 @@ export class MouseReadout extends React.Component {
                         }
                     }
                     else {
+                        var redUnitStr = get(plot.webFitsData, [Band.RED.value,'fluxUnits'],'');
+                        var greenUnitStr = get(plot.webFitsData, [Band.GREEN.value,'fluxUnits'],'');
+                        var blueUnitStr = get(plot.webFitsData, [Band.BLUE.value,'fluxUnits'],'');
                         var numBLue=parseFloat(result.Blue);
                         var numGreen=parseFloat(result.Green);
                         var numRed=parseFloat(result.Red);
                         var rBlueStr = (numBLue<1000)? numBLue.toFixed(6): numBLue.toExponential(6).replace('e+', 'E');
                         var rGreenStr = (numGreen<1000)? numGreen.toFixed(6): numGreen.toExponential(6).replace('e+', 'E');
                         var rRedStr = (numRed<1000)? numRed.toFixed(6): numRed.toExponential(6).replace('e+', 'E');
-                        var blueFlux = result.hasOwnProperty('Blue') ? `${rBlueStr} ${fluxUnitStr}` : EMPTY_READOUT;
-                        var greenFlux = result.hasOwnProperty('Green') ? `${rGreenStr} ${fluxUnitStr}` : EMPTY_READOUT;
-                        var RedFlux = result.hasOwnProperty('Red') ? `${rRedStr} ${fluxUnitStr}` : EMPTY_READOUT;
+                        var blueFlux = result.hasOwnProperty('Blue') ? `${rBlueStr} ${redUnitStr}` : EMPTY_READOUT;
+                        var greenFlux = result.hasOwnProperty('Green') ? `${rGreenStr} ${greenUnitStr}` : EMPTY_READOUT;
+                        var RedFlux = result.hasOwnProperty('Red') ? `${rRedStr} ${blueUnitStr}` : EMPTY_READOUT;
                         fluxArray = [RedFlux, greenFlux, blueFlux];
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});

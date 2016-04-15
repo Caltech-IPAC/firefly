@@ -20,10 +20,10 @@ const bandIdx= {'J':0, 'K':1, 'H':2};
  * @param row
  * @param includeSingle
  * @param includeStandard
- * @param includeThree
+ * @param threeColorOps
  * @return {{}}
  */
-export function make2MassPlotRequest(table, row, includeSingle, includeStandard, includeThree) {
+export function make2MassPlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
 
     const overlap= get(table, 'request.intersect', '').toUpperCase()==='OVERLAPS';
     var headerParams= overlap ? ['mission', 'ds'] : ['mission', 'ds', 'subsize'];
@@ -45,13 +45,13 @@ export function make2MassPlotRequest(table, row, includeSingle, includeStandard,
         retval.highlightPlotId= retval.standard[bandIdx[band]].getPlotId();
     }
 
-    if (includeThree) {
-        retval.threeColor= [
-            builder('2mass-three-J','ibe_file_retrieve', '2Mass 3 Color', row, {band:'J'}),
-            builder('2mass-three-H','ibe_file_retrieve', '2Mass 3 Color', row, {band:'H'}),
-            builder('2mass-three-K','ibe_file_retrieve', '2Mass 3 Color', row, {band:'K'})
-        ];
+    if (threeColorOps) {
+        retval.threeColor= threeColorOps
+            .filter( (op) => Boolean(op.color))
+            .map( (op) =>  {
+                const b= bandIdx[op.band];
+                return builder('2mass-three-J','ibe_file_retrieve', '2Mass 3 Color', row, {band:b});
+            } );
     }
     return retval;
 }
-

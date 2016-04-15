@@ -18,7 +18,7 @@ import {getActiveTarget} from '../../core/AppDataCntlr.js';
 import VisUtil from './../VisUtil.js';
 import PlotViewUtil, {getPlotViewById, matchPlotView, primePlot, findPlotGroup} from './../PlotViewUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import PlotPref from './../PlotPref.js';
+import {PlotPref} from './../PlotPref.js';
 import {DEFAULT_THUMBNAIL_SIZE} from '../WebPlotRequest.js';
 import SimpleMemCache from '../../util/SimpleMemCache.js';
 import {CCUtil} from './../CsysConverter.js';

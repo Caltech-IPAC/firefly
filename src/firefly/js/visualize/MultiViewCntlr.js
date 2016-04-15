@@ -21,6 +21,7 @@ const REMOVE_IMAGES= 'MultiViewCntlr.removeImages';
 const REPLACE_IMAGES= 'MultiViewCntlr.replaceImages';
 const IMAGE_VIEW_TYPE= 'MultiViewCntlr.imageViewType';
 const CHANGE_LAYOUT= 'MultiViewCntlr.changeLayout';
+const UPDATE_CUSTOM_DATA= 'MultiViewCntlr.updateCustomData';
 const ADD_TO_AUTO_RECEIVER = 'MultiViewCntlr.addToAutoReceiver';
 
 
@@ -33,7 +34,7 @@ const clone = (obj,params={}) => Object.assign({},obj,params);
 export default {
     ADD_VIEWER, REMOVE_VIEWER,
     ADD_IMAGES, REMOVE_IMAGES, REPLACE_IMAGES,
-    VIEWER_MOUNTED, VIEWER_UNMOUNTED,
+    VIEWER_MOUNTED, VIEWER_UNMOUNTED, UPDATE_CUSTOM_DATA,
     CHANGE_LAYOUT, reducer
 };
 
@@ -51,7 +52,8 @@ function initState() {
             plotIdAry:[], 
             viewType:'single', 
             canReceiveNewPlots: true,
-            reservedContainer:true
+            reservedContainer:true,
+            customData: {}
         }
     ];
 
@@ -95,11 +97,11 @@ export function dispatchRemoveViewer(viewerId) {
 /**
  *
  * @param viewerId
- * @param {[]} imageAry  array of {plotId : string, requestAry : array of WebPlotRequest}
+ * @param {[]} plotIdAry  array of plotIds
  *
  */
-export function dispatchAddImages(viewerId, imageAry) {
-    flux.process({type: ADD_IMAGES , payload: {viewerId, imageAry} });
+export function dispatchAddImages(viewerId, plotIdAry) {
+    flux.process({type: ADD_IMAGES , payload: {viewerId, imageAry:plotIdAry} });
 }
 
 /**
@@ -148,6 +150,14 @@ export function dispatchViewerUnmounted(viewerId) {
     flux.process({type: VIEWER_UNMOUNTED , payload: {viewerId} });
 }
 
+/**
+ *
+ * @param viewerId
+ * @param customData
+ */
+export function dispatchUpdateCustom(viewerId, customData) {
+    flux.process({type: UPDATE_CUSTOM_DATA , payload: {viewerId,customData} });
+}
 
 //======================================== Utilities =============================
 //======================================== Utilities =============================
@@ -254,6 +264,9 @@ function reducer(state=initState(), action={}) {
         case VIEWER_UNMOUNTED:
             retState= changeMount(state,action.payload.viewerId,false);
             break;
+        case UPDATE_CUSTOM_DATA:
+            retState= updateCustomData(state,action);
+            break;
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             retState= deletePlotView(state,action);
             break;
@@ -271,7 +284,7 @@ function addViewer(state,action) {
     const {viewerId,layout=GRID,canReceiveNewPlots=false,mounted}= action.payload;
     if (hasViewerId(state,viewerId)) return state;
 
-    const entry= { viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [] };
+    const entry= { viewerId, canReceiveNewPlots, layout, mounted, plotIdAry: [], customData:{} };
     return [...state,entry];
 }
 
@@ -299,9 +312,6 @@ function addToAutoReceiver(state,action) {
     return state.map( (entry) => 
               entry.canReceiveNewPlots ? clone(entry, {plotIdAry: union(entry.plotIdAry,imageAry)}) : entry);
 }
-
-
-
 
 
 function removeImages(state,action) {
@@ -345,3 +355,11 @@ function changeMount(state,viewerId,mounted) {
     if (viewer.mounted===mounted) return state;
     return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {mounted}) : entry);
 }
+
+function updateCustomData(state,action) {
+    const {viewerId,customData}= action.payload;
+    return state.map( (entry) => entry.viewerId===viewerId ? clone(entry, {customData}) : entry);
+}
+
+
+

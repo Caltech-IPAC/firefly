@@ -4,15 +4,18 @@
 
 
 import React, {PropTypes} from 'react';
-import {dispatchChangeLayout, GRID_FULL, GRID_RELATED} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {dispatchChangeLayout, dispatchUpdateCustom, getViewer, getMultiViewRoot,
+        GRID, GRID_FULL, GRID_RELATED, SINGLE} from '../MultiViewCntlr.js';
+import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID from 'html/images/icons-2014/Images-Tiled.png';
+import GRID_GROUP from 'html/images/icons-2014/Images-Tiled.png';
 import FULL_GRID from 'html/images/icons-2014/Images-Tiled-full.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+import THREE_COLOR from 'html/images/icons-2014/28x28_FITS_Modify3Image.png';
 
 
 
@@ -23,31 +26,34 @@ const toolsStyle= {
     flexWrap:'nowrap',
     alignItems: 'center',
     width:'100%',
-    height: 30,
+    height: 30
 };
 
 
 
 export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layoutType, activeTable, converterFactory}) {
-    
-    var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
-    if (cIdx<0) cIdx= 0;
-    const {converter}= converterFactory(activeTable);
 
+    const {dataId,converter}= converterFactory(activeTable);
+    var nextIdx, prevIdx, leftImageStyle;
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
 
-    const leftImageStyle= {
-        verticalAlign:'bottom',
-        cursor:'pointer',
-        flex: '0 0 auto',
-        paddingLeft: 10
-    };
-    if (viewerPlotIds.length===2) {
-        leftImageStyle.visibility='hidden';
+    // single mode stuff
+    if (layoutType===SINGLE) {
+        var cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
+        if (cIdx<0) cIdx= 0;
+        nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
+        prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
+
+        leftImageStyle= {
+            verticalAlign:'bottom',
+            cursor:'pointer',
+            flex: '0 0 auto',
+            paddingLeft: 10,
+            visibility : viewerPlotIds.length===2 ? 'hidden' : 'visible'// hide left arrow when single mode and 2 images
+        };
     }
+    const showThreeColorButton= converter.threeColor && viewer.layout===GRID && viewer.layoutDetail!==GRID_FULL;
 
-
-    const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
-    const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
 
     return (
         <div style={toolsStyle}>
@@ -55,9 +61,9 @@ export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layo
                            imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                            enabled={true} visible={true}
                            horizontal={true}
-                           onClick={() => dispatchChangeLayout(viewerId,'single')}/>
+                           onClick={() => dispatchChangeLayout(viewerId,SINGLE)}/>
             {converter.hasRelatedBands  &&
-                        <ToolbarButton icon={GRID} tip={'Show all as tiles'}
+                        <ToolbarButton icon={GRID_GROUP} tip={'Show all as tiles'}
                                        enabled={true} visible={true} horizontal={true}
                                        imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                                        onClick={() => dispatchChangeLayout(viewerId,'grid',GRID_RELATED)}/>
@@ -66,11 +72,17 @@ export function ImageMetaDataToolbarView({visRoot, viewerId, viewerPlotIds, layo
                            enabled={true} visible={true} horizontal={true}
                            imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                            onClick={() => dispatchChangeLayout(viewerId,'grid',GRID_FULL)}/>
-            {layoutType==='single' && viewerPlotIds.length>1 &&
+            {showThreeColorButton &&
+                         <ToolbarButton icon={THREE_COLOR} tip={'Show three color image'}
+                                     enabled={true} visible={true} horizontal={true}
+                                     imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
+                                     onClick={() => showThreeColorOps(viewer,dataId)}/>
+            }
+            {layoutType===SINGLE && viewerPlotIds.length>1 &&
                         <img style={leftImageStyle} src={PAGE_LEFT}
                              onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />
             }
-            {layoutType==='single' && viewerPlotIds.length>1 &&
+            {layoutType===SINGLE && viewerPlotIds.length>1 &&
                         <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:5, flex: '0 0 auto'}}
                              src={PAGE_RIGHT}
                              onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
@@ -89,6 +101,12 @@ ImageMetaDataToolbarView.propTypes= {
 };
 
 
+
+function showThreeColorOps(viewer,dataId) {
+    if (!viewer) return;
+    const newCustom= Object.assign({}, viewer.customData[dataId], {threeColorVisible:true});
+    showColorBandChooserPopup(viewer.viewerId,newCustom,dataId);
+}
 
 
 

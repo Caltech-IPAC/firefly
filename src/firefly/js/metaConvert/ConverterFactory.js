@@ -12,6 +12,7 @@ import {makeWisePlotRequest} from './WiseRequestList.js';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
+import {Band} from '../visualize/Band';
 import {getCellValue} from '../tables/TableUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 
@@ -30,14 +31,25 @@ export const converters = {
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : makeWisePlotRequest
+        makeRequest : makeWisePlotRequest,
+        threeColorBands : {
+            b1 : {color : Band.RED, title: 'Band 1'},
+            b2 : {color : Band.GREEN, title: 'Band 2'},
+            b3 : {color : null, title: 'Band 3'},
+            b4 : {color : Band.BLUE, title: 'Band 4'}
+        }
     },
     'twomass' : {
         threeColor : true,
         hasRelatedBands : true,
         canGrid : true,
         maxPlots : 12,
-        makeRequest : make2MassPlotRequest
+        makeRequest : make2MassPlotRequest,
+        threeColorBands : {
+            J : {color : Band.RED, title: 'J'},
+            H : {color : Band.GREEN, title: 'H'},
+            K : {color : Band.BLUE, title: 'K'}
+        }
     },
     'UNKNOWN' : {
         threeColor : false,

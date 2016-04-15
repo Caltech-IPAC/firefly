@@ -9,7 +9,7 @@
 import PlotState from './PlotState.js';
 import WebFitsData from './WebFitsData.js';
 import PlotImages from './PlotImages.js';
-import Band from './Band.js';
+import {Band} from './Band.js';
 import join from 'underscore.string/join';
 import {getStringWithNull } from '../util/StringUtils.js';
 

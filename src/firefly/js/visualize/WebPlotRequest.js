@@ -121,10 +121,11 @@ const C= {
     PLOT_GROUP_ID: 'plotGroupId',
     GROUP_LOCKED: 'GroupLocked',
     DRAWING_SUB_GROUP_ID: 'DrawingSubgroupID',
-    GRID_ID : 'GRID_ID',
+    //GRID_ID : 'GRID_ID', - deprecated
     DOWNLOAD_FILENAME_ROOT : 'DownloadFileNameRoot',
     PLOT_ID : 'PlotID',
     OVERLAY_IDS: 'PredefinedOverlayIds',
+    RELATED_TABLE_ROW : 'RELATED_TABLE_ROW',
 
 
 
@@ -162,7 +163,7 @@ const allKeys =
          C.ALLOW_IMAGE_SELECTION, C.HAS_NEW_PLOT_CONTAINER,
          C.GRID_ON, C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
-         C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.MINIMAL_READOUT, C.PLOT_GROUP_ID, C.GROUP_LOCKED, C.DRAWING_SUB_GROUP_ID, C.RELATED_TABLE_ROW,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID
         ];
 
@@ -176,7 +177,7 @@ const clientSideKeys =
          C.TITLE_OPTIONS, C.EXPANDED_TITLE_OPTIONS,
          C.POST_TITLE, C.PRE_TITLE, C.OVERLAY_POSITION,
          C.MINIMAL_READOUT,
-         C.PLOT_GROUP_ID, C.DRAWING_SUB_GROUP_ID, C.GRID_ID,
+         C.PLOT_GROUP_ID, C.DRAWING_SUB_GROUP_ID,  C.RELATED_TABLE_ROW,
          C.DOWNLOAD_FILENAME_ROOT, C.PLOT_ID, C.GROUP_LOCKED,
          C.OVERLAY_IDS
         ];
@@ -1176,9 +1177,9 @@ export class WebPlotRequest extends ServerRequest {
 
     getDrawingSubGroupId() { return this.getParam(C.DRAWING_SUB_GROUP_ID); }
 
-    setGridId(id) { this.setParam(C.GRID_ID,id); }
+    setRelatedTableRow(id) { this.setParam(C.RELATED_TABLE_ROW,id); }
 
-    getGridId() { return this.getParam(C.GRID_ID); }
+    getRelatedTableRow() { return this.getIntParam(C.RELATED_TABLE_ROW,-1); }
 
     setDownloadFileNameRoot(nameRoot) { this.setParam(C.DOWNLOAD_FILENAME_ROOT, nameRoot); }
 

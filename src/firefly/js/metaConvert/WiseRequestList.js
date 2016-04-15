@@ -12,6 +12,7 @@ const colToUse= ['scan_id', 'frame_num', 'coadd_id', 'in_ra', 'in_dec', 'image_s
 const rangeValues= RangeValues.make(SIGMA, -2, SIGMA, 10);
 rangeValues.algorithm= STRETCH_LINEAR;
 
+const bandMap= {b1:'1', b2:'2',b3:'3',b4:'4'};
 
 /**
  * make a list of plot request for wise. This function works with ConverterFactory.
@@ -19,16 +20,22 @@ rangeValues.algorithm= STRETCH_LINEAR;
  * @param row
  * @param includeSingle
  * @param includeStandard
- * @param includeThree
+ * @param threeColorOps
  * @return {{}}
  */
-export function makeWisePlotRequest(table, row, includeSingle, includeStandard, includeThree) {
+export function makeWisePlotRequest(table, row, includeSingle, includeStandard, threeColorOps) {
     
     const overlap= get(table, 'request.intersect', '').toUpperCase()==='OVERLAPS';
     var headerParams= overlap ? ['mission', 'ImageSet', 'ProductLevel'] :
                                 ['mission', 'ImageSet', 'ProductLevel', 'subsize'];
 
-    const builder= makeServerRequestBuilder(table,colToUse,headerParams,rangeValues,1);
+    const svcBuilder= makeServerRequestBuilder(table,colToUse,headerParams,rangeValues,1);
+    const builder = (plotId, reqKey, title, rowNum, extraParams) => {
+        const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
+        req.setPreferenceColorKey('wise-color-pref');
+        return req;
+    };
+
     const retval= {};
     const band= getCellValue(table,row,'band');
 
@@ -47,12 +54,10 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         if (retval.standard[idx]) retval.highlightPlotId= retval.standard[idx].getPlotId();
     }
 
-    if (includeThree) {
-        retval.threeColor= [
-            builder('wise-three-0','ibe_file_retrieve', 'Wise 3 Color', row, {band:'1'}),
-            builder('wise-three-0','ibe_file_retrieve', 'Wise 3 Color', row, {band:'2'}),
-            builder('wise-three-0','ibe_file_retrieve', 'Wise 3 Color', row, {band:'4'})
-        ];
+    if (threeColorOps) {
+        retval.threeColor= threeColorOps.map( (b) =>
+            b && builder('wise-three-0','ibe_file_retrieve', 'Wise 3 Color', row, {band:bandMap[b]})
+        );
     }
     return retval;
 }

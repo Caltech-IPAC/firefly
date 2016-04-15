@@ -5,7 +5,7 @@
 import ls from 'local-storage';
 
 
-function makeCacheEntry(time,data,lifeSpanSecs=0) {
+function makeCacheEntry(data,lifeSpanSecs=0) {
     return  {time:Date.now(),data,lifeSpanSecs};
 }
 

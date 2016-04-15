@@ -8,6 +8,7 @@ import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
 import WebPlot, {clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
 import {logError} from '../../util/WebUtil.js';
 import {CCUtil} from '../CsysConverter.js';
+import {PlotPref} from './../PlotPref.js';
 import {primePlot,
         matchPlotView,
         applyToOnePvOrGroup,
@@ -131,7 +132,7 @@ function installTiles(state, action) {
     if (!plot || !primaryStateJson) {
         logError('primePlot undefined or primaryStateJson is not set.', new Error());
         console.log('installTiles: state, action', state, action);
-        return plotViewAry;
+        return state;
     }
 
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
@@ -141,6 +142,10 @@ function installTiles(state, action) {
         return clone(oPv, {plot:p});
     });
     pv= PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
+
+    plot= primePlot(pv); // get the updated on
+    PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, plot.plotState);
+    PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, plot.plotState);
 
     return clone(state, {plotViewAry : replacePlotView(plotViewAry,pv)});
 }

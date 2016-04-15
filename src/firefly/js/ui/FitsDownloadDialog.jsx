@@ -18,7 +18,7 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {primePlot} from '../visualize/PlotViewUtil.js';
-import Band from '../visualize/Band.js';
+import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {encodeUrl, ParamType}  from '../util/WebUtil.js';
 import {RequestType} from '../visualize/RequestType.js';

@@ -19,7 +19,23 @@ import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 const DEF_BASE_URL = getRootURL() + 'sticky/CmdSrv';
 const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
-const makeURL= function(baseUrl, cmd, paramList, isJsonp) {
+
+function preparePostParamList(cmd,paramList) {
+    if (Array.isArray(paramList)) {
+        const initObj= cmd ? {name: ServerParams.COMMAND, value: cmd} : {};
+         return paramList.reduce( (rval, entry) => {
+                    if (entry.name) rval[entry.name]= get(entry, 'value','');
+                    return rval;
+                }, initObj);
+    }
+    else {
+        return Object.assign({},paramList,{[ServerParams.COMMAND]:cmd});
+    }
+}
+
+
+
+const makeURL= function(baseUrl, cmd, paramList, isJsonp= false) {
     if (Array.isArray(paramList)) {
         if (cmd) paramList.push({name: ServerParams.COMMAND, value: cmd});
         if (isJsonp) paramList.push({name: ServerParams.DO_JSONP, value: 'true'});
@@ -47,26 +63,34 @@ export const defaultJsonpRequest= function(cmd, paramList, cb) {
  * @param baseUrl
  * @param cmd
  * @param paramList
+ * @param doPost
  */
-export const jsonRequest= function(baseUrl, cmd, paramList) {
-    var url = makeURL(baseUrl, cmd, paramList, false);
+export const jsonRequest= function(baseUrl, cmd, paramList, doPost) {
+    const options= {method: doPost?'POST':'GET'};
+    var url;
+    if (doPost) {
+        url= encodeServerUrl(baseUrl,{});
+        options.params= preparePostParamList(cmd,paramList);
+    }
+    else {
+        url = makeURL(baseUrl, cmd, paramList);
+    }
+
 
     return new Promise(function(resolve, reject) {
-        fetchUrl(url).then( (response) => {
+        fetchUrl(url,options ).then( (response) => {
             response.json().then( (result) => {
                 if (result && result[0]) {
+                    if (result[0] && result[0].success && result[0].success !== 'false' && result[0].data) {
+                        resolve(result[0].data);
 
-
-                if (result[0] && result[0].success && result[0].success !== 'false' && result[0].data) {
-                    resolve(result[0].data);
-
+                    }
+                    else if (result[0] && get(result,'0.error')){//result[0].error) {
+                        reject(new Error(result[0].error));
+                    } else {
+                        reject(new Error(`Unreconized result: ${result}`));
+                    }
                 }
-                else if (result[0] && get(result,'0.error')){//result[0].error) {
-                    reject(new Error(result[0].error));
-                } else {
-                    reject(new Error(`Unreconized result: ${result}`));
-                }
-              }
                 else { //this part did not use WebPlotResultSerializer for making the return result in VisServerCommands
                     resolve(result);
 
@@ -78,15 +102,21 @@ export const jsonRequest= function(baseUrl, cmd, paramList) {
     });
 };
 
-export const defaultJsonRequest= function(cmd, paramList) {
-    return jsonRequest(DEF_PATH, cmd, paramList);
+/**
+ * 
+ * @param cmd
+ * @param paramList
+ * @param doPost
+ */
+export const doJsonRequest= function(cmd, paramList, doPost=false) {
+    return jsonRequest(DEF_PATH, cmd, paramList, doPost);
 };
 
 export const doService= function(doJsonP, cmd, paramList) {
     if (doJsonP) {
         return defaultJsonpRequest(cmd, paramList);
     } else {
-        return defaultJsonRequest(cmd,paramList);
+        return doJsonRequest(cmd,paramList);
     }
 };
 

@@ -77,6 +77,8 @@ export function makeServerRequestBuilder(table, colToUse, headerParams, rv=null,
 }
 
 
+export const computePlotId= (plotIdRoot ,plotIdx) => `${plotIdRoot}-row-${plotIdx}`;
+
 /**
  * helper function to make a list of table row that should be used to plot in grid mode
  * @param table
@@ -102,7 +104,7 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
     const retval= [];
 
     for(var i=start; (i<max );i++) {
-        retval[j++]= {plotId: `${plotIdRoot}-row-${i}`, row:i, highlight: i===highlightSubPageIdx};
+        retval[j++] = {plotId: computePlotId(plotIdRoot, i), row: i, highlight: i === highlightedRow};
     }
     return retval;
 }

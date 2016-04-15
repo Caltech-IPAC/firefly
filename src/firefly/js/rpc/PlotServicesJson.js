@@ -7,15 +7,10 @@
  */
 
 import {ServerParams} from '../data/ServerParams.js';
-import {doService} from '../core/JsonUtils.js';
+import {doJsonRequest} from '../core/JsonUtils.js';
 import {parse} from '../visualize/WebPlotResultParser.js';
 import {PlotState} from '../visualize/PlotState.js';
 
-
-const doJsonP= function() {
-    return false;
-    //return application.networkMode===NetworkMode.JSON;
-};
 
 
 /**
@@ -30,7 +25,7 @@ export const callGetColorHistogram= function(state,band,width,height) {
     paramList.push({name:ServerParams.BAND, value: band.key});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
 
-    return doService(doJsonP(), ServerParams.HISTOGRAM, paramList
+    return doJsonRequest(ServerParams.HISTOGRAM, paramList
     ).then((data) => parse(data) );
 };
 
@@ -40,25 +35,35 @@ export const callGetColorHistogram= function(state,band,width,height) {
  * @param {WebPlotRequest} blueRequest
  * @return {Promise}
  */
-export const callGetWebPlot3Color= function(redRequest, greenRequest, blueRequest) {
+export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
     var paramList = [];
     if (redRequest) paramList.push({name:ServerParams.RED_REQUEST, value:redRequest.toString()});
     if (greenRequest) paramList.push({name:ServerParams.GREEN_REQUEST, value:greenRequest.toString()});
     if (blueRequest) paramList.push({name:ServerParams.BLUE_REQUEST, value:blueRequest.toString()});
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
-    return doService(doJsonP(), ServerParams.CREATE_PLOT, paramList);
+    return doJsonRequest(ServerParams.CREATE_PLOT, paramList);
 };
 
 /**
  * @param {WebPlotRequest} request
  * @return {Promise}
  */
-export const callGetWebPlot= function(request) {
+export function callGetWebPlot(request) {
     var paramList = [{name: ServerParams.NOBAND_REQUEST, value:request.toString()}];
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
-    return doService(doJsonP(), ServerParams.CREATE_PLOT, paramList);
+    return doJsonRequest(ServerParams.CREATE_PLOT, paramList,false);
 };
 
+export function callGetWebPlotGroup(reqAry,  progressKey) {
+    var paramList = {};
+    paramList[ServerParams.PROGRESS_KEY]= progressKey;
+    paramList[ServerParams.JSON_DEEP]= 'true';
+    paramList= reqAry.reduce( (obj,req, idx) => {
+        obj[ServerParams.REQUEST+idx]= req.toString();
+        return obj;
+    }, paramList);
+    return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,false);
+}
 
 /**
  *
@@ -71,7 +76,7 @@ export function callRotateNorth(stateAry, north, newZoomLevel) {
                    {name: ServerParams.NORTH, value: north + ''},
                    {name: ServerParams.ZOOM, value: newZoomLevel + ''},
                  ]);
-    return doService(doJsonP(), ServerParams.ROTATE_NORTH, params);
+    return doJsonRequest(ServerParams.ROTATE_NORTH, params);
 }
 
 /**
@@ -87,7 +92,7 @@ export function callRotateToAngle(stateAry, rotate, angle, newZoomLevel) {
                        {name: ServerParams.ANGLE, value: angle + ''},
                        {name: ServerParams.ZOOM, value: newZoomLevel + ''},
                    ]);
-    return doService(doJsonP(), ServerParams.ROTATE_ANGLE, params);
+    return doJsonRequest(ServerParams.ROTATE_ANGLE, params);
 }
 
 
@@ -100,7 +105,7 @@ export function callGetAreaStatistics(state, ipt1, ipt2, ipt3, ipt4) {
         [ServerParams.PT3]: ipt3.toString(),
         [ServerParams.PT4]: ipt4.toString()
     };
-    return doService(doJsonP(), ServerParams.STAT, params);
+    return doJsonRequest(ServerParams.STAT, params);
 }
 
 
@@ -115,7 +120,7 @@ export function callSetZoomLevel(stateAry, level, isFullScreen) {
         {name:ServerParams.LEVEL, value:level},
         {name:ServerParams.FULL_SCREEN, value : isFullScreen},
     ]);
-    return doService(doJsonP(), ServerParams.ZOOM, params);
+    return doJsonRequest(ServerParams.ZOOM, params);
 }
 
 
@@ -125,7 +130,7 @@ export function callChangeColor(state, colorTableId) {
         {name:ServerParams.JSON_DEEP,value:'true'},
         {name:ServerParams.COLOR_IDX, value:colorTableId}
     ];
-    return doService(doJsonP(), ServerParams.CHANGE_COLOR, params);
+    return doJsonRequest(ServerParams.CHANGE_COLOR, params);
 }
 
 export function callRecomputeStretch(state, stretchDataAry) {
@@ -134,7 +139,7 @@ export function callRecomputeStretch(state, stretchDataAry) {
         [ServerParams.JSON_DEEP]: true
     };
     stretchDataAry.forEach( (sd,idx) => params[ServerParams.STRETCH_DATA+idx]=  JSON.stringify(sd));
-    return doService(doJsonP(), ServerParams.STRETCH, params);
+    return doJsonRequest(ServerParams.STRETCH, params);
 }
 
 
@@ -147,7 +152,7 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
         {name:ServerParams.CRO_MULTI_ALL, value: cropMultiAll +''}
     ]);
     
-    return doService(doJsonP(), ServerParams.CROP, params);
+    return doJsonRequest(ServerParams.CROP, params);
     
 }
 //LZ 3/22/16 DM-4494
@@ -158,8 +163,8 @@ export  function  callGetFitsHeaderInfo(plotState, tableId) {
         tableId
     };
 
-    var result = doService(doJsonP(), ServerParams.FITS_HEADER, params);
-    return result;//doService(doJsonP(), ServerParams.FITS_HEADER, params);
+    var result = doJsonRequest(ServerParams.FITS_HEADER, params);
+    return result;//doJsonRequest(ServerParams.FITS_HEADER, params);
 }
 
 
@@ -175,7 +180,7 @@ export function callFlipImageOnY(stateAry) {
     };
 
 
-    return doService(doJsonP(), ServerParams.FLIP_Y, params);
+    return doJsonRequest(ServerParams.FLIP_Y, params);
 }
 
 
@@ -186,7 +191,7 @@ export function callGetFileFlux(state, pt) {
         [ServerParams.PT]: pt.toString(),
         [ServerParams.JSON_DEEP]: true
     };
-    return doService(doJsonP(), ServerParams.FILE_FLUX_JSON, params);
+    return doJsonRequest(ServerParams.FILE_FLUX_JSON, params);
 }
 
 export function getDS9Region(fileKey) {
@@ -195,7 +200,7 @@ export function getDS9Region(fileKey) {
         [ServerParams.FILE_KEY]: fileKey,
         [ServerParams.JSON_DEEP]: true
     };
-    return doService(doJsonP(), ServerParams.DS9_REGION, params);
+    return doJsonRequest(ServerParams.DS9_REGION, params);
 }
 
 
@@ -205,13 +210,9 @@ export function saveDS9RegionFile(regionData) {
         [ServerParams.REGION_DATA]: regionData,
         [ServerParams.JSON_DEEP]: true
     };
-    return doService(doJsonP(), ServerParams.SAVE_DS9_REGION, params);
+    return doJsonRequest(ServerParams.SAVE_DS9_REGION, params);
 }
 
-
-const getWebPlotGroup= function(requestList, progressKey) {
-    //todo
-};
 
 const getOneFileGroup= function(requestList, progressKey) {
     //todo

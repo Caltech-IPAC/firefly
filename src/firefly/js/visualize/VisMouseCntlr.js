@@ -21,7 +21,7 @@ import {makeScreenPt} from './Point.js';
  *
  * @type {string}
  */
-const MOUSE_STATE_CHANGE= 'VisMouseCntlr/MouseStateChange';
+export const MOUSE_STATE_CHANGE= 'VisMouseCntlr/MouseStateChange';
 
 const VIS_MOUSE_KEY= 'visMouseState';
 

@@ -138,6 +138,20 @@ public class VisServerCommands {
         }
     }
 
+    public static class GetWebPlotGroupCmd extends ServerCommandAccess.ServCommand {
+
+        public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
+
+
+            SrvParam sp= new SrvParam(paramMap);
+            String key = sp.getRequired(ServerParams.PROGRESS_KEY);
+            List<WebPlotRequest> reqList= sp.getRequestList();
+            WebPlotResult resultAry[] = VisServerOps.createPlotGroup(reqList,key);
+
+            return WebPlotResultSerializer.createJson(resultAry, sp.isJsonDeep());
+        }
+    }
+
     public static class ZoomCmd extends ServerCommandAccess.ServCommand {
 
         public String doCommand(Map<String, String[]> paramMap) throws IllegalArgumentException {
