@@ -182,17 +182,17 @@ public class WiseRequest extends TableServerRequest {
 
     public final static Map<String,String> CATALOG_MAP = new HashMap<String,String>(){
         {
-            put(PRELIM,"wise_prelim_p1bs_psd");
-            put(PRELIM_POSTCRYO,"wise_prelim_2band_p1bs_psd");
-            put(ALLWISE_MULTIBAND,"wise_allwise_p3as_psd");
-            put(ALLSKY_4BAND,"wise_allsky_4band_p1bs_psd");
-            put(CRYO_3BAND,"wise_allsky_3band_p1bs_psd");
-            put(POSTCRYO,"wise_allsky_2band_p1bs_psd");
+            put(PRELIM,"prelim_p1bs_psd");
+            put(PRELIM_POSTCRYO,"prelim_2band_p1bs_psd");
+            put(ALLWISE_MULTIBAND,"allwise_p3as_psd");
+            put(ALLSKY_4BAND,"allsky_4band_p1bs_psd");
+            put(CRYO_3BAND,"allsky_3band_p1bs_psd");
+            put(POSTCRYO,"allsky_2band_p1bs_psd");
             put(NEOWISER,"neowiser_p1bs_psd");
-            put(PASS1,"wise_pass1_i1bs_psd_view");
-            put(PASS2_4BAND,"wise_pass2_4band_i1bs_psd_view");
-            put(PASS2_3BAND,"wise_pass2_3band_i1bs_psd_view");
-            put(PASS2_2BAND, "wise_pass2_2band_i1bs_psd_view");
+            put(PASS1,"pass1_i1bs_psd_view");
+            put(PASS2_4BAND,"pass2_4band_i1bs_psd_view");
+            put(PASS2_3BAND,"pass2_3band_i1bs_psd_view");
+            put(PASS2_2BAND, "pass2_2band_i1bs_psd_view");
             put(NEOWISER_YR1,"neowiser_yr1_p1bs_psd");
             put(NEOWISER_YR2,"neowiser_yr2_p1bs_psd");
             put(NEOWISER_YR3,"neowiser_i1bs_psd");
