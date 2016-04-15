@@ -56,7 +56,7 @@ var FormPanel = function (props) {
 FormPanel.propTypes = {
     onSubmit: React.PropTypes.func,
     onCancel: React.PropTypes.func,
-    groupKey: React.PropTypes.string,
+    groupKey: React.PropTypes.any,
     action: React.PropTypes.string,
     params: React.PropTypes.object
 };

@@ -294,7 +294,7 @@ const valueChange= function(state,action) {
     if (get(state, [fg.wrapperGroupKey,'mounted'],false)) {
         var wrapperFg= findAndCloneFieldGroup(state, fg.wrapperGroupKey);
         const childGroups= makeChildGroups(fg.wrapperGroupKey, state);
-        childGroups[fieldKey]= fg.fields;
+        childGroups[groupKey]= fg.fields;
         const wrapperAction= {
             type: CHILD_GROUP_CHANGE,
             payload: { changedGroupKey: groupKey, sourceAction:action, childGroups }
@@ -424,6 +424,7 @@ const constructFieldGroup= function(groupKey,fields, reducerFunc, actionTypes, k
 var FieldGroupCntlr = {reducer, FIELD_GROUP_KEY,
                        INIT_FIELD_GROUP, MOUNT_COMPONENT,
                        MOUNT_FIELD_GROUP, VALUE_CHANGE,
+                       CHILD_GROUP_CHANGE,
                        valueChangeActionCreator};
 export default FieldGroupCntlr;
 

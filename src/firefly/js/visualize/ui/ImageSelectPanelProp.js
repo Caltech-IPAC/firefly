@@ -3,8 +3,8 @@
  */
 export const panelCatalogs = [
     {
-        'Title':'IRSA',
-        'Symbol': 'IRSA',
+        'Title':'IRAS',
+        'Symbol': 'IRAS',
         'CatalogId': 0,
         'fields': ['types'],
         'types': {
@@ -60,7 +60,7 @@ export const panelCatalogs = [
                 {'item':'4', 'id': 1, 'name': 'Band 4'}],
             'Default': '1'
         },
-        'range': {'min':.01, 'max': 3, 'unit': 'deg'},
+        'range': {'min':.01, 'max': 2, 'unit': 'deg'},
         'size':.15
     },
     {
@@ -133,7 +133,7 @@ export const panelCatalogs = [
             'nullallowed': false
         },
         'upload': {
-            'Title': '',
+            'Title': ''
         },
         'list': {
             'Title': 'If file contains multiple extensions:',
@@ -173,20 +173,23 @@ export const panelCatalogs = [
                 'list': 'loadOne'
             }
         }
-    },
-    {
-        'Title': 'Blank Image',
-        'Symbol': 'BLANK',
-        'CatalogId': 8,
-        'fields': ['input'],
-        'input': {
-            'Title': 'Pixel Size:',
-            'nullallowed': false,
-            'Default': 400,
-            'range': {'min': 100, 'max': 800}
-        },
-        'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
-        'size': 0.139
-    },
+    }
 ];
 
+/*
+  blank
+ {
+ 'Title': 'Blank Image',
+ 'Symbol': 'BLANK',
+ 'CatalogId': 8,
+ 'fields': ['input'],
+ 'input': {
+ 'Title': 'Pixel Size:',
+ 'nullallowed': false,
+ 'Default': 400,
+ 'range': {'min': 100, 'max': 800}
+ },
+ 'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
+ 'size': 0.139
+ }
+*/

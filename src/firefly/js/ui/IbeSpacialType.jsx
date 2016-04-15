@@ -34,7 +34,7 @@ import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
-import {SizeInputFields, sizeFromDeg} from './sizeInputFields.jsx';
+import {SizeInputFields, sizeFromDeg} from './SizeInputFields.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import * as TblUtil from '../tables/TableUtil.js';
 import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCntlr.js';

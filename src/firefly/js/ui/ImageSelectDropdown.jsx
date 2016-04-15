@@ -15,11 +15,12 @@
 
 import React, { Component, PropTypes} from 'react';
 import {flux} from '../Firefly.js';
-
+import {visRoot } from '../visualize/ImagePlotCntlr.js';
 import FormPanel from './FormPanel.jsx';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
-import {ImageSelection, getPlotInfo, panelKey, isCreatePlot} from '../visualize/ui/ImageSelectPanel.jsx';
+import {ImageSelection, getPlotInfo, panelKey, isCreatePlot, PLOT_NO,
+        isOnThreeColorSetting, completeButtonKey} from '../visualize/ui/ImageSelectPanel.jsx';
 import {resultSuccess, resultFail} from '../visualize/ui/ImageSelectPanelResult.js';
 
 const dropdownName = 'ImageSelectDropDownCmd';
@@ -33,9 +34,9 @@ export class ImageSelectDropdown extends Component {
     constructor(props) {
         super(props);
 
-        this.plotInfo = getPlotInfo();
         this.state = {
-            addPlot: false
+            fields: FieldGroupUtils.getGroupFields(panelKey),
+            visroot: visRoot()
         };
     }
 
@@ -53,27 +54,31 @@ export class ImageSelectDropdown extends Component {
 
     stateUpdate() {
         var fields = FieldGroupUtils.getGroupFields(panelKey);
+        var vr = visRoot();
 
-        if (fields && this.iAmMounted ) {
-             this.setState({addPlot: isCreatePlot(this.plotInfo.plotMode, fields)});
+        if (fields != this.state.fields || vr != this.visroot) {
+            if (this.iAmMounted) {
+                this.setState({
+                    fields, visroot: vr
+                });
+            }
         }
     }
 
     render() {
-        var {addPlot} = this.state;
-        var {viewerId} = this.plotInfo;
+        var {plotId, viewerId, plotMode} = getPlotInfo(this.state.visroot);
+        var addPlot = isCreatePlot(plotMode, this.state.fields);
+        var isThreeColor = isOnThreeColorSetting(plotMode, this.state.fields);
+        var plotInfo = {addPlot, isThreeColor, plotId, viewerId};
 
         return (
             <div style={{padding: 10}}>
                 <FormPanel
-                    groupKey={panelKey}
-                    onSubmit={resultSuccess(addPlot, viewerId, true)}
+                    groupKey={completeButtonKey(isThreeColor)}
+                    onSubmit={resultSuccess(plotInfo, true)}
                     onError={resultFail()}
                     onCancel={hideSearchPanel}>
-                    <ImageSelection plotMode={this.plotInfo.plotMode}
-                                    viewerId={this.plotInfo.viewerId}
-                                    loadButton={false}
-                    />
+                    <ImageSelection loadButton={false} />
                 </FormPanel>
             </div>);
     }
