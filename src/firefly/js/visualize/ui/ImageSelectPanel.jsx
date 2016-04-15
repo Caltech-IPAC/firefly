@@ -19,7 +19,7 @@ import {ValidationField} from '../../ui/ValidationField.jsx';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {FileUpload} from '../../ui/FileUpload.jsx';
-import {SizeInputFields} from '../../ui/SizeInputFields.jsx';
+import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
