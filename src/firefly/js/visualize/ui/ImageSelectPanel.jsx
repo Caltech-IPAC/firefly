@@ -55,7 +55,7 @@ export const keyMap = {
     'plotmode':    'SELECTIMAGEPANEL_targetplot'
 };
 
-export const [IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+export const [IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE] = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 export const rgb = ['red', 'green', 'blue'];
 
 export function completeButtonKey( isThreeColor = false ) {
@@ -347,17 +347,20 @@ class ImageSelectionView extends Component {
         var threeColorTabs = rgb.map((color, index) => {
                 var msg = `${color.toUpperCase()} is not selected`;
                 var corner = CollapseHeaderCorner.BottomLeft;
+                const RGB = ['rgb(255, 51, 51)', 'rgb(51, 153, 51)', 'rgb(51, 51, 255)'];
 
                 return (
                     <CollapsiblePanel key={index}
                                       header={color.toUpperCase()}
                                       isOpen={ index === RED }
-                                      borderStyle={index === BLUE ? CollapseBorder.Threeborder : CollapseBorder.Twoborder}
+                                      borderStyle={CollapseBorder.Oneborder}
                                       headerRoundCorner={ index === RED ? corner|CollapseHeaderCorner.TopRight : corner}
-                                      headerStyle={{background: color,
-                                                    opacity: 0.8,
+                                      wrapperStyle={ {marginBottom: 3} }
+                                      headerStyle={{background: RGB[index],
                                                     color: 'white',
-                                                    fontWeight: 'bold' }}
+                                                    fontWeight: 'bold',
+                                                    paddingTop: 5,
+                                                    paddingBottom: 5 }}
                                       contentStyle={{padding: 10,
                                                      paddingTop: 10,
                                                      paddingBottom: 10,

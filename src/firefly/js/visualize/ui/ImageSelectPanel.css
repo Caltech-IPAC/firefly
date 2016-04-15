@@ -2,7 +2,7 @@ div.imagepanel  {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 800px;
+    width: 750px;
     background: white;
 /*
     border-left: 20px solid #c8c8c8;
@@ -45,7 +45,7 @@ div.close {
     align-items: center;
     justify-content: flex-end;
     background: #c8c8c8;
-    width: 800px;
+    width: 750px;
     height: 60px;
 }
 
@@ -103,5 +103,5 @@ div.padding_noleft {
 }
 
 div.tabview {
-    width: 560px;
+    width: 460px;
 }

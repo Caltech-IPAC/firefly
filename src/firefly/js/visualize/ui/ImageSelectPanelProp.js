@@ -173,20 +173,23 @@ export const panelCatalogs = [
                 'list': 'loadOne'
             }
         }
-    },
-    {
-        'Title': 'Blank Image',
-        'Symbol': 'BLANK',
-        'CatalogId': 8,
-        'fields': ['input'],
-        'input': {
-            'Title': 'Pixel Size:',
-            'nullallowed': false,
-            'Default': 400,
-            'range': {'min': 100, 'max': 800}
-        },
-        'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
-        'size': 0.139
     }
 ];
 
+/*
+  blank
+ {
+ 'Title': 'Blank Image',
+ 'Symbol': 'BLANK',
+ 'CatalogId': 8,
+ 'fields': ['input'],
+ 'input': {
+ 'Title': 'Pixel Size:',
+ 'nullallowed': false,
+ 'Default': 400,
+ 'range': {'min': 100, 'max': 800}
+ },
+ 'range': {'min': 0.01, 'max': 30, 'unit': 'deg'},
+ 'size': 0.139
+ }
+*/

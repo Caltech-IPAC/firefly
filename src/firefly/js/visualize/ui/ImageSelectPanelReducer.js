@@ -7,7 +7,7 @@ import Validate from '../../util/Validate.js';
 import {panelCatalogs} from './ImageSelectPanelProp.js';
 import FieldGroupCntlr from '../../fieldGroup/FieldGroupCntlr.js';
 import {keyMap, computeLabelWidth, rgbFieldGroup, isTargetNeeded,
-        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE} from './ImageSelectPanel.jsx';
+        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE} from './ImageSelectPanel.jsx';
 import {sizeFromDeg} from '../../ui/sizeInputFields.jsx';
 import {get} from 'lodash';
 
@@ -96,6 +96,7 @@ function initTabFields(crtCatalogId) {
             value: '0',
             labelWidth: computeLabelWidth(panelCatalogs[FITS].extinput.Title)
         },
+        /*
         [keyMap['blankinput']]: {
             fieldKey: keyMap['blankinput'],
             label: panelCatalogs[BLANK].input.Title,
@@ -105,6 +106,7 @@ function initTabFields(crtCatalogId) {
                 panelCatalogs[BLANK].input.range.max, 1.0, 'a float field'),
             labelWidth: computeLabelWidth(panelCatalogs[BLANK].input.Title)
         },
+        */
         [keyMap['urlinput']]: {
             fieldKey: keyMap['urlinput'],
             label: panelCatalogs[URL].input.Title,

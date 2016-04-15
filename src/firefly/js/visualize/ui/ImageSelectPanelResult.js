@@ -3,7 +3,7 @@
  */
 
 import {keyMap, panelKey, computeCurrentCatalogId, rgbFieldGroup,
-        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, BLANK, NONE,
+        IRAS, TWOMASS, WISE, MSX, DSS, SDSS, FITS, URL, NONE,
         PLOT_NO, RED, GREEN, BLUE, PLOT_CREATE, PLOT_CREATE3COLOR, rgb} from './ImageSelectPanel.jsx';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {dispatchPlotImage, visRoot } from '../ImagePlotCntlr.js';
@@ -166,7 +166,7 @@ export function resultFail(fromFail = true) {
                         }
                     }
                     break;
-
+/*
                 case BLANK:
                     if (fromFail) {
                         errMsg = 'invalid name or position or invalid pixel size or invalid size';
@@ -180,6 +180,8 @@ export function resultFail(fromFail = true) {
                         }
                     }
                     break;
+*/
+
 
                 case NONE:
                     break;
@@ -254,9 +256,9 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
                 case FITS:
                     wpr = imagePlotOnFITS(rq);
                     break;
-                case BLANK:
-                    wpr = imagePlotOnBlank(rq);
-                    break;
+                //case BLANK:
+                //    wpr = imagePlotOnBlank(rq);
+                //    break;
                 default:
                     wpr = imagePlotOnSurvey(cId, rq);
             }

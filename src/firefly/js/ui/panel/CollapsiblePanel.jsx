@@ -52,7 +52,8 @@ export default React.createClass({
     },
 
     getContentHeight() {
-        return this.state.isOpen ? {display: 'block'} : {display: 'none'};
+        return this.state.isOpen ? {height: '100%'} : {height: '0',
+            paddingTop: '0', paddingBottom: '0'};
     },
 
 
