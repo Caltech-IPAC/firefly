@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isUndefined, debounce, defer} from 'lodash';
+import {isUndefined, debounce} from 'lodash';
 import shallowequal from 'shallowequal';
 import React, {PropTypes} from 'react';
 import ReactHighcharts from 'react-highcharts/bundle/highcharts';
@@ -305,7 +305,7 @@ export class XYPlot extends React.Component {
                     chart.redraw();
                 }
             }
-        }, 500);
+        }, 300);
     }
 
     shouldAnimate() {
