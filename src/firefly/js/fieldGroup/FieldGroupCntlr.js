@@ -297,7 +297,7 @@ const valueChange= function(state,action) {
         childGroups[groupKey]= fg.fields;
         const wrapperAction= {
             type: CHILD_GROUP_CHANGE,
-            payload: { changedGroupKey: groupKey, childGroups }
+            payload: { changedGroupKey: groupKey, sourceAction:action, childGroups }
         };
         wrapperFg.fields= fireFieldsReducer(wrapperFg, wrapperAction);
         mods[wrapperFg.groupKey]= wrapperFg;
@@ -323,9 +323,10 @@ function makeChildGroups(wrapperGroupKey, state) {
 
 const updateMount= function(state, action) {
     var {fieldKey,mounted,fieldState={},groupKey,valid=true}= action.payload;
-    if (!getFieldGroup(state,groupKey)) return state;
+    var fg= getFieldGroup(state,groupKey);
+    if (!fg || (!mounted && !fg.fields)) return state;
 
-    var fg= findAndCloneFieldGroup(state,groupKey);
+    fg= findAndCloneFieldGroup(state,groupKey);
 
     if (mounted) {
         var omitPayload= omit(action.payload, ['fieldState','groupKey']);

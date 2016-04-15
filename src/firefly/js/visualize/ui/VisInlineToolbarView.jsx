@@ -7,7 +7,7 @@ import {primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LayerButton} from './VisToolbarView.jsx';
 import {dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {dispatchChangeExpandedMode, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
+import {dispatchChangeExpandedMode, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {LO_EXPANDED} from '../../core/LayoutCntlr.js';
 
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
@@ -18,6 +18,7 @@ import DELETE from 'html/images/blue_delete_10x10.png';
 
 function expand(pv) {
     //console.log('todo- expand:' + primePlot(pv).title);
+    dispatchChangeActivePlotView(pv.plotId);
     dispatchSetLayoutMode( LO_EXPANDED.images );
     dispatchChangeExpandedMode(true);
 }

@@ -5,8 +5,8 @@
  */
 /* eslint prefer-template:0 */
 import {ServerRequest, ID_NOT_DEFINED} from '../data/ServerRequest.js';
-import RequestType from './RequestType.js';
-import ZoomType from './ZoomType.js';
+import {RequestType} from './RequestType.js';
+import {ZoomType} from './ZoomType.js';
 import Enum from 'enum';
 import CoordinateSys from './CoordSys.js';
 import Point, {parseImagePt} from './Point.js';
@@ -198,7 +198,7 @@ const DEF_ORDER= makeOrderList(DEFAULT_PIPELINE_ORDER);
 /**
  * @author Trey Roby
  */
-class WebPlotRequest extends ServerRequest {
+export class WebPlotRequest extends ServerRequest {
 //class WebPlotRequest {
     constructor(type,userDesc,serviceType) {
         super(type);
@@ -261,6 +261,7 @@ class WebPlotRequest extends ServerRequest {
 
     static makeProcessorRequest(serverRequest, desc) {
         var req = new WebPlotRequest(RequestType.PROCESSOR, desc);
+        // req.setParams(serverRequest.getParams());
         req.setParams(serverRequest.getParams());
         return req;
     }

@@ -150,6 +150,13 @@ export function findColumnIdx(tableModel, colName) {
     });
 }
 
+/**
+ *
+ * @param tableModel
+ * @param rowIdx
+ * @param colName
+ * @return {*}
+ */
 export function getCellValue(tableModel, rowIdx, colName) {
     if (get(tableModel, 'tableData.data.length', 0) > 0) {
         const colIdx = findColumnIdx(tableModel, colName);

@@ -433,7 +433,7 @@ function getAllMouseReadouts(plotView, mouseState, visRoot) {
 
 
 function getSingleMouseReadout(plot, imagePt, toCoordinateName) {
-    if (!imagePt) return;
+    if (!imagePt || !plot) return;
     if (toCoordinateName === 'fitsIP') {
         return ` ${numeral(imagePt.x).format(precision1Digit)}, ${
             numeral(imagePt.y).format(precision1Digit)}`;

@@ -222,19 +222,6 @@ function process(rawAction, condition) {
     }
 
     recordHistory(rawAction);
-
-    return new Promise(
-        function (resolve, reject) {
-            if (condition) {
-                // monitor application state for changes until condition is met..
-                // invoke resolve() when this happens.
-                // invoke now, since condition is not yet implemented.
-                resolve('success');
-            } else {
-                // if no condition, go ahead and fulfill the promise
-                resolve('success');
-            }
-        });
 }
 
 function addListener(listener, ...types) {

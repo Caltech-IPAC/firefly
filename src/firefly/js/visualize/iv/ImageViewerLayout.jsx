@@ -121,8 +121,7 @@ export class ImageViewerLayout extends Component {
         var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
         if (!cursor || !cursor.length) cursor= 'crosshair';
         return (
-            <div className='plot-view-scroll-view-window'
-                 style={rootStyle}>
+            <div className='plot-view-scroll-view-window' style={rootStyle}>
                 <div className='plot-view-master-panel'
                      style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor}}>

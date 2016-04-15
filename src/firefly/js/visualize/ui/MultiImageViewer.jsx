@@ -6,7 +6,8 @@ import React, {Component,PropTypes} from 'react';
 import {isEmpty} from 'lodash';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
-import {dispatchAddViewer, getMultiViewRoot, getViewer, getLayoutType} from '../MultiViewCntlr.js';
+import {dispatchAddViewer, dispatchViewerMounted, dispatchViewerUnmounted, 
+        getMultiViewRoot, getViewer, getLayoutType} from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot} from '../ImagePlotCntlr.js';
 
@@ -19,18 +20,23 @@ export class MultiImageViewer extends Component {
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-    }
-
     componentWillReceiveProps(nextProps) {
+        if (this.props.viewerId!==nextProps.viewerId) {
+            dispatchAddViewer(nextProps.viewerId,nextProps.canReceiveNewPlots,true);
+            dispatchViewerUnmounted(this.props.viewerId);
+        }
         this.storeUpdate(nextProps);
     }
 
-    componentDidMount() {
+    componentWillUnmount() {
+        if (this.removeListener) this.removeListener();
+        dispatchViewerUnmounted(this.props.viewerId);
+    }
+
+    componentWillMount() {
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
         var {viewerId, canReceiveNewPlots}= this.props;
-        dispatchAddViewer(viewerId,canReceiveNewPlots);
+        dispatchAddViewer(viewerId,canReceiveNewPlots,true);
     }
 
     storeUpdate(props) {
@@ -44,7 +50,7 @@ export class MultiImageViewer extends Component {
 
     render() {
         const {viewer}= this.state;
-        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId}= this.props;
+        const {forceRowSize, forceColSize, gridDefFunc,Toolbar,viewerId, insideFlex}= this.props;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.plotIdAry)) return false;
         return (
@@ -56,6 +62,7 @@ export class MultiImageViewer extends Component {
                                   Toolbar={Toolbar}
                                   viewerId={viewerId}
                                   visRoot={this.state.visRoot}
+                                  insideFlex={insideFlex}
             />
         );
     }
@@ -67,7 +74,8 @@ MultiImageViewer.propTypes= {
     Toolbar : PropTypes.func,
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,
-    gridDefFunc : PropTypes.func
+    gridDefFunc : PropTypes.func,
+    insizeFlex : PropTypes.bool
 };
 
 // function gridDefFunc(plotIdAry) : [ {title :string, [plotId:string]}]

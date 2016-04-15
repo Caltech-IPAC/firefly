@@ -113,7 +113,12 @@ public class WebPlotResultSerializer {
             }
             if (res.containsKey(WebPlotResult.REGION_DATA)) {
                 String s= res.getStringResult(WebPlotResult.REGION_DATA);
-                map.put(WebPlotResult.REGION_DATA, s);
+                JSONArray ary = new JSONArray();
+                if (s.length()>2) {
+                    String regAry[] = s.substring(1, s.length() - 1).split("--STR--");
+                    for(String rv : regAry) ary.add(rv);
+                }
+                map.put(WebPlotResult.REGION_DATA, ary);
             }
             if (res.containsKey(WebPlotResult.REGION_ERRORS)) {
                 String s= res.getStringResult(WebPlotResult.REGION_ERRORS);

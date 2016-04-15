@@ -12,7 +12,7 @@ import {LO_EXPANDED, LAYOUT_PATH, getActiveTableId, getExpandedMode, SHOW_DROPDO
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import {SearchPanel} from 'firefly/ui/SearchPanel.jsx';
-import {TestCatalog} from 'firefly/ui/TestCatalog.jsx';
+import {TestQueriesPanel} from 'firefly/ui/TestQueriesPanel.jsx';
 import {ImageSelectDropdown} from 'firefly/ui/ImageSelectDropdown.jsx';
 import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import {ResultsPanel} from 'firefly/ui/ResultsPanel.jsx';
@@ -25,6 +25,7 @@ import {VisToolbar} from 'firefly/visualize/ui/VisToolbar.jsx';
 import {getActionFromUrl} from 'firefly/core/History.js';
 import {MultiImageViewer} from 'firefly/visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from 'firefly/visualize/ui/MultiViewStandardToolbar.jsx';
+import {TriViewImageSection,launchImageMetaDataSega} from    'firefly/visualize/ui/TriViewImageSection.jsx';
 
 
 const HOME = {type: SHOW_DROPDOWN_UI, payload: {view:'AnyDataSetSearch'}};
@@ -32,6 +33,7 @@ const HOME = {type: SHOW_DROPDOWN_UI, payload: {view:'AnyDataSetSearch'}};
 firefly.bootstrap();
 const goto = getActionFromUrl();
 firefly.process(goto || HOME);
+launchImageMetaDataSega();
 
 const resultId = TblUtil.uniqueTblUiGid();
 
@@ -70,21 +72,15 @@ const App = React.createClass({
                         />
                         <DropDownContainer>
                             <SearchPanel resultId={resultId} />
-                            <TestCatalog resultId={resultId} />
+                            <TestQueriesPanel resultId={resultId} />
                             <ImageSelectDropdown />
                         </DropDownContainer>
                     </header>
                     <main>
                         <ResultsPanel title={title}
-                            imagePlot ={expandedMode===LO_EXPANDED.images.view ?
-                                             <ExpandedModeDisplay   key='results-plots-expanded' forceExpandedMode={true}/> :
-                                             <div style={{display:'inline-block', position:'absolute', 
-                                                           left:2, right:2, top:3, bottom:4}}>
-                                                    <MultiImageViewer  viewerId='imageViews' 
-                                                         canReceiveNewPlots={true} 
-                                                         Toolbar={MultiViewStandardToolbar}/>
-                                             </div>
-                              }
+                            imagePlot ={<TriViewImageSection showCoverage={true} showFits={true}
+                                                             showImageMetaData={true}
+                                                             imageExpandedMode={expandedMode===LO_EXPANDED.images.view} />}
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsTableViewPanel key='results-xyplots' tblId={activeTblId} />}
                             tables = {<TablesContainer key='results-tables' tbl_ui_gid={resultId} /> }

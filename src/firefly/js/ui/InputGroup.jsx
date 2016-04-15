@@ -2,13 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 
-export function InputGroup({labelWidth,children }) {
+export function InputGroup({labelWidth,children, verticalSpace=5 }) {
     return (
         <div>
             {React.Children.map(children,function(inChild) {
-                return React.cloneElement(inChild, {labelWidth});
+                return (
+                    <div style={{paddingBottom:verticalSpace }}>
+                        { inChild && React.cloneElement(inChild, {labelWidth})}
+                    </div>
+                );
             })}
         </div>
 
@@ -16,7 +20,8 @@ export function InputGroup({labelWidth,children }) {
 }
 
 InputGroup.propTypes= {
-    labelWidth   : React.PropTypes.number.isRequired
+    labelWidth   : PropTypes.number.isRequired,
+    verticalSpace : PropTypes.number,
 };
 
 

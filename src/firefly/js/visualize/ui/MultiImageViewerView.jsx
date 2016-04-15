@@ -15,14 +15,12 @@ const flexContainerStyle= {
     flexDirection:'column',
     flexWrap:'nowrap',
     alignItems: 'stretch',
-    width:'100%',
-    height:'100%',
 };
 
 const defDecStyle= {
     background: 'rgb(200,200,200)',
     border: '1px solid rgb(200,200,200)',
-    borderRadius: '5px',
+    // borderRadius: '5px',
     boxSizing: 'border-box' 
 };
 
@@ -33,8 +31,15 @@ const flexToolbarStyle= {
 
 export function MultiImageViewerView({Toolbar, layoutType,viewerId, visRoot, 
                                       viewerPlotIds, forceRowSize, forceColSize, gridDefFunc,
-                                      additionalStyle, defaultDecoration=true}) {
+                                      additionalStyle, defaultDecoration=true, insideFlex=false}) {
 
+    var wrapperStyle; 
+    if (insideFlex) {
+        wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
+    }
+    else {
+        wrapperStyle= Object.assign({}, flexContainerStyle, {width:'100%', height:'100%'});
+    }
     var container;
     if (layoutType==='single') {  // SINGLE VIEW
         var id= viewerPlotIds.includes(visRoot.activePlotId) ? visRoot.activePlotId : viewerPlotIds[0];
@@ -56,7 +61,7 @@ export function MultiImageViewerView({Toolbar, layoutType,viewerId, visRoot,
         container= makePackedGrid(viewerPlotIds,dim.rows,dim.cols,true);
     }
     
-    var s= Object.assign({}, additionalStyle, flexContainerStyle, defaultDecoration? defDecStyle: {});
+    var s= Object.assign({}, additionalStyle, wrapperStyle, defaultDecoration? defDecStyle: {});
 
     return (
         <div style={s}>

@@ -162,9 +162,10 @@ class SizeInputFieldView extends Component {
 
     render() {
         var {displayValue, valid, unit} = this.state;
+        var {min, max, wrapperStyle={}} = this.props;
         var sign = unitSign[unit];
-        var minmsg = `${sizeFromDeg(this.props.min, unit)}`;
-        var maxmsg = `${sizeFromDeg(this.props.max, unit)}`;
+        var minmsg = `${sizeFromDeg(min, unit)}`;
+        var maxmsg = `${sizeFromDeg(max, unit)}`;
         var errmsg = `${invalidSizeMsg}, ${minmsg}-${maxmsg}${sign}.`;
 
 
@@ -179,7 +180,7 @@ class SizeInputFieldView extends Component {
         };
 
         return (
-            <div >
+            <div style={wrapperStyle}>
                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
                     <InputFieldView
                         valid={valid}
@@ -222,7 +223,8 @@ SizeInputFieldView.propTypes = {
     onChange: PropTypes.func,
     value: PropTypes.string,
     valid: PropTypes.bool,
-    showFeedback: PropTypes.bool
+    showFeedback: PropTypes.bool,
+    wrapperStyle: PropTypes.object
 };
 
 SizeInputFieldView.defaultProps = {

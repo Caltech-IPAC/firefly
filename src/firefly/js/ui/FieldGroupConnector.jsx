@@ -12,11 +12,14 @@ const defaultConfirmInitValue= (v) => v;
  *
  * @param FieldComponent the component to be wrapped
  * @param {function} getComponentProps a function that will be called for the properties for the FieldComponent
- *                          when it is renders.
+ *                          when it is rendered.
  *                          getComponentProps(params, fireValueChange)
  *                             - params is is a combination of all values in properties, fieldStore, and State
  *                             - fireValueChange is the function to call when the value has changed
- * @param {object} connectorPropTypes - the prop type of the connector.  
+ *                                     - Parameter: a object with new values to put into the fieldGroupStore
+ *                                           - object should include a a 'value' key. It may include other keys such
+ *                                             as 'validator', 'valid', or anything else you want to put in.
+ * @param {object} connectorPropTypes - the prop type of the connector.
  *                             The connector already has propType however, this is a way to add more
  * @param {object} connectorDefProps - the default properties of the connector
  * @param {function} confirmInitialValue - call just before mount, 
