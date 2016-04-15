@@ -55,8 +55,8 @@ class ChartsPanel extends React.Component {
         this.state = {
             chartType: localStorage.getItem(PREF_CHART_TYPE) || SCATTER,
             optionsShown: !(localStorage.getItem(PREF_OPTIONS_SHOWN)==='false'),
-            widthPx: 50,
-            heightPx: 300
+            widthPx: 20,
+            heightPx: 20
         };
 
         this.onResize = debounce((size) => {
@@ -137,7 +137,7 @@ class ChartsPanel extends React.Component {
     renderXYPlot() {
         const {tblId, tableModel, tblPlotData} = this.props;
         if (!tblPlotData) {
-            return 'Select XY plot parameters...';
+            return null;
         }
         const { isPlotDataReady, xyPlotData, xyPlotParams } = tblPlotData;
         var {widthPx, heightPx, optionsShown} = this.state;
@@ -169,7 +169,7 @@ class ChartsPanel extends React.Component {
             if (xyPlotParams) {
                 return 'Loading XY plot...';
             } else {
-                return 'Select XY plot parameters';
+                return null;
             }
         }
 
@@ -188,7 +188,6 @@ class ChartsPanel extends React.Component {
                 <HistogramOptions groupKey = {formName}
                                   colValStats={colStats}
                                   onOptionsSelected={(histogramParams) => {
-                                            //console.log(histogramParams);
                                             HistogramCntlr.dispatchLoadColData(histogramParams, searchRequest);
                                         }
                                       }/>
@@ -474,7 +473,7 @@ class ChartsPanel extends React.Component {
         const {optionsShown, chartType, heightPx} = this.state;
         if (optionsShown) {
             return (
-                <div style={{display:'inline-block',overflow:'auto',width:(OPTIONS_WIDTH-20),height:heightPx,border:'0px solid black', marginLeft:10}}>
+                <div style={{display:'inline-block',overflow:'auto',width:(OPTIONS_WIDTH-20),height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
                     {this.renderChartSelection()}
                     {chartType === SCATTER ? this.renderXYPlotOptions() : this.renderHistogramOptions()}
                 </div>
@@ -502,13 +501,13 @@ class ChartsPanel extends React.Component {
             return (
                 <Resizable id='xyplot-resizer' style={{width, height, overflow: 'hidden'}}
                            onResize={this.onResize} {...this.props} >
-                    {{knownSize} && <div style={{display:'inline-block', verticalAlign:'bottom'}}>
+                    {{knownSize} && <div style={{display:'inline-block', verticalAlign:'top'}}>
                         <div style={{display:'block', whiteSpace: 'nowrap'}}>
                             {this.renderToolbar()}
                         </div>
-                        <div style={{display:'block', whiteSpace: 'nowrap'}}>
+                        <div style={{display:'block', whiteSpace: 'nowrap', verticalAlign: 'top'}}>
                             {this.renderOptions()}
-                            <div style={{display:'inline-block',overflow:'auto', width:chartWidth,height:heightPx,border:'0px solid black', marginLeft:10}}>
+                            <div style={{display:'inline-block',overflow:'auto',width:chartWidth,height:heightPx,border:'0px solid black', paddingLeft:10}}>
                                 {chartType === SCATTER ? this.renderXYPlot() : this.renderHistogram()}
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 import React, {Component, PropTypes}  from 'react';
 import ReactDOM from 'react-dom';
-import {get, isArray, isUndefined} from 'lodash';
+import {get, isArray, isUndefined, defer} from 'lodash';
 
 import {logError} from '../util/WebUtil.js';
 
@@ -19,15 +19,30 @@ function getProps(params, fireValueChange) {
 /**
  *  Make sure a component (like highlighted suggestion) is visible
  *  @param {ReactComponent} c
+ *  @param {Number} highlightedIdx
  */
-function ensureVisible(c) {
+function ensureVisible(c, highlightedIdx) {
     const el = ReactDOM.findDOMNode(c); //DOMElement
-    if (el) {el.scrollIntoView();}
+    if (el && highlightedIdx) {
+        const nSuggestions = el.children.length;
+        if (nSuggestions>1) {
+            const highlightedTop = el.childNodes[highlightedIdx].offsetTop;
+            const scrollTop = el.parentNode.scrollTop;
+            if (highlightedTop<scrollTop) {
+                el.parentNode.scrollTop = scrollTop-180;
+                //console.log('highlightedTop: '+highlightedTop+' scrollTop: '+scrollTop+' '+el.parentNode.scrollTop );
+            } else if (highlightedTop>scrollTop+180) {
+                el.parentNode.scrollTop = scrollTop+180;
+                //console.log('highlightedTop: '+highlightedTop+' scrollTop: '+scrollTop+' '+el.parentNode.scrollTop );
+            }
+        }
+    }
 }
 
+
 const Suggestion = (props) => {
-    const {suggestion, renderSuggestion, highlighted, ...otherProps} = props;
-    return ( <li ref={(c)=>highlighted&&ensureVisible(c)} {...otherProps}>{renderSuggestion(suggestion)}</li>);
+    const {suggestion, renderSuggestion, ...otherProps} = props;
+    return ( <li {...otherProps}>{renderSuggestion(suggestion)}</li>);
 };
 
 Suggestion.propTypes = {
@@ -36,11 +51,31 @@ Suggestion.propTypes = {
 };
 
 const SuggestBox = (props) => {
-    var {suggestions, highlightedIdx, renderSuggestion, onChange, onComplete} = props;
+    var {suggestions, highlightedIdx, renderSuggestion, onChange, onComplete, mouseTrigger} = props;
     suggestions = suggestions || [];
 
+    var mouseEnterIdx; // to keep track where the mouse is
+
     const handleOptionMouseEnter = (idx, event) => {
-        onChange(idx);
+        if (mouseTrigger) {
+            //console.log('handle mouse enter ' + idx + ' ' + event.target);
+            mouseEnterIdx = undefined;
+            onChange(idx);
+        } else {
+            mouseEnterIdx = idx;
+            event.stopPropagation();
+        }
+    };
+
+    const handleMouseMove = (event) => {
+        if (!mouseTrigger) {
+            mouseTrigger = true;
+            event.stopPropagation();
+        } else {
+            if (!isUndefined(mouseEnterIdx)) {
+                onChange(mouseEnterIdx);
+            }
+        }
     };
 
     const handleOptionClick = (idx, event) => {
@@ -48,13 +83,13 @@ const SuggestBox = (props) => {
     };
 
     return (
-        <ul className={'SuggestBox'}>
+
+        <ul className={'SuggestBox'} ref={(c)=>{ensureVisible(c, highlightedIdx);}} onMouseMove={handleMouseMove.bind(this)}>
             {suggestions.map((suggestion, idx) => {
                 const highlighted = idx === highlightedIdx;
                 return (
                     <Suggestion
                         className={'SuggestBox__Suggestion'+(highlighted ? ' SuggestBox__Suggestion--highlighted' : '')}
-                        highlighted={highlighted}
                         renderSuggestion={renderSuggestion}
                         key={idx}
                         onMouseDown={handleOptionClick.bind(this, idx)} //onClick competes with onBlur
@@ -76,7 +111,8 @@ class SuggestBoxInputFieldView extends Component {
             valid: true,
             message: '',
             inputWidth: undefined,
-            suggestions: []
+            suggestions: [],
+            mouseTrigger: false
         };
 
         this.onValueChange = this.onValueChange.bind(this);
@@ -108,9 +144,14 @@ class SuggestBoxInputFieldView extends Component {
     }
 
 
-    changeHighlighted(newHighlightedIdx) {
-        if (newHighlightedIdx !== this.state.highlightedIdx) { this.setState({highlightedIdx: newHighlightedIdx}); }
+    changeHighlighted(mouseTrigger, newHighlightedIdx) {
+
+        if (newHighlightedIdx !== this.state.highlightedIdx || mouseTrigger !== this.state.mouseTrigger) {
+            //console.log('setting mouse trigger: '+mouseTrigger );
+            this.setState({highlightedIdx: newHighlightedIdx, mouseTrigger});
+        }
     }
+
 
     /*
      Change value based on a suggest box action
@@ -154,10 +195,10 @@ class SuggestBoxInputFieldView extends Component {
                 this.setState({highlightedIdx : undefined, isOpen: false});
                 break;
             case 38: // arrow up
-                isOpen && this.changeHighlighted(isUndefined(highlightedIdx) ? suggestions.length - 1 : Math.max(0, highlightedIdx - 1));
+                isOpen && this.changeHighlighted(false, isUndefined(highlightedIdx) ? suggestions.length - 1 : Math.max(0, highlightedIdx - 1));
                 break;
             case 40: // arrow down
-                isOpen && this.changeHighlighted(isUndefined(highlightedIdx) ? 0 : Math.min(highlightedIdx + 1, suggestions.length - 1));
+                isOpen && this.changeHighlighted(false, isUndefined(highlightedIdx) ? 0 : Math.min(highlightedIdx + 1, suggestions.length - 1));
                 break;
             default:
                 break;
@@ -167,7 +208,7 @@ class SuggestBoxInputFieldView extends Component {
 
     render() {
 
-        const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions } = this.state;
+        const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
         var {label, labelWidth, tooltip, inline, renderSuggestion} = this.props;
 
         const leftOffset = (labelWidth?labelWidth:0)+4;
@@ -193,8 +234,9 @@ class SuggestBoxInputFieldView extends Component {
                         suggestions={suggestions}
                         highlightedIdx={highlightedIdx}
                         renderSuggestion={renderSuggestion || ((suggestion) => <span>{suggestion}</span>)}
-                        onChange={this.changeHighlighted}
+                        onChange={this.changeHighlighted.bind(this, true)}
                         onComplete={this.changeValue}
+                        mouseTrigger={mouseTrigger}
                     />
                 </div>}
             </div>
