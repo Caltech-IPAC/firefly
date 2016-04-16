@@ -5,7 +5,7 @@
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../../Firefly.js';
 import {visRoot } from '../ImagePlotCntlr.js';
-import {getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot} from '../MultiViewCntlr.js';
+import {getAViewFromMultiView, findViewerWithPlotId, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -102,19 +102,35 @@ export const PlotSelectMode = {
                             'ReplacePlot':PLOT_REPLACE,
                             'ReplaceOrCreate': PLOT_REPLACE|PLOT_CREATE|PLOT_CREATE3COLOR};
 
-var getAViewId = () => {
-    var aView = getAViewFromMultiView();
+var getAViewId = (mvroot) => {
+    var aView = getAViewFromMultiView(mvroot);
     return aView ? aView.viewerId : '';
 };
+
+var canAddNewPlot = (viewer) => (!viewer.viewerId.includes('RESERVED')&&viewer.canReceiveNewPlots);
 
 // if there is plotID, find the viewer (plotId & viewerId => replace or create)
 //                                     (plotId & no viewerid => replace)
 // if there is no plotID, find an avaiable multiImageViewer (no plotId & viewerId => create)
 export function getPlotInfo( vr ) {
     var visroot = !vr ? visRoot() : vr;
+    var mvroot = getMultiViewRoot();
     var plotId = get(visroot, 'activePlotId');
-    var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : (getAViewId());
+    var viewerId = plotId ?  findViewerWithPlotId(getMultiViewRoot(), plotId) : null;
     var plotMode = PlotSelectMode.NoPlot;
+
+    // check if viewer can receive new plots and not reserved
+    if (viewerId ) {
+        var viewer = getViewer(mvroot, viewerId);
+
+        // find another viwer which can receive new plots
+        if (!viewer || !canAddNewPlot(viewer)) {
+            plotId = null;
+        }
+    }
+    if (!plotId) {
+        viewerId = getAViewId(mvroot);   // get a new viewer if no plot, plotId: no, viewerId: yes (create)
+    }                                    // there is plot and no viewer, plotId: yes, vieweId: no (replace)
 
     if (viewerId) {
         if (plotId) {
@@ -150,7 +166,7 @@ export function computeLabelWidth(labelStr) {
 
 
 /*
- * check if the tab selection need target setting or not
+ * check if the tab selection need target (and size) setting or not
  */
 
 export function isTargetNeeded(tabId, isThreeColor = false) {
@@ -217,12 +233,14 @@ export class ImageSelection extends Component {
 
         var isfieldChanged = (allfields) =>
                 {
-                    var fields = rgbFieldGroup.find((fg) => (this.state[fg] !== allfields[fg]));
-                    return (fields) ? true : allfields[this.groupkey] !== this.state.fields;
+                    var fields = rgbFieldGroup.find((fg) =>
+                                  (this.state[fg] && allfields[fg] && this.state[fg] !== allfields[fg]));
+
+                    return (fields) ? true : (((allfields[this.groupKey]) || (this.state.fields))&&
+                                              ( allfields[this.groupKey] !== this.state.fields ));
                 };
 
-
-        if (isfieldChanged(allfields) || vr != this.state.visroot) {
+        if (isfieldChanged(allfields) || vr.activePlotId !== this.state.visroot.activePlotId) {
 
             if (this.iAmMounted) {
                 this.setState({
@@ -285,7 +303,9 @@ export function isOnThreeColorSetting(pMode, fields) {
         var plotView = getActivePlotView(visRoot());
 
         if (plotView) {
-            return primePlot(plotView).plotState.isThreeColor();
+            var pPlot = primePlot(plotView);
+
+            return pPlot ? pPlot.plotState.isThreeColor() : false;
         }
     }
     return false;
