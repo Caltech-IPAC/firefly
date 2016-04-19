@@ -6,24 +6,29 @@
     "es6": true,
     "browser": true
   },
-  "ecmaFeatures": {
-    "arrowFunctions" : true,
-    "binaryLiterals" : true,
-    "blockBindings": true,
-    "classes" : true,
-    "defaultParams" : true,
-    "destructuring" : true,
-    "restParams" : true,
-    "forOf": true,
-    "jsx": true,
-    "modules" : true,
-    "objectLiteralComputedProperties" : true,
-    "objectLiteralShorthandMethods" : true,
-    "objectLiteralShorthandProperties" : true,
-    "octalLiterals" : true,
-    "spread" : true,
-    "superInFunctions" : true,
-    "templateStrings" : true
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "ecmaFeatures": {
+      "arrowFunctions" : true,
+      "binaryLiterals" : true,
+      "blockBindings": true,
+      "classes" : true,
+      "defaultParams" : true,
+      "destructuring" : true,
+      "restParams" : true,
+      "forOf": true,
+      "jsx": true,
+      "experimentalObjectRestSpread": true,
+      "modules" : true,
+      "objectLiteralComputedProperties" : true,
+      "objectLiteralShorthandMethods" : true,
+      "objectLiteralShorthandProperties" : true,
+      "octalLiterals" : true,
+      "spread" : true,
+      "superInFunctions" : true,
+      "templateStrings" : true
+    },
+    "sourceType": "module"
   },
   "rules": {
     "arrow-parens": [2, "always"],
