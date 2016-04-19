@@ -334,10 +334,5 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             dispatchPlotImage(nPlotId, wpSet[0]);
         }
 
-/*
-        if (hideDropdown) {
-            dispatchHideDropDownUi();
-        }
-*/
     };
 }
