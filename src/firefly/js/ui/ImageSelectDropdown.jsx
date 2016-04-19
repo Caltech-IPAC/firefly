@@ -56,7 +56,7 @@ export class ImageSelectDropdown extends Component {
         var fields = FieldGroupUtils.getGroupFields(panelKey);
         var vr = visRoot();
 
-        if (fields != this.state.fields || vr != this.visroot) {
+        if (fields !== this.state.fields || vr.activePlotId !== this.state.visroot.activePlotId) {
             if (this.iAmMounted) {
                 this.setState({
                     fields, visroot: vr

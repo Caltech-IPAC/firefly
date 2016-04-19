@@ -98,7 +98,10 @@ const propTypes= {
 };
 
 function checkForUndefined(v,props) {
-    return  (!v && !isEmpty(props.options)) ? props.options[0].value : v;
+    var optionContain = (v) => props.options.find ( (op) => op.value === v );
+
+    return isEmpty(props.options) ? v :
+            (!v ? props.options[0].value : (optionContain(v) ? v : props.options[0].value));
 }
 
 export const ListBoxInputField = fieldGroupConnector(ListBoxInputFieldView,

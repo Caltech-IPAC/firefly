@@ -323,15 +323,16 @@ export function resultSuccess(plotInfo, hideDropdown = false) {
             });
         }
 
+
+        if (hideDropdown) {
+            dispatchHideDropDownUi();
+        }
+
         if (plotInfo.isThreeColor) {
             dispatchPlotImage(nPlotId, wpSet, true);
         } else {
             dispatchPlotImage(nPlotId, wpSet[0]);
         }
 
-
-        if (hideDropdown) {
-            dispatchHideDropDownUi();
-        }
     };
 }
