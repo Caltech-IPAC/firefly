@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {pickBy, set} from 'lodash';
+import {pickBy, get} from 'lodash';
 import {uniqueTblId} from './TableUtil.js';
 
 
