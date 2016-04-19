@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 
 import {flux, firefly} from 'firefly/Firefly.js';
 import AppDataCntlr from 'firefly/core/AppDataCntlr.js';
-import {LO_EXPANDED, LAYOUT_PATH, getActiveTableId, getExpandedMode, SHOW_DROPDOWN_UI} from 'firefly/core/LayoutCntlr.js';
+import {LO_EXPANDED, LAYOUT_PATH, getExpandedMode, SHOW_DROPDOWN_UI} from 'firefly/core/LayoutCntlr.js';
 import Menu from 'firefly/ui/Menu.jsx';
 import Banner from 'firefly/ui/Banner.jsx';
 import {SearchPanel} from 'firefly/ui/SearchPanel.jsx';
@@ -27,15 +27,12 @@ import {MultiImageViewer} from 'firefly/visualize/ui/MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from 'firefly/visualize/ui/MultiViewStandardToolbar.jsx';
 import {TriViewImageSection,launchImageMetaDataSega} from    'firefly/visualize/ui/TriViewImageSection.jsx';
 
-
 const HOME = {type: SHOW_DROPDOWN_UI, payload: {view:'AnyDataSetSearch'}};
 
 firefly.bootstrap();
 const goto = getActionFromUrl();
 firefly.process(goto || HOME);
 launchImageMetaDataSega();
-
-const resultId = TblUtil.uniqueTblUiGid();
 
 const App = React.createClass({
 
@@ -71,8 +68,8 @@ const App = React.createClass({
                             appTitle='Firefly'
                         />
                         <DropDownContainer>
-                            <SearchPanel resultId={resultId} />
-                            <TestQueriesPanel resultId={resultId} />
+                            <SearchPanel />
+                            <TestQueriesPanel />
                             <ImageSelectDropdown />
                         </DropDownContainer>
                     </header>
@@ -83,7 +80,7 @@ const App = React.createClass({
                                                              imageExpandedMode={expandedMode===LO_EXPANDED.images.view} />}
                             visToolbar = {<VisToolbar/>}
                             xyPlot = {<ChartsContainer key='results-xyplots' tblId={activeTblId} />}
-                            tables = {<TablesContainer key='results-tables' tbl_ui_gid={resultId} /> }
+                            tables = {<TablesContainer key='results-tables' /> }
                         />
                     </main>
                 </div>
@@ -97,7 +94,7 @@ function connector(state) {
         appData: state[AppDataCntlr.APP_DATA_PATH],
         layout: state[LAYOUT_PATH],
         title: 'FFTools entry point',
-        activeTblId: getActiveTableId(),
+        activeTblId: TblUtil.getActiveTableId(),
         expandedMode: getExpandedMode()
     };
 }

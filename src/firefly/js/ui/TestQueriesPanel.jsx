@@ -69,14 +69,13 @@ export class TestQueriesPanel extends Component {
     }
 
     render() {
-        const {resultId} = this.props;
         const fields= this.state;
         return (
             <div style={{padding: 10}}>
                 <FormPanel
                     width='640px' height='500px'
                     groupKey='TEST_CAT_PANEL'
-                    onSubmit={(request) => onSearchSubmit(request, resultId)}
+                    onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
                     <FieldGroup groupKey='TEST_CAT_PANEL' validatorFunc={null} keepState={true}>
                         <div style={{padding:'5px 0 5px 0'}}>
@@ -106,12 +105,10 @@ export class TestQueriesPanel extends Component {
 
 TestQueriesPanel.propTypes = {
     name: PropTypes.oneOf(['TestSearches']),
-    resultId: PropTypes.string
 };
 
 TestQueriesPanel.defaultProps = {
     name: 'TestSearches',
-    resultId: TblUtil.uniqueTblUiGid()
 };
 
 
@@ -284,30 +281,29 @@ function renderImagesTab() {
 }
 
 
-function onSearchSubmit(request, resultId) {
+function onSearchSubmit(request) {
     console.log(request);
     if (request.Tabs==='catalog') {
-        doCatalog(request,resultId);
+        doCatalog(request);
     }
     else if (request.Tabs==='images') {
-        doImages(request,resultId);
+        doImages(request);
     }
     else if (request.Tabs==='wiseImage') {
-        doWise(request,resultId);
+        doWise(request);
     }
     else if (request.Tabs==='2massImage') {
-        do2Mass(request,resultId);
+        do2Mass(request);
     }
     else if (request.Tabs==='loadRegion') {
-        doRegionLoad(request,resultId);
+        doRegionLoad(request);
     }
     else {
         console.log('request no supported');
     }
 }
 
-function doCatalog(request, resultId) {
-    const activeTblId = TblUtil.uniqueTblId();
+function doCatalog(request) {
     var tReq = TableRequest.newInstance({
         [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
         id:'GatorQuery',
@@ -319,13 +315,11 @@ function doCatalog(request, resultId) {
         use : 'catalog_overlay',
         catalogProject : options.find( (op) => request.catalog===op.value).proj
     });
-    const tbl_ui_id = TblUtil.uniqueTblUiId();
-    dispatchSetupTblTracking(activeTblId);
-    dispatchTableSearch(tReq, resultId, tbl_ui_id);
+    dispatchTableSearch(tReq);
 }
 
 
-function doImages(request, resultsId) {
+function doImages(request) {
     var wp= parseWorldPt(request.UserTargetWorldPt);
 
     // -example call to 2mass
@@ -412,12 +406,13 @@ const schemaParams= {
 };
 
 
-function doWise(request, resultId) {
+function doWise(request) {
     console.log('wise',request);
     const reqParams= Object.assign({
         [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
         mission: 'wise',
         id: 'ibe_processor',
+        title: 'WISE-' + request[ServerParams.USER_TARGET_WORLD_PT],
         intersect: request.intersect,
         mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
         size: request.size,
@@ -425,37 +420,26 @@ function doWise(request, resultId) {
         band : request.wisebands
     }, schemaParams[request.wiseDataSet]);
     
-    
-    
-    const activeTblId = TblUtil.uniqueTblId();
-    dispatchSetupTblTracking(activeTblId);
-    const tbl_ui_id = TblUtil.uniqueTblUiId();
-    dispatchTableSearch(TableRequest.newInstance(reqParams), resultId, tbl_ui_id);
-    
+    dispatchTableSearch(TableRequest.newInstance(reqParams));
 }
 
-function do2Mass(request, resultId) {
+function do2Mass(request) {
     console.log('wmass',request);
     const reqParams= {
         [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
         mission: 'twomass',
         id: 'ibe_processor',
+        title: '2MASS-' + request[ServerParams.USER_TARGET_WORLD_PT],
         ds : request.ds,
         band : request.band
     };
 
-
-
-    const activeTblId = TblUtil.uniqueTblId();
-    dispatchSetupTblTracking(activeTblId);
-    const tbl_ui_id = TblUtil.uniqueTblUiId();
-    dispatchTableSearch(TableRequest.newInstance(reqParams), resultId, tbl_ui_id);
-
+    dispatchTableSearch(TableRequest.newInstance(reqParams));
 }
 
 
 
-function doRegionLoad(request, resultId) {
+function doRegionLoad(request) {
     getDS9Region(request.fileUpload)
         .then( (result) => {
             console.log(result);

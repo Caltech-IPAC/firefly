@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {pickBy} from 'lodash';
+import {pickBy, get} from 'lodash';
 import {uniqueTblId} from './TableUtil.js';
 
 
@@ -35,10 +35,19 @@ export class TableRequest {
         return retStr;
     }
 
+    getTblId() {
+        return get(this.params, 'META_INFO.tbl_id');
+    }
+
+    getTitle() {
+        return get(this.params, 'META_INFO.title');
+    }
+
     /**
      *
      * @param id
      * @param tbl_id
+     * @param title
      * @param startIdx
      * @param pageSize
      * @param filters  List of conditions separted by comma(,). Format:  (col_name|index) operator value.
@@ -51,11 +60,12 @@ export class TableRequest {
      * @param copyFromReq
      * @returns {TableRequest}
      */
-    static newInstance({id, tbl_id=uniqueTblId(), startIdx, pageSize=100, filters, sortInfo, inclCols, decimate, META_INFO, ...rest}, copyFromReq) {
+    static newInstance({id, tbl_id=uniqueTblId(), title, startIdx, pageSize=100, filters, sortInfo, inclCols, decimate, META_INFO={}, ...rest}, copyFromReq) {
         var params = Object.assign(rest, pickBy({id, tbl_id, startIdx, pageSize, filters, sortInfo, inclCols, decimate, META_INFO}));   // take only defined params
         if (copyFromReq) {
             params = Object.assign(copyFromReq, params);
         }
+        Object.assign(params.META_INFO, {tbl_id, title});
         return new TableRequest(params);
     }
 }
@@ -63,6 +73,7 @@ export class TableRequest {
 TableRequest.keys = {
     id: 'id',
     tbl_id: 'tbl_id',
+    title: 'title',
     startIdx: 'startIdx',
     pageSize: 'pageSize',
     filters: 'filters',

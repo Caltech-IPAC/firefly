@@ -12,6 +12,7 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.DataSetParser;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.util.*;
+import edu.jhu.util.StringUtil;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -95,9 +96,11 @@ public class JsonTableUtil {
             treq.put(TableServerRequest.FILTERS, TableServerRequest.toFilterStr(req.getFilters()));
         }
         if (req.getMeta() != null) {
+            JSONObject  metaInfo = new JSONObject();
             for (String key : req.getMeta().keySet()) {
-                treq.put(key, req.getMeta().get(key));
+                metaInfo.put(key, req.getMeta().get(key));
             }
+            treq.put(TableServerRequest.META_INFO, metaInfo);
         }
 
         return treq;

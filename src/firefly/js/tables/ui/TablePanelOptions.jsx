@@ -8,17 +8,16 @@ import {isEmpty, cloneDeep, get} from 'lodash';
 import {BasicTableView} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {SortInfo, SORT_ASC} from '../SortInfo.js';
-import {sortTable} from '../TableUtil.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 
 
 export const TablePanelOptions = (props) => {
-    const {columns, pageSize, showUnits, showFilters, onChange, colSortDir} = props;
+    const {columns, origColumns, pageSize, showUnits, showFilters, onChange, colSortDir} = props;
     if (isEmpty(columns)) return false;
 
     const {cols, data, sortInfo, selectInfoCls} = prepareOptionData(columns, colSortDir);
-    const callbacks = makeCallbacks(onChange, columns, data);
+    const callbacks = makeCallbacks(onChange, columns, origColumns, data);
     const {onPageSize, onPropChanged, onReset, ...tableCallbacks} = callbacks;
     return (
         <div className='TablePanelOptions'>
@@ -61,6 +60,7 @@ export const TablePanelOptions = (props) => {
 
 TablePanelOptions.propTypes = {
     columns: React.PropTypes.arrayOf(React.PropTypes.object),
+    origColumns: React.PropTypes.arrayOf(React.PropTypes.object),
     colSortDir: React.PropTypes.oneOf(['ASC', 'DESC', '']),
     pageSize: React.PropTypes.number,
     showUnits: React.PropTypes.bool,
@@ -98,7 +98,7 @@ function prepareOptionData(columns, colSortDir) {
     return {cols, data, tableRowCount, selectInfoCls, sortInfo};
 }
 
-function makeCallbacks(onChange, columns, data) {
+function makeCallbacks(onChange, columns, origColumns, data) {
     var onSelectAll = (checked) => {
         const nColumns = cloneDeep(columns);
         nColumns.forEach((v) => {
@@ -131,7 +131,7 @@ function makeCallbacks(onChange, columns, data) {
     };
 
     var onReset = () => {
-        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: null});
+        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: cloneDeep(origColumns)});
     };
 
     return {onSelectAll, onRowSelect, onPageSize, onSort, onPropChanged, onReset};

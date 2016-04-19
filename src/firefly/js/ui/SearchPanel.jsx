@@ -20,13 +20,12 @@ import * as TblUtil from '../tables/TableUtil.js';
 
 
 export const SearchPanel = (props) => {
-    const {resultId} = props;
     return (
         <div style={{padding: 10}}>
             <FormPanel
                 width='640px' height='300px'
                 groupKey='TBL_BY_URL_PANEL'
-                onSubmit={(request) => onSearchSubmit(request, resultId)}
+                onSubmit={(request) => onSearchSubmit(request)}
                 onCancel={hideSearchPanel}>
                 <p>
                     <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
@@ -67,13 +66,11 @@ export const SearchPanel = (props) => {
 };
 
 SearchPanel.propTypes = {
-    name: PropTypes.oneOf(['AnyDataSetSearch']),
-    resultId: PropTypes.string
+    name: PropTypes.oneOf(['AnyDataSetSearch'])
 };
 
 SearchPanel.defaultProps = {
     name: 'AnyDataSetSearch',
-    resultId: TblUtil.uniqueTblUiGid()
 };
 
 
@@ -85,17 +82,17 @@ function hideSearchPanel() {
     dispatchHideDropDownUi();
 }
 
-function onSearchSubmit(request, resultId) {
+function onSearchSubmit(request) {
     const activeTblId = TblUtil.uniqueTblId();
     if (request.srcTable) {
         var treq = TableRequest.newInstance({
             id:'IpacTableFromSource',
             source: request.srcTable,
             tbl_id:  activeTblId,
+            title:  request.srcTable,
             filters: request.filters
         });
-        const tbl_ui_id = TblUtil.uniqueTblUiId();
-        dispatchTableSearch(treq, resultId, tbl_ui_id);
+        dispatchTableSearch(treq);
     }
 }
 

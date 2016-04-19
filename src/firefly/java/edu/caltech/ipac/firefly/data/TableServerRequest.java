@@ -16,6 +16,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
 
     public static final String DECIMATE_INFO = "decimate";
     public static final String TBL_ID = "tbl_id";
+    public static final String TITLE = "tbl_table";
     public static final String FILTERS = "filters";
     public static final String SORT_INFO = "sortInfo";
     public static final String PAGE_SIZE = "pageSize";
@@ -55,6 +56,18 @@ public class TableServerRequest extends ServerRequest implements Serializable, D
             metaInfo = new HashMap<String, String>();
         }
         metaInfo.put(meta, value);
+    }
+
+    public void setTblId(String id) {
+        setMeta(TBL_ID, id);
+    }
+
+    public String getTblId() {
+        return getMeta(TBL_ID);
+    }
+
+    public String getTblTitle() {
+        return getMeta(TITLE);
     }
 
     @Override
