@@ -8,8 +8,8 @@ import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../../Firefly.js';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {converterFactory} from '../../metaConvert/ConverterFactory.js';
-import {getActiveTableId} from '../../core/LayoutCntlr.js';
-import {findTblById} from '../../tables/TableUtil.js';
+// import {getActiveTableId} from '../../core/LayoutCntlr.js';
+import {findTblById, getActiveTableId} from '../../tables/TableUtil.js';
 import {isMetaDataTable} from '../../metaConvert/converterUtils.js';
 
 export class ImageMetaDataToolbar extends Component {

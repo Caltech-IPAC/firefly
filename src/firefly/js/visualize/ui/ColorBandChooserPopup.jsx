@@ -12,7 +12,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {getMultiViewRoot,dispatchUpdateCustom, getViewer} from '../MultiViewCntlr.js';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {Band, allBandAry} from '../Band.js';
 
 

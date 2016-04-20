@@ -38,7 +38,7 @@ import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {FileUpload} from '../ui/FileUpload.jsx';
 import {parseWorldPt} from '../visualize/Point.js';
 import * as TblUtil from '../tables/TableUtil.js';
-import {dispatchAddImages,getAViewFromMultiView} from '../visualize/MultiViewCntlr.js';
+import {dispatchAddImages,getAViewFromMultiView,getMultiViewRoot} from '../visualize/MultiViewCntlr.js';
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
@@ -388,7 +388,7 @@ function doImages(request) {
 
     dispatchPlotImage('TestImage3Color', [cWpr1,cWpr2,cWpr3],true);
     
-    var viewer= getAViewFromMultiView();
+    var viewer= getAViewFromMultiView(getMultiViewRoot());
     dispatchAddImages(viewer.viewerId, ['TestImage1', 'TestImage2', 'TestImage3', 'TestImage4', 'TestImage3Color']);
     dispatchHideDropDownUi();
 

@@ -10,14 +10,14 @@ import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {findTblById,gatherTableState} from '../../tables/TableUtil.js';
+import {findTblById,gatherTableState, getActiveTableId} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceImages, dispatchUpdateCustom, getViewerPlotIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
 import {ACTIVE_TABLE_CHANGED} from '../../core/LayoutCntlr.js';
 import {converterFactory, converters} from '../../metaConvert/ConverterFactory.js';
 import {findGridTableRows,isMetaDataTable, computePlotId} from '../../metaConvert/converterUtils.js';
-import {getActiveTableId} from '../../core/LayoutCntlr.js';
+// import {getActiveTableId} from '../../core/LayoutCntlr.js';
 import {PlotAttribute} from '../WebPlot.js';
 
 const MAX_GRID_SIZE= 10; //todo when post is working, increase to 16 or 24
