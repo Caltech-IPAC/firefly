@@ -73,6 +73,7 @@ function getTitle(plotId) {
 function computeDrawLayer(plotId) {
     if (!plotId) return null;
     var plot= primePlot(visRoot(),plotId);
+    if (!plot) return [];
     var wp= plot.attributes[PlotAttribute.FIXED_TARGET];
     return wp ? [PointDataObj.make(wp)] : [];
 }
