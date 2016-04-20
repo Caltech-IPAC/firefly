@@ -1,0 +1,35 @@
+div.vopanel  {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 750px;
+    background: white;
+    /*
+        border-left: 20px solid #c8c8c8;
+        border-right: 20px solid #c8c8c8;
+    */
+}
+div.section {
+    margin-top: 10px;
+    padding-left: 15%;
+}
+
+div.intarget {
+    height: 75px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+div.size {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 30%;
+    height: 60px;
+}
+
+div.voarea {
+    margin-top: 10px;
+    padding-left: 15%;
+}
+

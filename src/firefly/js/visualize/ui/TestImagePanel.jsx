@@ -151,6 +151,8 @@ function showImageSelectPanel() {
     showImageSelPanel('Image Select');
 }
 
+import {showDemo} from './SimpleDemo.jsx';
+
 function TestImagePanelView({selectOn,distOn}) {
     var s = getCommandState('SelectAreaCmd');
     var selectText = (selectOn) ? 'Turn Select Off' : 'Turn Select On';
@@ -171,6 +173,7 @@ function TestImagePanelView({selectOn,distOn}) {
                     <button type='button' onClick={showExDialog}>Example Dialog</button>
 
                     <button type='button' style={{marginLeft: 30}} onClick={showImageSelectPanel}> Images </button>
+
                 </FieldGroup>
             </div>
             <div style={{display:'inline-block', width:400,height:400,marginLeft:10}}>

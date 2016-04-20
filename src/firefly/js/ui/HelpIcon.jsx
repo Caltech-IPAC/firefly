@@ -11,7 +11,7 @@ import smallHelp from 'html/images/icons-2014/Help-16x16.png';
 
 import './HelpIcon.css';
 
-function HelpIcon({helpId, size='small'}) {
+export function HelpIcon({helpId, size='small'}) {
     var imgSrc = (size === 'small') ? smallHelp : largeHelp;
 
     var onClick = () => {

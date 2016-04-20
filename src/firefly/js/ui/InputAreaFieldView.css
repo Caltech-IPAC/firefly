@@ -1,0 +1,36 @@
+/*
+ * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
+ */
+
+
+
+
+.ff-inputfield-view-valid {
+    border : 1px solid #b5b8c8;              /* NOT part of color palette */
+    background: url('/images/text-bg.gif') repeat-x;
+    width: auto;
+    height: auto;
+    padding : 2px;
+}
+
+.ff-inputfield-view-focus {
+    border : 1px solid #7eadd9;             /* NOT part of color palette */
+    background: url('/images/text-bg.gif') repeat-x;
+    width: auto;
+    height: auto;
+    padding : 2px;
+}
+
+
+.ff-inputfield-view-error {
+    border : 1px solid red;                 /* NOT part of color palette */
+    width: auto;
+    height: auto;
+    background: #FFEEEE url('/images/invalid_line.gif') left bottom repeat-x;
+    padding : 2px;
+}
+
+
+.firefly-inputfield-view-error-msg {
+    padding : 3px;
+}
