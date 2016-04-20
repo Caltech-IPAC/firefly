@@ -82,11 +82,11 @@ export function dispatchMountFieldGroup(groupKey, mounted, keepState= false,
  * @param fieldKey
  * @param mounted
  * @param value
- * @param fieldState
+ * @param initFieldState
  */
-export function dispatchMountComponent(groupKey,fieldKey,mounted,value,fieldState) {
+export function dispatchMountComponent(groupKey,fieldKey,mounted,value,initFieldState) {
         flux.process({
-            type: MOUNT_COMPONENT, payload: { groupKey, fieldKey, mounted, value, fieldState }
+            type: MOUNT_COMPONENT, payload: { groupKey, fieldKey, mounted, value, initFieldState }
         });
 }
 
@@ -322,16 +322,16 @@ function makeChildGroups(wrapperGroupKey, state) {
 
 
 const updateMount= function(state, action) {
-    var {fieldKey,mounted,fieldState={},groupKey,valid=true}= action.payload;
+    var {fieldKey,mounted,initFieldState={},groupKey,valid=true}= action.payload;
     var fg= getFieldGroup(state,groupKey);
     if (!fg || (!mounted && !fg.fields)) return state;
 
     fg= findAndCloneFieldGroup(state,groupKey);
 
     if (mounted) {
-        var omitPayload= omit(action.payload, ['fieldState','groupKey']);
-        fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],
-                                           fieldState, omitPayload,{valid});
+        var omitPayload= omit(action.payload, ['initFieldState','groupKey']);
+        fg.fields[fieldKey]= Object.assign({},initFieldState, fg.fields[fieldKey],
+                                           omitPayload,{valid});
     }
     else {
         fg.fields[fieldKey]= Object.assign({},fg.fields[fieldKey],{mounted});
