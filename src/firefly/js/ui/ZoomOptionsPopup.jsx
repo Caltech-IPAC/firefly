@@ -3,7 +3,7 @@
  */
 import React, {Component, PropTypes} from 'react';
 import {flux} from '../Firefly.js';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -69,7 +69,7 @@ function getInitialPlotState() {
 
 }
 
-class ZoomOptionsPopup extends React.Component {
+class ZoomOptionsPopup extends Component {
 
     constructor(props)  {
         super(props);
@@ -147,9 +147,9 @@ function makezoomItems(plot,opAry) {
 }
 
 makezoomItems.propTypes= {
-    plot: React.PropTypes.object.isRequired,
-    opAry : React.PropTypes.array.isRequired,
-    currLevel : React.PropTypes.number.isRequired
+    plot: PropTypes.object.isRequired,
+    opAry : PropTypes.array.isRequired,
+    currLevel : PropTypes.number.isRequired
 };
 
 function resultsSuccess(plotId,zoomLevel) {

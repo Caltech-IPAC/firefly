@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
-import {dispatchHideDialog} from '../core/DialogCntlr.js';
+import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 
 
 

@@ -5,7 +5,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import './ToolbarButton.css';
-import {dispatchHideDialog} from '../core/DialogCntlr.js';
+import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 
 
@@ -53,6 +53,7 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param bgDark layout on a dark background, if false lay out on a light background
  * @param visible if false then don't show button
  * @param active
+ * @param imageStyle
  * @param tipOnCB
  * @param tipOffCB
  * @param lastTextItem

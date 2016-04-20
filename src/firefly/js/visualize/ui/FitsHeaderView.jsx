@@ -9,7 +9,7 @@ import {primePlot} from '../PlotViewUtil.js';
 import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {callGetFitsHeaderInfo} from '../../rpc/PlotServicesJson.js';
 import {BasicTable} from '../../tables/ui/BasicTable.jsx';
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';

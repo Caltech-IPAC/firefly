@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';

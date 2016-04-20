@@ -18,9 +18,9 @@ import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 
-import CollapsiblePanel from './panel/CollapsiblePanel.jsx';
+import {CollapsiblePanel} from './panel/CollapsiblePanel.jsx';
 import {Tabs, Tab,FieldGroupTabs} from './panel/TabPanel.jsx';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 
 
 
@@ -124,13 +124,13 @@ var AllTest = React.createClass({
         return (
             <div style={{padding:'5px'}}>
                 <div>
-                    <Tabs defaultSelected={0}>
+                    <Tabs componentKey='exampleOuterTabs' defaultSelected={0}>
                         <Tab name='First'>
                             <FieldGroupTest />
                         </Tab>
                         <Tab name='Second'>
                             <div style={{'minWidth': '300', 'minHeight': '150'}}>
-                                <CollapsiblePanel header='Sample Histogram'>
+                                <CollapsiblePanel componentKey='exampleHistogramCollapsible' isOpen={true} header='Sample Histogram'>
                                     <Histogram data={[
                                      [1,-2.5138013781265,-2.0943590644815],
                                      [4,-2.0943590644815,-1.8749167508365],

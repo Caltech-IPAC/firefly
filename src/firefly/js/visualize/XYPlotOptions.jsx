@@ -14,9 +14,8 @@ import Validate from '../util/Validate.js';
 import {ValidationField} from '../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
-import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
 import {SuggestBoxInputField} from '../ui/SuggestBoxInputField.jsx';
-import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
+import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 
 
 
@@ -147,7 +146,9 @@ var XYPlotOptions = React.createClass({
                         groupKey={groupKey}
                         labelWidth={20}
                     />
-                    <CollapsiblePanel  header='X Label/Unit/Options'>
+                    <FieldGroupCollapsible  header='X Label/Unit/Options'
+                                            initialState= {{ value:'closed' }}
+                                            fieldKey='xplotoptions'>
                         <ValidationField
                             initialState= {{
                                 value: FieldGroupUtils.getFldValue(fields, 'x.label'),
@@ -185,7 +186,7 @@ var XYPlotOptions = React.createClass({
                             groupKey={groupKey}
                             labelWidth={50}
                         />
-                    </CollapsiblePanel>
+                    </FieldGroupCollapsible>
                     <br/>
 
                     <SuggestBoxInputField
@@ -202,7 +203,9 @@ var XYPlotOptions = React.createClass({
                         groupKey={groupKey}
                         labelWidth={20}
                     />
-                    <CollapsiblePanel  header='Y Label/Unit/Options'>
+                    <FieldGroupCollapsible  header='Y Label/Unit/Options'
+                                            initialState= {{ value:'closed' }}
+                                            fieldKey='yplotoptions'>
                         <ValidationField
                             initialState= {{
                                 value: FieldGroupUtils.getFldValue(fields, 'y.label'),
@@ -242,7 +245,7 @@ var XYPlotOptions = React.createClass({
                             labelWidth={50}
                         />
                         <br/>
-                    </CollapsiblePanel>
+                    </FieldGroupCollapsible>
                     <ValidationField style={{width:50}}
                         initialState= {{
                             value: FieldGroupUtils.getFldValue(fields, 'xyRatio'),

@@ -12,7 +12,7 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {getMultiViewRoot,getExpandedViewerPlotIds,dispatchReplaceImages,EXPANDED_MODE_RESERVED} from '../MultiViewCntlr.js';
-import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 
 
 

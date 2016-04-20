@@ -4,7 +4,7 @@
 
 
 import React from 'react';
-import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
 import {getActivePlotView} from '../PlotViewUtil.js';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';

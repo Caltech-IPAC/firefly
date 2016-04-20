@@ -4,7 +4,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {dispatchHideDialog,isDialogVisible} from '../core/DialogCntlr.js';
+import {dispatchHideDialog,isDialogVisible} from '../core/ComponentCntlr.js';
 import sCompare from 'react-addons-shallow-compare';
 import {flux} from '../Firefly.js';
 

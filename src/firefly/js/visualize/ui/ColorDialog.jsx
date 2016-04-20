@@ -8,7 +8,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 import {Band} from '../Band.js';
-import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {dispatchInitFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
