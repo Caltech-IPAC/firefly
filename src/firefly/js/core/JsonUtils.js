@@ -22,7 +22,7 @@ const DEF_PATH = getRootPath() + 'sticky/CmdSrv';
 
 function preparePostParamList(cmd,paramList) {
     if (Array.isArray(paramList)) {
-        const initObj= cmd ? {name: ServerParams.COMMAND, value: cmd} : {};
+        const initObj= cmd ? {[ServerParams.COMMAND]: cmd} : {};
          return paramList.reduce( (rval, entry) => {
                     if (entry.name) rval[entry.name]= get(entry, 'value','');
                     return rval;

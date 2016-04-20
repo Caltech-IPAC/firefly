@@ -120,6 +120,8 @@ export const encodeServerUrl= function(url, params) {
  * This function applies default behaviors before fetching.
  * options.params is a custom property used to carry a set of parameters.  It does not need to
  *                be encoded.  Base on the method used, it will be handled internally.
+ * options.method can be one of get, post, or file-upload
+ *                when 'file-upload', it will post with 'multipart/form-data' encoding.
  *
  * @param url
  * @param options
@@ -131,7 +133,7 @@ export function fetchUrl(url, options) {
 
     // define defaults request options
     options = options || {};
-    const req = { method: 'GET',
+    const req = { method: 'get',
             mode: 'cors',
             credentials: 'include',
             cache: 'default'
@@ -139,23 +141,26 @@ export function fetchUrl(url, options) {
     options = Object.assign(req, options);
 
     const headers = {};
-    if (options.method.toUpperCase() === 'POST') {
-        // add default content-type header when method is 'post'
-    }
     options.headers = Object.assign(headers, options.headers);
 
     if (options.params) {
-        if (options.method.toUpperCase() === 'GET') {
+        if (options.method.toLowerCase() === 'get') {
             url = encodeUrl(url, options.params);
         } else {
             url = encodeUrl(url);
             if (!options.body) {
                 // if 'post' but, body is not provided, add the parameters into the body.
-                var data = new FormData();
-                Object.keys(options.params).forEach( (key) => {
-                    data.append(key, options.params[key]);
-                });
-                options.body = data;
+                if (options.method.toLowerCase() === 'post') {
+                    options.headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                    options.body = encodeParams(options.params);
+                } else if (options.method.toLowerCase() === 'file-upload') {
+                    options.method = 'post';
+                    var data = new FormData();
+                    Object.keys(options.params).forEach( (key) => {
+                        data.append(key, options.params[key]);
+                    });
+                    options.body = data;
+                }
                 Reflect.deleteProperty(options, 'params');
             }
         }
