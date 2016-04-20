@@ -135,26 +135,25 @@ var collapsedLogging= [
 window.enableFireflyReduxLogging= true;
 
 
-function logFilter(getState,action) {
-    if (!window.enableFireflyReduxLogging) return false;
-
-    var fType= typeof filterOutOfLogging[action.type];
-    if (filterOutOfLogging[action.type] != 'undefined') {
-        if (fType==='function') {
-            return (filterOutOfLogging[action.type](action));
-        }
-        else if (fType==='boolean') {
-            return filterOutOfLogging[action.type];
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return true;
-    }
+/**
+ * Can be used for debugging.  Adjust content of filter function to suit your needs
+ * @param getState
+ * @param action
+ * @return {boolean}
+ */
+function logFilter(getState,action) { 
+    const {type}= action;
+    if (!type) return false;
+    if (type.startsWith('VisMouseCntlr')) return false;
+    if (type.startsWith('EFFECT')) return false;
+    if (type.startsWith('FieldGroupCntlr')) return false;
+    if (type.startsWith('layout')) return false;
+    if (type.startsWith('table_space')) return false;
+    if (type.startsWith('tblstats')) return false;
+    if (type.startsWith('table_ui')) return false;
+    if (type.startsWith('app_data')) return false;
+    return true;
 }
-
 
 
 function collapsedFilter(getState,action) {
@@ -162,7 +161,7 @@ function collapsedFilter(getState,action) {
 }
 
 
-var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:collapsedFilter});
+var logger= loggerMiddleware({duration:true, predicate:logFilter, collapsed:collapsedFilter}); // developer can add for debugging
 
 
 function createRedux() {

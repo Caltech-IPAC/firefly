@@ -281,7 +281,7 @@ export class BandState {
      * @param {BandState} bs
      */
     static convertToJSON(bs) {
-        if (!bs) return null;
+        if (!bs || !bs.plotRequestSerialize) return null;
         var json= {};
         json.workingFitsFileStr= bs.workingFitsFileStr;
         json.originalFitsFileStr= bs.originalFitsFileStr;

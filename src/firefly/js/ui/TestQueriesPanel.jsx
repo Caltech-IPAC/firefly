@@ -64,7 +64,7 @@ export class TestQueriesPanel extends Component {
     componentDidMount() {
         this.iAmMounted= true;
         this.removeListener= FieldGroupUtils.bindToStore('TEST_CAT_PANEL', (fields) => {
-            this.setState(fields);
+            if (this.iAmMounted) this.setState(fields);
         });
     }
 

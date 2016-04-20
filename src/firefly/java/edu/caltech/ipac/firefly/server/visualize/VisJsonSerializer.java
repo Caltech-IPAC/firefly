@@ -149,7 +149,8 @@ public class VisJsonSerializer {
         JSONArray list = new JSONArray();
         BandState bandStateAry[]= s.getBandStateAry();
         for(int i= 0; (i< bandStateAry.length); i++) {
-            list.add(bandStateAry[i]==null ? null : serializeBandState(bandStateAry[i]));
+            list.add(bandStateAry[i]==null || !bandStateAry[i].hasRequest() ?
+                                                   null : serializeBandState(bandStateAry[i]));
         }
         map.put("bandStateAry", list);
 

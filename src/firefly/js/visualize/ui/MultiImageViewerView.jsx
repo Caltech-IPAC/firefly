@@ -152,7 +152,9 @@ function findAutoGridDim(size) {
         rows = 1;
         cols = 1;
         if (size >= 7) {
-            rows = size / 4 + (size % 4);
+            // rows = size / 4 + (size % 4);
+            rows = Math.floor(size / 4);
+            if (size/4 > rows) rows++;
             cols = 4;
         } else if (size === 5 || size === 6) {
             rows = 2;

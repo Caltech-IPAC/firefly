@@ -73,6 +73,16 @@ public class SrvParam {
         return stateList.toArray(new PlotState[stateList.size()]);
     }
 
+    public List<WebPlotRequest> getRequestList() {
+        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>();
+        WebPlotRequest wpr= getRequiredWebPlotRequest(ServerParams.REQUEST+"0");
+        reqList.add(wpr);
+        for(int i=1;(wpr!=null); i++) {
+            wpr= getOptionalWebPlotRequest(ServerParams.REQUEST+i);
+            if (wpr!=null) reqList.add(wpr);
+        }
+        return reqList;
+    }
 
 
     /**
@@ -195,6 +205,9 @@ public class SrvParam {
 
     public WebPlotRequest getOptionalWebPlotRequest(String key) {
         return WebPlotRequest.parse(getOptional(key));
+    }
+    public WebPlotRequest getRequiredWebPlotRequest(String key) {
+        return WebPlotRequest.parse(getRequired(key));
     }
 }
 

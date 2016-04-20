@@ -14,7 +14,7 @@ import {logError} from '../../util/WebUtil.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {getSizeAsString} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import Band from '../Band.js';
+import {Band} from '../Band.js';
 
 const popupIdRoot = 'fitsHeader';
 

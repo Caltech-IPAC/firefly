@@ -185,7 +185,8 @@ export default {
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW
+    DELETE_PLOT_VIEW,
+    CHANGE_ACTIVE_PLOT_VIEW
 };
 
 
@@ -193,6 +194,14 @@ export default {
 
 //============ EXPORTS ===========
 //============ EXPORTS ===========
+
+const KEY_ROOT= 'progress-';
+var  keyCnt= 0;
+export function makeUniqueRequestKey() {
+    const progressKey= `${KEY_ROOT}-${keyCnt}-${Date.now()}`;
+    keyCnt++;
+    return progressKey;
+}
 
 
 //======================================== Dispatch Functions =============================
@@ -333,7 +342,9 @@ export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
             wpRequest.setPlotId(plotId);
             req= wpRequest;
         }
-
+    }
+    else {
+        plotId= Array.isArray(wpRequest) ? wpRequest[0].getPlotId() : wpRequest.getPlotId();
     }
 
     const payload= initPlotImagePayload(plotId,req,threeColor, removeOldPlot,addToHistory,useContextModifications);
@@ -354,6 +365,22 @@ export function dispatchPlotImage(plotId,wpRequest, threeColor=false,
 
     flux.process({ type: PLOT_IMAGE, payload});
 }
+
+export function dispatchPlotGroup(wpRequestAry) {
+    
+    const payload= {
+        wpRequestAry,
+        threeColor:false,
+        removeOldPlot:true,
+        addToHistory:false, 
+        useContextModifications:true,
+        groupLocked:true
+    };
+
+    flux.process({ type: PLOT_IMAGE, payload});
+}
+
+
 
 
 
@@ -410,7 +437,7 @@ export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
 /**
  *
  * @param requester a string id of the requester
- * @param enabled true will add the request to the list, false will remove, when all requesters are removed
+ * @param enabled true will add the request to the list, false will remove, when all requests are removed
  *                Point selection will be turned off
  */
 export function dispatchChangePointSelection(requester, enabled) {
@@ -426,7 +453,7 @@ export function dispatchChangeExpandedMode(expandedMode) {
 
     const vr= visRoot();
 
-    if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to epanded
+    if (!isExpanded(vr.expandedMode) && isExpanded(expandedMode)) { // if going from collapsed to expanded
         const plotId= vr.activePlotId;
         const pv= getPlotViewById(vr,plotId);
         if (pv) {
@@ -495,10 +522,10 @@ export function restoreDefaultsActionCreator(rawAction) {
                 if (vr.plotRequestDefaults[pv.plotId]) {
                     const def= vr.plotRequestDefaults[pv.plotId];
                     if (def.threeColor) {
-                        dispatchPlotImage(pv.plotId, [def.redReq,def.greenReq,def.blueReq],true,false,false);
+                        dispatchPlotImage(pv.plotId, [def.redReq,def.greenReq,def.blueReq],true,true,false,false);
                     }
                     else {
-                        dispatchPlotImage(pv.plotId, def.wpRequest,false, false, false);
+                        dispatchPlotImage(pv.plotId, def.wpRequest,false, true, false, false);
                     }
                 }
             });

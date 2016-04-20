@@ -1,30 +1,25 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-/*
- * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
- */
-
 import {take} from 'redux-saga/effects';
 import {unionWith, isEmpty} from 'lodash';
-import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from '../ImagePlotCntlr.js';
 import {modifyRequest, processPlotImageSuccessResponse} from '../PlotImageTask.js';
-import {callGetWebPlot, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';
+import {callGetWebPlot, callGetWebPlotGroup, callGetWebPlot3Color} from '../../rpc/PlotServicesJson.js';
 import {getPlotViewById} from '../PlotViewUtil.js';
 import {Band} from '../Band.js';
 import {requiresWidthHeight} from '../ZoomType.js';
 import {logError} from '../../util/WebUtil.js';
 
 
+
 /**
  * this saga does the following:
  * <ul>
- *     <li>watches to PLOT_IMAGE_START, it the action needs with and height and it is not available, it stores the action
- *     <li>when width/height is available the action is continued
- *     <li>when a plot is set to go it dispatches the server calls
+ *     <li>watches to PLOT_IMAGE_START, if the action needs width and height and it is not available, it stores the action
+ *     <li>when width/height is available via UPDATE_VIEW_SIZE, the PLOT_IMAGE_START action is continued
+ *     <li>Either way when a plot is all set to continue it call the server 
  * </ul>
- *
  */
 export function* imagePlotter(params, dispatch, getState) {
 
@@ -32,24 +27,26 @@ export function* imagePlotter(params, dispatch, getState) {
 
     while (true) {
         var action= yield take([ImagePlotCntlr.PLOT_IMAGE_START,ImagePlotCntlr.UPDATE_VIEW_SIZE]);
-        const {plotId}= action.payload;
-        var pv= getPlotViewById(visRoot(),plotId);
         switch (action.type) {
             case ImagePlotCntlr.PLOT_IMAGE_START:
-                if (canContinue(action,pv)) {
-                    continuePlotting(makeContinueAction(action,pv),dispatch);
+                if (canContinue(action)) {
+                    continuePlotting(makeContinueAction(action),dispatch);
                 }
                 else {
-                    waitingPlotActions= unionWith(waitingPlotActions,[action], 
-                                                   (a1,a2) => a1.payload.plotId===a2.payload.plotId);
+                    waitingPlotActions= unionWith(waitingPlotActions,[action],
+                                                   (a1,a2) => a1.payload.requestKey===a2.payload.requestKey);
                 }
                 break;
 
             case ImagePlotCntlr.UPDATE_VIEW_SIZE:
-                const waitAction= waitingPlotActions.find( (a) => a.payload.plotId===plotId);
+                const {plotId}= action.payload;
+                const waitAction= waitingPlotActions.find( (a) => actionMatches(a,plotId));
                 if (waitAction) {
-                    continuePlotting(makeContinueAction(waitAction,pv),dispatch);
-                    waitingPlotActions= waitingPlotActions.filter( (a) => a.payload.plotId!==plotId);
+                    const {requestKey}= waitAction.payload;
+                    if (canContinue(waitAction)) {
+                        continuePlotting(makeContinueAction(waitAction),dispatch);
+                        waitingPlotActions= waitingPlotActions.filter( (a) => a.payload.requestKey!==requestKey);
+                    }
                 }
                 break;
         }
@@ -57,61 +54,111 @@ export function* imagePlotter(params, dispatch, getState) {
 }
 
 
-/**
- * 
- * @param rawAction
- * @param pv
- * @return {*}
- */
-function canContinue(rawAction,pv) {
-    var {wpRequest,threeColor, redReq, greenReq, blueReq}= rawAction.payload;
-    var {viewDim:{width,height}}= pv;
-    var requiresWH= threeColor ? requiresWidthHeight(redReq || greenReq || blueReq) :
-                                 requiresWidthHeight(wpRequest.getZoomType());
-    
-    if (requiresWH) return width && height;
-    else return true;
+function actionMatches(a,plotId) {
+    var {wpRequestAry}= a.payload;
+    if (wpRequestAry) {
+        return wpRequestAry.some( (req) => req.getPlotId()===plotId);
+    }
+    else {
+       return a.payload.plotId= plotId;
+    }
 }
+
+
+function getRequestAry(payload) {
+    const {wpRequestAry, wpRequest,threeColor, redReq, greenReq, blueReq}= payload;
+    if (wpRequestAry) return wpRequestAry;
+    return  [threeColor ? redReq || greenReq || blueReq : wpRequest];
+}
+
+
+function canContinue(rawAction) {
+    return getRequestAry(rawAction.payload).every( (req) => {
+        return canContinueRequest(req,getPlotViewById(visRoot(),req.getPlotId()));
+    });
+}
+
+
+function canContinueRequest(req, pv) {
+    if (!pv) return false;
+    var requiresWH= requiresWidthHeight(req.getZoomType());
+    if (!requiresWH) return true;
+    var {viewDim:{width,height}}= pv;
+    return width && height;
+}
+
+
+
 
 /**
  * 
  * @param rawAction
- * @param pv
  * @return {*}
  */
-function makeContinueAction(rawAction,pv) {
-    var {wpRequest,redReq, greenReq, blueReq}= rawAction.payload;
+function makeContinueAction(rawAction) {
+    var {wpRequestAry}= rawAction.payload;
+    return wpRequestAry ? makeContinueActionGroup(rawAction) : makeContinueActionSingle(rawAction);
+
+}
+
+function makeContinueActionSingle(rawAction) {
+    var {plotId,wpRequest,redReq, greenReq, blueReq,requestKey}= rawAction.payload;
+    const pv= getPlotViewById(visRoot(),plotId);
     var {viewDim:{width,height}}= pv;
-    redReq= addWH(redReq,width,height);
-    greenReq=addWH(greenReq,width,height);
-    blueReq= addWH(blueReq,width,height);
-    wpRequest= addWH(wpRequest,width,height);
+    redReq= addWHP(redReq,width,height,requestKey);
+    greenReq=addWHP(greenReq,width,height,requestKey);
+    blueReq= addWHP(blueReq,width,height, requestKey);
+    wpRequest= addWHP(wpRequest,width,height,requestKey );
     const payload= Object.assign({},rawAction.payload, {wpRequest, redReq, greenReq, blueReq});
     return Object.assign({}, rawAction,{payload});
 }
+
+
+function makeContinueActionGroup(rawAction) {
+
+    var {wpRequestAry}= rawAction.payload;
+    wpRequestAry= wpRequestAry.map( (req) => {
+        const progressKey= makeUniqueRequestKey();
+        const pv= getPlotViewById(visRoot(),req.getPlotId());
+        var {viewDim:{width,height}}= pv;
+        return addWHP(req,width,height,progressKey );
+    });
+
+    const payload= Object.assign({},rawAction.payload, {wpRequestAry});
+    return Object.assign({}, rawAction,{payload});
+}
+
+
+
 
 /**
  * 
  * @param r
  * @param {number} w
  * @param {number} h
+ * @param {string} progressKey
  * @return {*}
  */
-function addWH(r,w,h) {
+function addWHP(r,w,h,progressKey) {
     if (!r) return;
     r= r.makeCopy();
     r.setZoomToWidth(w);
     r.setZoomToHeight(h);
+    r.setProgressKey(progressKey);
     return r;
 }
 
+function continuePlotting(rawAction, dispatcher) {
+    var {wpRequestAry}= rawAction.payload;
+    return wpRequestAry ? continueGroupPlotting(rawAction, dispatcher) : continueSinglePlotting(rawAction,dispatcher);
+}
 
 /**
  * 
  * @param rawAction
  * @param dispatcher
  */
-function continuePlotting(rawAction, dispatcher) {
+function continueSinglePlotting(rawAction, dispatcher) {
     var {plotId,wpRequest,threeColor, redReq, greenReq, blueReq}= rawAction.payload;
 
     if (rawAction.payload.useContextModifications) {
@@ -136,4 +183,22 @@ function continuePlotting(rawAction, dispatcher) {
         });
 }
 
+function continueGroupPlotting(rawAction, dispatcher) {
+    var {wpRequestAry}= rawAction.payload;
+    const progressKey= makeUniqueRequestKey();
+
+    if (rawAction.payload.useContextModifications) {
+        wpRequestAry= wpRequestAry.map( (req) =>{
+            var pv= getPlotViewById(visRoot(),req.getPlotId());
+            return pv ? modifyRequest(pv.plotViewCtx,req,Band.NO_BAND) : req;
+
+        });
+    }
+    callGetWebPlotGroup(wpRequestAry, progressKey)
+        .then( (wpResult) => processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult) )
+        .catch ( (e) => {
+            dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {wpRequestAry, error:e} } );
+            logError('plot group error', e);
+        });
+}
 

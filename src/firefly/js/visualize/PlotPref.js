@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Band from './Band.js';
+import {Band} from './Band.js';
 import BrowserCache from '../util/BrowserCache.js';
 import {RangeValues} from './RangeValues.js';
 import PlotState from './PlotState.js';
@@ -35,7 +35,7 @@ var getCacheColorPref= function(cacheKey) {
     var pref= BrowserCache.get(cacheKey);
     if (!pref) return null;
 
-    Band.enums().forEach( (band) => {
+    Band.enums.forEach( (band) => {
         if (pref[band.key]) {
             pref[band.key]= RangeValues.parse(pref[band.key]);
         }
@@ -68,8 +68,5 @@ var getCacheZoomPref= function(cacheKey) {
     return pref.zoomLevel;
 };
 
-
-
-var PlotPref= {putCacheColorPref, getCacheColorPref, getCacheZoomPref, putCacheZoomPref};
-export default PlotPref;
+export const PlotPref= {putCacheColorPref, getCacheColorPref, getCacheZoomPref, putCacheZoomPref};
 
