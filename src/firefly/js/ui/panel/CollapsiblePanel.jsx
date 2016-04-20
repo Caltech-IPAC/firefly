@@ -24,21 +24,30 @@ export const CollapseHeaderCorner = {
                             BottomLeft: 0b1000
                         };
 
+function collapsibleStateFromProps(props) {
+    // component key needs to be defined if the state needs to be saved though unmount/mount
+    var isOpen = props.componentKey && getComponentState(props.componentKey).isOpen;
+    if (!isBoolean(isOpen)) {
+        // use property to initialize state
+        isOpen = props.isOpen? props.isOpen: false;
+    }
+
+    return {isOpen};
+}
+
 export class CollapsiblePanel extends Component {
 
     constructor(props) {
         super(props);
 
-        // component key needs to be defined if the state needs to be saved though unmount/mount
-        var isOpen = props.componentKey && getComponentState(props.componentKey).isOpen;
-        if (!isBoolean(isOpen)) {
-            // use property to initialize state
-            isOpen = props.isOpen? props.isOpen: false;
-        }
-        this.state = {isOpen};
+        this.state = collapsibleStateFromProps(props);
 
         this.handleClick = this.handleClick.bind(this);
         this.getContentHeight = this.getContentHeight.bind(this);
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.state= collapsibleStateFromProps(nextProps);
     }
 
     shouldComponentUpdate(np, ns) {

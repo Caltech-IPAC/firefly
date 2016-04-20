@@ -8,29 +8,34 @@ import sCompare from 'react-addons-shallow-compare';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
+function tabsStateFromProps(props) {
+    const {defaultSelected, componentKey} = props;
+    var selectedIdx;
+    // component key should be defined if the state needs to be saved though unmount/mount
+    var savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
+    if (!isNaN(savedIdx)) {
+        selectedIdx = savedIdx;
+    } else if (!isNaN(defaultSelected)) {
+        selectedIdx = defaultSelected;
+    }
+    else {
+        const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
+        selectedIdx= idx>-1 ? idx : 0;
+    }
+    return {selectedIdx};
+}
 
 export class Tabs extends Component {
 
 
     constructor(props) {
         super(props);
-        const {defaultSelected, componentKey} = props;
-        var selectedIdx;
-        // component key needs to be defined if the state needs to be saved though unmount/mount
-        var savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
-        if (!isNaN(savedIdx)) {
-            selectedIdx = savedIdx;
-        } else if (!isNaN(defaultSelected)) {
-            selectedIdx = defaultSelected;
-        }
-        else {
-            const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
-            selectedIdx= idx>-1 ? idx : 0;
-        }
-
-        this.state= {selectedIdx};
+        this.state= tabsStateFromProps(props);
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.state= tabsStateFromProps(nextProps);
+    }
     
     shouldComponentUpdate(np, ns) {
         return sCompare(this, np, ns);

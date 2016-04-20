@@ -119,12 +119,13 @@ const showDialogChange= function(state,action) {
     if (!dialogsState[dialogId] || !dialogsState[dialogId].visible || ownerId!==dialogsState[dialogId].ownerId) {
         state = update(state,
                         {[DIALOG_KEY] :
-                            {$merge: {
-                                [dialogId]: {
-                                    visible: true,
-                                    ownerId
-                                }
-                            }}});
+                            {$merge:
+                                {
+                                    [dialogId]: {
+                                        visible: true,
+                                        ownerId
+                                    }
+                                } }});
     }
     return state;
 };
@@ -138,7 +139,9 @@ const hideDialogChange= function(state,action) {
     if (dialogsState[dialogId] && dialogsState[dialogId].visible) {
         state = update(state,
                         {[DIALOG_KEY] :
-                            {$merge: {[dialogId]: {visible: false}}}
+                            {$merge:
+                                {[dialogId]: {visible: false}}
+                            }
                         });
     }
     return state;
@@ -165,6 +168,7 @@ const changeComponentState=  function(state, action) {
                 [COMPONENT_KEY]: {$merge: {[componentId]: componentState}}
             });
     } else {
+        // merging changes into existing state
         state = update(state,
             {
                 [COMPONENT_KEY]: {[componentId]: {$merge: componentState}}
