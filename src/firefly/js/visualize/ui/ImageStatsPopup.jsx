@@ -19,7 +19,7 @@ import {Tabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import StatsPoint from '../../drawingLayers/StatsPoint.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 
 
 const popupId = 'ImageAreaStatsPopup';

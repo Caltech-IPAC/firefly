@@ -10,7 +10,7 @@ import delay from 'lodash/delay';
 import {flux} from '../Firefly.js';
 import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
-import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/DialogCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
 
 
@@ -99,8 +99,8 @@ export class DropDownToolbarButton extends Component {
     render() {
         var {dropDown}= this.props;
         var {dropDownVisible, dropDownOwnerId}= this.state;
-        return <ToolbarButton {...this.props} active={dropDownVisible && dropDownOwnerId===this.ownerId}
-            dropDownCB={(divElement)=> this.handleDropDown(divElement,dropDown)}/>;
+        return (<ToolbarButton {...this.props} active={dropDownVisible && dropDownOwnerId===this.ownerId}
+            dropDownCB={(divElement)=> this.handleDropDown(divElement,dropDown)}/>);
     }
 }
 

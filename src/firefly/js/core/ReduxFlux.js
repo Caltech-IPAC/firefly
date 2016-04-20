@@ -32,7 +32,7 @@ import DrawLayer, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import DrawLayerFactory from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {makeDetachLayerActionCreator} from '../visualize/DrawLayerCntlr.js';
 import MultiViewCntlr, {IMAGE_MULTI_VIEW_KEY} from '../visualize/MultiViewCntlr.js';
-import DialogCntlr, {DIALOG_KEY} from '../core/DialogCntlr.js';
+import ComponentCntlr, {DIALOG_OR_COMPONENT_KEY} from '../core/ComponentCntlr.js';
 import {masterSaga} from './MasterSaga.js';
 
 //--- import drawing Layers
@@ -76,7 +76,7 @@ const reducers = {
     [TablesCntlr.TABLE_SPACE_PATH]: TablesCntlr.reducer,
     [DRAWING_LAYER_KEY]: DrawLayer.makeReducer(drawLayerFactory),
     [IMAGE_MULTI_VIEW_KEY]: MultiViewCntlr.reducer,
-    [DIALOG_KEY]: DialogCntlr.reducer
+    [DIALOG_OR_COMPONENT_KEY]: ComponentCntlr.reducer
 };
 
 let redux = null;

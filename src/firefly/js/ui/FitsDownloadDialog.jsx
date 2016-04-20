@@ -7,7 +7,7 @@
  *
  */
 import React from 'react';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL} from '../util/BrowserUtil.js';
 import {download} from '../util/WebUtil.js';

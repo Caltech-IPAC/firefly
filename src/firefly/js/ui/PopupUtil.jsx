@@ -5,7 +5,7 @@
 import React from 'react';
 import CompleteButton from './CompleteButton.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 
 const INFO_POPUP= 'InfoPopup';

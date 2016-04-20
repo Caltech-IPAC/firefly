@@ -1,8 +1,8 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {Component, PropTypes} from 'react';
-import {dispatchShowDialog} from '../core/DialogCntlr.js';
+import React, {Component} from 'react';
+import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import Validate from '../util/Validate.js';
 import {ValidationField} from './ValidationField.jsx';
@@ -70,7 +70,7 @@ function getInitialPlotState() {
 
 
 
-class FitsRotationDialog extends React.Component {
+class FitsRotationDialog extends Component {
 
     constructor(props)  {
         super(props);

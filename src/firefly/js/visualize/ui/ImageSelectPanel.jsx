@@ -10,7 +10,7 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroupTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {dispatchShowDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
@@ -23,7 +23,7 @@ import {SizeInputFields} from '../../ui/SizeInputField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {resultSuccess, resultFail} from './ImageSelectPanelResult.js';
 import {getActivePlotView, primePlot} from '../PlotViewUtil.js';
-import CollapsiblePanel, {CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
+import {FieldGroupCollapsible, CollapseBorder, CollapseHeaderCorner} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ImageSelPanelChangeOneColor, ImageSelPanelChange} from './ImageSelectPanelReducer.js';
 import {get} from 'lodash';
 
@@ -340,61 +340,63 @@ class ImageSelectionView extends Component {
 
         // tabs for each catalog
         var categoryTabs = (fieldName, msg='') => {
-               var tabsRes = panelCatalogs.map((item, index) =>
-                    (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
-                        <CatalogTabView catalog={item}  fields={get(this.props, fieldName)}/>
+            var tabsRes = panelCatalogs.map((item, index) =>
+                (<Tab key={index} name={item.Title} id={item.CatalogId.toString()}>
+                    <CatalogTabView catalog={item}  fields={get(this.props, fieldName)}/>
+                </Tab>));
+            if (this.state.isThreeColor) {
+                var noneTab = 'Disable';
+                tabsRes.push(
+                    (<Tab key={noneTab} name={noneTab} id={`${NONE}`}>
+                        <div className='tabview padding_disable'>
+                            <span> {msg} </span>
+                        </div>
                     </Tab>));
-                if (this.state.isThreeColor) {
-                    var noneTab = 'Disable';
-                    tabsRes.push(
-                        (<Tab key={noneTab} name={noneTab} id={`${NONE}`}>
-                            <div className='tabview padding_disable'>
-                                <span> {msg} </span>
-                            </div>
-                        </Tab>));
-                }
-                return tabsRes;
+            }
+            return tabsRes;
         };
 
 
         var oneImageTabs = () => (
-                <FieldGroupTabs fieldKey={keyMap['catalogtab']} >
-                    {categoryTabs('fields')}
-                </FieldGroupTabs>
-            );
+            <FieldGroupTabs fieldKey={keyMap['catalogtab']} >
+                {categoryTabs('fields')}
+            </FieldGroupTabs>
+        );
 
 
         var threeColorTabs = rgb.map((color, index) => {
-                var msg = `${color.toUpperCase()} is not selected`;
-                var corner = CollapseHeaderCorner.BottomLeft;
-                const RGB = ['rgb(255, 51, 51)', 'rgb(51, 153, 51)', 'rgb(51, 51, 255)'];
+            var msg = `${color.toUpperCase()} is not selected`;
+            var corner = CollapseHeaderCorner.BottomLeft;
+            const RGB = ['rgb(255, 51, 51)', 'rgb(51, 153, 51)', 'rgb(51, 51, 255)'];
 
-                return (
-                    <CollapsiblePanel key={index}
-                                      header={color.toUpperCase()}
-                                      isOpen={ index === RED }
-                                      borderStyle={CollapseBorder.Oneborder}
-                                      headerRoundCorner={ index === RED ? corner|CollapseHeaderCorner.TopRight : corner}
-                                      wrapperStyle={ {marginBottom: 3} }
-                                      headerStyle={{background: RGB[index],
+            return (
+                <FieldGroupCollapsible initialState= {{ value: index===RED?'open':'closed' }}
+                                       fieldKey={`collapsible${index}`}
+                                       key={index}
+                                       header={color.toUpperCase()}
+                                       isOpen={ index === RED }
+                                       borderStyle={CollapseBorder.Oneborder}
+                                       headerRoundCorner={ index === RED ? corner|CollapseHeaderCorner.TopRight : corner}
+                                       wrapperStyle={ {marginBottom: 3} }
+                                       headerStyle={{background: RGB[index],
                                                     color: 'white',
                                                     fontWeight: 'bold',
                                                     paddingTop: 5,
                                                     paddingBottom: 5 }}
-                                      contentStyle={{padding: 10,
+                                       contentStyle={{padding: 10,
                                                      paddingTop: 10,
                                                      paddingBottom: 10,
                                                      margin: '0px 0px 0px 10px'}}>
-                        <FieldGroup groupKey={rgbFieldGroup[index]}
-                                    reducerFunc={ImageSelPanelChangeOneColor}
-                                    keepState={true}>
-                            <FieldGroupTabs fieldKey={keyMap['catalogtab']}>
-                                {categoryTabs(rgbFieldGroup[index], msg)}
-                            </FieldGroupTabs>
-                        </FieldGroup>
-                    </CollapsiblePanel>
-                );
-            });
+                    <FieldGroup groupKey={rgbFieldGroup[index]}
+                                reducerFunc={ImageSelPanelChangeOneColor}
+                                keepState={true}>
+                        <FieldGroupTabs fieldKey={keyMap['catalogtab']}>
+                            {categoryTabs(rgbFieldGroup[index], msg)}
+                        </FieldGroupTabs>
+                    </FieldGroup>
+                </FieldGroupCollapsible>
+            );
+        });
 
         var tabsArea = () => {
             if (this.state.isThreeColor) {

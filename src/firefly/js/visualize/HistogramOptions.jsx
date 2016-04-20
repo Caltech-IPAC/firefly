@@ -10,7 +10,7 @@ import {ValidationField} from '../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../ui/CheckboxGroupInputField.jsx';
 import {ListBoxInputField} from '../ui/ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
-import CollapsiblePanel from '../ui/panel/CollapsiblePanel.jsx';
+import {FieldGroupCollapsible} from '../ui/panel/CollapsiblePanel.jsx';
 
 
 var HistogramOptions = React.createClass({
@@ -121,7 +121,9 @@ var HistogramOptions = React.createClass({
                         groupKey={groupKey}
                         labelWidth={120}
                     />
-                    <CollapsiblePanel  header='Options'>
+                    <FieldGroupCollapsible  header='Options'
+                                            initialState= {{ value:'closed' }}
+                                            fieldKey='plotoptions'>
                         <InputGroup labelWidth={20}>
                             <CheckboxGroupInputField
                                 initialState= {{
@@ -148,7 +150,7 @@ var HistogramOptions = React.createClass({
                                 fieldKey='y'
                             />
                         </InputGroup>
-                    </CollapsiblePanel>
+                    </FieldGroupCollapsible>
                     <br/>
                     <InputGroup labelWidth={60}>
                         <RadioGroupInputField
@@ -172,7 +174,7 @@ var HistogramOptions = React.createClass({
                     <CompleteButton groupKey={groupKey}
                                     onSuccess={this.resultsSuccess}
                                     onFail={this.resultsFail}
-                        />
+                    />
                 </FieldGroup>
 
             </div>

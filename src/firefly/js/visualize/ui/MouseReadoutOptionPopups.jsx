@@ -1,4 +1,3 @@
-
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  * Lijun
@@ -19,7 +18,7 @@ import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroup
 //import CoordinateSys from '../CoordSys.js';
 import {dispatchChangeMouseReadout} from '../ImagePlotCntlr.js';
 
-import {dispatchShowDialog, dispatchHideDialog} from '../../core/DialogCntlr.js';
+import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 
 //define the labels and values for the radio options
 const coordOptions= [

@@ -5,28 +5,37 @@
 import './TabPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
+function tabsStateFromProps(props) {
+    const {defaultSelected, componentKey} = props;
+    var selectedIdx;
+    // component key should be defined if the state needs to be saved though unmount/mount
+    var savedIdx = componentKey && getComponentState(componentKey).selectedIdx;
+    if (!isNaN(savedIdx)) {
+        selectedIdx = savedIdx;
+    } else if (!isNaN(defaultSelected)) {
+        selectedIdx = defaultSelected;
+    }
+    else {
+        const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
+        selectedIdx= idx>-1 ? idx : 0;
+    }
+    return {selectedIdx};
+}
 
 export class Tabs extends Component {
 
 
     constructor(props) {
         super(props);
-        const {defaultSelected} = props;
-        var selectedIdx;
-        if (!isNaN(defaultSelected)) {
-            selectedIdx = defaultSelected;
-        }
-        else {
-            const idx= React.Children.toArray(props.children).findIndex( (c) => c.props.id===defaultSelected );
-            selectedIdx= idx>-1 ? idx : 0;
-        }
-
-        this.state= {selectedIdx};
+        this.state= tabsStateFromProps(props);
     }
 
+    componentWillReceiveProps(nextProps) {
+        this.state= tabsStateFromProps(nextProps);
+    }
     
     shouldComponentUpdate(np, ns) {
         return sCompare(this, np, ns);
@@ -34,10 +43,15 @@ export class Tabs extends Component {
 
 
     onSelect(index,id,name) {
-        const {onTabSelect} = this.props;
-        this.setState({
-            selectedIdx: index
-        });
+        const {onTabSelect, componentKey} = this.props;
+        if (this.state.selectedIdx !== index) {
+            if (componentKey) {
+                dispatchComponentStateChange(componentKey, {selectedIdx: index});
+            }
+            this.setState({
+                selectedIdx: index
+            });
+        }
         if (onTabSelect) {
             onTabSelect(index,id,name);
         }
@@ -73,6 +87,7 @@ export class Tabs extends Component {
 
 
 Tabs.propTypes= {
+    componentKey: PropTypes.string, // if need to preserve state and is not part of the field group
     defaultSelected:  PropTypes.any,
     onTabSelect: PropTypes.func
 };
