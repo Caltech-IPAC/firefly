@@ -16,11 +16,10 @@ import {logError} from '../../util/WebUtil.js';
 /**
  * this saga does the following:
  * <ul>
- *     <li>watches to PLOT_IMAGE_START, it the action needs with and height and it is not available, it stores the action
- *     <li>when width/height is available the action is continued
- *     <li>when a plot is set to go it dispatches the server calls
+ *     <li>watches to PLOT_IMAGE_START, if the action needs width and height and it is not available, it stores the action
+ *     <li>when width/height is available via UPDATE_VIEW_SIZE, the PLOT_IMAGE_START action is continued
+ *     <li>Either way when a plot is all set to continue it call the server 
  * </ul>
- * hmmm
  */
 export function* imagePlotter(params, dispatch, getState) {
 
