@@ -48,7 +48,7 @@ public class ProgressStat implements Serializable {
 
     public String getId() { return id; }
 
-    public String getPlotId() { return plo; }
+    public String getPlotId() { return plotId; }
 
     public List<String> getMemberIDList() { return memberIDList; }
 

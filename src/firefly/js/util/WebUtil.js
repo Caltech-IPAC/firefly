@@ -287,3 +287,41 @@ export function deepDiff(o1, o2, p) {
         console.groupEnd();
     }
 }
+
+
+/*----------------------------< COOKIES ----------------------------*/
+export function setCookie(name, value, options = {}) {
+    var str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+
+    if (value == null) options.maxage = -1;
+
+    if (options.maxage) {
+        options.expires = new Date(+new Date() + options.maxage);
+    }
+
+    if (options.path) str += '; path=' + options.path;
+    if (options.domain) str += '; domain=' + options.domain;
+    if (options.expires) str += '; expires=' + options.expires.toUTCString();
+    if (options.secure) str += '; secure';
+
+    document.cookie = str;
+}
+
+export function getCookie(name) {
+    var cookies = parseCookies(document.cookie);
+    return !!name ? cookies : cookies[name];
+}
+
+function parseCookies(str) {
+    var obj = {},
+        pairs = str.split(/ *; */);
+
+    if (!pairs[0]) return obj;
+
+    pairs.forEach( (pair) => {
+        pair = pair.split('=');
+        obj[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+    });
+    return obj;
+}
+/*---------------------------- COOKIES >----------------------------*/
