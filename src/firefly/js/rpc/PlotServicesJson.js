@@ -51,7 +51,7 @@ export function callGetWebPlot3Color(redRequest, greenRequest, blueRequest) {
 export function callGetWebPlot(request) {
     var paramList = [{name: ServerParams.NOBAND_REQUEST, value:request.toString()}];
     paramList.push({name:ServerParams.JSON_DEEP,value:'true'});
-    return doJsonRequest(ServerParams.CREATE_PLOT, paramList,false);
+    return doJsonRequest(ServerParams.CREATE_PLOT, paramList,true);
 };
 
 export function callGetWebPlotGroup(reqAry,  progressKey) {
@@ -62,7 +62,7 @@ export function callGetWebPlotGroup(reqAry,  progressKey) {
         obj[ServerParams.REQUEST+idx]= req.toString();
         return obj;
     }, paramList);
-    return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,false);
+    return doJsonRequest(ServerParams.CREATE_PLOT_GROUP, paramList,true);
 }
 
 /**

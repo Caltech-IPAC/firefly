@@ -74,7 +74,7 @@ function handleChange(ev, fireValueChange, type) {
 
 function makeDoUpload(file, type) {
     const options = {
-        method: 'post',
+        method: 'file-upload',
         params: {type, file}     // file should be the last param due to AnyFileUpload limitation
     };
     return () => {

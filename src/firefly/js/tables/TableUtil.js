@@ -4,10 +4,9 @@
 
 import {get, set, isEmpty, uniqueId, padEnd, cloneDeep} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import {SelectInfo} from './SelectInfo.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
 import {flux} from '../Firefly.js';
-import {fetchUrl, encodeServerUrl} from '../util/WebUtil.js';
+import {fetchUrl, encodeServerUrl, encodeParams} from '../util/WebUtil.js';
 import {getRootPath, getRootURL} from '../util/BrowserUtil.js';
 import {TableRequest} from './TableRequest.js';
 
@@ -28,8 +27,12 @@ export function doFetchTable(tableRequest, hlRowIdx) {
         tbl_id : (tableRequest.tbl_id || tableRequest.title || tableRequest.id)
     };
     var params = Object.assign(def, tableRequest);
+    // encoding for method post
+    if (params[TableRequest.keys.META_INFO]) {
+         params.META_INFO = encodeParams(params[TableRequest.keys.META_INFO]);
+    }
 
-    return fetchUrl(SRV_PATH, {params}).then( (response) => {
+    return fetchUrl(SRV_PATH, {method: 'post', params}).then( (response) => {
         return response.json().then( (tableModel) => {
             const startIdx = get(tableModel, ['request',TableRequest.keys.startIdx], 0);
             if (startIdx > 0) {

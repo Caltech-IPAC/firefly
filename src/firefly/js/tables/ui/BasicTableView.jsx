@@ -198,7 +198,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
                 fixed={false}
                 width={columnWidths[col.name]}
                 isResizable={true}
-                allowCellsRecycling={false}
+                allowCellsRecycling={true}
             />
         );
     });
@@ -210,7 +210,7 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
             cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
-            allowCellsRecycling={false}
+            allowCellsRecycling={true}
         />;
         colsEl.splice(0, 0, cbox);
     }

@@ -561,9 +561,10 @@ export class OptionsWrapper extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
+
         // deepDiff({props: prevProps, state: prevState},
         //     {props: this.props, state: this.state},
-        //     this.constructor.displayName);
+        //     this.constructor.name);
     }
 
     render() {
