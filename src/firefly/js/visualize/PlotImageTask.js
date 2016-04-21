@@ -35,7 +35,7 @@ function dispatchUpdateStatus() {
     // todo: if not finished
     // todo:       call server for status update for request id, start next timer
     // todo:       when call returns:
-    // todo:             fire  ImagePlotCntlr.PLOT_PROGRESS_UPDATE for plot Id
+    // todo:             fire  ImagePlotCntlr.LOT_PROGRESS_UPDATE for plot Id
     // todo:             reset time for 2 seconds
     // todo:
     // todo: Also, move to ImagePlotCntlr

@@ -224,82 +224,13 @@ public class VisServerOps {
         Cache cache = UserCache.getInstance();
         ProgressStat stat = (ProgressStat) cache.get(new StringKey(progressKey));
         WebPlotResult retval;
-        String progressStr = null;
-        if (stat != null) {
-            if (stat.isGroup()) {
-                List<String> keyList = stat.getMemberIDList();
-                progressStr = (keyList.size() == 1) ?
-                        getSingleStatusMessage(keyList.get(0)) :
-                        getMultiStatMessage(stat);
-            } else {
-                progressStr = stat.getMessage();
-            }
-        }
+        PlotServUtils.ProgressMessage progressMsg = PlotServUtils.getPlotProgressMessage(stat);
 
-        if (progressStr != null) {
+        if (progressMsg != null) {
             retval = new WebPlotResult(null);
-            retval.putResult(WebPlotResult.STRING, new DataEntry.Str(progressStr));
+            retval.putResult(WebPlotResult.STRING, new DataEntry.Str(progressMsg.message));
         } else {
             retval = WebPlotResult.makeFail("Not found", null, null);
-        }
-        return retval;
-    }
-
-    private static String getSingleStatusMessage(String key) {
-        String retval = null;
-        Cache cache = UserCache.getInstance();
-        ProgressStat stat = (ProgressStat) cache.get(new StringKey(key));
-        if (stat != null) {
-            retval = stat.getMessage();
-        }
-        return retval;
-    }
-
-
-    private static String getMultiStatMessage(ProgressStat stat) {
-        String retval = null;
-        String downloadStr = null;
-        Cache cache = UserCache.getInstance();
-        List<String> keyList = stat.getMemberIDList();
-        ProgressStat statEntry;
-
-        int numDone = 0;
-        int total = keyList.size();
-
-        String downloadMsg = null;
-        String readingMsg = null;
-        String creatingMsg = null;
-        ProgressStat.PType ptype;
-
-        for (String key : keyList) {
-            statEntry = (ProgressStat) cache.get(new StringKey(key));
-            if (statEntry != null) {
-                ptype = statEntry.getType();
-                if (ptype == ProgressStat.PType.SUCCESS) numDone++;
-
-                switch (ptype) {
-                    case DOWNLOADING:
-                        downloadMsg = statEntry.getMessage();
-                        break;
-                    case READING:
-                        readingMsg = statEntry.getMessage();
-                        break;
-                    case CREATING:
-                        creatingMsg = statEntry.getMessage();
-                        break;
-                    case GROUP:
-                    case OTHER:
-                    case SUCCESS:
-                    default:
-                        // ignore
-                        break;
-                }
-            }
-        }
-        if (downloadMsg != null) {
-            retval = downloadMsg;
-        } else {
-            retval = "Loaded " + numDone + " of " + total;
         }
         return retval;
     }

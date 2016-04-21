@@ -69,7 +69,9 @@ public class LockingVisNetwork {
             }
             synchronized (lockKey) {
                 DownloadListener dl = null;
-                if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
+                if (params.getStatusKey() != null) {
+                    dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
+                }
                 edu.caltech.ipac.util.download.FileData fd = VisNetwork.getImage(params, dl);
                 File fitsFile = fd.getFile();
                 if (unzip) fitsFile = unzip(fitsFile);
@@ -98,9 +100,11 @@ public class LockingVisNetwork {
     private static class DownloadProgress implements DownloadListener {
 
         private final String _key;
+        private final String _plotId;
 
-        DownloadProgress(String key) {
+        DownloadProgress(String key, String plotId) {
             _key = key;
+            _plotId = plotId;
         }
 
         public void dataDownloading(DownloadEvent ev) {
@@ -110,7 +114,7 @@ public class LockingVisNetwork {
                     offStr = " of " + FileUtil.getSizeAsString(ev.getMax());
                 }
                 String messStr = "Downloaded " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
-                PlotServUtils.updateProgress(_key, ProgressStat.PType.DOWNLOADING, messStr);
+                PlotServUtils.updateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
             }
         }
 

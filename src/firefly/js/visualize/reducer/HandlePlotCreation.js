@@ -31,6 +31,7 @@ export function reducer(state, action) {
             plotViewAry= preNewPlotPrep(state.plotViewAry,action);
             break;
         case Cntlr.PLOT_IMAGE_FAIL  :
+            plotViewAry= plotFail(state,action);
             break;
         case Cntlr.PLOT_IMAGE  :
             plotViewAry= addPlot(state,action);
@@ -85,19 +86,36 @@ const updateDefaults= function(plotRequestDefaults, action) {
     }
 };
 
-const addPlot= function(state,action) {
+function addPlot(state,action) {
     const {plotViewAry}= state;
     const {pvNewPlotInfoAry}= action.payload;
 
-    return plotViewAry.map( (pv) => {
-        const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
-        if (!info) return pv;
-        const {plotAry, overlayPlotViews}= info;
-        return PlotView.replacePlots(pv,plotAry,overlayPlotViews);
-    });
+    if (pvNewPlotInfoAry) { // used for doing groups
+        return plotViewAry.map( (pv) => {
+            const info= pvNewPlotInfoAry.find( (i) => i.plotId===pv.plotId);
+            if (!info) return pv;
+            const {plotAry, overlayPlotViews}= info;
+            return PlotView.replacePlots(pv,plotAry,overlayPlotViews);
+        });
+    }
+    else {// used for single plot update
+        console.error(`Deprecated payload send to handPlotChange.addPlot: type:${action.type}`);
+        const {plotAry, overlayPlotViews, plotId}= action.payload;
+        return plotViewAry.map( (pv) => {
+             return pv.plotId===plotId ? PlotView.replacePlots(pv,plotAry,overlayPlotViews) : pv;
+         });
+    }
 };
 
 
+function plotFail(state,action) {
+    const {description, plotId}= action.payload;
+    var {plotViewAry}= state;
+    const plotView=  getPlotViewById(state,plotId);
+    if (!plotView) return state;
+    return plotViewAry.map( (pv) => pv.plotId===plotId ? 
+                        clone(pv,{plottingStatus:description}) : pv);
+}
 
 /**
  /**
@@ -112,7 +130,10 @@ function preNewPlotPrep(plotViewAry,action) {
     const pvChangeAry= wpRequestAry.map( (req) => {
         const plotId= req.getPlotId();
         var pv= getPlotViewById(plotViewAry,plotId);
-        return pv ? clone(pv, {plots:[], primeIdx:-1}) : makePlotView(plotId, req,null);
+        return pv ? clone(pv, { plottingStatus:'Plotting...', 
+                                plots:[],  
+                                primeIdx:-1
+                              }) : makePlotView(plotId, req,null);
     });
 
     return unionBy(pvChangeAry,plotViewAry, 'plotId');

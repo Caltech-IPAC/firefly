@@ -63,6 +63,9 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_LOCKING:
             retState= changeLocking(state,action);
             break;
+        case Cntlr.PLOT_PROGRESS_UPDATE  :
+            retState= updatePlotProgress(state,action);
+            break;
         default:
             break;
     }
@@ -211,3 +214,14 @@ function recenterPv(pv) {
     return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
 }
 
+function updatePlotProgress(state,action) {
+    const {progressKey, plotId, message:plottingStatus, done}= action.payload;
+    console.log('updatePlotProgress', progressKey, plotId, plottingStatus, done);
+    var {plotViewAry}= state;
+    if (!plotId) return state;
+    const plotView=  getPlotViewById(state,plotId);
+    if (!plotView) return state;
+    if (plotView.plottingStatus===plottingStatus) return state;
+    plotViewAry= plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,{plottingStatus}) : pv);
+    return clone(state,{plotViewAry});
+}

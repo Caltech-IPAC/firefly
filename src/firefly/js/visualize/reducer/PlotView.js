@@ -70,6 +70,8 @@ export function makePlotView(plotId, req, pvOptions) {
         plotGroupId: req.getPlotGroupId(),
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
         plots:[],
+        plottingStatus:'Plotting...',
+        serverCallInProgress:false,
         primeIdx:-1,
         plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
@@ -126,7 +128,6 @@ function createPlotViewContextData(req) {
         preferenceColorKey: req.getPreferenceColorKey(),
         preferenceZoomKey:  req.getPreferenceZoomKey(),
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,
-        gridId : null// todo: grid id is associated with the MultiImageView and DataViewGrid, need to figure out how, or if we should keep it
     };
 }
 
@@ -173,6 +174,7 @@ function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
 
     pv.primeIdx=0;
+    pv.plottingStatus='';
 
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);

@@ -6,6 +6,8 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.WebAssert;
 import edu.caltech.ipac.firefly.visualize.Band;
@@ -50,8 +52,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 /**
  * User: roby
  * Date: Sep 23, 2009
@@ -363,11 +369,22 @@ public class PlotServUtils {
     public static void updateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
         if (pStat.getId()!=null) cache.put(new StringKey(pStat.getId()), pStat);
+
+
+        //todo
+        ProgressMessage progMsg= getPlotProgressMessage(pStat);
+        FluxAction a= new FluxAction("ImagePlotCntlr.PlotProgressUpdate");
+        a.setValue(progMsg.message,"message");
+        a.setValue(pStat.getId(),"progressKey");
+        a.setValue(pStat.getType()==ProgressStat.PType.GROUP,"group");
+        a.setValue(progMsg.done,"done");
+        a.setValue( pStat.getPlotId(),"plotId");
+        ServerEventManager.fireAction(a);
     }
 
-    public static void updateProgress(String key, ProgressStat.PType type, String progressMsg) {
+    public static void updateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {
         if (key!=null) {
-            updateProgress(new ProgressStat(key,type,progressMsg));
+            updateProgress(new ProgressStat(key,plotId, type,progressMsg));
         }
 
     }
@@ -375,7 +392,8 @@ public class PlotServUtils {
     public static void updateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
         if (r!=null) {
             String key= r.getProgressKey();
-            if (key!=null) updateProgress(new ProgressStat(key,type,progressMsg));
+            String plotId= r.getPlotId();
+            if (key!=null) updateProgress(new ProgressStat(key,plotId, type,progressMsg));
         }
     }
 
@@ -699,6 +717,90 @@ public class PlotServUtils {
             }
         }
         return c;
+    }
+
+    static ProgressMessage getPlotProgressMessage(ProgressStat stat) {
+        ProgressMessage progMessage = null;
+        if (stat != null) {
+            if (stat.isGroup()) {
+                List<String> keyList = stat.getMemberIDList();
+                progMessage = (keyList.size() == 1) ?
+                        getSingleStatusMessage(keyList.get(0)) :
+                        getMultiStatMessage(stat);
+            } else {
+                progMessage = new ProgressMessage(stat.getMessage(), stat.isDone());
+            }
+        }
+        return progMessage;
+    }
+
+    static ProgressMessage getSingleStatusMessage(String key) {
+        ProgressMessage retval = null;
+        Cache cache = UserCache.getInstance();
+        ProgressStat stat = (ProgressStat) cache.get(new StringKey(key));
+        if (stat != null) {
+            retval = new ProgressMessage(stat.getMessage(), stat.isDone());
+        }
+        return retval;
+    }
+
+    static ProgressMessage getMultiStatMessage(ProgressStat stat) {
+        ProgressMessage retval = null;
+        String downloadStr = null;
+        Cache cache = UserCache.getInstance();
+        List<String> keyList = stat.getMemberIDList();
+        ProgressStat statEntry;
+
+        int numSuccess = 0;
+        int numDone = 0;
+        int total = keyList.size();
+
+        String downloadMsg = null;
+        String readingMsg = null;
+        String creatingMsg = null;
+        ProgressStat.PType ptype;
+
+        for (String key : keyList) {
+            statEntry = (ProgressStat) cache.get(new StringKey(key));
+            if (statEntry != null) {
+                ptype = statEntry.getType();
+                if (ptype == ProgressStat.PType.SUCCESS) numSuccess++;
+                if (statEntry.isDone()) numDone++;
+
+                switch (ptype) {
+                    case DOWNLOADING:
+                        downloadMsg = statEntry.getMessage();
+                        break;
+                    case READING:
+                        readingMsg = statEntry.getMessage();
+                        break;
+                    case CREATING:
+                        creatingMsg = statEntry.getMessage();
+                        break;
+                    case GROUP:
+                    case OTHER:
+                    case SUCCESS:
+                    default:
+                        // ignore
+                        break;
+                }
+            }
+        }
+        if (downloadMsg != null) {
+            retval = new ProgressMessage(downloadMsg,false);
+        } else {
+            retval = new ProgressMessage("Loaded " + numSuccess + " of " + total, numDone==keyList.size());
+        }
+        return retval;
+    }
+
+    public static class ProgressMessage {
+        final String message;
+        final boolean done;
+        ProgressMessage(String message, boolean done) {
+            this.message= message;
+            this.done= done;
+        }
     }
 }
 

@@ -176,8 +176,9 @@ export function flipActionCreator(rawAction) {
  */
 function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
 
-    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.CROP,
-        payload: {plotId, plotAry, overlayPlotViews}
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
+        type: ImagePlotCntlr.CROP,
+        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}]}
     });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.CROP_FAIL,
@@ -208,9 +209,10 @@ function doFlip(dispatcher,pv,isY) {
         return;
     }
 
-    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.FLIP,
-                                                         payload: {plotId, plotAry, overlayPlotViews, isY}
-                                                      });
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) =>
+        ({ type: ImagePlotCntlr.FLIP,
+           payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}, isY]}
+        });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.FLIP_FAIL,
                               payload: {plotId, error: Error('flip: payload failed')}
@@ -267,8 +269,9 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
     }
 
 
-    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({ type: ImagePlotCntlr.ROTATE,
-        payload: {plotId, plotAry, overlayPlotViews, rotateType}
+    const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
+        type: ImagePlotCntlr.ROTATE,
+        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}, rotateType]}
     });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.ROTATE_FAIL,

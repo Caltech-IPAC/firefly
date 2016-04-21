@@ -140,11 +140,15 @@ export class ImageViewerLayout extends Component {
 
 
     render() {
-        var {viewDim:{width,height}}= this.props.plotView;
+        var {plotView:pv}= this.props;
+        var {viewDim:{width,height}}= pv;
         var insideStuff;
 
         if (width && height && primePlot(this.props.plotView)) {
             insideStuff= this.renderInside();
+        }
+        else {
+            insideStuff= <ImageViewerStatus message={pv.plottingStatus} working={false} />
         }
         var style= {
             position:'absolute',
@@ -248,3 +252,12 @@ DrawingLayers.propTypes= {
 };
 
 
+function ImageViewerStatus({message}) {
+    return (
+        <div style={{position:'relative', top: 30, left:30}}>{message}</div>
+    );
+}
+
+ImageViewerStatus.propTypes= {
+    message : PropTypes.string.isRequired
+};
