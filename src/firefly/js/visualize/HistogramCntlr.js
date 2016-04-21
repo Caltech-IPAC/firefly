@@ -158,7 +158,7 @@ function fetchColData(dispatch, activeTableServerRequest, histogramParams) {
         req.max = histogramParams.maxCutoff;
     }
 
-    req.tbl_id = activeTableServerRequest.tbl_id;
+    req.tbl_id = 'histogram-'+activeTableServerRequest.tbl_id;
 
     TableUtil.doFetchTable(req).then(
         (tableModel) => {
