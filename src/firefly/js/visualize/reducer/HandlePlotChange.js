@@ -3,6 +3,7 @@
  */
 
 import update from 'react-addons-update';
+import {get} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {replacePlotView, replacePrimaryPlot} from './PlotView.js';
 import WebPlot, {clonePlotWithZoom, PlotAttribute} from '../WebPlot.js';
@@ -10,6 +11,7 @@ import {logError} from '../../util/WebUtil.js';
 import {CCUtil} from '../CsysConverter.js';
 import {PlotPref} from './../PlotPref.js';
 import {primePlot,
+        clonePvAry,
         matchPlotView,
         applyToOnePvOrGroup,
         getPlotViewIdxById,
@@ -38,9 +40,18 @@ export function reducer(state, action) {
         case Cntlr.ZOOM_IMAGE_START  :
             retState= zoomStart(state, action);
             break;
+
+
+        case Cntlr.STRETCH_CHANGE_START  :
+        case Cntlr.COLOR_CHANGE_START  :
+            retState= workingServerCall(state,action);
+            break;
+        
+        
         case Cntlr.ZOOM_IMAGE_FAIL  :
         case Cntlr.STRETCH_CHANGE_FAIL:
         case Cntlr.COLOR_CHANGE_FAIL:
+            retState= endServerCallFail(state,action);
             break;
         case Cntlr.COLOR_CHANGE  :
         case Cntlr.ZOOM_IMAGE  :
@@ -140,6 +151,7 @@ function installTiles(state, action) {
 
     var centerImagePt= PlotView.findCurrentCenterPoint(pv,pv.scrollX,pv.scrollY);
     pv= replacePrimaryPlot(pv,WebPlot.setPlotState(plot,primaryStateJson,primaryTiles));
+    pv.serverCall='success';
     pv.overlayPlotViews= pv.overlayPlotViews.map( (oPv,idx) => {
         var p= WebPlot.setPlotState(oPv.plot,overlayStateJsonAry[idx],overlayTilesAry[idx]);
         return clone(oPv, {plot:p});
@@ -214,14 +226,30 @@ function recenterPv(pv) {
     return PlotView.updatePlotViewScrollXY(pv, PlotView.findScrollPtForImagePt(pv,centerImagePt));
 }
 
+
+export function endServerCallFail(state,action) {
+    var {plotId,message}= action.payload;
+    var {plotViewAry}= state;
+    const stat= {serverCall:'fail'};
+    if (typeof message === 'string') stat.plottingStatus= message;
+    return clone(state,{plotViewAry:clonePvAry(plotViewAry,plotId, stat)});
+}
+function workingServerCall(state,action) {
+    var {plotId,message}= action.payload;
+    var {plotViewAry}= state;
+    return clone(state,{plotViewAry:clonePvAry(plotViewAry,plotId, 
+                           {serverCall:'working', plottingStatus:message})});
+}
+
+
 function updatePlotProgress(state,action) {
-    const {progressKey, plotId, message:plottingStatus, done}= action.payload;
-    console.log('updatePlotProgress', progressKey, plotId, plottingStatus, done);
+    const {plotId, message:plottingStatus, done}= action.payload;
+    //console.log(`updatePlotProgress: plotId;${plotId}, message:${plottingStatus}, done:${done}`);
     var {plotViewAry}= state;
     if (!plotId) return state;
     const plotView=  getPlotViewById(state,plotId);
     if (!plotView) return state;
     if (plotView.plottingStatus===plottingStatus) return state;
-    plotViewAry= plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,{plottingStatus}) : pv);
-    return clone(state,{plotViewAry});
+    const changes= {plottingStatus,serverCall:done ? 'success': 'working'};
+    return clone(state,{plotViewAry:clonePvAry(plotViewAry,plotId, changes)});
 }

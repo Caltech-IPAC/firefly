@@ -71,7 +71,7 @@ export function makePlotView(plotId, req, pvOptions) {
         drawingSubGroupId: req.getDrawingSubGroupId(), //todo, string, this is an id
         plots:[],
         plottingStatus:'Plotting...',
-        serverCallInProgress:false,
+        serverCall:'success', // one of 'success', 'working', 'fail'
         primeIdx:-1,
         plotCounter:0, // index of how many plots, used for making next ID
         wcsMarginX: 0, // todo
@@ -175,6 +175,7 @@ function replacePlots(pv, plotAry, overlayPlotViews=null) {
 
     pv.primeIdx=0;
     pv.plottingStatus='';
+    pv.serverCall='success';
 
     PlotPref.putCacheColorPref(pv.plotViewCtx.preferenceColorKey, pv.plots[pv.primeIdx].plotState);
     PlotPref.putCacheZoomPref(pv.plotViewCtx.preferenceZoomKey, pv.plots[pv.primeIdx].plotState);

@@ -125,7 +125,7 @@ export const encodeServerUrl= function(url, params) {
  * @param options
  * @return a promise of the response when successful, or reject with an Error.
  */
-export function fetchUrl(url, options) {
+export function fetchUrl(url, options, returnAllResponses= false) {
 
     if (!url) return;
 
@@ -164,6 +164,7 @@ export function fetchUrl(url, options) {
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
+            if (returnAllResponses) return response;
             if (response.ok) {
                 return response;
             } else {

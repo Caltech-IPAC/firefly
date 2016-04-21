@@ -2,12 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {isEmpty} from 'lodash';
 import {flux} from '../Firefly.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
 import {reportUserAction} from '../rpc/SearchServicesJson.js';
 import { parseImagePt, parseWorldPt, parseScreenPt } from '../visualize/Point.js';
 
-
+const EMPTY_ARRAY=[];
 
 const doExtensionActivate= function(extension, resultData) {
     activate(getRemoteChannel(),extension,resultData);
@@ -46,7 +47,7 @@ export const getExtensionList= function(testPlotId) {
             return ext;
         }
     });
-    return retList;
+    return isEmpty(retList) ? EMPTY_ARRAY : retList;
 };
 
 export const extensionAdd= function(extension) {

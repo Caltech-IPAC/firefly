@@ -183,8 +183,7 @@ export default {
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW,
-    CHANGE_ACTIVE_PLOT_VIEW
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW
 };
 
 
@@ -205,6 +204,18 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
+
+
+/**
+ * 
+ * @param plotId
+ * @param message
+ * @param done
+ */
+export function dispatchPlotProgressUpdate(plotId, message, done ) {
+    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
+}
+
 
 
 /**
@@ -634,7 +645,9 @@ function reducer(state=initState(), action={}) {
         case PROCESS_SCROLL  :
         case CHANGE_PLOT_ATTRIBUTE:
         case COLOR_CHANGE  :
+        case COLOR_CHANGE_START  :
         case COLOR_CHANGE_FAIL  :
+        case STRETCH_CHANGE_START  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
         case RECENTER:
@@ -705,7 +718,9 @@ function changeMouseReadout(state, action) {
 }
 
 function changeActivePlotView(state,action) {
-    if (action.payload.plotId===state.activePlotId) return state;
+    const {plotId}= action.payload;
+    if (plotId===state.activePlotId) return state;
+    if (!getPlotViewById(state,plotId)) return state;
 
     return clone(state, {activePlotId:action.payload.plotId});
 }

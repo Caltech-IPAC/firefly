@@ -3,13 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.VetoDownloadException;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
 import edu.caltech.ipac.visualize.net.VisNetwork;
 
@@ -121,10 +120,6 @@ public class LockingVisNetwork {
         public void beginDownload(DownloadEvent ev) {/*not used*/ }
 
         public void downloadCompleted(DownloadEvent ev) {/*not used*/ }
-
-        public void downloadAborted(DownloadEvent ev) {/*not used*/ }
-
-        public void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException {/*not used*/ }
     }
 
 }

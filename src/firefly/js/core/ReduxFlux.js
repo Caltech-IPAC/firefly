@@ -46,6 +46,12 @@ import Catalog from '../drawingLayers/Catalog.js';
 
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
+
+// import Perf from 'react-addons-perf';
+// window.Perf = Perf;
+
+
+
 /**
  * A map to rawAction.type to an ActionCreator
  * @type {Map<string, function>}

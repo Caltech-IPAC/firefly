@@ -38,7 +38,9 @@ export function colorChangeActionCreator(rawAction) {
         if (!pv) return;
 
 
-        if (!primePlot(pv).plotState.isThreeColor()) doColorChange(dispatcher,store,plotId,cbarId);
+        if (!primePlot(pv).plotState.isThreeColor()) {
+            doColorChange(dispatcher,store,plotId,cbarId);
+        }
         operateOnOthersInGroup(store,pv, (pv) => {
             var p= primePlot(pv);
             if (p && !p.plotState.isThreeColor()) { // only do others that are not three color
@@ -63,6 +65,10 @@ export function stretchChangeActionCreator(rawAction) {
         var pv= getPlotViewById(store,plotId);
         var plot= primePlot(pv);
         if (!plot || !pv || !stretchData) return;
+
+
+        dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_START, payload: {plotId} } );
+
         const threeColor= plot.plotState.isThreeColor();
         doStretch(dispatcher,store,plotId,stretchData);
         operateOnOthersInGroup(store,pv, (pv) => {
@@ -182,12 +188,13 @@ function doCrop(dispatcher,pv,imagePt1, imagePt2, cropMultiAll) {
     });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.CROP_FAIL,
-        payload: {plotId, error: Error('crop: payload failed')}
+        payload: {plotId, message: 'Crop Failed', error: Error('crop: payload failed')}
     });
 
+    dispatcher( { type: ImagePlotCntlr.CROP_START, payload: {plotId:pv.plotId, message:'Cropping...'} } );
     callCrop(getPlotStateAry(pv), imagePt1, imagePt2, cropMultiAll)
     .then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
-        .catch ( (e) => { dispatcher( { type: ImagePlotCntlr.FLIP_FAIL, payload: {plotId:pv.plotId, error:e} } );
+        .catch ( (e) => { dispatcher(makeFailAction(pv.plotId) );
             logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
         });
 }
@@ -215,11 +222,12 @@ function doFlip(dispatcher,pv,isY) {
         });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.FLIP_FAIL,
-                              payload: {plotId, error: Error('flip: payload failed')}
+                              payload: {plotId, message: 'Flip Failed', error: Error('flip: payload failed')}
                             });
 
+    dispatcher( { type: ImagePlotCntlr.FLIP_START, payload: {plotId:pv.plotId, message:'Flipping...'} } );
     p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
-        .catch ( (e) => { dispatcher( { type: ImagePlotCntlr.FLIP_FAIL, payload: {plotId:pv.plotId, error:e} } );
+        .catch ( (e) => { dispatcher( makeFailAction(pv.plotId) );
             logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
         });
 }
@@ -229,11 +237,13 @@ function doFlip(dispatcher,pv,isY) {
 function doStretch(dispatcher,store,plotId,stretchData) {
 
     var plot= primePlot(store,plotId);
+    dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_START, payload: {plotId, message:'Changing Stretch...'} } );
     callRecomputeStretch(plot.plotState,stretchData)
         .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
                                    ImagePlotCntlr.STRETCH_CHANGE, ImagePlotCntlr.STRETCH_CHANGE_FAIL) )
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, payload: {plotId, stretchData, error:e} } );
+            dispatcher( { type: ImagePlotCntlr.STRETCH_CHANGE_FAIL, 
+                          payload: {plotId, message: 'Stretch Failed', stretchData, error:e} } );
             logError(`plot error, stretch change, plotId: ${plot.plotId}`, e);
         });
 }
@@ -243,11 +253,13 @@ function doStretch(dispatcher,store,plotId,stretchData) {
 function doColorChange(dispatcher,store,plotId,cbarId) {
 
     var plot= primePlot(store,plotId);
+    dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_START, payload: {plotId, message:'Changing Color...'} } );
     callChangeColor(plot.plotState,cbarId)
         .then( (wpResult) => processPlotUpdate(dispatcher,plotId,wpResult,
                                       ImagePlotCntlr.COLOR_CHANGE, ImagePlotCntlr.COLOR_CHANGE_FAIL) )
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, payload: {plotId, cbarId, error:e} } );
+            dispatcher( { type: ImagePlotCntlr.COLOR_CHANGE_FAIL, 
+                          payload: {plotId, message: 'Color change Failed', cbarId, error:e} } );
             logError(`plot error, color change, plotId: ${plot.plotId}`, e);
         });
 }
@@ -256,6 +268,7 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
 
     var p;
 
+    dispatcher( { type: ImagePlotCntlr.ROTATE_START, payload: {plotId:pv.plotId, message:'Rotating...'} } );
     switch (rotateType) {
         case RotateType.NORTH:
             p= callRotateNorth(getPlotStateAry(pv),true,newZoomLevel);
@@ -275,12 +288,12 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
     });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.ROTATE_FAIL,
-        payload: {plotId, error: Error('rotate: payload failed')}
+        payload: {plotId, message: 'Rotate Failed', error: Error('rotate: payload failed')}
     });
 
     p.then( (wpResult) => processPlotReplace(dispatcher,wpResult,pv,makeSuccAction, makeFailAction))
         .catch ( (e) => {
-            dispatcher( { type: ImagePlotCntlr.ROTATE_FAIL, payload: {plotId:pv.plotId, error:e} } );
+            dispatcher( makeFailAction(pv.plotId));
             logError(`plot error, rotate , plotId: ${pv.plotId}`, e);
         });
 }

@@ -216,6 +216,8 @@ export class ImageViewerDecorate extends Component {
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); } //todo: look at closely for optimization
 
+
+
     makeActive(ev) {
         const plotId= get(this.props,'plotView.plotId');
         if (plotId) dispatchChangeActivePlotView(plotId);

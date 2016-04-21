@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {uniqBy,unionBy} from 'lodash';
+import {get, uniqBy,unionBy} from 'lodash';
 import Cntlr, {ExpandType} from '../ImagePlotCntlr.js';
 import PlotView, {makePlotView} from './PlotView.js';
-import {getPlotViewById} from '../PlotViewUtil.js';
+import {getPlotViewById, clonePvAry} from '../PlotViewUtil.js';
 import PlotGroup from '../PlotGroup.js';
 
 
@@ -38,12 +38,18 @@ export function reducer(state, action) {
             // activePlotId= action.payload.plotId;
             // todo: also process adding to history
             break;
+
         case Cntlr.ROTATE_START  :
-        case Cntlr.ROTATE_FAIL  :
         case Cntlr.FLIP_START:
-        case Cntlr.FLIP_FAIL:
         case Cntlr.CROP_START:
+            plotViewAry= workingServerCall(state,action);
+            break;
+        
+        
+        case Cntlr.ROTATE_FAIL  :
+        case Cntlr.FLIP_FAIL:
         case Cntlr.CROP_FAIL:
+            plotViewAry= endServerCallFail(state,action);
             break;
         case Cntlr.ROTATE  :
             plotViewAry= addPlot(state,action);
@@ -51,7 +57,7 @@ export function reducer(state, action) {
         case Cntlr.FLIP:
             plotViewAry= addPlot(state,action);
             break;
-        case Cntlr.CROP: //todo- crop
+        case Cntlr.CROP:
             plotViewAry= addPlot(state,action);
             break;
         default:
@@ -112,9 +118,9 @@ function plotFail(state,action) {
     const {description, plotId}= action.payload;
     var {plotViewAry}= state;
     const plotView=  getPlotViewById(state,plotId);
-    if (!plotView) return state;
-    return plotViewAry.map( (pv) => pv.plotId===plotId ? 
-                        clone(pv,{plottingStatus:description}) : pv);
+    if (!plotView) return plotViewAry;
+    const changes= {plottingStatus:description,serverCall:'fail' };
+    return clonePvAry(plotViewAry,plotId,changes);
 }
 
 /**
@@ -137,6 +143,18 @@ function preNewPlotPrep(plotViewAry,action) {
     });
 
     return unionBy(pvChangeAry,plotViewAry, 'plotId');
+}
+
+export function endServerCallFail(state,action) {
+    var {plotId,message}= action.payload;
+    var {plotViewAry}= state;
+    const stat= {serverCall:'fail'};
+    if (typeof message === 'string') stat.plottingStatus= message;
+    return clonePvAry(state.plotViewAry,plotId, stat);
+}
+function workingServerCall(state,action) {
+    var {plotId,message}= action.payload;
+    return clonePvAry(state.plotViewAry,plotId, {serverCall:'working', plottingStatus:message});
 }
 
 

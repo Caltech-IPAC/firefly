@@ -18,6 +18,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.draw.FixedObjectGroup;
@@ -368,18 +369,28 @@ public class PlotServUtils {
 
     public static void updateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
-        if (pStat.getId()!=null) cache.put(new StringKey(pStat.getId()), pStat);
+        CacheKey key= new StringKey(pStat.getId());
+        ProgressStat lastPstat= (ProgressStat) cache.get(key);
+        boolean fireAction= true;
+        if (lastPstat!=null) {
+            if (lastPstat.getMessage()!=null && lastPstat.getMessage().equals((pStat.getMessage()))) {
+                fireAction= false;
+            }
+
+        }
+        if (pStat.getId()!=null) cache.put(key, pStat);
 
 
-        //todo
-        ProgressMessage progMsg= getPlotProgressMessage(pStat);
-        FluxAction a= new FluxAction("ImagePlotCntlr.PlotProgressUpdate");
-        a.setValue(progMsg.message,"message");
-        a.setValue(pStat.getId(),"progressKey");
-        a.setValue(pStat.getType()==ProgressStat.PType.GROUP,"group");
-        a.setValue(progMsg.done,"done");
-        a.setValue( pStat.getPlotId(),"plotId");
-        ServerEventManager.fireAction(a);
+        if (fireAction)  {
+            ProgressMessage progMsg= getPlotProgressMessage(pStat);
+            FluxAction a= new FluxAction("ImagePlotCntlr.PlotProgressUpdate");
+            a.setValue(progMsg.message,"message");
+            a.setValue(pStat.getId(),"progressKey");
+            a.setValue(pStat.getType()==ProgressStat.PType.GROUP,"group");
+            a.setValue(progMsg.done,"done");
+            a.setValue( pStat.getPlotId(),"plotId");
+            ServerEventManager.fireAction(a);
+        }
     }
 
     public static void updateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {

@@ -4,11 +4,17 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
+import {difference,xor,isEmpty} from 'lodash';
 import {TileDrawer} from './TileDrawer.jsx';
-import {TileDrawerCanvas} from './TileDrawerCanvas.jsx';
 import {EventLayer} from './EventLayer.jsx';
+import {ImageViewerStatus} from './ImageViewerStatus.jsx';
+import {makeScreenPt} from '../Point.js';
+import {logError} from '../../util/WebUtil.js';
+import {flux} from '../../Firefly.js';
+import {DrawerComponent}  from '../draw/DrawerComponent.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {
+    dispatchPlotProgressUpdate,
     dispatchZoom,
     dispatchProcessScroll,
     dispatchChangeActivePlotView,
@@ -17,10 +23,6 @@ import {
     MouseState,
     dispatchMouseStateChange,
     makeMouseStatePayload}  from '../VisMouseCntlr.js';
-import {PlotDrawer}  from '../draw/DrawerComponent.jsx';
-import {makeScreenPt} from '../Point.js';
-import {flux} from '../../Firefly.js';
-import {logError} from '../../util/WebUtil.js';
 
 
 
@@ -29,6 +31,7 @@ export class ImageViewerLayout extends Component {
     constructor(props) {
         super(props);
         this.plotDrag= null;
+        this.eventCB= this.eventCB.bind(this);
     }
 
     shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
@@ -116,6 +119,8 @@ export class ImageViewerLayout extends Component {
                         marginRight: 'auto'
 
         };
+        
+        const drawLayersIdAry= drawLayersAry ? drawLayersAry.map( (dl) => dl.drawLayerId) : null;
 
 
         var cursor= drawLayersAry.map( (dl) => dl.cursor).find( (c) => (c && c.length));
@@ -125,14 +130,19 @@ export class ImageViewerLayout extends Component {
                 <div className='plot-view-master-panel'
                      style={{width:viewPortWidth,height:viewPortHeight,
                                  left:0,right:0,position:'absolute', cursor}}>
-                    <TileDrawer x={scrollX} y={scrollY}
+                    <TileDrawer
+                        key={'TileDrawer:'+plotId}
+                                x={scrollX} y={scrollY}
                                 width={viewPortWidth} height={viewPortHeight}
                                 plot={plot} />
-                    <DrawingLayers plot={plot} drawLayersAry={drawLayersAry} />
-                    <EventLayer plotId={plotId} viewPort={plot.viewPort}
+                    <DrawingLayers
+                        key={'DrawingLayers:'+plotId}
+                        plot={plot} drawLayersIdAry={drawLayersIdAry} />
+                    <EventLayer plotId={plotId} 
+                                key={'EventLayer:'+plotId}
+                                viewPort={plot.viewPort}
                                 width={viewPortWidth} height={viewPortHeight}
-                                eventCallback={(plotId,mouseState,screenPt,screenX,screenY) =>
-                                                    this.eventCB(plotId,mouseState,screenPt,screenX,screenY)}/>
+                                eventCallback={this.eventCB}/>
                 </div>
             </div>
         );
@@ -143,13 +153,12 @@ export class ImageViewerLayout extends Component {
         var {plotView:pv}= this.props;
         var {viewDim:{width,height}}= pv;
         var insideStuff;
+        var plotShowing= width && height && primePlot(this.props.plotView);
 
-        if (width && height && primePlot(this.props.plotView)) {
+        if (plotShowing) {
             insideStuff= this.renderInside();
         }
-        else {
-            insideStuff= <ImageViewerStatus message={pv.plottingStatus} working={false} />
-        }
+
         var style= {
             position:'absolute',
             left : 0,
@@ -160,6 +169,7 @@ export class ImageViewerLayout extends Component {
         return (
             <div className='web-plot-view-scr' style={style}>
                 {insideStuff}
+                {makeMessageArea(pv,plotShowing)}
             </div>
         );
     }
@@ -208,6 +218,27 @@ function plotMover(screenX,screenY, originalScrollX, originalScrollY) {
     };
 }
 
+function makeMessageArea(pv,plotShowing) {
+    if (pv.serverCall==='success') return false;
+
+    if (pv.serverCall==='working') {
+        return (
+            <ImageViewerStatus message={pv.plottingStatus} working={true}
+                               maskWaitTimeMS= {500} messageWaitTimeMS={1000}
+                               useMessageAlpha={plotShowing}/>
+            );
+
+    }
+    else if (pv.plottingStatus) {
+        return (
+            <ImageViewerStatus message={pv.plottingStatus} working={false}
+                               useMessageAlpha={true} canClear={plotShowing}
+                               clearCB={() => dispatchPlotProgressUpdate(pv.plotId,'',true)}
+                               />
+        );
+    }
+}
+
 function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
     var payload= Object.assign({},mouseStatePayload,{drawLayer});
     var fireObj= drawLayer.mouseEventMap[mouseState.key];
@@ -230,34 +261,42 @@ function fireMouseEvent(drawLayer,mouseState,mouseStatePayload) {
 
 // ------------ React component
 
-function DrawingLayers({plot,drawLayersAry:dlAry}) {
-    var drawingAry= null;
-    var {width,height}= plot.viewPort.dim;
-    if (dlAry) {
-        drawingAry= dlAry.map( (dl) => <PlotDrawer plot={plot} drawLayer={dl}
-                                                   width={width} height={height}
-                                                   key={dl.drawLayerId}/> );
+/**
+ *
+ */
+class DrawingLayers extends Component {
+
+    constructor(props) {
+        super(props);
     }
-    return (
-        <div className='drawingArea'
-             style={{width, height, left:0, right:0, position:'absolute'}} >
-            {drawingAry}
-        </div>
-    );
+
+    shouldComponentUpdate(np) {
+        const p= this.props;
+        return np.plot!==p.plot || !isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry));
+    }
+    
+    render() {
+        const {plot,drawLayersIdAry:dlIdAry}= this.props;
+        var drawingAry= null;
+        var {width,height}= plot.viewPort.dim;
+        if (dlIdAry) {
+            drawingAry= dlIdAry.map( (dlId) => <DrawerComponent plot={plot} drawLayerId={dlId}
+                                                                width={width} height={height}
+                                                                key={dlId}/> );
+        }
+        return (
+            <div className='drawingArea'
+                 style={{width, height, left:0, right:0, position:'absolute'}} >
+                {drawingAry}
+            </div>
+        );
+        
+    }
 }
 
 DrawingLayers.propTypes= {
     plot: PropTypes.object.isRequired,
-    drawLayersAry: PropTypes.array.isRequired
+    drawLayersIdAry: PropTypes.array.isRequired
 };
 
 
-function ImageViewerStatus({message}) {
-    return (
-        <div style={{position:'relative', top: 30, left:30}}>{message}</div>
-    );
-}
-
-ImageViewerStatus.propTypes= {
-    message : PropTypes.string.isRequired
-};
