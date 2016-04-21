@@ -67,18 +67,33 @@ function creator() {
 
 }
 
+ /**
+  * Implement this method defined in DrawLayerFactory.js
+  * @param dataType
+  * @param plotId
+  * @param drawLayer
+  * @param action
+  * @param lastDataRet
+  * @returns {*}
+  */
 
 function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 
-    var plot= primePlot(visRoot(),plotId);
-    if (!plot)return null;
-    var cc= CsysConverter.make(plot);
-    if (!cc) return null;
+     var plot= primePlot(visRoot(),plotId);
+     if (!plot)return null;
+
+     var cc= CsysConverter.make(plot);
+     if (!cc) return null;
 
      var drawDataArray= getData(plot, cc);
      return drawDataArray|| lastDataRet;
  }
 
+ /**
+  * Return a Coordinate object for a given coordinate name
+  * @param csysName
+  * @returns {*}
+  */
 
  function getCoordinateSystem(csysName) {
 
@@ -91,27 +106,34 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
 
  }
 
+ /**
+  * This method does the calculation for drawing data array
+  * @param plot
+  * @param cc
+  */
  function getData (plot,  cc){
 
      const {width, height, screenWidth, csys,labelFormat} = getDrawLayerParameters(plot);
      if (width > 0 && height >0) {
          var bounds = new Rectangle(0, 0, width, height);
-         var factor = screenWidth / width;
+         var factor =  plot.zoomFactor;
          if (factor < 1.0) factor = 1.0;
          var range = getRange(csys, width, height, cc);
          var levels = getLevels(range, factor);
          var labels = getLabels(levels, csys, labelFormat);
-         var lines = computeLines(cc, csys, range, levels, screenWidth);
-         var xLines = lines[0];
-         var yLines = lines[1];
+         var {xLines, yLines} = computeLines(cc, csys, range, levels, screenWidth);
          var wpt = cc.getWorldCoords(makeImageWorkSpacePt(1, 1), csys);
          var aitoff = (!wpt);
          var drawDataArray = drawLines(csys, bounds, labels, xLines, yLines, levels[0].length, levels[1].length, aitoff, screenWidth);
          return drawDataArray;
      }
  }
-
-function getDrawLayerParameters(plot){
+ /**
+  * This method prepare the input parameters needed for calculating the drawing data array
+  * @param plot
+  * @returns {{width: (dataWidth|*), height: (*|dataHeight), screenWidth: *, csys: *, labelFormat: string}}
+  */
+ function getDrawLayerParameters(plot){
     var width = plot.dataWidth;
     var height = plot.dataHeight;
     var screenWidth = plot.screenSize.width;
@@ -127,8 +149,13 @@ function getDrawLayerParameters(plot){
 
     return {width, height, screenWidth, csys,labelFormat};
 }
-
-function getLayerChanges(drawLayer, action) {
+ /**
+  * Implement this one defined in DrawLayerFactory.js to handle the layer changes when the coodinate property is changed.
+  * @param drawLayer
+  * @param action
+  * @returns {null}
+  */
+ function getLayerChanges(drawLayer, action) {
 
 
     var {plotIdAry}= action.payload;
@@ -143,15 +170,33 @@ function getLayerChanges(drawLayer, action) {
     return getData(plot, cc);
 
 }
-
-function Rectangle(x, y, width, height){
+ /**
+  * Define a rectangle object
+  * @param x
+  * @param y
+  * @param width
+  * @param height
+  * @constructor
+  */
+ function Rectangle(x, y, width, height){
     this.x= x;
     this.y= y;
     this.width= width;
     this.height= height;
 }
-
-function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
+ /**
+  * walk around four corners to find the proper ranges
+  * @param intervals
+  * @param x0
+  * @param y0
+  * @param dx
+  * @param dy
+  * @param range
+  * @param csys
+  * @param wrap
+  * @param cc
+  */
+ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
 
 
     var  x = x0;
@@ -169,15 +214,18 @@ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
             vals[1] = wpt.getLat();
 
             if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
+            if (wrap!=null //true and false
+                || wrap==null && cc.pointInPlot(makeWorldPt(vals[0], vals[1], csys))//temporary solution to solve the problem reported.
+                || csys===CoordinateSys.EQ_B2000
+                || csys===CoordinateSys.EQ_J2000 ) {
                 //assign the new lower and upper longitude if found
-                if (wrap && vals[0] > 180) vals[0] = vals[0]-360;
                 if (vals[0] < range[0][0]) range[0][0] = vals[0];
                 if (vals[0] > range[0][1]) range[0][1] = vals[0];
 
                 //assign the new lower and upper latitude if found
                 if (vals[1] < range[1][0]) range[1][0] = vals[1];
                 if (vals[1] > range[1][1]) range[1][1] = vals[1];
-
+            }
         }
         x += dx;
         y += dy;
@@ -186,8 +234,17 @@ function edgeRun (intervals,x0,  y0,dx, dy, range, csys, wrap, cc) {
     }
 
 }
-
-function  edgeVals(intervals, width, height, csys, wrap, cc) {
+ /**
+  * get the ege value
+  * @param intervals
+  * @param width
+  * @param height
+  * @param csys
+  * @param wrap
+  * @param cc
+  * @returns {*[]}
+  */
+ function  edgeVals(intervals, width, height, csys, wrap, cc) {
 
     var  range = [[1.e20, -1.e20],[1.e20, -1.e20]];
     var xmin=0;
@@ -235,8 +292,13 @@ function  edgeVals(intervals, width, height, csys, wrap, cc) {
 
     return range;
 }
-
-function  testEdge( xrange, trange)
+ /**
+  * Test to see if the edge is a real one
+  * @param xrange
+  * @param trange
+  * @returns {boolean}
+  */
+ function  testEdge( xrange, trange)
 {
     /* This routine checks if the experimental minima and maxima
      * are significantly changed from the old test minima and
@@ -287,9 +349,18 @@ function  testEdge( xrange, trange)
 
     return true;
 }
+ /**
+  * Get the line ranges
+  * @param csys
+  * @param width
+  * @param height
+  * @param cc
+  * @returns {*[]}
+  */
+ function getRange( csys, width, height, cc) {
 
-function getRange( csys, width, height, cc) {
 
+    //using three state boolean wrap=true/false, the null, null for temporary solution to solve the problem reported.
     var range=[[0.,0.],[0.,0.]];
     var poles=0;  // 0 = no poles, 1=north pole, 2=south pole, 3=both
 
@@ -299,7 +370,7 @@ function getRange( csys, width, height, cc) {
      * them to be included.
      */
 
-    var wrap = false;	/* Does the image wrap from 360-0. */
+    var wrap=false;	/* Does the image wrap from 360-0. */
     var  sharedLon= 0.0;
     var  sharedLat= 90.0;
 
@@ -348,19 +419,19 @@ function getRange( csys, width, height, cc) {
             wrap = true;
 
             // Redo min/max
-            trange = edgeVals(1, wrap);
+            trange = edgeVals(1, width, height, csys,wrap,cc);
         }
         //this block was a temporary solution to solve the problem once found.  Comment it out for now in js version
-       /* else if (csys===CoordinateSys.GALACTIC){
-            trange=edgeVals(1,null);
+       else if (csys===CoordinateSys.GALACTIC){
+            trange=edgeVals(1, width, height, csys,null,cc);
             sharedLon = 0.0;
             sharedLat = (trange[1][0] + trange[1][1]) / 2;
             if (cc.pointInPlot(makeWorldPt(sharedLon, sharedLat,csys))) {
                 wrap=true;
                 // Redo min/max
-                trange = edgeVals(1, wrap);
+                trange =edgeVals(1, width, height, csys,wrap,cc);
             }
-        }*/
+        }
 
     }
 
@@ -394,8 +465,13 @@ function getRange( csys, width, height, cc) {
 
 }
 
-
-function getLevels(ranges,factor){
+ /**
+  *
+  * @param ranges
+  * @param factor
+  * @returns {Array}
+  */
+ function getLevels(ranges,factor){
 
     var levels=[];
     var  min, max, delta;
@@ -487,7 +563,13 @@ function calculateDelta(min, max,factor){
 
 }
 
-
+ /**
+  * Find the labels according to the coordinates
+  * @param levels
+  * @param csys
+  * @param labelFormat
+  * @returns {Array}
+  */
 
 function getLabels(levels,csys, labelFormat) {
 
@@ -532,8 +614,16 @@ function getLabels(levels,csys, labelFormat) {
 
     return labels;
 }
-
-function findLine(cc,csys, direction, value, range, screenWidth){
+ /**
+  * calculate lines
+  * @param cc
+  * @param csys
+  * @param direction
+  * @param value
+  * @param range
+  * @param screenWidth
+  */
+ function findLine(cc,csys, direction, value, range, screenWidth){
 
     var intervals;
     var x, dx, y, dy;
@@ -665,10 +755,10 @@ function fixPoints(points){
     // Convert points to fixed values.
     var len = points[0].length;
     for (let i=0; i < len; i += 1){
-        if (points[0][i] >=1.e10) {
-            points[0][i] = -10000;
-            points[1][i] = -10000;
-        }
+        if (points[0][i] < 1.e10) continue;
+        points[0][i] = -10000;
+        points[1][i] = -10000;
+
     }
     return points;
 }
@@ -714,6 +804,7 @@ function getLabelPoints(bounds, csys, xLines, yLines, nLevel0, nLevel1) {
     return  points;
 }
 
+
 function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations, x, y, count, aitoff,screenWidth){
 
 
@@ -733,7 +824,7 @@ function drawLabeledPolyLine (drawData, bounds, nLevel0,  label, labelLocations,
             ((y[i+1]-bounds.y) < bounds.height))) {
             ipt0= makeImageWorkSpacePt(x[i],y[i]);
             ipt1= makeImageWorkSpacePt(x[i+1], y[i+1]);
-            if (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.y) < screenWidth /8) && (aitoff))) {
+            if (!aitoff  ||  ((Math.abs(ipt1.x-ipt0.x) <screenWidth /8 ) && (aitoff))) {
                 drawData.push(ShapeDataObj.makeLine(ipt0,ipt1));
             }
         } //if
@@ -784,7 +875,7 @@ function computeLines(cc, csys, range, levels,screenWidth) {
             offset += 1;
         }
     }
-    return [xLines, yLines];
+    return {xLines, yLines};
 }
 
 
