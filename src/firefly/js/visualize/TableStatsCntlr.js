@@ -155,7 +155,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
     const req = TableRequest.newInstance({
                     id:'StatisticsProcessor',
                     searchRequest: JSON.stringify(sreq),
-                    tbl_id: activeTableServerRequest.tbl_id
+                    tbl_id: 'tblstats-'+activeTableServerRequest.tbl_id
                 });
 
     TableUtil.doFetchTable(req).then(
