@@ -41,7 +41,6 @@ function makeReducer(factory) {
             case ImagePlotCntlr.ANY_REPLOT:
                 return updateFromLayer(drawLayer,action,factory);
                 break;
-
             default:
                 return handleOtherAction(drawLayer,action,factory);
                 break;
@@ -96,6 +95,7 @@ function updateFromLayer(drawLayer,action,factory) {
     }
     return drawLayer;
 }
+
 
 
 
