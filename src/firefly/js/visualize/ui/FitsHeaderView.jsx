@@ -33,31 +33,31 @@ const popupPanelResizableStyle = {
 const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex'};
 
 //define the table style only in the table div
-const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 60px)',  overflow: 'hidden', flexGrow: 1, display: 'flex'};
+const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 70px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};
 
 
-const tableOnTabStyle = {boxSizing: 'border-box',paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 20px)', overflow: 'hidden', flexGrow: 1, display: 'flex'};//
+const tableOnTabStyle = {boxSizing: 'border-box',paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 30px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};//
 //define the size of the text on the tableInfo style in the title div
-const titleStyle = {width: '100%', height: 20};
+const titleStyle = {width: '100%', height: 30};
 
 //define the first column in the textStyle div
-const textColumn1 = {
+const textColumn1 = {paddingTop:5,
     width: 100, paddingLet: 2, textAlign: 'left', color: 'Black', fontWeight: 'bold',
     display: 'inline-block',paddingLeft:10
 };
 
 //define the second column in the textStyle div
-const textColumn2 = {paddingLeft:80, width: 100, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
+const textColumn2 = {paddingTop:5,paddingLeft:40, width: 250, display: 'inline-block', color: 'Black', fontWeight: 'bold'};
 
 //define the complete button
-const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:8, width: '90%'};
+const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
 //define the helpButton
 const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
 
 //3-color styles
-const tabStyle =  {width: '100%',height:'100%'};//,  display: 'inline-block',  overflow: 'auto', flexGrow: 1};
+const tabStyle =  {width: '100%',height:'100%'};
 
 
 function popupForm(plot, fitsHeaderInfo, popupId) {

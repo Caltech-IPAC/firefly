@@ -61,6 +61,7 @@ const columnColorBandFluxLabel = {
     display: 'inline-block'
 };
 const columnColorBandFluxValue = {width: 90, display: 'inline-block'};
+const column1Fl = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 
 const column1 = {
     width: 80,
@@ -71,7 +72,6 @@ const column1 = {
     fontStyle: 'italic',
     display: 'inline-block'
 };
-const column1Fl = {width: 80, paddingRight: 1, textAlign: 'right', color: 'DarkGray', display: 'inline-block'};
 const column2 = {width: 88, display: 'inline-block'};
 const column3 = {
     width: 74,
@@ -97,46 +97,56 @@ export class MouseReadout extends React.Component {
         super(props);
         this.showFlux = this.showFlux.bind(this);
         this.setLockState = this.setLockState.bind(this);
+
         this.isLocked = false;
 
         this.state = ({
             flux: [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT],
             fluxLabel: [],
             mouseReadouts: {},
-            imagePt:this.props.mouseState.imagePt
+            imagePt: this.props.mouseState.imagePt
 
-    });
+        });
 
 
         this.getFlux = debounce((mouseState, plot, iPt, isLocked) => {
             callGetFileFlux(plot.plotState, iPt)
                 .then((result) => {
-                    var fluxArray = [];
+                    var fluxArray = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
                     if (result.hasOwnProperty('NO_BAND')) {
                         var fluxUnitStr = plot.webFitsData[Band.NO_BAND.value].fluxUnits;
                         var fValue = parseFloat(result.NO_BAND);
 
-                        var fluxStr =fValue<1000? fValue.toFixed(6):fValue.toExponential(6).replace('e+', 'E');
+                        var fluxStr = fValue < 1000 ? fValue.toFixed(6) : fValue.toExponential(6).replace('e+', 'E');
                         fluxStr = (fValue !== 'NoContext') ? `${fluxStr} ${fluxUnitStr}` : '';
-                        fluxArray = [fluxStr, EMPTY_READOUT, EMPTY_READOUT];
+                        fluxArray = [fluxStr];
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});
                         }
                     }
                     else {
-                        var redUnitStr = get(plot.webFitsData, [Band.RED.value,'fluxUnits'],'');
-                        var greenUnitStr = get(plot.webFitsData, [Band.GREEN.value,'fluxUnits'],'');
-                        var blueUnitStr = get(plot.webFitsData, [Band.BLUE.value,'fluxUnits'],'');
-                        var numBLue=parseFloat(result.Blue);
-                        var numGreen=parseFloat(result.Green);
-                        var numRed=parseFloat(result.Red);
-                        var rBlueStr = (numBLue<1000)? numBLue.toFixed(6): numBLue.toExponential(6).replace('e+', 'E');
-                        var rGreenStr = (numGreen<1000)? numGreen.toFixed(6): numGreen.toExponential(6).replace('e+', 'E');
-                        var rRedStr = (numRed<1000)? numRed.toFixed(6): numRed.toExponential(6).replace('e+', 'E');
-                        var blueFlux = result.hasOwnProperty('Blue') ? `${rBlueStr} ${redUnitStr}` : EMPTY_READOUT;
-                        var greenFlux = result.hasOwnProperty('Green') ? `${rGreenStr} ${greenUnitStr}` : EMPTY_READOUT;
-                        var RedFlux = result.hasOwnProperty('Red') ? `${rRedStr} ${blueUnitStr}` : EMPTY_READOUT;
-                        fluxArray = [RedFlux, greenFlux, blueFlux];
+                        const bands = plot.plotState.getBands();
+
+                        fluxArray = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
+                        var bandName, unitStr, fnum, fluxValue;
+                        for (let i = 0; i < bands.length; i++) {
+                            switch (bands[i].key) {
+                                case 'RED':
+                                    bandName = 'Red';
+                                    break;
+                                case 'GREEN':
+                                    bandName = 'Green';
+                                    break;
+                                case 'BLUE':
+                                    bandName = 'Blue';
+                                    break;
+                            }
+                            unitStr = get(plot.webFitsData, [bands[i].value, 'fluxUnits'], '');
+                            fnum = parseFloat(result[bandName]);
+                            fluxValue = (fnum < 1000) ? fnum.toFixed(6) : fnum.toExponential(6).replace('e+', 'E');
+                            fluxArray[i] = `${fluxValue} ${unitStr}`;
+                        }
+
                         if (isLocked && mouseState.mouseState.key === 'UP' || !isLocked) {
                             this.setState({flux: fluxArray});
 
@@ -146,6 +156,7 @@ export class MouseReadout extends React.Component {
                 })
                 .catch((e) => {
                     console.log(`flux error: ${plot.plotId}`, e);
+                    return [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
                 });
         }, 200);
 
@@ -253,21 +264,32 @@ export class MouseReadout extends React.Component {
 
         var mouseReadouts = ( !this.isLocked && !isOutside || this.isLocked) ? mouseReadoutInState : [];
 
+        var mouseReadout1=mouseReadouts ? mouseReadouts[0] : '';
+        var pixelSize =mouseReadouts ? mouseReadouts[2] : '';
+        var mouseReadout2 =mouseReadouts ? mouseReadouts[1] : '';
+
         return (
 
+        <div style={ rS}>
 
-            <div style={ rS}>
+            {/*row1*/}
+            <div  >
+                <div style={ columnColorBandFluxLabel}>{fluxLabels[1]} </div>
+                <div style={ columnColorBandFluxValue}>  {fluxValues[1]}  </div>
+                <div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
+                    {labelMap[visRoot.pixelSize] }
+                </div>
+                <div style={column2}>{pixelSize} </div>
 
-                {renderMouseReadoutRow1({
-                    visRoot,
-                    title,
-                    fluxLabel: fluxLabels[1],
-                    fluxValue: fluxValues[1],
-                    mouseReadout1: (mouseReadouts ? mouseReadouts[0] : ''),
-                    pixelSize: (mouseReadouts ? mouseReadouts[2] : '')
-                })}
+                <div style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
+                    { labelMap[visRoot.mouseReadout1] }
+                </div>
+                <div style={column4}> {mouseReadout1} </div>
 
-                <div>
+
+                <div style={column5}> {title}  </div>
+            </div>
+            <div>{/* row2*/}
                     <div style={ columnColorBandFluxLabel}>{fluxLabels[2]} </div>
                     <div style={ columnColorBandFluxValue}> { fluxValues[2]} </div>
 
@@ -277,7 +299,7 @@ export class MouseReadout extends React.Component {
                     <div style={ column3} onClick={ () => showDialog('mouseReadout2' ,visRoot.mouseReadout2)}>
                         {labelMap[visRoot.mouseReadout2] } </div>
 
-                    <div style={column4}>  { (mouseReadouts ? mouseReadouts[1] : '')}  </div>
+                    <div style={column4}>  {mouseReadout2}  </div>
                     <div style={column5_1} title='Click on an image to lock the display at that point.'>
                         <input type='checkbox' name='aLock' value='lock'
                                onChange={ (request) => this.setLockState( request) }/>
@@ -304,39 +326,6 @@ MouseReadout.propTypes = {
 
 //===================end of MouseReadout class===========================================================
 
-function renderMouseReadoutRow1({visRoot, title,  fluxLabel, fluxValue, mouseReadout1, pixelSize}) {
-
-    return (
-        <div  >
-            <div style={ columnColorBandFluxLabel}>{fluxLabel} </div>
-            <div style={ columnColorBandFluxValue}>  {fluxValue}  </div>
-            <div style={ column1} onClick={ () => showDialog('pixelSize', visRoot.pixelSize)}>
-                {labelMap[visRoot.pixelSize] }
-            </div>
-            <div style={column2}>{ pixelSize} </div>
-
-            <div style={ column3} onClick={ () => showDialog('mouseReadout1' ,visRoot.mouseReadout1)}>
-                { labelMap[visRoot.mouseReadout1] }
-            </div>
-            <div style={column4}> {mouseReadout1} </div>
-
-
-            <div style={column5}> {title}  </div>
-        </div>
-
-
-    );
-
-}
-renderMouseReadoutRow1.propTypes = {
-    visRoot: PropTypes.object.isRequired,
-    title: PropTypes.string.isRequired,
-    fuxLabel: PropTypes.string.isRequired,
-    fluxValue: PropTypes.string.isRequired,
-    mouseReadout1: PropTypes.string.isRequired,
-    pixelSize: PropTypes.string.isRequired
-
-};
 
 
 function getFluxLabels(plotView) {
@@ -344,14 +333,9 @@ function getFluxLabels(plotView) {
     var plot = primePlot(plotView);
     if (!plot) return EMPTY;
     var bands = plot.plotState.getBands();
-    var fluxLabels = [];
-    for (var i = 0; i < 3; i++) {
-        if (i === 0 || bands.length === 3) {
+    var fluxLabels = [EMPTY_READOUT, EMPTY_READOUT, EMPTY_READOUT];
+    for (var i = 0; i < bands.length; i++) {
             fluxLabels[i] = showSingleBandFluxLabel(plot, bands[i]);
-        }
-        else {
-            fluxLabels[i] = EMPTY_READOUT;
-        }
     }
     return fluxLabels;
 
