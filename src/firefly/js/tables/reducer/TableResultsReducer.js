@@ -48,6 +48,14 @@ function removeTable(root, action) {
             root = update(root, {tables: {$set: changes}});
         }
     });
+
+    if (tbl_id === root.active) {
+        // active table have been remove. set it to the first available table
+        const first = Object.keys(root.tables)[0];
+        const newActiveId = first && root.tables[first].tbl_id;
+        root = update(root, {active: {$set: newActiveId}});
+    }
+
     return root;
 }
 

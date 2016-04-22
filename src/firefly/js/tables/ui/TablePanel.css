@@ -29,6 +29,13 @@
     flex-grow: 1;
 }
 
+.TablePanel__error {
+    position: relative;
+    flex-grow: 1;
+    align-self: center;
+    text-align: center;
+}
+
 .TablePanel__wrapper .border {
     border: 1px solid #b3b3b3;
     padding: 0 3px 3px 3px;

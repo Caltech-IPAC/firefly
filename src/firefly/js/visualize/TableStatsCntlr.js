@@ -104,10 +104,10 @@ export function reducer(state=getInitState(), action={}) {
             const newState = Object.assign({}, state);
             set(newState, tblId, {isTblLoaded});
             return newState;
-        case (TablesCntlr.TABLE_NEW)  :
-            const {tbl_id, tableMeta, request} = action.payload;
+        case (TablesCntlr.TABLE_NEW_LOADED)  :
+            const {tbl_id, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (TableUtil.isTableLoaded(action.payload) && !get(state, [tbl_id, 'isTblLoaded'])){
+                if (!get(state, [tbl_id, 'isTblLoaded'])){
                     const newState = Object.assign({}, state);
                     set(newState, tbl_id, {isTblLoaded:true});
                     action.sideEffect((dispatch) => fetchTblStats(dispatch,request));

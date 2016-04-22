@@ -298,7 +298,7 @@ export function getTblInfoById(tbl_id) {
 
 export function getTblInfo(tableModel) {
     if (!tableModel) return {};
-    var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo} = tableModel;
+    var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
     const pageSize = get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
     highlightedRow = highlightedRow < 0 || highlightedRow > totalRows ? 0 : highlightedRow;
@@ -307,7 +307,7 @@ export function getTblInfo(tableModel) {
     const startIdx = (currentPage-1) * pageSize;
     const endIdx = Math.min(startIdx+pageSize, totalRows) || startIdx ;
     var totalPages = Math.ceil((totalRows || 0)/pageSize);
-    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo};
+    return { tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow, selectInfo, error};
 }
 
 export function tableToText(columns, dataAry, showUnits=false) {

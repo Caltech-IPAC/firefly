@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isEmpty} from 'lodash';
+import {isEmpty, get} from 'lodash';
 import {getCellValue} from '../tables/TableUtil.js';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
@@ -116,8 +116,8 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
  */
 export function isMetaDataTable(tbl_id) {
     const table= findTblById(tbl_id);
-    if (!table) return false;
-    const {tableMeta}= table;
+    const tableMeta= get(table, 'tableMeta');
+    if (!tableMeta) return false;
 
     if (tableMeta[MetaConst.CATALOG_OVERLAY_TYPE] || tableMeta[MetaConst.CATALOG_COORD_COLS])  return false;
     const converter= converterFactory(table);

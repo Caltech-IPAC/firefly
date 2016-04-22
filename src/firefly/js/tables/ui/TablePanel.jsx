@@ -69,10 +69,13 @@ export class TablePanel extends Component {
     render() {
         const {selectable, expandable, expandedMode, border, renderers} = this.props;
         var {totalRows, request, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
-        const {startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
+        const {error, startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
             filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
-        if (isEmpty(columns))return <div style={{position: 'relative', flexGrow: 1}}><div className='loading-mask'/></div>;
+
+        if (error) return <div className='TablePanel__error'>{error}</div>;
+        if (isEmpty(columns))return <div style={{position: 'relative', flexGrow: 1}}><div msg='loading...' className='loading-mask'/></div>;
+
         const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
         const viewIcoStyle = 'tablepanel ' + (textView ? 'tableView' : 'textView');
         const origColumns = get(TblUtil.findTblById(this.tableConnector.tbl_id), 'tableData.columns');

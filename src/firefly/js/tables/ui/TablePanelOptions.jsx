@@ -131,7 +131,7 @@ function makeCallbacks(onChange, columns, origColumns, data) {
     };
 
     var onReset = () => {
-        onChange && onChange({pageSize: 50, showUnits: false, showFilters: false, columns: cloneDeep(origColumns)});
+        onChange && onChange({pageSize: 100, showUnits: false, showFilters: false, columns: cloneDeep(origColumns)});
     };
 
     return {onSelectAll, onRowSelect, onPageSize, onSort, onPropChanged, onReset};
