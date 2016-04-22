@@ -5,6 +5,8 @@
 import './TabPanel.css';
 import React, {Component, PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
+import Resizable from 'react-component-resizable';
+import {debounce} from 'lodash';
 import {fieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 
@@ -31,10 +33,15 @@ export class Tabs extends Component {
     constructor(props) {
         super(props);
         this.state= tabsStateFromProps(props);
+        this.onResize = debounce((size) => {
+            if (size) {
+                this.setState({widthPx: size.width});
+            }
+        }, 100);
     }
 
     componentWillReceiveProps(nextProps) {
-        this.state= tabsStateFromProps(nextProps);
+        this.state= Object.assign({widthPx:this.state.widthPx}, tabsStateFromProps(nextProps));
     }
     
     shouldComponentUpdate(np, ns) {
@@ -58,15 +65,19 @@ export class Tabs extends Component {
     }
 
     render () {
-        var { selectedIdx}= this.state;
+        var { selectedIdx, widthPx}= this.state;
+        const numTabs = this.props.children.length;
+        const maxTabWidth = widthPx && numTabs && Math.trunc(widthPx/numTabs-20);
+
         var content;
-        selectedIdx = Math.min(selectedIdx, this.props.children.length-1);
+        selectedIdx = Math.min(selectedIdx, numTabs-1);
         var children = React.Children.map(this.props.children, (child, index) => {
                 if (index === selectedIdx) {
                     content = React.Children.only(child.props.children);
                 }
 
                 return React.cloneElement(child, {
+                    maxTabWidth,
                     selected: (index == selectedIdx),
                     onSelect: this.onSelect.bind(this, index),
                     ref: 'tab-' + (index++)
@@ -75,9 +86,11 @@ export class Tabs extends Component {
         return (
             <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden'}}>
                 <div style={{flexGrow: 0, height: 18}}>
-                    <ul className='TabPanel__Tabs'>
-                        {children}
-                    </ul>
+                    <Resizable id='tabs-resizer' style={{position: 'relative', width: '100%', height: '100%', overflow: 'hidden'}} onResize={this.onResize}>
+                        <ul className='TabPanel__Tabs'>
+                            {children}
+                        </ul>
+                    </Resizable>
                 </div>
                 <div ref='contentRef' className='TabPanel__Content'>{(content)?content:''}</div>
             </div>
@@ -115,15 +128,28 @@ export class Tab extends Component {
     }
 
     render () {
-        const {name, selected, onSelect, removable, onTabRemove,id} = this.props;
+        if (!this.props.maxTabWidth) {return null;} // will render when width is available
+
+        const {name, maxTabWidth, selected, onSelect, removable, onTabRemove, id} = this.props;
+
         var tabClassName = 'TabPanel__Tab' ;
         if (selected) {
             tabClassName += ' TabPanel__Tab--selected';
         }
 
+        const nameDivProps = {
+            className: 'ellipsis',
+            title: name,
+            onClick: () => onSelect(id,name)
+        };
+        // 2*6px - padding, 2*1px - border, 12px - btn
+        if (maxTabWidth) { nameDivProps.style = {maxWidth: (maxTabWidth-25)+'px'}; }
+
         return (
             <li className={tabClassName}>
-                <div style={{display: 'inline-block'}} onClick={() => onSelect(id,name)} >{name}</div>
+                <div {...nameDivProps}>
+                     {name}
+                </div>
                 {removable &&
                         <div style={{right: -5, top: -2}} className='btn-close'
                              title='Remove Tab'
@@ -141,6 +167,7 @@ Tab.propTypes= {
     id: PropTypes.string,
     selected:  PropTypes.bool.isRequired, // private - true is the tab is currently selected
     onSelect: PropTypes.func, // private - called whenever the tab is clicked
+    maxTabWidth: PropTypes.number, // private - set in parent
     removable: PropTypes.bool,
     onTabRemove: PropTypes.func
 };
