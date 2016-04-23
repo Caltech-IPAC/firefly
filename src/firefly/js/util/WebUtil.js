@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import isBlank from 'underscore.string/isBlank';
-import {get, isObject, union, isFunction, isEqual} from 'lodash';
+import {get, isObject, union, isFunction, isEqual, isNil} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -294,7 +294,7 @@ export function deepDiff(o1, o2, p) {
 export function setCookie(name, value, options = {}) {
     var str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
 
-    if (value == null) options.maxage = -1;
+    if (isNil(value)) options.maxage = -1;
 
     if (options.maxage) {
         options.expires = new Date(+new Date() + options.maxage);
@@ -309,8 +309,8 @@ export function setCookie(name, value, options = {}) {
 }
 
 export function getCookie(name) {
-    var cookies = parseCookies(document.cookie);
-    return !!name ? cookies : cookies[name];
+    const cookies = parseCookies(document.cookie);
+    return name ? cookies[name] : cookies;
 }
 
 function parseCookies(str) {

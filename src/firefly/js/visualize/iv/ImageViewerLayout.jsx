@@ -153,7 +153,7 @@ export class ImageViewerLayout extends Component {
         var {plotView:pv}= this.props;
         var {viewDim:{width,height}}= pv;
         var insideStuff;
-        var plotShowing= width && height && primePlot(this.props.plotView);
+        var plotShowing= Boolean(width && height && primePlot(this.props.plotView));
 
         if (plotShowing) {
             insideStuff= this.renderInside();

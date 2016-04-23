@@ -3,6 +3,7 @@
  */
 
 import React, {Component,PropTypes} from 'react';
+import {omit} from 'lodash';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
 
 const statusContainer= {
@@ -61,6 +62,15 @@ export class ImageViewerStatus extends Component {
         if (!messageShowing || !maskShowing) this.manageTimer();
     }
 
+
+    componentDidMount() {
+        this.iAmMounted= true;
+    }
+    
+    componentWillUnmount() {
+        this.iAmMounted= false;
+    }
+
     manageTimer() {
         const {messageWaitTimeMS=0, maskWaitTimeMS=0} = this.props;
         var timeOuts= [];
@@ -70,7 +80,7 @@ export class ImageViewerStatus extends Component {
 
         const handleTimeout= () => {
             const timeout= timeOuts.shift();
-            this.setState({[timeout.name]:true});
+            if (this.iAmMounted) this.setState({[timeout.name]:true});
             if (timeOuts[0]) window.setTimeout( handleTimeout, timeOuts[0].wait);
         };
 
@@ -81,8 +91,10 @@ export class ImageViewerStatus extends Component {
         const {message,working,useMessageAlpha=false, canClear=false, clearCB} = this.props;
         const {messageShowing, maskShowing}= this.state;
 
-        const workingStatusText= useMessageAlpha ? statusTextAlpha : statusText;
+        var workingStatusText= useMessageAlpha ? statusTextAlpha : statusText;
         const workingStatusTextCell= canClear ? statusTextCellWithClear : statusTextCell;
+
+        if (!working && !canClear) workingStatusText= omit(workingStatusText,'zIndex');
 
         return (
             <div style={statusContainer}>
@@ -107,7 +119,7 @@ ImageViewerStatus.propTypes= {
     working : PropTypes.bool.isRequired,
     messageWaitTimeMS : PropTypes.number,
     maskWaitTimeMS : PropTypes.number,
-    useMessageAlpha : PropTypes.boolean,
-    canClear : PropTypes.boolean,
+    useMessageAlpha : PropTypes.bool,
+    canClear : PropTypes.bool,
     clearCB : PropTypes.string
 };

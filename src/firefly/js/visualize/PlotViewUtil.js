@@ -262,7 +262,7 @@ export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string')
 export function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
     const p= primePlot(pv);
-    const pvStateAry= p ? [primePlot(pv).plotState] : [];
+    const pvStateAry= p ? [p.plotState] : [];
     return [...pvStateAry, ...overlayStates];
 }
 
