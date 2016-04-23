@@ -43,6 +43,8 @@ import {dispatchAddImages,getAViewFromMultiView,getMultiViewRoot} from '../visua
 import WebPlotRequest from '../visualize/WebPlotRequest.js';
 import {dispatchPlotImage} from '../visualize/ImagePlotCntlr.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
+import {Region} from '../visualize/region/Region.js';
+import {RegionFactory} from '../visualize/region/RegionFactory.js';
 
 const options= [
     {label: 'AllWISE Source Catalog', value:'wise_allwise_p3as_psd', proj:'WISE'},
@@ -454,6 +456,14 @@ function doRegionLoad(request) {
         .then( (result) => {
             console.log(result);
 
+            try {
+                if (result.RegionData) {
+                    var rgAry = RegionFactory.parseRegionJson(result.RegionData);  // todo: region drawing
+                }
+            }
+            catch(e) {
+                console.log(e.message);
+            }
         });
     console.log('load region');
     
