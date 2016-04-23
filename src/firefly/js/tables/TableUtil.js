@@ -278,29 +278,22 @@ export function sortTable(origTableModel, sortInfoStr) {
     return tableModel;
 }
 
-
-export function gatherTableState(tableModel) {
-    var {tbl_id, highlightedRow} = tableModel;
-
-    const pageSize = get(tableModel, 'request.pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
-    const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
-    const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;
-    const startIdx = (currentPage-1) * pageSize;
-    const endIdx = Math.min(startIdx+pageSize, tableModel.totalRows) || startIdx ;
-    var totalPages = Math.ceil((tableModel.totalRows || 0)/pageSize);
-    return {tbl_id, startIdx, endIdx, hlRowIdx, currentPage, pageSize,totalPages, highlightedRow};
-}
-
 export function getTblInfoById(tbl_id) {
     const tableModel = findTblById(tbl_id);
     return Object.assign(getTblInfo(tableModel), {tableModel});
 }
 
-export function getTblInfo(tableModel) {
+/**
+ * collects all available table information given the tableModel.
+ * @param tableModel
+ * @param aPageSize  use this pageSize instead of the one in the request.
+ * @returns {*}
+ */
+export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
     var {tbl_id, request, highlightedRow, totalRows, tableMeta={}, selectInfo, error} = tableModel;
     const {title} = tableMeta;
-    const pageSize = get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    const pageSize = aPageSize || get(request, 'pageSize', 1);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
     highlightedRow = highlightedRow < 0 || highlightedRow > totalRows ? 0 : highlightedRow;
     const currentPage = highlightedRow >= 0 ? Math.floor(highlightedRow / pageSize)+1 : 1;
     const hlRowIdx = highlightedRow >= 0 ? highlightedRow % pageSize : 0;

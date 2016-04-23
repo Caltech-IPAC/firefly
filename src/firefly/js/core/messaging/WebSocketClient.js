@@ -87,7 +87,7 @@ function onClose(event) {
 
 function onMessage(event) {
     const eventData = event.data && JSON.parse(event.data);
-    console.log('ws message: ' + JSON.stringify(eventData));
+    // console.log('ws message: ' + JSON.stringify(eventData));
 
     listenters.forEach( (l) => {
        if (!l.matches || l.matches(eventData)) {
