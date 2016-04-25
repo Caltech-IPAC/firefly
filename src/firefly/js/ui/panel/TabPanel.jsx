@@ -100,7 +100,7 @@ export class Tabs extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        this.state= Object.assign(tabsStateFromProps(nextProps));
+        this.state= tabsStateFromProps(nextProps);
     }
     
     shouldComponentUpdate(np, ns) {
@@ -188,7 +188,7 @@ export class Tab extends Component {
 
         return (
             <li className={tabClassName}>
-                <div className='ellipsis' title={name} onClick={() => onSelect(id,name)}>
+                <div className='text-ellipsis' title={name} onClick={() => onSelect(id,name)}>
                      {name}
                 </div>
                 {removable &&
