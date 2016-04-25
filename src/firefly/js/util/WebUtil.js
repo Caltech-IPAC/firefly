@@ -120,8 +120,8 @@ export const encodeServerUrl= function(url, params) {
  * This function applies default behaviors before fetching.
  * options.params is a custom property used to carry a set of parameters.  It does not need to
  *                be encoded.  Base on the method used, it will be handled internally.
- * options.method can be one of get, post, or file-upload
- *                when 'file-upload', it will post with 'multipart/form-data' encoding.
+ * options.method can be one of get, post, or multipart
+ *                when 'multipart', it will post with 'multipart/form-data' encoding.
  *
  * @param url
  * @param options
@@ -153,7 +153,7 @@ export function fetchUrl(url, options, returnAllResponses= false) {
                 if (options.method.toLowerCase() === 'post') {
                     options.headers['Content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
                     options.body = encodeParams(options.params);
-                } else if (options.method.toLowerCase() === 'file-upload') {
+                } else if (options.method.toLowerCase() === 'multipart') {
                     options.method = 'post';
                     var data = new FormData();
                     Object.keys(options.params).forEach( (key) => {

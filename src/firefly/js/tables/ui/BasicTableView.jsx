@@ -191,7 +191,6 @@ function makeColumns ({columns, columnWidths, data, selectable, showUnits, showF
 
         return (
             <Column
-                key={col.name}
                 columnKey={col.name}
                 header={<HeadRenderer {...{col, showUnits, showFilters, filterInfoCls, sortInfoCls, onSort, onFilter}} />}
                 cell={<CellRenderer data={data} col={idx} />}

@@ -3,9 +3,8 @@
  */
 
 import update from 'react-addons-update';
-import {set, has, omit, omitBy, get, isEmpty, isUndefined, cloneDeep} from 'lodash';
+import {set, has, get, isEmpty, cloneDeep} from 'lodash';
 
-import {flux} from '../../Firefly.js';
 import * as Cntlr from '../TablesCntlr.js';
 import * as TblUtil from '../TableUtil.js';
 
@@ -17,10 +16,7 @@ export function uiReducer(state={ui:{}}, action={}) {
     const {tbl_ui_id, tbl_id} = action.payload;
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
-            if (tbl_ui_id) {
-                const changes = set({}, [tbl_ui_id], action.payload);
-                return TblUtil.smartMerge(root, changes);
-            } else return state;
+            return updateAllUi(root, tbl_id, tbl_ui_id, action.payload);
         case (Cntlr.TABLE_REMOVE)    :
             return removeTable(root, action);
 
@@ -30,12 +26,9 @@ export function uiReducer(state={ui:{}}, action={}) {
         case (Cntlr.TABLE_NEW)    :
         case (Cntlr.TABLE_UPDATE) :
         case (Cntlr.TABLE_REPLACE):
-            // state is in-progress(fresh) data.. use it to reduce ui state.
-            return uiStateReducer(root, get(state, ['data', tbl_id]));
-
         case (Cntlr.TABLE_SELECT)  :
+        case (Cntlr.TABLE_NEW_LOADED)  :
         case (Cntlr.TABLE_HIGHLIGHT)  :
-        case (Cntlr.TABLE_LOAD_STATUS)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
             return uiStateReducer(root, get(state, ['data', tbl_id]));
 
@@ -60,14 +53,15 @@ function removeTable(root, action) {
 /*---------------------------- utils -----------------------------*/
 
 function uiStateReducer(ui, tableModel) {
-    if (!get(tableModel, 'tableData')) return ui;
+    // if (!get(tableModel, 'tableData')) return ui;
     const {startIdx, endIdx, ...others} = TblUtil .getTblInfo(tableModel);
-    var data = tableModel.tableData.data.slice(startIdx, endIdx);
-    var tableRowCount = data.length;
     const filterInfo = get(tableModel, 'request.filters');
     const filterCount = filterInfo ? filterInfo.split(';').length : 0;
     const sortInfo = get(tableModel, 'request.sortInfo');
     const showLoading = !TblUtil.isTableLoaded(tableModel);
+
+    var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
+    var tableRowCount = data.length;
 
     var uiData = {startIdx, endIdx, tableRowCount, sortInfo, filterInfo, filterCount, data, showLoading, ...others};
 
@@ -79,7 +73,21 @@ function uiStateReducer(ui, tableModel) {
         ui = update(ui, {$merge: {[tbl_ui_id]: uiData}});
     });
     return ui;
+}
 
+function updateAllUi(ui, tbl_id, tbl_ui_id, payload) {
+    if (tbl_ui_id) {
+        const changes = set({}, [tbl_ui_id], payload);
+        return TblUtil.smartMerge(ui, changes);
+    } else {
+        Object.keys(ui).filter( (ui_id) => {
+            return get(ui, [ui_id, 'tbl_id']) === tbl_id;
+        }).forEach( (tbl_ui_id) => {
+            const changes = set({}, [tbl_ui_id], payload);
+            ui = TblUtil.smartMerge(ui, changes);
+        });
+    }
+    return ui;
 }
 
 const ensureColumns = ({tableModel, columns}) => {

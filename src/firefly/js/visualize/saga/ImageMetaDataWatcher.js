@@ -10,7 +10,7 @@ import {TABLE_NEW,TABLE_SELECT,TABLE_HIGHLIGHT,
 import ImagePlotCntlr, {visRoot, dispatchPlotImage, dispatchDeletePlotView,
                         dispatchPlotGroup, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {REINIT_RESULT_VIEW} from '../../core/AppDataCntlr.js';
-import {findTblById,gatherTableState, getActiveTableId} from '../../tables/TableUtil.js';
+import {findTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {dispatchReplaceImages, dispatchUpdateCustom, getViewerPlotIds,
                         getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE} from '../MultiViewCntlr.js';
@@ -117,6 +117,8 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
     if (!tbl_id) return [];
     var reqRet;
     const table= findTblById(tbl_id);
+    // check to see if tableData is available in this range.
+    if (!isTblDataAvail(table.highlightedRow, table.highlightedRow+1, table)) return [];
     const viewer= getViewer(getMultiViewRoot(),viewerId);
     if (!table) return [];
 
@@ -137,7 +139,7 @@ function updateImagePlots(tbl_id, viewerId, layoutChange=false) {
         }
     }
 
-    const tabState= gatherTableState(table);
+    const tabState= getTblInfo(table);
     const {highlightedRow}= tabState;
 
     if (layoutChange && viewer.layout===SINGLE && !isEmpty(viewer.plotIdAry)) {

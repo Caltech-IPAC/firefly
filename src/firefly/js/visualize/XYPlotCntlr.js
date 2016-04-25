@@ -4,7 +4,7 @@ import update from 'react-addons-update';
 import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
 
 
-import {doFetchTable, isTableLoaded, findTblById} from '../tables/TableUtil.js';
+import {doFetchTable, findTblById} from '../tables/TableUtil.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {serializeDecimateInfo} from '../tables/Decimate.js';
 import {logError} from '../util/WebUtil.js';
@@ -130,20 +130,15 @@ function stateWithNewData(tblId, state, newProps) {
 
 export function reducer(state={}, action={}) {
     switch (action.type) {
-        case (TablesCntlr.TABLE_NEW)  :
-        case (TablesCntlr.TABLE_LOAD_STATUS)  :
+        case (TablesCntlr.TABLE_NEW_LOADED)  :
         {
-            // in both cases action.payload contains tableMeta, but request is not present in TABLE_LOAD_STATUS
             var {tbl_id, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (isTableLoaded(action.payload)) {
-                    if (!request) {request = findTblById(tbl_id).request;}
-                    // use xyPlotParams with cleared selection box
-                    const prevXyPlotParams = state[tbl_id].xyPlotParams;
-                    const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
-                        update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
-                    action.sideEffect((dispatch) => debouncedFetchPlotData(dispatch, request, xyPlotParamsNext));
-                }
+                // use xyPlotParams with cleared selection box
+                const prevXyPlotParams = state[tbl_id].xyPlotParams;
+                const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
+                    update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
+                action.sideEffect((dispatch) => debouncedFetchPlotData(dispatch, request, xyPlotParamsNext));
             }
             return state;
         }
