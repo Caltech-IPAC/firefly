@@ -3,10 +3,11 @@
  */
 
 
-import React, {PropTypes} from 'react';
+import React, {Component,PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import {get} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
-import {ExpandType} from '../ImagePlotCntlr.js';
+import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
 import {VisInlineToolbarView} from './../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot} from '../PlotViewUtil.js';
@@ -207,80 +208,99 @@ function makeTitleLineHeader(annoOps, expandedMode,titleStr, zoomFactor, plotSta
 //---------- React Components -----------------------------------------------
 //===========================================================================
 
-export function ImageViewerDecorate({plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,width,height}) {
-
-    if (!width || !height) return <div></div>;
-
-    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
-    const top= ctxToolbar?32:0;
-    var title, zoomFactor;
-    var titleLineHeader= null;
-    var inlineTitle= null;
-    var plotId= null;
-    var plotState= null;
-    const {expandedMode}= visRoot;
-    const expandedToSingle= (expandedMode===ExpandType.SINGLE);
-    const iWidth= expandedToSingle ? width : width-4;
-    const iHeight=expandedToSingle ? height-top :height-5-top;
-    const plot= primePlot(pv);
-
-    if (plot) {
-        title= plot ? plot.title : '';
-        zoomFactor= plot.zoomFactor;
-        plotState= plot.plotState;
-        plotId= plot.plotId;
-        titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
-        inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
-
+export class ImageViewerDecorate extends Component {
+    constructor(props) {
+        super(props);
+        this.makeActive= this.makeActive.bind(this);
     }
 
-    var outerStyle= {
-        width: '100%',
-        height: '100%',
-        overflow:'hidden',
-        position:'relative',
-    };
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); } //todo: look at closely for optimization
 
 
-    var innerStyle= {
-        width:'calc(100% - 4px)',
-        bottom: 0,
-        top: titleLineHeader ? 20 : 0,
-        overflow: 'hidden',
-        position: 'absolute',
-        borderStyle: 'solid',
-        borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
-        borderColor: getBorderColor(pv,visRoot)
-    };
 
-    if (titleLineHeader) {
-        outerStyle.boxShadow= 'inset 0 0 3px #000';
-        outerStyle.padding= '3px';
-        outerStyle.width='calc(100% - 6px)';
-        outerStyle.height='calc(100% - 6px)';
-        innerStyle.bottom= 2;
-        innerStyle.width= 'calc(100% - 10px)';
+    makeActive(ev) {
+        const plotId= get(this.props,'plotView.plotId');
+        if (plotId) dispatchChangeActivePlotView(plotId);
     }
 
+    render() {
+        const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId,width,height}= this.props;
 
-    return (
-        <div style={outerStyle} className='disable-select'>
-            {titleLineHeader}
-            <div className='image-viewer-decorate' style={innerStyle}>
-                {ctxToolbar}
-                <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
-                    <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
-                                       width={iWidth} height={iHeight}
-                                       externalWidth={width} externalHeight={height}/>
-                    {inlineTitle}
-                    {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId)}
+        if (!width || !height) return false;
+
+        const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList);
+        const top= ctxToolbar?32:0;
+        var title, zoomFactor;
+        var titleLineHeader= null;
+        var inlineTitle= null;
+        var plotId= null;
+        var plotState= null;
+        const {expandedMode}= visRoot;
+        const expandedToSingle= (expandedMode===ExpandType.SINGLE);
+        const iWidth= expandedToSingle ? width : width-4;
+        const iHeight=expandedToSingle ? height-top :height-5-top;
+        const plot= primePlot(pv);
+
+        if (plot) {
+            title= plot ? plot.title : '';
+            zoomFactor= plot.zoomFactor;
+            plotState= plot.plotState;
+            plotId= plot.plotId;
+            titleLineHeader= makeTitleLineHeader(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
+            inlineTitle= makeInlineTitle(pv.options.annotationOps,expandedMode, title, zoomFactor,plotState,plotId);
+        }
+
+        var outerStyle= {
+            width: '100%',
+            height: '100%',
+            overflow:'hidden',
+            position:'relative',
+        };
+
+
+        var innerStyle= {
+            width:'calc(100% - 4px)',
+            bottom: 0,
+            top: titleLineHeader ? 20 : 0,
+            overflow: 'hidden',
+            position: 'absolute',
+            borderStyle: 'solid',
+            borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
+            borderColor: getBorderColor(pv,visRoot)
+        };
+
+        if (titleLineHeader) {
+            outerStyle.boxShadow= 'inset 0 0 3px #000';
+            outerStyle.padding= '3px';
+            outerStyle.width='calc(100% - 6px)';
+            outerStyle.height='calc(100% - 6px)';
+            innerStyle.bottom= 2;
+            innerStyle.width= 'calc(100% - 10px)';
+        }
+
+
+        return (
+            <div style={outerStyle} className='disable-select'
+                 onTouchStart={this.makeActive}
+                 onClick={this.makeActive}
+            >
+                {titleLineHeader}
+                <div className='image-viewer-decorate' style={innerStyle}>
+                    {ctxToolbar}
+                    <div style={{position: 'absolute', width:'100%', top, bottom:0}}>
+                        <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
+                                                      width={iWidth} height={iHeight}
+                                                      externalWidth={width} externalHeight={height}/>
+                        {inlineTitle}
+                        {makeInlineRightToolbar(visRoot,pv,drawLayersAry,mousePlotId)}
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
 
-//{makeInlineTitle(visRoot,pv)}
+    }
+
+}
 
 ImageViewerDecorate.propTypes= {
     plotView : PropTypes.object.isRequired,
@@ -291,4 +311,5 @@ ImageViewerDecorate.propTypes= {
     width : PropTypes.number.isRequired,
     height : PropTypes.number.isRequired
 };
+
 

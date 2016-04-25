@@ -30,7 +30,7 @@ const loadErrorMsg = {
 
 function *newPlotIdMaker() {
     var imgNo = 0;
-    const plotName = 'SELECTIMAGEPANEL_imgPlot';
+    const plotName = 'ImPanel_';
 
     while (true) {
         yield `${plotName}${(++imgNo)}`;

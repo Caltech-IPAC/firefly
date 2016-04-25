@@ -1,6 +1,7 @@
 /**
  * Created by loi on 1/19/16.
  */
+import {setCookie} from '../../util/WebUtil.js';
 
 var nRetries = 0;
 var pinger;
@@ -87,13 +88,20 @@ function onClose(event) {
 
 function onMessage(event) {
     const eventData = event.data && JSON.parse(event.data);
-    // console.log('ws message: ' + JSON.stringify(eventData));
+    if (eventData) {
+        // console.log('ws message: ' + JSON.stringify(eventData));
+        if (eventData.name === 'EVT_CONN_EST') {
+            // connection established.. doing handshake.
+            const sEventInfo = eventData.data.connID + '_' + eventData.data.channel;
+            setCookie('seinfo', sEventInfo);
+        }
+        listenters.forEach( (l) => {
+            if (!l.matches || l.matches(eventData)) {
+                l.onEvent(eventData);
+            }
+        });
+    }
 
-    listenters.forEach( (l) => {
-       if (!l.matches || l.matches(eventData)) {
-           l.onEvent(eventData);
-       }
-    });
 }
 
 

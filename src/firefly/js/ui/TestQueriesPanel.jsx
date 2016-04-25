@@ -14,7 +14,7 @@
 // ----------------------------------------------------------------------------
 
 import React, {Component, PropTypes} from 'react';
-import {get} from 'lodash';
+import {get,omit} from 'lodash';
 
 import FormPanel from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
@@ -23,6 +23,7 @@ import {IbeSpacialType} from './IbeSpacialType.jsx';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {InputGroup} from '../ui/InputGroup.jsx';
 import {ServerParams} from '../data/ServerParams.js';
+import {showInfoPopup} from './PopupUtil.jsx';
 
 import Validate from '../util/Validate.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
@@ -283,6 +284,11 @@ function renderImagesTab() {
 
 function onSearchSubmit(request) {
     console.log(request);
+    const wp= parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
+    if (!wp) {
+        showInfoPopup('Target is required');
+        return;
+    }
     if (request.Tabs==='catalog') {
         doCatalog(request);
     }
@@ -396,28 +402,32 @@ function doImages(request) {
 
 
 const schemaParams= {
-    'allwise-multiband':  {ImageSet:'allwise-multiband', ProductLevel:'3a' } ,
-    'allsky_4band-1b':  {ImageSet:'allsky-4band', ProductLevel:'1b' },
-    'allsky_4band-3a':  {ImageSet:'allsky-4band', ProductLevel:'3a' },
-    'cryo_3band-1b':  {ImageSet:'cryo_3band', ProductLevel:'1b' },
-    'cryo_3band-1b-3a': {ImageSet:'cryo_3band', ProductLevel:'3a' },
-    'postcryo-1b':  {ImageSet:'postcryo', ProductLevel:'1b'  },
-    'neowiser-1b':  {ImageSet:'neowiser', ProductLevel:'1b'  },
+    'allwise-multiband':  {ImageSet:'allwise-multiband', ProductLevel:'3a', title:'AllWISE' } ,
+    'allsky_4band-1b':  {ImageSet:'allsky-4band', ProductLevel:'1b', title:'AllSky - Single' },
+    'allsky_4band-3a':  {ImageSet:'allsky-4band', ProductLevel:'3a', title:'AllSky - Atlas' },
+    'cryo_3band-1b':  {ImageSet:'cryo_3band', ProductLevel:'1b' , title:'3-Band Single'},
+    'cryo_3band-1b-3a': {ImageSet:'cryo_3band', ProductLevel:'3a', title:'3-Band Atlas' },
+    'postcryo-1b':  {ImageSet:'postcryo', ProductLevel:'1b' , title:'Post-Cryo'},
+    'neowiser-1b':  {ImageSet:'neowiser', ProductLevel:'1b', title:'NeoWISER'  }
 };
 
 
 function doWise(request) {
     console.log('wise',request);
+    var tgtName= '';
+    const wp= parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
+    if (wp.getObjName()) tgtName= ', ' +wp.getObjName();
     const reqParams= Object.assign({
         [ServerParams.USER_TARGET_WORLD_PT] : request[ServerParams.USER_TARGET_WORLD_PT],
         mission: 'wise',
         id: 'ibe_processor',
-        title: 'WISE-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        // title: 'WISE-' + request[ServerParams.USER_TARGET_WORLD_PT],
+        title: `${schemaParams[request.wiseDataSet].title}${tgtName}`,
         intersect: request.intersect,
         mcenter:  (request.intersect==='CENTER' || request.intersect==='COVERS') ? request.mcenter : 'all',
         size: request.size,
         subsize: request.subsize,
-        band : request.wiseBands
+        band : request.wisebands
     }, schemaParams[request.wiseDataSet]);
     
     dispatchTableSearch(TableRequest.newInstance(reqParams));

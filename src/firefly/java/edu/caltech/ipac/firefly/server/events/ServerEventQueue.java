@@ -69,16 +69,18 @@ public class ServerEventQueue {
                 return false;
             }
 
-            if (!StringUtils.isEmpty(evTarget.getConnID()) && !evTarget.getConnID().equals(connID)) {
-                return false;
+            ServerEvent.Scope scope = sEvent.getTarget().getScope();
+            if (scope == ServerEvent.Scope.CHANNEL) {
+                return !StringUtils.isEmpty(evTarget.getChannel()) && evTarget.getChannel().equals(channel);
+            } else if (scope == ServerEvent.Scope.SELF){
+                return !StringUtils.isEmpty(evTarget.getConnID()) && evTarget.getConnID().equals(connID);
+            } else if (scope == ServerEvent.Scope.WORLD){
+                return true;
             }
-            if (!StringUtils.isEmpty(evTarget.getChannel()) && !evTarget.getChannel().equals(channel)) {
-                return false;
-            }
-            return true;
         } catch (Exception e) {
-            return false;
+            LOG.warn(e, "fail to match ServerEvent:" + sEvent);
         }
+        return false;
     }
 
     public static String convertToJson(ServerEvent ev) {

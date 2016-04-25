@@ -13,8 +13,6 @@ public interface DownloadListener extends EventListener {
     public abstract void dataDownloading(DownloadEvent ev);
     public abstract void beginDownload(DownloadEvent ev);
     public abstract void downloadCompleted(DownloadEvent ev);
-    public abstract void downloadAborted(DownloadEvent ev);
-    public abstract void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException;
 }
 
 

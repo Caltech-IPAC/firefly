@@ -43,11 +43,10 @@ public class RequestOwner implements Cloneable {
     private String host;
     private String referrer;
     private HashMap<String, Object> attributes = new HashMap<String, Object>();
-    // ------ these are lazy-load variables.. make sure you access it via getter. --------
-    private String userKey;
     private String eventChannel;
     private String eventConnID;
-
+    // ------ these are lazy-load variables.. make sure you access it via getter. --------
+    private String userKey;
     private WorkspaceManager wsManager;
 
     //------------------------------------------------------------------------------------
@@ -71,8 +70,10 @@ public class RequestOwner implements Cloneable {
         String sei = requestAgent.getCookie("seinfo");
         if (!StringUtils.isEmpty(sei)) {
             String [] parts =  sei.split("_");
-            eventConnID = parts[0];
-            eventChannel = parts[1];
+            if (parts.length > 1) {
+                eventConnID = parts[0];
+                eventChannel = parts[1];
+            }
         }
     }
 
@@ -177,13 +178,17 @@ public class RequestOwner implements Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         RequestOwner ro = new RequestOwner(getUserKey(), startTime);
-        ro.requestAgent = requestAgent;
+        ro.setRequestAgent(requestAgent);
         ro.workingDir = workingDir;
         ro.attributes = (HashMap<String, Object>) attributes.clone();
         ro.userInfo = userInfo;
         ro.referrer = referrer;
         ro.host = host;
         ro.wsManager = wsManager;
+        ro.userKey = userKey;
+        ro.eventChannel = eventChannel;
+        ro.eventConnID = eventConnID;
+
         return ro;
     }
 

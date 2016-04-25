@@ -3,13 +3,12 @@
  */
 package edu.caltech.ipac.firefly.server.visualize;
 
+import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.util.download.DownloadEvent;
 import edu.caltech.ipac.util.download.DownloadListener;
 import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.VetoDownloadException;
-import edu.caltech.ipac.firefly.server.packagedata.FileInfo;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.net.AnyFitsParams;
 import edu.caltech.ipac.visualize.net.VisNetwork;
 
@@ -69,7 +68,9 @@ public class LockingVisNetwork {
             }
             synchronized (lockKey) {
                 DownloadListener dl = null;
-                if (params.getStatusKey() != null) dl = new DownloadProgress(params.getStatusKey());
+                if (params.getStatusKey() != null) {
+                    dl = new DownloadProgress(params.getStatusKey(), params.getPlotid());
+                }
                 edu.caltech.ipac.util.download.FileData fd = VisNetwork.getImage(params, dl);
                 File fitsFile = fd.getFile();
                 if (unzip) fitsFile = unzip(fitsFile);
@@ -98,9 +99,11 @@ public class LockingVisNetwork {
     private static class DownloadProgress implements DownloadListener {
 
         private final String _key;
+        private final String _plotId;
 
-        DownloadProgress(String key) {
+        DownloadProgress(String key, String plotId) {
             _key = key;
+            _plotId = plotId;
         }
 
         public void dataDownloading(DownloadEvent ev) {
@@ -110,17 +113,13 @@ public class LockingVisNetwork {
                     offStr = " of " + FileUtil.getSizeAsString(ev.getMax());
                 }
                 String messStr = "Downloaded " + FileUtil.getSizeAsString(ev.getCurrent()) + offStr;
-                PlotServUtils.updateProgress(_key, ProgressStat.PType.DOWNLOADING, messStr);
+                PlotServUtils.updateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
             }
         }
 
         public void beginDownload(DownloadEvent ev) {/*not used*/ }
 
         public void downloadCompleted(DownloadEvent ev) {/*not used*/ }
-
-        public void downloadAborted(DownloadEvent ev) {/*not used*/ }
-
-        public void checkDataDownloading(DownloadEvent ev) throws VetoDownloadException {/*not used*/ }
     }
 
 }

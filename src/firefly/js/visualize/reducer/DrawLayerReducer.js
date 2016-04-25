@@ -153,6 +153,7 @@ function detachLayerFromPlot(drawLayer,action,factory) {
 
 
 function detachPerPlotData(drawData, plotId) {
+    if (!drawData) return null;
     var highlightData= null;
     var selectIdxs= drawData.selectIdxs;
 

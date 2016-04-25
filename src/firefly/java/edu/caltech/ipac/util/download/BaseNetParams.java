@@ -15,11 +15,17 @@ package edu.caltech.ipac.util.download;
 public abstract class BaseNetParams implements  NetParams {
 
     public final String _statusKey;
+    public final String _plotId;
 
 
-    public BaseNetParams() {this(null);}
+    public BaseNetParams() {this(null,null);}
 
-    public BaseNetParams(String statusKey) {_statusKey= statusKey;}
+    public BaseNetParams(String statusKey) {this(statusKey,null);}
+
+    public BaseNetParams(String statusKey, String plotId) {
+        _statusKey= statusKey;
+        _plotId= plotId;
+    }
 
     public abstract String getUniqueString();
 
@@ -43,6 +49,7 @@ public abstract class BaseNetParams implements  NetParams {
     public String toString() { return getUniqueString(); }
 
     public String getStatusKey() { return _statusKey; }
+    public String getPlotid() { return _plotId; }
 
 }
 
