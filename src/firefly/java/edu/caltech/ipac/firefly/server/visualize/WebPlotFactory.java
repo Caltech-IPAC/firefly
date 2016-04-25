@@ -40,10 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.visualize.Band.BLUE;
-import static edu.caltech.ipac.firefly.visualize.Band.GREEN;
-import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
-import static edu.caltech.ipac.firefly.visualize.Band.RED;
+import static edu.caltech.ipac.firefly.visualize.Band.*;
 
 /**
  * @author Trey Roby
@@ -193,6 +190,7 @@ public class WebPlotFactory {
 
 
         long start = System.currentTimeMillis();
+        WebPlotRequest saveRequest = requestMap.values().iterator().next();
         WebPlotInitializer retval[];
         if (requestMap.size() == 0) {
             throw new FailedRequestException("Could not create plot", "All WebPlotRequest are null");
@@ -208,10 +206,10 @@ public class WebPlotFactory {
             // ------------ Iterate through results, Prepare the return objects, including PlotState if it is null
             ImagePlotInfo pInfo[]= allPlots.getPlotInfoAry();
             retval = new WebPlotInitializer[pInfo.length];
-            String saveProgressKey= null;
             for (int i = 0; (i < pInfo.length); i++) {
                 ImagePlotInfo pi = pInfo[i];
-                if (i==0) saveProgressKey= pi.getState().getWebPlotRequest().getProgressKey();
+                if (i==0) saveRequest= pi.getState().getWebPlotRequest();
+
                 if (pInfo.length>3) {
                     PlotServUtils.updateProgress(pi.getState().getWebPlotRequest(), ProgressStat.PType.CREATING,
                                                  PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
@@ -232,25 +230,34 @@ public class WebPlotFactory {
                 retval[i] = makePlotResults(pi, (i < 3 || i > pInfo.length - 3), allPlots.getZoomChoice());
             }
 
-            if (saveProgressKey!=null) PlotServUtils.updateProgress(saveProgressKey, ProgressStat.PType.SUCCESS, "Success");
+            if (saveRequest!=null) {
+                PlotServUtils.updateProgress(saveRequest, ProgressStat.PType.SUCCESS, "Success");
+            }
 
             long elapse = System.currentTimeMillis() - start;
             logSuccess(pInfo[0].getState(), elapse,
                        allPlots.getFindElapse(), allPlots.getReadElapse(),
                        false, null, true);
         } catch (FileRetrieveException e) {
+            makeFailProgressState(saveRequest);
             throw e;
         } catch (FailedRequestException e) {
+            makeFailProgressState(saveRequest);
             throw new FailedRequestException("Could not create plot. " , e.getDetailMessage() + ": "+ e.getMessage()   );
         } catch (FitsException e) {
+            makeFailProgressState(saveRequest);
             throw new FailedRequestException("Could not create plot. Invalid FITS File format.", e.getMessage());
         } catch (Exception e) {
+            makeFailProgressState(saveRequest);
             throw new FailedRequestException("Could not create plot.", e.getMessage(), e);
         }
         return retval;
 
     }
 
+    private static void makeFailProgressState(WebPlotRequest wpr) {
+        if (wpr!=null) PlotServUtils.updateProgress(wpr, ProgressStat.PType.FAIL, "Failed");
+    }
 
 
     /**

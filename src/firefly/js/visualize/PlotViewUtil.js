@@ -9,6 +9,7 @@ import {CsysConverter} from './CsysConverter.js';
 
 
 
+const clone = (obj,params={}) => Object.assign({},obj,params);
 
 /**
  *
@@ -260,7 +261,9 @@ export function getLayerTitle(plotId,dl) { return (typeof dl.title === 'string')
  */
 export function getPlotStateAry(pv) {
     var overlayStates= pv.overlayPlotViews.map( (opv) => opv.plot.plotState);
-    return [primePlot(pv).plotState, ...overlayStates];
+    const p= primePlot(pv);
+    const pvStateAry= p ? [p.plotState] : [];
+    return [...pvStateAry, ...overlayStates];
 }
 
 /**
@@ -358,6 +361,16 @@ export function getOnePvOrGroup(plotViewAry, plotId,plotGroup) {
 }
 
 
+/**
+ * make a new copy of the plotview array with an object set on the plotview that matches the plotId
+ * @param plotViewAry
+ * @param plotId
+ * @param obj
+ * @return {*}
+ */
+export function clonePvAry(plotViewAry, plotId, obj) {
+    return plotViewAry.map( (pv) => pv.plotId===plotId ? clone(pv,obj) : pv);
+}
 
 
 /**

@@ -9,6 +9,7 @@ import {visRoot} from '../ImagePlotCntlr.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {flux} from '../../Firefly.js';
 import {VisToolbarView} from './VisToolbarView.jsx';
+//import {deepDiff} from '../../util/WebUtil.js';
 
 
 
@@ -20,11 +21,21 @@ export class VisToolbar extends Component {
         this.tipOff= () => this.setState({tip:null});
     }
 
+    shouldComponentUpdate(np,ns) {
+        return sCompare(this,np,ns);
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        // todo: more performance testing
+        // deepDiff({props: prevProps, state: prevState},
+        //     {props: this.props, state: this.state},
+        //     this.constructor.displayName);
+    }
+
     getChildContext() {
         return {tipOnCB: this.tipOn, tipOffCB: this.tipOff};
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
 
     componentWillUnmount() {
         if (this.removeListener) this.removeListener();

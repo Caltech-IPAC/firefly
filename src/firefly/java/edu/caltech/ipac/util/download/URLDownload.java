@@ -560,7 +560,7 @@ public class URLDownload {
 
         downloader = new Downloader(in, out, conn);
         downloader.setMaxDownloadSize(maxSize);
-        downloader.addDownloadListener(dl);
+        downloader.setDownloadListener(dl);
         try {
             downloader.download();
         } catch (VetoDownloadException de) {

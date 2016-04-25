@@ -14,13 +14,10 @@ import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
-import {InputField} from '../../ui/InputField.jsx';
-import {intValidator} from '../../util/Validate.js';
+import {PagingBar} from '../../ui/PagingBar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_EXPANDED, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
-import {CloseButton} from '../../ui/CloseButton.jsx';
 
-import LOADING from 'html/images/gxt/loading.gif';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
@@ -69,7 +66,7 @@ export class TablePanel extends Component {
     render() {
         const {selectable, expandable, expandedMode, border, renderers} = this.props;
         var {totalRows, request, showLoading, columns, showOptions, showUnits, showFilters, textView, colSortDir} = this.state;
-        const {error, startIdx, hlRowIdx, currentPage, pageSize, totalPages, tableRowCount, selectInfo,
+        const {error, startIdx, hlRowIdx, highlightedRow, pageSize, selectInfo,
             filterInfo, filterCount, sortInfo, data} = this.state;
         const {tableConnector} = this;
 
@@ -88,7 +85,7 @@ export class TablePanel extends Component {
                             <button style={{width:70}}>Download</button>
                         </div>
 
-                        <PagingBar {...{currentPage, totalPages, startIdx, tableRowCount, showLoading, totalRows, tableConnector}} />
+                        <PagingBar {...{highlightedRow, pageSize, showLoading, totalRows, callbacks:tableConnector}} />
 
                         <div className='group'>
                             {filterCount > 0 &&
@@ -171,40 +168,3 @@ TablePanel.defaultProps = {
     pageSize: 50
 };
 
-const Expanded = ({}) => {
-  return (
-      <div style={{marginBottom: 3}}><CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_EXPANDED.none)}/></div>
-    );
-};
-
-const PagingBar = ({currentPage, totalPages, startIdx, tableRowCount, totalRows, showLoading, tableConnector}) => {
-    const rowFrom = startIdx + 1;
-    const rowTo = startIdx + tableRowCount;
-
-    const onPageChange = (pageNum) => {
-        if (pageNum.valid) {
-            tableConnector.onGotoPage(pageNum.value);
-        }
-    };
-
-    return (
-        <div className='group'>
-            <button onClick={() => tableConnector.onGotoPage(1)} className='paging_bar first' title='First Page'/>
-            <button onClick={() => tableConnector.onGotoPage(currentPage - 1)} className='paging_bar previous'  title='Previous Page'/>
-            <InputField
-                style={{textAlign: 'right'}}
-                validator = {intValidator(1,totalPages, 'Page Number')}
-                tooltip = 'Jump to this page'
-                size = {2}
-                value = {currentPage+''}
-                onChange = {onPageChange}
-                actOn={['blur','enter']}
-                showWarning={false}
-            /> <div style={{fontSize: 'smaller'}} >&nbsp; of {totalPages}</div>
-            <button onClick={() => tableConnector.onGotoPage(currentPage + 1)} className='paging_bar next'  title='Next Page'/>
-            <button onClick={() => tableConnector.onGotoPage(totalPages)} className='paging_bar last'  title='Last Page'/>
-            <div style={{fontSize: 'smaller'}} > &nbsp; ({rowFrom.toLocaleString()} - {rowTo.toLocaleString()} of {totalRows.toLocaleString()})</div>
-            {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
-        </div>
-    );
-};

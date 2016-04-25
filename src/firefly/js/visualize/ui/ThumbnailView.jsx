@@ -2,11 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {Component,PropTypes} from 'react';
+import sCompare from 'react-addons-shallow-compare';
 import {isPlotNorth} from '../VisUtil.js';
 import {encodeServerUrl} from '../../util/WebUtil.js';
 import {getRootURL} from '../../util/BrowserUtil.js';
-import {AnyDrawer} from '../draw/DrawerComponent.jsx';
+import {DrawerComponent} from '../draw/DrawerComponent.jsx';
 import {makeScreenPt,makeImagePt,makeWorldPt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';
 import DirectionArrowDrawObj from '../draw/DirectionArrowDrawObj.js';
@@ -22,37 +23,73 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 
 
 
-export function ThumbnailView({plotView:pv}) {
+export class ThumbnailView extends Component {
 
-    var s= {
-        width: 70,
-        height: 70,
-        display: 'inline-block',
-        position: 'relative'
-    };
+    constructor(props) {
+        super(props);
+        this.drawData= null;
+        this.getDrawData= this.getDrawData.bind(this);
+        this.eventCallBack= this.eventCallBack.bind(this);
+        this.setSimpleUpdateNotify= this.setSimpleUpdateNotify.bind(this);
+        this.updateFunc= null;
+    }
 
-    if (!pv) return  <div style={s}></div>;
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+    
+    getDrawData() {
+        return this.drawData;
+    }
 
-    s.border= '1px solid rgb(187, 187, 187)';
-    var plot= primePlot(pv);
-    if (!plot) return  <div style={s}></div>;
-    var {width,height}= plot.serverImages.thumbnailImage;
-    var vp= WebPlot.makeViewPort(0,0,width,height);
-    var ary= makeDrawing(pv,width,height);
+    setSimpleUpdateNotify(f) {
+        this.updateFunc=f;
+    }
+
+    componentDidUpdate() {
+        if (this.updateFunc) this.updateFunc(this.drawData);
+    }
+
+    eventCallBack(plotId,mouseState,pt) {
+        const {plotView:pv}= this.props;
+        var plot= primePlot(pv);
+        if (!plot) return;
+        var {width,height}= plot.serverImages.thumbnailImage;
+        eventCB(mouseState,pt,pv,width,height);
+    }
+    
+    render() {
+        const {plotView:pv}= this.props;
+        
+        var s= {
+            width: 70,
+            height: 70,
+            display: 'inline-block',
+            position: 'relative'
+        };
+
+        if (!pv) return  <div style={s}></div>;
+
+        s.border= '1px solid rgb(187, 187, 187)';
+        var plot= primePlot(pv);
+        if (!plot) return  <div style={s}></div>;
+        var {width,height}= plot.serverImages.thumbnailImage;
+        var vp= WebPlot.makeViewPort(0,0,width,height);
+        this.drawData= makeDrawing(pv,width,height);
 
 
-    return (
-        <div style={s}>
-            {makeImageTag(plot)}
-            <AnyDrawer width={width} height={height} drawData={ary} />
-            <EventLayer viewPort={vp} width={width} height={height}
-                        eventCallback={(plotId,mouseState,pt) =>
-                                            eventCB(mouseState,pt,pv,width,height)}/>
-        </div>
-    );
 
+        return (
+            <div style={s}>
+                {makeImageTag(plot)}
+                <DrawerComponent width={width} height={height} getDrawLayer={this.getDrawData}
+                                 setSimpleUpdateNotify={this.setSimpleUpdateNotify}
+                />
+                <EventLayer viewPort={vp} width={width} height={height}
+                            eventCallback={this.eventCallBack} />
+            </div>
+        );
+        
+    }
 }
-
 
 ThumbnailView.propTypes= {
     plotView: React.PropTypes.object

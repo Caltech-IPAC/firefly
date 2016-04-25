@@ -19,7 +19,7 @@ import java.lang.String;
  * @author Trey Roby
  */
 public class ServerEvent implements Serializable {
-    public enum Scope {SELF, CHANNEL, SERVER}
+    public enum Scope {SELF, CHANNEL, WORLD}
     public static final String SERVER_CONN_ID = "-1";
     public enum DataType {JSON, BG_STATUS, STRING};
 

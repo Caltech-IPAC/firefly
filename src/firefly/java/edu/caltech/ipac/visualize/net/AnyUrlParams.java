@@ -26,10 +26,10 @@ public class AnyUrlParams extends BaseNetParams {
     private static long _maxSizeToDownload= 0L;
 
 
-    public AnyUrlParams(URL url) { this(url,null); }
+    public AnyUrlParams(URL url) { this(url,null,null); }
 
-    public AnyUrlParams(URL url, String statusKey) {
-        super(statusKey);
+    public AnyUrlParams(URL url, String statusKey, String plotId) {
+        super(statusKey,plotId);
         _url= url;
     }
 

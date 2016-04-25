@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {take} from 'redux-saga/effects';
-import {get, omitBy, pickBy, isUndefined} from 'lodash';
+import {get, set, omitBy, pickBy, isUndefined, cloneDeep} from 'lodash';
 
 import {flux} from '../Firefly.js';
 import * as TblUtil from './TableUtil.js';
@@ -12,7 +12,6 @@ import {uiReducer} from './reducer/TableUiReducer.js';
 import {resultsReducer} from './reducer/TableResultsReducer.js';
 import {dispatchHideDropDownUi} from '../core/LayoutCntlr.js';
 import {dispatchSetupTblTracking} from '../visualize/TableStatsCntlr.js';
-import {logError} from '../util/WebUtil.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -64,11 +63,13 @@ export function highlightRow(action) {
         const {tbl_id} = action.payload;
         var tableModel = TblUtil.findTblById(tbl_id);
         var tmpModel = TblUtil.smartMerge(tableModel, action.payload);
-        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.gatherTableState(tmpModel);
+        const {hlRowIdx, startIdx, endIdx, pageSize} = TblUtil.getTblInfo(tmpModel);
         if (TblUtil.isTblDataAvail(startIdx, endIdx, tableModel)) {
             dispatch(action);
         } else {
-            const request = Object.assign({}, tableModel.request, {startIdx, pageSize});
+            const request = cloneDeep(tableModel.request);
+            set(request, 'META_INFO.padResults', true);
+            Object.assign(request, {startIdx, pageSize});
             TblUtil.doFetchTable(request, startIdx+hlRowIdx).then ( (tableModel) => {
                 dispatch( {type:TABLE_UPDATE, payload: tableModel} );
             }).catch( (error) => {

@@ -6,7 +6,7 @@
 
 import Enum from 'enum';
 import update from 'react-addons-update';
-import {get, set, omit, isObject, union, isFunction, isEqual} from 'lodash';
+import {get, set, omit, isObject, union, isFunction, isEqual,  isNil} from 'lodash';
 import { getRootURL } from './BrowserUtil.js';
 
 const  MEG          = 1048576;
@@ -127,7 +127,7 @@ export const encodeServerUrl= function(url, params) {
  * @param options
  * @return a promise of the response when successful, or reject with an Error.
  */
-export function fetchUrl(url, options) {
+export function fetchUrl(url, options, returnAllResponses= false) {
 
     if (!url) return;
 
@@ -169,6 +169,7 @@ export function fetchUrl(url, options) {
     // do the actually fetch, then return a promise.
     return fetch(url, options)
         .then( (response) => {
+            if (returnAllResponses) return response;
             if (response.ok) {
                 return response;
             } else {
@@ -292,6 +293,42 @@ export function deepDiff(o1, o2, p) {
         console.groupEnd();
     }
 }
+/*----------------------------< COOKIES ----------------------------*/
+export function setCookie(name, value, options = {}) {
+    var str = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+
+    if (isNil(value)) options.maxage = -1;
+
+    if (options.maxage) {
+        options.expires = new Date(+new Date() + options.maxage);
+    }
+
+    if (options.path) str += '; path=' + options.path;
+    if (options.domain) str += '; domain=' + options.domain;
+    if (options.expires) str += '; expires=' + options.expires.toUTCString();
+    if (options.secure) str += '; secure';
+
+    document.cookie = str;
+}
+
+export function getCookie(name) {
+    const cookies = parseCookies(document.cookie);
+    return name ? cookies[name] : cookies;
+}
+
+function parseCookies(str) {
+    var obj = {},
+        pairs = str.split(/ *; */);
+
+    if (!pairs[0]) return obj;
+
+    pairs.forEach( (pair) => {
+        pair = pair.split('=');
+        obj[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+    });
+    return obj;
+}
+/*---------------------------- COOKIES >----------------------------*/
 
 /*----------------------------/ update ----------------------------*/
 /**

@@ -79,14 +79,16 @@ class FitsRotationDialog extends Component {
 
     componentWillUnmount() {
 
+        this.iAmMounted= false;
         if (this.unbinder) this.unbinder();
     }
 
 
     componentDidMount() {
 
+        this.iAmMounted= true;
         this.unbinder = FieldGroupUtils.bindToStore('FITS_ROTATION_FORM', (fields) => {
-            this.setState({fields});
+            if (this.iAmMounted) this.setState({fields});
         });
     }
 

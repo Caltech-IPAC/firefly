@@ -107,9 +107,8 @@ img, html {
 
 .disable-select {
     -moz-user-select : none;
-    -khtml-user-select : none;
+    -ms-user-select : none;
     -webkit-user-select : none;
-    -o-user-select :  none;
     user-select :  none;
 }
 
@@ -308,6 +307,14 @@ img, html {
     animation-duration: 2s;
     animation-iteration-count: infinite;
     animation-timing-function: linear;
-    filter: drop-shadow(0 0 2 rgba(0, 0, 0, 0.33));
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.33));
 }
 /*------------------- loading mask ---------------------*/
+
+
+.text-ellipsis {
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
