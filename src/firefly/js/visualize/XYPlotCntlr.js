@@ -1,7 +1,7 @@
 import {flux} from '../Firefly.js';
 
 import update from 'react-addons-update';
-import {debounce, get, has, omitBy, isUndefined, isString} from 'lodash';
+import {get, has, omit, omitBy, isUndefined, isString} from 'lodash';
 
 
 import {doFetchTable, findTblById} from '../tables/TableUtil.js';
@@ -132,13 +132,23 @@ export function reducer(state={}, action={}) {
     switch (action.type) {
         case (TablesCntlr.TABLE_NEW_LOADED)  :
         {
-            var {tbl_id, request} = action.payload;
+            const {tbl_id, request} = action.payload;
             if (has(state, tbl_id)) {
                 // use xyPlotParams with cleared selection box
                 const prevXyPlotParams = state[tbl_id].xyPlotParams;
                 const xyPlotParamsNext = has(prevXyPlotParams, 'selection') ?
                     update(prevXyPlotParams, {selection: {$set: undefined}}) : prevXyPlotParams;
-                action.sideEffect((dispatch) => debouncedFetchPlotData(dispatch, request, xyPlotParamsNext));
+                action.sideEffect((dispatch) => fetchPlotData(dispatch, request, xyPlotParamsNext));
+            }
+            return state;
+        }
+        case (TablesCntlr.TABLE_REMOVE)  :
+        {
+            const {tbl_id} = action.payload.tbl_id;
+            if (has(state, tbl_id)) {
+                const newState = Object.assign({}, state);
+                Reflect.deleteProperty(newState, [tbl_id]);
+                return newState;
             }
             return state;
         }
@@ -184,7 +194,7 @@ export function reducer(state={}, action={}) {
             if  (get(newState[tblId], 'xyPlotData.decimateKey')) {
                 const nextPlotParams = newState[tblId].xyPlotParams;
                 newState[tblId] = {plotDataReady: false, decimatedUnzoomed: state[tblId].decimatedUnzoomed};
-                request = findTblById(tblId).request;
+                const request = findTblById(tblId).request;
                 action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
             }
             return newState;
@@ -203,7 +213,7 @@ export function reducer(state={}, action={}) {
             if  (state[tblId].decimatedUnzoomed || isUndefined(state[tblId].decimatedUnzoomed)) {
                 const nextPlotParams = newState[tblId].xyPlotParams;
                 newState[tblId] = {plotDataReady: false};
-                request = findTblById(tblId).request;
+                const request = findTblById(tblId).request;
                 action.sideEffect((dispatch) => fetchPlotData(dispatch, request, nextPlotParams));
             }
             return newState;
@@ -211,7 +221,7 @@ export function reducer(state={}, action={}) {
         }
         case (TablesCntlr.TABLE_SELECT) :
         {
-            tbl_id = action.payload.tbl_id; //also has selectInfo
+            const tbl_id = action.payload.tbl_id; //also has selectInfo
             if (has(state, tbl_id)) {
                 return update(state,
                     {
@@ -241,11 +251,6 @@ function updatePlotData(data) {
     return { type : UPDATE_PLOT_DATA, payload: data };
 }
 
-/**
- * Walkaround for TABLE_LOAD action arriving before NEW_TABLE.
- * When it happens the data in table space (in particular the request) are not yet updated
- */
-const debouncedFetchPlotData = debounce(fetchPlotData, 200);
 
 /**
  * fetches xy plot data
@@ -266,13 +271,14 @@ function fetchPlotData(dispatch, activeTableServerRequest, xyPlotParams) {
     }
 
     // todo support expressions
-    const req = Object.assign({}, activeTableServerRequest, {'startIdx' : 0, 'pageSize' : 1000000,
+    const req = Object.assign({}, omit(activeTableServerRequest, ['tbl_id', 'META_INFO']), {'startIdx' : 0, 'pageSize' : 1000000,
         'inclCols' : `${xyPlotParams.x.columnOrExpr},${xyPlotParams.y.columnOrExpr}`,
         'decimate' : serializeDecimateInfo(xyPlotParams.x.columnOrExpr, xyPlotParams.y.columnOrExpr, 10000, 1.0, ...limits)
         });
 
     const tblId = activeTableServerRequest.tbl_id;
     req.tbl_id = 'xyplot-'+tblId;
+
 
     doFetchTable(req).then(
         (tableModel) => {
