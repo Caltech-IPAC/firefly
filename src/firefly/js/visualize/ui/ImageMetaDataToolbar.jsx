@@ -3,14 +3,14 @@
  */
 
 import React, {Component,PropTypes} from 'react';
-import {isEmpty} from 'lodash';
-import sCompare from 'react-addons-shallow-compare';
+import {isEmpty,omit} from 'lodash';
 import {flux} from '../../Firefly.js';
+import shallowequal from 'shallowequal';
 import {ImageMetaDataToolbarView} from './ImageMetaDataToolbarView.jsx';
 import {converterFactory} from '../../metaConvert/ConverterFactory.js';
-// import {getActiveTableId} from '../../core/LayoutCntlr.js';
 import {findTblById, getActiveTableId} from '../../tables/TableUtil.js';
 import {isMetaDataTable} from '../../metaConvert/converterUtils.js';
+import {SINGLE} from '../MultiViewCntlr.js';
 
 export class ImageMetaDataToolbar extends Component {
 
@@ -19,14 +19,21 @@ export class ImageMetaDataToolbar extends Component {
         this.state= {activeTable : null};
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+    shouldComponentUpdate(np,ns) {
+        const {props,state}= this;
+        const om= ['visRoot'];
+        var update= !shallowequal(omit(props,om), omit(np,om)) || !shallowequal(ns,state);
+        if (update) return true;
+
+        return (np.layoutType===SINGLE && props.visRoot.activePlotId!==np.visRoot.activePlotId);
+    }
 
 
     componentWillUnmount() {
         this.iAmMounted= false;
         if (this.removeListener) this.removeListener();
     }
-
+    
     componentWillMount() {
         this.iAmMounted= true;
         this.removeListener= flux.addListener(() => this.storeUpdate(this.props));
@@ -45,7 +52,7 @@ export class ImageMetaDataToolbar extends Component {
         
         const {visRoot, viewerId, viewerPlotIds, layoutType}= this.props;
         return (
-            <ImageMetaDataToolbarView visRoot={visRoot} viewerId={viewerId}
+            <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType}
                                       activeTable={activeTable} converterFactory={converterFactory}
                                         /> 

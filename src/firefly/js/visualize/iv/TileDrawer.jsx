@@ -1,8 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
+import {omit,pick} from 'lodash';
+// import shallowequal from 'shallowequal';
 import CsysConverter from '../CsysConverter.js';
+import sCompare from 'react-addons-shallow-compare';
 import {makeScreenPt} from '../Point.js';
 import {makeImageFromTile,createImageUrl,isTileVisible} from './TileDrawHelper.jsx';
 
@@ -17,29 +20,51 @@ const containerStyle={position:'absolute',
                       background: BACKGROUND_STYLE
 };
 
-export function TileDrawer({ x, y, width, height, plot}) {
+// const exPlot=['plot'];
+// const pickPlot=['serverImages', 'plotState', 'zoomFactor', 'percentOpaque', 'imageScaleFactor'];
+// const exFromPlotPlot=[ 'attributes', 'viewPort'];
 
 
-    var tileData=plot.serverImages;
-    var tileZoomFactor=plot.plotState.getZoomLevel();
-    var zoomFactor=plot.zoomFactor;
-    var opacity=plot.percentOpaque;
 
-    const scale= zoomFactor / tileZoomFactor;
-    const style=Object.assign({},containerStyle, {width,height});
-    if (scale < .5 && tileData.images.length>5) {
-        return <div></div>;
+
+export class TileDrawer extends Component {
+    constructor(props) {
+        super(props);
     }
-    else {
-        return (
-            <div className='tile-drawer'  style={style}>
-                {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
-            </div>
-        );
+    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); }
+
+    // shouldComponentUpdate(np) {
+    //     const {props}= this;
+    //     const update= !shallowequal(omit(props, exPlot), omit(np,exPlot));
+    //     if (update) {
+    //         return ( !shallowequal(omit(props.plot,exFromPlotPlot), omit(np.plot,exFromPlotPlot)) );
+    //     }
+    //     return false;
+    // }
+
+    render() {
+        const { x, y, width, height, plot}= this.props;
+        var tileData=plot.serverImages;
+        var tileZoomFactor=plot.plotState.getZoomLevel();
+        var zoomFactor=plot.zoomFactor;
+        var opacity=plot.percentOpaque;
+
+        const scale= zoomFactor / tileZoomFactor;
+        const style=Object.assign({},containerStyle, {width,height});
+        if (scale < .5 && tileData.images.length>5) {
+            return <div></div>;
+        }
+        else {
+            return (
+                <div className='tile-drawer'  style={style}>
+                    {getTilesForArea(x,y,width,height,tileData,plot,scale,opacity)}
+                </div>
+            );
+        }
+
     }
+
 }
-
-
 
 TileDrawer.propTypes= {
     x : PropTypes.number.isRequired,

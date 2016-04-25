@@ -361,6 +361,10 @@ function doImages(request) {
     wpr2.setPlotGroupId('test-group');
     wpr3.setPlotGroupId('test-group');
     wpr4.setPlotGroupId('test-group');
+    wpr1.setGroupLocked(false);
+    wpr2.setGroupLocked(false);
+    wpr3.setGroupLocked(false);
+    wpr4.setGroupLocked(false);
 
 
 

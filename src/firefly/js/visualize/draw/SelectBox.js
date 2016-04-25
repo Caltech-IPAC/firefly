@@ -11,6 +11,7 @@ import {Style} from './DrawingDef.js';
 
 const SELECT_BOX= 'SelectBox';
 const DEFAULT_STYLE= Style.STANDARD;
+const DEF_SHADOW= DrawUtil.makeShadow(4,1,1,'black');
 
 
 /**
@@ -27,7 +28,7 @@ function makeSelectBox(pt1,pt2,style) {
     obj.type= SELECT_BOX;
     obj.pt1= pt1;
     obj.pt2= pt2;
-    obj.renderOptions={shadow:DrawUtil.makeShadow(4,1,1,'black')};
+    obj.renderOptions={shadow:DEF_SHADOW};
     obj.style= style || Style.STANDARD;
 
     return obj;

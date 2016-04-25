@@ -16,9 +16,9 @@ import {
 import WebPlotResult from './WebPlotResult.js';
 import {RangeValues} from './RangeValues.js';
 import {isPlotNorth} from './VisUtil.js';
+import {RotateType} from './PlotState.js';
 import {WebPlot} from './WebPlot.js';
 
-export const RotateType= new Enum(['NORTH', 'ANGLE', 'UNROTATE']);
 
 
 //=======================================================================
@@ -218,7 +218,7 @@ function doFlip(dispatcher,pv,isY) {
 
     const makeSuccAction= (plotId, plotAry, overlayPlotViews) =>
         ({ type: ImagePlotCntlr.FLIP,
-           payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}, isY]}
+           payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}], isY}
         });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.FLIP_FAIL,
@@ -284,7 +284,7 @@ function doRotate(dispatcher,pv,rotateType,angle,newZoomLevel) {
 
     const makeSuccAction= (plotId, plotAry, overlayPlotViews) => ({
         type: ImagePlotCntlr.ROTATE,
-        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}, rotateType]}
+        payload: {pvNewPlotInfoAry: [{plotId, plotAry, overlayPlotViews}], rotateType}
     });
 
     const makeFailAction= (plotId) => ({ type: ImagePlotCntlr.ROTATE_FAIL,
@@ -314,6 +314,10 @@ function processPlotReplace(dispatcher, result, pv, makeSuccessAction, makeFailA
 
         if (resultAry[0].success) {
             var plotAry = resultAry[0].data[WebPlotResult.PLOT_CREATE].map((wpInit) => makePlot(wpInit, pv));
+            if (plotAry.length===1 && pv.plots.length>1) {
+                const newP= plotAry[0];
+                plotAry= pv.plots.map( (p,idx) => idx===pv.primeIdx ? newP : p);
+            }
 
             var overlayPlotViews = [];
             resultAry.forEach((r, i) => {

@@ -18,6 +18,7 @@ import {isActivePlotView,
         findPlotGroup,
         isDrawLayerAttached,
         getDrawLayerByType } from './PlotViewUtil.js';
+import {changePrime} from './ChangePrime.js';
 
 import PointSelection from '../drawingLayers/PointSelection.js';
 import {dispatchAttachLayerToPlot,
@@ -100,7 +101,8 @@ const CHANGE_PLOT_ATTRIBUTE= 'ImagePlotCntlr.ChangePlotAttribute';
 
 const CHANGE_EXPANDED_MODE= 'ImagePlotCntlr.changeExpandedMode';
 const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
-// const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
+const EXPANDED_LIST= 'ImagePlotCntlr.expandedList';
+const CHANGE_PRIME_PLOT= 'ImagePlotCntlr.changePrimePlot';
 
 const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
@@ -183,7 +185,7 @@ export default {
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT
 };
 
 
@@ -204,6 +206,16 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
+
+
+/**
+ *
+ * @param plotId
+ * @param primeIdx
+ */
+export function dispatchChangePrimePlot(plotId, primeIdx) {
+    flux.process({ type: CHANGE_PRIME_PLOT , payload: { plotId, primeIdx }});
+}
 
 
 /**
@@ -439,8 +451,16 @@ export function dispatchChangeActivePlotView(plotId) {
     }
 }
 
-export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue) {
-    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup} });
+/**
+ * 
+ * @param plotId
+ * @param applyToGroup
+ * @param attKey
+ * @param attValue
+ * @param toAll if a multiImageFits apply to all the images
+ */
+export function dispatchAttributeChange(plotId,applyToGroup,attKey,attValue,toAll=false) {
+    flux.process({ type: CHANGE_PLOT_ATTRIBUTE, payload: {plotId,attKey,attValue,applyToGroup,toAll} });
 }
 
 /**
@@ -515,6 +535,16 @@ export function dispatchDeletePlotView(plotId) {
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
 //======================================== Action Creators =============================
+
+
+/**
+ * @param rawAction
+ * @return {Function}
+ */
+export function changePrimeActionCreator(rawAction) {
+    return (dispatcher, getState) => changePrime(rawAction,dispatcher,getState);
+}
+
 
 export function plotImageActionCreator(rawAction) {
     return PlotImageTask.makePlotImageAction(rawAction);
@@ -652,6 +682,7 @@ function reducer(state=initState(), action={}) {
         case STRETCH_CHANGE_FAIL:
         case RECENTER:
         case PLOT_PROGRESS_UPDATE  :
+        case CHANGE_PRIME_PLOT  :
             retState= plotChangeReducer(state,action);
             break;
 

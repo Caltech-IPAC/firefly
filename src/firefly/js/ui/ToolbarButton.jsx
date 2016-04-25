@@ -62,78 +62,102 @@ function handleClick(onClick, dropdownCB ,divElement) {
  * @param ctx
  * @return {object}
  */
-export function ToolbarButton({icon,text,tip,badgeCount=0,enabled=true,dropDownCB,
-                               onClick, horizontal=true, bgDark, visible=true, active,
-                               imageStyle, tipOnCB,tipOffCB,lastTextItem=false, todo, additionalStyle},
-                               ctx) {
 
-    if (!tipOnCB && ctx) tipOnCB= ctx.tipOnCB;
-    if (!tipOffCB && ctx) tipOffCB= ctx.tipOffCB;
 
-    var s= { position: 'relative'};
-    if (horizontal) {
-        s.display='inline-block';
-    }
-    else {
-        s.display= 'block';
+export class ToolbarButton extends Component {
+    constructor(props) {
+        super(props);
+        this.click= this.click.bind(this);
+        this.mouseOver= this.mouseOver.bind(this);
+        this.mouseOut= this.mouseOut.bind(this);
+        this.setupRef= this.setupRef.bind(this);
     }
 
-    var textCName= 'menuItemText';
+    click() {
+        var { dropDownCB, onClick} = this.props;
+        handleClick(onClick,dropDownCB,this.divElement);
+    }
+
+    mouseOver() {
+        var {tipOnCB,tip} = this.props;
+        if (!tipOnCB && this.context) tipOnCB= this.context.tipOnCB;
+        if (tipOnCB) tipOnCB(tip);
+    }
+
+    mouseOut() {
+        var {tipOffCB} = this.props;
+        if (!tipOffCB && this.context) tipOffCB= this.context.tipOffCB;
+        if (tipOffCB) tipOffCB();
+    }
+
+    setupRef(c) { this.divElement= c; }
+
+    render() {
+        const {
+            icon,text,tip,badgeCount=0,enabled=true,
+            horizontal=true, bgDark, visible=true, active,
+            imageStyle, lastTextItem=false, todo, additionalStyle} = this.props;
 
 
-    if (!visible) return <div style={s}></div>;
-    var cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
-           ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
-    var divElement;
+        var s= { position: 'relative'};
+        if (horizontal) {
+            s.display='inline-block';
+        }
+        else {
+            s.display= 'block';
+        }
 
-    if (horizontal && !icon) {
-        s.height= 'calc(100% - 7px)';
-        s.verticalAlign= 'bottom';
-        s.fontSize= '10pt';
-        s.position= 'relative';
-        textCName= 'ff-menuItemHText';
-        const topStyle= Object.assign({display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
-        return (
-            <div style={topStyle}>
-                <div style={{ display:'inline-block',
+        var textCName= 'menuItemText';
+
+
+        if (!visible) return <div style={s}></div>;
+        var cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
+            ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
+
+        if (horizontal && !icon) {
+            s.height= 'calc(100% - 7px)';
+            s.verticalAlign= 'bottom';
+            s.fontSize= '10pt';
+            s.position= 'relative';
+            textCName= 'ff-menuItemHText';
+            const topStyle= Object.assign({display:'inline-block', height:'100%', flex:'0 0 auto' },additionalStyle);
+            return (
+                <div style={topStyle}>
+                    <div style={{ display:'inline-block',
                               margin:'0 4px 0 4px',
                               height: 'calc(100% - 7px)',
                               borderLeft : '1px solid rgba(0,0,0,.6)' }} />
-                <div title={tip} style={s} className={cName}
-                     ref={(c) => divElement= c}
-                     onClick={() => handleClick(onClick,dropDownCB,divElement)}
-                     onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
-                    <div className={textCName}>{text}</div>
-                    {badgeCount ? makeBadge(badgeCount) : ''}
-                    {todo?<div style={todoStyle}>ToDo</div>:false}
-                </div>
+                    <div title={tip} style={s} className={cName}
+                         ref={this.setupRef}
+                         onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
+                        <div className={textCName}>{text}</div>
+                        {badgeCount ? makeBadge(badgeCount) : ''}
+                        {todo?<div style={todoStyle}>ToDo</div>:false}
+                    </div>
 
-                {lastTextItem ? <div style={{ display:'inline-block',
+                    {lastTextItem ? <div style={{ display:'inline-block',
                                               margin:'0 4px 0 4px',
                                               height: 'calc(100% - 7px)',
                                               borderLeft : '1px solid rgba(0,0,0,.6)' }} /> : false}
-            </div>
+                </div>
             );
 
+        }
+        else {
+            s.flex= '0 0 auto';
+            Object.assign(s,additionalStyle);
+            return (
+                <div title={tip} style={s} className={cName}
+                     ref={this.setupRef}
+                     onClick={this.click} onMouseOver={this.mouseOver} onMouseOut={this.mouseOut}>
+                    {icon ? <img style={imageStyle} src={icon} />  : <div className={textCName}>{text}</div>}
+                    {badgeCount ? makeBadge(badgeCount) : ''}
+                    {todo?<div style={todoStyle}>ToDo</div>:false}
+                </div>
+            );
+        }
     }
-    else {
-        s.flex= '0 0 auto';
-        Object.assign(s,additionalStyle);
-        return (
-            <div title={tip} style={s} className={cName}
-                 ref={(c) => divElement= c}
-                 onClick={() => handleClick(onClick,dropDownCB,divElement)}
-                 onMouseOver={()=>tipOnCB?tipOnCB(tip):false} onMouseOut={tipOffCB}>
-
-                {icon ? <img style={imageStyle} src={icon} />  : <div className={textCName}>{text}</div>}
-                {badgeCount ? makeBadge(badgeCount) : ''}
-                {todo?<div style={todoStyle}>ToDo</div>:false}
-            </div>
-        );
-    }
-
 }
-
 
 ToolbarButton.contextTypes= {
     tipOnCB : PropTypes.func,

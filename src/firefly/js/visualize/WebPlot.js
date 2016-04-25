@@ -5,15 +5,10 @@
 
 
 import {RequestType} from './RequestType.js';
+import {isString} from 'lodash';
 import CoordinateSys from './CoordSys.js';
-import VisUtil from './VisUtil.js';
 import {makeProjection} from './Projection.js';
-import SimpleMemCache from '../util/SimpleMemCache.js';
-import {makeRoughGuesser} from './ImageBoundsData.js';
 import PlotState from './PlotState.js';
-import Point, {makeImageWorkSpacePt, makeViewPortPt, makeImagePt,
-               makeScreenPt, isValidPoint} from './Point.js';
-//import PlotState, {RotateType} from './PlotState.js';
 
 
 
@@ -112,23 +107,6 @@ export const PlotAttribute= {
 };
 
 
-const convertToCorrect= function(wp) {
-    if (!wp) return null;
-    var csys= wp.getCoordSys();
-    var retPt= wp;
-    if (csys===CoordinateSys.SCREEN_PIXEL) {
-        retPt= makeScreenPt(wp.x, wp.y);
-    }
-    else if (csys===CoordinateSys.PIXEL) {
-        retPt= makeImagePt(wp.x, wp.y);
-    }
-    return retPt;
-};
-
-
-const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 48000 with a 80% load factor
-
-
 /**
  * This class contains plot information.
  * Publicly this class operations in many coordinate system.
@@ -144,296 +122,16 @@ const MAX_CACHE_ENTRIES = 38000; // set to never allows the cache array over 480
  * @author Trey Roby
  * @version $Id: WebPlot.java,v 1.68 2012/12/14 23:59:58 roby Exp $
  */
-export class WebPlot {
-
-    /**
-     *
-     * @param {object} wpData
-     */
-    constructor(wpData)  {
-        Object.assign(this,wpData);
-
-    }
-
-    // =======================================================================
-    // ------------------    constants for Attributes -------------------------
-    // =======================================================================
-
-    /**
-     *
-     * @param wp world point
-     * @param imp Image Point
-     */
-    putInConversionCache(wp, imp) {
-        if (SimpleMemCache.size(this.plotImageId)<MAX_CACHE_ENTRIES) {
-            SimpleMemCache.set(this.plotImageId, wp.toString(), imp);
-        }
-    }
-
-
-
-    //public void refreshWidget() { _tileDrawer.refreshWidget(); } //todo - must do something
-    //public void refreshWidget(PlotImages images) { _tileDrawer.refreshWidget(images); }
-
-    getPlotState() { return this.plotState; }
-
-    getZoomFact() { return this.plotState.getZoomLevel(); }
-
-    /**
-     *
-     * @param {Band} band
-     * @return {*}
-     */
-    getFitsDataByBand(band) {
-        return this.webFitsData[band.value];
-    }
-
-
-    /**
-     *
-     * @param {Band} band
-     * @return {RangeValues}
-     */
-    getRangeValuesSerialized(band) {
-        var rv = this.plotState.getRangeValues(band);
-        return rv ? rv.serialize() : null;
-    }
-
-
-    /**
-     * @param {Band} band
-     * return {WebFitsData}
-     */
-    getFitsData(band) {
-        return this.webFitsData[band.value];
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isCube() {
-        return this.plotState.isMultiImageFile() && this.plotState.getCubeCnt()>0;
-    }
-
-    getCubeCnt() { return this.plotState.getCubeCnt(); }
-
-    getCubePlaneNumber() { return this.plotState.getCubePlaneNumber(); }
-
-    getImageWidth()  { return this.dataWidth;   }
-    getImageHeight()  { return this.dataHeight;   }
-
-
-    /**
-     * returns the first used band. It is possible that this method will return null.  You should always check.
-     * @return {Band} the first name used.
-     */
-    getFirstBand() { return this.plotState.firstBand(); }
-
-    /**
-     * Get an array of used band.  It is possible that this routine will return a array of length 0
-     * @return {array} the bands in use
-     */
-    getBands() { return this.plotState.getBands(); }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isThreeColor()  { return this.plotState.isThreeColor(); }
-
-    getColorTableID() { return this.plotState.getColorTableId(); }
-
-    /**
-     * This method will return the width of the image in screen coordinates.
-     * This number will change as the plot is zoomed up and down.
-     * @return {number} the width of the plot
-     */
-    getScreenWidth() { return this.screenSize.width; }
-
-    /**
-     *  This method will return the height of the image in screen coordinates.
-     *  This number will change as the plot is zoomed up and down.
-     * @return {number} the height of the plot
-     */
-    getScreenHeight() { return this.screenSize.height; }
-
-    /**
-     * This method will return the width of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return {number} the width of the image data
-     */
-    getImageDataWidth() { return this.dataWidth; }
-
-    /**
-     * This method will return the height of the image data.
-     * This number will not change as the plot is zoomed up and down.
-     * @return {number} the height of the image data
-     */
-    getImageDataHeight() { return this.dataHeight; }
-
-    /**
-     * This method will return the width of the image in the world coordinate
-     * system (probably degrees on the sky).
-     * @return {number} the width of the image data in world coord system.
-     */
-    getWorldPlotWidth() {
-        return this.projection.getPixelWidthDegree() * this.dataWidth;
-    }
-
-    /**
-     * This method will return the height of the image in the world coordinate
-     * system (probably degrees on the sky).
-     * @return {number} the height of the image data in world coord system.
-     */
-    getWorldPlotHeight() {
-        return this.projection.getPixelHeightDegree() * this.dataHeight;
-    }
-
-    /**
-     *
-     * @return {Projection}
-     */
-    getProjection() { return this.projection; }
-
-
-
-    /**
-     * get the coordinate system of the plot.
-     * @return  {CoordinateSys}  the coordinate system.
-     */
-    getCoordinatesOfPlot() { return this.imageCoordSys; }
-
-    /**
-     * get the scale (in arcseconds) that one image pixel of data represents.
-     * @return {number} double the scale of one pixel.
-     */
-    getImagePixelScaleInArcSec(){ return this.projection.getPixelScaleArcSec(); }
-
-    getImagePixelScaleInDeg(){ return this.projection.getPixelScaleArcSec()/3600.0; }
-
-
-
-    /**
-     */
-    freeResources() {
-        this.alive= false;
-    }
-
-    isAlive() { return this.alive; }
-
-    setAttribute(key, attribute) { this.attributes[key]= attribute; }
-    removeAttribute(key) { Reflect.deleteProperty(this.attributes,key); }
-
-    getAttribute(key) { return this.attributes[key]; }
-
-    containsAttributeKey(key) { return this.attributes[key]!==undefined; }
-
-    /**
-     * Get the description of this plot.
-     * @return String the plot description
-     */
-    getPlotDesc() { return this.plotDesc; }
-
-    /**
-     * Get the description of this fits data for this plot.
-     * @return String the plot description
-     */
-    getDataDesc() { return this.dataDesc; }
-
-
-    //setPercentOpaque(percentOpaque) {
-    //     this.percentOpaque= percentOpaque;
-    //}
-
-    getPercentOpaque() { return this.percentOpaque; }
-
-    isRotated() { return this.plotState.isRotated(); }
-
-    getRotationType() {
-        return this.plotState.getRotateType();
-    }
-
-    getRotationAngle() { return this.plotState.getRotationAngle(); }
-
-
-    isRotatable() {
-        var retval= false;
-        var proj= this.getProjection();
-        if (proj) {
-            retval= !proj.isWrappingProjection();
-            if (retval) {
-                retval= !this.containsAttributeKey(PlotAttribute.DISABLE_ROTATE_REASON);
-            }
-        }
-        return retval;
-    }
-
-
-    getNonRotatableReason() {
-        var retval= null;
-        if (!this.isRotatable()) {
-            var p= this.getProjection();
-            var rKey= PlotAttribute.DISABLE_ROTATE_REASON;
-            if (this.containsAttributeKey(rKey)) {
-                retval= this.getAttribute(rKey) ? this.getAttribute(rKey) :
-                                                  `FITS image can't be rotated`;
-            }
-            else {
-                if (p.isWrappingProjection()) {
-                    retval= 'FITS image with projection of type ' +
-                            p.getProjectionName() + ` can't be rotated`;
-                }
-                else {
-                    retval= `FITS image can't be rotated`;
-                }
-            }
-        }
-        return retval;
-    }
-
-
-
-    coordsWrap(wp1, wp2) {
-        if (!wp1 || !wp2) return false;
-
-        var retval= false;
-        if (this.projection.isWrappingProjection()) {
-            var  worldDist= VisUtil.computeDistance(wp1, wp2);
-            var pix= this.projection.getPixelWidthDegree();
-            var value1= worldDist/pix;
-
-            var ip1= this.getImageWorkSpaceCoords(wp1);
-            var ip2= this.getImageWorkSpaceCoords(wp2);
-            if (ip1 && ip2) {
-                var xdiff= ip1.x-ip2.x;
-                var ydiff= ip1.y-ip2.y;
-                var imageDist= Math.sqrt(xdiff*xdiff + ydiff*ydiff);
-                retval= ((imageDist / value1) > 3);
-            }
-            else {
-                retval= false;
-            }
-        }
-        return retval;
-    }
-
-
-    //============================================================
-    //============================================================
-    //--- Static WebPlot Util methods
-    //============================================================
-    //============================================================
-
+export const WebPlot= {
 
     /**
      *
      * @param plotId
      * @param wpInit init data returned from server
      * @param asOverlay
-     * @return {{plotId: *, plotImageId: string, serverImages: *, imageCoordSys: *, plotState: *, projection: {isWrapperProjection, getPixelWidthDegree, getPixelHeightDegree, getPixelScaleArcSec, isWrappingProjection, getImageCoords, getWorldCoords}, dataWidth: *, dataHeight: *, imageScaleFactor: *, plotDesc: (*|string|string|string|string|string), dataDesc: *, webFitsData: *, screenSize: {width: number, height: number}, percentOpaque: number, alive: boolean, attributes: {}, viewPort: ({dim, x, y}|{dim: {width: number, height: number}, x: number, y: number}), asOverlay: boolean}}
+     * @return {{}}
      */
-    static makeWebPlotData(plotId, wpInit, asOverlay= false) {
+    makeWebPlotData(plotId, wpInit, asOverlay= false) {
 
         var projection= makeProjection(wpInit.projection);
         var plotState= PlotState.makePlotStateWithJson(wpInit.plotState);
@@ -468,7 +166,7 @@ export class WebPlot {
         };
 
         return webPlot;
-    }
+    },
 
     /**
      *
@@ -476,9 +174,9 @@ export class WebPlot {
      * @param {{dim: {width: *, height: *}, x: *, y: *}} viewPort
      * @return {object} new webplot data
      */
-    static setWPViewPort(wpData,viewPort) {
+    setWPViewPort(wpData,viewPort) {
         return Object.assign({},wpData,{viewPort});
-    }
+    },
 
 
     /**
@@ -488,36 +186,15 @@ export class WebPlot {
      * @param {object} serverImages
      * @return {*}
      */
-    static setPlotState(wpData,stateJson,serverImages) {
+    setPlotState(wpData,stateJson,serverImages) {
         var plotState= PlotState.makePlotStateWithJson(stateJson);
         var zf= plotState.getZoomLevel();
         var screenSize= {width:wpData.dataWidth*zf, height:wpData.dataHeight*zf};
         var plot= Object.assign({},wpData,{plotState, zoomFactor:zf,screenSize});
         if (serverImages) plot.serverImages= serverImages;
         return plot;
-    }
+    },
 
-
-    /**
-     * add an attribute to the webplot data a return a new version
-     * @param wpData
-     * @param {string} attName
-     * @param attValue
-     * @return {*} new version of webplotdata
-     */
-    //static addWPAttribute(wpData,attName,attValue) {
-    //    var att= Object.assign({},wpData.attributes, {[attName]:attValue});
-    //    return Object.assign({},wpData,{attributes:att});
-    //}
-
-    /**
-     *
-     * @param {object} plotData, the plotData as it is kept in the store
-     * @return {WebPlot}
-     */
-    static makeWebPlot(plotData) {
-        return new WebPlot(plotData);
-    }
 
     /**
      * Make a viewport object
@@ -527,7 +204,7 @@ export class WebPlot {
      * @param {number} height
      * @return {{dim: {width: number, height: number}, x: number, y: number}}
      */
-    static makeViewPort(x,y,width,height) { return  {dim:{width,height},x,y}; }
+    makeViewPort(x,y,width,height) { return  {dim:{width,height},x,y}; }
 
 };
 
@@ -554,8 +231,27 @@ export function clonePlotWithZoom(wpData,zoomFactor) {
 }
 
 
+export function isRotatable(plot) {
+    var proj= plot.getProjection();
+    if (!proj || proj.isWrappingProjection()) return false;
+    return Boolean(plot.attrributes[PlotAttribute.DISABLE_ROTATE_REASON]);
+}
 
-export default WebPlot;
 
-
+export function getNonRotatableReason(plot) {
+    if (isRotatable(plot)) return '';
+    var p= plot.projetion;
+    var reason= plot.attributes[PlotAttribute.DISABLE_ROTATE_REASON];
+    if (reason) {
+        return isString(reason) ? reason : `FITS image can\'t be rotated`;
+    }
+    else {
+        if (p.isWrappingProjection()) {
+            return `FITS image with projection of type ${p.getProjectionName()} can't be rotated`;
+        }
+        else {
+            return `FITS image can't be rotated`;
+        }
+    }
+}
 

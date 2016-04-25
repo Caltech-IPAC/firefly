@@ -5,7 +5,8 @@
 
 import React, {Component,PropTypes} from 'react';
 import sCompare from 'react-addons-shallow-compare';
-import {get} from 'lodash';
+import shallowequal from 'shallowequal';
+import {get,isEmpty,omit} from 'lodash';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView} from './../ui/VisCtxToolbarView.jsx';
@@ -22,6 +23,7 @@ import Catalog from '../../drawingLayers/Catalog.js';
 import {DataTypes} from '../draw/DrawLayer.js';
 
 const TOOLBAR_HEIGHT= 32;
+const EMPTY_ARRAY=[];
 
 const titleBarAnno= [
     AnnotationOps.TITLE_BAR,
@@ -109,33 +111,46 @@ function contextToolbar(pv,dlAry,extensionList) {
     var plot= primePlot(pv);
     if (!plot) return;
 
+    const showMulti= pv.plots.length>1;
+
+    // todo
+
     if (plot.attributes[PlotAttribute.SELECTION]) {
         var select= showSelect(pv,dlAry);
         var unselect= showUnselect(pv,dlAry);
         var filter= showFilter(pv,dlAry);
         var clearFilter= showClearFilter(pv,dlAry);
         const selAry= extensionList.filter( (ext) => ext.extType===AREA_SELECT);
-        const extensionAry= selAry.length ? selAry : null;
+        const extensionAry= isEmpty(selAry) ? EMPTY_ARRAY : selAry;
         return (
             <VisCtxToolbarView {...{plotView:pv, dlAry,  extensionAry,
                                     showCrop:true, showStats:true, showSelect:select,
                                     showUnSelect:unselect,
-                                    showFilter:filter, showClearFilter:clearFilter}}
+                                    showFilter:filter, showClearFilter:clearFilter,
+                                    showMultiImageController:showMulti}}
             />
         );
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_DISTANCE]) {
         var distAry= extensionList.filter( (ext) => ext.extType===LINE_SELECT);
-        if (!distAry.length) return false;
+        if (!distAry.length && !showMulti) return false;
         return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={distAry} />
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(distAry)?EMPTY_ARRAY:distAry}
+                               showMultiImageController={showMulti}/>
         );
     }
     else if (plot.attributes[PlotAttribute.ACTIVE_POINT]) {
         const ptAry= extensionList.filter( (ext) => ext.extType===POINT);
-        if (!ptAry.length) return false;
+        if (!ptAry.length && !showMulti) return false;
         return (
-            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={ptAry} />
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={isEmpty(ptAry)?EMPTY_ARRAY:ptAry}
+                               showMultiImageController={showMulti}/>
+        );
+    }
+    else if (showMulti) {
+        return (
+            <VisCtxToolbarView plotView={pv} dlAry={dlAry} extensionAry={EMPTY_ARRAY}
+                               showMultiImageController={showMulti}/>
         );
     }
     return false;
@@ -154,7 +169,7 @@ function makeInlineRightToolbar(visRoot,pv,dlAry,mousePlotId) {
     return (
         <div className='iv-decorate-inline-toolbar-container'>
             <VisInlineToolbarView
-                plotView={pv} dlAry={dlAry}
+                plotId={pv.plotId} dlAry={dlAry}
                 showLayer={lVis}
                 showExpand={exVis}
                 showDelete ={true}
@@ -214,7 +229,20 @@ export class ImageViewerDecorate extends Component {
         this.makeActive= this.makeActive.bind(this);
     }
 
-    shouldComponentUpdate(np,ns) { return sCompare(this,np,ns); } //todo: look at closely for optimization
+    shouldComponentUpdate(np,ns) {
+        const {props:p}= this;
+        const omitList= ['mousePlotId'];
+        var update= !shallowequal(omit(np,omitList), omit(p,omitList) );
+        if (update) return true;
+
+        const plotId= get(p.plotView, 'plotId');
+        if (p.mousePlotId!==np.mousePlotId && (p.mousePlotId===plotId || np.mousePlotId===plotId)) return true;
+
+
+        return false;
+
+
+    } //todo: look at closely for optimization
 
 
 

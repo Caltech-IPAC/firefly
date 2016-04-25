@@ -278,7 +278,7 @@ function getArcSecPerPix(plot, zoomFact) {
     return plot.projection.getPixelScaleArcSec() / zoomFact;
 }
 
-function getZoomLevelForScale(plot, arcsecPerPix) {
+export function getZoomLevelForScale(plot, arcsecPerPix) {
     return plot.projection.getPixelScaleArcSec() / arcsecPerPix;
 }
 

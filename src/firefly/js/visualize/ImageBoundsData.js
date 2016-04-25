@@ -19,22 +19,22 @@ function getJ2XY(wp) {
 
 /**
  *
- * Return function that returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
- * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
+ * Return function that returns false it the point is definitely not in cc.  It returns true if the point might be in the cc.
+ * Used for tossing out points that we know that are not in cc without having to do all the math.  It is much faster.
  * When called the return function will take and WorldPt and return true in we guess it might be in the bounds,
  * false if we know that it is not in the bounds
- * @param {object} plot
+ * @param {object} cc
  */
-export const makeRoughGuesser= function(plot) {
+export const makeRoughGuesser= function(cc) {
 
 
-    var dataWidth= plot.dataWidth;
-    var dataHeight= plot.dataHeight;
-    var topLeft= plot.getWorldCoords(makeImagePt(0,0));
-    var topRight= plot.getWorldCoords(makeImagePt(0,dataWidth));
-    var bottomLeft= plot.getWorldCoords(makeImagePt(dataHeight,0));
-    var bottomRight= plot.getWorldCoords(makeImagePt(dataHeight,dataWidth));
-    var scale= plot.getImagePixelScaleInDeg();
+    var dataWidth= cc.dataWidth;
+    var dataHeight= cc.dataHeight;
+    var topLeft= cc.getWorldCoords(makeImagePt(0,0));
+    var topRight= cc.getWorldCoords(makeImagePt(0,dataWidth));
+    var bottomLeft= cc.getWorldCoords(makeImagePt(dataHeight,0));
+    var bottomRight= cc.getWorldCoords(makeImagePt(dataHeight,dataWidth));
+    var scale= cc.getImagePixelScaleInDeg();
 
 
     var wPad= 25;

@@ -333,7 +333,7 @@ const getNewPosition= function(ra, dec, dist, phi) {
 };
 
 const getBestTitle= function(plot) {
-    var t = plot.getPlotDesc();
+    var t = plot.plotDesc;
     if (!t) {
         var mpw = plot.getPlotView().getMiniPlotWidget();
         if (mpw) t = mpw.getTitle();
@@ -344,12 +344,13 @@ const getBestTitle= function(plot) {
 
 const getRotationAngle= function(plot) {
     var retval = 0;
-    var iWidth = plot.getImageWidth();
-    var iHeight = plot.getImageHeight();
+    var iWidth = plot.dataWidth;
+    var iHeight = plot.dataHeight;
     var ix = iWidth / 2;
     var iy = iHeight / 2;
-    var wptC = plot.getWorldCoords(makeImageWorkSpacePt(ix, iy));
-    var wpt2 = plot.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
+    const cc= CysConverter.make(plot);
+    var wptC = cc.getWorldCoords(makeImageWorkSpacePt(ix, iy));
+    var wpt2 = cc.getWorldCoords(makeImageWorkSpacePt(ix, iHeight/4));
     if (wptC && wpt2) {
         retval = getPositionAngle(wptC.getLon(), wptC.getLat(), wpt2.getLon(), wpt2.getLat());
     }

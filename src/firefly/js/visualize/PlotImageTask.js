@@ -5,7 +5,7 @@
 import {logError} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot, makeUniqueRequestKey} from './ImagePlotCntlr.js';
 import WebPlotResult from './WebPlotResult.js';
-import WebPlot, {PlotAttribute} from './WebPlot.js';
+import {WebPlot,PlotAttribute} from './WebPlot.js';
 import CsysConverter from './CsysConverter.js';
 import {dispatchActiveTarget, getActiveTarget} from '../core/AppDataCntlr.js';
 import VisUtils from './VisUtil.js';
@@ -108,7 +108,7 @@ export function modifyRequest(pvCtx, r, band) {
 
     //if (pv.options.rememberZoom && primePlot(pv)) {
     //    retval.setZoomType(ZoomType.STANDARD);
-    //    retval.setInitialZoomLevel(plot.getZoomFact());
+    //    retval.setInitialZoomLevel(plot.zoomFac);
     //}
 
     if (pvCtx.defThumbnailSize!=DEFAULT_THUMBNAIL_SIZE && !r.containsParam(WPConst.THUMBNAIL_SIZE)) {

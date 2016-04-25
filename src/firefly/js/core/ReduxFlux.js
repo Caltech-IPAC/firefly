@@ -18,7 +18,7 @@ import ImagePlotCntlr, {IMAGE_PLOT_KEY,
                         plotImageActionCreator, zoomActionCreator,
                         colorChangeActionCreator, stretchChangeActionCreator,
                         rotateActionCreator, flipActionCreator,
-                        cropActionCreator, autoPlayActionCreator,
+                        cropActionCreator, autoPlayActionCreator, changePrimeActionCreator,
                         restoreDefaultsActionCreator,
                         changePointSelectionActionCreator  } from '../visualize/ImagePlotCntlr.js';
 
@@ -46,8 +46,9 @@ import Catalog from '../drawingLayers/Catalog.js';
 
 import {showExampleDialog} from '../ui/ExampleDialog.jsx';
 
-//import Perf from 'react-addons-perf';
-//window.Perf = Perf;
+//==============
+// import Perf from 'react-addons-perf';
+// window.Perf = Perf;
 
 
 /**
@@ -98,6 +99,7 @@ actionCreators.set(ImagePlotCntlr.STRETCH_CHANGE, stretchChangeActionCreator);
 actionCreators.set(ImagePlotCntlr.ROTATE, rotateActionCreator);
 actionCreators.set(ImagePlotCntlr.FLIP, flipActionCreator);
 actionCreators.set(ImagePlotCntlr.CROP, cropActionCreator);
+actionCreators.set(ImagePlotCntlr.CHANGE_PRIME_PLOT , changePrimeActionCreator);
 actionCreators.set(ImagePlotCntlr.CHANGE_POINT_SELECTION, changePointSelectionActionCreator);
 actionCreators.set(ImagePlotCntlr.RESTORE_DEFAULTS, restoreDefaultsActionCreator);
 actionCreators.set(ImagePlotCntlr.EXPANDED_AUTO_PLAY, autoPlayActionCreator);

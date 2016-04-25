@@ -262,14 +262,21 @@ function isRequiredUpdateObject(o) {
     return Array.isArray(o) || (o && o.constructor === Object.prototype.constructor);
 }
 
-export function deepDiff(o1, o2, p) {
+/**
+ * Diff the the two objects and prints differences to console
+ * @param o1
+ * @param o2
+ * @param p the title
+ * @param collapsed show the differences collapsed
+ */
+export function deepDiff(o1, o2, p, collapsed=false) {
     const notify = (status) => {
         console.warn(' Update %s', status);
         console.log('%cbefore', 'font-weight: bold', o1);
         console.log('%cafter ', 'font-weight: bold', o2);
     };
     if (!isEqual(o1, o2)) {
-        console.group(p);
+        collapsed ? console.groupCollapsed(p) : console.group(p);
         if ([o1, o2].every(isFunction)) {
             notify('avoidable?');
         } else if (![o1, o2].every(isRequiredUpdateObject)) {
@@ -282,7 +289,7 @@ export function deepDiff(o1, o2, p) {
         }
         console.groupEnd();
     } else if (o1 !== o2) {
-        console.group(p);
+        collapsed ? console.groupCollapsed(p) : console.group(p);
         notify('avoidable!');
         if (isObject(o1) && isObject(o2)) {
             const keys = union(Object.keys(o1), Object.keys(o2));
