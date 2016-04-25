@@ -1,6 +1,6 @@
 import {flux} from '../Firefly.js';
 
-import {has, get, set} from 'lodash';
+import {has, get, omit, set} from 'lodash';
 
 import ColValuesStatistics from './ColValuesStatistics.js';
 
@@ -15,7 +15,6 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
    tbl_id: Object - the name of this node matches table id
    {
      isTblLoaded: boolean - tells if the table is completely loaded
-     searchRequest: TableRequest - if source table changes, histogram store should be recreated
      isColStatsReady: boolean
      colStats: [ColValuesStatistics]
    }
@@ -45,12 +44,12 @@ export const dispatchLoadTblStats = function(searchRequest) {
 
 /*
  * The statistics is successfully returned from the server, update the store
+ * @param {Number} tblId - table id
  * @param {boolean} isColStatsReady flags that column statistics is now available
  * @param {ColValuesStatistics[]} an array which holds column statistics for each column
- * @param {ServerRequest} table search request
  */
-export const dispatchUpdateTblStats = function(isColStatsReady,colStats,searchRequest) {
-    flux.process({type: UPDATE_TBL_STATS, payload: {isColStatsReady,colStats,searchRequest}});
+export const dispatchUpdateTblStats = function(tblId,isColStatsReady,colStats) {
+    flux.process({type: UPDATE_TBL_STATS, payload: {tblId,isColStatsReady,colStats}});
 };
 
 /*
@@ -92,8 +91,9 @@ function stateWithNewData(tblId, state, newProps) {
 export function reducer(state=getInitState(), action={}) {
     switch (action.type) {
         case (SETUP_TBL_TRACKING) :
-            var {tblId} = action.payload;
-            var isTblLoaded;
+        {
+            const {tblId} = action.payload;
+            let isTblLoaded;
             if (TableUtil.isFullyLoaded(tblId)) {
                 isTblLoaded = true;
                 action.sideEffect((dispatch) => fetchTblStats(dispatch, TableUtil.findTblById(tblId).request));
@@ -104,26 +104,39 @@ export function reducer(state=getInitState(), action={}) {
             const newState = Object.assign({}, state);
             set(newState, tblId, {isTblLoaded});
             return newState;
+        }
         case (TablesCntlr.TABLE_NEW_LOADED)  :
+        {
             const {tbl_id, request} = action.payload;
             if (has(state, tbl_id)) {
-                if (!get(state, [tbl_id, 'isTblLoaded'])){
+                if (!get(state, [tbl_id, 'isTblLoaded'])) {
                     const newState = Object.assign({}, state);
-                    set(newState, tbl_id, {isTblLoaded:true});
-                    action.sideEffect((dispatch) => fetchTblStats(dispatch,request));
+                    set(newState, tbl_id, {isTblLoaded: true});
+                    action.sideEffect((dispatch) => fetchTblStats(dispatch, request));
                     return newState;
                 }
             }
             return state;
+        }
+        case (TablesCntlr.TABLE_REMOVE)  :
+        {
+            const {tbl_id} = action.payload.tbl_id;
+            if (has(state, tbl_id)) {
+                const newState = Object.assign({}, state);
+                Reflect.deleteProperty(newState, [tbl_id]);
+                return newState;
+            }
+            return state;
+        }
         case (LOAD_TBL_STATS)  :
         {
-            let {searchRequest} = action.payload;
-            return stateWithNewData(searchRequest.tbl_id, state, {isColStatsReady: false});
+            const {tblId} = action.payload;
+            return stateWithNewData(tblId, state, {isColStatsReady: false});
         }
         case (UPDATE_TBL_STATS)  :
         {
-            let {isColStatsReady, colStats, searchRequest} = action.payload;
-            return stateWithNewData(searchRequest.tbl_id, state, {isColStatsReady, colStats, searchRequest});
+            const {tblId, isColStatsReady, colStats} = action.payload;
+            return stateWithNewData(tblId, state, {isColStatsReady, colStats});
         }
         default:
             return state;
@@ -149,8 +162,11 @@ function updateTblStats(statsData) {
  */
 function fetchTblStats(dispatch, activeTableServerRequest) {
 
+    const tblId = activeTableServerRequest['tbl_id'];
+
     // searchRequest
-    const sreq = Object.assign({}, activeTableServerRequest, {'startIdx': 0, 'pageSize': 1000000});
+    const sreq = Object.assign({}, omit(activeTableServerRequest, ['tbl_id'], 'META_INFO'),
+        {'startIdx': 0, 'pageSize': 1000000});
 
     const req = TableRequest.newInstance({
                     id:'StatisticsProcessor',
@@ -167,9 +183,9 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                 }, []);
                 dispatch(updateTblStats(
                     {
+                        tblId,
                         isColStatsReady: true,
-                        colStats,
-                        searchRequest: sreq
+                        colStats
                     }));
             }
         }

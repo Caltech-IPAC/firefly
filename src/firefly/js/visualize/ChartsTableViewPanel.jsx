@@ -3,8 +3,8 @@
  */
 
 import React, {PropTypes} from 'react';
-import sCompare from 'react-addons-shallow-compare';
-import {deepDiff} from '../util/WebUtil.js';
+//import sCompare from 'react-addons-shallow-compare';
+//import {deepDiff} from '../util/WebUtil.js';
 
 import {get, debounce, defer} from 'lodash';
 import Resizable from 'react-component-resizable';
@@ -70,9 +70,7 @@ class ChartsPanel extends React.Component {
             }
         }, 200);
 
-        // this.renderXYPlotOptions = this.renderXYPlotOptions.bind(this);
         this.renderXYPlot = this.renderXYPlot.bind(this);
-        this.renderHistogramOptions = this.renderHistogramOptions.bind(this);
         this.renderHistogram = this.renderHistogram.bind(this);
         this.toggleOptions = this.toggleOptions.bind(this);
         this.displaySelectionOptions = this.displaySelectionOptions.bind(this);
@@ -113,28 +111,6 @@ class ChartsPanel extends React.Component {
     // -------------
     // SCATTER PLOT
     // -------------
-
-    // renderXYPlotOptions() {
-    //     const { tblId, tableModel, tblStatsData} = this.props;
-    //
-    //     if (tblStatsData.isColStatsReady) {
-    //         const formName = 'XYPlotOptionsForm_'+tblId;
-    //         return (
-    //             <XYPlotOptions key={formName} groupKey = {formName}
-    //                               colValStats={tblStatsData.colStats}
-    //                               onOptionsSelected={(xyPlotParams) => {
-    //                                         XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
-    //                                     }
-    //                                   }/>
-    //         );
-    //     } else {
-    //         return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
-    //             title='Loading Options...'
-    //             src={LOADING}
-    //         />);
-    //     }
-    //
-    // }
 
     renderXYPlot() {
         const {tblId, tableModel, tblPlotData} = this.props;
@@ -181,24 +157,6 @@ class ChartsPanel extends React.Component {
     // HISTOGRAM
     // ----------
 
-    renderHistogramOptions() {
-        const { searchRequest, isColStatsReady, colStats } = this.props.tblStatsData;
-
-        if (isColStatsReady) {
-            const formName = 'HistogramOptionsForm_'+this.props.tblId;
-            return (
-                <HistogramOptions groupKey = {formName}
-                                  colValStats={colStats}
-                                  onOptionsSelected={(histogramParams) => {
-                                            HistogramCntlr.dispatchLoadColData(histogramParams, searchRequest);
-                                        }
-                                      }/>
-            );
-        } else {
-            return 'Loading Options...';
-        }
-
-    }
 
     renderHistogram() {
         if (!this.props.tblHistogramData) {
@@ -478,7 +436,7 @@ class ChartsPanel extends React.Component {
             return (
                 <div style={{display:'inline-block',overflow:'auto',width:(OPTIONS_WIDTH-20),height:heightPx,paddingLeft:10,verticalAlign:'top'}}>
                     {this.renderChartSelection()}
-                    {chartType === SCATTER ? <OptionsWrapper  {...{tblId, tableModel, tblStatsData}}/> : this.renderHistogramOptions()}
+                    <OptionsWrapper  {...{tblId, tableModel, tblStatsData, chartType}}/>
                 </div>
             );
         } else {
@@ -557,29 +515,41 @@ export class OptionsWrapper extends React.Component {
 
     shouldComponentUpdate(nProps, nState) {
         return get(nProps, 'tableModel.tbl_id') !== get(this.props, 'tableModel.tbl_id') ||
-            get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ;
+            get(nProps, 'tblStatsData.isColStatsReady') !== get(this.props, 'tblStatsData.isColStatsReady') ||
+            nProps.chartType != this.props.chartType;
     }
 
-    componentDidUpdate(prevProps, prevState) {
-
-        // deepDiff({props: prevProps, state: prevState},
-        //     {props: this.props, state: this.state},
-        //     this.constructor.name);
-    }
+    //componentDidUpdate(prevProps, prevState) {
+    //     deepDiff({props: prevProps, state: prevState},
+    //         {props: this.props, state: this.state},
+    //         this.constructor.name);
+    //}
 
     render() {
-        const { tblId, tableModel, tblStatsData} = this.props;
+        const { tblId, tableModel, tblStatsData, chartType} = this.props;
 
         if (tblStatsData.isColStatsReady) {
-            const formName = 'XYPlotOptionsForm_'+tblId;
-            return (
-                <XYPlotOptions key={formName} groupKey = {formName}
-                               colValStats={tblStatsData.colStats}
-                               onOptionsSelected={(xyPlotParams) => {
+            if (chartType === SCATTER) {
+                const formName = 'XYPlotOptionsForm_' + tblId;
+                return (
+                    <XYPlotOptions key={formName} groupKey={formName}
+                                   colValStats={tblStatsData.colStats}
+                                   onOptionsSelected={(xyPlotParams) => {
                                                 XYPlotCntlr.dispatchLoadPlotData(xyPlotParams, tableModel.request);
                                             }
                                           }/>
-            );
+                );
+            } else {
+                const formName = 'HistogramOptionsForm_'+this.props.tblId;
+                return (
+                    <HistogramOptions key={formName} groupKey = {formName}
+                                      colValStats={tblStatsData.colStats}
+                                      onOptionsSelected={(histogramParams) => {
+                                                HistogramCntlr.dispatchLoadColData(histogramParams, tableModel.request);
+                                            }
+                                          }/>
+                );
+            }
         } else {
             return (<img style={{verticalAlign:'top', height: 16, padding: 10, float: 'left'}}
                          title='Loading Options...'
@@ -588,5 +558,13 @@ export class OptionsWrapper extends React.Component {
         }
     }
 }
+
+OptionsWrapper.propTypes = {
+    tblId : PropTypes.string,
+    tableModel : PropTypes.object,
+    tblStatsData : PropTypes.object,
+    chartType: PropTypes.string
+};
+
 
 

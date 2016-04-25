@@ -34,7 +34,6 @@ export class TableConnector {
             flux.process({type: TblCntlr.TABLE_REPLACE, payload: tableModel});
         } else {
             request = Object.assign({}, request, {filters: filterIntoString});
-            request.startIdx = 0;
             TblCntlr.dispatchTableFetch(request);
         }
     }

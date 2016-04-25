@@ -4,6 +4,7 @@
 import update from 'react-addons-update';
 import {get} from 'lodash';
 
+import {updateSet} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
@@ -17,12 +18,13 @@ export function dataReducer(state={data:{}}, action={}) {
     switch (action.type) {
         case (Cntlr.TABLE_SELECT)  :
             if (selectInfo) {
-                return update(root, { [tbl_id] : {selectInfo: {$set: selectInfo}}});
+                return updateSet(root, [tbl_id, 'selectInfo'], selectInfo);
             } else return root;
 
         case (Cntlr.TABLE_NEW_LOADED)  :
-            if (get(root, [tbl_id, 'tableMeta', 'Loading-Status'], 'COMPLETED') !== 'COMPLETED') {
-                return update(root, { [tbl_id] : {tableMeta: {['Loading-Status']:  {$set: 'COMPLETED'}}}});
+            const statusPath = [tbl_id, 'tableMeta', 'Loading-Status'];
+            if (get(root, statusPath, 'COMPLETED') !== 'COMPLETED') {
+                return updateSet(root, statusPath, 'COMPLETED');
             } else return root;
 
         case (Cntlr.TABLE_HIGHLIGHT)  :
