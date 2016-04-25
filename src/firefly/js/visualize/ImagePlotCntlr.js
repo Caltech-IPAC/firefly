@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import Enum from 'enum';
 import {get} from 'lodash';
+import Enum from 'enum';
 import {flux} from '../Firefly.js';
 import PlotImageTask from './PlotImageTask.js';
 import {UserZoomTypes} from './ZoomUtil.js';
@@ -24,7 +24,8 @@ import {dispatchAttachLayerToPlot,
         dispatchCreateDrawLayer,
         dispatchDetachLayerFromPlot,
         DRAWING_LAYER_KEY} from './DrawLayerCntlr.js';
-import {dispatchReplaceImages, getExpandedViewerPlotIds, getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
+import {dispatchReplaceImages, getExpandedViewerPlotIds,
+         getMultiViewRoot, EXPANDED_MODE_RESERVED} from './MultiViewCntlr.js';
 
 export {zoomActionCreator} from './ZoomUtil.js';
 
@@ -104,10 +105,6 @@ const EXPANDED_AUTO_PLAY= 'ImagePlotCntlr.expandedAutoPlay';
 const CHANGE_MOUSE_READOUT_MODE='ImagePlotCntlr.changeMouseReadoutMode';
 const DELETE_PLOT_VIEW='ImagePlotCntlr.deletePlotView';
 
-/**
- * action should contain:
- * todo - add documentation
- */
 const PLOT_PROGRESS_UPDATE= 'ImagePlotCntlr.PlotProgressUpdate';
 
 export const IMAGE_PLOT_KEY= 'allPlots';
@@ -121,7 +118,8 @@ export function visRoot() { return flux.getState()[IMAGE_PLOT_KEY]; }
 
 /**
  * The state is best thought of at the following:
- * The state contains an array of PlotView each have a plotId and tie to an Image Viewer, one might be active (PlotView.js)
+ * The state contains an array of PlotView each have a plotId and tie to an Image Viewer,
+ * one might be active (PlotView.js)
  * A PlotView has an array of WebPlots, one is primary (WebPlot.js)
  * An ImageViewer shows the primary plot of a plotView. (ImageView.js)
  */
@@ -185,8 +183,7 @@ export default {
     CHANGE_POINT_SELECTION,
     PLOT_PROGRESS_UPDATE, UPDATE_VIEW_SIZE, PROCESS_SCROLL, RECENTER,
     RESTORE_DEFAULTS, CHANGE_PLOT_ATTRIBUTE,EXPANDED_AUTO_PLAY,
-    DELETE_PLOT_VIEW,
-    CHANGE_ACTIVE_PLOT_VIEW
+    DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW
 };
 
 
@@ -207,6 +204,18 @@ export function makeUniqueRequestKey() {
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
 //======================================== Dispatch Functions =============================
+
+
+/**
+ * 
+ * @param plotId
+ * @param message
+ * @param done
+ */
+export function dispatchPlotProgressUpdate(plotId, message, done ) {
+    flux.process({ type: PLOT_PROGRESS_UPDATE, payload: { plotId, done, message }});
+}
+
 
 
 /**
@@ -447,7 +456,8 @@ export function dispatchChangePointSelection(requester, enabled) {
 
 /**
  *
- * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one, if false colapse
+ * @param {ExpandType|boolean} expandedMode the mode to change to, it true the expand and match the last one,
+ *          if false colapse
  */
 export function dispatchChangeExpandedMode(expandedMode) {
 
@@ -631,15 +641,17 @@ function reducer(state=initState(), action={}) {
         case ZOOM_IMAGE_START  :
         case ZOOM_IMAGE_FAIL  :
         case ZOOM_IMAGE  :
-        case PLOT_PROGRESS_UPDATE  :
         case UPDATE_VIEW_SIZE :
         case PROCESS_SCROLL  :
         case CHANGE_PLOT_ATTRIBUTE:
         case COLOR_CHANGE  :
+        case COLOR_CHANGE_START  :
         case COLOR_CHANGE_FAIL  :
+        case STRETCH_CHANGE_START  :
         case STRETCH_CHANGE  :
         case STRETCH_CHANGE_FAIL:
         case RECENTER:
+        case PLOT_PROGRESS_UPDATE  :
             retState= plotChangeReducer(state,action);
             break;
 
@@ -665,6 +677,9 @@ function reducer(state=initState(), action={}) {
         case DELETE_PLOT_VIEW:
             retState= deletePlotView(state,action);
             break;
+
+
+
         default:
             break;
 
@@ -703,13 +718,17 @@ function changeMouseReadout(state, action) {
 }
 
 function changeActivePlotView(state,action) {
-    if (action.payload.plotId===state.activePlotId) return state;
+    const {plotId}= action.payload;
+    if (plotId===state.activePlotId) return state;
+    if (!getPlotViewById(state,plotId)) return state;
 
     return clone(state, {activePlotId:action.payload.plotId});
 }
 
 
-const isExpanded = (expandedMode) => expandedMode===true || expandedMode===ExpandType.GRID || expandedMode===ExpandType.SINGLE;
+const isExpanded = (expandedMode) => expandedMode===true ||
+                                     expandedMode===ExpandType.GRID ||
+                                     expandedMode===ExpandType.SINGLE;
 
 function changeExpandedMode(state,action) {
     var {expandedMode}= action.payload;
@@ -764,9 +783,11 @@ function deletePlotView(state,action) {
  * @param removeOldPlot
  * @param addToHistory
  * @param useContextModifications
- * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean, useContextModifications: boolean, groupLocked: *, threeColor: *}}
+ * @return {{plotId: *, plotGroupId: *, removeOldPlot: boolean, addToHistory: boolean,
+ *               useContextModifications: boolean, groupLocked: *, threeColor: *}}
  */
-function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true, addToHistory=false, useContextModifications= true) {
+function initPlotImagePayload(plotId,req, threeColor, removeOldPlot= true,
+                              addToHistory=false, useContextModifications= true) {
     if (!plotId) plotId= req.getPlotId();
 
     const plotGroupId= req.getPlotGroupId();

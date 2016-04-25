@@ -51,7 +51,7 @@ public class URLFileRetriever implements FileRetriever {
 //            Logger.warn("oops");
 //        }
         try {
-            AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey());
+            AnyUrlParams params = new AnyUrlParams(new URL(urlStr), request.getProgressKey(),request.getPlotId());
             RequestOwner ro = ServerContext.getRequestOwner();
             Map<String, String> cookies = ro.getCookieMap();
             if (cookies != null) {

@@ -17,25 +17,21 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Trey Roby
  */
 public class Downloader {
 
-    private enum ListenerCall {
-        INCREMENT, START, DONE, ABORTED
-    }
+    private enum ListenerCall { INCREMENT, START, DONE}
 
     private DataInputStream _in;
     private OutputStream _out;
     private Object _downloadObj;
     private long _downloadSize;
     private long _maxDownloadSize= 0L;
-    private List<DownloadListener> _listenerList = new ArrayList<DownloadListener>(2);
+    private DownloadListener downloadListener= null;
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
 
 
@@ -71,11 +67,10 @@ public class Downloader {
         String outStr;
         Date startDate = null;
         TimeStats timeStats = null;
-        int informInc = (int) (2* FileUtil.MEG / BUFFER_SIZE);
+        int informInc = (int) (30* FileUtil.MEG) / BUFFER_SIZE;
         long totalRead = 0;
         boolean elapseIncreased = false;
         long lastElapse = 0;
-        boolean aborted = false;
         if (total > 0) {
             messStr = " out of " + FileUtil.getSizeAsString(total);
         } else {
@@ -112,15 +107,13 @@ public class Downloader {
                                 "URL does not have a content length header but the " +
                                         "downloaded data exceeded the max size of " +_maxDownloadSize);
                     }
-                    fireVetoDownloadListeners(totalRead, total, timeStats, outStr,
-                            _downloadObj);
                     fireDownloadListeners(totalRead, total, timeStats,
                             outStr, _downloadObj,
                             ListenerCall.INCREMENT);
                     if (!elapseIncreased) {
                         if (lastElapse == timeStats.elapseSec) {
                             elapseIncreased = true;
-                            informInc *= 10;
+                            informInc *= 5;
                         }
                     }
                     lastElapse = timeStats.elapseSec;
@@ -130,24 +123,16 @@ public class Downloader {
 
         } catch (EOFException e) {
             if (totalRead == 0) {
-                IOException ioe = new IOException("No data was downloaded");
-                ioe.initCause(e);
-                throw ioe;
+                throw new IOException("No data was downloaded",e);
             }
-        } catch (VetoDownloadException e) {
-            aborted = true;
-            throw e;
         } finally {
             FileUtil.silentClose(_out);
             if (totalRead > 0) {
                 outStr = "Download Completed.";
-                ListenerCall stat = aborted ?
-                                    ListenerCall.ABORTED : ListenerCall.DONE;
                 fireDownloadListeners(total, total, timeStats, outStr,
-                                      _downloadObj, stat);
+                                      _downloadObj, ListenerCall.DONE);
             }
         }
-        _listenerList = null;
         _out = null;
         _in = null;
         //_conn            = null;
@@ -157,36 +142,9 @@ public class Downloader {
 //----------- add / remove listener methods -----------
 //=====================================================================
 
-    public void addDownloadListener(DownloadListener l) {
-        if (l!=null) _listenerList.add(l);
+    public void setDownloadListener(DownloadListener l) {
+        this.downloadListener= l;
     }
-
-    public void removeDownloadListener(DownloadListener l) {
-        if (_listenerList != null) _listenerList.remove(l);
-    }
-
-    public void fireVetoDownloadListeners(long current,
-                                          long max,
-                                          TimeStats timeStats,
-                                          String mess,
-                                          Object downloadObj) throws VetoDownloadException {
-        List<DownloadListener> newlist;
-        DownloadEvent ev = new DownloadEvent(this, current, max,
-                                             timeStats.elapseSec,
-                                             timeStats.remainSec,
-                                             timeStats.elapseStr,
-                                             timeStats.remainingStr,
-                                             downloadObj, mess);
-        synchronized (this) {
-            newlist = new ArrayList<DownloadListener>( _listenerList);
-        }
-
-        for (DownloadListener listener : newlist) {
-            listener.checkDataDownloading(ev);
-        }
-    }
-
-
 
 //======================================================================
 //------------------ Private / Protected Methods -----------------------
@@ -255,7 +213,7 @@ public class Downloader {
                                          String mess,
                                          Object downloadObj,
                                          ListenerCall type) {
-        List<DownloadListener> newlist;
+        if (downloadListener==null) return;
         DownloadEvent ev;
         if (timeStats != null) {
             ev = new DownloadEvent(this, current, max,
@@ -267,25 +225,16 @@ public class Downloader {
         } else {
             ev = new DownloadEvent(this, current, max, downloadObj, mess);
         }
-        synchronized (this) {
-            newlist = new ArrayList<DownloadListener>(_listenerList);
-        }
-
-        for (DownloadListener listener : newlist) {
-            switch (type) {
-                case INCREMENT:
-                    listener.dataDownloading(ev);
-                    break;
-                case START:
-                    listener.beginDownload(ev);
-                    break;
-                case DONE:
-                    listener.downloadCompleted(ev);
-                    break;
-                case ABORTED:
-                    listener.downloadAborted(ev);
-                    break;
-            }
+        switch (type) {
+            case INCREMENT:
+                downloadListener.dataDownloading(ev);
+                break;
+            case START:
+                downloadListener.beginDownload(ev);
+                break;
+            case DONE:
+                downloadListener.downloadCompleted(ev);
+                break;
         }
     }
 
